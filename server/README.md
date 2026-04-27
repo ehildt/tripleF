@@ -22,10 +22,12 @@ A NestJS microservice for AI-powered image analysis using Ollama vision models. 
 
 <div align="center">
 
+
+
 # Dependencies
 
 [![@ehildt/ckir-helpers](https://img.shields.io/badge/_ehildt_ckir_helpers-v1.5.0-a82947.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=a82947&logoWidth=40&style=flat-square)](https://github.com/ehildt/ckir-helpers)
-[![@ehildt/nestjs-bullmq](https://img.shields.io/badge/_ehildt_nestjs_bullmq-v1.1.2-add91c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=add91c&logoWidth=40&style=flat-square)](https://github.com/ehildt/nestjs-bullmq)
+[![@ehildt/nestjs-bullmq](https://img.shields.io/badge/_ehildt_nestjs_bullmq-v1.1.3-add91c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=add91c&logoWidth=40&style=flat-square)](https://github.com/ehildt/nestjs-bullmq)
 [![@ehildt/nestjs-bullmq-logger](https://img.shields.io/badge/_ehildt_nestjs_bullmq_logger-v1.2.4-abdb1a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=abdb1a&logoWidth=40&style=flat-square)](https://github.com/ehildt/nestjs-bullmq-logger)
 [![@ehildt/nestjs-config-factory](https://img.shields.io/badge/_ehildt_nestjs_config_factory-v1.1.2-a93cd7.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=a93cd7&logoWidth=40&style=flat-square)](https://github.com/ehildt/nestjs-config-factory)
 [![@ehildt/nestjs-ollama](https://img.shields.io/badge/_ehildt_nestjs_ollama-v1.2.1-9bdb24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9bdb24&logoWidth=40&style=flat-square)](https://github.com/ehildt/nestjs-ollama)
@@ -39,9 +41,9 @@ A NestJS microservice for AI-powered image analysis using Ollama vision models. 
 [![@nestjs/core](https://img.shields.io/badge/_nestjs_core-v11.1.19-4fc219.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4fc219&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@nestjs/microservices](https://img.shields.io/badge/_nestjs_microservices-v11.1.19-4628bd.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4628bd&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@nestjs/platform-fastify](https://img.shields.io/badge/_nestjs_platform_fastify-v11.1.19-33cc8f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33cc8f&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
-[![@nestjs/swagger](https://img.shields.io/badge/_nestjs_swagger-v11.4.1-225fd8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=225fd8&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
+[![@nestjs/swagger](https://img.shields.io/badge/_nestjs_swagger-v11.4.2-225fd8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=225fd8&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@nestjs/terminus](https://img.shields.io/badge/_nestjs_terminus-v11.1.1-9b3dd6.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9b3dd6&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
-[![bullmq](https://img.shields.io/badge/bullmq-v5.76.1-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
+[![bullmq](https://img.shields.io/badge/bullmq-v5.76.2-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
 [![class-transformer](https://img.shields.io/badge/class_transformer-v0.5.1-2bc59c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2bc59c&logoWidth=40&style=flat-square)](https://github.com/typestack/class-transformer)
 [![class-validator](https://img.shields.io/badge/class_validator-v0.15.1-461ddd.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=461ddd&logoWidth=40&style=flat-square)](https://github.com/typestack/class-validator)
 [![fastify](https://img.shields.io/badge/fastify-v5.8.5-29db88.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=29db88&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify)
@@ -61,9 +63,10 @@ A NestJS microservice for AI-powered image analysis using Ollama vision models. 
 
 <div align="center">
 
+
+
 # DevDependencies
 
-[![@changesets/cli](https://img.shields.io/badge/_changesets_cli-v2.31.0-82ba21.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=82ba21&logoWidth=40&style=flat-square)](https://github.com/changesets/changesets)
 [![@eslint/js](https://img.shields.io/badge/_eslint_js-v10.0.1-7a23a9.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=7a23a9&logoWidth=40&style=flat-square)](https://github.com/eslint/eslint)
 [![@nestjs/cli](https://img.shields.io/badge/_nestjs_cli-v11.0.21-2dc8ae.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2dc8ae&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@nestjs/schematics](https://img.shields.io/badge/_nestjs_schematics-v11.1.0-d01b6f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=d01b6f&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
