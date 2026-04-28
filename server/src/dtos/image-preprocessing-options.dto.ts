@@ -1,4 +1,4 @@
-import type { PreprocessingSize } from "../constants/image-preprocessing.constants.js";
+import type { PreprocessingSize } from '../constants/image-preprocessing.constants.js';
 
 export interface ImagePreprocessingOptions {
   /**

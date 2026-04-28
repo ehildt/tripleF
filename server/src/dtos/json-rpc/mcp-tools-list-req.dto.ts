@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsIn,
@@ -8,9 +8,9 @@ import {
   IsOptional,
   IsString,
   ValidateNested,
-} from "class-validator";
+} from 'class-validator';
 
-import { SupportedToolFunction, SupportedToolMethod } from "./mcp.model.js";
+import { SupportedToolFunction, SupportedToolMethod } from './mcp.model.js';
 
 export class McpToolsListReq_Params {
   @IsArray()
@@ -18,8 +18,8 @@ export class McpToolsListReq_Params {
   @ApiPropertyOptional({
     type: String,
     isArray: true,
-    example: ["visions.analyze"] satisfies SupportedToolFunction[],
-    description: "A list of requested tools by their names",
+    example: ['visions.analyze'] satisfies SupportedToolFunction[],
+    description: 'A list of requested tools by their names',
   })
   requestedTools?: Array<SupportedToolFunction>;
 }
@@ -30,11 +30,11 @@ export class McpToolsListReq {
   @IsNumber()
   id!: number;
 
-  @ApiProperty({ example: "2.0" })
-  @IsIn(["2.0"])
-  jsonrpc!: "2.0";
+  @ApiProperty({ example: '2.0' })
+  @IsIn(['2.0'])
+  jsonrpc!: '2.0';
 
-  @ApiProperty({ example: "tools/list" satisfies SupportedToolMethod })
+  @ApiProperty({ example: 'tools/list' satisfies SupportedToolMethod })
   @IsString()
   method!: SupportedToolMethod;
 

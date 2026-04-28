@@ -1,17 +1,17 @@
-import { BullMQLoggerService } from "@ehildt/nestjs-bullmq-logger";
-import { OllamaService } from "@ehildt/nestjs-ollama";
-import { SocketIOService } from "@ehildt/nestjs-socket.io";
-import { Processor } from "@nestjs/bullmq";
-import { Job, UnrecoverableError } from "bullmq";
+import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
+import { OllamaService } from '@ehildt/nestjs-ollama';
+import { SocketIOService } from '@ehildt/nestjs-socket.io';
+import { Processor } from '@nestjs/bullmq';
+import { Job, UnrecoverableError } from 'bullmq';
 
-import { OllamaConfigService } from "../configs/ollama-config.service.js";
-import { SocketIOConfigService } from "../configs/socket-io-config.service.js";
-import { BULLMQ_QUEUE } from "../constants/bullmq.constants.js";
-import { FastifyMultipartDataWithFiltersReq } from "../dtos/classic/get-fastify-multipart-data-req.dto.js";
-import { ImagePreprocessingService } from "../services/image-preprocessing.service.js";
-import { JobTrackingService } from "../services/job-tracking.service.js";
+import { OllamaConfigService } from '../configs/ollama-config.service.js';
+import { SocketIOConfigService } from '../configs/socket-io-config.service.js';
+import { BULLMQ_QUEUE } from '../constants/bullmq.constants.js';
+import { FastifyMultipartDataWithFiltersReq } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
+import { ImagePreprocessingService } from '../services/image-preprocessing.service.js';
+import { JobTrackingService } from '../services/job-tracking.service.js';
 
-import { VisionsProcessor } from "./visions.processor.js";
+import { VisionsProcessor } from './visions.processor.js';
 
 @Processor(BULLMQ_QUEUE.IMAGE_OCR)
 export class VisionsOCRProcessor extends VisionsProcessor {
@@ -41,11 +41,11 @@ export class VisionsOCRProcessor extends VisionsProcessor {
     if (this.jobTracking.isCanceled(requestId)) {
       await this.emitToSocket(job.data.filters.roomId, job.data.filters.event, {
         requestId,
-        status: "canceled",
+        status: 'canceled',
         canceled: true,
         pending: false,
       });
-      throw new UnrecoverableError("Job canceled before processing");
+      throw new UnrecoverableError('Job canceled before processing');
     }
 
     const { buffers, meta, filters } = job.data;
@@ -78,13 +78,13 @@ export class VisionsOCRProcessor extends VisionsProcessor {
       }
     }
 
-    const filenames = processedMeta.map(({ name }) => name).join(",");
+    const filenames = processedMeta.map(({ name }) => name).join(',');
     const request = this.buildChatRequest(
       processedBuffers,
       filenames,
       filters,
-      "OCR",
-      "Image(s):",
+      'OCR',
+      'Image(s):',
       variantDescriptions,
     );
 

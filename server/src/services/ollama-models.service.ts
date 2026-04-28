@@ -1,6 +1,6 @@
-import { CacheReturnValue } from "@ehildt/nestjs-config-factory/cache-return-value";
-import { OllamaService } from "@ehildt/nestjs-ollama";
-import { Injectable } from "@nestjs/common";
+import { CacheReturnValue } from '@ehildt/nestjs-config-factory/cache-return-value';
+import { OllamaService } from '@ehildt/nestjs-ollama';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class OllamaModelsService {

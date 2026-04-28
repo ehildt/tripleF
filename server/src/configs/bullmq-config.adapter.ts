@@ -1,7 +1,7 @@
-import { getBooleanEnv } from "@ehildt/ckir-helpers/get-boolean-env";
-import { getNumberEnv } from "@ehildt/ckir-helpers/get-number-env";
-import { BullMQConfig } from "@ehildt/nestjs-bullmq";
-import type { RedisOptions } from "ioredis";
+import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
+import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
+import { BullMQConfig } from '@ehildt/nestjs-bullmq';
+import type { RedisOptions } from 'ioredis';
 
 export function BullMQConfigAdapter(env = process.env): BullMQConfig {
   const connection: RedisOptions = {
@@ -42,7 +42,7 @@ export function BullMQConfigAdapter(env = process.env): BullMQConfig {
         count: Number(getNumberEnv(env.BULLMQ_REMOVE_ON_FAIL_COUNT, 1000)),
       },
       backoff: {
-        type: env.BULLMQ_BACKOFF_TYPE as "exponential" | "fixed",
+        type: env.BULLMQ_BACKOFF_TYPE as 'exponential' | 'fixed',
         delay: Number(getNumberEnv(env.BULLMQ_BACKOFF_DELAY, 5270)),
       },
     },

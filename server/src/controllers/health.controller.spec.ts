@@ -1,10 +1,10 @@
-import { Test, TestingModule } from "@nestjs/testing";
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { HealthService } from "../services/health.service.js";
+import { HealthService } from '../services/health.service.js';
 
-import { HealthController } from "./health.controller.js";
+import { HealthController } from './health.controller.js';
 
-describe("HealthController", () => {
+describe('HealthController', () => {
   let controller: HealthController;
   let healthService: HealthService;
 
@@ -15,8 +15,8 @@ describe("HealthController", () => {
         {
           provide: HealthService,
           useValue: {
-            checkReady: vi.fn().mockReturnValue({ status: "ok" }),
-            checkLive: vi.fn().mockReturnValue({ status: "ok" }),
+            checkReady: vi.fn().mockReturnValue({ status: 'ok' }),
+            checkLive: vi.fn().mockReturnValue({ status: 'ok' }),
           },
         },
       ],
@@ -26,21 +26,21 @@ describe("HealthController", () => {
     healthService = module.get<HealthService>(HealthService);
   });
 
-  describe("ready", () => {
-    it("calls healthService.checkReady", async () => {
+  describe('ready', () => {
+    it('calls healthService.checkReady', async () => {
       const result = await controller.ready();
 
       expect(healthService.checkReady).toHaveBeenCalled();
-      expect(result).toEqual({ status: "ok" });
+      expect(result).toEqual({ status: 'ok' });
     });
   });
 
-  describe("live", () => {
-    it("calls healthService.checkLive", async () => {
+  describe('live', () => {
+    it('calls healthService.checkLive', async () => {
       const result = await controller.live();
 
       expect(healthService.checkLive).toHaveBeenCalled();
-      expect(result).toEqual({ status: "ok" });
+      expect(result).toEqual({ status: 'ok' });
     });
   });
 });

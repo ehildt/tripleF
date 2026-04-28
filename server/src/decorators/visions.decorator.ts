@@ -1,10 +1,10 @@
-import { Body, ParseBoolPipe, PipeTransform, Query } from "@nestjs/common";
+import { Body, ParseBoolPipe, PipeTransform, Query } from '@nestjs/common';
 
-import { MultipartFieldPipe } from "../pipes/multipart-field.pipe.js";
+import { MultipartFieldPipe } from '../pipes/multipart-field.pipe.js';
 import {
   MultipartFilesPipe,
   MultipartFilesPipeOptions,
-} from "../pipes/multipart-files.pipe.js";
+} from '../pipes/multipart-files.pipe.js';
 
 export const MultiPartFiles = (
   options: MultipartFilesPipeOptions,

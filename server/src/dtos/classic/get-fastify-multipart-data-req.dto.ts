@@ -1,5 +1,5 @@
-import type { ImagePreprocessingOptions } from "../image-preprocessing-options.dto.js";
-import { Prompt } from "../prompt.dto.js";
+import type { ImagePreprocessingOptions } from '../image-preprocessing-options.dto.js';
+import { Prompt } from '../prompt.dto.js';
 
 export type FastifyMultipartMeta = {
   name: string;
@@ -8,7 +8,7 @@ export type FastifyMultipartMeta = {
   variant?: string;
 };
 
-export type VisionTask = "describe" | "compare" | "ocr";
+export type VisionTask = 'describe' | 'compare' | 'ocr';
 
 type FastifyMultipartFilter = {
   roomId: string;

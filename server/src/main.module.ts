@@ -1,34 +1,43 @@
-import { BullMQModule } from "@ehildt/nestjs-bullmq";
-import { BullMQLoggerModule } from "@ehildt/nestjs-bullmq-logger";
-import { ConfigFactoryModule } from "@ehildt/nestjs-config-factory/config-factory";
-import { OllamaModule } from "@ehildt/nestjs-ollama";
-import { SocketIOModule } from "@ehildt/nestjs-socket.io";
-import { HttpModule } from "@nestjs/axios";
-import { Logger, Module } from "@nestjs/common";
-import { TerminusModule } from "@nestjs/terminus";
+import { BullMQModule } from '@ehildt/nestjs-bullmq';
+import { BullMQLoggerModule } from '@ehildt/nestjs-bullmq-logger';
+import { ConfigFactoryModule } from '@ehildt/nestjs-config-factory/config-factory';
+import { OllamaModule } from '@ehildt/nestjs-ollama';
+import { SocketIOModule } from '@ehildt/nestjs-socket.io';
+import { HttpModule } from '@nestjs/axios';
+import { Logger, Module } from '@nestjs/common';
+import { TerminusModule } from '@nestjs/terminus';
 
-import { AppConfigService } from "./configs/app-config.service.js";
-import { BullMQConfigService } from "./configs/bullmq-config.service.js";
-import { BullMQLoggerConfigService } from "./configs/bullmq-logger-config.service.js";
-import { OllamaConfigService } from "./configs/ollama-config.service.js";
-import { SocketIOConfigService } from "./configs/socket-io-config.service.js";
-import { BULLMQ_QUEUE } from "./constants/bullmq.constants.js";
-import { ClassicController } from "./controllers/classic.controller.js";
-import { HealthController } from "./controllers/health.controller.js";
-import { JsonRpcController } from "./controllers/json-rpc.controller.js";
-import { SocketEventModule } from "./modules/socket-event.module.js";
-import { VisionsCompareProcessor } from "./processors/visions-compare.processor.js";
-import { VisionsDescribeProcessor } from "./processors/visions-describe.processor.js";
-import { VisionsOCRProcessor } from "./processors/visions-ocr.processor.js";
-import { AnalyzeImageService } from "./services/analyze-image.service.js";
-import { HealthService } from "./services/health.service.js";
-import { JobTrackingService } from "./services/job-tracking.service.js";
-import { JsonRpcService } from "./services/json-rpc.service.js";
-import { OllamaModelsService } from "./services/ollama-models.service.js";
-import { SocketService } from "./services/socket.service.js";
+import { AppConfigService } from './configs/app-config.service.js';
+import { BullMQConfigService } from './configs/bullmq-config.service.js';
+import { BullMQLoggerConfigService } from './configs/bullmq-logger-config.service.js';
+import { OllamaConfigService } from './configs/ollama-config.service.js';
+import { PostgresConfigService } from './configs/postgres-config.service.js';
+import { SocketIOConfigService } from './configs/socket-io-config.service.js';
+import { BULLMQ_QUEUE } from './constants/bullmq.constants.js';
+import { ClassicController } from './controllers/classic.controller.js';
+import { HealthController } from './controllers/health.controller.js';
+import { JsonRpcController } from './controllers/json-rpc.controller.js';
+import { PostgresController } from './controllers/postgres.controller.js';
+import { PostgresModule } from './modules/postgres.module.js';
+import { SocketEventModule } from './modules/socket-event.module.js';
+import { VisionsCompareProcessor } from './processors/visions-compare.processor.js';
+import { VisionsDescribeProcessor } from './processors/visions-describe.processor.js';
+import { VisionsOCRProcessor } from './processors/visions-ocr.processor.js';
+import { AnalyzeImageService } from './services/analyze-image.service.js';
+import { HealthService } from './services/health.service.js';
+import { JobTrackingService } from './services/job-tracking.service.js';
+import { JsonRpcService } from './services/json-rpc.service.js';
+import { OllamaModelsService } from './services/ollama-models.service.js';
+import { PostgresHealthIndicator } from './services/postgres-health-indicator.service.js';
+import { SocketService } from './services/socket.service.js';
 
 @Module({
-  controllers: [ClassicController, JsonRpcController, HealthController],
+  controllers: [
+    ClassicController,
+    JsonRpcController,
+    HealthController,
+    PostgresController,
+  ],
   providers: [
     Logger,
     AnalyzeImageService,
@@ -36,13 +45,15 @@ import { SocketService } from "./services/socket.service.js";
     JobTrackingService,
     JsonRpcService,
     OllamaModelsService,
+    PostgresHealthIndicator,
     SocketService,
   ],
   imports: [
     HttpModule,
+    PostgresModule,
     SocketEventModule,
     TerminusModule.forRoot({
-      errorLogStyle: "pretty",
+      errorLogStyle: 'pretty',
     }),
     ConfigFactoryModule.forRoot({
       global: true,
@@ -51,6 +62,7 @@ import { SocketService } from "./services/socket.service.js";
         BullMQConfigService,
         BullMQLoggerConfigService,
         OllamaConfigService,
+        PostgresConfigService,
         SocketIOConfigService,
       ],
     }),

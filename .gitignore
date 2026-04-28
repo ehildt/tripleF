@@ -3,3 +3,4 @@ dist
 coverage
 .depbadge
 TODO.md
+.env

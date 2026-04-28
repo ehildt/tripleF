@@ -1,10 +1,10 @@
-import { OllamaService } from "@ehildt/nestjs-ollama";
-import { Test, TestingModule } from "@nestjs/testing";
-import { vi } from "vitest";
+import { OllamaService } from '@ehildt/nestjs-ollama';
+import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
 
-import { OllamaModelsService } from "./ollama-models.service.js";
+import { OllamaModelsService } from './ollama-models.service.js';
 
-describe("OllamaModelsService", () => {
+describe('OllamaModelsService', () => {
   let service: OllamaModelsService;
   let ollamaService: OllamaService;
 
@@ -15,7 +15,7 @@ describe("OllamaModelsService", () => {
         {
           provide: OllamaService,
           useValue: {
-            list: vi.fn().mockResolvedValue(["llama3.2-vision", "minicpm"]),
+            list: vi.fn().mockResolvedValue(['llama3.2-vision', 'minicpm']),
           },
         },
       ],
@@ -25,15 +25,15 @@ describe("OllamaModelsService", () => {
     ollamaService = module.get<OllamaService>(OllamaService);
   });
 
-  describe("getModels", () => {
-    it("should return list of models from ollama service", async () => {
+  describe('getModels', () => {
+    it('should return list of models from ollama service', async () => {
       const models = await service.getModels();
 
       expect(ollamaService.list).toHaveBeenCalled();
-      expect(models).toEqual(["llama3.2-vision", "minicpm"]);
+      expect(models).toEqual(['llama3.2-vision', 'minicpm']);
     });
 
-    it("should handle empty model list", async () => {
+    it('should handle empty model list', async () => {
       (ollamaService.list as any).mockResolvedValueOnce([]);
 
       const models = await service.getModels();
@@ -41,12 +41,12 @@ describe("OllamaModelsService", () => {
       expect(models).toEqual([]);
     });
 
-    it("should propagate errors from ollama service", async () => {
+    it('should propagate errors from ollama service', async () => {
       (ollamaService.list as any).mockRejectedValueOnce(
-        new Error("Connection failed"),
+        new Error('Connection failed'),
       );
 
-      await expect(service.getModels()).rejects.toThrow("Connection failed");
+      await expect(service.getModels()).rejects.toThrow('Connection failed');
     });
   });
 });

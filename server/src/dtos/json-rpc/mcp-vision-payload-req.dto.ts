@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -9,31 +9,31 @@ import {
   IsOptional,
   IsString,
   ValidateNested,
-} from "class-validator";
+} from 'class-validator';
 
-import type { PreprocessingSize } from "../../constants/image-preprocessing.constants.js";
-import { VisionTask } from "../classic/get-fastify-multipart-data-req.dto.js";
-import { Prompt } from "../prompt.dto.js";
+import type { PreprocessingSize } from '../../constants/image-preprocessing.constants.js';
+import { VisionTask } from '../classic/get-fastify-multipart-data-req.dto.js';
+import { Prompt } from '../prompt.dto.js';
 
 import {
   McpGenericType,
   SupportedToolFunction,
   SupportedToolMethod,
-} from "./mcp.model.js";
+} from './mcp.model.js';
 
 class McpImageDataDto {
   @IsString()
-  @ApiProperty({ description: "Base64-encoded image bytes" })
+  @ApiProperty({ description: 'Base64-encoded image bytes' })
   data!: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ description: "Image MIME type (e.g. image/png)" })
+  @ApiPropertyOptional({ description: 'Image MIME type (e.g. image/png)' })
   mimeType?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ description: "Optional filename" })
+  @ApiPropertyOptional({ description: 'Optional filename' })
   name?: string;
 }
 
@@ -43,7 +43,7 @@ class McpPreprocessingResizeDto {
   @ApiPropertyOptional({
     type: Number,
     description:
-      "Maximum width in pixels (allowed: 256, 384, 512, 640, 768, 1024)",
+      'Maximum width in pixels (allowed: 256, 384, 512, 640, 768, 1024)',
     default: 768,
   })
   maxWidth?: PreprocessingSize;
@@ -52,7 +52,7 @@ class McpPreprocessingResizeDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Maximum height in pixels (keeps aspect ratio if not set)",
+    description: 'Maximum height in pixels (keeps aspect ratio if not set)',
     default: null,
   })
   maxHeight?: number | null;
@@ -61,7 +61,7 @@ class McpPreprocessingResizeDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "Prevent upscaling images smaller than target",
+    description: 'Prevent upscaling images smaller than target',
     default: true,
   })
   withoutEnlargement?: boolean;
@@ -72,7 +72,7 @@ class McpPreprocessingVariantsDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "Resized original image",
+    description: 'Resized original image',
     default: true,
   })
   original?: boolean;
@@ -81,7 +81,7 @@ class McpPreprocessingVariantsDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "Grayscale - removes color for luminance focus",
+    description: 'Grayscale - removes color for luminance focus',
     default: true,
   })
   grayscale?: boolean;
@@ -90,7 +90,7 @@ class McpPreprocessingVariantsDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "Denoised - Gaussian blur for background smoothing",
+    description: 'Denoised - Gaussian blur for background smoothing',
     default: true,
   })
   denoised?: boolean;
@@ -99,7 +99,7 @@ class McpPreprocessingVariantsDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "Sharpened - edge enhancement for clarity",
+    description: 'Sharpened - edge enhancement for clarity',
     default: false,
   })
   sharpened?: boolean;
@@ -108,7 +108,7 @@ class McpPreprocessingVariantsDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "CLAHE - adaptive contrast enhancement",
+    description: 'CLAHE - adaptive contrast enhancement',
     default: true,
   })
   clahe?: boolean;
@@ -119,7 +119,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Gaussian blur sigma for denoising",
+    description: 'Gaussian blur sigma for denoising',
     default: 0.5,
   })
   blurSigma?: number;
@@ -128,7 +128,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Sharpen sigma value",
+    description: 'Sharpen sigma value',
     default: 1,
   })
   sharpenSigma?: number;
@@ -137,7 +137,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Sharpen flat area level",
+    description: 'Sharpen flat area level',
     default: 1,
   })
   sharpenM1?: number;
@@ -146,7 +146,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Sharpen jagged area level",
+    description: 'Sharpen jagged area level',
     default: 2,
   })
   sharpenM2?: number;
@@ -155,7 +155,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Brightness multiplier",
+    description: 'Brightness multiplier',
     default: 1.2,
   })
   brightnessLevel?: number;
@@ -164,7 +164,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "CLAHE tile width",
+    description: 'CLAHE tile width',
     default: 8,
   })
   claheWidth?: number;
@@ -173,7 +173,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "CLAHE tile height",
+    description: 'CLAHE tile height',
     default: 8,
   })
   claheHeight?: number;
@@ -182,7 +182,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "CLAHE max slope/contrast limit",
+    description: 'CLAHE max slope/contrast limit',
     default: 3,
   })
   claheMaxSlope?: number;
@@ -191,7 +191,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Normalization lower percentile",
+    description: 'Normalization lower percentile',
     default: 1,
   })
   normalizeLower?: number;
@@ -200,7 +200,7 @@ class McpPreprocessingParametersDto {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Normalization upper percentile",
+    description: 'Normalization upper percentile',
     default: 99,
   })
   normalizeUpper?: number;
@@ -211,7 +211,7 @@ class McpPreprocessingOptionsDto {
   @IsBoolean()
   @ApiPropertyOptional({
     type: Boolean,
-    description: "Enable image preprocessing with multiple variants",
+    description: 'Enable image preprocessing with multiple variants',
     default: false,
   })
   enabled?: boolean;
@@ -221,7 +221,7 @@ class McpPreprocessingOptionsDto {
   @Type(() => McpPreprocessingResizeDto)
   @ApiPropertyOptional({
     type: McpPreprocessingResizeDto,
-    description: "Resize options for all variants",
+    description: 'Resize options for all variants',
   })
   resize?: McpPreprocessingResizeDto;
 
@@ -230,7 +230,7 @@ class McpPreprocessingOptionsDto {
   @Type(() => McpPreprocessingVariantsDto)
   @ApiPropertyOptional({
     type: McpPreprocessingVariantsDto,
-    description: "Toggle each image variant",
+    description: 'Toggle each image variant',
   })
   variants?: McpPreprocessingVariantsDto;
 
@@ -239,7 +239,7 @@ class McpPreprocessingOptionsDto {
   @Type(() => McpPreprocessingParametersDto)
   @ApiPropertyOptional({
     type: McpPreprocessingParametersDto,
-    description: "Processing parameters with defaults",
+    description: 'Processing parameters with defaults',
   })
   parameters?: McpPreprocessingParametersDto;
 }
@@ -251,15 +251,15 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
 
   @IsString()
   @ApiProperty({
-    description: "Client-provided request correlation identifier",
+    description: 'Client-provided request correlation identifier',
   })
   requestId!: string;
 
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({
-    description: "Socket.IO room identifier for routing results",
-    example: "room-123",
+    description: 'Socket.IO room identifier for routing results',
+    example: 'room-123',
   })
   roomId?: string;
 
@@ -268,7 +268,7 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
   @ApiPropertyOptional({
     type: Boolean,
     description:
-      "When enabled, the server streams partial results via Socket.IO",
+      'When enabled, the server streams partial results via Socket.IO',
     default: false,
   })
   stream?: boolean;
@@ -277,8 +277,8 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
   @IsString()
   @ApiPropertyOptional({
     type: String,
-    description: "Socket.IO event name for receiving real-time results",
-    default: "vision",
+    description: 'Socket.IO event name for receiving real-time results',
+    default: 'vision',
   })
   event?: string;
 
@@ -286,13 +286,13 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
   @IsNumber()
   @ApiPropertyOptional({
     type: Number,
-    description: "Maximum token context available to the model",
+    description: 'Maximum token context available to the model',
     default: null,
   })
   numCtx?: number;
 
   @IsString()
-  @ApiProperty({ description: "Ollama vision model to use" })
+  @ApiProperty({ description: 'Ollama vision model to use' })
   model!: string;
 
   @IsOptional()
@@ -303,7 +303,7 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
     type: Prompt,
     isArray: true,
     description:
-      "Optional textual instruction to guide the selected vision task",
+      'Optional textual instruction to guide the selected vision task',
   })
   prompt?: Array<Prompt>;
 
@@ -314,7 +314,7 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
   @ApiPropertyOptional({
     type: McpImageDataDto,
     isArray: true,
-    description: "Base64-encoded images for analysis",
+    description: 'Base64-encoded images for analysis',
   })
   images?: Array<McpImageDataDto>;
 
@@ -322,8 +322,8 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
   @IsString()
   @ApiPropertyOptional({
     type: String,
-    enum: ["describe", "compare", "ocr"] satisfies Array<VisionTask>,
-    example: "describe" as VisionTask,
+    enum: ['describe', 'compare', 'ocr'] satisfies Array<VisionTask>,
+    example: 'describe' as VisionTask,
   })
   task?: VisionTask;
 
@@ -332,7 +332,7 @@ class JsonRpcVisionPayloadReq_Params_Arguments {
   @Type(() => McpPreprocessingOptionsDto)
   @ApiPropertyOptional({
     type: McpPreprocessingOptionsDto,
-    description: "Image preprocessing options for enhanced AI analysis",
+    description: 'Image preprocessing options for enhanced AI analysis',
   })
   preprocessing?: McpPreprocessingOptionsDto;
 }
@@ -341,14 +341,14 @@ export class McpVisionPayloadReq_Params {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({
-    example: "visions.analyze" satisfies SupportedToolFunction,
-    enum: ["visions.analyze"] satisfies Array<SupportedToolFunction>,
+    example: 'visions.analyze' satisfies SupportedToolFunction,
+    enum: ['visions.analyze'] satisfies Array<SupportedToolFunction>,
   })
   name?: SupportedToolFunction;
 
   @ApiProperty({
     type: JsonRpcVisionPayloadReq_Params_Arguments,
-    description: "Tool arguments as defined by the tool inputSchema",
+    description: 'Tool arguments as defined by the tool inputSchema',
   })
   @IsObject()
   @Type(() => JsonRpcVisionPayloadReq_Params_Arguments)
@@ -361,11 +361,11 @@ export class McpVisionPayloadReq implements McpGenericType {
   @IsNumber()
   id!: number;
 
-  @ApiProperty({ example: "2.0" })
-  @IsIn(["2.0"])
-  jsonrpc!: "2.0";
+  @ApiProperty({ example: '2.0' })
+  @IsIn(['2.0'])
+  jsonrpc!: '2.0';
 
-  @ApiProperty({ example: "tools/call" satisfies SupportedToolMethod })
+  @ApiProperty({ example: 'tools/call' satisfies SupportedToolMethod })
   @IsString()
   method!: SupportedToolMethod;
 

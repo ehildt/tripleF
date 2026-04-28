@@ -16,9 +16,10 @@ ENTRYPOINT ["pnpm", "start:dev"]
 FROM base AS builder
 COPY package.json tsconfig*.json shims.d.ts ./
 COPY .env.example ./
+COPY prisma/ ./prisma/
 COPY src/ ./src/
 
-# Install root dependencies
+# Install root dependencies (triggers prisma generate)
 RUN pnpm install
 
 # Target: temporary (entrypoint for prepare-dev)

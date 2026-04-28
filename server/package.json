@@ -12,7 +12,7 @@
     "email": "eugen.hildt@gmail.com"
   },
   "scripts": {
-    "prebuild": "rimraf dist",
+    "prebuild": "rimraf dist && prisma generate",
     "build": "nest build --path ./tsconfig.build.json",
     "build:prod": "nest build --path ./tsconfig.build.prod.json",
     "depcheck": "npx depcheck .",
@@ -24,7 +24,12 @@
     "ncu:validate": "npx npm-check-updates -e 2 --packageFile=./package.json",
     "start": "nest start",
     "start:debug": "nest start --debug --watch  --preserveWatchOutput",
-    "start:dev": "dotenv -e ./.env.example -- nest start --watch  --preserveWatchOutput",
+    "start:dev": "dotenv -e ./.env.prisma -- nest start --watch  --preserveWatchOutput",
+    "db:generate": "dotenv -e ./.env.prisma -- prisma generate",
+    "db:push": "dotenv -e ./.env.prisma -- prisma db push",
+    "db:migrate": "dotenv -e ./.env.prisma -- prisma migrate dev",
+    "db:migrate:prod": "dotenv -e ./.env.prisma -- prisma migrate deploy",
+    "db:studio": "dotenv -e ./.env.prisma -- prisma studio",
     "start:node": "node dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -49,7 +54,8 @@
     "@nestjs/platform-fastify": "^11.1.19",
     "@nestjs/swagger": "^11.4.2",
     "@nestjs/terminus": "^11.1.1",
-    "bullmq": "^5.76.2",
+    "@prisma/client": "^6.19.3",
+    "bullmq": "^5.76.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "fastify": "^5.8.5",
@@ -68,7 +74,6 @@
     "@nestjs/cli": "^11.0.21",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.19",
-    "@types/eslint": "^9.6.1",
     "@types/node": "^25.6.0",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.5",
@@ -86,6 +91,7 @@
     "jiti": "^2.6.1",
     "lint-staged": "^16.4.0",
     "npm-check-updates": "^20.0.2",
+    "prisma": "^6.19.3",
     "rimraf": "^6.1.3",
     "source-map-support": "^0.5.21",
     "supertest": "^7.2.2",
@@ -94,7 +100,7 @@
     "ts-unused-exports": "^11.0.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.59.0",
+    "typescript-eslint": "^8.59.1",
     "vitest": "^4.1.5"
   }
 }

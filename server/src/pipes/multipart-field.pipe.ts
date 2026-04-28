@@ -1,16 +1,17 @@
-import { MultipartValue } from "@fastify/multipart";
+import { MultipartValue } from '@fastify/multipart';
 import {
   ArgumentMetadata,
   BadRequestException,
   Injectable,
   Optional,
   PipeTransform,
-} from "@nestjs/common";
+} from '@nestjs/common';
 
 @Injectable()
-export class MultipartFieldPipe
-  implements PipeTransform<unknown, MultipartValue | undefined>
-{
+export class MultipartFieldPipe implements PipeTransform<
+  unknown,
+  MultipartValue | undefined
+> {
   constructor(@Optional() private required = true) {}
 
   transform(v: MultipartValue, metadata: ArgumentMetadata) {

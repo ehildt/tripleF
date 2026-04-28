@@ -2,19 +2,19 @@ import {
   isNodeBuffer,
   isSerializedBuffer,
   SerializedBuffer,
-} from "@ehildt/ckir-helpers/is-buffer-or-serialized";
-import { Injectable, Logger } from "@nestjs/common";
-import sharp from "sharp";
+} from '@ehildt/ckir-helpers/is-buffer-or-serialized';
+import { Injectable, Logger } from '@nestjs/common';
+import sharp from 'sharp';
 
 import {
   mergePreprocessingOptions,
   VARIANT_DESCRIPTIONS,
-} from "../constants/image-preprocessing.constants.js";
-import { FastifyMultipartMeta } from "../dtos/classic/get-fastify-multipart-data-req.dto.js";
+} from '../constants/image-preprocessing.constants.js';
+import { FastifyMultipartMeta } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 import {
   ImagePreprocessingOptions,
   PreprocessedImage,
-} from "../dtos/image-preprocessing-options.dto.js";
+} from '../dtos/image-preprocessing-options.dto.js';
 
 @Injectable()
 export class ImagePreprocessingService {
@@ -27,7 +27,7 @@ export class ImagePreprocessingService {
   private ensureBuffer(buffer: Buffer | SerializedBuffer): Buffer {
     if (isNodeBuffer(buffer)) return buffer;
     if (isSerializedBuffer(buffer)) return Buffer.from(buffer.data);
-    throw new Error("Invalid buffer format");
+    throw new Error('Invalid buffer format');
   }
 
   /**
@@ -109,7 +109,7 @@ export class ImagePreprocessingService {
       width: resize.maxWidth ?? undefined,
       height: resize.maxHeight ?? undefined,
       withoutEnlargement: resize.withoutEnlargement,
-      fit: "inside",
+      fit: 'inside',
     });
 
     const variantPromises: Promise<PreprocessedImage>[] = [];
@@ -119,7 +119,7 @@ export class ImagePreprocessingService {
         this.processVariant(
           basePipeline.clone(),
           meta,
-          "original",
+          'original',
           (pipeline) => pipeline,
         ),
       );
@@ -130,7 +130,7 @@ export class ImagePreprocessingService {
         this.processVariant(
           basePipeline.clone(),
           meta,
-          "grayscale",
+          'grayscale',
           (pipeline) => pipeline.grayscale(),
         ),
       );
@@ -141,7 +141,7 @@ export class ImagePreprocessingService {
         this.processVariant(
           basePipeline.clone(),
           meta,
-          "denoised",
+          'denoised',
           (pipeline) => pipeline.grayscale().blur(parameters.blurSigma),
         ),
       );
@@ -152,7 +152,7 @@ export class ImagePreprocessingService {
         this.processVariant(
           basePipeline.clone(),
           meta,
-          "sharpened",
+          'sharpened',
           (pipeline) =>
             pipeline.sharpen({
               sigma: parameters.sharpenSigma ?? 1,
@@ -165,7 +165,7 @@ export class ImagePreprocessingService {
 
     if (variantOptions.clahe) {
       variantPromises.push(
-        this.processVariant(basePipeline.clone(), meta, "clahe", (pipeline) =>
+        this.processVariant(basePipeline.clone(), meta, 'clahe', (pipeline) =>
           pipeline.grayscale().clahe({
             width: parameters.claheWidth ?? 8,
             height: parameters.claheHeight ?? 8,
@@ -191,8 +191,8 @@ export class ImagePreprocessingService {
     const processed = processor(pipeline);
     const outputBuffer = await processed.png().toBuffer();
 
-    const fileExt = meta.name.split(".").pop() || "png";
-    const baseName = meta.name.replace(/\.[^/.]+$/, "");
+    const fileExt = meta.name.split('.').pop() || 'png';
+    const baseName = meta.name.replace(/\.[^/.]+$/, '');
 
     return {
       buffer: outputBuffer,
@@ -222,7 +222,7 @@ export class ImagePreprocessingService {
           width: resize.maxWidth ?? undefined,
           height: resize.maxHeight ?? undefined,
           withoutEnlargement: resize.withoutEnlargement,
-          fit: "inside",
+          fit: 'inside',
         })
         .toBuffer();
 
@@ -230,9 +230,9 @@ export class ImagePreprocessingService {
         buffer: processed,
         meta: {
           ...meta,
-          variant: "original",
+          variant: 'original',
         },
-        variant: "original",
+        variant: 'original',
         description: VARIANT_DESCRIPTIONS.original,
       };
     } catch (error) {
@@ -241,9 +241,9 @@ export class ImagePreprocessingService {
         buffer,
         meta: {
           ...meta,
-          variant: "original",
+          variant: 'original',
         },
-        variant: "original",
+        variant: 'original',
         description: VARIANT_DESCRIPTIONS.original,
       };
     }

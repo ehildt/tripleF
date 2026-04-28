@@ -4,11 +4,11 @@ import {
   Injectable,
   NestInterceptor,
   UseInterceptors,
-} from "@nestjs/common";
-import type { FastifyReply } from "fastify";
-import { Observable } from "rxjs";
+} from '@nestjs/common';
+import type { FastifyReply } from 'fastify';
+import { Observable } from 'rxjs';
 
-import { MCP_SYNC_METHODS } from "../decorators/json-rpc.decorators.js";
+import { MCP_SYNC_METHODS } from '../decorators/json-rpc.decorators.js';
 
 @Injectable()
 export class McpStatusInterceptor implements NestInterceptor {
@@ -18,12 +18,12 @@ export class McpStatusInterceptor implements NestInterceptor {
       body?: Record<string, unknown>;
     };
 
-    let method = "";
+    let method = '';
     const body = req.body as Record<string, unknown> | undefined;
 
     if (body) {
       // Case: plain JSON body
-      if (typeof body.method === "string") {
+      if (typeof body.method === 'string') {
         method = body.method;
       }
 

@@ -1,16 +1,16 @@
-import { hashPayload } from "@ehildt/ckir-helpers/hash-payload";
-import { MultipartFile } from "@fastify/multipart";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable, Logger } from "@nestjs/common";
-import { Job, Queue } from "bullmq";
+import { hashPayload } from '@ehildt/ckir-helpers/hash-payload';
+import { MultipartFile } from '@fastify/multipart';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { Job, Queue } from 'bullmq';
 
-import { BULLMQ_QUEUE } from "../constants/bullmq.constants.js";
+import { BULLMQ_QUEUE } from '../constants/bullmq.constants.js';
 import {
   FastifyMultipartDataWithFiltersReq,
   FastifyMultipartMeta,
-} from "../dtos/classic/get-fastify-multipart-data-req.dto.js";
+} from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 
-import { JobTrackingService } from "./job-tracking.service.js";
+import { JobTrackingService } from './job-tracking.service.js';
 
 @Injectable()
 export class AnalyzeImageService {
@@ -33,7 +33,7 @@ export class AnalyzeImageService {
         const meta: FastifyMultipartMeta = {
           name: file.filename,
           type: file.mimetype,
-          hash: `${hashPayload(buffer, "sha256")}_${requestId}`,
+          hash: `${hashPayload(buffer, 'sha256')}_${requestId}`,
         };
         return { buffer, meta };
       }),
@@ -49,13 +49,13 @@ export class AnalyzeImageService {
     let queueName: string | undefined;
 
     try {
-      if (req.filters.task === "describe") {
+      if (req.filters.task === 'describe') {
         job = await this.describeQueue.add(requestId, req);
         queueName = BULLMQ_QUEUE.IMAGE_DESCRIBE;
-      } else if (req.filters.task === "compare") {
+      } else if (req.filters.task === 'compare') {
         job = await this.compareQueue.add(requestId, req);
         queueName = BULLMQ_QUEUE.IMAGE_COMPARE;
-      } else if (req.filters.task === "ocr") {
+      } else if (req.filters.task === 'ocr') {
         job = await this.ocrQueue.add(requestId, req);
         queueName = BULLMQ_QUEUE.IMAGE_OCR;
       }
@@ -96,7 +96,7 @@ export class AnalyzeImageService {
     if (!marked) return false;
 
     // If still pending, remove from queue
-    if (trackedJob.status === "pending") {
+    if (trackedJob.status === 'pending') {
       let queue: Queue | undefined;
 
       if (trackedJob.queueName === BULLMQ_QUEUE.IMAGE_DESCRIBE)

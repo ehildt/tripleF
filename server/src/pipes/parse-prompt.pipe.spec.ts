@@ -1,43 +1,43 @@
-import { ArgumentMetadata, BadRequestException } from "@nestjs/common";
+import { ArgumentMetadata, BadRequestException } from '@nestjs/common';
 
-import { Prompt } from "../dtos/prompt.dto.js";
+import { Prompt } from '../dtos/prompt.dto.js';
 
-import { ParsePromptPipe } from "./parse-prompt.pipe.js";
+import { ParsePromptPipe } from './parse-prompt.pipe.js';
 
-describe("ParsePromptPipe", () => {
+describe('ParsePromptPipe', () => {
   let pipe: ParsePromptPipe;
 
   const metadata: ArgumentMetadata = {
-    type: "custom",
+    type: 'custom',
     metatype: undefined,
-    data: "prompt",
+    data: 'prompt',
   };
 
   beforeEach(() => {
     pipe = new ParsePromptPipe();
   });
 
-  it("returns empty array when value is undefined", async () => {
+  it('returns empty array when value is undefined', async () => {
     await expect(pipe.transform(undefined, metadata)).resolves.toEqual([]);
   });
 
-  it("returns empty array when matching field is missing", async () => {
-    const value = [{ type: "field", fieldname: "other", value: "{}" }];
+  it('returns empty array when matching field is missing', async () => {
+    const value = [{ type: 'field', fieldname: 'other', value: '{}' }];
 
     await expect(pipe.transform(value, metadata)).resolves.toEqual([]);
   });
 
-  it("returns empty array when JSON is invalid", async () => {
-    const value = [{ type: "field", fieldname: "prompt", value: "{invalid" }];
+  it('returns empty array when JSON is invalid', async () => {
+    const value = [{ type: 'field', fieldname: 'prompt', value: '{invalid' }];
 
     await expect(pipe.transform(value, metadata)).resolves.toEqual([]);
   });
 
-  it("parses and validates a single prompt", async () => {
+  it('parses and validates a single prompt', async () => {
     const value = [
       {
-        type: "field",
-        fieldname: "prompt",
+        type: 'field',
+        fieldname: 'prompt',
         value: '[{"role":"user","content":"hello"}]',
       },
     ];
@@ -47,16 +47,16 @@ describe("ParsePromptPipe", () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toBeInstanceOf(Prompt);
     expect(result[0]).toMatchObject({
-      role: "user",
-      content: "hello",
+      role: 'user',
+      content: 'hello',
     });
   });
 
-  it("parses and validates multiple prompts", async () => {
+  it('parses and validates multiple prompts', async () => {
     const value = [
       {
-        type: "field",
-        fieldname: "prompt",
+        type: 'field',
+        fieldname: 'prompt',
         value:
           '[{"role":"user","content":"one"},{"role":"assistant","content":"two"}]',
       },
@@ -65,14 +65,14 @@ describe("ParsePromptPipe", () => {
     const result = await pipe.transform(value, metadata);
 
     expect(result).toHaveLength(2);
-    expect(result.map((p) => p.content)).toEqual(["one", "two"]);
+    expect(result.map((p) => p.content)).toEqual(['one', 'two']);
   });
 
-  it("throws BadRequestException on validation errors", async () => {
+  it('throws BadRequestException on validation errors', async () => {
     const value = [
       {
-        type: "field",
-        fieldname: "prompt",
+        type: 'field',
+        fieldname: 'prompt',
         value: '[{"role":123,"content":false}]',
       },
     ];
@@ -82,10 +82,10 @@ describe("ParsePromptPipe", () => {
     );
   });
 
-  it("accepts non-array value by normalizing to array", async () => {
+  it('accepts non-array value by normalizing to array', async () => {
     const value = {
-      type: "field",
-      fieldname: "prompt",
+      type: 'field',
+      fieldname: 'prompt',
       value: '[{"role":"system","content":"single"}]',
     };
 
@@ -93,8 +93,8 @@ describe("ParsePromptPipe", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
-      role: "system",
-      content: "single",
+      role: 'system',
+      content: 'single',
     });
   });
 });

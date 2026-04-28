@@ -1,6 +1,6 @@
-import { Config } from "ollama";
+import { Config } from 'ollama';
 
-import { SYSTEM_PROMPTS } from "../constants/prompt.constants.js";
+import { SYSTEM_PROMPTS } from '../constants/prompt.constants.js';
 
 export interface OllamaSystemPrompts {
   DESCRIBE: string;
@@ -15,8 +15,8 @@ export function OllamaConfigAdapter(
     keepAlive: string;
     systemPrompts: OllamaSystemPrompts;
   } = {
-    host: env.OLLAMA_HOST ?? "127.0.0.1",
-    keepAlive: env.OLLAMA_KEEP_ALIVE ?? "5m",
+    host: env.OLLAMA_HOST ?? '127.0.0.1',
+    keepAlive: env.OLLAMA_KEEP_ALIVE ?? '5m',
     systemPrompts: {
       DESCRIBE: env.OLLAMA_SYSTEM_PROMPT_DESCRIBE ?? SYSTEM_PROMPTS.DESCRIBE,
       COMPARE: env.OLLAMA_SYSTEM_PROMPT_COMPARE ?? SYSTEM_PROMPTS.COMPARE,

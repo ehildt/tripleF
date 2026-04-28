@@ -7,12 +7,34 @@ services:
       target: local
     volumes:
       - ./server:/app
-    depends_on:
-      - keydb
     env_file:
-      - ./server/.env.example
+      - ./server/.env
     ports:
       - "3000:3000"
+    depends_on:
+      - keydb
+      - postgres
+    networks:
+      - ckir.io-visions
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: visions
+      POSTGRES_PASSWORD: visions
+      POSTGRES_DB: visions
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - ckir.io-visions
 
@@ -62,6 +84,7 @@ services:
 volumes:
   ollama_data:
   keydb_data:
+  postgres_data:
 
 networks:
   ckir.io-visions:

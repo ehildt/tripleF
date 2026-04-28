@@ -1,4 +1,4 @@
-import type { ImagePreprocessingOptions } from "../dtos/image-preprocessing-options.dto.js";
+import type { ImagePreprocessingOptions } from '../dtos/image-preprocessing-options.dto.js';
 
 /**
  * Allowed preprocessing sizes
@@ -18,7 +18,7 @@ export const PREPROCESSING_SIZES: PreprocessingSize[] = [
 const DEFAULT_PREPROCESSING_OPTIONS: Required<
   Pick<
     ImagePreprocessingOptions,
-    "enabled" | "resize" | "variants" | "parameters"
+    'enabled' | 'resize' | 'variants' | 'parameters'
   >
 > = {
   enabled: false,
@@ -54,15 +54,15 @@ const DEFAULT_PREPROCESSING_OPTIONS: Required<
  * These explain to the AI what each variant shows
  */
 export const VARIANT_DESCRIPTIONS: Record<string, string> = {
-  original: "original - baseline image at reduced resolution",
+  original: 'original - baseline image at reduced resolution',
   grayscale:
-    "grayscale - luminance only, removes color noise to focus on text structure",
+    'grayscale - luminance only, removes color noise to focus on text structure',
   denoised:
-    "denoised - background smoothed with Gaussian blur to reduce noise and artifacts",
+    'denoised - background smoothed with Gaussian blur to reduce noise and artifacts',
   sharpened:
-    "sharpened - edges enhanced for improved text clarity and boundary definition",
+    'sharpened - edges enhanced for improved text clarity and boundary definition',
   clahe:
-    "CLAHE - adaptive contrast enhancement that brings out details in both bright and dark areas",
+    'CLAHE - adaptive contrast enhancement that brings out details in both bright and dark areas',
 };
 
 /**

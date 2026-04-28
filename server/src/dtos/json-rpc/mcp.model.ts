@@ -1,10 +1,10 @@
 export type SupportedToolMethod =
-  | "tools/list"
-  | "tools/call"
-  | "initialize"
-  | "notifications/initialized";
+  | 'tools/list'
+  | 'tools/call'
+  | 'initialize'
+  | 'notifications/initialized';
 
-export type SupportedToolFunction = "visions.analyze";
+export type SupportedToolFunction = 'visions.analyze';
 
 export type McpGenericType<
   T extends {
@@ -18,7 +18,7 @@ export type McpGenericType<
   },
 > = {
   id?: number; // Notifications have no id
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   method: SupportedToolMethod;
   params?: T; // Notifications have no params
 };

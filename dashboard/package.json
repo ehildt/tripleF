@@ -33,7 +33,7 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
     "@paralleldrive/cuid2": "^3.3.0",
-    "@tanstack/vue-query": "^5.100.5",
+    "@tanstack/vue-query": "^5.100.6",
     "lucide-vue-next": "^0.577.0",
     "pinia": "^3.0.4",
     "socket.io-client": "^4.8.3",
@@ -72,7 +72,7 @@
     "prettier": "^3.8.3",
     "tailwindcss": "^4.2.4",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.59.0",
+    "typescript-eslint": "^8.59.1",
     "vite": "^7.3.2",
     "vitest": "^4.1.5",
     "vue-eslint-parser": "^10.4.0",

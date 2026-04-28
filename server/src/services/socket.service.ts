@@ -1,7 +1,7 @@
-import { SocketIOService } from "@ehildt/nestjs-socket.io";
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { SocketIOService } from '@ehildt/nestjs-socket.io';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
-import { AnalyzeImageService } from "./analyze-image.service.js";
+import { AnalyzeImageService } from './analyze-image.service.js';
 
 @Injectable()
 export class SocketService implements OnModuleInit {
@@ -19,14 +19,14 @@ export class SocketService implements OnModuleInit {
   private setupConnectionHandlers(): void {
     const socketIO = this.socketIOService.io;
     if (!socketIO) {
-      this.logger.warn("Socket.IO instance not available");
+      this.logger.warn('Socket.IO instance not available');
       return;
     }
 
-    socketIO.on("connection", (socket) => {
+    socketIO.on('connection', (socket) => {
       this.logger.log(`Client connected: ${socket.id}`);
 
-      socket.on("join", async (roomId: string) => {
+      socket.on('join', async (roomId: string) => {
         try {
           await socket.join(roomId);
           this.logger.log(`Socket ${socket.id} joined room: ${roomId}`);
@@ -40,7 +40,7 @@ export class SocketService implements OnModuleInit {
         }
       });
 
-      socket.on("leave", async (roomId: string) => {
+      socket.on('leave', async (roomId: string) => {
         try {
           await socket.leave(roomId);
           this.logger.log(`Socket ${socket.id} left room: ${roomId}`);
@@ -49,13 +49,13 @@ export class SocketService implements OnModuleInit {
         }
       });
 
-      socket.on("cancel", async (requestId: string) => {
+      socket.on('cancel', async (requestId: string) => {
         this.logger.log(
           `Socket ${socket.id} requested cancel for: ${requestId}`,
         );
         try {
           const result = await this.analyzeImageService.cancel(requestId);
-          socket.emit("cancel_result", {
+          socket.emit('cancel_result', {
             requestId,
             success: result,
           });
@@ -64,7 +64,7 @@ export class SocketService implements OnModuleInit {
         }
       });
 
-      socket.on("disconnect", (reason) => {
+      socket.on('disconnect', (reason) => {
         this.logger.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
       });
     });
@@ -77,7 +77,7 @@ export class SocketService implements OnModuleInit {
   ): Promise<void> {
     const socketIO = this.socketIOService.io;
     if (!socketIO) {
-      this.logger.warn("Socket.IO instance not available for emit");
+      this.logger.warn('Socket.IO instance not available for emit');
       return;
     }
     this.logger.log(`[emitToRoom] Emitting event=${event} to room=${roomId}`);
@@ -92,7 +92,7 @@ export class SocketService implements OnModuleInit {
   async emitToAll(event: string, data: unknown): Promise<void> {
     const socketIO = this.socketIOService.io;
     if (!socketIO) {
-      this.logger.warn("Socket.IO instance not available for emit");
+      this.logger.warn('Socket.IO instance not available for emit');
       return;
     }
     this.logger.log(`[emitToAll] Broadcasting event=${event}`);

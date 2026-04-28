@@ -1,13 +1,13 @@
-import { CacheReturnValue } from "@ehildt/nestjs-config-factory/cache-return-value";
-import { OllamaConfigSchema } from "@ehildt/nestjs-ollama";
-import { Injectable } from "@nestjs/common";
-import Joi from "joi";
-import { Config } from "ollama";
+import { CacheReturnValue } from '@ehildt/nestjs-config-factory/cache-return-value';
+import { OllamaConfigSchema } from '@ehildt/nestjs-ollama';
+import { Injectable } from '@nestjs/common';
+import Joi from 'joi';
+import { Config } from 'ollama';
 
 import {
   OllamaConfigAdapter,
   OllamaSystemPrompts,
-} from "./ollama-config.adapter.js";
+} from './ollama-config.adapter.js';
 
 const extendedSchema = OllamaConfigSchema.concat(
   Joi.object({

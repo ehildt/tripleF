@@ -1,34 +1,34 @@
-import { Readable } from "node:stream";
+import { Readable } from 'node:stream';
 
-import { Logger } from "@nestjs/common";
-import { Test, TestingModule } from "@nestjs/testing";
+import { Logger } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { SocketIOConfigService } from "../configs/socket-io-config.service.js";
-import { AnalyzeImageService } from "../services/analyze-image.service.js";
-import { OllamaModelsService } from "../services/ollama-models.service.js";
+import { SocketIOConfigService } from '../configs/socket-io-config.service.js';
+import { AnalyzeImageService } from '../services/analyze-image.service.js';
+import { OllamaModelsService } from '../services/ollama-models.service.js';
 
-import { ClassicController } from "./classic.controller.js";
+import { ClassicController } from './classic.controller.js';
 
-vi.mock("@ehildt/ckir-helpers/hash-payload", () => ({
-  hashPayload: vi.fn(() => "hash123"),
+vi.mock('@ehildt/ckir-helpers/hash-payload', () => ({
+  hashPayload: vi.fn(() => 'hash123'),
 }));
 
-describe("ClassicController", () => {
+describe('ClassicController', () => {
   let controller: ClassicController;
   let analyzeImageService: AnalyzeImageService;
 
   const makeFile = () => ({
-    type: "file",
-    fieldname: "image",
-    filename: "photo.jpg",
-    encoding: "7bit",
-    mimetype: "image/jpeg",
+    type: 'file',
+    fieldname: 'image',
+    filename: 'photo.jpg',
+    encoding: '7bit',
+    mimetype: 'image/jpeg',
     fields: {},
     file: Object.assign(new Readable({ read() {} }), {
       truncated: false,
       bytesRead: 0,
     }),
-    toBuffer: vi.fn().mockResolvedValue(Buffer.from("image-bytes")),
+    toBuffer: vi.fn().mockResolvedValue(Buffer.from('image-bytes')),
   });
 
   beforeEach(async () => {
@@ -43,11 +43,11 @@ describe("ClassicController", () => {
                 if (!files || (files as unknown[]).length === 0) return [];
                 return [
                   {
-                    buffer: Buffer.from("image-bytes"),
+                    buffer: Buffer.from('image-bytes'),
                     meta: {
-                      name: "photo.jpg",
-                      type: "image/jpeg",
-                      hash: "hash123",
+                      name: 'photo.jpg',
+                      type: 'image/jpeg',
+                      hash: 'hash123',
                     },
                   },
                 ];
@@ -59,7 +59,7 @@ describe("ClassicController", () => {
         {
           provide: SocketIOConfigService,
           useValue: {
-            config: { event: "vision" },
+            config: { event: 'vision' },
           },
         },
         {
@@ -67,7 +67,7 @@ describe("ClassicController", () => {
           useValue: {
             getModels: vi
               .fn()
-              .mockResolvedValue(["llama3.2-vision", "minicpm"]),
+              .mockResolvedValue(['llama3.2-vision', 'minicpm']),
           },
         },
         Logger,
@@ -143,23 +143,23 @@ describe("ClassicController", () => {
     );
   }
 
-  describe("visionStream", () => {
-    it("throws BadRequestException when x-vision-llm header is missing", async () => {
+  describe('visionStream', () => {
+    it('throws BadRequestException when x-vision-llm header is missing', async () => {
       await expect(
         callVisionStream({
-          requestId: "batch-1",
-          task: { value: "describe" },
+          requestId: 'batch-1',
+          task: { value: 'describe' },
           images: [],
         }),
-      ).rejects.toThrow("Missing x-vision-llm header");
+      ).rejects.toThrow('Missing x-vision-llm header');
     });
 
-    it("calls analyzeImageService with correct parameters", async () => {
-      const requestId = "batch-1";
-      const vLLM = "llama3.2-vision";
+    it('calls analyzeImageService with correct parameters', async () => {
+      const requestId = 'batch-1';
+      const vLLM = 'llama3.2-vision';
       const stream = false;
-      const task = { value: "describe" };
-      const roomId = "room-1";
+      const task = { value: 'describe' };
+      const roomId = 'room-1';
       const numCtx = 4096;
       const images = [makeFile()];
 
@@ -178,8 +178,8 @@ describe("ClassicController", () => {
         images,
       );
       expect(analyzeImageService.emit).toHaveBeenCalledWith({
-        buffers: [Buffer.from("image-bytes")],
-        meta: [{ name: "photo.jpg", type: "image/jpeg", hash: "hash123" }],
+        buffers: [Buffer.from('image-bytes')],
+        meta: [{ name: 'photo.jpg', type: 'image/jpeg', hash: 'hash123' }],
         filters: {
           vLLM,
           requestId,
@@ -187,18 +187,18 @@ describe("ClassicController", () => {
           stream,
           numCtx,
           prompt: undefined,
-          task: "describe",
-          event: "vision",
+          task: 'describe',
+          event: 'vision',
           preprocessing: undefined,
         },
       });
     });
 
-    it("processes images and calls analyzeImageService.emit", async () => {
-      const requestId = "batch-1";
-      const vLLM = "llama3.2-vision";
+    it('processes images and calls analyzeImageService.emit', async () => {
+      const requestId = 'batch-1';
+      const vLLM = 'llama3.2-vision';
       const stream = true;
-      const task = { value: "compare" };
+      const task = { value: 'compare' };
       const images = [makeFile()];
 
       await callVisionStream({
@@ -214,8 +214,8 @@ describe("ClassicController", () => {
         images,
       );
       expect(analyzeImageService.emit).toHaveBeenCalledWith({
-        buffers: [Buffer.from("image-bytes")],
-        meta: [{ name: "photo.jpg", type: "image/jpeg", hash: "hash123" }],
+        buffers: [Buffer.from('image-bytes')],
+        meta: [{ name: 'photo.jpg', type: 'image/jpeg', hash: 'hash123' }],
         filters: {
           vLLM,
           requestId,
@@ -223,18 +223,18 @@ describe("ClassicController", () => {
           stream: true,
           numCtx: undefined,
           prompt: undefined,
-          task: "compare",
-          event: "vision",
+          task: 'compare',
+          event: 'vision',
           preprocessing: undefined,
         },
       });
     });
 
-    it("handles empty images array", async () => {
-      const requestId = "batch-1";
-      const vLLM = "llama3.2-vision";
+    it('handles empty images array', async () => {
+      const requestId = 'batch-1';
+      const vLLM = 'llama3.2-vision';
       const stream = false;
-      const task = { value: "ocr" };
+      const task = { value: 'ocr' };
 
       await callVisionStream({
         requestId,
@@ -258,8 +258,8 @@ describe("ClassicController", () => {
           stream: false,
           numCtx: undefined,
           prompt: undefined,
-          task: "ocr",
-          event: "vision",
+          task: 'ocr',
+          event: 'vision',
           preprocessing: undefined,
         },
       });

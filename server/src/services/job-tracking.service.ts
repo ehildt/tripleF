@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 
-type JobStatus = "pending" | "active" | "completed" | "canceled";
+type JobStatus = 'pending' | 'active' | 'completed' | 'canceled';
 
 interface TrackedJob {
   queueName: string;
@@ -19,20 +19,20 @@ export class JobTrackingService {
       queueName,
       jobId,
       requestId,
-      status: "pending",
+      status: 'pending',
       addedAt: Date.now(),
     });
   }
 
   setActive(requestId: string): void {
     const job = this.jobs.get(requestId);
-    if (job && job.status !== "canceled") {
-      job.status = "active";
+    if (job && job.status !== 'canceled') {
+      job.status = 'active';
     }
   }
 
   isCanceled(requestId: string): boolean {
-    return this.jobs.get(requestId)?.status === "canceled";
+    return this.jobs.get(requestId)?.status === 'canceled';
   }
 
   remove(requestId: string): void {
@@ -48,12 +48,12 @@ export class JobTrackingService {
 
     if (existingJob) {
       if (
-        existingJob.status === "completed" ||
-        existingJob.status === "canceled"
+        existingJob.status === 'completed' ||
+        existingJob.status === 'canceled'
       ) {
         return false;
       }
-      existingJob.status = "canceled";
+      existingJob.status = 'canceled';
       return true;
     }
 
@@ -61,9 +61,9 @@ export class JobTrackingService {
     // This handles the case where cancel is called before job is even tracked
     this.jobs.set(requestId, {
       requestId,
-      queueName: "",
-      jobId: "",
-      status: "canceled",
+      queueName: '',
+      jobId: '',
+      status: 'canceled',
       addedAt: Date.now(),
     });
     return true;

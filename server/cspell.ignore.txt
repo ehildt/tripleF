@@ -85,6 +85,7 @@ Horizonal
 iconify
 iconoir
 Identificator
+ilike
 initdb
 INITDB
 Iobroker
@@ -156,6 +157,7 @@ pinia
 pkief
 pokemon
 postcss
+postgres
 pproc
 qdrant
 Qdrant
@@ -185,6 +187,7 @@ sonarjs
 sopts
 spdx
 sropts
+sslmode
 stefanzweifel
 supertest
 tailwindcss

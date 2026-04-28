@@ -1,5 +1,5 @@
-import type { MultipartFile } from "@fastify/multipart";
-import { BadRequestException, Injectable, PipeTransform } from "@nestjs/common";
+import type { MultipartFile } from '@fastify/multipart';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
 type Maybe<T> = T | ReadonlyArray<T> | undefined | null;
 
@@ -12,9 +12,10 @@ export type MultipartFilesPipeOptions = {
 };
 
 @Injectable()
-export class MultipartFilesPipe
-  implements PipeTransform<Maybe<any>, ReadonlyArray<MultipartFile>>
-{
+export class MultipartFilesPipe implements PipeTransform<
+  Maybe<any>,
+  ReadonlyArray<MultipartFile>
+> {
   constructor(private opt: Readonly<MultipartFilesPipeOptions>) {}
 
   transform(value: Maybe<any>): ReadonlyArray<MultipartFile> {
@@ -30,7 +31,7 @@ export class MultipartFilesPipe
     const parts = Array.isArray(value) ? value : [value];
 
     // KEEP ONLY FILE PARTS
-    const files = parts.filter((p): p is MultipartFile => p?.type === "file");
+    const files = parts.filter((p): p is MultipartFile => p?.type === 'file');
 
     // Optional field with no files
     if (!required && files.length === 0) return [];
@@ -51,7 +52,7 @@ export class MultipartFilesPipe
     if (allowedMimeTypes?.length) {
       const allow = new Set(allowedMimeTypes.map((m) => m.toLowerCase()));
       const bad = files.find(
-        (f) => !allow.has((f.mimetype ?? "").toLowerCase()),
+        (f) => !allow.has((f.mimetype ?? '').toLowerCase()),
       );
 
       if (bad)

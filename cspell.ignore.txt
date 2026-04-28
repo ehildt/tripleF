@@ -92,6 +92,7 @@ INITDB
 Iobroker
 ioredis
 ismaster
+isready
 jackspeak
 jinja
 jiti
@@ -158,6 +159,8 @@ pinia
 pkief
 pokemon
 postcss
+postgres
+postgresql
 pproc
 qdrant
 Qdrant

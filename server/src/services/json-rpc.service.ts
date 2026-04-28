@@ -1,24 +1,24 @@
-import { readPackageJsonFromRoot } from "@ehildt/ckir-helpers/bootstrap";
-import { hashPayload } from "@ehildt/ckir-helpers/hash-payload";
-import type { MultipartFile } from "@fastify/multipart";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { readPackageJsonFromRoot } from '@ehildt/ckir-helpers/bootstrap';
+import { hashPayload } from '@ehildt/ckir-helpers/hash-payload';
+import type { MultipartFile } from '@fastify/multipart';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { SocketIOConfigService } from "../configs/socket-io-config.service.js";
-import { JSON_RPC_TOOLS_LIST } from "../constants/json-rpc.constants.js";
+import { SocketIOConfigService } from '../configs/socket-io-config.service.js';
+import { JSON_RPC_TOOLS_LIST } from '../constants/json-rpc.constants.js';
 import {
   MCP_CAPABILITIES,
   MCP_PROTOCOL_VERSION,
-} from "../constants/mcp.constants.js";
+} from '../constants/mcp.constants.js';
 import {
   FastifyMultipartDataWithFiltersReq,
   FastifyMultipartMeta,
-} from "../dtos/classic/get-fastify-multipart-data-req.dto.js";
+} from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 import {
   McpGenericType,
   SupportedToolFunction,
-} from "../dtos/json-rpc/mcp.model.js";
+} from '../dtos/json-rpc/mcp.model.js';
 
-import { AnalyzeImageService } from "./analyze-image.service.js";
+import { AnalyzeImageService } from './analyze-image.service.js';
 @Injectable()
 export class JsonRpcService {
   constructor(
@@ -68,7 +68,7 @@ export class JsonRpcService {
     return await Promise.all(
       images.map(async (file) => {
         const buffer = await file.toBuffer();
-        const hash = hashPayload(buffer, "sha256");
+        const hash = hashPayload(buffer, 'sha256');
         const meta: FastifyMultipartMeta = {
           name: file.filename,
           type: file.mimetype,
@@ -84,27 +84,27 @@ export class JsonRpcService {
     images: Array<{ data: string; mimeType?: string; name?: string }>,
   ) {
     const ALLOWED_MIME_TYPES = new Set([
-      "image/png",
-      "image/jpeg",
-      "image/webp",
+      'image/png',
+      'image/jpeg',
+      'image/webp',
     ]);
 
     return images.map((image, index) => {
       const { data, mimeType, name } = image;
-      if (!data || typeof data !== "string")
+      if (!data || typeof data !== 'string')
         throw new BadRequestException(`Missing base64 data at index ${index}`);
 
-      const type = (mimeType || "image/png").toLowerCase();
+      const type = (mimeType || 'image/png').toLowerCase();
       if (!ALLOWED_MIME_TYPES.has(type))
         throw new BadRequestException(
           `Invalid image type at index ${index}: ${type}`,
         );
 
       try {
-        const buffer = Buffer.from(data, "base64");
-        const hash = hashPayload(buffer, "sha256");
+        const buffer = Buffer.from(data, 'base64');
+        const hash = hashPayload(buffer, 'sha256');
         const ext =
-          type === "image/png" ? "png" : type === "image/jpeg" ? "jpg" : "webp";
+          type === 'image/png' ? 'png' : type === 'image/jpeg' ? 'jpg' : 'webp';
 
         const meta: FastifyMultipartMeta = {
           name: name || `image_${index + 1}.${ext}`,
@@ -130,8 +130,8 @@ export class JsonRpcService {
     return {
       content: [
         {
-          type: "text",
-          text: "Processing will begin shortly.",
+          type: 'text',
+          text: 'Processing will begin shortly.',
         },
       ],
       isError: false,

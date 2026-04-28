@@ -3,11 +3,11 @@ import {
   BadRequestException,
   Injectable,
   PipeTransform,
-} from "@nestjs/common";
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
+} from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 
-import { Prompt } from "../dtos/prompt.dto.js";
+import { Prompt } from '../dtos/prompt.dto.js';
 
 type Maybe<T> = T | ReadonlyArray<T> | undefined | null;
 
@@ -19,7 +19,7 @@ export class ParsePromptPipe implements PipeTransform {
   ): Promise<Array<Prompt>> {
     const parts = Array.isArray(value) ? value : [value];
     const field = parts.find(
-      (p) => p?.type === "field" && p?.fieldname === metadata.data,
+      (p) => p?.type === 'field' && p?.fieldname === metadata.data,
     );
 
     if (!field?.value) return [];
@@ -42,10 +42,10 @@ export class ParsePromptPipe implements PipeTransform {
       const messages = errors
         .map((e) =>
           e.constraints
-            ? `${e.property}: ${Object.values(e.constraints).join(", ")}`
+            ? `${e.property}: ${Object.values(e.constraints).join(', ')}`
             : e.property,
         )
-        .join("; ");
+        .join('; ');
       throw new BadRequestException(`Validation failed: ${messages}`);
     }
 

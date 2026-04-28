@@ -1,12 +1,12 @@
-import { CallHandler, ExecutionContext } from "@nestjs/common";
-import { Test, TestingModule } from "@nestjs/testing";
-import { of } from "rxjs";
+import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { of } from 'rxjs';
 
-import { MCP_SYNC_METHODS } from "../decorators/json-rpc.decorators.js";
+import { MCP_SYNC_METHODS } from '../decorators/json-rpc.decorators.js';
 
-import { McpStatusInterceptor } from "./mcp-status.interceptor.js";
+import { McpStatusInterceptor } from './mcp-status.interceptor.js';
 
-describe("McpStatusInterceptor", () => {
+describe('McpStatusInterceptor', () => {
   let interceptor: McpStatusInterceptor;
 
   const createMockContext = (body: any): ExecutionContext =>
@@ -20,12 +20,12 @@ describe("McpStatusInterceptor", () => {
           },
         }),
       }),
-    } as ExecutionContext);
+    }) as ExecutionContext;
 
   const createMockNext = (): CallHandler =>
     ({
       handle: () => of({}),
-    } as CallHandler);
+    }) as CallHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,13 +35,13 @@ describe("McpStatusInterceptor", () => {
     interceptor = module.get(McpStatusInterceptor);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(interceptor).toBeDefined();
   });
 
-  it("returns 200 for initialize method", async () => {
+  it('returns 200 for initialize method', async () => {
     const body = {
-      payload: { value: JSON.stringify({ method: "initialize" }) },
+      payload: { value: JSON.stringify({ method: 'initialize' }) },
     };
     const ctx = createMockContext(body);
     const next = createMockNext();
@@ -49,9 +49,9 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("returns 200 for tools/list method", async () => {
+  it('returns 200 for tools/list method', async () => {
     const body = {
-      payload: { value: JSON.stringify({ method: "tools/list" }) },
+      payload: { value: JSON.stringify({ method: 'tools/list' }) },
     };
     const ctx = createMockContext(body);
     const next = createMockNext();
@@ -59,9 +59,9 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("returns 202 for tools/call method", async () => {
+  it('returns 202 for tools/call method', async () => {
     const body = {
-      payload: { value: JSON.stringify({ method: "tools/call" }) },
+      payload: { value: JSON.stringify({ method: 'tools/call' }) },
     };
     const ctx = createMockContext(body);
     const next = createMockNext();
@@ -69,9 +69,9 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("returns 202 for unknown method", async () => {
+  it('returns 202 for unknown method', async () => {
     const body = {
-      payload: { value: JSON.stringify({ method: "unknown" }) },
+      payload: { value: JSON.stringify({ method: 'unknown' }) },
     };
     const ctx = createMockContext(body);
     const next = createMockNext();
@@ -79,7 +79,7 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("handles empty body", async () => {
+  it('handles empty body', async () => {
     const body = {};
     const ctx = createMockContext(body);
     const next = createMockNext();
@@ -87,17 +87,17 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("handles body without payload", async () => {
-    const body = { other: "data" };
+  it('handles body without payload', async () => {
+    const body = { other: 'data' };
     const ctx = createMockContext(body);
     const next = createMockNext();
 
     interceptor.intercept(ctx, next);
   });
 
-  it("handles invalid JSON in payload", async () => {
+  it('handles invalid JSON in payload', async () => {
     const body = {
-      payload: { value: "not valid json" },
+      payload: { value: 'not valid json' },
     };
     const ctx = createMockContext(body);
     const next = createMockNext();
@@ -105,7 +105,7 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("returns 202 when payload.value is missing", async () => {
+  it('returns 202 when payload.value is missing', async () => {
     const body = {
       payload: {},
     };
@@ -115,8 +115,8 @@ describe("McpStatusInterceptor", () => {
     interceptor.intercept(ctx, next);
   });
 
-  it("sync methods should be defined", () => {
-    expect(MCP_SYNC_METHODS).toContain("initialize");
-    expect(MCP_SYNC_METHODS).toContain("tools/list");
+  it('sync methods should be defined', () => {
+    expect(MCP_SYNC_METHODS).toContain('initialize');
+    expect(MCP_SYNC_METHODS).toContain('tools/list');
   });
 });
