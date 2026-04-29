@@ -4,16 +4,24 @@ import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Processor } from '@nestjs/bullmq';
 import { Job, UnrecoverableError } from 'bullmq';
 
+import { BullMQConfigService } from '../configs/bullmq-config.service.js';
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
 import { SocketIOConfigService } from '../configs/socket-io-config.service.js';
-import { BULLMQ_QUEUE } from '../constants/bullmq.constants.js';
-import { FastifyMultipartDataWithFiltersReq } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
+import {
+  BULLMQ_QUEUE,
+  BULLMQ_WORKER_CONCURRENCY,
+} from '../constants/bullmq.constants.js';
+import { VisionJobPayload } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 import { ImagePreprocessingService } from '../services/image-preprocessing.service.js';
 import { JobTrackingService } from '../services/job-tracking.service.js';
+import { MinioService } from '../services/minio.service.js';
+import { PostgresService } from '../services/postgres.service.js';
 
 import { VisionsProcessor } from './visions.processor.js';
 
-@Processor(BULLMQ_QUEUE.IMAGE_DESCRIBE)
+@Processor(BULLMQ_QUEUE.IMAGE_DESCRIBE, {
+  concurrency: BULLMQ_WORKER_CONCURRENCY,
+})
 export class VisionsDescribeProcessor extends VisionsProcessor {
   constructor(
     protected readonly io: SocketIOService,
@@ -22,6 +30,9 @@ export class VisionsDescribeProcessor extends VisionsProcessor {
     protected readonly socketIOConfigService: SocketIOConfigService,
     protected readonly bullMQLogger: BullMQLoggerService,
     protected readonly jobTracking: JobTrackingService,
+    protected readonly minioService: MinioService,
+    protected readonly postgresService: PostgresService,
+    protected readonly bullMQConfigService: BullMQConfigService,
     private readonly imagePreprocessingService: ImagePreprocessingService,
   ) {
     super(
@@ -31,10 +42,13 @@ export class VisionsDescribeProcessor extends VisionsProcessor {
       socketIOConfigService,
       bullMQLogger,
       jobTracking,
+      minioService,
+      postgresService,
+      bullMQConfigService,
     );
   }
 
-  async process(job: Job<FastifyMultipartDataWithFiltersReq>, token?: string) {
+  async process(job: Job<VisionJobPayload>, token?: string) {
     const requestId = job.name;
 
     // Early cancel check - exit immediately if job was canceled while in queue
@@ -48,8 +62,11 @@ export class VisionsDescribeProcessor extends VisionsProcessor {
       throw new UnrecoverableError('Job canceled before processing');
     }
 
-    const { buffers, meta, filters } = job.data;
-    this.validateInput(buffers, meta);
+    const { meta, filters } = job.data;
+
+    // Fetch buffers from MinIO
+    const buffers = await this.fetchBuffers(requestId);
+    this.validateInput(meta);
 
     // Preprocess images if enabled
     let processedBuffers = buffers;

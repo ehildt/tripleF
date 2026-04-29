@@ -18,6 +18,7 @@
     "**/*.test.ts",
     "eslint.config.ts",
     "vitest.config.ts",
-    "prettier.config.mjs"
+    "prettier.config.mjs",
+    "prisma.config.ts"
   ]
 }

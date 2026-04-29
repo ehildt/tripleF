@@ -17,6 +17,7 @@
     "src",
     "eslint.config.ts",
     "prettier.config.mjs",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "prisma.config.ts"
   ]
 }

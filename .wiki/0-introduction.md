@@ -16,9 +16,14 @@ flowchart TB
 
     subgraph APILayer["API Layer (Fastify / Port 3000)"]
         Gateway[Fastify Gateway]
-        ClassicCtrl[ClassicController<br/>/api/v1/vision]
-        JsonRpcCtrl[JsonRpcController<br/>/api/v1/mcp]
-        HealthCtrl[HealthController<br/>/api/v1/health]
+        ClassicCtrl[ClassicController
+/api/v1/vision]
+        JsonRpcCtrl[JsonRpcController
+/api/v1/mcp]
+        HealthCtrl[HealthController
+/api/v1/health]
+        JobsCtrl[JobsController
+/api/v1/jobs]
     end
 
     subgraph ServiceLayer["Service Layer"]
@@ -43,19 +48,28 @@ flowchart TB
     end
 
     subgraph Infrastructure["Infrastructure"]
-        Ollama[Ollama Server<br/>Port 11434]
-        KeyDB[KeyDB<br/>Port 6379]
-        SocketIO[Socket.IO<br/>Port 3000]
+        Ollama[Ollama Server
+Port 11434]
+        KeyDB[KeyDB
+Port 6379]
+        Minio[(MinIO
+Object Storage)]
+        Postgres[(Postgres
+DLQ / Metadata)]
+        SocketIO[Socket.IO
+Port 3000]
     end
 
     Dashboard --> Gateway
-    RestClient --> ClassicCtrl
+    RestClient --> ClassicCtrl & JobsCtrl
     MCPClient --> JsonRpcCtrl
 
     ClassicCtrl --> VisionService
     JsonRpcCtrl --> RpcService
     HealthCtrl --> HealthService
+    JobsCtrl --> Postgres
 
+    VisionService --> Minio
     VisionService --> BullMQ
     RpcService --> BullMQ
 
@@ -74,8 +88,8 @@ flowchart TB
 
 | Pattern | Protocol | Use Case |
 |---------|----------|----------|
-| **Synchronous (HTTP)** | REST / JSON-RPC | Request submission, health checks, model listing, job cancellation |
-| **Asynchronous (Queue)** | BullMQ / Redis | Image processing, AI inference, result preparation |
+| **Synchronous (HTTP)** | REST / JSON-RPC | Request submission, health checks, model listing, job cancellation, DLQ reinstate/retry |
+| **Asynchronous (Queue)** | BullMQ / Redis | `{ meta, filters }` scheduling and worker orchestration (buffers travel via MinIO, not Redis) |
 | **Real-time (WebSocket)** | Socket.IO | Streaming status, progressive token delivery, final result dispatch |
 
 ## Documentation Index
@@ -112,7 +126,9 @@ For a step-by-step Docker Compose setup, see [0.1 Quick Start](0.1-quick-start.m
 | Backend Runtime | Node.js 18+ | Server-side TypeScript execution (ES module mode) |
 | Framework | NestJS (Fastify adapter) | Dependency-injected modular architecture |
 | HTTP Server | Fastify | High-throughput, low-latency request handling |
-| Job Queue | BullMQ | Async task scheduling and worker orchestration |
+| Job Queue | BullMQ | `{ meta, filters }` scheduling (buffers offloaded to MinIO) |
+| Object Storage | MinIO | Image buffer offloading (`jobs/{requestId}/{index}.bin`) |
+| Database | Postgres | DLQ persistence, retry tracking, metadata |
 | Real-time | Socket.IO (Redis adapter) | Cross-server event broadcasting |
 | AI Backend | Ollama | Local LLM inference with vision model support |
 | Image Processing | Sharp (libvips) | Grayscale, resize, sharpen, Gaussian blur, CLAHE |

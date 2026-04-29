@@ -17,7 +17,11 @@ export const useModelsStore = defineStore('models', () => {
       if (res.ok) {
         const data = await res.json();
         models.value =
-          data.models?.map((m: { model: string }) => m.model) ?? [];
+          data.models
+            ?.map((m: { model: string }) => m.model)
+            .sort((a: string, b: string) =>
+              a.localeCompare(b, undefined, { sensitivity: 'base' }),
+            ) ?? [];
         if (isRefresh) {
           toast.success(`Loaded ${models.value.length} models`);
         }

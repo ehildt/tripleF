@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import {
   IsDateString,
   IsEnum,
@@ -9,6 +8,7 @@ import {
 } from 'class-validator';
 
 import { DLQ_STATUSES } from '../../constants/postgres.constants.js';
+import { Prisma } from '../../generated/prisma/client.js';
 
 const statuses = DLQ_STATUSES;
 
@@ -36,10 +36,6 @@ export class UpdateVisionDlqDto {
   @IsOptional()
   @IsString()
   failedReason?: string;
-
-  @IsOptional()
-  @IsString()
-  stacktrace?: string;
 
   @IsOptional()
   @IsDateString()

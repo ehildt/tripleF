@@ -1,6 +1,7 @@
 import {
   DiskHealthIndicator,
   HealthCheckService,
+  HealthIndicatorService,
   HttpHealthIndicator,
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
@@ -10,6 +11,8 @@ import { AppConfigService } from '../configs/app-config.service.js';
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
 
 import { HealthService } from './health.service.js';
+import { MinioService } from './minio.service.js';
+import { MinioHealthIndicator } from './minio-health-indicator.service.js';
 import { PostgresService } from './postgres.service.js';
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
 
@@ -22,8 +25,15 @@ describe('HealthService', () => {
       providers: [
         HealthService,
         PostgresHealthIndicator,
+        MinioHealthIndicator,
         {
           provide: PostgresService,
+          useValue: {
+            ping: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: MinioService,
           useValue: {
             ping: vi.fn().mockResolvedValue(undefined),
           },
@@ -51,6 +61,15 @@ describe('HealthService', () => {
           provide: DiskHealthIndicator,
           useValue: {
             checkStorage: vi.fn().mockReturnValue({ status: 'ok' }),
+          },
+        },
+        {
+          provide: HealthIndicatorService,
+          useValue: {
+            check: vi.fn().mockReturnValue({
+              up: vi.fn().mockReturnValue({ status: 'up' }),
+              down: vi.fn().mockReturnValue({ status: 'down' }),
+            }),
           },
         },
         {
@@ -88,7 +107,7 @@ describe('HealthService', () => {
       expect(healthCheckService.check).toHaveBeenCalled();
       const checkCall = (healthCheckService.check as ReturnType<typeof vi.fn>)
         .mock.calls[0][0];
-      expect(checkCall).toHaveLength(5);
+      expect(checkCall).toHaveLength(6);
       expect(result).toEqual({ status: 'ok' });
     });
   });
@@ -109,8 +128,15 @@ describe('HealthService', () => {
         providers: [
           HealthService,
           PostgresHealthIndicator,
+          MinioHealthIndicator,
           {
             provide: PostgresService,
+            useValue: {
+              ping: vi.fn().mockResolvedValue(undefined),
+            },
+          },
+          {
+            provide: MinioService,
             useValue: {
               ping: vi.fn().mockResolvedValue(undefined),
             },
@@ -141,6 +167,15 @@ describe('HealthService', () => {
             },
           },
           {
+            provide: HealthIndicatorService,
+            useValue: {
+              check: vi.fn().mockReturnValue({
+                up: vi.fn().mockReturnValue({ status: 'up' }),
+                down: vi.fn().mockReturnValue({ status: 'down' }),
+              }),
+            },
+          },
+          {
             provide: OllamaConfigService,
             useValue: {
               config: {
@@ -162,7 +197,7 @@ describe('HealthService', () => {
 
       expect(checkFn).toHaveBeenCalled();
       const checkCall = checkFn.mock.calls[0][0];
-      expect(checkCall).toHaveLength(5);
+      expect(checkCall).toHaveLength(6);
     });
   });
 });

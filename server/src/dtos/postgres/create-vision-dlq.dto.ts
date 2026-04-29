@@ -42,10 +42,6 @@ export class CreateVisionDlqDto {
   failedReason?: string;
 
   @IsOptional()
-  @IsString()
-  stacktrace?: string;
-
-  @IsOptional()
   @IsDateString()
   failedAt?: string;
 

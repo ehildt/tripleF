@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-elevated border border-divider panel-glow min-h-50">
+  <div class="bg-elevated border border-divider panel-glow">
     <slot />
   </div>
 </template>

@@ -11,6 +11,7 @@ import {
 } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 
 import { JobTrackingService } from './job-tracking.service.js';
+import { MinioService } from './minio.service.js';
 
 @Injectable()
 export class AnalyzeImageService {
@@ -24,6 +25,7 @@ export class AnalyzeImageService {
     @InjectQueue(BULLMQ_QUEUE.IMAGE_OCR)
     private readonly ocrQueue: Queue,
     private readonly jobTracking: JobTrackingService,
+    private readonly minioService: MinioService,
   ) {}
 
   async toFilePayloads(requestId: string, images: Array<MultipartFile>) {
@@ -45,22 +47,51 @@ export class AnalyzeImageService {
   ): Promise<Job | undefined> {
     const requestId = req.filters.requestId!;
 
+    // Upload buffers to MinIO before enqueuing metadata-only payload
+    try {
+      await this.minioService.uploadBuffers(
+        requestId,
+        req.buffers.filter(Boolean),
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to upload buffers to MinIO for job ${requestId}:`,
+        err,
+      );
+      return undefined;
+    }
+
+    // Strip buffers before queuing — BullMQ carries metadata only
+    const payload = {
+      meta: req.meta.filter(Boolean),
+      filters: req.filters,
+    };
+
     let job: Job | undefined;
     let queueName: string | undefined;
 
     try {
       if (req.filters.task === 'describe') {
-        job = await this.describeQueue.add(requestId, req);
+        job = await this.describeQueue.add(requestId, payload);
         queueName = BULLMQ_QUEUE.IMAGE_DESCRIBE;
       } else if (req.filters.task === 'compare') {
-        job = await this.compareQueue.add(requestId, req);
+        job = await this.compareQueue.add(requestId, payload);
         queueName = BULLMQ_QUEUE.IMAGE_COMPARE;
       } else if (req.filters.task === 'ocr') {
-        job = await this.ocrQueue.add(requestId, req);
+        job = await this.ocrQueue.add(requestId, payload);
         queueName = BULLMQ_QUEUE.IMAGE_OCR;
       }
     } catch (err) {
       this.logger.error(`Failed to add job ${requestId} to queue:`, err);
+      // Clean up MinIO since the job never reached the queue
+      try {
+        await this.minioService.deleteBuffers(requestId);
+      } catch (cleanupErr) {
+        this.logger.error(
+          `Failed to clean up MinIO buffers for ${requestId}:`,
+          cleanupErr,
+        );
+      }
       return undefined;
     }
 
@@ -69,6 +100,7 @@ export class AnalyzeImageService {
       if (this.jobTracking.isCanceled(requestId)) {
         try {
           await job.remove();
+          await this.minioService.deleteBuffers(requestId);
         } catch (err) {
           this.logger.error(`Failed to remove job ${requestId}:`, err);
         }
@@ -111,6 +143,7 @@ export class AnalyzeImageService {
           const job = await Job.fromId(queue, trackedJob.jobId);
           if (job) {
             await job.remove();
+            await this.minioService.deleteBuffers(requestId);
           }
         } catch (err) {
           this.logger.error(`Failed to remove job ${requestId}:`, err);

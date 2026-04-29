@@ -47,6 +47,7 @@ dbfilename
 dccs
 DCCS
 deathspace
+deepseek
 deepspace
 Deepspace
 depbadge

@@ -78,6 +78,7 @@ gitconfiglocal
 github
 gitlab
 hangxingliu
+headlessui
 healthcheck
 Hildt
 Horizonal
@@ -184,6 +185,7 @@ sopts
 spdx
 sropts
 stefanzweifel
+submessage
 supertest
 tailwindcss
 tanstack

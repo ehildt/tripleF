@@ -6,10 +6,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
 import { ChatResponse, Message } from 'ollama';
 
+import { BullMQConfigService } from '../configs/bullmq-config.service.js';
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
 import { SocketIOConfigService } from '../configs/socket-io-config.service.js';
-import { FastifyMultipartDataWithFiltersReq } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
+import { VisionJobPayload } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 import { JobTrackingService } from '../services/job-tracking.service.js';
+import { MinioService } from '../services/minio.service.js';
+import { PostgresService } from '../services/postgres.service.js';
 
 export type SystemPromptKey = 'DESCRIBE' | 'COMPARE' | 'OCR';
 
@@ -24,25 +27,28 @@ export abstract class VisionsProcessor extends WorkerHost {
     protected readonly socketIOConfigService: SocketIOConfigService,
     protected readonly bullMQLogger: BullMQLoggerService,
     protected readonly jobTracking: JobTrackingService,
+    protected readonly minioService: MinioService,
+    protected readonly postgresService: PostgresService,
+    protected readonly bullMQConfigService: BullMQConfigService,
   ) {
     super();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async process(_job: Job<FastifyMultipartDataWithFiltersReq>) {
+  async process(_job: Job<VisionJobPayload>) {
     throw new Error('Not implemented - override in subclass');
   }
 
-  protected validateInput(buffers: unknown, meta: unknown): void {
+  protected validateInput(meta: unknown): void {
     if (!Array.isArray(meta) || !meta.length) throw new Error('Missing meta');
-    if (!Array.isArray(buffers) || !buffers.length)
-      throw new Error('Missing buffers');
-    if (buffers.length !== meta.length)
-      throw new Error('buffers/meta length mismatch');
+  }
+
+  protected async fetchBuffers(requestId: string): Promise<Buffer[]> {
+    return this.minioService.downloadBuffers(requestId);
   }
 
   protected async handleVision(
-    job: Job<FastifyMultipartDataWithFiltersReq>,
+    job: Job<VisionJobPayload>,
     request: Parameters<typeof this.ollamaService.chat>[0],
     stream: boolean,
     onChunk: (response: ChatResponse) => Promise<void>,
@@ -68,7 +74,6 @@ export abstract class VisionsProcessor extends WorkerHost {
             await job.moveToCompleted('canceled', token, true);
           } catch (error) {
             this.logger.error('moveToCompleted', error);
-            // ! REVIEW
             // Lock may have expired for long-running jobs - this is expected
             // The UnrecoverableError below will ensure no retries happen
           }
@@ -114,7 +119,7 @@ export abstract class VisionsProcessor extends WorkerHost {
   protected buildChatRequest(
     buffers: Buffer[],
     filenames: string,
-    filters: FastifyMultipartDataWithFiltersReq['filters'],
+    filters: VisionJobPayload['filters'],
     systemPromptKey: SystemPromptKey,
     userMessagePrefix: string = 'Image(s):',
     variantDescriptions?: string[],
@@ -124,7 +129,6 @@ export abstract class VisionsProcessor extends WorkerHost {
       content: this.ollamaConfigService.config.systemPrompts[systemPromptKey],
     };
 
-    // Build content with variant descriptions if preprocessing was enabled
     const variants = variantDescriptions?.reduce(
       (acc, desc, index) => `${acc} ${index}: ${desc}`,
       '',
@@ -144,7 +148,7 @@ export abstract class VisionsProcessor extends WorkerHost {
     };
 
     const prompts: Message[] = (filters.prompt ?? []).filter(
-      (p): p is { role: string; content: string } =>
+      (p): p is Message =>
         p &&
         typeof p.role === 'string' &&
         typeof p.content === 'string' &&
@@ -174,46 +178,89 @@ export abstract class VisionsProcessor extends WorkerHost {
       const payload = { event: socketEvent, ...(data as object) };
       if (roomId) this.io.emitTo(socketEvent, roomId, payload);
       else this.io.emit(socketEvent, payload);
-    } catch (err) {
-      this.logger.error(
-        `Socket emit failed: roomId=${roomId}, data=${JSON.stringify(
-          data,
-        ).slice(0, 100)}`,
-        err,
-      );
+    } catch (error) {
+      //
     }
   }
 
   @OnWorkerEvent('completed')
-  protected async onCompleted(job: Job<FastifyMultipartDataWithFiltersReq>) {
+  protected async onCompleted(job: Job<VisionJobPayload>) {
     try {
-      await this.bullMQLogger.log(job);
+      await this.bullMQLogger.log(job, 'completed');
     } catch (err) {
       this.logger.error('bullMQLogger.log failed in onCompleted:', err);
     }
+
+    try {
+      await this.minioService.deleteBuffers(job.name);
+    } catch (err) {
+      this.logger.error(`Failed to delete MinIO buffers for ${job.name}:`, err);
+    }
+
+    try {
+      const dlqEntry = await this.postgresService.findById(job.name);
+      if (dlqEntry) {
+        await this.postgresService.update(job.name, {
+          status: 'ARCHIVED',
+          failedReason: null,
+        });
+      }
+    } catch (err) {
+      this.logger.error(`Failed to archive DLQ entry for ${job.name}:`, err);
+    }
+
     this.jobTracking.remove(job.name);
   }
 
   @OnWorkerEvent('active')
-  protected async onActive(job: Job<FastifyMultipartDataWithFiltersReq>) {
+  protected async onActive(job: Job<VisionJobPayload>) {
     try {
-      await this.bullMQLogger.log(job);
+      await this.bullMQLogger.log(job, 'active');
     } catch (err) {
       this.logger.error('bullMQLogger.log failed in onActive:', err);
     }
+
     this.jobTracking.setActive(job.name);
   }
 
   @OnWorkerEvent('failed')
-  protected async onFailed(job: Job<FastifyMultipartDataWithFiltersReq>) {
+  protected async onFailed(job: Job<VisionJobPayload>) {
     try {
       const failedReason = (job as any).failedReason || '';
       if (failedReason.includes('canceled'))
         await this.bullMQLogger.log(job, 'canceled');
-      else await this.bullMQLogger.error(job);
+      else await this.bullMQLogger.error(job, 'failed');
     } catch (err) {
       this.logger.error('bullMQLogger failed in onFailed:', err);
     }
+
+    const maxAttempts =
+      this.bullMQConfigService.config.defaultJobOptions.attempts ?? 3;
+
+    if (job.attemptsMade < maxAttempts) return;
+    const retryDelayMs = this.bullMQConfigService.config.failedJobRetryDelayMs;
+
+    try {
+      await this.postgresService.upsert(job.name, {
+        queueName: job.queueName,
+        jobId: String(job.id),
+        status: 'PENDING_RETRY',
+        failedAt: new Date(),
+        failedReason: (job as any).failedReason,
+        attemptsMade: job.attemptsMade,
+        nextRetryAt: new Date(Date.now() + retryDelayMs),
+        payload: job.data as any,
+      });
+    } catch (err) {
+      this.logger.error('Failed to persist DLQ record:', err);
+    }
+
+    try {
+      await job.remove();
+    } catch (err) {
+      this.logger.error('Failed to remove dead job from BullMQ:', err);
+    }
+
     this.jobTracking.remove(job.name);
   }
 }

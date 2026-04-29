@@ -4,10 +4,11 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 import type { PostgresConfig } from '../configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../constants/postgres.constants.js';
+import { Prisma, PrismaClient } from '../generated/prisma/client.js';
 
 @Injectable()
 export class PostgresService implements OnModuleInit, OnModuleDestroy {
@@ -27,13 +28,10 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    this._prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: this._config.url,
-        },
-      },
+    const adapter = new PrismaPg({
+      connectionString: this._config.url,
     });
+    this._prisma = new PrismaClient({ adapter });
   }
 
   async onModuleDestroy() {
@@ -49,6 +47,7 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
     limit?: number;
     offset?: number;
     requestId?: string;
+    search?: string;
   }) {
     const where: Prisma.VisionsDlqWhereInput = {};
 
@@ -69,6 +68,27 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
 
     if (options.requestId)
       where.requestId = { contains: options.requestId, mode: 'insensitive' };
+
+    if (options.search) {
+      const searchTerm = `%${options.search}%`;
+      where.OR = [
+        { requestId: { contains: options.search, mode: 'insensitive' } },
+        { queueName: { contains: options.search, mode: 'insensitive' } },
+        { failedReason: { contains: options.search, mode: 'insensitive' } },
+      ];
+
+      const jsonRows = await this.prisma.$queryRaw<
+        Array<{ requestId: string }>
+      >(
+        Prisma.sql`SELECT "requestId" FROM "visions_dlq" WHERE "payload"::text ILIKE ${searchTerm}`,
+      );
+
+      if (jsonRows.length > 0) {
+        const requestIds = jsonRows.map((r) => r.requestId);
+        if (!where.OR) where.OR = [];
+        where.OR.push({ requestId: { in: requestIds } });
+      }
+    }
 
     const [rows, total] = await Promise.all([
       this.prisma.visionsDlq.findMany({
@@ -125,7 +145,6 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
     const failureEntry = {
       failedAt: new Date().toISOString(),
       failedReason: data.failedReason ?? existing.failedReason,
-      stacktrace: data.stacktrace ?? existing.stacktrace,
       attemptsMade: (existing.attemptsMade ?? 0) + 1,
     };
 
@@ -147,9 +166,48 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
   }
 
   async remove(requestId: string) {
-    return this.prisma.visionsDlq.delete({
-      where: { requestId },
+    return this.update(requestId, { status: 'PENDING_DELETION' });
+  }
+
+  async findEligible(
+    status: string,
+    retainAmount: number,
+    olderThanMs: number,
+  ) {
+    const cutoff = new Date(Date.now() - olderThanMs);
+
+    return this.prisma.visionsDlq.findMany({
+      where: {
+        status: status as Prisma.VisionsDlqWhereInput['status'],
+        createdAt: { lt: cutoff },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: retainAmount,
     });
+  }
+
+  async moveStatus(requestIds: string[], newStatus: string) {
+    if (!requestIds.length) return { moved: 0 };
+
+    const result = await this.prisma.visionsDlq.updateMany({
+      where: { requestId: { in: requestIds } },
+      data: {
+        status: newStatus as Prisma.VisionsDlqUpdateInput['status'],
+        updatedAt: new Date(),
+      },
+    });
+
+    return { moved: result.count };
+  }
+
+  async hardDeleteMany(requestIds: string[]) {
+    if (!requestIds.length) return { count: 0 };
+
+    const result = await this.prisma.visionsDlq.deleteMany({
+      where: { requestId: { in: requestIds } },
+    });
+
+    return { count: result.count };
   }
 
   async ping() {

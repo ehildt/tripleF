@@ -27,3 +27,9 @@ export type FastifyMultipartDataWithFiltersReq = {
   meta: Array<FastifyMultipartMeta>;
   filters: Partial<FastifyMultipartFilter>;
 };
+
+/** Metadata-only payload stored in BullMQ. Buffers are offloaded to MinIO. */
+export type VisionJobPayload = {
+  meta: Array<FastifyMultipartMeta>;
+  filters: Partial<FastifyMultipartFilter>;
+};

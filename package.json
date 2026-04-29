@@ -12,7 +12,10 @@
     "ncu:update": "npx npm-check-updates -u --format group"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
-    "@changesets/cli": "^2.31.0"
+    "@changesets/cli": "^2.31.0",
+    "husky": "^9.1.7"
+  },
+  "dependencies": {
+    "minio": "^8.0.7"
   }
 }

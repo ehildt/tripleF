@@ -12,6 +12,7 @@ import { BULLMQ_QUEUE } from '../constants/bullmq.constants.js';
 
 import { AnalyzeImageService } from './analyze-image.service.js';
 import { JobTrackingService } from './job-tracking.service.js';
+import { MinioService } from './minio.service.js';
 
 vi.mock('@ehildt/ckir-helpers/hash-payload', () => ({
   hashPayload: vi.fn(),
@@ -65,6 +66,13 @@ describe('AnalyzeImageService', () => {
           provide: BullMQLoggerService,
           useValue: {
             log: vi.fn(),
+          },
+        },
+        {
+          provide: MinioService,
+          useValue: {
+            uploadBuffers: vi.fn().mockResolvedValue(['jobs/test/0.bin']),
+            deleteBuffers: vi.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -164,32 +172,55 @@ describe('AnalyzeImageService', () => {
   describe('emit', () => {
     it('enqueues describe job', async () => {
       const req = {
+        buffers: [Buffer.from('image')],
+        meta: [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }],
         filters: { task: 'describe', requestId: 'req-123' },
       } as any;
 
       await service.emit(req);
 
-      expect(describeQueue.add).toHaveBeenCalledWith('req-123', req);
+      expect(describeQueue.add).toHaveBeenCalledWith('req-123', {
+        meta: req.meta,
+        filters: req.filters,
+      });
     });
 
     it('enqueues compare job', async () => {
-      const req = { filters: { task: 'compare', requestId: 'req-456' } } as any;
+      const req = {
+        buffers: [Buffer.from('image')],
+        meta: [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }],
+        filters: { task: 'compare', requestId: 'req-456' },
+      } as any;
 
       await service.emit(req);
 
-      expect(compareQueue.add).toHaveBeenCalledWith('req-456', req);
+      expect(compareQueue.add).toHaveBeenCalledWith('req-456', {
+        meta: req.meta,
+        filters: req.filters,
+      });
     });
 
     it('enqueues ocr job', async () => {
-      const req = { filters: { task: 'ocr', requestId: 'req-789' } } as any;
+      const req = {
+        buffers: [Buffer.from('image')],
+        meta: [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }],
+        filters: { task: 'ocr', requestId: 'req-789' },
+      } as any;
 
       await service.emit(req);
 
-      expect(ocrQueue.add).toHaveBeenCalledWith('req-789', req);
+      expect(ocrQueue.add).toHaveBeenCalledWith('req-789', {
+        meta: req.meta,
+        filters: req.filters,
+      });
     });
 
     it('does nothing for unknown task', async () => {
-      const req = { filters: { task: 'unknown' } } as any;
+      const req = {
+        buffers: [],
+        meta: [],
+        filters: { task: 'unknown' },
+      } as any;
 
       await service.emit(req);
 
@@ -204,6 +235,8 @@ describe('AnalyzeImageService', () => {
       (describeQueue.add as any).mockResolvedValue(mockJob);
 
       const req = {
+        buffers: [Buffer.from('image')],
+        meta: [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }],
         filters: { task: 'describe', requestId: 'req-123' },
       } as any;
 

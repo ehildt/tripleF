@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, Link2 } from 'lucide-vue-next';
+import { Braces, FileText, Link2, MessageSquare, Reply } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 import type { DebugResult } from '../../types/debug.model';
@@ -7,11 +7,13 @@ import {
   getValueTypeColor,
   getValueTypeGradient,
 } from '../../utils/colors/detail-field-colors.helper';
-import { getMethodTabColor } from '../../utils/colors/method-colors.helper';
 import { formatBody } from '../../utils/formatting.helper';
-import DebugTag from './DebugPanel.DebugTag.vue';
 import { parseUrl } from './DebugPanel.Details.helper';
 import DetailTag from './DebugPanel.DetailTag.vue';
+import DebugPanelEmptyState from './DebugPanel.EmptyState.vue';
+import DebugPanelHeaderTitle from './DebugPanel.Header.Title.vue';
+import DebugPanelHeader from './DebugPanel.Header.vue';
+import DebugPanelLayout from './DebugPanel.Layout.vue';
 
 const props = defineProps<{
   result: DebugResult | null;
@@ -46,47 +48,12 @@ const showHeaders = ref(false);
 </script>
 
 <template>
-  <div class="bg-elevated border border-divider panel-glow">
-    <!-- Header -->
-    <div
-      class="px-4 py-3 bg-secondary border-b border-divider flex items-center justify-between"
-    >
-      <div class="flex items-center gap-2 font-mono">
-        <ChevronRight class="w-4 h-4 text-accent-primary" />
-        <span class="text-xs text-accent-primary uppercase tracking-wider"
-          >Request Details</span
-        >
-      </div>
-    </div>
+  <DebugPanelLayout class="min-h-50">
+    <DebugPanelHeader>
+      <DebugPanelHeaderTitle label="Request Details" />
+    </DebugPanelHeader>
 
     <div v-if="result" :key="result.id" class="p-4 space-y-6">
-      <!-- Identity -->
-      <div
-        class="flex flex-wrap items-center gap-2 pb-3 border-b border-divider"
-      >
-        <DebugTag v-if="result.type" category="type" :value="result.type" />
-        <DebugTag
-          v-if="result.direction"
-          category="direction"
-          :value="result.direction"
-        />
-        <DebugTag
-          v-if="result.status"
-          category="status"
-          :value="result.status"
-        />
-        <span
-          v-if="result.method"
-          class="text-sm font-mono font-bold"
-          :class="getMethodTabColor(result.method)"
-        >
-          {{ result.method }}
-        </span>
-        <span class="text-xs font-mono text-fg-muted ml-auto">{{
-          result.timestamp
-        }}</span>
-      </div>
-
       <!-- Response -->
       <div v-if="result.type === 'http'" class="space-y-3">
         <h4
@@ -205,6 +172,7 @@ const showHeaders = ref(false);
               class="w-3 h-3 text-fg-muted transition-transform duration-200"
               :class="showHeaders ? 'rotate-90' : ''"
             />
+            <FileText class="w-3 h-3 text-fg-muted" />
             <span
               class="text-[10px] font-mono font-bold uppercase text-fg-muted group-hover:text-accent-primary transition-colors"
               >Headers</span
@@ -227,6 +195,7 @@ const showHeaders = ref(false);
               class="w-3 h-3 text-fg-muted transition-transform duration-200"
               :class="showPrompt ? 'rotate-90' : ''"
             />
+            <MessageSquare class="w-3 h-3 text-fg-muted" />
             <span
               class="text-[10px] font-mono font-bold uppercase text-fg-muted group-hover:text-accent-primary transition-colors"
               >Prompt</span
@@ -249,6 +218,7 @@ const showHeaders = ref(false);
               class="w-3 h-3 text-fg-muted transition-transform duration-200"
               :class="showBody ? 'rotate-90' : ''"
             />
+            <Braces class="w-3 h-3 text-fg-muted" />
             <span
               class="text-[10px] font-mono font-bold uppercase text-fg-muted group-hover:text-accent-primary transition-colors"
               >Body</span
@@ -271,6 +241,7 @@ const showHeaders = ref(false);
               class="w-3 h-3 text-fg-muted transition-transform duration-200"
               :class="showResponse ? 'rotate-90' : ''"
             />
+            <Reply class="w-3 h-3 text-fg-muted" />
             <span
               class="text-[10px] font-mono font-bold uppercase text-fg-muted group-hover:text-accent-primary transition-colors"
               >Response</span
@@ -299,18 +270,6 @@ const showHeaders = ref(false);
     </div>
 
     <!-- Empty state -->
-    <div
-      v-else
-      class="p-8 flex flex-col items-center justify-center h-full min-h-44"
-    >
-      <div class="text-center space-y-2">
-        <div class="text-fg-muted text-sm font-mono">
-          Select a request from the list to view details
-        </div>
-        <div class="text-fg-secondary text-xs">
-          Request information will appear here
-        </div>
-      </div>
-    </div>
-  </div>
+    <DebugPanelEmptyState v-else />
+  </DebugPanelLayout>
 </template>

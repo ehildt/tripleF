@@ -11,6 +11,7 @@ const props = defineProps<{
   debugCount: number;
   restCount?: number;
   mcpCount?: number;
+  dlqCount?: number;
 }>();
 
 const emit = defineEmits<{
@@ -48,6 +49,13 @@ const tabs = computed<
     tab: 'preprocessing',
     activeClasses: 'bg-tab-preprocessing',
     hoverClasses: 'hover-text-tab-preprocessing',
+  },
+  {
+    label: '> DLQ_',
+    tab: 'dlq',
+    count: props.dlqCount,
+    activeClasses: 'bg-tab-debug',
+    hoverClasses: 'hover-text-tab-debug',
   },
   {
     label: '> DEBUG_',

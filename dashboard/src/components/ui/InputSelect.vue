@@ -42,8 +42,11 @@ const displayValue = computed(() => {
             : 'border-divider',
         ]"
       >
-        <span :class="!modelValue ? 'text-fg-muted' : ''">
-          {{ displayValue }}
+        <span class="flex items-center gap-2">
+          <slot name="prepend-icon" />
+          <span :class="!modelValue ? 'text-fg-muted' : ''">
+            {{ displayValue }}
+          </span>
         </span>
         <ChevronDown
           class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-fg-muted"

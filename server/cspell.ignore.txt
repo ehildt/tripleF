@@ -40,10 +40,12 @@ conv
 conventionalcommits
 cres
 cuda
+datasource
 datefns
 datetime
 dbaeumer
 dbfilename
+dbgenerated
 dccs
 DCCS
 deathspace
@@ -158,6 +160,7 @@ pkief
 pokemon
 postcss
 postgres
+postgresql
 pproc
 qdrant
 Qdrant

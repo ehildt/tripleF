@@ -5,29 +5,33 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Job } from 'bullmq';
 import { vi } from 'vitest';
 
+import { BullMQConfigService } from '../configs/bullmq-config.service.js';
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
 import { SocketIOConfigService } from '../configs/socket-io-config.service.js';
-import { FastifyMultipartDataWithFiltersReq } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
+import { VisionJobPayload } from '../dtos/classic/get-fastify-multipart-data-req.dto.js';
 import { JobTrackingService } from '../services/job-tracking.service.js';
+import { MinioService } from '../services/minio.service.js';
+import { PostgresService } from '../services/postgres.service.js';
 
 import { SystemPromptKey, VisionsProcessor } from './visions.processor.js';
 
 class TestVisionsProcessor extends VisionsProcessor {
-  async process(_job: { data: FastifyMultipartDataWithFiltersReq }) {
-    const { buffers, meta, filters } = _job.data;
-    this.validateInput(buffers, meta);
+  async process(_job: Job<VisionJobPayload>) {
+    const { meta, filters } = _job.data;
+    this.validateInput(meta);
+    const buffers = await this.fetchBuffers(_job.name);
     this.buildChatRequest(buffers, 'test.jpg', filters, 'DESCRIBE');
     return undefined as unknown as void;
   }
 
-  testValidateInput(buffers: unknown, meta: unknown) {
-    return this.validateInput(buffers, meta);
+  testValidateInput(meta: unknown) {
+    return this.validateInput(meta);
   }
 
   testBuildChatRequest(
     buffers: Buffer[],
     filenames: string,
-    filters: FastifyMultipartDataWithFiltersReq['filters'],
+    filters: VisionJobPayload['filters'],
     systemPromptKey: SystemPromptKey,
     userMessagePrefix?: string,
   ) {
@@ -49,7 +53,7 @@ class TestVisionsProcessor extends VisionsProcessor {
   }
 
   async testHandleChat(
-    job: Job<FastifyMultipartDataWithFiltersReq>,
+    job: Job<VisionJobPayload>,
     request: Parameters<typeof this.ollamaService.chat>[0],
     stream: boolean,
     onChunk: (response: { message: { content: string } }) => Promise<void>,
@@ -130,6 +134,32 @@ describe('VisionsProcessor', () => {
             add: vi.fn(),
           },
         },
+        {
+          provide: MinioService,
+          useValue: {
+            downloadBuffers: vi.fn().mockResolvedValue([Buffer.from('image')]),
+            deleteBuffers: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: PostgresService,
+          useValue: {
+            upsert: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: BullMQConfigService,
+          useValue: {
+            config: {
+              failedJobRetryDelayMs: 300_000,
+              failedJobReinstateBatchSize: 10,
+              defaultJobOptions: {
+                attempts: 3,
+                backoff: { delay: 10000, type: 'exponential' },
+              },
+            },
+          },
+        },
       ],
     }).compile();
 
@@ -139,45 +169,26 @@ describe('VisionsProcessor', () => {
   });
 
   describe('validateInput', () => {
-    it('does not throw when buffers and meta are valid arrays with matching lengths', () => {
-      const buffers = [Buffer.from('test')];
+    it('does not throw when meta is a valid non-empty array', () => {
       const meta = [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }];
 
-      expect(() => processor.testValidateInput(buffers, meta)).not.toThrow();
+      expect(() => processor.testValidateInput(meta)).not.toThrow();
     });
 
     it('throws when meta is not an array', () => {
-      const buffers = [Buffer.from('test')];
-
-      expect(() => processor.testValidateInput(buffers, null as any)).toThrow(
+      expect(() => processor.testValidateInput(null as any)).toThrow(
         'Missing meta',
       );
-      expect(() =>
-        processor.testValidateInput(buffers, undefined as any),
-      ).toThrow('Missing meta');
-      expect(() => processor.testValidateInput(buffers, {} as any)).toThrow(
+      expect(() => processor.testValidateInput(undefined as any)).toThrow(
+        'Missing meta',
+      );
+      expect(() => processor.testValidateInput({} as any)).toThrow(
         'Missing meta',
       );
     });
 
-    it('throws when buffers is not an array', () => {
-      const meta = [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }];
-
-      expect(() => processor.testValidateInput(null as any, meta)).toThrow(
-        'Missing buffers',
-      );
-      expect(() => processor.testValidateInput(undefined as any, meta)).toThrow(
-        'Missing buffers',
-      );
-    });
-
-    it('throws when buffers and meta have different lengths', () => {
-      const buffers = [Buffer.from('test1'), Buffer.from('test2')];
-      const meta = [{ name: 'test.jpg', type: 'image/jpeg', hash: 'abc' }];
-
-      expect(() => processor.testValidateInput(buffers, meta)).toThrow(
-        'buffers/meta length mismatch',
-      );
+    it('throws when meta is an empty array', () => {
+      expect(() => processor.testValidateInput([])).toThrow('Missing meta');
     });
   });
 
@@ -188,7 +199,7 @@ describe('VisionsProcessor', () => {
         vLLM: 'llama3.2-vision',
         stream: false,
         numCtx: 4096,
-      } as FastifyMultipartDataWithFiltersReq['filters'];
+      } as VisionJobPayload['filters'];
 
       const result = processor.testBuildChatRequest(
         buffers,
@@ -216,7 +227,7 @@ describe('VisionsProcessor', () => {
       const filters = {
         vLLM: 'llama3.2-vision',
         stream: true,
-      } as FastifyMultipartDataWithFiltersReq['filters'];
+      } as VisionJobPayload['filters'];
 
       const result = processor.testBuildChatRequest(
         buffers,
@@ -235,7 +246,7 @@ describe('VisionsProcessor', () => {
       const filters = {
         vLLM: 'llama3.2-vision',
         prompt: [{ role: 'system', content: 'Additional instruction' }],
-      } as FastifyMultipartDataWithFiltersReq['filters'];
+      } as VisionJobPayload['filters'];
 
       const result = processor.testBuildChatRequest(
         buffers,
@@ -258,7 +269,7 @@ describe('VisionsProcessor', () => {
           null as any,
           undefined as any,
         ],
-      } as FastifyMultipartDataWithFiltersReq['filters'];
+      } as VisionJobPayload['filters'];
 
       const result = processor.testBuildChatRequest(
         buffers,
@@ -311,8 +322,11 @@ describe('VisionsProcessor', () => {
   });
 
   describe('handleChat', () => {
-    const createMockJob = (): Job<FastifyMultipartDataWithFiltersReq> =>
-      ({ name: 'test-request-id' }) as Job<FastifyMultipartDataWithFiltersReq>;
+    const createMockJob = (): Job<VisionJobPayload> =>
+      ({
+        name: 'test-request-id',
+        data: { meta: [], filters: {} },
+      }) as Job<VisionJobPayload>;
 
     it('calls ollamaService.chat with stream=false and invokes onChunk', async () => {
       const request = { messages: [], model: 'test' };

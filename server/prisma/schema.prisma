@@ -1,16 +1,17 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL")
 }
 
 enum DlqStatus {
   PENDING_RETRY
   REINSERTED
   ARCHIVED
+  PENDING_DELETION
 }
 
 model VisionsDlq {
@@ -21,7 +22,6 @@ model VisionsDlq {
   payload        Json      @default(dbgenerated())
   retryConfig    Json?
   failedReason   String?
-  stacktrace     String?
   failedAt       DateTime?
   attemptsMade   Int       @default(1)
   totalAttempts  Int       @default(1)

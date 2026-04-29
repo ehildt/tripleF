@@ -10,14 +10,19 @@ import { TerminusModule } from '@nestjs/terminus';
 import { AppConfigService } from './configs/app-config.service.js';
 import { BullMQConfigService } from './configs/bullmq-config.service.js';
 import { BullMQLoggerConfigService } from './configs/bullmq-logger-config.service.js';
+import { MinioConfigService } from './configs/minio-config.service.js';
 import { OllamaConfigService } from './configs/ollama-config.service.js';
 import { PostgresConfigService } from './configs/postgres-config.service.js';
 import { SocketIOConfigService } from './configs/socket-io-config.service.js';
 import { BULLMQ_QUEUE } from './constants/bullmq.constants.js';
 import { ClassicController } from './controllers/classic.controller.js';
 import { HealthController } from './controllers/health.controller.js';
+import { JobsController } from './controllers/jobs.controller.js';
 import { JsonRpcController } from './controllers/json-rpc.controller.js';
+import { MinioController } from './controllers/minio.controller.js';
 import { PostgresController } from './controllers/postgres.controller.js';
+import { ImageModule } from './modules/image.module.js';
+import { MinioModule } from './modules/minio.module.js';
 import { PostgresModule } from './modules/postgres.module.js';
 import { SocketEventModule } from './modules/socket-event.module.js';
 import { VisionsCompareProcessor } from './processors/visions-compare.processor.js';
@@ -26,7 +31,9 @@ import { VisionsOCRProcessor } from './processors/visions-ocr.processor.js';
 import { AnalyzeImageService } from './services/analyze-image.service.js';
 import { HealthService } from './services/health.service.js';
 import { JobTrackingService } from './services/job-tracking.service.js';
+import { JobsService } from './services/jobs.service.js';
 import { JsonRpcService } from './services/json-rpc.service.js';
+import { MinioHealthIndicator } from './services/minio-health-indicator.service.js';
 import { OllamaModelsService } from './services/ollama-models.service.js';
 import { PostgresHealthIndicator } from './services/postgres-health-indicator.service.js';
 import { SocketService } from './services/socket.service.js';
@@ -36,6 +43,8 @@ import { SocketService } from './services/socket.service.js';
     ClassicController,
     JsonRpcController,
     HealthController,
+    JobsController,
+    MinioController,
     PostgresController,
   ],
   providers: [
@@ -43,13 +52,17 @@ import { SocketService } from './services/socket.service.js';
     AnalyzeImageService,
     HealthService,
     JobTrackingService,
+    JobsService,
     JsonRpcService,
     OllamaModelsService,
+    MinioHealthIndicator,
     PostgresHealthIndicator,
     SocketService,
   ],
   imports: [
     HttpModule,
+    ImageModule,
+    MinioModule,
     PostgresModule,
     SocketEventModule,
     TerminusModule.forRoot({
@@ -61,6 +74,7 @@ import { SocketService } from './services/socket.service.js';
         AppConfigService,
         BullMQConfigService,
         BullMQLoggerConfigService,
+        MinioConfigService,
         OllamaConfigService,
         PostgresConfigService,
         SocketIOConfigService,

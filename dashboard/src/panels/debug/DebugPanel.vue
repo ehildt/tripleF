@@ -41,7 +41,7 @@ function select(result: DebugResult) {
 </script>
 
 <template>
-  <DebugPanelLayout>
+  <DebugPanelLayout class="min-h-50">
     <DebugPanelHeader>
       <DebugPanelHeaderTitle label="Request Log" />
       <DebugPanelHeaderMenu

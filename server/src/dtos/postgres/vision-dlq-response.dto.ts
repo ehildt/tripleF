@@ -23,9 +23,6 @@ export class VisionDlqResponseDto {
   failedReason?: string;
 
   @ApiProperty({ required: false })
-  stacktrace?: string;
-
-  @ApiProperty({ required: false })
   failedAt?: string;
 
   @ApiProperty()

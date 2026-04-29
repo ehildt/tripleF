@@ -10,6 +10,7 @@ import {
 import { AppConfigService } from '../configs/app-config.service.js';
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
 
+import { MinioHealthIndicator } from './minio-health-indicator.service.js';
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
 
 @Injectable()
@@ -22,6 +23,7 @@ export class HealthService {
     private readonly ocfg: OllamaConfigService,
     private readonly acfg: AppConfigService,
     private readonly pgIndicator: PostgresHealthIndicator,
+    private readonly minioIndicator: MinioHealthIndicator,
   ) {}
 
   @HealthCheck()
@@ -37,6 +39,7 @@ export class HealthService {
       () => this.memory.checkHeap('memory_heap', 256 * 1024 * 1024),
       () => this.memory.checkRSS('memory_rss', 256 * 1024 * 1024),
       () => this.pgIndicator.check('postgres'),
+      () => this.minioIndicator.check('minio'),
     ]);
   }
 

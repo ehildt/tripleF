@@ -38,13 +38,25 @@ describe('BullMQConfigAdapter', () => {
     expect(config.connection!.connectTimeout).toBe(30000);
     expect(config.connection!.commandTimeout).toBe(30000);
     expect(config.defaultJobOptions!.lifo).toBe(false);
-    expect(config.defaultJobOptions!.attempts).toBe(15);
+    expect(config.defaultJobOptions!.attempts).toBe(3);
     const backoff = config.defaultJobOptions!.backoff as unknown as {
       type?: string;
       delay: number;
     };
     expect(backoff.type).toBeUndefined();
-    expect(backoff.delay).toBe(5270);
+    expect(backoff.delay).toBe(10000);
+    expect(config.failedJobRetryDelayMs).toBe(300_000);
+    expect(config.failedJobReinstateBatchSize).toBe(10);
+  });
+
+  it('applies custom failedJobRetryDelayMs and failedJobReinstateBatchSize values', () => {
+    const config = BullMQConfigAdapter({
+      FAILED_JOB_RETRY_DELAY_MS: '600000',
+      FAILED_JOB_REINSTATE_BATCH_SIZE: '50',
+    });
+
+    expect(config.failedJobRetryDelayMs).toBe(600_000);
+    expect(config.failedJobReinstateBatchSize).toBe(50);
   });
 
   it('does not set TLS when BULLMQ_USE_TLS is not set', () => {

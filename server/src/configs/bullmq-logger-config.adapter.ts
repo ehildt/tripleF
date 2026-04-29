@@ -7,7 +7,7 @@ export function BullMQLoggerConfigAdapter(env = process.env): LoggerOptions {
   return {
     level: env.BULLMQ_LOG_LEVEL || 'info',
     base,
-    timestamp: getBooleanEnv(env.BULLMQ_LOG_TIMESTAMP_ENABLED, true)
+    timestamp: getBooleanEnv(env.BULLMQ_LOG_TIMESTAMP_ENABLED, true)!
       ? () => `,"timestamp":"${new Date().toISOString()}"`
       : false,
     transport: {
@@ -15,7 +15,7 @@ export function BullMQLoggerConfigAdapter(env = process.env): LoggerOptions {
       options: {
         translateTime:
           env.BULLMQ_LOG_TRANSPORT_TRANSLATE_TIME || 'yyyy-mm-dd HH:MM:ss.l',
-        colorize: getBooleanEnv(env.BULLMQ_LOG_TRANSPORT_COLORIZE, true),
+        colorize: getBooleanEnv(env.BULLMQ_LOG_TRANSPORT_COLORIZE, true)!,
         ignore: env.BULLMQ_LOG_TRANSPORT_IGNORE || 'pid,hostname',
       },
     },

@@ -24,4 +24,8 @@ export class QueryVisionDlqDto {
   @IsOptional()
   @IsNumberString()
   offset?: string;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

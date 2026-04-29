@@ -6,11 +6,11 @@
   "agent": {
     "build": {
       "mode": "primary",
-      "model": "ollama-cloud/kimi-k2.6:cloud"
+      "model": "ollama-cloud/deepseek-v4-pro"
     },
     "plan": {
       "mode": "primary",
-      "model": "ollama-cloud/kimi-k2.6:cloud"
+      "model": "ollama-cloud/deepseek-v4-pro"
     }
   },
   "mcp": {

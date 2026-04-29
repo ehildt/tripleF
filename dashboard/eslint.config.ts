@@ -91,6 +91,7 @@ export default defineConfig([
       'sonarjs/cognitive-complexity': 'warn',
       'sonarjs/todo-tag': 'warn',
       'sonarjs/no-identical-expressions': 'warn',
+      'vue/multi-word-component-names': 'off',
     },
   },
 

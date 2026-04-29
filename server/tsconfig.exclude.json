@@ -8,6 +8,7 @@
     "src/**/*.stories.?sx",
     "vitest.config.ts",
     "eslint.config.ts",
+    "prisma.config.ts",
     "src/dtos/json-rpc/mcp-response.dto.ts"
   ],
   "extends": "./tsconfig.json"

@@ -18,9 +18,7 @@ export class JsonRpcController {
 
   private wrap(id: number | string | undefined, result: unknown) {
     const envelope: Record<string, unknown> = { jsonrpc: '2.0', result };
-    if (id !== undefined) {
-      envelope.id = id;
-    }
+    if (id !== undefined) envelope.id = id;
     return envelope;
   }
 
@@ -52,6 +50,7 @@ export class JsonRpcController {
       args.requestId,
       args.images,
     );
+
     const buffers: Buffer[] = results.map((r) => r.buffer).filter(Boolean);
     const meta: Array<FastifyMultipartMeta> = results
       .map((r) => r.meta)

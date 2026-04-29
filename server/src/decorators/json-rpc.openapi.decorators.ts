@@ -18,10 +18,7 @@ import {
   McpToolsListReq,
   McpToolsListReq_Params,
 } from '../dtos/json-rpc/mcp-tools-list-req.dto.js';
-import {
-  McpVisionPayloadReq,
-  McpVisionPayloadReq_Params,
-} from '../dtos/json-rpc/mcp-vision-payload-req.dto.js';
+import { McpVisionPayloadReq } from '../dtos/json-rpc/mcp-vision-payload-req.dto.js';
 
 const ApiJsonRpcBodySchema = () =>
   ApiBody({

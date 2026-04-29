@@ -7,7 +7,7 @@ import { useClipboard } from '../composables/use-clipboard';
 import { createId } from '../utils/id.helper';
 import { delay } from '../utils/promise.helper';
 
-export type ActiveTab = 'rest' | 'mcp' | 'debug' | 'preprocessing';
+export type ActiveTab = 'rest' | 'mcp' | 'preprocessing' | 'dlq' | 'debug';
 
 export const useAppStore = defineStore('app', () => {
   const activeTab = ref<ActiveTab>('rest');

@@ -14,6 +14,39 @@ services:
     depends_on:
       - keydb
       - postgres
+      - minio
+    networks:
+      - ckir.io-visions
+
+  dashboard:
+    container_name: dashboard
+    restart: on-failure
+    build:
+      context: ./dashboard
+      target: local
+    volumes:
+      - ./dashboard:/app
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - VITE_SOCKET_URL=http://localhost:3000
+    ports:
+      - "5173:5173"
+    networks:
+      - ckir.io-visions
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: on-failure
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
     networks:
       - ckir.io-visions
 
@@ -35,22 +68,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - ckir.io-visions
-
-  dashboard:
-    container_name: dashboard
-    restart: on-failure
-    build:
-      context: ./dashboard
-      target: local
-    volumes:
-      - ./dashboard:/app
-    environment:
-      - VITE_API_URL=http://localhost:3000
-      - VITE_SOCKET_URL=http://localhost:3000
-    ports:
-      - "5173:5173"
     networks:
       - ckir.io-visions
 
@@ -85,6 +102,7 @@ volumes:
   ollama_data:
   keydb_data:
   postgres_data:
+  minio_data:
 
 networks:
   ckir.io-visions:

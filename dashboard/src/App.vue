@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue';
+
 import AppFooter from './components/app/AppFooter.vue';
 import AppHeader from './components/app/AppHeader.vue';
 import AppMainContent from './components/app/AppMainContent.vue';
 import AppThemeSwitcher from './components/app/AppThemeSwitcher.vue';
 import { useAppStore } from './stores/app';
 import { useDebugStore } from './stores/debug';
+import { useDlqStore } from './stores/dlq';
 import { useMcpMessagesStore, useRestMessagesStore } from './stores/messages';
 import { useModelsStore } from './stores/models';
 import { useSocketStore } from './stores/socket';
@@ -18,6 +21,10 @@ const modelsStore = useModelsStore();
 const appStore = useAppStore();
 const themeStore = useThemeStore();
 const socketStore = useSocketStore();
+const dlqStore = useDlqStore();
+
+const DLQ_POLL_INTERVAL = 30_000;
+let dlqPollTimer: ReturnType<typeof setInterval> | null = null;
 
 socketStore.setCallbacks(
   debugStore.addSocketDebugEntry,
@@ -38,6 +45,15 @@ const mcpSocketProvider = createSocketProvider(
 
 themeStore.initTheme();
 modelsStore.fetchModels();
+
+onMounted(() => {
+  dlqStore.fetchDlqCount();
+  dlqPollTimer = setInterval(() => dlqStore.fetchDlqCount(), DLQ_POLL_INTERVAL);
+});
+
+onUnmounted(() => {
+  if (dlqPollTimer) clearInterval(dlqPollTimer);
+});
 </script>
 
 <template>
@@ -48,6 +64,7 @@ modelsStore.fetchModels();
       :debug-count="debugStore.debugLogCount"
       :rest-count="restMessagesStore.completedCount"
       :mcp-count="mcpMessagesStore.completedCount"
+      :dlq-count="dlqStore.total"
       @tab-change="appStore.activeTab = $event"
     />
 

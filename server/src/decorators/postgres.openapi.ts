@@ -12,6 +12,7 @@ import {
   CreateVisionDlqDto,
   STATUSES,
 } from '../dtos/postgres/create-vision-dlq.dto.js';
+import { ReinstateDlqDto } from '../dtos/postgres/reinstate-dlq.dto.js';
 import { UpdateVisionDlqDto } from '../dtos/postgres/update-vision-dlq.dto.js';
 import { VisionDlqResponseDto } from '../dtos/postgres/vision-dlq-response.dto.js';
 
@@ -117,5 +118,36 @@ export const ApiDeleteVisionDlq = () =>
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'Entry not found',
+    }),
+  );
+
+export const ApiReinstateVisionDlq = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Reinstate DLQ entries into BullMQ for retry',
+      description:
+        'Accepts an optional body with requestIds, or a batchSize query param. Re-enqueues matching PENDING_RETRY entries into their respective queues.',
+    }),
+    ApiQuery({
+      name: 'batchSize',
+      required: false,
+      type: Number,
+      description: 'Number of jobs to reinstate when batching by time',
+      example: 10,
+    }),
+    ApiBody({ type: ReinstateDlqDto, required: false }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Reinstatement result',
+      schema: {
+        type: 'object',
+        properties: {
+          restored: { type: 'number' },
+          requestIds: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+      },
     }),
   );
