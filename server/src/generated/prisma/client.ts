@@ -31,8 +31,8 @@ export * from "./enums.js"
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more VisionsDlqs
- * const visionsDlqs = await prisma.visionsDlq.findMany()
+ * // Fetch zero or more HarnessDlqs
+ * const harnessDlqs = await prisma.harnessDlq.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -42,7 +42,7 @@ export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts exten
 export { Prisma }
 
 /**
- * Model VisionsDlq
+ * Model HarnessDlq
  * 
  */
-export type VisionsDlq = Prisma.VisionsDlqModel
+export type HarnessDlq = Prisma.HarnessDlqModel

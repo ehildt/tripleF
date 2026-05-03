@@ -17,9 +17,11 @@ autoresize
 azuretools
 bgclr
 bitnami
+blockquotes
 brcs
 BRCS
 BROKERCONNECT
+browserbase
 builddev
 buildprod
 bullmq
@@ -119,9 +121,11 @@ logprobs
 maxlength
 maxmemory
 metas
+metasearch
 metatype
 mhutchie
 mikestead
+minioadmin
 ministral
 mockedhash
 mongodb
@@ -142,6 +146,7 @@ NKEY
 nodenext
 nomic
 nrwl
+numctx
 nvidia
 obsidiandynamics
 ocfg
@@ -178,8 +183,10 @@ requirepass
 rimraf
 safelisted
 scanline
+searxng
 Securityscorecard
 sendfile
+serper
 Servicestack
 sibiraj
 simping
@@ -224,6 +231,7 @@ websockets
 webtransport
 webui
 WEBUI
+wikipedia
 wireframe
 wireframes
 Xmark

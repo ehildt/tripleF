@@ -4,73 +4,62 @@ import { ref } from 'vue';
 
 import { useAppStore } from './app';
 
-vi.mock('../composables/use-clipboard', () => ({
+vi.mock('@vueuse/core', () => ({
   useClipboard: vi.fn().mockReturnValue({
     copy: vi.fn().mockResolvedValue(undefined),
-    isCopied: ref(false),
-    clear: vi.fn(),
+    copied: ref(false),
+    isSupported: ref(true),
   }),
-}));
-
-let delayResolve: (() => void) | null = null;
-
-vi.mock('../utils/promise.helper', () => ({
-  delay: vi.fn().mockImplementation(() => {
-    return new Promise<void>((resolve) => {
-      delayResolve = resolve;
-    });
-  }),
+  useTimeoutFn: vi
+    .fn()
+    .mockImplementation((callback: () => void, ms: number) => {
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      return {
+        start: () => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(callback, ms);
+        },
+        stop: () => {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+        },
+      };
+    }),
 }));
 
 describe('useAppStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.restoreAllMocks();
-    delayResolve = null;
   });
 
   it('initializes with correct defaults', () => {
     const store = useAppStore();
-    expect(store.activeTab).toBe('rest');
+    expect(store.activeTab).toBe('http');
     expect(store.blinkLogo).toBe(true);
     expect(store.copiedIndex).toBeNull();
     expect(store.abortingId).toBeNull();
   });
 
-  it('handleCopyToClipboard sets copiedIndex and resets after delay resolves', async () => {
-    const store = useAppStore();
-    const promise = store.handleCopyToClipboard('hello', 3);
-    await Promise.resolve(); // flush up to first await
-    expect(store.copiedIndex).toBe(3);
-
-    delayResolve!();
-    await promise;
-    expect(store.copiedIndex).toBeNull();
-  });
-
-  it('refreshRestRequestId generates new id', () => {
-    const store = useAppStore();
-    const prev = store.restRequestId;
-    store.refreshRestRequestId();
-    expect(store.restRequestId).not.toBe(prev);
-  });
-
-  it('refreshMcpRequestId generates new id', () => {
-    const store = useAppStore();
-    const prev = store.mcpRequestId;
-    store.refreshMcpRequestId();
-    expect(store.mcpRequestId).not.toBe(prev);
-  });
-
-  it('handleModelSelected triggers blinkLogo', () => {
+  it('handleCopyToClipboard sets copiedIndex and resets after timeout', async () => {
     vi.useFakeTimers();
     const store = useAppStore();
-    store.blinkLogo = false;
-    store.handleModelSelected();
-    expect(store.blinkLogo).toBe(true);
-    vi.advanceTimersByTime(3000);
-    expect(store.blinkLogo).toBe(false);
+    await store.handleCopyToClipboard('hello', 3);
+    expect(store.copiedIndex).toBe(3);
+
+    vi.advanceTimersByTime(1500);
+    await Promise.resolve();
+    expect(store.copiedIndex).toBeNull();
     vi.useRealTimers();
+  });
+
+  it('refreshRequestId generates new id', () => {
+    const store = useAppStore();
+    const prev = store.requestId;
+    store.refreshRequestId();
+    expect(store.requestId).not.toBe(prev);
   });
 
   it('abortJob returns true on success', async () => {

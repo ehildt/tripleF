@@ -3,22 +3,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_PREPROCESSING_SETTINGS,
-  getDefaultParameterValue,
-  PARAMETER_VARIANTS,
   PREPROCESSING_SIZES,
   usePreprocessingStore,
   VARIANT_DESCRIPTIONS,
-  VARIANT_PARAMETERS,
 } from './preprocessing';
 
 describe('constants', () => {
   it('PREPROCESSING_SIZES has expected values', () => {
     expect(PREPROCESSING_SIZES).toEqual([256, 384, 512, 640, 768, 1024]);
-  });
-
-  it('getDefaultParameterValue returns default number', () => {
-    expect(getDefaultParameterValue('blurSigma')).toBe(0.5);
-    expect(getDefaultParameterValue('claheWidth')).toBe(8);
   });
 
   it('VARIANT_DESCRIPTIONS has descriptions for all variants', () => {
@@ -29,21 +21,6 @@ describe('constants', () => {
       'sharpened',
       'clahe',
     ]);
-  });
-
-  it('VARIANT_PARAMETERS maps correct parameters', () => {
-    expect(VARIANT_PARAMETERS.denoised).toEqual(['blurSigma']);
-    expect(VARIANT_PARAMETERS.sharpened).toEqual([
-      'sharpenSigma',
-      'sharpenM1',
-      'sharpenM2',
-    ]);
-    expect(VARIANT_PARAMETERS.clahe.length).toBe(6);
-  });
-
-  it('PARAMETER_VARIANTS is inverse of VARIANT_PARAMETERS', () => {
-    expect(PARAMETER_VARIANTS.blurSigma).toEqual(['denoised']);
-    expect(PARAMETER_VARIANTS.sharpenSigma).toEqual(['sharpened']);
   });
 });
 
@@ -163,22 +140,6 @@ describe('usePreprocessingStore', () => {
       store.setMaxHeight(null);
       const params = store.buildQueryParams();
       expect(params.pproc_resize_maxHeight).toBeUndefined();
-    });
-  });
-
-  describe('buildMcpPreprocessing', () => {
-    it('returns undefined when disabled', () => {
-      const store = usePreprocessingStore();
-      store.setEnabled(false);
-      expect(store.buildMcpPreprocessing()).toBeUndefined();
-    });
-
-    it('returns full config when enabled', () => {
-      const store = usePreprocessingStore();
-      const config = store.buildMcpPreprocessing();
-      expect(config).toBeDefined();
-      expect(config!.enabled).toBe(true);
-      expect(config!.resize.maxWidth).toBe(768);
     });
   });
 

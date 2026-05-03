@@ -51,7 +51,7 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  VisionsDlq: 'VisionsDlq'
+  HarnessDlq: 'HarnessDlq'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -70,7 +70,7 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const VisionsDlqScalarFieldEnum = {
+export const HarnessDlqScalarFieldEnum = {
   requestId: 'requestId',
   queueName: 'queueName',
   jobId: 'jobId',
@@ -87,7 +87,7 @@ export const VisionsDlqScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type VisionsDlqScalarFieldEnum = (typeof VisionsDlqScalarFieldEnum)[keyof typeof VisionsDlqScalarFieldEnum]
+export type HarnessDlqScalarFieldEnum = (typeof HarnessDlqScalarFieldEnum)[keyof typeof HarnessDlqScalarFieldEnum]
 
 
 export const SortOrder = {

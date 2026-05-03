@@ -1,35 +1,56 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
+import { extractPrompt } from '@/utils/extract-prompt.helper';
+
+import { useReadTracker } from '../composables/use-read-tracker';
 import type { DebugResult } from '../types/debug.model';
-import type { TrackRequestDetails } from '../types/socket-provider.model';
-import { extractPrompt } from '../utils/http.helper';
+import type { TrackRequestDetails } from '../types/track-request-details.model';
 import { createId } from '../utils/id.helper';
-import { createTrackingPromise, formatResponseBody } from './debug.helper';
-
-export type { DebugResult };
-
-export type { TrackRequestDetails } from '../types/socket-provider.model';
+import { buildFormDataSummary } from './helpers/build-form-data-summary.helper';
+import { createTrackingPromise } from './helpers/create-tracking-promise.helper';
+import { formatResponseBody } from './helpers/format-response-body.helper';
+import { sanitizeRequestBody } from './helpers/sanitize-request-body.helper';
 
 type DebugResultInput = Omit<DebugResult, 'id' | 'timestamp' | 'direction'>;
 
 export const useDebugStore = defineStore('debug', () => {
   const debugResults = ref<DebugResult[]>([]);
   const selectedDebugResult = ref<DebugResult | null>(null);
+  const readTracker = useReadTracker('read-debug-ids');
   const lastSeenDebugCount = ref(0);
   const debugTabVisited = ref(false);
+  const debugPaused = ref(localStorage.getItem('debug-paused') === 'true');
 
-  // Computed: Count of debug results for the counter
-  const debugLogCount = computed(() => {
-    return debugResults.value.length;
+  watch(debugPaused, (v) => {
+    localStorage.setItem('debug-paused', String(v));
   });
 
+  function markDebugAsRead(id: string) {
+    readTracker.markAsRead(id);
+  }
+
+  const debugLogCount = computed(() => {
+    const liveIds = debugResults.value.map((r) => r.id).filter(Boolean);
+    return readTracker.unreadCount(liveIds);
+  });
+
+  function isDebugRead(id: string) {
+    return readTracker.isRead(id);
+  }
+
+  function toggleDebugPaused() {
+    debugPaused.value = !debugPaused.value;
+  }
+
   function addDebugResult(result: DebugResultInput) {
+    if (debugPaused.value) return;
     debugResults.value.unshift({
       id: createId(),
       timestamp: new Date().toLocaleTimeString(),
       direction: 'request',
       ...result,
+      epoch: Date.now(),
     } as DebugResult);
   }
 
@@ -46,12 +67,14 @@ export const useDebugStore = defineStore('debug', () => {
     roomId?: string;
     event?: string;
     stream?: boolean;
-    sessionId?: string;
+    conversationId?: string;
   }) {
+    if (debugPaused.value) return;
     debugResults.value.unshift({
       id: createId(),
       timestamp: new Date().toLocaleTimeString(),
       ...result,
+      epoch: Date.now(),
     } as DebugResult);
   }
 
@@ -62,7 +85,10 @@ export const useDebugStore = defineStore('debug', () => {
     details?: TrackRequestDetails,
   ) {
     const tracking = createTrackingPromise(promise);
-    const prompt = extractPrompt(details?.formData);
+    const prompt = extractPrompt(details?.formData, details?.body);
+    const requestBody = details?.formData
+      ? buildFormDataSummary(details.formData)
+      : sanitizeRequestBody(details?.body);
 
     tracking.promise
       .then(async (res) => {
@@ -78,11 +104,13 @@ export const useDebugStore = defineStore('debug', () => {
           method,
           status: res.ok ? 'success' : 'error',
           statusCode: res.status,
-          errorMessage: res.ok ? undefined : responseBody,
+          errorMessage: res.ok
+            ? undefined
+            : `HTTP ${res.status}: ${responseBody.slice(0, 200)}`,
           responseTime,
           type: 'http',
           requestHeaders: details?.headers,
-          requestBody: details?.body,
+          requestBody,
           responseBody,
           requestId: details?.requestId,
           roomId: details?.roomId,
@@ -104,7 +132,7 @@ export const useDebugStore = defineStore('debug', () => {
           responseTime,
           type: 'http',
           requestHeaders: details?.headers,
-          requestBody: details?.body,
+          requestBody,
           prompt,
         });
         throw err;
@@ -135,11 +163,15 @@ export const useDebugStore = defineStore('debug', () => {
     debugLogCount,
     lastSeenDebugCount,
     debugTabVisited,
+    debugPaused,
+    toggleDebugPaused,
     addDebugResult,
     addSocketDebugEntry,
     trackRequest,
     clearDebugResults,
     incrementDebugCount,
     resetDebugCount,
+    markDebugAsRead,
+    isDebugRead,
   };
 });

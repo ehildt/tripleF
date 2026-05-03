@@ -1,0 +1,218 @@
+<script setup lang="ts">
+import { CircleGauge, MessageSquareText, Radio } from '@lucide/vue';
+
+import Dropdown from '../../../shared/ui/drop-down/DropDown.vue';
+import IconButton from '../shared/ui/icon-button/IconButton.vue';
+import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
+
+defineProps<{
+  isOpen: boolean;
+  isDisabled: boolean;
+  newConversationName: string;
+  newConversationSocketBinding: string;
+  availableSocketBindings: readonly string[];
+  filteredNumCtxOptions: readonly string[];
+  currentNumCtx: string;
+  defaultNumCtx: string;
+  formatCtx: (n: number) => string;
+  blinking?: { value: boolean };
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}>();
+
+defineEmits<{
+  toggleMenu: [];
+  'update:newConversationName': [value: string];
+  'update:newConversationSocketBinding': [value: string];
+  createConversation: [type: 'temporary' | 'persistent'];
+  selectNumCtx: [ctx: string];
+}>();
+</script>
+
+<template>
+  <div class="flex items-center gap-1.5 w-full justify-end">
+    <ToolbarLabel value="conversations" />
+    <div class="relative shrink-0">
+      <IconButton
+        :active="isOpen"
+        :disabled="isDisabled"
+        :blinking="blinking"
+        :on-mouse-enter="onMouseEnter"
+        :on-mouse-leave="onMouseLeave"
+        title="Sessions"
+        @click.stop="$emit('toggleMenu')"
+      >
+        <MessageSquareText class="w-4 h-4" />
+      </IconButton>
+      <div v-if="isOpen" class="new-conversation-menu__dropdown" @click.stop>
+        <div class="new-conversation-menu__content">
+          <div class="new-conversation-menu__input-wrapper">
+            <MessageSquareText class="new-conversation-menu__input-icon" />
+            <input
+              :value="newConversationName"
+              placeholder="Conversation name"
+              class="new-conversation-menu__input"
+              @input="
+                $emit(
+                  'update:newConversationName',
+                  ($event.target as HTMLInputElement).value,
+                )
+              "
+            />
+          </div>
+          <Dropdown
+            label="Context"
+            :options="filteredNumCtxOptions"
+            :model-value="currentNumCtx || defaultNumCtx"
+            :format-value="(v: string) => formatCtx(Number(v))"
+            @update:model-value="$emit('selectNumCtx', $event)"
+          >
+            <CircleGauge class="w-3.5 h-3.5" />
+          </Dropdown>
+          <Dropdown
+            :model-value="newConversationSocketBinding"
+            label="Socket"
+            :options="availableSocketBindings"
+            placeholder="(optional)"
+            @update:model-value="
+              $emit('update:newConversationSocketBinding', $event)
+            "
+          >
+            <Radio class="w-4 h-4" />
+          </Dropdown>
+          <div class="new-conversation-menu__button-row">
+            <button
+              class="new-conversation-menu__button"
+              :class="
+                newConversationName.trim()
+                  ? 'new-conversation-menu__button--enabled'
+                  : 'new-conversation-menu__button--disabled'
+              "
+              :disabled="!newConversationName.trim()"
+              @click.stop="$emit('createConversation', 'temporary')"
+            >
+              Temporary
+            </button>
+            <button
+              class="new-conversation-menu__button"
+              :class="
+                newConversationName.trim()
+                  ? 'new-conversation-menu__button--enabled'
+                  : 'new-conversation-menu__button--disabled'
+              "
+              :disabled="!newConversationName.trim()"
+              @click.stop="$emit('createConversation', 'persistent')"
+            >
+              Persistent
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.new-conversation-menu__dropdown {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: var(--spacing-1);
+  z-index: 100;
+  width: 14rem;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-divider);
+  box-shadow: 0 10px 15px -3px
+    color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
+}
+
+.new-conversation-menu__dropdown :deep(.relative button) {
+  font-size: 0.75rem;
+}
+
+.new-conversation-menu__dropdown :deep(.relative button span) {
+  font-size: 0.75rem;
+}
+
+.new-conversation-menu__dropdown :deep(.relative li) {
+  font-size: 0.75rem;
+}
+
+.new-conversation-menu__content {
+  padding: var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.new-conversation-menu__input-wrapper {
+  position: relative;
+}
+
+.new-conversation-menu__input-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--color-fg-muted);
+  position: absolute;
+  left: var(--spacing-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.new-conversation-menu__input {
+  width: 100%;
+  padding: var(--spacing-1-5) var(--spacing-3);
+  padding-left: 2rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  color: var(--color-fg-secondary);
+  outline: none;
+}
+
+.new-conversation-menu__input::placeholder {
+  color: var(--color-fg-muted);
+}
+
+.new-conversation-menu__input:focus {
+  border-color: var(--color-accent-primary);
+}
+
+.new-conversation-menu__button-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.new-conversation-menu__button {
+  flex: 1;
+  padding: var(--spacing-1-5) var(--spacing-2);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+  border: 1px solid var(--color-divider);
+}
+
+.new-conversation-menu__button--enabled {
+  cursor: pointer;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-fg-muted);
+}
+
+.new-conversation-menu__button--enabled:hover {
+  background-color: var(--color-accent-primary);
+  color: var(--color-fg-inverse);
+}
+
+.new-conversation-menu__button--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-fg-muted);
+}
+</style>

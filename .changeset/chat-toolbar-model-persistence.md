@@ -1,0 +1,23 @@
+---
+"dashboard": minor
+---
+- Model selection persisted to localStorage (key: vision-selected-model), fallback when no session model set
+- Think options added: off, low, medium, high with BrainCircuit icon, persisted to localStorage (key: vision-selected-think)
+- Think value stored in session store (setSessionThink), displayed in ChatToolbar with dropdown selector
+- Toolbar menu separators added (gradient hairline dividers) between sessions list, subscriptions list, and file lists
+- Conversation creation: binding selector for event/room pairs from connected socket events, event auto-subscription on new session
+- Subscription management: restoring subscriptions from session on load, active toggle support
+- Session subscriptions stored per session and restored on session switch
+- use-submit composable: removed triggerConnectButtonBlink dependency, model/think passed from session
+- RequestId refresh display removed from ChatToolbar
+- App store: removed requestId, refreshRequestId — request IDs managed per-session
+- Socket store: subscription persistence restored from localStorage on init
+- Session cards: conversation list uses date-fns formatDistanceToNow for relative timestamps
+- Compose files refactored: single compose.yml split into compose.infra.yml (postgres, minio, keydb, ollama) and compose.app.yml (server, dashboard)
+- Server: .env.example updated with new socket config variables
+- Server: socket.io config adapter and service updated for CORS/environment
+- Server: classic controller, compact controller, JSON-RPC controller refactored for multipart support
+- Server: vision constants expanded for think and compact parameters
+- Server: MCP vision payload DTO enhanced with think and compact fields
+- Server: compact service wired to multipart Fastify data
+- EventLog Exchange: metadata opacity reduced from 60% to 40% for subtler display

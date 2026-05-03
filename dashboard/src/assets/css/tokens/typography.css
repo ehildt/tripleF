@@ -1,0 +1,6 @@
+@theme {
+  /* Fonts */
+  --font-mono:
+    'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}

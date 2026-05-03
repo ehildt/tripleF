@@ -6,15 +6,14 @@ import App from './App.vue';
 
 vi.mock('./stores/app', () => ({
   useAppStore: () => ({
-    activeTab: 'rest',
+    activeTab: 'http',
     blinkLogo: false,
-    restRequestId: 'req-id',
-    mcpRequestId: 'mcp-id',
-    refreshRestRequestId: vi.fn(),
-    refreshMcpRequestId: vi.fn(),
+    requestId: 'req-id',
+    refreshRequestId: vi.fn(),
     abortJob: vi.fn(),
     handleCopyToClipboard: vi.fn(),
-    handleModelSelected: vi.fn(),
+    isTabVisible: () => true,
+    tabVisibility: {},
   }),
 }));
 
@@ -29,13 +28,7 @@ vi.mock('./stores/debug', () => ({
 }));
 
 vi.mock('./stores/messages', () => ({
-  useRestMessagesStore: () => ({
-    completedCount: 0,
-    messages: [],
-    addMessage: vi.fn(),
-    clearMessages: vi.fn(),
-  }),
-  useMcpMessagesStore: () => ({
+  useApiMessagesStore: () => ({
     completedCount: 0,
     messages: [],
     addMessage: vi.fn(),
@@ -46,6 +39,9 @@ vi.mock('./stores/messages', () => ({
 vi.mock('./stores/models', () => ({
   useModelsStore: () => ({
     models: ['llama'],
+    modelNames: ['llama'],
+    numCtxOptions: [],
+    formatCtx: (n: number) => String(n),
     modelsLoading: false,
     fetchModels: vi.fn(),
   }),
@@ -55,6 +51,9 @@ vi.mock('./stores/socket', () => ({
   useSocketStore: () => ({
     connectionState: 'disconnected',
     socketId: '',
+    connectedEvents: new Set(),
+    connectedRooms: new Map(),
+    connectedPairs: [],
     setCallbacks: vi.fn(),
     getSocket: vi.fn(() => ({ connected: false })),
     trackRequest: vi.fn(),
@@ -64,10 +63,11 @@ vi.mock('./stores/socket', () => ({
     connect: vi.fn(),
     disconnect: vi.fn(),
     subscribeToEvent: vi.fn(),
+    ensureSocketConnection: vi.fn(),
   }),
 }));
 
-vi.mock('./stores/socket.helper', () => ({
+vi.mock('./stores/helpers/create-socket-provider.helper', () => ({
   createSocketProvider: () => ({
     getSocket: vi.fn(() => ({ connected: false })),
     trackRequest: vi.fn(),
@@ -83,14 +83,14 @@ vi.mock('./stores/socket.helper', () => ({
 vi.mock('./stores/theme', () => ({
   useThemeStore: () => ({
     currentTheme: 'souls',
-    themeColors: {
-      souls: { name: 'Dark Souls', primary: '#cd853f' },
-      diablo: { name: 'Diablo', primary: '#c0392b' },
-    },
-    darkThemes: ['souls', 'diablo'],
-    darkThemes2: [],
+    isDarkMode: true,
     initTheme: vi.fn(),
+    toggleDarkMode: vi.fn(),
   }),
+  THEMES: [
+    { key: 'souls', name: 'Dark Souls', primary: '#e6a23c' },
+    { key: 'residentevil', name: 'Resident Evil', primary: '#c0392b' },
+  ],
 }));
 
 describe('App', () => {

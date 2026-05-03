@@ -1,23 +1,8 @@
-import { computed, ref } from 'vue';
+import { onScopeDispose, ref } from 'vue';
 
 export function useBlink(defaultDuration = 1000) {
   const isBlinking = ref(false);
   let timer: ReturnType<typeof setTimeout> | null = null;
-
-  function blink(duration = defaultDuration) {
-    start();
-    timer = setTimeout(() => {
-      stop();
-    }, duration);
-  }
-
-  function start() {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-    isBlinking.value = true;
-  }
 
   function stop() {
     if (timer) {
@@ -27,10 +12,22 @@ export function useBlink(defaultDuration = 1000) {
     isBlinking.value = false;
   }
 
-  const isActive = computed(() => isBlinking.value);
+  function start() {
+    stop();
+    isBlinking.value = true;
+  }
+
+  function blink(duration = defaultDuration) {
+    start();
+    timer = setTimeout(() => {
+      stop();
+    }, duration);
+  }
+
+  onScopeDispose(stop);
 
   return {
-    isBlinking: isActive,
+    isBlinking,
     blink,
     start,
     stop,

@@ -1,56 +1,34 @@
-import { toast, type ToastOptions, type ToastPosition } from 'vue3-toastify';
+import type { ToastType } from './toast-state';
+import { useToastState } from './toast-state';
 
-import ToastCloseButton from '../components/toast/Toast.CloseButton.vue';
-import type { ToastType } from './use-toast.type';
+export type { ToastType };
 
-export type { ToastOptions, ToastPosition, ToastType };
-
-export interface ToastOptionsWithTheme extends ToastOptions {
-  theme?: 'auto' | 'light' | 'dark' | 'colored';
-  position?: ToastPosition;
+export interface ToastOptions {
+  duration?: number;
 }
 
 export function useToast() {
+  const { add } = useToastState();
+
   const show = (
     message: string,
     type: ToastType = 'default',
-    options?: ToastOptionsWithTheme,
+    options?: ToastOptions,
   ) => {
-    const defaultOptions: ToastOptionsWithTheme = {
-      position: 'bottom-right',
-      autoClose: 3000,
-      closeOnClick: true,
-      pauseOnFocusLoss: true,
-      pauseOnHover: true,
-      theme: 'dark',
-      closeButton: ToastCloseButton as any,
-    };
-
-    switch (type) {
-      case 'info':
-        return toast.info(message, { ...defaultOptions, ...options });
-      case 'success':
-        return toast.success(message, { ...defaultOptions, ...options });
-      case 'warning':
-        return toast.warn(message, { ...defaultOptions, ...options });
-      case 'error':
-        return toast.error(message, { ...defaultOptions, ...options });
-      default:
-        return toast(message, { ...defaultOptions, ...options });
-    }
+    add(message, type, options?.duration);
   };
 
   return {
     show,
-    info: (message: string, options?: ToastOptionsWithTheme) =>
+    info: (message: string, options?: ToastOptions) =>
       show(message, 'info', options),
-    success: (message: string, options?: ToastOptionsWithTheme) =>
+    success: (message: string, options?: ToastOptions) =>
       show(message, 'success', options),
-    warning: (message: string, options?: ToastOptionsWithTheme) =>
+    warning: (message: string, options?: ToastOptions) =>
       show(message, 'warning', options),
-    error: (message: string, options?: ToastOptionsWithTheme) =>
+    error: (message: string, options?: ToastOptions) =>
       show(message, 'error', options),
-    default: (message: string, options?: ToastOptionsWithTheme) =>
+    default: (message: string, options?: ToastOptions) =>
       show(message, 'default', options),
   };
 }

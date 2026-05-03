@@ -1,11 +1,9 @@
 import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
+import { SocketIOServerConfig } from '@ehildt/nestjs-socket.io';
 
-import { SocketIOConfig } from './socket-io-config.service.js';
-
-export function SocketIOConfigAdapter(env = process.env): SocketIOConfig {
+export function SocketIOConfigAdapter(env = process.env): SocketIOServerConfig {
   return {
-    event: env.SOCKET_IO_EVENT!,
     opts: {
       maxHttpBufferSize: getNumberEnv(
         env.SOCKET_IO_MAX_HTTP_BUFFER_SIZE,

@@ -1,9 +1,0 @@
-export const X_VISION_LLM = 'x-vision-llm';
-export const REQUEST_ID = 'requestId';
-export const EVENT = 'event';
-export const STREAM = 'stream';
-export const ROOM_ID = 'roomId';
-export const NUM_CTX = 'numCtx';
-export const PROMPT = 'prompt';
-export const IMAGES = 'images';
-export const TASK = 'task';

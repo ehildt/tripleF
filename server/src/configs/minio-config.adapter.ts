@@ -9,6 +9,8 @@ export interface MinioConfig {
   accessKey: string;
   secretKey: string;
   bucket: string;
+  /** Default object lifetime for uploaded job buffers, in days. */
+  ttlDays: number;
 }
 
 export const MinioConfigSchema = Joi.object<MinioConfig>({
@@ -18,6 +20,7 @@ export const MinioConfigSchema = Joi.object<MinioConfig>({
   accessKey: Joi.string().required(),
   secretKey: Joi.string().required(),
   bucket: Joi.string().required(),
+  ttlDays: Joi.number().integer().positive().default(7),
 }).required();
 
 export function MinioConfigAdapter(env = process.env): MinioConfig {
@@ -28,5 +31,6 @@ export function MinioConfigAdapter(env = process.env): MinioConfig {
     accessKey: env.MINIO_ACCESS_KEY!,
     secretKey: env.MINIO_SECRET_KEY!,
     bucket: env.MINIO_BUCKET ?? 'failed-jobs',
+    ttlDays: getNumberEnv(env.MINIO_TTL_DAYS, 7) as number,
   };
 }

@@ -22,8 +22,6 @@ A Vue 3 frontend dashboard for CKIR.IO/VISIONS, built with Vite, Tailwind CSS v4
 
 <div align="center">
 
-
-
 # Dependencies
 
 [![@headlessui/vue](https://img.shields.io/badge/_headlessui_vue-v1.7.23-2c60c9.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2c60c9&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/headlessui)
@@ -40,8 +38,6 @@ A Vue 3 frontend dashboard for CKIR.IO/VISIONS, built with Vite, Tailwind CSS v4
 <br>
 
 <div align="center">
-
-
 
 # DevDependencies
 

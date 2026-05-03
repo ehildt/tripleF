@@ -1,8 +1,8 @@
+import pWaitFor from 'p-wait-for';
 import { computed, type Ref } from 'vue';
 
 import type { ConnectionState } from '../stores/socket';
 import type { SocketProvider } from '../types/socket-provider.model';
-import { delay } from '../utils/promise.helper';
 import { useBlink } from './use-blink';
 import { useToast } from './use-toast';
 
@@ -41,13 +41,12 @@ export function useSocketSubscription(
 
     const socket = socketProvider.getSocket();
     if (!socket?.connected) {
-      console.warn('Socket not connected, waiting...');
-      await delay(500);
-    }
-
-    if (!socket?.connected) {
-      toast.error('Socket not connected. Unable to subscribe.');
-      return;
+      try {
+        await pWaitFor(() => socket?.connected === true, { timeout: 500 });
+      } catch {
+        toast.error('Socket not connected. Unable to subscribe.');
+        return;
+      }
     }
 
     if (!isEventConnected(eventName)) {

@@ -16,10 +16,18 @@ describe('OllamaConfigAdapter', () => {
     expect(config).toEqual({
       host: 'localhost',
       keepAlive: '10m',
+      streamChunkTimeoutMs: 60000,
+      streamTotalTimeoutMs: 600000,
+      generateTotalTimeoutMs: 300000,
+      enableSmoothStream: true,
       systemPrompts: {
         DESCRIBE: 'Custom describe prompt',
         COMPARE: 'Custom compare prompt',
         OCR: 'Custom OCR prompt',
+      },
+      developerPrompts: {
+        IMAGE_CONSTRAINT: '',
+        TEXT_CONSTRAINT: '',
       },
     });
   });
@@ -27,7 +35,7 @@ describe('OllamaConfigAdapter', () => {
   it('uses default values when env vars are not provided', () => {
     const config = OllamaConfigAdapter({});
 
-    expect(config.host).toBe('127.0.0.1');
+    expect(config.host).toBe('http://127.0.0.1:11434/api');
     expect(config.keepAlive).toBe('5m');
   });
 

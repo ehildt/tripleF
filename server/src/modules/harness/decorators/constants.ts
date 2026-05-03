@@ -1,0 +1,8 @@
+export const X_HARNESS_LLM = 'x-harness-llm';
+export const REQUEST_ID = 'requestId';
+export const EVENT = 'event';
+export const STREAM = 'stream';
+export const ROOM_ID = 'roomId';
+export const NUM_CTX = 'numCtx';
+export const PROMPT = 'prompt';
+export const IMAGES = 'images';

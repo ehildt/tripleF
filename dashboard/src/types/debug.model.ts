@@ -1,6 +1,7 @@
 export interface DebugResult {
   id: string;
   timestamp: string;
+  epoch?: number;
   endpoint: string;
   method: string;
   status: 'success' | 'error';
@@ -19,6 +20,10 @@ export interface DebugResult {
   stream?: boolean;
   model?: string;
   prompt?: string;
-  sessionId?: string;
+  conversationId?: string;
   preprocessing?: string;
+  promptEvalCount?: number;
+  evalCount?: number;
+  evalDuration?: number;
+  totalDuration?: number;
 }

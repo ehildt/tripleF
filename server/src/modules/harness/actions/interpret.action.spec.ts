@@ -1,0 +1,606 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { describe, expect, it, vi } from 'vitest';
+
+import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+
+import { InterpretActionService } from './interpret.action.js';
+
+describe('InterpretActionService', () => {
+  let service: InterpretActionService;
+  let aiSdkService: AiSdkService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InterpretActionService,
+        {
+          provide: AiSdkService,
+          useValue: {
+            generateChat: vi.fn(),
+          },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              serper: {
+                enabled: false,
+                web: { enabled: false },
+                images: { enabled: false },
+                news: { enabled: false },
+                places: { enabled: false },
+                shopping: { enabled: false },
+                reviews: { enabled: false },
+                videos: { enabled: false },
+                webpageFetch: { enabled: false },
+              },
+              brave: {
+                enabled: false,
+                web: { enabled: false },
+                images: { enabled: false },
+                news: { enabled: false },
+                video: { enabled: false },
+              },
+              searxng: { enabled: false },
+              browserBase: {
+                enabled: false,
+                search: { enabled: false },
+                fetch: { enabled: false },
+              },
+            }),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<InterpretActionService>(InterpretActionService);
+    aiSdkService = module.get<AiSdkService>(AiSdkService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('accepts null clarificationQuestion when clarification is not needed', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: JSON.stringify({
+        template: 'text',
+        tools: [],
+        reasoning: 'chat',
+        needsClarification: false,
+        clarificationQuestion: null,
+        plan: {},
+      }),
+    });
+
+    const result = await service.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    expect(result.intent.template).toBe('text');
+    expect(result.intent.needsClarification).toBe(false);
+    expect(result.intent.clarificationQuestion).toBeNull();
+    expect(result.intent.plan).toEqual({});
+  });
+
+  it('returns clarification without invoking tools', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: JSON.stringify({
+        template: 'text',
+        tools: [],
+        reasoning: 'ambiguous',
+        needsClarification: true,
+        clarificationQuestion: 'Which one?',
+        plan: {},
+      }),
+    });
+
+    const result = await service.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'Tell me about it' }],
+    });
+
+    expect(result.intent.needsClarification).toBe(true);
+    expect(result.inputTokens).toBeUndefined();
+    expect(result.outputTokens).toBeUndefined();
+  });
+
+  it('classifies intent and plan for image tasks', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: JSON.stringify({
+        template: 'describe',
+        tools: [],
+        reasoning: 'image description',
+        needsClarification: false,
+        plan: {
+          images: {
+            resize: true,
+            variants: ['grayscale'],
+          },
+        },
+      }),
+      totalUsage: { inputTokens: 10, outputTokens: 5 },
+    });
+
+    const result = await service.execute({
+      model: 'model',
+      messages: [
+        {
+          role: 'user',
+          content: 'describe',
+          images: [Buffer.from('image')],
+        },
+      ],
+    });
+
+    expect(result.intent.template).toBe('describe');
+    expect(result.intent.plan?.images?.resize).toBe(true);
+    expect(result.intent.plan?.images?.variants).toEqual(['grayscale']);
+    expect(result.inputTokens).toBe(10);
+    expect(result.outputTokens).toBe(5);
+  });
+
+  it('strips images from classification prompt but preserves attachment marker', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: JSON.stringify({
+        template: 'describe',
+        tools: [],
+        reasoning: 'image description',
+        needsClarification: false,
+        plan: {},
+      }),
+    });
+
+    await service.execute({
+      model: 'model',
+      messages: [
+        {
+          role: 'user',
+          content: 'describe',
+          images: [Buffer.from('image')],
+        },
+      ],
+    });
+
+    const classifyCall = (aiSdkService.generateChat as any).mock.calls[0][0]
+      .messages as any[];
+    expect(classifyCall.some((m) => m.images)).toBe(false);
+    const userMessage = classifyCall.find((m) => m.role === 'user');
+    expect(userMessage?.content).toContain('[1 image attached]');
+  });
+
+  it('keeps the actual user text prompt for image classification', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: JSON.stringify({
+        template: 'describe',
+        tools: [],
+        reasoning: 'image description',
+        needsClarification: false,
+        plan: {},
+      }),
+    });
+
+    await service.execute({
+      model: 'model',
+      messages: [
+        {
+          role: 'user',
+          content: 'das hier koennten diese goettinen sein?',
+        },
+        {
+          role: 'user',
+          content: 'Image(s):\ntest.png (hash: abc)',
+          images: [Buffer.from('image')],
+        },
+      ],
+    });
+
+    const classifyCall = (aiSdkService.generateChat as any).mock.calls[0][0]
+      .messages as any[];
+    const userMessage = classifyCall.find((m) => m.role === 'user');
+    expect(userMessage?.content).toContain(
+      'das hier koennten diese goettinen sein?',
+    );
+    expect(userMessage?.content).toContain('[1 image attached]');
+    expect(userMessage?.content).not.toContain('Image(s):');
+  });
+
+  it('adds enabled image and video search tools for article template', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InterpretActionService,
+        {
+          provide: AiSdkService,
+          useValue: {
+            generateChat: vi.fn().mockResolvedValue({
+              text: JSON.stringify({
+                template: 'article',
+                tools: ['webSearch'],
+                reasoning: 'research',
+                needsClarification: false,
+                plan: {},
+              }),
+            }),
+          },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              serper: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: false },
+                places: { enabled: false },
+                shopping: { enabled: false },
+                reviews: { enabled: false },
+                videos: { enabled: true },
+                webpageFetch: { enabled: false },
+              },
+              brave: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: false },
+                video: { enabled: true },
+              },
+              searxng: { enabled: false },
+              browserBase: {
+                enabled: false,
+                search: { enabled: false },
+                fetch: { enabled: false },
+              },
+            }),
+          },
+        },
+      ],
+    }).compile();
+
+    const serviceWithTools = module.get<InterpretActionService>(
+      InterpretActionService,
+    );
+
+    const result = await serviceWithTools.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'research topic' }],
+    });
+
+    expect(result.intent.template).toBe('article');
+    expect(result.intent.tools).toContain('webSearch');
+    expect(result.intent.tools).toContain('serperImageSearch');
+    expect(result.intent.tools).toContain('braveImageSearch');
+    expect(result.intent.tools).toContain('serperVideoSearch');
+    expect(result.intent.tools).toContain('braveVideoSearch');
+  });
+
+  it('adds enabled image and video search tools for news template', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InterpretActionService,
+        {
+          provide: AiSdkService,
+          useValue: {
+            generateChat: vi.fn().mockResolvedValue({
+              text: JSON.stringify({
+                template: 'news',
+                tools: ['webSearch', 'serperNewsSearch'],
+                reasoning: 'current events',
+                needsClarification: false,
+                plan: {},
+              }),
+            }),
+          },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              serper: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: true },
+                places: { enabled: false },
+                shopping: { enabled: false },
+                reviews: { enabled: false },
+                videos: { enabled: true },
+                webpageFetch: { enabled: false },
+              },
+              brave: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: false },
+                news: { enabled: true },
+                video: { enabled: false },
+              },
+              searxng: { enabled: false },
+              browserBase: {
+                enabled: false,
+                search: { enabled: false },
+                fetch: { enabled: false },
+              },
+            }),
+          },
+        },
+      ],
+    }).compile();
+
+    const serviceWithTools = module.get<InterpretActionService>(
+      InterpretActionService,
+    );
+
+    const result = await serviceWithTools.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'latest news' }],
+    });
+
+    expect(result.intent.template).toBe('news');
+    expect(result.intent.tools).toContain('webSearch');
+    expect(result.intent.tools).toContain('serperNewsSearch');
+    expect(result.intent.tools).toContain('serperImageSearch');
+    expect(result.intent.tools).toContain('serperVideoSearch');
+    expect(result.intent.tools).not.toContain('braveImageSearch');
+    expect(result.intent.tools).not.toContain('braveVideoSearch');
+  });
+
+  it('does not add media search tools for non-media templates', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: JSON.stringify({
+        template: 'text',
+        tools: [],
+        reasoning: 'chat',
+        needsClarification: false,
+        plan: {},
+      }),
+    });
+
+    const result = await service.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    expect(result.intent.template).toBe('text');
+    expect(result.intent.tools).toEqual([]);
+  });
+
+  it('adds enabled media search tools for summary and evaluation templates', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InterpretActionService,
+        {
+          provide: AiSdkService,
+          useValue: {
+            generateChat: vi.fn().mockResolvedValue({
+              text: JSON.stringify({
+                template: 'evaluation',
+                tools: ['webSearch'],
+                reasoning: 'review',
+                needsClarification: false,
+                plan: {},
+              }),
+            }),
+          },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              serper: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: false },
+                places: { enabled: false },
+                shopping: { enabled: false },
+                reviews: { enabled: false },
+                videos: { enabled: true },
+                webpageFetch: { enabled: false },
+              },
+              brave: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: false },
+                video: { enabled: true },
+              },
+              searxng: { enabled: false },
+              browserBase: {
+                enabled: false,
+                search: { enabled: false },
+                fetch: { enabled: false },
+              },
+            }),
+          },
+        },
+      ],
+    }).compile();
+
+    const serviceWithTools = module.get<InterpretActionService>(
+      InterpretActionService,
+    );
+
+    const result = await serviceWithTools.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'online reviews' }],
+    });
+
+    expect(result.intent.template).toBe('evaluation');
+    expect(result.intent.tools).toEqual(
+      expect.arrayContaining([
+        'webSearch',
+        'serperImageSearch',
+        'serperVideoSearch',
+        'braveImageSearch',
+        'braveVideoSearch',
+      ]),
+    );
+    expect(result.intent.tools).toHaveLength(5);
+  });
+
+  it('defaults imageCount and videoCount to 6 when media tools are selected', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InterpretActionService,
+        {
+          provide: AiSdkService,
+          useValue: {
+            generateChat: vi.fn().mockResolvedValue({
+              text: JSON.stringify({
+                template: 'article',
+                tools: ['webSearch', 'serperImageSearch', 'serperVideoSearch'],
+                reasoning: 'research',
+                needsClarification: false,
+                plan: {},
+              }),
+            }),
+          },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              serper: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: false },
+                places: { enabled: false },
+                shopping: { enabled: false },
+                reviews: { enabled: false },
+                videos: { enabled: true },
+                webpageFetch: { enabled: false },
+              },
+              brave: {
+                enabled: false,
+                web: { enabled: false },
+                images: { enabled: false },
+                news: { enabled: false },
+                video: { enabled: false },
+              },
+              searxng: { enabled: false },
+              browserBase: {
+                enabled: false,
+                search: { enabled: false },
+                fetch: { enabled: false },
+              },
+            }),
+          },
+        },
+      ],
+    }).compile();
+
+    const serviceWithTools = module.get<InterpretActionService>(
+      InterpretActionService,
+    );
+
+    const result = await serviceWithTools.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'research topic' }],
+    });
+
+    expect(result.intent.imageCount).toBe(0);
+    expect(result.intent.videoCount).toBe(0);
+  });
+
+  it('preserves explicit imageCount and videoCount from the classifier', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InterpretActionService,
+        {
+          provide: AiSdkService,
+          useValue: {
+            generateChat: vi.fn().mockResolvedValue({
+              text: JSON.stringify({
+                template: 'article',
+                tools: ['webSearch', 'serperImageSearch', 'serperVideoSearch'],
+                imageCount: 7,
+                videoCount: 2,
+                reasoning: 'research',
+                needsClarification: false,
+                plan: {},
+              }),
+            }),
+          },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              serper: {
+                enabled: true,
+                apiKey: 'key',
+                web: { enabled: true },
+                images: { enabled: true },
+                news: { enabled: false },
+                places: { enabled: false },
+                shopping: { enabled: false },
+                reviews: { enabled: false },
+                videos: { enabled: true },
+                webpageFetch: { enabled: false },
+              },
+              brave: {
+                enabled: false,
+                web: { enabled: false },
+                images: { enabled: false },
+                news: { enabled: false },
+                video: { enabled: false },
+              },
+              searxng: { enabled: false },
+              browserBase: {
+                enabled: false,
+                search: { enabled: false },
+                fetch: { enabled: false },
+              },
+            }),
+          },
+        },
+      ],
+    }).compile();
+
+    const serviceWithTools = module.get<InterpretActionService>(
+      InterpretActionService,
+    );
+
+    const result = await serviceWithTools.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'show me 7 images and 2 videos' }],
+    });
+
+    expect(result.intent.imageCount).toBe(7);
+    expect(result.intent.videoCount).toBe(2);
+  });
+
+  it('throws when classification output is empty', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({ text: '' });
+
+    await expect(
+      service.execute({
+        model: 'model',
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+    ).rejects.toThrow('Intent classification returned empty output');
+  });
+
+  it('throws when classification output is not valid JSON', async () => {
+    (aiSdkService.generateChat as any).mockResolvedValue({
+      text: 'not json',
+    });
+
+    await expect(
+      service.execute({
+        model: 'model',
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+    ).rejects.toThrow('Intent classification produced invalid JSON');
+  });
+});

@@ -5,19 +5,19 @@ check_working_directory
 check_branch_identifier
 
 # makes sure all dependencies are up to date
-info 'pnpm -r ncu:validate' && pnpm -r ncu:validate
+info 'pn -r ncu:validate' && pn -r ncu:validate
 
-info 'pnpm -r lint' && pnpm -r lint
+info 'pn -r lint' && pn -r lint
 
 # dry run tests
-info 'pnpm -r test --silent' && pnpm -r test --silent
-info 'pnpm -r test:cov' && pnpm -r test:cov
+info 'pn -r test --silent' && pn -r test --silent
+info 'pn -r test:cov' && pn -r test:cov
 
 # no unused exports
-info 'pnpm -r lint:unused' && pnpm -r lint:unused
+info 'pn -r lint:unused' && pn -r lint:unused
 
 # add known orphans to .depcruiserrc.json
-info 'pnpm -r depcruise' && pnpm -r depcruise
+info 'pn -r depcruise' && pn -r depcruise
 
 # whitelist by adding the package to depcheckrc.yml
-info 'pnpm -r depcheck' && pnpm -r depcheck
+info 'pn -r depcheck' && pn -r depcheck

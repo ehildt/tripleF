@@ -23,15 +23,15 @@ describe('useSocketSubscription', () => {
   it('connect subscribes to an event', async () => {
     const provider = createProvider();
     const { connect } = useSocketSubscription(provider as any);
-    await connect('vision');
-    expect(provider.listenToEvent).toHaveBeenCalledWith('vision');
+    await connect('harness');
+    expect(provider.listenToEvent).toHaveBeenCalledWith('harness');
   });
 
   it('connect joins a room', async () => {
     const provider = createProvider();
     const { connect } = useSocketSubscription(provider as any);
-    await connect('vision', 'room1');
-    expect(provider.joinRoom).toHaveBeenCalledWith('room1', 'vision');
+    await connect('harness', 'room1');
+    expect(provider.joinRoom).toHaveBeenCalledWith('room1', 'harness');
   });
 
   it('connect does nothing for empty event', async () => {
@@ -42,19 +42,19 @@ describe('useSocketSubscription', () => {
   });
 
   it('isEventConnected reflects provider state', () => {
-    const provider = createProvider(new Set(['vision']));
+    const provider = createProvider(new Set(['harness']));
     const { isEventConnected } = useSocketSubscription(provider as any);
-    expect(isEventConnected('vision')).toBe(true);
+    expect(isEventConnected('harness')).toBe(true);
     expect(isEventConnected('other')).toBe(false);
   });
 
   it('isRoomConnected reflects provider state', () => {
     const rooms = new Map<string, Set<string>>();
-    rooms.set('vision', new Set(['room1']));
+    rooms.set('harness', new Set(['room1']));
     const provider = createProvider(new Set(), rooms);
     const { isRoomConnected } = useSocketSubscription(provider as any);
-    expect(isRoomConnected('vision', 'room1')).toBe(true);
-    expect(isRoomConnected('vision', 'room2')).toBe(false);
+    expect(isRoomConnected('harness', 'room1')).toBe(true);
+    expect(isRoomConnected('harness', 'room2')).toBe(false);
   });
 
   describe('isSubscribeDisabled', () => {
@@ -66,7 +66,7 @@ describe('useSocketSubscription', () => {
 
     it('returns false when not connected and event filled', () => {
       const provider = createProvider();
-      const eventRef = ref('vision');
+      const eventRef = ref('harness');
       const { isSubscribeDisabled } = useSocketSubscription(provider as any, {
         event: eventRef,
         roomId: ref(''),
@@ -75,8 +75,8 @@ describe('useSocketSubscription', () => {
     });
 
     it('returns true when event connected and no room', () => {
-      const provider = createProvider(new Set(['vision']));
-      const eventRef = ref('vision');
+      const provider = createProvider(new Set(['harness']));
+      const eventRef = ref('harness');
       const { isSubscribeDisabled } = useSocketSubscription(provider as any, {
         event: eventRef,
         roomId: ref(''),
@@ -86,9 +86,9 @@ describe('useSocketSubscription', () => {
 
     it('returns true when event and room already connected', () => {
       const rooms = new Map<string, Set<string>>();
-      rooms.set('vision', new Set(['room1']));
-      const provider = createProvider(new Set(['vision']), rooms);
-      const eventRef = ref('vision');
+      rooms.set('harness', new Set(['room1']));
+      const provider = createProvider(new Set(['harness']), rooms);
+      const eventRef = ref('harness');
       const { isSubscribeDisabled } = useSocketSubscription(provider as any, {
         event: eventRef,
         roomId: ref('room1'),

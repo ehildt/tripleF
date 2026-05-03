@@ -3,22 +3,24 @@ import { computed, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 
-import type {
-  DlqListResponse,
-  DlqQueryParams,
-  VisionDlq,
-} from '../types/vision-dlq.model';
+import { useReadTracker } from '../composables/use-read-tracker';
+import type { DlqEntry } from '../types/dlq-entry.model';
+import type { DlqListResponse } from '../types/dlq-list-response.model';
+import type { DlqQueryParams } from '../types/dlq-query-params.model';
 
 export const useDlqStore = defineStore('dlq', () => {
-  const entries = ref<VisionDlq[]>([]);
-  const selectedEntry = ref<VisionDlq | null>(null);
+  const entries = ref<DlqEntry[]>([]);
+  const selectedEntry = ref<DlqEntry | null>(null);
   const selectedRequestIds = ref<Set<string>>(new Set());
+  const readTracker = useReadTracker('read-dlq-ids');
+  const knownIds = ref<string[]>([]);
   const total = ref(0);
   const limit = ref(20);
   const offset = ref(0);
-  const filterStatus = ref('Status');
-  const filterQueue = ref('Queue');
+  const filterStatus = ref('');
+  const filterQueue = ref('');
   const filterSearch = ref('');
+  const hideRead = ref(false);
   const error = ref<string | null>(null);
 
   const hasNext = computed(() => offset.value + limit.value < total.value);
@@ -28,17 +30,39 @@ export const useDlqStore = defineStore('dlq', () => {
     () => Math.floor(offset.value / limit.value) + 1,
   );
   const selectedCount = computed(() => selectedRequestIds.value.size);
-  const allSelected = computed(
-    () =>
-      entries.value.length > 0 &&
-      entries.value.every((e) => selectedRequestIds.value.has(e.requestId)),
-  );
+  const allSelected = computed(() => {
+    const selectable = entries.value.filter((e) => e.status !== 'Removed');
+    return (
+      selectable.length > 0 &&
+      selectable.every((e) => selectedRequestIds.value.has(e.requestId))
+    );
+  });
+
+  function entryReadKey(e: DlqEntry): string {
+    return `${e.requestId}::${e.failedAt ?? ''}::${e.attemptsMade}`;
+  }
+
+  const unreadDlqCount = computed(() => {
+    const currentIds = knownIds.value.length
+      ? knownIds.value
+      : entries.value.map(entryReadKey);
+    return readTracker.unreadCount(currentIds);
+  });
+
+  function markEntryAsRead(entry: DlqEntry) {
+    readTracker.markAsRead(entryReadKey(entry));
+  }
+
+  function isEntryRead(entry: DlqEntry) {
+    return readTracker.isRead(entryReadKey(entry));
+  }
 
   function setEntries(res: DlqListResponse) {
     entries.value = res.data;
     total.value = res.total;
     limit.value = res.limit;
     offset.value = res.offset;
+
     const visibleIds = new Set(res.data.map((e) => e.requestId));
     selectedRequestIds.value = new Set(
       [...selectedRequestIds.value].filter((id) => visibleIds.has(id)),
@@ -50,7 +74,19 @@ export const useDlqStore = defineStore('dlq', () => {
     }
   }
 
-  function selectEntry(entry: VisionDlq | null) {
+  function updateEntry(updated: DlqEntry) {
+    const idx = entries.value.findIndex(
+      (e) => e.requestId === updated.requestId,
+    );
+    if (idx !== -1) {
+      entries.value.splice(idx, 1, updated);
+    }
+    if (selectedEntry.value?.requestId === updated.requestId) {
+      selectedEntry.value = updated;
+    }
+  }
+
+  function selectEntry(entry: DlqEntry | null) {
     selectedEntry.value = entry;
   }
 
@@ -68,7 +104,11 @@ export const useDlqStore = defineStore('dlq', () => {
 
   function setAllSelected(selected: boolean) {
     if (selected) {
-      selectedRequestIds.value = new Set(entries.value.map((e) => e.requestId));
+      selectedRequestIds.value = new Set(
+        entries.value
+          .filter((e) => e.status !== 'Removed')
+          .map((e) => e.requestId),
+      );
     } else {
       selectedRequestIds.value = new Set();
     }
@@ -100,10 +140,10 @@ export const useDlqStore = defineStore('dlq', () => {
       limit: limit.value,
       offset: offset.value,
     };
-    if (filterStatus.value && filterStatus.value !== 'Status') {
+    if (filterStatus.value) {
       params.status = filterStatus.value as any;
     }
-    if (filterQueue.value && filterQueue.value !== 'Queue') {
+    if (filterQueue.value) {
       params.queueName = filterQueue.value;
     }
     if (filterSearch.value) {
@@ -114,13 +154,35 @@ export const useDlqStore = defineStore('dlq', () => {
 
   async function fetchDlqCount() {
     try {
-      const res = await fetch(
-        getApiUrl('/api/v1/jobs/failed?limit=1&offset=0'),
-      );
-      if (res.ok) {
-        const data = await res.json();
-        total.value = data.total;
+      const PAGE_SIZE = 200;
+
+      const url = getApiUrl(`/api/v1/dlq?limit=${PAGE_SIZE}&offset=0`);
+      const res = await fetch(url);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      total.value = data.total;
+      const allData: DlqEntry[] = [...data.data];
+      const pages = Math.ceil(data.total / PAGE_SIZE);
+
+      if (pages > 1) {
+        const fetches: Promise<DlqEntry[]>[] = [];
+        for (let i = 1; i < pages; i++) {
+          const pageUrl = getApiUrl(
+            `/api/v1/dlq?limit=${PAGE_SIZE}&offset=${i * PAGE_SIZE}`,
+          );
+          fetches.push(
+            fetch(pageUrl).then((r) =>
+              r.ok ? r.json().then((d) => d.data as DlqEntry[]) : [],
+            ),
+          );
+        }
+        const pagesData = await Promise.all(fetches);
+        for (const page of pagesData) allData.push(...page);
       }
+
+      knownIds.value = allData.map(entryReadKey);
+      readTracker.pruneMissing(knownIds.value);
     } catch {
       // silently ignore count fetch failures
     }
@@ -129,6 +191,7 @@ export const useDlqStore = defineStore('dlq', () => {
   return {
     entries,
     selectedEntry,
+    knownIds,
     selectedRequestIds,
     selectedCount,
     allSelected,
@@ -138,12 +201,14 @@ export const useDlqStore = defineStore('dlq', () => {
     filterStatus,
     filterQueue,
     filterSearch,
+    hideRead,
     error,
     hasNext,
     hasPrev,
     totalPages,
     currentPage,
     setEntries,
+    updateEntry,
     selectEntry,
     clearSelection,
     toggleSelection,
@@ -154,5 +219,8 @@ export const useDlqStore = defineStore('dlq', () => {
     prevPage,
     getQueryParams,
     fetchDlqCount,
+    unreadDlqCount,
+    markEntryAsRead,
+    isEntryRead,
   };
 });

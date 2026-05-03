@@ -1,0 +1,258 @@
+import { SocketIOService } from '@ehildt/nestjs-socket.io';
+import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
+
+import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+
+import { HarnessChatStreamingService } from './harness-chat-streaming.service.js';
+
+describe('HarnessChatStreamingService', () => {
+  let service: HarnessChatStreamingService;
+  let io: SocketIOService;
+  let aiSdkService: AiSdkService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        HarnessChatStreamingService,
+        {
+          provide: SocketIOService,
+          useValue: {
+            emit: vi.fn(),
+            emitTo: vi.fn(),
+          },
+        },
+        {
+          provide: AiSdkService,
+          useValue: {
+            streamChat: vi.fn(),
+            generateChat: vi.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<HarnessChatStreamingService>(
+      HarnessChatStreamingService,
+    );
+    io = module.get<SocketIOService>(SocketIOService);
+    aiSdkService = module.get<AiSdkService>(AiSdkService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('emits clarification question and does not call AI SDK', async () => {
+    const ctx = {
+      doneReason: 'clarification',
+      requestId: 'req-1',
+      filters: {},
+      model: 'model',
+      roomId: 'room-1',
+      event: 'harness',
+      outputs: {
+        intent: { clarificationQuestion: 'What do you mean?' },
+      },
+    } as any;
+
+    await service.streamResult(ctx);
+
+    expect(aiSdkService.streamChat).not.toHaveBeenCalled();
+    expect(aiSdkService.generateChat).not.toHaveBeenCalled();
+    expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      model: 'model',
+      template: 'text',
+      delta: 'What do you mean?',
+      done: true,
+    });
+  });
+
+  it('emits error payload as text template delta and does not call AI SDK', async () => {
+    const ctx = {
+      doneReason: 'error',
+      requestId: 'req-1',
+      filters: {},
+      model: 'model',
+      roomId: 'room-1',
+      event: 'harness',
+      error: 'boom',
+    } as any;
+
+    await service.streamResult(ctx);
+
+    expect(aiSdkService.streamChat).not.toHaveBeenCalled();
+    expect(aiSdkService.generateChat).not.toHaveBeenCalled();
+    expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      model: 'model',
+      template: 'text',
+      delta: 'boom',
+      error: 'boom',
+      done: true,
+    });
+  });
+
+  it('emits missing content error as text template delta when no final content exists', async () => {
+    const ctx = {
+      done: false,
+      doneReason: undefined,
+      requestId: 'req-1',
+      filters: {},
+      model: 'model',
+      roomId: 'room-1',
+      event: 'harness',
+      stream: false,
+      outputs: { toolResults: [] },
+    } as any;
+
+    await service.streamResult(ctx);
+
+    expect(aiSdkService.streamChat).not.toHaveBeenCalled();
+    expect(aiSdkService.generateChat).not.toHaveBeenCalled();
+    expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      model: 'model',
+      template: 'text',
+      delta: 'No response content produced',
+      error: 'No response content produced',
+      done: true,
+    });
+  });
+
+  it('emits empty final delta for streamed structured responses', async () => {
+    const ctx = {
+      done: false,
+      doneReason: undefined,
+      requestId: 'req-1',
+      sessionId: 'sess-1',
+      filters: { conversationId: 'conv-1' },
+      model: 'model',
+      roomId: 'room-1',
+      event: 'harness',
+      stream: true,
+      hasNewImages: true,
+      lastUserPrompt: 'describe this',
+      processedMeta: [{ name: 'img.png', hash: 'h' }],
+      buffers: [Buffer.from('image')],
+      outputs: {
+        intent: { template: 'describe' },
+        finalContent: '{"title":"Image"}',
+        toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
+      },
+    } as any;
+
+    await service.streamResult(ctx);
+
+    expect(aiSdkService.streamChat).not.toHaveBeenCalled();
+    expect(aiSdkService.generateChat).not.toHaveBeenCalled();
+
+    expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      model: 'model',
+      template: 'describe',
+      delta: '',
+      images: [
+        {
+          imageUrl: '/api/v1/storage/sess-1/conv-1/h',
+          imageAlt: 'img.png',
+          title: 'img.png',
+          caption: 'img.png',
+        },
+      ],
+      toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
+      meta: [{ name: 'img.png', hash: 'h' }],
+      prompt: 'describe this',
+      promptEvalCount: undefined,
+      evalCount: undefined,
+      done: true,
+    });
+  });
+
+  it('emits full JSON delta for non-streamed structured responses', async () => {
+    const ctx = {
+      done: false,
+      doneReason: undefined,
+      requestId: 'req-1',
+      sessionId: 'sess-1',
+      filters: { conversationId: 'conv-1' },
+      model: 'model',
+      roomId: 'room-1',
+      event: 'harness',
+      stream: false,
+      hasNewImages: true,
+      lastUserPrompt: 'describe this',
+      processedMeta: [{ name: 'img.png', hash: 'h' }],
+      buffers: [Buffer.from('image')],
+      outputs: {
+        intent: { template: 'describe' },
+        finalContent: '{"title":"Image"}',
+        toolResults: [],
+      },
+    } as any;
+
+    await service.streamResult(ctx);
+
+    expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      model: 'model',
+      template: 'describe',
+      delta: '{"title":"Image"}',
+      images: [
+        {
+          imageUrl: '/api/v1/storage/sess-1/conv-1/h',
+          imageAlt: 'img.png',
+          title: 'img.png',
+          caption: 'img.png',
+        },
+      ],
+      toolResults: [],
+      meta: [{ name: 'img.png', hash: 'h' }],
+      prompt: 'describe this',
+      promptEvalCount: undefined,
+      evalCount: undefined,
+      done: true,
+    });
+  });
+
+  it('emits compacting status and streams compact content', async () => {
+    (aiSdkService.streamChat as any).mockResolvedValue({
+      fullStream: (async function* () {
+        yield { type: 'text-delta', text: 'summary' };
+      })(),
+    });
+
+    await service.streamCompact({
+      requestId: 'req-1',
+      roomId: 'room-1',
+      event: 'harness',
+      model: 'model',
+      messages: [{ role: 'user', content: 'hello' }],
+      keepAlive: '5m',
+      numCtx: 4096,
+      think: false,
+      stream: true,
+    });
+
+    expect(io.emitTo).toHaveBeenNthCalledWith(1, 'harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      compact: true,
+      status: 'compacting',
+    });
+
+    expect(io.emitTo).toHaveBeenLastCalledWith('harness', 'room-1', {
+      event: 'harness',
+      requestId: 'req-1',
+      compact: true,
+      message: { role: 'assistant', content: 'summary' },
+      done: true,
+    });
+  });
+});

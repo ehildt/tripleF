@@ -2,44 +2,58 @@ import { defineStore } from 'pinia';
 import { io } from 'socket.io-client';
 import { ref } from 'vue';
 
-import { makeDebugEntry } from './socket.helper';
+import type { SocketDebugEntry } from '../types/socket-debug-entry.model';
+import { getPersistentSocketSessionId } from './helpers/get-persistent-socket-session-id.helper';
+import { makeDebugEntry } from './helpers/make-debug-entry.helper';
+
+const SOCKET_SESSION_ID = getPersistentSocketSessionId();
 
 export type ConnectionState = 'connected' | 'disconnected' | 'error';
-
-export interface SocketDebugEntry {
-  endpoint: string;
-  method: string;
-  status: 'success' | 'error';
-  statusCode?: number;
-  errorMessage?: string;
-  responseTime: number;
-  type: 'http' | 'socket';
-  direction: 'request' | 'response';
-  requestId?: string;
-  roomId?: string;
-  event?: string;
-  stream?: boolean;
-  sessionId?: string;
-}
 
 export const useSocketStore = defineStore('socket', () => {
   const socket = ref<any>(null);
   const connectionState = ref<ConnectionState>('disconnected');
   const socketError = ref<string | null>(null);
   const lastConnectionEvent = ref<string>('disconnected');
-  const socketId = ref<string | null>(null);
+  const socketId = ref<string | null>(SOCKET_SESSION_ID);
 
   const connectedEvents = ref<Set<string>>(new Set());
   const connectedRooms = ref<Map<string, Set<string>>>(new Map());
+  const connectedPairs = ref<string[]>([]);
+
+  function buildConnectedPairs() {
+    const result: string[] = [];
+    const sortedEvents = Array.from(connectedEvents.value).sort();
+    for (const event of sortedEvents) {
+      const rooms = connectedRooms.value.get(event);
+      if (rooms && rooms.size > 0) {
+        for (const room of Array.from(rooms).sort()) {
+          result.push(`${event}::${room}`);
+        }
+      } else {
+        result.push(event);
+      }
+    }
+    connectedPairs.value = result;
+  }
+
+  function bumpSubscription() {
+    connectedEvents.value = new Set(connectedEvents.value);
+    const cloned = new Map<string, Set<string>>();
+    for (const [k, v] of connectedRooms.value) {
+      cloned.set(k, new Set(v));
+    }
+    connectedRooms.value = cloned;
+    buildConnectedPairs();
+  }
 
   const eventListeners = new Map<string, (...args: unknown[]) => void>();
 
-  let pendingEvent: string | null = null;
+  const pendingEvents: Set<string> = new Set();
+  const pendingRooms: Array<{ roomId: string; eventName: string }> = [];
   let addSocketDebugEntryCallback: ((entry: SocketDebugEntry) => void) | null =
     null;
-  let addRestMessageCallback: ((event: string, data: unknown) => void) | null =
-    null;
-  let addMcpMessageCallback: ((event: string, data: unknown) => void) | null =
+  let addMessageCallback: ((event: string, data: unknown) => void) | null =
     null;
 
   // Track which request IDs have been logged to avoid duplicates for streaming
@@ -47,12 +61,10 @@ export const useSocketStore = defineStore('socket', () => {
 
   function setCallbacks(
     onDebug: ((entry: SocketDebugEntry) => void) | null,
-    onRestMessage: ((event: string, data: unknown) => void) | null,
-    onMcpMessage: ((event: string, data: unknown) => void) | null,
+    onMessage: ((event: string, data: unknown) => void) | null,
   ) {
     addSocketDebugEntryCallback = onDebug;
-    addRestMessageCallback = onRestMessage;
-    addMcpMessageCallback = onMcpMessage;
+    addMessageCallback = onMessage;
   }
 
   function initSocket() {
@@ -62,25 +74,30 @@ export const useSocketStore = defineStore('socket', () => {
       return socket.value;
     }
 
-    socket.value = io(import.meta.env.VITE_SOCKET_URL || '', {
+    socket.value = io(import.meta.env.VITE_SOCKET_URL || undefined, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      auth: { conversationId: SOCKET_SESSION_ID },
     });
 
     socket.value.on('connect', () => {
       connectionState.value = 'connected';
       socketError.value = null;
-      socketId.value = socket.value?.id || null;
+      socketId.value = SOCKET_SESSION_ID;
 
       if (lastConnectionEvent.value !== 'connected') {
         lastConnectionEvent.value = 'connected';
       }
-      if (pendingEvent) {
-        applyEventListener(pendingEvent);
-        pendingEvent = null;
+      for (const ev of pendingEvents) {
+        applyEventListener(ev);
       }
+      pendingEvents.clear();
+      for (const pr of pendingRooms) {
+        joinRoom(pr.roomId, pr.eventName);
+      }
+      pendingRooms.length = 0;
     });
 
     socket.value.on('disconnect', () => {
@@ -115,7 +132,10 @@ export const useSocketStore = defineStore('socket', () => {
 
   function listenToEvent(eventName: string) {
     if (!socket.value?.connected) {
-      pendingEvent = eventName;
+      if (!socket.value) {
+        ensureSocketConnection();
+      }
+      pendingEvents.add(eventName);
       return;
     }
 
@@ -125,31 +145,42 @@ export const useSocketStore = defineStore('socket', () => {
   function applyEventListener(eventName: string) {
     if (eventListeners.has(eventName)) {
       connectedEvents.value.add(eventName);
+      bumpSubscription();
       return;
     }
 
     const listener = (data: unknown) => {
-      // Inject sessionId into the data before passing to message callback
+      // Inject conversationId into the data before passing to message callback
       const dataWithSession = data as Record<string, unknown>;
       if (typeof dataWithSession === 'object' && dataWithSession !== null) {
-        dataWithSession.sessionId = socketId.value;
+        dataWithSession.conversationId = socketId.value;
       }
 
-      // Route to both stores - each store will filter based on tracked request IDs
-      addRestMessageCallback?.(eventName, dataWithSession);
-      addMcpMessageCallback?.(eventName, dataWithSession);
+      // Route to message store - it will filter based on tracked request IDs
+      addMessageCallback?.(eventName, dataWithSession);
+
+      // Normalize Ollama snake_case fields
+      const raw = dataWithSession as Record<string, unknown>;
+      const promptEvalCount = (raw.promptEvalCount ?? raw.prompt_eval_count) as
+        number | undefined;
+      const evalCount = (raw.evalCount ?? raw.eval_count) as number | undefined;
+      const evalDuration = (raw.evalDuration ?? raw.eval_duration) as
+        number | undefined;
+      const totalDuration = (raw.totalDuration ?? raw.total_duration) as
+        number | undefined;
 
       // Log socket data received in debug log
-      const d = dataWithSession as {
+      const d = raw as unknown as {
         requestId?: string;
         roomId?: string;
         meta?: Array<{ requestId?: string }>;
         stream?: boolean;
+        done?: boolean;
       };
       const requestId = d?.requestId || d?.meta?.[0]?.requestId;
 
       if (requestId) {
-        // Only log if we haven't logged this request ID yet (prevents duplicate entries for streaming)
+        // First DATA event per requestId
         if (!loggedRequestIds.value.has(requestId)) {
           loggedRequestIds.value.add(requestId);
           addSocketDebugEntryCallback?.(
@@ -162,7 +193,26 @@ export const useSocketStore = defineStore('socket', () => {
               roomId: d?.roomId,
               event: eventName,
               stream: d?.stream,
-              sessionId: socketId.value || undefined,
+              conversationId: socketId.value || undefined,
+            }),
+          );
+        }
+        // Final event with token data
+        if (d?.done && (promptEvalCount != null || evalCount != null)) {
+          addSocketDebugEntryCallback?.(
+            makeDebugEntry({
+              endpoint: `socket.io:${eventName}`,
+              method: 'DONE',
+              status: 'success',
+              direction: 'response',
+              requestId: requestId,
+              roomId: d?.roomId,
+              event: eventName,
+              conversationId: socketId.value || undefined,
+              promptEvalCount,
+              evalCount,
+              evalDuration,
+              totalDuration,
             }),
           );
         }
@@ -172,6 +222,7 @@ export const useSocketStore = defineStore('socket', () => {
     eventListeners.set(eventName, listener);
     socket.value!.on(eventName, listener);
     connectedEvents.value.add(eventName);
+    bumpSubscription();
 
     addSocketDebugEntryCallback?.(
       makeDebugEntry({
@@ -179,7 +230,7 @@ export const useSocketStore = defineStore('socket', () => {
         method: 'LISTEN',
         status: 'success',
         direction: 'request',
-        sessionId: socketId.value || undefined,
+        conversationId: socketId.value || undefined,
       }),
     );
   }
@@ -194,6 +245,7 @@ export const useSocketStore = defineStore('socket', () => {
       eventListeners.delete(eventName);
     }
     connectedEvents.value.delete(eventName);
+    bumpSubscription();
   }
 
   function closeEvent(eventName: string) {
@@ -213,6 +265,7 @@ export const useSocketStore = defineStore('socket', () => {
       }
 
       connectedEvents.value.delete(eventName);
+      bumpSubscription();
 
       addSocketDebugEntryCallback?.(
         makeDebugEntry({
@@ -220,7 +273,7 @@ export const useSocketStore = defineStore('socket', () => {
           method: 'UNLISTEN',
           status: 'success',
           direction: 'request',
-          sessionId: socketId.value || undefined,
+          conversationId: socketId.value || undefined,
         }),
       );
     }
@@ -235,7 +288,7 @@ export const useSocketStore = defineStore('socket', () => {
       if (rooms.size === 0) {
         connectedRooms.value.delete(eventName);
       }
-
+      bumpSubscription();
       addSocketDebugEntryCallback?.(
         makeDebugEntry({
           endpoint: `socket.io:${eventName}:room:${roomId}`,
@@ -244,13 +297,14 @@ export const useSocketStore = defineStore('socket', () => {
           direction: 'request',
           event: eventName,
           roomId: roomId,
-          sessionId: socketId.value || undefined,
+          conversationId: socketId.value || undefined,
         }),
       );
     }
   }
 
   function joinRoom(roomId: string, eventName: string) {
+    if (connectedRooms.value.get(eventName)?.has(roomId)) return;
     if (socket.value?.connected) {
       socket.value.emit('join', roomId);
 
@@ -258,7 +312,7 @@ export const useSocketStore = defineStore('socket', () => {
         connectedRooms.value.set(eventName, new Set());
       }
       connectedRooms.value.get(eventName)!.add(roomId);
-
+      bumpSubscription();
       addSocketDebugEntryCallback?.(
         makeDebugEntry({
           endpoint: `socket.io:${eventName}:room:${roomId}`,
@@ -267,9 +321,11 @@ export const useSocketStore = defineStore('socket', () => {
           direction: 'request',
           event: eventName,
           roomId: roomId,
-          sessionId: socketId.value || undefined,
+          conversationId: socketId.value || undefined,
         }),
       );
+    } else {
+      pendingRooms.push({ roomId, eventName });
     }
   }
 
@@ -283,6 +339,7 @@ export const useSocketStore = defineStore('socket', () => {
         if (rooms.size === 0) {
           connectedRooms.value.delete(eventName);
         }
+        bumpSubscription();
       }
 
       addSocketDebugEntryCallback?.(
@@ -293,25 +350,10 @@ export const useSocketStore = defineStore('socket', () => {
           direction: 'request',
           event: eventName,
           roomId: roomId,
-          sessionId: socketId.value || undefined,
+          conversationId: socketId.value || undefined,
         }),
       );
     }
-  }
-
-  function getConnectedEventsAndRooms() {
-    const result: string[] = [];
-    const sortedEvents = Array.from(connectedEvents.value).sort();
-    for (const event of sortedEvents) {
-      const rooms = connectedRooms.value.get(event);
-      if (rooms && rooms.size > 0) {
-        const sortedRooms = Array.from(rooms).sort();
-        result.push(`${event}::${sortedRooms.join('::')}`);
-      } else {
-        result.push(event);
-      }
-    }
-    return result;
   }
 
   return {
@@ -322,6 +364,7 @@ export const useSocketStore = defineStore('socket', () => {
     socketId,
     connectedEvents,
     connectedRooms,
+    connectedPairs,
     setCallbacks,
     initSocket,
     ensureSocketConnection,
@@ -331,6 +374,5 @@ export const useSocketStore = defineStore('socket', () => {
     stopListening,
     closeEvent,
     closeRoom,
-    getConnectedEventsAndRooms,
   };
 });

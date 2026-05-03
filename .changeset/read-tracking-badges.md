@@ -1,0 +1,11 @@
+---
+"dashboard": patch
+---
+- Added use-read-tracker composable for tracking read/unread state of entries by ID
+- DLQ store: added unread count tracking (unreadDlqCount) with markEntryAsRead/isEntryRead
+- Messages stores (rest, mcp, debug): added isRead/markAsRead tracking with readIds sets
+- Debug store: added unread debug log count and markDebugAsRead
+- App.vue wires read state callbacks through component tree (isRestMessageRead, isMcpMessageRead, selectRestMessage, selectMcpMessage, selectDebugMarkRead)
+- EventLog item: unread entries get opacity-30 dimming, click marks as read
+- AppHeader tabs now display unread DLQ count instead of total count
+- .gitignore: added .eslintcache

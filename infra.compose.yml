@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: visions
+      POSTGRES_PASSWORD: visions
+      POSTGRES_DB: visions
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ckir.io-visions
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: on-failure
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - ckir.io-visions
+
+  keydb:
+    image: eqalpha/keydb
+    container_name: keydb
+    restart: on-failure
+    ports:
+      - "6379:6379"
+    volumes:
+      - keydb_data:/data
+      - ./server/keydb.conf:/usr/local/etc/keydb/keydb.conf
+    command: keydb-server /usr/local/etc/keydb/keydb.conf
+    networks:
+      - ckir.io-visions
+
+#  ollama:
+#    image: ollama/ollama:latest
+#    container_name: ollama
+#    restart: unless-stopped
+#    ports:
+#      - "11434:11434"
+#    volumes:
+#      - ./ollama_data:/root/.ollama
+#    gpus: all
+#    environment:
+#      - OLLAMA_HOST=0.0.0.0
+#    networks:
+#      - ckir.io-visions
+
+#  searxng:
+#    image: searxng/searxng:latest
+#    container_name: searxng
+#    restart: on-failure
+#    ports:
+#      - "4000:8080"
+#    volumes:
+#      - ./searxng:/etc/searxng:ro
+#    environment:
+#      - SEARXNG_BASE_URL=http://localhost:4000
+#      - SEARXNG_UWSGI=true
+#    networks:
+#      - ckir.io-visions
+
+volumes:
+  postgres_data:
+  minio_data:
+  keydb_data:
+#  ollama_data:
+
+networks:
+  ckir.io-visions:
+    #    external: true
+    name: ckir.io-visions
