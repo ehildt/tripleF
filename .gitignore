@@ -4,3 +4,8 @@ coverage
 .depbadge
 TODO.md
 .env
+.eslintcache
+ollama_data
+.pnpm-store/
+*storybook.log
+storybook-static

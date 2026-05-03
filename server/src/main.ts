@@ -22,6 +22,15 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { AppConfigService } from './configs/app-config.service.js';
 import { MainModule } from './main.module.js';
 
+process.on('unhandledRejection', (reason) => {
+  const log = new Logger('UnhandledRejection');
+  log.warn(reason instanceof Error ? reason.message : String(reason));
+});
+process.on('uncaughtException', (error) => {
+  const log = new Logger('UncaughtException');
+  log.warn(error.message);
+});
+
 void (async () => {
   const logger = { logger: getLogLevel(process.env.LOG_LEVEL) };
   const adapter = new FastifyAdapter({

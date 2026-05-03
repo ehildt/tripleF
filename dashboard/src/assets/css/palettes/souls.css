@@ -1,0 +1,81 @@
+:root[data-theme='souls'] {
+  --color-accent-primary: #e6a23c;
+  --color-accent-secondary: #8b6914;
+
+  --color-glow: #b8860b;
+
+  --color-status-success: #7cb342;
+  --color-status-warning: #f0a030;
+  --color-status-error: #e74c3c;
+  --color-status-info: #5dade2;
+
+  --color-method-get: #7cb342;
+  --color-method-post: #5dade2;
+  --color-method-put: #f0a030;
+  --color-method-delete: #e74c3c;
+  --color-method-patch: #9b59b6;
+  --color-method-system: #7f8c8d;
+  --color-method-default: #95a5a6;
+
+  --color-status-code-success: #7cb342;
+  --color-status-code-error: #e74c3c;
+  --color-status-code-default: #7f8c8d;
+
+  --color-connection-connected: #e6a23c;
+  --color-connection-disconnected: #d4a574;
+  --color-connection-error: #c0392b;
+  --color-connection-default: #bdc3c7;
+
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(
+    in srgb,
+    var(--color-accent-primary) 75%,
+    #ffffff 25%
+  );
+  --color-tab-debug: color-mix(
+    in srgb,
+    var(--color-accent-primary) 50%,
+    #ffffff 50%
+  );
+  --color-tab-preprocessing: color-mix(
+    in srgb,
+    var(--color-accent-primary) 25%,
+    #ffffff 75%
+  );
+
+  --color-tab-rest-rgb: 230, 162, 60;
+  --color-tab-accent-rgb: 237, 186, 111;
+  --color-tab-debug-rgb: 243, 209, 158;
+  --color-tab-preprocessing-rgb: 249, 232, 207;
+
+  --color-harmony-1: #f4d03f;
+  --color-harmony-2: #cd853f;
+  --color-harmony-3: #5d6d7e;
+  --color-harmony-4: #5d4e37;
+
+  --color-accent-hover: var(--color-harmony-2);
+  --color-accent-active: var(--color-tab-rest);
+  --color-accent-border: var(--color-harmony-3);
+  --color-accent-muted: var(--color-harmony-4);
+  --color-accent-glow: var(--color-tab-rest);
+  --color-accent-secondary-glow: var(--color-tab-accent);
+
+  --color-bg-primary: #171614;
+  --color-bg-secondary: #24221e;
+  --color-bg-tertiary: #2f2a22;
+  --color-bg-elevated: #24221e;
+
+  --color-divider: #453a30;
+
+  --color-fg-primary: #eee2ce;
+  --color-fg-secondary: #cfbfa0;
+  --color-fg-muted: #a0917b;
+  --color-fg-inverse: #000000;
+
+  --color-event: #f4d03f;
+  --color-event-secondary: #d4a574;
+  --color-room: #5dade2;
+  --color-loading: var(--color-tab-rest);
+  --color-loading-secondary: var(--color-tab-accent);
+
+}

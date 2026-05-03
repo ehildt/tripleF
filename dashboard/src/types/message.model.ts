@@ -1,21 +1,4 @@
-export interface MessageData {
-  pending?: boolean;
-  done?: boolean;
-  requestId?: string;
-  event?: string;
-  roomId?: string;
-  task?: string;
-  stream?: boolean;
-  message?: {
-    content?: string;
-  };
-  meta?: Array<{ requestId?: string }>;
-  aborted?: boolean;
-  canceled?: boolean;
-  status?: string;
-  sessionId?: string;
-  source?: 'rest' | 'mcp';
-}
+import type { MessageData } from './message-data.model';
 
 export interface Message {
   time: string;

@@ -1,5 +1,11 @@
 import '@testing-library/jest-dom/vitest';
 
+import { vi } from 'vitest';
+
+import { readAppVersion } from './app-version';
+
+globalThis.__APP_VERSION__ = readAppVersion();
+
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
@@ -43,4 +49,30 @@ Object.defineProperty(navigator, 'clipboard', {
 Object.defineProperty(globalThis, 'performance', {
   value: { now: vi.fn(() => Date.now()) },
   writable: true,
+});
+
+class IntersectionObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn(() => []);
+  root = null;
+  rootMargin = '';
+  thresholds = [];
+}
+
+Object.defineProperty(window, 'IntersectionObserver', {
+  writable: true,
+  value: IntersectionObserverMock,
+});
+
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: ResizeObserverMock,
 });

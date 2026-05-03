@@ -1,6 +1,6 @@
-version: "0.2"
-gitignoreRoot: ".gitignore"
-language: "en,de"
+version: '0.2'
+gitignoreRoot: '.gitignore'
+language: 'en,de'
 ignorePaths:
   - node_modules
   - dist
@@ -11,8 +11,8 @@ languageSettings:
   - allowCompoundWords: false
     caseSensitive: true
     enabled: true
-    languageId: "*"
-    locale: "*"
+    languageId: '*'
+    locale: '*'
 dictionaries:
   - ignore-words
 dictionaryDefinitions:

@@ -1,32 +1,36 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useMcpMessagesStore, useRestMessagesStore } from './messages';
+import { useConversationStore } from './conversation';
+import { useApiMessagesStore } from './messages';
 
-describe('useRestMessagesStore', () => {
+describe('useApiMessagesStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    localStorage.clear();
+    const conversationStore = useConversationStore();
+    conversationStore.createNewConversation('temporary', 'harness', '');
   });
 
   it('initializes with empty messages', () => {
-    const store = useRestMessagesStore();
+    const store = useApiMessagesStore();
     expect(store.messages).toEqual([]);
     expect(store.completedCount).toBe(0);
   });
 
   it('addPendingMessage creates a pending message', () => {
-    const store = useRestMessagesStore();
-    store.addPendingMessage('vision', 'room-1', 'req-1', 'describe', true);
+    const store = useApiMessagesStore();
+    store.addPendingMessage('harness', 'room-1', 'req-1', true);
     expect(store.messages).toHaveLength(1);
     expect(store.messages[0].data.pending).toBe(true);
     expect(store.messages[0].data.requestId).toBe('req-1');
-    expect(store.messages[0].data.event).toBe('vision');
+    expect(store.messages[0].data.event).toBe('harness');
   });
 
   it('addMessage appends message when tracked', () => {
-    const store = useRestMessagesStore();
-    store.addPendingMessage('vision', 'room-1', 'req-1');
-    store.addMessage('vision', {
+    const store = useApiMessagesStore();
+    store.addPendingMessage('harness', 'room-1', 'req-1');
+    store.addMessage('harness', {
       requestId: 'req-1',
       done: true,
       message: { content: 'result' },
@@ -37,65 +41,161 @@ describe('useRestMessagesStore', () => {
   });
 
   it('addMessage ignores canceled messages', () => {
-    const store = useRestMessagesStore();
-    store.addMessage('vision', { canceled: true });
+    const store = useApiMessagesStore();
+    store.addMessage('harness', { canceled: true });
     expect(store.messages).toHaveLength(0);
   });
 
-  it('addMessage ignores untracked requestIds', () => {
-    const store = useRestMessagesStore();
-    store.addMessage('vision', {
+  it('addMessage accepts untracked requestIds', () => {
+    const store = useApiMessagesStore();
+    store.addMessage('harness', {
       requestId: 'unknown',
       message: { content: 'x' },
     });
-    expect(store.messages).toHaveLength(0);
+    expect(store.messages).toHaveLength(1);
+    expect(store.messages[0].data.requestId).toBe('unknown');
   });
 
   it('removeMessage deletes by requestId', () => {
-    const store = useRestMessagesStore();
-    store.addPendingMessage('vision', 'room-1', 'req-1');
+    const store = useApiMessagesStore();
+    store.addPendingMessage('harness', 'room-1', 'req-1');
     store.removeMessage('req-1');
     expect(store.messages).toHaveLength(0);
   });
 
   it('updatePendingMessage updates existing pending', () => {
-    const store = useRestMessagesStore();
-    store.addPendingMessage('vision', 'room-1', 'req-1');
+    const store = useApiMessagesStore();
+    store.addPendingMessage('harness', 'room-1', 'req-1');
     store.updatePendingMessage('req-1', {
-      event: 'vision',
+      event: 'harness',
       done: true,
-      sessionId: 's1',
+      conversationId: 's1',
     });
-    expect(store.messages[0].data.sessionId).toBe('s1');
+    expect(store.messages[0].data.conversationId).toBe('s1');
     expect(store.messages[0].data.done).toBe(true);
-    // pending is cleared by the update logic via object spread
     expect(store.messages[0].data.pending).toBe(false);
   });
 
+  it('addMessage handles harness streaming JSON events', () => {
+    const store = useApiMessagesStore();
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'describe',
+      delta: '{"title":"Image"',
+      done: false,
+    });
+
+    const conversationStore = useConversationStore();
+    expect(conversationStore.conversations[0].exchanges).toHaveLength(1);
+    expect(conversationStore.conversations[0].exchanges[0].role).toBe(
+      'assistant',
+    );
+    expect(
+      conversationStore.conversations[0].exchanges[0].harnessTemplate,
+    ).toBe('describe');
+    expect(
+      conversationStore.conversations[0].exchanges[0].harnessData?.title,
+    ).toBe('Image');
+    expect(conversationStore.conversations[0].exchanges[0].status).toBe(
+      'streaming',
+    );
+  });
+
+  it('addMessage finalizes harness streaming events', () => {
+    const store = useApiMessagesStore();
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'describe',
+      delta: '{"title":"Image"',
+      done: false,
+    });
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'describe',
+      delta: ',"sectionContent":"A scene"}',
+      images: [
+        {
+          imageUrl: 'data:image/png;base64,abc',
+          imageAlt: 'photo',
+          title: 'photo',
+          caption: 'caption',
+        },
+      ],
+      done: true,
+    });
+
+    const conversationStore = useConversationStore();
+    expect(conversationStore.conversations[0].exchanges[0].status).toBe('done');
+    expect(
+      conversationStore.conversations[0].exchanges[0].harnessData?.galleryItems,
+    ).toHaveLength(1);
+    expect(
+      conversationStore.conversations[0].exchanges[0].harnessData
+        ?.galleryItems?.[0].imageUrl,
+    ).toBe('data:image/png;base64,abc');
+    expect(
+      conversationStore.conversations[0].exchanges[0].harnessData
+        ?.sectionContent,
+    ).toBe('A scene');
+  });
+
+  it('addMessage handles text template harness events', () => {
+    const store = useApiMessagesStore();
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'text',
+      delta: 'Hello world',
+      done: true,
+    });
+
+    const conversationStore = useConversationStore();
+    expect(conversationStore.conversations[0].exchanges[0].text).toBe(
+      'Hello world',
+    );
+    expect(conversationStore.conversations[0].exchanges[0].content).toBe(
+      'Hello world',
+    );
+    expect(conversationStore.conversations[0].exchanges[0].status).toBe('done');
+  });
+
+  it('addMessage clears pending on done without content', () => {
+    const store = useApiMessagesStore();
+    store.addPendingMessage('harness', 'room-1', 'req-1');
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      done: true,
+      message: { content: '' },
+    });
+
+    expect(store.messages[0].data.pending).toBeUndefined();
+    expect(store.messages[0].data.done).toBe(true);
+  });
+
+  it('renders error messages for harness stream errors', () => {
+    const store = useApiMessagesStore();
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'text',
+      delta: 'Something went wrong',
+      error: 'Something went wrong',
+      done: true,
+    });
+
+    const conversationStore = useConversationStore();
+    expect(conversationStore.conversations[0].exchanges[0].content).toContain(
+      'Something went wrong',
+    );
+    expect(conversationStore.conversations[0].exchanges[0].status).toBe('done');
+    expect(conversationStore.conversations[0].exchanges[0].content).toContain(
+      'Error: Something went wrong',
+    );
+  });
+
   it('clearMessages removes everything', () => {
-    const store = useRestMessagesStore();
-    store.addPendingMessage('vision', 'room-1', 'req-1');
+    const store = useApiMessagesStore();
+    store.addPendingMessage('harness', 'room-1', 'req-1');
     store.clearMessages();
     expect(store.messages).toHaveLength(0);
     expect(store.completedCount).toBe(0);
-  });
-});
-
-describe('useMcpMessagesStore', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
-  });
-
-  it('initializes independently', () => {
-    const mcp = useMcpMessagesStore();
-    expect(mcp.messages).toEqual([]);
-  });
-
-  it('tracks its own messages', () => {
-    const mcp = useMcpMessagesStore();
-    mcp.addPendingMessage('mcp-vision', 'room-a', 'mcp-req-1');
-    mcp.addMessage('mcp-vision', { requestId: 'mcp-req-1', done: true });
-    expect(mcp.messages).toHaveLength(1);
-    expect(mcp.messages[0].data.done).toBe(true);
   });
 });

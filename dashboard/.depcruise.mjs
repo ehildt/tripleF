@@ -12,6 +12,7 @@ const WHITELIST = {
     'src/components/inputs/MaxWidthField.vue',
     'src/components/inputs/MaxHeightField.vue',
     'src/utils/id.helper.spec.ts',
+    'src/components/app/tab-button/TabButton.spec.ts',
   ],
 };
 

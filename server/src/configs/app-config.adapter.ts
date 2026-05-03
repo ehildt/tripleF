@@ -34,7 +34,7 @@ export function AppConfigAdapter(env = process.env): AppConfig {
           ) as number,
           credentials: getBooleanEnv(env.CORS_CREDENTIALS, false)!,
           allowedHeaders:
-            env.CORS_ALLOWED_HEADERS ?? 'Content-Type,Accept,x-vision-llm',
+            env.CORS_ALLOWED_HEADERS ?? 'Content-Type,Accept,x-harness-llm',
         }
       : undefined,
   };

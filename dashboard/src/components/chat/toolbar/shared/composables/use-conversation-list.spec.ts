@@ -1,0 +1,149 @@
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useConversationStore } from '@/stores/conversation';
+
+import { useSocketStore } from '../../../../../stores/socket';
+import { subscriptions } from './subscriptions.state';
+import { useConversationList } from './use-conversation-list';
+
+vi.mock('../../../../../stores/socket', () => {
+  const ensureSocketConnection = vi.fn();
+  const listenToEvent = vi.fn();
+  const joinRoom = vi.fn();
+  const leaveRoom = vi.fn();
+  const closeEvent = vi.fn();
+  const closeRoom = vi.fn();
+
+  return {
+    useSocketStore: () => ({
+      connectedPairs: [],
+      connectionState: 'disconnected',
+      socketId: null,
+      ensureSocketConnection,
+      listenToEvent,
+      joinRoom,
+      leaveRoom,
+      closeEvent,
+      closeRoom,
+    }),
+  };
+});
+
+describe('useConversationList', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    localStorage.clear();
+    subscriptions.value = [];
+    vi.clearAllMocks();
+  });
+
+  it('starts with isConversationListExpanded from localStorage', () => {
+    localStorage.setItem('harness-expanded-conversations', 'true');
+    const { isConversationListExpanded } = useConversationList();
+    expect(isConversationListExpanded.value).toBe(true);
+  });
+
+  it('defaults isConversationListExpanded to false', () => {
+    const { isConversationListExpanded } = useConversationList();
+    expect(isConversationListExpanded.value).toBe(false);
+  });
+
+  it('exposes newConversationName and newConversationSocketBinding refs', () => {
+    const { newConversationName, newConversationSocketBinding } =
+      useConversationList();
+    expect(newConversationName.value).toBe('');
+    expect(newConversationSocketBinding.value).toBe('');
+  });
+
+  it('conversationsSortedByUpdated returns conversations sorted by updatedAt desc', () => {
+    const conversationStore = useConversationStore();
+    conversationStore.createNewConversation('temporary');
+    conversationStore.createNewConversation('temporary');
+
+    const { conversationsSortedByUpdated } = useConversationList();
+    const sorted = conversationsSortedByUpdated.value;
+    expect(sorted.length).toBeGreaterThanOrEqual(2);
+    for (let i = 1; i < sorted.length; i++) {
+      expect(sorted[i - 1].updatedAt).toBeGreaterThanOrEqual(
+        sorted[i].updatedAt,
+      );
+    }
+  });
+
+  it('switchToConversation sets active conversation', () => {
+    const conversationStore = useConversationStore();
+    const s1 = conversationStore.ensureConversation();
+    const s2 = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(s1.id);
+
+    const { switchToConversation } = useConversationList();
+    switchToConversation(s2.id);
+    expect(conversationStore.activeConversationId).toBe(s2.id);
+  });
+
+  it('deleteConversation removes the conversation', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    const lenBefore = conversationStore.conversations.length;
+
+    const { deleteConversation } = useConversationList();
+    await deleteConversation(conversation.id);
+    expect(conversationStore.conversations.length).toBe(lenBefore - 1);
+  });
+
+  it('deleteConversation leaves rooms and removes matching subscriptions', async () => {
+    const conversationStore = useConversationStore();
+    const socketStore = useSocketStore();
+
+    subscriptions.value = [
+      { event: 'harness', roomId: 'room1', active: true, stream: true },
+      { event: 'other', roomId: 'room2', active: true, stream: true },
+    ];
+
+    const { createNewConversation, deleteConversation } = useConversationList();
+    createNewConversation('temporary', 'Conv', 'harness::room1');
+    const conversation = conversationStore.conversations[0]!;
+
+    await deleteConversation(conversation.id);
+
+    expect(socketStore.leaveRoom).toHaveBeenCalledWith('room1', 'harness');
+    expect(socketStore.closeEvent).toHaveBeenCalledWith('harness');
+    expect(subscriptions.value).not.toContainEqual(
+      expect.objectContaining({ event: 'harness', roomId: 'room1' }),
+    );
+    expect(subscriptions.value).toContainEqual(
+      expect.objectContaining({ event: 'other', roomId: 'room2' }),
+    );
+  });
+
+  it('deleteConversation keeps the event alive when another conversation still uses it', async () => {
+    const conversationStore = useConversationStore();
+    const socketStore = useSocketStore();
+
+    const { createNewConversation, deleteConversation } = useConversationList();
+    createNewConversation('temporary', 'First', 'harness::room1');
+    createNewConversation('temporary', 'Second', 'harness::room2');
+    const first = conversationStore.conversations.find(
+      (c) => c.title === 'First',
+    )!;
+
+    await deleteConversation(first.id);
+
+    expect(socketStore.leaveRoom).toHaveBeenCalledWith('room1', 'harness');
+    expect(socketStore.closeEvent).not.toHaveBeenCalledWith('harness');
+  });
+
+  it('createNewConversation creates a conversation and clears form', () => {
+    const conversationStore = useConversationStore();
+    const lenBefore = conversationStore.conversations.length;
+
+    const { createNewConversation, newConversationName } =
+      useConversationList();
+    newConversationName.value = 'My Conversation';
+    createNewConversation('temporary', 'My Conversation', 'harness::room1');
+
+    expect(conversationStore.conversations.length).toBeGreaterThan(lenBefore);
+    expect(newConversationName.value).toBe('');
+  });
+});

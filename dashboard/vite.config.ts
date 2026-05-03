@@ -2,9 +2,17 @@
 import path from 'node:path';
 
 import vue from '@vitejs/plugin-vue';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+
+import { readAppVersion } from './app-version.js';
+
+const env = loadEnv('all', process.cwd(), 'VITE_');
+const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:3000';
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(readAppVersion()),
+  },
   base: '/dashboard/',
   plugins: [vue()],
   resolve: {
@@ -15,7 +23,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: proxyTarget,
         changeOrigin: true,
         secure: false,
       },

@@ -10,10 +10,10 @@
 */
 
 export const DlqStatus = {
-  PENDING_RETRY: 'PENDING_RETRY',
-  REINSERTED: 'REINSERTED',
-  ARCHIVED: 'ARCHIVED',
-  PENDING_DELETION: 'PENDING_DELETION'
+  Failed: 'Failed',
+  Active: 'Active',
+  Cleared: 'Cleared',
+  Removed: 'Removed'
 } as const
 
 export type DlqStatus = (typeof DlqStatus)[keyof typeof DlqStatus]

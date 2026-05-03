@@ -7,7 +7,6 @@
     "types": ["node"],
     "skipLibCheck": true,
 
-
     /* Bundler mode */
     "moduleResolution": "nodenext",
     "allowImportingTsExtensions": true,
@@ -24,5 +23,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "eslint.config.ts", "tailwind.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "eslint.config.ts",
+    "tailwind.config.ts",
+    "app-version.ts"
+  ]
 }

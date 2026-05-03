@@ -8,17 +8,17 @@ datasource db {
 }
 
 enum DlqStatus {
-  PENDING_RETRY
-  REINSERTED
-  ARCHIVED
-  PENDING_DELETION
+  Failed
+  Active
+  Cleared
+  Removed
 }
 
-model VisionsDlq {
+model HarnessDlq {
   requestId      String    @id @db.VarChar(255)
   queueName      String    @db.VarChar(100)
   jobId          String?   @db.VarChar(255)
-  status         DlqStatus @default(PENDING_RETRY)
+  status         DlqStatus @default(Failed)
   payload        Json      @default(dbgenerated())
   retryConfig    Json?
   failedReason   String?
@@ -30,5 +30,5 @@ model VisionsDlq {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @default(now()) @updatedAt
 
-  @@map("visions_dlq")
+  @@map("harness_dlq")
 }

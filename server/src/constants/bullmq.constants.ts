@@ -1,12 +1,8 @@
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 
-export enum BULLMQ_QUEUE {
-  IMAGE_DESCRIBE = 'image-describe',
-  IMAGE_COMPARE = 'image-compare',
-  IMAGE_OCR = 'image-ocr',
-}
+export const HARNESS_QUEUE = 'harness';
 
-export const BULLMQ_WORKER_CONCURRENCY = getNumberEnv(
+export const HARNESS_WORKER_CONCURRENCY = getNumberEnv(
   process.env.BULLMQ_WORKER_CONCURRENCY,
   3,
 ) as number;

@@ -18,7 +18,7 @@ export { Prisma }
 export * as $Enums from './enums.js'
 export * from './enums.js';
 /**
- * Model VisionsDlq
+ * Model HarnessDlq
  * 
  */
-export type VisionsDlq = Prisma.VisionsDlqModel
+export type HarnessDlq = Prisma.HarnessDlqModel

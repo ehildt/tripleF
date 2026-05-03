@@ -15,6 +15,10 @@ vi.mock('socket.io-client', () => {
   };
 });
 
+vi.mock('./helpers/get-persistent-socket-session-id.helper', () => ({
+  getPersistentSocketSessionId: vi.fn(() => 'persistent-conversation-123'),
+}));
+
 vi.mock('../../composables/use-toast', () => ({
   useToast: vi.fn(() => ({
     error: vi.fn(),
@@ -24,7 +28,11 @@ vi.mock('../../composables/use-toast', () => ({
   })),
 }));
 
+import { io } from 'socket.io-client';
+
 import { useSocketStore } from './socket';
+
+const MOCK_SESSION_ID = 'persistent-conversation-123';
 
 describe('useSocketStore', () => {
   beforeEach(() => {
@@ -32,71 +40,53 @@ describe('useSocketStore', () => {
     vi.clearAllMocks();
   });
 
-  it('initializes with disconnected state', () => {
+  it('initializes with disconnected state and persistent conversation id', () => {
     const store = useSocketStore();
     expect(store.connectionState).toBe('disconnected');
-    expect(store.socketId).toBeNull();
+    expect(store.socketId).toBe(MOCK_SESSION_ID);
     expect(store.socketError).toBeNull();
   });
 
-  it('initSocket creates socket and sets up listeners', () => {
+  it('initSocket creates socket with persistent conversation id auth', () => {
     const store = useSocketStore();
-    const socket = store.initSocket();
-    expect(socket).toBeDefined();
+    store.initSocket();
+    expect(io).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        auth: { conversationId: MOCK_SESSION_ID },
+      }),
+    );
   });
 
   it('listenToEvent applies listener when connected', () => {
     const store = useSocketStore();
     store.initSocket();
-    store.listenToEvent('vision');
-    expect(store.connectedEvents.has('vision')).toBe(true);
+    store.listenToEvent('harness');
+    expect(store.connectedEvents.has('harness')).toBe(true);
   });
 
   it('joinRoom adds room to connectedRooms', () => {
     const store = useSocketStore();
     store.initSocket();
-    store.joinRoom('room1', 'vision');
-    expect(store.connectedRooms.get('vision')?.has('room1')).toBe(true);
+    store.joinRoom('room1', 'harness');
+    expect(store.connectedRooms.get('harness')?.has('room1')).toBe(true);
   });
 
   it('leaveRoom removes room from connectedRooms', () => {
     const store = useSocketStore();
     store.initSocket();
-    store.joinRoom('room1', 'vision');
-    store.leaveRoom('room1', 'vision');
-    expect(store.connectedRooms.has('vision')).toBe(false);
+    store.joinRoom('room1', 'harness');
+    store.leaveRoom('room1', 'harness');
+    expect(store.connectedRooms.has('harness')).toBe(false);
   });
 
   it('closeEvent removes event and rooms', () => {
     const store = useSocketStore();
     store.initSocket();
-    store.listenToEvent('vision');
-    store.joinRoom('room1', 'vision');
-    store.closeEvent('vision');
-    expect(store.connectedEvents.has('vision')).toBe(false);
-    expect(store.connectedRooms.has('vision')).toBe(false);
-  });
-
-  it('getConnectedEventsAndRooms returns empty when no events', () => {
-    const store = useSocketStore();
-    store.initSocket();
-    expect(store.getConnectedEventsAndRooms()).toEqual([]);
-  });
-
-  it('getConnectedEventsAndRooms returns event with rooms', () => {
-    const store = useSocketStore();
-    store.initSocket();
-    store.joinRoom('room1', 'vision');
-    store.listenToEvent('vision');
-    const result = store.getConnectedEventsAndRooms();
-    expect(result).toEqual(['vision::room1']);
-  });
-
-  it('getConnectedEventsAndRooms returns event without rooms', () => {
-    const store = useSocketStore();
-    store.initSocket();
-    store.listenToEvent('vision');
-    const result = store.getConnectedEventsAndRooms();
-    expect(result).toEqual(['vision']);
+    store.listenToEvent('harness');
+    store.joinRoom('room1', 'harness');
+    store.closeEvent('harness');
+    expect(store.connectedEvents.has('harness')).toBe(false);
+    expect(store.connectedRooms.has('harness')).toBe(false);
   });
 });

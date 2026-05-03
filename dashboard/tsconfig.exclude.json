@@ -7,7 +7,7 @@
     "node_modules",
     "src/**/*.stories.?sx",
     "vitest.config.ts",
-    "eslint.config.ts",
+    "eslint.config.ts"
   ],
   "extends": "./tsconfig.json"
 }

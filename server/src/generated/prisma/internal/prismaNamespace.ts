@@ -384,7 +384,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  VisionsDlq: 'VisionsDlq'
+  HarnessDlq: 'HarnessDlq'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,81 +400,81 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "visionsDlq"
+    modelProps: "harnessDlq"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
-    VisionsDlq: {
-      payload: Prisma.$VisionsDlqPayload<ExtArgs>
-      fields: Prisma.VisionsDlqFieldRefs
+    HarnessDlq: {
+      payload: Prisma.$HarnessDlqPayload<ExtArgs>
+      fields: Prisma.HarnessDlqFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.VisionsDlqFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload> | null
+          args: Prisma.HarnessDlqFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.VisionsDlqFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>
+          args: Prisma.HarnessDlqFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
         }
         findFirst: {
-          args: Prisma.VisionsDlqFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload> | null
+          args: Prisma.HarnessDlqFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.VisionsDlqFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>
+          args: Prisma.HarnessDlqFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
         }
         findMany: {
-          args: Prisma.VisionsDlqFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>[]
+          args: Prisma.HarnessDlqFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>[]
         }
         create: {
-          args: Prisma.VisionsDlqCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>
+          args: Prisma.HarnessDlqCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
         }
         createMany: {
-          args: Prisma.VisionsDlqCreateManyArgs<ExtArgs>
+          args: Prisma.HarnessDlqCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.VisionsDlqCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>[]
+          args: Prisma.HarnessDlqCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>[]
         }
         delete: {
-          args: Prisma.VisionsDlqDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>
+          args: Prisma.HarnessDlqDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
         }
         update: {
-          args: Prisma.VisionsDlqUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>
+          args: Prisma.HarnessDlqUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
         }
         deleteMany: {
-          args: Prisma.VisionsDlqDeleteManyArgs<ExtArgs>
+          args: Prisma.HarnessDlqDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.VisionsDlqUpdateManyArgs<ExtArgs>
+          args: Prisma.HarnessDlqUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.VisionsDlqUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>[]
+          args: Prisma.HarnessDlqUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>[]
         }
         upsert: {
-          args: Prisma.VisionsDlqUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisionsDlqPayload>
+          args: Prisma.HarnessDlqUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
         }
         aggregate: {
-          args: Prisma.VisionsDlqAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateVisionsDlq>
+          args: Prisma.HarnessDlqAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessDlq>
         }
         groupBy: {
-          args: Prisma.VisionsDlqGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.VisionsDlqGroupByOutputType>[]
+          args: Prisma.HarnessDlqGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessDlqGroupByOutputType>[]
         }
         count: {
-          args: Prisma.VisionsDlqCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.VisionsDlqCountAggregateOutputType> | number
+          args: Prisma.HarnessDlqCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessDlqCountAggregateOutputType> | number
         }
       }
     }
@@ -517,7 +517,7 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const VisionsDlqScalarFieldEnum = {
+export const HarnessDlqScalarFieldEnum = {
   requestId: 'requestId',
   queueName: 'queueName',
   jobId: 'jobId',
@@ -534,7 +534,7 @@ export const VisionsDlqScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type VisionsDlqScalarFieldEnum = (typeof VisionsDlqScalarFieldEnum)[keyof typeof VisionsDlqScalarFieldEnum]
+export type HarnessDlqScalarFieldEnum = (typeof HarnessDlqScalarFieldEnum)[keyof typeof HarnessDlqScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -784,7 +784,7 @@ export type PrismaClientOptions = ({
   queryPlanCacheMaxSize?: number
 }
 export type GlobalOmitConfig = {
-  visionsDlq?: Prisma.VisionsDlqOmit
+  harnessDlq?: Prisma.HarnessDlqOmit
 }
 
 /* Types for Logging */

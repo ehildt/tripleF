@@ -1,0 +1,15 @@
+---
+"dashboard": patch
+---
+- Added DlqPromptSection component for DLQ prompt text display
+- DLQ top bar redesigned: select-all logic and count badge inlined, select-all and count badge sub-components removed
+- DlqSelectAllCheckbox and DlqSelectedCountBadge components removed (logic merged into DlqTopBar/DlqListHeader)
+- InputText component: added prepend-icon slot with conditional pl-9 padding
+- ClearButton: added disabled prop support
+- FilterButton: added disabled prop support
+- DebugPanel Header Menu: filter buttons disabled when corresponding count is zero, CLR button disabled when all count is zero
+- DLQ actions composable: refactored for top bar integration
+- DLQ loading composable updated
+- DLQ store: added socket event subscription tracking
+- Socket store: added connected events tracking
+- Detail-field-colors helper refactored

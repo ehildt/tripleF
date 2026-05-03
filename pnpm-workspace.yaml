@@ -1,0 +1,24 @@
+packages:
+  - "server"
+  - "dashboard"
+allowBuilds:
+  "@prisma/engines": true
+  "@scarf/scarf": true
+  esbuild: true
+  fastify-socket.io: true
+  msgpackr-extract: true
+  prisma: true
+  vue-demi: true
+minimumReleaseAgeExclude:
+  - "@vue/eslint-config-typescript@14.9.0"
+  - bullmq@5.79.1 || 5.80.2
+  - ts-loader@9.6.2
+  - "@ai-sdk/gateway@3.0.137 || 3.0.143 || 3.0.146"
+  - ai@6.0.212 || 6.0.219 || 6.0.222
+  - prettier@3.8.5 || 3.9.5
+  - "@ai-sdk/provider-utils@4.0.38"
+  - "@ai-sdk/provider@3.0.14"
+  - "@iconify/json@2.2.498"
+  - "@lucide/vue@1.24.0"
+  - dompurify@3.4.12
+  - postcss@8.5.17

@@ -1,9 +1,32 @@
+/* 1. Engine */
 @import 'tailwindcss';
-@import 'vue3-toastify/dist/index.css';
-@import './colors.css';
-@import './toast.css';
+
+/* 2. Tokens — design system defaults */
+@import './tokens/typography.css';
+@import './tokens/layout.css';
+@import './tokens/colors.css';
+
+/* 3. Palettes — override token values per selected palette */
+@import './palettes/souls.css';
+@import './palettes/residentevil.css';
+@import './palettes/gothic.css';
+@import './palettes/cyberpunk.css';
+@import './palettes/stellar.css';
+@import './palettes/wukong.css';
+@import './palettes/ghostwire.css';
+@import './palettes/deathspace.css';
+@import './palettes/nioh.css';
+@import './palettes/baldursgate.css';
+@import './palettes/yakuza.css';
+@import './palettes/wuchang.css';
+@import './palettes/pragmata.css';
+
+/* 4. Modes — display mode overrides (highest token priority) */
+@import './modes/light.css';
 
 @plugin "@iconify/tailwind4";
+
+/* 5. Global resets, base styles, animations */
 
 * {
   box-sizing: border-box;
@@ -36,7 +59,6 @@ pre,
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-accent-primary);
-  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -69,319 +91,109 @@ td {
   user-select: none;
 }
 
-.glow-primary {
-  box-shadow:
-    0 0 10px var(--color-accent-primary),
-    0 0 20px var(--color-accent-primary);
-}
-
-.glow-secondary {
-  box-shadow:
-    0 0 10px var(--color-accent-secondary),
-    0 0 20px var(--color-accent-secondary);
-}
-
-.glow-error {
-  box-shadow:
-    0 0 10px var(--color-status-error),
-    0 0 20px var(--color-status-error);
-}
-
-.text-glow {
-  text-shadow: 0 0 10px var(--color-accent-primary);
+header, main, footer,
+[class*='panel'],
+[class*='Panel'] {
+  transition:
+    background-color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .panel-glow {
   border: 1px solid var(--color-divider);
-  transition: all 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .panel-glow:hover {
-  filter: drop-shadow(0 0 3px var(--color-glow))
-    drop-shadow(inset 0 0 3px var(--color-glow));
-  animation: border-glow 2.5s ease-in-out infinite;
+  animation: border-glow 3s ease-in-out infinite;
 }
 
 @keyframes border-glow {
   0%,
   100% {
     box-shadow:
-      0 0 4px color-mix(in srgb, var(--color-glow) 10%, transparent),
-      inset 0 0 4px color-mix(in srgb, var(--color-glow) 8%, transparent);
+      0 0 2px color-mix(in srgb, var(--color-accent-primary) 5%, transparent),
+      inset 0 0 2px
+        color-mix(in srgb, var(--color-accent-secondary) 4%, transparent);
   }
   50% {
     box-shadow:
-      0 0 12px color-mix(in srgb, var(--color-glow) 25%, transparent),
-      inset 0 0 8px color-mix(in srgb, var(--color-glow) 15%, transparent);
-  }
-}
-
-@keyframes border-glow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 4px color-mix(in srgb, var(--color-accent-primary) 10%, transparent),
+      0 0 6px color-mix(in srgb, var(--color-accent-primary) 12%, transparent),
       inset 0 0 4px
         color-mix(in srgb, var(--color-accent-secondary) 8%, transparent);
   }
-  50% {
-    box-shadow:
-      0 0 12px color-mix(in srgb, var(--color-accent-primary) 25%, transparent),
-      inset 0 0 8px
-        color-mix(in srgb, var(--color-accent-secondary) 15%, transparent);
-  }
 }
 
-.btn-cyber {
-  background: transparent;
-  border: 1px solid var(--color-tab-rest);
-  color: var(--color-tab-rest);
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.btn-cyber:hover {
-  background: var(--color-tab-rest);
-  color: var(--color-bg-primary);
-  box-shadow: 0 0 15px var(--color-tab-rest);
-}
-
-.btn-cyber-primary {
-  background: var(--color-tab-rest);
-  color: var(--color-bg-primary);
-  border: 1px solid var(--color-tab-rest);
-}
-
-.btn-cyber-primary:hover {
-  background: transparent;
-  color: var(--color-tab-rest);
-  box-shadow: 0 0 20px var(--color-tab-rest);
-}
-
-.btn-cyber-secondary {
-  background: transparent;
-  border: 1px solid var(--color-tab-mcp);
-  color: var(--color-tab-mcp);
-}
-
-.btn-cyber-secondary:hover {
-  background: var(--color-tab-mcp);
-  color: var(--color-bg-primary);
-  box-shadow: 0 0 15px var(--color-tab-mcp);
-}
-
-.btn-cyber-tertiary {
-  background: transparent;
-  border: 1px solid var(--color-tab-debug);
-  color: var(--color-tab-debug);
-}
-
-.btn-cyber-tertiary:hover {
-  background: var(--color-tab-debug);
-  color: var(--color-bg-primary);
-  box-shadow: 0 0 15px var(--color-tab-debug);
-}
-
-.input-cyber {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-divider);
-  color: var(--color-fg-primary);
-  transition: all 0.2s ease;
-}
-
-.input-cyber:focus {
-  border-color: var(--color-tab-rest);
-  outline: none;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--color-tab-rest) 30%, transparent);
-}
-
-.input-cyber::placeholder {
-  color: var(--color-fg-muted);
-}
-
-.select-cyber {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-divider);
-  color: var(--color-fg-primary);
-  transition: all 0.2s ease;
-}
-
-.select-cyber:focus {
-  border-color: var(--color-tab-rest);
-  outline: none;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--color-tab-rest) 30%, transparent);
-}
-
-.label-cyber {
-  color: var(--color-tab-mcp);
-  transition: color 0.2s ease;
-}
-
-.label-cyber:hover {
-  color: var(--color-tab-rest);
-}
-
-.tag-cyber {
-  border: 1px solid var(--color-divider);
-  background: var(--color-bg-tertiary);
-  color: var(--color-fg-secondary);
-}
-
-.tag-cyber-rest {
-  border-color: var(--color-tab-rest);
-  background: color-mix(in srgb, var(--color-tab-rest) 10%, transparent);
-  color: var(--color-tab-rest);
-}
-
-.tag-cyber-mcp {
-  border-color: var(--color-tab-mcp);
-  background: color-mix(in srgb, var(--color-tab-mcp) 10%, transparent);
-  color: var(--color-tab-mcp);
-}
-
-.tag-cyber-debug {
-  border-color: var(--color-tab-debug);
-  background: color-mix(in srgb, var(--color-tab-debug) 10%, transparent);
-  color: var(--color-tab-debug);
-}
-
-.tag-cyber-preprocessing {
-  border-color: var(--color-tab-preprocessing);
-  background: color-mix(in srgb, var(--color-tab-preprocessing) 10%, transparent);
-  color: var(--color-tab-preprocessing);
-}
-
-.tag-cyber-success {
-  border-color: var(--color-status-success);
-  background: color-mix(in srgb, var(--color-status-success) 10%, transparent);
-  color: var(--color-status-success);
-}
-
-.tag-cyber-error {
-  border-color: var(--color-status-error);
-  background: color-mix(in srgb, var(--color-status-error) 10%, transparent);
-  color: var(--color-status-error);
-}
-
-@keyframes scanline {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
-  }
-}
-
-@keyframes flicker {
+@keyframes pulse-fast {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.5;
   }
 }
 
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
+.animate-pulse-fast {
+  animation: pulse-fast 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes battery-slide {
   0% {
     transform: translateX(-100%);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
   }
   100% {
     transform: translateX(200%);
-    opacity: 0;
   }
-}
-
-@keyframes glow-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 5px var(--color-accent-primary);
-  }
-  50% {
-    box-shadow: 0 0 20px var(--color-accent-primary);
-  }
-}
-
-.animate-scanline {
-  animation: scanline 3s linear infinite;
-}
-
-.animate-flicker {
-  animation: flicker 0.15s infinite;
-}
-
-.animate-blink {
-  animation: blink 0.5s infinite;
 }
 
 .animate-battery-slide {
-  animation: battery-slide 1.5s linear infinite;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-.animate-blink-3 {
-  animation: blink 0.5s infinite;
-  animation-iteration-count: 6;
-}
-
-.animate-blink-stop {
-  animation: none;
-  opacity: 1;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-dot-success {
-  background: var(--color-status-success);
-  box-shadow: 0 0 8px var(--color-status-success);
-}
-
-.status-dot-error {
-  background: var(--color-status-error);
-  box-shadow: 0 0 8px var(--color-status-error);
+  animation: battery-slide 1.5s ease-in-out infinite;
 }
 
 .bg-grid {
   background-image:
-    linear-gradient(rgba(0, 255, 245, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 245, 0.03) 1px, transparent 1px);
+    linear-gradient(
+      color-mix(in srgb, var(--color-accent-primary) 5%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent-primary) 5%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 50px 50px;
 }
 
+/* Theme-aware floating shadow used by dropdowns, menus, toasts */
+.shadow-floating {
+  box-shadow:
+    0 10px 15px -3px color-mix(in srgb, var(--color-bg-primary) 10%, transparent),
+    0 4px 6px -4px color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
+}
+
+.root-accent-gradient {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      color-mix(in srgb, var(--color-accent-primary) 8%, transparent) 0%,
+      transparent 100%
+    ),
+    var(--color-bg-primary);
+}
+
 /* Number input spinner styling - Hide default and use custom controls */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   appearance: none;
   margin: 0;
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
@@ -394,34 +206,4 @@ input[type="number"] {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-/* Custom checkbox */
-.dlq-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 0.875rem;
-  height: 0.875rem;
-  border: 1px solid var(--color-divider);
-  background: var(--color-tertiary);
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.dlq-checkbox:checked {
-  border-color: var(--color-tab-debug);
-  background: var(--color-tab-debug);
-}
-
-.dlq-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) rotate(45deg);
-  width: 4px;
-  height: 7px;
-  border: solid var(--color-fg-inverse, #fff);
-  border-width: 0 1.5px 1.5px 0;
 }

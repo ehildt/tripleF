@@ -1,0 +1,196 @@
+/* ── Light mode base overrides (neutral cool palette) ── */
+:root[data-theme-mode='light'] {
+  --color-bg-primary: #ececec;
+  --color-bg-secondary: #e2e2e2;
+  --color-bg-tertiary: #f0f0f0;
+  --color-bg-elevated: #f2f2f2;
+
+  --color-divider: #c7c7cc;
+
+  --color-fg-primary: #1c1c1e;
+  --color-fg-secondary: #4a4a4c;
+  --color-fg-muted: #7c7c80;
+  --color-fg-inverse: #ececec;
+}
+
+/*
+ * Per-theme light overrides for tab colors.
+ * Accent/status/method/harmony colors keep their ORIGINAL values
+ * for readability. Tab colors mix with #1c1c1e instead of #ffffff
+ * so pastel variants remain legible on light backgrounds.
+ */
+
+:root[data-theme='souls'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 230, 162, 60;
+  --color-tab-accent-rgb: 180, 128, 52;
+  --color-tab-debug-rgb: 129, 95, 45;
+  --color-tab-preprocessing-rgb: 78, 62, 38;
+}
+
+:root[data-theme='nioh'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 231, 76, 60;
+  --color-tab-accent-rgb: 180, 64, 52;
+  --color-tab-debug-rgb: 130, 52, 45;
+  --color-tab-preprocessing-rgb: 79, 40, 38;
+}
+
+:root[data-theme='residentevil'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 192, 57, 43;
+  --color-tab-accent-rgb: 151, 50, 40;
+  --color-tab-debug-rgb: 110, 42, 36;
+  --color-tab-preprocessing-rgb: 69, 35, 33;
+}
+
+:root[data-theme='gothic'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 125, 110, 99;
+  --color-tab-accent-rgb: 101, 90, 82;
+  --color-tab-debug-rgb: 76, 69, 64;
+  --color-tab-preprocessing-rgb: 52, 48, 47;
+}
+
+:root[data-theme='wukong'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 0, 168, 107;
+  --color-tab-accent-rgb: 7, 133, 88;
+  --color-tab-debug-rgb: 14, 98, 68;
+  --color-tab-preprocessing-rgb: 21, 63, 49;
+}
+
+:root[data-theme='ghostwire'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 29, 209, 161;
+  --color-tab-accent-rgb: 29, 164, 128;
+  --color-tab-debug-rgb: 28, 118, 96;
+  --color-tab-preprocessing-rgb: 28, 73, 63;
+}
+
+:root[data-theme='cyberpunk'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 26, 188, 156;
+  --color-tab-accent-rgb: 26, 148, 124;
+  --color-tab-debug-rgb: 27, 108, 93;
+  --color-tab-preprocessing-rgb: 28, 68, 62;
+}
+
+:root[data-theme='yakuza'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 0, 184, 169;
+  --color-tab-accent-rgb: 7, 145, 134;
+  --color-tab-debug-rgb: 14, 106, 100;
+  --color-tab-preprocessing-rgb: 21, 67, 65;
+}
+
+:root[data-theme='pragmata'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 74, 109, 229;
+  --color-tab-accent-rgb: 62, 89, 179;
+  --color-tab-debug-rgb: 51, 68, 130;
+  --color-tab-preprocessing-rgb: 40, 48, 80;
+}
+
+:root[data-theme='baldursgate'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 139, 92, 246;
+  --color-tab-accent-rgb: 111, 76, 192;
+  --color-tab-debug-rgb: 84, 60, 138;
+  --color-tab-preprocessing-rgb: 56, 44, 84;
+}
+
+:root[data-theme='deathspace'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 142, 68, 173;
+  --color-tab-accent-rgb: 114, 58, 137;
+  --color-tab-debug-rgb: 85, 48, 102;
+  --color-tab-preprocessing-rgb: 56, 38, 66;
+}
+
+:root[data-theme='stellar'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 232, 67, 147;
+  --color-tab-accent-rgb: 181, 57, 118;
+  --color-tab-debug-rgb: 130, 48, 88;
+  --color-tab-preprocessing-rgb: 79, 38, 59;
+}
+
+:root[data-theme='wuchang'][data-theme-mode='light'] {
+  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
+  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-tab-rest: var(--color-accent-primary);
+  --color-tab-accent: color-mix(in srgb, var(--color-accent-primary) 75%, #1c1c1e 25%);
+  --color-tab-debug: color-mix(in srgb, var(--color-accent-primary) 50%, #1c1c1e 50%);
+  --color-tab-preprocessing: color-mix(in srgb, var(--color-accent-primary) 25%, #1c1c1e 75%);
+  --color-tab-rest-rgb: 168, 168, 168;
+  --color-tab-accent-rgb: 133, 133, 134;
+  --color-tab-debug-rgb: 98, 98, 99;
+  --color-tab-preprocessing-rgb: 63, 63, 64;
+}
+
+/* ── Code blocks in light mode ── */
+:root[data-theme-mode='light'] .content-body pre code,
+:root[data-theme-mode='light'] .content-body pre code * {
+  color: #1c1c1e !important;
+}

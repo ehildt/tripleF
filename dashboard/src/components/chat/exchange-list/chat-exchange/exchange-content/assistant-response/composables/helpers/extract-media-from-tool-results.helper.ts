@@ -1,0 +1,189 @@
+import type {
+  GalleryItem,
+  HarnessResponseData,
+  VideoGalleryItem,
+} from '@/types/harness-response-data.model';
+
+import { isTrustedImageUrl } from './is-trusted-image-url.helper';
+import { isVideoUrl } from './is-video-url.helper';
+
+interface ToolResult {
+  toolName: string;
+  result?: {
+    results?: Array<Record<string, unknown>>;
+  };
+}
+
+function isToolResult(value: unknown): value is ToolResult {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'toolName' in value &&
+    typeof (value as ToolResult).toolName === 'string'
+  );
+}
+
+function extractImageUrl(item: Record<string, unknown>): string {
+  const candidates = [item.imageUrl, item.image, item.url];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return '';
+}
+
+function extractVideoUrl(item: Record<string, unknown>): string {
+  const candidates = [item.videoUrl, item.link, item.url];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return '';
+}
+
+function toImageTitle(raw?: Record<string, unknown>): string {
+  const title = raw?.title;
+  return typeof title === 'string' && title.trim() ? title.trim() : '';
+}
+
+function toVideoTitle(raw?: Record<string, unknown>): string {
+  const title = raw?.title;
+  return typeof title === 'string' && title.trim() ? title.trim() : '';
+}
+
+function collectImages(
+  toolResults: ToolResult[],
+): Array<{ url: string; title: string }> {
+  const images: Array<{ url: string; title: string }> = [];
+  for (const tr of toolResults) {
+    if (!tr.toolName.endsWith('ImageSearch')) continue;
+    for (const item of tr.result?.results ?? []) {
+      const url = extractImageUrl(item);
+      if (url && isTrustedImageUrl(url)) {
+        images.push({ url, title: toImageTitle(item) });
+      }
+    }
+  }
+  return images;
+}
+
+function collectVideos(
+  toolResults: ToolResult[],
+): Array<{ url: string; title: string }> {
+  const videos: Array<{ url: string; title: string }> = [];
+  for (const tr of toolResults) {
+    if (!tr.toolName.endsWith('VideoSearch')) continue;
+    for (const item of tr.result?.results ?? []) {
+      const url = extractVideoUrl(item);
+      if (url && isVideoUrl(url))
+        videos.push({ url, title: toVideoTitle(item) });
+    }
+  }
+  return videos;
+}
+
+function collectMediaUrls(toolResults: ToolResult[]): {
+  images: Array<{ url: string; title: string }>;
+  videos: Array<{ url: string; title: string }>;
+} {
+  return {
+    images: collectImages(toolResults),
+    videos: collectVideos(toolResults),
+  };
+}
+
+function buildGalleryItems(
+  imageItems: Array<{ url: string; title: string }>,
+  existingHeroImage?: string,
+  existingGallery?: GalleryItem[],
+): GalleryItem[] {
+  const seen = new Set<string>();
+  const items: GalleryItem[] = [];
+
+  if (existingHeroImage) seen.add(existingHeroImage);
+  for (const item of existingGallery ?? []) {
+    if (item.imageUrl) seen.add(item.imageUrl);
+  }
+
+  for (const { url, title } of imageItems) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    items.push({
+      imageUrl: url,
+      imageAlt: title,
+      title,
+      caption: '',
+    });
+  }
+
+  return items;
+}
+
+function buildVideoGalleryItems(
+  videoItems: Array<{ url: string; title: string }>,
+  existingHeroVideo?: string,
+  existingVideos?: VideoGalleryItem[],
+): VideoGalleryItem[] {
+  const seen = new Set<string>();
+  const items: VideoGalleryItem[] = [];
+
+  if (existingHeroVideo) seen.add(existingHeroVideo);
+  for (const item of existingVideos ?? []) {
+    if (item.videoUrl) seen.add(item.videoUrl);
+  }
+
+  for (const { url, title } of videoItems) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    items.push({
+      videoUrl: url,
+      title,
+      caption: '',
+    });
+  }
+
+  return items;
+}
+
+export function extractMediaFromToolResults(
+  toolResults: unknown[],
+  data: HarnessResponseData,
+): void {
+  const results = (toolResults ?? []).filter(isToolResult);
+  if (results.length === 0) return;
+
+  const { images, videos } = collectMediaUrls(results);
+  if (images.length === 0 && videos.length === 0) return;
+
+  const existingHeroImage = data.heroImageUrl?.trim();
+  const existingHeroVideo = data.heroVideoUrl?.trim();
+
+  // Prefer video hero when available, mirroring the server instructions.
+  if (!existingHeroVideo && videos.length > 0) {
+    data.heroVideoUrl = videos[0].url;
+  }
+
+  if (!existingHeroImage && !data.heroVideoUrl && images.length > 0) {
+    data.heroImageUrl = images[0].url;
+  }
+
+  const newGallery = buildGalleryItems(
+    images,
+    data.heroImageUrl,
+    data.galleryItems,
+  );
+  if (newGallery.length > 0) {
+    data.galleryItems = [...(data.galleryItems ?? []), ...newGallery];
+  }
+
+  const newVideos = buildVideoGalleryItems(
+    videos,
+    data.heroVideoUrl,
+    data.videoGalleryItems,
+  );
+  if (newVideos.length > 0) {
+    data.videoGalleryItems = [...(data.videoGalleryItems ?? []), ...newVideos];
+  }
+}

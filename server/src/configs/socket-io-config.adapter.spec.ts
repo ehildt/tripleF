@@ -3,7 +3,7 @@ import { SocketIOConfigAdapter } from './socket-io-config.adapter.js';
 describe('SocketIOConfigAdapter', () => {
   it('returns expected config from env object', () => {
     const config = SocketIOConfigAdapter({
-      SOCKET_IO_EVENT: 'vision',
+      SOCKET_IO_EVENT: 'harness',
       SOCKET_IO_PORT: '3000',
       SOCKET_IO_MAX_HTTP_BUFFER_SIZE: '262144',
       SOCKET_IO_CLEANUP_EMPTY_CHILD_NAMESPACES: 'false',
@@ -17,7 +17,6 @@ describe('SocketIOConfigAdapter', () => {
     });
 
     expect(config).toEqual({
-      event: 'vision',
       opts: {
         maxHttpBufferSize: 262144,
         cleanupEmptyChildNamespaces: false,
@@ -37,11 +36,10 @@ describe('SocketIOConfigAdapter', () => {
 
   it('uses default values when env vars are not provided', () => {
     const config = SocketIOConfigAdapter({
-      SOCKET_IO_EVENT: 'vision',
+      SOCKET_IO_EVENT: 'harness',
       SOCKET_IO_PORT: '3000',
     });
 
-    expect(config.event).toBe('vision');
     expect(config.opts!.maxHttpBufferSize).toBe(262144);
     expect(config.opts!.pingInterval).toBe(25000);
     expect(config.opts!.pingTimeout).toBe(5000);
@@ -49,7 +47,7 @@ describe('SocketIOConfigAdapter', () => {
 
   it('handles missing optional env vars', () => {
     const config = SocketIOConfigAdapter({
-      SOCKET_IO_EVENT: 'vision',
+      SOCKET_IO_EVENT: 'harness',
       SOCKET_IO_PORT: '3000',
     });
 
@@ -58,7 +56,7 @@ describe('SocketIOConfigAdapter', () => {
 
   it('uses default values for all optional settings', () => {
     const config = SocketIOConfigAdapter({
-      SOCKET_IO_EVENT: 'vision',
+      SOCKET_IO_EVENT: 'harness',
       SOCKET_IO_PORT: '3000',
     });
 
@@ -74,8 +72,9 @@ describe('SocketIOConfigAdapter', () => {
     expect(cors.methods).toEqual(['GET', 'POST']);
   });
 
-  it('handles missing SOCKET_IO_EVENT returns undefined event', () => {
+  it('handles empty env returns valid config with defaults', () => {
     const config = SocketIOConfigAdapter({});
-    expect(config.event).toBeUndefined();
+    expect(config.opts).toBeDefined();
+    expect(config.opts!.maxHttpBufferSize).toBe(262144);
   });
 });

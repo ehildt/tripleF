@@ -1,9 +1,11 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import sonarjs from 'eslint-plugin-sonarjs';
+import storybook from 'eslint-plugin-storybook';
 import eslintPluginVue from 'eslint-plugin-vue';
 import globals from 'globals';
 import typescriptEslint from 'typescript-eslint';
@@ -13,23 +15,15 @@ const __dirname = import.meta.dirname;
 export default defineConfig([
   {
     ignores: ['*.d.ts', '**/coverage', '**/dist'],
-  },
-
-  // Base + TS
+  }, // Base + TS
   eslint.configs.recommended,
   eslintPluginPrettierRecommended,
-  ...typescriptEslint.configs.recommended,
-
-  // Vue (flat configs are arrays; spread and scope to .vue)
+  ...typescriptEslint.configs.recommended, // Vue (flat configs are arrays; spread and scope to .vue)
   ...eslintPluginVue.configs['flat/recommended'].map((cfg) => ({
     ...cfg,
     files: ['**/*.vue'],
-  })),
-
-  // SonarJS recommended rules
-  sonarjs.configs.recommended,
-
-  // Project-wide settings / overrides
+  })), // SonarJS recommended rules
+  sonarjs.configs.recommended, // Project-wide settings / overrides
   {
     files: ['**/*.{ts,vue,js,mjs,cjs}'],
     languageOptions: {
@@ -43,7 +37,6 @@ export default defineConfig([
       },
     },
   },
-
   {
     plugins: {
       'simple-import-sort': simpleImportSort,
@@ -93,8 +86,15 @@ export default defineConfig([
       'sonarjs/no-identical-expressions': 'warn',
       'vue/multi-word-component-names': 'off',
     },
-  },
-
-  // Keep last to disable Prettier-conflicting rules
+  }, // Keep last to disable Prettier-conflicting rules
   eslintConfigPrettier,
+  ...storybook.configs['flat/recommended'],
+  {
+    rules: {
+      'storybook/no-uninstalled-addons': [
+        'error',
+        { packageJsonLocation: `${__dirname}/package.json` },
+      ],
+    },
+  },
 ]);

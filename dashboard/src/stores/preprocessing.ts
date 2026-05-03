@@ -1,11 +1,10 @@
+import { useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import { useLocalStorageSync } from '../composables/use-local-storage-sync';
-
 export type PreprocessingSize = 256 | 384 | 512 | 640 | 768 | 1024;
 
-export interface PreprocessingResizeOptions {
+interface PreprocessingResizeOptions {
   maxWidth: PreprocessingSize;
   maxHeight: number | null;
   withoutEnlargement: boolean;
@@ -71,12 +70,6 @@ export const DEFAULT_PREPROCESSING_SETTINGS: PreprocessingSettings = {
   },
 };
 
-export function getDefaultParameterValue(
-  key: keyof PreprocessingParametersOptions,
-): number {
-  return DEFAULT_PREPROCESSING_SETTINGS.parameters[key];
-}
-
 export const VARIANT_DESCRIPTIONS: Record<string, string> = {
   original: 'Baseline image at reduced resolution',
   grayscale: 'Luminance only, removes color noise to focus on text structure',
@@ -87,7 +80,7 @@ export const VARIANT_DESCRIPTIONS: Record<string, string> = {
     'Adaptive contrast enhancement that brings out details in both bright and dark areas',
 };
 
-export const VARIANT_PARAMETERS: Record<string, string[]> = {
+const VARIANT_PARAMETERS: Record<string, string[]> = {
   original: [],
   grayscale: [],
   denoised: ['blurSigma'],
@@ -102,7 +95,7 @@ export const VARIANT_PARAMETERS: Record<string, string[]> = {
   ],
 };
 
-export const PARAMETER_VARIANTS: Record<string, string[]> = {
+const PARAMETER_VARIANTS: Record<string, string[]> = {
   blurSigma: ['denoised'],
   sharpenSigma: ['sharpened'],
   sharpenM1: ['sharpened'],
@@ -117,10 +110,12 @@ export const PARAMETER_VARIANTS: Record<string, string[]> = {
 
 export const usePreprocessingStore = defineStore('preprocessing', () => {
   // Single source-of-truth ref synced to localStorage
-  const settings = ref<PreprocessingSettings>({
-    ...DEFAULT_PREPROCESSING_SETTINGS,
-  });
-  useLocalStorageSync('preprocessing-settings', settings, { immediate: true });
+  const settings = useStorage<PreprocessingSettings>(
+    'preprocessing-settings',
+    { ...DEFAULT_PREPROCESSING_SETTINGS },
+    localStorage,
+    { mergeDefaults: true },
+  );
 
   // Convenience refs — same refs exposed before, now backed by settings
   const enabled = computed({
@@ -279,23 +274,6 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     return params;
   }
 
-  function buildMcpPreprocessing():
-    | {
-        enabled: true;
-        resize: PreprocessingResizeOptions;
-        variants: PreprocessingVariantsOptions;
-        parameters: PreprocessingParametersOptions;
-      }
-    | undefined {
-    if (!enabled.value) return undefined;
-    return {
-      enabled: true,
-      resize: { ...resize.value },
-      variants: { ...variants.value },
-      parameters: { ...parameters.value },
-    };
-  }
-
   function getSummary(): string {
     if (!enabled.value) return 'Disabled';
     const activeVariants = Object.entries(variants.value)
@@ -347,7 +325,6 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     setParameter,
     resetToDefaults,
     buildQueryParams,
-    buildMcpPreprocessing,
     getSummary,
     hoveredVariant,
     highlightedParameters,

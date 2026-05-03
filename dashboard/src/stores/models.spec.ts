@@ -28,7 +28,7 @@ describe('useModelsStore', () => {
     );
     const store = useModelsStore();
     await store.fetchModels();
-    expect(store.models).toEqual(['llama', 'mistral']);
+    expect(store.models).toEqual([{ model: 'llama' }, { model: 'mistral' }]);
     expect(store.modelsLoading).toBe(false);
   });
 
@@ -42,7 +42,7 @@ describe('useModelsStore', () => {
     );
     const store = useModelsStore();
     await store.fetchModels(true);
-    expect(store.models).toEqual(['x']);
+    expect(store.models).toEqual([{ model: 'x' }]);
   });
 
   it('fetchModels shows error toast on non-ok', async () => {

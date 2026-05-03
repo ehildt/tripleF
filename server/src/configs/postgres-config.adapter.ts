@@ -1,30 +1,46 @@
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 import Joi from 'joi';
 
+interface DlqStageConfig {
+  retainAmount: number;
+  maxAgeMs: number;
+}
+
 export interface PostgresConfig {
   url: string;
-  retainJobsAmount: number | undefined;
-  garbageCollectJobsMs: number | undefined;
+  failed: DlqStageConfig;
+  cleared: DlqStageConfig;
+  removed: DlqStageConfig;
 }
+
+const stageConfigSchema = Joi.object<DlqStageConfig>({
+  retainAmount: Joi.number().integer().required(),
+  maxAgeMs: Joi.number().integer().required(),
+}).required();
 
 export const PostgresConfigSchema = Joi.object<PostgresConfig>({
   url: Joi.string()
     .uri({ scheme: ['postgres', 'postgresql'] })
     .required(),
-  retainJobsAmount: Joi.number().integer().optional(),
-  garbageCollectJobsMs: Joi.number().integer().optional(),
+  failed: stageConfigSchema,
+  cleared: stageConfigSchema,
+  removed: stageConfigSchema,
 }).required();
 
 export function PostgresConfigAdapter(env = process.env): PostgresConfig {
   return {
     url: env.POSTGRES_URL!,
-    retainJobsAmount:
-      env.FAILED_JOB_RETAIN_AMOUNT !== undefined
-        ? (getNumberEnv(env.FAILED_JOB_RETAIN_AMOUNT, 0) as number)
-        : undefined,
-    garbageCollectJobsMs:
-      env.FAILED_JOB_GARBAGE_COLLECT_MS !== undefined
-        ? (getNumberEnv(env.FAILED_JOB_GARBAGE_COLLECT_MS, 0) as number)
-        : undefined,
+    failed: {
+      retainAmount: getNumberEnv(env.DLQ_FAILED_RETAIN, 100) as number,
+      maxAgeMs: getNumberEnv(env.DLQ_FAILED_AGE_MS, 604_800_000) as number,
+    },
+    cleared: {
+      retainAmount: getNumberEnv(env.DLQ_CLEARED_RETAIN, 100) as number,
+      maxAgeMs: getNumberEnv(env.DLQ_CLEARED_AGE_MS, 2_592_000_000) as number,
+    },
+    removed: {
+      retainAmount: getNumberEnv(env.DLQ_REMOVED_RETAIN, 0) as number,
+      maxAgeMs: getNumberEnv(env.DLQ_REMOVED_AGE_MS, 86_400_000) as number,
+    },
   };
 }

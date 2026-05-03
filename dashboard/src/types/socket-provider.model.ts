@@ -1,17 +1,5 @@
-import type { MessageData } from './message.model';
-
-export interface TrackRequestDetails {
-  headers?: Record<string, string>;
-  body?: string;
-  formData?: FormData;
-  requestId?: string;
-  roomId?: string;
-  event?: string;
-  numCtx?: string;
-  stream?: boolean;
-  model?: string;
-  preprocessing?: string;
-}
+import type { MessageData } from './message-data.model';
+import type { TrackRequestDetails } from './track-request-details.model';
 
 export interface SocketProvider {
   getSocket: (event?: string, room?: string) => any;
@@ -30,13 +18,11 @@ export interface SocketProvider {
     event: string,
     roomId: string,
     requestId: string,
-    task?: string,
     stream?: boolean,
   ) => void;
   updatePendingMessage: (requestId: string, data: MessageData) => void;
   connectedEvents: Set<string>;
   connectedRooms: Map<string, Set<string>>;
-  getConnectedEventsAndRooms: () => string[];
   closeEvent: (eventName: string) => void;
   closeRoom: (eventName: string, roomId: string) => void;
   addSocketDebugEntry?: (result: {

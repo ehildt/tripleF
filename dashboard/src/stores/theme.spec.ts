@@ -1,13 +1,28 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useThemeStore } from './theme';
+import { THEMES, useThemeStore } from './theme';
+
+describe('THEMES', () => {
+  it('includes all 13 themes', () => {
+    expect(THEMES.length).toBe(13);
+  });
+
+  it('each theme has key, name, and primary', () => {
+    for (const theme of THEMES) {
+      expect(theme.key).toBeTruthy();
+      expect(theme.name).toBeTruthy();
+      expect(theme.primary).toMatch(/^#[0-9a-fA-F]{6}$/);
+    }
+  });
+});
 
 describe('useThemeStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-theme-mode');
   });
 
   it('has default theme souls', () => {
@@ -15,19 +30,16 @@ describe('useThemeStore', () => {
     expect(store.currentTheme).toBe('souls');
   });
 
-  it('applyTheme sets data-theme attribute', () => {
+  it('is dark mode by default', () => {
     const store = useThemeStore();
-    store.applyTheme('cyberpunk');
-    expect(document.documentElement.getAttribute('data-theme')).toBe(
-      'cyberpunk',
-    );
+    expect(store.isDarkMode).toBe(true);
   });
 
   it('initTheme loads valid saved theme', () => {
-    localStorage.setItem('theme', 'diablo');
+    localStorage.setItem('theme', 'residentevil');
     const store = useThemeStore();
     store.initTheme();
-    expect(store.currentTheme).toBe('diablo');
+    expect(store.currentTheme).toBe('residentevil');
   });
 
   it('initTheme ignores invalid saved theme', () => {
@@ -37,37 +49,37 @@ describe('useThemeStore', () => {
     expect(store.currentTheme).toBe('souls');
   });
 
+  it('initTheme restores saved mode', () => {
+    localStorage.setItem('theme-mode', 'light');
+    const store = useThemeStore();
+    store.initTheme();
+    expect(store.isDarkMode).toBe(false);
+  });
+
+  it('toggleDarkMode flips the mode', () => {
+    const store = useThemeStore();
+    expect(store.isDarkMode).toBe(true);
+    store.toggleDarkMode();
+    expect(store.isDarkMode).toBe(false);
+    store.toggleDarkMode();
+    expect(store.isDarkMode).toBe(true);
+  });
+
   it('watch persists theme to localStorage and applies it', async () => {
     const store = useThemeStore();
     store.currentTheme = 'nioh';
-    // wait for watch handler
     await new Promise((r) => setTimeout(r, 10));
     expect(localStorage.getItem('theme')).toBe('nioh');
     expect(document.documentElement.getAttribute('data-theme')).toBe('nioh');
   });
 
-  it('theme colors have entries for all themes', () => {
+  it('watch persists mode to localStorage and applies it', async () => {
     const store = useThemeStore();
-    const names = [
-      'souls',
-      'diablo',
-      'gothic',
-      'cyberpunk',
-      'stellar',
-      'ghostwire',
-      'deathspace',
-      'nioh',
-      'pragmata',
-    ];
-    for (const name of names) {
-      expect(store.themeColors[name as any]).toBeDefined();
-    }
-  });
-
-  it('darkThemes contains expected themes', () => {
-    const store = useThemeStore();
-    expect(store.darkThemes).toContain('souls');
-    expect(store.darkThemes).toContain('cyberpunk');
-    expect(store.darkThemes).not.toContain('ghostwire');
+    store.toggleDarkMode();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(localStorage.getItem('theme-mode')).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme-mode')).toBe(
+      'light',
+    );
   });
 });
