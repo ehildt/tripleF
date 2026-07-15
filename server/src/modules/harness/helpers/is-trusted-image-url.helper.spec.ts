@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  hasBlockedImageHost,
-  isTrustedImageUrl,
-} from './is-trusted-image-url.helper.js';
+import { hasBlockedImageHost } from './has-blocked-image-host.helper.js';
+import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
 
 describe('isTrustedImageUrl', () => {
   it('allows relative storage URLs', () => {
@@ -53,10 +51,21 @@ describe('isTrustedImageUrl', () => {
     ).toBe(false);
   });
 
-  it('rejects localhost and private IP addresses', () => {
-    expect(isTrustedImageUrl('https://localhost/image.jpg')).toBe(false);
-    expect(isTrustedImageUrl('https://127.0.0.1/image.jpg')).toBe(false);
-    expect(isTrustedImageUrl('https://192.168.1.1/image.jpg')).toBe(false);
+  it('allows localhost and private IP addresses for direct image files', () => {
+    expect(isTrustedImageUrl('https://localhost/image.jpg')).toBe(true);
+    expect(isTrustedImageUrl('https://127.0.0.1/image.jpg')).toBe(true);
+    expect(isTrustedImageUrl('https://192.168.1.1/image.jpg')).toBe(true);
+    expect(isTrustedImageUrl('http://minio:9000/bucket/photo.png')).toBe(true);
+    expect(isTrustedImageUrl('http://localhost:9000/bucket/photo.webp')).toBe(
+      true,
+    );
+  });
+
+  it('rejects localhost/private URLs without an image extension or trusted host', () => {
+    expect(isTrustedImageUrl('https://localhost/article-image?id=123')).toBe(
+      false,
+    );
+    expect(isTrustedImageUrl('https://192.168.1.1/random')).toBe(false);
   });
 
   it('rejects non-HTTP protocols except image data URIs', () => {

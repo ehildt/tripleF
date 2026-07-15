@@ -1,20 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
-import { HarnessStreamQueryDto } from '../../harness/dtos/harness-stream-query.dto.js';
 import { SharpConfigService } from '../configs/sharp-config.service.js';
 import { mergeSharpOptions } from '../constants/sharp.constants.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';
+import { getVariantPipeline } from '../helpers/get-variant-pipeline.helper.js';
 import { toBuffer } from '../helpers/image-buffer.helper.js';
 import {
   type FilterVariant,
-  getVariantPipeline,
   type Variant,
-} from '../helpers/image-variant.helper.js';
+} from '../types/image-variant.types.js';
 
 import { ImagePipelineFactory } from './image-pipeline-factory.service.js';
 import { ImageVariantProcessor } from './image-variant-processor.service.js';
-import { SharpOptionsBuilder } from './sharp-options-builder.service.js';
+import { SharpOverridesService } from './sharp-overrides.service.js';
 
 @Injectable()
 export class SharpService {
@@ -23,8 +22,8 @@ export class SharpService {
   constructor(
     @Inject(SharpConfigService)
     private readonly configService: SharpConfigService,
-    @Inject(SharpOptionsBuilder)
-    private readonly optionsBuilder: SharpOptionsBuilder,
+    @Inject(SharpOverridesService)
+    private readonly sharpOverrides: SharpOverridesService,
     @Inject(ImagePipelineFactory)
     private readonly pipelineFactory: ImagePipelineFactory,
     @Inject(ImageVariantProcessor)
@@ -32,11 +31,11 @@ export class SharpService {
   ) {}
 
   /**
-   * Build preprocessing options from flat query parameters.
-   * Query values override env-backed defaults. Returns undefined when disabled.
+   * Preprocessing options from the effective server-side config (env
+   * defaults + live overrides). Returns undefined when disabled.
    */
-  buildOptions(query: HarnessStreamQueryDto): SharpOptions | undefined {
-    return this.optionsBuilder.build(query);
+  buildOptions(): SharpOptions | undefined {
+    return this.sharpOverrides.buildOptions();
   }
 
   /**

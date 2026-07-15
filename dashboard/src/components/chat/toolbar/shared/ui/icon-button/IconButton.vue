@@ -35,7 +35,6 @@ defineEmits<{
 .toolbar-icon-button {
   padding: var(--spacing-1-5);
   color: var(--color-fg-muted);
-  border-radius: 0.25rem;
   flex-shrink: 0;
   cursor: pointer;
   transition:
@@ -56,7 +55,7 @@ defineEmits<{
 
 .toolbar-icon-button--disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .toolbar-icon-button--blinking {

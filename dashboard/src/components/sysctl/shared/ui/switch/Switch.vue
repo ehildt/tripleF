@@ -35,7 +35,7 @@ const emit = defineEmits<{
 }
 
 .switch--disabled {
-  cursor: not-allowed;
+  cursor: default;
   opacity: 0.4;
 }
 
@@ -54,7 +54,6 @@ const emit = defineEmits<{
 .switch__track {
   position: absolute;
   inset: 0;
-  border-radius: 9999px;
   background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
   transition: background-color 200ms ease;
@@ -70,7 +69,6 @@ const emit = defineEmits<{
   left: 0.125rem;
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 9999px;
   background-color: var(--color-fg-muted);
   transition:
     transform 200ms ease,

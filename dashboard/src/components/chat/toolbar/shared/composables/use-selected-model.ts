@@ -82,10 +82,28 @@ export function useSelectedModel() {
     );
   }
 
+  function syncNumCtxForModel(
+    conversationIdValue: string,
+    modelName: string | undefined,
+  ) {
+    if (!conversationIdValue || !modelName) return;
+    const s = conversationStore.getConversation(conversationIdValue);
+    if (!s || s.numCtx) return;
+
+    const numCtx = modelsStore.maxNumCtxForModel(modelName);
+    if (numCtx) {
+      conversationStore.setNumCtx(conversationIdValue, numCtx);
+    }
+  }
+
   watch(
     () => [conversationId.value, selectedModelDetails.value?.model],
-    ([currentSessionId]) => {
+    ([currentSessionId, modelName]) => {
       syncImageSelectionsForVisionState(currentSessionId as string);
+      syncNumCtxForModel(
+        currentSessionId as string,
+        modelName as string | undefined,
+      );
     },
     { immediate: true },
   );

@@ -28,7 +28,7 @@ const iconMap: Record<string, LucideIcon> = {
         class="flex items-start gap-3 p-3 min-w-[300px] max-w-[420px] text-sm font-mono shadow-lg border border-divider bg-elevated text-fg-primary"
       >
         <div
-          class="w-0.5 self-stretch shrink-0 rounded-full"
+          class="w-0.5 self-stretch shrink-0 rounded-none"
           :class="[
             t.type === 'success'
               ? 'bg-status-success'

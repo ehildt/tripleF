@@ -42,10 +42,16 @@ describe('toEmbedUrl', () => {
     );
   });
 
-  it('leaves existing youtube embed URLs unchanged', () => {
+  it('passes existing youtube embed URLs through unchanged', () => {
     expect(toEmbedUrl('https://www.youtube.com/embed/3tdfsBo9oiY')).toBe(
       'https://www.youtube.com/embed/3tdfsBo9oiY',
     );
+  });
+
+  it('normalizes nocookie embed URLs to the stock domain', () => {
+    expect(
+      toEmbedUrl('https://www.youtube-nocookie.com/embed/3tdfsBo9oiY'),
+    ).toBe('https://www.youtube.com/embed/3tdfsBo9oiY');
   });
 
   it('converts vimeo page URLs to player URLs', () => {

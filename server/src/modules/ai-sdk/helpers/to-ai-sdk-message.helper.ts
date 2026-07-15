@@ -3,7 +3,8 @@ import type {
   AiSdkMessage,
   AiSdkMessageRole,
   InputMessage,
-} from './ai-sdk-message.models.js';
+} from '../types/ai-sdk-messages.types.js';
+
 import { toFilePart } from './to-file-part.helper.js';
 
 export function toAiSdkMessage(message: InputMessage): AiSdkMessage {

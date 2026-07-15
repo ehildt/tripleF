@@ -120,7 +120,7 @@ function toggleHideRead() {
       </button>
     </div>
   </PanelHeader>
-  <div v-if="props.total > 0" class="dlq-list-header__pagination">
+  <div v-if="props.total > 0">
     <Pagination
       :current-page="props.currentPage"
       :total-pages="props.totalPages"
@@ -183,9 +183,5 @@ function toggleHideRead() {
 .dlq-list-header__hide-read-icon {
   width: 1rem;
   height: 1rem;
-}
-
-.dlq-list-header__pagination {
-  padding: var(--spacing-1) var(--spacing-4) var(--spacing-3);
 }
 </style>

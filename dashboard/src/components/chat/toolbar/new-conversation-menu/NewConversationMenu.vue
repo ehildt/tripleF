@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CircleGauge, MessageSquareText, Radio } from '@lucide/vue';
+import { CircleGauge, MessagesSquare, Radio } from '@lucide/vue';
 
 import Dropdown from '../../../shared/ui/drop-down/DropDown.vue';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
@@ -42,12 +42,12 @@ defineEmits<{
         title="Sessions"
         @click.stop="$emit('toggleMenu')"
       >
-        <MessageSquareText class="w-4 h-4" />
+        <MessagesSquare class="w-4 h-4" />
       </IconButton>
       <div v-if="isOpen" class="new-conversation-menu__dropdown" @click.stop>
         <div class="new-conversation-menu__content">
           <div class="new-conversation-menu__input-wrapper">
-            <MessageSquareText class="new-conversation-menu__input-icon" />
+            <MessagesSquare class="new-conversation-menu__input-icon" />
             <input
               :value="newConversationName"
               placeholder="Conversation name"
@@ -210,7 +210,7 @@ defineEmits<{
 }
 
 .new-conversation-menu__button--disabled {
-  cursor: not-allowed;
+  cursor: default;
   opacity: 0.5;
   background-color: var(--color-bg-tertiary);
   color: var(--color-fg-muted);

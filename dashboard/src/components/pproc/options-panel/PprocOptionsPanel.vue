@@ -1,113 +1,103 @@
 <script setup lang="ts">
-import { ArrowLeftRight, Contrast, ScanEye, Sparkles, Zap } from '@lucide/vue';
+import {
+  Activity,
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ArrowUpToLine,
+  Columns3,
+  Focus,
+  Minus,
+  Rows3,
+  Sun,
+  TrendingUp,
+  Waves,
+} from '@lucide/vue';
 
+import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 
 import { usePreprocessingStore } from '../../../stores/preprocessing';
-import BlurSigmaInput from '../shared/ui/blur-sigma-input/BlurSigmaInput.vue';
-import BrightnessInput from '../shared/ui/brightness-input/BrightnessInput.vue';
-import ClaheHeightInput from '../shared/ui/clahe-height-input/ClaheHeightInput.vue';
-import ClaheMaxSlopeInput from '../shared/ui/clahe-max-slope-input/ClaheMaxSlopeInput.vue';
-import ClaheWidthInput from '../shared/ui/clahe-width-input/ClaheWidthInput.vue';
-import NormalizeLowerInput from '../shared/ui/normalize-lower-input/NormalizeLowerInput.vue';
-import NormalizeUpperInput from '../shared/ui/normalize-upper-input/NormalizeUpperInput.vue';
-import PprocParamTile from '../shared/ui/param-tile/PprocParamTile.vue';
-import SharpenM1Input from '../shared/ui/sharpen-m1-input/SharpenM1Input.vue';
-import SharpenM2Input from '../shared/ui/sharpen-m2-input/SharpenM2Input.vue';
-import SharpenSigmaInput from '../shared/ui/sharpen-sigma-input/SharpenSigmaInput.vue';
 
 const store = usePreprocessingStore();
 
-const iconMap = {
-  Zap,
-  ScanEye,
-  Sparkles,
-  Contrast,
-};
-
 const parameters = [
-  // Row 1
-  [
-    {
-      field: BlurSigmaInput,
-      key: 'blurSigma',
-      icon: 'Zap',
-      label: 'Blur Sigma',
-      desc: 'Gaussian blur amount',
-    },
-    {
-      field: SharpenSigmaInput,
-      key: 'sharpenSigma',
-      icon: 'ScanEye',
-      label: 'Sharpen Sigma',
-      desc: 'Edge radius',
-    },
-    {
-      field: SharpenM1Input,
-      key: 'sharpenM1',
-      icon: 'ScanEye',
-      label: 'Sharpen M1',
-      desc: 'Flat factor',
-    },
-  ],
-  // Row 2
-  [
-    {
-      field: SharpenM2Input,
-      key: 'sharpenM2',
-      icon: 'ScanEye',
-      label: 'Sharpen M2',
-      desc: 'Edge factor',
-    },
-    {
-      field: ClaheWidthInput,
-      key: 'claheWidth',
-      icon: 'Sparkles',
-      label: 'CLAHE Width',
-      desc: 'Grid width tiles',
-    },
-    {
-      field: ClaheHeightInput,
-      key: 'claheHeight',
-      icon: 'Sparkles',
-      label: 'CLAHE Height',
-      desc: 'Grid height tiles',
-    },
-  ],
-  // Row 3
-  [
-    {
-      field: ClaheMaxSlopeInput,
-      key: 'claheMaxSlope',
-      icon: 'Sparkles',
-      label: 'Max Slope',
-      desc: 'Contrast limit',
-    },
-    {
-      field: BrightnessInput,
-      key: 'brightnessLevel',
-      icon: 'Sparkles',
-      label: 'Brightness',
-      desc: 'Brightness mult',
-    },
-    {
-      field: NormalizeLowerInput,
-      key: 'normalizeLower',
-      icon: 'Contrast',
-      label: 'Norm. Lower',
-      desc: 'Lower percentile',
-    },
-  ],
-  // Row 4
-  [
-    {
-      field: NormalizeUpperInput,
-      key: 'normalizeUpper',
-      icon: 'Contrast',
-      label: 'Norm. Upper',
-      desc: 'Upper percentile',
-    },
-  ],
+  {
+    key: 'blurSigma',
+    icon: Waves,
+    label: 'Blur Sigma',
+    desc: 'Gaussian blur amount',
+    step: 0.1,
+    placeholder: '0.5',
+  },
+  {
+    key: 'sharpenSigma',
+    icon: Focus,
+    label: 'Sharpen Sigma',
+    desc: 'Edge radius',
+    step: 0.1,
+    placeholder: '1.0',
+  },
+  {
+    key: 'sharpenM1',
+    icon: Minus,
+    label: 'Sharpen M1',
+    desc: 'Flat factor',
+    step: 0.1,
+    placeholder: '1.0',
+  },
+  {
+    key: 'sharpenM2',
+    icon: Activity,
+    label: 'Sharpen M2',
+    desc: 'Edge factor',
+    step: 0.1,
+    placeholder: '2.0',
+  },
+  {
+    key: 'claheWidth',
+    icon: Columns3,
+    label: 'CLAHE Width',
+    desc: 'Grid width tiles',
+    placeholder: '8',
+  },
+  {
+    key: 'claheHeight',
+    icon: Rows3,
+    label: 'CLAHE Height',
+    desc: 'Grid height tiles',
+    placeholder: '8',
+  },
+  {
+    key: 'claheMaxSlope',
+    icon: TrendingUp,
+    label: 'Max Slope',
+    desc: 'Contrast limit',
+    step: 0.1,
+    placeholder: '3.0',
+  },
+  {
+    key: 'brightnessLevel',
+    icon: Sun,
+    label: 'Brightness',
+    desc: 'Brightness mult',
+    step: 0.1,
+    placeholder: '1.2',
+  },
+  {
+    key: 'normalizeLower',
+    icon: ArrowDownToLine,
+    label: 'Norm. Lower',
+    desc: 'Lower percentile',
+    step: 0.1,
+    placeholder: '1',
+  },
+  {
+    key: 'normalizeUpper',
+    icon: ArrowUpToLine,
+    label: 'Norm. Upper',
+    desc: 'Upper percentile',
+    placeholder: '99',
+  },
 ] as const;
 </script>
 
@@ -116,7 +106,7 @@ const parameters = [
     <PanelTitleBar title="Advanced Parameters">
       <template #actions>
         <button
-          class="p-1 text-fg-muted hover:text-fg-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="p-1 text-fg-muted hover:text-fg-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
           title="Reset all"
           :disabled="!store.hasAnyParameterModified"
           @click="store.resetParametersToDefaults()"
@@ -126,59 +116,25 @@ const parameters = [
       </template>
     </PanelTitleBar>
 
-    <div class="p-4 space-y-2">
-      <div
-        v-for="(row, rowIndex) in parameters"
-        :key="rowIndex"
-        class="grid grid-cols-3 gap-2"
-      >
-        <PprocParamTile
-          v-for="param in row"
-          :key="param.key"
-          :icon="iconMap[param.icon]"
-          :label="param.label"
-          :description="param.desc"
-          :disabled="!store.enabled"
-          :highlighted="store.isParameterHighlighted(param.key)"
-          :modified="
-            store.isParameterModified(
-              param.key as keyof typeof store.parameters,
-            )
-          "
-          @mouseenter="
-            store.setHoveredParameter(
-              param.key as keyof typeof store.parameters,
-            )
-          "
-          @mouseleave="store.setHoveredParameter(null)"
-          @reset="
-            store.resetParameter(param.key as keyof typeof store.parameters)
-          "
-        >
-          <component
-            :is="param.field"
-            :model-value="
-              store.parameters[param.key as keyof typeof store.parameters]
-            "
-            :disabled="!store.enabled"
-            @update:model-value="
-              store.setParameter(
-                param.key as keyof typeof store.parameters,
-                $event,
-              )
-            "
-          />
-        </PprocParamTile>
-
-        <!-- Fill empty slots in last row -->
-        <template v-if="row.length < 3">
-          <div
-            v-for="n in 3 - row.length"
-            :key="`empty-${n}`"
-            class="p-3 border border-divider bg-primary h-25 opacity-0"
-          />
-        </template>
-      </div>
+    <div class="p-4 grid grid-cols-3 gap-1">
+      <FieldCard
+        v-for="param in parameters"
+        :key="param.key"
+        :icon="param.icon"
+        :label="param.label"
+        :description="param.desc"
+        :number-value="store.parameters[param.key]"
+        :number-step="'step' in param ? param.step : undefined"
+        :number-placeholder="param.placeholder"
+        :checked="store.isParameterModified(param.key)"
+        :disabled="!store.enabled"
+        :highlighted="store.isParameterHighlighted(param.key)"
+        tone="preprocessing"
+        @toggle="store.resetParameter(param.key)"
+        @update:number-value="store.setParameter(param.key, $event)"
+        @mouseenter="store.setHoveredParameter(param.key)"
+        @mouseleave="store.setHoveredParameter(null)"
+      />
     </div>
   </div>
 </template>

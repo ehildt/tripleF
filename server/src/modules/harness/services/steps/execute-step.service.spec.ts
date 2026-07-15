@@ -1,3 +1,4 @@
+import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -35,6 +36,13 @@ describe('ExecuteStepService', () => {
           provide: ExecuteActionService,
           useValue: { execute: vi.fn() },
         },
+        {
+          provide: SocketIOService,
+          useValue: {
+            emit: vi.fn(),
+            emitTo: vi.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -50,9 +58,6 @@ describe('ExecuteStepService', () => {
     (action.execute as any).mockResolvedValue({
       buffers: [Buffer.from('processed')],
       processedMeta: [{ name: 'test.png', type: 'image/png', hash: 'abc' }],
-      messages: [
-        { role: 'user', content: 'hi', images: [Buffer.from('processed')] },
-      ],
       toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
       inputTokens: 20,
       outputTokens: 10,
@@ -69,6 +74,7 @@ describe('ExecuteStepService', () => {
           reasoning: '',
           contextSummary: '',
           needsClarification: false,
+          language: 'en',
           plan: {},
         },
         toolResults: [],
@@ -83,7 +89,6 @@ describe('ExecuteStepService', () => {
       type: 'image/png',
       hash: 'abc',
     });
-    expect(ctx.request.messages).toHaveLength(1);
     expect(ctx.outputs.toolResults).toEqual([
       { toolName: 'webSearch', result: { x: 1 } },
     ]);

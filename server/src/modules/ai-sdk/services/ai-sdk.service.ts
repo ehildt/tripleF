@@ -9,13 +9,13 @@ import {
 } from 'ai';
 import { createOllama } from 'ollama-ai-provider-v2';
 
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
+import { OllamaConfigService } from '../configs/ollama-config.service.js';
 import { toAiSdkMessages } from '../helpers/ai-sdk-message.helper.js';
-import type { InputMessage } from '../helpers/ai-sdk-message.models.js';
-import { ThinkMode } from '../helpers/ollama.helpers.js';
 import { buildProviderOptions } from '../helpers/provider-options.helper.js';
+import type { InputMessage } from '../types/ai-sdk-messages.types.js';
+import { ThinkMode } from '../types/think-mode.type.js';
 
-export type { InputMessage } from '../helpers/ai-sdk-message.models.js';
+export type { InputMessage } from '../types/ai-sdk-messages.types.js';
 
 @Injectable()
 export class AiSdkService {

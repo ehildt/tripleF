@@ -13,9 +13,17 @@ import {
 
 import { useReadTracker } from '../composables/use-read-tracker';
 import { useAppStore } from '../stores/app';
+import { useModelsStore } from '../stores/models';
 import type { HarnessStreamEvent } from '../types/harness-stream-event.model';
 import type { Message } from '../types/message.model';
 import type { MessageData } from '../types/message-data.model';
+
+/**
+ * Activity label shown while the model streams response data: the thinking
+ * phase is over, the response is being assembled token by token.
+ */
+const STREAMING_ACTIVITY_LABEL = 'Assembling the response…';
+
 export const useApiMessagesStore = defineStore('apiMessages', () => {
   const messages = ref<Message[]>([]);
   const trackedRequestIds = ref<Set<string>>(new Set());
@@ -106,13 +114,21 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
           hash?: string;
           size?: number;
           variant?: string;
+          source?: string;
         }>
       | undefined;
     if (!Array.isArray(meta)) return [];
     const cid = conversationStore.getConversationId(conversationId);
     return meta
       .filter(
-        (entry): entry is { name: string; hash: string; size?: number } =>
+        (
+          entry,
+        ): entry is {
+          name: string;
+          hash: string;
+          size?: number;
+          source?: string;
+        } =>
           typeof entry.name === 'string' &&
           typeof entry.hash === 'string' &&
           (!entry.variant || entry.variant === 'original'),
@@ -124,6 +140,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         uploadedAt: Date.now(),
         selected: true,
         conversationId: cid,
+        source:
+          entry.source === 'cloud' ? ('cloud' as const) : ('local' as const),
       }));
   }
 
@@ -164,21 +182,25 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
           promptEvalCount: d.promptEvalCount,
           evalCount: d.evalCount,
         });
-        return;
+      } else {
+        conversationStore.addExchange(conversation.id, {
+          role: 'assistant',
+          content: fallbackContent,
+          requestId,
+          status,
+          event,
+          harnessTemplate: state.template ?? undefined,
+          harnessData: state.lastValidData ?? undefined,
+          text: state.text || undefined,
+          activity: d.done === true ? undefined : STREAMING_ACTIVITY_LABEL,
+          promptEvalCount: d.promptEvalCount,
+          evalCount: d.evalCount,
+        });
       }
 
-      conversationStore.addExchange(conversation.id, {
-        role: 'assistant',
-        content: fallbackContent,
-        requestId,
-        status,
-        event,
-        harnessTemplate: state.template ?? undefined,
-        harnessData: state.lastValidData ?? undefined,
-        text: state.text || undefined,
-        promptEvalCount: d.promptEvalCount,
-        evalCount: d.evalCount,
-      });
+      if (d.done === true) {
+        ensureConversationNumCtx(conversation);
+      }
       return;
     }
 
@@ -191,8 +213,14 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       existing.harnessTemplate = state.template ?? undefined;
       existing.harnessData = state.lastValidData ?? undefined;
       existing.text = state.text || undefined;
+      // A delta means the model left its thinking phase and is emitting the
+      // response: drop the reasoning label and announce the assembly until
+      // the done event clears it.
+      existing.reasoning = undefined;
+      existing.activity =
+        d.done === true ? undefined : STREAMING_ACTIVITY_LABEL;
     }
-    existing.toolCall = undefined;
+    existing.toolCalls = undefined;
     conversation.updatedAt = Date.now();
 
     if (d.done === true) {
@@ -200,6 +228,21 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         promptEvalCount: d.promptEvalCount,
         evalCount: d.evalCount,
       });
+      ensureConversationNumCtx(conversation);
+    }
+  }
+
+  function ensureConversationNumCtx(
+    conversation: ReturnType<
+      typeof useConversationStore
+    >['conversations'][number],
+  ) {
+    const modelsStore = useModelsStore();
+    if (conversation.numCtx || !conversation.model) return;
+
+    const numCtx = modelsStore.maxNumCtxForModel(conversation.model);
+    if (numCtx) {
+      conversation.numCtx = numCtx;
     }
   }
 
@@ -326,6 +369,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         content: newContent,
         requestId,
         status: d.done ? 'done' : 'streaming',
+        activity: d.done ? undefined : STREAMING_ACTIVITY_LABEL,
         promptEvalCount: d.promptEvalCount,
         evalCount: d.evalCount,
       });
@@ -334,7 +378,11 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         (e) => e.requestId === requestId && e.role === 'assistant',
       );
       if (ex) {
-        ex.toolCall = undefined;
+        ex.toolCalls = undefined;
+        // Streamed content ends the thinking phase — see
+        // updateHarnessSessionExchange for the same transition.
+        ex.reasoning = undefined;
+        ex.activity = d.done ? undefined : STREAMING_ACTIVITY_LABEL;
       }
       conversationStore.appendExchangeContent(
         conversation.id,
@@ -360,12 +408,15 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       evalCount: d.evalCount,
     });
 
+    ensureConversationNumCtx(conversation);
+
     const ex = conversation.exchanges.find(
       (e) => e.requestId === requestId && e.role === 'assistant',
     );
     if (ex) {
-      ex.phase = undefined;
-      ex.toolCall = undefined;
+      ex.activity = undefined;
+      ex.reasoning = undefined;
+      ex.toolCalls = undefined;
     }
 
     if (raw.compact === true) {
@@ -379,29 +430,35 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
   }
 
-  function handlePhase(
+  function handleActivityStatus(
     conversation: ReturnType<
       typeof useConversationStore
     >['conversations'][number],
     raw: Record<string, unknown>,
     requestId: string,
   ) {
-    const phase = raw.phase as
-      | 'classifying'
-      | 'strategizing'
-      | 'summarizing'
-      | 'rendering'
-      | 'reviewing'
-      | undefined;
+    if (raw.compact === true || raw.done === true) return;
     const status = raw.status as string | undefined;
-    if (!phase) return;
+    if (!status || status === 'canceled') return;
     const ex = conversation.exchanges.find(
       (e) => e.requestId === requestId && e.role === 'assistant',
     );
-    if (ex) {
-      if (status === 'start') ex.phase = phase;
-      else if (status === 'end') ex.phase = undefined;
-    }
+    if (ex) ex.activity = status;
+  }
+
+  function handleReasoningDelta(
+    conversation: ReturnType<
+      typeof useConversationStore
+    >['conversations'][number],
+    raw: Record<string, unknown>,
+    requestId: string,
+  ) {
+    const delta = raw.reasoningDelta as string | undefined;
+    if (!delta) return;
+    const ex = conversation.exchanges.find(
+      (e) => e.requestId === requestId && e.role === 'assistant',
+    );
+    if (ex) ex.reasoning = (ex.reasoning ?? '') + delta;
   }
 
   function handleToolCall(
@@ -412,7 +469,13 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     requestId: string,
   ) {
     const tc = raw.toolCall as
-      { name?: string; input?: unknown; status?: string } | undefined;
+      | {
+          name?: string;
+          category?: string;
+          query?: string;
+          status?: string;
+        }
+      | undefined;
     if (!tc?.name) return;
     const conversationStore = useConversationStore();
 
@@ -430,22 +493,24 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         (e) => e.requestId === requestId && e.role === 'assistant',
       );
     }
-    if (
-      ex &&
-      (tc.status === 'start' ||
-        tc.status === 'running' ||
-        tc.status === 'compacting' ||
-        tc.status === 'preparing')
-    ) {
-      ex.toolCall = {
+    if (!ex) return;
+
+    const active = (ex.toolCalls ?? []).filter((t) => t.name !== tc.name);
+
+    if (tc.status === 'done' || tc.status === 'error') {
+      ex.toolCalls = active.length ? active : undefined;
+      return;
+    }
+
+    ex.toolCalls = [
+      ...active,
+      {
         name: tc.name,
-        input: tc.input ?? ex.toolCall?.input,
-        status: tc.status,
-      };
-    }
-    if (ex && (tc.status === 'done' || tc.status === 'error')) {
-      ex.toolCall = undefined;
-    }
+        category: tc.category,
+        query: tc.query,
+        status: tc.status ?? 'start',
+      },
+    ];
   }
 
   function bridgeToSession(event: string, data: unknown) {
@@ -473,7 +538,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         event,
       );
       handleNewContent(conversation, newContent, requestId, d);
-      handlePhase(conversation, raw, requestId);
+      handleActivityStatus(conversation, raw, requestId);
+      handleReasoningDelta(conversation, raw, requestId);
       handleDone(conversation, raw, requestId, d);
       handleToolCall(conversation, raw, requestId);
     }
@@ -486,6 +552,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       for (const ex of conversation.exchanges) {
         if (ex.requestId !== requestId || ex.role !== 'assistant') continue;
         ex.status = 'done';
+        ex.activity = undefined;
+        ex.reasoning = undefined;
       }
     }
   }

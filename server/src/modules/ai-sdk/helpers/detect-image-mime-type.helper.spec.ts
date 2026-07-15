@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { UnsupportedImageFormatError } from '../constants/image-format-errors.js';
 import { MEDIA_TYPE } from '../constants/image-media-type.constants.js';
 
-import {
-  detectImageMimeType,
-  UnsupportedImageFormatError,
-} from './detect-image-mime-type.helper.js';
+import { detectImageMimeType } from './detect-image-mime-type.helper.js';
 
 describe('detectImageMimeType', () => {
   it.each([

@@ -12,6 +12,7 @@ export interface AttachmentItem {
   isUploaded: boolean;
   isSelected: boolean;
   pendingIndex: number | null;
+  source?: 'local' | 'cloud';
 }
 
 export interface UseAttachmentListOptions {
@@ -36,6 +37,7 @@ export function useAttachmentList(options: UseAttachmentListOptions) {
         isUploaded: false,
         isSelected: entry.isSelected,
         pendingIndex: index,
+        source: 'local',
       }),
     );
 
@@ -47,6 +49,7 @@ export function useAttachmentList(options: UseAttachmentListOptions) {
       isUploaded: true,
       isSelected: image.selected !== false,
       pendingIndex: null,
+      source: image.source ?? 'local',
     }));
 
     return [...pending, ...uploaded];

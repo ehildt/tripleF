@@ -8,17 +8,14 @@ const meta = {
   component: TabVisibilitySection,
   tags: ['autodocs'],
   argTypes: {
-    isPreprocessingVisible: { control: 'boolean' },
     isDebugVisible: { control: 'boolean' },
     isDlqVisible: { control: 'boolean' },
     showCounters: { control: 'boolean' },
   },
   args: {
-    isPreprocessingVisible: true,
     isDebugVisible: true,
     isDlqVisible: true,
     showCounters: true,
-    onTogglePreprocessing: fn(),
     onToggleDebug: fn(),
     onToggleDlq: fn(),
     onToggleCounters: fn(),

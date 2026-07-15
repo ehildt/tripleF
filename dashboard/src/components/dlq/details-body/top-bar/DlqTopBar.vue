@@ -177,7 +177,6 @@ const {
 .dlq-top-bar__skeleton-bar {
   width: 2.5rem;
   height: 0.75rem;
-  border-radius: 0.25rem;
   background-color: var(--color-bg-tertiary);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

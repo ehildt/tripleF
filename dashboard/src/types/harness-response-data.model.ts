@@ -4,6 +4,12 @@ export interface VideoGalleryItem {
   videoUrl: string;
   title?: string;
   caption?: string;
+  duration?: string;
+  channel?: string;
+  date?: string;
+  views?: number;
+  thumbnailUrl?: string;
+  description?: string;
 }
 
 export interface GalleryItem {
@@ -11,6 +17,9 @@ export interface GalleryItem {
   imageAlt?: string;
   title?: string;
   caption?: string;
+  width?: number;
+  height?: number;
+  source?: string;
 }
 
 export interface KeyFinding {
@@ -38,6 +47,26 @@ export interface ArticleCard {
   description?: string;
   url?: string;
   linkLabel?: string;
+}
+
+export interface ShopOffer {
+  title?: string;
+  price?: string;
+  source?: string;
+  imageUrl?: string;
+  delivery?: string;
+  rating?: number;
+  ratingCount?: number;
+  link?: string;
+}
+
+export interface ReviewSummary {
+  text: string;
+}
+
+export interface StatHighlight {
+  label: string;
+  value: string;
 }
 
 export interface HarnessResponseData {
@@ -81,6 +110,22 @@ export interface HarnessResponseData {
   keyFindings?: KeyFinding[];
   sources?: Source[];
 
+  /* Compare note */
+  note?: string;
+
+  /* Product template */
+  shortDescription?: string;
+  priceRange?: string;
+  aggregateRating?: number;
+  aggregateRatingCount?: number;
+  aggregateRatingLabel?: string;
+  buyAdvice?: string;
+  statHighlights?: StatHighlight[];
+  pros?: KeyFinding[];
+  cons?: KeyFinding[];
+  shopOffers?: ShopOffer[];
+  reviewSummary?: ReviewSummary[];
+
   /* Article-only */
   author?: string;
   publishDate?: string;
@@ -90,6 +135,7 @@ export interface HarnessResponseData {
   heroCaption?: string;
   heroVideoUrl?: string;
   heroVideoCaption?: string;
+  heroVideoTitle?: string;
   videoGalleryTitle?: string;
   videoGalleryItems?: VideoGalleryItem[];
   quote?: string;

@@ -26,17 +26,11 @@ function handleChange(value: string) {
 </script>
 
 <template>
-  <div class="space-y-1.5 h-full flex flex-col justify-center">
-    <label
-      class="text-xs font-medium text-fg-secondary font-mono uppercase tracking-wider"
-      >Max Height</label
-    >
-    <InputSelect
-      :model-value="props.modelValue?.toString() ?? 'AUTO'"
-      :options="HEIGHT_OPTIONS"
-      :disabled="props.disabled"
-      placeholder="AUTO"
-      @update:model-value="handleChange"
-    />
-  </div>
+  <InputSelect
+    :model-value="props.modelValue?.toString() ?? 'AUTO'"
+    :options="HEIGHT_OPTIONS"
+    :disabled="props.disabled"
+    placeholder="AUTO"
+    @update:model-value="handleChange"
+  />
 </template>

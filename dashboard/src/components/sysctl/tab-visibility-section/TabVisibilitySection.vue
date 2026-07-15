@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import SwitchCard from '../shared/ui/switch-card/SwitchCard.vue';
+import { Bug, Hash, MailX, Plug } from '@lucide/vue';
+
+import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 
 defineProps<{
-  isPreprocessingVisible: boolean;
   isDebugVisible: boolean;
   isDlqVisible: boolean;
+  isSocketsVisible: boolean;
   showCounters: boolean;
 }>();
 
 const emit = defineEmits<{
-  togglePreprocessing: [];
   toggleDebug: [];
   toggleDlq: [];
+  toggleSockets: [];
   toggleCounters: [];
 }>();
 </script>
@@ -19,25 +21,29 @@ const emit = defineEmits<{
 <template>
   <div class="tab-visibility-section__content">
     <div class="tab-visibility-section__grid">
-      <SwitchCard
-        label="pproc"
-        description="preprocessing tab"
-        :checked="isPreprocessingVisible"
-        @toggle="emit('togglePreprocessing')"
-      />
-      <SwitchCard
+      <FieldCard
+        :icon="MailX"
         label="dlq"
         description="dead letter queue tab"
         :checked="isDlqVisible"
         @toggle="emit('toggleDlq')"
       />
-      <SwitchCard
+      <FieldCard
+        :icon="Bug"
         label="debug"
         description="debug tab / logging"
         :checked="isDebugVisible"
         @toggle="emit('toggleDebug')"
       />
-      <SwitchCard
+      <FieldCard
+        :icon="Plug"
+        label="sockets"
+        description="sockets menu + list in the chat toolbar"
+        :checked="isSocketsVisible"
+        @toggle="emit('toggleSockets')"
+      />
+      <FieldCard
+        :icon="Hash"
         label="counters"
         description="show unread badge on tabs"
         :checked="showCounters"
@@ -54,7 +60,7 @@ const emit = defineEmits<{
 
 .tab-visibility-section__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-1);
 }
 </style>

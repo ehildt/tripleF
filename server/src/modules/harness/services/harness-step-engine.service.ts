@@ -1,22 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { HarnessContext, StepId, StepState } from './harness-context.type.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
 import { StepRegistry, StepRegistryService } from './step-registry.service.js';
 
 export type { StepRegistry };
 
 @Injectable()
 export class HarnessStepEngineService {
-  private readonly logger = new Logger(HarnessStepEngineService.name);
-
-  constructor(private readonly stepRegistryService: StepRegistryService) {}
+  constructor(
+    private readonly stepRegistryService: StepRegistryService,
+    private readonly stepLogger: HarnessStepLogger,
+  ) {}
 
   async run(ctx: HarnessContext): Promise<void> {
     while (!this.isGoalFinished(ctx)) {
       const step = this.selectNextStep(ctx, this.stepRegistryService.registry);
       if (!step) {
-        this.logger.warn(
-          `[HARNESS] No runnable step found for ${ctx.requestId}`,
+        this.stepLogger.warn(
+          ctx,
+          'engine',
+          `No runnable step found for ${ctx.requestId}`,
         );
         break;
       }
@@ -27,9 +31,8 @@ export class HarnessStepEngineService {
   isGoalFinished(ctx: HarnessContext): boolean {
     if (ctx.done) return true;
 
-    for (const [, state] of ctx.steps) {
+    for (const [, state] of ctx.steps)
       if (state.status !== 'done') return false;
-    }
 
     return true;
   }
@@ -71,8 +74,10 @@ export class HarnessStepEngineService {
       ctx.doneReason = 'error';
       ctx.error = message;
 
-      this.logger.error(
-        `[HARNESS] Step ${stepId} failed for ${ctx.requestId}:`,
+      this.stepLogger.error(
+        ctx,
+        stepId,
+        `Step ${stepId} failed for ${ctx.requestId}`,
         error,
       );
     }

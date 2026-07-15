@@ -12,6 +12,7 @@ import {
 import { useConversationStore } from '@/stores/conversation';
 
 import { useBlink } from '../../../composables/use-blink';
+import { useAppStore } from '../../../stores/app';
 import { useModelsStore } from '../../../stores/models';
 import CapabilitiesRow from './capabilities-row/CapabilitiesRow.vue';
 import ConversationList from './conversation-list/ConversationList.vue';
@@ -32,6 +33,10 @@ const props = defineProps<{ chatActive: boolean; promptFocused: boolean }>();
 
 const conversationStore = useConversationStore();
 const modelsStore = useModelsStore();
+const appStore = useAppStore();
+
+/** Sysctl toggle: hide the sockets menu + subscribed list from the toolbar. */
+const areSocketsVisible = computed(() => appStore.isTabVisible('sockets'));
 
 // ── Menu coordination ─────────────────────────────────────
 const { isMenuOpen, toggleMenu, closeAllMenus } = useExclusiveMenu();
@@ -302,7 +307,7 @@ defineExpose({
       />
     </div>
 
-    <div class="chat-toolbar__group">
+    <div v-if="areSocketsVisible" class="chat-toolbar__group">
       <!-- Stream / Subscribe -->
       <StreamSettingsMenu
         class="chat-toolbar__list"

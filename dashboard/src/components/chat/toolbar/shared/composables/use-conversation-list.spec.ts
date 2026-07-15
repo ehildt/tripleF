@@ -107,7 +107,7 @@ describe('useConversationList', () => {
 
     await deleteConversation(conversation.id);
 
-    expect(socketStore.leaveRoom).toHaveBeenCalledWith('room1', 'harness');
+    expect(socketStore.closeRoom).toHaveBeenCalledWith('harness', 'room1');
     expect(socketStore.closeEvent).toHaveBeenCalledWith('harness');
     expect(subscriptions.value).not.toContainEqual(
       expect.objectContaining({ event: 'harness', roomId: 'room1' }),
@@ -130,7 +130,7 @@ describe('useConversationList', () => {
 
     await deleteConversation(first.id);
 
-    expect(socketStore.leaveRoom).toHaveBeenCalledWith('room1', 'harness');
+    expect(socketStore.closeRoom).toHaveBeenCalledWith('harness', 'room1');
     expect(socketStore.closeEvent).not.toHaveBeenCalledWith('harness');
   });
 

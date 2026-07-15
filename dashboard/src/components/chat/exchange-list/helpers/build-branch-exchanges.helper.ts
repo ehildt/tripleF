@@ -31,7 +31,7 @@ export function buildBranchExchanges(
       id: createId(),
       requestId: newRequestId,
       timestamp: Date.now(),
-      toolCall: undefined,
+      toolCalls: undefined,
       status: 'done',
     });
   }

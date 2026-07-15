@@ -4,16 +4,21 @@ import { describe, expect, it } from 'vitest';
 import ArticleHeroMediaSection from './ArticleHeroMediaSection.vue';
 
 describe('ArticleHeroMediaSection', () => {
-  it('renders an iframe when heroVideoUrl is embeddable', () => {
+  it('renders an iframe once an embeddable hero video is engaged', async () => {
     const wrapper = mount(ArticleHeroMediaSection, {
       props: {
         heroVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       },
     });
 
+    // The player lazy-mounts: only after the figure is in view or engaged.
+    expect(wrapper.find('iframe').exists()).toBe(false);
+
+    await wrapper.find('.floating-video-figure__media').trigger('pointerdown');
+
     const iframe = wrapper.find('iframe');
     expect(iframe.exists()).toBe(true);
-    expect(iframe.attributes('src')).toBe(
+    expect(iframe.attributes('src')).toContain(
       'https://www.youtube.com/embed/dQw4w9WgXcQ',
     );
   });
@@ -26,12 +31,12 @@ describe('ArticleHeroMediaSection', () => {
     });
 
     expect(wrapper.find('iframe').exists()).toBe(false);
-    const link = wrapper.find('.hero-media-card__fallback');
+    const link = wrapper.find('.floating-video-figure__fallback');
     expect(link.exists()).toBe(true);
     expect(link.attributes('href')).toBe(
       'https://www.tiktok.com/@nasa/video/123456',
     );
-    expect(link.text()).toBe('Open video');
+    expect(link.text()).toBe('Watch on source ↗');
   });
 
   it('renders nothing when no video or image is provided', () => {

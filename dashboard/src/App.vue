@@ -11,6 +11,7 @@ import { useDlqStore } from './stores/dlq';
 import { createSocketProvider } from './stores/helpers/create-socket-provider.helper';
 import { useApiMessagesStore } from './stores/messages';
 import { useModelsStore } from './stores/models';
+import { usePreprocessingStore } from './stores/preprocessing';
 import { useSocketStore } from './stores/socket';
 import { useThemeStore } from './stores/theme';
 
@@ -21,6 +22,12 @@ const appStore = useAppStore();
 const themeStore = useThemeStore();
 const socketStore = useSocketStore();
 const dlqStore = useDlqStore();
+const preprocessingStore = usePreprocessingStore();
+
+// Push the persisted preprocessing settings to the server on boot: the
+// server applies preprocessing from its own effective config, so it needs
+// the client's overrides before the next query runs.
+preprocessingStore.pushSettingsToServer();
 
 const DLQ_POLL_INTERVAL = 30_000;
 let dlqPollTimer: ReturnType<typeof setInterval> | null = null;

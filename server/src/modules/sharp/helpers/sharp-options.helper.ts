@@ -1,17 +1,17 @@
-import { HarnessStreamQueryDto } from '../../harness/dtos/harness-stream-query.dto.js';
 import { SharpDefaults } from '../configs/sharp-config.adapter.js';
 import type { SharpSize } from '../constants/sharp.constants.js';
+import { PreprocessingPayload } from '../dtos/preprocessing-payload.dto.js';
 import { SharpOptions } from '../dtos/sharp-options.dto.js';
 
 /**
- * Build preprocessing options from flat query parameters.
- * Query values override env-backed defaults. Returns undefined when disabled.
+ * Parse preprocessing options from a JSON payload.
+ * Payload values override env-backed defaults. Returns undefined when disabled.
  */
-export function buildSharpOptions(
-  query: HarnessStreamQueryDto,
+export function parsePreprocessingPayload(
+  payload: PreprocessingPayload | undefined,
   defaults: SharpDefaults,
 ): SharpOptions | undefined {
-  if (!query.pproc_enabled) {
+  if (!payload?.enabled) {
     return undefined;
   }
 
@@ -19,36 +19,41 @@ export function buildSharpOptions(
     enabled: true,
     resize: {
       maxWidth:
-        (query.pproc_resize_maxWidth as SharpSize | undefined) ??
+        (payload.resize?.maxWidth as SharpSize | undefined) ??
         defaults.resize.maxWidth,
-      maxHeight: query.pproc_resize_maxHeight ?? defaults.resize.maxHeight,
+      maxHeight: payload.resize?.maxHeight ?? defaults.resize.maxHeight,
       withoutEnlargement:
-        query.pproc_resize_withoutEnlargement ??
+        payload.resize?.withoutEnlargement ??
         defaults.resize.withoutEnlargement,
     },
     variants: {
-      original: query.pproc_original ?? defaults.variants.original,
-      grayscale: query.pproc_grayscale ?? defaults.variants.grayscale,
-      denoised: query.pproc_denoised ?? defaults.variants.denoised,
-      sharpened: query.pproc_sharpened ?? defaults.variants.sharpened,
-      clahe: query.pproc_clahe ?? defaults.variants.clahe,
+      original: payload.variants?.original ?? defaults.variants.original,
+      grayscale: payload.variants?.grayscale ?? defaults.variants.grayscale,
+      denoised: payload.variants?.denoised ?? defaults.variants.denoised,
+      sharpened: payload.variants?.sharpened ?? defaults.variants.sharpened,
+      clahe: payload.variants?.clahe ?? defaults.variants.clahe,
     },
     parameters: {
-      blurSigma: query.pproc_blurSigma ?? defaults.parameters.blurSigma,
+      blurSigma: payload.parameters?.blurSigma ?? defaults.parameters.blurSigma,
       sharpenSigma:
-        query.pproc_sharpenSigma ?? defaults.parameters.sharpenSigma,
-      sharpenM1: query.pproc_sharpenM1 ?? defaults.parameters.sharpenM1,
-      sharpenM2: query.pproc_sharpenM2 ?? defaults.parameters.sharpenM2,
+        payload.parameters?.sharpenSigma ?? defaults.parameters.sharpenSigma,
+      sharpenM1: payload.parameters?.sharpenM1 ?? defaults.parameters.sharpenM1,
+      sharpenM2: payload.parameters?.sharpenM2 ?? defaults.parameters.sharpenM2,
       brightnessLevel:
-        query.pproc_brightnessLevel ?? defaults.parameters.brightnessLevel,
-      claheWidth: query.pproc_claheWidth ?? defaults.parameters.claheWidth,
-      claheHeight: query.pproc_claheHeight ?? defaults.parameters.claheHeight,
+        payload.parameters?.brightnessLevel ??
+        defaults.parameters.brightnessLevel,
+      claheWidth:
+        payload.parameters?.claheWidth ?? defaults.parameters.claheWidth,
+      claheHeight:
+        payload.parameters?.claheHeight ?? defaults.parameters.claheHeight,
       claheMaxSlope:
-        query.pproc_claheMaxSlope ?? defaults.parameters.claheMaxSlope,
+        payload.parameters?.claheMaxSlope ?? defaults.parameters.claheMaxSlope,
       normalizeLower:
-        query.pproc_normalizeLower ?? defaults.parameters.normalizeLower,
+        payload.parameters?.normalizeLower ??
+        defaults.parameters.normalizeLower,
       normalizeUpper:
-        query.pproc_normalizeUpper ?? defaults.parameters.normalizeUpper,
+        payload.parameters?.normalizeUpper ??
+        defaults.parameters.normalizeUpper,
     },
   };
 }

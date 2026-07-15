@@ -90,6 +90,7 @@ iconify
 iconoir
 Identificator
 ilike
+imagelist
 initdb
 INITDB
 Iobroker
@@ -218,6 +219,7 @@ usernamehw
 Vectorizer
 vectorizing
 venv
+videolist
 vite
 vitest
 vmsg

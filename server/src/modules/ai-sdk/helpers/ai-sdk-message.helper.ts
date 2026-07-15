@@ -1,4 +1,8 @@
-import type { AiSdkMessages, InputMessage } from './ai-sdk-message.models.js';
+import type {
+  AiSdkMessages,
+  InputMessage,
+} from '../types/ai-sdk-messages.types.js';
+
 import { toAiSdkMessage } from './to-ai-sdk-message.helper.js';
 
 function isSystemMessage(message: InputMessage): boolean {

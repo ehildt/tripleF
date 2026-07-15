@@ -30,6 +30,6 @@ defineProps<{
 .system-health-section__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-3);
+  gap: var(--spacing-1);
 }
 </style>

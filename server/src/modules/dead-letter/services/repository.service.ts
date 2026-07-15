@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-import type { PostgresConfig } from '../../../configs/postgres-config.adapter.js';
-import { POSTGRES_CONFIG } from '../../../constants/postgres.constants.js';
 import { Prisma, PrismaClient } from '../../../generated/prisma/client.js';
+import type { PostgresConfig } from '../configs/postgres-config.adapter.js';
+import { POSTGRES_CONFIG } from '../constants/postgres.constants.js';
 
 @Injectable()
 export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
@@ -83,11 +83,8 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
         Prisma.sql`SELECT "requestId" FROM "harness_dlq" WHERE "payload"::text ILIKE ${searchTerm}`,
       );
 
-      if (jsonRows.length > 0) {
-        const requestIds = jsonRows.map((r) => r.requestId);
-        if (!where.OR) where.OR = [];
-        where.OR.push({ requestId: { in: requestIds } });
-      }
+      if (jsonRows.length > 0)
+        where.OR.push({ requestId: { in: jsonRows.map((r) => r.requestId) } });
     }
 
     const [rows, total] = await Promise.all([

@@ -2,12 +2,9 @@ import { Injectable } from '@nestjs/common';
 import sharp, { Sharp } from 'sharp';
 
 import { SharpOptions } from '../dtos/sharp-options.dto.js';
-import {
-  getEnabledVariants,
-  getVariantPipeline,
-  Variant,
-  VariantPipeline,
-} from '../helpers/image-variant.helper.js';
+import { getEnabledVariants } from '../helpers/get-enabled-variants.helper.js';
+import { getVariantPipeline } from '../helpers/get-variant-pipeline.helper.js';
+import type { Variant, VariantPipeline } from '../types/image-variant.types.js';
 
 export interface ImageVariantPipeline {
   variant: Variant;

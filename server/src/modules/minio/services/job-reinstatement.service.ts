@@ -2,7 +2,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
-import { HARNESS_QUEUE } from '../../../constants/bullmq.constants.js';
+import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 

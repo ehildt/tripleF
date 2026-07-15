@@ -1,8 +1,8 @@
+import { categorizeTools } from '../../helpers/categorize-tools.helper.js';
 import {
-  categorizeTools,
   TOOL_DESCRIPTIONS,
   TOOL_NAMES,
-} from '../../helpers/tool-registry.helper.js';
+} from '../../helpers/tool-registry.constants.js';
 
 /**
  * Formats the enabled tools grouped by category for inclusion in the intent

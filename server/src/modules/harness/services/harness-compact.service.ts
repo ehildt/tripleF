@@ -1,19 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Job } from 'bullmq';
 
-import type { InputMessage } from '../../ai-sdk/helpers/ai-sdk-message.models.js';
-import { normalizeThink } from '../../ai-sdk/helpers/ollama.helpers.js';
+import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
-import { buildModeSystemPrompt } from '../prompts/base-system.prompt.js';
+import { getTemplatePlaceholders } from '../helpers/template-placeholders.constant.js';
+import { buildContentSystemPrompt } from '../prompts/content-system.prompt.js';
+import { resolveVariantInstructions } from '../prompts/variant-instructions.registry.js';
 
 import { HarnessChatStreamingService } from './harness-chat-streaming.service.js';
 
 @Injectable()
 export class HarnessCompactService {
-  constructor(
-    @Inject(HarnessChatStreamingService)
-    private readonly chatStreaming: HarnessChatStreamingService,
-  ) {}
+  constructor(private readonly chatStreaming: HarnessChatStreamingService) {}
 
   async runCompact(
     job: Job<HarnessJobPayload>,
@@ -31,10 +30,19 @@ export class HarnessCompactService {
     const think = normalizeThink(filters.think);
     const exchanges = filters.exchanges;
 
+    const instructions = resolveVariantInstructions('compact', 'default');
+    const placeholders = getTemplatePlaceholders('compact');
+
     const messages: InputMessage[] = [
       {
         role: 'system' as const,
-        content: buildModeSystemPrompt({ mode: 'compact', hasImages: false }),
+        content: buildContentSystemPrompt({
+          template: 'compact',
+          instructions,
+          tools: [],
+          placeholders,
+          isImageTask: false,
+        }),
       },
       ...(exchanges ?? []),
     ];

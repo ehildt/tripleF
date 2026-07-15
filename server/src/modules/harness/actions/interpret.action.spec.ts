@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { InterpretActionService } from './interpret.action.js';
 
@@ -51,6 +52,10 @@ describe('InterpretActionService', () => {
             }),
           },
         },
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
       ],
     }).compile();
 
@@ -68,6 +73,7 @@ describe('InterpretActionService', () => {
         template: 'text',
         tools: [],
         reasoning: 'chat',
+        language: 'en',
         needsClarification: false,
         clarificationQuestion: null,
         plan: {},
@@ -91,6 +97,7 @@ describe('InterpretActionService', () => {
         template: 'text',
         tools: [],
         reasoning: 'ambiguous',
+        language: 'en',
         needsClarification: true,
         clarificationQuestion: 'Which one?',
         plan: {},
@@ -113,6 +120,7 @@ describe('InterpretActionService', () => {
         template: 'describe',
         tools: [],
         reasoning: 'image description',
+        language: 'en',
         needsClarification: false,
         plan: {
           images: {
@@ -148,6 +156,7 @@ describe('InterpretActionService', () => {
         template: 'describe',
         tools: [],
         reasoning: 'image description',
+        language: 'en',
         needsClarification: false,
         plan: {},
       }),
@@ -177,6 +186,7 @@ describe('InterpretActionService', () => {
         template: 'describe',
         tools: [],
         reasoning: 'image description',
+        language: 'en',
         needsClarification: false,
         plan: {},
       }),
@@ -219,6 +229,7 @@ describe('InterpretActionService', () => {
                 template: 'article',
                 tools: ['webSearch'],
                 reasoning: 'research',
+                language: 'en',
                 needsClarification: false,
                 plan: {},
               }),
@@ -290,6 +301,7 @@ describe('InterpretActionService', () => {
                 template: 'news',
                 tools: ['webSearch', 'serperNewsSearch'],
                 reasoning: 'current events',
+                language: 'en',
                 needsClarification: false,
                 plan: {},
               }),
@@ -356,6 +368,7 @@ describe('InterpretActionService', () => {
         template: 'text',
         tools: [],
         reasoning: 'chat',
+        language: 'en',
         needsClarification: false,
         plan: {},
       }),
@@ -382,6 +395,7 @@ describe('InterpretActionService', () => {
                 template: 'evaluation',
                 tools: ['webSearch'],
                 reasoning: 'review',
+                language: 'en',
                 needsClarification: false,
                 plan: {},
               }),
@@ -458,6 +472,7 @@ describe('InterpretActionService', () => {
                 template: 'article',
                 tools: ['webSearch', 'serperImageSearch', 'serperVideoSearch'],
                 reasoning: 'research',
+                language: 'en',
                 needsClarification: false,
                 plan: {},
               }),
@@ -526,6 +541,7 @@ describe('InterpretActionService', () => {
                 imageCount: 7,
                 videoCount: 2,
                 reasoning: 'research',
+                language: 'en',
                 needsClarification: false,
                 plan: {},
               }),
@@ -602,5 +618,49 @@ describe('InterpretActionService', () => {
         messages: [{ role: 'user', content: 'hi' }],
       }),
     ).rejects.toThrow('Intent classification produced invalid JSON');
+  });
+
+  it('retries when language is missing and succeeds on subsequent attempt', async () => {
+    let attempts = 0;
+    (aiSdkService.generateChat as any).mockImplementation(async () => {
+      attempts++;
+      if (attempts === 1) {
+        // First attempt: missing language
+        return {
+          text: JSON.stringify({
+            template: 'article',
+            tools: ['webSearch'],
+            reasoning: 'research',
+            needsClarification: false,
+            plan: {},
+          }),
+          totalUsage: { inputTokens: 10, outputTokens: 5 },
+        };
+      }
+      // Second attempt: language provided
+      return {
+        text: JSON.stringify({
+          template: 'article',
+          tools: ['webSearch'],
+          reasoning: 'research',
+          language: 'de',
+          needsClarification: false,
+          plan: {},
+        }),
+        totalUsage: { inputTokens: 12, outputTokens: 6 },
+      };
+    });
+
+    const result = await service.execute({
+      model: 'model',
+      messages: [{ role: 'user', content: 'forschung thema' }],
+    });
+
+    expect(attempts).toBe(2);
+    expect(result.intent.template).toBe('article');
+    expect(result.intent.language).toBe('de');
+    // Tokens accumulated across both attempts
+    expect(result.inputTokens).toBe(10 + 12);
+    expect(result.outputTokens).toBe(5 + 6);
   });
 });

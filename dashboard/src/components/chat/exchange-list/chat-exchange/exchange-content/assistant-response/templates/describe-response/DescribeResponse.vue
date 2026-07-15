@@ -6,6 +6,8 @@ import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
+import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
+import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 
 defineProps<{
   data: HarnessResponseData;
@@ -15,11 +17,12 @@ defineProps<{
 <template>
   <article class="harness-describe">
     <header class="hero">
-      <HeroSection
-        :category="data.category"
-        :title="data.title"
-        :subtitle="data.subtitle"
-      />
+      <ResponseMetaBar>
+        <ResponseMetaBarPill v-if="data.category" variant="accent">{{
+          data.category
+        }}</ResponseMetaBarPill>
+      </ResponseMetaBar>
+      <HeroSection :title="data.title" :subtitle="data.subtitle" />
     </header>
     <GallerySection :items="data.galleryItems" />
     <ParagraphSection title="Description" :content="data.sectionContent" />

@@ -9,9 +9,9 @@ export class ProviderOverridesController {
   constructor(private readonly providerOverrides: ProviderOverridesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Current provider configuration' })
+  @ApiOperation({ summary: 'Current provider configuration (API keys masked)' })
   getConfig() {
-    return this.providerOverrides.getConfig();
+    return this.providerOverrides.getMaskedConfig();
   }
 
   @Put()

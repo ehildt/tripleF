@@ -1,6 +1,6 @@
 import { computed, type ComputedRef, type Ref, watch } from 'vue';
 
-import { calcTokenPercent } from '../components/chat/shared/helpers/calc-token-percent.helper';
+import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
 import { useBlink } from './use-blink';
 
 interface SessionSnapshot {
@@ -42,7 +42,7 @@ export function useChatContextSize(
   });
 
   const defaultContextSize = computed(
-    () => filteredContextSizeOptions.value[0] ?? '',
+    () => filteredContextSizeOptions.value.at(-1) ?? '',
   );
 
   const contextBlink = useBlink();
@@ -50,11 +50,11 @@ export function useChatContextSize(
   const tokenPercent = computed(() => {
     const s = conversation.value;
     if (!s) return null;
-    return calcTokenPercent(s.exchanges, s.numCtx);
+    return calcTotalContextPercentage(s.exchanges, s.numCtx);
   });
 
   watch([tokenPercent], ([pct]) => {
-    if (pct != null && pct >= 90) {
+    if (pct != null && Number(pct) >= 90) {
       contextBlink.start();
     } else {
       contextBlink.stop();

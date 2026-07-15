@@ -3,8 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import { MinioService } from '../../minio/services/minio.service.js';
 
 import { HarnessChatStreamingService } from './harness-chat-streaming.service.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 describe('HarnessChatStreamingService', () => {
   let service: HarnessChatStreamingService;
@@ -28,6 +30,14 @@ describe('HarnessChatStreamingService', () => {
             streamChat: vi.fn(),
             generateChat: vi.fn(),
           },
+        },
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
+        {
+          provide: MinioService,
+          useValue: { objectExists: vi.fn().mockResolvedValue(true) },
         },
       ],
     }).compile();
@@ -157,16 +167,20 @@ describe('HarnessChatStreamingService', () => {
       model: 'model',
       template: 'describe',
       delta: '',
+      data: undefined,
       images: [
         {
           imageUrl: '/api/v1/storage/sess-1/conv-1/h',
           imageAlt: 'img.png',
           title: 'img.png',
           caption: 'img.png',
+          source: 'local',
         },
       ],
       toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
-      meta: [{ name: 'img.png', hash: 'h' }],
+      meta: [
+        { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
+      ],
       prompt: 'describe this',
       promptEvalCount: undefined,
       evalCount: undefined,
@@ -204,16 +218,20 @@ describe('HarnessChatStreamingService', () => {
       model: 'model',
       template: 'describe',
       delta: '{"title":"Image"}',
+      data: undefined,
       images: [
         {
           imageUrl: '/api/v1/storage/sess-1/conv-1/h',
           imageAlt: 'img.png',
           title: 'img.png',
           caption: 'img.png',
+          source: 'local',
         },
       ],
       toolResults: [],
-      meta: [{ name: 'img.png', hash: 'h' }],
+      meta: [
+        { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
+      ],
       prompt: 'describe this',
       promptEvalCount: undefined,
       evalCount: undefined,

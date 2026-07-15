@@ -49,6 +49,12 @@ export class ParsePromptPipe implements PipeTransform {
       throw new BadRequestException(`Validation failed: ${messages}`);
     }
 
-    return instances;
+    const filtered = instances.filter(
+      (inst) =>
+        inst.role !== 'assistant' ||
+        (inst.content && inst.content.trim().length > 0),
+    );
+
+    return filtered;
   }
 }

@@ -50,3 +50,49 @@ Before proposing or implementing any non-trivial change, the agent must:
 - When introducing new code, ensure it aligns with the framework's current best practices and conventions.
 - If multiple technologies are involved, review the documentation for each relevant technology before proceeding.
 - When documentation and existing code conflict, verify the intended behavior and follow the documented approach unless there is a project-specific requirement to do otherwise.
+
+# NestJS Module Conventions
+
+These rules apply to `server/src` module code (processors, controllers, services, helpers, actions). The [processors skill](.pi/skills/processors/SKILL.md) covers entry-point thinning; this section codifies naming, helper conventions, and coding patterns applicable across the entire server.
+
+## Naming
+
+Every variable, function, service, and file name must answer "what does this do?" on its own. No abbreviations, no vague containers (`util`, `manager`, `handler`).
+
+| Category                 | Pattern                    | Example                                                   |
+| ------------------------ | -------------------------- | --------------------------------------------------------- |
+| Action method / function | verb + noun                | `buildIntentSelectionPrompt()`, `normalizeJsonResponse()` |
+| Predicate helper         | `is`/`has`/`should` prefix | `isTrustedImageUrl()`, `hasCompletedExchanges()`          |
+| Formatting helper        | `format` + what            | `formatContextUsagePercent()`                             |
+| Calculation helper       | `calc` + what              | `calcTokenPercent()`                                      |
+| Helper file              | function-name `.helper.ts` | `strip-html.helper.ts` → exports `stripHtml()`            |
+| Service file             | domain-noun `.service.ts`  | `harness-context.service.ts`                              |
+
+## Helpers — one function per file, co-located, with spec
+
+- Each helper lives in its own `.helper.ts` file inside a `helpers/` folder.
+- Helpers are **pure and stateless** — no NestJS decorators, no injected deps. (Those belong in services.)
+- Every `.helper.ts` gets a co-located `.helper.spec.ts` test file.
+- No barrel files (`index.ts`). Import directly from the defining file.
+
+## Prefer inline patterns
+
+When logic is simple and self-documenting, keep it inline rather than extracting:
+
+- **Arrow callbacks in iterators:** `[].filter(x => x.active)` instead of `filterByIdentity(isActive)`
+- **Guard clauses / early returns:** `if (!x) return;` at the top instead of wrapping the entire body in `if (x) { ... }`
+- **Short ternaries for simple branches:** `a ? 'yes' : 'no'` instead of a 5-line if-else that only assigns one variable
+- **Single-assignment blocks** that follow immediately don't need extraction into named functions
+- **Single-statement return/throw:** `if (!x) return value;` instead of `if (!x) { return value; }`
+- **Guard + throw in one line:** `if (!result) throw new Error(...)` instead of wrapping the error in braces
+- **Lookup objects over if-chains:** Use a `Record<string, handler>` dispatch map instead of sequential `if (type === 'a') ... else if ...` when >3 branches map type to action
+- **Flat if-filters in iterators:** Prefer `.filter(x => !x.dirty && x.length)` over `.filter(isClean).filter(hasLength)` chained calls
+- **No unnecessary intermediate variables for boolean branching:** Assign the result directly instead of storing a bool that feeds a single `if`
+
+## No wrapper functions
+
+A function earns its name only if the call site can't already see what it does. Pure rename-wrappers like `function foo(x) { return bar(x.id) }` add indirection without information. Either inline the call or promote to a real `.helper.ts` with tests.
+
+## Tests and stories are deferred
+
+Do **not** create `.spec.ts`, `.test.ts`, or `.stories.ts` files during implementation. After implementing code, ask the user to test it manually. Once the user confirms the behavior is correct, offer to generate the corresponding test/story files as a separate step.

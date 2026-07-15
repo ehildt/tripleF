@@ -60,7 +60,7 @@ function stepDown() {
 </script>
 
 <template>
-  <div class="relative">
+  <div class="input-number">
     <input
       type="number"
       :value="modelValue"
@@ -69,26 +69,86 @@ function stepDown() {
       :step="step"
       :min="min"
       :max="max"
-      class="w-full px-3 py-2 bg-primary border border-divider rounded-none text-sm text-fg-primary text-center focus:outline-none focus:border-[var(--color-accent-active)] focus:ring-1 focus:ring-[var(--color-accent-active)] transition-all font-mono disabled:opacity-50 disabled:cursor-not-allowed pr-8"
+      class="input-number__field"
       @input="handleInput"
     />
-    <div class="absolute right-0 top-0 bottom-0 flex flex-col w-6">
+    <div class="input-number__steppers">
       <button
         type="button"
         :disabled="disabled"
-        class="flex-1 flex items-center justify-center text-fg-muted hover:text-fg-primary hover:bg-fg-muted/10 disabled:text-fg-muted/30 disabled:cursor-not-allowed transition-colors border-l border-b border-divider"
+        class="input-number__stepper"
+        aria-label="Increase value"
         @click="stepUp"
       >
-        <ChevronUp class="w-3 h-3" />
+        <ChevronUp class="input-number__stepper-icon" />
       </button>
       <button
         type="button"
         :disabled="disabled"
-        class="flex-1 flex items-center justify-center text-fg-muted hover:text-fg-primary hover:bg-fg-muted/10 disabled:text-fg-muted/30 disabled:cursor-not-allowed transition-colors border-l border-divider"
+        class="input-number__stepper"
+        aria-label="Decrease value"
         @click="stepDown"
       >
-        <ChevronDown class="w-3 h-3" />
+        <ChevronDown class="input-number__stepper-icon" />
       </button>
     </div>
   </div>
 </template>
+
+<style scoped>
+.input-number {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+/* Borderless — the surrounding tile frame IS the field */
+.input-number__field {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: center;
+  outline: none;
+}
+
+.input-number__field:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.input-number__steppers {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-number__stepper {
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 0.75rem;
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.input-number__stepper:hover:not(:disabled) {
+  color: var(--color-accent-primary);
+}
+
+.input-number__stepper:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.input-number__stepper-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+</style>

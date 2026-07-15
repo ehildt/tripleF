@@ -28,10 +28,9 @@ function mockHealthState(
 describe('useSysctlHealthTiles', () => {
   it('returns loading placeholders while loading', () => {
     mockHealthState({ isLoading: true });
-    const { tiles, isSearxngHealthy } = useSysctlHealthTiles();
-    expect(tiles.value).toHaveLength(7);
+    const { tiles } = useSysctlHealthTiles();
+    expect(tiles.value).toHaveLength(6);
     expect(tiles.value.every((t) => t.loading)).toBe(true);
-    expect(isSearxngHealthy.value).toBe(false);
   });
 
   it('marks every tile as errored when the query fails', () => {
@@ -47,7 +46,6 @@ describe('useSysctlHealthTiles', () => {
         info: {
           ollama: { status: 'up' },
           postgres: { status: 'up' },
-          searxng: { status: 'ok' },
         },
         details: {
           postgres: { status: 'down' },
@@ -57,16 +55,13 @@ describe('useSysctlHealthTiles', () => {
         },
       },
     });
-    const { tiles, isSearxngHealthy } = useSysctlHealthTiles();
+    const { tiles } = useSysctlHealthTiles();
     const ollama = tiles.value.find((t) => t.key === 'ollama');
     const postgres = tiles.value.find((t) => t.key === 'postgres');
-    const searxng = tiles.value.find((t) => t.key === 'searxng');
 
     expect(ollama?.status).toBe('up');
     expect(ollama?.error).toBe(true);
     expect(postgres?.status).toBe('down');
     expect(postgres?.error).toBe(false);
-    expect(searxng?.status).toBe('ok');
-    expect(isSearxngHealthy.value).toBe(true);
   });
 });

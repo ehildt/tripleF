@@ -22,6 +22,13 @@ export function processHarnessResponseEvent(
     accumulatedDelta += delta;
   }
 
+  if (event.done && event.data != null && typeof event.data === 'object') {
+    const normalized = normalizeHarnessResponseData(event.data, event);
+    if (normalized) {
+      lastValidData = normalized;
+    }
+  }
+
   if (isTextTemplate) {
     text = extractHarnessText(accumulatedDelta);
   } else {
@@ -41,6 +48,7 @@ export function processHarnessResponseEvent(
     accumulatedDelta,
     lastValidData,
     text,
+    status: event.status ?? state.status,
     done: event.done === true,
   };
 }

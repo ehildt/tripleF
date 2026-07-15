@@ -1,4 +1,4 @@
-import type { InputMessage } from '../../ai-sdk/helpers/ai-sdk-message.models.js';
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { SharpOptions } from '../../sharp/dtos/sharp-options.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
 
@@ -8,6 +8,9 @@ export type FastifyMultipartMeta = {
   hash: string;
   variant?: string;
   size?: number;
+  source?: 'local' | 'cloud';
+  /** Optional canonical 512px content fingerprint used to compare user images with downloaded cloud images. */
+  fingerprint?: string;
 };
 
 type FastifyMultipartFilter = {

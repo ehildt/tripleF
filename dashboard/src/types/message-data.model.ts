@@ -17,14 +17,16 @@ export interface MessageData {
   evalCount?: number;
   evalDuration?: number;
   totalDuration?: number;
-  phase?:
-    'classifying' | 'strategizing' | 'summarizing' | 'rendering' | 'reviewing';
+  reasoningDelta?: string;
   toolCall?: {
     name: string;
+    category?: string;
+    query?: string;
     input?: unknown;
     status: string;
   };
-  /* ── Harness streaming JSON response fields ─────────────────────────── */
+  /* ── Authoritative structured payload when streaming finishes ───────── */
+  data?: Record<string, unknown>;
   template?: string;
   delta?: string;
   prompt?: string;

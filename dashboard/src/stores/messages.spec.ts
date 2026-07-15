@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useConversationStore } from './conversation';
 import { useApiMessagesStore } from './messages';
+import { useModelsStore } from './models';
 
 describe('useApiMessagesStore', () => {
   beforeEach(() => {
@@ -156,6 +157,27 @@ describe('useApiMessagesStore', () => {
       'Hello world',
     );
     expect(conversationStore.conversations[0].exchanges[0].status).toBe('done');
+  });
+
+  it('backfills numCtx from the model when a response completes with token data', () => {
+    const modelsStore = useModelsStore();
+    modelsStore.models = [{ model: 'llama3', context_length: 4096 }];
+    modelsStore.numCtxOptions = [2048, 4096];
+
+    const conversationStore = useConversationStore();
+    conversationStore.conversations[0].model = 'llama3';
+
+    const store = useApiMessagesStore();
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'text',
+      delta: 'Hello world',
+      promptEvalCount: 100,
+      evalCount: 50,
+      done: true,
+    });
+
+    expect(conversationStore.conversations[0].numCtx).toBe('4096');
   });
 
   it('addMessage clears pending on done without content', () => {

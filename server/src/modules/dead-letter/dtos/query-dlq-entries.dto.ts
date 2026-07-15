@@ -1,6 +1,6 @@
 import { IsEnum, IsNumberString, IsOptional, IsString } from 'class-validator';
 
-import { DLQ_STATUSES } from '../../../constants/postgres.constants.js';
+import { DLQ_STATUSES } from '../constants/postgres.constants.js';
 
 const statuses = DLQ_STATUSES;
 

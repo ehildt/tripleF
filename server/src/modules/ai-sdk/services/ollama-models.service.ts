@@ -1,7 +1,7 @@
 import { CacheReturnValue } from '@ehildt/nestjs-config-factory/cache-return-value';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
+import { OllamaConfigService } from '../configs/ollama-config.service.js';
 
 interface ShowResult {
   capabilities?: string[];

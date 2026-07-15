@@ -12,7 +12,6 @@ import ExchangeCollapsed from './exchange-collapsed/ExchangeCollapsed.vue';
 import ExchangeContent from './exchange-content/ExchangeContent.vue';
 import ExchangeHeader from './exchange-header/ExchangeHeader.vue';
 import ExchangeLightbox from './exchange-lightbox/ExchangeLightbox.vue';
-import ExchangeToolCallStatus from './exchange-tool-call-status/ExchangeToolCallStatus.vue';
 
 const props = defineProps<{
   exchange: Exchange;
@@ -47,8 +46,11 @@ async function handleCopy() {
   toast.success('Copied to clipboard');
 }
 
-function handleImageClicked(images: string[], clickedSrc: string) {
-  lightbox.openImages(images, clickedSrc);
+function handleImageClicked(
+  items: { url: string; title?: string }[],
+  clickedUrl: string,
+) {
+  lightbox.openImages(items, clickedUrl);
 }
 
 function handleSelectIndex(i: number) {
@@ -87,6 +89,7 @@ function handleCancel(requestId: string) {
         :is-done="isDone"
         :is-error="isError"
         :is-pending="isPending"
+        :is-streaming="isStreaming"
         @copy="handleCopy"
         @retry="emit('retry', exchange.id)"
         @branch="emit('branch', exchange.id)"
@@ -96,8 +99,6 @@ function handleCancel(requestId: string) {
         @hover-delete-start="emit('hover-delete-start', exchange.id)"
         @hover-delete-end="emit('hover-delete-end')"
       />
-
-      <ExchangeToolCallStatus v-if="!isUser" :exchange="exchange" />
 
       <ExchangeCollapsed
         v-if="collapsed"
@@ -121,6 +122,7 @@ function handleCancel(requestId: string) {
   <ExchangeLightbox
     :images="lightbox.images.value"
     :index="lightbox.index.value"
+    :active-title="lightbox.activeTitle.value"
     :is-open="lightbox.isOpen.value"
     @close="lightbox.close"
     @prev="lightbox.goPrev"

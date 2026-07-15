@@ -29,25 +29,25 @@ describe('AppHeader', () => {
   it('renders all four tabs', () => {
     const wrapper = mountHeader();
     expect(wrapper.text()).toContain('> CHAT_');
-    expect(wrapper.text()).toContain('> PPROC_');
     expect(wrapper.text()).toContain('> DLQ_');
     expect(wrapper.text()).toContain('> DEBUG_');
+    expect(wrapper.text()).toContain('> SYSCTL_');
   });
 
   it('emits tabChange when a tab is clicked', async () => {
     const wrapper = mountHeader();
     const buttons = wrapper.findAll('button');
-    const ppButton = buttons.find((b) => b.text().includes('PPROC'));
-    expect(ppButton).toBeDefined();
-    await ppButton!.trigger('click');
+    const dlqButton = buttons.find((b) => b.text().includes('DLQ'));
+    expect(dlqButton).toBeDefined();
+    await dlqButton!.trigger('click');
     expect(wrapper.emitted('tabChange')).toBeTruthy();
-    expect(wrapper.emitted('tabChange')![0]).toEqual(['preprocessing']);
+    expect(wrapper.emitted('tabChange')![0]).toEqual(['dlq']);
   });
 
   it('shows counts when provided', () => {
     localStorage.setItem('harness-show-counters', 'true');
     const wrapper = mountHeader({
-      activeTab: 'preprocessing',
+      activeTab: 'sysctl',
       debugCount: 5,
       showChatStar: true,
       dlqCount: 2,

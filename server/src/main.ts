@@ -1,7 +1,6 @@
 import {
   API_DOCS,
   getBodyLimit,
-  getLogLevel,
   logConfigObject,
   logServerPath,
   logSwaggerPath,
@@ -20,6 +19,7 @@ import {
 import { SwaggerModule } from '@nestjs/swagger';
 
 import { AppConfigService } from './configs/app-config.service.js';
+import { PinoLoggerService } from './modules/pino-logger/services/pino-logger.service.js';
 import { MainModule } from './main.module.js';
 
 process.on('unhandledRejection', (reason) => {
@@ -32,7 +32,6 @@ process.on('uncaughtException', (error) => {
 });
 
 void (async () => {
-  const logger = { logger: getLogLevel(process.env.LOG_LEVEL) };
   const adapter = new FastifyAdapter({
     bodyLimit: getBodyLimit(process.env.BODY_LIMIT),
   });
@@ -40,8 +39,10 @@ void (async () => {
   const APP = await NestFactory.create<NestFastifyApplication>(
     MainModule,
     adapter,
-    logger,
+    { bufferLogs: true },
   );
+
+  APP.useLogger(APP.get(PinoLoggerService));
 
   await SocketIOModule.attach(APP);
   const appConfigService = APP.get(AppConfigService);

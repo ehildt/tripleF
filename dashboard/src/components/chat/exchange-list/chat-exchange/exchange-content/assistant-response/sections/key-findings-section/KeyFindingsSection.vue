@@ -51,7 +51,6 @@ const validItems = computed(() =>
   top: 0.55em;
   width: 0.5em;
   height: 0.5em;
-  border-radius: 50%;
   background: var(--color-accent-primary);
 }
 

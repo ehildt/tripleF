@@ -60,15 +60,6 @@ function applyFrontendDefaults(
 ): ProviderOverridesSnapshot {
   return {
     serper: { ...snapshot.serper, enabled: snapshot.serper.enabled ?? false },
-    brave: { ...snapshot.brave, enabled: snapshot.brave.enabled ?? false },
-    searxng: {
-      ...snapshot.searxng,
-      enabled: snapshot.searxng.enabled ?? false,
-    },
-    browserBase: {
-      ...snapshot.browserBase,
-      enabled: snapshot.browserBase.enabled ?? false,
-    },
   };
 }
 
@@ -108,6 +99,31 @@ export function useSysctlConfig() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     });
+  }
+
+  /**
+   * Save a new API key for a provider. The key is never persisted to
+   * localStorage and the server answers with the masked form only, so we
+   * refresh the config to display the mask after saving.
+   */
+  async function updateApiKey(
+    provider: ProviderKey,
+    apiKey: string,
+  ): Promise<boolean> {
+    try {
+      const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [provider]: { apiKey } }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await refreshConfig();
+      toast.success('API key saved');
+      return true;
+    } catch {
+      toast.error('Failed to save API key');
+      return false;
+    }
   }
 
   function toggleProviderEnabled(provider: ProviderKey) {
@@ -156,5 +172,6 @@ export function useSysctlConfig() {
     toggleProviderEnabled,
     toggleEndpoint,
     updateEndpointResults,
+    updateApiKey,
   };
 }

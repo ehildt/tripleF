@@ -33,7 +33,6 @@ describe('useHeaderTabs', () => {
 
     expect(vm.tabs.map((t) => t.tab)).toEqual([
       'http',
-      'preprocessing',
       'dlq',
       'debug',
       'sysctl',

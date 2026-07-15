@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
-import { BullMQConfigService } from '../../../configs/bullmq-config.service.js';
 import { Prisma } from '../../../generated/prisma/client.js';
+import { BullMQConfigService } from '../../bullmq/configs/bullmq-config.service.js';
 import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 
 import { DeadLetterRepository } from './repository.service.js';

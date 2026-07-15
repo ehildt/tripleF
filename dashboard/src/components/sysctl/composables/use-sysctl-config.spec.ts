@@ -19,22 +19,6 @@ const baseSnapshot = {
     videos: { enabled: false, results: 5 },
     webpageFetch: { enabled: true },
   },
-  brave: {
-    enabled: true,
-    apiKey: 'brave-key',
-    web: { enabled: true, results: 10 },
-    images: { enabled: true, results: 10 },
-    news: { enabled: true, results: 10 },
-    video: { enabled: true, results: 10 },
-  },
-  searxng: { url: 'https://search.local', enabled: true, results: 10 },
-  browserBase: {
-    enabled: false,
-    apiKey: undefined,
-    projectId: undefined,
-    search: { enabled: false, results: 10 },
-    fetch: { enabled: false, format: 'markdown' as const, proxies: false },
-  },
 };
 
 function mockFetch(response: unknown, ok = true) {
@@ -92,13 +76,13 @@ describe('useSysctlConfig', () => {
   it('toggles provider enabled state and patches the server', async () => {
     const { config, refreshConfig, toggleProviderEnabled } = useSysctlConfig();
     await refreshConfig();
-    toggleProviderEnabled('brave');
-    expect(config.value?.brave.enabled).toBe(false);
+    toggleProviderEnabled('serper');
+    expect(config.value?.serper.enabled).toBe(false);
     expect(fetch).toHaveBeenLastCalledWith(
       expect.stringContaining('/api/v1/provider-overrides'),
       expect.objectContaining({
         method: 'PUT',
-        body: JSON.stringify({ brave: { enabled: false } }),
+        body: JSON.stringify({ serper: { enabled: false } }),
       }),
     );
   });

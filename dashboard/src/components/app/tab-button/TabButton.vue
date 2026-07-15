@@ -101,7 +101,6 @@ const activeStyle = computed(() =>
   color: var(--color-fg-primary);
   background-color: var(--color-accent-active);
   border: 1px solid color-mix(in srgb, var(--color-fg-primary) 20%, transparent);
-  border-radius: 9999px;
   box-shadow: 0 10px 15px -3px
     color-mix(in srgb, var(--color-bg-primary) 20%, transparent);
 }

@@ -3,12 +3,6 @@ export interface EndpointConfig {
   results: number;
 }
 
-export interface FetchEndpointConfig {
-  enabled: boolean;
-  format: 'raw' | 'markdown' | 'json';
-  proxies: boolean;
-}
-
 export interface SerperConfig {
   enabled: boolean;
   apiKey?: string;
@@ -22,38 +16,12 @@ export interface SerperConfig {
   webpageFetch: { enabled: boolean };
 }
 
-export interface BraveConfig {
-  enabled: boolean;
-  apiKey?: string;
-  web: EndpointConfig;
-  images: EndpointConfig;
-  news: EndpointConfig;
-  video: EndpointConfig;
-}
+export type ProviderKey = 'serper';
 
-export interface SearXNGConfig {
-  url?: string;
-  enabled: boolean;
-  results: number;
-}
-
-export interface BrowserBaseConfig {
-  enabled: boolean;
-  apiKey?: string;
-  projectId?: string;
-  search: EndpointConfig;
-  fetch: FetchEndpointConfig;
-}
-
-export type ProviderKey = 'serper' | 'brave' | 'searxng' | 'browserBase';
-
-export type ProviderConfig = SerperConfig | BraveConfig | BrowserBaseConfig;
+export type ProviderConfig = SerperConfig;
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
-  brave: BraveConfig;
-  searxng: SearXNGConfig;
-  browserBase: BrowserBaseConfig;
 }
 
 export function hasEndpointResults(

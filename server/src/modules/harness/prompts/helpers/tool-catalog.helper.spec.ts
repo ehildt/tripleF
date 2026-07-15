@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TOOL_DESCRIPTIONS,
   TOOL_NAMES,
-} from '../../helpers/tool-registry.helper.js';
+} from '../../helpers/tool-registry.constants.js';
 
 import {
   formatToolAvailabilityCatalog,
@@ -19,14 +19,14 @@ describe('formatToolCatalog', () => {
     const catalog = formatToolCatalog([
       'webSearch',
       'serperWebSearch',
-      'braveImageSearch',
+      'serperImageSearch',
     ]);
 
     expect(catalog.some((line) => line.includes('webSearch:'))).toBe(true);
     expect(catalog.some((line) => line.includes('serperWebSearch:'))).toBe(
       true,
     );
-    expect(catalog.some((line) => line.includes('braveImageSearch:'))).toBe(
+    expect(catalog.some((line) => line.includes('serperImageSearch:'))).toBe(
       true,
     );
   });
@@ -57,7 +57,7 @@ describe('formatToolAvailabilityCatalog', () => {
       catalog.some((line) => line.includes('serperImageSearch: enabled=true')),
     ).toBe(true);
     expect(
-      catalog.some((line) => line.includes('braveImageSearch: enabled=false')),
+      catalog.some((line) => line.includes('serperNewsSearch: enabled=false')),
     ).toBe(true);
     expect(
       catalog.some(

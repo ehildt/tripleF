@@ -33,7 +33,14 @@ const validItems = computed(() =>
     >
       <RelatedStoryCard :item="validItems[0]" />
     </ul>
-    <ul v-else class="related-stories related-stories--grid">
+    <ul
+      v-else
+      class="related-stories"
+      :class="{
+        'related-stories--count-2': validItems.length === 2,
+        'related-stories--count-3plus': validItems.length >= 3,
+      }"
+    >
       <RelatedStoryCard
         v-for="(item, index) in validItems"
         :key="index"
@@ -64,25 +71,37 @@ const validItems = computed(() =>
 }
 
 .related-stories-section .related-stories--single > :deep(li) {
-  width: 100%;
+  width: 75%;
   max-width: 560px;
 }
 
-.related-stories-section .related-stories--grid {
-  display: grid;
-  grid-template-columns: 1fr;
+.related-stories-section .related-stories--count-2,
+.related-stories-section .related-stories--count-3plus {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-2);
 }
 
+.related-stories-section .related-stories--count-2 > :deep(li) {
+  flex: 1 1 calc((100% - var(--spacing-2)) / 2);
+  min-width: calc((100% - var(--spacing-2)) / 2);
+}
+
+.related-stories-section .related-stories--count-3plus > :deep(li) {
+  flex: 1 1 100%;
+}
+
 @media (min-width: 640px) {
-  .related-stories-section .related-stories--grid {
-    grid-template-columns: repeat(2, 1fr);
+  .related-stories-section .related-stories--count-3plus > :deep(li) {
+    flex: 1 1 calc((100% - var(--spacing-2)) / 2);
+    min-width: calc((100% - var(--spacing-2)) / 2);
   }
 }
 
 @media (min-width: 1024px) {
-  .related-stories-section .related-stories--grid {
-    grid-template-columns: repeat(3, 1fr);
+  .related-stories-section .related-stories--count-3plus > :deep(li) {
+    flex: 1 1 calc((100% - 2 * var(--spacing-2)) / 3);
+    min-width: calc((100% - 2 * var(--spacing-2)) / 3);
   }
 }
 </style>

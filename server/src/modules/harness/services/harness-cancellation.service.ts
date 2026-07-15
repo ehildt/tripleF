@@ -1,10 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+
+import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 @Injectable()
 export class HarnessCancellationService {
-  private readonly logger = new Logger(HarnessCancellationService.name);
   private readonly controllers = new Map<string, AbortController>();
   private readonly listeners = new Map<string, () => void>();
+
+  constructor(private readonly stepLogger: HarnessStepLogger) {}
 
   register(requestId: string): AbortController {
     this.deregister(requestId, { quiet: true });
@@ -15,10 +18,14 @@ export class HarnessCancellationService {
     const listener = () => {
       if (controller.signal.reason === 'deregister-quiet') return;
 
-      this.logger.log(`[HARNESS] request ${requestId} aborted`, {
-        requestId,
-        reason: controller.signal.reason,
-      });
+      this.stepLogger.log(
+        { requestId },
+        'cancellation',
+        `request ${requestId} aborted`,
+        {
+          reason: controller.signal.reason,
+        },
+      );
     };
     this.listeners.set(requestId, listener);
     controller.signal.addEventListener('abort', listener);

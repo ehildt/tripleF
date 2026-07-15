@@ -167,8 +167,6 @@ export class DeadLetterController {
   async cleanup() {
     const { failed, cleared, removed } = this.dlqRepository.config;
 
-    let deletedCount = 0;
-
     const toDelete = await this.dlqRepository.findEligible(
       'Removed',
       removed.retainAmount,
@@ -182,8 +180,9 @@ export class DeadLetterController {
         // buffer cleanup is best-effort
       }
     }
-    const deleteIds = toDelete.map((r) => r.requestId);
-    deletedCount += (await this.dlqRepository.hardDeleteMany(deleteIds)).count;
+    const deletedCount = (
+      await this.dlqRepository.hardDeleteMany(toDelete.map((r) => r.requestId))
+    ).count;
 
     const toDeleted = await this.dlqRepository.findEligible(
       'Cleared',

@@ -55,11 +55,23 @@ describe('isTrustedImageUrl', () => {
     expect(isTrustedImageUrl('https://news.gstatic.com/image.png')).toBe(false);
   });
 
-  it('rejects localhost and private IP addresses', () => {
-    expect(isTrustedImageUrl('https://localhost/image.jpg')).toBe(false);
-    expect(isTrustedImageUrl('https://127.0.0.1/image.jpg')).toBe(false);
-    expect(isTrustedImageUrl('https://192.168.1.1/image.jpg')).toBe(false);
-    expect(isTrustedImageUrl('https://10.0.0.1/image.jpg')).toBe(false);
+  it('rejects non-image localhost and private IP addresses', () => {
+    expect(isTrustedImageUrl('https://localhost/article')).toBe(false);
+    expect(isTrustedImageUrl('https://127.0.0.1/article')).toBe(false);
+    expect(isTrustedImageUrl('https://192.168.1.1/article')).toBe(false);
+    expect(isTrustedImageUrl('https://10.0.0.1/article')).toBe(false);
+  });
+
+  it('allows direct image files from localhost and private IP addresses', () => {
+    expect(isTrustedImageUrl('https://localhost/bucket/photo.jpg')).toBe(true);
+    expect(isTrustedImageUrl('https://127.0.0.1/bucket/photo.jpg')).toBe(true);
+    expect(isTrustedImageUrl('https://192.168.1.1/bucket/photo.jpg')).toBe(
+      true,
+    );
+    expect(isTrustedImageUrl('https://10.0.0.1/bucket/photo.jpg')).toBe(true);
+    expect(isTrustedImageUrl('https://minio.local/bucket/photo.png')).toBe(
+      true,
+    );
   });
 
   it('rejects non-HTTP protocols except image data URIs', () => {

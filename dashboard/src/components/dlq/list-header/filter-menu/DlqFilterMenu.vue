@@ -76,7 +76,6 @@ const emit = defineEmits<{
 .dlq-filter-menu__trigger {
   padding: var(--spacing-1);
   color: var(--color-fg-muted);
-  border-radius: 0.25rem;
   cursor: pointer;
   transition:
     color 0.2s ease,

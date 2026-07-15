@@ -4,7 +4,10 @@ import type {
   HarnessResponseData,
   KeyFinding,
   RelatedStory,
+  ReviewSummary,
+  ShopOffer,
   Source,
+  StatHighlight,
   VideoGalleryItem,
 } from '@/types/harness-response-data.model';
 import type { HarnessStreamEvent } from '@/types/harness-stream-event.model';
@@ -23,8 +26,8 @@ export function normalizeHarnessResponseData(
   const data = extractData(raw);
 
   if (event.images?.length) {
-    data.galleryItems =
-      event.images as unknown as HarnessResponseData['galleryItems'];
+    const uploaded = event.images as unknown as GalleryItem[];
+    data.galleryItems = mergeGalleryItems(uploaded, data.galleryItems ?? []);
   }
 
   cleanHarnessResponseArrays(data);
@@ -90,6 +93,24 @@ function extractData(raw: Record<string, unknown>): HarnessResponseData {
     strengths: normalizeKeyFindings(raw.strengths),
     weaknesses: normalizeKeyFindings(raw.weaknesses),
     recommendations: normalizeKeyFindings(raw.recommendations),
+    // Product-only fields
+    shortDescription: toOptionalString(raw.shortDescription),
+    priceRange: toOptionalString(raw.priceRange),
+    aggregateRating:
+      typeof raw.aggregateRating === 'number' ? raw.aggregateRating : undefined,
+    aggregateRatingCount:
+      typeof raw.aggregateRatingCount === 'number'
+        ? raw.aggregateRatingCount
+        : undefined,
+    aggregateRatingLabel: toOptionalString(raw.aggregateRatingLabel),
+    buyAdvice: toOptionalString(raw.buyAdvice),
+    statHighlights: normalizeStatHighlights(raw.statHighlights),
+    pros: normalizeKeyFindings(raw.pros),
+    cons: normalizeKeyFindings(raw.cons),
+    shopOffers: toOptionalArray<ShopOffer>(raw.shopOffers),
+    reviewSummary: toOptionalArray<ReviewSummary>(raw.reviewSummary),
+    heroVideoTitle: toOptionalString(raw.heroVideoTitle),
+    note: toOptionalString(raw.note),
   };
 }
 
@@ -111,6 +132,26 @@ function normalizeKeyFindings(value: unknown): KeyFinding[] | undefined {
   });
 
   return findings;
+}
+
+function normalizeStatHighlights(value: unknown): StatHighlight[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+
+  const stats = value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        isRecord(item) &&
+        typeof item.label === 'string' &&
+        item.label.trim().length > 0 &&
+        typeof item.value === 'string' &&
+        item.value.trim().length > 0,
+    )
+    .map((item) => ({
+      label: (item.label as string).trim(),
+      value: (item.value as string).trim(),
+    }));
+
+  return stats.length > 0 ? stats : undefined;
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -167,10 +208,58 @@ function hasAnyContent(data: HarnessResponseData): boolean {
     hasItems(data.videoGalleryItems) ||
     hasItems(data.strengths) ||
     hasItems(data.weaknesses) ||
-    hasItems(data.recommendations)
+    hasItems(data.recommendations) ||
+    isMeaningfulString(data.shortDescription) ||
+    isMeaningfulString(data.priceRange) ||
+    isMeaningfulString(data.aggregateRatingLabel) ||
+    isMeaningfulString(data.buyAdvice) ||
+    data.aggregateRating !== undefined ||
+    hasItems(data.pros) ||
+    hasItems(data.cons) ||
+    hasItems(data.shopOffers) ||
+    hasItems(data.reviewSummary) ||
+    hasItems(data.statHighlights)
   );
 }
 
 function hasItems(value: unknown[] | undefined): boolean {
   return Array.isArray(value) && value.length > 0;
+}
+
+function mergeGalleryItems(
+  uploaded: GalleryItem[],
+  modelItems: GalleryItem[],
+): GalleryItem[] {
+  const seen = new Set<string>();
+  const result: GalleryItem[] = [];
+
+  for (const item of uploaded) {
+    if (item.imageUrl && !seen.has(item.imageUrl)) {
+      seen.add(item.imageUrl);
+      result.push(item);
+    }
+  }
+
+  for (const item of modelItems) {
+    if (item.imageUrl && !seen.has(item.imageUrl)) {
+      // Skip external URLs that point at the same basename as an already-kept storage URL.
+      // This prevents duplicates when the server ingested an external image and now both
+      // the storage URL and the original external URL appear in the response.
+      const basename = item.imageUrl.split('/').pop()?.split('?')[0];
+      const isDuplicateBasename =
+        basename &&
+        item.imageUrl.startsWith('http') &&
+        result.some(
+          (existing) =>
+            existing.imageUrl.startsWith('/') &&
+            existing.imageUrl.split('/').pop()?.split('?')[0] === basename,
+        );
+      if (isDuplicateBasename) continue;
+
+      seen.add(item.imageUrl);
+      result.push(item);
+    }
+  }
+
+  return result;
 }

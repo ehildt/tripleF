@@ -45,6 +45,9 @@ describe('buildIntentSelectionPrompt', () => {
     expect(prompt).toContain('MULTIMODAL RULES');
     expect(prompt).toContain('FOLLOW-UP / REFINEMENT RULES');
     expect(prompt).toContain('needsClarification=true');
+    expect(prompt).toContain(
+      'MUST be in the language identified by the "language" field',
+    );
   });
 
   it('lists concrete media tool names and warns about omissions', () => {

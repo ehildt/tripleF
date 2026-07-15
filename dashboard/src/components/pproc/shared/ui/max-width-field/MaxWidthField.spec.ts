@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest';
 import MaxWidthField from './MaxWidthField.vue';
 
 describe('MaxWidthField', () => {
-  it('renders Max Width label', () => {
+  it('renders the current size in the select', () => {
     const wrapper = mount(MaxWidthField, {
       props: { modelValue: 768 },
     });
-    expect(wrapper.text()).toContain('Max Width');
+    expect(wrapper.text()).toContain('768');
   });
 
   it('emits parsed PreprocessingSize on selection', async () => {

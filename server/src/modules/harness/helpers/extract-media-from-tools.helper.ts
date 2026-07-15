@@ -1,0 +1,282 @@
+import { categorizeUrl } from './categorize-url.helper.js';
+import { isEmbeddableVideoUrl } from './is-embeddable-video-url.helper.js';
+import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
+
+type ToolEntry = { toolName: string; result: unknown };
+
+/** Image candidate passed to the respond step, with display metadata. */
+export interface ExtractedImageItem {
+  imageUrl: string;
+  title?: string;
+  width?: number;
+  height?: number;
+  source?: string;
+}
+
+/** Video candidate passed to the respond step, with display metadata. */
+export interface ExtractedVideoItem {
+  videoUrl: string;
+  title?: string;
+  duration?: string;
+  channel?: string;
+  date?: string;
+  views?: number;
+  thumbnailUrl?: string;
+  description?: string;
+}
+
+/**
+ * Extract image URLs from ImageSearch results with deduplication. Keeps the
+ * dimensions and source site so media-list templates can display them.
+ */
+export function extractImageSearchItems(
+  toolResults: ToolEntry[],
+): ExtractedImageItem[] {
+  const items: ExtractedImageItem[] = [];
+  const seen = new Set<string>();
+
+  for (const tr of toolResults) {
+    if (!tr.toolName.endsWith('ImageSearch')) continue;
+
+    const data = tr.result as
+      | {
+          results?: Array<{
+            imageUrl?: string;
+            title?: string;
+            width?: number;
+            height?: number;
+            source?: string;
+            domain?: string;
+          }>;
+        }
+      | undefined;
+    if (!data?.results) continue;
+
+    for (const r of data.results) {
+      const url = r.imageUrl;
+      if (!url || !isTrustedImageUrl(url) || seen.has(url)) continue;
+      seen.add(url);
+      items.push({
+        imageUrl: url,
+        title: r.title,
+        width: r.width,
+        height: r.height,
+        source: r.source || r.domain || undefined,
+      });
+    }
+  }
+
+  return items;
+}
+
+/**
+ * Determine which bucket a video URL belongs to based on tool name.
+ */
+function videoUrlBucket(toolName: string): 'web' | 'video' | null {
+  if (toolName.endsWith('VideoSearch')) return 'video';
+  if (
+    toolName === 'webSearch' ||
+    toolName.endsWith('WebSearch') ||
+    toolName.endsWith('NewsSearch')
+  )
+    return 'web';
+  return null;
+}
+
+/**
+ * Extract video candidates from a single tool result.
+ */
+function extractCandidates(
+  tr: ToolEntry,
+): Array<ExtractedVideoItem & { fromWebSearch: boolean }> {
+  const bucket = videoUrlBucket(tr.toolName);
+  if (!bucket) return [];
+
+  const data = tr.result as
+    | {
+        results?: Array<{
+          videoUrl?: string;
+          url?: string;
+          link?: string;
+          title?: string;
+          duration?: string;
+          channel?: string;
+          date?: string;
+          views?: number;
+          thumbnailUrl?: string;
+          snippet?: string;
+        }>;
+      }
+    | undefined;
+  if (!data?.results) return [];
+
+  const items: ExtractedVideoItem[] = [];
+  for (const r of data.results) {
+    const rawUrl = r.videoUrl || r.url || r.link;
+    if (!rawUrl) continue;
+    const category = categorizeUrl(rawUrl);
+    if (!category.trusted || category.kind !== 'video') continue;
+    if (!isEmbeddableVideoUrl(rawUrl)) continue;
+    items.push({
+      videoUrl: rawUrl,
+      title: r.title,
+      duration: r.duration || undefined,
+      channel: r.channel || undefined,
+      date: r.date || undefined,
+      views: typeof r.views === 'number' && r.views > 0 ? r.views : undefined,
+      thumbnailUrl: r.thumbnailUrl || undefined,
+      description: r.snippet || undefined,
+    });
+  }
+
+  return items.map((item) => ({
+    ...item,
+    fromWebSearch: bucket === 'web',
+  }));
+}
+
+/**
+ * Canonicalize embeddable video URLs to provider-specific IDs for deduplication.
+ * Handles YouTube, Vimeo, and Dailymotion. Returns null for unsupported providers.
+ */
+function canonicalVideoId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+
+    return (
+      extractYouTubeId(parsed, host) ??
+      extractVimeoId(parsed, host) ??
+      extractDailymotionId(parsed, host)
+    );
+  } catch {
+    return null;
+  }
+}
+
+function extractYouTubeId(parsed: URL, host: string): string | null {
+  const isYouTubeHost =
+    host === 'youtu.be' ||
+    host === 'youtube.com' ||
+    host === 'm.youtube.com' ||
+    host === 'youtube-nocookie.com';
+  if (!isYouTubeHost) return null;
+
+  if (host === 'youtu.be') {
+    return `youtube:${parsed.pathname.slice(1).split('/')[0]}`;
+  }
+
+  if (parsed.pathname.startsWith('/shorts/')) {
+    return `youtube:${parsed.pathname.split('/')[2]}`;
+  }
+
+  if (
+    parsed.pathname.startsWith('/embed/') ||
+    parsed.pathname.startsWith('/v/')
+  ) {
+    return `youtube:${parsed.pathname.split('/')[2]}`;
+  }
+
+  const videoId = parsed.searchParams.get('v');
+  return videoId ? `youtube:${videoId}` : null;
+}
+
+function extractVimeoId(parsed: URL, host: string): string | null {
+  if (host !== 'vimeo.com') return null;
+  const match = parsed.pathname.match(/^\/(\d+)/);
+  return match ? `vimeo:${match[1]}` : null;
+}
+
+function extractDailymotionId(parsed: URL, host: string): string | null {
+  if (host === 'dai.ly') {
+    return `dailymotion:${parsed.pathname.slice(1).split('/')[0]}`;
+  }
+
+  if (host !== 'dailymotion.com') return null;
+  const match = parsed.pathname.match(/\/video\/([a-zA-Z0-9]+)/);
+  return match ? `dailymotion:${match[1]}` : null;
+}
+
+/**
+ * Normalize a video title for fuzzy deduplication.
+ * Lowercases, removes non-alphanumeric tokens, and collapses whitespace.
+ */
+function normalizeVideoTitle(title?: string): string {
+  if (!title) return '';
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+type VideoCandidate = ExtractedVideoItem & { fromWebSearch: boolean };
+
+type VideoDedupState = {
+  seenIds: Set<string>;
+  seenUrls: Set<string>;
+  seenTitles: Set<string>;
+  webVideos: ExtractedVideoItem[];
+  videoSearchItems: ExtractedVideoItem[];
+};
+
+function createVideoDedupState(): VideoDedupState {
+  return {
+    seenIds: new Set<string>(),
+    seenUrls: new Set<string>(),
+    seenTitles: new Set<string>(),
+    webVideos: [],
+    videoSearchItems: [],
+  };
+}
+
+function isDuplicateCandidate(
+  candidate: VideoCandidate,
+  state: VideoDedupState,
+): boolean {
+  const canonicalId = canonicalVideoId(candidate.videoUrl);
+  const normalizedTitle = normalizeVideoTitle(candidate.title);
+
+  if (canonicalId && state.seenIds.has(canonicalId)) return true;
+  if (state.seenUrls.has(candidate.videoUrl)) return true;
+  if (normalizedTitle && state.seenTitles.has(normalizedTitle)) return true;
+
+  return false;
+}
+
+function registerCandidate(
+  candidate: VideoCandidate,
+  state: VideoDedupState,
+): void {
+  const canonicalId = canonicalVideoId(candidate.videoUrl);
+  const normalizedTitle = normalizeVideoTitle(candidate.title);
+
+  if (canonicalId) state.seenIds.add(canonicalId);
+  state.seenUrls.add(candidate.videoUrl);
+  if (normalizedTitle) state.seenTitles.add(normalizedTitle);
+
+  const item: ExtractedVideoItem & { fromWebSearch?: boolean } = {
+    ...candidate,
+  };
+  delete item.fromWebSearch;
+  if (candidate.fromWebSearch) state.webVideos.push(item);
+  else state.videoSearchItems.push(item);
+}
+
+/**
+ * Extract video URLs from both VideoSearch and web search results.
+ * Web-search videos take precedence. Deduplicates by canonical provider ID,
+ * then falls back to URL exact match, then to normalized title similarity.
+ */
+export function extractVideoSearchItems(
+  toolResults: ToolEntry[],
+): ExtractedVideoItem[] {
+  const state = createVideoDedupState();
+
+  for (const candidate of toolResults.flatMap((tr) => extractCandidates(tr))) {
+    if (isDuplicateCandidate(candidate, state)) continue;
+    registerCandidate(candidate, state);
+  }
+
+  return [...state.webVideos, ...state.videoSearchItems];
+}

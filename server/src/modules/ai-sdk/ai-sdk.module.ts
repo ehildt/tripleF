@@ -1,10 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 
+import { OllamaConfigService } from './configs/ollama-config.service.js';
 import { AiSdkService } from './services/ai-sdk.service.js';
 import { OllamaModelsService } from './services/ollama-models.service.js';
 
+@Global()
 @Module({
-  providers: [AiSdkService, OllamaModelsService],
-  exports: [AiSdkService, OllamaModelsService],
+  providers: [OllamaConfigService, AiSdkService, OllamaModelsService],
+  exports: [OllamaConfigService, AiSdkService, OllamaModelsService],
 })
 export class AiSdkModule {}

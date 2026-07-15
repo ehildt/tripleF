@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 import AssistantResponse from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/AssistantResponse.vue';
 import UserRequest from '@/components/chat/exchange-list/chat-exchange/exchange-content/user-request/UserRequest.vue';
 import type { Exchange } from '@/stores/conversation';
 
-import { buildMessageClasses } from '../helpers/build-message-classes.helper';
+import CompactingIndicator from './compacting-indicator/CompactingIndicator.vue';
+import { useExchangeRenderMode } from './composables/use-exchange-render-mode';
+import { usePromptImageTiles } from './composables/use-prompt-image-tiles';
+import ExchangeActivity from './exchange-activity/ExchangeActivity.vue';
+import ExchangeDivider from './exchange-divider/ExchangeDivider.vue';
+import StreamingCursor from './streaming-cursor/StreamingCursor.vue';
+import StreamingSkeleton from './streaming-skeleton/StreamingSkeleton.vue';
 
 const props = defineProps<{
   exchange: Exchange;
@@ -17,78 +21,48 @@ const props = defineProps<{
   isCompacting: boolean;
 }>();
 
+interface LightboxImage {
+  url: string;
+  title?: string;
+}
+
 const emit = defineEmits<{
-  imageClicked: [images: string[], clickedSrc: string];
+  (e: 'imageClicked', images: LightboxImage[], clickedUrl: string): void;
 }>();
 
-const messageClasses = computed(() =>
-  buildMessageClasses({
-    isUser: props.isUser,
-    isError: props.isError,
-    isHighlighted: props.isHighlighted,
-  }),
-);
+const { dividerVariant, renderMode, containerClasses, showStreamingCursor } =
+  useExchangeRenderMode(
+    () => props.exchange,
+    () => ({
+      isUser: props.isUser,
+      isError: props.isError,
+      isPending: props.isPending,
+      isStreaming: props.isStreaming,
+      isHighlighted: props.isHighlighted,
+      isCompacting: props.isCompacting,
+    }),
+  );
 
-const isAssistantResponse = computed(
-  () =>
-    !!props.exchange.harnessTemplate &&
-    (props.exchange.harnessData !== undefined ||
-      props.exchange.text !== undefined),
-);
-
-const isStreamingAssistant = computed(
-  () => props.isStreaming && !!props.exchange.harnessTemplate,
-);
-
-const showStreamingSkeleton = computed(
-  () => isStreamingAssistant.value && !props.exchange.harnessData,
-);
-
-const isUserRequest = computed(() => props.isUser);
+const { imageTiles } = usePromptImageTiles(() => props.exchange);
 </script>
 
 <template>
-  <div
-    v-if="!isError && isUser"
-    class="exchange-content-divider exchange-content-divider--user"
-  />
-  <div
-    v-else-if="isError"
-    class="exchange-content-divider exchange-content-divider--error"
-  />
-  <div
-    v-else
-    class="exchange-content-divider exchange-content-divider--assistant"
-  />
+  <ExchangeDivider :variant="dividerVariant" />
 
-  <div :class="messageClasses">
-    <template v-if="isPending && !exchange.content">
-      <span v-if="isCompacting" class="exchange-content__compacting">
-        <span class="exchange-content__battery">
-          <span class="exchange-content__battery-fill" />
-        </span>
-        <span class="exchange-content__compacting-text"
-          >Compacting conversation…</span
-        >
-      </span>
-      <span v-else class="exchange-content__dots">
-        <span class="exchange-content__dot" />
-        <span class="exchange-content__dot" style="animation-delay: 0.2s" />
-        <span class="exchange-content__dot" style="animation-delay: 0.4s" />
-      </span>
-    </template>
+  <div :class="containerClasses">
+    <CompactingIndicator v-if="renderMode === 'compacting'" />
+    <ExchangeActivity
+      v-else-if="renderMode === 'reasoning'"
+      :reasoning="exchange.reasoning"
+    />
     <div
-      v-else-if="showStreamingSkeleton"
+      v-else-if="renderMode === 'streaming-skeleton'"
       class="exchange-content__body content-body"
     >
-      <span class="exchange-content__dots">
-        <span class="exchange-content__dot" />
-        <span class="exchange-content__dot" style="animation-delay: 0.2s" />
-        <span class="exchange-content__dot" style="animation-delay: 0.4s" />
-      </span>
+      <StreamingSkeleton />
     </div>
     <div
-      v-else-if="isAssistantResponse"
+      v-else-if="renderMode === 'assistant-response'"
       class="exchange-content__body content-body"
     >
       <AssistantResponse
@@ -98,116 +72,30 @@ const isUserRequest = computed(() => props.isUser);
         @image-clicked="(...args) => emit('imageClicked', ...args)"
       />
     </div>
-    <div
-      v-else-if="isUserRequest"
-      :class="messageClasses"
-      class="user-request-wrapper"
-    >
-      <UserRequest :content="exchange.content" />
+    <div v-else-if="renderMode === 'user-request'" class="user-request-wrapper">
+      <UserRequest
+        :content="exchange.content"
+        :images="imageTiles"
+        @image-clicked="(...args) => emit('imageClicked', ...args)"
+      />
     </div>
     <div
-      v-else-if="isError"
+      v-else-if="renderMode === 'error'"
       class="exchange-content__body content-body exchange-content__body--error"
     >
       {{ exchange.content }}
     </div>
     <div
-      v-else
+      v-else-if="renderMode === 'plain'"
       class="exchange-content__body content-body exchange-content__body--plain"
     >
       {{ exchange.content }}
     </div>
-    <span v-if="isStreaming" class="exchange-content__cursor" />
+    <StreamingCursor v-if="showStreamingCursor" />
   </div>
 </template>
 
 <style scoped>
-.exchange-content-divider {
-  height: 1px;
-  width: 100%;
-  flex-shrink: 0;
-}
-
-.exchange-content-divider--user {
-  background: linear-gradient(
-    to left,
-    color-mix(in srgb, var(--color-tab-rest) 40%, transparent),
-    transparent
-  );
-}
-
-.exchange-content-divider--error {
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--color-status-error) 50%, transparent),
-    transparent
-  );
-}
-
-.exchange-content-divider--assistant {
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--color-tab-rest) 40%, transparent),
-    transparent
-  );
-}
-
-.exchange-content__compacting {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  color: var(--color-fg-muted);
-}
-
-.exchange-content__battery {
-  width: 4rem;
-  height: 0.375rem;
-  position: relative;
-  overflow: hidden;
-  background-color: var(--color-bg-tertiary);
-  display: inline-block;
-}
-
-.exchange-content__battery-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 50%;
-  background-color: var(--color-loading, var(--color-accent-primary));
-  animation: battery-slide 1.5s ease-in-out infinite;
-}
-
-@keyframes battery-slide {
-  0% {
-    left: -50%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-.exchange-content__compacting-text {
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.exchange-content__dots {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  color: var(--color-fg-muted);
-}
-
-.exchange-content__dot {
-  width: 0.375rem;
-  height: 0.375rem;
-  background-color: var(--color-tab-rest);
-  border-radius: 50%;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
 .exchange-content__body {
   display: flex;
   flex-wrap: wrap;
@@ -224,16 +112,6 @@ const isUserRequest = computed(() => props.isUser);
   margin-bottom: 0;
   min-width: 0;
   max-width: 100%;
-}
-
-.exchange-content__cursor {
-  display: inline-block;
-  width: 0.5rem;
-  height: 1rem;
-  background-color: var(--color-tab-rest);
-  margin-left: 0.125rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  vertical-align: text-bottom;
 }
 
 .exchange-content__body :deep(h1) {
@@ -289,8 +167,12 @@ const isUserRequest = computed(() => props.isUser);
   padding: var(--spacing-2);
 }
 
-.exchange-content__body :deep(ul:has(> li > img):not(.harness-gallery)),
-.exchange-content__body :deep(ol:has(> li > img):not(.harness-gallery)) {
+/* Markdown image galleries only — structured video surfaces (videolist,
+   video gallery) carry poster <img> elements too and must stay excluded. */
+.exchange-content__body
+  :deep(ul:has(> li > img):not(.harness-gallery):not(.video-gallery)),
+.exchange-content__body
+  :deep(ol:has(> li > img):not(.harness-gallery):not(.video-list__playlist)) {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
@@ -299,7 +181,12 @@ const isUserRequest = computed(() => props.isUser);
   list-style: none;
 }
 
-.exchange-content__body :deep(li:has(img):not(.harness-gallery__item)) {
+.exchange-content__body
+  :deep(
+    li:has(img):not(.harness-gallery__item):not(.image-item):not(
+        .video-item
+      ):not(.video-gallery__item)
+  ) {
   display: flex;
   flex-wrap: wrap;
   list-style: none;
@@ -309,23 +196,46 @@ const isUserRequest = computed(() => props.isUser);
 }
 
 .exchange-content__body
-  :deep(li:has(img):not(.harness-gallery__item) > :not(img)) {
+  :deep(
+    li:has(img):not(.harness-gallery__item):not(.image-item):not(
+        .video-item
+      ):not(.video-gallery__item)
+      > :not(img)
+  ) {
   width: 100%;
   padding: 0.25rem 0.375rem;
 }
 
-.exchange-content__body :deep(li:has(img):not(.harness-gallery__item) h5) {
+.exchange-content__body
+  :deep(
+    li:has(img):not(.harness-gallery__item):not(.image-item):not(
+        .video-item
+      ):not(.video-gallery__item)
+      h5
+  ) {
   padding: 0.5rem;
   margin: 0;
 }
 
-.exchange-content__body :deep(li:has(img):not(.harness-gallery__item) p) {
+.exchange-content__body
+  :deep(
+    li:has(img):not(.harness-gallery__item):not(.image-item):not(
+        .video-item
+      ):not(.video-gallery__item)
+      p
+  ) {
   padding: 0.5rem;
   margin: 0;
   font-size: 0.85em;
 }
 
-.exchange-content__body :deep(li:has(img):not(.harness-gallery__item) img) {
+.exchange-content__body
+  :deep(
+    li:has(img):not(.harness-gallery__item):not(.image-item):not(
+        .video-item
+      ):not(.video-gallery__item)
+      img
+  ) {
   width: 100%;
   height: 12rem;
   object-fit: cover;
@@ -368,7 +278,6 @@ const isUserRequest = computed(() => props.isUser);
   max-width: none;
   padding: 0;
   border: none;
-  border-radius: 0;
   display: block;
 }
 
@@ -391,12 +300,18 @@ const isUserRequest = computed(() => props.isUser);
     color-mix(in srgb, var(--color-accent-primary) 40%, transparent);
 }
 
-.exchange-content__body :deep(img):not(.harness-gallery__thumb) {
+.exchange-content__body
+  :deep(img):not(.harness-gallery__thumb):not(.image-item__img):not(
+    .floating-video-figure__poster-image
+  ) {
   cursor: pointer;
   transition: box-shadow 0.3s ease;
 }
 
-.exchange-content__body :deep(img):not(.harness-gallery__thumb):hover {
+.exchange-content__body
+  :deep(img):not(.harness-gallery__thumb):not(.image-item__img):not(
+    .floating-video-figure__poster-image
+  ):hover {
   animation: img-pulse 2s ease-in-out infinite;
 }
 
@@ -447,20 +362,20 @@ const isUserRequest = computed(() => props.isUser);
 
 .exchange-content__message--highlighted {
   animation: breathe 2s ease-in-out infinite;
-  border-radius: 0.25rem;
 }
 
+/* NOTE: no filter/transform/opacity here — filter and transform make this
+   container the containing block for position:fixed descendants, and
+   opacity < 1 creates a stacking context that caps the floating video
+   popup's z-index. A box-shadow pulse avoids both. */
 @keyframes breathe {
   0%,
   100% {
-    opacity: 1;
-    box-shadow: 0 0 0 0
-      color-mix(in srgb, var(--color-accent-primary) 10%, transparent);
+    box-shadow: 0 0 0 0 transparent;
   }
   50% {
-    opacity: 0.92;
-    box-shadow: 0 0 12px 2px
-      color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent-primary) 35%, transparent);
   }
 }
 </style>

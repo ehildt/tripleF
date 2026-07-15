@@ -1,17 +1,22 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
-import type { InputMessage } from '../../ai-sdk/helpers/ai-sdk-message.models.js';
-import { ThinkMode } from '../../ai-sdk/helpers/ollama.helpers.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { parseLlmJson } from '../helpers/parse-llm-json.helper.js';
 import {
-  categorizeTools,
-  expandToolAliases,
-  getEnabledToolNames,
-} from '../helpers/tool-registry.helper.js';
+  buildStructuredJsonPrompt,
+  languageCorrectionPrompt,
+} from '../constants/structured-json-prompt.constant.js';
+import { enforceRequiredTools } from '../helpers/enforce-media-tools.helper.js';
+import { expandToolAliases } from '../helpers/expand-tool-aliases.helper.js';
+import { getEnabledToolNames } from '../helpers/get-enabled-tool-names.helper.js';
+import { parseLlmJson } from '../helpers/parse-llm-json.helper.js';
 import { buildIntentSelectionPrompt } from '../prompts/intent-selection.prompt.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { type IntentResult, IntentSchema } from '../templates/intent.schema.js';
+
+const MAX_INTERPRET_RETRIES = 3;
 
 export type InterpretResult = {
   intent: IntentResult;
@@ -21,26 +26,24 @@ export type InterpretResult = {
 
 @Injectable()
 export class InterpretActionService {
-  private readonly logger = new Logger(InterpretActionService.name);
-
   constructor(
-    @Inject(AiSdkService)
     private readonly aiSdkService: AiSdkService,
-    @Inject(ProviderOverridesService)
     private readonly providerOverrides: ProviderOverridesService,
+    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   /**
-   * Phase 1 – Interpret.
+   * Phase 1 — Interpret.
    *
    * Classifies the user intent and produces an execution plan:
    * - selected template + prompt variant
-   - external tools to invoke
-   - image processing plan (resize + optional preprocessing variants)
+   * - external tools to invoke
+   * - image processing plan (resize + optional preprocessing variants)
    *
    * No tools are executed and no response is produced here.
    */
   async execute(params: {
+    requestId: string;
     model: string;
     messages: InputMessage[];
     keepAlive?: string;
@@ -49,44 +52,119 @@ export class InterpretActionService {
     abortSignal?: AbortSignal;
     onIntent?: (intent: IntentResult) => void;
   }): Promise<InterpretResult> {
-    const classifyMessages = this.buildClassifyMessages(params.messages);
-
-    const result = await this.aiSdkService.generateChat({
-      model: params.model,
-      messages: classifyMessages,
-      keepAlive: params.keepAlive,
-      numCtx: params.numCtx,
-      think: false,
-      tools: {},
-      abortSignal: params.abortSignal,
-    });
-
-    const enabledToolNames = getEnabledToolNames(
-      this.providerOverrides.getConfig(),
+    const classifyMessages: InputMessage[] = this.buildClassifyMessages(
+      params.messages,
     );
-    const intent = this.parseIntent(result.text, enabledToolNames);
-    params.onIntent?.(intent);
 
-    this.logger.log('[HARNESS]', {
-      step: 'interpret',
-      model: params.model,
-      template: intent.template,
-      prompt: intent.prompt,
-      tools: intent.tools,
-      plan: intent.plan,
-      reasoning: intent.reasoning,
-      inputTokens: result.totalUsage?.inputTokens,
-      outputTokens: result.totalUsage?.outputTokens,
-    });
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let lastIntent: IntentResult | undefined;
+
+    for (let attempt = 1; attempt <= MAX_INTERPRET_RETRIES; attempt++) {
+      const result = await this.aiSdkService.generateChat({
+        model: params.model,
+        messages: classifyMessages,
+        keepAlive: params.keepAlive,
+        numCtx: params.numCtx,
+        think: false,
+        tools: {},
+        abortSignal: params.abortSignal,
+      });
+
+      totalInputTokens += result.totalUsage?.inputTokens ?? 0;
+      totalOutputTokens += result.totalUsage?.outputTokens ?? 0;
+
+      const enabledToolNames = getEnabledToolNames(
+        this.providerOverrides.getConfig(),
+      );
+      const intent = this.parseIntent(
+        params.requestId,
+        result.text,
+        enabledToolNames,
+      );
+      lastIntent = intent;
+      params.onIntent?.(intent);
+
+      this.stepLogger.log(
+        { requestId: params.requestId },
+        'interpret',
+        'intent classified',
+        {
+          model: params.model,
+          attempt,
+          language: intent.language,
+          template: intent.template,
+          prompt: intent.prompt,
+          tools: intent.tools,
+          plan: intent.plan,
+          reasoning: intent.reasoning,
+          clarification: intent.needsClarification,
+          inputTokens: result.totalUsage?.inputTokens,
+          outputTokens: result.totalUsage?.outputTokens,
+        },
+      );
+
+      if (this.isLanguageValid(intent.language)) {
+        return {
+          intent,
+          inputTokens: totalInputTokens || undefined,
+          outputTokens: totalOutputTokens || undefined,
+        };
+      }
+
+      this.stepLogger.warn(
+        { requestId: params.requestId },
+        'interpret',
+        'language missing',
+        {
+          attempt,
+          template: intent.template,
+        },
+      );
+
+      if (attempt < MAX_INTERPRET_RETRIES) {
+        classifyMessages.push(this.buildLanguageCorrectionMessage());
+      }
+    }
+
+    // All retries exhausted — fall back to default language.
+    if (lastIntent) {
+      lastIntent.language = 'en';
+      params.onIntent?.(lastIntent);
+
+      this.stepLogger.warn(
+        { requestId: params.requestId },
+        'interpret',
+        'retries exhausted, falling back to default language',
+        {
+          model: params.model,
+          fallback: 'en',
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+        },
+      );
+    }
 
     return {
-      intent,
-      inputTokens: result.totalUsage?.inputTokens || undefined,
-      outputTokens: result.totalUsage?.outputTokens || undefined,
+      intent: lastIntent!,
+      inputTokens: totalInputTokens || undefined,
+      outputTokens: totalOutputTokens || undefined,
     };
   }
 
-  private parseIntent(text: string, enabledToolNames: string[]): IntentResult {
+  private isLanguageValid(language?: string | null): boolean {
+    return typeof language === 'string' && language.trim().length > 0;
+  }
+
+  private buildLanguageCorrectionMessage(): InputMessage {
+    return { role: 'system', content: languageCorrectionPrompt };
+  }
+
+  private parseIntent(
+    requestId: string,
+    text: string,
+    enabledToolNames: string[],
+  ): IntentResult {
     const cleaned = text
       .trim()
       .replace(/^```json\s*/i, '')
@@ -100,6 +178,13 @@ export class InterpretActionService {
     try {
       const parsed = parseLlmJson(cleaned) as Record<string, unknown>;
 
+      if (typeof parsed.imageCount === 'number' && parsed.imageCount < 0) {
+        parsed.imageCount = 0;
+      }
+      if (typeof parsed.videoCount === 'number' && parsed.videoCount < 0) {
+        parsed.videoCount = 0;
+      }
+
       if (Array.isArray(parsed.tools)) {
         parsed.tools = expandToolAliases(parsed.tools, enabledToolNames);
       }
@@ -110,14 +195,10 @@ export class InterpretActionService {
           ...new Set(validated.tools),
         ] as IntentResult['tools'];
       }
-      validated.tools = this.ensureMediaSearchTools(
-        validated,
-        enabledToolNames,
-      );
+      validated.tools = enforceRequiredTools(validated, enabledToolNames);
       return validated;
     } catch (error) {
-      this.logger.warn({
-        request: 'intent-parse-failed',
+      this.stepLogger.warn({ requestId }, 'interpret', 'intent parse failed', {
         rawOutput: text,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -127,33 +208,6 @@ export class InterpretActionService {
     }
   }
 
-  private ensureMediaSearchTools(
-    intent: IntentResult,
-    enabledToolNames: string[],
-  ): IntentResult['tools'] {
-    const mediaTemplates = new Set([
-      'article',
-      'news',
-      'summary',
-      'evaluation',
-    ]);
-    if (!mediaTemplates.has(intent.template)) {
-      return intent.tools;
-    }
-
-    const categories = categorizeTools(enabledToolNames);
-    const requiredTools = new Set(intent.tools);
-
-    for (const tool of categories.imageSearch) {
-      requiredTools.add(tool as IntentResult['tools'][number]);
-    }
-    for (const tool of categories.videoSearch) {
-      requiredTools.add(tool as IntentResult['tools'][number]);
-    }
-
-    return [...requiredTools] as IntentResult['tools'];
-  }
-
   private buildClassifyMessages(messages: InputMessage[]): InputMessage[] {
     const enabledToolNames = getEnabledToolNames(
       this.providerOverrides.getConfig(),
@@ -161,10 +215,12 @@ export class InterpretActionService {
 
     const prompt = [
       buildIntentSelectionPrompt(enabledToolNames),
-      this.buildStructuredJsonPrompt(),
+      buildStructuredJsonPrompt(),
     ]
       .filter(Boolean)
       .join('\n\n');
+
+    const systemContent = this.buildSystemPrompt(prompt);
 
     const hasImages = messages.some(
       (m) => m.role === 'user' && m.images && m.images.length > 0,
@@ -175,7 +231,30 @@ export class InterpretActionService {
       ? this.buildImageContext(nonSystem)
       : nonSystem.slice(-4);
 
-    return [{ role: 'system', content: prompt }, ...contextMessages];
+    return [
+      { role: 'system' as const, content: systemContent },
+      ...contextMessages,
+    ];
+  }
+
+  private buildSystemPrompt(basePrompt: string): string {
+    const now = new Date()
+      .toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      })
+      .replace(' at ', ', '); // "Friday, January 3, 2025, 10:30 AM GMT"
+    return [
+      basePrompt,
+      '',
+      `Current date and time: ${now}`,
+      'Use this temporal context when classifying time-sensitive requests.',
+    ].join('\n');
   }
 
   /**
@@ -183,76 +262,31 @@ export class InterpretActionService {
    * plus the latest user text prompt as the actual image instruction.
    */
   private buildImageContext(messages: InputMessage[]): InputMessage[] {
-    // Only the latest user text prompt is treated as the image instruction.
-    const latestText = messages
-      .filter(
-        (m) =>
-          m.role === 'user' && m.content && !m.content.startsWith('Image(s):'),
-      )
-      .at(-1)?.content;
+    const userMessages = messages.filter((m) => m.role === 'user');
+    const latestUser = userMessages.at(-1);
 
-    // Assistant turns provide the conversation context; keep them as-is.
+    const imageMessage = userMessages.findLast(
+      (m) => m.images && m.images.length > 0,
+    );
+    const imageCount = imageMessage?.images?.length ?? 0;
+
+    const latestText = latestUser?.content ?? '';
+
     const assistantMessages = messages
       .filter((m) => m.role === 'assistant')
       .map((m) => ({ ...m, images: undefined }));
 
-    const imageCount = messages.reduce((max, m) => {
-      return m.role === 'user' && m.images?.length
-        ? Math.max(max, m.images.length)
-        : max;
-    }, 0);
-
-    const marker = this.buildImageMarker(imageCount);
-    const userContent = [latestText, marker].filter(Boolean).join('\n\n');
+    const marker =
+      imageCount > 0
+        ? imageCount === 1
+          ? ' [1 image attached]'
+          : ` [${imageCount} images attached]`
+        : '';
+    const userContent = [latestText, marker].filter(Boolean).join(' ');
 
     return [
       ...assistantMessages,
       ...(userContent ? [{ role: 'user' as const, content: userContent }] : []),
     ];
-  }
-
-  private buildImageMarker(count: number): string {
-    if (count === 0) return '';
-    if (count === 1) return '[1 image attached]';
-    return `[${count} images attached]`;
-  }
-
-  private buildStructuredJsonPrompt(): string {
-    return [
-      'OUTPUT FORMAT — you must output ONLY valid JSON matching this exact schema:',
-      '{',
-      '  "template": "article|news|describe|compare|ocr|text",',
-      '  "prompt": "promptVariant",',
-      '  "reasoning": "string (concise, 30 words or fewer)",',
-      '  "tools": ["toolName"],',
-      '  "imageCount": number,',
-      '  "videoCount": number,',
-      '  "contextSummary": "string (concise summary of prior conversation relevant to the latest user message; empty if none)",',
-      '  "needsClarification": boolean,',
-      '  "clarificationQuestion": "string (only when needsClarification=true)",',
-      '  "plan": {',
-      '    "images": {',
-      '      "resize": boolean,',
-      '      "variants": ["grayscale"|"denoised"|"sharpened"|"clahe"]',
-      '    }',
-      '  }',
-      '}',
-      '',
-      'Rules:',
-      '- No markdown code fences.',
-      '- No explanations, preamble, or postscript.',
-      '- Prompt must be one of the valid variants for the selected template.',
-      '- Tools array must contain only exact tool names from the enabled list.',
-      '- Do NOT use category names (imageSearch, newsSearch, videoSearch, webpageFetch) as tool names.',
-      '- contextSummary must summarize prior conversation context needed to understand references in the latest user message. It must be written in the same language as the latest user message. It must NOT include the latest user message itself.',
-      '- If the request is ambiguous set needsClarification=true and provide a concise question.',
-      '- imageCount: only include when the user explicitly requests a specific number of images. If omitted, the system defaults to 6.',
-      '- videoCount: only include when the user explicitly requests a specific number of videos. If omitted, the system defaults to 6.',
-      '- plan.images.resize should be true when images are present, unless the user explicitly asks for full resolution.',
-      '- plan.images.variants should only include variants that would materially improve the analysis. Leave empty if the original is sufficient.',
-      '',
-      'FINAL REMINDER:',
-      '- Output ONLY valid JSON matching the exact schema above. No markdown code fences, no explanations, preamble, or postscript.',
-    ].join('\n');
   }
 }

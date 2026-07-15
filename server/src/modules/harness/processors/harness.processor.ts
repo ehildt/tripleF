@@ -1,15 +1,16 @@
 import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Job } from 'bullmq';
 
 import {
   HARNESS_QUEUE,
   HARNESS_WORKER_CONCURRENCY,
-} from '../../../constants/bullmq.constants.js';
+} from '../../bullmq/constants/bullmq.constants.js';
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
+import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
-import { isCompactTask } from '../helpers/harness.helpers.js';
+import { isCompactTask } from '../helpers/is-compact-task.helper.js';
 import { HarnessCancellationService } from '../services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
 import { HarnessCompactService } from '../services/harness-compact.service.js';
@@ -19,16 +20,16 @@ import { StepRegistryService } from '../services/step-registry.service.js';
 import { ExecuteStepService } from '../services/steps/execute-step.service.js';
 import { InterpretStepService } from '../services/steps/interpret-step.service.js';
 import { RespondStepService } from '../services/steps/respond-step.service.js';
+import { SanitizeStepService } from '../services/steps/sanitize-step.service.js';
 
 @Injectable()
 @Processor(HARNESS_QUEUE, {
   concurrency: HARNESS_WORKER_CONCURRENCY,
 })
 export class HarnessProcessor extends WorkerHost implements OnModuleInit {
-  private readonly logger = new Logger(HarnessProcessor.name);
-
   constructor(
     private readonly bullMQLogger: BullMQLoggerService,
+    private readonly logger: PinoLoggerService,
     private readonly contextService: HarnessContextService,
     private readonly cancellationService: HarnessCancellationService,
     private readonly stepEngine: HarnessStepEngineService,
@@ -37,6 +38,7 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
     private readonly interpretStepService: InterpretStepService,
     private readonly executeStepService: ExecuteStepService,
     private readonly respondStepService: RespondStepService,
+    private readonly sanitizeStepService: SanitizeStepService,
     private readonly stepRegistryService: StepRegistryService,
     private readonly dlqLifecycleService: LifecycleService,
   ) {
@@ -54,9 +56,14 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
         ['interpret'],
       )
       .addStep(
+        'sanitize',
+        { execute: (ctx) => this.sanitizeStepService.execute(ctx) },
+        ['execute'],
+      )
+      .addStep(
         'respond',
         { execute: (ctx) => this.respondStepService.execute(ctx) },
-        ['execute'],
+        ['sanitize'],
       );
   }
 

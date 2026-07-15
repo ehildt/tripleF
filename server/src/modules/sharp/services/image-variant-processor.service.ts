@@ -2,13 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import sharp, { Sharp } from 'sharp';
 
 import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
+import { VARIANT_DESCRIPTIONS } from '../constants/sharp.constants.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';
-import {
-  buildVariantMeta,
-  getVariantDescription,
-  Variant,
-  VariantPipeline,
-} from '../helpers/image-variant.helper.js';
+import { buildVariantMeta } from '../helpers/build-variant-meta.helper.js';
+import type { Variant, VariantPipeline } from '../types/image-variant.types.js';
 
 @Injectable()
 export class ImageVariantProcessor {
@@ -30,7 +27,7 @@ export class ImageVariantProcessor {
       buffer: outputBuffer,
       meta: buildVariantMeta(meta, variant),
       variant,
-      description: getVariantDescription(variant),
+      description: VARIANT_DESCRIPTIONS[variant] ?? variant,
     };
   }
 
@@ -62,7 +59,7 @@ export class ImageVariantProcessor {
           variant: 'original',
         },
         variant: 'original',
-        description: getVariantDescription('original'),
+        description: 'original',
       };
     } catch (error) {
       this.logger.error(`Failed to process original image:`, error);
@@ -74,7 +71,7 @@ export class ImageVariantProcessor {
           variant: 'original',
         },
         variant: 'original',
-        description: getVariantDescription('original'),
+        description: 'original',
       };
     }
   }

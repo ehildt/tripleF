@@ -9,6 +9,8 @@ import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
+import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import EvaluationListSection from './sections/evaluation-list-section/EvaluationListSection.vue';
 
 const props = defineProps<{
@@ -57,19 +59,21 @@ const hasAnyContent = computed(() =>
   <article class="harness-evaluation">
     <template v-if="hasAnyContent">
       <header class="hero">
-        <HeroSection
-          :category="data.category"
-          :title="data.title"
-          :subtitle="data.subtitle"
-        />
-        <div v-if="scoreBadge" class="score-badge">
-          <span class="score-label">{{ scoreBadge }}</span>
-        </div>
+        <ResponseMetaBar>
+          <ResponseMetaBarPill v-if="data.category" variant="accent">{{
+            data.category
+          }}</ResponseMetaBarPill>
+          <ResponseMetaBarPill v-if="scoreBadge" variant="accent">{{
+            scoreBadge
+          }}</ResponseMetaBarPill>
+        </ResponseMetaBar>
+        <HeroSection :title="data.title" :subtitle="data.subtitle" />
       </header>
 
       <ArticleHeroMediaSection
         :hero-video-url="data.heroVideoUrl"
         :hero-video-caption="data.heroVideoCaption"
+        :hero-video-title="data.heroVideoTitle"
         :hero-image-url="data.heroImageUrl"
         :hero-image-alt="data.heroImageAlt"
         :hero-caption="data.heroCaption"
@@ -133,26 +137,12 @@ const hasAnyContent = computed(() =>
   gap: 0.75em;
 }
 
-.score-badge {
-  align-self: flex-start;
-  border: 1px solid var(--color-accent-primary);
-  border-radius: 999px;
-  padding: 0.25em 0.9em;
-}
-
-.score-label {
-  font-size: 0.85em;
-  font-weight: 700;
-  color: var(--color-accent-primary);
-}
-
 .overview {
   display: flex;
   flex-direction: column;
   gap: 0.35em;
   padding: 0.75em 1em;
   border: 1px solid var(--color-divider);
-  border-radius: 8px;
   background: var(--color-bg-secondary);
 }
 
@@ -170,7 +160,6 @@ const hasAnyContent = computed(() =>
 .evaluation__empty {
   padding: 1.5em;
   border: 1px solid var(--color-divider);
-  border-radius: 8px;
   background: var(--color-bg-secondary);
   text-align: center;
 }

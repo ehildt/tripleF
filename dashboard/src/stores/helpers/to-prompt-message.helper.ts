@@ -7,6 +7,7 @@ interface PromptExchange {
   content: string;
   text?: string;
   harnessData?: HarnessResponseData;
+  images?: Array<{ name: string; hash: string }>;
 }
 
 export interface PromptMessage {
@@ -31,6 +32,15 @@ export function toPromptMessage(exchange: PromptExchange): PromptMessage {
       const fromData = harnessDataToPromptText(exchange.harnessData);
       if (fromData.trim()) content = fromData;
     }
+  }
+
+  // Note image attachments on user turns so follow-ups can reference them.
+  if (exchange.role === 'user' && exchange.images?.length) {
+    const names = exchange.images
+      .map((image) => image.name)
+      .filter(Boolean)
+      .join(', ');
+    if (names) content = `${content}\n\n[Attached images: ${names}]`;
   }
 
   return {

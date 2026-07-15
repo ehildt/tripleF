@@ -85,6 +85,7 @@ Horizonal
 iconify
 iconoir
 Identificator
+imagelist
 initdb
 INITDB
 Iobroker
@@ -174,6 +175,7 @@ safelisted
 scanline
 Securityscorecard
 sendfile
+serper
 Servicestack
 sibiraj
 simping
@@ -205,6 +207,7 @@ usernamehw
 Vectorizer
 vectorizing
 venv
+videolist
 vite
 vitest
 vmsg

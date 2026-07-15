@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
+import { ResponseValidatorService } from '../services/response-validator.service.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
 import { RespondActionService } from './respond.action.js';
@@ -16,6 +18,7 @@ function intent(template: IntentResult['template']): IntentResult {
     reasoning: '',
     contextSummary: '',
     needsClarification: false,
+    language: 'en',
     plan: {},
   };
 }
@@ -28,6 +31,7 @@ describe('RespondActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RespondActionService,
+        ResponseValidatorService,
         {
           provide: AiSdkService,
           useValue: {
@@ -146,6 +150,10 @@ describe('RespondActionService', () => {
               })(),
             }),
           },
+        },
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
         },
       ],
     }).compile();
@@ -365,9 +373,9 @@ describe('RespondActionService', () => {
       .messages;
     const userMessages = messages.filter((m: any) => m.role === 'user');
     expect(userMessages).toHaveLength(1);
-    expect(userMessages[0].content).toContain('describe this');
-    expect(userMessages[0].content).toContain('[1 image attached]');
+    expect(userMessages[0].content).toBe('describe this');
     expect(userMessages[0].images).toEqual([imageBuffer]);
+    expect(messages.some((m: any) => m.role === 'system')).toBe(true);
     expect(messages.some((m: any) => m.role === 'assistant')).toBe(false);
   });
 });
