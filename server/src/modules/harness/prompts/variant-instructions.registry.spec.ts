@@ -21,6 +21,9 @@ describe('resolveVariantInstructions', () => {
     expect(resolveVariantInstructions('describe', 'detailed')).toContain(
       'exhaustive visual detail',
     );
+    expect(resolveVariantInstructions('compact', 'default')).toContain(
+      'MODE: COMPACT',
+    );
   });
 
   it('falls back to the default variant when an unknown variant is requested', () => {

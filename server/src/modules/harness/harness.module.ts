@@ -9,54 +9,72 @@ import { SharpModule } from '../sharp/sharp.module.js';
 import { ExecuteActionService } from './actions/execute.action.js';
 import { InterpretActionService } from './actions/interpret.action.js';
 import { RespondActionService } from './actions/respond.action.js';
+import { SanitizeActionService } from './actions/sanitize.action.js';
+import { NumCtxConfigService } from './configs/numctx-config.service.js';
+import { CloudImageIngestionService } from './services/cloud-image-ingestion.service.js';
 import { HarnessCancellationService } from './services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from './services/harness-chat-streaming.service.js';
 import { HarnessCompactService } from './services/harness-compact.service.js';
 import { HarnessContextService } from './services/harness-context.service.js';
 import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
+import { HarnessStepLogger } from './services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
+import { ResponseValidatorService } from './services/response-validator.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
 import { ExecuteStepService } from './services/steps/execute-step.service.js';
 import { InterpretStepService } from './services/steps/interpret-step.service.js';
 import { RespondStepService } from './services/steps/respond-step.service.js';
+import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
 
 @Global()
 @Module({
   imports: [AiSdkModule, SharpModule, HttpModule],
   providers: [
+    NumCtxConfigService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessCompactService,
     HarnessContextService,
     HarnessQueueService,
     HarnessStepEngineService,
+    HarnessStepLogger,
     StepRegistryService,
     InterpretStepService,
     InterpretActionService,
     ExecuteStepService,
     ExecuteActionService,
+    SanitizeStepService,
+    SanitizeActionService,
     RespondStepService,
     RespondActionService,
+    ResponseValidatorService,
     MediaUrlValidatorService,
+    CloudImageIngestionService,
     ToolSelectionService,
     LifecycleService,
   ],
   exports: [
+    NumCtxConfigService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessCompactService,
     HarnessContextService,
     HarnessQueueService,
     HarnessStepEngineService,
+    HarnessStepLogger,
     StepRegistryService,
     InterpretStepService,
     InterpretActionService,
     ExecuteStepService,
     ExecuteActionService,
+    SanitizeStepService,
+    SanitizeActionService,
     RespondStepService,
     RespondActionService,
+    ResponseValidatorService,
     MediaUrlValidatorService,
+    CloudImageIngestionService,
     ToolSelectionService,
     LifecycleService,
   ],

@@ -5,7 +5,6 @@ import { useAppStore } from '../../../../stores/app';
 
 const TAB_TINTS: Record<ActiveTab, number> = {
   http: 0.15,
-  preprocessing: 0.35,
   dlq: 0.55,
   debug: 0.75,
   sysctl: 1,
@@ -36,11 +35,6 @@ export function useHeaderTabs(props: {
         tab: 'http',
         tint: TAB_TINTS.http,
         showStar: props.showChatStar,
-      },
-      {
-        label: '> PPROC_',
-        tab: 'preprocessing',
-        tint: TAB_TINTS.preprocessing,
       },
       {
         label: '> DLQ_',

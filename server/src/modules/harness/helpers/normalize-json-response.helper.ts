@@ -1,4 +1,24 @@
 /**
+ * Deduplicate gallery arrays by a URL/key field, keeping the first occurrence.
+ */
+function dedupeGalleryItems(
+  value: unknown,
+  key: string,
+): unknown[] | undefined {
+  const arr = normalizeArray(value, (entry) => coerceToUrlObject(entry, key));
+  if (!arr) return undefined;
+
+  const seen = new Set<string>();
+  return arr.filter((item) => {
+    const url = (item as Record<string, unknown>)?.[key];
+    if (typeof url !== 'string') return true;
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
+/**
  * Light normalization for LLM-generated structured JSON.
  *
  * Vision and general-purpose models often emit array entries as plain strings
@@ -117,18 +137,29 @@ export function normalizeJsonResponse(
   normalizeField(normalized, 'keyFindings', coerceToObject);
   normalizeField(normalized, 'keyPoints', coerceToObject);
 
+  // Product text entries (pros/cons/reviewSummary share the { text } shape)
+  normalizeField(normalized, 'pros', coerceToObject);
+  normalizeField(normalized, 'cons', coerceToObject);
+  normalizeField(normalized, 'reviewSummary', coerceToObject);
+
   // Sources (news requires a title)
   normalizeField(normalized, 'sources', (entry) =>
     coerceToSource(entry, template === 'news'),
   );
 
   // Media gallery items
-  normalizeField(normalized, 'galleryItems', (entry) =>
-    coerceToUrlObject(entry, 'imageUrl'),
+  const galleryItems = dedupeGalleryItems(normalized.galleryItems, 'imageUrl');
+  if (galleryItems !== undefined) {
+    normalized.galleryItems = galleryItems;
+  }
+
+  const videoGalleryItems = dedupeGalleryItems(
+    normalized.videoGalleryItems,
+    'videoUrl',
   );
-  normalizeField(normalized, 'videoGalleryItems', (entry) =>
-    coerceToUrlObject(entry, 'videoUrl'),
-  );
+  if (videoGalleryItems !== undefined) {
+    normalized.videoGalleryItems = videoGalleryItems;
+  }
 
   // News-specific arrays
   normalizeField(normalized, 'relatedStories', (entry) =>

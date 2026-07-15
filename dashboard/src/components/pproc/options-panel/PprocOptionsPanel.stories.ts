@@ -11,9 +11,10 @@ const meta = {
       description: {
         component: `
 Right-side options panel of the preprocessing view. Renders the
-grid of \`PprocParamTile\` inputs for the advanced parameters (blur,
-sharpen, CLAHE, brightness, normalize). Reads and writes the
-preprocessing store directly.
+advanced parameters (blur, sharpen, CLAHE, brightness, normalize)
+as image-variant-style \`PprocParamRow\` rows: icon tile, label,
+inline number field, and a checkbox that resets to the default.
+Reads and writes the preprocessing store directly.
 `,
       },
     },

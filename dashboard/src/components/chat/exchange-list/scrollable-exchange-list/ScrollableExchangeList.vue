@@ -41,27 +41,30 @@ function onScroll() {
 
 <template>
   <div :ref="setContainer" class="scrollable-exchange-list" @scroll="onScroll">
-    <ExchangeEmptyState v-if="!hasExchanges" />
-    <template v-else>
-      <ExchangeRow
-        v-for="(exchange, index) in exchanges"
-        :key="exchange.id"
-        :exchange="exchange"
-        :index="index"
-        :highlighted="highlightedIds.has(exchange.id)"
-        :collapsed="collapsedIds.has(exchange.id)"
-        @delete="emit('delete', $event)"
-        @retry="emit('retry', $event)"
-        @branch="emit('branch', $event)"
-        @hover-delete-start="emit('hoverDeleteStart', $event)"
-        @hover-delete-end="emit('hoverDeleteEnd')"
-      />
-    </template>
+    <Transition name="exchange-list-state" mode="out-in">
+      <ExchangeEmptyState v-if="!hasExchanges" key="empty" />
+      <div v-else key="exchanges" class="scrollable-exchange-list__exchanges">
+        <ExchangeRow
+          v-for="(exchange, index) in exchanges"
+          :key="exchange.id"
+          :exchange="exchange"
+          :index="index"
+          :highlighted="highlightedIds.has(exchange.id)"
+          :collapsed="collapsedIds.has(exchange.id)"
+          @delete="emit('delete', $event)"
+          @retry="emit('retry', $event)"
+          @branch="emit('branch', $event)"
+          @hover-delete-start="emit('hoverDeleteStart', $event)"
+          @hover-delete-end="emit('hoverDeleteEnd')"
+        />
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
 .scrollable-exchange-list {
+  position: relative;
   padding: var(--spacing-4);
   display: flex;
   flex-direction: column;
@@ -69,5 +72,33 @@ function onScroll() {
   overflow-y: auto;
   overscroll-behavior: contain;
   height: calc(100vh - 18.5rem);
+}
+
+.scrollable-exchange-list__exchanges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.exchange-list-state-enter-active,
+.exchange-list-state-leave-active {
+  transition:
+    opacity 350ms ease,
+    transform 350ms ease;
+}
+
+.exchange-list-state-enter-from {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
+.exchange-list-state-leave-to {
+  opacity: 0;
+  transform: translateY(-0.25rem);
+}
+
+.exchange-list-state-leave-active {
+  position: absolute;
+  width: 100%;
 }
 </style>

@@ -1,6 +1,8 @@
-import { useStorage } from '@vueuse/core';
+import { useDebounceFn, useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+
+import { getApiUrl } from '@/api/api-url';
 
 export type PreprocessingSize = 256 | 384 | 512 | 640 | 768 | 1024;
 
@@ -71,13 +73,11 @@ export const DEFAULT_PREPROCESSING_SETTINGS: PreprocessingSettings = {
 };
 
 export const VARIANT_DESCRIPTIONS: Record<string, string> = {
-  original: 'Baseline image at reduced resolution',
-  grayscale: 'Luminance only, removes color noise to focus on text structure',
-  denoised:
-    'Background smoothed with Gaussian blur to reduce noise and artifacts',
-  sharpened: 'Edges enhanced for improved text clarity and boundary definition',
-  clahe:
-    'Adaptive contrast enhancement that brings out details in both bright and dark areas',
+  original: 'Unmodified baseline image',
+  grayscale: 'Luminance only — best for text and structure',
+  denoised: 'Gaussian smoothing — reduces noise and artifacts',
+  sharpened: 'Enhanced edges — crisper text and boundaries',
+  clahe: 'Adaptive contrast — reveals detail in shadows and highlights',
 };
 
 const VARIANT_PARAMETERS: Record<string, string[]> = {
@@ -116,6 +116,29 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     localStorage,
     { mergeDefaults: true },
   );
+
+  /**
+   * Server-side sync: preprocessing is applied by the server from its own
+   * effective config (env defaults + overrides), so every settings change is
+   * pushed as an override. localStorage stays the offline mirror — a failed
+   * push is retried on the next change or app boot.
+   */
+  function pushSettingsToServer() {
+    fetch(getApiUrl('/api/v1/sharp-overrides'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings.value),
+    }).catch(() => {
+      /* offline — the localStorage mirror keeps the settings */
+    });
+  }
+
+  const pushSettingsToServerDebounced = useDebounceFn(
+    pushSettingsToServer,
+    300,
+  );
+
+  watch(settings, () => pushSettingsToServerDebounced(), { deep: true });
 
   // Convenience refs — same refs exposed before, now backed by settings
   const enabled = computed({
@@ -238,42 +261,6 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     parameters.value = { ...DEFAULT_PREPROCESSING_SETTINGS.parameters };
   }
 
-  function buildQueryParams(): Record<string, string | undefined> {
-    if (!enabled.value) return {};
-
-    const params: Record<string, string | undefined> = {
-      pproc_enabled: 'true',
-      pproc_original: variants.value.original ? 'true' : 'false',
-      pproc_grayscale: variants.value.grayscale ? 'true' : 'false',
-      pproc_denoised: variants.value.denoised ? 'true' : 'false',
-      pproc_sharpened: variants.value.sharpened ? 'true' : 'false',
-      pproc_clahe: variants.value.clahe ? 'true' : 'false',
-      pproc_resize_maxWidth: resize.value.maxWidth.toString(),
-      pproc_resize_maxHeight: resize.value.maxHeight?.toString(),
-      pproc_resize_withoutEnlargement: resize.value.withoutEnlargement
-        ? 'true'
-        : 'false',
-      pproc_blurSigma: parameters.value.blurSigma.toString(),
-      pproc_sharpenSigma: parameters.value.sharpenSigma.toString(),
-      pproc_sharpenM1: parameters.value.sharpenM1.toString(),
-      pproc_sharpenM2: parameters.value.sharpenM2.toString(),
-      pproc_brightnessLevel: parameters.value.brightnessLevel.toString(),
-      pproc_claheWidth: parameters.value.claheWidth.toString(),
-      pproc_claheHeight: parameters.value.claheHeight.toString(),
-      pproc_claheMaxSlope: parameters.value.claheMaxSlope.toString(),
-      pproc_normalizeLower: parameters.value.normalizeLower.toString(),
-      pproc_normalizeUpper: parameters.value.normalizeUpper.toString(),
-    };
-
-    Object.keys(params).forEach((key) => {
-      if (params[key] === undefined) {
-        delete params[key];
-      }
-    });
-
-    return params;
-  }
-
   function getSummary(): string {
     if (!enabled.value) return 'Disabled';
     const activeVariants = Object.entries(variants.value)
@@ -324,7 +311,7 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     setVariant,
     setParameter,
     resetToDefaults,
-    buildQueryParams,
+    pushSettingsToServer,
     getSummary,
     hoveredVariant,
     highlightedParameters,

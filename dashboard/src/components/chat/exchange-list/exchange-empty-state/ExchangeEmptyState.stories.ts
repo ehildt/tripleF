@@ -11,8 +11,8 @@ const meta = {
       description: {
         component: `
 Empty-state placeholder shown inside the scroll area when a conversation is
-active but has no exchanges yet. Lists the toolbar controls to orient
-the user.
+active but has no exchanges yet. Displays a subtle animated constellation of
+wandering dots and connecting lines behind a short usage hint.
 `,
       },
     },

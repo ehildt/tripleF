@@ -1,8 +1,12 @@
+import { parseYouTubeId } from './parse-youtube-id.helper';
+
 const YOUTUBE_HOSTS = new Set([
   'www.youtube.com',
   'youtube.com',
   'm.youtube.com',
   'youtu.be',
+  'youtube-nocookie.com',
+  'www.youtube-nocookie.com',
 ]);
 
 const VIMEO_HOSTS = new Set(['vimeo.com', 'www.vimeo.com', 'player.vimeo.com']);
@@ -25,35 +29,16 @@ const WISTIA_HOSTS = new Set([
 const DIRECT_VIDEO_EXTENSION =
   /\.(mp4|webm|ogg|mov|mkv|avi|flv|m3u8|mpd)(\?.*)?$/i;
 
-function parseYouTubeId(url: URL): string | null {
-  if (url.hostname === 'youtu.be') {
-    return url.pathname.slice(1).split('/')[0] || null;
-  }
-  if (url.pathname.startsWith('/shorts/')) {
-    return url.pathname.slice('/shorts/'.length).split('/')[0] || null;
-  }
-  if (
-    url.pathname.startsWith('/embed/') ||
-    url.pathname.startsWith('/live/') ||
-    url.pathname.startsWith('/v/') ||
-    url.pathname.startsWith('/vi/') ||
-    url.pathname.startsWith('/e/')
-  ) {
-    return url.pathname.slice(1).split('/')[1] || null;
-  }
-  if (url.pathname.startsWith('/channel/') || url.pathname.startsWith('/@')) {
-    return null;
-  }
-  if (url.pathname.startsWith('/playlist')) {
-    return null;
-  }
-  return url.searchParams.get('v') || url.searchParams.get('vi');
-}
-
-function buildYouTubeEmbedUrl(url: URL, input: string): string | null {
-  if (url.pathname.startsWith('/embed/')) {
-    return input;
-  }
+/**
+ * YouTube embeds use the stock youtube.com domain. The privacy-enhanced
+ * nocookie domain was tried and reverted: its player misbehaves with
+ * multiple concurrent embeds on one page (the second player starts muted
+ * with a stuck buffering spinner), while the stock player has years of
+ * multi-embed hardening. The trade-off: the stock player fires DoubleClick
+ * ad-conversion pixels that fail CORS — harmless console noise inside the
+ * iframe, not an app error.
+ */
+function buildYouTubeEmbedUrl(url: URL): string | null {
   const id = parseYouTubeId(url);
   if (!id) return null;
   return `https://www.youtube.com/embed/${encodeURIComponent(id)}`;
@@ -127,7 +112,7 @@ export function toEmbedUrl(input: string): string | null {
     return null;
   }
 
-  if (YOUTUBE_HOSTS.has(url.hostname)) return buildYouTubeEmbedUrl(url, input);
+  if (YOUTUBE_HOSTS.has(url.hostname)) return buildYouTubeEmbedUrl(url);
   if (VIMEO_HOSTS.has(url.hostname)) return buildVimeoEmbedUrl(url, input);
   if (DAILYMOTION_HOSTS.has(url.hostname)) return buildDailymotionEmbedUrl(url);
   if (LOOM_HOSTS.has(url.hostname)) return buildLoomEmbedUrl(url);

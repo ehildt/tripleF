@@ -58,16 +58,14 @@ function imageAltFor(story: RelatedStory): string {
 }
 
 .related-story__item figure {
-  margin: 0 auto;
+  margin: 0;
   border: 1px solid var(--color-divider);
-  border-radius: 6px;
   overflow: hidden;
   background: var(--color-bg-secondary);
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 240px;
-  max-width: 560px;
   width: 100%;
   padding: 0 !important;
 }

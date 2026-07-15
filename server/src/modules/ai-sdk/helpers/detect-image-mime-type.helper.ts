@@ -1,16 +1,10 @@
+import { UnsupportedImageFormatError } from '../constants/image-format-errors.js';
 import {
   IMAGE_MEDIA_TYPE_SIGNATURES,
   type ImageMediaType,
   matchesMediaTypeSignature,
   MEDIA_TYPE,
 } from '../constants/image-media-type.constants.js';
-
-export class UnsupportedImageFormatError extends Error {
-  constructor() {
-    super('Unsupported image format');
-  }
-}
-
 function isMediaType(buffer: Uint8Array, mediaType: ImageMediaType): boolean {
   return matchesMediaTypeSignature(
     buffer,

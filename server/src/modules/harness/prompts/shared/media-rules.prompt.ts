@@ -1,0 +1,13 @@
+export const MEDIA_RULES = `MEDIA RULES
+- Use every provided image/video URL whenever applicable.
+- The system removes duplicate media by content hash (images) and canonical provider ID or title (videos). Do not worry if the raw tool results contain duplicates; choose one representative for each unique piece of content.
+- heroVideoUrl takes priority over heroImageUrl when both exist.
+- Fill galleryItems and videoGalleryItems from the supplied media without exceeding imageTargetCount or videoTargetCount.
+- Gallery entries require all mandatory fields.
+- Prefer high-resolution images.
+- Reject untrusted image hosts, thumbnails, private URLs, data URIs, tracking assets, and unsupported video providers.
+- URL fields must point to real public webpages, never scripts, APIs, assets, or tracking endpoints.
+- Images and videos are independent; never omit image galleries because videos exist.
+- Every image MUST have a non-empty imageAlt and a non-empty title. If the tool result provides none, derive a concise title and alt from the query/topic/context.
+- Every video gallery item MUST have a non-empty title and a non-empty caption. If the tool result provides none, derive concise values from the query/topic/context.
+- Do not include the same video twice (same trailer, official video, or clip) in heroVideoUrl and videoGalleryItems combined.`;

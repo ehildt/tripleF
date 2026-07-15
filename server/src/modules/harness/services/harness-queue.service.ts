@@ -1,28 +1,29 @@
 import { hashPayload } from '@ehildt/ckir-helpers/hash-payload';
 import { MultipartFile } from '@fastify/multipart';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 
-import { HARNESS_QUEUE } from '../../../constants/bullmq.constants.js';
-import { type ThinkMode } from '../../ai-sdk/helpers/ollama.helpers.js';
+import { type ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import {
   FastifyMultipartDataWithFiltersReq,
   FastifyMultipartMeta,
 } from '../dtos/harness-job.dto.js';
+import { buildImageFingerprint } from '../helpers/build-image-fingerprint.helper.js';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 @Injectable()
 export class HarnessQueueService {
-  private readonly logger = new Logger(HarnessQueueService.name);
-
   constructor(
     @InjectQueue(HARNESS_QUEUE)
     private readonly queue: Queue,
     private readonly minioService: MinioService,
     private readonly cancellationService: HarnessCancellationService,
+    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   async toFilePayloads(
@@ -34,10 +35,12 @@ export class HarnessQueueService {
         const buffer = await file.toBuffer();
         const hash =
           providedHashes?.[index] ?? `${hashPayload(buffer, 'sha256')}`;
+        const fingerprint = await buildImageFingerprint(buffer);
         const meta: FastifyMultipartMeta = {
           name: file.filename,
           type: file.mimetype,
           hash,
+          fingerprint,
           size: buffer.length,
         };
         return { buffer, meta };
@@ -59,8 +62,10 @@ export class HarnessQueueService {
         req.meta.filter(Boolean),
       );
     } catch (err) {
-      this.logger.error(
-        `Failed to upload buffers to MinIO for job ${requestId}:`,
+      this.stepLogger.error(
+        { requestId },
+        'queue',
+        `Failed to upload buffers to MinIO for job ${requestId}`,
         err,
       );
       return undefined;
@@ -76,12 +81,19 @@ export class HarnessQueueService {
     try {
       job = await this.queue.add(requestId, payload);
     } catch (err) {
-      this.logger.error(`Failed to add job ${requestId} to queue:`, err);
+      this.stepLogger.error(
+        { requestId },
+        'queue',
+        `Failed to add job ${requestId} to queue`,
+        err,
+      );
       try {
         await this.minioService.deleteBuffers(requestId);
       } catch (cleanupErr) {
-        this.logger.error(
-          `Failed to clean up MinIO buffers for ${requestId}:`,
+        this.stepLogger.error(
+          { requestId },
+          'queue',
+          `Failed to clean up MinIO buffers for ${requestId}`,
           cleanupErr,
         );
       }
@@ -119,8 +131,10 @@ export class HarnessQueueService {
         },
       });
     } catch (err) {
-      this.logger.error(
-        `Failed to add compact job ${payload.requestId} to queue:`,
+      this.stepLogger.error(
+        { requestId: payload.requestId },
+        'queue',
+        `Failed to add compact job ${payload.requestId} to queue`,
         err,
       );
       return undefined;
@@ -139,7 +153,12 @@ export class HarnessQueueService {
         return true;
       }
     } catch (err) {
-      this.logger.error(`Failed to cancel job ${requestId}:`, err);
+      this.stepLogger.error(
+        { requestId },
+        'queue',
+        `Failed to cancel job ${requestId}`,
+        err,
+      );
     }
 
     return aborted;

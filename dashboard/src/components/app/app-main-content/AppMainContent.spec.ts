@@ -25,11 +25,6 @@ vi.mock('./debug-section/DebugSection.vue', () => ({
     emits: ['clearDebugResults', 'selectDebugResult', 'selectDebugMarkRead'],
   },
 }));
-vi.mock('../../pproc/Pproc.vue', () => ({
-  default: {
-    template: '<div class="preprocessing-section">Preprocessing</div>',
-  },
-}));
 vi.mock('./sysctl-section/SysCtlSection.vue', () => ({
   default: {
     template: '<div class="sysctl-section">SysCtl</div>',
@@ -71,14 +66,6 @@ describe('AppMainContent', () => {
       global: { plugins: [createPinia()] },
     });
     expect(wrapper.find('.dlq-section').exists()).toBe(true);
-  });
-
-  it('renders preprocessing section when activeTab is preprocessing', () => {
-    const wrapper = mount(AppMainContent, {
-      props: { ...defaultProps, activeTab: 'preprocessing' as ActiveTab },
-      global: { plugins: [createPinia()] },
-    });
-    expect(wrapper.find('.preprocessing-section').exists()).toBe(true);
   });
 
   it('renders debug section when activeTab is debug', () => {

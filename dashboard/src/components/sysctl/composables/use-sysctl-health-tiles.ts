@@ -9,7 +9,6 @@ const TRACKED_KEYS = [
   'memory_rss',
   'postgres',
   'minio',
-  'searxng',
 ] as const;
 
 export interface HealthTileViewModel {
@@ -58,11 +57,5 @@ export function useSysctlHealthTiles() {
     return result;
   });
 
-  const isSearxngHealthy = computed(() => {
-    if (!readyData.value?.info) return false;
-    const sx = readyData.value.info['searxng'] as { status?: string };
-    return sx?.status === 'up' || sx?.status === 'ok';
-  });
-
-  return { tiles, isSearxngHealthy };
+  return { tiles };
 }

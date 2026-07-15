@@ -1,23 +1,47 @@
 <script setup lang="ts">
-import { Cloud, FileImage, History, X } from '@lucide/vue';
+import {
+  FileImage,
+  History,
+  ListVideo,
+  Pause,
+  Play,
+  Repeat,
+  Square,
+} from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { Conversation } from '@/stores/conversation';
+import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { getApiUrl } from '../../../api/api-url';
 import ExpandableMessageList from '../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
 import type { MessageListItem } from '../../shared/ui/expandable-message-list/types';
+import type { RightPanelView } from '../composables/use-chat-panel';
+import {
+  activePlaybackControlSupported,
+  activePlaybackPlaying,
+  activePlaybackVideoUrl,
+  launchVideo,
+  playlistAutoplayEnabled,
+  removePlaylistVideo,
+  stopActivePlayback,
+  toggleActivePlayback,
+  togglePlaylistAutoplay,
+} from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import AttachmentCard from './attachment-card/AttachmentCard.vue';
 import type { AttachmentItem } from './composables/use-attachment-list';
+import PlaylistItem from './playlist-item/PlaylistItem.vue';
 
 const props = defineProps<{
   attachments: AttachmentItem[];
   messageListItems: MessageListItem[];
-  rightPanelView: 'files' | 'history';
+  playlistVideos: VideoGalleryItem[];
+  rightPanelView: RightPanelView;
   conversation: Conversation | null;
 }>();
 
 const emit = defineEmits<{
-  selectView: [view: 'files' | 'history'];
+  selectView: [view: RightPanelView];
   removeAttachment: [id: string];
   toggleAttachment: [id: string];
   promptClick: [index: number];
@@ -25,9 +49,24 @@ const emit = defineEmits<{
 
 const hasAttachments = computed(() => props.attachments.length > 0);
 const hasHistory = computed(() => props.messageListItems.length > 0);
+const hasPlaylist = computed(() => props.playlistVideos.length > 0);
+
+const hasActivePlayback = computed(() => Boolean(activePlaybackVideoUrl.value));
+const canTogglePlayback = computed(
+  () => hasActivePlayback.value && activePlaybackControlSupported.value,
+);
+const playbackToggleTitle = computed(() => {
+  if (!hasActivePlayback.value) return 'Nothing is playing';
+  if (!activePlaybackControlSupported.value)
+    return 'Playback controls unavailable for this provider';
+  return activePlaybackPlaying.value ? 'Pause' : 'Play';
+});
 
 const filesTabClass = computed(() =>
   makeTabClass(props.rightPanelView === 'files'),
+);
+const playlistTabClass = computed(() =>
+  makeTabClass(props.rightPanelView === 'playlist'),
 );
 const historyTabClass = computed(() =>
   makeTabClass(props.rightPanelView === 'history'),
@@ -40,15 +79,12 @@ function makeTabClass(isActive: boolean) {
   };
 }
 
-function imageUrl(hash: string): string {
+function previewUrl(item: AttachmentItem): string {
+  if (!item.isUploaded) return item.previewUrl;
   if (!props.conversation?.id) return '';
   return getApiUrl(
-    `/api/v1/storage/${props.conversation.id}/${props.conversation.conversationId}/${hash}`,
+    `/api/v1/storage/${props.conversation.id}/${props.conversation.conversationId}/${item.hash}`,
   );
-}
-
-function previewUrl(item: AttachmentItem): string {
-  return item.isUploaded ? imageUrl(item.hash) : item.previewUrl;
 }
 
 function onPromptClick(idx: number) {
@@ -68,6 +104,14 @@ function onPromptClick(idx: number) {
         Files
       </button>
       <button
+        v-if="hasPlaylist"
+        :class="playlistTabClass"
+        @click="emit('selectView', 'playlist')"
+      >
+        <ListVideo class="chat-right-panel__tab-icon" />
+        Playlist
+      </button>
+      <button
         v-if="hasHistory"
         :class="historyTabClass"
         @click="emit('selectView', 'history')"
@@ -81,49 +125,80 @@ function onPromptClick(idx: number) {
       v-if="rightPanelView === 'files' && hasAttachments"
       class="chat-right-panel__scrollable"
     >
-      <div
+      <AttachmentCard
         v-for="item in attachments"
         :key="item.id"
-        class="chat-right-panel__file-card"
-        :class="{
-          'chat-right-panel__file-card--unselected': !item.isSelected,
-        }"
-      >
-        <div class="chat-right-panel__file-header">
-          <span class="chat-right-panel__file-name">
-            {{ item.name }}
-          </span>
-          <Cloud
-            v-if="item.isUploaded"
-            class="chat-right-panel__uploaded-indicator"
-            title="Already uploaded and part of the conversation"
-          />
-          <button
-            class="chat-right-panel__file-remove"
-            title="Remove"
-            @click.stop="emit('removeAttachment', item.id)"
-          >
-            <X class="chat-right-panel__file-remove-icon" />
-          </button>
-        </div>
-        <div
-          class="chat-right-panel__file-thumb"
-          :class="{
-            'chat-right-panel__file-thumb--unselected': !item.isSelected,
-          }"
-          @click="emit('toggleAttachment', item.id)"
+        :item="item"
+        :image-src="previewUrl(item)"
+        @remove="emit('removeAttachment', item.id)"
+        @toggle="emit('toggleAttachment', item.id)"
+      />
+    </div>
+
+    <div
+      v-if="rightPanelView === 'playlist' && hasPlaylist"
+      class="chat-right-panel__playlist"
+    >
+      <div class="chat-right-panel__playlist-bar">
+        <button
+          type="button"
+          class="chat-right-panel__transport-button"
+          :disabled="!canTogglePlayback"
+          :title="playbackToggleTitle"
+          :aria-label="playbackToggleTitle"
+          @click="toggleActivePlayback"
         >
-          <img
-            :src="previewUrl(item)"
-            class="chat-right-panel__file-image"
-            :class="{
-              'chat-right-panel__file-image--unselected': !item.isSelected,
-            }"
-            alt=""
-            loading="lazy"
-            decoding="async"
+          <Pause
+            v-if="activePlaybackPlaying"
+            class="chat-right-panel__transport-icon"
           />
-        </div>
+          <Play v-else class="chat-right-panel__transport-icon" />
+        </button>
+        <button
+          type="button"
+          class="chat-right-panel__transport-button"
+          :disabled="!hasActivePlayback"
+          title="Stop playback"
+          aria-label="Stop playback"
+          @click="stopActivePlayback"
+        >
+          <Square class="chat-right-panel__transport-icon" />
+        </button>
+        <button
+          type="button"
+          class="chat-right-panel__transport-button"
+          :class="{
+            'chat-right-panel__transport-button--active':
+              playlistAutoplayEnabled,
+          }"
+          :aria-pressed="playlistAutoplayEnabled"
+          :title="
+            playlistAutoplayEnabled
+              ? 'Autoplay on: the next video starts when one ends'
+              : 'Autoplay off'
+          "
+          aria-label="Toggle autoplay"
+          @click="togglePlaylistAutoplay"
+        >
+          <Repeat class="chat-right-panel__transport-icon" />
+        </button>
+      </div>
+      <div
+        class="chat-right-panel__scrollable chat-right-panel__playlist-items"
+      >
+        <PlaylistItem
+          v-for="(item, index) in playlistVideos"
+          :key="`${item.videoUrl}-${index}`"
+          :item="item"
+          :is-active="activePlaybackVideoUrl === item.videoUrl"
+          @play="
+            launchVideo(item, {
+              videos: playlistVideos,
+              conversationId: conversation?.id ?? '',
+            })
+          "
+          @remove="removePlaylistVideo(conversation?.id ?? '', item.videoUrl)"
+        />
       </div>
     </div>
 
@@ -142,7 +217,7 @@ function onPromptClick(idx: number) {
 .chat-right-panel {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 11rem);
+  max-height: calc(100vh - 10.1rem);
 }
 
 .chat-right-panel__tabs {
@@ -190,93 +265,70 @@ function onPromptClick(idx: number) {
   overscroll-behavior: contain;
 }
 
-.chat-right-panel__file-card {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-  overflow: hidden;
-  flex-shrink: 0;
-  transition:
-    opacity 250ms ease,
-    filter 250ms ease;
-}
-
-.chat-right-panel__file-card--unselected {
-  opacity: 0.6;
-}
-
-.chat-right-panel__file-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2);
-  border-bottom: 1px solid var(--color-divider);
-}
-
-.chat-right-panel__file-name {
-  flex: 1 1 0%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-secondary);
-}
-
-.chat-right-panel__file-remove {
-  padding: var(--spacing-0-5);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-  border: none;
-  background-color: transparent;
-  flex-shrink: 0;
-}
-
-.chat-right-panel__file-remove:hover {
-  color: var(--color-status-error);
-}
-
-.chat-right-panel__file-remove-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.chat-right-panel__uploaded-indicator {
-  width: 0.75rem;
-  height: 0.75rem;
-  color: var(--color-accent-primary);
-  flex-shrink: 0;
-}
-
-.chat-right-panel__file-card--unselected {
-  opacity: 0.6;
-}
-
-.chat-right-panel__file-thumb {
-  cursor: pointer;
-  transition: filter 250ms ease;
-}
-
-.chat-right-panel__file-thumb--unselected,
-.chat-right-panel__file-thumb--unselected .chat-right-panel__file-image {
-  filter: grayscale(100%);
-}
-
-.chat-right-panel__file-image {
-  width: 100%;
-  height: 8.875rem;
-  object-fit: cover;
-  transition: filter 250ms ease;
-}
-
-.chat-right-panel__file-image--unselected {
-  filter: grayscale(100%);
-}
-
 .chat-right-panel__history {
   width: 100%;
+}
+
+.chat-right-panel__playlist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.chat-right-panel__playlist-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-1);
+  flex-shrink: 0;
+}
+
+.chat-right-panel__transport-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-divider);
+  background-color: transparent;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.chat-right-panel__transport-button:hover:not(:disabled) {
+  color: var(--color-fg-primary);
+  border-color: var(--color-accent-border);
+}
+
+.chat-right-panel__transport-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chat-right-panel__transport-button--active {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 10%,
+    transparent
+  );
+}
+
+.chat-right-panel__transport-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.chat-right-panel__playlist-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 </style>

@@ -11,11 +11,13 @@ describe('buildContentSystemPrompt', () => {
       isImageTask: false,
     });
 
-    expect(prompt).toContain('deterministic execution engine');
-    expect(prompt).toContain('No markdown');
+    expect(prompt).toContain('deterministic multimodal execution engine');
+    expect(prompt).toContain('No Markdown');
+    expect(prompt).toContain('JSON RULES');
+    expect(prompt).toContain('ITEM SHAPES');
   });
 
-  it('uses JSON for the text template', async () => {
+  it('uses plain text for the text template', () => {
     const prompt = buildContentSystemPrompt({
       template: 'text',
       tools: [],
@@ -23,8 +25,21 @@ describe('buildContentSystemPrompt', () => {
       isImageTask: false,
     });
 
-    expect(prompt).toContain('single key "text"');
-    expect(prompt).toContain('valid JSON object');
+    expect(prompt).toContain('Return plain text.');
+    expect(prompt).not.toContain('JSON RULES');
+  });
+
+  it('uses plain text for the compact template', () => {
+    const prompt = buildContentSystemPrompt({
+      template: 'compact',
+      tools: [],
+      placeholders: [],
+      isImageTask: false,
+    });
+
+    expect(prompt).toContain('Return plain text.');
+    expect(prompt).not.toContain('JSON RULES');
+    expect(prompt).toContain('MODE: COMPACT');
   });
 
   it('requires a JSON object for structured templates', () => {
@@ -37,7 +52,7 @@ describe('buildContentSystemPrompt', () => {
 
     expect(prompt).toContain('valid JSON object');
     expect(prompt).toContain('title, galleryItems');
-    expect(prompt).toContain('USER-PROVIDED IMAGES');
+    expect(prompt).toContain('MULTIMODAL RULES');
   });
 
   it('injects variant instructions when provided', () => {
@@ -50,11 +65,9 @@ describe('buildContentSystemPrompt', () => {
     });
 
     expect(prompt).toContain(
-      'EXECUTION INSTRUCTIONS: Write like a news article.',
+      'EXECUTION INSTRUCTIONS\nWrite like a news article.',
     );
-    expect(prompt).toContain('RETRIEVED MATERIAL');
-    expect(prompt).toContain(
-      'Retrieved articles and media are provided below. Use them to fill the response JSON.',
-    );
+    expect(prompt).toContain('Retrieved articles and media are authoritative');
+    expect(prompt).toContain('SOURCE TRUTH');
   });
 });

@@ -21,6 +21,8 @@ services:
     container_name: dashboard
     user: "1000:1000"
     restart: on-failure
+    depends_on:
+      - server
     build:
       context: ./dashboard
       target: local

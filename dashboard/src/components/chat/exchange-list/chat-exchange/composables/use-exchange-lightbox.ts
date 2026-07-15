@@ -1,12 +1,20 @@
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+
+export interface LightboxImage {
+  url: string;
+  title?: string;
+}
 
 export function useExchangeLightbox() {
   const isOpen = ref(false);
-  const images = ref<string[]>([]);
+  const images = ref<LightboxImage[]>([]);
   const index = ref(0);
 
-  function openImages(allImages: string[], clickedSrc: string) {
-    const startIdx = allImages.findIndex((s) => s === clickedSrc);
+  // Active image's title derived from current selection
+  const activeTitle = computed(() => images.value[index.value]?.title ?? '');
+
+  function openImages(allImages: LightboxImage[], clickedUrl: string) {
+    const startIdx = allImages.findIndex((img) => img.url === clickedUrl);
     if (startIdx === -1) return;
     images.value = allImages;
     index.value = startIdx;
@@ -44,6 +52,7 @@ export function useExchangeLightbox() {
     isOpen,
     images,
     index,
+    activeTitle,
     openImages,
     close,
     goPrev,

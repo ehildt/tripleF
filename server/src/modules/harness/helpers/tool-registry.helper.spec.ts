@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  categorizeTools,
-  expandToolAliases,
-  getEnabledToolNames,
-  type ProviderConfig,
-  TOOL_NAMES,
-} from './tool-registry.helper.js';
+import { categorizeTools } from './categorize-tools.helper.js';
+import { expandToolAliases } from './expand-tool-aliases.helper.js';
+import { getEnabledToolNames } from './get-enabled-tool-names.helper.js';
+import { type ProviderConfig, TOOL_NAMES } from './tool-registry.constants.js';
 
 const fullConfig: ProviderConfig = {
   serper: {
@@ -21,21 +18,6 @@ const fullConfig: ProviderConfig = {
     videos: { enabled: true },
     webpageFetch: { enabled: true },
   },
-  brave: {
-    enabled: true,
-    apiKey: 'brave-key',
-    web: { enabled: true },
-    images: { enabled: true },
-    news: { enabled: true },
-    video: { enabled: true },
-  },
-  searxng: { enabled: true, url: 'http://searxng' },
-  browserBase: {
-    enabled: true,
-    apiKey: 'browserbase-key',
-    search: { enabled: true },
-    fetch: { enabled: true },
-  },
 };
 
 describe('tool-registry.helper', () => {
@@ -46,7 +28,6 @@ describe('tool-registry.helper', () => {
       expect(groups.webSearch).toContain('webSearch');
       expect(groups.webSearch).toContain('serperWebSearch');
       expect(groups.imageSearch).toContain('serperImageSearch');
-      expect(groups.imageSearch).toContain('braveImageSearch');
       expect(groups.newsSearch).toContain('serperNewsSearch');
       expect(groups.videoSearch).toContain('serperVideoSearch');
       expect(groups.webpageFetch).toContain('webFetch');
@@ -56,15 +37,12 @@ describe('tool-registry.helper', () => {
   });
 
   describe('getEnabledToolNames', () => {
-    it('includes only tools whose providers are enabled and configured', () => {
+    it('includes only tools whose provider is enabled and configured', () => {
       const enabled = getEnabledToolNames(fullConfig);
 
       expect(enabled).toContain('webSearch');
       expect(enabled).toContain('serperWebSearch');
       expect(enabled).toContain('serperImageSearch');
-      expect(enabled).toContain('braveImageSearch');
-      expect(enabled).toContain('searxngSearch');
-      expect(enabled).toContain('browserbaseSearch');
       expect(enabled).toContain('webFetch');
     });
 
@@ -78,14 +56,15 @@ describe('tool-registry.helper', () => {
       expect(enabled).not.toContain('serperImageSearch');
     });
 
-    it('excludes brave tools when the api key is missing', () => {
+    it('excludes serper tools when the api key is missing', () => {
       const enabled = getEnabledToolNames({
         ...fullConfig,
-        brave: { ...fullConfig.brave, apiKey: undefined },
+        serper: { ...fullConfig.serper, apiKey: undefined },
       });
 
-      expect(enabled).not.toContain('braveWebSearch');
-      expect(enabled).not.toContain('braveImageSearch');
+      expect(enabled).not.toContain('webSearch');
+      expect(enabled).not.toContain('serperWebSearch');
+      expect(enabled).not.toContain('serperImageSearch');
     });
   });
 
@@ -108,9 +87,7 @@ describe('tool-registry.helper', () => {
       );
 
       expect(expanded).toContain('serperImageSearch');
-      expect(expanded).toContain('braveImageSearch');
       expect(expanded).toContain('serperNewsSearch');
-      expect(expanded).toContain('braveNewsSearch');
       expect(expanded).not.toContain('imageSearch');
       expect(expanded).not.toContain('newsSearch');
     });
@@ -118,12 +95,11 @@ describe('tool-registry.helper', () => {
     it('does not include disabled tools when expanding aliases', () => {
       const enabled = getEnabledToolNames({
         ...fullConfig,
-        brave: { ...fullConfig.brave, enabled: false },
+        serper: { ...fullConfig.serper, images: { enabled: false } },
       });
       const expanded = expandToolAliases(['imageSearch'], enabled);
 
-      expect(expanded).toContain('serperImageSearch');
-      expect(expanded).not.toContain('braveImageSearch');
+      expect(expanded).not.toContain('serperImageSearch');
     });
 
     it('drops unknown tool names', () => {

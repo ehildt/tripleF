@@ -6,7 +6,6 @@ import {
   Database,
   FolderOpen,
   HardDrive,
-  Search,
   Server,
 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -35,8 +34,6 @@ const Icon = computed(() => {
       return Database;
     case 'minio':
       return FolderOpen;
-    case 'searxng':
-      return Search;
     case 'service':
       return Activity;
     default:

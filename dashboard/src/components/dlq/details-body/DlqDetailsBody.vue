@@ -6,7 +6,6 @@ import { computed, ref, toRef, watch } from 'vue';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { formatBody } from '@/utils/format-body.helper';
 
-import type { PreprocessingSettings } from '../../../stores/preprocessing';
 import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.vue';
 import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
@@ -15,9 +14,6 @@ import { useDlqDetailsState } from './composables/use-dlq-details-state';
 import { useDlqFailureText } from './composables/use-dlq-failure-text';
 import DlqMetadataSection from './metadata-section/DlqMetadataSection.vue';
 import DlqPayloadEditor from './payload-editor/DlqPayloadEditor.vue';
-import DlqPreprocessingParams from './preprocessing-params/DlqPreprocessingParams.vue';
-import DlqPreprocessingSection from './preprocessing-section/DlqPreprocessingSection.vue';
-import DlqPreprocessingVariants from './preprocessing-variants/DlqPreprocessingVariants.vue';
 import DlqPromptSection from './prompt-section/DlqPromptSection.vue';
 import DlqTopBar from './top-bar/DlqTopBar.vue';
 
@@ -32,24 +28,12 @@ const emit = defineEmits<{
 }>();
 
 const detailsState = useDlqDetailsState(props.models);
-const {
-  isImmutable,
-  extractPreprocessing,
-  buildPayloadWithPreprocessing,
-  buildPayloadWithFilterUpdate,
-} = detailsState;
+const { isImmutable, buildPayloadWithFilterUpdate } = detailsState;
 
 const entryRef = toRef(props, 'entry');
 const { failureText } = useDlqFailureText(entryRef);
 
-type DetailTab =
-  | 'error'
-  | 'metadata'
-  | 'prompt'
-  | 'preprocessing'
-  | 'variants'
-  | 'pproc-params'
-  | 'payload';
+type DetailTab = 'error' | 'metadata' | 'prompt' | 'payload';
 
 const tabs = computed<{ id: DetailTab; label: string }[]>(() => {
   const items: { id: DetailTab; label: string }[] = [];
@@ -59,9 +43,6 @@ const tabs = computed<{ id: DetailTab; label: string }[]>(() => {
   items.push(
     { id: 'metadata', label: 'Metadata' },
     { id: 'prompt', label: 'Prompt' },
-    { id: 'preprocessing', label: 'Preprocess' },
-    { id: 'variants', label: 'Variants' },
-    { id: 'pproc-params', label: 'Params' },
     { id: 'payload', label: 'Payload' },
   );
   return items;
@@ -80,17 +61,9 @@ function selectTab(tabId: DetailTab) {
   activeTab.value = tabId;
 }
 
-const preprocessingSettings = computed(() => extractPreprocessing(props.entry));
-
 function handleUpdateFilter(key: string, value: unknown) {
   if (!props.entry) return;
   const payload = buildPayloadWithFilterUpdate(props.entry, key, value);
-  emit('savePayload', props.entry.requestId, payload);
-}
-
-function handlePreprocessingUpdate(settings: PreprocessingSettings) {
-  if (!props.entry) return;
-  const payload = buildPayloadWithPreprocessing(props.entry, settings);
   emit('savePayload', props.entry.requestId, payload);
 }
 
@@ -164,36 +137,6 @@ function copyPayload() {
           <template v-else-if="activeTab === 'prompt'">
             <div class="dlq-details-body__prompt">
               <DlqPromptSection :entry="entry" />
-            </div>
-          </template>
-
-          <template v-else-if="activeTab === 'preprocessing'">
-            <div class="dlq-details-body__padded">
-              <DlqPreprocessingSection
-                :settings="preprocessingSettings"
-                :disabled="isImmutable(entry)"
-                @update:settings="handlePreprocessingUpdate"
-              />
-            </div>
-          </template>
-
-          <template v-else-if="activeTab === 'variants'">
-            <div class="dlq-details-body__padded">
-              <DlqPreprocessingVariants
-                :settings="preprocessingSettings"
-                :disabled="isImmutable(entry)"
-                @update:settings="handlePreprocessingUpdate"
-              />
-            </div>
-          </template>
-
-          <template v-else-if="activeTab === 'pproc-params'">
-            <div class="dlq-details-body__padded">
-              <DlqPreprocessingParams
-                :settings="preprocessingSettings"
-                :disabled="isImmutable(entry)"
-                @update:settings="handlePreprocessingUpdate"
-              />
             </div>
           </template>
 

@@ -1,202 +1,121 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, X } from '@lucide/vue';
+import { computed } from 'vue';
 
-defineProps<{
-  images: readonly string[];
+import ExchangeLightboxFooter from './lightbox-footer/ExchangeLightboxFooter.vue';
+import ExchangeLightboxHeader from './lightbox-header/ExchangeLightboxHeader.vue';
+import ExchangeLightboxViewer from './lightbox-viewer/ExchangeLightboxViewer.vue';
+
+const props = defineProps<{
+  images: readonly {
+    url: string;
+    title?: string;
+  }[];
   index: number;
+  activeTitle?: string;
   isOpen: boolean;
 }>();
 
 const emit = defineEmits<{
-  close: [];
-  prev: [];
-  next: [];
-  selectIndex: [index: number];
+  (e: 'close'): void;
+  (e: 'prev'): void;
+  (e: 'next'): void;
+  (e: 'selectIndex', index: number): void;
 }>();
+
+const hasPrev = computed(() => props.index > 0);
+const hasNext = computed(() => props.index < props.images.length - 1);
+const activeImage = computed(() => props.images[props.index]);
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="exchange-lightbox" @click.self="emit('close')">
-      <button class="exchange-lightbox__close" @click="emit('close')">
-        <X class="exchange-lightbox__close-icon" />
-      </button>
-
-      <div class="exchange-lightbox__stage">
-        <button
-          v-if="index > 0"
-          class="exchange-lightbox__nav exchange-lightbox__nav--prev"
-          @click.stop="emit('prev')"
-        >
-          <ChevronLeft class="exchange-lightbox__nav-icon" />
-        </button>
-
-        <img
-          :src="images[index]"
-          class="exchange-lightbox__image"
-          @click.stop
+    <div
+      v-if="isOpen"
+      class="exchange-lightbox__backdrop"
+      @click.self="emit('close')"
+    >
+      <div class="exchange-lightbox">
+        <ExchangeLightboxHeader
+          :active-title="activeTitle"
+          @close="emit('close')"
         />
 
-        <button
-          v-if="index < images.length - 1"
-          class="exchange-lightbox__nav exchange-lightbox__nav--next"
-          @click.stop="emit('next')"
-        >
-          <ChevronRight class="exchange-lightbox__nav-icon" />
-        </button>
+        <ExchangeLightboxViewer
+          v-if="activeImage"
+          :image-url="activeImage.url"
+          :has-prev="hasPrev"
+          :has-next="hasNext"
+          @prev="emit('prev')"
+          @next="emit('next')"
+        />
 
-        <div class="exchange-lightbox__dots">
-          <button
-            v-for="(_, i) in images"
-            :key="i"
-            class="exchange-lightbox__dot"
-            :class="i === index ? 'exchange-lightbox__dot--active' : ''"
-            @click.stop="emit('selectIndex', i)"
-          />
-        </div>
-      </div>
-
-      <div class="exchange-lightbox__counter">
-        {{ index + 1 }} / {{ images.length }}
+        <ExchangeLightboxFooter
+          :count="images.length"
+          :active-index="index"
+          @select-index="(i) => emit('selectIndex', i)"
+        />
       </div>
     </div>
   </Teleport>
 </template>
 
 <style scoped>
-.exchange-lightbox {
+.exchange-lightbox__backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  /* Above the floating video popouts (z-index 1000) and the lifted chat
+     column (z-index 60) so the lightbox is never hidden behind a popout. */
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-primary) 65%,
+    transparent
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Default: small / mobile screens — glass panel matching the popouts.
+   The height is definite (not max-height) so the frame — header, viewer,
+   footer, nav — never reflows between images of different sizes. */
+.exchange-lightbox {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: color-mix(
-    in srgb,
-    var(--color-bg-primary) 80%,
-    transparent
-  );
-  user-select: none;
+  width: calc(100vw - var(--spacing-4));
+  height: calc(100vh - var(--spacing-8));
+  background: color-mix(in srgb, var(--color-bg-elevated) 55%, transparent);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid
+    color-mix(in srgb, var(--color-accent-border) 45%, transparent);
+  box-shadow:
+    0 0.5rem 2rem color-mix(in srgb, black 45%, transparent),
+    0 0 1.5rem color-mix(in srgb, var(--color-accent-glow) 25%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, white 6%, transparent);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
 }
 
-.exchange-lightbox__close {
-  position: absolute;
-  top: var(--spacing-4);
-  right: var(--spacing-4);
-  padding: var(--spacing-2);
-  color: color-mix(in srgb, var(--color-fg-inverse) 80%, transparent);
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
-  transition: color 0.2s ease;
+.exchange-lightbox:hover {
+  border-color: var(--color-accent-border);
 }
 
-.exchange-lightbox__close:hover {
-  color: var(--color-fg-inverse);
+/* Tablet and up: centered panel with breathing room */
+@media (min-width: 640px) {
+  .exchange-lightbox {
+    width: min(90vw, 800px);
+    height: min(85vh, 700px);
+  }
 }
 
-.exchange-lightbox__close-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.exchange-lightbox__stage {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  width: 100%;
-}
-
-.exchange-lightbox__nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: var(--spacing-6);
-  color: color-mix(in srgb, var(--color-fg-inverse) 60%, transparent);
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
-  transition: color 0.2s ease;
-}
-
-.exchange-lightbox__nav:hover {
-  color: var(--color-fg-inverse);
-}
-
-.exchange-lightbox__nav--prev {
-  left: 0;
-}
-
-.exchange-lightbox__nav--next {
-  right: 0;
-}
-
-.exchange-lightbox__nav-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-}
-
-.exchange-lightbox__image {
-  width: 48rem;
-  height: 48rem;
-  object-fit: contain;
-  user-select: none;
-}
-
-.exchange-lightbox__dots {
-  position: absolute;
-  bottom: var(--spacing-3);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  z-index: 10;
-}
-
-.exchange-lightbox__dot {
-  width: 0.625rem;
-  height: 0.625rem;
-  border-radius: 50%;
-  background-color: color-mix(
-    in srgb,
-    var(--color-fg-inverse) 30%,
-    transparent
-  );
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.exchange-lightbox__dot:hover {
-  background-color: color-mix(
-    in srgb,
-    var(--color-fg-inverse) 50%,
-    transparent
-  );
-}
-
-.exchange-lightbox__dot--active {
-  background-color: var(--color-fg-inverse);
-  transform: scale(1.25);
-}
-
-.exchange-lightbox__counter {
-  position: absolute;
-  bottom: var(--spacing-6);
-  left: 50%;
-  transform: translateX(-50%);
-  color: color-mix(in srgb, var(--color-fg-inverse) 70%, transparent);
-  font-size: 0.875rem;
-  font-family: var(--font-mono);
-  z-index: 10;
+/* Desktop and up: wide-viewer mode */
+@media (min-width: 1024px) {
+  .exchange-lightbox {
+    width: min(60vw, 1100px);
+    height: min(75vh, 750px);
+  }
 }
 </style>

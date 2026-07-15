@@ -16,7 +16,6 @@ defineProps<{
 .content pre {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-divider);
-  border-radius: 6px;
   padding: 1em;
   overflow-x: auto;
   font-size: 0.92em;

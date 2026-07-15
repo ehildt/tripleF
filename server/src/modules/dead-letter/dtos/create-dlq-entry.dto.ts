@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 
-import { DLQ_STATUSES } from '../../../constants/postgres.constants.js';
+import { DLQ_STATUSES } from '../constants/postgres.constants.js';
 
 export const STATUSES = DLQ_STATUSES;
 

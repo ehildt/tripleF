@@ -1,10 +1,10 @@
 import { Job } from 'bullmq';
 
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
-import { buildChatRequest } from '../helpers/harness.helpers.js';
+import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
-export type StepId = 'interpret' | 'execute' | 'respond';
+export type StepId = 'interpret' | 'execute' | 'sanitize' | 'respond';
 
 export type StepState =
   | { status: 'idle' }
@@ -34,6 +34,7 @@ export type HarnessContext = {
     intent?: IntentResult;
     toolResults: Array<{ toolName: string; result: unknown }>;
     finalContent?: string;
+    finalData?: Record<string, unknown>;
     inputTokens?: number;
     outputTokens?: number;
   };

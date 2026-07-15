@@ -32,6 +32,7 @@ Delete, Cancel).
     isDone: { control: 'boolean' },
     isError: { control: 'boolean' },
     isPending: { control: 'boolean' },
+    isStreaming: { control: 'boolean' },
   },
   args: {
     exchange: baseExchange,
@@ -39,6 +40,7 @@ Delete, Cancel).
     isDone: true,
     isError: false,
     isPending: false,
+    isStreaming: false,
     onCopy: fn(),
     onRetry: fn(),
     onBranch: fn(),
@@ -79,18 +81,6 @@ export const UserPending: Story = {
     isDone: false,
     isPending: true,
     exchange: { ...baseExchange, requestId: 'req-123' },
-  },
-};
-
-/** Assistant with active phase icon. */
-export const AssistantStrategizing: Story = {
-  args: {
-    exchange: {
-      ...baseExchange,
-      role: 'assistant',
-      phase: 'strategizing',
-    },
-    isUser: false,
   },
 };
 

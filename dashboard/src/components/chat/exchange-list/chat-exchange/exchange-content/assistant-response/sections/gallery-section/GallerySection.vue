@@ -48,7 +48,13 @@ defineProps<{
 }
 
 .harness-gallery--single > :deep(li) {
+  width: 90%;
+  height: 35rem;
+}
+
+.harness-gallery--single > :deep(li) figure {
+  max-width: none;
   width: 100%;
-  max-width: 560px;
+  height: 100%;
 }
 </style>

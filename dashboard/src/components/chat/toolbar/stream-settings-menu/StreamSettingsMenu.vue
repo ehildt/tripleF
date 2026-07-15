@@ -295,6 +295,6 @@ defineEmits<{
 .stream-settings-menu__subscribe-button--disabled {
   color: var(--color-fg-muted);
   background-color: var(--color-bg-tertiary);
-  cursor: not-allowed;
+  cursor: default;
 }
 </style>

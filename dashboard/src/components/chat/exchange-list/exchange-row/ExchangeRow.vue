@@ -50,8 +50,10 @@ const shouldAddTopMargin = computed(
 .exchange-row {
   /* Avoid content-visibility because it reports an estimated scrollHeight while
    * rows are off-screen, then re-layouts when they enter the viewport. That
-   * makes the chat history scroll position jump unpredictably. */
-  contain: layout style paint;
+   * makes the chat history scroll position jump unpredictably.
+   * No `contain` at all: EVERY containment type that optimizes rows (layout
+   * and paint) establishes a fixed-position containing block, which would
+   * re-anchor the floating video popup to this row instead of the viewport. */
 }
 
 .exchange-row--spaced {

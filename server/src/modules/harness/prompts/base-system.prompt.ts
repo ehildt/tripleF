@@ -1,30 +1,54 @@
 import { COMPACT_INSTRUCTIONS } from './instructions/compact.instruction.js';
-import { COMPARE_INSTRUCTIONS } from './instructions/compare.instruction.js';
-import { DESCRIBE_INSTRUCTIONS } from './instructions/describe.instruction.js';
-import { OCR_INSTRUCTIONS } from './instructions/ocr.instruction.js';
-import { TEXT_INSTRUCTIONS } from './instructions/text.instruction.js';
-import { MULTIMODAL_POLICY } from './policies/multimodal.policy.js';
-import { SEARCH_POLICY } from './policies/search.policy.js';
-import { CORE_SYSTEM_CONTRACT } from './rules/core-system-contract.rule.js';
-import { PRECEDENCE_RULES } from './rules/precedence.rule.js';
+import {
+  COMPARE_INSTRUCTIONS,
+  COMPARE_VISUAL_INSTRUCTIONS,
+} from './instructions/compare.instruction.js';
+import {
+  DESCRIBE_CONCISE_INSTRUCTIONS,
+  DESCRIBE_DETAILED_INSTRUCTIONS,
+  DESCRIBE_INSTRUCTIONS,
+} from './instructions/describe.instruction.js';
+import {
+  OCR_INSTRUCTIONS,
+  OCR_VERBATIM_INSTRUCTIONS,
+} from './instructions/ocr.instruction.js';
+import {
+  TEXT_CODING_INSTRUCTIONS,
+  TEXT_INSTRUCTIONS,
+} from './instructions/text.instruction.js';
+import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
+import { OUTPUT_CONTRACT } from './shared/output-contract.prompt.js';
+import { PRECEDENCE_RULES } from './shared/precedence-rules.prompt.js';
+import { SEARCH_POLICY } from './shared/search-policy.prompt.js';
+import { SECURITY_RULES } from './shared/security-rules.prompt.js';
 
-const MODE_PROMPTS = {
+const MODE_PROMPTS: Record<string, string> = {
   text: TEXT_INSTRUCTIONS,
+  coding: TEXT_CODING_INSTRUCTIONS,
   ocr: OCR_INSTRUCTIONS,
+  ocrVerbatim: OCR_VERBATIM_INSTRUCTIONS,
   compare: COMPARE_INSTRUCTIONS,
+  compareVisual: COMPARE_VISUAL_INSTRUCTIONS,
   describe: DESCRIBE_INSTRUCTIONS,
+  describeDetailed: DESCRIBE_DETAILED_INSTRUCTIONS,
+  describeConcise: DESCRIBE_CONCISE_INSTRUCTIONS,
   compact: COMPACT_INSTRUCTIONS,
-} as const;
+};
 
 export type PromptMode = keyof typeof MODE_PROMPTS;
 
+/**
+ * Legacy base system prompt used by the direct chat helper.
+ * @deprecated Use buildContentSystemPrompt from content-system.prompt.ts for new code.
+ */
 export const buildBaseSystemPrompt = ({
   hasImages = false,
 }: {
   hasImages?: boolean;
 }) => {
   return [
-    CORE_SYSTEM_CONTRACT,
+    OUTPUT_CONTRACT,
+    SECURITY_RULES,
     PRECEDENCE_RULES,
     hasImages ? MULTIMODAL_POLICY : '',
     hasImages ? SEARCH_POLICY : '',
@@ -35,6 +59,10 @@ export const buildBaseSystemPrompt = ({
     .join('\n\n');
 };
 
+/**
+ * Legacy mode-aware system prompt used by the compact service.
+ * @deprecated Use buildContentSystemPrompt from content-system.prompt.ts for new code.
+ */
 export const buildModeSystemPrompt = ({
   mode = 'text',
   hasImages = false,
@@ -47,7 +75,8 @@ export const buildModeSystemPrompt = ({
   const effectiveMode: PromptMode = hasImages ? mode : 'text';
 
   return [
-    CORE_SYSTEM_CONTRACT,
+    OUTPUT_CONTRACT,
+    SECURITY_RULES,
     PRECEDENCE_RULES,
     hasImages ? MULTIMODAL_POLICY : '',
     hasImages ? SEARCH_POLICY : '',

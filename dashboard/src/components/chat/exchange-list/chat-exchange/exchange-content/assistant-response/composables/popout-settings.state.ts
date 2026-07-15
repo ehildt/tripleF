@@ -1,0 +1,156 @@
+import { ref } from 'vue';
+
+/** Position where a floating video popout initially appears. */
+export type PopoutAnchor =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'middle-left'
+  | 'middle-center'
+  | 'middle-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right';
+
+export interface FloatingPopupRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export const DEFAULT_POPOUT_ANCHOR: PopoutAnchor = 'bottom-right';
+export const DEFAULT_POPOUT_REMEMBER_POSITION = true;
+
+const POPOUT_ANCHOR_STORAGE_KEY = 'vision-popout-anchor';
+const POPOUT_REMEMBER_POSITION_STORAGE_KEY = 'vision-popout-remember-position';
+const POPOUT_RECT_STORAGE_KEY = 'vision-popout-rect';
+
+const POPOUT_ANCHORS: readonly PopoutAnchor[] = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'middle-left',
+  'middle-center',
+  'middle-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+];
+
+function loadPopoutAnchor(): PopoutAnchor {
+  try {
+    const saved = localStorage.getItem(POPOUT_ANCHOR_STORAGE_KEY);
+    return POPOUT_ANCHORS.includes(saved as PopoutAnchor)
+      ? (saved as PopoutAnchor)
+      : DEFAULT_POPOUT_ANCHOR;
+  } catch {
+    return DEFAULT_POPOUT_ANCHOR;
+  }
+}
+
+function loadRememberPosition(): boolean {
+  try {
+    const saved = localStorage.getItem(POPOUT_REMEMBER_POSITION_STORAGE_KEY);
+    return saved === null ? DEFAULT_POPOUT_REMEMBER_POSITION : saved === 'true';
+  } catch {
+    return DEFAULT_POPOUT_REMEMBER_POSITION;
+  }
+}
+
+function loadFloatingPopupRect(): FloatingPopupRect | null {
+  try {
+    const raw = localStorage.getItem(POPOUT_RECT_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as FloatingPopupRect) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Popout settings, shared module state: the corner a floating video popout
+ * initially appears in, and whether a moved popout position is remembered —
+ * across players, conversations, and (persisted) app reloads. Configured in
+ * SysCtl → Popout.
+ */
+export const popoutAnchor = ref<PopoutAnchor>(loadPopoutAnchor());
+export const popoutRememberPosition = ref(loadRememberPosition());
+
+/**
+ * Last geometry of the floating video popup. Hydrated from localStorage when
+ * position memory is on, so a popout reappears where the user last moved it.
+ * Null when no position is remembered — the initial anchor applies.
+ */
+export const floatingPopupRect = ref<FloatingPopupRect | null>(
+  popoutRememberPosition.value ? loadFloatingPopupRect() : null,
+);
+
+export function setPopoutAnchor(anchor: PopoutAnchor) {
+  popoutAnchor.value = anchor;
+  try {
+    localStorage.setItem(POPOUT_ANCHOR_STORAGE_KEY, anchor);
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+  // The new anchor takes effect on the next popout — drop any remembered spot.
+  floatingPopupRect.value = null;
+  try {
+    localStorage.removeItem(POPOUT_RECT_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function setPopoutRememberPosition(enabled: boolean) {
+  popoutRememberPosition.value = enabled;
+  try {
+    localStorage.setItem(POPOUT_REMEMBER_POSITION_STORAGE_KEY, String(enabled));
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+  if (!enabled) {
+    floatingPopupRect.value = null;
+    try {
+      localStorage.removeItem(POPOUT_RECT_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Persist the current popup geometry at the end of a drag/resize gesture —
+ * only while position memory is on.
+ */
+export function rememberFloatingPopupRect() {
+  if (!popoutRememberPosition.value || !floatingPopupRect.value) return;
+  try {
+    localStorage.setItem(
+      POPOUT_RECT_STORAGE_KEY,
+      JSON.stringify(floatingPopupRect.value),
+    );
+  } catch {
+    /* storage full or unavailable — the position stays in-memory only */
+  }
+}
+
+/**
+ * Drop the live popup position when a popout closes and position memory is
+ * off, so the next popout opens at the configured initial anchor.
+ */
+export function releaseFloatingPopupRect() {
+  if (popoutRememberPosition.value) return;
+  floatingPopupRect.value = null;
+}
+
+/** Restore the popout settings to their defaults and forget any position. */
+export function resetPopoutSettings() {
+  floatingPopupRect.value = null;
+  try {
+    localStorage.removeItem(POPOUT_RECT_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  setPopoutAnchor(DEFAULT_POPOUT_ANCHOR);
+  setPopoutRememberPosition(DEFAULT_POPOUT_REMEMBER_POSITION);
+}

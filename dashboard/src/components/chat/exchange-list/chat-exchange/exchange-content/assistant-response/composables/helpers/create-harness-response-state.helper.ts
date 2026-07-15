@@ -6,6 +6,7 @@ export interface HarnessResponseState {
   lastValidData: HarnessResponseData | null;
   template: string | null;
   text: string;
+  status: string | null;
   done: boolean;
 }
 
@@ -18,6 +19,7 @@ export function createHarnessResponseState(
     lastValidData: null,
     template: null,
     text: '',
+    status: null,
     done: false,
   };
 }

@@ -1,15 +1,15 @@
 import { Global, Module } from '@nestjs/common';
 
-import { PostgresConfigService } from '../../configs/postgres-config.service.js';
-import { POSTGRES_CONFIG } from '../../constants/postgres.constants.js';
-
+import { PostgresConfigService } from './configs/postgres-config.service.js';
+import { POSTGRES_CONFIG } from './constants/postgres.constants.js';
 import { DeadLetterRepository } from './services/repository.service.js';
 
 @Global()
 @Module({
-  exports: [DeadLetterRepository],
+  exports: [DeadLetterRepository, PostgresConfigService, POSTGRES_CONFIG],
   providers: [
     DeadLetterRepository,
+    PostgresConfigService,
     {
       inject: [PostgresConfigService],
       provide: POSTGRES_CONFIG,

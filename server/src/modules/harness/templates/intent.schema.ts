@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-import { TOOL_NAMES, VARIANT_NAMES } from '../helpers/tool-registry.helper.js';
+import {
+  TOOL_NAMES,
+  VARIANT_NAMES,
+} from '../helpers/tool-registry.constants.js';
 
 export const DEFAULT_VARIANT_ID = 'default';
 
@@ -12,7 +15,11 @@ export const TEMPLATES = [
   'ocr',
   'summary',
   'evaluation',
+  'product',
+  'imagelist',
+  'videolist',
   'text',
+  'compact',
 ] as const;
 
 export type TemplateName = (typeof TEMPLATES)[number];
@@ -39,7 +46,7 @@ export const IntentSchema = z.object({
   template: z
     .enum(TEMPLATES)
     .describe(
-      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare images), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "text" (free chat).',
+      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare images), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "text" (free chat), "compact" (summarize/condense prior conversation).',
     ),
 
   prompt: z
@@ -54,21 +61,19 @@ export const IntentSchema = z.object({
     .describe('List of tool names the model decided to invoke.'),
 
   imageCount: z
-    .number()
-    .int()
-    .min(0)
-    .max(50)
-    .default(0)
+    .preprocess(
+      (val) => (val === null ? 0 : val),
+      z.number().int().min(0).max(50).default(0),
+    )
     .describe(
       'Number of images to retrieve when an imageSearch tool is selected. Only set when the user explicitly requests a specific number; otherwise omit or set to 0 and the system will default to 6.',
     ),
 
   videoCount: z
-    .number()
-    .int()
-    .min(0)
-    .max(50)
-    .default(0)
+    .preprocess(
+      (val) => (val === null ? 0 : val),
+      z.number().int().min(0).max(50).default(0),
+    )
     .describe(
       'Number of videos to retrieve when a videoSearch tool is selected. Only set when the user explicitly requests a specific number; otherwise omit or set to 0 and the system will default to 6.',
     ),
@@ -98,7 +103,15 @@ export const IntentSchema = z.object({
     .nullable()
     .optional()
     .describe(
-      'Concise, human-friendly question to ask the user when needsClarification is true. Do not hardcode wording; adapt tone and language to the user.',
+      'Concise, human-friendly question to ask the user when needsClarification is true. Ask what the user might have meant and offer the most likely interpretations as options. Do not hardcode wording; adapt tone and language to the user.',
+    ),
+
+  language: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Two-letter ISO language code of the latest user message (e.g. 'en', 'de', 'ja', 'es'). Detect from the user's text.",
     ),
 
   plan: z

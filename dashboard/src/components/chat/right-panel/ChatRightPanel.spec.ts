@@ -11,6 +11,7 @@ function mountComponent(props = {}) {
     props: {
       attachments: [],
       messageListItems: [],
+      playlistVideos: [],
       rightPanelView: 'files',
       ...props,
     },
@@ -34,7 +35,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    expect(wrapper.findAll('.chat-right-panel__file-card').length).toBe(1);
+    expect(wrapper.findAll('.attachment-card').length).toBe(1);
   });
 
   it('renders prompt list when view is history', () => {
@@ -62,7 +63,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    await wrapper.find('.chat-right-panel__file-remove').trigger('click');
+    await wrapper.find('.attachment-card__remove').trigger('click');
 
     expect(wrapper.emitted('removeAttachment')).toEqual([['pending-1']]);
   });
@@ -83,7 +84,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    await wrapper.find('.chat-right-panel__file-thumb').trigger('click');
+    await wrapper.find('.attachment-card__thumb').trigger('click');
 
     expect(wrapper.emitted('toggleAttachment')).toEqual([['pending-1']]);
   });
@@ -115,9 +116,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    expect(
-      wrapper.find('.chat-right-panel__file-card--unselected').exists(),
-    ).toBe(true);
+    expect(wrapper.find('.attachment-card--unselected').exists()).toBe(true);
   });
 
   it('shows cloud indicator for uploaded items', () => {
@@ -136,7 +135,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    expect(wrapper.find('.chat-right-panel__uploaded-indicator').exists()).toBe(
+    expect(wrapper.find('.attachment-card__uploaded-indicator').exists()).toBe(
       true,
     );
   });

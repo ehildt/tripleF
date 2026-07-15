@@ -20,9 +20,11 @@ import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
 import { useChatPanel } from './composables/use-chat-panel';
 import ChatExchangeList from './exchange-list/ChatExchangeList.vue';
+import FloatingPlayer from './floating-player/FloatingPlayer.vue';
 import ChatPromptActionBar from './prompt-action-bar/ChatPromptActionBar.vue';
 import ChatRightPanel from './right-panel/ChatRightPanel.vue';
 import { useAttachmentList } from './right-panel/composables/use-attachment-list';
+import { useVideoPlaylist } from './right-panel/composables/use-video-playlist';
 import ChatToolbar from './toolbar/ChatToolbar.vue';
 
 const props = defineProps<{
@@ -132,15 +134,21 @@ const {
   supportsVision,
 });
 
+const { playlistVideos, hasPlaylist } = useVideoPlaylist(conversation);
+
 const { rightPanelView, selectPanelView } = useChatPanel(
   hasAttachments,
   computed(() => userExchanges.value.length > 0),
+  hasPlaylist,
+  computed(() => playlistVideos.value.length),
 );
 
 const shouldShowRightPanel = computed(
   () =>
     conversation.value !== null &&
-    (hasAttachments.value || userExchanges.value.length > 0),
+    (hasAttachments.value ||
+      hasPlaylist.value ||
+      userExchanges.value.length > 0),
 );
 
 const currentThinkValue = computed(() => conversation.value?.think || 'medium');
@@ -222,7 +230,9 @@ defineExpose({ actionBarRef });
     :prompt-focused="false"
   />
 
-  <div class="lg:col-span-8 lg:col-start-3 h-fit lg:sticky lg:top-24">
+  <div
+    class="chat-center-column lg:col-span-8 lg:col-start-3 h-fit lg:sticky lg:top-24"
+  >
     <ChatExchangeList
       ref="chatListRef"
       :compact="true"
@@ -264,10 +274,13 @@ defineExpose({ actionBarRef });
     :attachments="attachments"
     :conversation="conversation"
     :message-list-items="messageListItems"
+    :playlist-videos="playlistVideos"
     :right-panel-view="rightPanelView"
     @select-view="selectPanelView"
     @remove-attachment="onRemoveAttachment"
     @toggle-attachment="onToggleAttachment"
     @prompt-click="onPromptClick"
   />
+
+  <FloatingPlayer />
 </template>

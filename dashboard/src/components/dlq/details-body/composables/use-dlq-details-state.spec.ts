@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { DEFAULT_PREPROCESSING_SETTINGS } from '../../../../stores/preprocessing';
 import { useDlqDetailsState } from './use-dlq-details-state';
 
 const makeEntry = (
@@ -48,11 +47,5 @@ describe('useDlqDetailsState', () => {
 
   it('isImmutable returns false for other statuses', () => {
     expect(state.isImmutable(makeEntry({}, 'Failed'))).toBe(false);
-  });
-
-  it('extractPreprocessing returns the defaults when no block is set', () => {
-    expect(state.extractPreprocessing(makeEntry({}))).toEqual(
-      DEFAULT_PREPROCESSING_SETTINGS,
-    );
   });
 });

@@ -118,6 +118,16 @@ export function useExchangeScrollContainer(
     }
   }
 
+  // Thinking text streams into the exchange-activity element and has its own
+  // internal autoscroll — it must not pull the whole exchange list along.
+  // Only mutations outside that element (actual response data) may trigger
+  // autoscroll.
+  function isActivityMutation(mutation: MutationRecord): boolean {
+    const target = mutation.target;
+    const element = target instanceof Element ? target : target.parentElement;
+    return element?.closest('[data-exchange-activity]') != null;
+  }
+
   function observeContainer(container: HTMLElement) {
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => keepAtBottomIfNeeded());
@@ -125,7 +135,10 @@ export function useExchangeScrollContainer(
     }
 
     if (typeof MutationObserver !== 'undefined') {
-      mutationObserver = new MutationObserver(() => keepAtBottomIfNeeded());
+      mutationObserver = new MutationObserver((mutations) => {
+        if (mutations.length > 0 && mutations.every(isActivityMutation)) return;
+        keepAtBottomIfNeeded();
+      });
       mutationObserver.observe(container, {
         childList: true,
         subtree: true,

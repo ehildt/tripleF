@@ -1,17 +1,22 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
-import type { InputMessage } from '../../ai-sdk/helpers/ai-sdk-message.models.js';
-import { ThinkMode } from '../../ai-sdk/helpers/ollama.helpers.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import { MinioService } from '../../minio/services/minio.service.js';
 import {
   buildGalleryItems,
-  emitToSocket,
-  extractImageCountFromToolResults,
-  extractVideoCountFromToolResults,
-} from '../helpers/harness.helpers.js';
+  type GalleryItem,
+  limitLocalGalleryItems,
+} from '../helpers/build-gallery-items.helper.js';
+import { emitToSocket } from '../helpers/emit-to-socket.helper.js';
+import { extractImageCountFromToolResults } from '../helpers/extract-image-count-from-tool-results.helper.js';
+import { extractVideoCountFromToolResults } from '../helpers/extract-video-count-from-tool-results.helper.js';
+import { filterExistingGalleryItems } from '../helpers/filter-existing-gallery-items.helper.js';
 
 import { HarnessContext } from './harness-context.type.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 type CompactStreamParams = {
   requestId: string;
@@ -28,13 +33,36 @@ type CompactStreamParams = {
 
 @Injectable()
 export class HarnessChatStreamingService {
-  private readonly logger = new Logger(HarnessChatStreamingService.name);
   constructor(
-    @Inject(SocketIOService)
     private readonly io: SocketIOService,
-    @Inject(AiSdkService)
     private readonly aiSdkService: AiSdkService,
+    private readonly stepLogger: HarnessStepLogger,
+    private readonly minioService: MinioService,
   ) {}
+
+  /**
+   * Gallery items point at MinIO storage objects that may have been deleted
+   * since the meta was recorded. Stat each object and drop the dead ones.
+   */
+  private async filterToExistingStorageObjects(
+    ctx: HarnessContext,
+    items: GalleryItem[],
+  ): Promise<GalleryItem[]> {
+    const conversationId = ctx.filters.conversationId;
+    if (!ctx.sessionId || !conversationId || items.length === 0) return items;
+
+    const existing = await filterExistingGalleryItems(items, (hash) =>
+      this.minioService.objectExists(ctx.sessionId!, conversationId, hash),
+    );
+
+    if (existing.length !== items.length) {
+      this.stepLogger.log(ctx, 'stream', 'dropped missing storage objects', {
+        removedCount: items.length - existing.length,
+      });
+    }
+
+    return existing;
+  }
 
   async streamResult(ctx: HarnessContext): Promise<void> {
     if (ctx.doneReason === 'clarification') {
@@ -61,18 +89,16 @@ export class HarnessChatStreamingService {
     }
 
     if (!ctx.outputs.finalContent) {
+      const message =
+        ctx.outputs.finalContent === undefined
+          ? 'No response content produced'
+          : 'The model returned an empty response';
       await emitToSocket(this.io, ctx.roomId, ctx.event, {
         requestId: ctx.requestId,
         model: ctx.model,
         template: 'text',
-        delta:
-          ctx.outputs.finalContent === undefined
-            ? 'No response content produced'
-            : 'The model returned an empty response',
-        error:
-          ctx.outputs.finalContent === undefined
-            ? 'No response content produced'
-            : 'The model returned an empty response',
+        delta: message,
+        error: message,
         done: true,
       });
       return;
@@ -82,17 +108,27 @@ export class HarnessChatStreamingService {
       (entry) => !entry.variant || entry.variant === 'original',
     );
 
-    const images = ctx.hasNewImages
-      ? buildGalleryItems(
+    const images = limitLocalGalleryItems(
+      await this.filterToExistingStorageObjects(
+        ctx,
+        buildGalleryItems(
           ctx.sessionId,
           ctx.filters.conversationId,
           originalMeta,
-        )
-      : [];
+        ),
+      ),
+      3,
+    );
+
+    const metaForStream = images.map(({ imageUrl, title, source }) => ({
+      name: title,
+      hash: imageUrl.split('/').pop() ?? '',
+      source,
+      variant: 'original' as const,
+    }));
     const template = ctx.outputs.intent?.template ?? 'text';
 
-    this.logger.log('[HARNESS] stream result', {
-      requestId: ctx.requestId,
+    this.stepLogger.log(ctx, 'stream', 'result', {
       sessionId: ctx.sessionId,
       hasNewImages: ctx.hasNewImages,
       template,
@@ -107,19 +143,30 @@ export class HarnessChatStreamingService {
       ),
     });
 
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
+    const streamPayload = {
       requestId: ctx.requestId,
       model: ctx.model,
       template,
       delta: ctx.stream ? '' : ctx.outputs.finalContent,
+      data: ctx.stream ? ctx.outputs.finalData : undefined,
       images,
       toolResults: ctx.outputs.toolResults,
-      meta: ctx.hasNewImages ? originalMeta : undefined,
+      meta: metaForStream,
       prompt: ctx.lastUserPrompt,
       promptEvalCount: ctx.outputs.inputTokens,
       evalCount: ctx.outputs.outputTokens,
       done: true,
+    };
+
+    this.stepLogger.log(ctx, 'stream', 'emitting final payload', {
+      hasDoneFlag: streamPayload.done === true,
+      hasPromptEvalCount: streamPayload.promptEvalCount != null,
+      hasEvalCount: streamPayload.evalCount != null,
+      hasData: streamPayload.data != null,
+      deltaLength: streamPayload.delta?.length ?? 0,
     });
+
+    await emitToSocket(this.io, ctx.roomId, ctx.event, streamPayload);
   }
 
   async streamCompact(params: CompactStreamParams): Promise<void> {

@@ -29,7 +29,6 @@ defineProps<{
   display: inline-block;
   width: 3px;
   height: 3px;
-  border-radius: 50%;
   background: var(--color-divider);
   margin-left: 0.75em;
   vertical-align: middle;

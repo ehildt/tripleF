@@ -7,7 +7,6 @@ import ArticleCardsSection from '../../sections/article-cards-section/ArticleCar
 import ArticleConclusionSection from '../../sections/article-conclusion-section/ArticleConclusionSection.vue';
 import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
-import ArticleMetaSection from '../../sections/article-meta-section/ArticleMetaSection.vue';
 import ArticleQuoteSection from '../../sections/article-quote-section/ArticleQuoteSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
@@ -15,6 +14,8 @@ import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsS
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
+import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 
 const props = defineProps<{
   data: HarnessResponseData;
@@ -35,19 +36,25 @@ const galleryItems = computed(() => {
 <template>
   <article class="article">
     <header class="hero">
-      <HeroSection
-        :category="data.category"
-        :title="data.title"
-        :subtitle="data.subtitle"
-      />
-      <ArticleMetaSection
-        :author="data.author"
-        :publish-date="data.publishDate"
-        :read-time="data.readTime"
-      />
+      <ResponseMetaBar>
+        <ResponseMetaBarPill v-if="data.category" variant="accent">{{
+          data.category
+        }}</ResponseMetaBarPill>
+        <ResponseMetaBarPill v-if="data.publishDate">{{
+          data.publishDate
+        }}</ResponseMetaBarPill>
+        <ResponseMetaBarPill v-if="data.readTime">{{
+          data.readTime
+        }}</ResponseMetaBarPill>
+        <ResponseMetaBarPill v-if="data.author">{{
+          data.author
+        }}</ResponseMetaBarPill>
+      </ResponseMetaBar>
+      <HeroSection :title="data.title" :subtitle="data.subtitle" />
       <ArticleHeroMediaSection
         :hero-video-url="data.heroVideoUrl"
         :hero-video-caption="data.heroVideoCaption"
+        :hero-video-title="data.heroVideoTitle"
         :hero-image-url="data.heroImageUrl"
         :hero-image-alt="data.heroImageAlt"
         :hero-caption="data.heroCaption"

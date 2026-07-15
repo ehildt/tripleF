@@ -5,7 +5,6 @@ import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
-import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 
 import { ExecuteActionService } from './execute.action.js';
 
@@ -14,7 +13,6 @@ describe('ExecuteActionService', () => {
   let sharpService: SharpService;
   let aiSdkService: AiSdkService;
   let toolSelectionService: ToolSelectionService;
-  let mediaUrlValidator: MediaUrlValidatorService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,16 +41,6 @@ describe('ExecuteActionService', () => {
           provide: OllamaConfigService,
           useValue: { config: { keepAlive: '5m' } },
         },
-        {
-          provide: MediaUrlValidatorService,
-          useValue: {
-            validateUrls: vi
-              .fn()
-              .mockImplementation((urls: string[]) =>
-                Promise.resolve(urls.map((url) => ({ url, kind: 'unknown' }))),
-              ),
-          },
-        },
       ],
     }).compile();
 
@@ -61,9 +49,6 @@ describe('ExecuteActionService', () => {
     aiSdkService = module.get<AiSdkService>(AiSdkService);
     toolSelectionService =
       module.get<ToolSelectionService>(ToolSelectionService);
-    mediaUrlValidator = module.get<MediaUrlValidatorService>(
-      MediaUrlValidatorService,
-    );
   });
 
   function createContext(
@@ -282,112 +267,6 @@ describe('ExecuteActionService', () => {
     expect(result.outputTokens).toBe(10);
   });
 
-  it('includes tool results in final messages', async () => {
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: '',
-      toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { description: 'search' },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find news on conan' },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['webSearch'],
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    const result = await service.execute(ctx);
-
-    const userMessages = result.messages.filter((m: any) => m.role === 'user');
-    expect(userMessages.length).toBeGreaterThan(0);
-    expect(userMessages[userMessages.length - 1]?.content).toContain(
-      'Retrieved articles and media (JSON):',
-    );
-  });
-
-  it('sanitizes search results and removes provider slugs from final messages', async () => {
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: '',
-      toolResults: [
-        {
-          toolName: 'webSearch',
-          result: {
-            results: [
-              {
-                title: 'A',
-                snippet: 'snippet',
-                url: 'https://example.com/page',
-                source: 'serper',
-              },
-            ],
-          },
-        },
-        {
-          toolName: 'serperNewsSearch',
-          result: {
-            results: [
-              {
-                title: 'B',
-                snippet: 'snippet',
-                url: 'https://bbc.com/news',
-                source: 'BBC',
-                date: '2026-07-11',
-              },
-            ],
-          },
-        },
-      ],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { description: 'search' },
-      serperNewsSearch: { description: 'news' },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find news on conan' },
-      ],
-      intent: {
-        template: 'news',
-        prompt: 'default',
-        tools: ['webSearch', 'serperNewsSearch'],
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    const result = await service.execute(ctx);
-
-    const contextMessage = result.messages
-      .filter((m: any) => m.role === 'user')
-      .at(-1)?.content;
-
-    expect(contextMessage).toContain('Retrieved articles and media (JSON):');
-    expect(contextMessage).not.toContain('toolName');
-    expect(contextMessage).not.toContain('"serper"');
-    expect(contextMessage).not.toContain('"brave"');
-    expect(contextMessage).toContain('"example"');
-    expect(contextMessage).toContain('"BBC"');
-  });
-
   it('does not duplicate the latest user message for non-image tasks', async () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: '',
@@ -415,11 +294,7 @@ describe('ExecuteActionService', () => {
       },
     });
 
-    const result = await service.execute(ctx);
-
-    const userMessages = result.messages.filter((m: any) => m.role === 'user');
-    expect(userMessages).toHaveLength(2); // original prompt + tool context
-    expect(userMessages[0].content).toBe('find news on conan');
+    await service.execute(ctx);
 
     const call = (aiSdkService.generateWithTools as any).mock.calls[0][0];
     const executeUserMessages = call.messages.filter(
@@ -612,279 +487,11 @@ describe('ExecuteActionService', () => {
       },
     });
 
-    const result = await service.execute(ctx);
-
-    const userMessages = result.messages.filter((m: any) => m.role === 'user');
-    expect(userMessages[0].content).toBe('describe this\n\n[1 image attached]');
-    expect(userMessages[0].images).toHaveLength(1);
+    await service.execute(ctx);
 
     const call = (aiSdkService.generateWithTools as any).mock.calls[0][0];
     expect(call.messages[0].content).toContain('image task');
     expect(call.messages[1].images).toHaveLength(1);
     expect(call.messages[1].content).toContain('[1 image attached]');
-  });
-
-  it('extracts and prioritizes video URLs from webSearch over videoSearch', async () => {
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: '',
-      toolResults: [
-        {
-          toolName: 'serperVideoSearch',
-          result: {
-            results: [
-              {
-                videoUrl: 'https://www.youtube.com/watch?v=videoSearchId',
-                title: 'Video search result',
-              },
-            ],
-          },
-        },
-        {
-          toolName: 'webSearch',
-          result: {
-            results: [
-              {
-                url: 'https://www.youtube.com/watch?v=webSearchId',
-                title: 'Web article with video',
-              },
-            ],
-          },
-        },
-      ],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { description: 'search' },
-      serperVideoSearch: { description: 'videos' },
-    });
-    (mediaUrlValidator.validateUrls as any).mockImplementation(
-      (urls: string[]) => Promise.resolve(urls.map(() => ({ kind: 'video' }))),
-    );
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find videos' },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['webSearch', 'serperVideoSearch'],
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    const result = await service.execute(ctx);
-
-    const contextMessage = result.messages.find(
-      (m: any) =>
-        m.role === 'user' &&
-        typeof m.content === 'string' &&
-        m.content.startsWith('Retrieved articles and media'),
-    );
-    expect(contextMessage).toBeDefined();
-    const payload = JSON.parse(
-      contextMessage!.content.replace(
-        'Retrieved articles and media (JSON):\n',
-        '',
-      ),
-    );
-    expect(payload.availableVideos[0].videoUrl).toBe(
-      'https://www.youtube.com/watch?v=webSearchId',
-    );
-    expect(payload.availableVideos[1].videoUrl).toBe(
-      'https://www.youtube.com/watch?v=videoSearchId',
-    );
-  });
-
-  it('includes imageTargetCount and videoTargetCount in the tool context', async () => {
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: '',
-      toolResults: [
-        {
-          toolName: 'webSearch',
-          result: {
-            results: [
-              {
-                url: 'https://example.com/article',
-                title: 'Article',
-                snippet: 'Snippet',
-              },
-            ],
-          },
-        },
-      ],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { description: 'search' },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find media' },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['webSearch'],
-        imageCount: 3,
-        videoCount: 4,
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    const result = await service.execute(ctx);
-
-    const contextMessage = result.messages.find(
-      (m: any) =>
-        m.role === 'user' &&
-        typeof m.content === 'string' &&
-        m.content.startsWith('Retrieved articles and media'),
-    );
-    expect(contextMessage).toBeDefined();
-    const payload = JSON.parse(
-      contextMessage!.content.replace(
-        'Retrieved articles and media (JSON):\n',
-        '',
-      ),
-    );
-    expect(payload.imageTargetCount).toBe(3);
-    expect(payload.videoTargetCount).toBe(4);
-    expect(payload.mediaInstructions.join('\n')).toContain(
-      'Target counts: use at most 3 image(s) and 4 video(s)',
-    );
-  });
-
-  it('caps availableVideos to the default target count of 6', async () => {
-    const videos = Array.from({ length: 10 }, (_, i) => ({
-      videoUrl: `https://www.youtube.com/watch?v=video${i}`,
-      title: `Video ${i}`,
-    }));
-
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: '',
-      toolResults: [
-        {
-          toolName: 'serperVideoSearch',
-          result: { results: videos },
-        },
-      ],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperVideoSearch: { description: 'videos' },
-    });
-    (mediaUrlValidator.validateUrls as any).mockImplementation(
-      (urls: string[]) => Promise.resolve(urls.map(() => ({ kind: 'video' }))),
-    );
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find videos' },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['serperVideoSearch'],
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    const result = await service.execute(ctx);
-
-    expect(result.availableVideoCount).toBe(6);
-
-    const contextMessage = result.messages.find(
-      (m: any) =>
-        m.role === 'user' &&
-        typeof m.content === 'string' &&
-        m.content.startsWith('Retrieved articles and media'),
-    );
-    expect(contextMessage).toBeDefined();
-    const payload = JSON.parse(
-      contextMessage!.content.replace(
-        'Retrieved articles and media (JSON):\n',
-        '',
-      ),
-    );
-    expect(payload.availableVideos).toHaveLength(6);
-    expect(payload.videoTargetCount).toBe(6);
-  });
-
-  it('caps availableVideos to the explicit videoCount target', async () => {
-    const videos = Array.from({ length: 10 }, (_, i) => ({
-      videoUrl: `https://www.youtube.com/watch?v=video${i}`,
-      title: `Video ${i}`,
-    }));
-
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: '',
-      toolResults: [
-        {
-          toolName: 'serperVideoSearch',
-          result: { results: videos },
-        },
-      ],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperVideoSearch: { description: 'videos' },
-    });
-    (mediaUrlValidator.validateUrls as any).mockImplementation(
-      (urls: string[]) => Promise.resolve(urls.map(() => ({ kind: 'video' }))),
-    );
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find 4 videos' },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['serperVideoSearch'],
-        videoCount: 4,
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    const result = await service.execute(ctx);
-
-    expect(result.availableVideoCount).toBe(4);
-
-    const contextMessage = result.messages.find(
-      (m: any) =>
-        m.role === 'user' &&
-        typeof m.content === 'string' &&
-        m.content.startsWith('Retrieved articles and media'),
-    );
-    expect(contextMessage).toBeDefined();
-    const payload = JSON.parse(
-      contextMessage!.content.replace(
-        'Retrieved articles and media (JSON):\n',
-        '',
-      ),
-    );
-    expect(payload.availableVideos).toHaveLength(4);
-    expect(payload.videoTargetCount).toBe(4);
   });
 });

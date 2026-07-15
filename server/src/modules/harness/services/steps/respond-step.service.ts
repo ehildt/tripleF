@@ -1,53 +1,79 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
+import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
 import {
   buildGalleryItems,
-  emitToSocket,
-} from '../../helpers/harness.helpers.js';
+  type GalleryItem,
+  limitLocalGalleryItems,
+} from '../../helpers/build-gallery-items.helper.js';
+import { dedupeGalleryItems } from '../../helpers/dedupe-gallery-items.helper.js';
+import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import { enforceAvailableMediaUrls } from '../../helpers/enforce-available-media-urls.helper.js';
+import { ensureProductShopOffers } from '../../helpers/ensure-product-shop-offers.helper.js';
+import {
+  extractImageSearchItems,
+  extractVideoSearchItems,
+} from '../../helpers/extract-media-from-tools.helper.js';
+import { extractShopOffers } from '../../helpers/extract-shop-offers.helper.js';
+import { filterExistingGalleryItems } from '../../helpers/filter-existing-gallery-items.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
+import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 @Injectable()
 export class RespondStepService implements StepHandler {
-  private readonly logger = new Logger(RespondStepService.name);
-
   constructor(
-    @Inject(RespondActionService)
     private readonly respondAction: RespondActionService,
-    @Inject(SocketIOService)
     private readonly io: SocketIOService,
+    private readonly stepLogger: HarnessStepLogger,
+    private readonly minioService: MinioService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
     if (!ctx.outputs.intent)
       throw new Error('Missing interpret output — respond cannot run');
 
+    const status = this.resolveRespondStatus(ctx);
+    if (status) await this.emitStatus(ctx, status);
+
     const originalMeta = ctx.processedMeta.filter(
       (entry) => !entry.variant || entry.variant === 'original',
     );
 
-    const galleryItems = ctx.hasNewImages
-      ? buildGalleryItems(
+    const galleryItems = await this.filterToExistingStorageObjects(
+      ctx,
+      dedupeGalleryItems(
+        buildGalleryItems(
           ctx.sessionId,
           ctx.filters.conversationId,
           originalMeta,
-        )
-      : [];
+        ),
+      ),
+    );
 
-    this.logger.log('[HARNESS] respond step', {
-      requestId: ctx.requestId,
+    const limitedGalleryItems = limitLocalGalleryItems(galleryItems, 3);
+
+    this.stepLogger.log(ctx, 'respond', 'preparing final response', {
       hasNewImages: ctx.hasNewImages,
       galleryItemCount: galleryItems.length,
+      localItemCount: limitedGalleryItems.filter(
+        (item) => item.source === 'local',
+      ).length,
+      cloudItemCount: limitedGalleryItems.filter(
+        (item) => item.source === 'cloud',
+      ).length,
       imageCount: ctx.processedMeta.length,
       originalImageCount: originalMeta.length,
     });
 
-    const { content, inputTokens, outputTokens } =
+    const { content, data, inputTokens, outputTokens } =
       await this.respondAction.execute({
+        requestId: ctx.requestId,
         intent: ctx.outputs.intent,
         messages: ctx.request.messages,
+        availableImages: limitedGalleryItems,
         model: ctx.model,
         keepAlive: ctx.request.keep_alive,
         numCtx: ctx.request.options?.num_ctx,
@@ -55,100 +81,244 @@ export class RespondStepService implements StepHandler {
         stream: ctx.stream,
         abortSignal: ctx.abortSignal,
         onTextDelta: ctx.stream
-          ? (delta) => this.emitStreamDelta(ctx, delta, galleryItems)
+          ? (delta) => this.emitStreamDelta(ctx, delta, limitedGalleryItems)
+          : undefined,
+        onReasoningDelta: ctx.stream
+          ? (delta) => this.emitReasoningDelta(ctx, delta)
           : undefined,
       });
 
+    const mediaCheckedData = this.applyResponseDataGuards(
+      ctx,
+      data,
+      limitedGalleryItems,
+    );
+
     ctx.outputs.finalContent = content;
+    ctx.outputs.finalData = mediaCheckedData;
     ctx.outputs.inputTokens = inputTokens;
     ctx.outputs.outputTokens = outputTokens;
 
-    this.logger.log('[HARNESS]', {
-      step: 'respond',
-      requestId: ctx.requestId,
+    const stats = this.parseResponseStats(content);
+
+    this.stepLogger.log(ctx, 'respond', 'response generated', {
       model: ctx.model,
       template: ctx.outputs.intent.template,
       inputTokens,
       outputTokens,
       length: content.length,
       contentPreview: content.slice(0, 500),
-      parsedHeroImageUrl: this.extractHeroImageUrl(content),
-      parsedHeroVideoUrl: this.extractHeroVideoUrl(content),
-      parsedGalleryItemCount: this.extractGalleryItemCount(content),
-      parsedVideoGalleryItemCount: this.extractVideoGalleryItemCount(content),
+      parsedHeroImageUrl: stats.heroImageUrl,
+      parsedHeroVideoUrl: stats.heroVideoUrl,
+      parsedGalleryItemCount: stats.galleryItemCount,
+      parsedVideoGalleryItemCount: stats.videoGalleryItemCount,
     });
   }
 
-  private extractHeroImageUrl(content: string): string | null {
+  /**
+   * Post-generation data guards: merge uploaded images into the gallery,
+   * re-inject shop offers the model dropped, and blank media URLs that did
+   * not come from verified tool results.
+   */
+  private applyResponseDataGuards(
+    ctx: HarnessContext,
+    data: Record<string, unknown> | undefined,
+    limitedGalleryItems: GalleryItem[],
+  ): Record<string, unknown> | undefined {
+    const mergedData = this.mergeLocalImagesIntoResponseData(
+      data,
+      limitedGalleryItems,
+    );
+
+    // Shop-offers guard: shopping results existed but the model dropped the
+    // field — inject the extracted offers so the card never shows 0 stores.
+    const withOffers = ensureProductShopOffers(
+      mergedData,
+      ctx.outputs.intent?.template,
+      extractShopOffers(ctx.outputs.toolResults),
+    );
+    if (withOffers !== mergedData) {
+      this.stepLogger.warn(
+        ctx,
+        'respond',
+        'shop offers injected from context',
+        {
+          offerCount: (withOffers?.shopOffers as unknown[]).length,
+        },
+      );
+    }
+
+    // Media membership enforcement: the model may only use URLs from verified
+    // tool results (or uploaded images) — everything else is blanked.
+    const mediaCheckedData = enforceAvailableMediaUrls(
+      withOffers,
+      extractImageSearchItems(ctx.outputs.toolResults),
+      extractVideoSearchItems(ctx.outputs.toolResults),
+      limitedGalleryItems.map((item) => item.imageUrl),
+    );
+    if (mediaCheckedData !== withOffers) {
+      this.stepLogger.warn(ctx, 'respond', 'unverified media urls blanked', {
+        heroImageUrl: mediaCheckedData?.heroImageUrl === '',
+        galleryItemCount: Array.isArray(mediaCheckedData?.galleryItems)
+          ? mediaCheckedData.galleryItems.length
+          : 0,
+        heroVideoUrl: mediaCheckedData?.heroVideoUrl === '',
+        videoGalleryItemCount: Array.isArray(
+          mediaCheckedData?.videoGalleryItems,
+        )
+          ? mediaCheckedData.videoGalleryItems.length
+          : 0,
+      });
+    }
+
+    return mediaCheckedData;
+  }
+
+  /**
+   * Only announce preparation when there are images to gather — statting the
+   * storage objects below is the visible work of this step. Without images
+   * the step goes straight to the model, whose reasoning stream announces
+   * itself ("Thinking…"), so a status here would just be a redundant
+   * "getting ready" beat between the previous step and the thinking.
+   */
+  private resolveRespondStatus(ctx: HarnessContext): string | undefined {
+    if (ctx.processedMeta.length > 0) return 'Gathering the images…';
+    return undefined;
+  }
+
+  /**
+   * Gallery items point at MinIO storage objects that may have been deleted
+   * since the meta was recorded. Stat each object and drop the dead ones.
+   */
+  private async filterToExistingStorageObjects(
+    ctx: HarnessContext,
+    items: GalleryItem[],
+  ): Promise<GalleryItem[]> {
+    const conversationId = ctx.filters.conversationId;
+    if (!ctx.sessionId || !conversationId || items.length === 0) return items;
+
+    const existing = await filterExistingGalleryItems(items, (hash) =>
+      this.minioService.objectExists(ctx.sessionId!, conversationId, hash),
+    );
+
+    if (existing.length !== items.length) {
+      this.stepLogger.log(ctx, 'respond', 'dropped missing storage objects', {
+        removedCount: items.length - existing.length,
+      });
+    }
+
+    return existing;
+  }
+
+  private mergeLocalImagesIntoResponseData(
+    data: Record<string, unknown> | undefined,
+    galleryItems: GalleryItem[],
+  ): Record<string, unknown> | undefined {
+    if (!data) return data;
+
+    const extractHash = (url: string): string | undefined => {
+      const lastSlash = url.lastIndexOf('/');
+      if (lastSlash === -1) return undefined;
+      return url.slice(lastSlash + 1).split('?')[0];
+    };
+
+    const existingHashes = new Set<string>(
+      ((data.galleryItems as GalleryItem[]) ?? [])
+        .filter(
+          (item): item is GalleryItem => typeof item?.imageUrl === 'string',
+        )
+        .map((item) => extractHash(item.imageUrl))
+        .filter((hash): hash is string => !!hash),
+    );
+
+    const missingLocal = galleryItems
+      .filter((item) => item.source === 'local')
+      .filter((item) => {
+        const hash = extractHash(item.imageUrl);
+        return hash ? !existingHashes.has(hash) : false;
+      });
+
+    const merged = [
+      ...missingLocal,
+      ...((data.galleryItems as GalleryItem[]) ?? []),
+    ];
+
+    // The hero renders separately — a gallery tile repeating it would show
+    // the same image twice, in the grid and in the lightbox. Remaining
+    // duplicates collapse by URL and content hash.
+    const heroImageUrl =
+      typeof data.heroImageUrl === 'string' ? data.heroImageUrl : undefined;
+    const withoutHeroDuplicates = heroImageUrl
+      ? merged.filter((item) => item.imageUrl !== heroImageUrl)
+      : merged;
+
+    return {
+      ...data,
+      galleryItems: dedupeGalleryItems(withoutHeroDuplicates),
+    };
+  }
+
+  private parseResponseStats(content: string) {
     try {
-      // cleaned content should not be repeatedly parsed
       const cleaned = content
         .trim()
         .replace(/^```json\s*/i, '')
         .replace(/\s*```$/i, '')
         .trim();
       const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-      return typeof parsed.heroImageUrl === 'string'
-        ? parsed.heroImageUrl
-        : null;
+
+      return {
+        heroImageUrl:
+          typeof parsed.heroImageUrl === 'string' ? parsed.heroImageUrl : null,
+        heroVideoUrl:
+          typeof parsed.heroVideoUrl === 'string' ? parsed.heroVideoUrl : null,
+        galleryItemCount: Array.isArray(parsed.galleryItems)
+          ? parsed.galleryItems.length
+          : null,
+        videoGalleryItemCount: Array.isArray(parsed.videoGalleryItems)
+          ? parsed.videoGalleryItems.length
+          : null,
+      };
     } catch {
-      return null;
+      return {
+        heroImageUrl: null,
+        heroVideoUrl: null,
+        galleryItemCount: null,
+        videoGalleryItemCount: null,
+      };
     }
   }
 
-  private extractGalleryItemCount(content: string): number | null {
-    try {
-      // cleaned content should not be repeatedly parsed
-      const cleaned = content
-        .trim()
-        .replace(/^```json\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-      const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-      return Array.isArray(parsed.galleryItems)
-        ? parsed.galleryItems.length
-        : null;
-    } catch {
-      return null;
-    }
+  private async emitStatus(
+    ctx: HarnessContext,
+    message: string,
+  ): Promise<void> {
+    await emitToSocket(this.io, ctx.roomId, ctx.event, {
+      requestId: ctx.requestId,
+      model: ctx.model,
+      template: ctx.outputs.intent?.template,
+      status: message,
+      done: false,
+    });
   }
 
-  private extractHeroVideoUrl(content: string): string | null {
-    try {
-      const cleaned = content
-        .trim()
-        .replace(/^```json\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-      const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-      return typeof parsed.heroVideoUrl === 'string'
-        ? parsed.heroVideoUrl
-        : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private extractVideoGalleryItemCount(content: string): number | null {
-    try {
-      const cleaned = content
-        .trim()
-        .replace(/^```json\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-      const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-      return Array.isArray(parsed.videoGalleryItems)
-        ? parsed.videoGalleryItems.length
-        : null;
-    } catch {
-      return null;
-    }
+  private async emitReasoningDelta(
+    ctx: HarnessContext,
+    reasoningDelta: string,
+  ): Promise<void> {
+    await emitToSocket(this.io, ctx.roomId, ctx.event, {
+      requestId: ctx.requestId,
+      model: ctx.model,
+      template: ctx.outputs.intent?.template,
+      reasoningDelta,
+      done: false,
+    });
   }
 
   private async emitStreamDelta(
     ctx: HarnessContext,
     delta: string,
-    galleryItems: Array<Record<string, string>>,
+    galleryItems: GalleryItem[],
   ): Promise<void> {
     await emitToSocket(this.io, ctx.roomId, ctx.event, {
       requestId: ctx.requestId,

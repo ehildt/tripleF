@@ -27,7 +27,7 @@ function handleKeydown(event: KeyboardEvent) {
     :placeholder="placeholder"
     :disabled="disabled"
     :rows="rows ?? 3"
-    class="w-full px-3 py-2 bg-tertiary border border-divider rounded-none text-sm text-fg-primary placeholder:text-left placeholder:text-fg-muted focus:outline-none focus:border-tab-rest focus:ring-1 focus:ring-tab-rest transition-all font-mono disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+    class="w-full px-3 py-2 bg-tertiary border border-divider rounded-none text-sm text-fg-primary placeholder:text-left placeholder:text-fg-muted focus:outline-none focus:border-tab-rest focus:ring-1 focus:ring-tab-rest transition-all font-mono disabled:opacity-50 disabled:cursor-default resize-none"
     @input="handleInput"
     @keydown="handleKeydown"
   />

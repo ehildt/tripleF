@@ -65,7 +65,6 @@ const validItems = computed(() =>
 
 .card {
   border: 1px solid var(--color-divider);
-  border-radius: 6px;
   padding: 0.6em 0.75em;
   background: var(--color-bg-secondary);
   transition:

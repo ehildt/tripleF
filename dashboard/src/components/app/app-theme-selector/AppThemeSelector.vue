@@ -82,7 +82,6 @@ const {
   align-items: center;
   justify-content: center;
   border: 2px solid;
-  border-radius: 9999px;
   color: var(--color-fg-secondary);
   background-color: transparent;
   transition:
@@ -110,7 +109,6 @@ const {
   width: 11rem;
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-divider);
-  border-radius: 6px;
   box-shadow: 0 20px 25px -5px
     color-mix(in srgb, var(--color-bg-primary) 20%, transparent);
   z-index: 50;
@@ -156,7 +154,6 @@ const {
   width: 0.75rem;
   height: 0.75rem;
   flex-shrink: 0;
-  border-radius: 9999px;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--color-fg-inverse) 10%, transparent);
 }

@@ -19,7 +19,7 @@ describe('calcTokenPercent', () => {
     expect(calcTokenPercent(exchanges as any, '1000')).toBe(30);
   });
 
-  it('uses the most recent assistant exchange instead of summing history', () => {
+  it('sums token counts across all included assistant exchanges', () => {
     const exchanges = [
       {
         role: 'assistant',
@@ -34,7 +34,25 @@ describe('calcTokenPercent', () => {
         evalCount: 50,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '1000')).toBe(15);
+    expect(calcTokenPercent(exchanges as any, '1000')).toBe(105);
+  });
+
+  it('caps the percentage at 100', () => {
+    const exchanges = [
+      {
+        role: 'assistant',
+        status: 'done',
+        promptEvalCount: 600,
+        evalCount: 100,
+      },
+      {
+        role: 'assistant',
+        status: 'done',
+        promptEvalCount: 600,
+        evalCount: 100,
+      },
+    ];
+    expect(calcTokenPercent(exchanges as any, '1000')).toBe(100);
   });
 
   it('ignores assistant exchanges excluded from context', () => {

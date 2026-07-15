@@ -4,16 +4,37 @@ import {
 } from '../templates/intent.schema.js';
 
 import { ARTICLE_INSTRUCTIONS } from './instructions/article.instruction.js';
+import { COMPACT_INSTRUCTIONS } from './instructions/compact.instruction.js';
+import {
+  COMPARE_INSTRUCTIONS,
+  COMPARE_VISUAL_INSTRUCTIONS,
+} from './instructions/compare.instruction.js';
+import {
+  DESCRIBE_CONCISE_INSTRUCTIONS,
+  DESCRIBE_DETAILED_INSTRUCTIONS,
+  DESCRIBE_INSTRUCTIONS,
+} from './instructions/describe.instruction.js';
 import { EVALUATION_INSTRUCTIONS } from './instructions/evaluation.instruction.js';
+import { IMAGELIST_INSTRUCTIONS } from './instructions/imagelist.instruction.js';
 import { NEWS_INSTRUCTIONS } from './instructions/news.instruction.js';
+import {
+  OCR_INSTRUCTIONS,
+  OCR_VERBATIM_INSTRUCTIONS,
+} from './instructions/ocr.instruction.js';
+import { PRODUCT_INSTRUCTIONS } from './instructions/product.instruction.js';
 import { SUMMARY_INSTRUCTIONS } from './instructions/summary.instruction.js';
+import {
+  TEXT_CODING_INSTRUCTIONS,
+  TEXT_INSTRUCTIONS,
+} from './instructions/text.instruction.js';
+import { VIDEOLIST_INSTRUCTIONS } from './instructions/videolist.instruction.js';
 
 export { DEFAULT_VARIANT_ID };
 
 /**
  * Canonical list of valid template variants. The intent classifier uses this
  * to know which variants exist, and the resolver below maps each pair to the
- * short style instructions injected into the content system prompt.
+ * style instructions injected into the content system prompt.
  */
 export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   article: ['default'],
@@ -23,35 +44,32 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   ocr: ['default', 'verbatim'],
   summary: ['default'],
   evaluation: ['default'],
+  product: ['default'],
+  imagelist: ['default'],
+  videolist: ['default'],
   text: ['default', 'coding'],
+  compact: ['default'],
 };
 
 const VARIANT_INSTRUCTIONS: Record<string, string> = {
-  // describe
-  'describe:default':
-    'Describe the visible content clearly and accurately. Focus on what is directly observable.\n\nFINAL REMINDER:\n- Base everything strictly on what is visible in the provided image(s).',
-  'describe:detailed':
-    'Describe the image in exhaustive visual detail: objects, materials, lighting, composition, colors, textures, spatial relationships, and any visible text or symbols.\n\nFINAL REMINDER:\n- Base everything strictly on what is visible in the provided image(s).',
-  'describe:concise':
-    'Give a brief, one-paragraph description of the image covering only the most important visible elements.\n\nFINAL REMINDER:\n- Base everything strictly on what is visible in the provided image(s).',
-
-  // compare
-  'compare:default':
-    'Compare the images by visible attributes: composition, objects, materials, lighting, colors, and spatial layout.\n\nFINAL REMINDER:\n- Base everything strictly on what is visible in the provided image(s).',
-  'compare:visual':
-    'Focus the comparison on visual and aesthetic differences between the images.\n\nFINAL REMINDER:\n- Base everything strictly on what is visible in the provided image(s).',
-
-  // ocr
-  'ocr:default':
-    'Extract the visible text and preserve its structure as faithfully as possible.\n\nFINAL REMINDER:\n- Transcribe only the text visible in the image.',
-  'ocr:verbatim':
-    'Transcribe the visible text exactly as it appears, without reformatting, summarizing, or correcting errors.\n\nFINAL REMINDER:\n- Transcribe only the text visible in the image.',
-
   // article
   'article:default': ARTICLE_INSTRUCTIONS,
 
   // news
   'news:default': NEWS_INSTRUCTIONS,
+
+  // describe
+  'describe:default': DESCRIBE_INSTRUCTIONS,
+  'describe:detailed': DESCRIBE_DETAILED_INSTRUCTIONS,
+  'describe:concise': DESCRIBE_CONCISE_INSTRUCTIONS,
+
+  // compare
+  'compare:default': COMPARE_INSTRUCTIONS,
+  'compare:visual': COMPARE_VISUAL_INSTRUCTIONS,
+
+  // ocr
+  'ocr:default': OCR_INSTRUCTIONS,
+  'ocr:verbatim': OCR_VERBATIM_INSTRUCTIONS,
 
   // summary
   'summary:default': SUMMARY_INSTRUCTIONS,
@@ -59,15 +77,25 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
   // evaluation
   'evaluation:default': EVALUATION_INSTRUCTIONS,
 
+  // product
+  'product:default': PRODUCT_INSTRUCTIONS,
+
+  // imagelist
+  'imagelist:default': IMAGELIST_INSTRUCTIONS,
+
+  // videolist
+  'videolist:default': VIDEOLIST_INSTRUCTIONS,
+
   // text
-  'text:default':
-    'Answer the user directly and helpfully. Use plain text with line breaks for structure.\n\nFINAL REMINDER:\n- Return only the required plain-text answer; no markdown, HTML, code fences, or extra keys.',
-  'text:coding':
-    'Answer as a coding assistant: include code examples, explain trade-offs, and keep explanations precise.\n\nFINAL REMINDER:\n- Return only the required plain-text answer; no markdown, HTML, code fences, or extra keys.',
+  'text:default': TEXT_INSTRUCTIONS,
+  'text:coding': TEXT_CODING_INSTRUCTIONS,
+
+  // compact
+  'compact:default': COMPACT_INSTRUCTIONS,
 };
 
 /**
- * Resolves the short style instructions for a selected template variant.
+ * Resolves the style instructions for a selected template variant.
  * Falls back to the template's default variant, then to an empty string.
  */
 export function resolveVariantInstructions(

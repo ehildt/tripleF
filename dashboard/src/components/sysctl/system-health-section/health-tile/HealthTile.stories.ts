@@ -49,6 +49,3 @@ export const ErrorState: Story = { args: { name: 'minio', error: true } };
 
 /** Disk icon. */
 export const Disk: Story = { args: { name: 'disk', status: 'up' } };
-
-/** SearXNG icon. */
-export const SearXNG: Story = { args: { name: 'searxng', status: 'up' } };

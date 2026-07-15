@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest';
 import MaxHeightField from './MaxHeightField.vue';
 
 describe('MaxHeightField', () => {
-  it('renders Max Height label', () => {
+  it('renders the current size in the select', () => {
     const wrapper = mount(MaxHeightField, {
       props: { modelValue: 768 },
     });
-    expect(wrapper.text()).toContain('Max Height');
+    expect(wrapper.text()).toContain('768');
   });
 
   it('emits null for AUTO selection', async () => {

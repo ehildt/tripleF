@@ -16,7 +16,7 @@ const emit = defineEmits<{
     class="w-full h-full relative p-3 border transition-all duration-200 text-left group overflow-hidden"
     :class="[
       disabled
-        ? 'bg-primary/50 border-divider/50 cursor-not-allowed opacity-60'
+        ? 'bg-primary/50 border-divider/50 cursor-default opacity-60'
         : selected
           ? 'bg-secondary border-tab-preprocessing/20 hover:brightness-110'
           : 'bg-primary border-divider hover:border-fg-muted/50 cursor-pointer hover:brightness-105',

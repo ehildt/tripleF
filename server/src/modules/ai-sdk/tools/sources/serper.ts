@@ -2,8 +2,9 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 import { isTrustedImageUrl } from '../../../harness/helpers/is-trusted-image-url.helper.js';
-import { filterLiveUrls } from '../url-checker.js';
 
+import { applyLocaleParams } from './apply-locale-params.helper.js';
+import { buildYoutubeThumbnailUrl } from './build-youtube-thumbnail-url.helper.js';
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import {
   meetsMinimumImageDimensions,
@@ -24,20 +25,31 @@ export function createSerperWebSearch(deps: ToolDependencies) {
       'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links.',
     inputSchema: z.object({
       query: z.string().describe('The search query'),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
-    execute: async ({ query }: { query: string }) => {
+    execute: async ({ query, lang }: { query: string; lang?: string }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.web.enabled) {
         return { results: [], error: 'Serper.dev web search is not enabled' };
       }
 
       deps.logger.log(`Serper.dev search for "${query}"`);
+      const body: Record<string, unknown> = {
+        q: query,
+        num: cfg.web.results,
+      };
+      applyLocaleParams(body, lang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/search',
         {
           method: 'POST',
           headers: HEADERS(cfg.apiKey),
-          body: JSON.stringify({ q: query, num: cfg.web.results }),
+          body: JSON.stringify(body),
         },
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
@@ -96,12 +108,9 @@ const IMAGE_SIZE_BUCKETS = [
  */
 function tbsSizeLabelForPixels(pixels: number): string {
   const targetMp = pixels / 1_000_000;
-  let selected = IMAGE_SIZE_BUCKETS[IMAGE_SIZE_BUCKETS.length - 1];
-  for (const bucket of IMAGE_SIZE_BUCKETS) {
-    if (bucket.mp <= targetMp) {
-      selected = bucket;
-    }
-  }
+  const selected =
+    IMAGE_SIZE_BUCKETS.findLast((bucket) => bucket.mp <= targetMp) ??
+    IMAGE_SIZE_BUCKETS[IMAGE_SIZE_BUCKETS.length - 1];
   return selected.label;
 }
 
@@ -124,17 +133,25 @@ export function createSerperImageSearch(deps: ToolDependencies) {
         .describe(
           'Minimum image height in pixels. Use 1080 when the user wants 1080p-quality images, 1440 for 1440p, 2160 for 4K. The tool always enforces a floor of 720 (720p).',
         ),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
     execute: async ({
       query,
       count: reqCount,
       minWidth: requestedMinWidth,
       minHeight: requestedMinHeight,
+      lang,
     }: {
       query: string;
       count?: number;
       minWidth?: number;
       minHeight?: number;
+      lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.images.enabled) {
@@ -152,6 +169,7 @@ export function createSerperImageSearch(deps: ToolDependencies) {
       );
       const num = Math.min(reqCount ?? cfg.images.results, cfg.images.results);
       const body: Record<string, unknown> = { q: query, num };
+      applyLocaleParams(body, lang);
       const targetPixels = minWidth * minHeight;
       body.tbs = `isz:lt,islt:${tbsSizeLabelForPixels(targetPixels)}`;
       const res = await fetchWithTimeout(
@@ -179,6 +197,8 @@ export function createSerperImageSearch(deps: ToolDependencies) {
           imageHeight?: number;
           width?: number;
           height?: number;
+          source?: string;
+          domain?: string;
         }>;
       };
       if (!data.images?.length) {
@@ -194,7 +214,8 @@ export function createSerperImageSearch(deps: ToolDependencies) {
           sourcePageUrl: r.link || '',
           width: r.imageWidth ?? r.width,
           height: r.imageHeight ?? r.height,
-          source: 'serper',
+          source: r.source || '',
+          domain: r.domain || '',
         }))
         .filter((r) => {
           if (!isTrustedImageUrl(r.imageUrl)) return false;
@@ -218,13 +239,21 @@ export function createSerperNewsSearch(deps: ToolDependencies) {
     inputSchema: z.object({
       query: z.string().describe('The news search query'),
       count: z.number().optional().describe('Number of results (max 100)'),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
     execute: async ({
       query,
       count: reqCount,
+      lang,
     }: {
       query: string;
       count?: number;
+      lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.news.enabled) {
@@ -233,12 +262,17 @@ export function createSerperNewsSearch(deps: ToolDependencies) {
 
       deps.logger.log(`Serper.dev News search for "${query}"`);
       const num = Math.min(reqCount ?? cfg.news.results, cfg.news.results);
+      const newsBody: Record<string, unknown> = {
+        q: query,
+        num,
+      };
+      applyLocaleParams(newsBody, lang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/news',
         {
           method: 'POST',
           headers: HEADERS(cfg.apiKey),
-          body: JSON.stringify({ q: query, num }),
+          body: JSON.stringify(newsBody),
         },
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
@@ -270,17 +304,29 @@ export function createSerperNewsSearch(deps: ToolDependencies) {
 export function createSerperPlacesSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for places and businesses using Serper.dev. Returns addresses, phone numbers, ratings, and coordinates.',
+      'Search for places and businesses using Serper.dev (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Phrase the query like a Google Maps search: a business name, a business type, or a business type plus location (e.g. "MediaMarkt Berlin", "coffee shops in Munich").',
     inputSchema: z.object({
-      query: z.string().describe('The places search query'),
+      query: z
+        .string()
+        .describe(
+          'The places search query — a business name or business type, ideally with a location',
+        ),
       count: z.number().optional().describe('Number of results (max 100)'),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
     execute: async ({
       query,
       count: reqCount,
+      lang,
     }: {
       query: string;
       count?: number;
+      lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.places.enabled) {
@@ -289,12 +335,14 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
 
       deps.logger.log(`Serper.dev Places search for "${query}"`);
       const num = Math.min(reqCount ?? cfg.places.results, cfg.places.results);
+      const body: Record<string, unknown> = { q: query, num };
+      applyLocaleParams(body, lang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/places',
         {
           method: 'POST',
           headers: HEADERS(cfg.apiKey),
-          body: JSON.stringify({ q: query, num }),
+          body: JSON.stringify(body),
         },
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
@@ -310,8 +358,9 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
           longitude?: number;
           rating?: number;
           ratingCount?: number;
-          reviews?: string;
-          thumbnailUrl?: string;
+          type?: string;
+          website?: string;
+          cid?: string;
         }>;
       };
       if (!data.places?.length) {
@@ -326,8 +375,9 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
         longitude: r.longitude,
         rating: r.rating,
         ratingCount: r.ratingCount,
-        reviews: r.reviews || '',
-        thumbnailUrl: r.thumbnailUrl || '',
+        type: r.type || '',
+        website: r.website || '',
+        cid: r.cid || '',
       }));
       return { results };
     },
@@ -337,17 +387,27 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
 export function createSerperShoppingSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for products using Serper.dev. Returns prices, sources, images, and ratings.',
+      'Search for products using Serper.dev (Google Shopping). Returns prices, sellers, delivery info, images, and per-offer ratings. Phrase the query as the bare product name with model number (e.g. "Sony WH-1000XM5") — do NOT add words like "review", "test", or long descriptive sentences, they hurt shopping result quality.',
     inputSchema: z.object({
-      query: z.string().describe('The shopping search query'),
+      query: z
+        .string()
+        .describe('The product name with model number, kept short'),
       count: z.number().optional().describe('Number of results (max 100)'),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
     execute: async ({
       query,
       count: reqCount,
+      lang,
     }: {
       query: string;
       count?: number;
+      lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.shopping.enabled) {
@@ -362,12 +422,14 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
         reqCount ?? cfg.shopping.results,
         cfg.shopping.results,
       );
+      const body: Record<string, unknown> = { q: query, num };
+      applyLocaleParams(body, lang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/shopping',
         {
           method: 'POST',
           headers: HEADERS(cfg.apiKey),
-          body: JSON.stringify({ q: query, num }),
+          body: JSON.stringify(body),
         },
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
@@ -390,7 +452,11 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
         );
         return { results: [] };
       }
-      let results = data.shopping.map((r) => ({
+      // NOTE: no liveness HEAD checks here. Serper returns Google shopping
+      // redirect links that routinely block HEAD requests — probing them with
+      // a short timeout drops every offer. Link validity is enforced later by
+      // the product schema's safeUrl validation.
+      const results = data.shopping.map((r) => ({
         title: r.title,
         price: r.price || '',
         link: r.link || '',
@@ -400,10 +466,6 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
         rating: r.rating,
         ratingCount: r.ratingCount,
       }));
-      const { live: liveUrls } = await filterLiveUrls(
-        results.map((r) => r.link),
-      );
-      results = results.filter((r) => liveUrls.has(r.link));
       return { results };
     },
   });
@@ -412,17 +474,43 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
 export function createSerperReviewsSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for reviews using Serper.dev. Returns ratings, snippets, sources, and dates.',
+      'Fetch Google Maps reviews for a specific business or place using Serper.dev. Returns individual reviewer snippets with author names, star ratings, dates, and likes. This endpoint reviews BUSINESSES (shops, restaurants, hotels, services) — it does not search editorial product reviews. Identify the business by its exact name plus location via query (e.g. "MediaMarkt Berlin Alexanderplatz"), or pass placeId/cid when a previous places search returned them. Use it to judge seller/business reputation; for product quality opinions use webSearch with a "<product> review" query instead.',
     inputSchema: z.object({
-      query: z.string().describe('The reviews search query'),
-      count: z.number().optional().describe('Number of results (max 100)'),
+      query: z
+        .string()
+        .optional()
+        .describe(
+          'Exact business or place name, ideally with a location. Used when neither placeId nor cid is known.',
+        ),
+      placeId: z
+        .string()
+        .optional()
+        .describe(
+          'Google Place ID of the business. Most precise identifier — prefer it when available.',
+        ),
+      cid: z
+        .string()
+        .optional()
+        .describe(
+          'Google CID of the business, e.g. from a places search result.',
+        ),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
     execute: async ({
       query,
-      count: reqCount,
+      placeId,
+      cid,
+      lang,
     }: {
-      query: string;
-      count?: number;
+      query?: string;
+      placeId?: string;
+      cid?: string;
+      lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.reviews.enabled) {
@@ -431,53 +519,72 @@ export function createSerperReviewsSearch(deps: ToolDependencies) {
           error: 'Serper.dev reviews is not enabled',
         };
       }
+      if (!placeId && !cid && !query?.trim()) {
+        return {
+          results: [],
+          error: 'Provide a placeId, cid, or business name query',
+        };
+      }
 
-      deps.logger.log(`Serper.dev Reviews search for "${query}"`);
-      const num = Math.min(
-        reqCount ?? cfg.reviews.results,
-        cfg.reviews.results,
-      );
+      const lookup = placeId ?? cid ?? query?.trim();
+      deps.logger.log(`Serper.dev Reviews search for "${lookup}"`);
+      const body: Record<string, unknown> = {};
+      if (placeId) body.placeId = placeId;
+      else if (cid) body.cid = cid;
+      else body.q = query!.trim();
+      applyLocaleParams(body, lang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/reviews',
         {
           method: 'POST',
           headers: HEADERS(cfg.apiKey),
-          body: JSON.stringify({ q: query, num }),
+          body: JSON.stringify(body),
         },
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
       if (!res.ok) return { results: [], error: `HTTP ${res.status}` };
       const data = (await res.json()) as {
-        reviews?: Array<{
+        placeInfo?: {
           title?: string;
+          address?: string;
+          rating?: number;
+          ratingCount?: number;
+        };
+        reviews?: Array<{
           snippet?: string;
-          link?: string;
           rating?: number;
           date?: string;
-          source?: string;
-          reviewLink?: string;
+          isoDate?: string;
+          likes?: number | null;
+          user?: { name?: string };
         }>;
       };
       if (!data.reviews?.length) {
         deps.logger.warn(
-          `Serper.dev Reviews returned 0 results for "${query}"`,
+          `Serper.dev Reviews returned 0 results for "${lookup}"`,
         );
         return { results: [] };
       }
-      let results = data.reviews.map((r) => ({
-        title: r.title || '',
+      const placeName = data.placeInfo?.title || '';
+      const results = data.reviews.map((r) => ({
+        author: r.user?.name || '',
         snippet: r.snippet || '',
-        link: r.link || '',
         rating: r.rating,
-        date: r.date || '',
-        source: r.source || '',
-        reviewLink: r.reviewLink || '',
+        date: r.isoDate || r.date || '',
+        likes: r.likes ?? 0,
+        place: placeName,
       }));
-      const { live: liveUrls } = await filterLiveUrls(
-        results.map((r) => r.link),
-      );
-      results = results.filter((r) => liveUrls.has(r.link));
-      return { results };
+      return {
+        results,
+        place: data.placeInfo
+          ? {
+              title: data.placeInfo.title || '',
+              address: data.placeInfo.address || '',
+              rating: data.placeInfo.rating,
+              ratingCount: data.placeInfo.ratingCount,
+            }
+          : undefined,
+      };
     },
   });
 }
@@ -489,13 +596,21 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
     inputSchema: z.object({
       query: z.string().describe('The video search query'),
       count: z.number().optional().describe('Number of results (max 100)'),
+      lang: z
+        .string()
+        .optional()
+        .describe(
+          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
+        ),
     }),
     execute: async ({
       query,
       count: reqCount,
+      lang,
     }: {
       query: string;
       count?: number;
+      lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.videos.enabled) {
@@ -504,12 +619,17 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
 
       deps.logger.log(`Serper.dev Video search for "${query}"`);
       const num = Math.min(reqCount ?? cfg.videos.results, cfg.videos.results);
+      const videoBody: Record<string, unknown> = {
+        q: query,
+        num,
+      };
+      applyLocaleParams(videoBody, lang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/videos',
         {
           method: 'POST',
           headers: HEADERS(cfg.apiKey),
-          body: JSON.stringify({ q: query, num }),
+          body: JSON.stringify(videoBody),
         },
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
@@ -523,6 +643,7 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
           duration: string;
           date: string;
           imageUrl: string;
+          source?: string;
           views: number;
         }>;
       };
@@ -534,7 +655,10 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
         channel: r.channel || '',
         duration: r.duration || '',
         date: r.date || '',
-        imageUrl: r.imageUrl || '',
+        // Serper thumbnails are Google proxy images (blocked by our image
+        // trust rules) — derive a direct thumbnail for YouTube instead.
+        thumbnailUrl: buildYoutubeThumbnailUrl(r.link) ?? '',
+        source: r.source || '',
         views: r.views ?? 0,
       }));
       deps.logger.log(

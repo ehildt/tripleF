@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import { Brain, MessagesSquare, Network } from '@lucide/vue';
+import { Brain, MessagesSquare, Sparkles } from '@lucide/vue';
+
+import ExchangeEmptyStateCanvas from '../exchange-empty-state/exchange-empty-state-canvas/ExchangeEmptyStateCanvas.vue';
 </script>
 
 <template>
   <div class="no-conversation-panel">
-    <p class="no-conversation-panel__title">📋 No Conversation Selected</p>
-    <div class="no-conversation-panel__list">
-      <div class="no-conversation-panel__row">
-        <Brain class="no-conversation-panel__icon" />
-        <span>first select a model — everything else depends on it</span>
-      </div>
-      <div class="no-conversation-panel__row">
-        <MessagesSquare class="no-conversation-panel__icon" />
-        <span>click to create or switch conversations</span>
-      </div>
-      <div class="no-conversation-panel__row">
-        <Network class="no-conversation-panel__icon" />
-        <span
-          >configure sockets &amp; subscriptions (optional — for real-time
-          data)</span
-        >
+    <ExchangeEmptyStateCanvas class="no-conversation-panel__canvas" />
+    <div class="no-conversation-panel__content">
+      <p class="no-conversation-panel__title">No conversation selected</p>
+      <div class="no-conversation-panel__list">
+        <div class="no-conversation-panel__row">
+          <Brain class="no-conversation-panel__icon" />
+          <span>Select a model first</span>
+        </div>
+        <div class="no-conversation-panel__row">
+          <MessagesSquare class="no-conversation-panel__icon" />
+          <span>Create or pick a chat</span>
+        </div>
+        <div class="no-conversation-panel__row">
+          <Sparkles class="no-conversation-panel__icon" />
+          <span>Start talking</span>
+        </div>
       </div>
     </div>
   </div>
@@ -27,18 +29,37 @@ import { Brain, MessagesSquare, Network } from '@lucide/vue';
 
 <style scoped>
 .no-conversation-panel {
+  position: relative;
+  padding: var(--spacing-4);
+  width: 100%;
+  height: calc(100vh - 18.5rem);
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-conversation-panel__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.no-conversation-panel__content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-  padding: var(--spacing-4);
-  height: calc(100vh - 21rem);
   align-items: center;
   justify-content: center;
+  text-align: center;
   font-size: 0.75rem;
   font-family: var(--font-mono);
   color: var(--color-fg-muted);
-  max-width: 24rem;
-  margin: 0 auto;
 }
 
 .no-conversation-panel__title {
@@ -55,6 +76,7 @@ import { Brain, MessagesSquare, Network } from '@lucide/vue';
 .no-conversation-panel__row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-2);
 }
 

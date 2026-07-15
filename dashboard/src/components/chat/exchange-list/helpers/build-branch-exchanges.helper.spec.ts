@@ -20,7 +20,7 @@ const assistantPartner: Exchange = {
   status: 'done',
   timestamp: 101,
   requestId: 'r1',
-  toolCall: { name: 'tool', status: 'done' },
+  toolCalls: [{ name: 'tool', status: 'done' }],
 };
 
 const assistantForeign: Exchange = {
@@ -51,13 +51,13 @@ describe('buildBranchExchanges', () => {
     expect(result[0].role).toBe('user');
   });
 
-  it('copies the assistant partner with the same new requestId and clears toolCall', () => {
+  it('copies the assistant partner with the same new requestId and clears toolCalls', () => {
     const result = buildBranchExchanges(userExchange, assistantPartner);
     expect(result).toHaveLength(2);
     const user = result[0];
     const assistant = result[1];
     expect(user.requestId).toBe(assistant.requestId);
-    expect(assistant.toolCall).toBeUndefined();
+    expect(assistant.toolCalls).toBeUndefined();
     expect(assistant.status).toBe('done');
   });
 });

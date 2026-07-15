@@ -7,7 +7,6 @@ export type ResultItem = {
 
 const SOURCE_PRIORITY: Record<string, number> = {
   serper: 0,
-  brave: 1,
 };
 
 export function sortByPriority(

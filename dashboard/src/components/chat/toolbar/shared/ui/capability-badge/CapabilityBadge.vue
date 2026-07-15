@@ -14,7 +14,6 @@ defineProps<{
 .capability-badge {
   font-size: 0.625rem;
   padding: var(--spacing-0-5) var(--spacing-1);
-  border-radius: 0.25rem;
   background-color: color-mix(
     in srgb,
     var(--color-accent-primary) 10%,

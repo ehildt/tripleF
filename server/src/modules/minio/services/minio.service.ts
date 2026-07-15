@@ -8,12 +8,12 @@ import {
 } from '@nestjs/common';
 import { Client, ItemBucketMetadata } from 'minio';
 
-import type { MinioConfig } from '../../../configs/minio-config.adapter.js';
-import { MINIO_CONFIG } from '../../../constants/minio.constants.js';
 import type {
   FastifyMultipartMeta,
   HarnessJobPayload,
 } from '../../harness/dtos/harness-job.dto.js';
+import type { MinioConfig } from '../configs/minio-config.adapter.js';
+import { MINIO_CONFIG } from '../constants/minio.constants.js';
 
 @Injectable()
 export class MinioService implements OnModuleInit, OnModuleDestroy {
@@ -137,23 +137,44 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
     sessionId: string | undefined,
     conversationId: string | undefined,
     meta: HarnessJobPayload['meta'],
-  ): Promise<Buffer[]> {
-    return Promise.all(
+  ): Promise<{
+    buffers: Buffer[];
+    keptMeta: HarnessJobPayload['meta'];
+  }> {
+    const results = await Promise.all(
       meta.map(async (entry) => {
         const objectName = this.getObjectKey(
           sessionId,
           conversationId,
           entry.hash,
         );
-        const dataStream = await this.client.getObject(
-          this._config.bucket,
-          objectName,
-        );
-        const chunks: Buffer[] = [];
-        for await (const chunk of dataStream) chunks.push(chunk);
-        return Buffer.concat(chunks);
+        try {
+          const dataStream = await this.client.getObject(
+            this._config.bucket,
+            objectName,
+          );
+          const chunks: Buffer[] = [];
+          for await (const chunk of dataStream) chunks.push(chunk);
+          return { buffer: Buffer.concat(chunks), entry };
+        } catch (error) {
+          const code = (error as any)?.code;
+          if (code === 'NoSuchKey' || code === 'NotFound') {
+            this.logger.warn(
+              `Missing referenced image ${objectName}; skipping.`,
+            );
+            return null;
+          }
+          throw error;
+        }
       }),
     );
+
+    const kept = results.filter((r): r is NonNullable<typeof r> => r !== null);
+
+    return {
+      buffers: kept.map((r) => r.buffer),
+      keptMeta: kept.map((r) => r.entry),
+    };
   }
 
   async getObjectUrl(

@@ -54,6 +54,24 @@ conversation history in a single merged Files tab.
       { role: 'user', content: 'Describe this' },
       { role: 'user', content: 'Compare these two' },
     ],
+    playlistVideos: [
+      {
+        videoUrl: 'https://www.youtube.com/watch?v=CCHdMIEGaaM',
+        title: 'Daft Punk - Get Lucky (Official Video)',
+        duration: '4:08',
+        channel: 'Daft Punk',
+        date: 'Apr 19, 2013',
+        caption: 'Official music video featuring Pharrell Williams.',
+      },
+      {
+        videoUrl: 'https://www.youtube.com/watch?v=h5EofwRzit0',
+        title: 'Daft Punk - One More Time (Official Video)',
+        duration: '5:21',
+        channel: 'Daft Punk',
+        date: 'Mar 15, 2001',
+        caption: 'From the album Discovery.',
+      },
+    ],
     rightPanelView: 'files',
     onSelectView: fn(),
     onRemoveAttachment: fn(),
@@ -67,6 +85,11 @@ type Story = StoryObj<typeof meta>;
 
 /** Files tab selected with pending and uploaded items. */
 export const Files: Story = {};
+
+/** Playlist tab selected with accumulated videos. */
+export const Playlist: Story = {
+  args: { rightPanelView: 'playlist' },
+};
 
 /** History tab selected. */
 export const History: Story = {

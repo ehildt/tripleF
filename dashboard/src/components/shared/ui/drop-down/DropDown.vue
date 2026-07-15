@@ -160,7 +160,7 @@ defineExpose({ close });
 
 .dropdown-trigger:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .dropdown-trigger:hover:not(:disabled) {
@@ -170,7 +170,6 @@ defineExpose({ close });
 .dropdown-trigger--icon-only {
   padding: var(--spacing-1);
   color: var(--color-fg-muted);
-  border-radius: 0.25rem;
   cursor: pointer;
   transition:
     color 0.2s ease,
@@ -180,7 +179,7 @@ defineExpose({ close });
 
 .dropdown-trigger--icon-only:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .dropdown-trigger--icon-only:hover:not(:disabled) {
@@ -236,7 +235,6 @@ defineExpose({ close });
 
 .dropdown-menu::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
-  border-radius: 3px;
 }
 
 .dropdown-enter-active,

@@ -15,6 +15,7 @@ import { StepRegistryService } from '../services/step-registry.service.js';
 import { ExecuteStepService } from '../services/steps/execute-step.service.js';
 import { InterpretStepService } from '../services/steps/interpret-step.service.js';
 import { RespondStepService } from '../services/steps/respond-step.service.js';
+import { SanitizeStepService } from '../services/steps/sanitize-step.service.js';
 
 import { HarnessProcessor } from './harness.processor.js';
 
@@ -111,6 +112,12 @@ describe('HarnessProcessor', () => {
         },
         {
           provide: RespondStepService,
+          useValue: {
+            execute: vi.fn(),
+          },
+        },
+        {
+          provide: SanitizeStepService,
           useValue: {
             execute: vi.fn(),
           },

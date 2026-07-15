@@ -1,7 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
-import { type FilterVariant } from '../../../sharp/helpers/image-variant.helper.js';
+import { type FilterVariant } from '../../../sharp/types/image-variant.types.js';
 
 export function createVariantRequestTool(variant: FilterVariant) {
   const descriptions: Record<FilterVariant, string> = {

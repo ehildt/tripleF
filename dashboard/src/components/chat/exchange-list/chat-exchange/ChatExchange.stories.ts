@@ -48,8 +48,8 @@ const meta = {
       description: {
         component: `
 A single exchange in the chat — either a user message or an assistant
-response. Orchestrates the ExchangeHeader, ExchangeToolCallStatus,
-ExchangeContent / ExchangeCollapsed, and the ExchangeLightbox modal.
+response. Orchestrates the ExchangeHeader, ExchangeContent /
+ExchangeCollapsed, and the ExchangeLightbox modal.
 `,
       },
     },

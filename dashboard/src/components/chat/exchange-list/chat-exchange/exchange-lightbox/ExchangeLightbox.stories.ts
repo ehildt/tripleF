@@ -4,9 +4,18 @@ import { fn } from 'storybook/test';
 import ExchangeLightbox from './ExchangeLightbox.vue';
 
 const sampleImages = [
-  'https://placehold.co/600x600/png?text=1',
-  'https://placehold.co/600x600/png?text=2',
-  'https://placehold.co/600x600/png?text=3',
+  {
+    url: 'https://placehold.co/600x400/png?text=Image+1',
+    title: 'First Image',
+  },
+  {
+    url: 'https://placehold.co/600x450/png?text=Image+2',
+    title: 'Second Image',
+  },
+  {
+    url: 'https://placehold.co/600x500/png?text=Image+3',
+    title: 'Third Image',
+  },
 ];
 
 const meta = {
@@ -17,9 +26,11 @@ const meta = {
     docs: {
       description: {
         component: `
-Teleported full-screen image lightbox. Renders prev/next arrows, dot
-indicators, a close button, and an image counter. Pure presentational —
-the parent owns the open state and image list.
+Teleported full-screen image lightbox centered in a 60vw panel with
+blurred backdrop. Features a header, footer with pagination dots and
+a counter, prev/next flanking the image. Pure presentational — parents
+via an orchestrator (ChatExchange) passing props and listening to events.
+Arrows remain visible but are disabled/grayscale when at the start/end.
 `,
       },
     },
@@ -32,6 +43,7 @@ the parent owns the open state and image list.
     isOpen: true,
     images: sampleImages,
     index: 1,
+    activeTitle: sampleImages[1].title,
     onClose: fn(),
     onPrev: fn(),
     onNext: fn(),
@@ -45,13 +57,13 @@ type Story = StoryObj<typeof meta>;
 /** Open at the middle image — both arrows visible. */
 export const Middle: Story = {};
 
-/** First image — prev hidden. */
+/** First image — left arrow grays out and is disabled. */
 export const First: Story = { args: { index: 0 } };
 
-/** Last image — next hidden. */
+/** Last image — right arrow grays out and is disabled. */
 export const Last: Story = { args: { index: 2 } };
 
-/** Single image — both arrows and dots hidden. */
+/** Single image — both arrows grays out, single dot active. */
 export const Single: Story = {
   args: { images: [sampleImages[0]], index: 0 },
 };

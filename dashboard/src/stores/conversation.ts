@@ -7,6 +7,7 @@ import type { HarnessResponseData } from '@/types/harness-response-data.model';
 import { getApiUrl } from '../api/api-url';
 import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
+import type { ConversationMetadataImage } from '../utils/build-query-params.helper';
 import { createId } from '../utils/id.helper';
 import { toPromptMessage } from './helpers/to-prompt-message.helper';
 import { useSocketStore } from './socket';
@@ -29,6 +30,7 @@ export interface UploadedImage {
   size?: number;
   selected?: boolean;
   conversationId: string;
+  source?: 'local' | 'cloud';
 }
 
 export interface Exchange {
@@ -42,16 +44,30 @@ export interface Exchange {
   event?: string;
   roomId?: string;
   conversationId?: string;
+  // Token data: promptEvalCount is the cumulative input token count reported
+  // by Ollama for this turn. evalCount is the output tokens for this response.
+  // inputTokenDelta holds the non-cumulative inputs added by this specific
+  // turn so excluded exchanges can be deducted from totals correctly.
   promptEvalCount?: number;
   evalCount?: number;
-  toolCall?: {
+  inputTokenDelta?: number;
+  // Currently running tool calls for this exchange. Parallel searches are
+  // tracked individually so the activity label can group them by category
+  // instead of flickering through near-duplicate labels.
+  toolCalls?: Array<{
     name: string;
-    input?: unknown;
-    status: 'start' | 'running' | 'compacting' | 'done' | 'preparing';
-  };
-  phase?:
-    'classifying' | 'strategizing' | 'summarizing' | 'rendering' | 'reviewing';
+    category?: string;
+    query?: string;
+    status: string;
+  }>;
+  // Live activity while the request is processed: the current step or tool
+  // label (fallback for non-thinking models) and the streamed thinking text.
+  activity?: string;
+  reasoning?: string;
   included?: boolean;
+  // Images that were associated with this prompt, either uploaded as new
+  // files in the form data or referenced through conversation metadata.
+  images?: ConversationMetadataImage[];
   harnessTemplate?: string;
   harnessData?: HarnessResponseData;
   text?: string;
@@ -212,11 +228,17 @@ export const useConversationStore = defineStore('conversation', () => {
   }
 
   function ensureConversation(): Conversation {
-    if (activeConversationId.value) {
-      const existing = getConversation(activeConversationId.value);
-      if (existing) return existing;
-    }
-    const conversation = createConversation({ type: 'temporary' });
+    const existing = activeConversationId.value
+      ? getConversation(activeConversationId.value)
+      : undefined;
+    if (existing) return existing;
+
+    const cid = createId();
+    const conversation = createConversation({
+      type: 'temporary',
+      event: cid,
+      conversationId: cid,
+    });
     conversations.value.unshift(conversation);
     activeConversationId.value = conversation.id;
     return conversation;
@@ -468,8 +490,37 @@ export const useConversationStore = defineStore('conversation', () => {
     if (exchange) {
       exchange.status = 'done';
       if (tokenData) {
-        exchange.promptEvalCount = tokenData.promptEvalCount;
+        const cumulativeInputs = tokenData.promptEvalCount;
+        exchange.promptEvalCount = cumulativeInputs;
         exchange.evalCount = tokenData.evalCount;
+
+        // Compute non-cumulative input delta for this specific turn.
+        // PEC is cumulative and bakes in:
+        //   1) new user input tokens
+        //   2) previous assistant's response (already counted in its evalCount)
+        // We subtract the previous evalCount to avoid double-counting,
+        // leaving only the *new* inputs actually added by this exchange.
+        if (cumulativeInputs != null) {
+          const allAssistants = conversation.exchanges.filter(
+            (e) => e.role === 'assistant' && e.status === 'done',
+          );
+          const prevAssistant = allAssistants.at(-2);
+
+          let delta = !prevAssistant
+            ? cumulativeInputs
+            : Math.max(
+                0,
+                cumulativeInputs - (prevAssistant.promptEvalCount ?? 0),
+              );
+
+          // Subtract previous response tokens — they were already counted in
+          // the prior assistant's evalCount and only reappear here because
+          // Ollama counts them as input on this call.
+          if (prevAssistant && prevAssistant.evalCount != null) {
+            delta = Math.max(0, delta - prevAssistant.evalCount);
+          }
+          exchange.inputTokenDelta = delta;
+        }
       }
       conversation.updatedAt = Date.now();
     }
@@ -580,6 +631,10 @@ export const useConversationStore = defineStore('conversation', () => {
         ...img,
         conversationId: img.conversationId ?? cid,
         selected: existing?.selected ?? img.selected ?? true,
+        source:
+          img.source === 'cloud'
+            ? ('cloud' as const)
+            : (existing?.source ?? img.source ?? 'local'),
       });
     }
     conversation.uploadedImages = merged;
@@ -689,9 +744,27 @@ export const useConversationStore = defineStore('conversation', () => {
   function toggleExchangeIncluded(conversationId: string, exchangeId: string) {
     const conversation = getConversation(conversationId);
     if (!conversation) return;
-    const exchange = conversation.exchanges.find((e) => e.id === exchangeId);
-    if (!exchange) return;
-    exchange.included = exchange.included === false ? true : false;
+    const idx = conversation.exchanges.findIndex((e) => e.id === exchangeId);
+    if (idx === -1) return;
+
+    // Toggle this exchange and its paired partner so both user prompt +
+    // assistant response are included/excluded together.
+    const target = conversation.exchanges[idx];
+    const newVal = target.included !== false ? false : true;
+    target.included = newVal;
+
+    // Check forward for paired assistant, or backward for paired user
+    if (
+      idx < conversation.exchanges.length - 1 &&
+      conversation.exchanges[idx + 1].requestId === target.requestId
+    ) {
+      conversation.exchanges[idx + 1].included = newVal;
+    } else if (
+      idx > 0 &&
+      conversation.exchanges[idx - 1].requestId === target.requestId
+    ) {
+      conversation.exchanges[idx - 1].included = newVal;
+    }
   }
 
   function buildPrompt(conversationId: string): string {
@@ -705,7 +778,11 @@ export const useConversationStore = defineStore('conversation', () => {
           role: message.role,
           content: turndown.turndown(message.content),
         };
-      });
+      })
+      .filter(
+        (m) =>
+          m.role !== 'assistant' || (m.content && m.content.trim().length > 0),
+      );
     return JSON.stringify(messages);
   }
 

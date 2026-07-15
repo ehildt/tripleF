@@ -29,7 +29,7 @@ describe('PprocToggleButton', () => {
       props: { selected: false, disabled: true },
     });
     const btn = wrapper.find('button');
-    expect(btn.classes().join(' ')).toContain('cursor-not-allowed');
+    expect(btn.classes().join(' ')).toContain('cursor-default');
     expect(btn.classes().join(' ')).toContain('opacity-60');
   });
 

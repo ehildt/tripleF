@@ -7,7 +7,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-import { HARNESS_QUEUE } from '../../../constants/bullmq.constants.js';
+import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { CreateDlqEntryDto, STATUSES } from '../dtos/create-dlq-entry.dto.js';
 import { DlqEntryResponseDto } from '../dtos/dlq-entry-response.dto.js';
 import { ReinstateDlqDto } from '../dtos/reinstate-dlq.dto.js';

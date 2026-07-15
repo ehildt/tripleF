@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import VideoGalleryItemComponent from './video-gallery-item/VideoGalleryItem.vue';
 
-defineProps<{
+const props = defineProps<{
   title?: string;
   items?: VideoGalleryItem[];
 }>();
+
+const count = computed(() => props.items?.length ?? 0);
 </script>
 
 <template>
@@ -16,10 +20,15 @@ defineProps<{
     aria-label="Video gallery"
   >
     <h3 v-if="title">{{ title }}</h3>
-    <ul v-if="items.length === 1" class="video-gallery video-gallery--single">
-      <VideoGalleryItemComponent :item="items[0]" />
-    </ul>
-    <ul v-else class="video-gallery video-gallery--grid">
+    <ul
+      v-if="items.length"
+      class="video-gallery"
+      :class="{
+        'video-gallery--count-1': count === 1,
+        'video-gallery--count-2': count === 2,
+        'video-gallery--count-3-plus': count >= 3,
+      }"
+    >
       <VideoGalleryItemComponent
         v-for="(item, index) in items"
         :key="index"
@@ -42,33 +51,67 @@ defineProps<{
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-2);
 }
 
-.video-gallery--single {
+.video-gallery > :deep(li) {
   display: flex;
   justify-content: center;
 }
 
-.video-gallery--single > :deep(li) {
+/* 1 item: full-width, centered. */
+.video-gallery--count-1 > :deep(li) {
   width: 100%;
-  max-width: 560px;
+  flex: 0 0 100%;
 }
 
-.video-gallery--grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-2);
+/* 2 items: 2 equal columns. */
+.video-gallery--count-2 > :deep(li) {
+  flex: 1 1 calc((100% - var(--spacing-2)) / 2);
+  min-width: calc((100% - var(--spacing-2)) / 2);
+}
+
+/* 3+ items: single column on small screens. */
+.video-gallery--count-3-plus > :deep(li) {
+  width: 100%;
+  flex: 0 0 100%;
 }
 
 @media (min-width: 640px) {
-  .video-gallery--grid {
-    grid-template-columns: repeat(2, 1fr);
+  /* 3+ items: 2 columns. */
+  .video-gallery--count-3-plus > :deep(li) {
+    flex: 1 1 calc((100% - var(--spacing-2)) / 2);
+    min-width: calc((100% - var(--spacing-2)) / 2);
+  }
+
+  /* Odd total count: the lone last-row item spans the full row. */
+  .video-gallery--count-3-plus > :deep(li:nth-child(2n + 1):last-child) {
+    width: 100%;
+    flex: 0 0 100%;
   }
 }
 
 @media (min-width: 1024px) {
-  .video-gallery--grid {
-    grid-template-columns: repeat(3, 1fr);
+  /* 3+ items: 3 columns. */
+  .video-gallery--count-3-plus > :deep(li) {
+    flex: 1 1 calc((100% - 2 * var(--spacing-2)) / 3);
+    min-width: calc((100% - 2 * var(--spacing-2)) / 3);
+  }
+
+  /* 2 items left in the last row → share the row equally. */
+  .video-gallery--count-3-plus > :deep(li:nth-last-child(2):nth-child(3n + 1)),
+  .video-gallery--count-3-plus > :deep(li:nth-last-child(1):nth-child(3n + 2)) {
+    flex: 1 1 calc((100% - var(--spacing-2)) / 2);
+    min-width: calc((100% - var(--spacing-2)) / 2);
+  }
+
+  /* 1 item left in the last row → full width, centered. */
+  .video-gallery--count-3-plus > :deep(li:nth-child(3n + 1):last-child) {
+    width: 100%;
+    flex: 0 0 100%;
   }
 }
 </style>

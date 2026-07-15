@@ -1,0 +1,589 @@
+import { Inject, Injectable } from '@nestjs/common';
+
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import { buildFinalMessagesForSanitize } from '../helpers/build-final-messages.helper.js';
+import { collectHistoryVideoUrls } from '../helpers/collect-history-video-urls.helper.js';
+import { dedupeImagesByFingerprint } from '../helpers/dedupe-images-by-fingerprint.helper.js';
+import {
+  extractArticles,
+  extractReferences,
+} from '../helpers/extract-articles-from-tools.helper.js';
+import {
+  type ExtractedImageItem,
+  type ExtractedVideoItem,
+  extractImageSearchItems,
+  extractVideoSearchItems,
+} from '../helpers/extract-media-from-tools.helper.js';
+import { extractPlaces } from '../helpers/extract-places.helper.js';
+import { extractReviews } from '../helpers/extract-reviews.helper.js';
+import { extractShopOffers } from '../helpers/extract-shop-offers.helper.js';
+import { sanitizeToolResult } from '../helpers/sanitize-tool-result.helper.js';
+import { sanitizeToolResultsWithIngestedUrls } from '../helpers/sanitize-tool-result.helper.js';
+import { videoUrlKeys } from '../helpers/video-url-keys.helper.js';
+import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
+import type { HarnessContext } from '../services/harness-context.type.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
+import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
+
+export type SanitizeResult = {
+  toolResults: Array<{ toolName: string; result: unknown }>;
+  messages: InputMessage[];
+  availableImageCount: number;
+  availableVideoCount: number;
+  ingestedImages?: Array<{
+    imageUrl: string;
+    imageAlt: string;
+    title: string;
+    caption: string;
+    source: 'cloud';
+    hash: string;
+    name: string;
+    sourceUrl: string;
+  }>;
+};
+
+@Injectable()
+export class SanitizeActionService {
+  constructor(
+    @Inject(MediaUrlValidatorService)
+    private readonly mediaUrlValidator: MediaUrlValidatorService,
+    @Inject(CloudImageIngestionService)
+    private readonly cloudImageIngestion: CloudImageIngestionService,
+    private readonly stepLogger: HarnessStepLogger,
+  ) {}
+
+  async execute(
+    ctx: HarnessContext,
+    toolResults: Array<{ toolName: string; result: unknown }>,
+    buffers: Buffer[],
+  ): Promise<SanitizeResult> {
+    // 1. Trust-based sanitize (drop untrusted hosts, keep only embeddable videos).
+    const trustSanitized = this.sanitizeToolResults(toolResults);
+
+    // 2. Collect every URL that appears anywhere in the tool results and ping
+    //    each one. This covers ImageSearch URLs, article thumbnails embedded in
+    //    webSearch/newsSearch results, video thumbnails, and the article/page
+    //    URLs themselves, so broken media and dead citations cannot leak into
+    //    the response.
+    const allImageUrls = this.collectImageUrls(trustSanitized);
+    const videoThumbnailUrls = this.collectVideoThumbnailUrls(trustSanitized);
+    const pageUrls = this.collectPageUrls(trustSanitized);
+
+    const [brokenImageUrls, brokenThumbnailUrls, brokenPageUrls] =
+      await Promise.all([
+        this.findBrokenImageUrls(ctx, allImageUrls),
+        this.findBrokenThumbnailUrls(ctx, videoThumbnailUrls),
+        this.findBrokenPageUrls(ctx, pageUrls),
+      ]);
+
+    const brokenMediaUrls = new Set([
+      ...brokenImageUrls,
+      ...brokenThumbnailUrls,
+    ]);
+    const sanitizedToolResults = this.sanitizeToolResultsWithBrokenUrls(
+      trustSanitized,
+      brokenMediaUrls,
+      brokenPageUrls,
+    );
+
+    // 3. Extract image/video candidates and verify them against live endpoints.
+    const rawImageItems = extractImageSearchItems(sanitizedToolResults);
+    const rawVideoItems = extractVideoSearchItems(sanitizedToolResults);
+    let { images: verifiedImages, videos: verifiedVideos } =
+      await this.filterVerifiedMedia(rawImageItems, rawVideoItems);
+
+    // 3b. Deduplicate verified images by content fingerprint.
+    const { items: dedupedImages, removedCount: removedDuplicateImages } =
+      await dedupeImagesByFingerprint(verifiedImages);
+    verifiedImages = dedupedImages;
+
+    if (removedDuplicateImages > 0) {
+      this.stepLogger.log(
+        ctx,
+        'sanitize',
+        'deduplicated images by content hash',
+        {
+          removedDuplicateImages,
+          remainingImages: verifiedImages.length,
+        },
+      );
+    }
+
+    // 3c. Videolist follow-ups must never repeat videos the user already
+    // saw: drop every candidate whose URL appeared in an earlier videolist
+    // response instead of offering it to the response model again.
+    if (ctx.outputs.intent?.template === 'videolist') {
+      const historyVideoUrls = collectHistoryVideoUrls(ctx.request.messages);
+      if (historyVideoUrls.size > 0) {
+        const beforeCount = verifiedVideos.length;
+        verifiedVideos = verifiedVideos.filter(
+          (video) =>
+            !videoUrlKeys(video.videoUrl).some((key) =>
+              historyVideoUrls.has(key),
+            ),
+        );
+        if (beforeCount !== verifiedVideos.length) {
+          this.stepLogger.log(
+            ctx,
+            'sanitize',
+            'skipped previously shown videos',
+            {
+              removedCount: beforeCount - verifiedVideos.length,
+              remainingCount: verifiedVideos.length,
+            },
+          );
+        }
+      }
+    }
+
+    // 4. Respect explicit counts from intent (default to 6 each).
+    const imageTargetCount =
+      (ctx.outputs.intent?.imageCount ?? 0) > 0
+        ? ctx.outputs.intent!.imageCount
+        : 6;
+    const videoTargetCount =
+      (ctx.outputs.intent?.videoCount ?? 0) > 0
+        ? ctx.outputs.intent!.videoCount
+        : 6;
+    verifiedImages = verifiedImages.slice(0, imageTargetCount);
+    verifiedVideos = verifiedVideos.slice(0, videoTargetCount);
+
+    // 5. Ingest external images into MinIO for image-required compare/describe tasks.
+    let ingestedImages: SanitizeResult['ingestedImages'] = [];
+    const shouldIngestCloudImages =
+      (ctx.outputs.intent?.template === 'compare' ||
+        ctx.outputs.intent?.template === 'describe') &&
+      (ctx.buffers.length > 0 || ctx.processedMeta.length > 0);
+    if (shouldIngestCloudImages) {
+      const existingFingerprints = await this.buildUserFingerprints(ctx);
+      ingestedImages = await this.ingestExternalImages(
+        ctx,
+        verifiedImages,
+        existingFingerprints,
+      );
+      ingestedImages = this.limitCloudReferenceImages(ingestedImages, 3);
+      verifiedImages = this.replaceExternalWithIngested(
+        verifiedImages,
+        ingestedImages,
+      );
+    }
+
+    // 5b. Rewrite image URLs inside tool results to use local storage URLs after ingestion.
+    const finalToolResults = shouldIngestCloudImages
+      ? sanitizeToolResultsWithIngestedUrls(
+          sanitizedToolResults,
+          this.buildIngestedByUrlMap(ingestedImages),
+          brokenMediaUrls,
+          brokenPageUrls,
+        )
+      : sanitizedToolResults;
+
+    // 6. Build the final message payload with tool context for the response model.
+    const articles = extractArticles(finalToolResults);
+    const references = extractReferences(finalToolResults);
+    const shopOffers = extractShopOffers(finalToolResults);
+    const reviews = extractReviews(finalToolResults);
+    const places = extractPlaces(finalToolResults);
+
+    this.stepLogger.log(ctx, 'sanitize', 'shop data extracted', {
+      shopOfferCount: shopOffers.length,
+      reviewCount: reviews.length,
+      placeCount: places.length,
+    });
+
+    const messages = this.scrubBrokenUrlsFromMessages(
+      buildFinalMessagesForSanitize(
+        ctx,
+        buffers,
+        finalToolResults,
+        verifiedImages,
+        verifiedVideos,
+        articles,
+        references,
+        shopOffers,
+        reviews,
+        places,
+      ),
+      new Set([...brokenMediaUrls, ...brokenPageUrls]),
+    );
+
+    return {
+      toolResults: finalToolResults,
+      messages,
+      availableImageCount: verifiedImages.length,
+      availableVideoCount: verifiedVideos.length,
+      ingestedImages,
+    };
+  }
+
+  private sanitizeToolResults(
+    toolResults: Array<{ toolName: string; result: unknown }>,
+  ): Array<{ toolName: string; result: unknown }> {
+    return toolResults.map((tr) => ({
+      toolName: tr.toolName,
+      result: sanitizeToolResult(tr.toolName, tr.result),
+    }));
+  }
+
+  private sanitizeToolResultsWithBrokenUrls(
+    toolResults: Array<{ toolName: string; result: unknown }>,
+    brokenImageUrls: Set<string>,
+    brokenPageUrls: Set<string>,
+  ): Array<{ toolName: string; result: unknown }> {
+    return toolResults.map((tr) => ({
+      toolName: tr.toolName,
+      result: sanitizeToolResult(tr.toolName, tr.result, {
+        brokenImageUrls,
+        brokenPageUrls,
+      }),
+    }));
+  }
+
+  private collectImageUrls(
+    toolResults: Array<{ toolName: string; result: unknown }>,
+  ): string[] {
+    const urls = new Set<string>();
+
+    for (const tr of toolResults) {
+      const data = tr.result as
+        | {
+            results?: Array<{
+              imageUrl?: string;
+            }>;
+          }
+        | undefined;
+      if (!data?.results) continue;
+
+      for (const r of data.results) {
+        if (typeof r.imageUrl === 'string' && r.imageUrl.trim()) {
+          urls.add(r.imageUrl.trim());
+        }
+      }
+    }
+
+    return Array.from(urls);
+  }
+
+  /** Thumbnail URLs on video candidates from video/web/news search results. */
+  private collectVideoThumbnailUrls(
+    toolResults: Array<{ toolName: string; result: unknown }>,
+  ): string[] {
+    const urls = new Set<string>();
+
+    for (const tr of toolResults) {
+      if (
+        !tr.toolName.endsWith('VideoSearch') &&
+        tr.toolName !== 'webSearch' &&
+        !tr.toolName.endsWith('WebSearch') &&
+        !tr.toolName.endsWith('NewsSearch')
+      )
+        continue;
+
+      const data = tr.result as
+        { results?: Array<{ thumbnailUrl?: string }> } | undefined;
+      if (!data?.results) continue;
+
+      for (const r of data.results) {
+        if (typeof r.thumbnailUrl === 'string' && r.thumbnailUrl.trim()) {
+          urls.add(r.thumbnailUrl.trim());
+        }
+      }
+    }
+
+    return Array.from(urls);
+  }
+
+  /** Article/page URLs from web and news search results. */
+  private collectPageUrls(
+    toolResults: Array<{ toolName: string; result: unknown }>,
+  ): string[] {
+    const urls = new Set<string>();
+
+    for (const tr of toolResults) {
+      if (
+        tr.toolName !== 'webSearch' &&
+        !tr.toolName.endsWith('WebSearch') &&
+        !tr.toolName.endsWith('NewsSearch')
+      )
+        continue;
+
+      const data = tr.result as
+        { results?: Array<{ url?: string; link?: string }> } | undefined;
+      if (!data?.results) continue;
+
+      for (const r of data.results) {
+        const url = [r.url, r.link].find(
+          (candidate): candidate is string =>
+            typeof candidate === 'string' && !!candidate.trim(),
+        );
+        if (url) urls.add(url.trim());
+      }
+    }
+
+    return Array.from(urls);
+  }
+
+  private async findBrokenImageUrls(
+    ctx: HarnessContext,
+    urls: string[],
+  ): Promise<Set<string>> {
+    if (urls.length === 0) return new Set();
+
+    const results = await this.mediaUrlValidator.validateUrls(urls, {
+      enabled: true,
+      timeoutMs: 5000,
+      maxRedirects: 3,
+      concurrency: 5,
+      checkImageDimensions: true,
+      minWidth: 1280,
+      minHeight: 720,
+      maxProbeBytes: 256 * 1024,
+    });
+
+    const broken = results.filter((r) => r.kind !== 'image').map((r) => r.url);
+
+    if (broken.length > 0) {
+      this.stepLogger.log(
+        ctx,
+        'sanitize',
+        'removed broken or sub-720p image urls',
+        {
+          brokenCount: broken.length,
+          sampledUrls: broken.slice(0, 5),
+        },
+      );
+    }
+
+    return new Set(broken);
+  }
+
+  /**
+   * Video thumbnails are rendered small in video cards, so no dimension
+   * check — the URL just has to serve an actual image.
+   */
+  private async findBrokenThumbnailUrls(
+    ctx: HarnessContext,
+    urls: string[],
+  ): Promise<Set<string>> {
+    if (urls.length === 0) return new Set();
+
+    const results = await this.mediaUrlValidator.validateUrls(urls, {
+      enabled: true,
+      timeoutMs: 3000,
+      maxRedirects: 3,
+      concurrency: 5,
+    });
+
+    const broken = results.filter((r) => r.kind !== 'image').map((r) => r.url);
+
+    if (broken.length > 0) {
+      this.stepLogger.log(ctx, 'sanitize', 'removed broken video thumbnails', {
+        brokenCount: broken.length,
+        sampledUrls: broken.slice(0, 5),
+      });
+    }
+
+    return new Set(broken);
+  }
+
+  /**
+   * Article/page URLs are only dropped on a definitive dead response
+   * (status >= 400). "unknown" is kept because many sites block bot probes
+   * while serving real browsers fine.
+   */
+  private async findBrokenPageUrls(
+    ctx: HarnessContext,
+    urls: string[],
+  ): Promise<Set<string>> {
+    if (urls.length === 0) return new Set();
+
+    const results = await this.mediaUrlValidator.validateUrls(urls, {
+      enabled: true,
+      timeoutMs: 3000,
+      maxRedirects: 3,
+      concurrency: 5,
+    });
+
+    const broken = results.filter((r) => r.kind === 'broken').map((r) => r.url);
+
+    if (broken.length > 0) {
+      this.stepLogger.log(ctx, 'sanitize', 'removed dead article page urls', {
+        brokenCount: broken.length,
+        sampledUrls: broken.slice(0, 5),
+      });
+    }
+
+    return new Set(broken);
+  }
+
+  private scrubBrokenUrlsFromMessages(
+    messages: InputMessage[],
+    brokenImageUrls: Set<string>,
+  ): InputMessage[] {
+    if (brokenImageUrls.size === 0) return messages;
+
+    const replacements = Array.from(brokenImageUrls).map((url) => ({
+      url,
+      escaped: url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    }));
+
+    return messages.map((message) => {
+      if (typeof message.content !== 'string') return message;
+      let content = message.content;
+      for (const { escaped } of replacements) {
+        content = content.replace(new RegExp(escaped, 'g'), ' ');
+      }
+      return { ...message, content };
+    });
+  }
+
+  private async buildUserFingerprints(ctx: HarnessContext): Promise<string[]> {
+    const originalEntries = ctx.processedMeta
+      .map((entry, index) => ({ entry, index }))
+      .filter(({ entry }) => !entry.variant || entry.variant === 'original');
+
+    const fingerprints: string[] = [];
+    for (const { entry } of originalEntries) {
+      const fingerprint = entry.fingerprint;
+      if (fingerprint) {
+        fingerprints.push(fingerprint);
+      }
+    }
+    return fingerprints;
+  }
+
+  private async ingestExternalImages(
+    ctx: HarnessContext,
+    verifiedImages: Array<{ imageUrl: string; title?: string }>,
+    existingFingerprints: string[],
+  ): Promise<SanitizeResult['ingestedImages']> {
+    const externalOnly = verifiedImages.filter(
+      (item) =>
+        item.imageUrl.startsWith('http://') ||
+        item.imageUrl.startsWith('https://'),
+    );
+    if (externalOnly.length === 0) return [];
+
+    return this.cloudImageIngestion.ingest(
+      externalOnly,
+      ctx.sessionId,
+      ctx.filters.conversationId,
+      ctx.requestId,
+      { existingFingerprints },
+    );
+  }
+
+  private replaceExternalWithIngested(
+    verifiedImages: Array<{ imageUrl: string; title?: string }>,
+    ingestedImages: SanitizeResult['ingestedImages'],
+  ): Array<{ imageUrl: string; title?: string }> {
+    const ingestedByUrl = new Map(
+      (ingestedImages ?? []).map((img) => [img.sourceUrl, img]),
+    );
+
+    const result: Array<{ imageUrl: string; title?: string }> = [];
+    const seenUrls = new Set<string>();
+
+    for (const item of verifiedImages) {
+      const ingested = ingestedByUrl.get(item.imageUrl);
+      const finalUrl = ingested?.imageUrl ?? item.imageUrl;
+      if (seenUrls.has(finalUrl)) continue;
+
+      seenUrls.add(finalUrl);
+      result.push({
+        imageUrl: finalUrl,
+        title: ingested?.title ?? item.title,
+      });
+    }
+
+    return result;
+  }
+
+  private buildIngestedByUrlMap(
+    ingestedImages: SanitizeResult['ingestedImages'],
+  ): Map<string, { imageUrl: string; title?: string }> {
+    return new Map(
+      (ingestedImages ?? []).map((img) => [
+        img.sourceUrl,
+        { imageUrl: img.imageUrl, title: img.title },
+      ]),
+    );
+  }
+
+  private limitCloudReferenceImages(
+    ingestedImages: SanitizeResult['ingestedImages'],
+    maxCloud: number,
+  ): SanitizeResult['ingestedImages'] {
+    return (ingestedImages ?? []).slice(0, maxCloud);
+  }
+
+  /**
+   * Verify media URLs against live endpoints. Broken links are dropped; type mismatches (image URL actually pointing to a video or vice versa) are re-routed.
+   */
+  private async filterVerifiedMedia(
+    rawImages: ExtractedImageItem[],
+    rawVideos: ExtractedVideoItem[],
+  ): Promise<{
+    images: ExtractedImageItem[];
+    videos: ExtractedVideoItem[];
+  }> {
+    const imageUrls = rawImages.map((item) => item.imageUrl);
+    const videoUrls = rawVideos.map((item) => item.videoUrl);
+
+    const [imageResults, videoResults] = await Promise.all([
+      this.mediaUrlValidator.validateUrls(imageUrls, {
+        enabled: true,
+        timeoutMs: 5000,
+        maxRedirects: 3,
+        concurrency: 5,
+        checkImageDimensions: true,
+        minWidth: 1280,
+        minHeight: 720,
+        maxProbeBytes: 256 * 1024,
+      }),
+      this.mediaUrlValidator.validateUrls(videoUrls, {
+        enabled: true,
+        timeoutMs: 3000,
+        maxRedirects: 3,
+        concurrency: 5,
+      }),
+    ]);
+
+    const images: ExtractedImageItem[] = [];
+    const videos: ExtractedVideoItem[] = [];
+
+    for (let i = 0; i < rawImages.length; i++) {
+      const item = rawImages[i];
+      const result = imageResults[i];
+      if (
+        !result ||
+        result.kind === 'broken' ||
+        result.kind === 'unknown' ||
+        result.kind === 'html'
+      )
+        continue;
+
+      if (result.kind === 'video')
+        videos.push({ videoUrl: item.imageUrl, title: item.title });
+      else images.push(item);
+    }
+
+    for (let i = 0; i < rawVideos.length; i++) {
+      const item = rawVideos[i];
+      const result = videoResults[i];
+      if (
+        !result ||
+        result.kind === 'broken' ||
+        result.kind === 'unknown' ||
+        result.kind === 'html'
+      )
+        continue;
+
+      if (result.kind === 'image')
+        images.push({ imageUrl: item.videoUrl, title: item.title });
+      else videos.push(item);
+    }
+
+    return { images, videos };
+  }
+}

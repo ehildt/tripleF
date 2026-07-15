@@ -207,3 +207,8 @@ input[type='number'] {
 .fade-leave-to {
   opacity: 0;
 }
+/* While a video floats as a popup, lift the chat's center column above the
+   sticky toolbar/panels (sticky always creates a stacking context). */
+body.has-floating-video .chat-center-column {
+  z-index: 60;
+}

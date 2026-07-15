@@ -33,33 +33,22 @@ const displayValue = computed(() => {
     :disabled="disabled"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <div class="relative w-full">
+    <div class="input-select">
       <ListboxButton
-        :class="[
-          'w-full px-3 py-2 bg-secondary border rounded-none text-sm text-fg-primary text-left focus:outline-none transition-all font-mono cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed pr-10',
-          'hover:border-[var(--color-accent-active)]/50',
-          blinking
-            ? 'animate-pulse ring-2 ring-[var(--color-accent-active)] border-[var(--color-accent-active)]'
-            : 'border-divider',
-        ]"
+        class="input-select__button"
+        :class="{ 'input-select__button--blinking': blinking }"
       >
-        <span class="flex items-center gap-2">
+        <span
+          class="input-select__value"
+          :class="{ 'input-select__value--placeholder': !modelValue }"
+        >
           <slot name="prepend-icon" />
-          <AlertCircle
-            v-if="errored"
-            class="w-3.5 h-3.5 shrink-0 text-status-error"
-          />
-          <span :class="!modelValue ? 'text-fg-muted text-[10px]' : ''">
-            {{ displayValue }}
-          </span>
+          <AlertCircle v-if="errored" class="input-select__error-icon" />
+          {{ displayValue }}
         </span>
-        <ChevronDown
-          class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-fg-muted"
-        />
+        <ChevronDown class="input-select__chevron" />
       </ListboxButton>
-      <ListboxOptions
-        class="absolute z-50 w-full mt-1 bg-secondary border border-divider rounded-none shadow-lg max-h-40 overflow-auto focus:outline-none"
-      >
+      <ListboxOptions class="input-select__options">
         <ListboxOption
           v-for="option in options"
           :key="option"
@@ -67,20 +56,125 @@ const displayValue = computed(() => {
           :value="option"
         >
           <li
-            :class="[
-              'px-3 py-2 text-sm font-mono cursor-pointer flex items-center justify-between',
-              selected
-                ? 'bg-[var(--color-accent-active)] text-[var(--color-fg-inverse)]'
-                : active
-                  ? 'bg-[var(--color-accent-active)]/20 text-fg-primary'
-                  : 'text-fg-primary',
-            ]"
+            class="input-select__option"
+            :class="{
+              'input-select__option--active': active && !selected,
+              'input-select__option--selected': selected,
+            }"
           >
             <span>{{ option }}</span>
-            <Check v-if="selected" class="w-4 h-4" />
+            <Check v-if="selected" class="input-select__check-icon" />
           </li>
         </ListboxOption>
       </ListboxOptions>
     </div>
   </Listbox>
 </template>
+
+<style scoped>
+.input-select {
+  position: relative;
+  width: 100%;
+}
+
+/* Borderless — the surrounding field box IS the frame */
+.input-select__button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--spacing-1) var(--spacing-4) var(--spacing-1) var(--spacing-1);
+  border: none;
+  background: transparent;
+  color: var(--color-fg-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.input-select__button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.input-select__button--blinking {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 0 2px var(--color-accent-active);
+}
+
+.input-select__value {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  min-width: 0;
+}
+
+.input-select__value--placeholder {
+  color: var(--color-fg-muted);
+}
+
+.input-select__error-icon {
+  flex-shrink: 0;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--color-status-error);
+}
+
+.input-select__chevron {
+  position: absolute;
+  right: var(--spacing-1);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  color: var(--color-fg-muted);
+}
+
+.input-select__options {
+  position: absolute;
+  z-index: 50;
+  width: 100%;
+  margin-top: var(--spacing-1);
+  padding: 0;
+  list-style: none;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-divider);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  max-height: 10rem;
+  overflow-y: auto;
+  outline: none;
+}
+
+.input-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-1-5) var(--spacing-2);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-fg-primary);
+  cursor: pointer;
+}
+
+.input-select__option--active {
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-active) 20%,
+    transparent
+  );
+}
+
+.input-select__option--selected {
+  background-color: var(--color-accent-active);
+  color: var(--color-fg-inverse);
+}
+
+.input-select__check-icon {
+  width: 1rem;
+  height: 1rem;
+}
+</style>

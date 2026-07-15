@@ -6,15 +6,13 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Logger,
   Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { NumCtxConfigService } from '../../../configs/numctx-config.service.js';
-import { normalizeThink } from '../../ai-sdk/helpers/ollama.helpers.js';
+import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
-import { SharpService } from '../../sharp/services/sharp.service.js';
+import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
   HarnessLLMHeader,
   HarnessStreamQuery,
@@ -35,18 +33,18 @@ import { CompactRequestDto, CompactResponseDto } from '../dtos/compact.dto.js';
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
+import { parseSessionMetadata } from '../helpers/parse-session-metadata.helper.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 @ApiTags('Harness')
 @Controller('harness')
 export class HarnessController {
-  private readonly logger = new Logger(HarnessController.name);
-
   constructor(
     private readonly harnessQueueService: HarnessQueueService,
     private readonly ollamaModelsService: OllamaModelsService,
     private readonly numCtxConfigService: NumCtxConfigService,
-    private readonly imagePreprocessingService: SharpService,
+    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   @Post()
@@ -61,16 +59,14 @@ export class HarnessController {
     if (!model) throw new BadRequestException('Missing x-harness-llm header');
 
     const { requestId, roomId, stream, numCtx, event, think } = query;
-    const preprocessing = this.imagePreprocessingService.buildOptions(query);
-    const sessionMetadata = this.parseSessionMetadata(query.sessionMetadata);
+    const sessionMetadata = parseSessionMetadata(query.sessionMetadata);
     const frontendHashes = sessionMetadata?.images?.map((img) => img.hash);
     const results = await this.harnessQueueService.toFilePayloads(
       images ?? [],
       frontendHashes,
     );
 
-    this.logger.log('[HARNESS] receive request', {
-      requestId,
+    this.stepLogger.log({ requestId }, 'receive', 'request received', {
       sessionId: query.sessionId,
       conversationId: query.conversationId,
       roomId,
@@ -109,7 +105,6 @@ export class HarnessController {
         prompt,
         event,
         think,
-        preprocessing,
         hasNewImages: query.hasNewImages,
         sessionMetadata: query.sessionMetadata,
       },
@@ -122,24 +117,6 @@ export class HarnessController {
         requestId,
       },
     };
-  }
-
-  private parseSessionMetadata(
-    raw?: string,
-  ): { images?: Array<{ name: string; hash: string }> } | undefined {
-    if (!raw) return undefined;
-    try {
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed.images)) return { images: [] };
-      return {
-        images: parsed.images.filter(
-          (img: any): img is { name: string; hash: string } =>
-            typeof img.name === 'string' && typeof img.hash === 'string',
-        ),
-      };
-    } catch {
-      return undefined;
-    }
   }
 
   @Post('compact')

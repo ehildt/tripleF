@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { ToolSet } from 'ai';
 
-import { type ToolName } from '../../harness/helpers/tool-registry.helper.js';
+import { type ToolName } from '../../harness/helpers/tool-registry.constants.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { createEnabledTools } from '../tools/sources/create-enabled-tools.js';
 import { type ToolWithSummary } from '../tools/sources/tool-factory.js';

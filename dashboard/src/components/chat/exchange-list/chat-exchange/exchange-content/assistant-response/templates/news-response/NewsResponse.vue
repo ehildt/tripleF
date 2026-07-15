@@ -5,11 +5,13 @@ import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
+import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import NewsMetaSection from './sections/news-meta-section/NewsMetaSection.vue';
+import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
+import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import SourcesSection from './sections/news-sources-section/NewsSourcesSection.vue';
 import RelatedStoriesSection from './sections/related-stories-section/RelatedStoriesSection.vue';
 
@@ -21,6 +23,13 @@ const heroUrl = computed(
   () => props.data.heroVideoUrl || props.data.heroImageUrl,
 );
 
+const galleryItems = computed(() => {
+  const items = props.data.galleryItems ?? [];
+  const hero = heroUrl.value;
+  if (!hero) return items;
+  return items.filter((item) => item.imageUrl !== hero);
+});
+
 const hasAnyContent = computed(() =>
   Boolean(
     props.data.headline ||
@@ -31,7 +40,8 @@ const hasAnyContent = computed(() =>
     props.data.keyPoints?.length ||
     props.data.sources?.length ||
     props.data.relatedStories?.length ||
-    props.data.videoGalleryItems?.length,
+    props.data.videoGalleryItems?.length ||
+    props.data.galleryItems?.length,
   ),
 );
 </script>
@@ -40,20 +50,25 @@ const hasAnyContent = computed(() =>
   <article class="news">
     <template v-if="hasAnyContent">
       <header class="news__hero">
-        <HeroSection
-          :category="data.category"
-          :title="data.headline"
-          :subtitle="data.deck"
-        />
-        <NewsMetaSection
-          :dateline="data.dateline"
-          :publish-date="data.publishDate"
-          :read-time="data.readTime"
-          :byline="data.byline"
-        />
+        <ResponseMetaBar>
+          <ResponseMetaBarPill v-if="data.category" variant="accent">{{
+            data.category
+          }}</ResponseMetaBarPill>
+          <ResponseMetaBarPill v-if="data.publishDate">{{
+            data.publishDate
+          }}</ResponseMetaBarPill>
+          <ResponseMetaBarPill v-if="data.readTime">{{
+            data.readTime
+          }}</ResponseMetaBarPill>
+          <ResponseMetaBarPill v-if="data.dateline || data.byline">{{
+            data.dateline ? `${data.dateline} · ${data.byline}` : data.byline
+          }}</ResponseMetaBarPill>
+        </ResponseMetaBar>
+        <HeroSection :title="data.headline" :subtitle="data.deck" />
         <ArticleHeroMediaSection
           :hero-video-url="data.heroVideoUrl"
           :hero-video-caption="data.heroVideoCaption"
+          :hero-video-title="data.heroVideoTitle"
           :hero-image-url="data.heroImageUrl"
           :hero-image-alt="data.heroImageAlt"
           :hero-caption="data.heroCaption"
@@ -66,6 +81,7 @@ const hasAnyContent = computed(() =>
         :content="data.sectionContent"
       />
       <KeyFindingsSection title="Key Points" :items="data.keyPoints" />
+      <GallerySection :title="data.galleryTitle" :items="galleryItems" />
       <VideoGallerySection :items="data.videoGalleryItems" />
       <SourcesSection :items="data.sources" />
       <RelatedStoriesSection :items="data.relatedStories" />
@@ -90,7 +106,6 @@ const hasAnyContent = computed(() =>
 .news__empty {
   padding: 1.5em;
   border: 1px solid var(--color-divider);
-  border-radius: 8px;
   background: var(--color-bg-secondary);
   text-align: center;
 }

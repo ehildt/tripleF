@@ -46,7 +46,6 @@ defineProps<Props>();
   justify-content: center;
   background-color: transparent;
   border: 2px solid;
-  border-radius: 0;
   transition:
     border-color 0.3s ease,
     color 0.3s ease;

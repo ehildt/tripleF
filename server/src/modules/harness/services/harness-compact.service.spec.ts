@@ -69,6 +69,8 @@ describe('HarnessCompactService', () => {
 
     const call = (chatStreaming.streamCompact as any).mock.calls[0][0];
     expect(call.messages[0].role).toBe('system');
+    expect(call.messages[0].content).toContain('MODE: COMPACT');
+    expect(call.messages[0].content).toContain('Return plain text.');
     expect(call.messages[1]).toEqual({ role: 'user', content: 'hello' });
   });
 });

@@ -8,12 +8,10 @@ import {
 } from '@nestjs/terminus';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
-import { SearXNGConfigService } from '../../../configs/searxng-config.service.js';
+import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
 
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
-import { SearXNGHealthIndicator } from './searxng-health-indicator.service.js';
 
 @Injectable()
 export class HealthService {
@@ -26,8 +24,6 @@ export class HealthService {
     private readonly acfg: AppConfigService,
     private readonly pgIndicator: PostgresHealthIndicator,
     private readonly minioIndicator: MinioHealthIndicator,
-    private readonly searxngIndicator: SearXNGHealthIndicator,
-    private readonly scfg: SearXNGConfigService,
   ) {}
 
   @HealthCheck()
@@ -49,9 +45,6 @@ export class HealthService {
         this.memory.checkRSS('memory_rss', this.acfg.config.health!.memoryRSS),
       () => this.pgIndicator.check('postgres'),
       () => this.minioIndicator.check('minio'),
-      ...(this.scfg.config.url
-        ? [() => this.searxngIndicator.check('searxng')]
-        : []),
     ]);
   }
 

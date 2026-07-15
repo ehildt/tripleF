@@ -61,7 +61,7 @@ function onFileButtonMouseLeave() {
     <span class="chat-prompt-action-bar__prompt">&gt;</span>
     <textarea
       :value="props.value"
-      :rows="1"
+      :rows="2"
       placeholder="Enter your text here…  (Enter: send, Shift+Enter: new line)"
       class="chat-prompt-action-bar__input"
       style="caret-shape: block"
@@ -152,7 +152,7 @@ function onFileButtonMouseLeave() {
 
 .chat-prompt-action-bar__input:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .chat-prompt-action-bar__actions {
@@ -170,7 +170,6 @@ function onFileButtonMouseLeave() {
 .chat-prompt-action-bar__file-button {
   padding: var(--spacing-1);
   color: var(--color-fg-muted);
-  border-radius: 0.25rem;
   cursor: pointer;
   transition:
     color 0.2s ease,
@@ -186,6 +185,6 @@ function onFileButtonMouseLeave() {
 
 .chat-prompt-action-bar__file-button--disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: default;
 }
 </style>

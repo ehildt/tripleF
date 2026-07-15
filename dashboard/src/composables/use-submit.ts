@@ -3,18 +3,18 @@ import { computed, ref } from 'vue';
 import { getApiUrl } from '@/api/api-url';
 import type { UploadedImage } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
-import { usePreprocessingStore } from '@/stores/preprocessing';
 import { buildFormData } from '@/utils/build-form-data.helper';
 import { buildHeaders } from '@/utils/build-headers.helper';
 import {
   buildQueryParams,
   type ConversationMetadata,
+  type ConversationMetadataImage,
 } from '@/utils/build-query-params.helper';
 import { handleResponse } from '@/utils/handle-response.helper';
 import { hashFile } from '@/utils/hash-file.helper';
 import { requireModel } from '@/utils/require-model.helper';
 
-import { calcTokenPercent } from '../components/chat/shared/helpers/calc-token-percent.helper';
+import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
 import { useAppStore } from '../stores/app';
 import { useModelsStore } from '../stores/models';
 import type { SocketProvider } from '../types/socket-provider.model';
@@ -82,12 +82,12 @@ export function useSubmit(options: UseSubmitOptions) {
     const conversation = conversationStore.getConversation(conversationId);
     if (!conversation) return false;
 
-    const percent = calcTokenPercent(
+    const percent = calcTotalContextPercentage(
       conversation.exchanges,
       conversation.numCtx ?? '',
     );
     if (percent == null) return false;
-    return percent >= 100;
+    return Number(percent) >= 100;
   }
 
   function ensureConversation(): string {
@@ -124,6 +124,7 @@ export function useSubmit(options: UseSubmitOptions) {
     room: string,
     requestId: string,
     userContent: string,
+    images: ConversationMetadataImage[],
   ) {
     if (userContent) {
       conversationStore.addExchange(sid, {
@@ -135,6 +136,7 @@ export function useSubmit(options: UseSubmitOptions) {
         event,
         roomId: room,
         conversationId,
+        images,
       });
     }
     conversationStore.addExchange(sid, {
@@ -148,7 +150,12 @@ export function useSubmit(options: UseSubmitOptions) {
       conversationId,
     });
     conversationStore.setModel(sid, model);
-    conversationStore.setNumCtx(sid, activeConversation.value?.numCtx ?? '');
+    const numCtx =
+      conversationStore.getConversation(sid)?.numCtx ||
+      activeConversation.value?.numCtx ||
+      modelsStore.maxNumCtxForModel(model) ||
+      '';
+    conversationStore.setNumCtx(sid, numCtx);
     conversationStore.setStream(sid, activeConversation.value?.stream ?? true);
     conversationStore.setThink(
       sid,
@@ -168,6 +175,7 @@ export function useSubmit(options: UseSubmitOptions) {
     requestId: string,
     model: string,
     userContent: string,
+    images: ConversationMetadataImage[],
   ) {
     for (const s of conversationStore.conversations) {
       if (s.id === sid) continue;
@@ -185,6 +193,7 @@ export function useSubmit(options: UseSubmitOptions) {
           event,
           roomId: room,
           conversationId,
+          images,
         });
       }
       conversationStore.addExchange(s.id, {
@@ -276,7 +285,7 @@ export function useSubmit(options: UseSubmitOptions) {
     };
   }
 
-  function ensureActiveSession(): {
+  function buildSubmitContext(): {
     sid: string;
     conversationId: string;
     model: string;
@@ -298,18 +307,6 @@ export function useSubmit(options: UseSubmitOptions) {
     const sid = conversationStore.activeConversationId;
     const conversationId = sid ? conversationStore.getConversationId(sid) : '';
 
-    if (sid) {
-      setupActiveSession(
-        sid,
-        conversationId,
-        model,
-        event,
-        room,
-        requestId,
-        userContent,
-      );
-    }
-
     return {
       sid: sid ?? '',
       conversationId,
@@ -330,9 +327,6 @@ export function useSubmit(options: UseSubmitOptions) {
     conversationMetadata: ConversationMetadata,
     conversationId: string,
   ): URLSearchParams {
-    const preprocessingStore = usePreprocessingStore();
-    const preprocessingParams = preprocessingStore.buildQueryParams();
-
     const params = buildQueryParams({
       requestId: ref(requestId),
       sessionId: ref(sid ?? ''),
@@ -346,17 +340,11 @@ export function useSubmit(options: UseSubmitOptions) {
       conversationMetadata: ref(conversationMetadata),
     });
 
-    Object.entries(preprocessingParams).forEach(([key, value]) => {
-      if (value !== undefined) {
-        params.append(key, value);
-      }
-    });
-
     return params;
   }
 
   async function submitRest() {
-    const ctx = ensureActiveSession();
+    const ctx = buildSubmitContext();
     if (!ctx) return;
 
     const { sid, conversationId, model, event, room, requestId, userContent } =
@@ -389,6 +377,21 @@ export function useSubmit(options: UseSubmitOptions) {
       conversationId,
     );
 
+    const promptImages = conversationMetadata.images ?? [];
+
+    if (sid) {
+      setupActiveSession(
+        sid,
+        conversationId,
+        model,
+        event,
+        room,
+        requestId,
+        userContent,
+        promptImages,
+      );
+    }
+
     console.log('[use-submit] submitting request', {
       requestId,
       conversationId: sid,
@@ -406,7 +409,15 @@ export function useSubmit(options: UseSubmitOptions) {
     arguments_.value = '';
     persistArguments();
 
-    addCrossSessionExchanges(sid, event, room, requestId, model, userContent);
+    addCrossSessionExchanges(
+      sid,
+      event,
+      room,
+      requestId,
+      model,
+      userContent,
+      promptImages,
+    );
 
     const params = buildSubmitParams(
       requestId,
@@ -490,9 +501,6 @@ export function useSubmit(options: UseSubmitOptions) {
         numCtx: activeConversation.value?.numCtx ?? '',
         stream: activeConversation.value?.stream ?? true,
         model,
-        preprocessing: JSON.stringify(
-          usePreprocessingStore().buildQueryParams(),
-        ),
       },
     );
 

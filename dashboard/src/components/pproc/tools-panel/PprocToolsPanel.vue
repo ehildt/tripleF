@@ -5,11 +5,14 @@ import {
   Image,
   Images,
   Maximize2,
+  MoveHorizontal,
+  MoveVertical,
   ScanLine,
   Sparkles,
   Zap,
 } from '@lucide/vue';
 
+import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 
 import {
@@ -83,83 +86,60 @@ function toggleVariant(key: keyof typeof store.variants) {
 
         <!-- Resize Settings -->
         <PprocSection :icon="ArrowDownToLine" title="Resize Settings">
-          <div class="grid grid-cols-3 gap-2">
-            <div class="p-3 border border-divider bg-primary">
-              <MaxWidthField
-                :model-value="store.resize.maxWidth"
-                :disabled="!store.enabled"
-                @update:model-value="
-                  store.setMaxWidth(
-                    $event as 256 | 384 | 512 | 640 | 768 | 1024,
-                  )
-                "
-              />
-            </div>
-
-            <div class="p-3 border border-divider bg-primary">
-              <MaxHeightField
-                :model-value="store.resize.maxHeight"
-                :disabled="!store.enabled"
-                @update:model-value="store.setMaxHeight($event)"
-              />
-            </div>
-
-            <!-- Prevent Upscaling -->
-            <PprocToggleButton
-              :selected="store.resize.withoutEnlargement"
+          <div class="grid grid-cols-3 gap-1">
+            <FieldCard
+              :icon="MoveHorizontal"
+              label="Max Width"
+              description="in pixels"
               :disabled="!store.enabled"
-              @click="
+              tone="preprocessing"
+            >
+              <template #field>
+                <MaxWidthField
+                  :model-value="store.resize.maxWidth"
+                  :disabled="!store.enabled"
+                  @update:model-value="
+                    store.setMaxWidth(
+                      $event as 256 | 384 | 512 | 640 | 768 | 1024,
+                    )
+                  "
+                />
+              </template>
+            </FieldCard>
+
+            <FieldCard
+              :icon="MoveVertical"
+              label="Max Height"
+              description="in pixels"
+              :disabled="!store.enabled"
+              tone="preprocessing"
+            >
+              <template #field>
+                <MaxHeightField
+                  :model-value="store.resize.maxHeight"
+                  :disabled="!store.enabled"
+                  @update:model-value="store.setMaxHeight($event)"
+                />
+              </template>
+            </FieldCard>
+
+            <FieldCard
+              :icon="Maximize2"
+              label="Prevent Upscaling"
+              description="skip smaller images"
+              :checked="store.resize.withoutEnlargement"
+              :disabled="!store.enabled"
+              tone="preprocessing"
+              @toggle="
                 store.setWithoutEnlargement(!store.resize.withoutEnlargement)
               "
-            >
-              <template #icon>
-                <div
-                  class="w-9 h-9 flex items-center justify-center"
-                  :class="
-                    store.enabled
-                      ? 'bg-fg-muted/10 text-fg-muted'
-                      : 'bg-fg-muted/5 text-fg-muted/40'
-                  "
-                >
-                  <Maximize2 class="w-4 h-4" />
-                </div>
-              </template>
-              <template #content>
-                <span
-                  class="block font-mono font-bold text-xs"
-                  :class="store.enabled ? 'text-fg-secondary' : 'text-fg-muted'"
-                >
-                  Prevent Upscaling
-                </span>
-                <span class="block text-[10px] font-mono text-fg-muted"
-                  >Skip smaller images</span
-                >
-              </template>
-              <template #checkbox>
-                <div
-                  class="w-4 h-4 border-2 flex items-center justify-center transition-all duration-200"
-                  :class="[
-                    store.resize.withoutEnlargement && store.enabled
-                      ? 'bg-tab-preprocessing border-tab-preprocessing'
-                      : store.enabled
-                        ? 'border-fg-muted group-hover:border-fg-secondary'
-                        : 'border-fg-muted/40',
-                  ]"
-                >
-                  <Check
-                    v-if="store.resize.withoutEnlargement && store.enabled"
-                    class="w-3 h-3 text-fg-inverse"
-                    stroke-width="3"
-                  />
-                </div>
-              </template>
-            </PprocToggleButton>
+            />
           </div>
         </PprocSection>
 
         <!-- Variants -->
         <PprocSection :icon="Images" title="Image Variants">
-          <div class="grid grid-cols-1 gap-2">
+          <div class="grid grid-cols-2 gap-1">
             <PprocToggleButton
               v-for="(config, key) in variantConfig"
               :key="key"

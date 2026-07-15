@@ -6,7 +6,7 @@ import { getApiUrl } from '@/api/api-url';
 
 import { createId } from '../utils/id.helper';
 
-export type ActiveTab = 'http' | 'preprocessing' | 'dlq' | 'debug' | 'sysctl';
+export type ActiveTab = 'http' | 'dlq' | 'debug' | 'sysctl';
 
 const STAR_KEY = 'harness-chat-star';
 

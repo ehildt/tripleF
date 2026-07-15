@@ -142,6 +142,17 @@ describe('useSelectedModel', () => {
     expect(conversation.imageSelectionSnapshot).toEqual({ h1: true });
   });
 
+  it('backfills numCtx when active conversation has a model but no context size', () => {
+    localStorage.setItem('harness-selected-model', 'llama3');
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+
+    useSelectedModel();
+
+    expect(conversation.numCtx).toBe('4096');
+  });
+
   it('does not snapshot selections on initial load with a non-vision model', () => {
     const conversationStore = useConversationStore();
     const conversation = conversationStore.ensureConversation();

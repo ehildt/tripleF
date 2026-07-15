@@ -21,7 +21,6 @@ vi.mock('../../api/queries/use-health-ready.query', () => ({
         memory_rss: { status: 'up' },
         postgres: { status: 'up' },
         minio: { status: 'up' },
-        searxng: { status: 'ok' },
       },
       details: {},
       error: {},
@@ -43,22 +42,6 @@ const baseConfig = {
     reviews: { enabled: false, results: 5 },
     videos: { enabled: false, results: 5 },
     webpageFetch: { enabled: true },
-  },
-  brave: {
-    enabled: true,
-    apiKey: 'brave-key',
-    web: { enabled: true, results: 10 },
-    images: { enabled: true, results: 10 },
-    news: { enabled: true, results: 10 },
-    video: { enabled: true, results: 10 },
-  },
-  searxng: { url: 'https://search.local', enabled: true, results: 10 },
-  browserBase: {
-    enabled: false,
-    apiKey: undefined,
-    projectId: undefined,
-    search: { enabled: false, results: 10 },
-    fetch: { enabled: false, format: 'markdown', proxies: false },
   },
 };
 
@@ -91,59 +74,61 @@ describe('SysCtl', () => {
     });
   }
 
-  it('renders the Search Engine header with selected provider', async () => {
+  async function selectMenuTab(
+    wrapper: ReturnType<typeof mountPanel>,
+    label: string,
+  ) {
+    const tab = wrapper
+      .findAll('.sysctl-menu__tab')
+      .find((button) => button.text() === label);
+    await tab?.trigger('click');
+  }
+
+  it('opens on the search engines tab by default', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('Search Engine :: Serper');
+      expect(wrapper.text()).toContain('SysCtl :: Search Engines');
     });
   });
 
-  it('renders provider selector buttons for all providers', async () => {
+  it('renders the serper provider section with its endpoints', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
-      const buttons = wrapper.findAll('.provider-selector__button');
-      expect(buttons.length).toBe(4);
+      expect(wrapper.text()).toContain('master toggle');
+      expect(wrapper.text()).toContain('web');
+      expect(wrapper.text()).toContain('images');
     });
   });
 
-  it('shows only the selected provider switch cards', async () => {
+  it('shows the tab visibility switches on the interface tab', async () => {
     const wrapper = mountPanel();
-    await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('enabled');
-    });
-    expect(wrapper.text()).not.toContain('Brave');
-    expect(wrapper.text()).not.toContain('SearXNG');
-    expect(wrapper.text()).not.toContain('Browserbase');
-  });
+    await selectMenuTab(wrapper, 'Interface');
 
-  it('switches to the selected provider when a selector button is clicked', async () => {
-    const wrapper = mountPanel();
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('Serper');
-    });
-
-    const buttons = wrapper.findAll('.provider-selector__button');
-    await buttons[2]?.trigger('click');
-    await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SearXNG');
-    });
-  });
-
-  it('renders tab visibility section with dlq', async () => {
-    const wrapper = mountPanel();
-    await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('Tab Visibility');
+      expect(wrapper.text()).toContain('SysCtl :: Interface');
       expect(wrapper.text()).toContain('dlq');
+      expect(wrapper.text()).toContain('sockets');
     });
   });
 
-  it('renders system health and tab visibility as their own panels', async () => {
+  it('shows the health tiles on the system tab', async () => {
     const wrapper = mountPanel();
+    await selectMenuTab(wrapper, 'System');
+
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('System Health');
-      expect(wrapper.text()).toContain('Tab Visibility');
+      expect(wrapper.text()).toContain('SysCtl :: System');
+      expect(wrapper.text()).toContain('disk');
     });
-    const panels = wrapper.findAll('.sysctl-panels > div');
-    expect(panels.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('remembers the selected tab across remounts', async () => {
+    const wrapper = mountPanel();
+    await selectMenuTab(wrapper, 'System');
+    wrapper.unmount();
+
+    const remounted = mountPanel();
+    await vi.waitFor(() => {
+      expect(remounted.text()).toContain('SysCtl :: System');
+    });
   });
 });

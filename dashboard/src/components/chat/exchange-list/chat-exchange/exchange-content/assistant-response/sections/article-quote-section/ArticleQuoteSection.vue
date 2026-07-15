@@ -18,7 +18,6 @@ defineProps<{
   padding: 0.75em 1em;
   border-left: 4px solid var(--color-accent-primary);
   background: color-mix(in srgb, var(--color-accent-primary) 5%, transparent);
-  border-radius: 0 6px 6px 0;
   font-style: italic;
   font-size: 1em;
   color: var(--color-fg-primary);

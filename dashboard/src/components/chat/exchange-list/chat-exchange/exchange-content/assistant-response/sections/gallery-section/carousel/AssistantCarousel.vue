@@ -306,7 +306,6 @@ onMounted(() => {
   display: grid;
   place-items: center;
   border: none;
-  border-radius: 50%;
   background: color-mix(in srgb, var(--color-bg-primary) 92%, transparent);
   color: var(--color-fg-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -330,7 +329,7 @@ onMounted(() => {
 
 .harness-carousel__button:disabled {
   opacity: 0.3;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .harness-carousel__button--prev {
@@ -352,7 +351,6 @@ onMounted(() => {
   width: 0.5rem;
   height: 0.5rem;
   border: 0;
-  border-radius: 50%;
   background: var(--color-fg-muted);
   opacity: 0.4;
   cursor: pointer;

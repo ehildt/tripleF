@@ -7,8 +7,8 @@ import {
   IsString,
 } from 'class-validator';
 
-import { DLQ_STATUSES } from '../../../constants/postgres.constants.js';
 import { Prisma } from '../../../generated/prisma/client.js';
+import { DLQ_STATUSES } from '../constants/postgres.constants.js';
 
 const statuses = DLQ_STATUSES;
 

@@ -59,9 +59,7 @@ const displayedPages = computed(() => {
 </script>
 
 <template>
-  <div
-    class="flex items-center justify-between px-4 py-3 bg-secondary border-t border-divider"
-  >
+  <div class="flex items-center justify-between px-4 py-3 bg-secondary">
     <span class="text-[10px] font-mono text-fg-muted">
       {{ rangeStart }}–{{ rangeEnd }} of {{ total }}
     </span>

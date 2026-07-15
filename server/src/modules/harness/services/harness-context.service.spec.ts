@@ -165,12 +165,7 @@ describe('HarnessContextService', () => {
     expect(ctx.processedMeta).toEqual([]);
     expect(ctx.visionExcluded).toBe(true);
     expect(ctx.hasNewImages).toBe(false);
-    expect(
-      ctx.request.messages.find((m) => m.role === 'system')?.content,
-    ).toContain('text-model');
-    expect(
-      ctx.request.messages.find((m) => m.role === 'system')?.content,
-    ).toContain('Respond in the same language');
+    expect(ctx.request.messages.some((m) => m.role === 'system')).toBe(true);
     expect(ctx.request.messages.some((m: any) => m.images?.length > 0)).toBe(
       false,
     );

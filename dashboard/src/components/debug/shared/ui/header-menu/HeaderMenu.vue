@@ -30,7 +30,7 @@ const disableSocket = computed(() => props.socketCount === 0);
     <div class="flex items-center -gap-px">
       <button
         :disabled="disableAll"
-        class="px-3 py-1 text-xs font-mono transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-divider"
+        class="px-3 py-1 text-xs font-mono transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-default border border-divider"
         :class="
           filter === 'all'
             ? 'font-bold text-fg-inverse'
@@ -50,7 +50,7 @@ const disableSocket = computed(() => props.socketCount === 0);
       </button>
       <button
         :disabled="disableHttp"
-        class="px-3 py-1 text-xs font-mono transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-divider -ml-px"
+        class="px-3 py-1 text-xs font-mono transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-default border border-divider -ml-px"
         :class="
           filter === 'http'
             ? 'font-bold text-fg-inverse'
@@ -70,7 +70,7 @@ const disableSocket = computed(() => props.socketCount === 0);
       </button>
       <button
         :disabled="disableSocket"
-        class="px-3 py-1 text-xs font-mono transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-divider -ml-px"
+        class="px-3 py-1 text-xs font-mono transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-default border border-divider -ml-px"
         :class="
           filter === 'socket'
             ? 'font-bold text-fg-inverse'
@@ -114,7 +114,7 @@ const disableSocket = computed(() => props.socketCount === 0);
     </button>
     <button
       :disabled="disableAll"
-      class="p-1 text-fg-muted hover:text-status-error transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      class="p-1 text-fg-muted hover:text-status-error transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-default"
       @click="$emit('clear')"
     >
       <Trash2 class="w-4 h-4" />

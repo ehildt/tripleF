@@ -103,19 +103,9 @@ function isPrivateOrLocalhost(hostname: string): boolean {
 /**
  * Returns true if an image URL is safe to render.
  *
- * Rules:
- * 1. Relative URLs are allowed (these point at our own storage/API).
- * 2. Only http/https protocols are accepted.
- * 3. Localhost and private IP hosts are rejected.
- * 4. Known thumbnail / proxy / low-resolution hosts are rejected.
- * 5. URLs ending in a common image file extension are accepted from any
- *    non-blocklisted public host (the path itself is the image file).
- * 6. URLs served by the explicit trusted-host allowlist are accepted even
- *    without a file extension.
- * 7. Everything else is rejected.
- *
- * This gives us a provider/allowlist model for unknown URLs while still
- * accepting direct image files from legitimate publisher domains.
+ * The server is the authoritative source of URL filtering; this helper is a
+ * lightweight client-side guard. It keeps the same rules as the server so
+ * local services such as MinIO continue to work.
  */
 export function isTrustedImageUrl(url: string): boolean {
   if (!url) return false;
@@ -141,12 +131,15 @@ export function isTrustedImageUrl(url: string): boolean {
   }
 
   const hostname = parsed.hostname.toLowerCase();
+  const isPrivate = isPrivateOrLocalhost(hostname);
 
-  if (isPrivateOrLocalhost(hostname)) {
+  if (BLOCKED_IMAGE_HOSTS.has(hostname)) {
     return false;
   }
 
-  if (BLOCKED_IMAGE_HOSTS.has(hostname)) {
+  // Reject non-image private/localhost URLs; accept direct image files from
+  // local services such as MinIO.
+  if (isPrivate && !DIRECT_IMAGE_EXTENSION.test(parsed.pathname)) {
     return false;
   }
 

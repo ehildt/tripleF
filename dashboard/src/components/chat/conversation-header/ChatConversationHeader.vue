@@ -12,7 +12,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
-import { calcTokenPercent } from '../shared/helpers/calc-token-percent.helper';
+import { calcTotalContextPercentage } from '../shared/helpers/calc-token-percent.helper';
 
 const props = defineProps<{
   title: string;
@@ -28,12 +28,11 @@ const conversationStore = useConversationStore();
 
 const tokenPercent = computed(() => {
   const conversation = conversationStore.getConversation(props.conversationId);
-  if (!conversation) return 0;
-  const pct = calcTokenPercent(
+  if (!conversation) return null;
+  return calcTotalContextPercentage(
     conversation.exchanges,
     conversation.numCtx ?? '',
   );
-  return pct ?? 0;
 });
 
 const conversationType = computed(() => {
@@ -108,14 +107,14 @@ function onDelete() {
       <span
         class="text-xs leading-none font-mono"
         :class="
-          tokenPercent > 80
+          tokenPercent != null && Number(tokenPercent) > 80
             ? 'text-status-error'
-            : tokenPercent > 50
+            : tokenPercent != null && Number(tokenPercent) > 50
               ? 'text-status-warning'
               : 'text-tab-debug'
         "
       >
-        {{ tokenPercent }}%
+        {{ tokenPercent != null ? `${tokenPercent}%` : '--' }}
       </span>
     </div>
 
@@ -152,7 +151,7 @@ function onDelete() {
       class="p-1 transition-colors cursor-pointer"
       :class="
         conversationStore.compacting
-          ? 'text-fg-muted cursor-not-allowed'
+          ? 'text-fg-muted cursor-default'
           : 'text-fg-muted hover:text-tab-accent'
       "
       :title="conversationStore.compacting ? 'Compacting...' : 'Compact'"

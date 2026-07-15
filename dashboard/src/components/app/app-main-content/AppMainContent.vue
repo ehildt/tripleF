@@ -4,7 +4,6 @@ import type { SocketProvider } from '@/types/socket-provider.model';
 import type { ActiveTab } from '../../../stores/app';
 import Chat from '../../chat/Chat.vue';
 import Dlq from '../../dlq/Dlq.vue';
-import Pproc from '../../pproc/Pproc.vue';
 import DebugSection from './debug-section/DebugSection.vue';
 import SysCtlSection from './sysctl-section/SysCtlSection.vue';
 
@@ -36,7 +35,6 @@ const emit = defineEmits<{
         @select-debug-result="emit('selectDebugResult', $event)"
         @select-debug-mark-read="emit('selectDebugMarkRead', $event)"
       />
-      <Pproc v-else-if="activeTab === 'preprocessing'" />
       <SysCtlSection v-else-if="activeTab === 'sysctl'" />
       <Chat v-else :socket-provider="socketProvider" />
     </div>
@@ -48,7 +46,6 @@ const emit = defineEmits<{
   max-width: 125rem;
   margin-left: auto;
   margin-right: auto;
-  padding: 2.5rem 1rem;
   padding-top: 6rem;
 }
 

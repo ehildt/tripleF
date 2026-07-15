@@ -43,6 +43,20 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
   data.recommendations = filterArray(data.recommendations, (item) =>
     isMeaningfulString(item.text),
   );
+  data.pros = filterArray(data.pros, (item) => isMeaningfulString(item.text));
+  data.cons = filterArray(data.cons, (item) => isMeaningfulString(item.text));
+  data.reviewSummary = filterArray(data.reviewSummary, (item) =>
+    isMeaningfulString(item.text),
+  );
+  data.shopOffers = filterArray(
+    data.shopOffers,
+    (offer) =>
+      isMeaningfulString(offer.link) && !!offer.link?.startsWith('http'),
+  );
+  data.statHighlights = filterArray(
+    data.statHighlights,
+    (stat) => isMeaningfulString(stat.label) && isMeaningfulString(stat.value),
+  );
 }
 
 function filterArray<T>(

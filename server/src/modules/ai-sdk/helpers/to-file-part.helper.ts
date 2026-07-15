@@ -1,4 +1,5 @@
-import type { FilePart } from './ai-sdk-message.models.js';
+import type { FilePart } from '../types/ai-sdk-messages.types.js';
+
 import { detectImageMimeType } from './detect-image-mime-type.helper.js';
 
 export function toBuffer(image: Uint8Array | string): Uint8Array {
