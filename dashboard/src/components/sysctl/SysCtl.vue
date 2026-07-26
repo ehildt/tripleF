@@ -7,12 +7,12 @@ import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
 import { useSysctlHealthTiles } from './composables/use-sysctl-health-tiles';
 import { type SysctlTab, useSysctlTab } from './composables/use-sysctl-tab';
 import { useSysctlTabVisibility } from './composables/use-sysctl-tab-visibility';
-import PopoutSection from './popout-section/PopoutSection.vue';
 import PreprocessingSection from './preprocessing-section/PreprocessingSection.vue';
 import SearchEnginesSection from './search-engines-section/SearchEnginesSection.vue';
 import SysCtlMenu from './sysctl-menu/SysCtlMenu.vue';
 import SystemHealthSection from './system-health-section/SystemHealthSection.vue';
 import TabVisibilitySection from './tab-visibility-section/TabVisibilitySection.vue';
+import WidgetsSection from './widgets-section/WidgetsSection.vue';
 
 const { activeSysctlTab, selectSysctlTab } = useSysctlTab();
 const { tiles } = useSysctlHealthTiles();
@@ -22,7 +22,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 const TAB_TITLES: Record<SysctlTab, string> = {
   'search-engines': 'Search Engines',
   preprocessing: 'Preprocessing',
-  popout: 'Popout',
+  widgets: 'Widgets',
   interface: 'Interface',
   system: 'System',
 };
@@ -41,7 +41,7 @@ const activeTabTitle = computed(() => TAB_TITLES[activeSysctlTab.value]);
 
     <PreprocessingSection v-else-if="activeSysctlTab === 'preprocessing'" />
 
-    <PopoutSection v-else-if="activeSysctlTab === 'popout'" />
+    <WidgetsSection v-else-if="activeSysctlTab === 'widgets'" />
 
     <TabVisibilitySection
       v-else-if="activeSysctlTab === 'interface'"

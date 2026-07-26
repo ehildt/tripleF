@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { getConnectionStateColors } from '@/utils/colors/status/get-connection-state-colors.helper';
-
 import type { ConnectionState } from '../../../stores/socket';
 import { APP_VERSION } from '../../../version';
 
@@ -20,7 +18,7 @@ defineProps<{
           <span class="app-footer__divider">::</span>
           <span>v{{ APP_VERSION }}</span>
           <span class="app-footer__divider">::</span>
-          <span :class="getConnectionStateColors(connectionState).text">
+          <span :class="`app-footer__connection--${connectionState}`">
             {{ connectionState.toUpperCase() }}
           </span>
           <span v-if="socketId" class="app-footer__divider">::</span>
@@ -54,6 +52,18 @@ defineProps<{
   z-index: 40;
   border-top: 1px solid var(--color-divider);
   background-color: var(--color-bg-secondary);
+}
+
+.app-footer__connection--connected {
+  color: var(--color-connection-connected);
+}
+
+.app-footer__connection--disconnected {
+  color: var(--color-connection-disconnected);
+}
+
+.app-footer__connection--error {
+  color: var(--color-connection-error);
 }
 
 .app-footer__container {

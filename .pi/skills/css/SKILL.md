@@ -26,7 +26,7 @@ Read the full guide before writing or modifying any component styles:
 | `tokens/colors.css`     | All `--color-*` variables (backgrounds, foregrounds, accents, status, harmony, tab, method, borders, glow) |
 | `tokens/layout.css`     | `--spacing-*` variables                                                                                    |
 | `tokens/typography.css` | `--font-mono`, `--font-sans`                                                                               |
-| `palettes/*.css`        | Per-palette color overrides via `:root[data-theme='...']`                                                  |
+| `palettes/*.css`        | Per-palette color overrides via `[data-theme='...']`                                                       |
 | `modes/light.css`       | Light-mode overrides via `:root[data-theme-mode='light']`                                                  |
 
 ## File Structure

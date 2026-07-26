@@ -37,7 +37,7 @@
   left: 0;
   height: 100%;
   width: 50%;
-  background-color: var(--color-loading, var(--color-accent-primary));
+  background-color: var(--color-loading);
   /* keyframes battery-slide: global, from style.css */
   animation: battery-slide 1.5s ease-in-out infinite;
 }

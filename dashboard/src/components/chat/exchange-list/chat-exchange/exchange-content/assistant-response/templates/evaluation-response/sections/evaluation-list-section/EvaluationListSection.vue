@@ -72,11 +72,11 @@ const icon = computed(() => {
 }
 
 .strength .icon {
-  color: var(--color-status-success, #22c55e);
+  color: var(--color-status-success);
 }
 
 .weakness .icon {
-  color: var(--color-status-error, #ef4444);
+  color: var(--color-status-error);
 }
 
 .recommendation .icon {

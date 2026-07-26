@@ -16,7 +16,7 @@ const emit = defineEmits<{
 const TAB_LABELS: { tab: SysctlTab; label: string }[] = [
   { tab: 'search-engines', label: 'Search Engines' },
   { tab: 'preprocessing', label: 'Preprocessing' },
-  { tab: 'popout', label: 'Popout' },
+  { tab: 'widgets', label: 'Widgets' },
   { tab: 'interface', label: 'Interface' },
   { tab: 'system', label: 'System' },
 ];

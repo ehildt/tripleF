@@ -4,6 +4,7 @@ import { onBeforeMount, onMounted, onUnmounted } from 'vue';
 import AppFooter from './components/app/app-footer/AppFooter.vue';
 import AppHeader from './components/app/app-header/AppHeader.vue';
 import AppMainContent from './components/app/app-main-content/AppMainContent.vue';
+import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
 import { useAppStore } from './stores/app';
 import { useDebugStore } from './stores/debug';
@@ -88,6 +89,7 @@ onUnmounted(() => {
     />
 
     <ToastContainer />
+    <PopoutPreview />
     <AppFooter
       :connection-state="socketStore.connectionState"
       :socket-id="socketStore.socketId"

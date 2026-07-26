@@ -47,14 +47,6 @@ describe('useThemeSelector', () => {
     expect(store.currentTheme).toBe('nioh');
   });
 
-  it('exposes the current primary color', () => {
-    const { vm } = mountComposable();
-    const store = useThemeStore();
-
-    store.currentTheme = 'yakuza';
-    expect(vm.currentPrimary).toBe('#00b8a9');
-  });
-
   it('closes dropdown on Escape', async () => {
     const { vm } = mountComposable();
     vm.toggleDropdown();

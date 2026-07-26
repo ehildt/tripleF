@@ -24,7 +24,7 @@ const OPACITY_SNAP_THRESHOLD_PERCENT = 3;
  * clearance). Centered anchors use translate offsets; the transform drops
  * away as soon as a remembered rect replaces the anchor styles.
  */
-const ANCHOR_STYLES: Record<PopoutAnchor, Record<string, string>> = {
+export const ANCHOR_STYLES: Record<PopoutAnchor, Record<string, string>> = {
   'top-left': { left: '1rem', top: '4rem' },
   'top-center': { left: '50%', top: '4rem', transform: 'translateX(-50%)' },
   'top-right': { right: '1rem', top: '4rem' },

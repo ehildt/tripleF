@@ -4,6 +4,7 @@ import { ref, watch } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 
+import { useToast } from '../composables/use-toast';
 import { createId } from '../utils/id.helper';
 
 export type ActiveTab = 'http' | 'dlq' | 'debug' | 'sysctl';
@@ -120,6 +121,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function abortJob(requestId: string): Promise<boolean> {
     abortingId.value = requestId;
+    const toast = useToast();
 
     try {
       const res = await fetch(getApiUrl('/api/v1/harness/cancel'), {
@@ -131,15 +133,20 @@ export const useAppStore = defineStore('app', () => {
       if (!res.ok) {
         const text = await res.text();
         console.warn('Abort failed:', text);
+        toast.error('Failed to cancel request');
         abortingId.value = null;
         return false;
       }
 
       const data = await res.json();
       abortingId.value = null;
-      return data.success ?? false;
+      const success = data.success ?? false;
+      if (success) toast.info('Request cancelled');
+      else toast.error('Failed to cancel request');
+      return success;
     } catch (err) {
       console.error('Failed to abort job:', err);
+      toast.error('Failed to cancel request');
       abortingId.value = null;
       return false;
     }

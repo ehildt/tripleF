@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useDebugStore } from '../../stores/debug';
 import type { DebugResult } from '../../types/debug.model';
@@ -7,10 +7,12 @@ import PanelEmptyState from '../shared/ui/panel-empty-state/PanelEmptyState.vue'
 import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
+import {
+  buildFilteredDebugResults,
+  type DebugResultFilter,
+} from './helpers/build-filtered-debug-results.helper';
 import RequestList from './request-list/RequestList.vue';
 import HeaderMenu from './shared/ui/header-menu/HeaderMenu.vue';
-
-export type ResultFilter = 'all' | 'http' | 'socket';
 
 const props = defineProps<{
   results: DebugResult[];
@@ -25,47 +27,24 @@ const emit = defineEmits<{
 
 const debugStore = useDebugStore();
 
-/** Composable-local state: the active type filter and hide-read flag. */
-const filter = ref<ResultFilter>('all');
+/** Composable-local state: type filter, text search, and hide-read flag. */
+const filter = ref<DebugResultFilter>('all');
+const search = ref('');
 const hideRead = ref(false);
 
-const filteredResults = ref<DebugResult[]>([]);
-
-function recomputeFilter() {
-  let results = props.results;
-  if (filter.value !== 'all') {
-    results = results.filter((r) => r.type === filter.value);
-  }
-  if (hideRead.value) {
-    results = results.filter((r) => !debugStore.isDebugRead(r.id));
-  }
-  filteredResults.value = [...results].sort((a, b) => {
-    const aRead = debugStore.isDebugRead(a.id);
-    const bRead = debugStore.isDebugRead(b.id);
-    if (aRead !== bRead) return aRead ? 1 : -1;
-    return (b.epoch ?? 0) - (a.epoch ?? 0);
-  });
-}
-
-const hasHiddenRead = ref(false);
-
-function recomputeHasHiddenRead() {
-  hasHiddenRead.value =
-    hideRead.value && props.results.some((r) => debugStore.isDebugRead(r.id));
-}
-
-watch(
-  () => props.results,
-  () => {
-    recomputeFilter();
-    recomputeHasHiddenRead();
-  },
-  { immediate: true },
+const filteredResults = computed(() =>
+  buildFilteredDebugResults(props.results, {
+    filter: filter.value,
+    hideRead: hideRead.value,
+    search: search.value,
+    isRead: debugStore.isDebugRead,
+  }),
 );
-watch(filter, recomputeFilter);
-watch(filter, recomputeHasHiddenRead);
-watch(hideRead, recomputeFilter);
-watch(hideRead, recomputeHasHiddenRead);
+
+const hasHiddenRead = computed(
+  () =>
+    hideRead.value && props.results.some((r) => debugStore.isDebugRead(r.id)),
+);
 
 const httpCount = computed(
   () => props.results.filter((r) => r.type === 'http').length,
@@ -88,13 +67,15 @@ function select(result: DebugResult) {
       <PanelHeaderTitle label="Request Log" />
       <HeaderMenu
         :filter="filter"
+        :search="search"
         :all-count="results.length"
         :http-count="httpCount"
         :socket-count="socketCount"
         :hide-read="hideRead"
         @update:filter="filter = $event"
+        @update:search="search = $event"
         @update:hide-read="hideRead = $event"
-        @clear="$emit('clear')"
+        @clear="emit('clear')"
       />
     </PanelHeader>
     <RequestList
@@ -117,7 +98,7 @@ function select(result: DebugResult) {
     <PanelEmptyState
       v-else
       message="No matching requests"
-      submessage="Change filter to see other requests"
+      submessage="Change filter or search to see other requests"
     />
   </PanelLayout>
 </template>

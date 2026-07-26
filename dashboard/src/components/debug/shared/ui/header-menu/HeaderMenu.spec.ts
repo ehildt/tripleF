@@ -8,7 +8,13 @@ describe('HeaderMenu', () => {
   beforeEach(() => setActivePinia(createPinia()));
   it('renders filter buttons', () => {
     const wrapper = mount(HeaderMenu, {
-      props: { filter: 'all', allCount: 10, httpCount: 7, socketCount: 3 },
+      props: {
+        filter: 'all',
+        search: '',
+        allCount: 10,
+        httpCount: 7,
+        socketCount: 3,
+      },
     });
     expect(wrapper.text()).toContain('ALL');
     expect(wrapper.text()).toContain('HTTP');
@@ -17,7 +23,13 @@ describe('HeaderMenu', () => {
 
   it('emits update:filter when a filter button is clicked', async () => {
     const wrapper = mount(HeaderMenu, {
-      props: { filter: 'all', allCount: 10, httpCount: 7, socketCount: 3 },
+      props: {
+        filter: 'all',
+        search: '',
+        allCount: 10,
+        httpCount: 7,
+        socketCount: 3,
+      },
     });
     const httpButton = wrapper
       .findAll('button')
@@ -28,19 +40,33 @@ describe('HeaderMenu', () => {
     expect(wrapper.emitted('update:filter')![0]).toEqual(['http']);
   });
 
-  it('emits clear on trash icon click', async () => {
+  it('emits clear only after a confirming second click', async () => {
     const wrapper = mount(HeaderMenu, {
-      props: { filter: 'all', allCount: 5, httpCount: 3, socketCount: 2 },
+      props: {
+        filter: 'all',
+        search: '',
+        allCount: 5,
+        httpCount: 3,
+        socketCount: 2,
+      },
     });
     const buttons = wrapper.findAll('button');
     const trashButton = buttons[buttons.length - 1];
+    await trashButton!.trigger('click');
+    expect(wrapper.emitted('clear')).toBeUndefined();
     await trashButton!.trigger('click');
     expect(wrapper.emitted('clear')).toBeTruthy();
   });
 
   it('disables HTTP and trash buttons when counts are zero', () => {
     const wrapper = mount(HeaderMenu, {
-      props: { filter: 'all', allCount: 0, httpCount: 0, socketCount: 0 },
+      props: {
+        filter: 'all',
+        search: '',
+        allCount: 0,
+        httpCount: 0,
+        socketCount: 0,
+      },
     });
     const httpButton = wrapper
       .findAll('button')

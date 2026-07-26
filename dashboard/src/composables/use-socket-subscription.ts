@@ -51,12 +51,12 @@ export function useSocketSubscription(
 
     if (!isEventConnected(eventName)) {
       socketProvider.listenToEvent?.(eventName);
-      toast.info(`Subscribed to event: ${eventName}`);
+      toast.debug(`Subscribed to event: ${eventName}`);
     }
 
     if (roomName && !isRoomConnected(eventName, roomName)) {
       socketProvider.joinRoom?.(roomName, eventName);
-      toast.info(`Joined room: ${roomName}`);
+      toast.debug(`Joined room: ${roomName}`);
     }
   }
 
