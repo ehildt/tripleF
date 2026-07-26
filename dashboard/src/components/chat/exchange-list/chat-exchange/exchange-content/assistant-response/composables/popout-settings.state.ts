@@ -89,6 +89,30 @@ export const popoutEnabled = ref<boolean>(loadPopoutEnabled());
 export const popoutAnchor = ref<PopoutAnchor>(loadPopoutAnchor());
 export const popoutRememberPosition = ref(loadRememberPosition());
 
+/** Example popout shown from SysCtl → Widgets to preview the anchor. */
+export const popoutPreviewVisible = ref(false);
+
+let popoutPreviewTimer: ReturnType<typeof setTimeout> | null = null;
+
+const POPOUT_PREVIEW_DURATION_MS = 3000;
+
+export function showPopoutPreview() {
+  popoutPreviewVisible.value = true;
+  if (popoutPreviewTimer) clearTimeout(popoutPreviewTimer);
+  popoutPreviewTimer = setTimeout(() => {
+    popoutPreviewVisible.value = false;
+    popoutPreviewTimer = null;
+  }, POPOUT_PREVIEW_DURATION_MS);
+}
+
+export function hidePopoutPreview() {
+  popoutPreviewVisible.value = false;
+  if (popoutPreviewTimer) {
+    clearTimeout(popoutPreviewTimer);
+    popoutPreviewTimer = null;
+  }
+}
+
 /**
  * Last geometry of the floating video popup. Hydrated from localStorage when
  * position memory is on, so a popout reappears where the user last moved it.

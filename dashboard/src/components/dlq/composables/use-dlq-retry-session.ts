@@ -28,11 +28,11 @@ export function useDlqRetrySession(socketStore: DlqRetrySessionSocket) {
 
     if (!socketStore.connectedEvents.has(eventName)) {
       socketStore.listenToEvent(eventName);
-      toast.info(`Resubscribed to ${eventName}`);
+      toast.debug(`Resubscribed to ${eventName}`);
     }
     if (!(socketStore.connectedRooms.get(eventName)?.has(roomId) ?? false)) {
       socketStore.joinRoom(roomId, eventName);
-      toast.info(`Rejoined room: ${roomId}`);
+      toast.debug(`Rejoined room: ${roomId}`);
     }
   }
 

@@ -8,11 +8,10 @@ describe('THEMES', () => {
     expect(THEMES.length).toBe(13);
   });
 
-  it('each theme has key, name, and primary', () => {
+  it('each theme has key and name', () => {
     for (const theme of THEMES) {
       expect(theme.key).toBeTruthy();
       expect(theme.name).toBeTruthy();
-      expect(theme.primary).toMatch(/^#[0-9a-fA-F]{6}$/);
     }
   });
 });

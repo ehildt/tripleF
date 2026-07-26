@@ -18,7 +18,7 @@ function mockSocket(connected: boolean) {
 function mockToast(): ToastApi {
   return {
     error: vi.fn(),
-    info: vi.fn(),
+    success: vi.fn(),
     warning: vi.fn(),
   };
 }
@@ -31,10 +31,10 @@ describe('handleResponse', () => {
     expect(toast.error).toHaveBeenCalledWith('500: fail');
   });
 
-  it('shows info when response is ok and socket connected', () => {
+  it('shows success when response is ok and socket connected', () => {
     const toast = mockToast();
     handleResponse(mockResponse(true, 200), mockSocket(true), toast);
-    expect(toast.info).toHaveBeenCalledWith('Request sent successfully');
+    expect(toast.success).toHaveBeenCalledWith('Request sent successfully');
   });
 
   it('shows warning when response is ok and socket disconnected', () => {

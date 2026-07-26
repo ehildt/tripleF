@@ -40,6 +40,7 @@ const emit = defineEmits<{
 .segmented-toggle {
   flex-shrink: 0;
   display: flex;
+  gap: 0.25rem;
 }
 
 .segmented-toggle__button {

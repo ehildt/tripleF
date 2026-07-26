@@ -11,12 +11,6 @@ export function useThemeSelector() {
   const isDropdownOpen = ref(false);
   const containerRef = ref<HTMLElement | null>(null);
 
-  const currentPrimary = computed(
-    () =>
-      THEMES.find((t) => t.key === store.currentTheme)?.primary ??
-      'var(--color-accent-primary)',
-  );
-
   function toggleDropdown() {
     isDropdownOpen.value = !isDropdownOpen.value;
   }
@@ -59,7 +53,6 @@ export function useThemeSelector() {
     isDropdownOpen,
     toggleDropdown,
     closeDropdown,
-    currentPrimary,
     themes: THEMES,
     currentTheme: computed(() => store.currentTheme),
     isDarkMode: computed(() => store.isDarkMode),

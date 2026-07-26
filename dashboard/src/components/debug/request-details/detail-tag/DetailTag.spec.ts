@@ -1,21 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('@/utils/colors/detail-field/get-detail-field-colors.helper', () => ({
-  getDetailFieldColors: () => ({
-    border: 'border-blue-500',
-    text: 'text-blue-500',
-    gradient: 'from-blue-500/20',
-  }),
-}));
-
-vi.mock('@/utils/colors/detail-field/get-value-type-color.helper', () => ({
-  getValueTypeColor: () => 'text-green-500',
-}));
-
-vi.mock('@/utils/colors/detail-field/get-value-type-gradient.helper', () => ({
-  getValueTypeGradient: () => 'from-green-500/20',
-}));
+import { describe, expect, it } from 'vitest';
 
 import DetailTag from './DetailTag.vue';
 

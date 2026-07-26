@@ -8,7 +8,6 @@ const themeSelector = useThemeSelector();
 const {
   isDropdownOpen,
   toggleDropdown,
-  currentPrimary,
   themes,
   currentTheme,
   isDarkMode,
@@ -22,7 +21,6 @@ const {
     <button
       class="theme-selector__button"
       :class="{ 'theme-selector__button--active': isDropdownOpen }"
-      :style="{ borderColor: currentPrimary }"
       title="Switch theme"
       @click="toggleDropdown"
     >
@@ -31,7 +29,6 @@ const {
 
     <button
       class="theme-selector__button"
-      :style="{ borderColor: currentPrimary }"
       :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
       @click="toggleDarkMode"
     >
@@ -50,10 +47,7 @@ const {
             }"
             @click="selectTheme(theme.key)"
           >
-            <span
-              class="theme-selector__swatch"
-              :style="{ backgroundColor: theme.primary }"
-            />
+            <span class="theme-selector__swatch" :data-theme="theme.key" />
             <span class="theme-selector__name">{{ theme.name }}</span>
             <span
               v-if="currentTheme === theme.key"
@@ -81,7 +75,7 @@ const {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid;
+  border: 2px solid var(--color-accent-primary);
   color: var(--color-fg-secondary);
   background-color: transparent;
   transition:
@@ -154,6 +148,7 @@ const {
   width: 0.75rem;
   height: 0.75rem;
   flex-shrink: 0;
+  background-color: var(--color-accent-primary-source);
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--color-fg-inverse) 10%, transparent);
 }

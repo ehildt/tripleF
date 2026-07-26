@@ -8,7 +8,7 @@ export interface ToastOptions {
 }
 
 export function useToast() {
-  const { add } = useToastState();
+  const { add, preview } = useToastState();
 
   const show = (
     message: string,
@@ -20,6 +20,7 @@ export function useToast() {
 
   return {
     show,
+    preview,
     info: (message: string, options?: ToastOptions) =>
       show(message, 'info', options),
     success: (message: string, options?: ToastOptions) =>
@@ -28,6 +29,8 @@ export function useToast() {
       show(message, 'warning', options),
     error: (message: string, options?: ToastOptions) =>
       show(message, 'error', options),
+    debug: (message: string, options?: ToastOptions) =>
+      show(message, 'debug', options),
     default: (message: string, options?: ToastOptions) =>
       show(message, 'default', options),
   };

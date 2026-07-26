@@ -48,7 +48,7 @@ const displayValue = computed(() => {
         </span>
         <ChevronDown class="input-select__chevron" />
       </ListboxButton>
-      <ListboxOptions class="input-select__options">
+      <ListboxOptions class="input-select__options shadow-floating">
         <ListboxOption
           v-for="option in options"
           :key="option"
@@ -143,7 +143,6 @@ const displayValue = computed(() => {
   list-style: none;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   max-height: 10rem;
   overflow-y: auto;
   outline: none;

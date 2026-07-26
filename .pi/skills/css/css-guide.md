@@ -15,7 +15,7 @@ Tokens (defaults)  →  Palettes (override token values)  →  Modes (override t
 | Layer      | Folder        | Purpose                                         | Contains                                      |
 | ---------- | ------------- | ----------------------------------------------- | --------------------------------------------- |
 | Tokens     | `tokens/`     | Design system variable definitions and defaults | `@theme { }` blocks only                      |
-| Palettes   | `palettes/`   | Override token values per selected palette      | Only `:root[data-theme='...']` selectors      |
+| Palettes   | `palettes/`   | Override token values per selected palette      | Only `[data-theme='...']` selectors           |
 | Modes      | `modes/`      | Override token values per display mode          | Only `:root[data-theme-mode='...']` selectors |
 | Components | `components/` | Global (unscoped) component styles              | Plain CSS using `var()` references            |
 | Entry      | `style.css`   | Import orchestration, global resets, animations | `@import` statements in correct order         |
@@ -44,15 +44,15 @@ css/
 
 **Colors** (`tokens/colors.css`) — all variables start with `--color-`:
 
+- Hue sources: `--color-accent-primary-source`, `--color-harmony-1..4-source`, `--color-status-*-source`, `--color-connection-*-source` — raw identity colors set by palettes. The final tokens (`--color-accent-primary`, `--color-harmony-1..4`, `--color-status-success/warning/error/info`, `--color-connection-connected/disconnected/error`) derive from them; light mode darkens the finals via `color-mix` with `#1c1c1e` so every palette keeps ≥ 4.5:1 contrast on light surfaces. Components always consume the final tokens, never the sources. (Exception: theme-preview swatches use `--color-accent-primary-source` to show a palette's raw identity color.)
 - Background: `--color-bg-primary`, `--color-bg-secondary`, `--color-bg-tertiary`, `--color-bg-elevated`
 - Foreground: `--color-fg-primary`, `--color-fg-secondary`, `--color-fg-muted`, `--color-fg-inverse`
-- Accent: `--color-accent-primary`, `--color-accent-secondary`, `--color-accent-hover`, `--color-accent-active`, `--color-accent-border`, `--color-accent-muted`, `--color-accent-glow`
+- Accent: `--color-accent-primary`, `--color-accent-secondary`, `--color-accent-hover`, `--color-accent-active`, `--color-accent-border`, `--color-accent-glow`
 - Harmony: `--color-harmony-1` through `--color-harmony-4`
 - Tab: `--color-tab-rest`, `--color-tab-accent`, `--color-tab-debug`, `--color-tab-preprocessing`
 - Status: `--color-status-success`, `--color-status-warning`, `--color-status-error`, `--color-status-info`
-- Border: `--color-divider`, `--color-border-focus`
-- Method: `--color-method-get`, `--color-method-post`, `--color-method-put`, `--color-method-delete`, `--color-method-patch`
-- Glow: `--color-glow`
+- Border: `--color-divider`
+- Loading: `--color-loading`, `--color-loading-secondary`
 
 **Spacing** (`tokens/layout.css`):
 
@@ -506,7 +506,7 @@ Only add tokens that are actually used by components. Do not pre-build a full sc
 --spacing-5: 1.25rem; /* gap-5, p-5 */
 ```
 
-**New color token** — add to `tokens/colors.css` inside `@theme`, then add overrides in each `palettes/*.css` that needs a different value. The palette files use `:root[data-theme='...']` selectors.
+**New color token** — add to `tokens/colors.css` inside `@theme`, then add overrides in each `palettes/*.css` that needs a different value. The palette files use `[data-theme='...']` selectors (no `:root`), so palette values can also be previewed on arbitrary elements — e.g. the theme selector renders swatches with `data-theme` on the swatch itself. If the new token is a hue that must stay legible in light mode, define it as a `*-source` token in the palettes, compose the final token in `tokens/colors.css`, and add a darkened `color-mix` override in `modes/light.css`.
 
 **New font token** — add to `tokens/typography.css` inside `@theme`.
 

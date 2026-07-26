@@ -14,16 +14,12 @@ defineEmits<{
 </script>
 
 <template>
-  <div
-    class="max-h-[calc(100vh-27.3rem)] overflow-y-auto divide-y divide-divider pr-1.5"
-  >
+  <div class="request-list">
     <div
       v-for="result in results"
       :key="result.id"
-      :class="[
-        'cursor-pointer hover:bg-tertiary/50 divide-y divide-divider',
-        { 'bg-tertiary': selectedResultId === result.id },
-      ]"
+      class="request-list__row"
+      :class="{ 'request-list__row--active': selectedResultId === result.id }"
       @click="$emit('select', result)"
     >
       <RequestItem
@@ -34,3 +30,32 @@ defineEmits<{
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Fills the column panel (flex parent) and scrolls internally — the
+   column wrapper in DebugSection owns the shared panel height. */
+.request-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.request-list__row {
+  border-bottom: 1px solid var(--color-divider);
+  cursor: pointer;
+}
+
+.request-list__row:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-tertiary) 50%,
+    transparent
+  );
+}
+
+.request-list__row--active,
+.request-list__row--active:hover {
+  background-color: var(--color-bg-tertiary);
+}
+</style>

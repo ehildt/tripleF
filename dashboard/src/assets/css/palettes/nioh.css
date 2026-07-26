@@ -1,31 +1,22 @@
-:root[data-theme='nioh'] {
-  --color-accent-primary: #e74c3c;
+[data-theme='nioh'] {
+  /* Hue sources — light mode darkens these for contrast */
+  --color-accent-primary-source: #e74c3c;
+  --color-harmony-1-source: #f1c40f;
+  --color-harmony-2-source: #2c3e50;
+  --color-harmony-3-source: #c0392b;
+  --color-harmony-4-source: #ecf0f1;
+  --color-status-success-source: #27ae60;
+  --color-status-warning-source: #f1c40f;
+  --color-status-error-source: #e74c3c;
+  --color-status-info-source: #3498db;
+  --color-connection-connected-source: #e74c3c;
+  --color-connection-disconnected-source: #e67e22;
+  --color-connection-error-source: #ef6c57;
+
+  /* Supporting accent */
   --color-accent-secondary: #c0392b;
 
-  --color-glow: #b03a2e;
-
-  --color-status-success: #27ae60;
-  --color-status-warning: #f1c40f;
-  --color-status-error: #e74c3c;
-  --color-status-info: #3498db;
-
-  --color-method-get: #27ae60;
-  --color-method-post: #2980b9;
-  --color-method-put: #f1c40f;
-  --color-method-delete: #e74c3c;
-  --color-method-patch: #8e44ad;
-  --color-method-system: #d35400;
-  --color-method-default: #7f8c8d;
-
-  --color-status-code-success: #27ae60;
-  --color-status-code-error: #e74c3c;
-  --color-status-code-default: #d35400;
-
-  --color-connection-connected: #e74c3c;
-  --color-connection-disconnected: #e67e22;
-  --color-connection-error: #ef6c57;
-  --color-connection-default: #f1c40f;
-
+  /* Tab ramp derived from the accent */
   --color-tab-rest: var(--color-accent-primary);
   --color-tab-accent: color-mix(
     in srgb,
@@ -43,23 +34,13 @@
     #ffffff 75%
   );
 
-  --color-tab-rest-rgb: 231, 76, 60;
-  --color-tab-accent-rgb: 237, 121, 109;
-  --color-tab-debug-rgb: 243, 166, 158;
-  --color-tab-preprocessing-rgb: 248, 210, 206;
-
-  --color-harmony-1: #f1c40f;
-  --color-harmony-2: #2c3e50;
-  --color-harmony-3: #c0392b;
-  --color-harmony-4: #ecf0f1;
-
+  /* Semantic accent roles */
   --color-accent-hover: var(--color-harmony-2);
   --color-accent-active: var(--color-tab-rest);
   --color-accent-border: var(--color-harmony-3);
-  --color-accent-muted: var(--color-harmony-4);
   --color-accent-glow: var(--color-tab-rest);
-  --color-accent-secondary-glow: var(--color-tab-accent);
 
+  /* Surfaces */
   --color-bg-primary: #121212;
   --color-bg-secondary: #1c1c1c;
   --color-bg-tertiary: #262626;
@@ -72,10 +53,7 @@
   --color-fg-muted: #a6a6a6;
   --color-fg-inverse: #000000;
 
-  --color-event: #f1c40f;
-  --color-event-secondary: #f4d03f;
-  --color-room: #2980b9;
+  /* Loading indicator */
   --color-loading: var(--color-tab-rest);
   --color-loading-secondary: var(--color-tab-accent);
-
 }

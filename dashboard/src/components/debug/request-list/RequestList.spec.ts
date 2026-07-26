@@ -49,7 +49,7 @@ describe('RequestList', () => {
         isRead: () => false,
       },
     });
-    await wrapper.find('.cursor-pointer').trigger('click');
+    await wrapper.find('.request-list__row').trigger('click');
     expect(wrapper.emitted('select')).toBeTruthy();
   });
 });
