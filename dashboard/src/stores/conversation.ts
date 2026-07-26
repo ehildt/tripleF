@@ -9,6 +9,7 @@ import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
 import type { ConversationMetadataImage } from '../utils/build-query-params.helper';
 import { createId } from '../utils/id.helper';
+import { calcInputTokenDelta } from './helpers/calc-input-token-delta.helper';
 import { toPromptMessage } from './helpers/to-prompt-message.helper';
 import { useSocketStore } from './socket';
 
@@ -487,43 +488,20 @@ export const useConversationStore = defineStore('conversation', () => {
     const exchange = conversation.exchanges.find(
       (e) => e.requestId === requestId && e.role === 'assistant',
     );
-    if (exchange) {
-      exchange.status = 'done';
-      if (tokenData) {
-        const cumulativeInputs = tokenData.promptEvalCount;
-        exchange.promptEvalCount = cumulativeInputs;
-        exchange.evalCount = tokenData.evalCount;
+    if (!exchange) return;
 
-        // Compute non-cumulative input delta for this specific turn.
-        // PEC is cumulative and bakes in:
-        //   1) new user input tokens
-        //   2) previous assistant's response (already counted in its evalCount)
-        // We subtract the previous evalCount to avoid double-counting,
-        // leaving only the *new* inputs actually added by this exchange.
-        if (cumulativeInputs != null) {
-          const allAssistants = conversation.exchanges.filter(
-            (e) => e.role === 'assistant' && e.status === 'done',
-          );
-          const prevAssistant = allAssistants.at(-2);
-
-          let delta = !prevAssistant
-            ? cumulativeInputs
-            : Math.max(
-                0,
-                cumulativeInputs - (prevAssistant.promptEvalCount ?? 0),
-              );
-
-          // Subtract previous response tokens — they were already counted in
-          // the prior assistant's evalCount and only reappear here because
-          // Ollama counts them as input on this call.
-          if (prevAssistant && prevAssistant.evalCount != null) {
-            delta = Math.max(0, delta - prevAssistant.evalCount);
-          }
-          exchange.inputTokenDelta = delta;
-        }
+    exchange.status = 'done';
+    if (tokenData) {
+      exchange.promptEvalCount = tokenData.promptEvalCount;
+      exchange.evalCount = tokenData.evalCount;
+      if (tokenData.promptEvalCount != null) {
+        exchange.inputTokenDelta = calcInputTokenDelta(
+          conversation.exchanges,
+          tokenData.promptEvalCount,
+        );
       }
-      conversation.updatedAt = Date.now();
     }
+    conversation.updatedAt = Date.now();
   }
 
   function markExchangeError(

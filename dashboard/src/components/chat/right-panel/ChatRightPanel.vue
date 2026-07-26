@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+  Eye,
+  EyeOff,
   FileImage,
   History,
   ListVideo,
@@ -8,28 +10,17 @@ import {
   Repeat,
   Square,
 } from '@lucide/vue';
-import { computed } from 'vue';
 
 import type { Conversation } from '@/stores/conversation';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
-import { getApiUrl } from '../../../api/api-url';
 import ExpandableMessageList from '../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
 import type { MessageListItem } from '../../shared/ui/expandable-message-list/types';
 import type { RightPanelView } from '../composables/use-chat-panel';
-import {
-  activePlaybackControlSupported,
-  activePlaybackPlaying,
-  activePlaybackVideoUrl,
-  launchVideo,
-  playlistAutoplayEnabled,
-  removePlaylistVideo,
-  stopActivePlayback,
-  toggleActivePlayback,
-  togglePlaylistAutoplay,
-} from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import AttachmentCard from './attachment-card/AttachmentCard.vue';
 import type { AttachmentItem } from './composables/use-attachment-list';
+import { usePlaylistTransport } from './composables/use-playlist-transport';
+import { useRightPanel } from './composables/use-right-panel';
 import PlaylistItem from './playlist-item/PlaylistItem.vue';
 
 const props = defineProps<{
@@ -47,49 +38,33 @@ const emit = defineEmits<{
   promptClick: [index: number];
 }>();
 
-const hasAttachments = computed(() => props.attachments.length > 0);
-const hasHistory = computed(() => props.messageListItems.length > 0);
-const hasPlaylist = computed(() => props.playlistVideos.length > 0);
+const {
+  hasAttachments,
+  hasHistory,
+  hasPlaylist,
+  filesTabClass,
+  playlistTabClass,
+  historyTabClass,
+  previewUrl,
+  onPromptClick,
+} = useRightPanel(props, emit);
 
-const hasActivePlayback = computed(() => Boolean(activePlaybackVideoUrl.value));
-const canTogglePlayback = computed(
-  () => hasActivePlayback.value && activePlaybackControlSupported.value,
-);
-const playbackToggleTitle = computed(() => {
-  if (!hasActivePlayback.value) return 'Nothing is playing';
-  if (!activePlaybackControlSupported.value)
-    return 'Playback controls unavailable for this provider';
-  return activePlaybackPlaying.value ? 'Pause' : 'Play';
-});
-
-const filesTabClass = computed(() =>
-  makeTabClass(props.rightPanelView === 'files'),
-);
-const playlistTabClass = computed(() =>
-  makeTabClass(props.rightPanelView === 'playlist'),
-);
-const historyTabClass = computed(() =>
-  makeTabClass(props.rightPanelView === 'history'),
-);
-
-function makeTabClass(isActive: boolean) {
-  return {
-    'chat-right-panel__tab': true,
-    'chat-right-panel__tab--active': isActive,
-  };
-}
-
-function previewUrl(item: AttachmentItem): string {
-  if (!item.isUploaded) return item.previewUrl;
-  if (!props.conversation?.id) return '';
-  return getApiUrl(
-    `/api/v1/storage/${props.conversation.id}/${props.conversation.conversationId}/${item.hash}`,
-  );
-}
-
-function onPromptClick(idx: number) {
-  emit('promptClick', idx);
-}
+const {
+  activePlaybackPlaying,
+  activePlaybackVideoUrl,
+  activePlaybackTitle,
+  playlistAutoplayEnabled,
+  popoutHideOnPlaylist,
+  toggleHideOnPlaylist,
+  hasActivePlayback,
+  canTogglePlayback,
+  playbackToggleTitle,
+  toggleActivePlayback,
+  stopActivePlayback,
+  togglePlaylistAutoplay,
+  onPlayItem,
+  onRemoveItem,
+} = usePlaylistTransport(props);
 </script>
 
 <template>
@@ -140,48 +115,86 @@ function onPromptClick(idx: number) {
       class="chat-right-panel__playlist"
     >
       <div class="chat-right-panel__playlist-bar">
-        <button
-          type="button"
-          class="chat-right-panel__transport-button"
-          :disabled="!canTogglePlayback"
-          :title="playbackToggleTitle"
-          :aria-label="playbackToggleTitle"
-          @click="toggleActivePlayback"
+        <div class="chat-right-panel__transport">
+          <button
+            type="button"
+            class="chat-right-panel__transport-button"
+            :disabled="!canTogglePlayback"
+            :title="playbackToggleTitle"
+            :aria-label="playbackToggleTitle"
+            @click="toggleActivePlayback"
+          >
+            <Pause
+              v-if="activePlaybackPlaying"
+              class="chat-right-panel__transport-icon"
+            />
+            <Play v-else class="chat-right-panel__transport-icon" />
+          </button>
+          <button
+            type="button"
+            class="chat-right-panel__transport-button"
+            :disabled="!hasActivePlayback"
+            title="Stop playback"
+            aria-label="Stop playback"
+            @click="stopActivePlayback"
+          >
+            <Square class="chat-right-panel__transport-icon" />
+          </button>
+          <button
+            type="button"
+            class="chat-right-panel__transport-button"
+            :class="{
+              'chat-right-panel__transport-button--active':
+                playlistAutoplayEnabled,
+            }"
+            :aria-pressed="playlistAutoplayEnabled"
+            :title="
+              playlistAutoplayEnabled
+                ? 'Autoplay on: the next video starts when one ends'
+                : 'Autoplay off'
+            "
+            aria-label="Toggle autoplay"
+            @click="togglePlaylistAutoplay"
+          >
+            <Repeat class="chat-right-panel__transport-icon" />
+          </button>
+          <button
+            type="button"
+            class="chat-right-panel__transport-button"
+            :class="{
+              'chat-right-panel__transport-button--active':
+                popoutHideOnPlaylist,
+            }"
+            :aria-pressed="popoutHideOnPlaylist"
+            :title="
+              popoutHideOnPlaylist
+                ? 'Popup hidden while playlist videos play'
+                : 'Show popup while playlist videos play'
+            "
+            aria-label="Toggle popup visibility for playlist videos"
+            @click="toggleHideOnPlaylist"
+          >
+            <EyeOff
+              v-if="popoutHideOnPlaylist"
+              class="chat-right-panel__transport-icon"
+            />
+            <Eye v-else class="chat-right-panel__transport-icon" />
+          </button>
+        </div>
+
+        <div
+          v-if="hasActivePlayback && activePlaybackTitle"
+          class="chat-right-panel__now-playing"
         >
-          <Pause
-            v-if="activePlaybackPlaying"
-            class="chat-right-panel__transport-icon"
-          />
-          <Play v-else class="chat-right-panel__transport-icon" />
-        </button>
-        <button
-          type="button"
-          class="chat-right-panel__transport-button"
-          :disabled="!hasActivePlayback"
-          title="Stop playback"
-          aria-label="Stop playback"
-          @click="stopActivePlayback"
-        >
-          <Square class="chat-right-panel__transport-icon" />
-        </button>
-        <button
-          type="button"
-          class="chat-right-panel__transport-button"
-          :class="{
-            'chat-right-panel__transport-button--active':
-              playlistAutoplayEnabled,
-          }"
-          :aria-pressed="playlistAutoplayEnabled"
-          :title="
-            playlistAutoplayEnabled
-              ? 'Autoplay on: the next video starts when one ends'
-              : 'Autoplay off'
-          "
-          aria-label="Toggle autoplay"
-          @click="togglePlaylistAutoplay"
-        >
-          <Repeat class="chat-right-panel__transport-icon" />
-        </button>
+          <div class="chat-right-panel__now-playing-track">
+            <span class="chat-right-panel__now-playing-text">
+              {{ activePlaybackTitle }}
+            </span>
+            <span class="chat-right-panel__now-playing-text" aria-hidden="true">
+              {{ activePlaybackTitle }}
+            </span>
+          </div>
+        </div>
       </div>
       <div
         class="chat-right-panel__scrollable chat-right-panel__playlist-items"
@@ -191,13 +204,8 @@ function onPromptClick(idx: number) {
           :key="`${item.videoUrl}-${index}`"
           :item="item"
           :is-active="activePlaybackVideoUrl === item.videoUrl"
-          @play="
-            launchVideo(item, {
-              videos: playlistVideos,
-              conversationId: conversation?.id ?? '',
-            })
-          "
-          @remove="removePlaylistVideo(conversation?.id ?? '', item.videoUrl)"
+          @play="onPlayItem(item)"
+          @remove="onRemoveItem(item.videoUrl)"
         />
       </div>
     </div>
@@ -279,9 +287,57 @@ function onPromptClick(idx: number) {
 
 .chat-right-panel__playlist-bar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+  padding: var(--spacing-1) 0;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.chat-right-panel__transport {
+  display: flex;
   gap: var(--spacing-1);
   flex-shrink: 0;
+}
+
+.chat-right-panel__now-playing {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.chat-right-panel__now-playing-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: now-playing-scroll 12s linear infinite;
+}
+
+.chat-right-panel__now-playing-text {
+  padding-right: var(--spacing-9\.5);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--color-fg-muted);
+}
+
+/* Endless left-to-right loop: the duplicated span makes the wrap
+   from -50% back to 0 seamless. */
+@keyframes now-playing-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-right-panel__now-playing-track {
+    animation: none;
+  }
 }
 
 .chat-right-panel__transport-button {
@@ -289,7 +345,7 @@ function onPromptClick(idx: number) {
   align-items: center;
   justify-content: center;
   padding: var(--spacing-1) var(--spacing-2);
-  border: 1px solid var(--color-divider);
+  border: none;
   background-color: transparent;
   font-size: 0.7rem;
   font-family: var(--font-mono);
@@ -297,13 +353,11 @@ function onPromptClick(idx: number) {
   cursor: pointer;
   transition:
     color 0.2s ease,
-    border-color 0.2s ease,
     background-color 0.2s ease;
 }
 
 .chat-right-panel__transport-button:hover:not(:disabled) {
-  color: var(--color-fg-primary);
-  border-color: var(--color-accent-border);
+  color: var(--color-accent-primary);
 }
 
 .chat-right-panel__transport-button:disabled {
@@ -313,7 +367,6 @@ function onPromptClick(idx: number) {
 
 .chat-right-panel__transport-button--active {
   color: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
   background-color: color-mix(
     in srgb,
     var(--color-accent-primary) 10%,

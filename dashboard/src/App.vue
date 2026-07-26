@@ -67,7 +67,6 @@ onUnmounted(() => {
   >
     <AppHeader
       :active-tab="appStore.activeTab"
-      :blink-logo="appStore.blinkLogo"
       :debug-count="debugStore.debugLogCount"
       :show-chat-star="appStore.showChatStar"
       :dlq-count="dlqStore.unreadDlqCount"
@@ -90,11 +89,7 @@ onUnmounted(() => {
 
     <ToastContainer />
     <PopoutPreview />
-    <AppFooter
-      :connection-state="socketStore.connectionState"
-      :socket-id="socketStore.socketId"
-      :connected-pairs="socketStore.connectedPairs"
-    />
+    <AppFooter :socket-id="socketStore.socketId" />
   </div>
 </template>
 

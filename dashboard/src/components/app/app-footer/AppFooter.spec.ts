@@ -1,51 +1,35 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import AppFooter from './AppFooter.vue';
 
+function mountFooter(props: Record<string, unknown> = {}) {
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  return mount(AppFooter, {
+    props: { socketId: null, ...props },
+    global: { plugins: [pinia] },
+  });
+}
+
 describe('AppFooter', () => {
-  it('renders version and endpoints', () => {
-    const wrapper = mount(AppFooter, {
-      props: { connectionState: 'disconnected' },
-    });
-    expect(wrapper.text()).toContain('v1.3.0');
-    expect(wrapper.text()).toContain('/api/v1/harness');
+  beforeEach(() => {
+    setActivePinia(createPinia());
   });
 
-  it.each([
-    ['connected', 'CONNECTED'],
-    ['disconnected', 'DISCONNECTED'],
-    ['error', 'ERROR'],
-  ] as const)('shows %s state', (state, expectedText) => {
-    const wrapper = mount(AppFooter, {
-      props: { connectionState: state },
-    });
-    expect(wrapper.text()).toContain(expectedText);
+  it('shows the full session id when connected', () => {
+    const wrapper = mountFooter({ socketId: 'abc-123-full-session-id' });
+    expect(wrapper.text()).toContain('abc-123-full-session-id');
   });
 
-  it('shows socketId when provided', () => {
-    const wrapper = mount(AppFooter, {
-      props: { connectionState: 'connected', socketId: 'abc-123' },
-    });
-    expect(wrapper.text()).toContain('abc-123');
+  it('shows a placeholder when there is no session', () => {
+    const wrapper = mountFooter({ socketId: null });
+    expect(wrapper.text()).toContain('—');
   });
 
-  it('shows connected pairs when provided', () => {
-    const wrapper = mount(AppFooter, {
-      props: {
-        connectionState: 'connected',
-        connectedPairs: ['harness', 'harness::room1'],
-      },
-    });
-    expect(wrapper.text()).toContain('connected:');
-    expect(wrapper.text()).toContain('harness');
-    expect(wrapper.text()).toContain('harness::room1');
-  });
-
-  it('does not show connected pairs when empty', () => {
-    const wrapper = mount(AppFooter, {
-      props: { connectionState: 'connected', connectedPairs: [] },
-    });
-    expect(wrapper.text()).not.toContain('connected:');
+  it('disables the copy button without a session', () => {
+    const wrapper = mountFooter({ socketId: null });
+    expect(wrapper.find('button').attributes('disabled')).toBeDefined();
   });
 });

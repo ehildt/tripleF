@@ -52,7 +52,7 @@ describe('useThemeSelector', () => {
     vm.toggleDropdown();
     expect(vm.isDropdownOpen).toBe(true);
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     await nextTick();
 
     expect(vm.isDropdownOpen).toBe(false);

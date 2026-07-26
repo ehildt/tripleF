@@ -1,3 +1,4 @@
+import { useEventListener } from '@vueuse/core';
 import {
   type ComponentPublicInstance,
   computed,
@@ -106,8 +107,9 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
     isFloating.value ? geometryStyle.value : {},
   );
 
+  useEventListener(window, 'blur', onWindowBlur);
+
   onMounted(() => {
-    window.addEventListener('blur', onWindowBlur);
     if (!cardElement.value) return;
     observer = new IntersectionObserver(
       ([entry]) => {
@@ -120,7 +122,6 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
 
   onUnmounted(() => {
     observer?.disconnect();
-    window.removeEventListener('blur', onWindowBlur);
     document.body.classList.remove('has-floating-video');
   });
 

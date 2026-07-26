@@ -38,7 +38,6 @@ describe('useAppStore', () => {
   it('initializes with correct defaults', () => {
     const store = useAppStore();
     expect(store.activeTab).toBe('http');
-    expect(store.blinkLogo).toBe(true);
     expect(store.copiedIndex).toBeNull();
     expect(store.abortingId).toBeNull();
   });

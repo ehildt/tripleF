@@ -10,7 +10,6 @@ function mountHeader(props: Record<string, unknown> = {}) {
   return mount(AppHeader, {
     props: {
       activeTab: 'http',
-      blinkLogo: false,
       debugCount: 0,
       ...props,
     } as any,
@@ -19,32 +18,28 @@ function mountHeader(props: Record<string, unknown> = {}) {
 }
 
 describe('AppHeader', () => {
-  it('renders brand and version text', () => {
+  it('renders all four tabs in the burger menu', async () => {
     const wrapper = mountHeader();
-    expect(wrapper.text()).toContain('ckir.io');
-    expect(wrapper.text()).toContain('harness');
-    expect(wrapper.text()).toContain('AI Harness Console');
+    await wrapper.find('.nav-menu__burger').trigger('click');
+    expect(wrapper.text()).toContain('chat');
+    expect(wrapper.text()).toContain('dlq');
+    expect(wrapper.text()).toContain('debug');
+    expect(wrapper.text()).toContain('sysctl');
   });
 
-  it('renders all four tabs', () => {
+  it('emits tabChange when a menu tab is clicked', async () => {
     const wrapper = mountHeader();
-    expect(wrapper.text()).toContain('> CHAT_');
-    expect(wrapper.text()).toContain('> DLQ_');
-    expect(wrapper.text()).toContain('> DEBUG_');
-    expect(wrapper.text()).toContain('> SYSCTL_');
-  });
-
-  it('emits tabChange when a tab is clicked', async () => {
-    const wrapper = mountHeader();
-    const buttons = wrapper.findAll('button');
-    const dlqButton = buttons.find((b) => b.text().includes('DLQ'));
-    expect(dlqButton).toBeDefined();
-    await dlqButton!.trigger('click');
+    await wrapper.find('.nav-menu__burger').trigger('click');
+    const dlqItem = wrapper
+      .findAll('.nav-menu__item')
+      .find((b) => b.text().includes('dlq'));
+    expect(dlqItem).toBeDefined();
+    await dlqItem!.trigger('click');
     expect(wrapper.emitted('tabChange')).toBeTruthy();
     expect(wrapper.emitted('tabChange')![0]).toEqual(['dlq']);
   });
 
-  it('shows counts when provided', () => {
+  it('shows counts and the aggregated dot when provided', async () => {
     localStorage.setItem('harness-show-counters', 'true');
     const wrapper = mountHeader({
       activeTab: 'sysctl',
@@ -52,6 +47,8 @@ describe('AppHeader', () => {
       showChatStar: true,
       dlqCount: 2,
     });
+    expect(wrapper.find('.nav-menu__badge').exists()).toBe(true);
+    await wrapper.find('.nav-menu__burger').trigger('click');
     expect(wrapper.text()).toContain('✦');
     expect(wrapper.text()).toContain('2');
     expect(wrapper.text()).toContain('5');

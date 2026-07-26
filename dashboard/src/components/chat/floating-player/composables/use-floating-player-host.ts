@@ -1,5 +1,6 @@
 import { computed, onUnmounted, watch } from 'vue';
 
+import { popoutHideOnPlaylist } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import { usePausablePlayer } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-pausable-player';
 import { usePopupGeometry } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-popup-geometry';
 import {
@@ -60,6 +61,7 @@ export function useFloatingPlayerHost() {
   return {
     launchedVideo,
     popupStyle,
+    popoutHideOnPlaylist,
     embedSrc,
     isDirectVideo,
     isUnembeddable,

@@ -1,44 +1,35 @@
 <script setup lang="ts">
-import type { ConnectionState } from '../../../stores/socket';
-import { APP_VERSION } from '../../../version';
+import { useClipboard } from '@vueuse/core';
 
-defineProps<{
-  connectionState: ConnectionState;
+import { useToast } from '../../../composables/use-toast';
+
+const props = defineProps<{
   socketId?: string | null;
-  connectedPairs?: string[];
 }>();
+
+const toast = useToast();
+const { copy } = useClipboard({ legacy: true });
+
+/** Game-style session id: click copies it for support/debugging. */
+async function copySessionId() {
+  if (!props.socketId) return;
+  await copy(props.socketId);
+  toast.success('Copied to clipboard');
+}
 </script>
 
 <template>
   <footer class="app-footer">
     <div class="app-footer__container">
-      <div class="app-footer__row">
-        <div class="app-footer__left">
-          <span class="app-footer__brand">ckir.io/harness</span>
-          <span class="app-footer__divider">::</span>
-          <span>v{{ APP_VERSION }}</span>
-          <span class="app-footer__divider">::</span>
-          <span :class="`app-footer__connection--${connectionState}`">
-            {{ connectionState.toUpperCase() }}
-          </span>
-          <span v-if="socketId" class="app-footer__divider">::</span>
-          <span v-if="socketId" class="app-footer__socket-id">
-            {{ socketId }}
-          </span>
-        </div>
-
-        <div class="app-footer__right">
-          <span class="app-footer__label">endpoints:</span>
-          <span class="app-footer__endpoint">/api/v1/harness</span>
-        </div>
-
-        <div v-if="connectedPairs?.length" class="app-footer__bindings">
-          <span class="app-footer__label">connected:</span>
-          <span class="app-footer__binding">{{
-            connectedPairs.join(', ')
-          }}</span>
-        </div>
-      </div>
+      <button
+        type="button"
+        class="app-footer__session"
+        :disabled="!socketId"
+        :title="socketId ? 'Session ID — click to copy' : 'No session'"
+        @click="copySessionId"
+      >
+        {{ socketId ?? '—' }}
+      </button>
     </div>
   </footer>
 </template>
@@ -54,23 +45,12 @@ defineProps<{
   background-color: var(--color-bg-secondary);
 }
 
-.app-footer__connection--connected {
-  color: var(--color-connection-connected);
-}
-
-.app-footer__connection--disconnected {
-  color: var(--color-connection-disconnected);
-}
-
-.app-footer__connection--error {
-  color: var(--color-connection-error);
-}
-
 .app-footer__container {
-  max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
   padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
 }
 
 @media (min-width: 640px) {
@@ -87,57 +67,24 @@ defineProps<{
   }
 }
 
-.app-footer__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.app-footer__session {
+  padding: 0;
+  border: none;
+  background: none;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: var(--color-fg-muted);
-}
-
-.app-footer__left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.app-footer__right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.app-footer__brand {
-  color: var(--color-tab-rest);
-}
-
-.app-footer__divider {
-  color: var(--color-border);
-}
-
-.app-footer__socket-id {
   font-size: 0.625rem;
   line-height: 0.875rem;
-  color: var(--color-fg-secondary);
-}
-
-.app-footer__label {
   color: var(--color-fg-muted);
+  cursor: pointer;
+  user-select: text;
+  transition: color 0.2s ease;
 }
 
-.app-footer__bindings {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.app-footer__session:hover:not(:disabled) {
+  color: var(--color-fg-primary);
 }
 
-.app-footer__binding {
-  color: var(--color-accent-primary);
-}
-
-.app-footer__endpoint {
-  color: var(--color-accent-primary);
+.app-footer__session:disabled {
+  cursor: default;
 }
 </style>

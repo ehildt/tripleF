@@ -89,7 +89,7 @@ describe('AppThemeSelector', () => {
     await wrapper.find('button').trigger('click');
     expect(wrapper.text()).toContain('Dark Souls');
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     await wrapper.vm.$nextTick();
 
     expect(wrapper.text()).not.toContain('Dark Souls');

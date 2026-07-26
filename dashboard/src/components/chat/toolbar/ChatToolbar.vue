@@ -1,13 +1,6 @@
 <script setup lang="ts">
-import {
-  computed,
-  inject,
-  onMounted,
-  onUnmounted,
-  provide,
-  ref,
-  watch,
-} from 'vue';
+import { onClickOutside } from '@vueuse/core';
+import { computed, inject, onMounted, provide, ref, watch } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
@@ -209,22 +202,13 @@ const {
 // ── Outside click ─────────────────────────────────────────
 const toolbarRef = ref<HTMLElement | null>(null);
 
-function onDocumentClick(e: MouseEvent) {
-  if (toolbarRef.value && !toolbarRef.value.contains(e.target as Node)) {
-    closeAllMenus();
-  }
-}
+onClickOutside(toolbarRef, closeAllMenus);
 
 // ── Lifecycle ─────────────────────────────────────────────
 onMounted(() => {
-  document.addEventListener('click', onDocumentClick);
   loadSessionFiles();
   mergeSubscriptionsFromSessions();
   reconnectActiveSubscriptions();
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', onDocumentClick);
 });
 
 // ── Expose for parent (Chat.vue) ───────────────────
