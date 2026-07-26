@@ -1,3 +1,4 @@
+import { Bug, MailX, MessageSquare, SlidersHorizontal } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { ActiveTab } from '../../../../stores/app';
@@ -10,9 +11,17 @@ const TAB_TINTS: Record<ActiveTab, number> = {
   sysctl: 1,
 };
 
+const TAB_ICONS: Record<ActiveTab, HeaderTab['icon']> = {
+  http: MessageSquare,
+  dlq: MailX,
+  debug: Bug,
+  sysctl: SlidersHorizontal,
+};
+
 export interface HeaderTab {
   label: string;
   tab: ActiveTab;
+  icon: typeof MessageSquare;
   tint: number;
   count?: number;
   showStar?: boolean;
@@ -31,26 +40,30 @@ export function useHeaderTabs(props: {
 
     const allTabs: HeaderTab[] = [
       {
-        label: '> CHAT_',
+        label: 'chat',
         tab: 'http',
+        icon: TAB_ICONS.http,
         tint: TAB_TINTS.http,
         showStar: props.showChatStar,
       },
       {
-        label: '> DLQ_',
+        label: 'dlq',
         tab: 'dlq',
+        icon: TAB_ICONS.dlq,
         tint: TAB_TINTS.dlq,
         count: showCounters ? (props.dlqCount ?? 0) : undefined,
       },
       {
-        label: '> DEBUG_',
+        label: 'debug',
         tab: 'debug',
+        icon: TAB_ICONS.debug,
         tint: TAB_TINTS.debug,
         count: showCounters ? (props.debugCount ?? 0) : undefined,
       },
       {
-        label: '> SYSCTL_',
+        label: 'sysctl',
         tab: 'sysctl',
+        icon: TAB_ICONS.sysctl,
         tint: TAB_TINTS.sysctl,
       },
     ];

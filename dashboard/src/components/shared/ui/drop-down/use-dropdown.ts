@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, type Ref, ref } from 'vue';
+import { onClickOutside, onKeyStroke } from '@vueuse/core';
+import { type Ref, ref } from 'vue';
 
 export function useDropdown(
   containerRef: Ref<HTMLElement | null>,
@@ -23,25 +24,8 @@ export function useDropdown(
     open.value = false;
   }
 
-  function handleClickOutside(e: MouseEvent) {
-    if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
-      open.value = false;
-    }
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') open.value = false;
-  }
-
-  onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleKeydown);
-  });
-
-  onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
-    document.removeEventListener('keydown', handleKeydown);
-  });
+  onClickOutside(containerRef, close);
+  onKeyStroke('Escape', close);
 
   return { open, toggle, select, close };
 }

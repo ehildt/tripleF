@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, type Ref, ref } from 'vue';
+import { onClickOutside } from '@vueuse/core';
+import { type Ref, ref } from 'vue';
 
 export type DlqFilterMenuId = 'status' | 'queue' | 'search';
 
@@ -29,19 +30,7 @@ export function useExclusiveFilterMenu(
     return openMenus.value.has(id);
   }
 
-  function handleDocumentClick(e: MouseEvent) {
-    if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
-      closeAllMenus();
-    }
-  }
-
-  onMounted(() => {
-    document.addEventListener('click', handleDocumentClick);
-  });
-
-  onUnmounted(() => {
-    document.removeEventListener('click', handleDocumentClick);
-  });
+  onClickOutside(containerRef, closeAllMenus);
 
   return {
     isMenuOpen,

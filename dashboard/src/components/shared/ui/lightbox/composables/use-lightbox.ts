@@ -1,4 +1,5 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onKeyStroke } from '@vueuse/core';
+import { computed, ref } from 'vue';
 
 export interface LightboxImage {
   url: string;
@@ -33,19 +34,14 @@ export function useLightbox() {
     if (index.value < images.value.length - 1) index.value++;
   }
 
-  function onKeydown(e: KeyboardEvent) {
-    if (!isOpen.value) return;
-    if (e.key === 'Escape') close();
-    if (e.key === 'ArrowLeft') goPrev();
-    if (e.key === 'ArrowRight') goNext();
-  }
-
-  onMounted(() => {
-    document.addEventListener('keydown', onKeydown);
+  onKeyStroke('Escape', () => {
+    if (isOpen.value) close();
   });
-
-  onUnmounted(() => {
-    document.removeEventListener('keydown', onKeydown);
+  onKeyStroke('ArrowLeft', () => {
+    if (isOpen.value) goPrev();
+  });
+  onKeyStroke('ArrowRight', () => {
+    if (isOpen.value) goNext();
   });
 
   return {

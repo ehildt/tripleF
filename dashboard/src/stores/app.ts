@@ -39,7 +39,6 @@ export const useAppStore = defineStore('app', () => {
     1500,
     { immediate: false },
   );
-  const blinkLogo = ref(true);
   const showChatStar = ref(loadStar());
 
   const VIS_KEY = 'harness-tab-visibility';
@@ -156,7 +155,6 @@ export const useAppStore = defineStore('app', () => {
     activeTab,
     abortingId,
     copiedIndex,
-    blinkLogo,
     showChatStar,
     requestId,
     tabVisibility,

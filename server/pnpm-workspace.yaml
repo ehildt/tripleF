@@ -4,9 +4,3 @@ allowBuilds:
   fastify-socket.io: true
   msgpackr-extract: true
   prisma: true
-minimumReleaseAgeExclude:
-  - '@vue/eslint-config-typescript@14.9.0'
-  - bullmq@5.79.1
-  - ts-loader@9.6.2
-  - '@ai-sdk/gateway@3.0.143'
-  - ai@6.0.219

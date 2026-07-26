@@ -1,4 +1,5 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onClickOutside, onKeyStroke } from '@vueuse/core';
+import { computed, ref } from 'vue';
 
 import {
   type ThemeName,
@@ -23,29 +24,11 @@ export function useThemeSelector() {
     store.currentTheme = key;
   }
 
-  function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape' && isDropdownOpen.value) {
-      closeDropdown();
-    }
-  }
-
-  function onDocumentClick(e: MouseEvent) {
-    if (
-      isDropdownOpen.value &&
-      !containerRef.value?.contains(e.target as Node)
-    ) {
-      closeDropdown();
-    }
-  }
-
-  onMounted(() => {
-    document.addEventListener('keydown', onKeydown);
-    document.addEventListener('click', onDocumentClick);
+  onClickOutside(containerRef, () => {
+    if (isDropdownOpen.value) closeDropdown();
   });
-
-  onUnmounted(() => {
-    document.removeEventListener('keydown', onKeydown);
-    document.removeEventListener('click', onDocumentClick);
+  onKeyStroke('Escape', () => {
+    if (isDropdownOpen.value) closeDropdown();
   });
 
   return {

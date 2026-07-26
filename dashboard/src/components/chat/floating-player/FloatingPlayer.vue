@@ -14,6 +14,7 @@ const RESIZE_DIRECTIONS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const;
 const {
   launchedVideo,
   popupStyle,
+  popoutHideOnPlaylist,
   embedSrc,
   isDirectVideo,
   isUnembeddable,
@@ -42,6 +43,7 @@ function onOpacityInput(event: Event) {
   <div
     v-if="launchedVideo"
     class="floating-player"
+    :class="{ 'floating-player--hidden': popoutHideOnPlaylist }"
     :style="popupStyle"
     data-floating-player
   >
@@ -147,6 +149,13 @@ function onOpacityInput(event: Event) {
 
 .floating-player:hover {
   border-color: var(--color-accent-border);
+}
+
+/* Playlist background mode: the player keeps running, only the window is
+   suppressed — visibility (not display) so playback is never suspended. */
+.floating-player--hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .floating-player__bar {

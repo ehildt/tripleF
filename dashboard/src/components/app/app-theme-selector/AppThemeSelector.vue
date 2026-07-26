@@ -75,7 +75,7 @@ const {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--color-accent-primary);
+  border: none;
   color: var(--color-fg-secondary);
   background-color: transparent;
   transition:
@@ -87,7 +87,7 @@ const {
 
 .theme-selector__button:hover,
 .theme-selector__button--active {
-  color: var(--color-fg-primary);
+  color: var(--color-accent-primary);
   background-color: color-mix(
     in srgb,
     var(--color-bg-secondary) 50%,

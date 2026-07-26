@@ -56,12 +56,11 @@ const metaLine = computed(() =>
 .playlist-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1-5) var(--spacing-2);
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-1-5);
   border: 1px solid var(--color-divider);
   background-color: var(--color-bg-secondary);
   cursor: pointer;
-  margin-right: var(--spacing-2);
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease;

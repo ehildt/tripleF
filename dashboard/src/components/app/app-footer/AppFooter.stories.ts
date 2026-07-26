@@ -10,38 +10,27 @@ const meta = {
     docs: {
       description: {
         component:
-          'Status footer with version, connection state, and endpoint info.',
+          'Minimal footer: the game-style session id at the very left. Click copies it to the clipboard.',
       },
     },
   },
   argTypes: {
-    connectionState: { control: 'select' },
     socketId: { control: 'text' },
-    connectedPairs: { control: 'object' },
   },
   args: {
-    connectionState: 'disconnected',
     socketId: null,
-    connectedPairs: [],
   },
 } satisfies Meta<typeof AppFooter>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Disconnected state. */
-export const Disconnected: Story = {};
+/** No session yet — placeholder. */
+export const NoSession: Story = {};
 
-/** Connected with socket id and active bindings. */
+/** Connected — full session id, click to copy. */
 export const Connected: Story = {
   args: {
-    connectionState: 'connected',
-    socketId: 'sock-abc-123',
-    connectedPairs: ['harness', 'harness::room1'],
+    socketId: 'kX9f2mAbCdEfGhIjKlMn',
   },
-};
-
-/** Error state. */
-export const ErrorState: Story = {
-  args: { connectionState: 'error' },
 };

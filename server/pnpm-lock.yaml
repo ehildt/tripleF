@@ -62,10 +62,10 @@ importers:
         specifier: '7'
         version: 7.9.0(prisma@7.9.0(@types/react@19.2.17)(magicast@0.5.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)
       ai:
-        specifier: ^6.0.230
+        specifier: ^6.0.235
         version: 6.0.235(zod@4.4.3)
       bullmq:
-        specifier: ^5.80.7
+        specifier: ^5.81.2
         version: 5.81.2(supports-color@8.1.1)
       class-transformer:
         specifier: ^0.5.1
@@ -150,7 +150,7 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
       eslint:
-        specifier: ^10.7.0
+        specifier: ^10.8.0
         version: 10.8.0(jiti@2.7.0)(supports-color@8.1.1)
       eslint-config-prettier:
         specifier: ^10.1.8
@@ -180,7 +180,7 @@ importers:
         specifier: ^20.0.2
         version: 20.0.2
       prisma:
-        specifier: ^7.8.0
+        specifier: ^7.9.0
         version: 7.9.0(@types/react@19.2.17)(magicast@0.5.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
       rimraf:
         specifier: ^6.1.3
@@ -207,7 +207,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       typescript-eslint:
-        specifier: ^8.64.0
+        specifier: ^8.65.0
         version: 8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
       vitest:
         specifier: ^4.1.10

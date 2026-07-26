@@ -22,11 +22,13 @@ export interface FloatingPopupRect {
 export const DEFAULT_POPOUT_ANCHOR: PopoutAnchor = 'bottom-right';
 export const DEFAULT_POPOUT_REMEMBER_POSITION = true;
 export const DEFAULT_POPOUT_ENABLED = true;
+export const DEFAULT_POPOUT_HIDE_ON_PLAYLIST = false;
 
 const POPOUT_ENABLED_STORAGE_KEY = 'vision-popout-enabled';
 const POPOUT_ANCHOR_STORAGE_KEY = 'vision-popout-anchor';
 const POPOUT_REMEMBER_POSITION_STORAGE_KEY = 'vision-popout-remember-position';
 const POPOUT_RECT_STORAGE_KEY = 'vision-popout-rect';
+const POPOUT_HIDE_ON_PLAYLIST_STORAGE_KEY = 'vision-popout-hide-on-playlist';
 
 const POPOUT_ANCHORS: readonly PopoutAnchor[] = [
   'top-left',
@@ -41,11 +43,15 @@ const POPOUT_ANCHORS: readonly PopoutAnchor[] = [
 ];
 
 function loadPopoutEnabled(): boolean {
+  return loadBoolean(POPOUT_ENABLED_STORAGE_KEY, DEFAULT_POPOUT_ENABLED);
+}
+
+function loadBoolean(key: string, fallback: boolean): boolean {
   try {
-    const saved = localStorage.getItem(POPOUT_ENABLED_STORAGE_KEY);
-    return saved === null ? DEFAULT_POPOUT_ENABLED : saved === 'true';
+    const saved = localStorage.getItem(key);
+    return saved === null ? fallback : saved === 'true';
   } catch {
-    return DEFAULT_POPOUT_ENABLED;
+    return fallback;
   }
 }
 
@@ -88,6 +94,18 @@ function loadFloatingPopupRect(): FloatingPopupRect | null {
 export const popoutEnabled = ref<boolean>(loadPopoutEnabled());
 export const popoutAnchor = ref<PopoutAnchor>(loadPopoutAnchor());
 export const popoutRememberPosition = ref(loadRememberPosition());
+
+/**
+ * Hide the floating popup while playlist videos play: the launch machinery
+ * (player, queue, autoplay) keeps running — only the window is suppressed,
+ * so the playlist becomes a background player driven by the transport bar.
+ */
+export const popoutHideOnPlaylist = ref<boolean>(
+  loadBoolean(
+    POPOUT_HIDE_ON_PLAYLIST_STORAGE_KEY,
+    DEFAULT_POPOUT_HIDE_ON_PLAYLIST,
+  ),
+);
 
 /** Example popout shown from SysCtl → Widgets to preview the anchor. */
 export const popoutPreviewVisible = ref(false);
@@ -164,6 +182,15 @@ export function setPopoutRememberPosition(enabled: boolean) {
   }
 }
 
+export function setPopoutHideOnPlaylist(enabled: boolean) {
+  popoutHideOnPlaylist.value = enabled;
+  try {
+    localStorage.setItem(POPOUT_HIDE_ON_PLAYLIST_STORAGE_KEY, String(enabled));
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+}
+
 /**
  * Persist the current popup geometry at the end of a drag/resize gesture —
  * only while position memory is on.
@@ -200,4 +227,5 @@ export function resetPopoutSettings() {
   }
   setPopoutAnchor(DEFAULT_POPOUT_ANCHOR);
   setPopoutRememberPosition(DEFAULT_POPOUT_REMEMBER_POSITION);
+  setPopoutHideOnPlaylist(DEFAULT_POPOUT_HIDE_ON_PLAYLIST);
 }
