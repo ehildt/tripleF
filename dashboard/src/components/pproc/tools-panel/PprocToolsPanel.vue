@@ -7,6 +7,7 @@ import {
   Columns3,
   Focus,
   Image,
+  ImagePlus,
   Images,
   Maximize2,
   Minus,
@@ -23,8 +24,10 @@ import {
 } from '@lucide/vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
+import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
 import {
@@ -35,8 +38,18 @@ import MaxHeightField from '../shared/ui/max-height-field/MaxHeightField.vue';
 import MaxWidthField from '../shared/ui/max-width-field/MaxWidthField.vue';
 import PprocSection from '../shared/ui/section/PprocSection.vue';
 import PprocToggleButton from '../shared/ui/toggle-button/PprocToggleButton.vue';
+import { usePreprocessingPreview } from './composables/use-preprocessing-preview';
 
 const store = usePreprocessingStore();
+
+const {
+  fileInput,
+  isPreviewLoading,
+  lightbox,
+  onFilePicked,
+  onPreviewClick,
+  repickImage,
+} = usePreprocessingPreview();
 
 const variantConfig: Record<
   string,
@@ -160,6 +173,11 @@ const parameters = [
     <div class="bg-elevated border border-divider panel-glow">
       <PanelTitleBar title="Image Preprocessing">
         <template #actions>
+          <PreviewButton
+            title="Preview preprocessing on an image"
+            :disabled="isPreviewLoading"
+            @click="onPreviewClick"
+          />
           <ResetButton
             title="Reset preprocessing to defaults"
             @click="store.resetToDefaults()"
@@ -176,13 +194,6 @@ const parameters = [
       <div class="p-4 space-y-4">
         <!-- Resize Settings -->
         <PprocSection :icon="ArrowDownToLine" title="Resize Settings">
-          <template #action>
-            <ResetButton
-              title="Reset resize settings"
-              :disabled="!store.hasResizeModified"
-              @click="store.resetResizeToDefaults()"
-            />
-          </template>
           <div class="grid grid-cols-3 gap-1">
             <FieldCard
               :icon="MoveHorizontal"
@@ -236,13 +247,6 @@ const parameters = [
 
         <!-- Variants -->
         <PprocSection :icon="Images" title="Image Variants">
-          <template #action>
-            <ResetButton
-              title="Reset image variants"
-              :disabled="!store.hasVariantsModified"
-              @click="store.resetVariantsToDefaults()"
-            />
-          </template>
           <div class="grid grid-cols-5 gap-1">
             <PprocToggleButton
               v-for="(config, key) in variantConfig"
@@ -318,14 +322,6 @@ const parameters = [
 
         <!-- Advanced Parameters -->
         <PprocSection :icon="SlidersHorizontal" title="Advanced Parameters">
-          <template #action>
-            <ResetButton
-              title="Reset all parameters"
-              :disabled="!store.hasAnyParameterModified"
-              @click="store.resetParametersToDefaults()"
-            />
-          </template>
-
           <div class="grid grid-cols-5 gap-2">
             <FieldCard
               v-for="param in parameters"
@@ -349,5 +345,61 @@ const parameters = [
         </PprocSection>
       </div>
     </div>
+
+    <input
+      ref="fileInput"
+      type="file"
+      accept="image/png,image/jpeg,image/webp"
+      class="pproc-tools-panel__file-input"
+      @change="onFilePicked"
+    />
+
+    <Lightbox
+      :images="lightbox.images.value"
+      :index="lightbox.index.value"
+      :active-title="lightbox.activeTitle.value"
+      :is-open="lightbox.isOpen.value"
+      @close="lightbox.close"
+      @prev="lightbox.goPrev"
+      @next="lightbox.goNext"
+      @select-index="lightbox.index.value = $event"
+    >
+      <template #actions>
+        <button
+          type="button"
+          class="pproc-tools-panel__repick"
+          title="Pick a different image"
+          aria-label="Pick a different image"
+          @click="repickImage"
+        >
+          <ImagePlus class="pproc-tools-panel__repick-icon" />
+        </button>
+      </template>
+    </Lightbox>
   </div>
 </template>
+
+<style scoped>
+.pproc-tools-panel__file-input {
+  display: none;
+}
+
+.pproc-tools-panel__repick {
+  padding: var(--spacing-1);
+  color: var(--color-fg-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pproc-tools-panel__repick:hover {
+  color: var(--color-accent-primary);
+}
+
+.pproc-tools-panel__repick-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+</style>

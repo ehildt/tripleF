@@ -49,7 +49,7 @@ const meta = {
         component: `
 A single exchange in the chat — either a user message or an assistant
 response. Orchestrates the ExchangeHeader, ExchangeContent /
-ExchangeCollapsed, and the ExchangeLightbox modal.
+ExchangeCollapsed, and the shared Lightbox modal.
 `,
       },
     },

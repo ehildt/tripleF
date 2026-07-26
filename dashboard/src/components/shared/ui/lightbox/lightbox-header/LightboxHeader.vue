@@ -11,22 +11,21 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <header class="exchange-lightbox__header">
-    <h1 class="exchange-lightbox__title">
+  <header class="lightbox__header">
+    <h1 class="lightbox__title">
       {{ activeTitle && activeTitle.trim() ? activeTitle : 'Image' }}
     </h1>
-    <button
-      type="button"
-      class="exchange-lightbox__close"
-      @click="emit('close')"
-    >
-      <X class="exchange-lightbox__close-icon" />
-    </button>
+    <div class="lightbox__header-actions">
+      <slot name="actions" />
+      <button type="button" class="lightbox__close" @click="emit('close')">
+        <X class="lightbox__close-icon" />
+      </button>
+    </div>
   </header>
 </template>
 
 <style scoped>
-.exchange-lightbox__header {
+.lightbox__header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -39,19 +38,26 @@ const emit = defineEmits<{
   background: color-mix(in srgb, var(--color-bg-elevated) 35%, transparent);
 }
 
+.lightbox__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-shrink: 0;
+}
+
 /* Mobile: smaller text and icon */
 @media (max-width: 639px) {
-  .exchange-lightbox__title {
+  .lightbox__title {
     font-size: 0.75rem;
   }
 
-  .exchange-lightbox__close-icon {
+  .lightbox__close-icon {
     width: 1.25rem;
     height: 1.25rem;
   }
 }
 
-.exchange-lightbox__title {
+.lightbox__title {
   font-size: 0.875rem;
   color: var(--color-fg-primary);
   font-family: var(--font-sans);
@@ -60,7 +66,7 @@ const emit = defineEmits<{
   white-space: nowrap;
 }
 
-.exchange-lightbox__close {
+.lightbox__close {
   padding: var(--spacing-1);
   color: var(--color-fg-muted);
   background: none;
@@ -70,11 +76,11 @@ const emit = defineEmits<{
   flex-shrink: 0;
 }
 
-.exchange-lightbox__close:hover {
+.lightbox__close:hover {
   color: var(--color-status-error);
 }
 
-.exchange-lightbox__close-icon {
+.lightbox__close-icon {
   width: 1.5rem;
   height: 1.5rem;
 }

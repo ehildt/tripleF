@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { LightboxImage } from '../../composables/use-exchange-lightbox';
+import type { LightboxImage } from '@/components/shared/ui/lightbox/composables/use-lightbox';
 
 defineProps<{
   content: string;

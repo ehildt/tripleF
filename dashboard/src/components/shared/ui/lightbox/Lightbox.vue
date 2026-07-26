@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import ExchangeLightboxFooter from './lightbox-footer/ExchangeLightboxFooter.vue';
-import ExchangeLightboxHeader from './lightbox-header/ExchangeLightboxHeader.vue';
-import ExchangeLightboxViewer from './lightbox-viewer/ExchangeLightboxViewer.vue';
+import LightboxFooter from './lightbox-footer/LightboxFooter.vue';
+import LightboxHeader from './lightbox-header/LightboxHeader.vue';
+import LightboxViewer from './lightbox-viewer/LightboxViewer.vue';
 
 const props = defineProps<{
   images: readonly {
@@ -29,18 +29,15 @@ const activeImage = computed(() => props.images[props.index]);
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="isOpen"
-      class="exchange-lightbox__backdrop"
-      @click.self="emit('close')"
-    >
-      <div class="exchange-lightbox">
-        <ExchangeLightboxHeader
-          :active-title="activeTitle"
-          @close="emit('close')"
-        />
+    <div v-if="isOpen" class="lightbox__backdrop" @click.self="emit('close')">
+      <div class="lightbox">
+        <LightboxHeader :active-title="activeTitle" @close="emit('close')">
+          <template v-if="$slots.actions" #actions>
+            <slot name="actions" />
+          </template>
+        </LightboxHeader>
 
-        <ExchangeLightboxViewer
+        <LightboxViewer
           v-if="activeImage"
           :image-url="activeImage.url"
           :has-prev="hasPrev"
@@ -49,7 +46,7 @@ const activeImage = computed(() => props.images[props.index]);
           @next="emit('next')"
         />
 
-        <ExchangeLightboxFooter
+        <LightboxFooter
           :count="images.length"
           :active-index="index"
           @select-index="(i) => emit('selectIndex', i)"
@@ -60,7 +57,7 @@ const activeImage = computed(() => props.images[props.index]);
 </template>
 
 <style scoped>
-.exchange-lightbox__backdrop {
+.lightbox__backdrop {
   position: fixed;
   inset: 0;
   /* Above the floating video popouts (z-index 1000) and the lifted chat
@@ -81,7 +78,7 @@ const activeImage = computed(() => props.images[props.index]);
 /* Default: small / mobile screens — glass panel matching the popouts.
    The height is definite (not max-height) so the frame — header, viewer,
    footer, nav — never reflows between images of different sizes. */
-.exchange-lightbox {
+.lightbox {
   display: flex;
   flex-direction: column;
   width: calc(100vw - var(--spacing-4));
@@ -99,13 +96,13 @@ const activeImage = computed(() => props.images[props.index]);
   transition: border-color 0.2s ease;
 }
 
-.exchange-lightbox:hover {
+.lightbox:hover {
   border-color: var(--color-accent-border);
 }
 
 /* Tablet and up: centered panel with breathing room */
 @media (min-width: 640px) {
-  .exchange-lightbox {
+  .lightbox {
     width: min(90vw, 800px);
     height: min(85vh, 700px);
   }
@@ -113,7 +110,7 @@ const activeImage = computed(() => props.images[props.index]);
 
 /* Desktop and up: wide-viewer mode */
 @media (min-width: 1024px) {
-  .exchange-lightbox {
+  .lightbox {
     width: min(60vw, 1100px);
     height: min(75vh, 750px);
   }

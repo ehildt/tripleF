@@ -2,16 +2,16 @@
 import { useClipboard } from '@vueuse/core';
 import { computed } from 'vue';
 
+import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
+import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useToast } from '../../../../composables/use-toast';
 import { useAppStore } from '../../../../stores/app';
-import { useExchangeLightbox } from './composables/use-exchange-lightbox';
 import ExchangeCollapsed from './exchange-collapsed/ExchangeCollapsed.vue';
 import ExchangeContent from './exchange-content/ExchangeContent.vue';
 import ExchangeHeader from './exchange-header/ExchangeHeader.vue';
-import ExchangeLightbox from './exchange-lightbox/ExchangeLightbox.vue';
 
 const props = defineProps<{
   exchange: Exchange;
@@ -39,7 +39,7 @@ const isCompacting = computed(() => conversationStore.compacting);
 
 const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
-const lightbox = useExchangeLightbox();
+const lightbox = useLightbox();
 
 async function handleCopy() {
   await copy(props.exchange.content);
@@ -119,7 +119,7 @@ function handleCancel(requestId: string) {
     </div>
   </div>
 
-  <ExchangeLightbox
+  <Lightbox
     :images="lightbox.images.value"
     :index="lightbox.index.value"
     :active-title="lightbox.activeTitle.value"

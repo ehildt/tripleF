@@ -14,31 +14,31 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="exchange-lightbox__viewer">
+  <div class="lightbox__viewer">
     <button
       type="button"
       :disabled="!hasPrev"
-      class="exchange-lightbox__nav"
+      class="lightbox__nav"
       @click.stop="emit('prev')"
     >
-      <ChevronLeft class="exchange-lightbox__nav-icon" />
+      <ChevronLeft class="lightbox__nav-icon" />
     </button>
 
-    <img :src="imageUrl" class="exchange-lightbox__image" @click.stop />
+    <img :src="imageUrl" class="lightbox__image" @click.stop />
 
     <button
       type="button"
       :disabled="!hasNext"
-      class="exchange-lightbox__nav"
+      class="lightbox__nav"
       @click.stop="emit('next')"
     >
-      <ChevronRight class="exchange-lightbox__nav-icon" />
+      <ChevronRight class="lightbox__nav-icon" />
     </button>
   </div>
 </template>
 
 <style scoped>
-.exchange-lightbox__viewer {
+.lightbox__viewer {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,26 +50,26 @@ const emit = defineEmits<{
 
 /* Mobile: reduce padding to give image more room */
 @media (max-width: 639px) {
-  .exchange-lightbox__viewer {
+  .lightbox__viewer {
     padding: var(--spacing-1);
   }
 }
 
 /* Tablet and up: standard padding */
 @media (min-width: 640px) {
-  .exchange-lightbox__viewer {
+  .lightbox__viewer {
     padding: var(--spacing-2);
   }
 }
 
 /* Desktop: generous padding for larger panels */
 @media (min-width: 1024px) {
-  .exchange-lightbox__viewer {
+  .lightbox__viewer {
     padding: var(--spacing-3);
   }
 }
 
-.exchange-lightbox__nav {
+.lightbox__nav {
   flex-shrink: 0;
   padding: var(--spacing-1);
   color: var(--color-fg-secondary);
@@ -82,7 +82,7 @@ const emit = defineEmits<{
     border-color 0.2s ease;
 }
 
-.exchange-lightbox__nav:hover:not(:disabled) {
+.lightbox__nav:hover:not(:disabled) {
   color: var(--color-accent-primary);
   border-color: var(--color-accent-border);
   background-color: color-mix(
@@ -92,20 +92,20 @@ const emit = defineEmits<{
   );
 }
 
-.exchange-lightbox__nav:disabled {
+.lightbox__nav:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
 /* Mobile: smaller nav icons for tight screens */
 @media (max-width: 639px) {
-  .exchange-lightbox__nav-icon {
+  .lightbox__nav-icon {
     width: 1.25rem;
     height: 1.25rem;
   }
 }
 
-.exchange-lightbox__nav-icon {
+.lightbox__nav-icon {
   width: 2rem;
   height: 2rem;
 }
@@ -113,7 +113,7 @@ const emit = defineEmits<{
 /* The image boxes itself inside the stable viewer: flex-basis 0 + grow
    fixes its width, max-height caps its height — its intrinsic aspect ratio
    can never push the nav buttons or resize the panel. */
-.exchange-lightbox__image {
+.lightbox__image {
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
@@ -126,14 +126,14 @@ const emit = defineEmits<{
 
 /* Tablet and up: image gets proportional room within panel */
 @media (min-width: 640px) {
-  .exchange-lightbox__image {
+  .lightbox__image {
     padding: var(--spacing-2);
   }
 }
 
 /* Desktop and up: maximize image display space */
 @media (min-width: 1024px) {
-  .exchange-lightbox__image {
+  .lightbox__image {
     padding: var(--spacing-3);
   }
 }
