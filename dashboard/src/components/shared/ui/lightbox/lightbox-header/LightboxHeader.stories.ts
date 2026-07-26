@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
-import ExchangeLightboxHeader from './ExchangeLightboxHeader.vue';
+import LightboxHeader from './LightboxHeader.vue';
 
 const meta = {
-  title:
-    'Chat/ExchangeList/ChatExchange/ExchangeLightbox/ExchangeLightboxHeader',
-  component: ExchangeLightboxHeader,
+  title: 'Shared/UI/Lightbox/LightboxHeader',
+  component: LightboxHeader,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -23,7 +22,7 @@ Top of the lightbox panel. Shows an optional caption title on the left and a clo
   args: {
     onClose: fn(),
   },
-} satisfies Meta<typeof ExchangeLightboxHeader>;
+} satisfies Meta<typeof LightboxHeader>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

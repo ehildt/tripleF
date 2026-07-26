@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
-import ExchangeLightboxFooter from './ExchangeLightboxFooter.vue';
+import LightboxFooter from './LightboxFooter.vue';
 
 const meta = {
-  title:
-    'Chat/ExchangeList/ChatExchange/ExchangeLightbox/ExchangeLightboxFooter',
-  component: ExchangeLightboxFooter,
+  title: 'Shared/UI/Lightbox/LightboxFooter',
+  component: LightboxFooter,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -26,7 +25,7 @@ Bottom of the lightbox panel. Pagination dots and an index counter framed by a d
     activeIndex: 1,
     onSelectIndex: fn(),
   },
-} satisfies Meta<typeof ExchangeLightboxFooter>;
+} satisfies Meta<typeof LightboxFooter>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

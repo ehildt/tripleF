@@ -10,25 +10,23 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <footer class="exchange-lightbox__footer">
-    <div class="exchange-lightbox__dots">
+  <footer class="lightbox__footer">
+    <div class="lightbox__dots">
       <button
         v-for="(_, i) in count"
         :key="i"
         type="button"
-        class="exchange-lightbox__dot"
-        :class="{ 'exchange-lightbox__dot--active': i === activeIndex }"
+        class="lightbox__dot"
+        :class="{ 'lightbox__dot--active': i === activeIndex }"
         @click.stop="emit('selectIndex', i)"
       />
     </div>
-    <span class="exchange-lightbox__counter">
-      {{ activeIndex + 1 }} / {{ count }}
-    </span>
+    <span class="lightbox__counter"> {{ activeIndex + 1 }} / {{ count }} </span>
   </footer>
 </template>
 
 <style scoped>
-.exchange-lightbox__footer {
+.lightbox__footer {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -44,20 +42,20 @@ const emit = defineEmits<{
 
 /* Mobile: smaller dots for tight screens */
 @media (max-width: 639px) {
-  .exchange-lightbox__dot {
+  .lightbox__dot {
     width: 0.5rem;
     height: 0.5rem;
   }
 }
 
-.exchange-lightbox__dots {
+.lightbox__dots {
   display: flex;
   justify-content: center;
   gap: var(--spacing-1-5);
   flex-wrap: wrap;
 }
 
-.exchange-lightbox__dot {
+.lightbox__dot {
   width: 0.625rem;
   height: 0.625rem;
   background-color: color-mix(in srgb, var(--color-fg-muted) 30%, transparent);
@@ -69,23 +67,23 @@ const emit = defineEmits<{
     transform 0.2s ease;
 }
 
-.exchange-lightbox__dot:hover {
+.lightbox__dot:hover {
   background-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
 }
 
-.exchange-lightbox__dot--active {
+.lightbox__dot--active {
   background-color: var(--color-accent-primary);
   transform: scale(1.25);
 }
 
 /* Mobile: smaller counter font size */
 @media (max-width: 639px) {
-  .exchange-lightbox__counter {
+  .lightbox__counter {
     font-size: 0.75rem;
   }
 }
 
-.exchange-lightbox__counter {
+.lightbox__counter {
   font-size: 0.875rem;
   color: var(--color-fg-secondary);
   font-family: var(--font-mono);

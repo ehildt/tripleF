@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
-import ExchangeLightbox from './ExchangeLightbox.vue';
+import Lightbox from './Lightbox.vue';
 
 const sampleImages = [
   {
@@ -19,8 +19,8 @@ const sampleImages = [
 ];
 
 const meta = {
-  title: 'Chat/ExchangeList/ChatExchange/ExchangeLightbox/ExchangeLightbox',
-  component: ExchangeLightbox,
+  title: 'Shared/UI/Lightbox/Lightbox',
+  component: Lightbox,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -49,7 +49,7 @@ Arrows remain visible but are disabled/grayscale when at the start/end.
     onNext: fn(),
     onSelectIndex: fn(),
   },
-} satisfies Meta<typeof ExchangeLightbox>;
+} satisfies Meta<typeof Lightbox>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

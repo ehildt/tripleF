@@ -1,10 +1,9 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
+import type { LightboxImage } from '@/components/shared/ui/lightbox/composables/use-lightbox';
 import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
-
-import type { LightboxImage } from '../../composables/use-exchange-lightbox';
 
 export function usePromptImageTiles(exchange: MaybeRefOrGetter<Exchange>) {
   const conversationStore = useConversationStore();

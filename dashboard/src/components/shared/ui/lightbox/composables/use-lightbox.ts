@@ -5,7 +5,7 @@ export interface LightboxImage {
   title?: string;
 }
 
-export function useExchangeLightbox() {
+export function useLightbox() {
   const isOpen = ref(false);
   const images = ref<LightboxImage[]>([]);
   const index = ref(0);

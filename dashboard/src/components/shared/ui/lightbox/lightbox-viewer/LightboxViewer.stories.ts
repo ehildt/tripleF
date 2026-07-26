@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
-import ExchangeLightboxViewer from './ExchangeLightboxViewer.vue';
+import LightboxViewer from './LightboxViewer.vue';
 
 const meta = {
-  title:
-    'Chat/ExchangeList/ChatExchange/ExchangeLightbox/ExchangeLightboxViewer',
-  component: ExchangeLightboxViewer,
+  title: 'Shared/UI/Lightbox/LightboxViewer',
+  component: LightboxViewer,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -29,7 +28,7 @@ Central viewer area with flanking navigation chevrons and a constrained image. A
     onPrev: fn(),
     onNext: fn(),
   },
-} satisfies Meta<typeof ExchangeLightboxViewer>;
+} satisfies Meta<typeof LightboxViewer>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

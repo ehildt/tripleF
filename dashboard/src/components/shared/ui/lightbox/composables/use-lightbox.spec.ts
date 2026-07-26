@@ -1,24 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp, defineComponent, h, nextTick } from 'vue';
 
-import { useExchangeLightbox } from './use-exchange-lightbox';
+import { useLightbox } from './use-lightbox';
 
 interface Harness {
-  isOpen: ReturnType<typeof useExchangeLightbox>['isOpen'];
-  images: ReturnType<typeof useExchangeLightbox>['images'];
-  index: ReturnType<typeof useExchangeLightbox>['index'];
-  openImages: ReturnType<typeof useExchangeLightbox>['openImages'];
-  close: ReturnType<typeof useExchangeLightbox>['close'];
-  goPrev: ReturnType<typeof useExchangeLightbox>['goPrev'];
-  goNext: ReturnType<typeof useExchangeLightbox>['goNext'];
+  isOpen: ReturnType<typeof useLightbox>['isOpen'];
+  images: ReturnType<typeof useLightbox>['images'];
+  index: ReturnType<typeof useLightbox>['index'];
+  openImages: ReturnType<typeof useLightbox>['openImages'];
+  close: ReturnType<typeof useLightbox>['close'];
+  goPrev: ReturnType<typeof useLightbox>['goPrev'];
+  goNext: ReturnType<typeof useLightbox>['goNext'];
   unmount: () => void;
 }
 
 function createHarness(): Harness {
-  let exposed!: ReturnType<typeof useExchangeLightbox>;
+  let exposed!: ReturnType<typeof useLightbox>;
   const Comp = defineComponent({
     setup() {
-      exposed = useExchangeLightbox();
+      exposed = useLightbox();
       return () => h('div');
     },
   });
@@ -41,7 +41,7 @@ function createHarness(): Harness {
   };
 }
 
-describe('useExchangeLightbox', () => {
+describe('useLightbox', () => {
   let harness: Harness;
 
   beforeEach(() => {

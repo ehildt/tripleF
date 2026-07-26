@@ -111,15 +111,6 @@ describe('usePreprocessingStore', () => {
     expect(store.parameters.blurSigma).toBe(0.5);
   });
 
-  it('resetParametersToDefaults restores only parameters', () => {
-    const store = usePreprocessingStore();
-    store.setVariant('grayscale', true);
-    store.setParameter('blurSigma', 99);
-    store.resetParametersToDefaults();
-    expect(store.variants.grayscale).toBe(true);
-    expect(store.parameters.blurSigma).toBe(0.5);
-  });
-
   describe('buildQueryParams', () => {
     it('returns empty object when disabled', () => {
       const store = usePreprocessingStore();
@@ -158,7 +149,7 @@ describe('usePreprocessingStore', () => {
     });
   });
 
-  describe('resetParameter / isParameterModified / hasAnyParameterModified', () => {
+  describe('resetParameter / isParameterModified', () => {
     it('detects modified parameters', () => {
       const store = usePreprocessingStore();
       expect(store.isParameterModified('blurSigma')).toBe(false);
@@ -166,13 +157,6 @@ describe('usePreprocessingStore', () => {
       expect(store.isParameterModified('blurSigma')).toBe(true);
       store.resetParameter('blurSigma');
       expect(store.isParameterModified('blurSigma')).toBe(false);
-    });
-
-    it('tracks hasAnyParameterModified', () => {
-      const store = usePreprocessingStore();
-      expect(store.hasAnyParameterModified).toBe(false);
-      store.setParameter('blurSigma', 5);
-      expect(store.hasAnyParameterModified).toBe(true);
     });
   });
 });

@@ -257,18 +257,6 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     };
   }
 
-  function resetParametersToDefaults() {
-    parameters.value = { ...DEFAULT_PREPROCESSING_SETTINGS.parameters };
-  }
-
-  function resetResizeToDefaults() {
-    resize.value = { ...DEFAULT_PREPROCESSING_SETTINGS.resize };
-  }
-
-  function resetVariantsToDefaults() {
-    variants.value = { ...DEFAULT_PREPROCESSING_SETTINGS.variants };
-  }
-
   function getSummary(): string {
     if (!enabled.value) return 'Disabled';
     const activeVariants = Object.entries(variants.value)
@@ -292,37 +280,6 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
       DEFAULT_PREPROCESSING_SETTINGS.parameters[param]
     );
   }
-
-  const hasAnyParameterModified = computed(() => {
-    return (
-      Object.keys(parameters.value) as Array<
-        keyof PreprocessingParametersOptions
-      >
-    ).some(
-      (key) =>
-        parameters.value[key] !==
-        DEFAULT_PREPROCESSING_SETTINGS.parameters[key],
-    );
-  });
-
-  const hasResizeModified = computed(
-    () =>
-      resize.value.maxWidth !==
-        DEFAULT_PREPROCESSING_SETTINGS.resize.maxWidth ||
-      resize.value.maxHeight !==
-        DEFAULT_PREPROCESSING_SETTINGS.resize.maxHeight ||
-      resize.value.withoutEnlargement !==
-        DEFAULT_PREPROCESSING_SETTINGS.resize.withoutEnlargement,
-  );
-
-  const hasVariantsModified = computed(() =>
-    (
-      Object.keys(variants.value) as Array<keyof PreprocessingVariantsOptions>
-    ).some(
-      (key) =>
-        variants.value[key] !== DEFAULT_PREPROCESSING_SETTINGS.variants[key],
-    ),
-  );
 
   return {
     enabled,
@@ -350,11 +307,5 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     isVariantHighlighted,
     resetParameter,
     isParameterModified,
-    hasAnyParameterModified,
-    hasResizeModified,
-    hasVariantsModified,
-    resetParametersToDefaults,
-    resetResizeToDefaults,
-    resetVariantsToDefaults,
   };
 });
