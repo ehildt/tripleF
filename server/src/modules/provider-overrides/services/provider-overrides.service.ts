@@ -43,6 +43,14 @@ export class ProviderOverridesService {
     };
   }
 
+  /**
+   * Drop all overrides of one provider — the effective config falls back
+   * to the pristine env defaults (including the env API key).
+   */
+  resetConfig(provider: string): void {
+    delete this.overrides[provider];
+  }
+
   updateConfig(patch: Partial<Record<string, Record<string, any>>>): void {
     for (const [provider, values] of Object.entries(patch)) {
       if (!values) continue;

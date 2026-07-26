@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { Database } from '@lucide/vue';
+import { Database, TriangleAlert } from '@lucide/vue';
+import { computed } from 'vue';
 
 import { formatDate } from '@/utils/format-date.helper';
 
-defineProps<{
+const props = defineProps<{
   queueName: string;
   attemptsMade: number;
   totalAttempts: number;
   failedAt: string | null;
 }>();
+
+/** Poison-pill signal: the job exhausted every attempt it was given. */
+const isExhausted = computed(() => props.attemptsMade >= props.totalAttempts);
 </script>
 
 <template>
@@ -16,8 +20,19 @@ defineProps<{
     <span class="dlq-item-meta-row__field">
       <Database class="dlq-item-meta-row__icon" />{{ queueName }}
     </span>
-    <span class="dlq-item-meta-row__field">
-      {{ attemptsMade }} {{ attemptsMade === 1 ? 'attempt' : 'attempts' }}
+    <span
+      class="dlq-item-meta-row__field"
+      :class="{ 'dlq-item-meta-row__field--exhausted': isExhausted }"
+      :title="
+        isExhausted ? 'Poison pill: exhausted all retry attempts' : undefined
+      "
+    >
+      <TriangleAlert
+        v-if="isExhausted"
+        class="dlq-item-meta-row__icon dlq-item-meta-row__icon--warning"
+      />
+      {{ attemptsMade }}/{{ totalAttempts }}
+      {{ attemptsMade === 1 ? 'attempt' : 'attempts' }}
     </span>
     <span class="dlq-item-meta-row__field">
       {{ formatDate(failedAt) }}
@@ -44,5 +59,14 @@ defineProps<{
   height: 0.75rem;
   display: inline;
   margin-right: var(--spacing-1);
+}
+
+.dlq-item-meta-row__field--exhausted {
+  color: var(--color-status-warning);
+  font-weight: 700;
+}
+
+.dlq-item-meta-row__icon--warning {
+  color: var(--color-status-warning);
 }
 </style>

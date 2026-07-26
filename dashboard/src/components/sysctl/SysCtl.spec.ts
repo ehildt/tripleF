@@ -94,7 +94,9 @@ describe('SysCtl', () => {
   it('renders the serper provider section with its endpoints', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('master toggle');
+      expect(wrapper.find('button[aria-label="Enable Serper"]').exists()).toBe(
+        true,
+      );
       expect(wrapper.text()).toContain('web');
       expect(wrapper.text()).toContain('images');
     });

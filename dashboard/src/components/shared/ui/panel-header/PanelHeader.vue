@@ -1,7 +1,21 @@
 <template>
-  <div
-    class="px-4 py-3 bg-secondary border-b border-divider flex items-center justify-between min-h-12 gap-4"
-  >
+  <div class="panel-header">
     <slot />
   </div>
 </template>
+
+<style scoped>
+/* Fixed height: every panel header in a row lines up, regardless of
+   whether it holds just a title or icon buttons. */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  height: 3rem;
+  flex-shrink: 0;
+  padding: 0 var(--spacing-4);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-divider);
+}
+</style>

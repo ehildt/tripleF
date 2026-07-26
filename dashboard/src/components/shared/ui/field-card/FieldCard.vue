@@ -110,7 +110,8 @@ const emit = defineEmits<{
   background-color: var(--color-bg-primary);
   transition:
     border-color 0.2s ease,
-    filter 0.2s ease;
+    filter 0.2s ease,
+    opacity 0.3s ease;
 }
 
 .field-card--preprocessing {
@@ -120,6 +121,14 @@ const emit = defineEmits<{
 .field-card:hover {
   border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
   filter: brightness(1.05);
+}
+
+/* The hover filter above makes every card its own stacking context — an
+   open dropdown inside one card would paint under the cards after it.
+   While focus is inside (open select, editing number), lift the card. */
+.field-card:focus-within {
+  position: relative;
+  z-index: 20;
 }
 
 .field-card--checked {

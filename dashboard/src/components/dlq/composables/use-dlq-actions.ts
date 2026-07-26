@@ -1,32 +1,22 @@
 import type { UseMutationReturnType } from '@tanstack/vue-query';
 
-import { useConversationStore } from '@/stores/conversation';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useToast } from '../../../composables/use-toast';
-import { useDebugStore } from '../../../stores/debug';
 import { useDlqStore } from '../../../stores/dlq';
-import { useApiMessagesStore } from '../../../stores/messages';
+import { extractEntryFilters } from '../helpers/extract-entry-filters.helper';
+import {
+  type DlqRetrySessionSocket,
+  useDlqRetrySession,
+} from './use-dlq-retry-session';
 
 export interface DlqActionsOptions {
   dlqStore: ReturnType<typeof useDlqStore>;
-  socketStore: {
-    ensureSocketConnection: () => void;
-    joinRoom: (roomId: string, eventName: string) => void;
-    listenToEvent: (eventName: string) => void;
-    connectedEvents: Set<string>;
-    connectedRooms: Map<string, Set<string>>;
-  };
+  socketStore: DlqRetrySessionSocket;
   retryMutation: UseMutationReturnType<
     { restored: number; requestIds: string[] },
     Error,
     string,
-    unknown
-  >;
-  reinstateSelectedMutation: UseMutationReturnType<
-    { restored: number; requestIds: string[] },
-    Error,
-    string[],
     unknown
   >;
   deleteMutation: UseMutationReturnType<void, Error, string, unknown>;
@@ -39,34 +29,26 @@ export interface DlqActionsOptions {
   guardedRefetch: () => void;
 }
 
+/**
+ * DLQ row/detail actions — thin orchestration over the mutations, the
+ * store, and the retry-session side effects (socket rooms, conversation
+ * seeding, debug log).
+ */
 export function useDlqActions(options: DlqActionsOptions) {
   const {
     dlqStore,
-    socketStore,
     retryMutation,
-    reinstateSelectedMutation,
     deleteMutation,
     updateMutation,
     guardedRefetch,
   } = options;
 
   const toast = useToast();
+  const { ensureSocketSubscription, addRetryPendingMessage } =
+    useDlqRetrySession(options.socketStore);
 
-  function ensureSocketSubscription(roomId: string, eventName: string) {
-    socketStore.ensureSocketConnection();
-
-    const hadEvent = socketStore.connectedEvents.has(eventName);
-    const rooms = socketStore.connectedRooms.get(eventName);
-    const hadRoom = rooms?.has(roomId) ?? false;
-
-    if (!hadEvent) {
-      socketStore.listenToEvent(eventName);
-      toast.info(`Resubscribed to ${eventName}`);
-    }
-    if (!hadRoom) {
-      socketStore.joinRoom(roomId, eventName);
-      toast.info(`Rejoined room: ${roomId}`);
-    }
+  function findEntry(requestId: string) {
+    return dlqStore.entries.find((e) => e.requestId === requestId);
   }
 
   function onSelect(entry: DlqEntry) {
@@ -78,149 +60,11 @@ export function useDlqActions(options: DlqActionsOptions) {
     );
   }
 
-  function extractFilters(entry: DlqEntry | undefined): {
-    roomId: string;
-    event: string;
-    model: string;
-  } {
-    const filters = (entry?.payload as Record<string, unknown> | null)?.filters;
-    return {
-      roomId:
-        filters && typeof filters === 'object'
-          ? String((filters as { roomId?: string }).roomId ?? '')
-          : '',
-      event:
-        (filters && typeof filters === 'object'
-          ? String((filters as { event?: string }).event ?? '')
-          : '') || 'harness',
-      model:
-        filters && typeof filters === 'object'
-          ? String((filters as { model?: string }).model ?? '')
-          : '',
-    };
-  }
-
-  function extractPromptMessages(
-    entry: DlqEntry | undefined,
-  ): { role: string; content: string }[] {
-    const payload = entry?.payload as Record<string, unknown> | null;
-    const filters = payload?.filters as Record<string, unknown> | undefined;
-    const raw = filters?.prompt;
-    if (!raw) return [];
-    if (Array.isArray(raw)) return raw as { role: string; content: string }[];
-    if (typeof raw === 'object') {
-      const p = raw as { content?: { role: string; content: string }[] };
-      if (Array.isArray(p.content)) return p.content;
-    }
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
-        if (
-          parsed &&
-          typeof parsed === 'object' &&
-          Array.isArray(parsed.content)
-        )
-          return parsed.content;
-      } catch {
-        /* intentional */
-      }
-    }
-    return [];
-  }
-
-  function populateSessionFromEntry(
-    requestId: string,
-    roomId: string,
-    event: string,
-    model: string,
-    entry: DlqEntry,
-  ) {
-    const conversationStore = useConversationStore();
-    const conversationId = conversationStore.activeConversationId;
-    if (!conversationId) return;
-    const conversation = conversationStore.getConversation(conversationId);
-    if (!conversation) return;
-
-    if (event) conversation.event = event;
-    if (roomId) conversation.roomId = roomId;
-    if (model) {
-      conversationStore.setModel(conversationId, model);
-    }
-
-    const promptMessages = extractPromptMessages(entry);
-    const alreadyHaveUser = conversation.exchanges.some(
-      (e) => e.requestId === requestId && e.role === 'user',
-    );
-
-    if (!alreadyHaveUser) {
-      for (const msg of promptMessages) {
-        conversationStore.addExchange(conversationId, {
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-          requestId,
-          status: 'done',
-          model,
-          event,
-          roomId,
-        });
-      }
-    }
-
-    const alreadyHaveAssistant = conversation.exchanges.some(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
-    if (!alreadyHaveAssistant) {
-      conversationStore.addExchange(conversationId, {
-        role: 'assistant',
-        content: '',
-        requestId,
-        status: 'pending',
-        model,
-        event,
-        roomId,
-      });
-    }
-  }
-
-  function addRetryPendingMessage(
-    requestId: string,
-    roomId: string,
-    event: string,
-    model: string,
-    entry?: DlqEntry,
-  ) {
-    const debugStore = useDebugStore();
-    const store = useApiMessagesStore();
-    const conversationStore = useConversationStore();
-
-    debugStore.addDebugResult({
-      endpoint: `/api/v1/dlq/${requestId}`,
-      method: 'RETRY',
-      status: 'success',
-      statusCode: 200,
-      responseTime: 0,
-      type: 'http',
-      requestId,
-      ...(roomId ? { roomId } : {}),
-    });
-
-    const exists = store.messages.some((m) => m.data.requestId === requestId);
-    if (!exists) {
-      store.trackRequest(requestId);
-      store.addPendingMessage(event, roomId, requestId, true);
-    }
-
-    if (entry && conversationStore.activeConversationId) {
-      populateSessionFromEntry(requestId, roomId, event, model, entry);
-    }
-  }
-
   async function onRetry(requestId: string) {
     dlqStore.error = null;
     try {
-      const entry = dlqStore.entries.find((e) => e.requestId === requestId);
-      const { roomId, event, model } = extractFilters(entry);
+      const entry = findEntry(requestId);
+      const { roomId, event, model } = extractEntryFilters(entry);
 
       if (roomId && event) ensureSocketSubscription(roomId, event);
 
@@ -237,35 +81,8 @@ export function useDlqActions(options: DlqActionsOptions) {
     }
   }
 
-  async function onReinstateSelected() {
-    if (dlqStore.selectedRequestIds.size === 0) return;
-    dlqStore.error = null;
-    try {
-      const requestIds = [...dlqStore.selectedRequestIds];
-      for (const id of requestIds) {
-        const entry = dlqStore.entries.find((e) => e.requestId === id);
-        const { roomId, event } = extractFilters(entry);
-        if (roomId && event) ensureSocketSubscription(roomId, event);
-      }
-
-      const res = await reinstateSelectedMutation.mutateAsync(requestIds);
-      toast.success(`Reinstated ${res.restored} job(s)`);
-
-      for (const requestId of res.requestIds ?? requestIds) {
-        const entry = dlqStore.entries.find((e) => e.requestId === requestId);
-        const { roomId, event, model } = extractFilters(entry);
-        addRetryPendingMessage(requestId, roomId, event, model, entry);
-      }
-
-      dlqStore.clearSelection();
-      guardedRefetch();
-    } catch {
-      toast.error('Reinstate selected failed');
-    }
-  }
-
   async function onArchive(requestId: string) {
-    const entry = dlqStore.entries.find((e) => e.requestId === requestId);
+    const entry = findEntry(requestId);
     if (entry && entry.status === 'Removed') return;
     try {
       const updated = await updateMutation.mutateAsync({
@@ -284,7 +101,7 @@ export function useDlqActions(options: DlqActionsOptions) {
       await deleteMutation.mutateAsync(requestId);
       toast.success('Marked for deletion');
       if (dlqStore.selectedEntry?.requestId === requestId) {
-        dlqStore.clearSelection();
+        dlqStore.selectEntry(null);
       }
       guardedRefetch();
     } catch {
@@ -324,7 +141,6 @@ export function useDlqActions(options: DlqActionsOptions) {
   return {
     onSelect,
     onRetry,
-    onReinstateSelected,
     onArchive,
     onDelete,
     onSavePayload,

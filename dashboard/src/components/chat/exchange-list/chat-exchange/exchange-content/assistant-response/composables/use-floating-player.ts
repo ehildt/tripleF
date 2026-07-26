@@ -8,7 +8,10 @@ import {
   watch,
 } from 'vue';
 
-import { releaseFloatingPopupRect } from './popout-settings.state';
+import {
+  popoutEnabled,
+  releaseFloatingPopupRect,
+} from './popout-settings.state';
 import { usePausablePlayer } from './use-pausable-player';
 import { usePopupGeometry } from './use-popup-geometry';
 import {
@@ -86,6 +89,7 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
    */
   const isFloating = computed(
     () =>
+      popoutEnabled.value &&
       isActivePlayback.value &&
       !isInView.value &&
       !wasDismissed.value &&

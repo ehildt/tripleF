@@ -74,10 +74,10 @@ export const DEFAULT_PREPROCESSING_SETTINGS: PreprocessingSettings = {
 
 export const VARIANT_DESCRIPTIONS: Record<string, string> = {
   original: 'Unmodified baseline image',
-  grayscale: 'Luminance only — best for text and structure',
-  denoised: 'Gaussian smoothing — reduces noise and artifacts',
-  sharpened: 'Enhanced edges — crisper text and boundaries',
-  clahe: 'Adaptive contrast — reveals detail in shadows and highlights',
+  grayscale: 'Best for text and structure',
+  denoised: 'Reduces noise and artifacts',
+  sharpened: 'Crisper text and boundaries',
+  clahe: 'Reveals detail in shadows and highlights',
 };
 
 const VARIANT_PARAMETERS: Record<string, string[]> = {
@@ -261,6 +261,14 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     parameters.value = { ...DEFAULT_PREPROCESSING_SETTINGS.parameters };
   }
 
+  function resetResizeToDefaults() {
+    resize.value = { ...DEFAULT_PREPROCESSING_SETTINGS.resize };
+  }
+
+  function resetVariantsToDefaults() {
+    variants.value = { ...DEFAULT_PREPROCESSING_SETTINGS.variants };
+  }
+
   function getSummary(): string {
     if (!enabled.value) return 'Disabled';
     const activeVariants = Object.entries(variants.value)
@@ -297,6 +305,25 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     );
   });
 
+  const hasResizeModified = computed(
+    () =>
+      resize.value.maxWidth !==
+        DEFAULT_PREPROCESSING_SETTINGS.resize.maxWidth ||
+      resize.value.maxHeight !==
+        DEFAULT_PREPROCESSING_SETTINGS.resize.maxHeight ||
+      resize.value.withoutEnlargement !==
+        DEFAULT_PREPROCESSING_SETTINGS.resize.withoutEnlargement,
+  );
+
+  const hasVariantsModified = computed(() =>
+    (
+      Object.keys(variants.value) as Array<keyof PreprocessingVariantsOptions>
+    ).some(
+      (key) =>
+        variants.value[key] !== DEFAULT_PREPROCESSING_SETTINGS.variants[key],
+    ),
+  );
+
   return {
     enabled,
     resize,
@@ -324,6 +351,10 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     resetParameter,
     isParameterModified,
     hasAnyParameterModified,
+    hasResizeModified,
+    hasVariantsModified,
     resetParametersToDefaults,
+    resetResizeToDefaults,
+    resetVariantsToDefaults,
   };
 });

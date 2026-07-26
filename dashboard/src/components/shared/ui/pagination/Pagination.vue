@@ -7,7 +7,6 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-// ! TANSTACK pagination??
 const props = defineProps<{
   currentPage: number;
   totalPages: number;
@@ -59,71 +58,66 @@ const displayedPages = computed(() => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between px-4 py-3 bg-secondary">
-    <span class="text-[10px] font-mono text-fg-muted">
+  <div class="pagination">
+    <span class="pagination__range">
       {{ rangeStart }}–{{ rangeEnd }} of {{ total }}
     </span>
 
-    <div class="flex items-center gap-1">
+    <div class="pagination__pages">
       <button
-        class="px-2 py-1 text-fg-muted hover:text-fg-primary transition-colors disabled:opacity-30"
+        class="pagination__button"
         :disabled="currentPage <= 1"
+        title="First page"
         @click="$emit('first')"
       >
-        <ChevronsLeft class="w-3.5 h-3.5" />
+        <ChevronsLeft class="pagination__icon" />
       </button>
       <button
-        class="px-2 py-1 text-fg-muted hover:text-fg-primary transition-colors disabled:opacity-30"
+        class="pagination__button"
         :disabled="currentPage <= 1"
+        title="Previous page"
         @click="$emit('prev')"
       >
-        <ChevronLeft class="w-3.5 h-3.5" />
+        <ChevronLeft class="pagination__icon" />
       </button>
 
       <template v-for="(page, idx) in displayedPages" :key="idx">
         <button
           v-if="typeof page === 'number'"
-          class="min-w-6 px-1.5 py-0.5 text-[10px] font-mono transition-colors"
-          :class="
-            page === currentPage
-              ? 'text-fg-inverse bg-accent-primary'
-              : 'text-fg-muted hover:text-fg-primary'
-          "
+          class="pagination__page"
+          :class="{ 'pagination__page--active': page === currentPage }"
           @click="$emit('page', page)"
         >
           {{ page }}
         </button>
-        <span v-else class="px-1 py-0.5 text-[10px] font-mono text-fg-muted"
-          >...</span
-        >
+        <span v-else class="pagination__ellipsis">...</span>
       </template>
 
       <button
-        class="px-2 py-1 text-fg-muted hover:text-fg-primary transition-colors disabled:opacity-30"
+        class="pagination__button"
         :disabled="currentPage >= totalPages"
+        title="Next page"
         @click="$emit('next')"
       >
-        <ChevronRight class="w-3.5 h-3.5" />
+        <ChevronRight class="pagination__icon" />
       </button>
       <button
-        class="px-2 py-1 text-fg-muted hover:text-fg-primary transition-colors disabled:opacity-30"
+        class="pagination__button"
         :disabled="currentPage >= totalPages"
+        title="Last page"
         @click="$emit('last')"
       >
-        <ChevronsRight class="w-3.5 h-3.5" />
+        <ChevronsRight class="pagination__icon" />
       </button>
     </div>
 
-    <div class="flex items-center gap-0.5">
+    <div class="pagination__sizes">
       <button
         v-for="size in pageSizes"
         :key="size"
-        class="px-1.5 py-0.5 text-[10px] font-mono transition-colors"
-        :class="
-          size === limit
-            ? 'text-fg-inverse bg-accent-primary'
-            : 'text-fg-muted hover:text-fg-primary'
-        "
+        class="pagination__page"
+        :class="{ 'pagination__page--active': size === limit }"
+        :title="`${size} per page`"
         @click="$emit('setPageSize', size)"
       >
         {{ size }}
@@ -131,3 +125,81 @@ const displayedPages = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--color-bg-secondary);
+}
+
+.pagination__range {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-fg-muted);
+}
+
+.pagination__pages,
+.pagination__sizes {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.pagination__sizes {
+  gap: var(--spacing-0-5);
+}
+
+.pagination__button {
+  padding: var(--spacing-1) var(--spacing-2);
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.pagination__button:hover:not(:disabled) {
+  color: var(--color-fg-primary);
+}
+
+.pagination__button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pagination__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.pagination__page {
+  min-width: 1.5rem;
+  padding: var(--spacing-0-5) var(--spacing-1-5);
+  border: none;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.pagination__page:hover:not(.pagination__page--active) {
+  color: var(--color-fg-primary);
+}
+
+.pagination__page--active {
+  background-color: var(--color-accent-primary);
+  color: var(--color-fg-inverse);
+}
+
+.pagination__ellipsis {
+  padding: var(--spacing-0-5) var(--spacing-1);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-fg-muted);
+}
+</style>

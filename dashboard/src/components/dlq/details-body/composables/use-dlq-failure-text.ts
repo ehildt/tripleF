@@ -2,10 +2,12 @@ import { computed, type Ref } from 'vue';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { resolveFailureText } from '../helpers/resolve-failure-text.helper';
+import { parseFailureReason } from '../../helpers/parse-failure-reason.helper';
 
 export function useDlqFailureText(entry: Ref<DlqEntry | null>) {
-  const failureText = computed(() => resolveFailureText(entry.value));
+  const parsed = computed(() => parseFailureReason(entry.value?.failedReason));
+  const failureText = computed(() => parsed.value?.text ?? null);
+  const failureRaw = computed(() => parsed.value?.raw ?? null);
 
-  return { failureText };
+  return { failureText, failureRaw };
 }

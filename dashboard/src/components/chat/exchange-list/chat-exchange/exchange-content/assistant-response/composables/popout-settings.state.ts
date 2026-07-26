@@ -21,7 +21,9 @@ export interface FloatingPopupRect {
 
 export const DEFAULT_POPOUT_ANCHOR: PopoutAnchor = 'bottom-right';
 export const DEFAULT_POPOUT_REMEMBER_POSITION = true;
+export const DEFAULT_POPOUT_ENABLED = true;
 
+const POPOUT_ENABLED_STORAGE_KEY = 'vision-popout-enabled';
 const POPOUT_ANCHOR_STORAGE_KEY = 'vision-popout-anchor';
 const POPOUT_REMEMBER_POSITION_STORAGE_KEY = 'vision-popout-remember-position';
 const POPOUT_RECT_STORAGE_KEY = 'vision-popout-rect';
@@ -37,6 +39,15 @@ const POPOUT_ANCHORS: readonly PopoutAnchor[] = [
   'bottom-center',
   'bottom-right',
 ];
+
+function loadPopoutEnabled(): boolean {
+  try {
+    const saved = localStorage.getItem(POPOUT_ENABLED_STORAGE_KEY);
+    return saved === null ? DEFAULT_POPOUT_ENABLED : saved === 'true';
+  } catch {
+    return DEFAULT_POPOUT_ENABLED;
+  }
+}
 
 function loadPopoutAnchor(): PopoutAnchor {
   try {
@@ -73,6 +84,8 @@ function loadFloatingPopupRect(): FloatingPopupRect | null {
  * across players, conversations, and (persisted) app reloads. Configured in
  * SysCtl → Popout.
  */
+/** Whether scrolled-out videos may float as a popup at all. */
+export const popoutEnabled = ref<boolean>(loadPopoutEnabled());
 export const popoutAnchor = ref<PopoutAnchor>(loadPopoutAnchor());
 export const popoutRememberPosition = ref(loadRememberPosition());
 
@@ -84,6 +97,15 @@ export const popoutRememberPosition = ref(loadRememberPosition());
 export const floatingPopupRect = ref<FloatingPopupRect | null>(
   popoutRememberPosition.value ? loadFloatingPopupRect() : null,
 );
+
+export function setPopoutEnabled(enabled: boolean) {
+  popoutEnabled.value = enabled;
+  try {
+    localStorage.setItem(POPOUT_ENABLED_STORAGE_KEY, String(enabled));
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+}
 
 export function setPopoutAnchor(anchor: PopoutAnchor) {
   popoutAnchor.value = anchor;
@@ -145,6 +167,7 @@ export function releaseFloatingPopupRect() {
 
 /** Restore the popout settings to their defaults and forget any position. */
 export function resetPopoutSettings() {
+  setPopoutEnabled(DEFAULT_POPOUT_ENABLED);
   floatingPopupRect.value = null;
   try {
     localStorage.removeItem(POPOUT_RECT_STORAGE_KEY);

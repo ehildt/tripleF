@@ -17,20 +17,23 @@ import {
   ArrowUp,
   PictureInPicture2,
   Pin,
-  RotateCcw,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
+import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
+import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 
 import {
   type PopoutAnchor,
   popoutAnchor,
+  popoutEnabled,
   popoutRememberPosition,
   resetPopoutSettings,
   setPopoutAnchor,
+  setPopoutEnabled,
   setPopoutRememberPosition,
 } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 
@@ -63,21 +66,38 @@ function setVertical(value: string) {
 function setHorizontal(value: string) {
   setPopoutAnchor(`${vertical.value}-${value}` as PopoutAnchor);
 }
+
+// Brief "pop" on the panel whenever any popout setting changes.
+const panelChanged = ref(false);
+watch(
+  [popoutEnabled, popoutAnchor, popoutRememberPosition],
+  () => {
+    panelChanged.value = false;
+    requestAnimationFrame(() => {
+      panelChanged.value = true;
+    });
+  },
+  { flush: 'post' },
+);
 </script>
 
 <template>
   <div class="popout-section">
     <div class="popout-section__panel panel-glow">
-      <PanelTitleBar title="Video Popout">
+      <PanelTitleBar
+        title="Video Popout"
+        :class="{ 'panel-changed': panelChanged }"
+      >
         <template #actions>
-          <button
-            type="button"
-            class="popout-section__reset"
+          <ResetButton
             title="Reset popout settings to defaults"
             @click="resetPopoutSettings"
-          >
-            <RotateCcw class="popout-section__reset-icon" />
-          </button>
+          />
+          <PowerToggle
+            :enabled="popoutEnabled"
+            title="Enable video popout"
+            @toggle="setPopoutEnabled(!popoutEnabled)"
+          />
         </template>
       </PanelTitleBar>
 
@@ -87,6 +107,7 @@ function setHorizontal(value: string) {
           :icon="PictureInPicture2"
           label="initial position"
           description="where the popout first appears"
+          :disabled="!popoutEnabled"
         >
           <template #controls>
             <SegmentedToggle
@@ -109,6 +130,7 @@ function setHorizontal(value: string) {
           label="remember position"
           description="keep the moved popout position across conversations and app reloads"
           :checked="popoutRememberPosition"
+          :disabled="!popoutEnabled"
           @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
         />
       </div>
@@ -141,21 +163,16 @@ function setHorizontal(value: string) {
   }
 }
 
-.popout-section__reset {
-  padding: var(--spacing-1);
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
+.panel-changed {
+  animation: popout-panel-changed 0.4s ease;
 }
 
-.popout-section__reset:hover {
-  color: var(--color-fg-primary);
-}
-
-.popout-section__reset-icon {
-  width: 0.875rem;
-  height: 0.875rem;
+@keyframes popout-panel-changed {
+  0% {
+    box-shadow: 0 0 0 2px var(--color-accent-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
 }
 </style>

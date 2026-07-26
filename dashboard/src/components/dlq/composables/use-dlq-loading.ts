@@ -12,12 +12,27 @@ export function useDlqLoading(options: DlqLoadingOptions) {
   let loadingTimer: ReturnType<typeof setTimeout> | null = null;
   let loadingStartedAt = 0;
 
+  /**
+   * Manual reload button: keep the spinner up for at least minLoadingMs so
+   * the click feels acknowledged.
+   */
   async function guardedRefetch() {
     if (loadingTimer) clearTimeout(loadingTimer);
     showLoading.value = true;
     loadingStartedAt = Date.now();
     await refetch();
     onDataArrived();
+  }
+
+  /**
+   * Filter/pagination-driven refetch: no artificial minimum — the spinner
+   * clears as soon as data arrives so typing never feels sluggish.
+   */
+  async function instantRefetch() {
+    if (loadingTimer) clearTimeout(loadingTimer);
+    showLoading.value = true;
+    await refetch();
+    showLoading.value = false;
   }
 
   function onDataArrived(): number | null {
@@ -40,5 +55,11 @@ export function useDlqLoading(options: DlqLoadingOptions) {
     showLoading.value = false;
   }
 
-  return { showLoading, guardedRefetch, onDataArrived, onError };
+  return {
+    showLoading,
+    guardedRefetch,
+    instantRefetch,
+    onDataArrived,
+    onError,
+  };
 }

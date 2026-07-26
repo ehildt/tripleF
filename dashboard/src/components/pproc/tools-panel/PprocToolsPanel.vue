@@ -1,25 +1,36 @@
 <script setup lang="ts">
 import {
+  Activity,
   ArrowDownToLine,
+  ArrowUpToLine,
   Check,
+  Columns3,
+  Focus,
   Image,
   Images,
   Maximize2,
+  Minus,
   MoveHorizontal,
   MoveVertical,
+  Rows3,
   ScanLine,
+  SlidersHorizontal,
   Sparkles,
+  Sun,
+  TrendingUp,
+  Waves,
   Zap,
 } from '@lucide/vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
+import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
+import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
 import {
   usePreprocessingStore,
   VARIANT_DESCRIPTIONS,
 } from '../../../stores/preprocessing';
-import PprocMasterToggle from '../shared/ui/master-toggle/PprocMasterToggle.vue';
 import MaxHeightField from '../shared/ui/max-height-field/MaxHeightField.vue';
 import MaxWidthField from '../shared/ui/max-width-field/MaxWidthField.vue';
 import PprocSection from '../shared/ui/section/PprocSection.vue';
@@ -62,30 +73,116 @@ function toggleVariant(key: keyof typeof store.variants) {
   if (!store.enabled) return;
   store.setVariant(key, !store.variants[key]);
 }
+
+const parameters = [
+  {
+    key: 'blurSigma',
+    icon: Waves,
+    label: 'Blur Sigma',
+    desc: 'Gaussian blur amount',
+    step: 0.1,
+    placeholder: '0.5',
+  },
+  {
+    key: 'sharpenSigma',
+    icon: Focus,
+    label: 'Sharpen Sigma',
+    desc: 'Edge radius',
+    step: 0.1,
+    placeholder: '1.0',
+  },
+  {
+    key: 'sharpenM1',
+    icon: Minus,
+    label: 'Sharpen M1',
+    desc: 'Flat factor',
+    step: 0.1,
+    placeholder: '1.0',
+  },
+  {
+    key: 'sharpenM2',
+    icon: Activity,
+    label: 'Sharpen M2',
+    desc: 'Edge factor',
+    step: 0.1,
+    placeholder: '2.0',
+  },
+  {
+    key: 'claheWidth',
+    icon: Columns3,
+    label: 'CLAHE Width',
+    desc: 'Grid width tiles',
+    placeholder: '8',
+  },
+  {
+    key: 'claheHeight',
+    icon: Rows3,
+    label: 'CLAHE Height',
+    desc: 'Grid height tiles',
+    placeholder: '8',
+  },
+  {
+    key: 'claheMaxSlope',
+    icon: TrendingUp,
+    label: 'Max Slope',
+    desc: 'Contrast limit',
+    step: 0.1,
+    placeholder: '3.0',
+  },
+  {
+    key: 'brightnessLevel',
+    icon: Sun,
+    label: 'Brightness',
+    desc: 'Brightness mult',
+    step: 0.1,
+    placeholder: '1.2',
+  },
+  {
+    key: 'normalizeLower',
+    icon: ArrowDownToLine,
+    label: 'Norm. Lower',
+    desc: 'Lower percentile',
+    step: 0.1,
+    placeholder: '1',
+  },
+  {
+    key: 'normalizeUpper',
+    icon: ArrowUpToLine,
+    label: 'Norm. Upper',
+    desc: 'Upper percentile',
+    placeholder: '99',
+  },
+] as const;
 </script>
 
 <template>
   <div class="space-y-3">
     <div class="bg-elevated border border-divider panel-glow">
-      <PanelTitleBar title="Image Preprocessing" />
+      <PanelTitleBar title="Image Preprocessing">
+        <template #actions>
+          <ResetButton
+            title="Reset preprocessing to defaults"
+            @click="store.resetToDefaults()"
+          />
+          <PowerToggle
+            :enabled="store.enabled"
+            tone="preprocessing"
+            title="Enable preprocessing"
+            @toggle="store.setEnabled(!store.enabled)"
+          />
+        </template>
+      </PanelTitleBar>
 
       <div class="p-4 space-y-4">
-        <!-- Master Toggle -->
-        <PprocMasterToggle
-          :enabled="store.enabled"
-          @toggle="store.setEnabled(!store.enabled)"
-        >
-          <template #icon>
-            <Zap class="w-5 h-5" />
-          </template>
-          <template #title>Enable Preprocessing</template>
-          <template #description
-            >Create multiple image variants for enhanced AI analysis</template
-          >
-        </PprocMasterToggle>
-
         <!-- Resize Settings -->
         <PprocSection :icon="ArrowDownToLine" title="Resize Settings">
+          <template #action>
+            <ResetButton
+              title="Reset resize settings"
+              :disabled="!store.hasResizeModified"
+              @click="store.resetResizeToDefaults()"
+            />
+          </template>
           <div class="grid grid-cols-3 gap-1">
             <FieldCard
               :icon="MoveHorizontal"
@@ -139,7 +236,14 @@ function toggleVariant(key: keyof typeof store.variants) {
 
         <!-- Variants -->
         <PprocSection :icon="Images" title="Image Variants">
-          <div class="grid grid-cols-2 gap-1">
+          <template #action>
+            <ResetButton
+              title="Reset image variants"
+              :disabled="!store.hasVariantsModified"
+              @click="store.resetVariantsToDefaults()"
+            />
+          </template>
+          <div class="grid grid-cols-5 gap-1">
             <PprocToggleButton
               v-for="(config, key) in variantConfig"
               :key="key"
@@ -209,6 +313,38 @@ function toggleVariant(key: keyof typeof store.variants) {
                 </div>
               </template>
             </PprocToggleButton>
+          </div>
+        </PprocSection>
+
+        <!-- Advanced Parameters -->
+        <PprocSection :icon="SlidersHorizontal" title="Advanced Parameters">
+          <template #action>
+            <ResetButton
+              title="Reset all parameters"
+              :disabled="!store.hasAnyParameterModified"
+              @click="store.resetParametersToDefaults()"
+            />
+          </template>
+
+          <div class="grid grid-cols-5 gap-2">
+            <FieldCard
+              v-for="param in parameters"
+              :key="param.key"
+              :icon="param.icon"
+              :label="param.label"
+              :description="param.desc"
+              :number-value="store.parameters[param.key]"
+              :number-step="'step' in param ? param.step : undefined"
+              :number-placeholder="param.placeholder"
+              :checked="store.isParameterModified(param.key)"
+              :disabled="!store.enabled"
+              :highlighted="store.isParameterHighlighted(param.key)"
+              tone="preprocessing"
+              @toggle="store.resetParameter(param.key)"
+              @update:number-value="store.setParameter(param.key, $event)"
+              @mouseenter="store.setHoveredParameter(param.key)"
+              @mouseleave="store.setHoveredParameter(null)"
+            />
           </div>
         </PprocSection>
       </div>
