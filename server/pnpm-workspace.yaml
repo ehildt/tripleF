@@ -4,3 +4,5 @@ allowBuilds:
   fastify-socket.io: true
   msgpackr-extract: true
   prisma: true
+minimumReleaseAgeExclude:
+  - globals@17.8.0

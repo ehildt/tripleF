@@ -53,6 +53,8 @@ const {
   selectedModelObj,
   userExchanges,
   messageListItems,
+  toggleUserExchangeIncluded,
+  deleteUserExchange,
 } = useChatConversation();
 
 const { filteredThinkOptions, selectThink } = useChatThink(
@@ -225,19 +227,20 @@ defineExpose({ actionBarRef });
 <template>
   <ChatToolbar
     ref="toolbarRef"
-    class="lg:col-span-2 lg:col-start-1 h-fit lg:sticky lg:top-24 z-50"
+    class="lg:col-span-2 lg:col-start-1 h-fit lg:sticky lg:top-12 z-50"
     :chat-active="true"
     :prompt-focused="false"
   />
 
   <div
-    class="chat-center-column lg:col-span-8 lg:col-start-3 h-fit lg:sticky lg:top-24"
+    class="chat-center-column lg:col-span-8 lg:col-start-3 h-fit lg:sticky lg:top-12"
   >
     <ChatExchangeList
       ref="chatListRef"
       :compact="true"
       :retry-handler="onRetry"
       @delete-conversation="onDeleteConversation"
+      @toggle-included="selectPanelView('history')"
     />
     <ChatPromptActionBar
       :value="arguments_"
@@ -270,7 +273,7 @@ defineExpose({ actionBarRef });
 
   <ChatRightPanel
     v-if="shouldShowRightPanel"
-    class="lg:col-span-2 lg:col-start-11 h-fit lg:sticky lg:top-24"
+    class="lg:col-span-2 lg:col-start-11 h-fit lg:sticky lg:top-12"
     :attachments="attachments"
     :conversation="conversation"
     :message-list-items="messageListItems"
@@ -280,6 +283,8 @@ defineExpose({ actionBarRef });
     @remove-attachment="onRemoveAttachment"
     @toggle-attachment="onToggleAttachment"
     @prompt-click="onPromptClick"
+    @toggle-include="toggleUserExchangeIncluded"
+    @delete-item="deleteUserExchange"
   />
 
   <FloatingPlayer />

@@ -49,11 +49,6 @@ const {
           >
             <span class="theme-selector__swatch" :data-theme="theme.key" />
             <span class="theme-selector__name">{{ theme.name }}</span>
-            <span
-              v-if="currentTheme === theme.key"
-              class="theme-selector__check"
-              >✓</span
-            >
           </button>
         </div>
       </div>
@@ -157,11 +152,6 @@ const {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.theme-selector__check {
-  margin-left: auto;
-  flex-shrink: 0;
 }
 
 .dropdown-enter-active,

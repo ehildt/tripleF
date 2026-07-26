@@ -5,7 +5,8 @@ import { PinoLoggerService } from '../../pino-logger/services/pino-logger.servic
 import type { HarnessContext } from './harness-context.type.js';
 
 export type StepLoggerContext =
-  Pick<HarnessContext, 'requestId'> | { requestId?: string };
+  | Pick<HarnessContext, 'requestId'>
+  | { requestId?: string };
 
 @Injectable()
 export class HarnessStepLogger {

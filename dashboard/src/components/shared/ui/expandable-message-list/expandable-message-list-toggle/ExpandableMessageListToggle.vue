@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown } from '@lucide/vue';
+import { ChevronDown, SendToBack, Trash2 } from '@lucide/vue';
 
 function stripHtml(html: string): string {
   let result = '';
@@ -12,17 +12,30 @@ function stripHtml(html: string): string {
   return result;
 }
 
-defineProps<{
-  expanded: boolean;
-  role: string;
-  content: string;
-  hasBody: boolean;
-  renderHtml?: (content: string) => string;
-}>();
+withDefaults(
+  defineProps<{
+    expanded: boolean;
+    role: string;
+    content: string;
+    hasBody: boolean;
+    renderHtml?: (content: string) => string;
+    included?: boolean;
+    contextPercent?: string;
+    showRole?: boolean;
+  }>(),
+  {
+    renderHtml: undefined,
+    included: undefined,
+    contextPercent: undefined,
+    showRole: true,
+  },
+);
 
 defineEmits<{
   toggle: [];
   select: [];
+  toggleInclude: [];
+  deleteItem: [];
 }>();
 </script>
 
@@ -41,9 +54,42 @@ defineEmits<{
         class="expandable-message-list__toggle-chevron-icon"
       />
     </span>
-    <span class="expandable-message-list__toggle-role">{{ role }}</span>
+    <span v-if="showRole" class="expandable-message-list__toggle-role">{{
+      role
+    }}</span>
     <span class="expandable-message-list__toggle-preview">
       {{ renderHtml ? stripHtml(renderHtml(content)) : stripHtml(content) }}
+    </span>
+    <span class="expandable-message-list__toggle-actions">
+      <span
+        v-if="contextPercent"
+        class="expandable-message-list__toggle-percent"
+        >{{ contextPercent }}%</span
+      >
+      <button
+        v-if="included !== undefined"
+        type="button"
+        class="expandable-message-list__toggle-include"
+        :class="{
+          'expandable-message-list__toggle-include--excluded': !included,
+        }"
+        :title="included ? 'Exclude from context' : 'Include in context'"
+        :aria-label="included ? 'Exclude from context' : 'Include in context'"
+        :aria-pressed="!included"
+        @click.stop="$emit('toggleInclude')"
+      >
+        <SendToBack class="expandable-message-list__include-icon" />
+      </button>
+      <button
+        v-if="included !== undefined"
+        type="button"
+        class="expandable-message-list__toggle-delete"
+        title="Delete from history"
+        aria-label="Delete from history"
+        @click.stop="$emit('deleteItem')"
+      >
+        <Trash2 class="expandable-message-list__include-icon" />
+      </button>
     </span>
   </div>
 </template>
@@ -105,6 +151,59 @@ defineEmits<{
   color: var(--color-fg-muted);
   text-transform: uppercase;
   flex-shrink: 0;
+}
+
+.expandable-message-list__toggle-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-shrink: 0;
+}
+
+.expandable-message-list__toggle-percent {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+}
+
+.expandable-message-list__toggle-include {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-0-5);
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandable-message-list__toggle-include:hover,
+.expandable-message-list__toggle-include--excluded {
+  color: var(--color-accent-primary);
+}
+
+.expandable-message-list__toggle-delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-0-5);
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandable-message-list__toggle-delete:hover {
+  color: var(--color-status-error);
+}
+
+.expandable-message-list__include-icon {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .expandable-message-list__toggle-preview {

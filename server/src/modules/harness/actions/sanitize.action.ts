@@ -280,7 +280,8 @@ export class SanitizeActionService {
         continue;
 
       const data = tr.result as
-        { results?: Array<{ thumbnailUrl?: string }> } | undefined;
+        | { results?: Array<{ thumbnailUrl?: string }> }
+        | undefined;
       if (!data?.results) continue;
 
       for (const r of data.results) {
@@ -308,7 +309,8 @@ export class SanitizeActionService {
         continue;
 
       const data = tr.result as
-        { results?: Array<{ url?: string; link?: string }> } | undefined;
+        | { results?: Array<{ url?: string; link?: string }> }
+        | undefined;
       if (!data?.results) continue;
 
       for (const r of data.results) {

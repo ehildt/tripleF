@@ -37,9 +37,6 @@ defineEmits<{
         <span class="conversation-item__title">{{
           conversation.title || '(untitled)'
         }}</span>
-        <span class="conversation-item__context">{{
-          contextUsagePercent
-        }}</span>
         <button
           class="conversation-item__delete"
           type="button"
@@ -49,24 +46,33 @@ defineEmits<{
           <X class="w-3 h-3" />
         </button>
       </div>
-      <div v-if="conversation.event" class="conversation-item__meta">
-        <Radio class="w-3 h-3 shrink-0" />
-        <span class="truncate">{{ conversation.event }}</span>
-      </div>
-      <div v-if="conversation.roomId" class="conversation-item__meta">
-        <Tag class="w-3 h-3 shrink-0" />
-        <span class="truncate">{{ conversation.roomId }}</span>
-      </div>
-      <div
-        v-if="conversation.type === 'temporary'"
-        class="conversation-item__meta"
-      >
-        <Clock class="w-3 h-3 shrink-0" />
-        expires {{ expiresLabel }}
-      </div>
-      <div v-else class="conversation-item__meta">
-        <Save class="w-3 h-3 shrink-0" />
-        persisted
+      <div class="conversation-item__meta">
+        <span v-if="conversation.event" class="conversation-item__meta-group">
+          <Radio class="conversation-item__meta-icon" />
+          <span class="truncate">{{ conversation.event }}</span>
+        </span>
+        <span v-if="conversation.roomId" class="conversation-item__meta-group">
+          <Tag class="conversation-item__meta-icon" />
+          <span class="truncate">{{ conversation.roomId }}</span>
+        </span>
+        <span
+          v-if="conversation.type === 'temporary'"
+          class="conversation-item__meta-group"
+        >
+          <Clock class="conversation-item__meta-icon" />
+          <span class="truncate">expires {{ expiresLabel }}</span>
+        </span>
+        <span v-else class="conversation-item__meta-group">
+          <Save class="conversation-item__meta-icon" />
+          <span class="truncate">persisted</span>
+        </span>
+        <span
+          class="conversation-item__meta-group conversation-item__meta-group--percent"
+        >
+          <span class="conversation-item__context truncate">{{
+            contextUsagePercent
+          }}</span>
+        </span>
       </div>
     </div>
   </div>
@@ -161,8 +167,34 @@ defineEmits<{
 .conversation-item__meta {
   display: flex;
   align-items: center;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
+  overflow: hidden;
   font-size: 10px;
   color: var(--color-fg-muted);
+}
+
+.conversation-item__meta-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.conversation-item__meta-group--percent {
+  flex: 0 0 auto;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.conversation-item__meta-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.conversation-item__meta-group .truncate {
+  min-width: 0;
 }
 </style>

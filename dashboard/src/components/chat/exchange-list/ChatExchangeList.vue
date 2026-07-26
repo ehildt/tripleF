@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   deleteConversation: [id: string];
+  toggleIncluded: [exchangeId: string];
 }>();
 
 const { activeConversation, exchanges, activeAssistantExchangeId } =
@@ -71,6 +72,7 @@ defineExpose({ scrollToExchange });
       @delete="deleteExchange"
       @retry="retryExchange"
       @branch="branchExchange"
+      @toggle-included="emit('toggleIncluded', $event)"
       @hover-delete-start="onHoverDeleteStart"
       @hover-delete-end="onHoverDeleteEnd"
     />

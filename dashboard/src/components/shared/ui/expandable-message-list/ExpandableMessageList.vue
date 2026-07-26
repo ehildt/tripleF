@@ -5,12 +5,25 @@ import ExpandableMessageListItem from './expandable-message-list-item/Expandable
 import type { MessageListItem as MessageListItemType } from './types';
 import { useExpandableMessageList } from './use-expandable-message-list';
 
-const props = defineProps<{
-  items?: string | MessageListItemType[] | Record<string, unknown> | null;
-  renderHtml?: (content: string) => string;
-  onClick?: (index: number) => void;
-  expandAll?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    items?: string | MessageListItemType[] | Record<string, unknown> | null;
+    renderHtml?: (content: string) => string;
+    onClick?: (index: number) => void;
+    onToggleInclude?: (index: number) => void;
+    onDeleteItem?: (index: number) => void;
+    expandAll?: boolean;
+    showRole?: boolean;
+  }>(),
+  {
+    items: null,
+    renderHtml: undefined,
+    onClick: undefined,
+    onToggleInclude: undefined,
+    onDeleteItem: undefined,
+    showRole: true,
+  },
+);
 
 const slots = useSlots();
 const hasBody = !!slots.body;
@@ -22,6 +35,14 @@ const { messages, expanded, toggle } = useExpandableMessageList(
 
 function handleSelect(idx: number) {
   props.onClick?.(idx);
+}
+
+function handleToggleInclude(idx: number) {
+  props.onToggleInclude?.(idx);
+}
+
+function handleDeleteItem(idx: number) {
+  props.onDeleteItem?.(idx);
 }
 </script>
 
@@ -36,8 +57,11 @@ function handleSelect(idx: number) {
         :expanded="expanded.has(idx)"
         :has-body="hasBody"
         :render-html="props.renderHtml"
+        :show-role="showRole"
         @toggle="toggle(idx)"
         @select="handleSelect(idx)"
+        @toggle-include="handleToggleInclude(idx)"
+        @delete-item="handleDeleteItem(idx)"
       >
         <template v-if="hasBody" #body>
           <slot name="body" :message="msg" :index="idx" />

@@ -28,8 +28,10 @@ export function useActiveConversation(): ActiveSessionData {
     return conversationStore.getConversation(id) ?? null;
   });
 
-  const exchanges = computed<readonly Exchange[]>(
-    () => activeConversation.value?.exchanges ?? [],
+  const exchanges = computed<readonly Exchange[]>(() =>
+    (activeConversation.value?.exchanges ?? []).filter(
+      (exchange) => exchange.included !== false,
+    ),
   );
 
   const activeAssistantExchangeId = computed<string | null>(() => {

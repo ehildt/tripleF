@@ -18,6 +18,7 @@ const emit = defineEmits<{
   delete: [exchangeId: string];
   retry: [exchangeId: string];
   branch: [exchangeId: string];
+  toggleIncluded: [exchangeId: string];
   hoverDeleteStart: [exchangeId: string];
   hoverDeleteEnd: [];
   setScrollContainer: [container: HTMLElement | null];
@@ -54,6 +55,7 @@ function onScroll() {
           @delete="emit('delete', $event)"
           @retry="emit('retry', $event)"
           @branch="emit('branch', $event)"
+          @toggle-included="emit('toggleIncluded', $event)"
           @hover-delete-start="emit('hoverDeleteStart', $event)"
           @hover-delete-end="emit('hoverDeleteEnd')"
         />
@@ -71,7 +73,7 @@ function onScroll() {
   gap: var(--spacing-3);
   overflow-y: auto;
   overscroll-behavior: contain;
-  height: calc(100vh - 18.5rem);
+  height: calc(100vh - 14rem);
 }
 
 .scrollable-exchange-list__exchanges {

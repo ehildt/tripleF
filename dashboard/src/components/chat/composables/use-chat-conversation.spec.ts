@@ -46,7 +46,7 @@ describe('useChatConversation', () => {
     expect(userExchanges.value).toHaveLength(1);
     expect(userExchanges.value[0].content).toBe('hello');
     expect(messageListItems.value).toEqual([
-      { role: 'user', content: 'hello' },
+      { role: 'user', content: 'hello', included: true, contextPercent: '--' },
     ]);
   });
 });

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * Big-number stat row for the specs buyers care about most — values divided
- * only by hairlines, no box — with an expander that reveals the full
- * label/value spec table. Nothing is ever truncated.
+ * only by hairlines, no box — followed by the full label/value spec table.
+ * Nothing is ever truncated.
  */
 import type {
   KeyFinding,
@@ -10,14 +10,11 @@ import type {
 } from '@/types/harness-response-data.model';
 
 import ProductSpecsList from '../product-specs-list/ProductSpecsList.vue';
-import { useSpecsExpansion } from './composables/use-specs-expansion';
 
 defineProps<{
   stats?: readonly StatHighlight[];
   specItems?: readonly KeyFinding[];
 }>();
-
-const { showAllSpecs, toggleSpecs } = useSpecsExpansion();
 </script>
 
 <template>
@@ -29,21 +26,7 @@ const { showAllSpecs, toggleSpecs } = useSpecsExpansion();
       </li>
     </ul>
 
-    <template v-if="specItems?.length">
-      <button
-        v-if="stats?.length"
-        type="button"
-        class="stat-highlights__toggle"
-        :aria-expanded="showAllSpecs"
-        @click="toggleSpecs"
-      >
-        {{ showAllSpecs ? 'Hide specs ▴' : 'Show all specs ▾' }}
-      </button>
-      <ProductSpecsList
-        v-if="showAllSpecs || !stats?.length"
-        :items="specItems"
-      />
-    </template>
+    <ProductSpecsList v-if="specItems?.length" :items="specItems" />
   </section>
 </template>
 
@@ -92,30 +75,5 @@ const { showAllSpecs, toggleSpecs } = useSpecsExpansion();
   letter-spacing: 0.06em;
   color: var(--color-fg-muted);
   overflow-wrap: anywhere;
-}
-
-.stat-highlights__toggle {
-  align-self: center;
-  padding: var(--spacing-1) var(--spacing-2);
-  border: none;
-  border-bottom: 1px solid transparent;
-  background-color: transparent;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.stat-highlights__toggle:hover {
-  color: var(--color-accent-primary);
-  border-bottom-color: var(--color-accent-primary);
-}
-
-.stat-highlights__toggle:focus-visible {
-  outline: 2px solid var(--color-accent-primary);
-  outline-offset: 1px;
 }
 </style>

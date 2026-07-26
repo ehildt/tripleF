@@ -4,7 +4,7 @@
  * remove button on the right. Clicking the row launches the video in the
  * floating player.
  */
-import { X } from '@lucide/vue';
+import { ListMinus } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
@@ -47,7 +47,7 @@ const metaLine = computed(() =>
       :aria-label="`Remove from playlist: ${item.title || 'video'}`"
       @click.stop="emit('remove')"
     >
-      <X class="playlist-item__remove-icon" />
+      <ListMinus class="playlist-item__remove-icon" />
     </button>
   </div>
 </template>
@@ -90,19 +90,16 @@ const metaLine = computed(() =>
 }
 
 .playlist-item__title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--color-fg-primary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .playlist-item__meta {
-  font-size: 0.7rem;
+  font-size: 0.625rem;
   font-family: var(--font-mono);
   color: var(--color-fg-muted);
   overflow: hidden;
