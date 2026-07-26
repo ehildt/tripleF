@@ -20,16 +20,14 @@ const { tabs } = useHeaderTabs(props);
 
 <template>
   <header class="app-header">
-    <div class="app-header__container">
-      <div class="app-header__inner">
-        <NavMenu
-          :tabs="tabs"
-          :active-tab="activeTab"
-          @tab-change="emit('tabChange', $event)"
-        />
+    <div class="app-header__group">
+      <NavMenu
+        :tabs="tabs"
+        :active-tab="activeTab"
+        @tab-change="emit('tabChange', $event)"
+      />
 
-        <AppThemeSelector />
-      </div>
+      <AppThemeSelector />
     </div>
   </header>
 </template>
@@ -37,38 +35,36 @@ const { tabs } = useHeaderTabs(props);
 <style scoped>
 .app-header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0.75rem;
+  right: 1rem;
   z-index: 40;
-  border-bottom: 1px solid var(--color-divider);
-  background-color: var(--color-bg-secondary);
-}
-
-.app-header__container {
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0.5rem 1rem;
 }
 
 @media (min-width: 640px) {
-  .app-header__container {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+  .app-header {
+    right: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .app-header__container {
-    padding-left: 2rem;
-    padding-right: 2rem;
+  .app-header {
+    right: 2rem;
   }
 }
 
-.app-header__inner {
+/* Floating frosted pill: keeps the controls legible over scrolling content
+   without the old full-width header bar. */
+.app-header__group {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
+  padding: var(--spacing-0-5) var(--spacing-1);
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-secondary) 50%,
+    transparent
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 </style>

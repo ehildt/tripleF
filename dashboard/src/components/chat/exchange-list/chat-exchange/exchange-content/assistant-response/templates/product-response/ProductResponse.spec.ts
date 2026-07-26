@@ -66,7 +66,7 @@ describe('ProductResponse', () => {
     expect(wrapper.text()).toContain('ANC on');
   });
 
-  it('renders stat highlights and expands the full spec table', async () => {
+  it('renders stat highlights and the full spec table', async () => {
     const wrapper = mountProduct({
       title: 'Widget',
       statHighlights: [{ label: 'Battery', value: '30 h' }],
@@ -75,9 +75,6 @@ describe('ProductResponse', () => {
 
     expect(wrapper.find('.stat-highlights__value').text()).toBe('30 h');
     expect(wrapper.find('.stat-highlights__label').text()).toBe('Battery');
-    expect(wrapper.find('.spec-list').exists()).toBe(false);
-
-    await wrapper.find('.stat-highlights__toggle').trigger('click');
     expect(wrapper.find('.spec-list').exists()).toBe(true);
     expect(wrapper.text()).toContain('LDAC');
   });

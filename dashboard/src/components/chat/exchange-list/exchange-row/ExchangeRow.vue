@@ -16,6 +16,7 @@ const emit = defineEmits<{
   delete: [exchangeId: string];
   retry: [exchangeId: string];
   branch: [exchangeId: string];
+  toggleIncluded: [exchangeId: string];
   hoverDeleteStart: [exchangeId: string];
   hoverDeleteEnd: [];
 }>();
@@ -40,6 +41,7 @@ const shouldAddTopMargin = computed(
       @delete="emit('delete', $event)"
       @retry="emit('retry', $event)"
       @branch="emit('branch', $event)"
+      @toggle-included="emit('toggleIncluded', $event)"
       @hover-delete-start="emit('hoverDeleteStart', $event)"
       @hover-delete-end="emit('hoverDeleteEnd')"
     />

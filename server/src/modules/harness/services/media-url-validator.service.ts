@@ -567,7 +567,8 @@ export class MediaUrlValidatorService {
 
   private destroyResponseStream(response: HttpResponse): void {
     const stream = response.data as
-      (NodeJS.ReadableStream & { destroy?: () => void }) | undefined;
+      | (NodeJS.ReadableStream & { destroy?: () => void })
+      | undefined;
     stream?.destroy?.();
   }
 

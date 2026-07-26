@@ -23,6 +23,7 @@ const emit = defineEmits<{
   (e: 'delete', exchangeId: string): void;
   (e: 'retry', exchangeId: string): void;
   (e: 'branch', exchangeId: string): void;
+  (e: 'toggle-included', exchangeId: string): void;
   (e: 'hover-delete-start', exchangeId: string): void;
   (e: 'hover-delete-end'): void;
 }>();
@@ -63,6 +64,7 @@ function handleToggleIncluded() {
       conversationStore.activeConversationId,
       props.exchange.id,
     );
+    emit('toggle-included', props.exchange.id);
   }
 }
 

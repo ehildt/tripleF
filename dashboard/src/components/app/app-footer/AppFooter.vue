@@ -20,50 +20,36 @@ async function copySessionId() {
 
 <template>
   <footer class="app-footer">
-    <div class="app-footer__container">
-      <button
-        type="button"
-        class="app-footer__session"
-        :disabled="!socketId"
-        :title="socketId ? 'Session ID — click to copy' : 'No session'"
-        @click="copySessionId"
-      >
-        {{ socketId ?? '—' }}
-      </button>
-    </div>
+    <button
+      type="button"
+      class="app-footer__session"
+      :disabled="!socketId"
+      :title="socketId ? 'Session ID — click to copy' : 'No session'"
+      @click="copySessionId"
+    >
+      {{ socketId ?? '—' }}
+    </button>
   </footer>
 </template>
 
 <style scoped>
 .app-footer {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0.75rem;
+  left: 1rem;
   z-index: 40;
-  border-top: 1px solid var(--color-divider);
-  background-color: var(--color-bg-secondary);
-}
-
-.app-footer__container {
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
+  padding: var(--spacing-0-5) var(--spacing-1);
 }
 
 @media (min-width: 640px) {
-  .app-footer__container {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+  .app-footer {
+    left: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .app-footer__container {
-    padding-left: 2rem;
-    padding-right: 2rem;
+  .app-footer {
+    left: 2rem;
   }
 }
 

@@ -166,12 +166,6 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
-  border: 1px solid var(--color-divider);
-  background-color: color-mix(
-    in srgb,
-    var(--color-bg-elevated) 85%,
-    transparent
-  );
   color: var(--color-fg-muted);
   cursor: pointer;
   transition:

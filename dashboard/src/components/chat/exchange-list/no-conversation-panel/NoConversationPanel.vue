@@ -32,7 +32,7 @@ import ExchangeEmptyStateCanvas from '../exchange-empty-state/exchange-empty-sta
   position: relative;
   padding: var(--spacing-4);
   width: 100%;
-  height: calc(100vh - 18.5rem);
+  height: calc(100vh - 14rem);
   min-height: 0;
   overflow: hidden;
   display: flex;

@@ -46,7 +46,7 @@ const emit = defineEmits<{
   max-width: 125rem;
   margin-left: auto;
   margin-right: auto;
-  padding-top: 6rem;
+  padding-top: 3rem;
 }
 
 @media (min-width: 640px) {

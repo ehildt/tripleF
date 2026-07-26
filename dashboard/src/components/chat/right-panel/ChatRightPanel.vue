@@ -36,6 +36,8 @@ const emit = defineEmits<{
   removeAttachment: [id: string];
   toggleAttachment: [id: string];
   promptClick: [index: number];
+  toggleInclude: [index: number];
+  deleteItem: [index: number];
 }>();
 
 const {
@@ -214,7 +216,10 @@ const {
       <ExpandableMessageList
         :items="messageListItems"
         :on-click="onPromptClick"
+        :on-toggle-include="(i: number) => emit('toggleInclude', i)"
+        :on-delete-item="(i: number) => emit('deleteItem', i)"
         :expand-all="true"
+        :show-role="false"
         class="chat-right-panel__scrollable"
       />
     </div>
@@ -225,7 +230,7 @@ const {
 .chat-right-panel {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 10.1rem);
+  max-height: calc(100vh - 7rem);
 }
 
 .chat-right-panel__tabs {

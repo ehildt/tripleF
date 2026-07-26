@@ -32,9 +32,65 @@ export function useChatConversation() {
     return conversation.value.exchanges.filter((ex) => ex.role === 'user');
   });
 
+  /** Explicit conversation numCtx, else the model's default context size. */
+  const effectiveNumCtx = computed(() => {
+    if (conversation.value?.numCtx) return conversation.value.numCtx;
+    const options = modelsStore.numCtxOptions.map(String);
+    const ctx = selectedModelObj.value?.context_length;
+    const filtered = ctx
+      ? options.filter((opt) => Number(opt) <= ctx)
+      : options;
+    return filtered.at(-1) ?? '';
+  });
+
   const messageListItems = computed(() =>
-    userExchanges.value.map((ex) => ({ role: ex.role, content: ex.content })),
+    userExchanges.value.map((ex) => {
+      const assistant = conversation.value?.exchanges.find(
+        (e) => e.role === 'assistant' && e.requestId === ex.requestId,
+      );
+      const ctx = Number(effectiveNumCtx.value);
+      const hasTokenData =
+        assistant != null &&
+        (assistant.inputTokenDelta != null || assistant.evalCount != null);
+      const percent =
+        assistant && ctx && hasTokenData
+          ? Math.min(
+              100,
+              (((assistant.inputTokenDelta ?? 0) + (assistant.evalCount ?? 0)) /
+                ctx) *
+                100,
+            ).toFixed(2)
+          : null;
+      return {
+        role: ex.role,
+        content: ex.content,
+        included: ex.included !== false,
+        contextPercent: percent ?? '--',
+      };
+    }),
   );
+
+  /** Include/exclude the user prompt at the given history index (pairs its
+   * assistant response automatically). */
+  function toggleUserExchangeIncluded(index: number) {
+    const exchange = userExchanges.value[index];
+    if (!conversation.value || !exchange) return;
+    conversationStore.toggleExchangeIncluded(
+      conversation.value.id,
+      exchange.id,
+    );
+  }
+
+  /** Delete the user prompt at the given history index (pairs its
+   * assistant response automatically). */
+  function deleteUserExchange(index: number) {
+    const exchange = userExchanges.value[index];
+    if (!conversation.value || !exchange) return;
+    conversationStore.deleteExchangeAndPrune(
+      conversation.value.id,
+      exchange.id,
+    );
+  }
 
   return {
     conversationId,
@@ -42,5 +98,7 @@ export function useChatConversation() {
     selectedModelObj,
     userExchanges,
     messageListItems,
+    toggleUserExchangeIncluded,
+    deleteUserExchange,
   };
 }

@@ -63,7 +63,7 @@ onUnmounted(() => {
 <template>
   <div
     id="app-root"
-    class="min-h-screen text-fg-primary font-sans pb-10 bg-grid root-accent-gradient"
+    class="min-h-screen text-fg-primary font-sans bg-grid root-accent-gradient"
   >
     <AppHeader
       :active-tab="appStore.activeTab"
