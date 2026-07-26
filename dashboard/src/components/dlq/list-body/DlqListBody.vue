@@ -13,13 +13,11 @@ const props = withDefaults(
     selectedEntryId: string | null;
     error?: string | null;
     hideRead?: boolean;
-    sortTrigger?: number;
     isEntryRead: (entry: DlqEntry) => boolean;
   }>(),
   {
     error: null,
     hideRead: false,
-    sortTrigger: 0,
   },
 );
 
@@ -32,13 +30,11 @@ const emit = defineEmits<{
 
 const entriesRef = toRef(props, 'entries');
 const hideReadRef = toRef(props, 'hideRead');
-const sortTriggerRef = toRef(props, 'sortTrigger');
 
 const { sortedEntries } = useDlqListState({
   entries: entriesRef,
   hideRead: hideReadRef,
   isEntryRead: props.isEntryRead,
-  sortTrigger: sortTriggerRef,
 });
 
 function select(entry: DlqEntry) {
@@ -54,13 +50,7 @@ function select(entry: DlqEntry) {
     />
   </div>
 
-  <div
-    v-else-if="sortedEntries.length"
-    :class="[
-      'dlq-list-body',
-      sortedEntries.length > 1 ? 'dlq-list-body--scrollable' : '',
-    ]"
-  >
+  <div v-else-if="sortedEntries.length" class="dlq-list-body">
     <div
       v-for="entry in sortedEntries"
       :key="entry.requestId"
@@ -94,16 +84,15 @@ function select(entry: DlqEntry) {
 </template>
 
 <style scoped>
+/* Fills the column panel (flex parent) and scrolls internally — the
+   column wrapper in Dlq.vue owns the shared panel height. */
 .dlq-list-body {
   display: flex;
+  flex: 1;
   flex-direction: column;
-}
-
-.dlq-list-body--scrollable {
-  max-height: calc(100vh - 27.375rem);
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: var(--spacing-1-5);
 }
 
 .dlq-list-body__row {

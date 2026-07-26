@@ -28,9 +28,7 @@ vi.mock('../../api/queries/use-dlq-query', () => ({
 vi.mock('../../api/queries/use-retry-dlq-mutation', () => ({
   useRetryDlqMutation: () => ({ mutateAsync: vi.fn() }),
 }));
-vi.mock('../../api/queries/use-reinstate-selected-dlq-mutation', () => ({
-  useReinstateSelectedDlqMutation: () => ({ mutateAsync: vi.fn() }),
-}));
+vi.mock('../../api/queries/use-reinstate-selected-dlq-mutation', () => ({}));
 vi.mock('../../api/queries/use-delete-dlq-mutation', () => ({
   useDeleteDlqMutation: () => ({ mutateAsync: vi.fn() }),
 }));

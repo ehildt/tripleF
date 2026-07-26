@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { ProviderOverridesService } from '../services/provider-overrides.service.js';
@@ -19,5 +19,14 @@ export class ProviderOverridesController {
   updateConfig(@Body() body: Record<string, Record<string, any>>) {
     this.providerOverrides.updateConfig(body);
     return { success: true };
+  }
+
+  @Delete(':provider')
+  @ApiOperation({
+    summary: 'Reset one provider to its env defaults (API keys masked)',
+  })
+  resetConfig(@Param('provider') provider: string) {
+    this.providerOverrides.resetConfig(provider);
+    return this.providerOverrides.getMaskedConfig();
   }
 }

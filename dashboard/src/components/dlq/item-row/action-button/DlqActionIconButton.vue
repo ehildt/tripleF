@@ -5,6 +5,8 @@ const props = defineProps<{
   icon: Component;
   tint: number;
   visible: boolean;
+  armed?: boolean;
+  title?: string;
 }>();
 
 const emit = defineEmits<{
@@ -20,7 +22,9 @@ const iconStyle = computed(() => ({
   <button
     v-if="visible"
     class="dlq-action-icon-button"
+    :class="{ 'dlq-action-icon-button--armed': armed }"
     :style="iconStyle"
+    :title="title"
     @click.stop="emit('click')"
   >
     <component :is="icon" class="dlq-action-icon-button__icon" />
@@ -36,6 +40,16 @@ const iconStyle = computed(() => ({
 
 .dlq-action-icon-button:hover {
   opacity: 0.7;
+}
+
+/* Armed for destructive confirmation: second click executes. */
+.dlq-action-icon-button--armed {
+  background-color: color-mix(
+    in srgb,
+    var(--color-status-error) 20%,
+    transparent
+  );
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .dlq-action-icon-button__icon {

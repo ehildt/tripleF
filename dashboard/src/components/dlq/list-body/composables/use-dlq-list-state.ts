@@ -9,11 +9,10 @@ export interface UseDlqListStateOptions {
   entries: Ref<DlqEntry[]>;
   hideRead: Ref<boolean>;
   isEntryRead: (entry: DlqEntry) => boolean;
-  sortTrigger?: Ref<number>;
 }
 
 export function useDlqListState(options: UseDlqListStateOptions) {
-  const { entries, hideRead, isEntryRead, sortTrigger } = options;
+  const { entries, hideRead, isEntryRead } = options;
 
   const sortedEntries = ref<DlqEntry[]>([]);
 
@@ -25,11 +24,9 @@ export function useDlqListState(options: UseDlqListStateOptions) {
     );
   }
 
-  watch(entries, recomputeSort, { immediate: true });
+  // Deep: the store mutates entries in place (splice on updateEntry).
+  watch(entries, recomputeSort, { immediate: true, deep: true });
   watch(hideRead, recomputeSort);
-  if (sortTrigger) {
-    watch(sortTrigger, recomputeSort);
-  }
 
   return { sortedEntries };
 }

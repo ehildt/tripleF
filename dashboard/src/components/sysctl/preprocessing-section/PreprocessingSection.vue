@@ -1,34 +1,54 @@
 <script setup lang="ts">
 /**
- * The SysCtl "Preprocessing" tab: the pproc tools panel (master toggle,
- * resize, variants) next to the options panel (advanced parameters).
+ * The SysCtl "Preprocessing" tab: the image preprocessing panel with the
+ * master toggle, resize settings, image variants, and advanced parameters.
  */
-import PprocOptionsPanel from '../../pproc/options-panel/PprocOptionsPanel.vue';
+import { ref, watch } from 'vue';
+
+import { usePreprocessingStore } from '@/stores/preprocessing';
+
 import PprocToolsPanel from '../../pproc/tools-panel/PprocToolsPanel.vue';
+
+const store = usePreprocessingStore();
+
+// Brief "pop" on the panel whenever the master toggle or a variant flips —
+// same feedback the search engines panel gives on configuration changes.
+const panelChanged = ref(false);
+watch(
+  () => [store.enabled, JSON.stringify(store.variants)],
+  () => {
+    panelChanged.value = false;
+    requestAnimationFrame(() => {
+      panelChanged.value = true;
+    });
+  },
+  { flush: 'post' },
+);
 </script>
 
 <template>
-  <div class="preprocessing-section">
-    <PprocToolsPanel class="preprocessing-section__panel" />
-    <PprocOptionsPanel class="preprocessing-section__panel" />
+  <div class="preprocessing-section" :class="{ 'panel-changed': panelChanged }">
+    <PprocToolsPanel />
   </div>
 </template>
 
 <style scoped>
 .preprocessing-section {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
   padding: var(--spacing-4);
 }
 
-@media (min-width: 1024px) {
-  .preprocessing-section {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.panel-changed {
+  animation: preprocessing-panel-changed 0.4s ease;
 }
 
-.preprocessing-section__panel {
-  min-width: 0;
+@keyframes preprocessing-panel-changed {
+  0% {
+    box-shadow: 0 0 0 2px var(--color-tab-preprocessing);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
 }
 </style>

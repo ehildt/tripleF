@@ -11,7 +11,6 @@ import {
   KeyRound,
   MapPin,
   Newspaper,
-  Power,
   ShoppingCart,
   Star,
 } from '@lucide/vue';
@@ -19,6 +18,8 @@ import { computed } from 'vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
+import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
+import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
 import { useApiKeyForm } from '../composables/use-api-key-form';
 import { useSysctlConfig } from '../composables/use-sysctl-config';
@@ -28,6 +29,7 @@ const {
   config,
   isLoading,
   hasError,
+  resetProvider,
   toggleProviderEnabled,
   toggleEndpoint,
   updateEndpointResults,
@@ -87,7 +89,20 @@ function handleUpdateResults({ name, value }: { name: string; value: string }) {
 
     <div v-else class="search-engines-section__panels">
       <div class="search-engines-section__panel panel-glow">
-        <PanelTitleBar title="Serper API" />
+        <PanelTitleBar title="Serper API">
+          <template #actions>
+            <ResetButton
+              title="Reset Serper to defaults"
+              @click="resetProvider('serper')"
+            />
+            <PowerToggle
+              :enabled="config.serper.enabled"
+              :disabled="!isSerperConfigured"
+              title="Enable Serper"
+              @toggle="toggleProviderEnabled('serper')"
+            />
+          </template>
+        </PanelTitleBar>
 
         <ProviderSection
           provider-name="Serper"
@@ -95,9 +110,7 @@ function handleUpdateResults({ name, value }: { name: string; value: string }) {
           :config="config.serper"
           :descriptions="serperDescriptions"
           :icons="serperIcons"
-          :master-icon="Power"
           :configured="isSerperConfigured"
-          @toggle-master="toggleProviderEnabled('serper')"
           @toggle-endpoint="toggleEndpoint('serper', $event)"
           @update-results="handleUpdateResults($event)"
         >

@@ -14,7 +14,7 @@ describe('DlqItemMetaRow', () => {
       },
     });
     expect(wrapper.text()).toContain('harness');
-    expect(wrapper.text()).toContain('1 attempt');
+    expect(wrapper.text()).toContain('1/3 attempt');
   });
 
   it('pluralizes the attempt label correctly', () => {
@@ -26,7 +26,7 @@ describe('DlqItemMetaRow', () => {
         failedAt: '2024-01-01T00:00:00Z',
       },
     });
-    expect(wrapper.text()).toContain('2 attempts');
+    expect(wrapper.text()).toContain('2/3 attempts');
   });
 
   it('renders a dash for null failedAt', () => {

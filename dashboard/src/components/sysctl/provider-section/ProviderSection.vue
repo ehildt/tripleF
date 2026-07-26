@@ -17,14 +17,12 @@ const props = withDefaults(
     descriptions: Record<string, string>;
     configured: boolean;
     icons?: Record<string, LucideIcon>;
-    masterIcon?: LucideIcon;
     endpointMaxResults?: Record<string, number>;
   }>(),
-  { icons: () => ({}), masterIcon: undefined, endpointMaxResults: undefined },
+  { icons: () => ({}), endpointMaxResults: undefined },
 );
 
 const emit = defineEmits<{
-  toggleMaster: [];
   toggleEndpoint: [name: string];
   updateResults: [payload: { name: string; value: string }];
 }>();
@@ -60,15 +58,6 @@ function getResults(value: unknown): number | undefined {
     >
       <div class="provider-section__grid">
         <slot name="prepend" />
-
-        <FieldCard
-          :icon="masterIcon"
-          label="enabled"
-          description="master toggle"
-          :checked="config.enabled"
-          :disabled="!configured"
-          @toggle="emit('toggleMaster')"
-        />
 
         <FieldCard
           v-for="[name, value] in endpointEntries"

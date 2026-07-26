@@ -35,6 +35,16 @@ function saveOverrides(patch: Record<string, Record<string, unknown>>) {
   }
 }
 
+function clearSavedOverrides(provider: string) {
+  const existing = loadSavedOverrides();
+  delete existing[provider];
+  try {
+    localStorage.setItem(PROVIDER_OVERRIDES_KEY, JSON.stringify(existing));
+  } catch {
+    /* ignore */
+  }
+}
+
 async function syncOverridesToServer(
   saved: Record<string, Record<string, unknown>>,
   snapshot: ProviderOverridesSnapshot,
@@ -89,6 +99,24 @@ export function useSysctlConfig() {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /**
+   * Reset one provider to its env defaults: clears the locally persisted
+   * overrides first (so a later refresh does not re-sync them), then asks
+   * the server to drop its overrides and refreshes from the masked config
+   * it returns.
+   */
+  async function resetProvider(provider: ProviderKey) {
+    clearSavedOverrides(provider);
+    try {
+      await fetch(getApiUrl(`/api/v1/provider-overrides/${provider}`), {
+        method: 'DELETE',
+      });
+    } catch {
+      toast.error('Failed to reset provider config');
+    }
+    await refreshConfig();
   }
 
   async function patchConfig(provider: string, path: string, value: unknown) {
@@ -169,6 +197,7 @@ export function useSysctlConfig() {
     isLoading,
     hasError,
     refreshConfig,
+    resetProvider,
     toggleProviderEnabled,
     toggleEndpoint,
     updateEndpointResults,

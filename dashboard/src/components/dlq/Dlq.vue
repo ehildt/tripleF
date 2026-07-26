@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { watch } from 'vue';
 
 import { useDeleteDlqMutation } from '../../api/queries/use-delete-dlq-mutation';
 import { useDlqQuery } from '../../api/queries/use-dlq-query';
-import { useReinstateSelectedDlqMutation } from '../../api/queries/use-reinstate-selected-dlq-mutation';
 import { useRetryDlqMutation } from '../../api/queries/use-retry-dlq-mutation';
 import { useUpdateDlqMutation } from '../../api/queries/use-update-dlq-mutation';
 import { useToast } from '../../composables/use-toast';
@@ -32,19 +31,16 @@ const {
 } = useDlqQuery(() => dlqStore.getQueryParams());
 
 const retryMutation = useRetryDlqMutation();
-const reinstateSelectedMutation = useReinstateSelectedDlqMutation();
 const deleteMutation = useDeleteDlqMutation();
 const updateMutation = useUpdateDlqMutation();
 
-const { showLoading, guardedRefetch, onDataArrived, onError } = useDlqLoading({
-  refetch,
-});
-
-const sortTrigger = ref(0);
+const { showLoading, guardedRefetch, instantRefetch, onDataArrived, onError } =
+  useDlqLoading({
+    refetch,
+  });
 
 async function handleRefresh() {
   await guardedRefetch();
-  sortTrigger.value++;
 }
 
 const { onSelect, onRetry, onArchive, onDelete, onSavePayload, onSaveQueue } =
@@ -58,7 +54,6 @@ const { onSelect, onRetry, onArchive, onDelete, onSavePayload, onSaveQueue } =
       connectedRooms: socketStore.connectedRooms,
     },
     retryMutation,
-    reinstateSelectedMutation,
     deleteMutation,
     updateMutation,
     guardedRefetch,
@@ -86,20 +81,18 @@ watch(
     () => dlqStore.filterStatus,
     () => dlqStore.filterQueue,
     () => dlqStore.filterSearch,
+    () => dlqStore.offset,
+    () => dlqStore.limit,
   ],
   () => {
-    guardedRefetch();
+    instantRefetch();
   },
 );
-
-watch([() => dlqStore.offset, () => dlqStore.limit], () => {
-  guardedRefetch();
-});
 </script>
 
 <template>
-  <div class="lg:col-span-6 h-fit lg:sticky lg:top-24">
-    <PanelLayout>
+  <div class="dlq-column">
+    <PanelLayout class="dlq-column__panel">
       <DlqListHeader
         :show-loading="showLoading"
         :filter-status="dlqStore.filterStatus"
@@ -128,7 +121,6 @@ watch([() => dlqStore.offset, () => dlqStore.limit], () => {
         :selected-entry-id="dlqStore.selectedEntry?.requestId ?? null"
         :error="dlqStore.error"
         :hide-read="dlqStore.hideRead"
-        :sort-trigger="sortTrigger"
         :is-entry-read="(entry) => dlqStore.isEntryRead(entry)"
         @select="onSelect"
         @retry="onRetry"
@@ -138,8 +130,9 @@ watch([() => dlqStore.offset, () => dlqStore.limit], () => {
     </PanelLayout>
   </div>
 
-  <div class="lg:col-span-6 h-fit lg:sticky lg:top-24">
+  <div class="dlq-column">
     <DlqDetailsBody
+      class="dlq-column__panel"
       :entry="dlqStore.selectedEntry"
       :models="props.models"
       @save-payload="onSavePayload"
@@ -149,7 +142,21 @@ watch([() => dlqStore.offset, () => dlqStore.limit], () => {
 </template>
 
 <style scoped>
-.dlq-panel {
-  display: contents;
+/* Jobs and Details share one viewport-derived height on desktop so both
+   panels always line up; each panel scrolls its own body internally. */
+@media (min-width: 1024px) {
+  .dlq-column {
+    grid-column: span 6 / span 6;
+    position: sticky;
+    top: 6rem;
+    height: calc(100vh - 10rem);
+  }
+
+  .dlq-column__panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
 }
 </style>

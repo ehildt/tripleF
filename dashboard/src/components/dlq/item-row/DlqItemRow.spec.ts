@@ -65,12 +65,14 @@ describe('DlqItemRow', () => {
     expect(wrapper.emitted('archive')?.[0]).toEqual(['req-1']);
   });
 
-  it('emits delete when the delete button is clicked', () => {
+  it('emits delete only after a confirming second click', async () => {
     const wrapper = mount(DlqItemRow, {
       props: { entry: makeEntry() },
     });
     const buttons = wrapper.findAll('button');
-    buttons[2].trigger('click');
+    await buttons[2].trigger('click');
+    expect(wrapper.emitted('delete')).toBeUndefined();
+    await buttons[2].trigger('click');
     expect(wrapper.emitted('delete')?.[0]).toEqual(['req-1']);
   });
 });

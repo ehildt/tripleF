@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import { getApiUrl } from '@/api/api-url';
-
+import { fetchAllDlqEntries } from '../api/queries/fetch-all-dlq-entries.helper';
 import { useReadTracker } from '../composables/use-read-tracker';
 import type { DlqEntry } from '../types/dlq-entry.model';
 import type { DlqListResponse } from '../types/dlq-list-response.model';
@@ -11,7 +10,6 @@ import type { DlqQueryParams } from '../types/dlq-query-params.model';
 export const useDlqStore = defineStore('dlq', () => {
   const entries = ref<DlqEntry[]>([]);
   const selectedEntry = ref<DlqEntry | null>(null);
-  const selectedRequestIds = ref<Set<string>>(new Set());
   const readTracker = useReadTracker('read-dlq-ids');
   const knownIds = ref<string[]>([]);
   const total = ref(0);
@@ -29,15 +27,6 @@ export const useDlqStore = defineStore('dlq', () => {
   const currentPage = computed(
     () => Math.floor(offset.value / limit.value) + 1,
   );
-  const selectedCount = computed(() => selectedRequestIds.value.size);
-  const allSelected = computed(() => {
-    const selectable = entries.value.filter((e) => e.status !== 'Removed');
-    return (
-      selectable.length > 0 &&
-      selectable.every((e) => selectedRequestIds.value.has(e.requestId))
-    );
-  });
-
   function entryReadKey(e: DlqEntry): string {
     return `${e.requestId}::${e.failedAt ?? ''}::${e.attemptsMade}`;
   }
@@ -63,10 +52,6 @@ export const useDlqStore = defineStore('dlq', () => {
     limit.value = res.limit;
     offset.value = res.offset;
 
-    const visibleIds = new Set(res.data.map((e) => e.requestId));
-    selectedRequestIds.value = new Set(
-      [...selectedRequestIds.value].filter((id) => visibleIds.has(id)),
-    );
     if (selectedEntry.value) {
       selectedEntry.value =
         res.data.find((e) => e.requestId === selectedEntry.value!.requestId) ??
@@ -88,30 +73,6 @@ export const useDlqStore = defineStore('dlq', () => {
 
   function selectEntry(entry: DlqEntry | null) {
     selectedEntry.value = entry;
-  }
-
-  function clearSelection() {
-    selectedEntry.value = null;
-    selectedRequestIds.value = new Set();
-  }
-
-  function toggleSelection(requestId: string) {
-    const next = new Set(selectedRequestIds.value);
-    if (next.has(requestId)) next.delete(requestId);
-    else next.add(requestId);
-    selectedRequestIds.value = next;
-  }
-
-  function setAllSelected(selected: boolean) {
-    if (selected) {
-      selectedRequestIds.value = new Set(
-        entries.value
-          .filter((e) => e.status !== 'Removed')
-          .map((e) => e.requestId),
-      );
-    } else {
-      selectedRequestIds.value = new Set();
-    }
   }
 
   function setPage(page: number) {
@@ -153,48 +114,17 @@ export const useDlqStore = defineStore('dlq', () => {
   }
 
   async function fetchDlqCount() {
-    try {
-      const PAGE_SIZE = 200;
-
-      const url = getApiUrl(`/api/v1/dlq?limit=${PAGE_SIZE}&offset=0`);
-      const res = await fetch(url);
-      if (!res.ok) return;
-
-      const data = await res.json();
-      total.value = data.total;
-      const allData: DlqEntry[] = [...data.data];
-      const pages = Math.ceil(data.total / PAGE_SIZE);
-
-      if (pages > 1) {
-        const fetches: Promise<DlqEntry[]>[] = [];
-        for (let i = 1; i < pages; i++) {
-          const pageUrl = getApiUrl(
-            `/api/v1/dlq?limit=${PAGE_SIZE}&offset=${i * PAGE_SIZE}`,
-          );
-          fetches.push(
-            fetch(pageUrl).then((r) =>
-              r.ok ? r.json().then((d) => d.data as DlqEntry[]) : [],
-            ),
-          );
-        }
-        const pagesData = await Promise.all(fetches);
-        for (const page of pagesData) allData.push(...page);
-      }
-
-      knownIds.value = allData.map(entryReadKey);
-      readTracker.pruneMissing(knownIds.value);
-    } catch {
-      // silently ignore count fetch failures
-    }
+    const snapshot = await fetchAllDlqEntries();
+    if (!snapshot) return;
+    total.value = snapshot.total;
+    knownIds.value = snapshot.entries.map(entryReadKey);
+    readTracker.pruneMissing(knownIds.value);
   }
 
   return {
     entries,
     selectedEntry,
     knownIds,
-    selectedRequestIds,
-    selectedCount,
-    allSelected,
     total,
     limit,
     offset,
@@ -210,9 +140,6 @@ export const useDlqStore = defineStore('dlq', () => {
     setEntries,
     updateEntry,
     selectEntry,
-    clearSelection,
-    toggleSelection,
-    setAllSelected,
     setPage,
     setPageSize,
     nextPage,

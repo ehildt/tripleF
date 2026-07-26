@@ -9,7 +9,6 @@ describe('PanelHeader', () => {
       slots: { default: '<span data-testid="lead">Title</span>' },
     });
     expect(wrapper.find('[data-testid="lead"]').exists()).toBe(true);
-    expect(wrapper.find('div').classes().join(' ')).toContain('bg-secondary');
-    expect(wrapper.find('div').classes().join(' ')).toContain('border-divider');
+    expect(wrapper.find('div').classes()).toContain('panel-header');
   });
 });

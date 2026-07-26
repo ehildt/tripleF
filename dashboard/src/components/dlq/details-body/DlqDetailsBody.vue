@@ -31,7 +31,7 @@ const detailsState = useDlqDetailsState(props.models);
 const { isImmutable, buildPayloadWithFilterUpdate } = detailsState;
 
 const entryRef = toRef(props, 'entry');
-const { failureText } = useDlqFailureText(entryRef);
+const { failureText, failureRaw } = useDlqFailureText(entryRef);
 
 type DetailTab = 'error' | 'metadata' | 'prompt' | 'payload';
 
@@ -125,6 +125,9 @@ function copyPayload() {
               <div class="dlq-details-body__error-body">
                 {{ failureText }}
               </div>
+              <pre v-if="failureRaw" class="dlq-details-body__error-raw">{{
+                failureRaw
+              }}</pre>
             </div>
           </template>
 
@@ -175,11 +178,17 @@ function copyPayload() {
 .dlq-details-body {
   padding: var(--spacing-4);
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--spacing-4);
+  min-height: 0;
 }
 
 .dlq-details-body__tabs-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   border-top: 1px solid var(--color-divider);
   padding-top: var(--spacing-3);
 }
@@ -217,11 +226,14 @@ function copyPayload() {
   color: var(--color-accent-primary);
 }
 
+/* Fills the space under the tab bar and scrolls internally — the column
+   wrapper in Dlq.vue owns the shared panel height. */
 .dlq-details-body__panel {
   position: relative;
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--color-divider);
   background-color: var(--color-bg-secondary);
-  max-height: 26.75rem;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -263,6 +275,20 @@ function copyPayload() {
   padding: var(--spacing-2);
   border: 1px solid
     color-mix(in srgb, var(--color-status-error) 20%, transparent);
+  overflow-wrap: anywhere;
+}
+
+/* Complex failure objects (Zod / AI-SDK validation) in full, formatted. */
+.dlq-details-body__error-raw {
+  margin: 0;
+  padding: var(--spacing-2);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 1.5;
+  color: var(--color-fg-secondary);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  overflow-x: auto;
 }
 
 .dlq-details-body__copy {

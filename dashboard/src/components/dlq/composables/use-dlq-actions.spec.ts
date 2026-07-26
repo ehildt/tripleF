@@ -7,13 +7,8 @@ function mockDlqStore() {
   return {
     entries: [],
     selectedEntry: null,
-    selectedRequestIds: new Set<string>(),
-    selectedCount: 0,
     error: null as string | null,
     selectEntry: vi.fn(),
-    clearSelection: vi.fn(),
-    toggleSelection: vi.fn(),
-    setAllSelected: vi.fn(),
     markEntryAsRead: vi.fn(),
     updateEntry: vi.fn(),
   } as any;
@@ -44,7 +39,6 @@ function makeCommonOptions(overrides: Record<string, unknown> = {}) {
     dlqStore: mockDlqStore(),
     socketStore: mockSocketStore(),
     retryMutation: mockMutation(),
-    reinstateSelectedMutation: mockMutation(),
     deleteMutation: mockMutation(),
     updateMutation: mockMutation(),
     guardedRefetch: makeGuardedRefetch(),
@@ -104,42 +98,6 @@ describe('useDlqActions', () => {
     expect(store.error).toBeNull();
   });
 
-  it('onReinstateSelected does nothing when no selection', async () => {
-    const store = mockDlqStore();
-    store.selectedRequestIds = new Set();
-    const reinstateMutation = mockMutation();
-    const actions = useDlqActions(
-      makeCommonOptions({
-        dlqStore: store,
-        reinstateSelectedMutation: reinstateMutation,
-      }),
-    );
-    await actions.onReinstateSelected();
-    expect(reinstateMutation.mutateAsync).not.toHaveBeenCalled();
-  });
-
-  it('onReinstateSelected calls mutation with selected ids', async () => {
-    const store = mockDlqStore();
-    store.selectedRequestIds = new Set(['a', 'b']);
-    const reinstateMutation = {
-      mutateAsync: vi
-        .fn()
-        .mockResolvedValue({ restored: 2, requestIds: ['a', 'b'] }),
-    } as any;
-    const guardedRefetch = makeGuardedRefetch();
-    const actions = useDlqActions(
-      makeCommonOptions({
-        dlqStore: store,
-        reinstateSelectedMutation: reinstateMutation,
-        guardedRefetch,
-      }),
-    );
-    await actions.onReinstateSelected();
-    expect(reinstateMutation.mutateAsync).toHaveBeenCalledWith(['a', 'b']);
-    expect(store.clearSelection).toHaveBeenCalledOnce();
-    expect(guardedRefetch).toHaveBeenCalledOnce();
-  });
-
   it('onArchive prevents clearing Deleted entries', async () => {
     const store = mockDlqStore();
     store.entries = [{ requestId: 'def', status: 'Removed' }];
@@ -182,7 +140,7 @@ describe('useDlqActions', () => {
       }),
     );
     await actions.onDelete('xyz');
-    expect(store.clearSelection).toHaveBeenCalledOnce();
+    expect(store.selectEntry).toHaveBeenCalledWith(null);
     expect(guardedRefetch).toHaveBeenCalledOnce();
   });
 
