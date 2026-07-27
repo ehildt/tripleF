@@ -70,10 +70,7 @@ export function useSubmit(options: UseSubmitOptions) {
   });
 
   const conversationModel = computed(
-    () =>
-      activeConversation.value?.model ||
-      localStorage.getItem('harness-selected-model') ||
-      '',
+    () => activeConversation.value?.model || modelsStore.selectedModel || '',
   );
 
   function isTokenContextFull(): boolean {

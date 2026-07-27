@@ -51,7 +51,9 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  HarnessDlq: 'HarnessDlq'
+  HarnessDlq: 'HarnessDlq',
+  HarnessConversation: 'HarnessConversation',
+  HarnessConfig: 'HarnessConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -88,6 +90,31 @@ export const HarnessDlqScalarFieldEnum = {
 } as const
 
 export type HarnessDlqScalarFieldEnum = (typeof HarnessDlqScalarFieldEnum)[keyof typeof HarnessDlqScalarFieldEnum]
+
+
+export const HarnessConversationScalarFieldEnum = {
+  sessionId: 'sessionId',
+  conversationId: 'conversationId',
+  requestId: 'requestId',
+  title: 'title',
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessConversationScalarFieldEnum = (typeof HarnessConversationScalarFieldEnum)[keyof typeof HarnessConversationScalarFieldEnum]
+
+
+export const HarnessConfigScalarFieldEnum = {
+  sessionId: 'sessionId',
+  selectedModel: 'selectedModel',
+  preprocessing: 'preprocessing',
+  providerOverrides: 'providerOverrides',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessConfigScalarFieldEnum = (typeof HarnessConfigScalarFieldEnum)[keyof typeof HarnessConfigScalarFieldEnum]
 
 
 export const SortOrder = {

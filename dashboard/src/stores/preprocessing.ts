@@ -1,8 +1,12 @@
-import { useDebounceFn, useStorage } from '@vueuse/core';
+import { useDebounceFn } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
+import { fetchConfig, saveConfig } from '@/api/config.api';
+import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
+
+const SESSION_ID = getPersistentSocketSessionId();
 
 export type PreprocessingSize = 256 | 384 | 512 | 640 | 768 | 1024;
 
@@ -109,27 +113,71 @@ const PARAMETER_VARIANTS: Record<string, string[]> = {
 };
 
 export const usePreprocessingStore = defineStore('preprocessing', () => {
-  // Single source-of-truth ref synced to localStorage
-  const settings = useStorage<PreprocessingSettings>(
-    'preprocessing-settings',
-    { ...DEFAULT_PREPROCESSING_SETTINGS },
-    localStorage,
-    { mergeDefaults: true },
-  );
+  // Single source-of-truth ref; loaded from global + session config on boot.
+  const settings = ref<PreprocessingSettings>({
+    ...DEFAULT_PREPROCESSING_SETTINGS,
+  });
+
+  function mergePartialSettings(
+    patch?: Record<string, unknown> | null,
+  ): PreprocessingSettings {
+    if (!patch) return { ...DEFAULT_PREPROCESSING_SETTINGS };
+    return {
+      ...DEFAULT_PREPROCESSING_SETTINGS,
+      ...patch,
+      resize: {
+        ...DEFAULT_PREPROCESSING_SETTINGS.resize,
+        ...(patch.resize as Record<string, unknown>),
+      },
+      variants: {
+        ...DEFAULT_PREPROCESSING_SETTINGS.variants,
+        ...(patch.variants as Record<string, unknown>),
+      },
+      parameters: {
+        ...DEFAULT_PREPROCESSING_SETTINGS.parameters,
+        ...(patch.parameters as Record<string, unknown>),
+      },
+    } as PreprocessingSettings;
+  }
+
+  async function loadSettings() {
+    try {
+      const [globalRes, sessionConfig] = await Promise.all([
+        fetch(getApiUrl('/api/v1/sharp-overrides')),
+        fetchConfig(SESSION_ID),
+      ]);
+      const globalSettings = globalRes.ok
+        ? ((await globalRes.json()) as Record<string, unknown>)
+        : {};
+      const merged = mergePartialSettings({
+        ...globalSettings,
+        ...sessionConfig?.preprocessing,
+      });
+      settings.value = merged;
+    } catch {
+      // Offline — keep the defaults.
+    }
+  }
+
+  void loadSettings();
 
   /**
    * Server-side sync: preprocessing is applied by the server from its own
    * effective config (env defaults + overrides), so every settings change is
-   * pushed as an override. localStorage stays the offline mirror — a failed
-   * push is retried on the next change or app boot.
+   * pushed as a global override. The same settings are also persisted as a
+   * session override for cross-device recovery.
    */
   function pushSettingsToServer() {
+    const body = JSON.stringify(settings.value);
     fetch(getApiUrl('/api/v1/sharp-overrides'), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings.value),
+      body,
     }).catch(() => {
-      /* offline — the localStorage mirror keeps the settings */
+      /* offline — ignored */
+    });
+    saveConfig(SESSION_ID, { preprocessing: settings.value }).catch(() => {
+      /* offline — ignored */
     });
   }
 

@@ -1,15 +1,22 @@
 import { defineStore } from 'pinia';
 import TurndownService from 'turndown';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 import { getApiUrl } from '../api/api-url';
+import {
+  deleteConversation as deleteServerConversation,
+  fetchConversation,
+  fetchConversations,
+  saveConversation as saveServerConversation,
+} from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
 import type { ConversationMetadataImage } from '../utils/build-query-params.helper';
 import { createId } from '../utils/id.helper';
 import { calcInputTokenDelta } from './helpers/calc-input-token-delta.helper';
+import { getPersistentSocketSessionId } from './helpers/get-persistent-socket-session-id.helper';
 import { toPromptMessage } from './helpers/to-prompt-message.helper';
 import { useSocketStore } from './socket';
 
@@ -124,8 +131,7 @@ interface PersistedConversation {
   updatedAt: number;
 }
 
-const STORAGE_KEY = 'harness-conversations';
-const ACTIVE_SESSION_KEY = 'harness-active-conversation';
+const SESSION_ID = getPersistentSocketSessionId();
 const TEMP_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function createConversation(partial?: Partial<Conversation>): Conversation {
@@ -152,77 +158,115 @@ function createConversation(partial?: Partial<Conversation>): Conversation {
   };
 }
 
-function loadConversations(): Conversation[] {
+function toPersistedConversation(
+  conversation: Conversation,
+): PersistedConversation {
+  return {
+    id: conversation.id,
+    title: conversation.title,
+    exchanges: conversation.exchanges,
+    savedFileInfos: conversation.savedFileInfos,
+    uploadedImages: conversation.uploadedImages,
+    imageSelectionSnapshot: conversation.imageSelectionSnapshot,
+    conversationId: conversation.conversationId,
+    model: conversation.model,
+    numCtx: conversation.numCtx,
+    think: conversation.think,
+    event: conversation.event,
+    roomId: conversation.roomId,
+    stream: conversation.stream,
+    subscriptions: conversation.subscriptions,
+    type: conversation.type,
+    task: conversation.task,
+    createdAt: conversation.createdAt,
+    updatedAt: conversation.updatedAt,
+  };
+}
+
+function fromPersistedConversation(
+  persisted: PersistedConversation,
+): Conversation {
+  return {
+    ...persisted,
+    files: [],
+    uploadedImages: (persisted.uploadedImages ?? []).map((img) => ({
+      ...img,
+      selected: (img as UploadedImage).selected ?? true,
+    })),
+    imageSelectionSnapshot: persisted.imageSelectionSnapshot ?? {},
+    subscriptions: persisted.subscriptions ?? [],
+    type: persisted.type ?? 'temporary',
+  } as Conversation;
+}
+
+async function loadConversations(): Promise<Conversation[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const persisted: PersistedConversation[] = JSON.parse(raw);
+    const snapshots = await fetchConversations(SESSION_ID);
     const now = Date.now();
-    return persisted
-      .filter((p) => {
-        if (p.type !== 'temporary') return true;
-        return now - p.updatedAt <= TEMP_SESSION_TTL_MS;
+    const loaded = await Promise.all(
+      snapshots.map((snapshot) =>
+        fetchConversation(SESSION_ID, snapshot.conversationId),
+      ),
+    );
+
+    return loaded
+      .filter((merged) => {
+        let updatedAt = 0;
+        if (merged.updatedAt) {
+          updatedAt = new Date(merged.updatedAt).getTime();
+        } else if (merged.content.updatedAt) {
+          updatedAt = new Date(String(merged.content.updatedAt)).getTime();
+        }
+        const type = merged.content.type ?? 'temporary';
+        if (type !== 'temporary') return true;
+        return now - updatedAt <= TEMP_SESSION_TTL_MS;
       })
-      .map((p) => {
-        const persisted = { ...(p as any) };
-        delete persisted.task;
-        return {
-          ...persisted,
-          files: [],
-          uploadedImages: (p.uploadedImages ?? []).map((img) => ({
-            ...img,
-            selected: img.selected ?? true,
-          })),
-          imageSelectionSnapshot: p.imageSelectionSnapshot ?? {},
-          conversationId: p.conversationId ?? createId(),
-          subscriptions: p.subscriptions ?? [],
-          type: p.type ?? 'temporary',
-        };
-      });
+      .map((merged) =>
+        fromPersistedConversation({
+          ...(merged.content as unknown as PersistedConversation),
+          conversationId: merged.conversationId,
+        }),
+      );
   } catch {
     return [];
   }
 }
 
-function persistConversations(conversations: Conversation[]) {
-  const toSave: PersistedConversation[] = conversations.map((s) => ({
-    id: s.id,
-    title: s.title,
-    exchanges: s.exchanges,
-    savedFileInfos: s.savedFileInfos,
-    uploadedImages: s.uploadedImages,
-    imageSelectionSnapshot: s.imageSelectionSnapshot,
-    conversationId: s.conversationId,
-    model: s.model,
-    numCtx: s.numCtx,
-    think: s.think,
-    event: s.event,
-    roomId: s.roomId,
-    stream: s.stream,
-    subscriptions: s.subscriptions,
-    type: s.type,
-    createdAt: s.createdAt,
-    updatedAt: s.updatedAt,
-  }));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+function getLatestRequestId(conversation: Conversation): string {
+  const latest = [...conversation.exchanges].reverse().find((e) => e.requestId);
+  return latest?.requestId ?? conversation.conversationId;
 }
 
-function loadActiveConversationId(): string | null {
-  return localStorage.getItem(ACTIVE_SESSION_KEY);
-}
-
-function persistActiveConversationId(id: string | null) {
-  if (id) {
-    localStorage.setItem(ACTIVE_SESSION_KEY, id);
-  } else {
-    localStorage.removeItem(ACTIVE_SESSION_KEY);
+async function saveConversationToServer(conversation: Conversation) {
+  try {
+    const content = toPersistedConversation(conversation);
+    await saveServerConversation(
+      SESSION_ID,
+      conversation.conversationId,
+      getLatestRequestId(conversation),
+      content as Record<string, unknown>,
+    );
+  } catch {
+    // Offline — the in-memory store remains usable.
   }
 }
 
 export const useConversationStore = defineStore('conversation', () => {
-  const conversations = ref<Conversation[]>(loadConversations());
-  const activeConversationId = ref<string | null>(loadActiveConversationId());
+  const conversations = ref<Conversation[]>([]);
+  const activeConversationId = ref<string | null>(null);
   const compacting = ref(false);
+
+  loadConversations().then((loaded) => {
+    conversations.value = loaded;
+  });
+
+  function saveActiveConversation() {
+    const id = activeConversationId.value;
+    if (!id) return;
+    const conversation = getConversation(id);
+    if (!conversation) return;
+    void saveConversationToServer(conversation);
+  }
 
   function getConversation(id: string): Conversation | undefined {
     return conversations.value.find((s) => s.id === id);
@@ -267,15 +311,22 @@ export const useConversationStore = defineStore('conversation', () => {
   }
 
   function deleteConversation(id: string) {
-    const idx = conversations.value.findIndex((s) => s.id === id);
-    if (idx === -1) return;
-    conversations.value.splice(idx, 1);
+    const conversation = getConversation(id);
+    if (!conversation) return;
+
+    const conversationId = conversation.conversationId;
+    conversations.value.splice(
+      conversations.value.findIndex((s) => s.id === id),
+      1,
+    );
     conversationFileMap.value = Object.fromEntries(
       Object.entries(conversationFileMap.value).filter(([k]) => k !== id),
     );
     if (activeConversationId.value === id) {
       activeConversationId.value = conversations.value[0]?.id ?? null;
     }
+
+    void deleteServerConversation(SESSION_ID, conversationId);
   }
 
   async function deleteCurrentConversation(parentId: string) {
@@ -325,6 +376,9 @@ export const useConversationStore = defineStore('conversation', () => {
       if (activeConversationId.value === parentId) {
         activeConversationId.value = conversations.value[0]?.id ?? null;
       }
+      void deleteServerConversation(SESSION_ID, conversationId);
+    } else {
+      void saveConversationToServer(conversation);
     }
   }
 
@@ -332,6 +386,7 @@ export const useConversationStore = defineStore('conversation', () => {
     const conversation = getConversation(id);
     if (conversation) {
       conversation.title = title;
+      void saveConversationToServer(conversation);
     }
   }
 
@@ -350,6 +405,7 @@ export const useConversationStore = defineStore('conversation', () => {
     if (conversation.title === 'New Conversation') {
       conversation.title = exchange.content.slice(0, 50) || 'New Conversation';
     }
+    void saveConversationToServer(conversation);
   }
 
   function deleteExchangeAndPrune(conversationId: string, exchangeId: string) {
@@ -364,6 +420,8 @@ export const useConversationStore = defineStore('conversation', () => {
     )
       conversation.exchanges.splice(idx, 2);
     else conversation.exchanges.splice(idx, 1);
+
+    void saveConversationToServer(conversation);
   }
 
   function toggleConversationType(conversationId: string) {
@@ -371,6 +429,7 @@ export const useConversationStore = defineStore('conversation', () => {
     if (!conversation) return;
     conversation.type =
       conversation.type === 'temporary' ? 'persistent' : 'temporary';
+    void saveConversationToServer(conversation);
   }
 
   async function compactExchanges(conversationId: string) {
@@ -502,6 +561,7 @@ export const useConversationStore = defineStore('conversation', () => {
       }
     }
     conversation.updatedAt = Date.now();
+    void saveConversationToServer(conversation);
   }
 
   function markExchangeError(
@@ -518,6 +578,7 @@ export const useConversationStore = defineStore('conversation', () => {
       exchange.status = 'error';
       if (errorMessage) exchange.content = errorMessage;
       conversation.updatedAt = Date.now();
+      void saveConversationToServer(conversation);
     }
   }
 
@@ -536,6 +597,7 @@ export const useConversationStore = defineStore('conversation', () => {
       size: f.size,
       type: f.type,
     }));
+    void saveConversationToServer(conversation);
   }
 
   function getFiles(conversationId: string): File[] {
@@ -547,32 +609,50 @@ export const useConversationStore = defineStore('conversation', () => {
 
   function setModel(conversationId: string, model: string) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.model = model;
+    if (conversation) {
+      conversation.model = model;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function setNumCtx(conversationId: string, numCtx: string) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.numCtx = numCtx;
+    if (conversation) {
+      conversation.numCtx = numCtx;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function setThink(conversationId: string, think: string) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.think = think;
+    if (conversation) {
+      conversation.think = think;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function setStream(conversationId: string, stream: boolean) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.stream = stream;
+    if (conversation) {
+      conversation.stream = stream;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function setEvent(conversationId: string, event: string) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.event = event;
+    if (conversation) {
+      conversation.event = event;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function setRoomId(conversationId: string, roomId: string) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.roomId = roomId;
+    if (conversation) {
+      conversation.roomId = roomId;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function getConversationId(conversationId: string): string {
@@ -587,7 +667,10 @@ export const useConversationStore = defineStore('conversation', () => {
     newConversationId: string,
   ) {
     const conversation = getConversation(conversationId);
-    if (conversation) conversation.conversationId = newConversationId;
+    if (conversation) {
+      conversation.conversationId = newConversationId;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function setUploadedImages(conversationId: string, images: UploadedImage[]) {
@@ -616,6 +699,7 @@ export const useConversationStore = defineStore('conversation', () => {
       });
     }
     conversation.uploadedImages = merged;
+    void saveConversationToServer(conversation);
   }
 
   function getUploadedImagesForConversation(
@@ -656,7 +740,10 @@ export const useConversationStore = defineStore('conversation', () => {
     const image = conversation.uploadedImages.find(
       (img) => img.hash === hash && (img.conversationId ?? cid) === cid,
     );
-    if (image) image.selected = image.selected !== false ? false : true;
+    if (image) {
+      image.selected = image.selected !== false ? false : true;
+      void saveConversationToServer(conversation);
+    }
   }
 
   function snapshotImageSelections(conversationId: string) {
@@ -669,6 +756,7 @@ export const useConversationStore = defineStore('conversation', () => {
       snapshot[img.hash] = img.selected !== false;
     }
     conversation.imageSelectionSnapshot = snapshot;
+    void saveConversationToServer(conversation);
   }
 
   function restoreImageSelections(conversationId: string) {
@@ -683,6 +771,7 @@ export const useConversationStore = defineStore('conversation', () => {
         img.selected = saved;
       }
     }
+    void saveConversationToServer(conversation);
   }
 
   function deselectAllImages(conversationId: string) {
@@ -694,6 +783,7 @@ export const useConversationStore = defineStore('conversation', () => {
         img.selected = false;
       }
     }
+    void saveConversationToServer(conversation);
   }
 
   function removeUploadedImage(
@@ -707,6 +797,7 @@ export const useConversationStore = defineStore('conversation', () => {
     conversation.uploadedImages = conversation.uploadedImages.filter(
       (img) => !(img.hash === hash && (img.conversationId ?? cid) === cid),
     );
+    void saveConversationToServer(conversation);
   }
 
   function setSubscriptions(
@@ -716,6 +807,7 @@ export const useConversationStore = defineStore('conversation', () => {
     const conversation = getConversation(conversationId);
     if (conversation) {
       conversation.subscriptions = subscriptions;
+      void saveConversationToServer(conversation);
     }
   }
 
@@ -743,6 +835,8 @@ export const useConversationStore = defineStore('conversation', () => {
     ) {
       conversation.exchanges[idx - 1].included = newVal;
     }
+
+    void saveConversationToServer(conversation);
   }
 
   function buildPrompt(conversationId: string): string {
@@ -763,9 +857,6 @@ export const useConversationStore = defineStore('conversation', () => {
       );
     return JSON.stringify(messages);
   }
-
-  watch(activeConversationId, (id) => persistActiveConversationId(id));
-  watch(conversations, (v) => persistConversations(v), { deep: true });
 
   return {
     conversations,
@@ -808,5 +899,6 @@ export const useConversationStore = defineStore('conversation', () => {
     toggleUploadedImageSelected,
     setSubscriptions,
     buildPrompt,
+    saveActiveConversation,
   };
 });

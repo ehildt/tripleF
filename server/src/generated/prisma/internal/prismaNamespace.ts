@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.8.0
- * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
+ * Prisma Client JS version: 7.9.0
+ * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.8.0",
-  engine: "3c6e192761c0362d496ed980de936e2f3cebcd3a"
+  client: "7.9.0",
+  engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
 }
 
 /**
@@ -156,6 +156,19 @@ export type Subset<T, U> = {
 };
 
 /**
+ * Resolved type of the argument passed to the `PrismaClient` constructor.
+ *
+ * When called without a narrower options type (the common case), this resolves
+ * to `PrismaClientOptions` directly, which produces a clear TypeScript error
+ * message (`not assignable to parameter of type 'PrismaClientOptions'`) when
+ * the argument is missing or incomplete. When the user supplies a narrower
+ * options type (e.g. via a literal), it falls back to `Subset` to keep
+ * filtering out unknown properties.
+ */
+export type PrismaClientConstructorArgs<Options extends PrismaClientOptions> =
+  [PrismaClientOptions] extends [Options] ? PrismaClientOptions : Subset<Options, PrismaClientOptions>;
+
+/**
  * SelectSubset
  * @desc From `T` pick properties that exist in `U`. Simple version of Intersection.
  * Additionally, it validates, if both select and include are present. If the case, it errors.
@@ -187,7 +200,7 @@ type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
 export type XOR<T, U> =
   T extends object ?
   U extends object ?
-    (Without<T, U> & U) | (Without<U, T> & T)
+    ((Without<T, U> & U) | (Without<U, T> & T)) & object
   : U : T
 
 
@@ -384,7 +397,9 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  HarnessDlq: 'HarnessDlq'
+  HarnessDlq: 'HarnessDlq',
+  HarnessConversation: 'HarnessConversation',
+  HarnessConfig: 'HarnessConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "harnessDlq"
+    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -478,6 +493,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HarnessConversation: {
+      payload: Prisma.$HarnessConversationPayload<ExtArgs>
+      fields: Prisma.HarnessConversationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HarnessConversationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HarnessConversationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>
+        }
+        findFirst: {
+          args: Prisma.HarnessConversationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HarnessConversationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>
+        }
+        findMany: {
+          args: Prisma.HarnessConversationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>[]
+        }
+        create: {
+          args: Prisma.HarnessConversationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>
+        }
+        createMany: {
+          args: Prisma.HarnessConversationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HarnessConversationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>[]
+        }
+        delete: {
+          args: Prisma.HarnessConversationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>
+        }
+        update: {
+          args: Prisma.HarnessConversationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>
+        }
+        deleteMany: {
+          args: Prisma.HarnessConversationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HarnessConversationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HarnessConversationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>[]
+        }
+        upsert: {
+          args: Prisma.HarnessConversationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConversationPayload>
+        }
+        aggregate: {
+          args: Prisma.HarnessConversationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessConversation>
+        }
+        groupBy: {
+          args: Prisma.HarnessConversationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessConversationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HarnessConversationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessConversationCountAggregateOutputType> | number
+        }
+      }
+    }
+    HarnessConfig: {
+      payload: Prisma.$HarnessConfigPayload<ExtArgs>
+      fields: Prisma.HarnessConfigFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HarnessConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HarnessConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>
+        }
+        findFirst: {
+          args: Prisma.HarnessConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HarnessConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>
+        }
+        findMany: {
+          args: Prisma.HarnessConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>[]
+        }
+        create: {
+          args: Prisma.HarnessConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>
+        }
+        createMany: {
+          args: Prisma.HarnessConfigCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HarnessConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>[]
+        }
+        delete: {
+          args: Prisma.HarnessConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>
+        }
+        update: {
+          args: Prisma.HarnessConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>
+        }
+        deleteMany: {
+          args: Prisma.HarnessConfigDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HarnessConfigUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HarnessConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>[]
+        }
+        upsert: {
+          args: Prisma.HarnessConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessConfigPayload>
+        }
+        aggregate: {
+          args: Prisma.HarnessConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessConfig>
+        }
+        groupBy: {
+          args: Prisma.HarnessConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessConfigGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HarnessConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessConfigCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -535,6 +698,31 @@ export const HarnessDlqScalarFieldEnum = {
 } as const
 
 export type HarnessDlqScalarFieldEnum = (typeof HarnessDlqScalarFieldEnum)[keyof typeof HarnessDlqScalarFieldEnum]
+
+
+export const HarnessConversationScalarFieldEnum = {
+  sessionId: 'sessionId',
+  conversationId: 'conversationId',
+  requestId: 'requestId',
+  title: 'title',
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessConversationScalarFieldEnum = (typeof HarnessConversationScalarFieldEnum)[keyof typeof HarnessConversationScalarFieldEnum]
+
+
+export const HarnessConfigScalarFieldEnum = {
+  sessionId: 'sessionId',
+  selectedModel: 'selectedModel',
+  preprocessing: 'preprocessing',
+  providerOverrides: 'providerOverrides',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessConfigScalarFieldEnum = (typeof HarnessConfigScalarFieldEnum)[keyof typeof HarnessConfigScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -684,19 +872,10 @@ export type BatchPayload = {
 export const defineExtension = runtime.Extensions.defineExtension as unknown as runtime.Types.Extensions.ExtendsHook<"define", TypeMapCb, runtime.Types.Extensions.DefaultArgs>
 export type DefaultPrismaClient = PrismaClient
 export type ErrorFormat = 'pretty' | 'colorless' | 'minimal'
-export type PrismaClientOptions = ({
-  /**
-   * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-pg`.
-   */
-  adapter: runtime.SqlDriverAdapterFactory
-  accelerateUrl?: never
-} | {
-  /**
-   * Prisma Accelerate URL allowing the client to connect through Accelerate instead of a direct database.
-   */
-  accelerateUrl: string
-  adapter?: never
-}) & {
+/**
+ * Options common to all variants of `PrismaClientOptions`, regardless of whether you connect to your database through a driver adapter or through Prisma Accelerate.
+ */
+export interface PrismaClientBaseOptions {
   /**
    * @default "colorless"
    */
@@ -783,8 +962,60 @@ export type PrismaClientOptions = ({
    */
   queryPlanCacheMaxSize?: number
 }
+
+/**
+ * `PrismaClient` options for connecting to your database through Prisma Accelerate instead of a driver adapter.
+ * 
+ * Learn more: https://pris.ly/d/accelerate
+ */
+export interface PrismaClientOptionsWithAccelerateUrl extends PrismaClientBaseOptions {
+  /**
+   * The Prisma Accelerate connection URL. Use this option to connect to your database through Prisma Accelerate instead of using a driver adapter to connect directly.
+   * 
+   * Learn more: https://pris.ly/d/accelerate
+   */
+  accelerateUrl: string
+  adapter?: never
+}
+
+/**
+ * `PrismaClient` options for connecting to your database through a driver adapter. This is the common case in Prisma 7.
+ * 
+ * Learn more: https://pris.ly/d/driver-adapters
+ */
+export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions {
+  /**
+   * A driver adapter that PrismaClient uses to connect to your database, such as the ones provided by `@prisma/adapter-pg`, `@prisma/adapter-libsql`, `@prisma/adapter-planetscale`, etc.
+   * 
+   * A driver adapter is **required** unless you connect to your database through Prisma Accelerate (in which case use `accelerateUrl` instead).
+   * 
+   * Learn more: https://pris.ly/d/driver-adapters
+   * 
+   * @example
+   * ```ts
+   * import { PrismaPg } from '@prisma/adapter-pg'
+   * import { PrismaClient } from './generated/prisma/client'
+   * 
+   * const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+   * const prisma = new PrismaClient({ adapter })
+   * ```
+   */
+  adapter: runtime.SqlDriverAdapterFactory
+  accelerateUrl?: never
+}
+
+/**
+ * Options passed to the `PrismaClient` constructor.
+ * 
+ * A driver adapter (or, alternatively, a Prisma Accelerate URL) is **required**. See {@link PrismaClientOptionsWithAdapter} and {@link PrismaClientOptionsWithAccelerateUrl} for the two variants. All other properties live in {@link PrismaClientBaseOptions} and are optional.
+ * 
+ * Learn more about driver adapters: https://pris.ly/d/driver-adapters
+ */
+export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   harnessDlq?: Prisma.HarnessDlqOmit
+  harnessConversation?: Prisma.HarnessConversationOmit
+  harnessConfig?: Prisma.HarnessConfigOmit
 }
 
 /* Types for Logging */

@@ -2,10 +2,14 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
+import { fetchConfig, saveConfig } from '@/api/config.api';
 import { useConversationStore } from '@/stores/conversation';
+import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
 import { formatCtx } from '@/utils/format-ctx.helper';
 
 import { useToast } from '../composables/use-toast';
+
+const SESSION_ID = getPersistentSocketSessionId();
 
 export interface OllamaModel {
   model: string;
@@ -21,6 +25,25 @@ export const useModelsStore = defineStore('models', () => {
   const numCtxOptions = ref<number[]>([]);
   const modelsLoading = ref(false);
   const toast = useToast();
+  const selectedModel = ref('');
+
+  async function loadSelectedModel() {
+    try {
+      const config = await fetchConfig(SESSION_ID);
+      if (config?.selectedModel) {
+        selectedModel.value = config.selectedModel;
+      }
+    } catch {
+      // Offline — fall back to the first available model later.
+    }
+  }
+
+  function setSelectedModel(modelName: string) {
+    selectedModel.value = modelName;
+    saveConfig(SESSION_ID, { selectedModel: modelName }).catch(() => {
+      // Offline — keep the in-memory value.
+    });
+  }
 
   const defaultNumCtx = computed(() =>
     numCtxOptions.value.length > 0 ? String(numCtxOptions.value.at(-1)!) : '',
@@ -43,9 +66,11 @@ export const useModelsStore = defineStore('models', () => {
   }
 
   const defaultModel = computed(() => {
-    const saved = localStorage.getItem('harness-selected-model');
-    if (saved && models.value.some((m) => m.model === saved)) {
-      return saved;
+    if (
+      selectedModel.value &&
+      models.value.some((m) => m.model === selectedModel.value)
+    ) {
+      return selectedModel.value;
     }
     return models.value[0]?.model ?? '';
   });
@@ -83,6 +108,7 @@ export const useModelsStore = defineStore('models', () => {
       const data = await res.json();
       models.value = (data.models ?? []) as OllamaModel[];
       numCtxOptions.value = data.numCtxOptions ?? [];
+      await loadSelectedModel();
       syncSessionsToAvailableModels();
       if (isRefresh) {
         toast.success(`Loaded ${models.value.length} models`);
@@ -96,6 +122,8 @@ export const useModelsStore = defineStore('models', () => {
   }
 
   return {
+    selectedModel,
+    setSelectedModel,
     models,
     modelNames,
     numCtxOptions,

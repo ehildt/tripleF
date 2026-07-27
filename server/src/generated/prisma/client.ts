@@ -46,3 +46,13 @@ export { Prisma }
  * 
  */
 export type HarnessDlq = Prisma.HarnessDlqModel
+/**
+ * Model HarnessConversation
+ * 
+ */
+export type HarnessConversation = Prisma.HarnessConversationModel
+/**
+ * Model HarnessConfig
+ * 
+ */
+export type HarnessConfig = Prisma.HarnessConfigModel
