@@ -32,3 +32,28 @@ model HarnessDlq {
 
   @@map("harness_dlq")
 }
+
+model HarnessConversation {
+  sessionId      String   @db.VarChar(255)
+  conversationId String   @db.VarChar(255)
+  requestId      String   @db.VarChar(255)
+  title          String?  @db.VarChar(500)
+  content        Json     @default(dbgenerated())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@id([sessionId, conversationId, requestId])
+  @@index([sessionId, conversationId])
+  @@map("harness_conversation")
+}
+
+model HarnessConfig {
+  sessionId         String   @id @db.VarChar(255)
+  selectedModel     String?  @db.VarChar(255)
+  preprocessing     Json?
+  providerOverrides Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@map("harness_config")
+}

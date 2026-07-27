@@ -5,7 +5,6 @@ import { useConversationStore } from '@/stores/conversation';
 import { useToast } from '../../../../../composables/use-toast';
 import { useModelsStore } from '../../../../../stores/models';
 
-const LOCAL_STORAGE_SELECTED_MODEL_KEY = 'harness-selected-model';
 const VISION_CAPABILITY = 'vision';
 
 /**
@@ -25,9 +24,7 @@ export function useSelectedModel() {
   );
 
   // ── Selected model (persisted) ───────────────────────────
-  const selectedModel = ref(
-    localStorage.getItem(LOCAL_STORAGE_SELECTED_MODEL_KEY) || '',
-  );
+  const selectedModel = ref(modelsStore.selectedModel);
 
   // ── Model availability ───────────────────────────────────
   const isModelAvailable = computed(() => {
@@ -46,6 +43,13 @@ export function useSelectedModel() {
 
   const hasNoModelSelected = computed(
     () => !(conversation.value?.model || selectedModel.value),
+  );
+
+  watch(
+    () => modelsStore.selectedModel,
+    (modelName) => {
+      selectedModel.value = modelName;
+    },
   );
 
   const supportsVision = computed(() => {
@@ -91,9 +95,7 @@ export function useSelectedModel() {
     if (!s || s.numCtx) return;
 
     const numCtx = modelsStore.maxNumCtxForModel(modelName);
-    if (numCtx) {
-      conversationStore.setNumCtx(conversationIdValue, numCtx);
-    }
+    if (numCtx) conversationStore.setNumCtx(conversationIdValue, numCtx);
   }
 
   watch(
@@ -111,7 +113,7 @@ export function useSelectedModel() {
   // ── Change model ────────────────────────────────────────
   function changeModel(modelName: string) {
     selectedModel.value = modelName;
-    localStorage.setItem(LOCAL_STORAGE_SELECTED_MODEL_KEY, modelName);
+    modelsStore.setSelectedModel(modelName);
 
     if (conversationId.value) {
       conversationStore.setModel(conversationId.value, modelName);

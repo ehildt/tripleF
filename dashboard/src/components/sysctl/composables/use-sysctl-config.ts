@@ -1,7 +1,9 @@
 import { onMounted, ref } from 'vue';
 
 import { getApiUrl } from '../../../api/api-url';
+import { fetchConfig, saveConfig } from '../../../api/config.api';
 import { useToast } from '../../../composables/use-toast';
+import { getPersistentSocketSessionId } from '../../../stores/helpers/get-persistent-socket-session-id.helper';
 import { clampSysctlResults } from '../helpers/clamp-sysctl-results.helper';
 import type {
   ProviderConfig,
@@ -9,60 +11,53 @@ import type {
   ProviderOverridesSnapshot,
 } from '../sysctl-config.model';
 
-const PROVIDER_OVERRIDES_KEY = 'provider-overrides';
+const SESSION_ID = getPersistentSocketSessionId();
 
-function loadSavedOverrides(): Record<string, Record<string, unknown>> {
+let sessionOverrides: Record<string, Record<string, unknown>> = {};
+
+async function loadSessionOverrides(): Promise<
+  Record<string, Record<string, unknown>>
+> {
   try {
-    return JSON.parse(localStorage.getItem(PROVIDER_OVERRIDES_KEY) || '{}');
+    const config = await fetchConfig(SESSION_ID);
+    const overrides = config?.providerOverrides ?? {};
+    return overrides as Record<string, Record<string, unknown>>;
   } catch {
     return {};
   }
 }
 
-function saveOverrides(patch: Record<string, Record<string, unknown>>) {
-  const existing = loadSavedOverrides();
-  for (const [provider, values] of Object.entries(patch)) {
-    if (!existing[provider]) existing[provider] = {};
-    for (const [key, val] of Object.entries(values)) {
-      if (key === 'apiKey') continue;
-      existing[provider][key] = val;
-    }
-  }
-  try {
-    localStorage.setItem(PROVIDER_OVERRIDES_KEY, JSON.stringify(existing));
-  } catch {
-    /* ignore */
-  }
-}
-
-function clearSavedOverrides(provider: string) {
-  const existing = loadSavedOverrides();
-  delete existing[provider];
-  try {
-    localStorage.setItem(PROVIDER_OVERRIDES_KEY, JSON.stringify(existing));
-  } catch {
-    /* ignore */
-  }
-}
-
-async function syncOverridesToServer(
-  saved: Record<string, Record<string, unknown>>,
+function mergeSessionOverrides(
   snapshot: ProviderOverridesSnapshot,
-) {
-  for (const [provider, values] of Object.entries(saved)) {
-    if (!(provider in snapshot)) continue;
-    const target = snapshot[
-      provider as keyof ProviderOverridesSnapshot
-    ] as unknown as Record<string, unknown>;
+): ProviderOverridesSnapshot {
+  const result: ProviderOverridesSnapshot = { ...snapshot };
+  for (const [provider, values] of Object.entries(sessionOverrides)) {
+    const target = result[provider as keyof ProviderOverridesSnapshot] as
+      Record<string, unknown> | undefined;
+    if (!target) continue;
     for (const [key, val] of Object.entries(values)) {
       if (key in target) target[key] = val;
     }
   }
-  await fetch(getApiUrl('/api/v1/provider-overrides'), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(saved),
-  });
+  return result;
+}
+
+function saveSessionOverrides(patch: Record<string, Record<string, unknown>>) {
+  for (const [provider, values] of Object.entries(patch)) {
+    if (!sessionOverrides[provider]) sessionOverrides[provider] = {};
+    for (const [key, val] of Object.entries(values)) {
+      if (key === 'apiKey') continue;
+      sessionOverrides[provider][key] = val;
+    }
+  }
+}
+
+function clearSessionOverrides(provider: string) {
+  delete sessionOverrides[provider];
+}
+
+async function persistSessionOverrides() {
+  await saveConfig(SESSION_ID, { providerOverrides: sessionOverrides });
 }
 
 function applyFrontendDefaults(
@@ -84,15 +79,15 @@ export function useSysctlConfig() {
     isLoading.value = true;
     hasError.value = false;
     try {
-      const res = await fetch(getApiUrl('/api/v1/provider-overrides'));
+      const [res, overrides] = await Promise.all([
+        fetch(getApiUrl('/api/v1/provider-overrides')),
+        loadSessionOverrides(),
+      ]);
+      sessionOverrides = overrides;
       const snapshot = applyFrontendDefaults(
         (await res.json()) as ProviderOverridesSnapshot,
       );
-      const saved = loadSavedOverrides();
-      if (Object.keys(saved).length > 0) {
-        await syncOverridesToServer(saved, snapshot);
-      }
-      config.value = snapshot;
+      config.value = mergeSessionOverrides(snapshot);
     } catch {
       hasError.value = true;
       toast.error('Failed to load config');
@@ -102,13 +97,14 @@ export function useSysctlConfig() {
   }
 
   /**
-   * Reset one provider to its env defaults: clears the locally persisted
-   * overrides first (so a later refresh does not re-sync them), then asks
-   * the server to drop its overrides and refreshes from the masked config
-   * it returns.
+   * Reset one provider to its env defaults: clears the session-persisted
+   * overrides first (so a later refresh does not re-merge them), then asks
+   * the server to drop its global overrides and refreshes from the masked
+   * config it returns.
    */
   async function resetProvider(provider: ProviderKey) {
-    clearSavedOverrides(provider);
+    clearSessionOverrides(provider);
+    await persistSessionOverrides();
     try {
       await fetch(getApiUrl(`/api/v1/provider-overrides/${provider}`), {
         method: 'DELETE',
@@ -121,12 +117,15 @@ export function useSysctlConfig() {
 
   async function patchConfig(provider: string, path: string, value: unknown) {
     const patch = { [provider]: { [path]: value } };
-    saveOverrides(patch);
-    await fetch(getApiUrl('/api/v1/provider-overrides'), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    });
+    saveSessionOverrides(patch);
+    await Promise.all([
+      fetch(getApiUrl('/api/v1/provider-overrides'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      }),
+      persistSessionOverrides(),
+    ]);
   }
 
   /**

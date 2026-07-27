@@ -29,6 +29,7 @@ import { StorageController } from './modules/minio/controllers/storage.controlle
 import { MinioModule } from './modules/minio/minio.module.js';
 import { JobReinstatementService } from './modules/minio/services/job-reinstatement.service.js';
 import { MinioHealthIndicator } from './modules/minio/services/minio-health-indicator.service.js';
+import { PersistenceModule } from './modules/persistence/persistence.module.js';
 import { PinoLoggerConfigService } from './modules/pino-logger/configs/pino-logger-config.service.js';
 import { PinoLoggerModule } from './modules/pino-logger/pino-logger.module.js';
 import { SerperConfigService } from './modules/provider-overrides/configs/serper-config.service.js';
@@ -67,6 +68,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
     SharpModule,
     MinioModule,
     DeadLetterModule,
+    PersistenceModule,
     ProviderOverridesModule,
     SocketIOModule,
     TerminusModule.forRoot({
