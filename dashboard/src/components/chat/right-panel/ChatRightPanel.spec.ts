@@ -1,7 +1,18 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import {
+  clearActivePlayback,
+  closeLaunchedVideo,
+  setActivePlayback,
+} from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import ChatRightPanel from './ChatRightPanel.vue';
+
+beforeEach(() => {
+  localStorage.clear();
+  closeLaunchedVideo();
+  clearActivePlayback();
+});
 
 const placeholderImage =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -137,6 +148,49 @@ describe('ChatRightPanel', () => {
 
     expect(wrapper.find('.attachment-card__uploaded-indicator').exists()).toBe(
       true,
+    );
+  });
+
+  it('shows the playlist entry title in the now-playing marquee', async () => {
+    const wrapper = mountComponent({
+      playlistVideos: [
+        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
+      ],
+      rightPanelView: 'playlist',
+    });
+    setActivePlayback('https://youtu.be/in-list', 'In List');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('.chat-right-panel__now-playing-text').text()).toBe(
+      'In List',
+    );
+  });
+
+  it('shows an outside video title in the now-playing marquee', async () => {
+    const wrapper = mountComponent({
+      playlistVideos: [
+        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
+      ],
+      rightPanelView: 'playlist',
+    });
+    // A video that was never added to the playlist starts playing elsewhere.
+    setActivePlayback('https://youtu.be/outside', 'Outside Title');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('.chat-right-panel__now-playing-text').text()).toBe(
+      'Outside Title',
+    );
+  });
+
+  it('prefers the playlist metadata over the engagement title', async () => {
+    const wrapper = mountComponent({
+      playlistVideos: [
+        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
+      ],
+      rightPanelView: 'playlist',
+    });
+    setActivePlayback('https://youtu.be/in-list', 'Raw engagement title');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('.chat-right-panel__now-playing-text').text()).toBe(
+      'In List',
     );
   });
 });

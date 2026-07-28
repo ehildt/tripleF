@@ -12,6 +12,7 @@ import { useAppStore } from '../../../../stores/app';
 import ExchangeCollapsed from './exchange-collapsed/ExchangeCollapsed.vue';
 import ExchangeContent from './exchange-content/ExchangeContent.vue';
 import ExchangeHeader from './exchange-header/ExchangeHeader.vue';
+import { buildExchangeCopyText } from './helpers/build-exchange-copy-text.helper';
 
 const props = defineProps<{
   exchange: Exchange;
@@ -43,7 +44,7 @@ const { copy } = useClipboard({ legacy: true });
 const lightbox = useLightbox();
 
 async function handleCopy() {
-  await copy(props.exchange.content);
+  await copy(buildExchangeCopyText(props.exchange));
   toast.success('Copied to clipboard');
 }
 

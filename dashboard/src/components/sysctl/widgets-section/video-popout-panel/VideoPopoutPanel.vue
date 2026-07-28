@@ -2,7 +2,9 @@
 /**
  * Video popout settings: where the floating video popout initially
  * appears, whether a moved position is remembered across conversations and
- * reloads, and a reset back to the defaults.
+ * reloads, whether the popout docks itself when its video is back in view,
+ * whether closing a popout stops playback — and a reset back to the
+ * defaults.
  *
  * Initial position is a FieldCard row with two icon-only segmented
  * toggles: vertical (top/middle/bottom) × horizontal (left/center/right),
@@ -12,9 +14,11 @@ import {
   AlignCenterHorizontal,
   AlignCenterVertical,
   ArrowDown,
+  ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  CircleStop,
   PictureInPicture2,
   Pin,
 } from '@lucide/vue';
@@ -30,12 +34,16 @@ import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedTo
 import {
   type PopoutAnchor,
   popoutAnchor,
+  popoutAutoDock,
   popoutEnabled,
   popoutRememberPosition,
+  popoutStopOnClose,
   resetPopoutSettings,
   setPopoutAnchor,
+  setPopoutAutoDock,
   setPopoutEnabled,
   setPopoutRememberPosition,
+  setPopoutStopOnClose,
   showPopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 
@@ -121,6 +129,24 @@ function setHorizontal(value: string) {
         :checked="popoutRememberPosition"
         :disabled="!popoutEnabled"
         @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
+      />
+
+      <FieldCard
+        :icon="ArrowDownToLine"
+        label="autodock"
+        description="dock the popout automatically when its video scrolls back into view"
+        :checked="popoutAutoDock"
+        :disabled="!popoutEnabled"
+        @toggle="setPopoutAutoDock(!popoutAutoDock)"
+      />
+
+      <FieldCard
+        :icon="CircleStop"
+        label="stop on close"
+        description="stop playing and deselect the video when a popout is closed"
+        :checked="popoutStopOnClose"
+        :disabled="!popoutEnabled"
+        @toggle="setPopoutStopOnClose(!popoutStopOnClose)"
       />
     </div>
   </div>

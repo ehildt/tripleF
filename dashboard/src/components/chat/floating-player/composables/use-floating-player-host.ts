@@ -1,10 +1,14 @@
 import { computed, onUnmounted, watch } from 'vue';
 
-import { popoutHideOnPlaylist } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
+import {
+  popoutHideOnPlaylist,
+  popoutStopOnClose,
+} from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import { usePausablePlayer } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-pausable-player';
 import { usePopupGeometry } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-popup-geometry';
 import {
   closeLaunchedVideo,
+  dockLaunchedVideo,
   floatingPopupOpacity,
   launchedVideo,
   playlistAutoplayEnabled,
@@ -58,6 +62,16 @@ export function useFloatingPlayerHost() {
     document.body.classList.remove('has-floating-video');
   });
 
+  /**
+   * Close the launched popup per the stop-on-close setting: stop playback
+   * and deselect the video, or dock it back onto the page (its inline
+   * figure picks playback up when it is part of the chat).
+   */
+  function close() {
+    if (popoutStopOnClose.value) closeLaunchedVideo();
+    else dockLaunchedVideo();
+  }
+
   return {
     launchedVideo,
     popupStyle,
@@ -70,6 +84,6 @@ export function useFloatingPlayerHost() {
     setOpacity,
     startDrag,
     startResize,
-    close: closeLaunchedVideo,
+    close,
   };
 }
