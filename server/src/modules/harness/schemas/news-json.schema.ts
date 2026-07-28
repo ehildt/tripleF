@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 import { safeUrl } from '../helpers/url-schema.helper.js';
 
+import {
+  HERO_VIDEO_TITLE_ISSUE,
+  heroVideoHasTitle,
+  videoGalleryItemSchema,
+} from './video-gallery-item-json.schema.js';
+
 const keyPointSchema = z.object(
   {
     text: z.string().min(1, {
@@ -47,42 +53,34 @@ const galleryItemSchema = z.object(
   { message: 'galleryItems entries must be objects with imageUrl' },
 );
 
-const videoGalleryItemSchema = z.object(
-  {
-    videoUrl: z
-      .string()
-      .url({ message: 'videoGalleryItems.videoUrl must be a valid URL' }),
-    title: z.string().optional(),
-    caption: z.string().optional(),
-  },
-  { message: 'videoGalleryItems entries must be objects with videoUrl' },
-);
-
-export const newsSchema = z.object({
-  category: z.string(),
-  headline: z.string().min(1, { message: 'headline must not be empty' }),
-  deck: z.string(),
-  lead: z.string(),
-  sectionTitle: z.string(),
-  sectionContent: z.string(),
-  heroImageUrl: z.string().url().optional().or(z.literal('')),
-  heroImageAlt: z.string().optional(),
-  heroCaption: z.string().optional(),
-  heroVideoUrl: z.string().url().optional().or(z.literal('')),
-  heroVideoTitle: z.string().optional(),
-  heroVideoCaption: z.string().optional(),
-  galleryTitle: z.string().optional(),
-  galleryItems: z.array(galleryItemSchema).optional(),
-  videoGalleryItems: z.array(videoGalleryItemSchema).optional(),
-  keyPoints: z.array(keyPointSchema).optional(),
-  sources: z.array(newsSourceSchema).optional(),
-  relatedStories: z.array(relatedStorySchema).optional(),
-  // Optional fields
-  dateline: z.string().optional(),
-  byline: z.string().optional(),
-  publishDate: z.string().optional(),
-  readTime: z.string().optional(),
-});
+export const newsSchema = z
+  .object({
+    category: z.string(),
+    headline: z.string().min(1, { message: 'headline must not be empty' }),
+    deck: z.string(),
+    lead: z.string(),
+    sectionTitle: z.string(),
+    sectionContent: z.string(),
+    heroImageUrl: z.string().url().optional().or(z.literal('')),
+    heroImageAlt: z.string().optional(),
+    heroCaption: z.string().optional(),
+    heroVideoUrl: z.string().url().optional().or(z.literal('')),
+    heroVideoTitle: z.string().optional(),
+    heroVideoCaption: z.string().optional(),
+    galleryTitle: z.string().optional(),
+    galleryItems: z.array(galleryItemSchema).optional(),
+    videoGalleryTitle: z.string().optional(),
+    videoGalleryItems: z.array(videoGalleryItemSchema).optional(),
+    keyPoints: z.array(keyPointSchema).optional(),
+    sources: z.array(newsSourceSchema).optional(),
+    relatedStories: z.array(relatedStorySchema).optional(),
+    // Optional fields
+    dateline: z.string().optional(),
+    byline: z.string().optional(),
+    publishDate: z.string().optional(),
+    readTime: z.string().optional(),
+  })
+  .refine(heroVideoHasTitle, HERO_VIDEO_TITLE_ISSUE);
 
 export type NewsJson = z.infer<typeof newsSchema>;
 

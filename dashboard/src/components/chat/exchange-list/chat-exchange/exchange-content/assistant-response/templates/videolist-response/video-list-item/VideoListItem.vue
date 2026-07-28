@@ -12,9 +12,9 @@ import { computed } from 'vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { buildVideoPosterUrl } from '../../../composables/helpers/build-video-poster-url.helper';
+import { usePlaylistToggle } from '../../../composables/use-playlist-toggle';
 import { activePlaybackVideoUrl } from '../../../composables/video-playback.state';
 import FloatingVideoFigure from '../../../sections/floating-video-figure/FloatingVideoFigure.vue';
-import { usePlaylistToggle } from './composables/use-playlist-toggle';
 import { buildVideoMetaLine } from './helpers/build-video-meta-line.helper';
 
 const props = defineProps<{

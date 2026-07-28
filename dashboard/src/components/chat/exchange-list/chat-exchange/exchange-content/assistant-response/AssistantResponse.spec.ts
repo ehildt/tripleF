@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
 import AssistantResponse from './AssistantResponse.vue';
@@ -9,6 +10,7 @@ function mountAssistantResponse(
   text?: string,
 ) {
   return mount(AssistantResponse, {
+    global: { plugins: [createPinia()] },
     props: { template, data: data as any, text },
   });
 }

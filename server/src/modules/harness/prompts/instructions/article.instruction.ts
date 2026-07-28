@@ -34,9 +34,9 @@ Optional fields (include only when the data is available):
 - readTime: leave empty. The dashboard computes read time automatically.
 - heroVideoUrl: a video URL from videoSearch or webSearch results. Only use URLs from supported providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. The dashboard will convert it to an embedded player automatically. Empty string if none.
 - heroVideoCaption: optional caption for the hero video; empty string if none.
-- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry; empty string if none.
+- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry. REQUIRED (non-empty) whenever heroVideoUrl is set — the dashboard displays it in the playlist, the video popout title bar, and the now-playing text. Empty string only when there is no hero video.
 - videoGalleryTitle: heading for an inline video gallery; empty string if none.
-  - videoGalleryItems: an array of video objects for the inline video gallery. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. When videoSearch URLs are provided and there are multiple videos, populate this array with the remaining URLs. The dashboard will embed them automatically.
+  - videoGalleryItems: an array of video objects for the inline video gallery. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. When videoSearch URLs are provided and there are multiple videos, populate this array with the remaining URLs. The dashboard will embed them automatically. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description.
 - quote: a notable quote from the sources; empty string if none.
 - cardsTitle: heading for a cards section; empty string if none.
 - cards: an array of 0–6 related link cards. Each card needs title, description, url, linkLabel. Use only real tool results.

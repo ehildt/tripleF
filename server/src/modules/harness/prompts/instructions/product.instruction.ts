@@ -65,11 +65,11 @@ Optional media fields (include only when the data is available; otherwise use ""
 - heroCaption: an optional caption for the hero image; empty string if none.
 - heroVideoUrl: a video URL from videoSearch or webSearch results. Only use URLs from supported providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. The dashboard will convert it to an embedded player automatically. Empty string if none.
 - heroVideoCaption: optional caption for the hero video; empty string if none.
-- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry; empty string if none.
+- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry. REQUIRED (non-empty) whenever heroVideoUrl is set — the dashboard displays it in the playlist, the video popout title bar, and the now-playing text. Empty string only when there is no hero video.
 - galleryTitle: heading for the product image gallery (e.g. 'Product Gallery'); empty string if no gallery images.
 - galleryItems: an array of image objects for the inline gallery. Each item needs imageUrl, imageAlt, title, caption. imageAlt and title MUST be non-empty. When imageSearch returns 3 or more images, include the additional images here (excluding any hero image).
 - videoGalleryTitle: heading for a video gallery (e.g. 'Hands-On Reviews'); empty string if none.
-- videoGalleryItems: an array of additional video objects when multiple videos are available. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file.
+- videoGalleryItems: an array of additional video objects when multiple videos are available. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description.
 
 Optional attribution fields:
 - sources: an array of source objects with url, title, sourceName, date, and snippet. Use only real retrieved URLs from webSearch, shopping, and webpageFetch results.

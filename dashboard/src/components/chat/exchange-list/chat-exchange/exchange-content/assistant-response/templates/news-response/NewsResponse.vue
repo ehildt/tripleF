@@ -82,7 +82,10 @@ const hasAnyContent = computed(() =>
       />
       <KeyFindingsSection title="Key Points" :items="data.keyPoints" />
       <GallerySection :title="data.galleryTitle" :items="galleryItems" />
-      <VideoGallerySection :items="data.videoGalleryItems" />
+      <VideoGallerySection
+        :title="data.videoGalleryTitle"
+        :items="data.videoGalleryItems"
+      />
       <SourcesSection :items="data.sources" />
       <RelatedStoriesSection :items="data.relatedStories" />
     </template>

@@ -6,16 +6,19 @@
  * text-link CTA to the cheapest offer. Depth comes from whitespace and
  * hairlines — no boxes, no tint panels, no truncation.
  */
+import { ListCheck, ListPlus } from '@lucide/vue';
 import { computed, inject, toRef } from 'vue';
 
 import type {
   GalleryItem,
   HarnessImageClickedHandler,
   ShopOffer,
+  VideoGalleryItem,
 } from '@/types/harness-response-data.model';
 import { harnessImageClickedKey } from '@/types/harness-response-data.model';
 
 import { buildVideoPosterUrl } from '../../../composables/helpers/build-video-poster-url.helper';
+import { usePlaylistToggle } from '../../../composables/use-playlist-toggle';
 import FloatingVideoFigure from '../../../sections/floating-video-figure/FloatingVideoFigure.vue';
 import StarRatingIndicator from '../star-rating-indicator/StarRatingIndicator.vue';
 import { useHeroImageViewer } from './composables/use-hero-image-viewer';
@@ -59,6 +62,15 @@ const videoPosterUrl = computed(() =>
   props.videoUrl ? buildVideoPosterUrl(props.videoUrl) : null,
 );
 
+/** The hero video as a playlist entry: title falls back to the caption. */
+const heroVideoItem = computed<VideoGalleryItem>(() => ({
+  videoUrl: props.videoUrl ?? '',
+  title: props.videoTitle || props.videoCaption,
+  caption: props.videoCaption,
+}));
+
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(heroVideoItem);
+
 const eyebrow = computed(() =>
   [props.category, props.ratingLabel].filter(Boolean).join(' · '),
 );
@@ -97,6 +109,22 @@ function handleThumbClick(index: number) {
           :title="videoTitle || videoCaption"
           :poster-url="videoPosterUrl"
         />
+        <!-- Playlist toggle in the media's top-right corner -->
+        <button
+          v-if="hasHeroVideo"
+          type="button"
+          class="spotlight__playlist-toggle"
+          :class="{ 'spotlight__playlist-toggle--added': isInPlaylist }"
+          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+          :aria-pressed="isInPlaylist"
+          @click.stop="togglePlaylistVideo"
+        >
+          <ListCheck
+            v-if="isInPlaylist"
+            class="spotlight__playlist-toggle-icon"
+          />
+          <ListPlus v-else class="spotlight__playlist-toggle-icon" />
+        </button>
         <button
           v-else-if="selectedSlide"
           type="button"
@@ -205,6 +233,7 @@ function handleThumbClick(index: number) {
 }
 
 .spotlight__media {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -212,6 +241,46 @@ function handleThumbClick(index: number) {
   width: 100%;
   aspect-ratio: 4 / 3;
   background-color: var(--color-bg-tertiary);
+}
+
+/* ---------- playlist toggle (top-right corner) ---------- */
+
+.spotlight__playlist-toggle {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  margin: 0.1rem 0.1rem 0 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.spotlight__playlist-toggle:hover {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-border);
+}
+
+.spotlight__playlist-toggle--added {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 15%,
+    var(--color-bg-elevated)
+  );
+}
+
+.spotlight__playlist-toggle-icon {
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 .spotlight__media--video {

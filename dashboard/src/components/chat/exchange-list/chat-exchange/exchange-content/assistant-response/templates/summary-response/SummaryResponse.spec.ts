@@ -1,10 +1,12 @@
 import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
 import SummaryResponse from './SummaryResponse.vue';
 
 function mountSummaryResponse(data: Record<string, unknown>) {
   return mount(SummaryResponse, {
+    global: { plugins: [createPinia()] },
     props: { data: data as any },
   });
 }

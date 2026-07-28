@@ -7,11 +7,13 @@ import {
   addPlaylistVideo,
   isPlaylistVideo,
   removePlaylistVideo,
-} from '../../../../composables/video-playback.state';
+} from './video-playback.state';
 
 /**
- * Playlist membership toggle for one videolist card: whether the video is in
+ * Playlist membership toggle for one video surface: whether the video is in
  * the active conversation's playlist, and an action that adds or removes it.
+ * Shared by every surface that offers an add-to-playlist button (videolist
+ * cards, video gallery items, hero videos).
  */
 export function usePlaylistToggle(item: MaybeRefOrGetter<VideoGalleryItem>) {
   const conversationStore = useConversationStore();
