@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 
+import { useFrozenReadSnapshot } from '../../composables/use-frozen-read-snapshot';
 import { useDebugStore } from '../../stores/debug';
 import type { DebugResult } from '../../types/debug.model';
 import PanelEmptyState from '../shared/ui/panel-empty-state/PanelEmptyState.vue';
@@ -32,12 +33,27 @@ const filter = ref<DebugResultFilter>('all');
 const search = ref('');
 const hideRead = ref(false);
 
+/**
+ * Clicking an unread row marks it read immediately (badge counter, row
+ * styling) but must not reshuffle the list under the user's cursor — the
+ * unread-first sort and the hide-read filter read from a frozen snapshot
+ * that refreshes on tab revisit and on explicit view changes only.
+ */
+const { frozenReadKeys, refreshReadSnapshot } =
+  useFrozenReadSnapshot<DebugResult>({
+    items: toRef(props, 'results'),
+    itemKey: (result) => result.id,
+    isItemRead: (result) => debugStore.isDebugRead(result.id),
+  });
+
+watch([filter, search, hideRead], refreshReadSnapshot);
+
 const filteredResults = computed(() =>
   buildFilteredDebugResults(props.results, {
     filter: filter.value,
     hideRead: hideRead.value,
     search: search.value,
-    isRead: debugStore.isDebugRead,
+    isRead: (id) => frozenReadKeys.value.has(id),
   }),
 );
 

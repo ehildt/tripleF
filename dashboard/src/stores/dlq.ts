@@ -149,5 +149,6 @@ export const useDlqStore = defineStore('dlq', () => {
     unreadDlqCount,
     markEntryAsRead,
     isEntryRead,
+    entryReadKey,
   };
 });

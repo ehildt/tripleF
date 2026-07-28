@@ -28,6 +28,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: null,
         isEntryRead: () => false,
+        entryReadKey: (entry: DlqEntry) => entry.requestId,
       },
     });
     expect(wrapper.text()).toContain('No failed jobs');
@@ -40,6 +41,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: 'Network error',
         isEntryRead: () => false,
+        entryReadKey: (entry: DlqEntry) => entry.requestId,
       },
     });
     expect(wrapper.text()).toContain('Network error');
@@ -52,6 +54,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: null,
         isEntryRead: () => false,
+        entryReadKey: (entry: DlqEntry) => entry.requestId,
       },
     });
     expect(wrapper.text()).toContain('a');
@@ -65,6 +68,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: null,
         isEntryRead: () => false,
+        entryReadKey: (entry: DlqEntry) => entry.requestId,
       },
     });
     wrapper.find('.dlq-list-body__row').trigger('click');

@@ -1,12 +1,14 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Debug from './Debug.vue';
 
+const mockReadIds: string[] = [];
+
 vi.mock('../../stores/debug', () => ({
   useDebugStore: () => ({
-    isDebugRead: vi.fn(() => false),
+    isDebugRead: vi.fn((id: string) => mockReadIds.includes(id)),
   }),
 }));
 
@@ -37,6 +39,10 @@ vi.mock('./request-list/RequestList.vue', () => ({
 
 describe('Debug', () => {
   setActivePinia(createPinia());
+
+  beforeEach(() => {
+    mockReadIds.length = 0;
+  });
 
   const results = [
     { id: '1', type: 'http' },
@@ -98,5 +104,49 @@ describe('Debug', () => {
     vm.filter = 'socket';
     await wrapper.vm.$nextTick();
     expect(vm.filteredResults.length).toBe(1);
+  });
+
+  it('keeps the list order frozen when a result is marked read', async () => {
+    const timed = [
+      { id: '1', type: 'http', epoch: 100 },
+      { id: '2', type: 'http', epoch: 300 },
+      { id: '3', type: 'http', epoch: 200 },
+    ] as any[];
+    const wrapper = mount(Debug, {
+      props: { results: timed, selectedResult: null },
+    });
+    const vm = wrapper.vm as any;
+    expect(vm.filteredResults.map((r: any) => r.id)).toEqual(['2', '3', '1']);
+
+    // Marking the newest entry read must not sink it below the unread ones.
+    mockReadIds.push('2');
+    await wrapper.vm.$nextTick();
+    expect(vm.filteredResults.map((r: any) => r.id)).toEqual(['2', '3', '1']);
+  });
+
+  it('hides session-read results only after an explicit view change', async () => {
+    const timed = [
+      { id: '1', type: 'http', epoch: 100 },
+      { id: '2', type: 'http', epoch: 300 },
+    ] as any[];
+    const wrapper = mount(Debug, {
+      props: { results: timed, selectedResult: null },
+    });
+    const vm = wrapper.vm as any;
+    vm.hideRead = true;
+    await wrapper.vm.$nextTick();
+    expect(vm.filteredResults.length).toBe(2);
+
+    // Click with hide-read on: the row stays put instead of vanishing.
+    mockReadIds.push('2');
+    await wrapper.vm.$nextTick();
+    expect(vm.filteredResults.length).toBe(2);
+
+    // An explicit view change re-applies the read state: now it disappears.
+    vm.hideRead = false;
+    await wrapper.vm.$nextTick();
+    vm.hideRead = true;
+    await wrapper.vm.$nextTick();
+    expect(vm.filteredResults.map((r: any) => r.id)).toEqual(['1']);
   });
 });

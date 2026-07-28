@@ -14,6 +14,7 @@ const props = withDefaults(
     error?: string | null;
     hideRead?: boolean;
     isEntryRead: (entry: DlqEntry) => boolean;
+    entryReadKey: (entry: DlqEntry) => string;
   }>(),
   {
     error: null,
@@ -35,6 +36,7 @@ const { sortedEntries } = useDlqListState({
   entries: entriesRef,
   hideRead: hideReadRef,
   isEntryRead: props.isEntryRead,
+  entryReadKey: props.entryReadKey,
 });
 
 function select(entry: DlqEntry) {
