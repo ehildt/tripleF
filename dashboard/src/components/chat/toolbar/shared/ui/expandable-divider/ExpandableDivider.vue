@@ -38,6 +38,7 @@ defineEmits<{
   align-items: center;
   width: 100%;
   padding-right: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
 }
 
 .expandable-divider__line {

@@ -24,16 +24,15 @@ export class SocketIOEventsService implements OnModuleInit {
     }
 
     socketIO.on('connection', (socket) => {
-      this.logger.log(`Client connected: ${socket.id}`);
+      this.logger.debug(`Client connected: ${socket.id}`);
 
       socket.on('join', async (roomId: string) => {
         try {
           await socket.join(roomId);
-          this.logger.log(`Socket ${socket.id} joined room: ${roomId}`);
-          this.logger.log(
-            `[join] Room ${roomId} now has ${
+          this.logger.debug(
+            `Socket ${socket.id} joined room: ${roomId} (${
               socketIO.sockets.adapter.rooms.get(roomId)?.size || 0
-            } clients`,
+            } clients)`,
           );
         } catch (err) {
           this.logger.error(`Socket join failed for room ${roomId}:`, err);
@@ -43,7 +42,7 @@ export class SocketIOEventsService implements OnModuleInit {
       socket.on('leave', async (roomId: string) => {
         try {
           await socket.leave(roomId);
-          this.logger.log(`Socket ${socket.id} left room: ${roomId}`);
+          this.logger.debug(`Socket ${socket.id} left room: ${roomId}`);
         } catch (err) {
           this.logger.error(`Socket leave failed for room ${roomId}:`, err);
         }
@@ -65,7 +64,9 @@ export class SocketIOEventsService implements OnModuleInit {
       });
 
       socket.on('disconnect', (reason) => {
-        this.logger.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+        this.logger.debug(
+          `Client disconnected: ${socket.id}, reason: ${reason}`,
+        );
       });
     });
   }
@@ -80,10 +81,9 @@ export class SocketIOEventsService implements OnModuleInit {
       this.logger.warn('Socket.IO instance not available for emit');
       return;
     }
-    this.logger.log(`[emitToRoom] Emitting event=${event} to room=${roomId}`);
+    this.logger.debug(`[emitToRoom] Emitting event=${event} to room=${roomId}`);
     try {
       socketIO.to(roomId).emit(event, data);
-      this.logger.log(`[emitToRoom] Emitted successfully`);
     } catch (err) {
       this.logger.error(`[emitToRoom] Failed to emit to room ${roomId}:`, err);
     }
@@ -95,10 +95,9 @@ export class SocketIOEventsService implements OnModuleInit {
       this.logger.warn('Socket.IO instance not available for emit');
       return;
     }
-    this.logger.log(`[emitToAll] Broadcasting event=${event}`);
+    this.logger.debug(`[emitToAll] Broadcasting event=${event}`);
     try {
       socketIO.emit(event, data);
-      this.logger.log(`[emitToAll] Broadcasted successfully`);
     } catch (err) {
       this.logger.error(`[emitToAll] Failed to broadcast event ${event}:`, err);
     }

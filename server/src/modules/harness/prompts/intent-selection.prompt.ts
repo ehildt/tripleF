@@ -167,6 +167,12 @@ MEDIA COUNT RULES
 - Never return 0 or negative counts.
 - These counts only matter when an *ImageSearch or *VideoSearch tool is selected.
 
+RECENCY RULES (getDate)
+- The pipeline automatically anchors search queries on the current date and the search tools can filter results to recent periods. getDate controls this behavior.
+- Keep the default true whenever freshness matters: news, current events, latest releases, announcements, prices, versions, sports, ongoing development, recommendations ("best X"), or media lookups about a living topic.
+- Set false ONLY for timeless requests where a date anchor would pollute the search query: historical events, scientific concepts, math, coding concepts, definitions, biographies, creative writing, personal opinions, nostalgia.
+- When in doubt, keep the default true.
+
 MULTIMODAL RULES
 - describe, compare, and ocr are IMAGE-REQUIRED templates.
 - They may ONLY be selected when images are PROVIDED in the CURRENT request.

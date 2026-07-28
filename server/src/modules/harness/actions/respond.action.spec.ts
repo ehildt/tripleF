@@ -14,6 +14,7 @@ function intent(template: IntentResult['template']): IntentResult {
     template,
     prompt: 'default',
     tools: [],
+    getDate: true,
     imageCount: 0,
     videoCount: 0,
     reasoning: '',

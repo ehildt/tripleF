@@ -1,6 +1,7 @@
 import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
 import Joi from 'joi';
 import type { LoggerOptions } from 'pino';
+import pino from 'pino';
 
 export const PinoLoggerSchema = Joi.object({
   level: Joi.string()
@@ -26,6 +27,9 @@ export function PinoLoggerConfigAdapter(env = process.env): LoggerOptions {
   return {
     level: env.LOGGER_LEVEL || 'info',
     base: env.LOGGER_BASE ? JSON.parse(env.LOGGER_BASE) : undefined,
+    // pino's standard error serializer keeps the stack trace (and the error
+    // type) instead of flattening the error to its message string.
+    serializers: { err: pino.stdSerializers.err },
     transport: prettyEnabled
       ? {
           target: env.LOGGER_TRANSPORT_TARGET || 'pino-pretty',

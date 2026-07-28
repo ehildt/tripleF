@@ -80,6 +80,7 @@ describe('ExecuteActionService', () => {
         tools: string[];
         reasoning: string;
         needsClarification: false;
+        getDate?: boolean;
         imageCount?: number;
         videoCount?: number;
         plan?: { images?: { resize?: boolean; variants?: string[] } };
@@ -415,6 +416,7 @@ describe('ExecuteActionService', () => {
         template: 'article',
         prompt: 'default',
         tools: ['serperImageSearch', 'serperVideoSearch'],
+        getDate: false,
         imageCount: 0,
         videoCount: 0,
         reasoning: '',
@@ -451,6 +453,7 @@ describe('ExecuteActionService', () => {
         template: 'article',
         prompt: 'default',
         tools: ['serperImageSearch', 'serperVideoSearch'],
+        getDate: false,
         imageCount: 7,
         videoCount: 4,
         reasoning: '',

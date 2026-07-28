@@ -1,3 +1,7 @@
+import {
+  applyRecencyParam,
+  type SearchRecency,
+} from './apply-recency-param.helper.js';
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { SEARCH_TIMEOUT_MS } from './search-timeout.js';
 import type { ResultItem } from './sort-by-priority.js';
@@ -9,6 +13,7 @@ export async function searchSerper(
   deps: ToolDependencies,
   allResults: ResultItem[],
   lang?: string,
+  recency?: SearchRecency,
 ): Promise<void> {
   if (!cfg.serper.enabled || !cfg.serper.apiKey || !cfg.serper.web.enabled)
     return;
@@ -20,6 +25,7 @@ export async function searchSerper(
       num: cfg.serper.web.results,
       ...(lang ? { hl: lang, gl: lang } : {}),
     };
+    applyRecencyParam(payload, recency);
 
     const res = await fetchWithTimeout(
       'https://google.serper.dev/search',

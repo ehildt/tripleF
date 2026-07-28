@@ -72,6 +72,7 @@ describe('RespondStepService', () => {
       template: 'text',
       prompt: 'default',
       tools: [],
+      getDate: true,
       imageCount: 0,
       videoCount: 0,
       reasoning: '',
