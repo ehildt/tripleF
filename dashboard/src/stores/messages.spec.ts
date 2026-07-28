@@ -5,10 +5,22 @@ import { useConversationStore } from './conversation';
 import { useApiMessagesStore } from './messages';
 import { useModelsStore } from './models';
 
+vi.mock('../api/conversations.api', () => ({
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  fetchConversation: vi.fn(),
+  saveConversation: vi.fn().mockResolvedValue(undefined),
+  deleteConversation: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe('useApiMessagesStore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia());
     localStorage.clear();
+    // The conversation store hydrates persisted conversations asynchronously
+    // on creation — settle before seeding a conversation, or the load result
+    // would wipe it mid-test.
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     const conversationStore = useConversationStore();
     conversationStore.createNewConversation('temporary', 'harness', '');
   });

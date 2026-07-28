@@ -39,7 +39,7 @@ const emit = defineEmits<{
     grid-column: span 6 / span 6;
     position: sticky;
     top: 6rem;
-    height: calc(100vh - 10rem);
+    max-height: calc(100vh - 10rem);
   }
 
   .debug-column__panel {

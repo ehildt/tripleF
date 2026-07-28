@@ -8,8 +8,8 @@ HARD PRINCIPLES:
 
 OUTPUT CONTRACT:
 - Structured templates require a single valid JSON object.
-- Free-form templates (text, compact) require plain text.
-- No Markdown.
+- text: free-form response. Markdown is allowed and encouraged when it improves readability.
+- compact: plain text summary.
 - No explanations.
 - No raw URLs in text nodes.
 - URLs are only allowed as values inside JSON string fields or plain text references.`;

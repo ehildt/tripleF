@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { calcTokenPercent } from './calc-token-percent.helper';
+import { calcTotalContextPercentage } from './calc-token-percent.helper';
 
-describe('calcTokenPercent', () => {
+describe('calcTotalContextPercentage', () => {
   it('returns null when exchanges array is empty', () => {
-    expect(calcTokenPercent([], '4096')).toBeNull();
+    expect(calcTotalContextPercentage([], '4096')).toBeNull();
   });
 
   it('returns percentage for a completed assistant exchange', () => {
@@ -12,11 +12,11 @@ describe('calcTokenPercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 100,
+        inputTokenDelta: 100,
         evalCount: 200,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '1000')).toBe(30);
+    expect(calcTotalContextPercentage(exchanges as any, '1000')).toBe('30.00');
   });
 
   it('sums token counts across all included assistant exchanges', () => {
@@ -24,17 +24,17 @@ describe('calcTokenPercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 800,
+        inputTokenDelta: 400,
         evalCount: 100,
       },
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 100,
+        inputTokenDelta: 100,
         evalCount: 50,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '1000')).toBe(105);
+    expect(calcTotalContextPercentage(exchanges as any, '1000')).toBe('65.00');
   });
 
   it('caps the percentage at 100', () => {
@@ -42,17 +42,17 @@ describe('calcTokenPercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 600,
+        inputTokenDelta: 600,
         evalCount: 100,
       },
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 600,
+        inputTokenDelta: 600,
         evalCount: 100,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '1000')).toBe(100);
+    expect(calcTotalContextPercentage(exchanges as any, '1000')).toBe('100.00');
   });
 
   it('ignores assistant exchanges excluded from context', () => {
@@ -60,18 +60,18 @@ describe('calcTokenPercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 100,
+        inputTokenDelta: 100,
         evalCount: 50,
       },
       {
         role: 'assistant',
         status: 'done',
         included: false,
-        promptEvalCount: 900,
+        inputTokenDelta: 900,
         evalCount: 0,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '1000')).toBe(15);
+    expect(calcTotalContextPercentage(exchanges as any, '1000')).toBe('15.00');
   });
 
   it('ignores pending or streaming assistant exchanges', () => {
@@ -79,17 +79,17 @@ describe('calcTokenPercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 400,
+        inputTokenDelta: 400,
         evalCount: 100,
       },
       {
         role: 'assistant',
         status: 'streaming',
-        promptEvalCount: undefined,
+        inputTokenDelta: undefined,
         evalCount: undefined,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '1000')).toBe(50);
+    expect(calcTotalContextPercentage(exchanges as any, '1000')).toBe('50.00');
   });
 
   it('returns null when numCtx is 0', () => {
@@ -97,11 +97,11 @@ describe('calcTokenPercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 100,
+        inputTokenDelta: 100,
         evalCount: 200,
       },
     ];
-    expect(calcTokenPercent(exchanges as any, '0')).toBeNull();
+    expect(calcTotalContextPercentage(exchanges as any, '0')).toBeNull();
   });
 
   it('returns null when no assistant exchange has token data', () => {
@@ -111,11 +111,7 @@ describe('calcTokenPercent', () => {
         status: 'done',
         content: 'hello',
       },
-      {
-        role: 'assistant',
-        status: 'done',
-      },
     ];
-    expect(calcTokenPercent(exchanges as any, '4096')).toBeNull();
+    expect(calcTotalContextPercentage(exchanges as any, '4096')).toBeNull();
   });
 });

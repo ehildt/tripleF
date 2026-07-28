@@ -202,7 +202,9 @@ const {
 // ── Outside click ─────────────────────────────────────────
 const toolbarRef = ref<HTMLElement | null>(null);
 
-onClickOutside(toolbarRef, closeAllMenus);
+onClickOutside(toolbarRef, closeAllMenus, {
+  ignore: ['[data-model-menu-dropdown]'],
+});
 
 // ── Lifecycle ─────────────────────────────────────────────
 onMounted(() => {

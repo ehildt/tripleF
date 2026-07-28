@@ -105,6 +105,7 @@ function onDelete() {
 
     <div class="flex items-center gap-1.5">
       <span
+        v-if="tokenPercent != null"
         class="text-xs leading-none font-mono"
         :class="
           tokenPercent != null && Number(tokenPercent) > 80
@@ -114,7 +115,7 @@ function onDelete() {
               : 'text-tab-debug'
         "
       >
-        {{ tokenPercent != null ? `${tokenPercent}%` : '--' }}
+        {{ `${tokenPercent}%` }}
       </span>
     </div>
 

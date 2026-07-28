@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
+import { OllamaConfigService } from '../configs/ollama-config.service.js';
 
 import { OllamaModelsService } from './ollama-models.service.js';
 

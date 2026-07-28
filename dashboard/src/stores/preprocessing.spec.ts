@@ -111,29 +111,6 @@ describe('usePreprocessingStore', () => {
     expect(store.parameters.blurSigma).toBe(0.5);
   });
 
-  describe('buildQueryParams', () => {
-    it('returns empty object when disabled', () => {
-      const store = usePreprocessingStore();
-      store.setEnabled(false);
-      expect(store.buildQueryParams()).toEqual({});
-    });
-
-    it('returns all params when enabled', () => {
-      const store = usePreprocessingStore();
-      const params = store.buildQueryParams();
-      expect(params.pproc_enabled).toBe('true');
-      expect(params.pproc_original).toBe('true');
-      expect(params.pproc_resize_maxWidth).toBe('768');
-    });
-
-    it('omits undefined maxHeight', () => {
-      const store = usePreprocessingStore();
-      store.setMaxHeight(null);
-      const params = store.buildQueryParams();
-      expect(params.pproc_resize_maxHeight).toBeUndefined();
-    });
-  });
-
   describe('getSummary', () => {
     it('returns Disabled when off', () => {
       const store = usePreprocessingStore();

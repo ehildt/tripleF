@@ -14,44 +14,49 @@ vi.mock('../../../../../composables/use-toast', () => ({
   })),
 }));
 
-vi.mock('../../../../../stores/models', () => ({
-  useModelsStore: vi.fn(() => ({
-    getModel: vi.fn((name: string) => {
-      if (name === 'vision-model') {
-        return {
-          model: 'vision-model',
-          capabilities: ['completion', 'vision'],
-          context_length: 4096,
-        };
-      }
+const mockModelsStore = vi.hoisted(() => ({
+  selectedModel: '',
+  setSelectedModel: vi.fn(),
+  modelsLoading: false,
+  models: [] as Array<{ model: string }>,
+  numCtxOptions: [2048, 4096],
+  defaultNumCtx: '4096',
+  formatCtx: (n: number) => String(n),
+  maxNumCtxForModel: () => '4096',
+  getModel: (name: string) => {
+    if (name === 'vision-model') {
       return {
-        model: name,
-        capabilities: ['completion'],
-        context_length: 2048,
+        model: 'vision-model',
+        capabilities: ['completion', 'vision'],
+        context_length: 4096,
       };
-    }),
-    maxNumCtxForModel: vi.fn(() => '4096'),
-    formatCtx: vi.fn((n: number) => String(n)),
-    modelsLoading: false,
-    models: [],
-    numCtxOptions: [2048, 4096],
-    defaultNumCtx: '4096',
-  })),
+    }
+    return {
+      model: name,
+      capabilities: ['completion'],
+      context_length: 2048,
+    };
+  },
+}));
+
+vi.mock('../../../../../stores/models', () => ({
+  useModelsStore: () => mockModelsStore,
 }));
 
 describe('useSelectedModel', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    localStorage.clear();
+    mockModelsStore.selectedModel = '';
+    mockModelsStore.setSelectedModel.mockClear();
   });
 
-  it('starts with empty selectedModel when nothing in localStorage', () => {
+  it('starts with empty selectedModel when the store has none', () => {
     const { selectedModel } = useSelectedModel();
     expect(selectedModel.value).toBe('');
   });
 
-  it('reads selectedModel from localStorage', () => {
-    localStorage.setItem('harness-selected-model', 'llama3');
+  it('initializes selectedModel from the models store', () => {
+    mockModelsStore.selectedModel = 'llama3';
     const { selectedModel } = useSelectedModel();
     expect(selectedModel.value).toBe('llama3');
   });
@@ -61,21 +66,23 @@ describe('useSelectedModel', () => {
     expect(hasNoModelSelected.value).toBe(true);
   });
 
-  it('hasNoModelSelected is false when localStorage has a model', () => {
-    localStorage.setItem('harness-selected-model', 'llama3');
+  it('hasNoModelSelected is false when the store has a model', () => {
+    mockModelsStore.selectedModel = 'llama3';
     const { hasNoModelSelected } = useSelectedModel();
     expect(hasNoModelSelected.value).toBe(false);
   });
 
-  it('changeModel persists to localStorage and conversation store', () => {
+  it('changeModel persists via the models store and the conversation store', () => {
     const conversationStore = useConversationStore();
     const conversation = conversationStore.ensureConversation();
     conversationStore.setActiveConversation(conversation.id);
 
     const { selectedModel, changeModel } = useSelectedModel();
     changeModel('mistral');
+
     expect(selectedModel.value).toBe('mistral');
-    expect(localStorage.getItem('harness-selected-model')).toBe('mistral');
+    expect(mockModelsStore.setSelectedModel).toHaveBeenCalledWith('mistral');
+    expect(conversation.model).toBe('mistral');
   });
 
   it('deselects meta images when switching to a non-vision model', () => {
@@ -143,7 +150,7 @@ describe('useSelectedModel', () => {
   });
 
   it('backfills numCtx when active conversation has a model but no context size', () => {
-    localStorage.setItem('harness-selected-model', 'llama3');
+    mockModelsStore.selectedModel = 'llama3';
     const conversationStore = useConversationStore();
     const conversation = conversationStore.ensureConversation();
     conversationStore.setActiveConversation(conversation.id);

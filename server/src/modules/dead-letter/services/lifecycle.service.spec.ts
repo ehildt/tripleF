@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Job } from 'bullmq';
 import { vi } from 'vitest';
 
-import { BullMQConfigService } from '../../../configs/bullmq-config.service.js';
+import { BullMQConfigService } from '../../bullmq/configs/bullmq-config.service.js';
 import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 
 import { LifecycleService } from './lifecycle.service.js';

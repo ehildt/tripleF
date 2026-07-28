@@ -2,8 +2,8 @@
 import {
   CirclePause,
   CirclePlay,
-  Eye,
-  EyeOff,
+  Mail,
+  MailOpen,
   Search,
   Trash2,
 } from '@lucide/vue';
@@ -107,8 +107,8 @@ onUnmounted(disarmClear);
       :title="hideRead ? 'Show read requests' : 'Hide read requests'"
       @click="emit('update:hideRead', !hideRead)"
     >
-      <Eye v-if="hideRead" class="header-menu__icon" />
-      <EyeOff v-else class="header-menu__icon" />
+      <Mail v-if="hideRead" class="header-menu__icon" />
+      <MailOpen v-else class="header-menu__icon" />
     </button>
 
     <button

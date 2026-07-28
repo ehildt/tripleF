@@ -33,7 +33,7 @@ describe('NewsResponse', () => {
     expect(wrapper.text()).toContain('Point two');
   });
 
-  it('renders a single consolidated meta line with labels', () => {
+  it('renders meta bar pills for publish date, read time, and byline', () => {
     const wrapper = mountNewsResponse({
       headline: 'H',
       byline: 'Reuters',
@@ -41,19 +41,32 @@ describe('NewsResponse', () => {
       readTime: '3 min read',
     });
 
-    const meta = wrapper.find('.news-meta-section');
-    expect(meta.exists()).toBe(true);
-    expect(meta.text()).toBe(
-      'Published: 2026-07-11 · Read time: 3 min read · By Reuters',
-    );
+    const pills = wrapper.findAll('.pill');
+    const pillTexts = pills.map((pill) => pill.text());
+
+    expect(pillTexts).toContain('2026-07-11');
+    expect(pillTexts).toContain('3 min read');
+    expect(pillTexts).toContain('Reuters');
   });
 
-  it('hides the meta line when no meta fields are present', () => {
+  it('renders the dateline and byline combined in a single pill', () => {
+    const wrapper = mountNewsResponse({
+      headline: 'H',
+      dateline: 'Berlin',
+      byline: 'Reuters',
+    });
+
+    const pillTexts = wrapper.findAll('.pill').map((pill) => pill.text());
+
+    expect(pillTexts).toContain('Berlin · Reuters');
+  });
+
+  it('renders no meta pills when no meta fields are present', () => {
     const wrapper = mountNewsResponse({
       headline: 'H',
     });
 
-    expect(wrapper.find('.news-meta-section').exists()).toBe(false);
+    expect(wrapper.findAll('.pill')).toHaveLength(0);
   });
 
   it('renders source links as bullet list', () => {

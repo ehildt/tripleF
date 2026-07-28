@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
+
+function createService() {
+  const stepLogger = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
+  const service = new HarnessCancellationService(
+    stepLogger as unknown as HarnessStepLogger,
+  );
+  return { service, stepLogger };
+}
 
 describe('HarnessCancellationService', () => {
   it('registers and returns an abort controller', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
     const controller = service.register('req-1');
 
     expect(controller).toBeInstanceOf(AbortController);
@@ -13,7 +22,7 @@ describe('HarnessCancellationService', () => {
   });
 
   it('overwrites an existing controller when registering the same requestId', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
     const first = service.register('req-1');
     const second = service.register('req-1');
 
@@ -23,7 +32,7 @@ describe('HarnessCancellationService', () => {
   });
 
   it('cancels an active request and reports it active no longer', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
     service.register('req-1');
 
     const cancelled = service.cancel('req-1', 'test-reason');
@@ -33,13 +42,13 @@ describe('HarnessCancellationService', () => {
   });
 
   it('returns false when cancelling an unknown request', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
 
     expect(service.cancel('unknown')).toBe(false);
   });
 
   it('returns false when cancelling an already-aborted request', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
     service.register('req-1');
     service.cancel('req-1');
 
@@ -47,7 +56,7 @@ describe('HarnessCancellationService', () => {
   });
 
   it('deregisters an active request quietly without logging an abort', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
     const controller = service.register('req-1');
 
     service.deregister('req-1', { quiet: true });
@@ -58,7 +67,7 @@ describe('HarnessCancellationService', () => {
   });
 
   it('deregisters an active request loudly with an error reason', () => {
-    const service = new HarnessCancellationService();
+    const { service } = createService();
     const controller = service.register('req-2');
 
     service.deregister('req-2');

@@ -5,6 +5,7 @@ import { Job } from 'bullmq';
 import { vi } from 'vitest';
 
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
+import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { HarnessCancellationService } from '../services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
@@ -57,6 +58,14 @@ describe('HarnessProcessor', () => {
           provide: BullMQLoggerService,
           useValue: {
             log: vi.fn(),
+            error: vi.fn(),
+          },
+        },
+        {
+          provide: PinoLoggerService,
+          useValue: {
+            log: vi.fn(),
+            warn: vi.fn(),
             error: vi.fn(),
           },
         },
