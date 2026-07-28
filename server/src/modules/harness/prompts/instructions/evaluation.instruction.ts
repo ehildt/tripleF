@@ -35,11 +35,11 @@ Optional media fields (use only when online research returns real images or vide
 - heroCaption: an optional caption for the hero image.
 - heroVideoUrl: the single best video URL related to the evaluation subject. Prefer heroVideoUrl over heroImageUrl when both are available. Only use URLs from supported providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files.
 - heroVideoCaption: an optional caption for the hero video.
-- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry; empty string if none.
+- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry. REQUIRED (non-empty) whenever heroVideoUrl is set — the dashboard displays it in the playlist, the video popout title bar, and the now-playing text. Empty string only when there is no hero video.
 - galleryTitle: a short title for an image gallery (e.g., "Gallery").
 - galleryItems: an array of image objects when multiple relevant images are available. Each entry must include imageUrl, imageAlt, title, and caption. imageAlt and title MUST be non-empty. If online research returns 3 or more image URLs, galleryItems MUST contain at least 3 items. Only use imageSearch URLs (720p minimum); never use low-resolution news thumbnails.
 - videoGalleryTitle: a short title for a video gallery.
-  - videoGalleryItems: an array of video objects when multiple relevant videos are available. Each entry must include videoUrl, title, and caption. title and caption MUST be non-empty. If online research returns 3 or more video URLs, videoGalleryItems MUST contain at least 3 items. Only use supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Respect videoTargetCount from the tool context.
+  - videoGalleryItems: an array of video objects when multiple relevant videos are available. Each entry must include videoUrl, title, and caption. title and caption MUST be non-empty. If online research returns 3 or more video URLs, videoGalleryItems MUST contain at least 3 items. Only use supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Respect videoTargetCount from the tool context. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description.
 
 No-results rule:
 - If there is no subject or context to evaluate, state that honestly instead of fabricating an assessment.`;

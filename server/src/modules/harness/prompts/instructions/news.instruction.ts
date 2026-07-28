@@ -24,10 +24,11 @@ Optional fields (include only when the data is available; otherwise use "" or []
 - heroCaption: an optional caption for the hero image; empty string if none.
 - heroVideoUrl: a video URL from videoSearch or webSearch results. Only use URLs from supported providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. The dashboard will convert it to an embedded player automatically. Empty string if none.
 - heroVideoCaption: optional caption for the hero video; empty string if none.
-- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry; empty string if none.
+- heroVideoTitle: the hero video's title copied verbatim from its availableVideos entry. REQUIRED (non-empty) whenever heroVideoUrl is set — the dashboard displays it in the playlist, the video popout title bar, and the now-playing text. Empty string only when there is no hero video.
 - galleryTitle: heading for an inline image gallery; empty string if none.
 - galleryItems: an array of image objects for the inline gallery. Each item needs imageUrl, imageAlt, title, caption. imageAlt and title MUST be non-empty. When imageSearch returns 3 or more images, include the additional images here (excluding any hero image).
-  - videoGalleryItems: an array of additional video objects when multiple videos are available. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file.
+  - videoGalleryItems: an array of additional video objects when multiple videos are available. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description.
+- videoGalleryTitle: heading for the video gallery (e.g. 'Related coverage'); empty string if none.
 - keyPoints: an array of 3-5 short bullet points. Each entry MUST be an object with exactly one key: "text".
 - sources: an array of source objects with url, title, sourceName, date, and snippet. Use only real retrieved URLs.
 - relatedStories: an array of up to 6 related story cards. Each card needs title, url, sourceName, date, imageUrl. title, url, and imageUrl MUST be non-empty. Use only real retrieved URLs.

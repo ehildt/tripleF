@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { ListCheck, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { buildVideoPosterUrl } from '../../../composables/helpers/build-video-poster-url.helper';
+import { usePlaylistToggle } from '../../../composables/use-playlist-toggle';
 import FloatingVideoFigure from '../../floating-video-figure/FloatingVideoFigure.vue';
 
 const props = defineProps<{
@@ -12,6 +14,10 @@ const props = defineProps<{
 
 const posterUrl = computed(
   () => props.item.thumbnailUrl || buildVideoPosterUrl(props.item.videoUrl),
+);
+
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
+  () => props.item,
 );
 </script>
 
@@ -28,6 +34,21 @@ const posterUrl = computed(
         :title="item.title"
         :poster-url="posterUrl"
       />
+      <!-- Playlist toggle in the card's top-right corner -->
+      <button
+        type="button"
+        class="video-gallery__playlist-toggle"
+        :class="{ 'video-gallery__playlist-toggle--added': isInPlaylist }"
+        :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+        :aria-pressed="isInPlaylist"
+        @click.stop="togglePlaylistVideo"
+      >
+        <ListCheck
+          v-if="isInPlaylist"
+          class="video-gallery__playlist-toggle-icon"
+        />
+        <ListPlus v-else class="video-gallery__playlist-toggle-icon" />
+      </button>
       <figcaption
         v-if="item.title || item.caption"
         class="video-gallery__caption"
@@ -43,6 +64,7 @@ const posterUrl = computed(
 
 <style scoped>
 .video-gallery__item .video-gallery__card {
+  position: relative;
   margin: 0 auto;
   border: 1px solid var(--color-divider);
   overflow: hidden;
@@ -52,6 +74,46 @@ const posterUrl = computed(
   height: 100%;
   min-height: 240px;
   width: 100%;
+}
+
+/* ---------- playlist toggle (top-right corner) ---------- */
+
+.video-gallery__playlist-toggle {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  margin: 0.1rem 0.1rem 0 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.video-gallery__playlist-toggle:hover {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-border);
+}
+
+.video-gallery__playlist-toggle--added {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 15%,
+    var(--color-bg-elevated)
+  );
+}
+
+.video-gallery__playlist-toggle-icon {
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 /* Single-item gallery: constrain the player box and center it. */

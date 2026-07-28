@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
 import type {
@@ -10,6 +11,7 @@ import ProductResponse from './ProductResponse.vue';
 
 function mountProduct(data: Partial<HarnessResponseData>) {
   return mount(ProductResponse, {
+    global: { plugins: [createPinia()] },
     props: { data: data as HarnessResponseData },
   });
 }

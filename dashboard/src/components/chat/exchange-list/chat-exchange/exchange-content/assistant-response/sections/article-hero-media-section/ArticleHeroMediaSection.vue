@@ -1,14 +1,17 @@
 <script setup lang="ts">
+import { ListCheck, ListPlus } from '@lucide/vue';
 import { computed, inject } from 'vue';
 
 import MediaImageCard from '@/components/shared/media/MediaImageCard.vue';
 import type {
   GalleryItem,
   HarnessImageClickedHandler,
+  VideoGalleryItem,
 } from '@/types/harness-response-data.model';
 import { harnessImageClickedKey } from '@/types/harness-response-data.model';
 
 import { buildVideoPosterUrl } from '../../composables/helpers/build-video-poster-url.helper';
+import { usePlaylistToggle } from '../../composables/use-playlist-toggle';
 import FloatingVideoFigure from '../floating-video-figure/FloatingVideoFigure.vue';
 
 const props = defineProps<{
@@ -24,6 +27,18 @@ const props = defineProps<{
 const heroPosterUrl = computed(() =>
   props.heroVideoUrl ? buildVideoPosterUrl(props.heroVideoUrl) : null,
 );
+
+/**
+ * The hero video as a playlist entry: title falls back to the caption, so a
+ * title-less hero still names itself in the playlist panel.
+ */
+const heroVideoItem = computed<VideoGalleryItem>(() => ({
+  videoUrl: props.heroVideoUrl ?? '',
+  title: props.heroVideoTitle || props.heroVideoCaption,
+  caption: props.heroVideoCaption,
+}));
+
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(heroVideoItem);
 
 const onImageClicked = inject<HarnessImageClickedHandler>(
   harnessImageClickedKey,
@@ -57,6 +72,21 @@ function handleClick() {
         :title="heroVideoTitle || heroVideoCaption"
         :poster-url="heroPosterUrl"
       />
+      <!-- Playlist toggle in the card's top-right corner -->
+      <button
+        type="button"
+        class="hero-media-card__playlist-toggle"
+        :class="{ 'hero-media-card__playlist-toggle--added': isInPlaylist }"
+        :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+        :aria-pressed="isInPlaylist"
+        @click.stop="togglePlaylistVideo"
+      >
+        <ListCheck
+          v-if="isInPlaylist"
+          class="hero-media-card__playlist-toggle-icon"
+        />
+        <ListPlus v-else class="hero-media-card__playlist-toggle-icon" />
+      </button>
       <figcaption v-if="heroVideoCaption" class="hero-media-card__caption">
         <p>{{ heroVideoCaption }}</p>
       </figcaption>
@@ -83,8 +113,49 @@ function handleClick() {
 
 <style scoped>
 .hero-media-card {
+  position: relative;
   margin: 0.75em auto 0;
   width: 80%;
+}
+
+/* ---------- playlist toggle (top-right corner) ---------- */
+
+.hero-media-card__playlist-toggle {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  margin: 0.1rem 0.1rem 0 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.hero-media-card__playlist-toggle:hover {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-border);
+}
+
+.hero-media-card__playlist-toggle--added {
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 15%,
+    var(--color-bg-elevated)
+  );
+}
+
+.hero-media-card__playlist-toggle-icon {
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 .hero-media-card__caption {

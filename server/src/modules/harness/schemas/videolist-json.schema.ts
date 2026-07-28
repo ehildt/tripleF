@@ -1,25 +1,6 @@
 import { z } from 'zod';
 
-const videoGalleryItemSchema = z.object(
-  {
-    videoUrl: z
-      .string()
-      .min(1, { message: 'videoGalleryItems.videoUrl must not be empty' }),
-    title: z.string().min(1, {
-      message: 'videoGalleryItems.title must not be empty',
-    }),
-    caption: z.string().min(1, {
-      message: 'videoGalleryItems.caption must not be empty',
-    }),
-    duration: z.string().optional(),
-    channel: z.string().optional(),
-    date: z.string().optional(),
-    views: z.number().int().min(0).optional(),
-    thumbnailUrl: z.string().url().optional().or(z.literal('')),
-    description: z.string().optional(),
-  },
-  { message: 'videoGalleryItems entries must be objects with videoUrl' },
-);
+import { videoGalleryItemSchema } from './video-gallery-item-json.schema.js';
 
 export const videolistSchema = z.object({
   category: z.string(),

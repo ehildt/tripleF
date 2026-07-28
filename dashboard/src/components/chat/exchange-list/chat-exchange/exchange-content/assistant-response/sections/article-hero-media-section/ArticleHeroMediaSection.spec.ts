@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
 import ArticleHeroMediaSection from './ArticleHeroMediaSection.vue';
@@ -6,6 +7,7 @@ import ArticleHeroMediaSection from './ArticleHeroMediaSection.vue';
 describe('ArticleHeroMediaSection', () => {
   it('renders an iframe once an embeddable hero video is engaged', async () => {
     const wrapper = mount(ArticleHeroMediaSection, {
+      global: { plugins: [createPinia()] },
       props: {
         heroVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       },
@@ -25,6 +27,7 @@ describe('ArticleHeroMediaSection', () => {
 
   it('renders a fallback link when heroVideoUrl is not embeddable', () => {
     const wrapper = mount(ArticleHeroMediaSection, {
+      global: { plugins: [createPinia()] },
       props: {
         heroVideoUrl: 'https://www.tiktok.com/@nasa/video/123456',
       },
@@ -40,12 +43,16 @@ describe('ArticleHeroMediaSection', () => {
   });
 
   it('renders nothing when no video or image is provided', () => {
-    const wrapper = mount(ArticleHeroMediaSection, { props: {} });
+    const wrapper = mount(ArticleHeroMediaSection, {
+      global: { plugins: [createPinia()] },
+      props: {},
+    });
     expect(wrapper.find('figure').exists()).toBe(false);
   });
 
   it('renders a hero image when heroImageUrl is provided', () => {
     const wrapper = mount(ArticleHeroMediaSection, {
+      global: { plugins: [createPinia()] },
       props: {
         heroImageUrl: 'https://example.com/hero.jpg',
         heroImageAlt: 'Hero',
@@ -60,6 +67,7 @@ describe('ArticleHeroMediaSection', () => {
 
   it('renders the caption when provided', () => {
     const wrapper = mount(ArticleHeroMediaSection, {
+      global: { plugins: [createPinia()] },
       props: {
         heroImageUrl: 'https://example.com/hero.jpg',
         heroCaption: 'A caption',
