@@ -5,8 +5,11 @@
  * poster the user clicks becomes the single mounted player (autoplay),
  * replacing whatever was mounted before. Once the player scrolls out of
  * view, the media floats as a draggable, resizable popup that keeps
- * playing; closing it docks the media back inline without interrupting
- * playback. Unembeddable URLs degrade to an external link.
+ * playing and docks back when the figure is in view again (unless autodock
+ * is disabled in the popout settings). The popup's close button either
+ * docks the media back inline without interrupting playback, or stops and
+ * deselects the video — per the stop-on-close setting. Unembeddable URLs
+ * degrade to an external link.
  */
 import { GripVertical } from '@lucide/vue';
 import { computed } from 'vue';
@@ -19,7 +22,10 @@ const props = defineProps<{
   posterUrl?: string | null;
 }>();
 
-const item = computed(() => ({ videoUrl: props.videoUrl }));
+const item = computed(() => ({
+  videoUrl: props.videoUrl,
+  title: props.title,
+}));
 
 const {
   setCardElement,
@@ -34,6 +40,8 @@ const {
   isUnembeddable,
   engage,
   dismissFloating,
+  closeFloating,
+  closeFloatingTitle,
   startDrag,
   startResize,
   setOpacity,
@@ -96,10 +104,10 @@ function onOpacityInput(event: Event) {
         <button
           type="button"
           class="floating-video-figure__popup-close"
-          aria-label="Dock video back inline"
-          title="Dock video back inline"
+          :aria-label="closeFloatingTitle"
+          :title="closeFloatingTitle"
           @pointerdown.stop
-          @click.stop="dismissFloating"
+          @click.stop="closeFloating"
         >
           ✕
         </button>

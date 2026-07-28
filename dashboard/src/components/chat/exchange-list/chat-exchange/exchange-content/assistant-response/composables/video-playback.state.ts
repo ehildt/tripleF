@@ -13,12 +13,28 @@ import { releaseFloatingPopupRect } from './popout-settings.state';
  */
 export const activePlaybackVideoUrl = ref<string | null>(null);
 
-export function setActivePlayback(videoUrl: string) {
+/**
+ * Title of the currently playing video, shown in the playlist panel's
+ * animated "now playing" text. Tracked alongside the active playback so a
+ * video that was never added to a playlist (hero media, gallery videos)
+ * still announces itself there.
+ */
+export const nowPlayingTitle = ref('');
+
+export function setActivePlayback(videoUrl: string, title?: string) {
+  if (activePlaybackVideoUrl.value !== videoUrl) {
+    nowPlayingTitle.value = title ?? '';
+  } else if (title !== undefined) {
+    // A repeated engage (e.g. iframe window blur) may name the video for
+    // the first time — adopt the title without disturbing playback.
+    nowPlayingTitle.value = title;
+  }
   activePlaybackVideoUrl.value = videoUrl;
 }
 
 export function clearActivePlayback() {
   activePlaybackVideoUrl.value = null;
+  nowPlayingTitle.value = '';
 }
 
 /**
@@ -103,7 +119,7 @@ export function launchVideo(
     launchedPlaylistQueue.value = playlist.videos;
     launchedPlaylistConversationId.value = playlist.conversationId;
   }
-  setActivePlayback(item.videoUrl);
+  setActivePlayback(item.videoUrl, item.title);
 }
 
 export function closeLaunchedVideo() {
@@ -111,6 +127,20 @@ export function closeLaunchedVideo() {
   launchedPlaylistQueue.value = [];
   launchedPlaylistConversationId.value = '';
   clearActivePlayback();
+  releaseFloatingPopupRect();
+}
+
+/**
+ * Dock the launched video back onto the page without stopping it: the
+ * floating window closes but the video stays the active playback, so an
+ * inline figure with the same URL mounts the player right away (or floats
+ * it again while scrolled out). The playlist queue is dropped — playlist
+ * autoplay belongs to the launched player only.
+ */
+export function dockLaunchedVideo() {
+  launchedVideo.value = null;
+  launchedPlaylistQueue.value = [];
+  launchedPlaylistConversationId.value = '';
   releaseFloatingPopupRect();
 }
 
@@ -249,7 +279,7 @@ export function playNextPlaylistVideo(): boolean {
   if (!next) return false;
 
   launchedVideo.value = next;
-  setActivePlayback(next.videoUrl);
+  setActivePlayback(next.videoUrl, next.title);
   return true;
 }
 

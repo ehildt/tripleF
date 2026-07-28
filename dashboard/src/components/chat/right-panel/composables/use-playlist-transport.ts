@@ -12,6 +12,7 @@ import {
   activePlaybackPlaying,
   activePlaybackVideoUrl,
   launchVideo,
+  nowPlayingTitle,
   playlistAutoplayEnabled,
   removePlaylistVideo,
   stopActivePlayback,
@@ -33,12 +34,16 @@ export function usePlaylistTransport(props: {
     Boolean(activePlaybackVideoUrl.value),
   );
 
-  /** Title of the currently playing track, resolved from the playlist. */
+  /**
+   * Title of the currently playing track for the animated "now playing"
+   * text: the playlist's own metadata wins, videos playing outside the
+   * playlist fall back to the title they announced on engagement.
+   */
   const activePlaybackTitle = computed(
     () =>
       props.playlistVideos.find(
         (video) => video.videoUrl === activePlaybackVideoUrl.value,
-      )?.title ?? '',
+      )?.title ?? nowPlayingTitle.value,
   );
   const canTogglePlayback = computed(
     () => hasActivePlayback.value && activePlaybackControlSupported.value,

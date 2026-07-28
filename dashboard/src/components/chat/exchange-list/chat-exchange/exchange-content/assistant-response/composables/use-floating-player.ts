@@ -10,7 +10,9 @@ import {
 } from 'vue';
 
 import {
+  popoutAutoDock,
   popoutEnabled,
+  popoutStopOnClose,
   releaseFloatingPopupRect,
 } from './popout-settings.state';
 import { usePausablePlayer } from './use-pausable-player';
@@ -21,6 +23,7 @@ import {
   floatingPopupOpacity,
   launchedVideo,
   setActivePlayback,
+  stopActivePlayback,
 } from './video-playback.state';
 
 type TemplateRefTarget = Element | ComponentPublicInstance | null;
@@ -38,11 +41,14 @@ type TemplateRefTarget = Element | ComponentPublicInstance | null;
  *
  * The mounted player is never re-parented (that would reload the iframe and
  * kill playback). Once it scrolls out of view, the media element flips to
- * `position: fixed` and becomes a draggable popup. Closing the popup docks
- * the media back inline — playback continues uninterrupted, and the popup
- * stays dismissed until the video is resumed or explicitly played again.
+ * `position: fixed` and becomes a draggable popup that docks automatically
+ * when the figure is back in view (unless autodock is disabled). Closing
+ * the popup either docks the media back inline — playback continues — or
+ * stops and deselects the video, per the popout stop-on-close setting.
  */
-export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
+export function useFloatingPlayer(
+  item: Ref<{ videoUrl: string; title?: string }>,
+) {
   const cardElement = ref<HTMLElement | null>(null);
   const mediaElement = ref<HTMLElement | null>(null);
   const isInView = ref(false);
@@ -87,15 +93,47 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
    * dismissed the popup — a dismissal sticks until playback is resumed or
    * the video is explicitly played again. Since only one player is mounted
    * at a time, popups can never stack.
+   *
+   * Autodock disabled: once the figure floated on scroll-out, it stays
+   * floating when it comes back into view until the user docks or closes
+   * it. The latch releases whenever floating becomes impossible (popup
+   * dismissed, video deselected, popout disabled).
    */
-  const isFloating = computed(
+  const canFloat = computed(
     () =>
       popoutEnabled.value &&
       isActivePlayback.value &&
-      !isInView.value &&
       !wasDismissed.value &&
       shouldMountPlayer.value,
   );
+
+  const floatLatched = ref(false);
+
+  /**
+   * Keep the float latch in sync with the visibility and float-gate state.
+   * Driven by the observer callback directly (not an isInView watcher):
+   * the observer's first callback may not change the ref it initializes,
+   * which a mere watcher would never see.
+   */
+  function syncFloatLatch() {
+    if (!canFloat.value) {
+      floatLatched.value = false;
+      return;
+    }
+    if (!isInView.value) {
+      floatLatched.value = true;
+      return;
+    }
+    if (popoutAutoDock.value) floatLatched.value = false;
+  }
+
+  watch([canFloat, popoutAutoDock], syncFloatLatch);
+
+  const isFloating = computed(() => {
+    if (!canFloat.value) return false;
+    if (!popoutAutoDock.value) return floatLatched.value;
+    return !isInView.value;
+  });
 
   const {
     popupStyle: geometryStyle,
@@ -114,6 +152,7 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
     observer = new IntersectionObserver(
       ([entry]) => {
         isInView.value = entry.isIntersecting;
+        syncFloatLatch();
       },
       { threshold: 0.1 },
     );
@@ -163,12 +202,14 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
    * same render flush and this figure's player mounts with autoplay.
    * Activating from the poster state (or back from another video) is fresh
    * play intent, so it re-arms floating after a dismissal — while mere
-   * interaction with the already-active inline player does not.
+   * interaction with the already-active inline player does not. The title
+   * travels with the activation so the playlist panel's "now playing" text
+   * can name videos that are not part of any playlist.
    */
   function engage() {
     if (!isActivePlayback.value) wasDismissed.value = false;
     if (launchedVideo.value) closeLaunchedVideo();
-    setActivePlayback(item.value.videoUrl);
+    setActivePlayback(item.value.videoUrl, item.value.title);
   }
 
   /**
@@ -180,6 +221,22 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
     wasDismissed.value = true;
     releaseFloatingPopupRect();
   }
+
+  /**
+   * Close the popup per the stop-on-close setting: stop playback and
+   * deselect the video (the figure drops back to its poster), or dock it
+   * back inline and keep playing.
+   */
+  function closeFloating() {
+    wasDismissed.value = true;
+    if (popoutStopOnClose.value) stopActivePlayback();
+    else releaseFloatingPopupRect();
+  }
+
+  /** Tooltip of the popup's close button, matching the close semantics. */
+  const closeFloatingTitle = computed(() =>
+    popoutStopOnClose.value ? 'Stop playing' : 'Dock video back inline',
+  );
 
   return {
     setCardElement,
@@ -194,6 +251,8 @@ export function useFloatingPlayer(item: Ref<{ videoUrl: string }>) {
     isUnembeddable,
     engage,
     dismissFloating,
+    closeFloating,
+    closeFloatingTitle,
     startDrag,
     startResize,
     setOpacity,
