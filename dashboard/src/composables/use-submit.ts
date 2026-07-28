@@ -389,15 +389,7 @@ export function useSubmit(options: UseSubmitOptions) {
       );
     }
 
-    console.log('[use-submit] submitting request', {
-      requestId,
-      conversationId: sid,
-      hasNewImages,
-      conversationMetadata,
-    });
-
     const conv = buildConversation();
-    console.log('[use-submit] conversation prompt', conv);
 
     const formData = buildFormData(newFiles, {
       prompt: conv,

@@ -60,6 +60,13 @@ export const IntentSchema = z.object({
     .array(z.enum(TOOL_NAMES))
     .describe('List of tool names the model decided to invoke.'),
 
+  getDate: z
+    .boolean()
+    .default(true)
+    .describe(
+      'Whether search queries should be anchored on the current date so results bias toward recent information. Default true. Set to false ONLY for timeless general-knowledge, historical, or conceptual requests where recency does not matter (e.g. "how does photosynthesis work", "history of the Roman Empire", "explain quantum entanglement", creative writing).',
+    ),
+
   imageCount: z
     .preprocess(
       (val) => (val === null ? 0 : val),

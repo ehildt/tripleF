@@ -13,13 +13,13 @@ export type VariantName = (typeof VARIANT_NAMES)[number];
 
 export const TOOL_DESCRIPTIONS: Record<string, string> = {
   webSearch:
-    'Web search. Returns titles, snippets, and URLs. Use for general research and fact-finding.',
+    'Web search. Returns titles, snippets, and URLs. Use for general research and fact-finding. Supports an optional recency window (day/week/month/year) for fresh results.',
   serperWebSearch:
-    'Search the web using Serper.dev (Google). Returns organic results with titles, snippets, and links.',
+    'Search the web using Serper.dev (Google). Returns organic results with titles, snippets, and links. Supports an optional recency window (day/week/month/year) for fresh results.',
   serperImageSearch:
-    'Search for images using Serper.dev (Google Images). Prefers 2560×1440 (1440p) images and enforces a minimum of 1280×720 (720p) via the Google Images tbs size filter and a client-side dimension filter.',
+    'Search for images using Serper.dev (Google Images). Prefers 2560×1440 (1440p) images and enforces a minimum of 1280×720 (720p) via the Google Images tbs size filter and a client-side dimension filter. Supports an optional recency window (day/week/month/year).',
   serperNewsSearch:
-    'Search latest news using Serper.dev. Returns headlines, sources, dates, and snippets.',
+    'Search latest news using Serper.dev. Returns headlines, sources, dates, and snippets. Supports an optional recency window (day/week/month/year).',
   serperPlacesSearch:
     'Search places and businesses using Serper.dev (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Query with a business name or business type plus location.',
   serperShoppingSearch:
@@ -27,7 +27,7 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   serperReviewsSearch:
     'Fetch Google Maps reviews for a specific business or place using Serper.dev. Returns reviewer snippets with author names, star ratings, and dates. Use for seller/business reputation, not editorial product reviews.',
   serperVideoSearch:
-    'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
+    'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year). Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
   serperWebpageFetch:
     'Fetch and render a full webpage using Serper.dev scrape API. Returns clean rendered text with its title.',
   webFetch:

@@ -4,6 +4,10 @@ import { z } from 'zod';
 import { isTrustedImageUrl } from '../../../harness/helpers/is-trusted-image-url.helper.js';
 
 import { applyLocaleParams } from './apply-locale-params.helper.js';
+import {
+  applyRecencyParam,
+  type SearchRecency,
+} from './apply-recency-param.helper.js';
 import { buildYoutubeThumbnailUrl } from './build-youtube-thumbnail-url.helper.js';
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import {
@@ -19,12 +23,19 @@ const HEADERS = (apiKey: string) => ({
   'Content-Type': 'application/json',
 });
 
+const RECENCY_DESCRIPTION =
+  'Restrict results to the given past period (day=24 hours, week=7 days, month=1 month, year=1 year). Use for fresh content such as news, recent releases, or trending topics; leave unset for evergreen, historical, or general queries.';
+
 export function createSerperWebSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links.',
+      'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results.',
     inputSchema: z.object({
       query: z.string().describe('The search query'),
+      recency: z
+        .enum(['day', 'week', 'month', 'year'])
+        .optional()
+        .describe(RECENCY_DESCRIPTION),
       lang: z
         .string()
         .optional()
@@ -32,7 +43,15 @@ export function createSerperWebSearch(deps: ToolDependencies) {
           'Two-letter ISO language code for result preference (e.g. en, de, ja)',
         ),
     }),
-    execute: async ({ query, lang }: { query: string; lang?: string }) => {
+    execute: async ({
+      query,
+      recency,
+      lang,
+    }: {
+      query: string;
+      recency?: SearchRecency;
+      lang?: string;
+    }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.web.enabled) {
         return { results: [], error: 'Serper.dev web search is not enabled' };
@@ -44,6 +63,7 @@ export function createSerperWebSearch(deps: ToolDependencies) {
         num: cfg.web.results,
       };
       applyLocaleParams(body, lang);
+      applyRecencyParam(body, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/search',
         {
@@ -117,7 +137,7 @@ function tbsSizeLabelForPixels(pixels: number): string {
 export function createSerperImageSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for images using Serper.dev (Google Images). Returns image URLs, thumbnails, source pages, and dimensions. The tool prefers 2560×1440 (1440p) images and always enforces a minimum of 1280×720 (720p). It passes the appropriate Google Images `tbs=isz:lt,islt:<bucket>` size filter server-side, drops any returned images whose dimensions are below 1280×720, and rejects untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com, t*.gstatic.com), data URIs, localhost, and private IPs. You do not need to pass minWidth/minHeight for the default 720p floor. If the user asks for a higher resolution, pass minWidth/minHeight and the tool will pick the smallest Google bucket that can satisfy the requested area. Common reference: 1280×720 (720p) ~0.9 MP, 1920×1080 (1080p) ~2 MP, 2560×1440 (1440p) ~3.7 MP, 3840×2160 (4K) ~8.3 MP.',
+      'Search for images using Serper.dev (Google Images). Returns image URLs, thumbnails, source pages, and dimensions. The tool prefers 2560×1440 (1440p) images and always enforces a minimum of 1280×720 (720p). It passes the appropriate Google Images `tbs=isz:lt,islt:<bucket>` size filter server-side, drops any returned images whose dimensions are below 1280×720, and rejects untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com, t*.gstatic.com), data URIs, localhost, and private IPs. You do not need to pass minWidth/minHeight for the default 720p floor. If the user asks for a higher resolution, pass minWidth/minHeight and the tool will pick the smallest Google bucket that can satisfy the requested area. Common reference: 1280×720 (720p) ~0.9 MP, 1920×1080 (1080p) ~2 MP, 2560×1440 (1440p) ~3.7 MP, 3840×2160 (4K) ~8.3 MP. Pass recency ("day"|"week"|"month"|"year") to restrict to recently published images.',
     inputSchema: z.object({
       query: z.string().describe('The image search query'),
       count: z.number().optional().describe('Number of results (max 100)'),
@@ -139,6 +159,10 @@ export function createSerperImageSearch(deps: ToolDependencies) {
         .describe(
           'Two-letter ISO language code for result preference (e.g. en, de, ja)',
         ),
+      recency: z
+        .enum(['day', 'week', 'month', 'year'])
+        .optional()
+        .describe(RECENCY_DESCRIPTION),
     }),
     execute: async ({
       query,
@@ -146,12 +170,14 @@ export function createSerperImageSearch(deps: ToolDependencies) {
       minWidth: requestedMinWidth,
       minHeight: requestedMinHeight,
       lang,
+      recency,
     }: {
       query: string;
       count?: number;
       minWidth?: number;
       minHeight?: number;
       lang?: string;
+      recency?: SearchRecency;
     }) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.images.enabled) {
@@ -172,6 +198,7 @@ export function createSerperImageSearch(deps: ToolDependencies) {
       applyLocaleParams(body, lang);
       const targetPixels = minWidth * minHeight;
       body.tbs = `isz:lt,islt:${tbsSizeLabelForPixels(targetPixels)}`;
+      applyRecencyParam(body, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/images',
         {
@@ -235,10 +262,14 @@ export function createSerperImageSearch(deps: ToolDependencies) {
 export function createSerperNewsSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search the latest news using Serper.dev. Returns headlines, sources, dates, and snippets.',
+      'Search the latest news using Serper.dev. Returns headlines, sources, dates, and snippets. Pass recency ("day"|"week"|"month"|"year") to restrict to a recent period.',
     inputSchema: z.object({
       query: z.string().describe('The news search query'),
       count: z.number().optional().describe('Number of results (max 100)'),
+      recency: z
+        .enum(['day', 'week', 'month', 'year'])
+        .optional()
+        .describe(RECENCY_DESCRIPTION),
       lang: z
         .string()
         .optional()
@@ -249,10 +280,12 @@ export function createSerperNewsSearch(deps: ToolDependencies) {
     execute: async ({
       query,
       count: reqCount,
+      recency,
       lang,
     }: {
       query: string;
       count?: number;
+      recency?: SearchRecency;
       lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
@@ -267,6 +300,7 @@ export function createSerperNewsSearch(deps: ToolDependencies) {
         num,
       };
       applyLocaleParams(newsBody, lang);
+      applyRecencyParam(newsBody, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/news',
         {
@@ -592,10 +626,14 @@ export function createSerperReviewsSearch(deps: ToolDependencies) {
 export function createSerperVideoSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
+      'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos.',
     inputSchema: z.object({
       query: z.string().describe('The video search query'),
       count: z.number().optional().describe('Number of results (max 100)'),
+      recency: z
+        .enum(['day', 'week', 'month', 'year'])
+        .optional()
+        .describe(RECENCY_DESCRIPTION),
       lang: z
         .string()
         .optional()
@@ -606,10 +644,12 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
     execute: async ({
       query,
       count: reqCount,
+      recency,
       lang,
     }: {
       query: string;
       count?: number;
+      recency?: SearchRecency;
       lang?: string;
     }) => {
       const cfg = deps.getLiveConfig().serper;
@@ -624,6 +664,7 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
         num,
       };
       applyLocaleParams(videoBody, lang);
+      applyRecencyParam(videoBody, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/videos',
         {

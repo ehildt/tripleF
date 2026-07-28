@@ -42,11 +42,11 @@ defineEmits<{
 .expandable-list__content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
   flex: 1;
   width: 100%;
   min-width: 0;
-  padding: var(--spacing-2);
+  padding-inline: var(--spacing-2);
   overflow-y: auto;
 }
 </style>

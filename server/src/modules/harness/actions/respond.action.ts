@@ -63,10 +63,6 @@ export class RespondActionService {
         template: params.intent.template,
         messageCount: executionMessages.length,
         totalImageCount,
-        messages: executionMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
       },
     );
 

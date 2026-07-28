@@ -45,7 +45,7 @@ export class HarnessStepLogger {
     this.logger.error(
       {
         ...this.buildBindings(ctx, step, meta),
-        error: this.formatError(error),
+        err: this.normalizeError(error),
       },
       `[HARNESS] ${step}: ${message}`,
     );
@@ -63,9 +63,14 @@ export class HarnessStepLogger {
     };
   }
 
-  private formatError(error: unknown): string | undefined {
+  /**
+   * Real Errors pass through untouched so pino's `err` serializer emits the
+   * stack trace; anything else (rejection values, strings) is wrapped so the
+   * `err` key always holds a genuine Error instance.
+   */
+  private normalizeError(error: unknown): Error | undefined {
     if (error === undefined || error === null) return undefined;
-    if (error instanceof Error) return error.message;
-    return String(error);
+    if (error instanceof Error) return error;
+    return new Error(String(error));
   }
 }

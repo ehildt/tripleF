@@ -74,6 +74,7 @@ describe('ExecuteStepService', () => {
           template: 'describe',
           prompt: 'default',
           tools: [],
+          getDate: true,
           imageCount: 0,
           videoCount: 0,
           reasoning: '',
