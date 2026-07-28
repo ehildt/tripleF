@@ -15,7 +15,7 @@ export function buildActivityLabel(params: {
   toolCalls?: ActiveToolCall[];
   activity?: string;
 }): string {
-  if (params.reasoning?.trim()) return 'Thinking…';
+  if (params.reasoning?.trim()) return 'Consolidating everything..';
 
   const toolLabel = buildToolActivityLabel(params.toolCalls ?? []);
   if (toolLabel) return toolLabel;

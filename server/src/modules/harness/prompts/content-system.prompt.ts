@@ -1,3 +1,5 @@
+import { buildContextSummarySection } from '../helpers/build-context-summary-section.helper.js';
+
 import {
   buildLanguageRule,
   COMPACT_INSTRUCTIONS,
@@ -28,7 +30,6 @@ export function buildContentSystemPrompt(params: {
   const isTextTemplate = params.template === 'text';
   const isCompactTemplate = params.template === 'compact';
   const isFreeForm = isTextTemplate || isCompactTemplate;
-  const language = params.language ?? 'en';
 
   let returnDirective: string;
   if (isTextTemplate) {
@@ -42,7 +43,7 @@ export function buildContentSystemPrompt(params: {
 
   const sections: string[] = [
     OUTPUT_CONTRACT,
-    buildLanguageRule(language),
+    buildLanguageRule(params.language),
     SECURITY_RULES,
     PRECEDENCE_RULES,
   ];
@@ -79,9 +80,7 @@ export function buildContentSystemPrompt(params: {
   }
 
   if (params.contextSummary) {
-    sections.push(
-      `CONTEXT SUMMARY\n${params.contextSummary}\nUse only to resolve references from the latest message.`,
-    );
+    sections.push(buildContextSummarySection(params.contextSummary));
   }
 
   if (!isFreeForm) {

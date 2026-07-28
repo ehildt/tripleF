@@ -69,6 +69,7 @@ export class InterpretStepService implements StepHandler {
         template: intent.template,
         prompt: intent.prompt,
         tools: intent.tools,
+        contextSummary: intent.contextSummary,
         needsClarification: intent.needsClarification,
       });
     }
@@ -141,8 +142,15 @@ export class InterpretStepService implements StepHandler {
     englishQuestion: string,
     language?: string,
   ): Promise<string> {
-    if (!language || language === 'en' || language.length !== 2)
-      return englishQuestion;
+    const code = language?.trim().toLowerCase() ?? '';
+    if (code === 'en') return englishQuestion;
+
+    // The model picks the language: either the detected ISO code or, when
+    // detection failed, whatever language the latest user message is in.
+    const targetRule =
+      code.length === 2
+        ? `Write ONLY in "${code}".`
+        : 'Write in the SAME language as the quoted user message. Never use English unless the user message is English.';
 
     const latestUserMessage = this.findLatestUserText(ctx.request.messages);
 
@@ -152,13 +160,13 @@ export class InterpretStepService implements StepHandler {
         messages: [
           {
             role: 'system',
-            content: `You are writing a short clarifying question for a user whose language is "${language}". Write ONLY in "${language}". Never use English. The question should ask whether the user wants you to search the internet for more context, or answer based only on what is visible in the image. Keep it concise and natural.`,
+            content: `You translate short clarifying questions for a chat assistant. ${targetRule} Keep the question concise, natural, and faithful to the original meaning. Output ONLY the question.`,
           },
           {
             role: 'user',
             content: latestUserMessage
-              ? `Original user message (${language}): ${latestUserMessage}\n\nWrite the clarifying question in ${language} for: ${englishQuestion}`
-              : `Write the clarifying question in ${language} for: ${englishQuestion}`,
+              ? `User message: ${latestUserMessage}\n\nQuestion to translate: ${englishQuestion}`
+              : `Question to translate: ${englishQuestion}`,
           },
         ],
         keepAlive: ctx.request.keep_alive,

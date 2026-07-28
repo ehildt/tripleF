@@ -83,4 +83,69 @@ describe('toPromptMessage', () => {
       content: '',
     });
   });
+
+  it('flattens assistant content that holds raw response JSON', () => {
+    const exchange = {
+      id: 'ex-6',
+      role: 'assistant',
+      content: JSON.stringify({
+        title: 'Legacy article',
+        sectionContent: 'Persisted before harnessData existed.',
+      }),
+      harnessTemplate: 'article',
+      status: 'done',
+      timestamp: 6,
+    } as const;
+
+    const result = toPromptMessage(exchange as any);
+    expect(result.content).toContain('Title: Legacy article');
+    expect(result.content).toContain('Persisted before harnessData existed.');
+    expect(result.content).not.toContain('{');
+  });
+
+  it('drops assistant content that looks like corrupted response JSON', () => {
+    const exchange = {
+      id: 'ex-7',
+      role: 'assistant',
+      content: '{"title": "Truncated", "sectionContent": "unterminated',
+      status: 'done',
+      timestamp: 7,
+    } as const;
+
+    expect(toPromptMessage(exchange as any)).toEqual({
+      role: 'assistant',
+      content: '',
+    });
+  });
+
+  it('keeps non-JSON assistant content as-is', () => {
+    const exchange = {
+      id: 'ex-8',
+      role: 'assistant',
+      content: 'Some error text',
+      status: 'done',
+      timestamp: 8,
+    } as const;
+
+    expect(toPromptMessage(exchange as any)).toEqual({
+      role: 'assistant',
+      content: 'Some error text',
+    });
+  });
+
+  it('appends attached image names to user turns', () => {
+    const exchange = {
+      id: 'ex-9',
+      role: 'user',
+      content: 'What is this?',
+      images: [{ name: 'photo.png', hash: 'abc' }],
+      status: 'done',
+      timestamp: 9,
+    } as const;
+
+    expect(toPromptMessage(exchange as any)).toEqual({
+      role: 'user',
+      content: 'What is this?\n\n[Attached images: photo.png]',
+    });
+  });
 });

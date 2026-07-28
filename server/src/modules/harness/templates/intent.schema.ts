@@ -88,7 +88,7 @@ export const IntentSchema = z.object({
     .string()
     .default('')
     .describe(
-      'Concise but complete summary of the prior conversation context that is relevant to the current user request. Empty if there is no relevant prior context.',
+      'Query-focused extraction of the prior conversation context that the latest user message references or depends on: established topics/entities, key facts from prior answers the follow-up builds on, user constraints, and — for imagelist/videolist follow-ups — the previously shown image/video URLs verbatim. Empty if there is no relevant prior context.',
     ),
 
   needsClarification: z

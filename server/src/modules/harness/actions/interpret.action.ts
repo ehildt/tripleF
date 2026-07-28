@@ -8,6 +8,7 @@ import {
   buildStructuredJsonPrompt,
   languageCorrectionPrompt,
 } from '../constants/structured-json-prompt.constant.js';
+import { buildClassifyTranscript } from '../helpers/build-classify-transcript.helper.js';
 import { enforceRequiredTools } from '../helpers/enforce-media-tools.helper.js';
 import { expandToolAliases } from '../helpers/expand-tool-aliases.helper.js';
 import { getEnabledToolNames } from '../helpers/get-enabled-tool-names.helper.js';
@@ -98,6 +99,7 @@ export class InterpretActionService {
           tools: intent.tools,
           plan: intent.plan,
           reasoning: intent.reasoning,
+          contextSummary: intent.contextSummary,
           clarification: intent.needsClarification,
           inputTokens: result.totalUsage?.inputTokens,
           outputTokens: result.totalUsage?.outputTokens,
@@ -127,18 +129,17 @@ export class InterpretActionService {
       }
     }
 
-    // All retries exhausted — fall back to default language.
+    // All retries exhausted — leave the language unset and let downstream
+    // steps mirror the user's latest message instead of forcing English.
     if (lastIntent) {
-      lastIntent.language = 'en';
       params.onIntent?.(lastIntent);
 
       this.stepLogger.warn(
         { requestId: params.requestId },
         'interpret',
-        'retries exhausted, falling back to default language',
+        'retries exhausted, language left unset',
         {
           model: params.model,
-          fallback: 'en',
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
         },
@@ -227,13 +228,37 @@ export class InterpretActionService {
     );
 
     const nonSystem = messages.filter((m) => m.role !== 'system');
-    const contextMessages = hasImages
-      ? this.buildImageContext(nonSystem)
-      : nonSystem.slice(-4);
+
+    // The interpret step is the context gatekeeper: it derives the
+    // query-focused contextSummary that downstream steps rely on, so it must
+    // see the full conversation. Earlier turns move into a delimited
+    // transcript inside the system message — reference-only data that the
+    // classifier cannot confuse with the current request, which stays as
+    // the final user message.
+    const latestUserIndex = nonSystem.findLastIndex((m) => m.role === 'user');
+    const latestUser =
+      latestUserIndex >= 0 ? nonSystem[latestUserIndex] : undefined;
+
+    const transcriptSource = hasImages
+      ? nonSystem.filter((m) => m.role === 'assistant')
+      : nonSystem.slice(
+          0,
+          latestUserIndex < 0 ? nonSystem.length : latestUserIndex,
+        );
+    const transcript = buildClassifyTranscript(transcriptSource);
+
+    const latestUserContent = hasImages
+      ? this.buildImageUserContent(nonSystem)
+      : (latestUser?.content ?? '');
 
     return [
-      { role: 'system' as const, content: systemContent },
-      ...contextMessages,
+      {
+        role: 'system' as const,
+        content: [systemContent, transcript].filter(Boolean).join('\n\n'),
+      },
+      ...(latestUserContent
+        ? [{ role: 'user' as const, content: latestUserContent }]
+        : []),
     ];
   }
 
@@ -258,23 +283,16 @@ export class InterpretActionService {
   }
 
   /**
-   * For image tasks we keep a compacted version of the conversation context
-   * plus the latest user text prompt as the actual image instruction.
+   * Latest user text plus the attachment marker, so the classifier knows
+   * the current request carries images without sending the images.
    */
-  private buildImageContext(messages: InputMessage[]): InputMessage[] {
+  private buildImageUserContent(messages: InputMessage[]): string {
     const userMessages = messages.filter((m) => m.role === 'user');
-    const latestUser = userMessages.at(-1);
+    const latestText = userMessages.at(-1)?.content ?? '';
 
-    const imageMessage = userMessages.findLast(
-      (m) => m.images && m.images.length > 0,
-    );
-    const imageCount = imageMessage?.images?.length ?? 0;
-
-    const latestText = latestUser?.content ?? '';
-
-    const assistantMessages = messages
-      .filter((m) => m.role === 'assistant')
-      .map((m) => ({ ...m, images: undefined }));
+    const imageCount =
+      userMessages.findLast((m) => m.images && m.images.length > 0)?.images
+        ?.length ?? 0;
 
     const marker =
       imageCount > 0
@@ -282,11 +300,7 @@ export class InterpretActionService {
           ? ' [1 image attached]'
           : ` [${imageCount} images attached]`
         : '';
-    const userContent = [latestText, marker].filter(Boolean).join(' ');
 
-    return [
-      ...assistantMessages,
-      ...(userContent ? [{ role: 'user' as const, content: userContent }] : []),
-    ];
+    return [latestText, marker].filter(Boolean).join(' ');
   }
 }

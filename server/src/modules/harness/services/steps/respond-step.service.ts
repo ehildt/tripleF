@@ -86,6 +86,8 @@ export class RespondStepService implements StepHandler {
         onReasoningDelta: ctx.stream
           ? (delta) => this.emitReasoningDelta(ctx, delta)
           : undefined,
+        onJsonRetry: () =>
+          void this.emitStatus(ctx, 'Refining the response format…'),
       });
 
     const mediaCheckedData = this.applyResponseDataGuards(
@@ -178,7 +180,7 @@ export class RespondStepService implements StepHandler {
    * Only announce preparation when there are images to gather — statting the
    * storage objects below is the visible work of this step. Without images
    * the step goes straight to the model, whose reasoning stream announces
-   * itself ("Thinking…"), so a status here would just be a redundant
+   * itself ("Consolidating everything.."), so a status here would just be a redundant
    * "getting ready" beat between the previous step and the thinking.
    */
   private resolveRespondStatus(ctx: HarnessContext): string | undefined {

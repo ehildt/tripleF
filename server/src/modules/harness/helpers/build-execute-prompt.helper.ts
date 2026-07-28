@@ -145,8 +145,6 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
     })
     .replace(' at ', ', ');
 
-  const language = intent?.language ?? 'en';
-
   const imageCountLine = intent?.imageCount
     ? `imageCount: retrieve ${intent.imageCount} image(s). Only pass this count to *ImageSearch tools; if omitted, each tool defaults to 6.`
     : '';
@@ -161,7 +159,11 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
       : 'Do not pass a count to search tools unless imageCount or videoCount is provided above; each tool will default to 6.';
 
   const timestampInstruction = `Current date and time: ${timestamp}. Use this for time-sensitive queries.`;
-  const langInstruction = `Detected user language: ${language}. Use this language in all search queries and pass it to tools that accept a language/locale parameter (e.g. search_lang, hl, gl) when available.`;
+  // The language comes from the intent classifier; when it could not detect
+  // one, the tool model mirrors the user's latest message on its own.
+  const langInstruction = intent?.language
+    ? `Detected user language: ${intent.language}. Use this language in all search queries and pass it to tools that accept a language/locale parameter (e.g. search_lang, hl, gl) when available.`
+    : '';
 
   const queryGuidance =
     intent?.template === 'product'
