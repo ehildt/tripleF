@@ -6,8 +6,26 @@ export function buildIntentSelectionPrompt(toolNames: string[]): string {
 You ONLY classify and understand the user request.
 You do NOT answer the user.
 You MUST include \`reasoning\` — keep it concise (30 words or fewer).
-You MUST include \`contextSummary\` — a concise summary of prior conversation context relevant to the current request. Empty if no relevant context. The summary should be as long or short as needed to capture what the user has already established, but omit irrelevant filler.
+You MUST include \`contextSummary\` — a query-focused extraction of the prior conversation context that the latest user message references or depends on. Empty if no relevant context.
 You output ONLY valid JSON.
+
+CONTEXT SUMMARY RULES
+- The contextSummary replaces the conversation history for later pipeline steps. It must be self-sufficient.
+- Extract ONLY what the latest user request references or depends on. Omit everything else.
+- Always include: the established topic/entities verbatim, key facts from prior answers the follow-up builds on, and user-stated constraints or preferences.
+- Resolve short follow-ups ("the second one", "make it shorter", "more", "what about X"): spell out what they refer to from prior turns.
+- For imagelist/videolist follow-ups ("more images", "more videos"): include the previously shown image/video URLs verbatim so later steps can skip them.
+- For requests about specific prior content ("use the first image as hero", "expand point 2"): include the referenced items verbatim.
+- Write it in the language identified by the "language" field.
+
+TOPIC SWITCH RULES
+- Before extracting context, classify the relationship between the latest message and the prior turns:
+  → CONTINUATION: the latest message follows up, refines, or references the established topic (including short follow-ups like "more", "the second one", "what about X").
+  → NEW TOPIC: the latest message introduces a subject that does not depend on prior turns.
+- NEW TOPIC → contextSummary MUST be empty. Do not carry over any URLs, sources, entities, facts, or media references from prior turns. Treat the request as if the conversation started now.
+- CONTINUATION → extract only what the latest message references, per the CONTEXT SUMMARY RULES.
+- Example: turn 1 about dinosaurs, turn 2 about anime characters → NEW TOPIC, contextSummary="".
+- Example: turn 1 about the Gothic remake, turn 2 "show me images" → CONTINUATION, contextSummary names the Gothic remake.
 
 LANGUAGE RULES (ABSOLUTE)
 - Detect the language of the latest user message and write it into the "language" field as an ISO-639-1 code.
@@ -244,7 +262,8 @@ Follow-up media requests (user adds images/videos/news to established topic):
 - User: "only the videos, as a playlist" (after an article) → template: "videolist", tools: [serperVideoSearch]
 
 FOLLOW-UP / REFINEMENT RULES
-- Analyze the FULL conversation history, not just the latest message.
+- These rules apply when the latest message CONTINUES an earlier topic. For NEW TOPIC requests, classify the latest message on its own.
+- Resolve follow-ups against the full conversation history, not just the latest message.
 - The latest message may be short ("show me images", "add videos", "what about news?", "summarize", "evaluate")
   because it references prior context. Always look BACK at prior turns to understand intent.
 - A follow-up that builds on a previous topic should keep the SAME template as the prior response

@@ -4,6 +4,7 @@ import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { buildCorrectionPrompt } from '../helpers/build-correction-prompt.helper.js';
+import { selectStepHistory } from '../helpers/select-step-history.helper.js';
 import { getTemplatePlaceholders } from '../helpers/template-placeholders.constant.js';
 import { buildContentSystemPrompt } from '../prompts/content-system.prompt.js';
 import { resolveVariantInstructions } from '../prompts/variant-instructions.registry.js';
@@ -44,6 +45,7 @@ export class RespondActionService {
     abortSignal?: AbortSignal;
     onTextDelta?: (delta: string) => void;
     onReasoningDelta?: (delta: string) => void;
+    onJsonRetry?: (attempt: number) => void;
   }): Promise<RespondResult> {
     const executionMessages = this.buildExecutionMessages(params);
 
@@ -79,6 +81,7 @@ export class RespondActionService {
   }
 
   private buildExecutionMessages(params: {
+    requestId: string;
     intent: IntentResult;
     messages: InputMessage[];
     availableImages?: Array<Record<string, unknown>>;
@@ -108,10 +111,30 @@ export class RespondActionService {
     );
 
     if (!isImageTask) {
+      // Downstream steps consume the query-focused contextSummary (already
+      // injected into the execution system prompt) instead of the raw
+      // transcript — except when the history is short, the template recaps
+      // it, or free-form chat needs the last exchange for tone.
+      const selection = selectStepHistory({
+        messages: nonSystemMessages,
+        template: params.intent.template,
+      });
+
+      this.stepLogger.log(
+        { requestId: params.requestId },
+        'respond',
+        'history selected',
+        {
+          mode: selection.mode,
+          keptCount: selection.messages.length,
+          droppedCount: nonSystemMessages.length - selection.messages.length,
+        },
+      );
+
       return [
         { role: 'system', content: executionSystem },
         ...systemMessages,
-        ...nonSystemMessages,
+        ...selection.messages,
       ];
     }
 
@@ -184,6 +207,7 @@ export class RespondActionService {
       numCtx?: number;
       think?: ThinkMode;
       abortSignal?: AbortSignal;
+      onJsonRetry?: (attempt: number) => void;
     },
     baseMessages: InputMessage[],
   ): Promise<RespondResult> {
@@ -250,6 +274,8 @@ export class RespondActionService {
           params.intent.template,
         ),
       });
+
+      if (attempt < MAX_JSON_RETRIES) params.onJsonRetry?.(attempt + 1);
     }
 
     throw new Error(
@@ -271,6 +297,7 @@ export class RespondActionService {
       abortSignal?: AbortSignal;
       onTextDelta?: (delta: string) => void;
       onReasoningDelta?: (delta: string) => void;
+      onJsonRetry?: (attempt: number) => void;
     },
     messages: InputMessage[],
   ): Promise<RespondResult> {
@@ -315,6 +342,7 @@ export class RespondActionService {
             preview: content.slice(0, 500),
           },
         );
+        params.onJsonRetry?.(1);
         return this.validateWithRetries(params, messages);
       }
 

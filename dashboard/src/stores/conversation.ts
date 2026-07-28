@@ -449,11 +449,8 @@ export const useConversationStore = defineStore('conversation', () => {
     const roomId = conversation.roomId;
 
     const compactPayload = conversation.exchanges
-      .filter((e) => e.content.trim())
-      .map((e) => ({
-        role: e.role,
-        content: e.content,
-      }));
+      .map((e) => toPromptMessage(e))
+      .filter((m) => m.content.trim());
 
     conversation.exchanges = [];
 

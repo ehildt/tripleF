@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Pulsing mono label that shows what the pipeline is currently doing while
- * an assistant exchange is pending ("Thinking…", grouped tool activity, or
+ * an assistant exchange is pending ("Consolidating everything..", grouped tool activity, or
  * the current step status).
  */
 defineProps<{

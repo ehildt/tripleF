@@ -7,6 +7,7 @@ import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
+import { buildContextSummarySection } from '../helpers/build-context-summary-section.helper.js';
 import {
   buildFallbackInput,
   buildImageExecutePrompt,
@@ -17,6 +18,7 @@ import {
   resolveToolCategory,
   type ToolCategory,
 } from '../helpers/resolve-tool-category.helper.js';
+import { selectStepHistory } from '../helpers/select-step-history.helper.js';
 import { type VariantName } from '../helpers/tool-registry.constants.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
@@ -312,7 +314,19 @@ export class ExecuteActionService {
 
     const imageInventory = this.buildImageInventory(buffers, meta);
 
-    const systemContent = [baseSystem, executePrompt, imageInventory]
+    // Downstream steps see the query-focused context the interpret step
+    // derived, not the full transcript.
+    const contextSummary = ctx.outputs.intent?.contextSummary?.trim();
+    const contextSection = contextSummary
+      ? buildContextSummarySection(contextSummary)
+      : '';
+
+    const systemContent = [
+      baseSystem,
+      executePrompt,
+      imageInventory,
+      contextSection,
+    ]
       .filter(Boolean)
       .join('\n\n');
 
@@ -337,9 +351,21 @@ export class ExecuteActionService {
     ctx: HarnessContext,
     buffers: Buffer[],
   ): InputMessage[] {
-    const conversation = ctx.request.messages.filter(
+    const fullConversation = ctx.request.messages.filter(
       (m) => m.role !== 'system',
     );
+    const selection = selectStepHistory({
+      messages: fullConversation,
+      template: ctx.outputs.intent?.template,
+    });
+
+    this.stepLogger.log(ctx, 'execute', 'history selected', {
+      mode: selection.mode,
+      keptCount: selection.messages.length,
+      droppedCount: fullConversation.length - selection.messages.length,
+    });
+
+    const conversation = selection.messages;
 
     if (buffers.length === 0) return conversation;
 
