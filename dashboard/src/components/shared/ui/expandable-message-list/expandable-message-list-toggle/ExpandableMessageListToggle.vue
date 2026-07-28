@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown, SendToBack, Trash2 } from '@lucide/vue';
+import { ChevronDown, GitBranch, SendToBack, Trash2 } from '@lucide/vue';
 
 function stripHtml(html: string): string {
   let result = '';
@@ -22,12 +22,14 @@ withDefaults(
     included?: boolean;
     contextPercent?: string;
     showRole?: boolean;
+    showBranch?: boolean;
   }>(),
   {
     renderHtml: undefined,
     included: undefined,
     contextPercent: undefined,
     showRole: true,
+    showBranch: false,
   },
 );
 
@@ -36,6 +38,7 @@ defineEmits<{
   select: [];
   toggleInclude: [];
   deleteItem: [];
+  branchOut: [];
 }>();
 </script>
 
@@ -79,6 +82,16 @@ defineEmits<{
         @click.stop="$emit('toggleInclude')"
       >
         <SendToBack class="expandable-message-list__include-icon" />
+      </button>
+      <button
+        v-if="showBranch"
+        type="button"
+        class="expandable-message-list__toggle-branch"
+        title="Branch out into a new conversation"
+        aria-label="Branch out into a new conversation"
+        @click.stop="$emit('branchOut')"
+      >
+        <GitBranch class="expandable-message-list__include-icon" />
       </button>
       <button
         v-if="included !== undefined"
@@ -199,6 +212,22 @@ defineEmits<{
 
 .expandable-message-list__toggle-delete:hover {
   color: var(--color-status-error);
+}
+
+.expandable-message-list__toggle-branch {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-0-5);
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandable-message-list__toggle-branch:hover {
+  color: var(--color-accent-primary);
 }
 
 .expandable-message-list__include-icon {

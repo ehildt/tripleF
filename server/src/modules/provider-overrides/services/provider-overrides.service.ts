@@ -2,10 +2,13 @@ import { Injectable } from '@nestjs/common';
 
 import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
+import type { SourcesConfig } from '../configs/sources-config.adapter.js';
+import { SourcesConfigService } from '../configs/sources-config.service.js';
 import { isMaskedApiKey, maskApiKey } from '../helpers/mask-api-key.helper.js';
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
+  sources: SourcesConfig;
 }
 
 @Injectable()
@@ -13,9 +16,13 @@ export class ProviderOverridesService {
   private snapshot: ProviderOverridesSnapshot;
   private overrides: Record<string, any> = {};
 
-  constructor(private readonly serperCfg: SerperConfigService) {
+  constructor(
+    private readonly serperCfg: SerperConfigService,
+    private readonly sourcesCfg: SourcesConfigService,
+  ) {
     this.snapshot = {
       serper: this.serperCfg.config,
+      sources: this.sourcesCfg.config,
     };
   }
 
@@ -90,6 +97,7 @@ export class ProviderOverridesService {
     // snapshot object would permanently pollute the pristine env config.
     const result: ProviderOverridesSnapshot = {
       serper: { ...snapshot.serper },
+      sources: { ...snapshot.sources },
     };
     for (const [provider, values] of Object.entries(this.overrides)) {
       if (!(provider in result)) continue;

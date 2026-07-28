@@ -55,6 +55,7 @@ const {
   messageListItems,
   toggleUserExchangeIncluded,
   deleteUserExchange,
+  branchUserExchange,
 } = useChatConversation();
 
 const { filteredThinkOptions, selectThink } = useChatThink(
@@ -285,6 +286,7 @@ defineExpose({ actionBarRef });
     @prompt-click="onPromptClick"
     @toggle-include="toggleUserExchangeIncluded"
     @delete-item="deleteUserExchange"
+    @branch-out="branchUserExchange"
   />
 
   <FloatingPlayer />

@@ -8,9 +8,18 @@ const CSS_DOT_RADIUS = 1.5;
 const CSS_BASE_SPEED = 0.6;
 const MAX_LINE_OPACITY = 0.25;
 const DOT_OPACITY = 0.7;
-const PARTICLE_LIFETIME_MS = 6000;
 const PARTICLE_FADE_IN_MS = 900;
 const PARTICLE_FADE_OUT_MS = 900;
+/**
+ * Per-particle random lifetime and trickled respawn: a frame stall (hidden
+ * tab, CPU pause) expires many dots in the same rAF tick. Respawning them
+ * all with birth=now would lock them into one synchronized lifecycle — they
+ * would fade in and out as a group forever. Random lifetimes plus a random
+ * appear-delay spread every batch out again.
+ */
+const PARTICLE_LIFETIME_MIN_MS = 4000;
+const PARTICLE_LIFETIME_MAX_MS = 8000;
+const RESPAWN_DELAY_MAX_MS = 2000;
 
 interface Particle {
   x: number;
@@ -18,6 +27,7 @@ interface Particle {
   vx: number;
   vy: number;
   birth: number;
+  lifetime: number;
 }
 
 /**
@@ -50,16 +60,41 @@ export function useConstellationAnimation(
     const styles = getComputedStyle(root);
     dotColor =
       styles.getPropertyValue('--color-fg-secondary').trim() || dotColor;
-    lineColor = styles.getPropertyValue('--color-fg-muted').trim() || lineColor;
+    // Lines carry the selected theme accent; dots stay a neutral star-field.
+    lineColor =
+      styles.getPropertyValue('--color-accent-primary').trim() || lineColor;
+  }
+
+  /** Random float in [min, max) — organic visuals, predictability unneeded. */
+  function randomBetween(min: number, max: number): number {
+    // eslint-disable-next-line sonarjs/pseudo-random
+    return min + Math.random() * (max - min);
+  }
+
+  /** Respawn delay: trickled unless immediate or reduced-motion is set. */
+  function computeRespawnDelay(immediate?: boolean): number {
+    if (immediate || isReducedMotionPreferred()) return 0;
+    return randomBetween(0, RESPAWN_DELAY_MAX_MS);
   }
 
   /* Random initial position and direction are required for the organic
      wandering-dot visual effect; predictability is not a concern here. */
-  function createParticle(now: number): Particle {
+  function createParticle(
+    now: number,
+    opts?: { immediate?: boolean },
+  ): Particle {
     // eslint-disable-next-line sonarjs/pseudo-random
     const angle = Math.random() * Math.PI * 2;
     // eslint-disable-next-line sonarjs/pseudo-random
     const speed = (Math.random() * 0.5 + 0.5) * CSS_BASE_SPEED * dpr;
+
+    const lifetime = randomBetween(
+      PARTICLE_LIFETIME_MIN_MS,
+      PARTICLE_LIFETIME_MAX_MS,
+    );
+    // Respawns trickle in over a short window so batch expiries after a
+    // frame stall do not reappear (and re-expire) as one synchronized wave.
+    const delay = computeRespawnDelay(opts?.immediate);
 
     return {
       // eslint-disable-next-line sonarjs/pseudo-random
@@ -68,17 +103,18 @@ export function useConstellationAnimation(
       y: Math.random() * canvasHeight,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
-      birth: now,
+      birth: now + delay,
+      lifetime,
     };
   }
 
   function initParticles(now: number) {
     particles = Array.from({ length: CSS_PARTICLE_COUNT }, () => {
-      const particle = createParticle(now);
-      // Stagger initial births across the full lifetime so dots fade in and
-      // out independently instead of in one synchronized pulse.
+      const particle = createParticle(now, { immediate: true });
+      // Stagger initial births across each dot's own lifetime so they fade
+      // in and out independently instead of in one synchronized pulse.
       // eslint-disable-next-line sonarjs/pseudo-random
-      particle.birth = now - Math.random() * PARTICLE_LIFETIME_MS;
+      particle.birth = now - Math.random() * particle.lifetime;
       return particle;
     });
   }
@@ -108,7 +144,9 @@ export function useConstellationAnimation(
     for (const particle of particles) {
       const age = now - particle.birth;
 
-      if (age >= PARTICLE_LIFETIME_MS) {
+      if (age < 0) continue; // waiting to appear: invisible, do not move
+
+      if (age >= particle.lifetime) {
         Object.assign(particle, createParticle(now));
         continue;
       }
@@ -128,12 +166,13 @@ export function useConstellationAnimation(
     }
   }
 
-  function calcParticleOpacity(age: number): number {
+  function calcParticleOpacity(age: number, lifetime: number): number {
+    if (age < 0) return 0;
     if (age < PARTICLE_FADE_IN_MS) {
       return age / PARTICLE_FADE_IN_MS;
     }
-    if (age > PARTICLE_LIFETIME_MS - PARTICLE_FADE_OUT_MS) {
-      return (PARTICLE_LIFETIME_MS - age) / PARTICLE_FADE_OUT_MS;
+    if (age > lifetime - PARTICLE_FADE_OUT_MS) {
+      return (lifetime - age) / PARTICLE_FADE_OUT_MS;
     }
     return 1;
   }
@@ -155,9 +194,11 @@ export function useConstellationAnimation(
 
         const age1 = now - p1.birth;
         const age2 = now - p2.birth;
+        if (age1 < 0 || age2 < 0) continue; // either dot still waiting
+
         const particleOpacity = Math.min(
-          calcParticleOpacity(age1),
-          calcParticleOpacity(age2),
+          calcParticleOpacity(age1, p1.lifetime),
+          calcParticleOpacity(age2, p2.lifetime),
         );
         const distanceOpacity = calcConnectionOpacity(distance, maxDistance);
         const opacity = distanceOpacity * particleOpacity * MAX_LINE_OPACITY;
@@ -181,7 +222,8 @@ export function useConstellationAnimation(
 
     for (const particle of particles) {
       const age = now - particle.birth;
-      const opacity = calcParticleOpacity(age) * DOT_OPACITY;
+      const opacity = calcParticleOpacity(age, particle.lifetime) * DOT_OPACITY;
+      if (opacity <= 0) continue;
 
       ctx.beginPath();
       ctx.globalAlpha = opacity;
@@ -213,7 +255,14 @@ export function useConstellationAnimation(
     });
   }
 
+  /**
+   * Idempotent: tears down any running loop and observers first. Called
+   * from the canvas watch and onMounted, so without the teardown both would
+   * drive concurrent rAF loops (dots drifting twice as fast).
+   */
   function start() {
+    stop();
+
     const canvas = canvasRef.value;
     if (!canvas) return;
 
@@ -226,6 +275,8 @@ export function useConstellationAnimation(
       initParticles(performance.now());
     }
 
+    observeResize();
+    observeThemeChanges();
     scheduleFrame();
   }
 
@@ -276,8 +327,6 @@ export function useConstellationAnimation(
   if (getCurrentInstance()) {
     onMounted(() => {
       start();
-      observeResize();
-      observeThemeChanges();
     });
 
     onUnmounted(() => {

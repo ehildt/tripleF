@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { applySourcePolicy } from '../helpers/apply-source-policy.helper.js';
 import { buildFinalMessagesForSanitize } from '../helpers/build-final-messages.helper.js';
 import { collectHistoryVideoUrls } from '../helpers/collect-history-video-urls.helper.js';
 import { dedupeImagesByFingerprint } from '../helpers/dedupe-images-by-fingerprint.helper.js';
@@ -50,6 +52,7 @@ export class SanitizeActionService {
     @Inject(CloudImageIngestionService)
     private readonly cloudImageIngestion: CloudImageIngestionService,
     private readonly stepLogger: HarnessStepLogger,
+    private readonly providerOverrides: ProviderOverridesService,
   ) {}
 
   async execute(
@@ -179,8 +182,19 @@ export class SanitizeActionService {
       : sanitizedToolResults;
 
     // 6. Build the final message payload with tool context for the response model.
-    const articles = extractArticles(finalToolResults);
-    const references = extractReferences(finalToolResults);
+    // Dynamic source policy (SysCtl): preferred domains rank first, blocked
+    // domains are dropped entirely — before the response model ever sees them.
+    const sources = this.providerOverrides.getConfig().sources;
+    const articles = applySourcePolicy(
+      extractArticles(finalToolResults),
+      sources,
+    );
+    const references = applySourcePolicy(
+      extractReferences(finalToolResults) as Array<Record<string, unknown>>,
+      sources,
+    );
+    verifiedImages = applySourcePolicy(verifiedImages, sources);
+    verifiedVideos = applySourcePolicy(verifiedVideos, sources);
     const shopOffers = extractShopOffers(finalToolResults);
     const reviews = extractReviews(finalToolResults);
     const places = extractPlaces(finalToolResults);

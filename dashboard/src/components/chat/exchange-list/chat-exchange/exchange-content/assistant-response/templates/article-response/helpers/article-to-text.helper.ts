@@ -1,6 +1,7 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import { buildSourceLine } from '../../../composables/helpers/build-source-line.helper';
+import { appendLabeledFields } from '../../../composables/helpers/append-labeled-fields.helper';
+import { buildSourcesLines } from '../../../composables/helpers/build-sources-lines.helper';
 
 function appendList(
   parts: string[],
@@ -23,15 +24,11 @@ function appendList(
 export function articleToText(data: HarnessResponseData): string {
   const parts: string[] = [];
 
-  const fields: Array<[string, string | undefined]> = [
+  appendLabeledFields(parts, [
     ['Category', data.category],
     ['Title', data.title],
     ['Subtitle', data.subtitle],
-  ];
-  for (const [label, value] of fields) {
-    const trimmed = value?.trim();
-    if (trimmed) parts.push(`${label}: ${trimmed}`);
-  }
+  ]);
 
   if (data.summary?.trim()) parts.push(data.summary.trim());
   const sectionTitle = data.sectionTitle?.trim();
@@ -45,19 +42,22 @@ export function articleToText(data: HarnessResponseData): string {
   const conclusion = data.conclusion?.trim();
   if (conclusion) parts.push(`Conclusion: ${conclusion}`);
 
-  if (data.sources?.length) {
-    parts.push('Sources:');
-    for (const source of data.sources) parts.push(buildSourceLine(source));
-  }
-
-  if (data.cards?.length) {
-    parts.push('Article cards:');
-    for (const card of data.cards) {
-      const label = card.title?.trim() || card.linkLabel?.trim() || 'card';
-      const urlPart = card.url ? ` (${card.url})` : '';
-      parts.push(`- ${label}${urlPart}`);
-    }
-  }
+  appendCards(parts, data.cards);
+  parts.push(...buildSourcesLines(data.sources));
 
   return parts.join('\n\n');
+}
+
+/** One plain-text line per article card: label, with the URL in parens. */
+function appendCards(
+  parts: string[],
+  cards: HarnessResponseData['cards'],
+): void {
+  if (!cards?.length) return;
+  parts.push('Article cards:');
+  for (const card of cards) {
+    const label = card.title?.trim() || card.linkLabel?.trim() || 'card';
+    const urlPart = card.url ? ` (${card.url})` : '';
+    parts.push(`- ${label}${urlPart}`);
+  }
 }

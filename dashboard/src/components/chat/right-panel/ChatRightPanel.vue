@@ -38,6 +38,7 @@ const emit = defineEmits<{
   promptClick: [index: number];
   toggleInclude: [index: number];
   deleteItem: [index: number];
+  branchOut: [index: number];
 }>();
 
 const {
@@ -218,6 +219,7 @@ const {
         :on-click="onPromptClick"
         :on-toggle-include="(i: number) => emit('toggleInclude', i)"
         :on-delete-item="(i: number) => emit('deleteItem', i)"
+        :on-branch-out="(i: number) => emit('branchOut', i)"
         :expand-all="true"
         :show-role="false"
         class="chat-right-panel__scrollable"

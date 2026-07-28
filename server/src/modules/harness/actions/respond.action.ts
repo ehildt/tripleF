@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { buildCorrectionPrompt } from '../helpers/build-correction-prompt.helper.js';
 import { selectStepHistory } from '../helpers/select-step-history.helper.js';
 import { getTemplatePlaceholders } from '../helpers/template-placeholders.constant.js';
@@ -27,6 +28,7 @@ export class RespondActionService {
     private readonly aiSdkService: AiSdkService,
     private readonly responseValidator: ResponseValidatorService,
     private readonly stepLogger: HarnessStepLogger,
+    private readonly providerOverrides: ProviderOverridesService,
   ) {}
 
   /**
@@ -99,6 +101,7 @@ export class RespondActionService {
       isImageTask,
       contextSummary: params.intent.contextSummary,
       language: params.intent.language ?? undefined,
+      sources: this.providerOverrides.getConfig().sources,
     });
 
     const systemMessages = params.messages.filter((m) => m.role === 'system');

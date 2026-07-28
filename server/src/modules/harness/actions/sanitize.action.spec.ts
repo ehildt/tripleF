@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
@@ -18,6 +19,14 @@ describe('SanitizeActionService', () => {
         {
           provide: CloudImageIngestionService,
           useValue: { ingest: vi.fn().mockResolvedValue([]) },
+        },
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              sources: { preferred: [], blocked: [] },
+            }),
+          },
         },
         {
           provide: HarnessStepLogger,

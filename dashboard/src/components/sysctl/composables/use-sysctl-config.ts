@@ -6,6 +6,7 @@ import { useToast } from '../../../composables/use-toast';
 import { getPersistentSocketSessionId } from '../../../stores/helpers/get-persistent-socket-session-id.helper';
 import { clampSysctlResults } from '../helpers/clamp-sysctl-results.helper';
 import type {
+  ConfigSectionKey,
   ProviderConfig,
   ProviderKey,
   ProviderOverridesSnapshot,
@@ -32,8 +33,9 @@ function mergeSessionOverrides(
 ): ProviderOverridesSnapshot {
   const result: ProviderOverridesSnapshot = { ...snapshot };
   for (const [provider, values] of Object.entries(sessionOverrides)) {
-    const target = result[provider as keyof ProviderOverridesSnapshot] as
-      Record<string, unknown> | undefined;
+    const target = result[
+      provider as keyof ProviderOverridesSnapshot
+    ] as unknown as Record<string, unknown> | undefined;
     if (!target) continue;
     for (const [key, val] of Object.entries(values)) {
       if (key in target) target[key] = val;
@@ -65,6 +67,10 @@ function applyFrontendDefaults(
 ): ProviderOverridesSnapshot {
   return {
     serper: { ...snapshot.serper, enabled: snapshot.serper.enabled ?? false },
+    sources: {
+      preferred: snapshot.sources?.preferred ?? [],
+      blocked: snapshot.sources?.blocked ?? [],
+    },
   };
 }
 
@@ -102,7 +108,7 @@ export function useSysctlConfig() {
    * the server to drop its global overrides and refreshes from the masked
    * config it returns.
    */
-  async function resetProvider(provider: ProviderKey) {
+  async function resetProvider(provider: ConfigSectionKey) {
     clearSessionOverrides(provider);
     await persistSessionOverrides();
     try {
@@ -197,6 +203,7 @@ export function useSysctlConfig() {
     hasError,
     refreshConfig,
     resetProvider,
+    patchConfig,
     toggleProviderEnabled,
     toggleEndpoint,
     updateEndpointResults,
