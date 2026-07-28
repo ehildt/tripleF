@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, LoaderCircle } from '@lucide/vue';
+import { LoaderCircle } from '@lucide/vue';
 
 import type { OllamaModel } from '../../../../../stores/models';
 
@@ -34,11 +34,6 @@ defineEmits<{
         :class="{ 'model-list-item--selected': m.model === selectedModel }"
         @click="$emit('select', m.model)"
       >
-        <Check
-          v-if="m.model === selectedModel"
-          class="model-list-item__check"
-        />
-        <span v-else class="model-list-item__check-placeholder" />
         <div class="model-list-item__info">
           <span>{{ m.model }}</span>
           <span
@@ -75,7 +70,6 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-2);
   padding: var(--spacing-3) 0;
 }
 
@@ -93,14 +87,11 @@ defineEmits<{
 }
 
 .model-list-item {
-  width: 100%;
   padding: var(--spacing-1-5) var(--spacing-3);
   text-align: left;
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  display: flex;
   align-items: center;
-  gap: var(--spacing-2);
   color: var(--color-fg-secondary);
   min-height: 2.5rem;
   transition:
@@ -115,18 +106,6 @@ defineEmits<{
 
 .model-list-item--selected {
   color: var(--color-accent-primary);
-}
-
-.model-list-item__check {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex-shrink: 0;
-}
-
-.model-list-item__check-placeholder {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex-shrink: 0;
 }
 
 .model-list-item__info {

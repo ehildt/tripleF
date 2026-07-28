@@ -1,9 +1,8 @@
-import { HarnessStreamQueryDto } from '../../harness/dtos/harness-stream-query.dto.js';
 import { SharpDefaults } from '../configs/sharp-config.adapter.js';
 
-import { buildSharpOptions } from './sharp-options.helper.js';
+import { parsePreprocessingPayload } from './sharp-options.helper.js';
 
-describe('buildSharpOptions', () => {
+describe('parsePreprocessingPayload', () => {
   const defaults: SharpDefaults = {
     enabled: false,
     resize: {
@@ -33,28 +32,18 @@ describe('buildSharpOptions', () => {
     },
   };
 
-  it('returns undefined when preprocessing is disabled', () => {
-    const query: HarnessStreamQueryDto = {
-      requestId: 'req-1',
-      stream: false,
-      event: 'harness',
-      think: 'medium',
-      pproc_enabled: false,
-    };
+  it('returns undefined when the payload is missing', () => {
+    expect(parsePreprocessingPayload(undefined, defaults)).toBeUndefined();
+  });
 
-    expect(buildSharpOptions(query, defaults)).toBeUndefined();
+  it('returns undefined when preprocessing is disabled', () => {
+    expect(
+      parsePreprocessingPayload({ enabled: false }, defaults),
+    ).toBeUndefined();
   });
 
   it('returns options with defaults when enabled without overrides', () => {
-    const query: HarnessStreamQueryDto = {
-      requestId: 'req-1',
-      stream: false,
-      event: 'harness',
-      think: 'medium',
-      pproc_enabled: true,
-    };
-
-    expect(buildSharpOptions(query, defaults)).toEqual({
+    expect(parsePreprocessingPayload({ enabled: true }, defaults)).toEqual({
       enabled: true,
       resize: defaults.resize,
       variants: defaults.variants,
@@ -73,34 +62,39 @@ describe('buildSharpOptions', () => {
     });
   });
 
-  it('overrides defaults with query params', () => {
-    const query: HarnessStreamQueryDto = {
-      requestId: 'req-1',
-      stream: false,
-      event: 'harness',
-      think: 'medium',
-      pproc_enabled: true,
-      pproc_resize_maxWidth: 512,
-      pproc_resize_maxHeight: 384,
-      pproc_resize_withoutEnlargement: false,
-      pproc_original: false,
-      pproc_grayscale: false,
-      pproc_denoised: false,
-      pproc_sharpened: true,
-      pproc_clahe: false,
-      pproc_blurSigma: 1.5,
-      pproc_sharpenSigma: 2,
-      pproc_sharpenM1: 3,
-      pproc_sharpenM2: 4,
-      pproc_brightnessLevel: 1.5,
-      pproc_claheWidth: 16,
-      pproc_claheHeight: 16,
-      pproc_claheMaxSlope: 5,
-      pproc_normalizeLower: 2,
-      pproc_normalizeUpper: 98,
-    };
-
-    expect(buildSharpOptions(query, defaults)).toEqual({
+  it('overrides defaults with payload values', () => {
+    expect(
+      parsePreprocessingPayload(
+        {
+          enabled: true,
+          resize: {
+            maxWidth: 512,
+            maxHeight: 384,
+            withoutEnlargement: false,
+          },
+          variants: {
+            original: false,
+            grayscale: false,
+            denoised: false,
+            sharpened: true,
+            clahe: false,
+          },
+          parameters: {
+            blurSigma: 1.5,
+            sharpenSigma: 2,
+            sharpenM1: 3,
+            sharpenM2: 4,
+            brightnessLevel: 1.5,
+            claheWidth: 16,
+            claheHeight: 16,
+            claheMaxSlope: 5,
+            normalizeLower: 2,
+            normalizeUpper: 98,
+          },
+        },
+        defaults,
+      ),
+    ).toEqual({
       enabled: true,
       resize: {
         maxWidth: 512,
@@ -130,16 +124,12 @@ describe('buildSharpOptions', () => {
   });
 
   it('keeps maxHeight null when not provided', () => {
-    const query: HarnessStreamQueryDto = {
-      requestId: 'req-1',
-      stream: false,
-      event: 'harness',
-      think: 'medium',
-      pproc_enabled: true,
-    };
+    const options = parsePreprocessingPayload(
+      { enabled: true, resize: { maxWidth: 512 } },
+      defaults,
+    );
 
-    const options = buildSharpOptions(query, defaults);
-
+    expect(options!.resize.maxWidth).toBe(512);
     expect(options!.resize.maxHeight).toBeNull();
   });
 });

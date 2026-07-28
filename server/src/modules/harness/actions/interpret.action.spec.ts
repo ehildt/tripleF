@@ -82,6 +82,7 @@ describe('InterpretActionService', () => {
 
     const result = await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'hi' }],
     });
 
@@ -106,6 +107,7 @@ describe('InterpretActionService', () => {
 
     const result = await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'Tell me about it' }],
     });
 
@@ -134,6 +136,7 @@ describe('InterpretActionService', () => {
 
     const result = await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [
         {
           role: 'user',
@@ -164,6 +167,7 @@ describe('InterpretActionService', () => {
 
     await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [
         {
           role: 'user',
@@ -194,14 +198,11 @@ describe('InterpretActionService', () => {
 
     await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [
         {
           role: 'user',
           content: 'das hier koennten diese goettinen sein?',
-        },
-        {
-          role: 'user',
-          content: 'Image(s):\ntest.png (hash: abc)',
           images: [Buffer.from('image')],
         },
       ],
@@ -221,6 +222,10 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
         {
           provide: AiSdkService,
           useValue: {
@@ -278,21 +283,25 @@ describe('InterpretActionService', () => {
 
     const result = await serviceWithTools.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'research topic' }],
     });
 
     expect(result.intent.template).toBe('article');
     expect(result.intent.tools).toContain('webSearch');
     expect(result.intent.tools).toContain('serperImageSearch');
-    expect(result.intent.tools).toContain('braveImageSearch');
     expect(result.intent.tools).toContain('serperVideoSearch');
-    expect(result.intent.tools).toContain('braveVideoSearch');
+    expect(result.intent.tools).toHaveLength(3);
   });
 
   it('adds enabled image and video search tools for news template', async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
         {
           provide: AiSdkService,
           useValue: {
@@ -350,6 +359,7 @@ describe('InterpretActionService', () => {
 
     const result = await serviceWithTools.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'latest news' }],
     });
 
@@ -376,6 +386,7 @@ describe('InterpretActionService', () => {
 
     const result = await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'hi' }],
     });
 
@@ -387,6 +398,10 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
         {
           provide: AiSdkService,
           useValue: {
@@ -444,6 +459,7 @@ describe('InterpretActionService', () => {
 
     const result = await serviceWithTools.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'online reviews' }],
     });
 
@@ -453,17 +469,19 @@ describe('InterpretActionService', () => {
         'webSearch',
         'serperImageSearch',
         'serperVideoSearch',
-        'braveImageSearch',
-        'braveVideoSearch',
       ]),
     );
-    expect(result.intent.tools).toHaveLength(5);
+    expect(result.intent.tools).toHaveLength(3);
   });
 
   it('defaults imageCount and videoCount to 6 when media tools are selected', async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
         {
           provide: AiSdkService,
           useValue: {
@@ -520,6 +538,7 @@ describe('InterpretActionService', () => {
 
     const result = await serviceWithTools.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'research topic' }],
     });
 
@@ -531,6 +550,10 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        {
+          provide: HarnessStepLogger,
+          useValue: { log: vi.fn(), warn: vi.fn() },
+        },
         {
           provide: AiSdkService,
           useValue: {
@@ -589,6 +612,7 @@ describe('InterpretActionService', () => {
 
     const result = await serviceWithTools.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'show me 7 images and 2 videos' }],
     });
 
@@ -602,6 +626,7 @@ describe('InterpretActionService', () => {
     await expect(
       service.execute({
         model: 'model',
+        requestId: 'req-1',
         messages: [{ role: 'user', content: 'hi' }],
       }),
     ).rejects.toThrow('Intent classification returned empty output');
@@ -615,6 +640,7 @@ describe('InterpretActionService', () => {
     await expect(
       service.execute({
         model: 'model',
+        requestId: 'req-1',
         messages: [{ role: 'user', content: 'hi' }],
       }),
     ).rejects.toThrow('Intent classification produced invalid JSON');
@@ -653,6 +679,7 @@ describe('InterpretActionService', () => {
 
     const result = await service.execute({
       model: 'model',
+      requestId: 'req-1',
       messages: [{ role: 'user', content: 'forschung thema' }],
     });
 

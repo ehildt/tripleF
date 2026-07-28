@@ -8,15 +8,13 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
-import { SearXNGConfigService } from '../../../configs/searxng-config.service.js';
+import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
 
 import { HealthService } from './health.service.js';
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
-import { SearXNGHealthIndicator } from './searxng-health-indicator.service.js';
 
 describe('HealthService', () => {
   let service: HealthService;
@@ -29,12 +27,6 @@ describe('HealthService', () => {
         HealthService,
         PostgresHealthIndicator,
         MinioHealthIndicator,
-        {
-          provide: SearXNGHealthIndicator,
-          useValue: {
-            check: vi.fn().mockResolvedValue({ status: 'up' }),
-          },
-        },
         {
           provide: DeadLetterRepository,
           useValue: {
@@ -92,12 +84,6 @@ describe('HealthService', () => {
             config: {
               host: 'http://localhost:11434/api',
             },
-          },
-        },
-        {
-          provide: SearXNGConfigService,
-          useValue: {
-            config: {},
           },
         },
         {
@@ -160,12 +146,6 @@ describe('HealthService', () => {
           PostgresHealthIndicator,
           MinioHealthIndicator,
           {
-            provide: SearXNGHealthIndicator,
-            useValue: {
-              check: vi.fn().mockResolvedValue({ status: 'up' }),
-            },
-          },
-          {
             provide: DeadLetterRepository,
             useValue: {
               ping: vi.fn().mockResolvedValue(undefined),
@@ -217,12 +197,6 @@ describe('HealthService', () => {
               config: {
                 host: 'http://localhost:11434/api',
               },
-            },
-          },
-          {
-            provide: SearXNGConfigService,
-            useValue: {
-              config: {},
             },
           },
           {

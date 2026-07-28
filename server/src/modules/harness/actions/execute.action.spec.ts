@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
+import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { ExecuteActionService } from './execute.action.js';
 
@@ -40,6 +41,14 @@ describe('ExecuteActionService', () => {
         {
           provide: OllamaConfigService,
           useValue: { config: { keepAlive: '5m' } },
+        },
+        {
+          provide: HarnessStepLogger,
+          useValue: {
+            log: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+          },
         },
       ],
     }).compile();
@@ -491,7 +500,11 @@ describe('ExecuteActionService', () => {
 
     const call = (aiSdkService.generateWithTools as any).mock.calls[0][0];
     expect(call.messages[0].content).toContain('image task');
+    expect(call.messages[0].content).toContain(
+      'Image attachment(s): 1. test.png',
+    );
     expect(call.messages[1].images).toHaveLength(1);
-    expect(call.messages[1].content).toContain('[1 image attached]');
+    // The "[N image attached]" marker is added by the interpret step, not here.
+    expect(call.messages[1].content).toBe('describe this');
   });
 });

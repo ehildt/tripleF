@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
+import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
@@ -155,6 +156,16 @@ describe('RespondActionService', () => {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
         },
+        {
+          provide: MediaUrlValidatorService,
+          useValue: {
+            validateUrls: vi
+              .fn()
+              .mockImplementation(async (urls: string[]) =>
+                urls.map((url) => ({ url, kind: 'unknown' })),
+              ),
+          },
+        },
       ],
     }).compile();
 
@@ -168,6 +179,7 @@ describe('RespondActionService', () => {
 
   it('returns generated JSON content for the text template', async () => {
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('text'),
       messages: [{ role: 'user', content: 'hi' }],
       model: 'model',
@@ -178,6 +190,7 @@ describe('RespondActionService', () => {
 
   it('returns generated JSON content for structured templates', async () => {
     const articleResult = await service.execute({
+      requestId: 'req-1',
       intent: intent('article'),
       messages: [{ role: 'user', content: 'hi' }],
       model: 'article-model',
@@ -188,6 +201,7 @@ describe('RespondActionService', () => {
 
   it('validates describe template JSON against its schema', async () => {
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('describe'),
       messages: [{ role: 'user', content: 'describe this' }],
       model: 'describe-model',
@@ -198,6 +212,7 @@ describe('RespondActionService', () => {
 
   it('validates compare template JSON against its schema', async () => {
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('compare'),
       messages: [{ role: 'user', content: 'compare these' }],
       model: 'compare-model',
@@ -208,6 +223,7 @@ describe('RespondActionService', () => {
 
   it('validates ocr template JSON against its schema', async () => {
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('ocr'),
       messages: [{ role: 'user', content: 'ocr this' }],
       model: 'ocr-model',
@@ -218,6 +234,7 @@ describe('RespondActionService', () => {
 
   it('validates news template JSON against its schema', async () => {
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('news'),
       messages: [{ role: 'user', content: 'latest news' }],
       model: 'news-model',
@@ -240,6 +257,7 @@ describe('RespondActionService', () => {
     });
 
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('describe'),
       messages: [{ role: 'user', content: 'describe this' }],
       model: 'model',
@@ -261,6 +279,7 @@ describe('RespondActionService', () => {
     });
 
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('describe'),
       messages: [{ role: 'user', content: 'describe this' }],
       model: 'model',
@@ -312,6 +331,7 @@ describe('RespondActionService', () => {
     });
 
     const result = await service.execute({
+      requestId: 'req-1',
       intent: intent('article'),
       messages: [{ role: 'user', content: 'hi' }],
       model: 'model',
@@ -329,6 +349,7 @@ describe('RespondActionService', () => {
 
     await expect(
       service.execute({
+        requestId: 'req-1',
         intent: intent('article'),
         messages: [{ role: 'user', content: 'hi' }],
         model: 'model',
@@ -338,6 +359,7 @@ describe('RespondActionService', () => {
 
   it('keeps conversation history for text tasks', async () => {
     await service.execute({
+      requestId: 'req-1',
       intent: intent('text'),
       messages: [
         { role: 'user', content: 'hello' },
@@ -356,6 +378,7 @@ describe('RespondActionService', () => {
   it('uses only the latest image-carrying user message for image tasks', async () => {
     const imageBuffer = Buffer.from('image');
     await service.execute({
+      requestId: 'req-1',
       intent: intent('describe'),
       messages: [
         { role: 'user', content: 'hello' },

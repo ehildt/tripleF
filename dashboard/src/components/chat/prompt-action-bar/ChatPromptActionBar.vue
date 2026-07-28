@@ -118,14 +118,22 @@ function onFileButtonMouseLeave() {
   background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
   padding: var(--spacing-3) var(--spacing-4);
+  opacity: 0.6;
   transition:
     border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    opacity 0.3s ease;
+}
+
+.chat-prompt-action-bar:hover {
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 .chat-prompt-action-bar:focus-within {
   border-color: var(--color-tab-rest);
   box-shadow: 0 0 0 1px var(--color-tab-rest);
+  opacity: 1;
 }
 
 .chat-prompt-action-bar__prompt {

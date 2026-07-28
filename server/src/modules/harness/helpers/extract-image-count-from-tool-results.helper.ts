@@ -5,8 +5,7 @@ export function extractImageCountFromToolResults(
   for (const tr of toolResults ?? []) {
     if (!tr.toolName.endsWith('ImageSearch')) continue;
     const data = tr.result as
-      | { results?: Array<{ imageUrl?: string }> }
-      | undefined;
+      { results?: Array<{ imageUrl?: string }> } | undefined;
     count += data?.results?.length ?? 0;
   }
   return count;

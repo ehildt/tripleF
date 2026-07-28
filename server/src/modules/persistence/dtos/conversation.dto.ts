@@ -11,6 +11,11 @@ import {
 } from 'class-validator';
 
 export class ConversationExchangeDto {
+  @ApiProperty({ example: 'exchange-id-1' })
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
   @ApiProperty({ example: 'user' })
   @IsString()
   @IsNotEmpty()
@@ -86,6 +91,32 @@ export class ConversationExchangeDto {
   @ApiPropertyOptional({
     type: 'array',
     items: { type: 'object' },
+    example: [{ name: 'search', category: 'web', status: 'start' }],
+  })
+  @IsOptional()
+  @IsArray()
+  toolCalls?: Array<Record<string, unknown>>;
+
+  @ApiPropertyOptional({ example: 'news' })
+  @IsOptional()
+  @IsString()
+  harnessTemplate?: string;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  harnessData?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ example: 'streamed text' })
+  @IsOptional()
+  @IsString()
+  text?: string;
+
+  @ApiPropertyOptional({
+    type: 'array',
+    items: { type: 'object' },
     example: [{ name: 'a.png', hash: 'abc123' }],
   })
   @IsOptional()
@@ -93,6 +124,16 @@ export class ConversationExchangeDto {
 }
 
 export class ConversationContentDto {
+  @ApiProperty({ example: 'conversation-id-1' })
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @ApiProperty({ example: 'conv-123' })
+  @IsString()
+  @IsNotEmpty()
+  conversationId!: string;
+
   @ApiPropertyOptional({ example: 'New Conversation' })
   @IsOptional()
   @IsString()
@@ -154,10 +195,27 @@ export class ConversationContentDto {
   @IsArray()
   uploadedImages?: Array<Record<string, unknown>>;
 
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: { type: 'boolean' },
+  })
+  @IsOptional()
+  imageSelectionSnapshot?: Record<string, boolean>;
+
   @ApiPropertyOptional({ type: 'array', items: { type: 'object' } })
   @IsOptional()
   @IsArray()
   subscriptions?: Array<Record<string, unknown>>;
+
+  @ApiPropertyOptional({ example: 1_700_000_000_000 })
+  @IsOptional()
+  @IsNumber()
+  createdAt?: number;
+
+  @ApiPropertyOptional({ example: 1_700_000_000_000 })
+  @IsOptional()
+  @IsNumber()
+  updatedAt?: number;
 }
 
 export class UpsertConversationDto {

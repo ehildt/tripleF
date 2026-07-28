@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MINIO_CONFIG } from '../../../constants/minio.constants.js';
+import { MINIO_CONFIG } from '../constants/minio.constants.js';
 
 import { MinioService } from './minio.service.js';
 

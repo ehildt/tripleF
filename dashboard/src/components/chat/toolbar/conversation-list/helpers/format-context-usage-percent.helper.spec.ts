@@ -12,11 +12,11 @@ describe('formatContextUsagePercent', () => {
       {
         role: 'assistant',
         status: 'done',
-        promptEvalCount: 100,
+        inputTokenDelta: 100,
         evalCount: 200,
       },
     ];
-    expect(formatContextUsagePercent(exchanges as any, '1000')).toBe('30%');
+    expect(formatContextUsagePercent(exchanges as any, '1000')).toBe('30.00%');
   });
 
   it('returns "--" when numCtx is "0"', () => {

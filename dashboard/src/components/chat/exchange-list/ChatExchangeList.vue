@@ -57,7 +57,8 @@ defineExpose({ scrollToExchange });
 <template>
   <div class="chat-exchange-list panel-glow">
     <ChatConversationHeader
-      :title="activeConversation?.title ?? 'No conversation'"
+      v-if="activeConversation"
+      :title="activeConversation.title"
       :conversation-id="activeConversationId"
       @delete="emit('deleteConversation', activeConversationId)"
     />

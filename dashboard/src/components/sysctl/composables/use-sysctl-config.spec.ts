@@ -21,20 +21,34 @@ const baseSnapshot = {
   },
 };
 
-function mockFetch(response: unknown, ok = true) {
-  return vi.fn(async () => ({
-    ok,
-    json: async () => response,
-  }));
+function mockFetchByUrl(configOverrides?: Record<string, unknown>) {
+  return vi.fn(async (input: unknown, init?: { method?: string }) => {
+    const url = String(input);
+    if (url.includes('/api/v1/configs/')) {
+      if (init?.method === 'PUT') {
+        return { ok: true, status: 200, json: async () => ({}) };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ providerOverrides: configOverrides ?? {} }),
+      };
+    }
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ...baseSnapshot,
+        serper: { ...baseSnapshot.serper },
+      }),
+    };
+  });
 }
 
 describe('useSysctlConfig', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.stubGlobal(
-      'fetch',
-      mockFetch({ ...baseSnapshot, serper: { ...baseSnapshot.serper } }),
-    );
+    vi.stubGlobal('fetch', mockFetchByUrl());
   });
 
   afterEach(() => {
@@ -52,25 +66,17 @@ describe('useSysctlConfig', () => {
     );
   });
 
-  it('applies saved overrides and syncs them to the server', async () => {
-    localStorage.setItem(
-      'provider-overrides',
-      JSON.stringify({ serper: { web: { enabled: false, results: 3 } } }),
+  it('applies server-persisted overrides on refresh', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockFetchByUrl({ serper: { web: { enabled: false, results: 3 } } }),
     );
     const { config, refreshConfig } = useSysctlConfig();
     await refreshConfig();
+
     const web = config.value?.serper.web;
     expect(web?.enabled).toBe(false);
     expect(web?.results).toBe(3);
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/v1/provider-overrides'),
-      expect.objectContaining({
-        method: 'PUT',
-        body: JSON.stringify({
-          serper: { web: { enabled: false, results: 3 } },
-        }),
-      }),
-    );
   });
 
   it('toggles provider enabled state and patches the server', async () => {
@@ -78,7 +84,7 @@ describe('useSysctlConfig', () => {
     await refreshConfig();
     toggleProviderEnabled('serper');
     expect(config.value?.serper.enabled).toBe(false);
-    expect(fetch).toHaveBeenLastCalledWith(
+    expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/provider-overrides'),
       expect.objectContaining({
         method: 'PUT',
@@ -92,7 +98,7 @@ describe('useSysctlConfig', () => {
     await refreshConfig();
     toggleEndpoint('serper', 'web');
     expect(config.value?.serper.web.enabled).toBe(false);
-    expect(fetch).toHaveBeenLastCalledWith(
+    expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/provider-overrides'),
       expect.objectContaining({
         method: 'PUT',

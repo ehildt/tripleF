@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Brain } from '@lucide/vue';
+import { ref, toRef } from 'vue';
 
 import type { OllamaModel } from '../../../../stores/models';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
+import { useMenuPosition } from './composables/use-menu-position';
 import ModelList from './model-list/ModelList.vue';
 
-defineProps<{
+const props = defineProps<{
   isOpen: boolean;
   selectedModelName: string;
   isModelMissing: boolean;
@@ -18,11 +20,15 @@ defineEmits<{
   toggleMenu: [];
   selectModel: [modelName: string];
 }>();
+
+const triggerRef = ref<HTMLElement | null>(null);
+
+const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
 </script>
 
 <template>
-  <div>
-    <div class="model-selector">
+  <div class="model-menu">
+    <div ref="triggerRef" class="model-selector">
       <ToolbarLabel
         :value="selectedModelName || '—'"
         :active="isModelMissing"
@@ -34,21 +40,31 @@ defineEmits<{
       >
         <Brain class="w-4 h-4" />
       </IconButton>
-      <div v-if="isOpen" class="model-selector__dropdown" @click.stop>
-        <ModelList
-          :models="models"
-          :selected-model="selectedModelName"
-          :loading="isLoading"
-          @select="$emit('selectModel', $event)"
-        />
-      </div>
     </div>
   </div>
+
+  <!-- Teleported to escape the sticky toolbar's stacking context (z-50):
+       a nested z-index can never beat the floating video popouts. -->
+  <Teleport to="body">
+    <div
+      v-if="isOpen"
+      class="model-selector__dropdown"
+      data-model-menu-dropdown
+      :style="positionStyle ?? undefined"
+      @click.stop
+    >
+      <ModelList
+        :models="models"
+        :selected-model="selectedModelName"
+        :loading="isLoading"
+        @select="$emit('selectModel', $event)"
+      />
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
 .model-selector {
-  position: relative;
   display: flex;
   align-items: center;
   gap: var(--spacing-1-5);
@@ -58,11 +74,11 @@ defineEmits<{
 }
 
 .model-selector__dropdown {
-  position: absolute;
-  left: 100%;
-  top: 0;
+  position: fixed;
   margin-left: var(--spacing-1);
-  z-index: 100;
+  /* Teleported to <body>: above the floating video popouts (z-index 1000)
+     and the lifted chat column (z-index 60), below the lightbox (1100). */
+  z-index: 1050;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
   box-shadow: 0 10px 15px -3px

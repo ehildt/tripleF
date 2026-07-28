@@ -12,12 +12,12 @@ describe('buildContentSystemPrompt', () => {
     });
 
     expect(prompt).toContain('deterministic multimodal execution engine');
-    expect(prompt).toContain('No Markdown');
+    expect(prompt).toContain('Markdown is allowed');
     expect(prompt).toContain('JSON RULES');
     expect(prompt).toContain('ITEM SHAPES');
   });
 
-  it('uses plain text for the text template', () => {
+  it('allows Markdown for the text template', () => {
     const prompt = buildContentSystemPrompt({
       template: 'text',
       tools: [],
@@ -25,7 +25,9 @@ describe('buildContentSystemPrompt', () => {
       isImageTask: false,
     });
 
-    expect(prompt).toContain('Return plain text.');
+    expect(prompt).toContain(
+      'Return free-form text. Markdown is allowed and encouraged when it improves readability.',
+    );
     expect(prompt).not.toContain('JSON RULES');
   });
 

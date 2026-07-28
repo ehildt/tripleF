@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Job } from 'bullmq';
 import { describe, expect, it, vi } from 'vitest';
 
-import { OllamaConfigService } from '../../../configs/ollama-config.service.js';
+import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
+import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 
 import { HarnessContextService } from './harness-context.service.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 function createJob(payload: HarnessJobPayload): Job<HarnessJobPayload> {
   return {
@@ -39,6 +41,20 @@ describe('HarnessContextService', () => {
           provide: OllamaModelsService,
           useValue: {
             supportsCapability: vi.fn().mockResolvedValue(true),
+          },
+        },
+        {
+          provide: SharpService,
+          useValue: {
+            buildOptions: vi.fn().mockReturnValue(undefined),
+          },
+        },
+        {
+          provide: HarnessStepLogger,
+          useValue: {
+            log: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
           },
         },
       ],
@@ -76,7 +92,10 @@ describe('HarnessContextService', () => {
 
   it('downloads buffers when images are provided', async () => {
     const buffers = [Buffer.from('img')];
-    (minioService.downloadBuffers as any).mockResolvedValue(buffers);
+    (minioService.downloadBuffers as any).mockResolvedValue({
+      buffers,
+      keptMeta: [{ name: 'test.png', type: 'image/png', hash: 'abc' }],
+    });
 
     const job = createJob({
       meta: [{ name: 'test.png', type: 'image/png', hash: 'abc' }],
@@ -101,7 +120,13 @@ describe('HarnessContextService', () => {
     const referencedBuffers = [Buffer.from('ref')];
     const newBuffers = [Buffer.from('new')];
     const mergedBuffers = [...referencedBuffers, ...newBuffers];
-    (minioService.downloadBuffers as any).mockResolvedValue(mergedBuffers);
+    (minioService.downloadBuffers as any).mockResolvedValue({
+      buffers: mergedBuffers,
+      keptMeta: [
+        { name: 'ref.png', type: 'image/*', hash: 'ref-hash', source: 'local' },
+        { name: 'new.png', type: 'image/png', hash: 'new-hash' },
+      ],
+    });
 
     const job = createJob({
       meta: [{ name: 'new.png', type: 'image/png', hash: 'new-hash' }],
@@ -121,7 +146,7 @@ describe('HarnessContextService', () => {
       'sess-1',
       undefined,
       [
-        { name: 'ref.png', type: 'image/*', hash: 'ref-hash' },
+        { name: 'ref.png', type: 'image/*', hash: 'ref-hash', source: 'local' },
         { name: 'new.png', type: 'image/png', hash: 'new-hash' },
       ],
     );

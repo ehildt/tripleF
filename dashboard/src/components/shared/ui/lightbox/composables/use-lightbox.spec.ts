@@ -59,19 +59,23 @@ describe('useLightbox', () => {
   });
 
   it('opens with images and starts at the clicked image index', () => {
-    harness.openImages(['a.png', 'b.png', 'c.png'], 'b.png');
+    const images = ['a.png', 'b.png', 'c.png'].map((url) => ({ url }));
+    harness.openImages(images, 'b.png');
     expect(harness.isOpen.value).toBe(true);
-    expect(harness.images.value).toEqual(['a.png', 'b.png', 'c.png']);
+    expect(harness.images.value).toEqual(images);
     expect(harness.index.value).toBe(1);
   });
 
   it('does not open when clicked src is not found', () => {
-    harness.openImages(['a.png'], 'missing.png');
+    harness.openImages([{ url: 'a.png' }], 'missing.png');
     expect(harness.isOpen.value).toBe(false);
   });
 
   it('navigates prev/next with bounds', () => {
-    harness.openImages(['a.png', 'b.png', 'c.png'], 'b.png');
+    harness.openImages(
+      ['a.png', 'b.png', 'c.png'].map((url) => ({ url })),
+      'b.png',
+    );
 
     harness.goPrev();
     expect(harness.index.value).toBe(0);
@@ -85,33 +89,46 @@ describe('useLightbox', () => {
   });
 
   it('closes the lightbox', () => {
-    harness.openImages(['a.png'], 'a.png');
+    harness.openImages([{ url: 'a.png' }], 'a.png');
     expect(harness.isOpen.value).toBe(true);
     harness.close();
     expect(harness.isOpen.value).toBe(false);
   });
 
   it('reacts to keydown events when open', async () => {
-    harness.openImages(['a.png', 'b.png'], 'a.png');
+    harness.openImages(
+      ['a.png', 'b.png'].map((url) => ({ url })),
+      'a.png',
+    );
     await nextTick();
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+    );
     expect(harness.index.value).toBe(1);
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }),
+    );
     expect(harness.index.value).toBe(0);
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }),
+    );
     expect(harness.index.value).toBe(0);
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
     expect(harness.isOpen.value).toBe(false);
   });
 
   it('ignores keydown events when closed', async () => {
     await nextTick();
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
     expect(harness.isOpen.value).toBe(false);
   });
 });

@@ -3,11 +3,16 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
-import { HARNESS_QUEUE } from '../../../constants/bullmq.constants.js';
+import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessQueueService } from './harness-queue.service.js';
+import { HarnessStepLogger } from './harness-step-logger.service.js';
+
+vi.mock('../helpers/build-image-fingerprint.helper.js', () => ({
+  buildImageFingerprint: vi.fn().mockResolvedValue('fingerprint'),
+}));
 
 describe('HarnessQueueService', () => {
   let service: HarnessQueueService;
@@ -36,6 +41,14 @@ describe('HarnessQueueService', () => {
           provide: HarnessCancellationService,
           useValue: {
             cancel: vi.fn().mockReturnValue(false),
+          },
+        },
+        {
+          provide: HarnessStepLogger,
+          useValue: {
+            log: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
           },
         },
       ],

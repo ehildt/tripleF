@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useConversationStore } from '@/stores/conversation';
 
+import { pendingFilesByConversation } from '../../../../../composables/attached-files.state';
 import { useAttachedFiles } from './use-attached-files';
 
 vi.mock('../../../../../utils/hash-file.helper', () => ({
@@ -11,19 +12,38 @@ vi.mock('../../../../../utils/hash-file.helper', () => ({
 
 vi.mock('../../../../../api/storage.api', () => ({
   checkObjectExists: vi.fn(),
+  deleteUploadedObject: vi.fn(),
 }));
 
+vi.mock('../../../../../api/conversations.api', () => ({
+  fetchConversations: vi.fn(),
+  fetchConversation: vi.fn(),
+  saveConversation: vi.fn(),
+  deleteConversation: vi.fn(),
+}));
+
+import { fetchConversations } from '../../../../../api/conversations.api';
 import { checkObjectExists } from '../../../../../api/storage.api';
 import { hashFile } from '../../../../../utils/hash-file.helper';
 
 const mockedHashFile = vi.mocked(hashFile);
 const mockedCheckObjectExists = vi.mocked(checkObjectExists);
+const mockedFetchConversations = vi.mocked(fetchConversations);
 
 describe('useAttachedFiles', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
+  beforeEach(async () => {
     vi.resetAllMocks();
     mockedHashFile.mockImplementation(async (file: File) => file.name);
+    mockedFetchConversations.mockResolvedValue([]);
+
+    setActivePinia(createPinia());
+    // The conversation store loads persisted conversations asynchronously on
+    // creation — let that settle before tests create conversations, or the
+    // load result would wipe them mid-test.
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    pendingFilesByConversation.value = new Map();
   });
 
   function createInput(files: File[]): HTMLInputElement {

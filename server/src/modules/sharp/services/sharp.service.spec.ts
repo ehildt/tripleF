@@ -2,18 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, type Mocked, vi } from 'vitest';
 
 import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
-import { HarnessStreamQueryDto } from '../../harness/dtos/harness-stream-query.dto.js';
 import { SharpConfigService } from '../configs/sharp-config.service.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';
 
 import { ImagePipelineFactory } from './image-pipeline-factory.service.js';
 import { ImageVariantProcessor } from './image-variant-processor.service.js';
 import { SharpService } from './sharp.service.js';
-import { SharpOptionsBuilder } from './sharp-options-builder.service.js';
+import { SharpOverridesService } from './sharp-overrides.service.js';
 
 describe('SharpService', () => {
   let service: SharpService;
-  let optionsBuilder: Mocked<SharpOptionsBuilder>;
+  let sharpOverrides: Mocked<SharpOverridesService>;
   let pipelineFactory: Mocked<ImagePipelineFactory>;
   let variantProcessor: Mocked<ImageVariantProcessor>;
 
@@ -65,9 +64,9 @@ describe('SharpService', () => {
           useValue: { defaults },
         },
         {
-          provide: SharpOptionsBuilder,
+          provide: SharpOverridesService,
           useValue: {
-            build: vi.fn(),
+            buildOptions: vi.fn(),
           },
         },
         {
@@ -88,7 +87,7 @@ describe('SharpService', () => {
     }).compile();
 
     service = module.get<SharpService>(SharpService);
-    optionsBuilder = module.get(SharpOptionsBuilder);
+    sharpOverrides = module.get(SharpOverridesService);
     pipelineFactory = module.get(ImagePipelineFactory);
     variantProcessor = module.get(ImageVariantProcessor);
   });
@@ -98,20 +97,13 @@ describe('SharpService', () => {
   });
 
   describe('buildOptions', () => {
-    it('delegates to the options builder', () => {
-      const query: HarnessStreamQueryDto = {
-        requestId: 'req-1',
-        stream: false,
-        event: 'harness',
-        think: 'medium',
-        pproc_enabled: true,
-      };
+    it('delegates to the sharp overrides service', () => {
       const expected: SharpOptions = { enabled: true };
 
-      optionsBuilder.build.mockReturnValue(expected);
+      sharpOverrides.buildOptions.mockReturnValue(expected);
 
-      expect(service.buildOptions(query)).toBe(expected);
-      expect(optionsBuilder.build).toHaveBeenCalledWith(query);
+      expect(service.buildOptions()).toBe(expected);
+      expect(sharpOverrides.buildOptions).toHaveBeenCalledWith();
     });
   });
 

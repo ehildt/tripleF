@@ -1,6 +1,7 @@
 import { getApiUrl } from './api-url';
 
 export interface ConversationContent {
+  id: string;
   title?: string;
   model?: string;
   numCtx?: string;
@@ -10,10 +11,14 @@ export interface ConversationContent {
   roomId?: string;
   type?: 'temporary' | 'persistent';
   task?: string;
+  conversationId: string;
   exchanges: Record<string, unknown>[];
   savedFileInfos?: Record<string, unknown>[];
   uploadedImages?: Record<string, unknown>[];
+  imageSelectionSnapshot?: Record<string, boolean>;
   subscriptions?: Record<string, unknown>[];
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface ConversationSnapshot {

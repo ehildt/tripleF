@@ -30,6 +30,16 @@ export function buildContentSystemPrompt(params: {
   const isFreeForm = isTextTemplate || isCompactTemplate;
   const language = params.language ?? 'en';
 
+  let returnDirective: string;
+  if (isTextTemplate) {
+    returnDirective =
+      'Return free-form text. Markdown is allowed and encouraged when it improves readability.';
+  } else if (isCompactTemplate) {
+    returnDirective = 'Return plain text.';
+  } else {
+    returnDirective = `Return exactly these top-level keys: ${params.placeholders.join(', ') || '(none)'}.`;
+  }
+
   const sections: string[] = [
     OUTPUT_CONTRACT,
     buildLanguageRule(language),
@@ -41,12 +51,7 @@ export function buildContentSystemPrompt(params: {
     sections.push(MULTIMODAL_POLICY, SEARCH_POLICY, IMAGE_TASK_RULE);
   }
 
-  sections.push(
-    `TEMPLATE: ${params.template}`,
-    isFreeForm
-      ? 'Return plain text.'
-      : `Return exactly these top-level keys: ${params.placeholders.join(', ') || '(none)'}.`,
-  );
+  sections.push(`TEMPLATE: ${params.template}`, returnDirective);
 
   if (!isFreeForm) {
     sections.push(JSON_RULES, ITEM_SHAPES);

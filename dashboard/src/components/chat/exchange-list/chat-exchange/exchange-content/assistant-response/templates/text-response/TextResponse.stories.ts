@@ -19,6 +19,28 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const Markdown: Story = {
+  args: {
+    text: [
+      '## Streaming markdown',
+      '',
+      'Text with **bold**, *italic*, `inline code` and a bare URL: https://example.com',
+      '',
+      '- First item',
+      '- Second item',
+      '',
+      '```ts',
+      'const answer: number = 42;',
+      '```',
+      '',
+      '| Column | Value |',
+      '| --- | --- |',
+      '| Alpha | 1 |',
+      '| Beta | 2 |',
+    ].join('\n'),
+  },
+};
+
 export const Empty: Story = {
   args: { text: undefined },
 };
