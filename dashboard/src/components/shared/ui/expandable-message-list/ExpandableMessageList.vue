@@ -12,6 +12,7 @@ const props = withDefaults(
     onClick?: (index: number) => void;
     onToggleInclude?: (index: number) => void;
     onDeleteItem?: (index: number) => void;
+    onBranchOut?: (index: number) => void;
     expandAll?: boolean;
     showRole?: boolean;
   }>(),
@@ -21,6 +22,7 @@ const props = withDefaults(
     onClick: undefined,
     onToggleInclude: undefined,
     onDeleteItem: undefined,
+    onBranchOut: undefined,
     showRole: true,
   },
 );
@@ -44,6 +46,10 @@ function handleToggleInclude(idx: number) {
 function handleDeleteItem(idx: number) {
   props.onDeleteItem?.(idx);
 }
+
+function handleBranchOut(idx: number) {
+  props.onBranchOut?.(idx);
+}
 </script>
 
 <template>
@@ -58,10 +64,12 @@ function handleDeleteItem(idx: number) {
         :has-body="hasBody"
         :render-html="props.renderHtml"
         :show-role="showRole"
+        :show-branch="!!props.onBranchOut"
         @toggle="toggle(idx)"
         @select="handleSelect(idx)"
         @toggle-include="handleToggleInclude(idx)"
         @delete-item="handleDeleteItem(idx)"
+        @branch-out="handleBranchOut(idx)"
       >
         <template v-if="hasBody" #body>
           <slot name="body" :message="msg" :index="idx" />

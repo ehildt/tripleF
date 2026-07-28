@@ -46,7 +46,7 @@ MANDATORY MEDIA SEARCH:
 - You MUST use the returned image URLs and video URLs. Do not leave heroImageUrl, heroVideoUrl, galleryItems, or videoGalleryItems empty when corresponding tool results were provided.
 - If the tools returned images or videos, use them. Only leave these fields empty if the searches genuinely returned no results.
 - When selecting images, prefer 2560×1440 (1440p). 1280×720 (720p) is the enforced minimum; never use images below that resolution.
-- IMAGE DOMAIN RESTRICTION: only use image URLs from trusted sources. Reject Google thumbnail proxies (encrypted-tbn*.gstatic.com, t*.gstatic.com), data URIs, localhost, private IPs, and unknown hosts without a direct image file extension.
+- IMAGE DOMAIN RESTRICTION: only use image URLs from trusted sources. Reject Google thumbnail proxies (configured blocked sources), data URIs, localhost, private IPs, and unknown hosts without a direct image file extension.
 - VIDEO PROVIDER RESTRICTION: only use video URLs from supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other platforms that cannot be embedded reliably.
 - Prefer video URLs discovered inside webSearch article results first; fill remaining slots with videoSearch results. Prefer image URLs from imageSearch results first.
 

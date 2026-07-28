@@ -1,7 +1,9 @@
+import type { SourcesConfig } from '../../provider-overrides/configs/sources-config.adapter.js';
 import { buildContextSummarySection } from '../helpers/build-context-summary-section.helper.js';
 
 import {
   buildLanguageRule,
+  buildSourcePolicyPrompt,
   COMPACT_INSTRUCTIONS,
   FINAL_REMINDER,
   IMAGE_TASK_RULE,
@@ -26,6 +28,7 @@ export function buildContentSystemPrompt(params: {
   isImageTask: boolean;
   contextSummary?: string;
   language?: string;
+  sources?: SourcesConfig;
 }): string {
   const isTextTemplate = params.template === 'text';
   const isCompactTemplate = params.template === 'compact';
@@ -74,6 +77,11 @@ export function buildContentSystemPrompt(params: {
     SOURCE_TRUTH_RULES,
     TOOL_RESULTS_RULES,
   );
+
+  // Runtime source policy (SysCtl): preferred domains = soft rank guidance,
+  // blocked domains = absolute exclusions.
+  const sourcePolicy = buildSourcePolicyPrompt(params.sources);
+  if (sourcePolicy) sections.push(sourcePolicy);
 
   if (!isFreeForm) {
     sections.push(MEDIA_RULES, MEDIA_COUNTS);

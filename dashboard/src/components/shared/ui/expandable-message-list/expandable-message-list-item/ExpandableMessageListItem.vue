@@ -8,6 +8,7 @@ defineProps<{
   hasBody: boolean;
   renderHtml?: (content: string) => string;
   showRole?: boolean;
+  showBranch?: boolean;
 }>();
 
 defineEmits<{
@@ -15,6 +16,7 @@ defineEmits<{
   select: [];
   toggleInclude: [];
   deleteItem: [];
+  branchOut: [];
 }>();
 </script>
 
@@ -34,10 +36,12 @@ defineEmits<{
       :included="message.included"
       :context-percent="message.contextPercent"
       :show-role="showRole"
+      :show-branch="showBranch"
       @toggle="$emit('toggle')"
       @select="$emit('select')"
       @toggle-include="$emit('toggleInclude')"
       @delete-item="$emit('deleteItem')"
+      @branch-out="$emit('branchOut')"
     />
     <Transition name="expand">
       <div v-if="hasBody && expanded" key="body" @click="$emit('select')">

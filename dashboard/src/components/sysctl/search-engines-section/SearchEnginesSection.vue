@@ -9,6 +9,7 @@ import {
   Globe,
   Image,
   KeyRound,
+  ListFilter,
   MapPin,
   Newspaper,
   ShoppingCart,
@@ -24,12 +25,14 @@ import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import { useApiKeyForm } from '../composables/use-api-key-form';
 import { useSysctlConfig } from '../composables/use-sysctl-config';
 import ProviderSection from '../provider-section/ProviderSection.vue';
+import SourcesPanel from './sources-panel/SourcesPanel.vue';
 
 const {
   config,
   isLoading,
   hasError,
   resetProvider,
+  patchConfig,
   toggleProviderEnabled,
   toggleEndpoint,
   updateEndpointResults,
@@ -73,6 +76,14 @@ const serperIcons = {
 
 function handleUpdateResults({ name, value }: { name: string; value: string }) {
   updateEndpointResults('serper', name, value);
+}
+
+function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
+  // Optimistic local echo — the session-overrides merge keeps it on refresh.
+  if (config.value?.sources && (key === 'preferred' || key === 'blocked')) {
+    config.value.sources[key] = value;
+  }
+  patchConfig('sources', key, value);
 }
 </script>
 
@@ -138,6 +149,24 @@ function handleUpdateResults({ name, value }: { name: string; value: string }) {
           </template>
         </ProviderSection>
       </div>
+
+      <!-- Preferred / blocked content domains (dynamic source config) -->
+      <div class="search-engines-section__panel panel-glow">
+        <PanelTitleBar title="Sources">
+          <template #actions>
+            <ResetButton
+              title="Reset sources to defaults"
+              @click="resetProvider('sources')"
+            />
+            <ListFilter class="search-engines-section__panel-icon" />
+          </template>
+        </PanelTitleBar>
+
+        <SourcesPanel
+          :sources="config.sources"
+          @patch="handleSourcesPatch($event)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -180,5 +209,11 @@ function handleUpdateResults({ name, value }: { name: string; value: string }) {
 
 .search-engines-section__state--error {
   color: var(--color-status-error);
+}
+
+.search-engines-section__panel-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-fg-muted);
 }
 </style>

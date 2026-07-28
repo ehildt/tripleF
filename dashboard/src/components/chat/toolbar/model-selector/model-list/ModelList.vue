@@ -63,6 +63,8 @@ defineEmits<{
 <style scoped>
 .model-list-content {
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   overscroll-behavior: contain;
 }
 

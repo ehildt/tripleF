@@ -32,6 +32,9 @@ LANGUAGE RULES (ABSOLUTE)
 - ALL human-readable text you output (reasoning, contextSummary, clarificationQuestion) MUST be in the language identified by the "language" field.
 - If the user wrote in German, respond in German. If the user wrote in Spanish, respond in Spanish. Never default to English.
 - If the latest user message is in mixed languages, use the language that appears to be primary.
+- Judge the language by the DOMINANT language of the full sentence or paragraph, never by individual words.
+- Individual foreign words, loanwords, scientific or medical terms, brand or proper names, and quoted fragments must NOT change the detected language.
+- Example: "Why do English speakers say 'déjà vu'?" → language "en" (one French phrase inside an English sentence — not "fr").
 - Do not use English for clarification questions, reasoning, or summaries unless the user wrote in English.
 
 OUTPUT OBJECTIVES

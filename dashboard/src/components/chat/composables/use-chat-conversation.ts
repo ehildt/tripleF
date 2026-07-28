@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useModelsStore } from '../../../stores/models';
+import { useBranchExchange } from './use-branch-exchange';
 
 /**
  * Maps the active conversation and its selected model into the reactive
@@ -12,6 +13,7 @@ import { useModelsStore } from '../../../stores/models';
 export function useChatConversation() {
   const conversationStore = useConversationStore();
   const modelsStore = useModelsStore();
+  const { branchExchange } = useBranchExchange();
 
   const conversationId = computed(
     () => conversationStore.activeConversationId ?? '',
@@ -92,6 +94,14 @@ export function useChatConversation() {
     );
   }
 
+  /** Branch the conversation at the user prompt with the given history
+   * index: the prompt (and its reply) seed a new conversation. */
+  function branchUserExchange(index: number) {
+    const exchange = userExchanges.value[index];
+    if (!exchange) return;
+    branchExchange(exchange.id);
+  }
+
   return {
     conversationId,
     conversation,
@@ -100,5 +110,6 @@ export function useChatConversation() {
     messageListItems,
     toggleUserExchangeIncluded,
     deleteUserExchange,
+    branchUserExchange,
   };
 }

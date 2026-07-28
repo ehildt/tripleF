@@ -11,5 +11,6 @@ export { OUTPUT_CONTRACT } from './output-contract.prompt.js';
 export { PRECEDENCE_RULES } from './precedence-rules.prompt.js';
 export { SEARCH_POLICY } from './search-policy.prompt.js';
 export { SECURITY_RULES } from './security-rules.prompt.js';
+export { buildSourcePolicyPrompt } from './source-policy.prompt.js';
 export { SOURCE_TRUTH_RULES } from './source-truth.prompt.js';
 export { TOOL_RESULTS_RULES } from './tool-results.prompt.js';

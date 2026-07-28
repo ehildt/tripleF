@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
@@ -34,6 +35,14 @@ describe('RespondActionService', () => {
       providers: [
         RespondActionService,
         ResponseValidatorService,
+        {
+          provide: ProviderOverridesService,
+          useValue: {
+            getConfig: vi.fn().mockReturnValue({
+              sources: { preferred: [], blocked: [] },
+            }),
+          },
+        },
         {
           provide: AiSdkService,
           useValue: {

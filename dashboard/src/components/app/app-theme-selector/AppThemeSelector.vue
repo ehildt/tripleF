@@ -90,6 +90,18 @@ const {
   );
 }
 
+/* Mouse clicks leave the button focused; the browser's default focus ring
+   would linger as a visible box around the icon. Suppress it and keep a
+   themed ring for keyboard navigation only. */
+.theme-selector__button:focus {
+  outline: none;
+}
+
+.theme-selector__button:focus-visible {
+  outline: 1px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
 .theme-selector__dropdown {
   position: absolute;
   right: 0;

@@ -16,12 +16,21 @@ export interface SerperConfig {
   webpageFetch: { enabled: boolean };
 }
 
+export interface SourcesConfig {
+  preferred: string[];
+  blocked: string[];
+}
+
 export type ProviderKey = 'serper';
+
+/** Resettable top-level config sections (provider or the sources list). */
+export type ConfigSectionKey = ProviderKey | 'sources';
 
 export type ProviderConfig = SerperConfig;
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
+  sources: SourcesConfig;
 }
 
 export function hasEndpointResults(

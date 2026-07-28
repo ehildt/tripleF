@@ -35,6 +35,40 @@ function parseJsonContent(content: string): HarnessResponseData | undefined {
 }
 
 /**
+ * Resolve an assistant exchange's textual content: prefer the plain text
+ * field, fall back to the structured harness data flattened to text, and
+ * parse legacy raw-JSON content. Content that looks like corrupted response
+ * JSON is dropped rather than leaked into the history.
+ */
+function resolveAssistantContent(exchange: PromptExchange): unknown {
+  if (exchange.text?.trim()) return exchange.text.trim();
+
+  if (exchange.harnessData) {
+    const fromData = harnessResponseToText(
+      exchange.harnessTemplate,
+      exchange.harnessData,
+    );
+    if (fromData.trim()) return fromData;
+    return exchange.content;
+  }
+
+  if (typeof exchange.content !== 'string') return exchange.content;
+
+  const parsed = parseJsonContent(exchange.content);
+  if (parsed) return harnessResponseToText(exchange.harnessTemplate, parsed);
+  return exchange.content.trim().startsWith('{') ? '' : exchange.content;
+}
+
+/** Note image attachments on user turns so follow-ups can reference them. */
+function appendImageNames(content: string, exchange: PromptExchange): string {
+  const names = exchange.images
+    ?.map((image) => image.name)
+    .filter(Boolean)
+    .join(', ');
+  return names ? `${content}\n\n[Attached images: ${names}]` : content;
+}
+
+/**
  * Convert an exchange into a text-only prompt message for the LLM.
  *
  * For assistant exchanges with structured responses, the template-specific
@@ -44,34 +78,13 @@ function parseJsonContent(content: string): HarnessResponseData | undefined {
  * rather than leaked into the history.
  */
 export function toPromptMessage(exchange: PromptExchange): PromptMessage {
-  let content = exchange.content;
+  let content: unknown =
+    exchange.role === 'assistant'
+      ? resolveAssistantContent(exchange)
+      : exchange.content;
 
-  if (exchange.role === 'assistant') {
-    if (exchange.text?.trim()) {
-      content = exchange.text.trim();
-    } else if (exchange.harnessData) {
-      const fromData = harnessResponseToText(
-        exchange.harnessTemplate,
-        exchange.harnessData,
-      );
-      if (fromData.trim()) content = fromData;
-    } else if (typeof content === 'string') {
-      const parsed = parseJsonContent(content);
-      if (parsed) {
-        content = harnessResponseToText(exchange.harnessTemplate, parsed);
-      } else if (content.trim().startsWith('{')) {
-        content = '';
-      }
-    }
-  }
-
-  // Note image attachments on user turns so follow-ups can reference them.
   if (exchange.role === 'user' && exchange.images?.length) {
-    const names = exchange.images
-      .map((image) => image.name)
-      .filter(Boolean)
-      .join(', ');
-    if (names) content = `${content}\n\n[Attached images: ${names}]`;
+    content = appendImageNames(`${content ?? ''}`, exchange);
   }
 
   return {
