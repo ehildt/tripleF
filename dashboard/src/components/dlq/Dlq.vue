@@ -122,6 +122,7 @@ watch(
         :error="dlqStore.error"
         :hide-read="dlqStore.hideRead"
         :is-entry-read="(entry) => dlqStore.isEntryRead(entry)"
+        :entry-read-key="(entry) => dlqStore.entryReadKey(entry)"
         @select="onSelect"
         @retry="onRetry"
         @archive="onArchive"
