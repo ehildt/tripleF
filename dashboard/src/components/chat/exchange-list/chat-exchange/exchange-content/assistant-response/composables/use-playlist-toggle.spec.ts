@@ -1,7 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { ref } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
+import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { usePlaylistToggle } from './use-playlist-toggle';
 import { isPlaylistVideo, removePlaylistVideo } from './video-playback.state';
@@ -56,5 +58,25 @@ describe('usePlaylistToggle', () => {
     const { togglePlaylistVideo } = usePlaylistToggle({ videoUrl: '' });
     togglePlaylistVideo();
     expect(isPlaylistVideo('conversation-1', '')).toBe(false);
+  });
+
+  it('reports a null item as not added and toggles nothing', () => {
+    const store = useConversationStore();
+    store.activeConversationId = 'conversation-1';
+    const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(null);
+    expect(isInPlaylist.value).toBe(false);
+    togglePlaylistVideo();
+    expect(isPlaylistVideo('conversation-1', item.videoUrl)).toBe(false);
+  });
+
+  it('follows a reactive item that becomes available later', () => {
+    const store = useConversationStore();
+    store.activeConversationId = 'conversation-1';
+    const video = ref<VideoGalleryItem | null>(null);
+    const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(video);
+    expect(isInPlaylist.value).toBe(false);
+    video.value = item;
+    togglePlaylistVideo();
+    expect(isInPlaylist.value).toBe(true);
   });
 });

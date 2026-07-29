@@ -6,7 +6,7 @@ type ToolEntry = { toolName: string; result: unknown };
 /**
  * Determine the source name from a URL or raw provider slug.
  */
-export function deriveSourceName(url: string, rawSource?: string): string {
+function deriveSourceName(url: string, rawSource?: string): string {
   const providerSlugs = new Set(['serper']);
   if (rawSource && !providerSlugs.has(rawSource.toLowerCase()))
     return rawSource;
@@ -83,7 +83,7 @@ export function extractArticles(
  * Tools whose results are not suitable as references (search-like tools return lists of links;
  * we want full content like fetched pages).
  */
-export function isSearchLikeTool(toolName: string): boolean {
+function isSearchLikeTool(toolName: string): boolean {
   if (toolName.endsWith('ImageSearch') || toolName.endsWith('VideoSearch'))
     return true;
   if (toolName.endsWith('NewsSearch')) return true;

@@ -9,7 +9,6 @@ import {
 const DEFAULT_MIN_WIDTH = 1280;
 const DEFAULT_MIN_HEIGHT = 720;
 const DEFAULT_TIMEOUT_MS = 8000;
-const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
 const DEFAULT_MAX_DIMENSION = 512;
 
 /**
@@ -32,7 +31,6 @@ export class CloudImageIngestionService {
       minWidth?: number;
       minHeight?: number;
       timeoutMs?: number;
-      maxBytes?: number;
       maxDimension?: number;
       existingFingerprints?: string[];
     },
@@ -60,7 +58,6 @@ export class CloudImageIngestionService {
         minWidth: options?.minWidth ?? DEFAULT_MIN_WIDTH,
         minHeight: options?.minHeight ?? DEFAULT_MIN_HEIGHT,
         timeoutMs: options?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-        maxBytes: options?.maxBytes ?? DEFAULT_MAX_BYTES,
         maxDimension: options?.maxDimension ?? DEFAULT_MAX_DIMENSION,
         existingFingerprints: options?.existingFingerprints ?? [],
       },

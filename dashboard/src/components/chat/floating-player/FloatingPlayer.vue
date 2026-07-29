@@ -2,11 +2,16 @@
 /**
  * Standalone floating video popup, launched from the playlist panel. Shares
  * geometry and opacity with the scroll-out float: drag by the bar, resize
- * from any edge or corner, dock with ✕.
+ * from any edge or corner, dock with ✕. The bar also hosts the playlist
+ * add/remove toggle; when the playlist panel is not visible, the title
+ * becomes the scrolling now-playing marquee that otherwise lives in the
+ * playlist bar.
  */
-import { GripVertical } from '@lucide/vue';
+import { ListCheck, ListPlus, X } from '@lucide/vue';
 import { computed } from 'vue';
 
+import { playlistMarqueeVisible } from '../composables/right-panel-view.state';
+import { usePlaylistToggle } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-playlist-toggle';
 import { useFloatingPlayerHost } from './composables/use-floating-player-host';
 
 const RESIZE_DIRECTIONS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const;
@@ -25,6 +30,8 @@ const {
   startResize,
   close,
 } = useFloatingPlayerHost();
+
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(launchedVideo);
 
 /** Fill the slider track with accent up to the current value. */
 const opacitySliderStyle = computed(() => {
@@ -48,31 +55,67 @@ function onOpacityInput(event: Event) {
     data-floating-player
   >
     <div class="floating-player__bar" @pointerdown="startDrag">
-      <GripVertical class="floating-player__grip" aria-hidden="true" />
-      <span class="floating-player__title">{{ launchedVideo.title }}</span>
-      <input
-        type="range"
-        class="floating-player__opacity-slider"
-        min="25"
-        max="100"
-        step="1"
-        :value="opacityPercent"
-        :style="opacitySliderStyle"
-        :aria-label="`Popup opacity: ${opacityPercent}%`"
-        :title="`Opacity: ${opacityPercent}%`"
-        @pointerdown.stop
-        @input="onOpacityInput"
-      />
-      <button
-        type="button"
-        class="floating-player__close"
-        aria-label="Close video"
-        title="Close video"
-        @pointerdown.stop
-        @click.stop="close"
+      <!-- While the playlist bar carries the animated now-playing text the
+           title stays static; otherwise the popout scrolls it instead. -->
+      <span v-if="playlistMarqueeVisible" class="floating-player__title">{{
+        launchedVideo.title
+      }}</span>
+      <div
+        v-else
+        class="floating-player__title floating-player__title--marquee"
       >
-        ✕
-      </button>
+        <div class="floating-player__marquee-track">
+          <span class="floating-player__marquee-text">{{
+            launchedVideo.title
+          }}</span>
+          <span class="floating-player__marquee-text" aria-hidden="true">{{
+            launchedVideo.title
+          }}</span>
+        </div>
+      </div>
+      <div class="floating-player__controls">
+        <input
+          type="range"
+          class="floating-player__opacity-slider"
+          min="25"
+          max="100"
+          step="1"
+          :value="opacityPercent"
+          :style="opacitySliderStyle"
+          :aria-label="`Popup opacity: ${opacityPercent}%`"
+          :title="`Opacity: ${opacityPercent}%`"
+          @pointerdown.stop
+          @input="onOpacityInput"
+        />
+        <button
+          type="button"
+          class="floating-player__playlist-toggle"
+          :class="{ 'floating-player__playlist-toggle--added': isInPlaylist }"
+          :aria-pressed="isInPlaylist"
+          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+          :aria-label="
+            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+          "
+          @pointerdown.stop
+          @click.stop="togglePlaylistVideo"
+        >
+          <ListCheck
+            v-if="isInPlaylist"
+            class="floating-player__playlist-icon"
+          />
+          <ListPlus v-else class="floating-player__playlist-icon" />
+        </button>
+        <button
+          type="button"
+          class="floating-player__close"
+          aria-label="Close video"
+          title="Close video"
+          @pointerdown.stop
+          @click.stop="close"
+        >
+          <X class="floating-player__close-icon" />
+        </button>
+      </div>
     </div>
 
     <div class="floating-player__media">
@@ -162,7 +205,7 @@ function onOpacityInput(event: Event) {
   display: flex;
   align-items: center;
   gap: var(--spacing-1-5);
-  padding: var(--spacing-1) var(--spacing-1-5);
+  padding: var(--spacing-0-5) var(--spacing-1-5);
   border-bottom: 1px solid
     color-mix(in srgb, var(--color-divider) 70%, transparent);
   background: color-mix(in srgb, var(--color-bg-elevated) 35%, transparent);
@@ -175,11 +218,12 @@ function onOpacityInput(event: Event) {
   cursor: grabbing;
 }
 
-.floating-player__grip {
+/* Right-aligned icon cluster with equal gap-1 spacing. */
+.floating-player__controls {
   flex-shrink: 0;
-  width: 0.9rem;
-  height: 0.9rem;
-  color: var(--color-fg-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
 }
 
 .floating-player__title {
@@ -193,12 +237,84 @@ function onOpacityInput(event: Event) {
   color: var(--color-fg-secondary);
 }
 
+/* Marquee mode: same seamless loop as the playlist panel — the duplicated
+   span makes the wrap from -50% back to 0 invisible. */
+.floating-player__title--marquee {
+  display: flex;
+  align-items: center;
+  text-overflow: clip;
+}
+
+.floating-player__marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: floating-player-scroll 12s linear infinite;
+}
+
+.floating-player__marquee-text {
+  padding-right: var(--spacing-9\.5);
+}
+
+@keyframes floating-player-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-player__marquee-track {
+    animation: none;
+  }
+}
+
+.floating-player__playlist-toggle {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: white;
+  cursor: pointer;
+  background: color-mix(in srgb, black 55%, transparent);
+  backdrop-filter: blur(12px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  box-shadow:
+    0 0.15rem 0.6rem color-mix(in srgb, black 40%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.floating-player__playlist-toggle:hover {
+  color: white;
+  background: var(--color-accent-primary);
+}
+
+.floating-player__playlist-toggle--added,
+.floating-player__playlist-toggle--added:hover {
+  color: white;
+  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
+}
+
+.floating-player__playlist-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
+}
+
 .floating-player__opacity-slider {
   flex-shrink: 0;
   appearance: none;
   width: 4.5rem;
   height: 0.25rem;
-  margin: 0;
+  /* Matches the icon buttons' inner padding so the space between the
+     track and the playlist icon equals the space between the icons. */
+  margin: 0 var(--spacing-1) 0 0;
   outline: none;
   cursor: pointer;
 }
@@ -224,14 +340,18 @@ function onOpacityInput(event: Event) {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.1rem;
+  height: 1.1rem;
   border: none;
   background: none;
-  font-size: 0.7rem;
   color: var(--color-fg-muted);
   cursor: pointer;
   transition: color 0.2s ease;
+}
+
+.floating-player__close-icon {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .floating-player__close:hover {

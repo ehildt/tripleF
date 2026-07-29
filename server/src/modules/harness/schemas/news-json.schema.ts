@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { safeUrl } from '../helpers/url-schema.helper.js';
+import {
+  safeMediaUrl,
+  safeMediaUrlOrEmpty,
+  safeUrl,
+} from '../helpers/url-schema.helper.js';
 
 import {
   HERO_VIDEO_TITLE_ISSUE,
@@ -35,17 +39,17 @@ const relatedStorySchema = z.object(
       .min(1, { message: 'relatedStories entries must have a title' }),
     url: safeUrl({ message: 'relatedStories entries must have a valid url' }),
     sourceName: z.string().optional(),
+    imageUrl: safeMediaUrlOrEmpty(),
     date: z.string().optional(),
-    imageUrl: z.string().url().optional().or(z.literal('')),
   },
   { message: 'relatedStories entries must have title and url' },
 );
 
 const galleryItemSchema = z.object(
   {
-    imageUrl: z
-      .string()
-      .url({ message: 'galleryItems.imageUrl must be a valid URL' }),
+    imageUrl: safeMediaUrl({
+      message: 'galleryItems.imageUrl must be a valid URL',
+    }),
     imageAlt: z.string().optional(),
     title: z.string().optional(),
     caption: z.string().optional(),
@@ -61,7 +65,7 @@ export const newsSchema = z
     lead: z.string(),
     sectionTitle: z.string(),
     sectionContent: z.string(),
-    heroImageUrl: z.string().url().optional().or(z.literal('')),
+    heroImageUrl: safeMediaUrlOrEmpty(),
     heroImageAlt: z.string().optional(),
     heroCaption: z.string().optional(),
     heroVideoUrl: z.string().url().optional().or(z.literal('')),
@@ -81,8 +85,6 @@ export const newsSchema = z
     readTime: z.string().optional(),
   })
   .refine(heroVideoHasTitle, HERO_VIDEO_TITLE_ISSUE);
-
-export type NewsJson = z.infer<typeof newsSchema>;
 
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues

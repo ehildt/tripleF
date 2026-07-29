@@ -1,8 +1,8 @@
-# ckir.io/visions — Project Guide
+# tripleF ({fff}) — Project Guide
 
 ## Project Overview
 
-This is a TypeScript monorepo for ckir.io/visions, an AI-powered image analysis microservice.
+This is a TypeScript monorepo for tripleF ({fff}), an open-source agentic AI workbench (conversation harness + dashboard), local-first via Ollama or Ollama Cloud.
 
 - `server/` — NestJS backend with Fastify, Prisma/PostgreSQL, BullMQ/KeyDB, MinIO.
 - `dashboard/` — Vue 3 frontend with Vite, Pinia, Tailwind, Storybook, Vitest.

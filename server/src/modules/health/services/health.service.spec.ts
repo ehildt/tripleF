@@ -8,7 +8,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
+import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
@@ -79,11 +79,11 @@ describe('HealthService', () => {
           },
         },
         {
-          provide: OllamaConfigService,
+          provide: OllamaOverridesService,
           useValue: {
-            config: {
+            getConfig: () => ({
               host: 'http://localhost:11434/api',
-            },
+            }),
           },
         },
         {
@@ -192,11 +192,11 @@ describe('HealthService', () => {
             },
           },
           {
-            provide: OllamaConfigService,
+            provide: OllamaOverridesService,
             useValue: {
-              config: {
+              getConfig: () => ({
                 host: 'http://localhost:11434/api',
-              },
+              }),
             },
           },
           {

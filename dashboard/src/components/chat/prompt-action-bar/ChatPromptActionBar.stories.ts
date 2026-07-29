@@ -23,6 +23,11 @@ think/context dropdowns, and the file attachment trigger.
     isDisabled: { control: 'boolean' },
     isFileSelectDisabled: { control: 'boolean' },
     fileSelectDisabledReason: { control: 'text' },
+    searchEngineState: {
+      control: 'select',
+      options: [undefined, 'unknown', 'unavailable', 'disabled', 'enabled'],
+    },
+    searchSources: { control: 'object' },
   },
   args: {
     value: '',
@@ -36,6 +41,7 @@ think/context dropdowns, and the file attachment trigger.
     isDisabled: false,
     isFileSelectDisabled: false,
     fileSelectDisabledReason: undefined,
+    searchSources: [],
     setActionBarRef: fn(),
     setThinkDropdownRef: fn(),
     setContextSizeDropdownRef: fn(),
@@ -48,6 +54,7 @@ think/context dropdowns, and the file attachment trigger.
     onDisabledHoverStart: fn(),
     onDisabledHoverEnd: fn(),
     onFileSelect: fn(),
+    onToggleSearchEngine: fn(),
   },
 } satisfies Meta<typeof ChatPromptActionBar>;
 
@@ -72,5 +79,39 @@ export const NoVision: Story = {
   args: {
     isFileSelectDisabled: true,
     fileSelectDisabledReason: 'Selected model does not support images',
+  },
+};
+
+/** No search engine configured — non-interactive globe-off with tooltip. */
+export const NoSearchEngine: Story = {
+  args: { searchEngineState: 'unavailable' },
+};
+
+/** Search engine connected — globe kill switch. */
+export const SearchEngineEnabled: Story = {
+  args: { searchEngineState: 'enabled' },
+};
+
+/** Search engine killed — globe-off toggle re-enables it, no source tags. */
+export const SearchEngineDisabled: Story = {
+  args: {
+    searchEngineState: 'disabled',
+    searchSources: [
+      { key: 'web', enabled: true },
+      { key: 'news', enabled: false },
+    ],
+  },
+};
+
+/** Search engine connected with sources enabled — tags on the top edge. */
+export const SearchEngineWithSources: Story = {
+  args: {
+    searchEngineState: 'enabled',
+    searchSources: [
+      { key: 'web', enabled: true },
+      { key: 'images', enabled: true },
+      { key: 'news', enabled: false },
+      { key: 'webpageFetch', enabled: true },
+    ],
   },
 };

@@ -76,19 +76,6 @@ export const TOOL_NAMES = [
 
 export type ToolName = (typeof TOOL_NAMES)[number];
 
-/** Category names the classifier prompt uses as shorthand; not real tools. */
-export const TOOL_CATEGORY_ALIASES = [
-  'webSearch',
-  'imageSearch',
-  'newsSearch',
-  'videoSearch',
-  'webpageFetch',
-  'imageVariants',
-  'specialized',
-] as const;
-
-export type ToolCategoryAlias = (typeof TOOL_CATEGORY_ALIASES)[number];
-
 export type ProviderConfig = {
   serper: {
     enabled: boolean;

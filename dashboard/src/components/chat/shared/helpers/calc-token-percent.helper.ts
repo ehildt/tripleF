@@ -57,9 +57,9 @@ export function calcAssistantExchangeContribution(
 
   const assistant = assistants[index];
 
-  if (assistant.inputTokenDelta != null || assistant.evalCount != null) {
+  if (assistant.inputTokenDelta != null || assistant.evalCount != null)
     return (assistant.inputTokenDelta ?? 0) + (assistant.evalCount ?? 0);
-  }
+
   return null;
 }
 

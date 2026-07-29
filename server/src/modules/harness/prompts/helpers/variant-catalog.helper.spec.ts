@@ -15,7 +15,7 @@ describe('formatVariantCatalog', () => {
         expect.stringMatching(/^\s+describe: default, detailed, concise$/),
         expect.stringMatching(/^\s+compare: default, visual$/),
         expect.stringMatching(/^\s+ocr: default, verbatim$/),
-        expect.stringMatching(/^\s+text: default, coding$/),
+        expect.stringMatching(/^\s+text: default, coding, familiarity$/),
       ]),
     );
   });

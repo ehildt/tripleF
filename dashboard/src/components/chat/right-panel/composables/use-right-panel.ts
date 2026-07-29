@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import type { Conversation } from '@/stores/conversation';
 
 import { getApiUrl } from '../../../../api/api-url';
-import type { RightPanelView } from '../../composables/use-chat-panel';
+import type { RightPanelView } from '../../types/right-panel-view.type';
 import type { AttachmentItem } from './use-attachment-list';
 
 /**

@@ -10,8 +10,10 @@ const meta = {
     docs: {
       description: {
         component: `
-Single capability tag shown as a small badge. Used by CapabilitiesRow to render all
-capabilities of the currently selected model.`,
+Single capability marker. Known capabilities render as a muted icon with the
+capability label as tooltip — identical to the icons in the model selector
+dropdown. Unknown capability strings fall back to the text badge. Used by
+CapabilitiesRow for the currently selected model.`,
       },
     },
   },
@@ -19,17 +21,27 @@ capabilities of the currently selected model.`,
     capability: { control: 'text' },
   },
   args: {
-    capability: 'tool-use',
+    capability: 'vision',
   },
 } satisfies Meta<typeof CapabilityBadge>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Default state. */
-export const Default: Story = {};
+/** Known capability — icon with label tooltip (vision). */
+export const Vision: Story = {};
 
-/** A common text-generation capability label. */
-export const TextGeneration: Story = {
-  args: { capability: 'text-generation' },
+/** Known capability — wrench icon for tools. */
+export const Tools: Story = {
+  args: { capability: 'tools' },
+};
+
+/** Known capability — waveform icon for audio. */
+export const Audio: Story = {
+  args: { capability: 'audio' },
+};
+
+/** Unknown capability — falls back to the text badge. */
+export const UnknownTextFallback: Story = {
+  args: { capability: 'insert' },
 };

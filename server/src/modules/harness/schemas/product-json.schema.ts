@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { safeUrl } from '../helpers/url-schema.helper.js';
+import {
+  safeMediaUrl,
+  safeMediaUrlOrEmpty,
+  safeUrl,
+} from '../helpers/url-schema.helper.js';
 
 import {
   HERO_VIDEO_TITLE_ISSUE,
@@ -10,9 +14,9 @@ import {
 
 const galleryItemSchema = z.object(
   {
-    imageUrl: z
-      .string()
-      .url({ message: 'galleryItems.imageUrl must be a valid URL' }),
+    imageUrl: safeMediaUrl({
+      message: 'galleryItems.imageUrl must be a valid URL',
+    }),
     imageAlt: z.string().optional(),
     title: z.string().optional(),
     caption: z.string().optional(),
@@ -89,7 +93,7 @@ export const productSchema = z
     sectionTitle: z.string().optional(),
     sectionContent: z.string().optional(),
     // Media
-    heroImageUrl: z.string().url().optional().or(z.literal('')),
+    heroImageUrl: safeMediaUrlOrEmpty(),
     heroImageAlt: z.string().optional(),
     heroCaption: z.string().optional(),
     heroVideoUrl: z.string().min(1).optional().or(z.literal('')),
@@ -103,8 +107,6 @@ export const productSchema = z
     sources: z.array(sourceSchema).optional(),
   })
   .refine(heroVideoHasTitle, HERO_VIDEO_TITLE_ISSUE);
-
-export type ProductJson = z.infer<typeof productSchema>;
 
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues

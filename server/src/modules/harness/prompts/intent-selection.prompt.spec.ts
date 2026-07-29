@@ -11,6 +11,15 @@ describe('buildIntentSelectionPrompt', () => {
     expect(prompt).toContain('contextSummary');
   });
 
+  it('requires verbatim entities so later steps can cite them in standalone queries', () => {
+    const prompt = buildIntentSelectionPrompt([]);
+
+    expect(prompt).toContain('the established topic/entities verbatim');
+    expect(prompt).toContain(
+      'cite them word-for-word in standalone search queries',
+    );
+  });
+
   it('includes the template catalog', () => {
     const prompt = buildIntentSelectionPrompt([]);
 

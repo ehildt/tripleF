@@ -7,6 +7,7 @@ import { getPersistentSocketSessionId } from '../../../stores/helpers/get-persis
 import { clampSysctlResults } from '../helpers/clamp-sysctl-results.helper';
 import type {
   ConfigSectionKey,
+  OllamaConnectionConfig,
   ProviderConfig,
   ProviderKey,
   ProviderOverridesSnapshot,
@@ -62,14 +63,28 @@ async function persistSessionOverrides() {
   await saveConfig(SESSION_ID, { providerOverrides: sessionOverrides });
 }
 
+/**
+ * The Ollama connection lives behind its own overrides API; every other
+ * config section shares the provider-overrides API.
+ */
+function configApiUrl(provider: ConfigSectionKey | string): string {
+  if (provider === 'ollama') return getApiUrl('/api/v1/ollama-overrides');
+  return getApiUrl('/api/v1/provider-overrides');
+}
+
 function applyFrontendDefaults(
-  snapshot: ProviderOverridesSnapshot,
+  snapshot: Omit<ProviderOverridesSnapshot, 'ollama'>,
+  ollama: OllamaConnectionConfig,
 ): ProviderOverridesSnapshot {
   return {
     serper: { ...snapshot.serper, enabled: snapshot.serper.enabled ?? false },
     sources: {
       preferred: snapshot.sources?.preferred ?? [],
       blocked: snapshot.sources?.blocked ?? [],
+    },
+    ollama: {
+      host: ollama?.host ?? '',
+      apiKey: ollama?.apiKey,
     },
   };
 }
@@ -85,13 +100,15 @@ export function useSysctlConfig() {
     isLoading.value = true;
     hasError.value = false;
     try {
-      const [res, overrides] = await Promise.all([
+      const [res, ollamaRes, overrides] = await Promise.all([
         fetch(getApiUrl('/api/v1/provider-overrides')),
+        fetch(getApiUrl('/api/v1/ollama-overrides')),
         loadSessionOverrides(),
       ]);
       sessionOverrides = overrides;
       const snapshot = applyFrontendDefaults(
-        (await res.json()) as ProviderOverridesSnapshot,
+        (await res.json()) as Omit<ProviderOverridesSnapshot, 'ollama'>,
+        (await ollamaRes.json()) as OllamaConnectionConfig,
       );
       config.value = mergeSessionOverrides(snapshot);
     } catch {
@@ -112,9 +129,11 @@ export function useSysctlConfig() {
     clearSessionOverrides(provider);
     await persistSessionOverrides();
     try {
-      await fetch(getApiUrl(`/api/v1/provider-overrides/${provider}`), {
-        method: 'DELETE',
-      });
+      const url =
+        provider === 'ollama'
+          ? configApiUrl(provider)
+          : `${configApiUrl(provider)}/${provider}`;
+      await fetch(url, { method: 'DELETE' });
     } catch {
       toast.error('Failed to reset provider config');
     }
@@ -125,10 +144,10 @@ export function useSysctlConfig() {
     const patch = { [provider]: { [path]: value } };
     saveSessionOverrides(patch);
     await Promise.all([
-      fetch(getApiUrl('/api/v1/provider-overrides'), {
+      fetch(configApiUrl(provider), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
+        body: JSON.stringify(provider === 'ollama' ? { [path]: value } : patch),
       }),
       persistSessionOverrides(),
     ]);
@@ -144,10 +163,12 @@ export function useSysctlConfig() {
     apiKey: string,
   ): Promise<boolean> {
     try {
-      const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
+      const res = await fetch(configApiUrl(provider), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [provider]: { apiKey } }),
+        body: JSON.stringify(
+          provider === 'ollama' ? { apiKey } : { [provider]: { apiKey } },
+        ),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await refreshConfig();

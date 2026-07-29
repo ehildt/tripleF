@@ -17,6 +17,7 @@ export default {
       from: {},
       to: {
         circular: true,
+        pathNot: '^src/generated/prisma/',
       },
     },
     {

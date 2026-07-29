@@ -6,13 +6,18 @@ import { dedupeByUrl } from './dedupe-by-url.js';
 import { searchSerper } from './search-serper.js';
 import type { ResultItem } from './sort-by-priority.js';
 import { sortByPriority } from './sort-by-priority.js';
+import {
+  STANDALONE_QUERY_DESCRIPTION,
+  STANDALONE_QUERY_TOOL_CLAUSE,
+} from './standalone-query.constants.js';
 import type { ToolDependencies } from './types.js';
 
 const DESCRIPTION =
-  'Search the web and return titles, snippets, and URLs. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results.';
+  'Search the web and return titles, snippets, and URLs. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results. ' +
+  STANDALONE_QUERY_TOOL_CLAUSE;
 
 const INPUT_SCHEMA = z.object({
-  query: z.string().describe('The search query'),
+  query: z.string().describe(STANDALONE_QUERY_DESCRIPTION),
   recency: z
     .enum(['day', 'week', 'month', 'year'])
     .optional()

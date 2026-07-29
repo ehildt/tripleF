@@ -6,7 +6,7 @@ import { SharpService } from './sharp.service.js';
 import { SharpOverridesService } from './sharp-overrides.service.js';
 
 /** One preprocessing variant of the preview upload, encoded for display. */
-export interface SharpPreviewVariant {
+interface SharpPreviewVariant {
   variant: string;
   name: string;
   description: string;

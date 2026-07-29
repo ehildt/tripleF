@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 
-import type { ToastType } from '../../../../composables/toast-state';
+import type { ToastType } from '@/types/toast-type.model';
 
 /** Screen corner/edge the toast stack is anchored to. */
 export type ToastAnchor =

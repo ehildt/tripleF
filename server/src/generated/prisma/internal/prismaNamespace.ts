@@ -80,11 +80,11 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.9.0
+ * Prisma Client JS version: 7.9.1
  * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.9.0",
+  client: "7.9.1",
   engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
 }
 
@@ -399,7 +399,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   HarnessDlq: 'HarnessDlq',
   HarnessConversation: 'HarnessConversation',
-  HarnessConfig: 'HarnessConfig'
+  HarnessConfig: 'HarnessConfig',
+  HarnessProviderOverride: 'HarnessProviderOverride'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig"
+    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessProviderOverride"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -641,6 +642,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HarnessProviderOverride: {
+      payload: Prisma.$HarnessProviderOverridePayload<ExtArgs>
+      fields: Prisma.HarnessProviderOverrideFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HarnessProviderOverrideFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HarnessProviderOverrideFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>
+        }
+        findFirst: {
+          args: Prisma.HarnessProviderOverrideFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HarnessProviderOverrideFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>
+        }
+        findMany: {
+          args: Prisma.HarnessProviderOverrideFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>[]
+        }
+        create: {
+          args: Prisma.HarnessProviderOverrideCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>
+        }
+        createMany: {
+          args: Prisma.HarnessProviderOverrideCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HarnessProviderOverrideCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>[]
+        }
+        delete: {
+          args: Prisma.HarnessProviderOverrideDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>
+        }
+        update: {
+          args: Prisma.HarnessProviderOverrideUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>
+        }
+        deleteMany: {
+          args: Prisma.HarnessProviderOverrideDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HarnessProviderOverrideUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HarnessProviderOverrideUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>[]
+        }
+        upsert: {
+          args: Prisma.HarnessProviderOverrideUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessProviderOverridePayload>
+        }
+        aggregate: {
+          args: Prisma.HarnessProviderOverrideAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessProviderOverride>
+        }
+        groupBy: {
+          args: Prisma.HarnessProviderOverrideGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessProviderOverrideGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HarnessProviderOverrideCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessProviderOverrideCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -723,6 +798,16 @@ export const HarnessConfigScalarFieldEnum = {
 } as const
 
 export type HarnessConfigScalarFieldEnum = (typeof HarnessConfigScalarFieldEnum)[keyof typeof HarnessConfigScalarFieldEnum]
+
+
+export const HarnessProviderOverrideScalarFieldEnum = {
+  provider: 'provider',
+  values: 'values',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessProviderOverrideScalarFieldEnum = (typeof HarnessProviderOverrideScalarFieldEnum)[keyof typeof HarnessProviderOverrideScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1016,6 +1101,7 @@ export type GlobalOmitConfig = {
   harnessDlq?: Prisma.HarnessDlqOmit
   harnessConversation?: Prisma.HarnessConversationOmit
   harnessConfig?: Prisma.HarnessConfigOmit
+  harnessProviderOverride?: Prisma.HarnessProviderOverrideOmit
 }
 
 /* Types for Logging */

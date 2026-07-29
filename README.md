@@ -1,19 +1,21 @@
 <div align="center">
 
-# @CKIR.IO/VISIONS
+# tripleF (3F)
 
-A NestJS microservice monorepo for AI-powered image analysis using locally-hosted Ollama vision models. Supports image description, comparison, and OCR via REST, MCP (Model Context Protocol) JSON-RPC 2.0, and streaming real-time results over Socket.IO.
+**An agentic AI workbench, fully open source.** Chat with free open models — running **fully locally** via Ollama, or on **Ollama Cloud** when you want the headroom. No lock-in, no meter, no black box: reasoning areas, context-size readouts, real cancellation, persisted queues with replay — the whole machine is inspectable, and the whole machine is yours.
 
-<br>
-
-![Dashboard](dashboard.png)
+Early in development; already a complete chat experience — with features some proprietary chats still miss. Next: speech-to-text, music & image generation, and everyday providers (YouTube, messengers, finance). tripleF aims for the top of the open-source community.
 
 <br>
 
-![github](https://img.shields.io/github/release/ehildt/ckir.io-visions?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/stars/ehildt/ckir.io-visions?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/license/ehildt/ckir.io-visions?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-[![codecov](https://img.shields.io/codecov/c/github/ehildt/ckir.io-visions?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
+![Dashboard](banner.gif)
+
+<br>
+
+![github](https://img.shields.io/github/release/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![github](https://img.shields.io/github/stars/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![github](https://img.shields.io/github/license/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+[![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF.io?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
 
 <br>
 
@@ -21,28 +23,45 @@ A NestJS microservice monorepo for AI-powered image analysis using locally-hoste
 
 <div align="center">
 
-## What is VISIONS?
+## What is tripleF?
 
-**@CKIR.IO/VISIONS** is a horizontally-scalable NestJS microservice that offloads vision analysis to BullMQ workers backed by Redis/KeyDB. It exposes two ingress protocols—REST and MCP—over a single Fastify HTTP server, with real-time results streamed over Socket.IO. A Vue 3 dashboard provides a debug console and user-facing UI.
+A NestJS-powered **conversation harness** (agentic step engine: sanitize → interpret → execute → respond, with Serper-grounded tools and schema-validated structured answers) behind a Vue 3 **workbench dashboard** (chat, system control, dead-letter replay, image preprocessing, 13 game-inspired themes) — async over BullMQ/KeyDB, persisted in PostgreSQL/Prisma, streamed live over Socket.IO, images in MinIO. See the [wiki](.wiki/0-introduction.md) for architecture, API, and operations.
+
+### Quick Start
+
+</div>
+
+```bash
+docker compose -f infra.compose.yml up -d    # postgres · minio · keydb
+cp server/.env.example server/.env
+cp dashboard/.env.example dashboard/.env
+docker compose up -d                          # deps → server → dashboard
+```
+
+<br>
+
+<div align="center">
+
+Dashboard at `http://localhost:5173/dashboard/` · API at `http://localhost:3000/api/v1` · Swagger at `/api-docs`.  
+Full guide: [0.1-quick-start](.wiki/0.1-quick-start.md) · Docker deep-dive: [0.2-docker](.wiki/0.2-docker.md).
 
 ### Built with AI-Assisted Context Coding, Owned by Humans
 
-This project was developed using **context coding**—a disciplined  [AI-assisted](.wiki/3-ai-assisted-development.md) paradigm where generative tools accelerate boilerplate and exploration while every architectural decision, interface contract, and failure mode is deliberately reviewed, tested, and owned. We believe velocity without ownership accelerates directly into technical insolvency.
+This project is developed using **context coding** — a disciplined [AI-assisted](.wiki/3-ai-assisted-development.md) paradigm where generative tools accelerate boilerplate and exploration while every architectural decision, interface contract, and failure mode is deliberately reviewed, tested, and owned. We believe velocity without ownership accelerates directly into technical insolvency.
 
 <br>
 
 ## Contributing & License
 
-Contributions are welcome! Please open an issue first to discuss what you would like to change or add. This project follows [Semantic Versioning](https://semver.org/). Pull requests must pass CI before they can be merged. Distributed under the MIT License. 
+Contributions are welcome! Please open an issue first to discuss what you would like to change or add. This project follows [Semantic Versioning](https://semver.org/). Pull requests must pass CI before they can be merged. Dependency and status badges in the per-app READMEs are generated by [depbadge](https://github.com/ehildt/depbadge) — see [0.3-documentation](.wiki/0.3-documentation.md). Distributed under the MIT License.
 See [LICENSE](LICENSE) for more information.
 
 </div>
 
 <br>
 
-
 <div align="center">
 
-[E-MAIL](mailto:eugen.hildt@gmail.com) · [WIKI](https://github.com/ehildt/ckir.io-visions/wiki) · [ISSUES](https://github.com/ehildt/ckir.io-visions/issues) · [DONATE](https://github.com/sponsors/ehildt)
+[E-MAIL](mailto:eugen.hildt@gmail.com) · [WIKI](https://github.com/ehildt/tripleF.io/wiki) · [ISSUES](https://github.com/ehildt/tripleF.io/issues) · [DONATE](https://github.com/sponsors/ehildt)
 
 </div>

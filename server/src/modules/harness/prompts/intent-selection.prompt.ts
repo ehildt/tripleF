@@ -12,7 +12,7 @@ You output ONLY valid JSON.
 CONTEXT SUMMARY RULES
 - The contextSummary replaces the conversation history for later pipeline steps. It must be self-sufficient.
 - Extract ONLY what the latest user request references or depends on. Omit everything else.
-- Always include: the established topic/entities verbatim, key facts from prior answers the follow-up builds on, and user-stated constraints or preferences.
+- Always include: the established topic/entities verbatim (later steps must be able to cite them word-for-word in standalone search queries), key facts from prior answers the follow-up builds on, and user-stated constraints or preferences.
 - Resolve short follow-ups ("the second one", "make it shorter", "more", "what about X"): spell out what they refer to from prior turns.
 - For imagelist/videolist follow-ups ("more images", "more videos"): include the previously shown image/video URLs verbatim so later steps can skip them.
 - For requests about specific prior content ("use the first image as hero", "expand point 2"): include the referenced items verbatim.
@@ -71,6 +71,15 @@ PROMPT SELECTION RULES
 - default for evaluation: use when the user asks for a critique, review, assessment, pros and cons, or comparison with judgment.
 - default for product: use when the user asks about a specific product they want to buy, compare prices, find where to buy something, or look up best deals.
 - coding: use for text when the user asks for code help or technical implementation.
+- familiarity: use for text when the user asks whether you know or have heard of something (see FAMILIARITY QUESTION RULES).
+
+FAMILIARITY QUESTION RULES
+- Questions asking whether you know or have heard of something ("do you know X?", "have you heard of X?", "what do you know about X?", "kennst du X?", "hast du von X gehört?") are familiarity questions.
+- Familiarity questions MUST use template "text" with prompt variant "familiarity" — NEVER "article", "news", or "evaluation". The user is opening a conversation about the subject, not commissioning a report.
+- Include webSearch (and topical tools such as wikipediaSearch) whenever the subject is niche, recent, a living topic, or a specific named entity — the tools ground the answer. Only omit tools for timeless, universally known subjects.
+- Example: "kennst du dich mit NTE aus?" → template: "text", prompt: "familiarity", tools: [webSearch, wikipediaSearch]
+- Example: "have you heard of the new Dune movie?" → template: "text", prompt: "familiarity", tools: [webSearch]
+- Example: "do you know the Pythagorean theorem?" → template: "text", prompt: "familiarity", tools: []
 
 PRODUCT TEMPLATE RULES
 - If the user asks about a specific product they want to purchase (e.g. 'iPhone 16 Pro Max', 'Sony WH-1000XM5', 'best budget mechanical keyboard'), you MUST choose template 'product'.
@@ -194,6 +203,18 @@ MULTIMODAL RULES
 - If the user asks to describe items from prior conversation and no images are attached,
   do NOT pick "describe". Pick "summary" (if a recap is requested) or "text" otherwise.
 
+COMPARE IS FOR UPLOADED IMAGES ONLY
+- The "compare" template exists solely to compare images the user uploaded in the CURRENT request. Nothing else ever maps to it.
+- Comparisons of information NEVER use "compare" — not for games, movies, products, companies, people, places, versions, specs, prices, or opinions. This covers "X vs Y", "X versus Y", "X or Y", "how does X compare to Y", "how does X differ from Y", "is X better than Y", "what is the difference between X and Y", "vergleiche X mit Y", "was ist der Unterschied".
+- Information comparisons instead use:
+  → "evaluation" when a verdict, judgment, critique, or pros/cons are wanted — the default for "how does X compare to Y?".
+  → "article" for a neutral side-by-side research report.
+  → "text" for casual conversational answers.
+- Information comparisons usually need facts about BOTH subjects: include webSearch unless the conversation already provides everything.
+- Example: User: "how does NTE compare to Wuthering Waves?" → template: "evaluation", tools: [webSearch, serperImageSearch, serperVideoSearch]
+- Example: User: "Xbox Ally X vs Steam Deck OLED — which should I buy?" → template: "evaluation", tools: [webSearch, serperImageSearch, serperVideoSearch]
+- Counter-example: User attaches two screenshots and asks "which of these is from game X?" → template: "compare" (images are present).
+
 CLASSIFICATION RULES
 - choose exactly one template
 - choose exactly one prompt variant per template
@@ -217,7 +238,7 @@ TEMPLATE RULES
   When image search is used, prefer 2560×1440 (1440p) images. The tools enforce the 1280×720 (720p) minimum, so never request lower resolutions.
   Choose "news" (not "article") when the user explicitly asks for "news", "latest", "recent", "breaking", "announcements", "update", "status", or "current events".
 - describe: for describing user-provided images. No tools unless the user explicitly asks for external data or the images contain searchable clues (watermarks, URLs, brands, logos, recognizable named entities).
-- compare: for comparing user-provided images. No tools unless the user explicitly asks for external data or the images contain searchable clues.
+- compare: ONLY for comparing images the user uploaded in the CURRENT request. Information/entity comparisons ("how does X compare to Y", "X vs Y", "vergleiche X mit Y") are NEVER "compare" — they are "evaluation" (verdict wanted) or "article" (neutral report); see COMPARE IS FOR UPLOADED IMAGES ONLY. No tools unless the user explicitly asks for external data or the images contain searchable clues.
   If the user asks whether the uploaded images match/resemble/reference an external topic (e.g. "are these characters from X?", "is this from game Y?", "do these images show Z?"), keep template "compare" with the default (not visual) variant, include imageSearch tools for reference discovery, and use the search results as reference images for verification. Do NOT switch to evaluation or summary just because the question mentions an external topic.
 - ocr: for extracting text from images. No tools unless the extracted text contains URLs or named entities the user asks you to look up.
 
@@ -238,6 +259,7 @@ IMAGE-SELF-ANALYSIS TOOL RULES
   When serperShoppingSearch is available, include it. When serperReviewsSearch is available, include it.
   Include serperPlacesSearch when the user asks about local availability or nearby stores carrying the product.
 - text: catch-all for chat, coding, creative writing. Tools only when external data needed.
+  Familiarity questions ("do you know X?", "have you heard of X?") use the "familiarity" variant — see FAMILIARITY QUESTION RULES.
 
 MEDIA REQUEST RULES
 - When the user asks for media (images, videos, screenshots, photos, graphics) about a topic, this is NOT a clarification — classify it with the appropriate media tools.
@@ -262,6 +284,8 @@ Use these examples to resolve "news" vs "article":
 - User: "find me music videos of Daft Punk on YouTube" → template: "videolist", tools: [serperVideoSearch]
 - User: "give me a playlist of the best Nioh 3 trailers" → template: "videolist", tools: [serperVideoSearch]
 - User: "latest music videos from Billie Eilish" → template: "videolist", tools: [serperVideoSearch]
+- User: "how does NTE compare to Wuthering Waves?" → template: "evaluation", tools: [webSearch, serperImageSearch, serperVideoSearch]
+- User: "iPhone 16 Pro vs Pixel 9 Pro — which camera is better?" → template: "evaluation", tools: [webSearch, serperImageSearch, serperVideoSearch]
 
 Follow-up media requests (user adds images/videos/news to established topic):
 - User: "show me images" (after discussing a game) → template: "article", tools: [webSearch, serperImageSearch, serperVideoSearch]

@@ -8,9 +8,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: visions
-      POSTGRES_PASSWORD: visions
-      POSTGRES_DB: visions
+      POSTGRES_USER: triplef
+      POSTGRES_PASSWORD: triplef
+      POSTGRES_DB: triplef
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -18,7 +18,7 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - ckir.io-visions
+      - triplef.io
 
   minio:
     image: minio/minio:latest
@@ -34,7 +34,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     networks:
-      - ckir.io-visions
+      - triplef.io
 
   keydb:
     image: eqalpha/keydb
@@ -47,7 +47,7 @@ services:
       - ./server/keydb.conf:/usr/local/etc/keydb/keydb.conf
     command: keydb-server /usr/local/etc/keydb/keydb.conf
     networks:
-      - ckir.io-visions
+      - triplef.io
 
 #  ollama:
 #    image: ollama/ollama:latest
@@ -61,7 +61,7 @@ services:
 #    environment:
 #      - OLLAMA_HOST=0.0.0.0
 #    networks:
-#      - ckir.io-visions
+#      - triplef.io
 
 #  searxng:
 #    image: searxng/searxng:latest
@@ -75,7 +75,7 @@ services:
 #      - SEARXNG_BASE_URL=http://localhost:4000
 #      - SEARXNG_UWSGI=true
 #    networks:
-#      - ckir.io-visions
+#      - triplef.io
 
 volumes:
   postgres_data:
@@ -84,6 +84,6 @@ volumes:
 #  ollama_data:
 
 networks:
-  ckir.io-visions:
+  triplef.io:
     #    external: true
-    name: ckir.io-visions
+    name: triplef.io

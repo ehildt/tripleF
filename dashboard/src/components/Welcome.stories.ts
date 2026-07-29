@@ -18,7 +18,7 @@ export const Introduction: Story = {
         <div style="max-width: 48rem; margin: 0 auto;">
           <div style="margin-bottom: 2.5rem;">
             <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-accent-primary); font-family: var(--font-mono);">
-              ckir.io Harness
+              tripleF Harness
             </h1>
             <p style="font-size: 1.25rem; opacity: 0.7;">
               Component Library — Storybook

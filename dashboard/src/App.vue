@@ -2,8 +2,8 @@
 import { onBeforeMount, onMounted, onUnmounted } from 'vue';
 
 import AppFooter from './components/app/app-footer/AppFooter.vue';
-import AppHeader from './components/app/app-header/AppHeader.vue';
 import AppMainContent from './components/app/app-main-content/AppMainContent.vue';
+import TabMenu from './components/app/tab-menu/TabMenu.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
 import { useAppStore } from './stores/app';
@@ -65,7 +65,7 @@ onUnmounted(() => {
     id="app-root"
     class="min-h-screen text-fg-primary font-sans bg-grid root-accent-gradient"
   >
-    <AppHeader
+    <TabMenu
       :active-tab="appStore.activeTab"
       :debug-count="debugStore.debugLogCount"
       :show-chat-star="appStore.showChatStar"

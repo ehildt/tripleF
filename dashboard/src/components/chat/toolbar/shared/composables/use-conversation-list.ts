@@ -6,7 +6,6 @@ import { useSocketStore } from '../../../../../stores/socket';
 import { createId } from '../../../../../utils/id.helper';
 import { isSocketEventInUse } from '../../conversation-list/helpers/is-socket-event-in-use.helper';
 import { isSocketShared } from '../../conversation-list/helpers/is-socket-shared.helper';
-import { parseSocketBinding } from '../../conversation-list/helpers/parse-socket-binding.helper';
 import {
   removeSubscriptionByEventRoom,
   subscriptions,
@@ -38,7 +37,8 @@ export function useConversationList() {
 
   // ── New conversation form ─────────────────────────────────────
   const newConversationName = ref('');
-  const newConversationSocketBinding = ref('');
+  const newConversationEvent = ref('');
+  const newConversationRoomId = ref('');
 
   // ── Conversation actions ──────────────────────────────────────
   function switchToConversation(id: string) {
@@ -93,24 +93,19 @@ export function useConversationList() {
   /**
    * Create a new conversation from the current form values.
    * Wires up the socket connection and subscriptions.
+   * A blank event generates a fresh id; a blank roomId joins no room.
    */
   function createNewConversation(
     type: 'temporary' | 'persistent',
     newConversationNameValue: string,
-    newConversationSocketBindingValue: string,
+    newConversationEventValue: string,
+    newConversationRoomIdValue: string,
   ) {
     const name = newConversationNameValue.trim();
+    const enteredEvent = newConversationEventValue.trim();
 
-    let event: string;
-    let roomId: string | undefined;
-    const parsed = parseSocketBinding(newConversationSocketBindingValue);
-    if (parsed.event) {
-      event = parsed.event;
-      roomId = parsed.roomId || undefined;
-    } else {
-      event = createId();
-      roomId = undefined;
-    }
+    const event = enteredEvent || createId();
+    const roomId = newConversationRoomIdValue.trim() || undefined;
 
     socketStore.ensureSocketConnection();
     socketStore.listenToEvent(event);
@@ -132,13 +127,16 @@ export function useConversationList() {
     }
 
     newConversationName.value = '';
+    newConversationEvent.value = '';
+    newConversationRoomId.value = '';
   }
 
   return {
     isConversationListExpanded,
     conversationsSortedByUpdated,
     newConversationName,
-    newConversationSocketBinding,
+    newConversationEvent,
+    newConversationRoomId,
     switchToConversation,
     deleteConversation,
     createNewConversation,

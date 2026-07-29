@@ -8,7 +8,7 @@ import {
 } from '@nestjs/terminus';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
+import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
 
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
@@ -20,7 +20,7 @@ export class HealthService {
     private readonly http: HttpHealthIndicator,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
-    private readonly ocfg: OllamaConfigService,
+    private readonly ocfg: OllamaOverridesService,
     private readonly acfg: AppConfigService,
     private readonly pgIndicator: PostgresHealthIndicator,
     private readonly minioIndicator: MinioHealthIndicator,
@@ -54,7 +54,7 @@ export class HealthService {
   }
 
   private buildOllamaPingUrl(): string {
-    const host = this.ocfg.config.host ?? 'http://127.0.0.1:11434/api';
+    const host = this.ocfg.getConfig().host;
     return host.startsWith('http') ? `${host}/tags` : `http://${host}/api/tags`;
   }
 }

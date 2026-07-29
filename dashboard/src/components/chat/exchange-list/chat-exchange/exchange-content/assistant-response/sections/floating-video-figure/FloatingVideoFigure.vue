@@ -11,10 +11,12 @@
  * deselects the video — per the stop-on-close setting. Unembeddable URLs
  * degrade to an external link.
  */
-import { GripVertical } from '@lucide/vue';
 import { computed } from 'vue';
 
+import { playlistMarqueeVisible } from '../../../../../../composables/right-panel-view.state';
 import { useFloatingPlayer } from '../../composables/use-floating-player';
+import { usePlaylistToggle } from '../../composables/use-playlist-toggle';
+import FloatingVideoPopupBar from './popup-bar/FloatingVideoPopupBar.vue';
 
 const props = defineProps<{
   videoUrl: string;
@@ -47,23 +49,18 @@ const {
   setOpacity,
 } = useFloatingPlayer(item);
 
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
+
+/** The now-playing marquee rides the popout unless the playlist bar carries it. */
+const showTitleMarquee = computed(
+  () => isFloating.value && !playlistMarqueeVisible.value,
+);
+
 const RESIZE_DIRECTIONS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const;
 
 const opacityPercent = computed(() =>
   Math.round(floatingPopupOpacity.value * 100),
 );
-
-/** Fill the slider track with accent up to the current value. */
-const opacitySliderStyle = computed(() => {
-  const fillPercent = ((opacityPercent.value - 25) / 75) * 100;
-  return {
-    background: `linear-gradient(to right, var(--color-accent-primary) ${fillPercent}%, var(--color-bg-tertiary) ${fillPercent}%)`,
-  };
-});
-
-function onOpacityInput(event: Event) {
-  setOpacity(Number((event.target as HTMLInputElement).value));
-}
 </script>
 
 <template>
@@ -78,40 +75,18 @@ function onOpacityInput(event: Event) {
       :style="popupStyle"
       @pointerdown="engage"
     >
-      <div
+      <FloatingVideoPopupBar
         v-if="isFloating"
-        class="floating-video-figure__popup-bar"
-        @pointerdown="startDrag"
-      >
-        <GripVertical
-          class="floating-video-figure__popup-grip"
-          aria-hidden="true"
-        />
-        <span class="floating-video-figure__popup-title">{{ title }}</span>
-        <input
-          type="range"
-          class="floating-video-figure__popup-opacity-slider"
-          min="25"
-          max="100"
-          step="1"
-          :value="opacityPercent"
-          :style="opacitySliderStyle"
-          :aria-label="`Popup opacity: ${opacityPercent}%`"
-          :title="`Opacity: ${opacityPercent}%`"
-          @pointerdown.stop
-          @input="onOpacityInput"
-        />
-        <button
-          type="button"
-          class="floating-video-figure__popup-close"
-          :aria-label="closeFloatingTitle"
-          :title="closeFloatingTitle"
-          @pointerdown.stop
-          @click.stop="closeFloating"
-        >
-          ✕
-        </button>
-      </div>
+        :title="title"
+        :show-title-marquee="showTitleMarquee"
+        :opacity-percent="opacityPercent"
+        :is-in-playlist="isInPlaylist"
+        :close-title="closeFloatingTitle"
+        @drag="startDrag"
+        @opacity-input="setOpacity"
+        @toggle-playlist="togglePlaylistVideo"
+        @close="closeFloating()"
+      />
 
       <template v-if="shouldMountPlayer">
         <video
@@ -296,7 +271,6 @@ function onOpacityInput(event: Event) {
   display: grid;
   place-items: center;
   width: 100%;
-  padding: 0;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -329,103 +303,6 @@ function onOpacityInput(event: Event) {
 .floating-video-figure__poster:hover .floating-video-figure__poster-play {
   transform: scale(1.1);
   background: var(--color-accent-primary);
-}
-
-/* ---------- floating popup bar (drag handle + close) ---------- */
-
-.floating-video-figure__popup-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  padding: var(--spacing-1) var(--spacing-1-5);
-  background: color-mix(in srgb, var(--color-bg-elevated) 35%, transparent);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--color-divider) 70%, transparent);
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.floating-video-figure__popup-bar:active {
-  cursor: grabbing;
-}
-
-.floating-video-figure__popup-grip {
-  flex-shrink: 0;
-  width: 0.9rem;
-  height: 0.9rem;
-  color: var(--color-fg-muted);
-}
-
-.floating-video-figure__popup-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-secondary);
-}
-
-.floating-video-figure__popup-close {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: none;
-  background: none;
-  font-size: 0.7rem;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.floating-video-figure__popup-close:hover {
-  color: var(--color-status-error);
-}
-
-.floating-video-figure__popup-opacity-slider {
-  flex-shrink: 0;
-  appearance: none;
-  width: 4.5rem;
-  height: 0.25rem;
-  margin-left: 0.5rem;
-  outline: none;
-  cursor: pointer;
-}
-
-.floating-video-figure__popup-opacity-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 0.66rem;
-  height: 0.66rem;
-  background-color: var(--color-accent-primary);
-  border: 2px solid var(--color-bg-elevated);
-  box-shadow: 0 0 0 1px var(--color-accent-border);
-  transition: transform 0.15s ease;
-}
-
-.floating-video-figure__popup-opacity-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-.floating-video-figure__popup-opacity-slider::-moz-range-track {
-  height: 0.25rem;
-  background: transparent;
-}
-
-.floating-video-figure__popup-opacity-slider::-moz-range-thumb {
-  width: 0.55rem;
-  height: 0.55rem;
-  background-color: var(--color-accent-primary);
-  border: 2px solid var(--color-bg-elevated);
-  box-shadow: 0 0 0 1px var(--color-accent-border);
-  transition: transform 0.15s ease;
-}
-
-.floating-video-figure__popup-opacity-slider::-moz-range-thumb:hover {
-  transform: scale(1.2);
 }
 
 /* ---------- resize handles (edges + corners) ---------- */

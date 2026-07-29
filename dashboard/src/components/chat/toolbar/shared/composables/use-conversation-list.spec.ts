@@ -7,6 +7,13 @@ import { useSocketStore } from '../../../../../stores/socket';
 import { subscriptions } from './subscriptions.state';
 import { useConversationList } from './use-conversation-list';
 
+vi.mock('../../../../../api/conversations.api', () => ({
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  fetchConversation: vi.fn(),
+  saveConversation: vi.fn().mockResolvedValue(undefined),
+  deleteConversation: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../../../../../stores/socket', () => {
   const ensureSocketConnection = vi.fn();
   const listenToEvent = vi.fn();
@@ -49,11 +56,12 @@ describe('useConversationList', () => {
     expect(isConversationListExpanded.value).toBe(false);
   });
 
-  it('exposes newConversationName and newConversationSocketBinding refs', () => {
-    const { newConversationName, newConversationSocketBinding } =
+  it('exposes newConversationName, newConversationEvent, and newConversationRoomId refs', () => {
+    const { newConversationName, newConversationEvent, newConversationRoomId } =
       useConversationList();
     expect(newConversationName.value).toBe('');
-    expect(newConversationSocketBinding.value).toBe('');
+    expect(newConversationEvent.value).toBe('');
+    expect(newConversationRoomId.value).toBe('');
   });
 
   it('conversationsSortedByUpdated returns conversations sorted by updatedAt desc', () => {
@@ -102,7 +110,7 @@ describe('useConversationList', () => {
     ];
 
     const { createNewConversation, deleteConversation } = useConversationList();
-    createNewConversation('temporary', 'Conv', 'harness::room1');
+    createNewConversation('temporary', 'Conv', 'harness', 'room1');
     const conversation = conversationStore.conversations[0]!;
 
     await deleteConversation(conversation.id);
@@ -122,8 +130,8 @@ describe('useConversationList', () => {
     const socketStore = useSocketStore();
 
     const { createNewConversation, deleteConversation } = useConversationList();
-    createNewConversation('temporary', 'First', 'harness::room1');
-    createNewConversation('temporary', 'Second', 'harness::room2');
+    createNewConversation('temporary', 'First', 'harness', 'room1');
+    createNewConversation('temporary', 'Second', 'harness', 'room2');
     const first = conversationStore.conversations.find(
       (c) => c.title === 'First',
     )!;
@@ -138,12 +146,18 @@ describe('useConversationList', () => {
     const conversationStore = useConversationStore();
     const lenBefore = conversationStore.conversations.length;
 
-    const { createNewConversation, newConversationName } =
-      useConversationList();
+    const {
+      createNewConversation,
+      newConversationName,
+      newConversationEvent,
+      newConversationRoomId,
+    } = useConversationList();
     newConversationName.value = 'My Conversation';
-    createNewConversation('temporary', 'My Conversation', 'harness::room1');
+    createNewConversation('temporary', 'My Conversation', 'harness', 'room1');
 
     expect(conversationStore.conversations.length).toBeGreaterThan(lenBefore);
     expect(newConversationName.value).toBe('');
+    expect(newConversationEvent.value).toBe('');
+    expect(newConversationRoomId.value).toBe('');
   });
 });

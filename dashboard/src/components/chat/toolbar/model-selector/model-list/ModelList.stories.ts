@@ -13,8 +13,12 @@ const meta = {
         component: `
 Dropdown panel displaying available models for selection.
 
-Receives the model list and selection state as props. Emits \`select\` when a model is clicked.
-Handles loading, empty, and populated states internally.`,
+Local models come first; Ollama Cloud models (when an Ollama API key is
+configured) follow below. Both sections get a labeled divider, but only
+when both groups exist — with a single group the lines are omitted. The
+list is height-capped and scrolls. Receives the model groups and selection
+state as props. Emits \`select\` when a model is clicked. Handles loading,
+empty, and populated states internally.`,
       },
     },
   },
@@ -23,11 +27,12 @@ Handles loading, empty, and populated states internally.`,
     selectedModel: { control: 'text' },
   },
   args: {
-    models: [
+    localModels: [
       { model: 'llama3:8b', parameter_size: '8B' },
       { model: 'mistral:7b', parameter_size: '7B' },
       { model: 'gemma:7b', parameter_size: '7B' },
     ],
+    cloudModels: [],
     selectedModel: 'llama3:8b',
     loading: false,
   },
@@ -49,7 +54,8 @@ Handles loading, empty, and populated states internally.`,
     template: `
       <div style="width: 260px; background: var(--color-bg-elevated); border: 1px solid var(--color-divider); box-shadow: 0 4px 12px color-mix(in srgb, var(--color-bg-primary) 30%, transparent);">
         <ModelList
-          :models="args.models"
+          :local-models="args.localModels"
+          :cloud-models="args.cloudModels"
           :selected-model="selected"
           :loading="args.loading"
           @select="onSelect"
@@ -62,13 +68,33 @@ Handles loading, empty, and populated states internally.`,
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Default state with a few models, one selected. */
+/** Default state with a few local models, one selected — no dividers with a single group. */
 export const Default: Story = {};
+
+/** Local and Ollama Cloud models, each group under its labeled divider. */
+export const WithCloudModels: Story = {
+  args: {
+    cloudModels: [
+      { model: 'gpt-oss:120b', origin: 'cloud', parameter_size: '120B' },
+      { model: 'kimi-k2:1t', origin: 'cloud', parameter_size: '1T' },
+    ],
+  },
+};
+
+/** Cloud-only list (e.g. the configured host is ollama.com itself) — no dividers with a single group. */
+export const CloudOnly: Story = {
+  args: {
+    localModels: [],
+    cloudModels: [
+      { model: 'gpt-oss:120b', origin: 'cloud', parameter_size: '120B' },
+    ],
+  },
+};
 
 /** Multiple models with quantization info. */
 export const WithQuantizationLevels: Story = {
   args: {
-    models: [
+    localModels: [
       {
         model: 'llama3-instruct-q4_K_M.gguf',
         parameter_size: '8B',
@@ -86,18 +112,18 @@ export const WithQuantizationLevels: Story = {
 
 /** Loading state — spinner shown. */
 export const Loading: Story = {
-  args: { models: [], loading: true },
+  args: { localModels: [], cloudModels: [], loading: true },
 };
 
 /** Empty state — no models and not loading. */
 export const Empty: Story = {
-  args: { models: [], selectedModel: '', loading: false },
+  args: { localModels: [], cloudModels: [], selectedModel: '', loading: false },
 };
 
-/** Long list triggers scroll container. */
+/** Long list exceeds the height cap and scrolls. */
 export const LongList: Story = {
   args: {
-    models: Array.from({ length: 15 }, (_, i) => ({
+    localModels: Array.from({ length: 15 }, (_, i) => ({
       model: `model-${String(i + 1).padStart(3, '0')}.gguf`,
       parameter_size: `${[7, 8, 13, 30, 65][i % 5]}B`,
     })),

@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-import { safeUrl } from '../helpers/url-schema.helper.js';
+import { safeMediaUrl, safeUrl } from '../helpers/url-schema.helper.js';
 
 const galleryItemSchema = z.object(
   {
-    imageUrl: z
-      .string()
-      .url({ message: 'galleryItems.imageUrl must be a valid URL' }),
+    imageUrl: safeMediaUrl({
+      message: 'galleryItems.imageUrl must be a valid URL',
+    }),
     imageAlt: z.string().min(1, {
       message: 'galleryItems.imageAlt must not be empty',
     }),
@@ -39,8 +39,6 @@ export const imagelistSchema = z.object({
   galleryItems: z.array(galleryItemSchema),
   sources: z.array(sourceSchema).optional(),
 });
-
-export type ImagelistJson = z.infer<typeof imagelistSchema>;
 
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues

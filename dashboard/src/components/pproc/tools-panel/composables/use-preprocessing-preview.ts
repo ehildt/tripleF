@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
@@ -27,7 +27,7 @@ export function usePreprocessingPreview() {
 
   const previewFile = ref<File | null>(null);
   const isPreviewLoading = ref(false);
-  const fileInput = ref<HTMLInputElement | null>(null);
+  const fileInput = useTemplateRef<HTMLInputElement>('fileInput');
 
   function openPicker() {
     fileInput.value?.click();
@@ -87,7 +87,6 @@ export function usePreprocessingPreview() {
   }
 
   return {
-    fileInput,
     isPreviewLoading,
     lightbox,
     onFilePicked,

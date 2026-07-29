@@ -6,11 +6,14 @@ export const MEDIA_TYPE = {
 } as const;
 
 export type ImageMediaType =
-  'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  | 'image/jpeg'
+  | 'image/png'
+  | 'image/webp'
+  | 'image/gif';
 
-export type MediaTypeSignature = readonly (number | null)[];
+type MediaTypeSignature = readonly (number | null)[];
 
-export type ImageMediaTypeSignatures = {
+type ImageMediaTypeSignatures = {
   [key in ImageMediaType]: MediaTypeSignature;
 };
 

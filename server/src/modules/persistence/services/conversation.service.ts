@@ -4,7 +4,7 @@ import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConversationRepository } from './conversation.repository.js';
 
-export interface ConversationTurn {
+interface ConversationTurn {
   sessionId: string;
   conversationId: string;
   requestId: string;
@@ -12,14 +12,14 @@ export interface ConversationTurn {
   content: Record<string, unknown>;
 }
 
-export interface ConversationSnapshot {
+interface ConversationSnapshot {
   conversationId: string;
   title?: string | null;
   latestRequestId?: string;
   updatedAt?: Date;
 }
 
-export interface MergedConversation {
+interface MergedConversation {
   sessionId: string;
   conversationId: string;
   latestRequestId?: string;

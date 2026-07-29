@@ -260,6 +260,11 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       requestId,
       template: d.template,
       delta: d.delta,
+      status: d.status,
+      // Authoritative payload of the non-streaming retry: when the streamed
+      // deltas were not valid JSON, this is the only place the validated
+      // response reaches the client.
+      data: d.data,
       images: d.images,
       toolResults: d.toolResults,
       done: d.done,

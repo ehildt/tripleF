@@ -1,8 +1,6 @@
 import type { Tool } from 'ai';
 
-export type ToolSummaryFn = (
-  data: Record<string, unknown>,
-) => Record<string, unknown>;
+type ToolSummaryFn = (data: Record<string, unknown>) => Record<string, unknown>;
 
 export type ToolWithSummary = Tool & { summarize?: ToolSummaryFn };
 

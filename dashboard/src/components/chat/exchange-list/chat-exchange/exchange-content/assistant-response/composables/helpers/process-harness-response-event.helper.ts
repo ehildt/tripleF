@@ -22,14 +22,18 @@ export function processHarnessResponseEvent(
     accumulatedDelta += delta;
   }
 
-  if (event.done && event.data != null && typeof event.data === 'object') {
-    const normalized = normalizeHarnessResponseData(event.data, event);
-    if (normalized) {
-      lastValidData = normalized;
-    }
-  }
+  // The done event's validated server data is authoritative — when the
+  // streamed deltas failed validation and were regenerated via retries,
+  // this is the only channel the corrected payload reaches the client on.
+  // Never re-parse the (possibly invalid) raw deltas over it.
+  const doneDataNormalized =
+    event.done && event.data != null && typeof event.data === 'object'
+      ? normalizeHarnessResponseData(event.data, event)
+      : null;
 
-  if (isTextTemplate) {
+  if (doneDataNormalized) {
+    lastValidData = doneDataNormalized;
+  } else if (isTextTemplate) {
     text = extractHarnessText(accumulatedDelta);
   } else {
     const parsed = parsePartialJson(stripMarkdownFences(accumulatedDelta));

@@ -10,6 +10,22 @@ import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 const IMAGE_REQUIRED_TEMPLATES = new Set(['describe', 'compare', 'ocr']);
 
+/**
+ * Fallback for a classifier that emitted an image-only template although
+ * nothing is attached. Mirrors the prompt's IMAGE-REQUIRED TEMPLATE
+ * GUARDRAIL: never ask the user for an image here — informational
+ * comparisons become 'evaluation', describe/ocr follow-ups without
+ * attachments become 'summary'.
+ */
+const IMAGE_REQUIRED_TEMPLATE_FALLBACKS: Record<
+  string,
+  'evaluation' | 'summary'
+> = {
+  compare: 'evaluation',
+  describe: 'summary',
+  ocr: 'summary',
+};
+
 @Injectable()
 export class InterpretStepService implements StepHandler {
   constructor(
@@ -119,22 +135,31 @@ export class InterpretStepService implements StepHandler {
     if (!IMAGE_REQUIRED_TEMPLATES.has(intent.template)) return;
 
     const hasImages = ctx.buffers.length > 0 || ctx.processedMeta.length > 0;
-    if (!hasImages) {
-      // No images available for an image-required template. Ask the user to
-      // attach an image instead of silently falling back to a text template.
-      intent.needsClarification = true;
-      intent.clarificationQuestion =
-        'This request requires an image. Please attach at least one image and send it again.';
-      intent.plan = {};
-      intent.tools = [];
+    if (hasImages) {
+      // Images are present. Trust the classifier's intent: the model already
+      // selected describe/compare/ocr and decided whether tools are needed.
+      intent.needsClarification = false;
+      intent.clarificationQuestion = undefined;
       return;
     }
 
-    // Images are present. Trust the classifier's intent: the model already
-    // selected describe/compare/ocr and decided whether tools are needed. Do
-    // not override it with an English clarifying question.
-    intent.needsClarification = false;
-    intent.clarificationQuestion = undefined;
+    // No images attached. A classifier-set clarification is respected — the
+    // model may have decided the user meant a previously discussed image and
+    // should re-attach it; that question is localized and shown as asked.
+    if (intent.needsClarification) return;
+
+    // Otherwise the classifier misused an image-only template for a request
+    // that has no image semantics (e.g. an informational comparison). Mirror
+    // the prompt's guardrail: downgrade to a text template instead of asking
+    // the user to attach an image they never intended to send.
+    const fallbackTemplate = IMAGE_REQUIRED_TEMPLATE_FALLBACKS[intent.template];
+    this.stepLogger.warn(ctx, 'interpret', 'image-only template downgraded', {
+      template: intent.template,
+      fallbackTemplate,
+    });
+    intent.template = fallbackTemplate;
+    intent.prompt = 'default';
+    intent.plan = {};
   }
 
   private async localizeClarificationQuestion(

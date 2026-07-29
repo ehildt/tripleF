@@ -151,35 +151,41 @@ export class SanitizeActionService {
     verifiedImages = verifiedImages.slice(0, imageTargetCount);
     verifiedVideos = verifiedVideos.slice(0, videoTargetCount);
 
-    // 5. Ingest external images into MinIO for image-required compare/describe tasks.
-    let ingestedImages: SanitizeResult['ingestedImages'] = [];
-    const shouldIngestCloudImages =
-      (ctx.outputs.intent?.template === 'compare' ||
-        ctx.outputs.intent?.template === 'describe') &&
-      (ctx.buffers.length > 0 || ctx.processedMeta.length > 0);
-    if (shouldIngestCloudImages) {
-      const existingFingerprints = await this.buildUserFingerprints(ctx);
-      ingestedImages = await this.ingestExternalImages(
+    // 5. Ingest external images into MinIO. Bot-protected CDNs answer our
+    //    link probes yet block real clients (UA/Referer/TLS checks), and a
+    //    download can fail regardless — so only images we could fetch and
+    //    store locally may reach the response: external URLs that were not
+    //    ingested are dropped and blanked out of the tool results.
+    const ingestion = await this.ingestCloudImages(ctx, verifiedImages);
+    verifiedImages = ingestion.verifiedImages;
+
+    const droppedImageUrls = this.collectExternalImageSearchUrls(
+      sanitizedToolResults,
+      ingestion.ingestedForRewrite,
+    );
+    if (droppedImageUrls.size > 0) {
+      this.stepLogger.warn(
         ctx,
-        verifiedImages,
-        existingFingerprints,
-      );
-      ingestedImages = this.limitCloudReferenceImages(ingestedImages, 3);
-      verifiedImages = this.replaceExternalWithIngested(
-        verifiedImages,
-        ingestedImages,
+        'sanitize',
+        'dropped un-ingestable external images',
+        {
+          droppedCount: droppedImageUrls.size,
+          sampledUrls: Array.from(droppedImageUrls).slice(0, 5),
+        },
       );
     }
 
-    // 5b. Rewrite image URLs inside tool results to use local storage URLs after ingestion.
-    const finalToolResults = shouldIngestCloudImages
-      ? sanitizeToolResultsWithIngestedUrls(
-          sanitizedToolResults,
-          this.buildIngestedByUrlMap(ingestedImages),
-          brokenMediaUrls,
-          brokenPageUrls,
-        )
-      : sanitizedToolResults;
+    // 5b. Rewrite ingested image URLs inside tool results to local storage
+    //     URLs and blank the dropped ones as if they were broken media.
+    const finalToolResults =
+      ingestion.ingestedForRewrite.length > 0 || droppedImageUrls.size > 0
+        ? sanitizeToolResultsWithIngestedUrls(
+            sanitizedToolResults,
+            this.buildIngestedByUrlMap(ingestion.ingestedForRewrite),
+            new Set([...brokenMediaUrls, ...droppedImageUrls]),
+            brokenPageUrls,
+          )
+        : sanitizedToolResults;
 
     // 6. Build the final message payload with tool context for the response model.
     // Dynamic source policy (SysCtl): preferred domains rank first, blocked
@@ -226,7 +232,7 @@ export class SanitizeActionService {
       messages,
       availableImageCount: verifiedImages.length,
       availableVideoCount: verifiedVideos.length,
-      ingestedImages,
+      ingestedImages: ingestion.ingestedImages,
     };
   }
 
@@ -294,7 +300,8 @@ export class SanitizeActionService {
         continue;
 
       const data = tr.result as
-        { results?: Array<{ thumbnailUrl?: string }> } | undefined;
+        | { results?: Array<{ thumbnailUrl?: string }> }
+        | undefined;
       if (!data?.results) continue;
 
       for (const r of data.results) {
@@ -322,7 +329,8 @@ export class SanitizeActionService {
         continue;
 
       const data = tr.result as
-        { results?: Array<{ url?: string; link?: string }> } | undefined;
+        | { results?: Array<{ url?: string; link?: string }> }
+        | undefined;
       if (!data?.results) continue;
 
       for (const r of data.results) {
@@ -451,6 +459,108 @@ export class SanitizeActionService {
     });
   }
 
+  /**
+   * Download verified external images into MinIO and rewrite them to local
+   * storage URLs. External candidates the pipeline could not download are
+   * dropped — never handed to the client as a fallback, because links that
+   * answered our probes may still refuse real clients. Compare/describe
+   * tasks additionally keep up to three ingested images as cloud reference
+   * attachments returned in `ingestedImages`; other templates only rewrite
+   * URLs, so search images never appear as user-gallery attachments.
+   */
+  private async ingestCloudImages(
+    ctx: HarnessContext,
+    verifiedImages: Array<{ imageUrl: string; title?: string }>,
+  ): Promise<{
+    verifiedImages: Array<{ imageUrl: string; title?: string }>;
+    ingestedImages: SanitizeResult['ingestedImages'];
+    ingestedForRewrite: NonNullable<SanitizeResult['ingestedImages']>;
+  }> {
+    const isImageReferenceTask =
+      (ctx.outputs.intent?.template === 'compare' ||
+        ctx.outputs.intent?.template === 'describe') &&
+      (ctx.buffers.length > 0 || ctx.processedMeta.length > 0);
+    const hasExternalImages = verifiedImages.some((item) =>
+      item.imageUrl.startsWith('http'),
+    );
+
+    if (!isImageReferenceTask && !hasExternalImages) {
+      return { verifiedImages, ingestedImages: [], ingestedForRewrite: [] };
+    }
+
+    const existingFingerprints = isImageReferenceTask
+      ? await this.buildUserFingerprints(ctx)
+      : [];
+    const ingested =
+      (await this.ingestExternalImages(
+        ctx,
+        verifiedImages,
+        existingFingerprints,
+      )) ?? [];
+    const ingestedForRewrite = isImageReferenceTask
+      ? this.limitCloudReferenceImages(ingested, 3)
+      : ingested;
+
+    const ingestedByUrl = new Map(
+      ingestedForRewrite.map((img) => [img.sourceUrl, img]),
+    );
+    const rewritten: Array<{ imageUrl: string; title?: string }> = [];
+    const seenUrls = new Set<string>();
+    for (const item of verifiedImages) {
+      const isExternal = item.imageUrl.startsWith('http');
+      const match = isExternal ? ingestedByUrl.get(item.imageUrl) : undefined;
+      // Un-ingestable external images are dropped, never kept as fallback.
+      if (isExternal && !match) continue;
+
+      const finalUrl = match?.imageUrl ?? item.imageUrl;
+      if (seenUrls.has(finalUrl)) continue;
+
+      seenUrls.add(finalUrl);
+      rewritten.push({
+        imageUrl: finalUrl,
+        title: match?.title ?? item.title,
+      });
+    }
+
+    return {
+      verifiedImages: rewritten,
+      // Only image-reference tasks surface ingested images as attachments.
+      ingestedImages: isImageReferenceTask ? ingestedForRewrite : [],
+      ingestedForRewrite,
+    };
+  }
+
+  /**
+   * External image URLs in image-search results that were not rewritten to
+   * local storage — the client would fetch them from their origin, which
+   * the pipeline could not ingest. They are blanked as broken media.
+   */
+  private collectExternalImageSearchUrls(
+    toolResults: Array<{ toolName: string; result: unknown }>,
+    ingestedForRewrite: NonNullable<SanitizeResult['ingestedImages']>,
+  ): Set<string> {
+    const keptUrls = new Set(ingestedForRewrite.map((img) => img.sourceUrl));
+    const droppedUrls = new Set<string>();
+
+    for (const tr of toolResults) {
+      if (!tr.toolName.endsWith('ImageSearch')) continue;
+      const results = (
+        tr.result as { results?: Array<{ imageUrl?: string }> } | undefined
+      )?.results;
+      if (!Array.isArray(results)) continue;
+
+      for (const r of results) {
+        const imageUrl =
+          typeof r?.imageUrl === 'string' ? r.imageUrl.trim() : '';
+        if (imageUrl.startsWith('http') && !keptUrls.has(imageUrl)) {
+          droppedUrls.add(imageUrl);
+        }
+      }
+    }
+
+    return droppedUrls;
+  }
+
   private async buildUserFingerprints(ctx: HarnessContext): Promise<string[]> {
     const originalEntries = ctx.processedMeta
       .map((entry, index) => ({ entry, index }))
@@ -485,32 +595,6 @@ export class SanitizeActionService {
       ctx.requestId,
       { existingFingerprints },
     );
-  }
-
-  private replaceExternalWithIngested(
-    verifiedImages: Array<{ imageUrl: string; title?: string }>,
-    ingestedImages: SanitizeResult['ingestedImages'],
-  ): Array<{ imageUrl: string; title?: string }> {
-    const ingestedByUrl = new Map(
-      (ingestedImages ?? []).map((img) => [img.sourceUrl, img]),
-    );
-
-    const result: Array<{ imageUrl: string; title?: string }> = [];
-    const seenUrls = new Set<string>();
-
-    for (const item of verifiedImages) {
-      const ingested = ingestedByUrl.get(item.imageUrl);
-      const finalUrl = ingested?.imageUrl ?? item.imageUrl;
-      if (seenUrls.has(finalUrl)) continue;
-
-      seenUrls.add(finalUrl);
-      result.push({
-        imageUrl: finalUrl,
-        title: ingested?.title ?? item.title,
-      });
-    }
-
-    return result;
   }
 
   private buildIngestedByUrlMap(

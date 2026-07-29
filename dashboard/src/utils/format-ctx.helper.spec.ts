@@ -12,6 +12,11 @@ describe('formatCtx', () => {
   });
 
   it('formats megabytes', () => {
+    expect(formatCtx(1048576)).toBe('1m');
+    expect(formatCtx(5242880)).toBe('5m');
+  });
+
+  it('formats gigabytes', () => {
     expect(formatCtx(1073741824)).toBe('1g');
   });
 

@@ -1,6 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createSerperImageSearch, createSerperVideoSearch } from './serper.js';
+import {
+  createSerperImageSearch,
+  createSerperNewsSearch,
+  createSerperPlacesSearch,
+  createSerperReviewsSearch,
+  createSerperShoppingSearch,
+  createSerperVideoSearch,
+  createSerperWebSearch,
+} from './serper.js';
+import {
+  STANDALONE_QUERY_DESCRIPTION,
+  STANDALONE_QUERY_TOOL_CLAUSE,
+} from './standalone-query.constants.js';
 
 describe('createSerperImageSearch', () => {
   const mockDeps = () =>
@@ -297,5 +309,68 @@ describe('createSerperVideoSearch', () => {
     expect(result.results).toHaveLength(2);
 
     fetchSpy.mockRestore();
+  });
+});
+
+describe('standalone query guidance', () => {
+  const stubDeps = () =>
+    ({
+      logger: { log: vi.fn(), warn: vi.fn() },
+      getLiveConfig: () => ({
+        serper: {
+          enabled: true,
+          apiKey: 'test-key',
+          web: { enabled: true, results: 10 },
+        },
+      }),
+    }) as any;
+
+  const genericSearchTools = [
+    ['web search', createSerperWebSearch],
+    ['image search', createSerperImageSearch],
+    ['news search', createSerperNewsSearch],
+    ['video search', createSerperVideoSearch],
+  ] as const;
+
+  it.each(genericSearchTools)(
+    '%s repeats the standalone-query clause in its tool description',
+    (_name, factory) => {
+      const tool = factory(stubDeps());
+      expect(tool.description).toContain(STANDALONE_QUERY_TOOL_CLAUSE);
+    },
+  );
+
+  it.each(genericSearchTools)(
+    '%s describes its query argument with the shared standalone-query contract',
+    (_name, factory) => {
+      const tool = factory(stubDeps());
+      const queryDescription = (tool.inputSchema as any).shape.query
+        .description as string;
+      expect(queryDescription).toContain(STANDALONE_QUERY_DESCRIPTION);
+    },
+  );
+
+  it('places search asks for an explicitly named business and location', () => {
+    const tool = createSerperPlacesSearch(stubDeps());
+    const queryDescription = (tool.inputSchema as any).shape.query
+      .description as string;
+    expect(queryDescription).toContain('standalone places search query');
+    expect(queryDescription).toContain('never copy the user message verbatim');
+  });
+
+  it('shopping search demands a standalone resolved product reference', () => {
+    const tool = createSerperShoppingSearch(stubDeps());
+    const queryDescription = (tool.inputSchema as any).shape.query
+      .description as string;
+    expect(queryDescription).toContain('kept short and standalone');
+    expect(queryDescription).toContain('resolve product references');
+  });
+
+  it('reviews search demands an explicitly named business resolved from the conversation', () => {
+    const tool = createSerperReviewsSearch(stubDeps());
+    const queryDescription = (tool.inputSchema as any).shape.query
+      .description as string;
+    expect(queryDescription).toContain('named explicitly');
+    expect(queryDescription).toContain('resolved from the conversation');
   });
 });

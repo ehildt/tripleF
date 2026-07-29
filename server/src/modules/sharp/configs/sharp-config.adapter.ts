@@ -1,8 +1,8 @@
 import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 
-import { SHARP_SIZES, type SharpSize } from '../constants/sharp.constants.js';
 import { SharpOptions } from '../dtos/sharp-options.dto.js';
+import { SHARP_SIZES, type SharpSize } from '../types/sharp-size.type.js';
 
 export type SharpDefaults = Required<
   Pick<SharpOptions, 'enabled' | 'resize' | 'variants' | 'parameters'>

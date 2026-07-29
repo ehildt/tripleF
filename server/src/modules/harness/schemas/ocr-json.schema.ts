@@ -17,8 +17,6 @@ export const ocrSchema = z.object({
   keyFindings: z.array(keyFindingSchema).optional(),
 });
 
-export type OcrJson = z.infer<typeof ocrSchema>;
-
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues
     .map((issue) => {

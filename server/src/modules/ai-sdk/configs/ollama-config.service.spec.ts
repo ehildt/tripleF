@@ -8,27 +8,16 @@ describe('OllamaConfigAdapter', () => {
     const config = OllamaConfigAdapter({
       OLLAMA_HOST: 'localhost',
       OLLAMA_KEEP_ALIVE: '10m',
-      OLLAMA_SYSTEM_PROMPT_DESCRIBE: 'Custom describe prompt',
-      OLLAMA_SYSTEM_PROMPT_COMPARE: 'Custom compare prompt',
-      OLLAMA_SYSTEM_PROMPT_OCR: 'Custom OCR prompt',
     });
 
     expect(config).toEqual({
       host: 'localhost',
+      apiKey: undefined,
       keepAlive: '10m',
       streamChunkTimeoutMs: 60000,
       streamTotalTimeoutMs: 600000,
       generateTotalTimeoutMs: 300000,
       enableSmoothStream: true,
-      systemPrompts: {
-        DESCRIBE: 'Custom describe prompt',
-        COMPARE: 'Custom compare prompt',
-        OCR: 'Custom OCR prompt',
-      },
-      developerPrompts: {
-        IMAGE_CONSTRAINT: '',
-        TEXT_CONSTRAINT: '',
-      },
     });
   });
 
@@ -39,28 +28,26 @@ describe('OllamaConfigAdapter', () => {
     expect(config.keepAlive).toBe('5m');
   });
 
-  it('adds Authorization header when OLLAMA_API_KEY is provided', () => {
+  it('exposes the API key when OLLAMA_API_KEY is provided', () => {
     const config = OllamaConfigAdapter({
       OLLAMA_API_KEY: 'test-api-key',
     });
 
-    expect(config.headers).toEqual({
-      Authorization: 'Bearer test-api-key',
-    });
+    expect(config.apiKey).toBe('test-api-key');
   });
 
-  it('does not add Authorization header when OLLAMA_API_KEY is not provided', () => {
+  it('exposes no API key when OLLAMA_API_KEY is not provided', () => {
     const config = OllamaConfigAdapter({});
 
-    expect(config.headers).toBeUndefined();
+    expect(config.apiKey).toBeUndefined();
   });
 
-  it('does not add Authorization header when OLLAMA_API_KEY is empty string', () => {
+  it('exposes no API key when OLLAMA_API_KEY is empty string', () => {
     const config = OllamaConfigAdapter({
       OLLAMA_API_KEY: '',
     });
 
-    expect(config.headers).toBeUndefined();
+    expect(config.apiKey).toBeUndefined();
   });
 });
 
@@ -70,7 +57,6 @@ describe('OllamaConfigService', () => {
   beforeEach(() => {
     vi.stubEnv('OLLAMA_HOST', 'test-host');
     vi.stubEnv('OLLAMA_KEEP_ALIVE', '2m');
-    vi.stubEnv('OLLAMA_SYSTEM_PROMPT_DESCRIBE', 'Test describe');
     service = new OllamaConfigService();
   });
 
@@ -79,6 +65,5 @@ describe('OllamaConfigService', () => {
 
     expect(config.host).toBe('test-host');
     expect(config.keepAlive).toBe('2m');
-    expect(config.systemPrompts.DESCRIBE).toBe('Test describe');
   });
 });

@@ -35,6 +35,7 @@ import { PinoLoggerModule } from './modules/pino-logger/pino-logger.module.js';
 import { SerperConfigService } from './modules/provider-overrides/configs/serper-config.service.js';
 import { ProviderOverridesController } from './modules/provider-overrides/controllers/provider-overrides.controller.js';
 import { ProviderOverridesModule } from './modules/provider-overrides/provider-overrides.module.js';
+import { SecretsModule } from './modules/secrets/secrets.module.js';
 import { SharpConfigService } from './modules/sharp/configs/sharp-config.service.js';
 import { SharpModule } from './modules/sharp/sharp.module.js';
 import { SocketIOConfigService } from './modules/socket-io/configs/socket-io-config.service.js';
@@ -70,6 +71,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
     DeadLetterModule,
     PersistenceModule,
     ProviderOverridesModule,
+    SecretsModule,
     SocketIOModule,
     TerminusModule.forRoot({
       errorLogStyle: 'pretty',

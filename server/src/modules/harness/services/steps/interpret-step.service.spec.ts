@@ -86,7 +86,7 @@ describe('InterpretStepService', () => {
     expect(ctx.done).toBe(false);
   });
 
-  it('asks for an image when compare is chosen but no images are attached', async () => {
+  it('downgrades compare to evaluation when no images are attached', async () => {
     (action.execute as any).mockResolvedValue({
       intent: {
         template: 'compare',
@@ -103,16 +103,19 @@ describe('InterpretStepService', () => {
     });
     await service.execute(ctx);
 
-    expect(ctx.outputs.intent?.template).toBe('compare');
-    expect(ctx.outputs.intent?.needsClarification).toBe(true);
-    expect(ctx.outputs.intent?.clarificationQuestion).toBeTruthy();
-    expect(ctx.outputs.intent?.tools).toEqual([]);
+    expect(ctx.outputs.intent?.template).toBe('evaluation');
+    expect(ctx.outputs.intent?.prompt).toBe('default');
+    expect(ctx.outputs.intent?.needsClarification).toBe(false);
+    expect(ctx.outputs.intent?.tools).toEqual([
+      'webSearch',
+      'serperImageSearch',
+      'serperVideoSearch',
+    ]);
     expect(ctx.outputs.intent?.plan).toEqual({});
-    expect(ctx.done).toBe(true);
-    expect(ctx.doneReason).toBe('clarification');
+    expect(ctx.done).toBe(false);
   });
 
-  it('asks for an image when compare is chosen but no images are attached, even without judgment language', async () => {
+  it('downgrades compare to evaluation even without judgment language', async () => {
     (action.execute as any).mockResolvedValue({
       intent: {
         template: 'compare',
@@ -129,16 +132,13 @@ describe('InterpretStepService', () => {
     });
     await service.execute(ctx);
 
-    expect(ctx.outputs.intent?.template).toBe('compare');
-    expect(ctx.outputs.intent?.needsClarification).toBe(true);
-    expect(ctx.outputs.intent?.clarificationQuestion).toBeTruthy();
-    expect(ctx.outputs.intent?.tools).toEqual([]);
+    expect(ctx.outputs.intent?.template).toBe('evaluation');
+    expect(ctx.outputs.intent?.needsClarification).toBe(false);
     expect(ctx.outputs.intent?.plan).toEqual({});
-    expect(ctx.done).toBe(true);
-    expect(ctx.doneReason).toBe('clarification');
+    expect(ctx.done).toBe(false);
   });
 
-  it('asks for an image when describe is chosen but no images are attached', async () => {
+  it('downgrades describe to summary when no images are attached', async () => {
     (action.execute as any).mockResolvedValue({
       intent: {
         template: 'describe',
@@ -153,16 +153,13 @@ describe('InterpretStepService', () => {
     const ctx = createContext();
     await service.execute(ctx);
 
-    expect(ctx.outputs.intent?.template).toBe('describe');
-    expect(ctx.outputs.intent?.needsClarification).toBe(true);
-    expect(ctx.outputs.intent?.clarificationQuestion).toBeTruthy();
-    expect(ctx.outputs.intent?.tools).toEqual([]);
+    expect(ctx.outputs.intent?.template).toBe('summary');
+    expect(ctx.outputs.intent?.needsClarification).toBe(false);
     expect(ctx.outputs.intent?.plan).toEqual({});
-    expect(ctx.done).toBe(true);
-    expect(ctx.doneReason).toBe('clarification');
+    expect(ctx.done).toBe(false);
   });
 
-  it('asks for an image when ocr is chosen but no images are attached', async () => {
+  it('downgrades ocr to summary when no images are attached', async () => {
     (action.execute as any).mockResolvedValue({
       intent: {
         template: 'ocr',
@@ -176,11 +173,34 @@ describe('InterpretStepService', () => {
     const ctx = createContext();
     await service.execute(ctx);
 
-    expect(ctx.outputs.intent?.template).toBe('ocr');
+    expect(ctx.outputs.intent?.template).toBe('summary');
+    expect(ctx.outputs.intent?.needsClarification).toBe(false);
+    expect(ctx.outputs.intent?.plan).toEqual({});
+    expect(ctx.done).toBe(false);
+  });
+
+  it('keeps a classifier-set clarification for an image-required template without images', async () => {
+    (action.execute as any).mockResolvedValue({
+      intent: {
+        template: 'compare',
+        prompt: 'default',
+        tools: [],
+        reasoning: 'user refers to a previously shown image',
+        needsClarification: true,
+        clarificationQuestion:
+          'Do you want to compare the images from earlier? Please attach them again.',
+        plan: {},
+      },
+    });
+
+    const ctx = createContext({
+      lastUserPrompt: 'attach them again please',
+    });
+    await service.execute(ctx);
+
+    expect(ctx.outputs.intent?.template).toBe('compare');
     expect(ctx.outputs.intent?.needsClarification).toBe(true);
     expect(ctx.outputs.intent?.clarificationQuestion).toBeTruthy();
-    expect(ctx.outputs.intent?.tools).toEqual([]);
-    expect(ctx.outputs.intent?.plan).toEqual({});
     expect(ctx.done).toBe(true);
     expect(ctx.doneReason).toBe('clarification');
   });

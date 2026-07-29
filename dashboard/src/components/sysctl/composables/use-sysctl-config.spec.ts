@@ -3,8 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSysctlConfig } from './use-sysctl-config';
 
 vi.mock('../../../composables/use-toast', () => ({
-  useToast: vi.fn(() => ({ error: vi.fn() })),
+  useToast: vi.fn(() => ({ error: vi.fn(), success: vi.fn() })),
 }));
+
+const baseOllamaConnection = {
+  host: 'http://localhost:11434/api',
+  apiKey: 'ollama-key',
+};
 
 const baseSnapshot = {
   serper: {
@@ -32,6 +37,13 @@ function mockFetchByUrl(configOverrides?: Record<string, unknown>) {
         ok: true,
         status: 200,
         json: async () => ({ providerOverrides: configOverrides ?? {} }),
+      };
+    }
+    if (url.includes('/api/v1/ollama-overrides')) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ...baseOllamaConnection }),
       };
     }
     return {
@@ -128,5 +140,50 @@ describe('useSysctlConfig', () => {
     await refreshConfig();
     updateEndpointResults('serper', 'webpageFetch', '50');
     expect(config.value?.serper.webpageFetch).toEqual({ enabled: true });
+  });
+
+  it('loads the ollama connection from its own overrides API', async () => {
+    const { config, refreshConfig } = useSysctlConfig();
+    await refreshConfig();
+    expect(config.value?.ollama).toEqual(baseOllamaConnection);
+  });
+
+  it('saves the ollama API key against the ollama overrides API', async () => {
+    const { refreshConfig, updateApiKey } = useSysctlConfig();
+    await refreshConfig();
+    const saved = await updateApiKey('ollama', 'new-ollama-key');
+    expect(saved).toBe(true);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/ollama-overrides'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ apiKey: 'new-ollama-key' }),
+      }),
+    );
+  });
+
+  it('patches the ollama host against the ollama overrides API', async () => {
+    const { refreshConfig, patchConfig } = useSysctlConfig();
+    await refreshConfig();
+    await patchConfig('ollama', 'host', 'https://ollama.com/api');
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/ollama-overrides'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ host: 'https://ollama.com/api' }),
+      }),
+    );
+  });
+
+  it('resets the ollama connection without a provider path suffix', async () => {
+    const { refreshConfig, resetProvider } = useSysctlConfig();
+    await refreshConfig();
+    await resetProvider('ollama');
+    const deleteCalls = (fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([, init]) => (init as { method?: string })?.method === 'DELETE',
+    );
+    expect(deleteCalls[0]?.[0]).toEqual(
+      expect.stringMatching(/\/api\/v1\/ollama-overrides$/),
+    );
   });
 });

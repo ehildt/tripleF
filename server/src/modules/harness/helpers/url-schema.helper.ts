@@ -23,10 +23,51 @@ export function safeUrl(
 }
 
 /**
- * Zod schema that accepts an empty string OR a safe URL.
+ * Same-origin storage path pattern: `/api/v1/storage/<session>/<chat>/<hash>`.
+ * The pipeline rewrites ingested response images to these relative URLs; the
+ * dashboard proxies them to the server, so they never carry a scheme.
  */
-export function safeUrlOrEmpty(
-  message: string | { message: string } = 'must be a safe URL',
+const LOCAL_STORAGE_URL_PATTERN =
+  /^\/api\/v1\/storage\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/[A-Za-z0-9]+$/;
+
+/**
+ * Parseable absolute http(s) URL — matches the leniency `z.string().url()`
+ * used to give these fields, minus non-http schemes. Trust membership is
+ * enforced separately (source policy + enforceAvailableMediaUrls).
+ */
+function isAbsoluteHttpUrl(value: string): boolean {
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Zod schema for model-emitted IMAGE URLs: an absolute http(s) URL or a
+ * same-origin storage path produced by the pipeline's image ingestion
+ * (relative, proxied by the dashboard). Plain `z.string().url()` would
+ * reject the relative storage paths and burn all JSON retries on valid output.
+ */
+export function safeMediaUrl(
+  message: string | { message: string } = 'must be a safe media URL',
 ) {
-  return safeUrl(message).optional().or(z.literal(''));
+  const text = typeof message === 'string' ? message : message.message;
+  return z
+    .string()
+    .refine(
+      (value) =>
+        LOCAL_STORAGE_URL_PATTERN.test(value) || isAbsoluteHttpUrl(value),
+      { message: text },
+    );
+}
+
+/**
+ * Zod schema that accepts an empty string OR a safe media URL.
+ */
+export function safeMediaUrlOrEmpty(
+  message: string | { message: string } = 'must be a safe media URL',
+) {
+  return safeMediaUrl(message).optional().or(z.literal(''));
 }

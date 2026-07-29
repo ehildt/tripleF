@@ -42,8 +42,13 @@ const reasoningHtml = computed(() => renderMarkdown(props.reasoning ?? ''));
   font-size: 0.75rem;
   font-family: var(--font-mono);
   color: var(--color-fg-muted);
-  max-height: 8rem;
+  max-height: 12rem;
   overflow-y: auto;
+  /* Long unbroken tokens (URLs, JSON fragments) must wrap instead of
+     opening a horizontal scrollbar. overflow-wrap is inherited, so the
+     markdown children wrap as well. */
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
   min-width: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--color-accent-primary) var(--color-bg-secondary);
@@ -103,7 +108,10 @@ const reasoningHtml = computed(() => renderMarkdown(props.reasoning ?? ''));
   margin: 0 0 0.5em;
   padding: var(--spacing-1) var(--spacing-2);
   background-color: var(--color-bg-tertiary);
-  overflow-x: auto;
+  /* Thinking traces are prose, not source code: wrap preformatted blocks
+     too so the reasoning area never grows a horizontal scrollbar. */
+  white-space: pre-wrap;
+  overflow-x: hidden;
 }
 
 .exchange-activity__reasoning :deep(pre code) {

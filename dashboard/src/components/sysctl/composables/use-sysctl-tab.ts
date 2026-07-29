@@ -2,7 +2,7 @@ import { ref } from 'vue';
 
 /** Section tabs inside the SysCtl panel. */
 export type SysctlTab =
-  'search-engines' | 'preprocessing' | 'widgets' | 'interface' | 'system';
+  'search-engines' | 'preprocessing' | 'widgets' | 'system';
 
 const SYSCTL_TAB_STORAGE_KEY = 'vision-sysctl-tab';
 
@@ -10,15 +10,15 @@ const SYSCTL_TABS: readonly SysctlTab[] = [
   'search-engines',
   'preprocessing',
   'widgets',
-  'interface',
   'system',
 ];
 
 function loadSysctlTab(): SysctlTab {
   try {
     const saved = localStorage.getItem(SYSCTL_TAB_STORAGE_KEY);
-    // Legacy: the widgets tab was called "popout" before it gained the toast panel.
-    if (saved === 'popout') return 'widgets';
+    // Legacy: the widgets tab was called "popout" before it gained the toast
+    // panel; the interface tab was folded into the system tab.
+    if (saved === 'popout' || saved === 'interface') return 'system';
     return SYSCTL_TABS.includes(saved as SysctlTab)
       ? (saved as SysctlTab)
       : 'search-engines';

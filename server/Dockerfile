@@ -1,65 +1,72 @@
-# Setup corepack + pnpm (cached)
-FROM node:24 AS base
-ENV CI=true
-ENV PNPM_ENABLE_PROGRESS_BAR=false
-ENV PNPM_CONFIG_CONFIRM_MODULES_PURGE=false
-ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0
-RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
+# syntax=docker/dockerfile:1
+#
+# Standalone server image (app build context = ./server).
+# NOTE: In this monorepo the canonical flow is the root ../Dockerfile +
+# ../compose.yml (workspace-aware, driven by the root pnpm-lock.yaml).
+# This file is kept for a potential repo split back into a standalone repo.
 
-WORKDIR /app
+ARG NODE_VERSION=24
+ARG PNPM_VERSION=11.17.0
+
+FROM node:${NODE_VERSION} AS base
+ENV CI=true PNPM_CONFIG_CONFIRM_MODULES_PURGE=false PNPM_CONFIG_MINIMUM_RELEASE_AGE=0
+ENV PNPM_ENABLE_PROGRESS_BAR=false
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-ENV PNPM_STORE_DIR="/pnpm-store"
+WORKDIR /app
+RUN corepack enable
+RUN corepack prepare pnpm@${PNPM_VERSION} --activate
+RUN chown node:node /app
 
-# Target: local (entrypoint for local development)
 FROM base AS local
-COPY . .
+COPY --chown=node:node . ./
 EXPOSE 3000
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENTRYPOINT ["pnpm", "start:dev"]
-
-# Target: builder (shared build stage)
-FROM base AS builder
-COPY package.json tsconfig*.json shims.d.ts ./
-COPY .env.example ./
-COPY prisma/ ./prisma/
-COPY src/ ./src/
-
-# Install root dependencies (triggers prisma generate)
+USER node
 RUN pnpm install
 
-# Target: temporary (entrypoint for prepare-dev)
-FROM builder AS builddev
-COPY . .
+FROM base AS builder
+COPY --chown=node:node package.json ./
+COPY --chown=node:node tsconfig*.json ./
+COPY --chown=node:node shims.d.ts ./
+COPY --chown=node:node .env.example ./
+COPY --chown=node:node prisma/ ./prisma/
+COPY --chown=node:node src/ ./src/
+USER node
+RUN pnpm install
+
+FROM base AS builddev
+COPY --from=builder /app/node_modules /app/node_modules
+WORKDIR /app
 RUN pnpm run build
 
-# Target: temporary (entrypoint for prepare-prod)
-FROM builder AS buildprod
-COPY . .
+FROM base AS buildprod
+COPY --from=builder /app/node_modules /app/node_modules
+WORKDIR /app
 RUN pnpm run build:prod
 
-# Target: development (entrypoint for dev-stage)
-FROM base AS development
+FROM base AS server-development
+WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-
-COPY --chown=node:node --from=builddev /app/dist ./dist
-COPY --chown=node:node --from=builddev /app/package*.json ./
-COPY --chown=node:node --from=builddev /app/.env.example ./
+ENV NODE_ENV="development"
+COPY --chown=node:node --from=builder /app/package.json ./package.json
+COPY --chown=node:node --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --chown=node:node --from=builder /app/.env.example ./
+COPY --chown=node:node --from=builder /app/prisma ./prisma
+COPY --chown=node:node --from=builder /app/src ./src
 COPY --chown=node:node --from=builddev /app/node_modules ./node_modules
-
+COPY --chown=node:node --from=builddev /app/dist ./dist
 EXPOSE 3000
-USER node
-ENTRYPOINT ["pnpm", "run", "start:node"]
 
-# Target: production (entrypoint for prod-stage)
-FROM base AS production
+FROM base AS server-production
+WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-
-COPY --chown=node:node --from=buildprod /app/dist ./dist
-COPY --chown=node:node --from=buildprod /app/package*.json ./
+COPY --chown=node:node --from=buildprod /app/package.json ./package.json
+COPY --chown=node:node --from=buildprod /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --chown=node:node --from=buildprod /app/.env.example ./
+COPY --chown=node:node --from=buildprod /app/prisma.config.ts ./
+COPY --chown=node:node --from=buildprod /app/prisma ./prisma
+COPY --chown=node:node --from=buildprod /app/src ./src
 COPY --chown=node:node --from=buildprod /app/node_modules ./node_modules
-
-EXPOSE 3000
+COPY --chown=node:node --from=buildprod /app/dist ./dist
 USER node
-ENTRYPOINT ["pnpm", "run", "start:node"]
+ENTRYPOINT [ "pnpm", "run", "start:node" ]

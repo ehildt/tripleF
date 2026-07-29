@@ -60,34 +60,27 @@ const {
 .theme-selector {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--spacing-0-5);
 }
 
 .theme-selector__button {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   color: var(--color-fg-secondary);
   background-color: transparent;
-  transition:
-    color 0.3s ease,
-    background-color 0.3s ease,
-    border-color 0.3s ease;
+  transition: color 0.3s ease;
   cursor: pointer;
 }
 
 .theme-selector__button:hover,
 .theme-selector__button--active {
   color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-bg-secondary) 50%,
-    transparent
-  );
 }
 
 /* Mouse clicks leave the button focused; the browser's default focus ring
@@ -135,15 +128,12 @@ const {
   text-align: left;
   color: var(--color-fg-muted);
   background-color: transparent;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+  transition: color 0.15s ease;
   cursor: pointer;
 }
 
 .theme-selector__item:hover {
   color: var(--color-fg-primary);
-  background-color: var(--color-bg-tertiary);
 }
 
 .theme-selector__item--active {

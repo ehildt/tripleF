@@ -16,6 +16,10 @@ import {
   MIN_IMAGE_WIDTH,
 } from './image-search.constants.js';
 import { SEARCH_TIMEOUT_MS } from './search-timeout.js';
+import {
+  STANDALONE_QUERY_DESCRIPTION,
+  STANDALONE_QUERY_TOOL_CLAUSE,
+} from './standalone-query.constants.js';
 import type { ToolDependencies } from './types.js';
 
 const HEADERS = (apiKey: string) => ({
@@ -29,9 +33,10 @@ const RECENCY_DESCRIPTION =
 export function createSerperWebSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results.',
+      'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results. ' +
+      STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
-      query: z.string().describe('The search query'),
+      query: z.string().describe(STANDALONE_QUERY_DESCRIPTION),
       recency: z
         .enum(['day', 'week', 'month', 'year'])
         .optional()
@@ -137,9 +142,14 @@ function tbsSizeLabelForPixels(pixels: number): string {
 export function createSerperImageSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for images using Serper.dev (Google Images). Returns image URLs, thumbnails, source pages, and dimensions. The tool prefers 2560×1440 (1440p) images and always enforces a minimum of 1280×720 (720p). It passes the appropriate Google Images `tbs=isz:lt,islt:<bucket>` size filter server-side, drops any returned images whose dimensions are below 1280×720, and rejects untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com, t*.gstatic.com), data URIs, localhost, and private IPs. You do not need to pass minWidth/minHeight for the default 720p floor. If the user asks for a higher resolution, pass minWidth/minHeight and the tool will pick the smallest Google bucket that can satisfy the requested area. Common reference: 1280×720 (720p) ~0.9 MP, 1920×1080 (1080p) ~2 MP, 2560×1440 (1440p) ~3.7 MP, 3840×2160 (4K) ~8.3 MP. Pass recency ("day"|"week"|"month"|"year") to restrict to recently published images.',
+      'Search for images using Serper.dev (Google Images). Returns image URLs, thumbnails, source pages, and dimensions. The tool prefers 2560×1440 (1440p) images and always enforces a minimum of 1280×720 (720p). It passes the appropriate Google Images `tbs=isz:lt,islt:<bucket>` size filter server-side, drops any returned images whose dimensions are below 1280×720, and rejects untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com, t*.gstatic.com), data URIs, localhost, and private IPs. You do not need to pass minWidth/minHeight for the default 720p floor. If the user asks for a higher resolution, pass minWidth/minHeight and the tool will pick the smallest Google bucket that can satisfy the requested area. Common reference: 1280×720 (720p) ~0.9 MP, 1920×1080 (1080p) ~2 MP, 2560×1440 (1440p) ~3.7 MP, 3840×2160 (4K) ~8.3 MP. Pass recency ("day"|"week"|"month"|"year") to restrict to recently published images. ' +
+      STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
-      query: z.string().describe('The image search query'),
+      query: z
+        .string()
+        .describe(
+          `${STANDALONE_QUERY_DESCRIPTION} Add short visual qualifiers describing the subject.`,
+        ),
       count: z.number().optional().describe('Number of results (max 100)'),
       minWidth: z
         .number()
@@ -262,9 +272,14 @@ export function createSerperImageSearch(deps: ToolDependencies) {
 export function createSerperNewsSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search the latest news using Serper.dev. Returns headlines, sources, dates, and snippets. Pass recency ("day"|"week"|"month"|"year") to restrict to a recent period.',
+      'Search the latest news using Serper.dev. Returns headlines, sources, dates, and snippets. Pass recency ("day"|"week"|"month"|"year") to restrict to a recent period. ' +
+      STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
-      query: z.string().describe('The news search query'),
+      query: z
+        .string()
+        .describe(
+          `${STANDALONE_QUERY_DESCRIPTION} Include the newsworthy angle (announcement, release, event, update).`,
+        ),
       count: z.number().optional().describe('Number of results (max 100)'),
       recency: z
         .enum(['day', 'week', 'month', 'year'])
@@ -343,7 +358,7 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
       query: z
         .string()
         .describe(
-          'The places search query — a business name or business type, ideally with a location',
+          'A standalone places search query that explicitly names the business or business type plus location (e.g. "MediaMarkt Berlin", "coffee shops in Munich") — resolve the subject from the conversation; never copy the user message verbatim.',
         ),
       count: z.number().optional().describe('Number of results (max 100)'),
       lang: z
@@ -425,7 +440,9 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
     inputSchema: z.object({
       query: z
         .string()
-        .describe('The product name with model number, kept short'),
+        .describe(
+          'The exact product name with model number, kept short and standalone — resolve product references from the conversation (e.g. "the headphones we discussed" becomes "Sony WH-1000XM5"). No extra words like "buy", "price", or "review".',
+        ),
       count: z.number().optional().describe('Number of results (max 100)'),
       lang: z
         .string()
@@ -514,7 +531,7 @@ export function createSerperReviewsSearch(deps: ToolDependencies) {
         .string()
         .optional()
         .describe(
-          'Exact business or place name, ideally with a location. Used when neither placeId nor cid is known.',
+          'The exact business or place name, ideally with its location, named explicitly and resolved from the conversation. Used when neither placeId nor cid is known.',
         ),
       placeId: z
         .string()
@@ -626,9 +643,14 @@ export function createSerperReviewsSearch(deps: ToolDependencies) {
 export function createSerperVideoSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos.',
+      'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos. ' +
+      STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
-      query: z.string().describe('The video search query'),
+      query: z
+        .string()
+        .describe(
+          `${STANDALONE_QUERY_DESCRIPTION} Add the video type (e.g. review, trailer, tutorial, gameplay).`,
+        ),
       count: z.number().optional().describe('Number of results (max 100)'),
       recency: z
         .enum(['day', 'week', 'month', 'year'])

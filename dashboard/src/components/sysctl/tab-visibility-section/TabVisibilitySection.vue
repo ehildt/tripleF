@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { Bug, Hash, MailX, Plug } from '@lucide/vue';
+import { Hash, Plug } from '@lucide/vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 
 defineProps<{
-  isDebugVisible: boolean;
-  isDlqVisible: boolean;
   isSocketsVisible: boolean;
   showCounters: boolean;
 }>();
 
 const emit = defineEmits<{
-  toggleDebug: [];
-  toggleDlq: [];
   toggleSockets: [];
   toggleCounters: [];
 }>();
@@ -21,20 +17,6 @@ const emit = defineEmits<{
 <template>
   <div class="tab-visibility-section__content">
     <div class="tab-visibility-section__grid">
-      <FieldCard
-        :icon="MailX"
-        label="dlq"
-        description="dead letter queue tab"
-        :checked="isDlqVisible"
-        @toggle="emit('toggleDlq')"
-      />
-      <FieldCard
-        :icon="Bug"
-        label="debug"
-        description="debug tab / logging"
-        :checked="isDebugVisible"
-        @toggle="emit('toggleDebug')"
-      />
       <FieldCard
         :icon="Plug"
         label="sockets"
@@ -60,7 +42,7 @@ const emit = defineEmits<{
 
 .tab-visibility-section__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-1);
 }
 </style>

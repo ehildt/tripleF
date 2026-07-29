@@ -5,10 +5,14 @@ import sharp from 'sharp';
 
 import { BLOCKED_IMAGE_HOSTS } from '../constants/blocked-image-hosts.js';
 import { BLOCKED_URL_HOSTS } from '../constants/url-trust.constants.js';
+import {
+  BROWSER_USER_AGENT,
+  HARNESS_USER_AGENT,
+} from '../constants/user-agents.constant.js';
 import { isEmbeddableVideoUrl } from '../helpers/is-embeddable-video-url.helper.js';
 import { isPrivateOrLocalhost } from '../helpers/is-private-or-localhost.helper.js';
 
-export type MediaUrlKind = 'image' | 'video' | 'html' | 'broken' | 'unknown';
+type MediaUrlKind = 'image' | 'video' | 'html' | 'broken' | 'unknown';
 
 export interface MediaValidationResult {
   url: string;
@@ -18,7 +22,7 @@ export interface MediaValidationResult {
   error?: string;
 }
 
-export interface MediaUrlValidatorOptions {
+interface MediaUrlValidatorOptions {
   enabled?: boolean;
   timeoutMs?: number;
   maxRedirects?: number;
@@ -40,16 +44,6 @@ type HttpResponse = {
 };
 
 type OembedProvider = 'youtube' | 'vimeo' | 'dailymotion';
-
-const DEFAULT_USER_AGENT = 'ckir-harness/1.0';
-
-/**
- * Hotlink-protecting CDNs (social image CDNs, some news CDNs) answer 403 to
- * non-browser user agents. Retrying a 403 once with a browser agent avoids
- * false "broken" verdicts for images that render fine in the dashboard.
- */
-const BROWSER_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 const OEMBED_ENDPOINTS: Record<OembedProvider, string> = {
   youtube: 'https://www.youtube.com/oembed',
@@ -406,7 +400,7 @@ export class MediaUrlValidatorService {
           maxRedirects: 2,
           validateStatus: () => true,
           headers: {
-            'User-Agent': DEFAULT_USER_AGENT,
+            'User-Agent': HARNESS_USER_AGENT,
           },
         }),
       );
@@ -557,7 +551,7 @@ export class MediaUrlValidatorService {
       return firstValueFrom(request) as Promise<HttpResponse>;
     };
 
-    let response = await send(DEFAULT_USER_AGENT);
+    let response = await send(HARNESS_USER_AGENT);
     if (response.status === 403) {
       this.destroyResponseStream(response);
       response = await send(BROWSER_USER_AGENT);
@@ -567,7 +561,8 @@ export class MediaUrlValidatorService {
 
   private destroyResponseStream(response: HttpResponse): void {
     const stream = response.data as
-      (NodeJS.ReadableStream & { destroy?: () => void }) | undefined;
+      | (NodeJS.ReadableStream & { destroy?: () => void })
+      | undefined;
     stream?.destroy?.();
   }
 

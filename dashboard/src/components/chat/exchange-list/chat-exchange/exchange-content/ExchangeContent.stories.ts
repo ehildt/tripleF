@@ -76,8 +76,8 @@ export const ErrorState: Story = {
   },
 };
 
-/** Pending state with three animated dots (non-compacting). */
-export const PendingDots: Story = {
+/** Pending state — no reasoning or data yet, so only the divider renders. */
+export const PendingEmpty: Story = {
   args: {
     isPending: true,
     exchange: { ...baseAssistantExchange, status: 'pending', content: '' },

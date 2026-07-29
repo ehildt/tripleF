@@ -34,3 +34,7 @@ ignores:
   - '@eslint/css'
   - '@eslint/json'
   - '@eslint/markdown'
+  # Storybook addons referenced in .storybook/main.ts
+  - '@chromatic-com/storybook'
+  - '@storybook/addon-a11y'
+  - '@storybook/addon-docs'

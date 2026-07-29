@@ -12,7 +12,8 @@ const props = defineProps<{
   isOpen: boolean;
   selectedModelName: string;
   isModelMissing: boolean;
-  models: readonly OllamaModel[];
+  localModels: readonly OllamaModel[];
+  cloudModels: readonly OllamaModel[];
   isLoading: boolean;
 }>();
 
@@ -54,7 +55,8 @@ const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
       @click.stop
     >
       <ModelList
-        :models="models"
+        :local-models="localModels"
+        :cloud-models="cloudModels"
         :selected-model="selectedModelName"
         :loading="isLoading"
         @select="$emit('selectModel', $event)"

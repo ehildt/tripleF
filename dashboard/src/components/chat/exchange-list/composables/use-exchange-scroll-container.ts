@@ -18,11 +18,16 @@ const SCROLL_BOTTOM_THRESHOLD_PX = 8;
  * `scrollContainerRef` is the orchestrator-owned ref bound to the
  * scrollable element via the child's `setScrollContainer` emit. Returns
  * `scrollToBottom`, `scrollToExchange`, and `onScroll` helpers.
+ *
+ * `activeAssistantResponseStarted` releases the bottom pin: once the first
+ * response content arrives, the view stops chasing the growing tail so the
+ * user can start reading from the top of the response.
  */
 export function useExchangeScrollContainer(
   isCompact: Ref<boolean>,
   activeAssistantExchangeId: Ref<string | null>,
   scrollContainerRef: Ref<HTMLElement | null>,
+  activeAssistantResponseStarted: Ref<boolean>,
 ) {
   const shouldAutoScroll = ref(true);
   const savedScrollTop = ref<number | null>(null);
@@ -173,6 +178,15 @@ export function useExchangeScrollContainer(
     scrollToBottom();
   });
 
+  watch(activeAssistantResponseStarted, (started) => {
+    if (!started) return;
+    // The first response content has arrived: release the bottom pin so the
+    // user can read from the start instead of chasing the streaming tail.
+    // This is not a manual scroll-away, so no position is saved — finishing
+    // the response must not yank the view back.
+    shouldAutoScroll.value = false;
+  });
+
   watch(activeAssistantExchangeId, (current, previous) => {
     if (current === null) {
       if (previous !== null && savedScrollTop.value !== null) {
@@ -181,7 +195,13 @@ export function useExchangeScrollContainer(
       return;
     }
 
-    if (previous === null && savedScrollTop.value === null) {
+    // A new (or different) assistant exchange becoming active means the user
+    // just sent a prompt: snap to the bottom of that exchange regardless of
+    // the previous scroll state. Sending is an explicit "take me to the
+    // response" gesture, so neither a saved position nor a scrolled-away
+    // state may suppress the scroll.
+    if (current !== previous) {
+      savedScrollTop.value = null;
       scrollToBottom();
       return;
     }
