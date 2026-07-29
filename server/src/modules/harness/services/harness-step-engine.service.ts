@@ -4,8 +4,6 @@ import { HarnessContext, StepId, StepState } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
 import { StepRegistry, StepRegistryService } from './step-registry.service.js';
 
-export type { StepRegistry };
-
 @Injectable()
 export class HarnessStepEngineService {
   constructor(

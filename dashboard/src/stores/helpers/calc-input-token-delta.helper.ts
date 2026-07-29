@@ -1,4 +1,9 @@
-import type { Exchange } from '../conversation';
+interface ExchangeLike {
+  role: 'user' | 'assistant';
+  status: string;
+  promptEvalCount?: number;
+  evalCount?: number;
+}
 
 /**
  * Non-cumulative input tokens added by a specific turn. PEC is cumulative
@@ -12,7 +17,7 @@ import type { Exchange } from '../conversation';
  * assistant is therefore the second-to-last done assistant.
  */
 export function calcInputTokenDelta(
-  exchanges: Exchange[],
+  exchanges: ExchangeLike[],
   cumulativeInputs: number,
 ): number {
   const allAssistants = exchanges.filter(

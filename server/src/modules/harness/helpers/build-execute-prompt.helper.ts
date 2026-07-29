@@ -63,6 +63,24 @@ export function buildFallbackInput(
 }
 
 /**
+ * The non-negotiable contract for every search query argument. External
+ * search engines only ever see the query string — never the conversation —
+ * so each query must stand alone and name its subject explicitly. This is
+ * the guard against verbatim follow-up messages ("what do the reviews
+ * say?") leaking into tool arguments without their established subject.
+ */
+const STANDALONE_QUERY_RULES = [
+  'STANDALONE QUERY RULES (absolute — they apply to every search query you emit):',
+  '- Search engines only see the query string — never this conversation. Every query MUST be fully self-contained.',
+  '- ALWAYS name the subject explicitly: the exact entity (game, product, person, place, topic) the request is about, spelled out in every query of every parallel tool call.',
+  '- NEVER copy the latest user message into a query verbatim. Rewrite it into a proper search phrase that includes its subject.',
+  '- Short follow-ups ("what do the reviews say?", "more", "and the second one?", "was sagen die Tests dazu?") refer to an established subject — take that subject from the CONTEXT SUMMARY or earlier conversation turns and fold it into every query.',
+  '- Example: after a conversation about the game Neverness to Everness (NTE), the follow-up "what do the reviews say?" becomes "Neverness to Everness NTE reviews verdict" — never "what do the reviews say?".',
+  '- A query without its explicit subject is a failure, even when the phrasing matches the endpoint guidance below.',
+  '- Only when the latest message starts a NEW topic unrelated to earlier turns, ignore the earlier context and craft the query for the new topic alone.',
+].join('\n');
+
+/**
  * Per-endpoint query crafting guidance for the product template. Each Serper
  * endpoint performs best with a differently phrased query, so the model must
  * not reuse one generic query for all tools.
@@ -113,6 +131,7 @@ export function buildImageExecutePrompt(
     langInstruction,
     'Your job in this step is NOT to answer the user. It is only to inspect the attached image(s) and decide which tools or variants are needed.',
     'If external search tools are selected, identify the most useful visible signal (watermark, logo, text, character, outfit, location, object) and call the search tools with a query derived from that signal.',
+    'Every search query must be standalone: it explicitly names the subject (character, game, brand, place) by combining the visible signal with the established subject from the conversation or CONTEXT SUMMARY. Never emit a bare generic description or the user message verbatim.',
     'Only call external tools if they were selected for this task.',
     'Only request image variants if they would materially improve your analysis.',
     'Do NOT write a final answer, explanation, or conclusion in this step.',
@@ -181,6 +200,7 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
     'Your ONLY job is to call every mandatory tool with an appropriate input.',
     'Do not answer the user, do not explain, and do not produce JSON in this step.',
     'Derive the search query or target URL for each tool from the latest user message and the conversation context.',
+    STANDALONE_QUERY_RULES,
     queryGuidance,
     'Emit ALL mandatory tool calls in ONE response, as parallel tool calls. Do not stop after the first tool call.',
     'You may call the same tool more than once with differently phrased queries when the task needs broader coverage.',
@@ -190,6 +210,7 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
     'Return ONLY tool calls. No prose.',
     'FINAL REMINDER:',
     '- Call every mandatory tool at least once and return ONLY tool calls; no prose, no explanations, no JSON deliverables.',
+    '- Every query names its subject explicitly; never pass the user message verbatim as a query.',
   ]
     .filter(Boolean)
     .join(' ');

@@ -1,4 +1,4 @@
-integrity: d7eab23a175ae2b4c0ba09e9940c87159706fb9d29fa04fc39fe1d9a9cfbbabf
+integrity: 16ed6d5a1a7b94a3caee8ac09b7eb7a33a26424c487d5eeb789faacb655e9e84
 # yaml-language-server: $schema=https://raw.githubusercontent.com/ehildt/depbadge/refs/heads/main/depbadgerc.schema.json
 
 target: README.md
@@ -149,24 +149,24 @@ statusBadges:
     - name: github
       metric: release
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       branch: main
       namedLogo: github
     - name: github
       metric: stars
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       branch: main
       namedLogo: github
     - name: github
       metric: license
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       branch: main
       namedLogo: github
     - name: codecov
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       namedLogo: codecov
       branch: main
       flag: c

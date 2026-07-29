@@ -10,27 +10,44 @@ import {
 import { createOllama } from 'ollama-ai-provider-v2';
 
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
+import { OLLAMA_CLOUD_HOST } from '../constants/ollama-cloud.constants.js';
 import { toAiSdkMessages } from '../helpers/ai-sdk-message.helper.js';
+import { buildOllamaHeaders } from '../helpers/build-ollama-headers.helper.js';
 import { buildProviderOptions } from '../helpers/provider-options.helper.js';
 import type { InputMessage } from '../types/ai-sdk-messages.types.js';
 import { ThinkMode } from '../types/think-mode.type.js';
 
-export type { InputMessage } from '../types/ai-sdk-messages.types.js';
+import { OllamaModelsService } from './ollama-models.service.js';
+import { OllamaOverridesService } from './ollama-overrides.service.js';
 
 @Injectable()
 export class AiSdkService {
-  private readonly client: ReturnType<typeof createOllama>;
+  private readonly clients = new Map<string, ReturnType<typeof createOllama>>();
   private readonly logger = new Logger(AiSdkService.name);
 
-  constructor(private readonly ollamaConfigService: OllamaConfigService) {
-    this.client = createOllama({
-      baseURL: this.ollamaConfigService.config.host,
-      headers: this.ollamaConfigService.config.headers,
-    });
-  }
+  constructor(
+    private readonly ollamaConfigService: OllamaConfigService,
+    private readonly ollamaOverrides: OllamaOverridesService,
+    private readonly ollamaModels: OllamaModelsService,
+  ) {}
 
-  createModel(model: string) {
-    return this.client(model);
+  /**
+   * Clients are built lazily and cached per effective connection
+   * (baseURL + API key fingerprint), so a SysCtl connection override takes
+   * effect on the very next request without a restart. Cloud models route
+   * to ollama.com; everything else goes to the configured host.
+   */
+  private resolveClient(modelName: string) {
+    const { host, apiKey } = this.ollamaOverrides.getConfig();
+    const useCloud = this.ollamaModels.getModelOrigin(modelName) === 'cloud';
+    const baseURL = useCloud ? OLLAMA_CLOUD_HOST : host;
+    const fingerprint = `${baseURL}|${apiKey ?? ''}`;
+    let client = this.clients.get(fingerprint);
+    if (!client) {
+      client = createOllama({ baseURL, headers: buildOllamaHeaders(apiKey) });
+      this.clients.set(fingerprint, client);
+    }
+    return client;
   }
 
   async streamChat(params: {
@@ -44,7 +61,7 @@ export class AiSdkService {
     abortSignal?: AbortSignal;
     smoothStream?: boolean;
   }) {
-    const model = this.client(params.model);
+    const model = this.resolveClient(params.model)(params.model);
     const { system, messages } = toAiSdkMessages(params.messages);
 
     const timeout = params.timeout ?? {
@@ -88,7 +105,7 @@ export class AiSdkService {
     timeout?: TimeoutConfiguration;
     abortSignal?: AbortSignal;
   }) {
-    const model = this.client(params.model);
+    const model = this.resolveClient(params.model)(params.model);
     const { system, messages } = toAiSdkMessages(params.messages);
 
     const timeout =
@@ -124,7 +141,7 @@ export class AiSdkService {
       `Compacting ${content.length} chars with model "${options.model}"`,
     );
     options.notify?.('compaction-start');
-    const model = this.client(options.model);
+    const model = this.resolveClient(options.model)(options.model);
 
     const timeout =
       options.timeout ?? this.ollamaConfigService.config.generateTotalTimeoutMs;
@@ -160,7 +177,7 @@ export class AiSdkService {
     toolResults: Array<{ toolName: string; result: unknown }>;
     totalUsage?: { inputTokens?: number; outputTokens?: number };
   }> {
-    const model = this.client(params.model);
+    const model = this.resolveClient(params.model)(params.model);
     const { system, messages } = toAiSdkMessages(params.messages);
 
     const capturedResults: Array<{ toolName: string; result: unknown }> = [];

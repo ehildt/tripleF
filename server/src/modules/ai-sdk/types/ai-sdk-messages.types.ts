@@ -1,4 +1,4 @@
-export type InputMessageRole = 'system' | 'user' | 'assistant';
+type InputMessageRole = 'system' | 'user' | 'assistant';
 
 export type InputMessage = {
   role: InputMessageRole;
@@ -10,7 +10,7 @@ export type InputMessage = {
   images?: Array<Uint8Array | string>;
 };
 
-export type TextPart = {
+type TextPart = {
   type: 'text';
   text: string;
 };

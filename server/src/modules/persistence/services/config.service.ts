@@ -4,7 +4,7 @@ import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConfigRepository } from './config.repository.js';
 
-export interface SessionConfig {
+interface SessionConfig {
   sessionId: string;
   selectedModel?: string | null;
   preprocessing?: Record<string, unknown> | null;

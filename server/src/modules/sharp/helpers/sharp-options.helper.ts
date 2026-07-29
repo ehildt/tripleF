@@ -1,7 +1,7 @@
 import { SharpDefaults } from '../configs/sharp-config.adapter.js';
-import type { SharpSize } from '../constants/sharp.constants.js';
 import { PreprocessingPayload } from '../dtos/preprocessing-payload.dto.js';
 import { SharpOptions } from '../dtos/sharp-options.dto.js';
+import type { SharpSize } from '../types/sharp-size.type.js';
 
 /**
  * Parse preprocessing options from a JSON payload.

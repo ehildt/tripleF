@@ -19,9 +19,9 @@ import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
 import { useChatPanel } from './composables/use-chat-panel';
-import ChatExchangeList from './exchange-list/ChatExchangeList.vue';
+import { useSearchEngineAvailability } from './composables/use-search-engine-availability';
 import FloatingPlayer from './floating-player/FloatingPlayer.vue';
-import ChatPromptActionBar from './prompt-action-bar/ChatPromptActionBar.vue';
+import ChatMainColumn from './main-column/ChatMainColumn.vue';
 import ChatRightPanel from './right-panel/ChatRightPanel.vue';
 import { useAttachmentList } from './right-panel/composables/use-attachment-list';
 import { useVideoPlaylist } from './right-panel/composables/use-video-playlist';
@@ -42,6 +42,9 @@ const { arguments_, submit, persistArguments } = useSubmit({
 });
 
 const { actionBarRef } = useActionBar();
+
+const { searchEngineState, searchSources, toggleSearchEngine, toggleSource } =
+  useSearchEngineAvailability();
 
 const modelsStore = useModelsStore();
 const conversationStore = useConversationStore();
@@ -92,7 +95,10 @@ const brainBlink = useBlink();
 provide('brainBlink', brainBlink);
 
 const toolbarRef = ref<InstanceType<typeof ChatToolbar> | null>(null);
-const chatListRef = ref<InstanceType<typeof ChatExchangeList> | null>(null);
+const mainColumnRef = ref<InstanceType<typeof ChatMainColumn> | null>(null);
+const chatListRef = computed(
+  () => mainColumnRef.value?.exchangeListRef ?? null,
+);
 
 const hasNoModelSelected = computed(
   () => !(conversation.value?.model || toolbarRef.value?.selectedModel),
@@ -144,6 +150,8 @@ const { rightPanelView, selectPanelView } = useChatPanel(
   computed(() => userExchanges.value.length > 0),
   hasPlaylist,
   computed(() => playlistVideos.value.length),
+  computed(() => attachments.value.length),
+  computed(() => messageListItems.value.length),
 );
 
 const shouldShowRightPanel = computed(
@@ -228,53 +236,51 @@ defineExpose({ actionBarRef });
 <template>
   <ChatToolbar
     ref="toolbarRef"
-    class="lg:col-span-2 lg:col-start-1 h-fit lg:sticky lg:top-12 z-50"
+    class="lg:col-span-2 lg:col-start-1 min-w-0 h-fit lg:sticky lg:top-12 z-50"
     :chat-active="true"
     :prompt-focused="false"
   />
 
-  <div
-    class="chat-center-column lg:col-span-8 lg:col-start-3 h-fit lg:sticky lg:top-12"
-  >
-    <ChatExchangeList
-      ref="chatListRef"
-      :compact="true"
-      :retry-handler="onRetry"
-      @delete-conversation="onDeleteConversation"
-      @toggle-included="selectPanelView('history')"
-    />
-    <ChatPromptActionBar
-      :value="arguments_"
-      :is-compacting="conversationStore.compacting"
-      :think-options="filteredThinkOptions"
-      :think-value="currentThinkValue"
-      :context-size-options="filteredContextSizeOptions"
-      :context-size-value="currentContextSizeValue"
-      :default-context-size="defaultContextSize"
-      :format-context-size="formatContextSize"
-      :is-disabled="hasNoModelSelected"
-      :is-file-select-disabled="isFileSelectDisabled"
-      :file-select-disabled-reason="
-        !supportsVision ? 'Selected model does not support images' : undefined
-      "
-      :set-action-bar-ref="onSetActionBarRef"
-      :set-think-dropdown-ref="setThinkDropdownRef"
-      :set-context-size-dropdown-ref="setContextSizeDropdownRef"
-      @input="onPromptInput"
-      @keydown="onCollapsedKeydown"
-      @select-think="selectThink"
-      @select-context-size="selectContextSize"
-      @open-think="onThinkOpen"
-      @open-context-size="onContextSizeOpen"
-      @disabled-hover-start="brainBlink.start"
-      @disabled-hover-end="brainBlink.stop"
-      @file-select="triggerFileSelect"
-    />
-  </div>
+  <ChatMainColumn
+    ref="mainColumnRef"
+    class="lg:col-span-8 lg:col-start-3 min-w-0 h-fit lg:sticky lg:top-12"
+    :value="arguments_"
+    :is-compacting="conversationStore.compacting"
+    :think-options="filteredThinkOptions"
+    :think-value="currentThinkValue"
+    :context-size-options="filteredContextSizeOptions"
+    :context-size-value="currentContextSizeValue"
+    :default-context-size="defaultContextSize"
+    :format-context-size="formatContextSize"
+    :is-disabled="hasNoModelSelected"
+    :is-file-select-disabled="isFileSelectDisabled"
+    :file-select-disabled-reason="
+      !supportsVision ? 'Selected model does not support images' : undefined
+    "
+    :search-engine-state="searchEngineState"
+    :search-sources="searchSources"
+    :set-action-bar-ref="onSetActionBarRef"
+    :set-think-dropdown-ref="setThinkDropdownRef"
+    :set-context-size-dropdown-ref="setContextSizeDropdownRef"
+    :retry-handler="onRetry"
+    @input="onPromptInput"
+    @keydown="onCollapsedKeydown"
+    @select-think="selectThink"
+    @select-context-size="selectContextSize"
+    @open-think="onThinkOpen"
+    @open-context-size="onContextSizeOpen"
+    @disabled-hover-start="brainBlink.start"
+    @disabled-hover-end="brainBlink.stop"
+    @file-select="triggerFileSelect"
+    @toggle-search-engine="toggleSearchEngine"
+    @toggle-source="toggleSource"
+    @delete-conversation="onDeleteConversation"
+    @toggle-included="selectPanelView('history')"
+  />
 
   <ChatRightPanel
     v-if="shouldShowRightPanel"
-    class="lg:col-span-2 lg:col-start-11 h-fit lg:sticky lg:top-12"
+    class="lg:col-span-2 lg:col-start-11 min-w-0 h-fit lg:sticky lg:top-12"
     :attachments="attachments"
     :conversation="conversation"
     :message-list-items="messageListItems"

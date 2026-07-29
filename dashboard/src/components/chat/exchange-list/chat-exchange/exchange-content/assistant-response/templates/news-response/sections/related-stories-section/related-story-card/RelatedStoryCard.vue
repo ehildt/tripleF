@@ -15,36 +15,55 @@ function metaFor(story: RelatedStory): string {
 function imageAltFor(story: RelatedStory): string {
   return story.title || story.sourceName || 'Related story image';
 }
+
+/** Whole-card link when a URL exists; inert wrapper otherwise. */
+function linkPropsFor(story: RelatedStory): {
+  is: 'a' | 'div';
+  href?: string;
+  target?: string;
+  rel?: string;
+  title?: string;
+} {
+  if (!story.url) return { is: 'div' };
+  return {
+    is: 'a',
+    href: story.url,
+    target: '_blank',
+    rel: 'noopener noreferrer',
+    title: story.title || story.url,
+  };
+}
 </script>
 
 <template>
   <li class="related-story__item">
-    <figure>
-      <div v-if="item.imageUrl" class="related-story__media">
-        <img
-          :src="encodeURI(item.imageUrl)"
-          :alt="imageAltFor(item)"
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
-      <figcaption
-        v-if="item.title || item.url || metaFor(item)"
-        class="related-story__caption"
-      >
-        <a
-          v-if="item.url"
-          :href="item.url"
-          target="_blank"
-          rel="noopener noreferrer"
+    <component
+      :is="linkPropsFor(item).is"
+      :href="linkPropsFor(item).href"
+      :target="linkPropsFor(item).target"
+      :rel="linkPropsFor(item).rel"
+      :title="linkPropsFor(item).title"
+      class="related-story__card"
+    >
+      <figure>
+        <div v-if="item.imageUrl" class="related-story__media">
+          <img
+            :src="encodeURI(item.imageUrl)"
+            :alt="imageAltFor(item)"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <figcaption
+          v-if="item.title || item.url || metaFor(item)"
+          class="related-story__caption"
         >
           <strong v-if="item.title">{{ item.title }}</strong>
-          <strong v-else>{{ item.url }}</strong>
-        </a>
-        <strong v-else-if="item.title">{{ item.title }}</strong>
-        <p v-if="metaFor(item)">{{ metaFor(item) }}</p>
-      </figcaption>
-    </figure>
+          <strong v-else-if="item.url">{{ item.url }}</strong>
+          <p v-if="metaFor(item)">{{ metaFor(item) }}</p>
+        </figcaption>
+      </figure>
+    </component>
   </li>
 </template>
 
@@ -57,7 +76,18 @@ function imageAltFor(story: RelatedStory): string {
   padding: 0 !important;
 }
 
-.related-story__item figure {
+.related-story__card {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.related-story__card:hover figure {
+  border-color: var(--color-accent-border);
+}
+
+.related-story__card figure {
   margin: 0;
   border: 1px solid var(--color-divider);
   overflow: hidden;
@@ -68,6 +98,7 @@ function imageAltFor(story: RelatedStory): string {
   min-height: 240px;
   width: 100%;
   padding: 0 !important;
+  transition: border-color 0.2s ease;
 }
 
 .related-story__media {
@@ -104,12 +135,10 @@ function imageAltFor(story: RelatedStory): string {
   color: var(--color-fg-muted);
 }
 
-.related-story__caption a,
 .related-story__caption strong {
   display: block;
   color: var(--color-fg-primary);
   margin-bottom: 0.25em;
-  text-decoration: none;
 }
 
 .related-story__caption p {

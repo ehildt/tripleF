@@ -6,7 +6,7 @@ import { getEnabledVariants } from '../helpers/get-enabled-variants.helper.js';
 import { getVariantPipeline } from '../helpers/get-variant-pipeline.helper.js';
 import type { Variant, VariantPipeline } from '../types/image-variant.types.js';
 
-export interface ImageVariantPipeline {
+interface ImageVariantPipeline {
   variant: Variant;
   pipeline: VariantPipeline;
 }

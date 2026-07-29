@@ -13,6 +13,8 @@ const SESSION_ID = getPersistentSocketSessionId();
 
 export interface OllamaModel {
   model: string;
+  /** Where the model runs: the configured host or Ollama Cloud. */
+  origin?: 'local' | 'cloud';
   parameter_size?: string;
   quantization_level?: string;
   family?: string;
@@ -50,6 +52,23 @@ export const useModelsStore = defineStore('models', () => {
   );
 
   const modelNames = computed(() => models.value.map((m) => m.model));
+
+  // Sorted alphabetically within each section so the model selector's
+  // local/cloud groups read in a stable order regardless of API order.
+  const localModels = computed(() =>
+    models.value
+      .filter((m) => m.origin !== 'cloud')
+      .sort((a, b) =>
+        a.model.localeCompare(b.model, undefined, { sensitivity: 'base' }),
+      ),
+  );
+  const cloudModels = computed(() =>
+    models.value
+      .filter((m) => m.origin === 'cloud')
+      .sort((a, b) =>
+        a.model.localeCompare(b.model, undefined, { sensitivity: 'base' }),
+      ),
+  );
 
   function maxNumCtxForModel(modelName: string): string {
     const model = getModel(modelName);
@@ -126,6 +145,8 @@ export const useModelsStore = defineStore('models', () => {
     setSelectedModel,
     models,
     modelNames,
+    localModels,
+    cloudModels,
     numCtxOptions,
     defaultNumCtx,
     modelsLoading,

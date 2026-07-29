@@ -44,8 +44,6 @@ export const describeSchema = z.object({
   note: z.string().optional(),
 });
 
-export type DescribeJson = z.infer<typeof describeSchema>;
-
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues
     .map((issue) => {

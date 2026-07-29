@@ -21,7 +21,16 @@ export interface SourcesConfig {
   blocked: string[];
 }
 
-export type ProviderKey = 'serper';
+/**
+ * The Ollama connection (host + API key), served by /api/v1/ollama-overrides
+ * with the key masked — same override contract as the Serper provider.
+ */
+export interface OllamaConnectionConfig {
+  host: string;
+  apiKey?: string;
+}
+
+export type ProviderKey = 'serper' | 'ollama';
 
 /** Resettable top-level config sections (provider or the sources list). */
 export type ConfigSectionKey = ProviderKey | 'sources';
@@ -31,6 +40,7 @@ export type ProviderConfig = SerperConfig;
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
   sources: SourcesConfig;
+  ollama: OllamaConnectionConfig;
 }
 
 export function hasEndpointResults(

@@ -26,18 +26,17 @@ jobs:
 
       - uses: pnpm/action-setup@v6
         with:
-          version: 10
           run_install: false
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - uses: actions/cache@v3
         with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: .pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - run: pnpm -r install --frozen-lockfile
 
@@ -79,7 +78,7 @@ jobs:
 
       - name: Upload Coverage — Server
         if: github.event_name == 'push'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           fail_ci_if_error: true
           flags: server
@@ -88,7 +87,7 @@ jobs:
 
       - name: Upload Coverage — Dashboard
         if: github.event_name == 'push'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           fail_ci_if_error: true
           flags: dashboard
@@ -97,14 +96,14 @@ jobs:
 
       - name: Build Artifact — Server
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: server-dist
           path: server/dist/
 
       - name: Build Artifact — Dashboard
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dashboard-dist
           path: dashboard/dist/
@@ -120,12 +119,10 @@ jobs:
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v6
-        with:
-          version: 10
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
 
       - run: pnpm -r install --frozen-lockfile
 
@@ -133,20 +130,20 @@ jobs:
         run: pnpm changeset version
 
       - name: Commit version bump
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "VERSION BUMP"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Server dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: server-dist
           path: server/dist/
 
       - name: Download Dashboard dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dashboard-dist
           path: dashboard/dist/
@@ -158,7 +155,7 @@ jobs:
         run: cd dashboard && npx @ehildt/depbadge
 
       - name: Commit badge bump
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "BADGE BUMP"
         env:

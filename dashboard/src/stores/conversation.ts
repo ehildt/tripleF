@@ -255,9 +255,11 @@ export const useConversationStore = defineStore('conversation', () => {
   const conversations = ref<Conversation[]>([]);
   const activeConversationId = ref<string | null>(null);
   const compacting = ref(false);
+  const hydrated = ref(false);
 
   loadConversations().then((loaded) => {
     conversations.value = loaded;
+    hydrated.value = true;
   });
 
   function saveActiveConversation() {
@@ -859,6 +861,7 @@ export const useConversationStore = defineStore('conversation', () => {
     conversations,
     activeConversationId,
     compacting,
+    hydrated,
     getConversation,
     ensureConversation,
     setActiveConversation,

@@ -9,8 +9,6 @@ export const videolistSchema = z.object({
   videoGalleryItems: z.array(videoGalleryItemSchema),
 });
 
-export type VideolistJson = z.infer<typeof videolistSchema>;
-
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues
     .map((issue) => {

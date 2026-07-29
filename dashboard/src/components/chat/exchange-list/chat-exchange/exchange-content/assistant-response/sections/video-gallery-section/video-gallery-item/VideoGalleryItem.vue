@@ -88,30 +88,32 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
-  color: var(--color-fg-muted);
+  color: white;
   cursor: pointer;
+  background: color-mix(in srgb, black 55%, transparent);
+  backdrop-filter: blur(12px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  box-shadow:
+    0 0.3rem 1rem color-mix(in srgb, black 45%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
   transition:
     color 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .video-gallery__playlist-toggle:hover {
-  color: var(--color-accent-primary);
-  border-color: var(--color-accent-border);
+  color: white;
+  background: var(--color-accent-primary);
 }
 
 .video-gallery__playlist-toggle--added {
-  color: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 15%,
-    var(--color-bg-elevated)
-  );
+  color: white;
+  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
 }
 
 .video-gallery__playlist-toggle-icon {
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
   width: 0.9rem;
   height: 0.9rem;
 }

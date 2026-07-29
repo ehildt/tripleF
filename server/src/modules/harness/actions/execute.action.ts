@@ -24,7 +24,7 @@ import { type VariantName } from '../helpers/tool-registry.constants.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
-export type ExecuteResult = {
+type ExecuteResult = {
   buffers: Buffer[];
   processedMeta: FastifyMultipartMeta[];
   toolResults: Array<{ toolName: string; result: unknown }>;
@@ -40,7 +40,7 @@ export type ToolExecutionEvent = {
   status: 'start' | 'done' | 'error';
 };
 
-export type ToolExecutionEventHandler = (event: ToolExecutionEvent) => void;
+type ToolExecutionEventHandler = (event: ToolExecutionEvent) => void;
 
 @Injectable()
 export class ExecuteActionService {
@@ -418,7 +418,12 @@ export class ExecuteActionService {
   }
 
   /**
-   * Extract a search query from the context — prefers user messages first, falls back to intent contextSummary.
+   * Extract a fallback search query from the context.
+   *
+   * A short follow-up message ("what do the reviews say?", "more media")
+   * carries no searchable subject on its own, so the intent step's
+   * contextSummary — which names the established entities verbatim — leads
+   * the query, with the user's wording appended for the actual request.
    */
   private extractQuery(
     ctx: HarnessContext,
@@ -430,21 +435,20 @@ export class ExecuteActionService {
     const rawQuery = (lastUser?.content ?? ctx.lastUserPrompt)?.trim() ?? '';
 
     const contextSummary = intent.contextSummary?.trim() ?? '';
+    if (!contextSummary) return rawQuery.slice(0, 300);
+
     const words = rawQuery.split(/\s+/).filter(Boolean);
-    const isVagueFollowUp =
-      words.length < 5 ||
-      /\b(these|those|this|that|sie|dies|das|den|dem|search\s+online|online\s+search)\b/i.test(
+    const hasDependentReference =
+      /\b(this|that|these|those|it|its|he|she|they|them|sie|dies|das|den|dem|dazu|search\s+online|online\s+search)\b/i.test(
         rawQuery,
       );
-    const hasConcreteSubject =
-      /\b(?:Stellar|Blade|Gothic|Nioh|game|movie|film|book|product|company|person|artist|album)\b/i.test(
-        rawQuery,
-      );
+    const isShortFollowUp = words.length > 0 && words.length < 8;
 
-    if (contextSummary && isVagueFollowUp && !hasConcreteSubject)
-      return contextSummary.slice(0, 250).replace(/\s+/g, ' ').trim();
+    if (!isShortFollowUp && !hasDependentReference)
+      return rawQuery.slice(0, 300);
 
-    return rawQuery.slice(0, 300);
+    const subject = contextSummary.replace(/\s+/g, ' ').trim().slice(0, 250);
+    return (rawQuery ? `${subject} — ${rawQuery}` : subject).slice(0, 300);
   }
 
   private async invokeMissingMandatoryTools(

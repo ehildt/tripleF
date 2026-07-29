@@ -56,6 +56,30 @@ export function enforceAvailableMediaUrls(
     }
   }
 
+  // Related-story thumbnails are optional decorations: an image URL the
+  // model did not take from the verified results is blanked in place so an
+  // unvetted (possibly client-blocked) origin never reaches the dashboard.
+  if (Array.isArray(result.relatedStories)) {
+    let storiesChanged = false;
+    const stories = result.relatedStories.map((item) => {
+      if (!item || typeof item !== 'object') return item;
+      const story = item as MediaData;
+      if (
+        typeof story.imageUrl !== 'string' ||
+        !story.imageUrl ||
+        imageUrls.has(story.imageUrl)
+      )
+        return item;
+
+      storiesChanged = true;
+      return { ...story, imageUrl: '' };
+    });
+    if (storiesChanged) {
+      result.relatedStories = stories;
+      changed = true;
+    }
+  }
+
   if (
     typeof result.heroVideoUrl === 'string' &&
     result.heroVideoUrl &&

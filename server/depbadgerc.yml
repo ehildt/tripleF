@@ -1,4 +1,4 @@
-integrity: 5f9fba5573a3907a7e2079271e31065a99e76697dfd5a6272271576079656395
+integrity: de3875c1d05e07493d8f28a5b0be3cae15c66d3a98fd7adfb87c78266da75da0
 # yaml-language-server: $schema=https://raw.githubusercontent.com/ehildt/depbadge/refs/heads/main/depbadgerc.schema.json
 
 target: README.md
@@ -13,7 +13,7 @@ dependenciesLayout: &DEPENDENCIES_LAYOUT
   showHeader: false
 
 dependenciesStyle: &DEPENDENCIES_STYLE
-  labelColor: "333"
+  labelColor: '333'
   isError: false
   namedLogo: npm
   logoWidth: 40
@@ -25,7 +25,7 @@ devDependenciesStyle: &DEV_DEPENDENCIES_STYLE
   style: flat-square
 
 statusBadgesStyle: &STATUS_BADGES_STYLE
-  labelColor: "333"
+  labelColor: '333'
   isError: false
   namedLogo: github
   logoWidth: 40
@@ -40,39 +40,39 @@ dependencies:
     position: center
   badgeStyle: *DEPENDENCIES_STYLE
   items:
-    - name: "@ehildt/ckir-helpers"
+    - name: '@ehildt/ckir-helpers'
       link: https://github.com/ehildt/ckir-helpers
-    - name: "@ehildt/nestjs-bullmq"
+    - name: '@ehildt/nestjs-bullmq'
       link: https://github.com/ehildt/nestjs-bullmq
-    - name: "@ehildt/nestjs-bullmq-logger"
+    - name: '@ehildt/nestjs-bullmq-logger'
       link: https://github.com/ehildt/nestjs-bullmq-logger
-    - name: "@ehildt/nestjs-config-factory"
+    - name: '@ehildt/nestjs-config-factory'
       link: https://github.com/ehildt/nestjs-config-factory
-    - name: "@ehildt/nestjs-ollama"
+    - name: '@ehildt/nestjs-ollama'
       link: https://github.com/ehildt/nestjs-ollama
-    - name: "@ehildt/nestjs-socket.io"
+    - name: '@ehildt/nestjs-socket.io'
       link: https://github.com/ehildt/nestjs-socket.io
-    - name: "@fastify/compress"
+    - name: '@fastify/compress'
       link: https://github.com/fastify/fastify-compress
-    - name: "@fastify/multipart"
+    - name: '@fastify/multipart'
       link: https://github.com/fastify/fastify-multipart
-    - name: "@fastify/static"
+    - name: '@fastify/static'
       link: https://github.com/fastify/fastify-static
-    - name: "@nestjs/axios"
+    - name: '@nestjs/axios'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/bullmq"
+    - name: '@nestjs/bullmq'
       link: https://github.com/nestjs/bullmq
-    - name: "@nestjs/common"
+    - name: '@nestjs/common'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/core"
+    - name: '@nestjs/core'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/microservices"
+    - name: '@nestjs/microservices'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/platform-fastify"
+    - name: '@nestjs/platform-fastify'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/swagger"
+    - name: '@nestjs/swagger'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/terminus"
+    - name: '@nestjs/terminus'
       link: https://github.com/nestjs/nest
     - name: bullmq
       link: https://github.com/taskforcesh/bullmq
@@ -109,23 +109,23 @@ devDependencies:
     position: center
   badgeStyle: *DEV_DEPENDENCIES_STYLE
   items:
-    - name: "@changesets/cli"
+    - name: '@changesets/cli'
       link: https://github.com/changesets/changesets
-    - name: "@eslint/js"
+    - name: '@eslint/js'
       link: https://github.com/eslint/eslint
-    - name: "@nestjs/cli"
+    - name: '@nestjs/cli'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/schematics"
+    - name: '@nestjs/schematics'
       link: https://github.com/nestjs/nest
-    - name: "@nestjs/testing"
+    - name: '@nestjs/testing'
       link: https://github.com/nestjs/nest
-    - name: "@types/eslint"
+    - name: '@types/eslint'
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
-    - name: "@types/node"
+    - name: '@types/node'
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
-    - name: "@types/supertest"
+    - name: '@types/supertest'
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
-    - name: "@vitest/coverage-v8"
+    - name: '@vitest/coverage-v8'
       link: https://github.com/vitest-dev/vitest
     - name: depcheck
       link: https://github.com/depcheck/depcheck
@@ -183,24 +183,24 @@ statusBadges:
     - name: github
       metric: release
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       branch: main
       namedLogo: github
     - name: github
       metric: stars
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       branch: main
       namedLogo: github
     - name: github
       metric: license
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       branch: main
       namedLogo: github
     - name: codecov
       user: ehildt
-      repo: ckir.io-visions
+      repo: tripleF.io
       namedLogo: codecov
       branch: main
       flag: c

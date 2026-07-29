@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
-import { OllamaConfigService } from '../configs/ollama-config.service.js';
-
 import { OllamaModelsService } from './ollama-models.service.js';
+import { OllamaOverridesService } from './ollama-overrides.service.js';
 
 describe('OllamaModelsService', () => {
   let service: OllamaModelsService;
@@ -64,12 +63,12 @@ describe('OllamaModelsService', () => {
       providers: [
         OllamaModelsService,
         {
-          provide: OllamaConfigService,
+          provide: OllamaOverridesService,
           useValue: {
-            config: {
+            getConfig: () => ({
               host: '127.0.0.1',
-              headers: undefined,
-            },
+              apiKey: undefined,
+            }),
           },
         },
       ],
@@ -93,6 +92,7 @@ describe('OllamaModelsService', () => {
         models: [
           {
             model: 'llama3.2-vision:latest',
+            origin: 'local',
             parameter_size: '3B',
             quantization_level: 'Q4_0',
             family: 'llama',
@@ -101,6 +101,7 @@ describe('OllamaModelsService', () => {
           },
           {
             model: 'minicpm:latest',
+            origin: 'local',
             parameter_size: '2B',
             quantization_level: 'Q4_0',
             family: 'minicpm',

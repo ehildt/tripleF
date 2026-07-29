@@ -1,15 +1,14 @@
 import { buildImageFingerprint } from './build-image-fingerprint.helper.js';
 import type { ExtractedImageItem } from './extract-media-from-tools.helper.js';
 
-export interface DedupeImagesByFingerprintOptions {
+interface DedupeImagesByFingerprintOptions {
   timeoutMs?: number;
-  maxBytes?: number;
   concurrency?: number;
 }
 
 type ImageItem = ExtractedImageItem;
 
-export interface DedupImagesResult {
+interface DedupImagesResult {
   items: ImageItem[];
   removedCount: number;
 }
@@ -26,11 +25,7 @@ export async function dedupeImagesByFingerprint(
   items: ImageItem[],
   options: DedupeImagesByFingerprintOptions = {},
 ): Promise<DedupImagesResult> {
-  const {
-    timeoutMs = 8000,
-    maxBytes = 8 * 1024 * 1024,
-    concurrency = 3,
-  } = options;
+  const { timeoutMs = 8000, concurrency = 3 } = options;
 
   if (items.length === 0) return { items: [], removedCount: 0 };
 
@@ -43,11 +38,7 @@ export async function dedupeImagesByFingerprint(
     if (currentIndex >= items.length) return;
 
     const item = items[currentIndex];
-    const fingerprint = await fetchImageFingerprint(
-      item.imageUrl,
-      timeoutMs,
-      maxBytes,
-    );
+    const fingerprint = await fetchImageFingerprint(item.imageUrl, timeoutMs);
 
     if (fingerprint && seenHashes.has(fingerprint)) {
       results[currentIndex] = undefined;
@@ -74,22 +65,18 @@ export async function dedupeImagesByFingerprint(
 async function fetchImageFingerprint(
   url: string,
   timeoutMs: number,
-  maxBytes: number,
 ): Promise<string | undefined> {
   try {
     const response = await fetch(url, {
       signal: AbortSignal.timeout(timeoutMs),
-      headers: { 'User-Agent': 'ckir-harness/1.0' },
+      headers: { 'User-Agent': 'triplef-harness/1.0' },
     });
 
     if (!response.ok) return undefined;
 
-    const contentLength = Number(response.headers.get('content-length') ?? '0');
-    if (contentLength > maxBytes) return undefined;
-
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    if (buffer.length === 0 || buffer.length > maxBytes) return undefined;
+    if (buffer.length === 0) return undefined;
 
     return buildImageFingerprint(buffer, 512);
   } catch {

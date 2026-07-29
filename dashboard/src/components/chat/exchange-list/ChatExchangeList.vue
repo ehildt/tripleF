@@ -19,8 +19,12 @@ const emit = defineEmits<{
   toggleIncluded: [exchangeId: string];
 }>();
 
-const { activeConversation, exchanges, activeAssistantExchangeId } =
-  useActiveConversation();
+const {
+  activeConversation,
+  exchanges,
+  activeAssistantExchangeId,
+  activeAssistantResponseStarted,
+} = useActiveConversation();
 
 const { highlightedIds, collapsedIds, onHoverDeleteStart, onHoverDeleteEnd } =
   useExchangeVisualState(exchanges);
@@ -38,6 +42,7 @@ const { scrollToBottom, scrollToExchange, onScroll } =
     isCompact,
     activeAssistantExchangeId,
     scrollContainerRef,
+    activeAssistantResponseStarted,
   );
 
 const { deleteExchange, retryExchange, branchExchange } = useExchangeActions(

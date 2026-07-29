@@ -25,6 +25,7 @@ import { PRODUCT_INSTRUCTIONS } from './instructions/product.instruction.js';
 import { SUMMARY_INSTRUCTIONS } from './instructions/summary.instruction.js';
 import {
   TEXT_CODING_INSTRUCTIONS,
+  TEXT_FAMILIARITY_INSTRUCTIONS,
   TEXT_INSTRUCTIONS,
 } from './instructions/text.instruction.js';
 import { VIDEOLIST_INSTRUCTIONS } from './instructions/videolist.instruction.js';
@@ -47,7 +48,7 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   product: ['default'],
   imagelist: ['default'],
   videolist: ['default'],
-  text: ['default', 'coding'],
+  text: ['default', 'coding', 'familiarity'],
   compact: ['default'],
 };
 
@@ -89,6 +90,7 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
   // text
   'text:default': TEXT_INSTRUCTIONS,
   'text:coding': TEXT_CODING_INSTRUCTIONS,
+  'text:familiarity': TEXT_FAMILIARITY_INSTRUCTIONS,
 
   // compact
   'compact:default': COMPACT_INSTRUCTIONS,

@@ -46,8 +46,6 @@ export const compareSchema = z.object({
   note: z.string().optional(),
 });
 
-export type CompareJson = z.infer<typeof compareSchema>;
-
 export function formatZodIssues(issues: z.ZodIssue[]): string {
   return issues
     .map((issue) => {

@@ -49,7 +49,10 @@ const { imageTiles } = usePromptImageTiles(() => props.exchange);
 <template>
   <ExchangeDivider :variant="dividerVariant" />
 
-  <div :class="containerClasses">
+  <!-- pending-empty renders nothing: the assistant exchange exists but no
+       reasoning or response data has arrived yet, so the padded container
+       would paint as an empty box. -->
+  <div v-if="renderMode !== 'pending-empty'" :class="containerClasses">
     <CompactingIndicator v-if="renderMode === 'compacting'" />
     <ExchangeActivity
       v-else-if="renderMode === 'reasoning'"

@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { SHARP_SIZES, type SharpSize } from '../constants/sharp.constants.js';
+import { SHARP_SIZES, type SharpSize } from '../types/sharp-size.type.js';
 
 class PreprocessingResizePayload {
   @ApiPropertyOptional({

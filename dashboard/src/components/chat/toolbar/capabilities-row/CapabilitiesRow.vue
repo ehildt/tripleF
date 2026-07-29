@@ -16,7 +16,7 @@ defineProps<{
 .capabilities-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-1);
+  gap: var(--spacing-3);
   justify-content: flex-end;
   padding: var(--spacing-2);
 }

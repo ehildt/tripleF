@@ -65,7 +65,7 @@ const count = computed(() => props.items?.length ?? 0);
 /* 1 item: full-width, centered. */
 .video-gallery--count-1 > :deep(li) {
   width: 100%;
-  flex: 0 0 100%;
+  flex: 0 0 85%;
 }
 
 /* 2 items: 2 equal columns. */

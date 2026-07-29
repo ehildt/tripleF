@@ -43,7 +43,6 @@ import { usePreprocessingPreview } from './composables/use-preprocessing-preview
 const store = usePreprocessingStore();
 
 const {
-  fileInput,
   isPreviewLoading,
   lightbox,
   onFilePicked,

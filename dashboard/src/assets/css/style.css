@@ -212,7 +212,9 @@ input[type='number'] {
   opacity: 0;
 }
 /* While a video floats as a popup, lift the chat's center column above the
-   sticky toolbar/panels (sticky always creates a stacking context). */
-body.has-floating-video .chat-center-column {
+   sticky toolbar/panels (sticky always creates a stacking context). The
+   scroll-out popout is nested inside this column, so the lift must target
+   the column itself — a z-index on a descendant cannot beat the toolbar. */
+body.has-floating-video .chat-main-column {
   z-index: 60;
 }

@@ -1,41 +1,71 @@
+# Local development stack. All services share one image (target: local)
+# and one dependency state: the repository root is bind-mounted at /repo,
+# so the workspace install performed once by the one-shot `deps` service
+# is used identically by host tooling and both dev servers — no more
+# conflicting node_modules/lockfile regimes.
 services:
+  deps:
+    container_name: deps
+    image: triplef-local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: local
+    user: "1000:1000"
+    working_dir: /repo
+    entrypoint: ["pnpm", "install", "--frozen-lockfile", "--prefer-offline"]
+    volumes:
+      - ./:/repo
+    networks:
+      - triplef.io
+
   server:
     container_name: server
+    image: triplef-local
     user: "1000:1000"
     restart: on-failure
-    build:
-      context: ./server
-      target: local
+    working_dir: /repo/server
+    entrypoint: ["pnpm", "start:dev"]
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+    environment:
+      NODE_OPTIONS: --max-old-space-size=2048
     volumes:
-      - ./server:/app
+      - ./:/repo
     env_file:
       - ./server/.env
     ports:
       - "3000:3000"
     networks:
-      - ckir.io-visions
+      - triplef.io
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
   dashboard:
     container_name: dashboard
+    image: triplef-local
     user: "1000:1000"
     restart: on-failure
+    working_dir: /repo/dashboard
+    entrypoint: ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]
     depends_on:
-      - server
-    build:
-      context: ./dashboard
-      target: local
+      deps:
+        condition: service_completed_successfully
+      server:
+        condition: service_started
+    environment:
+      NODE_OPTIONS: --max-old-space-size=1024
     volumes:
-      - ./dashboard:/app
+      - ./:/repo
     env_file:
       - ./dashboard/.env
     ports:
       - "5173:5173"
     networks:
-      - ckir.io-visions
+      - triplef.io
 
 networks:
-  ckir.io-visions:
+  triplef.io:
     external: true
-    name: ckir.io-visions
+    name: triplef.io

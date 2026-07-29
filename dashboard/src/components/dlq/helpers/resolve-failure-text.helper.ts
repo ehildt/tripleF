@@ -1,4 +1,5 @@
-import type { DlqEntry } from '../../../../types/dlq-entry.model';
+import type { DlqEntry } from '@/types/dlq-entry.model';
+
 import { parseFailureReason } from './parse-failure-reason.helper';
 
 /**

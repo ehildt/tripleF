@@ -29,8 +29,8 @@ describe('AppConfigAdapter', () => {
       printConfig: true,
       enableSwagger: false,
       health: {
-        memoryHeap: 268435456,
-        memoryRSS: 268435456,
+        memoryHeap: 2048 * 1024 * 1024,
+        memoryRSS: 2048 * 1024 * 1024,
         diskPath: '/',
         diskThresholdPercent: 0.8,
       },
@@ -94,8 +94,8 @@ describe('AppConfigAdapter', () => {
   it('handles missing health env vars with defaults', () => {
     const config = AppConfigAdapter({});
 
-    expect(config.health!.memoryHeap).toBe(268435456);
-    expect(config.health!.memoryRSS).toBe(268435456);
+    expect(config.health!.memoryHeap).toBe(2048 * 1024 * 1024);
+    expect(config.health!.memoryRSS).toBe(2048 * 1024 * 1024);
     expect(config.health!.diskPath).toBe('/');
     expect(config.health!.diskThresholdPercent).toBe(0.8);
   });

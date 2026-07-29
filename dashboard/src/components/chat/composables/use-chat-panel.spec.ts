@@ -101,4 +101,138 @@ describe('useChatPanel', () => {
 
     expect(rightPanelView.value).toBe('files');
   });
+
+  it('follows an added playlist video into the playlist tab', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+    const playlistVideoCount = ref(0);
+
+    const { rightPanelView } = useChatPanel(
+      ref(false),
+      ref(false),
+      ref(true),
+      playlistVideoCount,
+    );
+    await flushPromises();
+    rightPanelView.value = 'history';
+
+    playlistVideoCount.value = 1;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('playlist');
+  });
+
+  it('follows an added attachment into the files tab', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+    const attachmentCount = ref(0);
+
+    const { rightPanelView } = useChatPanel(
+      ref(true),
+      ref(false),
+      ref(false),
+      ref(0),
+      attachmentCount,
+    );
+    await flushPromises();
+    rightPanelView.value = 'history';
+
+    attachmentCount.value = 1;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('files');
+  });
+
+  it('follows a new prompt into the history tab', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+    const historyItemCount = ref(1);
+
+    const { rightPanelView } = useChatPanel(
+      ref(false),
+      ref(true),
+      ref(true),
+      ref(1),
+      ref(0),
+      historyItemCount,
+    );
+    await flushPromises();
+    rightPanelView.value = 'playlist';
+
+    historyItemCount.value = 2;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('history');
+  });
+
+  it('also follows removals, since any tab change is surfaced', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+    const playlistVideoCount = ref(2);
+
+    const { rightPanelView } = useChatPanel(
+      ref(false),
+      ref(true),
+      ref(true),
+      playlistVideoCount,
+    );
+    await flushPromises();
+    rightPanelView.value = 'history';
+
+    playlistVideoCount.value = 1;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('playlist');
+  });
+
+  it('falls back to the next available tab when a removal empties the current one', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+    const hasPlaylist = ref(true);
+    const playlistVideoCount = ref(1);
+
+    const { rightPanelView } = useChatPanel(
+      ref(false),
+      ref(true),
+      hasPlaylist,
+      playlistVideoCount,
+    );
+    await flushPromises();
+    rightPanelView.value = 'playlist';
+
+    // Removing the last playlist item: the count change must not pull the
+    // view back into a tab that has no content left.
+    playlistVideoCount.value = 0;
+    hasPlaylist.value = false;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('history');
+  });
+
+  it('does not follow counts loaded by a conversation switch', async () => {
+    const conversationStore = useConversationStore();
+    const first = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(first.id);
+    const playlistVideoCount = ref(1);
+
+    const { rightPanelView } = useChatPanel(
+      ref(false),
+      ref(true),
+      ref(false),
+      playlistVideoCount,
+    );
+    await flushPromises();
+
+    const second = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(second.id);
+    playlistVideoCount.value = 3;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('history');
+  });
 });

@@ -6,9 +6,9 @@ import {
   toastEnabled,
   toastTypeFilters,
 } from '../components/widgets/toast/composables/toast-settings.state';
+import type { ToastType } from '../types/toast-type.model';
 
-export type ToastType =
-  'info' | 'success' | 'warning' | 'error' | 'debug' | 'default';
+export type { ToastType };
 
 export interface Toast {
   id: string;

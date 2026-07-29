@@ -1,4 +1,4 @@
-import type { SharpSize } from '../constants/sharp.constants.js';
+import type { SharpSize } from '../types/sharp-size.type.js';
 
 export interface SharpOptions {
   /**

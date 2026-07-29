@@ -15,8 +15,8 @@ export function AppConfigAdapter(env = process.env): AppConfig {
     logLevel: (env.LOG_LEVEL?.split(',')?.filter(Boolean) ??
       []) as Array<LogLevel>,
     health: {
-      memoryHeap: getByteSizeEnv(env.HEALTH_MEMORY_HEAP, 256 * 1024 * 1024)!,
-      memoryRSS: getByteSizeEnv(env.HEALTH_MEMORY_RSS, 256 * 1024 * 1024)!,
+      memoryHeap: getByteSizeEnv(env.HEALTH_MEMORY_HEAP, 2048 * 1024 * 1024)!,
+      memoryRSS: getByteSizeEnv(env.HEALTH_MEMORY_RSS, 2048 * 1024 * 1024)!,
       diskPath: env.HEALTH_DISK_PATH ?? '/',
       diskThresholdPercent: getNumberEnv(
         env.HEALTH_DISK_THRESHOLD,

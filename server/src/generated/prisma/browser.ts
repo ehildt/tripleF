@@ -32,3 +32,8 @@ export type HarnessConversation = Prisma.HarnessConversationModel
  * 
  */
 export type HarnessConfig = Prisma.HarnessConfigModel
+/**
+ * Model HarnessProviderOverride
+ * 
+ */
+export type HarnessProviderOverride = Prisma.HarnessProviderOverrideModel

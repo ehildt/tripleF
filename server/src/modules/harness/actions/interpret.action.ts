@@ -19,7 +19,7 @@ import { type IntentResult, IntentSchema } from '../templates/intent.schema.js';
 
 const MAX_INTERPRET_RETRIES = 3;
 
-export type InterpretResult = {
+type InterpretResult = {
   intent: IntentResult;
   inputTokens?: number;
   outputTokens?: number;

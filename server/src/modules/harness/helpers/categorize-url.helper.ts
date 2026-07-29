@@ -3,7 +3,7 @@ import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
 import { isTrustedUrl } from './is-trusted-url.helper.js';
 
 /** Categorizes a URL for the sanitization step. */
-export type UrlKind = 'image' | 'video' | 'page' | 'untrusted';
+type UrlKind = 'image' | 'video' | 'page' | 'untrusted';
 
 export function categorizeUrl(url: string): {
   kind: UrlKind;

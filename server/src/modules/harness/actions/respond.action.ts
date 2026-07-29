@@ -13,7 +13,7 @@ import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
 import type { IntentResult } from '../templates/intent.schema.js';
 
-export type RespondResult = {
+type RespondResult = {
   content: string;
   data?: Record<string, unknown>;
   inputTokens?: number;
@@ -266,15 +266,18 @@ export class RespondActionService {
         },
       );
 
-      messages.push({
-        role: 'system',
-        content: buildCorrectionPrompt(
-          validation.error,
-          params.intent.template,
-        ),
-      });
+      if (attempt < MAX_JSON_RETRIES) {
+        messages.push({
+          role: 'system',
+          content: buildCorrectionPrompt(
+            validation.error,
+            params.intent.template,
+            { finalAttempt: attempt + 1 === MAX_JSON_RETRIES },
+          ),
+        });
 
-      if (attempt < MAX_JSON_RETRIES) params.onJsonRetry?.(attempt + 1);
+        params.onJsonRetry?.(attempt + 1);
+      }
     }
 
     throw new Error(

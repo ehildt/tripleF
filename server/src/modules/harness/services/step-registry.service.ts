@@ -3,12 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { StepId } from './harness-context.type.js';
 import { StepHandler } from './harness-step.interface.js';
 
-export type StepRegistration = {
-  id: StepId;
-  handler: StepHandler;
-  deps: StepId[];
-};
-
 export type StepRegistry = Map<
   StepId,
   { handler: StepHandler; deps: StepId[] }

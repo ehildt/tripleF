@@ -1,4 +1,5 @@
-import type { ToastType } from './toast-state';
+import type { ToastType } from '@/types/toast-type.model';
+
 import { useToastState } from './toast-state';
 
 export type { ToastType };

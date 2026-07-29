@@ -1,8 +1,15 @@
 allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': true
+  '@swc/core': true
   fastify-socket.io: true
   msgpackr-extract: true
   prisma: true
 minimumReleaseAgeExclude:
   - globals@17.8.0
+  - '@ai-sdk/gateway@3.0.160'
+  - '@ai-sdk/provider-utils@4.0.41'
+  - ai@6.0.238
+  - bullmq@5.81.3
+  - fastify@5.11.0
+  - npm@11.19.0

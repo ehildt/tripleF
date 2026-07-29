@@ -67,13 +67,13 @@ function onScroll() {
 <style scoped>
 .scrollable-exchange-list {
   position: relative;
-  padding: var(--spacing-4);
+  padding: var(--spacing-2);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
   overflow-y: auto;
   overscroll-behavior: contain;
-  height: calc(100vh - 14rem);
+  height: calc(100vh - 15rem);
 }
 
 .scrollable-exchange-list__exchanges {

@@ -2,14 +2,19 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 import { fetchJson } from './fetch-json.js';
+import {
+  STANDALONE_QUERY_DESCRIPTION,
+  STANDALONE_QUERY_TOOL_CLAUSE,
+} from './standalone-query.constants.js';
 import type { ToolDependencies } from './types.js';
 
 export function createWikipediaSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search Wikipedia for articles matching the query. Returns titles, descriptions, and page links.',
+      'Search Wikipedia for articles matching the query. Returns titles, descriptions, and page links. ' +
+      STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
-      query: z.string().describe('The search query'),
+      query: z.string().describe(STANDALONE_QUERY_DESCRIPTION),
       lang: z
         .string()
         .optional()

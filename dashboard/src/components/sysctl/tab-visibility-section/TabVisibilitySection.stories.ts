@@ -8,16 +8,13 @@ const meta = {
   component: TabVisibilitySection,
   tags: ['autodocs'],
   argTypes: {
-    isDebugVisible: { control: 'boolean' },
-    isDlqVisible: { control: 'boolean' },
+    isSocketsVisible: { control: 'boolean' },
     showCounters: { control: 'boolean' },
   },
   args: {
-    isDebugVisible: true,
-    isDlqVisible: true,
+    isSocketsVisible: true,
     showCounters: true,
-    onToggleDebug: fn(),
-    onToggleDlq: fn(),
+    onToggleSockets: fn(),
     onToggleCounters: fn(),
   },
 } satisfies Meta<typeof TabVisibilitySection>;
@@ -25,12 +22,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** All tabs visible and counters enabled. */
+/** Sockets visible and counters enabled. */
 export const AllVisible: Story = {};
 
-/** Debug tab hidden. */
-export const DebugHidden: Story = {
-  args: { isDebugVisible: false },
+/** Sockets toolbar menu hidden. */
+export const SocketsHidden: Story = {
+  args: { isSocketsVisible: false },
 };
 
 /** Counters turned off. */

@@ -2,18 +2,28 @@ import { nextTick, type Ref, ref, watch } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
-export type RightPanelView = 'files' | 'playlist' | 'history';
+import type { RightPanelView } from '../types/right-panel-view.type';
+import { rightPanelViewState } from './right-panel-view.state';
+
+export type { RightPanelView };
 
 /**
  * Manages the right-side panel view state (files, playlist, or history),
  * including the automatic switches that happen when the active conversation
  * changes or when the available content changes.
+ *
+ * Tab follow-on-change: whenever a tab's content count changes (a video is
+ * added to the playlist, a file is attached, a prompt lands in history),
+ * the panel switches to that tab. Conversation switches rebase the counters
+ * without triggering a follow — hydration is not a "change".
  */
 export function useChatPanel(
   hasAttachments: Ref<boolean>,
   hasHistory: Ref<boolean>,
   hasPlaylist: Ref<boolean> = ref(false),
   playlistVideoCount: Ref<number> = ref(0),
+  attachmentCount: Ref<number> = ref(0),
+  historyItemCount: Ref<number> = ref(0),
 ) {
   const conversationStore = useConversationStore();
 
@@ -48,19 +58,43 @@ export function useChatPanel(
   });
 
   /**
-   * Follow an explicit add into the playlist view. Conversation switches
-   * rebase the count without triggering this — they pick the first
-   * available view via the watcher above instead.
+   * Follow a change in one tab's content count into that tab. Count changes
+   * that flush in the same tick as a conversation switch are the new
+   * conversation's data loading, not user actions — those are skipped.
    */
-  const lastCountConversationId = ref<string | null>(null);
-  watch(playlistVideoCount, (count, previousCount) => {
-    const conversationId = conversationStore.activeConversationId;
-    if (conversationId !== lastCountConversationId.value) {
-      lastCountConversationId.value = conversationId;
-      return;
-    }
-    if (count > (previousCount ?? 0)) rightPanelView.value = 'playlist';
-  });
+  let conversationSwitchTick = false;
+  watch(
+    () => conversationStore.activeConversationId,
+    async () => {
+      conversationSwitchTick = true;
+      await nextTick();
+      conversationSwitchTick = false;
+    },
+  );
+
+  function watchCountIntoView(count: Ref<number>, view: RightPanelView) {
+    watch(count, (value, previous) => {
+      if (conversationSwitchTick) return;
+      // A removal that empties a tab must not navigate INTO it — the
+      // availability fallback picks the next available tab instead.
+      if (!isViewAvailable(view)) return;
+      if (value !== (previous ?? 0)) rightPanelView.value = view;
+    });
+  }
+
+  watchCountIntoView(playlistVideoCount, 'playlist');
+  watchCountIntoView(attachmentCount, 'files');
+  watchCountIntoView(historyItemCount, 'history');
+
+  // Mirror the view for deep surfaces (floating popouts) that cannot
+  // receive it as a prop.
+  watch(
+    rightPanelView,
+    (view) => {
+      rightPanelViewState.value = view;
+    },
+    { immediate: true },
+  );
 
   function selectPanelView(view: RightPanelView) {
     rightPanelView.value = view;

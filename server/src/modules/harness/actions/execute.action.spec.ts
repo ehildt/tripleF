@@ -83,6 +83,7 @@ describe('ExecuteActionService', () => {
         getDate?: boolean;
         imageCount?: number;
         videoCount?: number;
+        contextSummary?: string;
         plan?: { images?: { resize?: boolean; variants?: string[] } };
       };
       preprocessing?: { enabled: boolean; variants?: Record<string, boolean> };
@@ -509,5 +510,168 @@ describe('ExecuteActionService', () => {
     expect(call.messages[1].images).toHaveLength(1);
     // The "[N image attached]" marker is added by the interpret step, not here.
     expect(call.messages[1].content).toBe('describe this');
+  });
+
+  it('composes fallback queries for short follow-ups from the context summary', async () => {
+    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
+    (aiSdkService.generateWithTools as any).mockResolvedValue({
+      text: 'I will not call any tools',
+      toolResults: [],
+      totalUsage: {},
+    });
+    (toolSelectionService.selectToolsByName as any).mockReturnValue({
+      webSearch: { execute: executeSpy },
+    });
+
+    const ctx = createContext({
+      buffers: [],
+      meta: [],
+      messages: [
+        { role: 'system', content: 'base' },
+        { role: 'user', content: 'news about Neverness to Everness' },
+        { role: 'assistant', content: 'NTE 1.2 "999 Nights" coverage' },
+        { role: 'user', content: 'what do the reviews say?' },
+      ],
+      intent: {
+        template: 'evaluation',
+        prompt: 'default',
+        tools: ['webSearch'],
+        getDate: false,
+        contextSummary:
+          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
+        reasoning: '',
+        needsClarification: false,
+        plan: {},
+      },
+    });
+
+    await service.execute(ctx);
+
+    expect(executeSpy).toHaveBeenCalledWith({
+      query:
+        'Subject: the game Neverness to Everness (NTE) by Hotta Studio. — what do the reviews say?',
+    });
+  });
+
+  it('composes fallback queries for follow-ups with dependent references', async () => {
+    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
+    (aiSdkService.generateWithTools as any).mockResolvedValue({
+      text: 'I will not call any tools',
+      toolResults: [],
+      totalUsage: {},
+    });
+    (toolSelectionService.selectToolsByName as any).mockReturnValue({
+      webSearch: { execute: executeSpy },
+    });
+
+    const ctx = createContext({
+      buffers: [],
+      meta: [],
+      messages: [
+        { role: 'system', content: 'base' },
+        { role: 'user', content: 'news about Neverness to Everness' },
+        { role: 'assistant', content: 'NTE 1.2 "999 Nights" coverage' },
+        {
+          role: 'user',
+          content: 'Are there any known performance issues with it?',
+        },
+      ],
+      intent: {
+        template: 'article',
+        prompt: 'default',
+        tools: ['webSearch'],
+        getDate: false,
+        contextSummary:
+          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
+        reasoning: '',
+        needsClarification: false,
+        plan: {},
+      },
+    });
+
+    await service.execute(ctx);
+
+    expect(executeSpy).toHaveBeenCalledWith({
+      query:
+        'Subject: the game Neverness to Everness (NTE) by Hotta Studio. — Are there any known performance issues with it?',
+    });
+  });
+
+  it('keeps standalone user messages as the fallback query even with a context summary', async () => {
+    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
+    (aiSdkService.generateWithTools as any).mockResolvedValue({
+      text: 'I will not call any tools',
+      toolResults: [],
+      totalUsage: {},
+    });
+    (toolSelectionService.selectToolsByName as any).mockReturnValue({
+      webSearch: { execute: executeSpy },
+    });
+
+    const ctx = createContext({
+      buffers: [],
+      meta: [],
+      messages: [
+        { role: 'system', content: 'base' },
+        { role: 'user', content: 'news about Neverness to Everness' },
+        { role: 'assistant', content: 'NTE 1.2 "999 Nights" coverage' },
+        {
+          role: 'user',
+          content: 'Find detailed critic reviews for the NTE 1.2 update',
+        },
+      ],
+      intent: {
+        template: 'article',
+        prompt: 'default',
+        tools: ['webSearch'],
+        getDate: false,
+        contextSummary:
+          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
+        reasoning: '',
+        needsClarification: false,
+        plan: {},
+      },
+    });
+
+    await service.execute(ctx);
+
+    expect(executeSpy).toHaveBeenCalledWith({
+      query: 'Find detailed critic reviews for the NTE 1.2 update',
+    });
+  });
+
+  it('falls back to the raw message when no context summary exists', async () => {
+    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
+    (aiSdkService.generateWithTools as any).mockResolvedValue({
+      text: 'I will not call any tools',
+      toolResults: [],
+      totalUsage: {},
+    });
+    (toolSelectionService.selectToolsByName as any).mockReturnValue({
+      webSearch: { execute: executeSpy },
+    });
+
+    const ctx = createContext({
+      buffers: [],
+      meta: [],
+      messages: [
+        { role: 'system', content: 'base' },
+        { role: 'user', content: 'find media' },
+      ],
+      intent: {
+        template: 'article',
+        prompt: 'default',
+        tools: ['webSearch'],
+        getDate: false,
+        contextSummary: '',
+        reasoning: '',
+        needsClarification: false,
+        plan: {},
+      },
+    });
+
+    await service.execute(ctx);
+
+    expect(executeSpy).toHaveBeenCalledWith({ query: 'find media' });
   });
 });

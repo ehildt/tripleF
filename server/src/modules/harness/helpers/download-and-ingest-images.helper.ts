@@ -2,6 +2,10 @@ import { hashPayload } from '@ehildt/ckir-helpers/hash-payload';
 import type { Metadata } from 'sharp';
 import sharp from 'sharp';
 
+import {
+  BROWSER_USER_AGENT,
+  HARNESS_USER_AGENT,
+} from '../constants/user-agents.constant.js';
 import type { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
 
 export interface IngestedImage {
@@ -16,19 +20,22 @@ export interface IngestedImage {
   sourceUrl: string;
 }
 
-export interface DownloadAndIngestOptions {
+interface DownloadAndIngestOptions {
   sessionId?: string;
   conversationId?: string;
   requestId: string;
   minWidth: number;
   minHeight: number;
   timeoutMs: number;
-  maxBytes: number;
   /** Maximum pixel dimension for downloaded cloud images before upload. */
   maxDimension?: number;
   /** Fingerprints of images that are already available (e.g. user uploads). Matching cloud images are skipped. */
   existingFingerprints?: string[];
+  /** Number of images downloaded in parallel. Defaults to {@link INGEST_CONCURRENCY}. */
+  concurrency?: number;
 }
+
+const INGEST_CONCURRENCY = 3;
 
 type UploadFn = (
   sessionId: string | undefined,
@@ -97,6 +104,24 @@ function resolveContentType(metadata: Metadata, res: Response): string {
 }
 
 /**
+ * Fetch an image URL with the harness agent, retrying once with a browser
+ * agent when a hotlink-protecting CDN answers 403.
+ */
+async function fetchImage(
+  url: string,
+  timeoutMs: number,
+): Promise<Response | undefined> {
+  const send = (userAgent: string) =>
+    fetch(url, {
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { 'User-Agent': userAgent },
+    });
+
+  const initial = await send(HARNESS_USER_AGENT);
+  return initial.status === 403 ? send(BROWSER_USER_AGENT) : initial;
+}
+
+/**
  * Ingest a single external image URL, reusing an existing MinIO object when the
  * resized content hash already exists.
  */
@@ -108,19 +133,12 @@ async function ingestImage(
   options: DownloadAndIngestOptions,
 ): Promise<IngestedImage | undefined> {
   try {
-    const res = await fetch(item.imageUrl, {
-      signal: AbortSignal.timeout(options.timeoutMs),
-      headers: { 'User-Agent': 'ckir-harness/1.0' },
-    });
-    if (!res.ok) return undefined;
-
-    const contentLength = Number(res.headers.get('content-length') ?? '0');
-    if (contentLength > options.maxBytes) return undefined;
+    const res = await fetchImage(item.imageUrl, options.timeoutMs);
+    if (!res || !res.ok) return undefined;
 
     const arrayBuffer = await res.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    if (buffer.length === 0 || buffer.length > options.maxBytes)
-      return undefined;
+    if (buffer.length === 0) return undefined;
 
     const validSize = await isValidImageSize(
       buffer,
@@ -198,26 +216,46 @@ export async function downloadAndIngestImages(
   buildStorageUrl: BuildStorageUrlFn,
   options: DownloadAndIngestOptions,
 ): Promise<IngestedImage[]> {
-  const results: IngestedImage[] = [];
+  const uniqueItems: Array<{ imageUrl: string; title?: string }> = [];
   const seenUrls = new Set<string>();
-  const seenHashes = new Set<string>();
-
   for (const item of imageItems) {
     if (seenUrls.has(item.imageUrl)) continue;
     seenUrls.add(item.imageUrl);
+    uniqueItems.push(item);
+  }
 
-    const ingested = await ingestImage(
-      item,
+  // Bounded worker pool — downloads and uploads for distinct URLs run in
+  // parallel while result order and hash deduping stay deterministic.
+  const settled: Array<IngestedImage | undefined> = new Array(
+    uniqueItems.length,
+  );
+  let cursor = 0;
+  const runNext = async (): Promise<void> => {
+    const index = cursor++;
+    if (index >= uniqueItems.length) return;
+
+    settled[index] = await ingestImage(
+      uniqueItems[index],
       uploadFn,
       objectExistsFn,
       buildStorageUrl,
       options,
     );
+    await runNext();
+  };
 
-    if (ingested && !seenHashes.has(ingested.hash)) {
-      seenHashes.add(ingested.hash);
-      results.push(ingested);
-    }
+  const workerCount = Math.min(
+    options.concurrency ?? INGEST_CONCURRENCY,
+    uniqueItems.length,
+  );
+  await Promise.all(Array.from({ length: workerCount }, () => runNext()));
+
+  const results: IngestedImage[] = [];
+  const seenHashes = new Set<string>();
+  for (const ingested of settled) {
+    if (!ingested || seenHashes.has(ingested.hash)) continue;
+    seenHashes.add(ingested.hash);
+    results.push(ingested);
   }
 
   return results;

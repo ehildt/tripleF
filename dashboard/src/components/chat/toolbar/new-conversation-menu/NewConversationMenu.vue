@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { CircleGauge, MessagesSquare, Radio } from '@lucide/vue';
+import { CircleGauge, Hash, MessagesSquare, Radio } from '@lucide/vue';
 
+import ComboBox from '../../../shared/ui/combo-box/ComboBox.vue';
 import Dropdown from '../../../shared/ui/drop-down/DropDown.vue';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
@@ -9,8 +10,10 @@ defineProps<{
   isOpen: boolean;
   isDisabled: boolean;
   newConversationName: string;
-  newConversationSocketBinding: string;
-  availableSocketBindings: readonly string[];
+  newConversationEvent: string;
+  newConversationRoomId: string;
+  availableSocketEvents: readonly string[];
+  availableRooms: readonly string[];
   filteredNumCtxOptions: readonly string[];
   currentNumCtx: string;
   defaultNumCtx: string;
@@ -23,7 +26,8 @@ defineProps<{
 defineEmits<{
   toggleMenu: [];
   'update:newConversationName': [value: string];
-  'update:newConversationSocketBinding': [value: string];
+  'update:newConversationEvent': [value: string];
+  'update:newConversationRoomId': [value: string];
   createConversation: [type: 'temporary' | 'persistent'];
   selectNumCtx: [ctx: string];
 }>();
@@ -69,17 +73,22 @@ defineEmits<{
           >
             <CircleGauge class="w-3.5 h-3.5" />
           </Dropdown>
-          <Dropdown
-            :model-value="newConversationSocketBinding"
-            label="Socket"
-            :options="availableSocketBindings"
-            placeholder="(optional)"
-            @update:model-value="
-              $emit('update:newConversationSocketBinding', $event)
-            "
+          <ComboBox
+            :model-value="newConversationEvent"
+            :options="availableSocketEvents"
+            placeholder="socket"
+            @update:model-value="$emit('update:newConversationEvent', $event)"
           >
-            <Radio class="w-4 h-4" />
-          </Dropdown>
+            <Radio class="w-3.5 h-3.5" />
+          </ComboBox>
+          <ComboBox
+            :model-value="newConversationRoomId"
+            :options="availableRooms"
+            placeholder="channel"
+            @update:model-value="$emit('update:newConversationRoomId', $event)"
+          >
+            <Hash class="w-3.5 h-3.5" />
+          </ComboBox>
           <div class="new-conversation-menu__button-row">
             <button
               class="new-conversation-menu__button"

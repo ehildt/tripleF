@@ -5,6 +5,13 @@ import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
 import { useConversationStore } from './conversation';
 
+vi.mock('../api/conversations.api', () => ({
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  fetchConversation: vi.fn(),
+  saveConversation: vi.fn().mockResolvedValue(undefined),
+  deleteConversation: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../api/storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
@@ -18,10 +25,15 @@ vi.mock('../composables/attached-files.state', async () => {
 });
 
 describe('useConversationStore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia());
     localStorage.clear();
     vi.clearAllMocks();
+    // The conversation store hydrates persisted conversations asynchronously
+    // on creation — settle before seeding, or the load result would wipe
+    // conversations seeded mid-test.
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   it('deleteCurrentConversation removes exchanges and images tied to the current context', async () => {

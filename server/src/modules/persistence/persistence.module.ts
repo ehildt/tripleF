@@ -6,6 +6,7 @@ import { ConfigRepository } from './services/config.repository.js';
 import { ConfigService } from './services/config.service.js';
 import { ConversationRepository } from './services/conversation.repository.js';
 import { ConversationService } from './services/conversation.service.js';
+import { ProviderOverridesRepository } from './services/provider-overrides.repository.js';
 
 @Global()
 @Module({
@@ -15,7 +16,8 @@ import { ConversationService } from './services/conversation.service.js';
     ConversationService,
     ConfigRepository,
     ConfigService,
+    ProviderOverridesRepository,
   ],
-  exports: [ConversationService, ConfigService],
+  exports: [ConversationService, ConfigService, ProviderOverridesRepository],
 })
 export class PersistenceModule {}

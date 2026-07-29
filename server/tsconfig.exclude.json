@@ -9,7 +9,8 @@
     "vitest.config.ts",
     "eslint.config.ts",
     "prisma.config.ts",
-    "src/dtos/json-rpc/mcp-response.dto.ts"
+    "src/dtos/json-rpc/mcp-response.dto.ts",
+    "src/generated/prisma/**/*.ts"
   ],
   "extends": "./tsconfig.json"
 }

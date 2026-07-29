@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export class ConversationExchangeDto {
+class ConversationExchangeDto {
   @ApiProperty({ example: 'exchange-id-1' })
   @IsString()
   @IsNotEmpty()
@@ -123,7 +123,7 @@ export class ConversationExchangeDto {
   images?: Array<Record<string, unknown>>;
 }
 
-export class ConversationContentDto {
+class ConversationContentDto {
   @ApiProperty({ example: 'conversation-id-1' })
   @IsString()
   @IsNotEmpty()

@@ -1,17 +1,6 @@
-interface OllamaClientConfig {
+interface OllamaConnectionConfig {
   host?: string;
-  headers?: Record<string, string>;
-}
-
-export interface OllamaSystemPrompts {
-  DESCRIBE: string;
-  COMPARE: string;
-  OCR: string;
-}
-
-export interface OllamaDeveloperPrompts {
-  IMAGE_CONSTRAINT: string;
-  TEXT_CONSTRAINT: string;
+  apiKey?: string;
 }
 
 function parseIntWithDefault(
@@ -31,35 +20,21 @@ function parseBoolWithDefault(
   return value === '1' || value.toLowerCase() === 'true';
 }
 
-export function OllamaConfigAdapter(env = process.env): OllamaClientConfig & {
+export function OllamaConfigAdapter(
+  env = process.env,
+): OllamaConnectionConfig & {
   keepAlive: string;
-  systemPrompts: OllamaSystemPrompts;
-  developerPrompts: OllamaDeveloperPrompts;
   streamChunkTimeoutMs: number;
   streamTotalTimeoutMs: number;
   generateTotalTimeoutMs: number;
   enableSmoothStream: boolean;
 } {
-  const config: OllamaClientConfig & {
-    keepAlive: string;
-    systemPrompts: OllamaSystemPrompts;
-    developerPrompts: OllamaDeveloperPrompts;
-    streamChunkTimeoutMs: number;
-    streamTotalTimeoutMs: number;
-    generateTotalTimeoutMs: number;
-    enableSmoothStream: boolean;
-  } = {
+  return {
     host: env.OLLAMA_HOST ?? 'http://127.0.0.1:11434/api',
+    // The API key is needed for remote Ollama servers (e.g., Ollama Cloud).
+    // Local self-hosted Ollama typically doesn't require authentication.
+    apiKey: env.OLLAMA_API_KEY || undefined,
     keepAlive: env.OLLAMA_KEEP_ALIVE ?? '5m',
-    systemPrompts: {
-      DESCRIBE: env.OLLAMA_SYSTEM_PROMPT_DESCRIBE ?? '',
-      COMPARE: env.OLLAMA_SYSTEM_PROMPT_COMPARE ?? '',
-      OCR: env.OLLAMA_SYSTEM_PROMPT_OCR ?? '',
-    },
-    developerPrompts: {
-      IMAGE_CONSTRAINT: env.OLLAMA_DEVELOPER_PROMPT_IMAGE_CONSTRAINT ?? '',
-      TEXT_CONSTRAINT: env.OLLAMA_DEVELOPER_PROMPT_TEXT_CONSTRAINT ?? '',
-    },
     streamChunkTimeoutMs: parseIntWithDefault(
       env.OLLAMA_STREAM_CHUNK_TIMEOUT_MS,
       60_000,
@@ -77,15 +52,4 @@ export function OllamaConfigAdapter(env = process.env): OllamaClientConfig & {
       true,
     ),
   };
-
-  // Only add Authorization header if API key is provided
-  // This is needed for remote Ollama servers (e.g., Ollama Cloud)
-  // Local self-hosted Ollama typically doesn't require authentication
-  if (env.OLLAMA_API_KEY) {
-    config.headers = {
-      Authorization: `Bearer ${env.OLLAMA_API_KEY}`,
-    };
-  }
-
-  return config;
 }

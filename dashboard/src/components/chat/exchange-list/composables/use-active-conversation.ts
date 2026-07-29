@@ -11,13 +11,15 @@ export interface ActiveSessionData {
   activeConversation: ComputedRef<ActiveSession | null>;
   exchanges: ComputedRef<readonly Exchange[]>;
   activeAssistantExchangeId: ComputedRef<string | null>;
+  activeAssistantResponseStarted: ComputedRef<boolean>;
 }
 
 /**
  * Provide the currently active conversation and its exchanges, or `null`/`[]`
  * when no conversation is selected. Also exposes the id of the most recent
- * assistant exchange that is still pending or streaming, which is used to
- * drive auto-scroll behavior.
+ * assistant exchange that is still pending or streaming, and whether that
+ * exchange has started receiving response content — both drive auto-scroll
+ * behavior.
  */
 export function useActiveConversation(): ActiveSessionData {
   const conversationStore = useConversationStore();
@@ -47,9 +49,22 @@ export function useActiveConversation(): ActiveSessionData {
     return null;
   });
 
+  // The store flips an exchange from pending to streaming exactly when the
+  // first response delta arrives (reasoning is cleared at the same moment),
+  // so this marks "reasoning done, response content has started".
+  const activeAssistantResponseStarted = computed<boolean>(() => {
+    const id = activeAssistantExchangeId.value;
+    if (!id) return false;
+    return (
+      exchanges.value.find((exchange) => exchange.id === id)?.status ===
+      'streaming'
+    );
+  });
+
   return {
     activeConversation,
     exchanges,
     activeAssistantExchangeId,
+    activeAssistantResponseStarted,
   };
 }

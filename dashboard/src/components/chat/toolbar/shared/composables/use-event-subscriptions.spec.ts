@@ -4,8 +4,16 @@ import { nextTick } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
+import { useSocketStore } from '../../../../../stores/socket';
 import { subscriptions } from './subscriptions.state';
 import { useEventSubscriptions } from './use-event-subscriptions';
+
+vi.mock('../../../../../api/conversations.api', () => ({
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  fetchConversation: vi.fn(),
+  saveConversation: vi.fn().mockResolvedValue(undefined),
+  deleteConversation: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('../../../../../stores/socket', () => {
   const ensureSocketConnection = vi.fn();
@@ -110,12 +118,96 @@ describe('useEventSubscriptions', () => {
     expect(subscriptions.value[0].event).toBe('debug');
   });
 
-  it('availableSocketBindings returns sorted unique active binding strings', () => {
-    const { availableSocketBindings, subscribeToEvent } =
-      useEventSubscriptions();
+  it('availableSocketEvents returns sorted unique active events', () => {
+    const { availableSocketEvents, subscribeToEvent } = useEventSubscriptions();
     subscribeToEvent('beta', '');
     subscribeToEvent('alpha', 'room1');
-    expect(availableSocketBindings.value).toEqual(['alpha::room1', 'beta']);
+    subscribeToEvent('alpha', 'room2');
+    expect(availableSocketEvents.value).toEqual(['alpha', 'beta']);
+  });
+
+  it('availableRoomsByEvent groups sorted unique roomIds per event', () => {
+    const { availableRoomsByEvent, subscribeToEvent } = useEventSubscriptions();
+    subscribeToEvent('alpha', 'room2');
+    subscribeToEvent('alpha', 'room1');
+    subscribeToEvent('beta', 'room9');
+    subscribeToEvent('beta', '');
+    expect(availableRoomsByEvent.value).toEqual({
+      alpha: ['room1', 'room2'],
+      beta: ['room9'],
+    });
+  });
+
+  it('pruneUnreferencedSubscriptions removes sockets no conversation references', () => {
+    const conversationStore = useConversationStore();
+    const socketStore = useSocketStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setSubscriptions(conversation.id, [
+      { event: 'keep', roomId: 'room1' },
+    ]);
+
+    subscriptions.value = [
+      { event: 'keep', roomId: 'room1', active: true, stream: true },
+      { event: 'stale', roomId: 'room2', active: true, stream: true },
+      { event: 'stale', roomId: '', active: true, stream: true },
+    ];
+
+    const { pruneUnreferencedSubscriptions } = useEventSubscriptions();
+    pruneUnreferencedSubscriptions();
+
+    expect(subscriptions.value).toEqual([
+      { event: 'keep', roomId: 'room1', active: true, stream: true },
+    ]);
+    expect(socketStore.closeRoom).toHaveBeenCalledWith('stale', 'room2');
+    expect(socketStore.closeEvent).toHaveBeenCalledWith('stale');
+    expect(socketStore.closeEvent).not.toHaveBeenCalledWith('keep');
+  });
+
+  it('pruneUnreferencedSubscriptions keeps the event alive while another room uses it', () => {
+    const conversationStore = useConversationStore();
+    const socketStore = useSocketStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setSubscriptions(conversation.id, [
+      { event: 'shared', roomId: 'room2' },
+    ]);
+
+    subscriptions.value = [
+      { event: 'shared', roomId: 'room1', active: true, stream: true },
+      { event: 'shared', roomId: 'room2', active: true, stream: true },
+    ];
+
+    const { pruneUnreferencedSubscriptions } = useEventSubscriptions();
+    pruneUnreferencedSubscriptions();
+
+    expect(subscriptions.value).toEqual([
+      { event: 'shared', roomId: 'room2', active: true, stream: true },
+    ]);
+    expect(socketStore.closeRoom).toHaveBeenCalledWith('shared', 'room1');
+    expect(socketStore.closeEvent).not.toHaveBeenCalledWith('shared');
+  });
+
+  it('prunes subscriptions when a conversation is deleted', async () => {
+    const conversationStore = useConversationStore();
+    useEventSubscriptions();
+
+    conversationStore.createNewConversation('temporary', 'gone', 'gone-room');
+    await nextTick();
+    subscriptions.value.push({
+      event: 'orphan',
+      roomId: 'x',
+      active: true,
+      stream: true,
+    });
+
+    conversationStore.deleteCurrentConversation(
+      conversationStore.conversations[0]!.id,
+    );
+    await nextTick();
+
+    expect(subscriptions.value.some((sub) => sub.event === 'orphan')).toBe(
+      false,
+    );
+    expect(subscriptions.value.some((sub) => sub.event === 'gone')).toBe(false);
   });
 
   it('reactively adds new conversation subscriptions without remounting', async () => {

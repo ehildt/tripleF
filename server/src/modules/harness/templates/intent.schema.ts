@@ -7,7 +7,7 @@ import {
 
 export const DEFAULT_VARIANT_ID = 'default';
 
-export const TEMPLATES = [
+const TEMPLATES = [
   'article',
   'news',
   'describe',
@@ -26,7 +26,7 @@ export type TemplateName = (typeof TEMPLATES)[number];
 
 /* ── Zod schema for structured output from the intent classifier ───────── */
 
-export const ImagePlanSchema = z.object({
+const ImagePlanSchema = z.object({
   resize: z
     .boolean()
     .default(true)
@@ -46,7 +46,7 @@ export const IntentSchema = z.object({
   template: z
     .enum(TEMPLATES)
     .describe(
-      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare images), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "text" (free chat), "compact" (summarize/condense prior conversation).',
+      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare uploaded images only — information comparisons use "evaluation"), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "text" (free chat), "compact" (summarize/condense prior conversation).',
     ),
 
   prompt: z
@@ -132,4 +132,3 @@ export const IntentSchema = z.object({
 });
 
 export type IntentResult = z.infer<typeof IntentSchema>;
-export type ImagePlan = z.infer<typeof ImagePlanSchema>;

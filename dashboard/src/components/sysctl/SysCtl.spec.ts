@@ -102,14 +102,27 @@ describe('SysCtl', () => {
     });
   });
 
-  it('shows the tab visibility switches on the interface tab', async () => {
+  it('shows the interface switches inside the system tab', async () => {
     const wrapper = mountPanel();
-    await selectMenuTab(wrapper, 'Interface');
+    await selectMenuTab(wrapper, 'System');
 
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: Interface');
-      expect(wrapper.text()).toContain('dlq');
+      expect(wrapper.text()).toContain('SysCtl :: System');
       expect(wrapper.text()).toContain('sockets');
+      expect(wrapper.text()).toContain('counters');
+    });
+  });
+
+  it('shows the tab menu switches inside the widgets tab', async () => {
+    const wrapper = mountPanel();
+    await selectMenuTab(wrapper, 'Widgets');
+
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('SysCtl :: Widgets');
+      expect(wrapper.text()).toContain('dlq');
+      expect(wrapper.text()).toContain('debug');
+      expect(wrapper.text()).toContain('side');
+      expect(wrapper.text()).toContain('autoclose');
     });
   });
 

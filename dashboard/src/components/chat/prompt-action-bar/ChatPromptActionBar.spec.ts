@@ -89,4 +89,114 @@ describe('ChatPromptActionBar', () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted('disabledHoverEnd')).toBeTruthy();
   });
+
+  it('hides the search engine indicator by default', () => {
+    const wrapper = mountComponent();
+    expect(
+      wrapper.find('.chat-prompt-action-bar__offline-indicator').exists(),
+    ).toBe(false);
+    expect(
+      wrapper.find('.chat-prompt-action-bar__search-toggle').exists(),
+    ).toBe(false);
+  });
+
+  it('shows the non-interactive globe-off indicator when no search engine is configured', () => {
+    const wrapper = mountComponent({ searchEngineState: 'unavailable' });
+    const indicator = wrapper.find(
+      '.chat-prompt-action-bar__offline-indicator',
+    );
+    expect(indicator.exists()).toBe(true);
+    expect(indicator.attributes('title')).toContain('No search engine');
+    expect(indicator.attributes('aria-label')).toBe(
+      'No search engine connected',
+    );
+    expect(indicator.element.tagName).toBe('SPAN');
+  });
+
+  it('shows a globe toggle when the search engine is enabled and emits on click', async () => {
+    const wrapper = mountComponent({ searchEngineState: 'enabled' });
+    const toggle = wrapper.find('.chat-prompt-action-bar__search-toggle');
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.attributes('title')).toContain('click to disable');
+
+    await toggle.trigger('click');
+    expect(wrapper.emitted('toggleSearchEngine')).toBeTruthy();
+  });
+
+  it('shows a globe-off toggle when the search engine is disabled and emits on click', async () => {
+    const wrapper = mountComponent({ searchEngineState: 'disabled' });
+    const toggle = wrapper.find('.chat-prompt-action-bar__search-toggle');
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.attributes('title')).toContain('click to enable');
+
+    await toggle.trigger('click');
+    expect(wrapper.emitted('toggleSearchEngine')).toBeTruthy();
+  });
+
+  it('shows all source tags colored by state while a search engine is enabled', () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'enabled',
+      searchSources: [
+        { key: 'web', enabled: true },
+        { key: 'news', enabled: false },
+      ],
+    });
+    const tags = wrapper.findAll('.chat-prompt-action-bar__source-tag');
+    expect(tags.map((tag) => tag.attributes('title'))).toEqual([
+      'web source enabled — click to disable',
+      'news source disabled — click to enable',
+    ]);
+    expect(tags[0].classes()).not.toContain(
+      'chat-prompt-action-bar__source-tag--disabled',
+    );
+    expect(tags[1].classes()).toContain(
+      'chat-prompt-action-bar__source-tag--disabled',
+    );
+  });
+
+  it('emits toggleSource when a source tag is clicked', async () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'enabled',
+      searchSources: [
+        { key: 'web', enabled: true },
+        { key: 'news', enabled: false },
+      ],
+    });
+    const tags = wrapper.findAll('.chat-prompt-action-bar__source-tag');
+    await tags[1].trigger('click');
+    expect(wrapper.emitted('toggleSource')).toEqual([['news']]);
+  });
+
+  it('hides source tags when the kill switch disables the engine', () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'disabled',
+      searchSources: [{ key: 'web', enabled: true }],
+    });
+    expect(wrapper.find('.chat-prompt-action-bar__source-tag').exists()).toBe(
+      false,
+    );
+  });
+
+  it('hides source tags when no search engine is available', () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'unavailable',
+      searchSources: [{ key: 'web', enabled: true }],
+    });
+    expect(wrapper.find('.chat-prompt-action-bar__source-tag').exists()).toBe(
+      false,
+    );
+  });
+
+  it('falls back to a distinct Search icon for unknown future sources', () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'enabled',
+      searchSources: [{ key: 'videos', enabled: true }],
+    });
+    expect(
+      wrapper.find('.chat-prompt-action-bar__source-tag-icon').exists(),
+    ).toBe(true);
+    expect(
+      wrapper.find('.chat-prompt-action-bar__source-tag').attributes('title'),
+    ).toContain('videos source enabled');
+  });
 });

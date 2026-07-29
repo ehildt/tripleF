@@ -20,6 +20,15 @@ const sampleModels = [
   },
 ];
 
+const sampleCloudModels = [
+  {
+    model: 'gpt-oss:120b',
+    origin: 'cloud' as const,
+    parameter_size: '120B',
+    capabilities: ['text-generation'],
+  },
+];
+
 const meta = {
   title: 'Chat/Toolbar/ModelSelector/ModelSelector',
   component: ModelSelector,
@@ -45,7 +54,8 @@ unavailable in the current model list.
     isOpen: false,
     selectedModelName: 'llama3',
     isModelMissing: false,
-    models: sampleModels,
+    localModels: sampleModels,
+    cloudModels: [],
     isLoading: false,
     onToggleMenu: fn(),
     onSelectModel: fn(),
@@ -61,6 +71,11 @@ export const Closed: Story = {};
 /** Open — showing the model dropdown list. */
 export const Open: Story = { args: { isOpen: true } };
 
+/** Open with cloud models — local and cloud groups split by a divider. */
+export const OpenWithCloudModels: Story = {
+  args: { isOpen: true, cloudModels: sampleCloudModels },
+};
+
 /** Model missing — label highlighted. */
 export const ModelMissing: Story = {
   args: { isModelMissing: true },
@@ -68,7 +83,7 @@ export const ModelMissing: Story = {
 
 /** Loading models. */
 export const Loading: Story = {
-  args: { isLoading: true, models: [] },
+  args: { isLoading: true, localModels: [] },
 };
 
 /** No model selected. */

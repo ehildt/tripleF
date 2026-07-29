@@ -106,11 +106,17 @@ function toggleModelMenu() {
   }
 }
 
+function onSelectModel(modelName: string) {
+  changeModel(modelName);
+  closeAllMenus();
+}
+
 // ── Conversation list ──────────────────────────────────────────
 const {
   isConversationListExpanded,
   newConversationName,
-  newConversationSocketBinding,
+  newConversationEvent,
+  newConversationRoomId,
   switchToConversation,
   deleteConversation,
   createNewConversation,
@@ -171,7 +177,8 @@ function toggleStreamSettingsMenu() {
 const {
   subscriptions,
   isSubscriptionListExpanded,
-  availableSocketBindings,
+  availableSocketEvents,
+  availableRoomsByEvent,
   conversationNamesByEvent,
   subscribeToEvent,
   toggleSubscriptionActive,
@@ -235,10 +242,11 @@ defineExpose({
         :is-open="isMenuOpen('model').value"
         :selected-model-name="conversation?.model || selectedModel || '—'"
         :is-model-missing="isModelAvailable === false"
-        :models="modelsStore.models"
+        :local-models="modelsStore.localModels"
+        :cloud-models="modelsStore.cloudModels"
         :is-loading="modelsStore.modelsLoading"
         @toggle-menu="toggleModelMenu"
-        @select-model="changeModel"
+        @select-model="onSelectModel"
       />
 
       <!-- Capabilities -->
@@ -254,8 +262,10 @@ defineExpose({
         :is-open="isMenuOpen('newSession').value"
         :is-disabled="hasNoModelSelected"
         :new-conversation-name="newConversationName"
-        :new-conversation-socket-binding="newConversationSocketBinding"
-        :available-socket-bindings="availableSocketBindings"
+        :new-conversation-event="newConversationEvent"
+        :new-conversation-room-id="newConversationRoomId"
+        :available-socket-events="availableSocketEvents"
+        :available-rooms="availableRoomsByEvent[newConversationEvent] ?? []"
         :filtered-num-ctx-options="filteredNumCtxOptions"
         :current-num-ctx="conversationNumCtx || defaultNumCtx"
         :default-num-ctx="defaultNumCtx"
@@ -265,14 +275,14 @@ defineExpose({
         :on-mouse-leave="brainBlink?.stop"
         @toggle-menu="toggleNewConversationMenu"
         @update:new-conversation-name="newConversationName = $event"
-        @update:new-conversation-socket-binding="
-          newConversationSocketBinding = $event
-        "
+        @update:new-conversation-event="newConversationEvent = $event"
+        @update:new-conversation-room-id="newConversationRoomId = $event"
         @create-conversation="
           createNewConversation(
             $event,
             newConversationName,
-            newConversationSocketBinding,
+            newConversationEvent,
+            newConversationRoomId,
           )
         "
         @select-num-ctx="selectNumCtx"

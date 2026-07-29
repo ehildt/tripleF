@@ -2,6 +2,10 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 import { fetchJson } from './fetch-json.js';
+import {
+  STANDALONE_QUERY_DESCRIPTION,
+  STANDALONE_QUERY_TOOL_CLAUSE,
+} from './standalone-query.constants.js';
 import type { ToolDependencies } from './types.js';
 
 type HNItem = {
@@ -26,9 +30,10 @@ type HNUser = {
 export function createHackerNewsSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search Hacker News stories, comments, and jobs using Algolia. Returns titles, URLs, points, and authors.',
+      'Search Hacker News stories, comments, and jobs using Algolia. Returns titles, URLs, points, and authors. ' +
+      STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
-      query: z.string().describe('The search query'),
+      query: z.string().describe(STANDALONE_QUERY_DESCRIPTION),
       tags: z
         .string()
         .optional()

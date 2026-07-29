@@ -152,6 +152,38 @@ describe('useApiMessagesStore', () => {
     ).toBe('A scene');
   });
 
+  it('addMessage applies the authoritative data payload after a stream-validation retry', () => {
+    const store = useApiMessagesStore();
+    // The model ignored the article JSON schema and streamed markdown prose,
+    // so the harness discarded the stream and retried non-streaming. The
+    // final event therefore carries an empty delta and the validated article
+    // in `data`.
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'article',
+      delta: 'Ja, ich kenne *Neverness to Everness* (NTE).',
+      done: false,
+    });
+    store.addMessage('harness', {
+      requestId: 'req-1',
+      template: 'article',
+      delta: '',
+      data: {
+        category: 'Gaming',
+        title: 'Neverness to Everness (NTE)',
+        summary: 'Ein Open-World-Action-RPG.',
+      },
+      done: true,
+    });
+
+    const conversationStore = useConversationStore();
+    const exchange = conversationStore.conversations[0].exchanges[0];
+    expect(exchange.status).toBe('done');
+    expect(exchange.harnessTemplate).toBe('article');
+    expect(exchange.harnessData?.title).toBe('Neverness to Everness (NTE)');
+    expect(exchange.content).toBe('Neverness to Everness (NTE)');
+  });
+
   it('addMessage handles text template harness events', () => {
     const store = useApiMessagesStore();
     store.addMessage('harness', {

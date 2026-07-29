@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useSocketStore } from '../../../../../stores/socket';
+import { isSocketEventInUse } from '../../conversation-list/helpers/is-socket-event-in-use.helper';
+import { isSocketShared } from '../../conversation-list/helpers/is-socket-shared.helper';
 import {
   addSubscription,
   removeSubscriptionByEventRoom,
@@ -36,21 +38,51 @@ export function useEventSubscriptions() {
     (newLength) => {
       if (newLength > previousSessionCount) {
         mergeSubscriptionsFromSessions();
+      } else if (newLength < previousSessionCount) {
+        // A conversation disappeared: sweep every socket/room that no
+        // remaining conversation references anymore.
+        pruneUnreferencedSubscriptions();
       }
       previousSessionCount = newLength;
     },
   );
 
-  // ── Available socket bindings ────────────────────────────
-  const availableSocketBindings = computed(() => {
-    const pairs = subscriptions.value
-      .filter((s) => s.active && s.event)
-      .map((s) => (s.roomId ? `${s.event}::${s.roomId}` : s.event));
-    if (!pairs.length) {
-      // Include current value if any
-      return [] as string[];
+  // Once conversations have hydrated from the server, merge their bindings
+  // into the list and prune stale localStorage entries that no conversation
+  // references anymore. Runs only on the hydration transition — a later
+  // remount must not wipe freshly added manual subscriptions.
+  watch(
+    () => conversationStore.hydrated,
+    (isHydrated) => {
+      if (!isHydrated) return;
+      mergeSubscriptionsFromSessions();
+      pruneUnreferencedSubscriptions();
+    },
+  );
+
+  // ── Available socket events (for the new-conversation combobox) ──
+  const availableSocketEvents = computed(() =>
+    [
+      ...new Set(
+        subscriptions.value
+          .filter((s) => s.active && s.event)
+          .map((s) => s.event),
+      ),
+    ].sort(),
+  );
+
+  // ── Known roomIds per socket event ──────────────────────────────
+  const availableRoomsByEvent = computed(() => {
+    const roomsByEvent = new Map<string, Set<string>>();
+    for (const sub of subscriptions.value) {
+      if (!sub.active || !sub.event || !sub.roomId) continue;
+      const rooms = roomsByEvent.get(sub.event) ?? new Set<string>();
+      rooms.add(sub.roomId);
+      roomsByEvent.set(sub.event, rooms);
     }
-    return [...new Set(pairs)].sort();
+    return Object.fromEntries(
+      [...roomsByEvent].map(([event, rooms]) => [event, [...rooms].sort()]),
+    );
   });
 
   // ── Conversation names by event ───────────────────────────────
@@ -123,6 +155,40 @@ export function useEventSubscriptions() {
     }
   }
 
+  /**
+   * Garbage-collect subscriptions: every socket/room that no conversation
+   * references anymore (own binding or extra subscription) is closed and
+   * removed. The event itself is closed once nothing else still uses it.
+   */
+  function pruneUnreferencedSubscriptions() {
+    for (const sub of [...subscriptions.value]) {
+      if (
+        isSocketShared(
+          conversationStore.conversations,
+          '',
+          sub.event,
+          sub.roomId,
+        )
+      ) {
+        continue;
+      }
+      if (sub.active && sub.roomId) {
+        socketStore.closeRoom(sub.event, sub.roomId);
+      }
+      removeSubscriptionByEventRoom(sub.event, sub.roomId);
+      if (
+        !isSocketEventInUse(
+          conversationStore.conversations,
+          subscriptions.value,
+          '',
+          sub.event,
+        )
+      ) {
+        socketStore.closeEvent(sub.event);
+      }
+    }
+  }
+
   function reconnectActiveSubscriptions() {
     for (const sub of subscriptions.value) {
       if (!sub.active) continue;
@@ -134,13 +200,15 @@ export function useEventSubscriptions() {
   return {
     subscriptions,
     isSubscriptionListExpanded,
-    availableSocketBindings,
+    availableSocketEvents,
+    availableRoomsByEvent,
     conversationNamesByEvent,
     subscribeToEvent,
     toggleSubscriptionActive,
     toggleSubscriptionStream,
     removeSubscription,
     mergeSubscriptionsFromSessions,
+    pruneUnreferencedSubscriptions,
     reconnectActiveSubscriptions,
   };
 }
