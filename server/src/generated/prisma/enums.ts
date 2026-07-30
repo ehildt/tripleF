@@ -17,3 +17,11 @@ export const DlqStatus = {
 } as const
 
 export type DlqStatus = (typeof DlqStatus)[keyof typeof DlqStatus]
+
+
+export const ShownMediaKind = {
+  Image: 'Image',
+  Video: 'Video'
+} as const
+
+export type ShownMediaKind = (typeof ShownMediaKind)[keyof typeof ShownMediaKind]

@@ -143,12 +143,16 @@ export class HarnessChatStreamingService {
       ),
     });
 
+    // The guarded response data (media membership enforced, shop offers
+    // merged, local images injected) is authoritative for every mode —
+    // stream and non-stream alike. Without it a non-streamed response
+    // would reach the client as the raw, pre-guard model JSON via delta.
     const streamPayload = {
       requestId: ctx.requestId,
       model: ctx.model,
       template,
       delta: ctx.stream ? '' : ctx.outputs.finalContent,
-      data: ctx.stream ? ctx.outputs.finalData : undefined,
+      data: ctx.outputs.finalData,
       images,
       toolResults: ctx.outputs.toolResults,
       meta: metaForStream,

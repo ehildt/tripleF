@@ -7,7 +7,7 @@ export function categorizeTools(
     imageSearch: [],
     newsSearch: [],
     videoSearch: [],
-    webpageFetch: [],
+    pageFetch: [],
     imageVariants: [],
     specialized: [],
   };
@@ -16,8 +16,8 @@ export function categorizeTools(
     else if (t.endsWith('ImageSearch')) cats.imageSearch.push(t);
     else if (t.endsWith('NewsSearch')) cats.newsSearch.push(t);
     else if (t.endsWith('VideoSearch')) cats.videoSearch.push(t);
-    else if (t.includes('Fetch') || t.includes('fetch') || t === 'webFetch')
-      cats.webpageFetch.push(t);
+    else if (t.includes('Fetch') || t.includes('fetch') || t.includes('Scrape'))
+      cats.pageFetch.push(t);
     else if (t.startsWith('request')) cats.imageVariants.push(t);
     else cats.specialized.push(t);
   }

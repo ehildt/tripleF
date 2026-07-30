@@ -24,9 +24,12 @@
 /* 4. Modes — display mode overrides (highest token priority) */
 @import './modes/light.css';
 
+/* 5. Component-level unscoped styles */
+@import './components/chat.css';
+
 @plugin "@iconify/tailwind4";
 
-/* 5. Global resets, base styles, animations */
+/* 6. Global resets, base styles, animations */
 
 * {
   box-sizing: border-box;
@@ -95,7 +98,9 @@ td {
   user-select: none;
 }
 
-header, main, footer,
+header,
+main,
+footer,
 [class*='panel'],
 [class*='Panel'] {
   transition:
@@ -105,29 +110,37 @@ header, main, footer,
 }
 
 .panel-glow {
-  border: 1px solid var(--color-divider);
-  transition:
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+  box-shadow:
+    0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 6%, transparent);
+  transition: box-shadow 0.4s ease;
 }
 
 .panel-glow:hover {
-  animation: border-glow 3s ease-in-out infinite;
+  animation: panel-glow-pulse 4s ease-in-out infinite;
 }
 
-@keyframes border-glow {
+.panel-glow--active,
+.panel-glow:focus-within {
+  box-shadow:
+    0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+    0 0 1rem color-mix(in srgb, var(--color-accent-glow) 12%, transparent);
+}
+
+@keyframes panel-glow-pulse {
   0%,
   100% {
     box-shadow:
-      0 0 2px color-mix(in srgb, var(--color-accent-primary) 5%, transparent),
-      inset 0 0 2px
-        color-mix(in srgb, var(--color-accent-secondary) 4%, transparent);
+      0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+      0 0 0.5rem color-mix(in srgb, var(--color-accent-glow) 6%, transparent);
   }
   50% {
     box-shadow:
-      0 0 6px color-mix(in srgb, var(--color-accent-primary) 12%, transparent),
-      inset 0 0 4px
-        color-mix(in srgb, var(--color-accent-secondary) 8%, transparent);
+      0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+      0 0 0.75rem color-mix(in srgb, var(--color-accent-glow) 10%, transparent);
   }
 }
 
@@ -175,7 +188,8 @@ header, main, footer,
 /* Theme-aware floating shadow used by dropdowns, menus, toasts */
 .shadow-floating {
   box-shadow:
-    0 10px 15px -3px color-mix(in srgb, var(--color-bg-primary) 10%, transparent),
+    0 10px 15px -3px
+      color-mix(in srgb, var(--color-bg-primary) 10%, transparent),
     0 4px 6px -4px color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
 }
 

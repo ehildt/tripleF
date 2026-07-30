@@ -59,7 +59,7 @@ function save(key: 'preferred' | 'blocked') {
         v-model="preferredDraft"
         class="sources-panel__input"
         rows="6"
-        placeholder="wikipedia.org&#10;arstechnica.com"
+        placeholder="bbc.com&#10;arstechnica.com"
         autocomplete="off"
         spellcheck="false"
         @change="save('preferred')"
@@ -95,7 +95,7 @@ function save(key: 'preferred' | 'blocked') {
 .sources-panel {
   display: flex;
   gap: var(--spacing-1);
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
 }
 
 .sources-panel__card {

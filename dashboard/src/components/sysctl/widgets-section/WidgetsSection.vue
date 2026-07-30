@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
  * The SysCtl "Widgets" tab: settings for the floating widgets — the video
- * popout, the toast notifications, and the slide-out tab menu.
+ * popout, the floating playlist, the toast notifications, and the
+ * slide-out tab menu.
  */
+import PlaylistPanel from './playlist-panel/PlaylistPanel.vue';
 import TabMenuPanel from './tab-menu-panel/TabMenuPanel.vue';
 import ToastPanel from './toast-panel/ToastPanel.vue';
 import VideoPopoutPanel from './video-popout-panel/VideoPopoutPanel.vue';
@@ -11,6 +13,7 @@ import VideoPopoutPanel from './video-popout-panel/VideoPopoutPanel.vue';
 <template>
   <div class="widgets-section">
     <VideoPopoutPanel />
+    <PlaylistPanel />
     <ToastPanel />
     <TabMenuPanel />
   </div>

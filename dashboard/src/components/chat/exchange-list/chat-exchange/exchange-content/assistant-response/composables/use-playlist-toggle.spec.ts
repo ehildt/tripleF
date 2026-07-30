@@ -2,11 +2,19 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
+import {
+  resetPlaylistSettings,
+  setPlaylistMode,
+} from '@/components/widgets/floating-playlist/composables/playlist-settings.state';
 import { useConversationStore } from '@/stores/conversation';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { usePlaylistToggle } from './use-playlist-toggle';
-import { isPlaylistVideo, removePlaylistVideo } from './video-playback.state';
+import {
+  FLOATING_PLAYLIST_QUEUE_KEY,
+  isPlaylistVideo,
+  removePlaylistVideo,
+} from './video-playback.state';
 
 const item = {
   videoUrl: 'https://www.youtube.com/watch?v=abc',
@@ -16,7 +24,9 @@ const item = {
 describe('usePlaylistToggle', () => {
   beforeEach(() => {
     localStorage.clear();
+    resetPlaylistSettings();
     removePlaylistVideo('conversation-1', item.videoUrl);
+    removePlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl);
     setActivePinia(createPinia());
   });
 
@@ -77,6 +87,21 @@ describe('usePlaylistToggle', () => {
     expect(isInPlaylist.value).toBe(false);
     video.value = item;
     togglePlaylistVideo();
+    expect(isInPlaylist.value).toBe(true);
+  });
+
+  it('in floating mode toggles the global queue regardless of conversation', () => {
+    setPlaylistMode('floating');
+    const store = useConversationStore();
+    store.activeConversationId = 'conversation-1';
+    const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
+    togglePlaylistVideo();
+    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
+      true,
+    );
+    expect(isPlaylistVideo('conversation-1', item.videoUrl)).toBe(false);
+    expect(isInPlaylist.value).toBe(true);
+    store.activeConversationId = 'another-conversation';
     expect(isInPlaylist.value).toBe(true);
   });
 });

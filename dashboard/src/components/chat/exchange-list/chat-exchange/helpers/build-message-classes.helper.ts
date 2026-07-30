@@ -1,23 +1,30 @@
-/**
- * Build the message container class string for a chat exchange.
- *
- * Combines the role-specific background/text alignment, the error
- * status override, the highlight pulse ring, and the shared content
- * typography classes.
- */
-export function buildMessageClasses(args: {
+import type { MessageContainerVariant } from '../types/message-container-variant.model';
+
+interface BuildMessageClassesArgs {
   isUser: boolean;
   isError: boolean;
   isHighlighted: boolean;
-}): string {
-  let roleClass = 'bg-tertiary text-left';
+}
+
+/**
+ * Build the message container class string for a chat exchange.
+ *
+ * Returns a BEM-aware class list describing the role variant, the error
+ * status override, and the highlight pulse; the styles live in the global
+ * `chat.css` (it must reach markdown children injected via v-html).
+ * `content-body` is the semantic hook class the light mode uses for its
+ * code-block color overrides — keep it or light-mode prose breaks.
+ */
+export function buildMessageClasses(args: BuildMessageClassesArgs): string {
+  let variant: MessageContainerVariant = 'assistant';
   if (args.isUser) {
-    roleClass = 'bg-accent-primary/10 text-right';
+    variant = 'user';
   } else if (args.isError) {
-    roleClass = 'bg-status-error/5 text-status-error';
+    variant = 'error';
   }
+  const roleClass = `exchange-message--${variant}`;
   const highlightClass = args.isHighlighted
-    ? 'exchange-content__message--highlighted'
+    ? 'exchange-message--highlighted'
     : '';
-  return `px-3 py-2 text-sm font-mono content-body ${roleClass} ${highlightClass}`;
+  return `exchange-message ${roleClass} content-body ${highlightClass}`.trim();
 }

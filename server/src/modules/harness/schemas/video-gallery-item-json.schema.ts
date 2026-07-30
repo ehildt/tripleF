@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  safeMediaUrlOrEmpty,
+  safeVideoUrl,
+} from '../helpers/url-schema.helper.js';
+
 /**
  * One entry of a videoGalleryItems array — shared by every template with a
  * video surface (article, news, summary, evaluation, product, videolist).
@@ -11,7 +16,7 @@ import { z } from 'zod';
  */
 export const videoGalleryItemSchema = z.object(
   {
-    videoUrl: z.url({
+    videoUrl: safeVideoUrl({
       message: 'videoGalleryItems.videoUrl must be a valid URL',
     }),
     title: z.string().min(1, {
@@ -24,7 +29,9 @@ export const videoGalleryItemSchema = z.object(
     channel: z.string().optional(),
     date: z.string().optional(),
     views: z.number().int().min(0).optional(),
-    thumbnailUrl: z.url().optional().or(z.literal('')),
+    thumbnailUrl: safeMediaUrlOrEmpty({
+      message: 'videoGalleryItems.thumbnailUrl must be a valid URL',
+    }),
     description: z.string().optional(),
   },
   { message: 'videoGalleryItems entries must be objects with videoUrl' },

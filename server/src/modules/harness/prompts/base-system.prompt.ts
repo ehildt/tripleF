@@ -1,4 +1,5 @@
 import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
+import { NOISE_RULES } from './shared/noise-rules.prompt.js';
 import { OUTPUT_CONTRACT } from './shared/output-contract.prompt.js';
 import { PRECEDENCE_RULES } from './shared/precedence-rules.prompt.js';
 import { SEARCH_POLICY } from './shared/search-policy.prompt.js';
@@ -17,6 +18,7 @@ export const buildBaseSystemPrompt = ({
     OUTPUT_CONTRACT,
     SECURITY_RULES,
     PRECEDENCE_RULES,
+    NOISE_RULES,
     hasImages ? MULTIMODAL_POLICY : '',
     hasImages ? SEARCH_POLICY : '',
     'FINAL REMINDER:',

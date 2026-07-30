@@ -39,6 +39,12 @@ export function isVideoUrl(url: string): boolean {
 
   try {
     const parsed = new URL(url);
+    // Protocol gate first: extension and host checks below trust the URL
+    // shape — `javascript:alert(1).mp4` parses fine and matches the direct
+    // file extension, but must never reach an <a :href> or a player.
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
     if (VIDEO_EXTENSION.test(parsed.pathname)) return true;
     if (!VIDEO_HOSTS.has(parsed.hostname)) return false;
 

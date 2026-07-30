@@ -1,12 +1,12 @@
 import type { DebugResult } from '../../../../types/debug.model';
+import type { TabPanelTab } from '../../../shared/ui/tab-panel/TabPanel.vue';
 import { parseUrl } from './parse-url.helper';
 
 export type DetailTabId =
   'error' | 'params' | 'headers' | 'prompt' | 'body' | 'response';
 
-export interface DetailTab {
+export interface DetailTab extends TabPanelTab {
   id: DetailTabId;
-  label: string;
   content: unknown;
 }
 

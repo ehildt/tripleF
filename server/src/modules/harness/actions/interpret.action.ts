@@ -239,12 +239,14 @@ export class InterpretActionService {
     const latestUser =
       latestUserIndex >= 0 ? nonSystem[latestUserIndex] : undefined;
 
-    const transcriptSource = hasImages
-      ? nonSystem.filter((m) => m.role === 'assistant')
-      : nonSystem.slice(
-          0,
-          latestUserIndex < 0 ? nonSystem.length : latestUserIndex,
-        );
+    // The transcript always covers every turn before the latest user
+    // message — including earlier user turns, whose constraints the
+    // classifier needs to resolve follow-ups. Image attachments are not
+    // sent; the latest message carries an attachment marker instead.
+    const transcriptSource = nonSystem.slice(
+      0,
+      latestUserIndex < 0 ? nonSystem.length : latestUserIndex,
+    );
     const transcript = buildClassifyTranscript(transcriptSource);
 
     const latestUserContent = hasImages

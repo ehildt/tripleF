@@ -1,0 +1,21 @@
+# Railway config-as-code for the all-in-one test service (app + infra in a
+# single container). Railway only auto-discovers config files at the repo
+# root, so point the service at this file once in the dashboard:
+#   Service Settings → Config as Code → Custom Config Path: /railway/railway.toml
+# (Equivalent alternative: service variable
+#  RAILWAY_DOCKERFILE_PATH=railway/Dockerfile.railway.)
+# Dropping Railway entirely = delete this folder + the dashboard pointer.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "railway/Dockerfile.railway"
+
+[deploy]
+healthcheckPath = "/healthz"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+# Railway uses the PORT variable to determine which port to health-check.
+# Since nginx owns the public port in this all-in-one image, we pin it to 80
+# (start-server.sh keeps the Nest server on 3000 internally).
+[deploy.envs]
+PORT = "80"

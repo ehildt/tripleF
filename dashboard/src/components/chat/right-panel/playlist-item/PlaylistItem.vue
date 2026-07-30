@@ -2,7 +2,9 @@
 /**
  * One compact row of the playlist panel: title and meta on the left, a
  * remove button on the right. Clicking the row launches the video in the
- * floating player.
+ * floating player. The active (now-playing) item scrolls its title in
+ * place — the animated now-playing text lives inside the selected item,
+ * not in a separate bar.
  */
 import { ListMinus } from '@lucide/vue';
 import { computed } from 'vue';
@@ -37,7 +39,17 @@ const metaLine = computed(() =>
     @keydown.enter="emit('play')"
   >
     <div class="playlist-item__text">
-      <span class="playlist-item__title">{{ item.title }}</span>
+      <!-- Now playing: the title scrolls as a seamless marquee inside the
+           selected item (the duplicated span makes the -50% wrap invisible). -->
+      <div v-if="isActive" class="playlist-item__marquee">
+        <div class="playlist-item__marquee-track">
+          <span class="playlist-item__marquee-text">{{ item.title }}</span>
+          <span class="playlist-item__marquee-text" aria-hidden="true">{{
+            item.title
+          }}</span>
+        </div>
+      </div>
+      <span v-else class="playlist-item__title">{{ item.title }}</span>
       <span v-if="metaLine" class="playlist-item__meta">{{ metaLine }}</span>
     </div>
     <button
@@ -96,6 +108,44 @@ const metaLine = computed(() =>
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Now-playing marquee: same typography as the static title, scrolling in
+   place (endless left loop, matching the playlist bar and popout). */
+.playlist-item__marquee {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
+}
+
+.playlist-item__marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: playlist-item-title-scroll 12s linear infinite;
+}
+
+.playlist-item__marquee-text {
+  padding-right: var(--spacing-9-5);
+}
+
+@keyframes playlist-item-title-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playlist-item__marquee-track {
+    animation: none;
+  }
 }
 
 .playlist-item__meta {

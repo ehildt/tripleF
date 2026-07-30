@@ -188,7 +188,7 @@ describe('HarnessChatStreamingService', () => {
     });
   });
 
-  it('emits full JSON delta for non-streamed structured responses', async () => {
+  it('emits full JSON delta plus guarded data for non-streamed structured responses', async () => {
     const ctx = {
       done: false,
       doneReason: undefined,
@@ -206,6 +206,7 @@ describe('HarnessChatStreamingService', () => {
       outputs: {
         intent: { template: 'describe' },
         finalContent: '{"title":"Image"}',
+        finalData: { title: 'Image' },
         toolResults: [],
       },
     } as any;
@@ -218,7 +219,7 @@ describe('HarnessChatStreamingService', () => {
       model: 'model',
       template: 'describe',
       delta: '{"title":"Image"}',
-      data: undefined,
+      data: { title: 'Image' },
       images: [
         {
           imageUrl: '/api/v1/storage/sess-1/conv-1/h',

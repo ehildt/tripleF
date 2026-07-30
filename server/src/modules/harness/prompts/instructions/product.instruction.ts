@@ -4,7 +4,7 @@ Goal: produce a structured, purchase-decision-oriented product overview that the
 
 DATA SOURCES (understand what each one is authoritative for):
 - shopOffers (from shopping search): prices, sellers, delivery, per-offer ratings. This is the ONLY source for prices and shopOffers.
-- articles (from webSearch / webpageFetch): editorial reviews, spec sheets, manufacturer pages. This is the source for specs (keyPoints), the product quality consensus (pros/cons), and reviewSummary highlights.
+- articles (from webSearch / pageFetch): editorial reviews, spec sheets, manufacturer pages. This is the source for specs (keyPoints), the product quality consensus (pros/cons), and reviewSummary highlights.
 - reviews (from reviews search): individual Google Maps reviews of a BUSINESS (a retailer, brand store, or the place the user asked about). Use them to judge seller reputation — never as evidence about product quality.
 - places (from places search): local stores with address and rating. Use them ONLY for a local-availability note inside buyAdvice. They have no prices and no product links — never turn them into shopOffers.
 
@@ -43,7 +43,11 @@ Shop offer rules:
 - shopOffers: an array of shop offer objects from shopping search results. Each entry needs title, price, source, link, and may include imageUrl, delivery, rating, ratingCount.
 - Sort by ascending price so the cheapest offer appears first — the dashboard marks it as the best price and renders it as the hero's primary call-to-action button, so correct sorting is critical.
 - Include delivery info (e.g. "Free shipping", "2-day delivery") and rating/ratingCount when available.
-- Prefer real store links to direct product pages.
+- LINK RULES (strict): every link must take the user directly to the offer, never to a Google page.
+  → Best: the direct product page URL on the merchant's website (e.g. https://store.example/products/sony-wh-1000xm5).
+  → Shopping search often returns Google Shopping or Google redirect links (google.com/shopping, google.com/search, google.com/aclk). Such links are FORBIDDEN — never emit them.
+  → When an offer's shopping link is a Google link, find the same product on that merchant's site inside the webSearch results (match by the offer's source/store name or domain) and use that URL instead.
+  → If no product page URL can be identified for an offer, link to the merchant's homepage or storefront from the webSearch results and keep the store name in source. An offer without any trustworthy merchant URL may keep its shopping link only when it is already a direct merchant URL; otherwise drop the offer.
 - Do NOT invent prices, sellers, ratings, or URLs. Only use data from tool results.
 - When multiple identical offers exist, keep only the best (lowest price, fastest delivery).
 - Exclude pure installment/subscription prices (e.g. "$29.12/mo") whenever one-time purchase offers exist — they are not comparable to full prices. If every offer is an installment price, keep them but sort them last.
@@ -72,7 +76,7 @@ Optional media fields (include only when the data is available; otherwise use ""
 - videoGalleryItems: an array of additional video objects when multiple videos are available. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description.
 
 Optional attribution fields:
-- sources: an array of source objects with url, title, sourceName, date, and snippet. Use only real retrieved URLs from webSearch, shopping, and webpageFetch results.
+- sources: an array of source objects with url, title, sourceName, date, and snippet. Use only real retrieved URLs from webSearch, shopping, and pageFetch results.
 - publishDate: leave empty. The dashboard does not use this for products.
 - author: leave empty.
 - readTime: leave empty. The dashboard computes read time automatically.
@@ -84,7 +88,7 @@ MANDATORY MEDIA SEARCH:
 - When selecting images, prefer 2560×1440 (1440p). 1280×720 (720p) is the enforced minimum; never use images below that resolution.
 - IMAGE DOMAIN RESTRICTION: only use image URLs from trusted sources. Reject Google thumbnail proxies (configured blocked sources), data URIs, localhost, private IPs, and unknown hosts without a direct image file extension.
 - VIDEO PROVIDER RESTRICTION: only use video URLs from supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other platforms that cannot be embedded reliably.
-- Prefer video URLs discovered inside webSearch article results first; fill remaining slots with videoSearch results.
+- Pool ownership: every image comes from imageSearch results. heroVideoUrl may take the best vetted video (hands-on review, unboxing) from videoSearch or from links inside web/news article results; videoGalleryItems must come from videoSearch results only.
 
 Hero media priority:
 1. If a relevant video URL is available (hands-on review, unboxing), set heroVideoUrl.

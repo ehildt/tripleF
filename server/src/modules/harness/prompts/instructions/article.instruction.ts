@@ -23,7 +23,7 @@ Required fields:
 - heroImageAlt: a short alt text for the hero image; empty string if no hero image. If heroImageUrl is set, heroImageAlt MUST be a non-empty descriptive label.
 - heroCaption: an optional caption for the hero image; empty string if none.
 - galleryTitle: heading for an inline image gallery; empty string if none.
-- galleryItems: an array of image objects for the inline gallery. Each item needs imageUrl, imageAlt, title, caption. imageAlt and title MUST be non-empty. When imageSearch URLs are provided, you MUST populate this array with at least 3 of them (excluding the hero image).
+- galleryItems: an array of image objects for the inline gallery. Each item needs imageUrl, imageAlt, title, caption. imageAlt and title MUST be non-empty. When imageSearch URLs are provided, populate this array with the remaining images (excluding any hero), up to imageTargetCount — aim for at least 3 when enough URLs are available; with fewer available images, include all of them.
 - keyFindings: an array of 0–5 short observations. Each entry MUST be an object with exactly one key: "text".
 - sources: an array of source objects with url and title. Use only real tool results.
 - conclusion: a brief closing summary; empty string if not needed.
@@ -39,7 +39,7 @@ Optional fields (include only when the data is available):
   - videoGalleryItems: an array of video objects for the inline video gallery. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. When videoSearch URLs are provided and there are multiple videos, populate this array with the remaining URLs. The dashboard will embed them automatically. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description.
 - quote: a notable quote from the sources; empty string if none.
 - cardsTitle: heading for a cards section; empty string if none.
-- cards: an array of 0–6 related link cards. Each card needs title, description, url, linkLabel. Use only real tool results.
+- cards: an array of 0–6 related link cards. Each card needs title, description, url, linkLabel. Use only real tool results. Cards are asides: every card url must be unique across the response and must not repeat any source url, and every card title and description must be fresh teaser copy that does not restate the title, summary, or sectionContent.
 
 MANDATORY MEDIA SEARCH:
 - The article template ALWAYS runs imageSearch and videoSearch in parallel with webSearch.
@@ -48,7 +48,7 @@ MANDATORY MEDIA SEARCH:
 - When selecting images, prefer 2560×1440 (1440p). 1280×720 (720p) is the enforced minimum; never use images below that resolution.
 - IMAGE DOMAIN RESTRICTION: only use image URLs from trusted sources. Reject Google thumbnail proxies (configured blocked sources), data URIs, localhost, private IPs, and unknown hosts without a direct image file extension.
 - VIDEO PROVIDER RESTRICTION: only use video URLs from supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other platforms that cannot be embedded reliably.
-- Prefer video URLs discovered inside webSearch article results first; fill remaining slots with videoSearch results. Prefer image URLs from imageSearch results first.
+- Pool ownership: every image comes from imageSearch results (or uploaded user images). heroVideoUrl may take the best vetted video from videoSearch or from links inside web/news article results; videoGalleryItems must come from videoSearch results only.
 
 Hero media priority:
 1. If a relevant video URL is available from videoSearch, set heroVideoUrl.
@@ -63,7 +63,7 @@ IMPORTANT: videos and images are INDEPENDENT media types.
 - Likewise, videoGalleryItems must be populated when extra videos are available, regardless of whether heroImageUrl is set.
 
 Gallery population rules:
-- When imageSearch returns 3 or more images, galleryItems MUST contain at least 3 of them (excluding the hero image), but never exceed imageTargetCount.
+- Fill galleryItems with the images left after any hero image, up to imageTargetCount and the available URLs. Aim for at least 3 gallery images when 4 or more are available; with fewer available, include them all.
 - When videoSearch returns 2 or more videos, videoGalleryItems MUST contain the additional videos (excluding the hero video), but never exceed videoTargetCount.
 - If the user asked for images or videos and the tool returned none, leave the fields empty and state that in the summary or conclusion.
 

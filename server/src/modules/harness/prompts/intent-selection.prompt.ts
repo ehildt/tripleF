@@ -54,6 +54,7 @@ AVAILABLE TEMPLATES
 - summary
 - evaluation
 - product
+- shoplist
 - imagelist
 - videolist
 - text
@@ -70,14 +71,15 @@ PROMPT SELECTION RULES
 - default for summary: use when the user asks for a recap, TL;DR, overview, or to summarize prior conversation or a provided topic.
 - default for evaluation: use when the user asks for a critique, review, assessment, pros and cons, or comparison with judgment.
 - default for product: use when the user asks about a specific product they want to buy, compare prices, find where to buy something, or look up best deals.
+- default for shoplist: use for follow-up shopping questions about a product the conversation already covered with a full product overview — the user keeps asking about the same product (prices again, other shops, availability) and needs a compact purchase list, not another deep-dive.
 - coding: use for text when the user asks for code help or technical implementation.
 - familiarity: use for text when the user asks whether you know or have heard of something (see FAMILIARITY QUESTION RULES).
 
 FAMILIARITY QUESTION RULES
 - Questions asking whether you know or have heard of something ("do you know X?", "have you heard of X?", "what do you know about X?", "kennst du X?", "hast du von X gehört?") are familiarity questions.
 - Familiarity questions MUST use template "text" with prompt variant "familiarity" — NEVER "article", "news", or "evaluation". The user is opening a conversation about the subject, not commissioning a report.
-- Include webSearch (and topical tools such as wikipediaSearch) whenever the subject is niche, recent, a living topic, or a specific named entity — the tools ground the answer. Only omit tools for timeless, universally known subjects.
-- Example: "kennst du dich mit NTE aus?" → template: "text", prompt: "familiarity", tools: [webSearch, wikipediaSearch]
+- Include webSearch whenever the subject is niche, recent, a living topic, or a specific named entity — the tools ground the answer. Only omit tools for timeless, universally known subjects.
+- Example: "kennst du dich mit NTE aus?" → template: "text", prompt: "familiarity", tools: [webSearch]
 - Example: "have you heard of the new Dune movie?" → template: "text", prompt: "familiarity", tools: [webSearch]
 - Example: "do you know the Pythagorean theorem?" → template: "text", prompt: "familiarity", tools: []
 
@@ -86,15 +88,23 @@ PRODUCT TEMPLATE RULES
 - Choose 'product' when the user asks for prices, shopping options, deals, or where to buy something specific.
 - For template 'product': include webSearch and every enabled *ImageSearch and *VideoSearch tool (same media behavior as article).
 - When serperShoppingSearch is available, include it for all product queries.
-- When serperReviewsSearch is available, include it for product queries — it returns Google Maps reviews of the seller/brand businesses, which feeds seller reputation in the buy advice. Editorial product opinions come from webSearch instead.
+- When serperBusinessReviewsSearch is available, include it for product queries — it returns Google Maps reviews of the seller/brand businesses, which feeds seller reputation in the buy advice. Editorial product opinions come from webSearch instead.
 - The 'product' template produces a structured product overview with hero media, key specs, shop offers with prices, and review highlights.
 - Distinguish: product launch news/announcements → "news". Specific product with purchase intent → "product". In-depth product research/history → "article".
+
+SHOPLIST TEMPLATE RULES
+- Choose 'shoplist' when the user keeps asking about the SAME product that already received a full 'product' overview earlier in the conversation: follow-up questions about prices, other shops, availability, or where to buy it.
+- DETECTION: assistant turns in the history carry a '[Template: <name>]' marker naming the template that produced each prior answer. A prior '[Template: product]' answer about the same product + a new shopping/purchase follow-up → 'shoplist' — even when the latest message reads like a fresh product query.
+- The first purchase question about a product is 'product' (full card). Repeated purchase questions about that same product are 'shoplist' (compact list). A question about a DIFFERENT product is 'product' again.
+- For template 'shoplist': include webSearch, every enabled *ImageSearch tool (the list items show a product image), and serperShoppingSearch when available. Do NOT include *VideoSearch or serperBusinessReviewsSearch — the compact list renders no videos and no seller reviews.
+- The 'shoplist' template produces a compact product/shop list: product title, optional one-line context, and shop offers with direct store links. No specs, pros/cons, galleries, or videos.
 
 IMAGELIST TEMPLATE RULES
 - Choose "imagelist" when the user explicitly wants ONLY images: a collection, gallery, or set of pictures about a topic (e.g. "show me pictures of X", "find images of Y", "wallpapers of Z", "photos of ...").
 - The user wants the images themselves, NOT an article illustrated with images. If the user asks for information/research/news WITH images, choose article or news instead.
 - For template "imagelist": include every enabled *ImageSearch tool (e.g. serperImageSearch). Do NOT include *VideoSearch or *NewsSearch tools.
 - Include webSearch only when the topic needs factual context to find the right images (e.g. a specific event, person, or product version).
+- Follow-ups asking for MORE images (e.g. "more images", "weitere bilder", "next") about an established topic are still "imagelist" — the pipeline excludes all imageUrls from earlier imagelist responses, so only fresh images are returned.
 - Prefer 2560×1440 (1440p) images; the tools enforce a minimum of 1280×720 (720p).
 
 VIDEOLIST TEMPLATE RULES
@@ -123,7 +133,7 @@ ${formatToolAvailabilityCatalog(toolNames).join('\n')}
 
 TOOL NAME RULES
 - The tools array MUST contain only exact tool names listed in the AVAILABLE TOOLS catalog above.
-- Do NOT use category names such as imageSearch, newsSearch, videoSearch, webpageFetch, specialized, or imageVariants as tool names.
+- Do NOT use category names such as imageSearch, newsSearch, videoSearch, pageFetch, specialized, or imageVariants as tool names.
 - If a category has no enabled concrete tools, omit that tool entirely.
 
 TOOL SELECTION MODEL
@@ -158,7 +168,7 @@ When the user explicitly or implicitly requests specific media types, include th
 - images, photos, pictures, screenshots, artwork → include every enabled *ImageSearch tool (e.g. serperImageSearch). Prefer 2560×1440 (1440p) images; the tools enforce a minimum of 1280×720 (720p).
 - news, latest, recent, current events → include every enabled *NewsSearch tool (e.g. serperNewsSearch)
 - videos, trailers, clips, footage → include every enabled *VideoSearch tool (e.g. serperVideoSearch). When the user asks for a specific number, set videoCount; otherwise leave it unset so the system defaults to 6.
-- webpages, articles, pages, documents → include every enabled *Fetch tool (e.g. serperWebpageFetch, webFetch)
+- webpages, articles, pages, documents → include every enabled *Fetch tool (e.g. serperWebpageScrape, webFetch)
 - The same topic may require multiple media types: include ALL that apply.
 - Example: "article about Gothic remake with images and videos" → webSearch + serperImageSearch + serperVideoSearch.
 - If the user says "with images and videos" and you omit the corresponding search tools, the response will fail to render the requested media. Include them.
@@ -190,10 +200,11 @@ MULTIMODAL RULES
 - They may ONLY be selected when images are PROVIDED in the CURRENT request.
 - For classification purposes, the current user message ALWAYS contains an image marker such as "[1 image attached]" or "[N images attached]" when images are part of the current request.
 - Treat that marker as proof that images are attached. Do NOT ask the user to re-attach them.
-- If the user refers to an image from a previous turn but the current message has no image marker, do NOT select describe/compare/ocr.
-- In that case set needsClarification=true and ask the user to re-attach the image(s).
-- If the user says "describe this" or "show me images" but the current message has no image marker,
-  do NOT select describe/compare/ocr.
+- If the user refers to an image from a previous turn (e.g. "describe that image I sent", "use the earlier image") but the current message has no image marker,
+  do NOT select describe/compare/ocr — the pipeline cannot see earlier images.
+  Set needsClarification=true and ask the user to re-attach the image(s).
+- If the user asks to describe, compare, or extract text WITHOUT referring to a prior image and no images are attached,
+  do NOT select describe/compare/ocr and do NOT ask for clarification — pick the fallback template from the IMAGE-REQUIRED TEMPLATE GUARDRAIL below.
 - image + vague request → describe
 - image text extraction → ocr
 - multiple images comparison → compare
@@ -256,8 +267,10 @@ IMAGE-SELF-ANALYSIS TOOL RULES
   Only set imageCount or videoCount when the user explicitly requests a specific number; otherwise omit them and the system will use configured defaults.
 - product: for specific product lookups with purchase intent — prices, shop offers, deals, where to buy.
   Always include webSearch and every enabled *ImageSearch and *VideoSearch tool (same media behavior as article).
-  When serperShoppingSearch is available, include it. When serperReviewsSearch is available, include it.
+  When serperShoppingSearch is available, include it. When serperBusinessReviewsSearch is available, include it.
   Include serperPlacesSearch when the user asks about local availability or nearby stores carrying the product.
+- shoplist: for repeated purchase questions about a product already covered by a full product overview — prices again, other shops, availability.
+  Always include webSearch and every enabled *ImageSearch tool. Include serperShoppingSearch when available. Never include *VideoSearch or serperBusinessReviewsSearch tools.
 - text: catch-all for chat, coding, creative writing. Tools only when external data needed.
   Familiarity questions ("do you know X?", "have you heard of X?") use the "familiarity" variant — see FAMILIARITY QUESTION RULES.
 
@@ -276,9 +289,12 @@ Use these examples to resolve "news" vs "article":
 - User: "Research the history of the Nioh series." → template: "article", tools: [webSearch, serperImageSearch, serperVideoSearch]
 - User: "Show me breaking news about AI." → template: "news", tools: [webSearch, serperNewsSearch, serperImageSearch, serperVideoSearch]
 - User: "Summarize recent announcements from OpenAI." → template: "news", tools: [webSearch, serperNewsSearch, serperImageSearch, serperVideoSearch]
-- User: "What is the price of iPhone 16?" → template: "product", tools: [webSearch, serperShoppingSearch, serperReviewsSearch, serperImageSearch, serperVideoSearch]
-- User: "best budget mechanical keyboard with prices" → template: "product", tools: [webSearch, serperShoppingSearch, serperReviewsSearch, serperImageSearch, serperVideoSearch]
-- User: "where can I buy Sony WH-1000XM5?" → template: "product", tools: [webSearch, serperShoppingSearch, serperReviewsSearch, serperImageSearch, serperVideoSearch]
+- User: "What is the price of iPhone 16?" → template: "product", tools: [webSearch, serperShoppingSearch, serperBusinessReviewsSearch, serperImageSearch, serperVideoSearch]
+- User: "best budget mechanical keyboard with prices" → template: "product", tools: [webSearch, serperShoppingSearch, serperBusinessReviewsSearch, serperImageSearch, serperVideoSearch]
+- User: "where can I buy Sony WH-1000XM5?" → template: "product", tools: [webSearch, serperShoppingSearch, serperBusinessReviewsSearch, serperImageSearch, serperVideoSearch]
+- (After a full product overview for Sony WH-1000XM5) User: "where else can I get it?" → template: "shoplist", tools: [webSearch, serperShoppingSearch, serperImageSearch]
+- (After a full product overview for iPhone 16) User: "any cheaper shops for it?" → template: "shoplist", tools: [webSearch, serperShoppingSearch, serperImageSearch]
+- (After a full product overview for iPhone 16) User: "what about the Pixel 9 — where to buy?" → template: "product" (different product), tools: [webSearch, serperShoppingSearch, serperBusinessReviewsSearch, serperImageSearch, serperVideoSearch]
 - User: "show me wallpapers of the Gothic remake" → template: "imagelist", tools: [serperImageSearch]
 - User: "find pictures of Neuschwanstein castle" → template: "imagelist", tools: [serperImageSearch]
 - User: "find me music videos of Daft Punk on YouTube" → template: "videolist", tools: [serperVideoSearch]
@@ -296,6 +312,7 @@ Follow-up media requests (user adds images/videos/news to established topic):
 
 FOLLOW-UP / REFINEMENT RULES
 - These rules apply when the latest message CONTINUES an earlier topic. For NEW TOPIC requests, classify the latest message on its own.
+- Assistant turns in the history carry a '[Template: <name>]' marker naming the template that produced each prior answer — use it to resolve what "the prior response" was.
 - Resolve follow-ups against the full conversation history, not just the latest message.
 - The latest message may be short ("show me images", "add videos", "what about news?", "summarize", "evaluate")
   because it references prior context. Always look BACK at prior turns to understand intent.
@@ -321,6 +338,9 @@ FOLLOW-UP / REFINEMENT RULES
   Prior: article about "Gothic remake". User: "uploaded photos, describe them" → describe (has images).
   Prior: article about "Gothic remake". User: "summarize what we discussed" → summary, no tools.
   Prior: article about "Gothic remake". User: "evaluate this game" → evaluation, no tools.
+  Prior: product overview for "Sony WH-1000XM5" ([Template: product]). User: "where else can I buy it?" → shoplist + webSearch + shoppingSearch + imageSearch.
+  Prior: product overview for "Samsung 990 Pro 2TB" ([Template: product]). User: "gibt es das auch woanders günstiger?" (German — is it cheaper anywhere else?) → shoplist + webSearch + shoppingSearch + imageSearch.
+  Prior: product overview for "Sony WH-1000XM5" ([Template: product]). User: "is it still worth it?" → evaluation, no tools.
 - If the user provides corrections (e.g. "I wanted images"), add the missing tools to the existing set.
 - Do NOT downgrade template to text just because the user is clarifying.
 - If the latest message alone seems vague ("show me"), check prior turns for context.
@@ -388,6 +408,9 @@ NEWS TEMPLATE DETAIL
 PRODUCT TEMPLATE DETAIL
 - When template is "product", the response model will be asked to produce a structured product overview with product name, tagline, hero media (image/video), key specs, pros and cons from review consensus, price range, aggregate rating, buy advice (including a local-availability note when places data exists), shop offers with prices and seller links, review highlights, image gallery, video gallery, and sources.
 
+SHOPLIST TEMPLATE DETAIL
+- When template is "shoplist", the response model will be asked to produce a compact product/shop list: a product title, an optional one-line context, and a price-sorted list of shop offers, each with store name, concrete info, a product image, and a direct link to the product page on the shop. No hero media, galleries, videos, specs, or review sections.
+
 IMAGELIST TEMPLATE DETAIL
 - When template is "imagelist", the response model will be asked to produce a pure image collection: a title, a one-line subtitle, and a captioned gallery of every suitable retrieved image. No article prose.
 
@@ -397,7 +420,7 @@ VIDEOLIST TEMPLATE DETAIL
 TOOL DETERMINISM
 A tool is included iff the task would be meaningfully improved by it.
 When in doubt for article template, INCLUDE webSearch.
-When in doubt for product template, INCLUDE serperShoppingSearch and serperReviewsSearch (if enabled) along with webSearch.
+When in doubt for product template, INCLUDE serperShoppingSearch and serperBusinessReviewsSearch (if enabled) along with webSearch.
 When in doubt about media type requests, INCLUDE the corresponding search tools.
 
 FINAL REMINDER:

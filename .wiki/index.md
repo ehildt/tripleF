@@ -1,4 +1,4 @@
-# tripleF ({fff}) — Technical Wiki
+# tripleF (3F) — Technical Wiki
 
 > An agentic AI workbench, fully open source, powered by free models — run everything locally or on Ollama Cloud.
 
@@ -36,7 +36,7 @@
 
 | Document                                                  | Concern                                        | Key Sections                                                           |
 | --------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
-| [0-introduction](0-introduction.md)                       | Mission, feature set, roadmap, system overview | Why {fff}, architecture diagram, technology matrix                     |
+| [0-introduction](0-introduction.md)                       | Mission, feature set, roadmap, system overview | Why 3F, architecture diagram, technology matrix                     |
 | [0.1-quick-start](0.1-quick-start.md)                     | From clone to running stack                    | Prerequisites, environment, first run, verification                    |
 | [0.2-docker](0.2-docker.md)                               | Image design, compose topology, install model  | Root Dockerfile targets, `deps` service, pnpm regimes, troubleshooting |
 | [0.3-documentation](0.3-documentation.md)                 | Wiki conventions, badge automation             | Writing docs, depbadge workflow, regenerating badges                   |
@@ -51,4 +51,4 @@
 | [2.2-chat](2.2-chat.md)                                   | The chat experience                            | Exchanges, reasoning areas, streaming UX, compaction                   |
 | [2.3-theming](2.3-theming.md)                             | Theme system                                   | Theme catalogue, harmony model, tokens                                 |
 | [3-ai-assisted-development](3-ai-assisted-development.md) | How this project is built                      | Context coding, ownership, quality gates                               |
-| [3.1-market-positioning](3.1-market-positioning.md)       | Where {fff} competes                           | Proprietary landscape, local-first advantages, strategy                |
+| [3.1-market-positioning](3.1-market-positioning.md)       | Where 3F competes                           | Proprietary landscape, local-first advantages, strategy                |

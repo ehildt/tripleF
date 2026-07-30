@@ -16,7 +16,7 @@ const fullConfig: ProviderConfig = {
     shopping: { enabled: true },
     reviews: { enabled: true },
     videos: { enabled: true },
-    webpageFetch: { enabled: true },
+    scrape: { enabled: true },
   },
 };
 
@@ -30,9 +30,8 @@ describe('tool-registry.helper', () => {
       expect(groups.imageSearch).toContain('serperImageSearch');
       expect(groups.newsSearch).toContain('serperNewsSearch');
       expect(groups.videoSearch).toContain('serperVideoSearch');
-      expect(groups.webpageFetch).toContain('webFetch');
+      expect(groups.pageFetch).toContain('webFetch');
       expect(groups.imageVariants).toContain('requestGrayscale');
-      expect(groups.specialized).toContain('wikipediaSearch');
     });
   });
 

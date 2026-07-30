@@ -34,20 +34,7 @@ describe('InterpretActionService', () => {
                 shopping: { enabled: false },
                 reviews: { enabled: false },
                 videos: { enabled: false },
-                webpageFetch: { enabled: false },
-              },
-              brave: {
-                enabled: false,
-                web: { enabled: false },
-                images: { enabled: false },
-                news: { enabled: false },
-                video: { enabled: false },
-              },
-              searxng: { enabled: false },
-              browserBase: {
-                enabled: false,
-                search: { enabled: false },
-                fetch: { enabled: false },
+                scrape: { enabled: false },
               },
             }),
           },
@@ -255,21 +242,7 @@ describe('InterpretActionService', () => {
                 shopping: { enabled: false },
                 reviews: { enabled: false },
                 videos: { enabled: true },
-                webpageFetch: { enabled: false },
-              },
-              brave: {
-                enabled: true,
-                apiKey: 'key',
-                web: { enabled: true },
-                images: { enabled: true },
-                news: { enabled: false },
-                video: { enabled: true },
-              },
-              searxng: { enabled: false },
-              browserBase: {
-                enabled: false,
-                search: { enabled: false },
-                fetch: { enabled: false },
+                scrape: { enabled: false },
               },
             }),
           },
@@ -331,21 +304,7 @@ describe('InterpretActionService', () => {
                 shopping: { enabled: false },
                 reviews: { enabled: false },
                 videos: { enabled: true },
-                webpageFetch: { enabled: false },
-              },
-              brave: {
-                enabled: true,
-                apiKey: 'key',
-                web: { enabled: true },
-                images: { enabled: false },
-                news: { enabled: true },
-                video: { enabled: false },
-              },
-              searxng: { enabled: false },
-              browserBase: {
-                enabled: false,
-                search: { enabled: false },
-                fetch: { enabled: false },
+                scrape: { enabled: false },
               },
             }),
           },
@@ -368,8 +327,6 @@ describe('InterpretActionService', () => {
     expect(result.intent.tools).toContain('serperNewsSearch');
     expect(result.intent.tools).toContain('serperImageSearch');
     expect(result.intent.tools).toContain('serperVideoSearch');
-    expect(result.intent.tools).not.toContain('braveImageSearch');
-    expect(result.intent.tools).not.toContain('braveVideoSearch');
   });
 
   it('does not add media search tools for non-media templates', async () => {
@@ -394,7 +351,7 @@ describe('InterpretActionService', () => {
     expect(result.intent.tools).toEqual([]);
   });
 
-  it('adds enabled media search tools for summary and evaluation templates', async () => {
+  it('does not force media search tools for summary and evaluation templates', async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
@@ -431,21 +388,7 @@ describe('InterpretActionService', () => {
                 shopping: { enabled: false },
                 reviews: { enabled: false },
                 videos: { enabled: true },
-                webpageFetch: { enabled: false },
-              },
-              brave: {
-                enabled: true,
-                apiKey: 'key',
-                web: { enabled: true },
-                images: { enabled: true },
-                news: { enabled: false },
-                video: { enabled: true },
-              },
-              searxng: { enabled: false },
-              browserBase: {
-                enabled: false,
-                search: { enabled: false },
-                fetch: { enabled: false },
+                scrape: { enabled: false },
               },
             }),
           },
@@ -464,14 +407,7 @@ describe('InterpretActionService', () => {
     });
 
     expect(result.intent.template).toBe('evaluation');
-    expect(result.intent.tools).toEqual(
-      expect.arrayContaining([
-        'webSearch',
-        'serperImageSearch',
-        'serperVideoSearch',
-      ]),
-    );
-    expect(result.intent.tools).toHaveLength(3);
+    expect(result.intent.tools).toEqual(['webSearch']);
   });
 
   it('defaults imageCount and videoCount to 6 when media tools are selected', async () => {
@@ -511,20 +447,7 @@ describe('InterpretActionService', () => {
                 shopping: { enabled: false },
                 reviews: { enabled: false },
                 videos: { enabled: true },
-                webpageFetch: { enabled: false },
-              },
-              brave: {
-                enabled: false,
-                web: { enabled: false },
-                images: { enabled: false },
-                news: { enabled: false },
-                video: { enabled: false },
-              },
-              searxng: { enabled: false },
-              browserBase: {
-                enabled: false,
-                search: { enabled: false },
-                fetch: { enabled: false },
+                scrape: { enabled: false },
               },
             }),
           },
@@ -585,20 +508,7 @@ describe('InterpretActionService', () => {
                 shopping: { enabled: false },
                 reviews: { enabled: false },
                 videos: { enabled: true },
-                webpageFetch: { enabled: false },
-              },
-              brave: {
-                enabled: false,
-                web: { enabled: false },
-                images: { enabled: false },
-                news: { enabled: false },
-                video: { enabled: false },
-              },
-              searxng: { enabled: false },
-              browserBase: {
-                enabled: false,
-                search: { enabled: false },
-                fetch: { enabled: false },
+                scrape: { enabled: false },
               },
             }),
           },

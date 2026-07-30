@@ -8,14 +8,19 @@ import {
 import { AlertCircle, Check, ChevronDown } from '@lucide/vue';
 import { computed } from 'vue';
 
-const props = defineProps<{
-  modelValue: string;
-  options: string[];
-  placeholder?: string;
-  disabled?: boolean;
-  blinking?: boolean;
-  errored?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: string;
+    options: string[];
+    placeholder?: string;
+    disabled?: boolean;
+    blinking?: boolean;
+    errored?: boolean;
+    /** Whether the picked option is marked with a check icon (default true). */
+    checkmark?: boolean;
+  }>(),
+  { checkmark: true, placeholder: '' },
+);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -63,7 +68,10 @@ const displayValue = computed(() => {
             }"
           >
             <span>{{ option }}</span>
-            <Check v-if="selected" class="input-select__check-icon" />
+            <Check
+              v-if="selected && checkmark"
+              class="input-select__check-icon"
+            />
           </li>
         </ListboxOption>
       </ListboxOptions>

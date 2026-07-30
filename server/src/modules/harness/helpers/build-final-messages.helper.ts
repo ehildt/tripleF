@@ -34,6 +34,7 @@ function buildMediaInstructions(
     return [
       `You have ${imageCount} image URL(s) in availableImages.`,
       `Put every suitable image URL into galleryItems (at most ${imageTargetCount}). This template has NO hero image — every image lives in galleryItems.`,
+      'Skip any imageUrl that already appeared in an earlier imagelist response in the conversation history ("Previously shown images") — never return images the user has already seen.',
       'You MUST use these exact URLs in the response JSON. Do not ignore them.',
       'Each galleryItems entry must be an object with imageUrl, imageAlt, title, and caption. imageAlt and title must be non-empty.',
       'Copy width, height, and source from the availableImages entries into each galleryItems entry.',
@@ -55,6 +56,18 @@ function buildMediaInstructions(
       'If media URLs are present, leaving videoGalleryItems empty is a failure.',
       'Never fabricate URLs — only use availableVideos.',
       'VIDEO RESTRICTION: only YouTube, Vimeo, Dailymotion, Loom, Wistia or direct video files.',
+    ];
+  }
+
+  if (template === 'shoplist') {
+    return [
+      `You have ${imageCount} image URL(s) in availableImages.`,
+      'This template has NO hero media, NO galleries, and NO videos — images only appear as shopOffers[].imageUrl.',
+      'Use the shopOffers array from this context verbatim for the shopOffers field — every offer has title, price, source, and link. Sort by ascending price.',
+      "Attach the best matching product image from availableImages to each offer's imageUrl. The same product image may be reused across offers of the same product. Leave imageUrl empty when no image matches — never invent URLs.",
+      'If shopOffers is non-empty, leaving the shopOffers field empty is a failure.',
+      'Never fabricate URLs — offer links come from shopOffers/webSearch results, image URLs only from availableImages.',
+      'IMAGE RESTRICTION: trusted sources only. No Google thumbnails, data URIs, localhost, or private IPs.',
     ];
   }
 

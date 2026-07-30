@@ -3,18 +3,27 @@ import type { IntentResult } from '../templates/intent.schema.js';
 
 type ToolArray = IntentResult['tools'];
 
-const mediaTemplates = new Set([
-  'article',
-  'news',
-  'summary',
-  'evaluation',
-  'product',
-]);
+const mediaTemplates = new Set(['article', 'news', 'product']);
+
+/**
+ * Summary and evaluation are NOT in the forced-media set: the intent
+ * classifier already adds media/search tools for them when the user asks
+ * for external facts, and their instructions only use media "when online
+ * research returns". Forcing searches for a plain recap or a judgment
+ * about the conversation would waste tool calls and inject unsolicited
+ * galleries.
+ */
+
+/**
+ * Shoplist is a compact purchase list: it needs product images and shopping
+ * results, but never videos.
+ */
+const shoplistTemplates = new Set(['shoplist']);
 
 const imageOnlyMediaTemplates = new Set(['compare', 'describe']);
 
 /**
- * Media templates (article/news/summary/evaluation/product) always need image
+ * Media templates (article/news/product) always need image
  * and video search so they can illustrate their answer.
  */
 function ensureMediaSearchTools(
@@ -36,13 +45,36 @@ function ensureMediaSearchTools(
 
   // Product template also needs shopping + reviews tools when available.
   if (intent.template === 'product') {
-    return ensureProductTools(
-      [...requiredTools],
-      enabledToolNames,
-    ) as unknown as ToolArray;
+    return ensureShoppingTools([...requiredTools], enabledToolNames, {
+      includeReviews: true,
+    }) as unknown as ToolArray;
   }
 
   return [...requiredTools] as unknown as ToolArray;
+}
+
+/**
+ * Shoplist needs image search (product images for the compact list) plus
+ * shopping search (prices and sellers). Reviews search is intentionally not
+ * forced — the offers carry per-offer ratings, and the compact list does not
+ * render seller reviews.
+ */
+function ensureShoplistTools(
+  intent: IntentResult,
+  enabledToolNames: string[],
+): ToolArray {
+  if (!shoplistTemplates.has(intent.template)) return intent.tools;
+
+  const categories = categorizeTools(enabledToolNames);
+  const withImages = new Set<string>(intent.tools);
+  for (const tool of categories.imageSearch) {
+    withImages.add(tool as ToolArray[number]);
+  }
+
+  return ensureShoppingTools(
+    [...withImages],
+    enabledToolNames,
+  ) as unknown as ToolArray;
 }
 
 /**
@@ -89,17 +121,19 @@ function ensureMediaListTools(
 }
 
 /**
- * Add shopping and reviews search tools for product intent when available.
+ * Add shopping-related search tools for purchase templates when available.
+ * Reviews search (seller reputation) is only forced for the full product
+ * overview — the compact shoplist does not render seller reviews.
  */
-function ensureProductTools(
+function ensureShoppingTools(
   tools: string[],
   enabledToolNames: string[],
+  { includeReviews = false }: { includeReviews?: boolean } = {},
 ): string[] {
   const expanded = new Set<string>(tools);
   for (const name of enabledToolNames) {
-    if (name.includes('ShoppingSearch') || name.includes('ReviewsSearch')) {
-      expanded.add(name);
-    }
+    if (name.includes('ShoppingSearch')) expanded.add(name);
+    if (includeReviews && name.includes('ReviewsSearch')) expanded.add(name);
   }
   return [...expanded];
 }
@@ -116,8 +150,12 @@ export function enforceRequiredTools(
     { ...intent, tools },
     enabledToolNames,
   );
-  return ensureMediaSearchTools(
+  const withShoplistTools = ensureShoplistTools(
     { ...intent, tools: withMediaListTools },
+    enabledToolNames,
+  );
+  return ensureMediaSearchTools(
+    { ...intent, tools: withShoplistTools },
     enabledToolNames,
   );
 }

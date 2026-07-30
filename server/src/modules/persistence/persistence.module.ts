@@ -7,6 +7,7 @@ import { ConfigService } from './services/config.service.js';
 import { ConversationRepository } from './services/conversation.repository.js';
 import { ConversationService } from './services/conversation.service.js';
 import { ProviderOverridesRepository } from './services/provider-overrides.repository.js';
+import { ShownMediaRepository } from './services/shown-media.repository.js';
 
 @Global()
 @Module({
@@ -17,7 +18,13 @@ import { ProviderOverridesRepository } from './services/provider-overrides.repos
     ConfigRepository,
     ConfigService,
     ProviderOverridesRepository,
+    ShownMediaRepository,
   ],
-  exports: [ConversationService, ConfigService, ProviderOverridesRepository],
+  exports: [
+    ConversationService,
+    ConfigService,
+    ProviderOverridesRepository,
+    ShownMediaRepository,
+  ],
 })
 export class PersistenceModule {}

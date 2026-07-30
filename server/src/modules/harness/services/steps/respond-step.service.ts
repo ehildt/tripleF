@@ -11,16 +11,18 @@ import {
 import { dedupeGalleryItems } from '../../helpers/dedupe-gallery-items.helper.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
 import { enforceAvailableMediaUrls } from '../../helpers/enforce-available-media-urls.helper.js';
-import { ensureProductShopOffers } from '../../helpers/ensure-product-shop-offers.helper.js';
+import { ensureShopOffers } from '../../helpers/ensure-shop-offers.helper.js';
 import {
   extractImageSearchItems,
   extractVideoSearchItems,
 } from '../../helpers/extract-media-from-tools.helper.js';
 import { extractShopOffers } from '../../helpers/extract-shop-offers.helper.js';
+import { extractStorageHash } from '../../helpers/extract-storage-hash.helper.js';
 import { filterExistingGalleryItems } from '../../helpers/filter-existing-gallery-items.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
+import { ShownMediaService } from '../shown-media.service.js';
 
 @Injectable()
 export class RespondStepService implements StepHandler {
@@ -29,6 +31,7 @@ export class RespondStepService implements StepHandler {
     private readonly io: SocketIOService,
     private readonly stepLogger: HarnessStepLogger,
     private readonly minioService: MinioService,
+    private readonly shownMedia: ShownMediaService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
@@ -101,6 +104,8 @@ export class RespondStepService implements StepHandler {
     ctx.outputs.inputTokens = inputTokens;
     ctx.outputs.outputTokens = outputTokens;
 
+    await this.recordShownMedia(ctx, mediaCheckedData, limitedGalleryItems);
+
     const stats = this.parseResponseStats(content);
 
     this.stepLogger.log(ctx, 'respond', 'response generated', {
@@ -134,7 +139,7 @@ export class RespondStepService implements StepHandler {
 
     // Shop-offers guard: shopping results existed but the model dropped the
     // field — inject the extracted offers so the card never shows 0 stores.
-    const withOffers = ensureProductShopOffers(
+    const withOffers = ensureShopOffers(
       mergedData,
       ctx.outputs.intent?.template,
       extractShopOffers(ctx.outputs.toolResults),
@@ -218,25 +223,19 @@ export class RespondStepService implements StepHandler {
   ): Record<string, unknown> | undefined {
     if (!data) return data;
 
-    const extractHash = (url: string): string | undefined => {
-      const lastSlash = url.lastIndexOf('/');
-      if (lastSlash === -1) return undefined;
-      return url.slice(lastSlash + 1).split('?')[0];
-    };
-
     const existingHashes = new Set<string>(
       ((data.galleryItems as GalleryItem[]) ?? [])
         .filter(
           (item): item is GalleryItem => typeof item?.imageUrl === 'string',
         )
-        .map((item) => extractHash(item.imageUrl))
+        .map((item) => extractStorageHash(item.imageUrl))
         .filter((hash): hash is string => !!hash),
     );
 
     const missingLocal = galleryItems
       .filter((item) => item.source === 'local')
       .filter((item) => {
-        const hash = extractHash(item.imageUrl);
+        const hash = extractStorageHash(item.imageUrl);
         return hash ? !existingHashes.has(hash) : false;
       });
 
@@ -258,6 +257,51 @@ export class RespondStepService implements StepHandler {
       ...data,
       galleryItems: dedupeGalleryItems(withoutHeroDuplicates),
     };
+  }
+
+  /**
+   * Persist the media this response rendered so the next media-list
+   * follow-up in this conversation can skip it. Recording is best-effort:
+   * a failure degrades to a possible repeat, never to a failed job.
+   */
+  private async recordShownMedia(
+    ctx: HarnessContext,
+    data: Record<string, unknown> | undefined,
+    galleryItems: GalleryItem[],
+  ): Promise<void> {
+    if (!data) return;
+
+    const localImageUrls = new Set(
+      galleryItems
+        .filter((item) => item.source === 'local')
+        .map((item) => item.imageUrl),
+    );
+    const fingerprintByStorageUrl = new Map(
+      (ctx.outputs.ingestedForRewrite ?? []).map((img) => [
+        img.imageUrl,
+        img.fingerprint,
+      ]),
+    );
+
+    try {
+      const recordedCount = await this.shownMedia.recordShownMedia({
+        sessionId: ctx.sessionId,
+        conversationId: ctx.filters.conversationId,
+        requestId: ctx.requestId,
+        data,
+        sources: { localImageUrls, fingerprintByStorageUrl },
+      });
+
+      if (recordedCount > 0) {
+        this.stepLogger.log(ctx, 'respond', 'shown media recorded', {
+          recordedCount,
+        });
+      }
+    } catch (error) {
+      this.stepLogger.warn(ctx, 'respond', 'shown media recording failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   private parseResponseStats(content: string) {

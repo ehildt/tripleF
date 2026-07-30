@@ -57,6 +57,18 @@ export type HarnessConversation = Prisma.HarnessConversationModel
  */
 export type HarnessConfig = Prisma.HarnessConfigModel
 /**
+ * Model HarnessShownMedia
+ * *
+ *  * Media the user has already been shown inside a conversation, keyed by
+ *  * deterministic identity: image entries carry the normalized content
+ *  * fingerprint (fp:) or storage hash (sh:), video entries carry the canonical
+ *  * provider keys produced by videoUrlKeys. Written at respond time from the
+ *  * guarded final data; read at sanitize time so media-list follow-ups never
+ *  * repeat already-shown content. Rows are purged when their conversation or
+ *  * session is deleted.
+ */
+export type HarnessShownMedia = Prisma.HarnessShownMediaModel
+/**
  * Model HarnessProviderOverride
  * 
  */

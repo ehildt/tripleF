@@ -156,7 +156,6 @@ function onFileButtonMouseLeave() {
     <textarea
       :value="props.value"
       :rows="2"
-      placeholder="Enter your text here…  (Enter: send, Shift+Enter: new line)"
       class="chat-prompt-action-bar__input"
       style="caret-shape: block"
       :disabled="props.isCompacting"

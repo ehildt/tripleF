@@ -8,4 +8,4 @@ export const ITEM_SHAPES = `ITEM SHAPES
 - videoGalleryItems entries must include videoUrl, title, and caption. title and caption must be non-empty descriptive strings.
   Example: [{ "videoUrl": "https://www.youtube.com/watch?v=ID", "title": "Official gameplay trailer", "caption": "First footage from the reveal" }]
 
-- shopOffers entries need title, price, source, link, and may include imageUrl, delivery, rating, and ratingCount.`;
+- shopOffers entries need title, price, source, link, and may include imageUrl, delivery, rating, and ratingCount. link must be a direct URL to the product page on the merchant's website; when no product page URL is available, link the merchant's homepage. Google Shopping, Google search, and Google redirect links (google.com/shopping, /search, /aclk) are forbidden — never emit them.`;

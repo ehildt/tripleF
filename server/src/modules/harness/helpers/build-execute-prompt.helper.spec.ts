@@ -29,8 +29,7 @@ const buildIntent = (overrides: Partial<IntentResult> = {}): IntentResult =>
 describe('isNoFallbackTool', () => {
   it('marks URL/title-based tools as unsuitable for fallback invocation', () => {
     expect(isNoFallbackTool('webFetch')).toBe(true);
-    expect(isNoFallbackTool('serperWebpageFetch')).toBe(true);
-    expect(isNoFallbackTool('wikipediaGetPage')).toBe(true);
+    expect(isNoFallbackTool('serperWebpageScrape')).toBe(true);
   });
 
   it('allows search tools for fallback invocation', () => {
@@ -42,11 +41,9 @@ describe('isNoFallbackTool', () => {
 describe('isPureSearchTool', () => {
   it('recognizes keyword-based search tools', () => {
     expect(isPureSearchTool('webSearch')).toBe(true);
-    expect(isPureSearchTool('wikipediaSearch')).toBe(true);
-    expect(isPureSearchTool('hackerNewsSearch')).toBe(true);
     expect(isPureSearchTool('serperWebSearch')).toBe(true);
     expect(isPureSearchTool('serperShoppingSearch')).toBe(true);
-    expect(isPureSearchTool('serperReviewsSearch')).toBe(true);
+    expect(isPureSearchTool('serperBusinessReviewsSearch')).toBe(true);
     expect(isPureSearchTool('serperPlacesSearch')).toBe(true);
   });
 
@@ -73,8 +70,7 @@ describe('enrichSearchInput', () => {
 describe('buildFallbackInput', () => {
   it('returns undefined for non-fallback tools', () => {
     expect(buildFallbackInput('webFetch', 'q')).toBeUndefined();
-    expect(buildFallbackInput('serperWebpageFetch', 'q')).toBeUndefined();
-    expect(buildFallbackInput('wikipediaGetPage', 'q')).toBeUndefined();
+    expect(buildFallbackInput('serperWebpageScrape', 'q')).toBeUndefined();
   });
 
   it('builds image search input with count and language', () => {

@@ -11,4 +11,10 @@ export interface ToolDependencies {
   ) => Promise<{ text: string }>;
   model?: string;
   notify?: (event: string, data?: unknown) => void;
+  /**
+   * Fallback locale (two-letter code of the detected user language) applied
+   * when the model omits a tool's lang input. Threaded from the intent
+   * classifier; nothing is hardcoded.
+   */
+  defaultLang?: string;
 }

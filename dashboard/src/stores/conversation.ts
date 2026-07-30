@@ -2,10 +2,9 @@ import { defineStore } from 'pinia';
 import TurndownService from 'turndown';
 import { ref } from 'vue';
 
-import type { HarnessResponseData } from '@/types/harness-response-data.model';
-
 import { getApiUrl } from '../api/api-url';
 import {
+  type ConversationContent,
   deleteConversation as deleteServerConversation,
   fetchConversation,
   fetchConversations,
@@ -13,191 +12,41 @@ import {
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
-import type { ConversationMetadataImage } from '../utils/build-query-params.helper';
 import { createId } from '../utils/id.helper';
 import { calcInputTokenDelta } from './helpers/calc-input-token-delta.helper';
+import { createConversation } from './helpers/create-conversation.helper';
+import { fromPersistedConversation } from './helpers/from-persisted-conversation.helper';
+import { getLatestRequestId } from './helpers/get-latest-request-id.helper';
 import { getPersistentSocketSessionId } from './helpers/get-persistent-socket-session-id.helper';
+import { inferConversationTitle } from './helpers/infer-conversation-title.helper';
+import { isTemporaryConversationExpired } from './helpers/is-temporary-conversation-expired.helper';
+import { mergeUploadedImages } from './helpers/merge-uploaded-images.helper';
+import { prunePairedExchange } from './helpers/prune-paired-exchange.helper';
+import { toPersistedConversation } from './helpers/to-persisted-conversation.helper';
 import { toPromptMessage } from './helpers/to-prompt-message.helper';
+import { togglePairedExchangeIncluded } from './helpers/toggle-paired-exchange-included.helper';
+import { withTemplateMarker } from './helpers/with-template-marker.helper';
+import type {
+  Conversation,
+  ConversationSubscription,
+  ConversationType,
+  PersistedConversation,
+  UploadedImage,
+} from './conversation.model';
 import { useSocketStore } from './socket';
+
+export type {
+  Conversation,
+  Exchange,
+  UploadedImage,
+} from './conversation.model';
 
 const turndown = new TurndownService({
   headingStyle: 'atx',
   codeBlockStyle: 'fenced',
 });
 
-interface SavedFileInfo {
-  name: string;
-  size: number;
-  type: string;
-}
-
-export interface UploadedImage {
-  name: string;
-  hash: string;
-  uploadedAt: number;
-  size?: number;
-  selected?: boolean;
-  conversationId: string;
-  source?: 'local' | 'cloud';
-}
-
-export interface Exchange {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  requestId?: string;
-  status: 'pending' | 'streaming' | 'done' | 'error';
-  timestamp: number;
-  model?: string;
-  event?: string;
-  roomId?: string;
-  conversationId?: string;
-  // Token data: promptEvalCount is the cumulative input token count reported
-  // by Ollama for this turn. evalCount is the output tokens for this response.
-  // inputTokenDelta holds the non-cumulative inputs added by this specific
-  // turn so excluded exchanges can be deducted from totals correctly.
-  promptEvalCount?: number;
-  evalCount?: number;
-  inputTokenDelta?: number;
-  // Currently running tool calls for this exchange. Parallel searches are
-  // tracked individually so the activity label can group them by category
-  // instead of flickering through near-duplicate labels.
-  toolCalls?: Array<{
-    name: string;
-    category?: string;
-    query?: string;
-    status: string;
-  }>;
-  // Live activity while the request is processed: the current step or tool
-  // label (fallback for non-thinking models) and the streamed thinking text.
-  activity?: string;
-  reasoning?: string;
-  included?: boolean;
-  // Images that were associated with this prompt, either uploaded as new
-  // files in the form data or referenced through conversation metadata.
-  images?: ConversationMetadataImage[];
-  harnessTemplate?: string;
-  harnessData?: HarnessResponseData;
-  text?: string;
-}
-
-interface ConversationSubscription {
-  event: string;
-  roomId: string;
-}
-
-type ConversationType = 'temporary' | 'persistent';
-
-export interface Conversation {
-  id: string;
-  title: string;
-  exchanges: Exchange[];
-  files: File[];
-  savedFileInfos: SavedFileInfo[];
-  uploadedImages: UploadedImage[];
-  imageSelectionSnapshot: Record<string, boolean>;
-  conversationId: string;
-  model: string;
-  numCtx: string;
-  think: string;
-  event: string;
-  roomId: string;
-  stream: boolean;
-  subscriptions: ConversationSubscription[];
-  type: ConversationType;
-  task?: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-interface PersistedConversation {
-  id: string;
-  title: string;
-  exchanges: Exchange[];
-  savedFileInfos: SavedFileInfo[];
-  uploadedImages: UploadedImage[];
-  imageSelectionSnapshot?: Record<string, boolean>;
-  conversationId: string;
-  model: string;
-  numCtx: string;
-  think: string;
-  event: string;
-  roomId: string;
-  stream: boolean;
-  subscriptions?: ConversationSubscription[];
-  type: ConversationType;
-  task?: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
 const SESSION_ID = getPersistentSocketSessionId();
-const TEMP_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-function createConversation(partial?: Partial<Conversation>): Conversation {
-  const now = Date.now();
-  return {
-    id: createId(),
-    title: 'New Conversation',
-    exchanges: [],
-    files: [],
-    savedFileInfos: [],
-    uploadedImages: partial?.uploadedImages ?? [],
-    imageSelectionSnapshot: partial?.imageSelectionSnapshot ?? {},
-    conversationId: partial?.conversationId ?? createId(),
-    model: partial?.model ?? '',
-    numCtx: partial?.numCtx ?? '',
-    think: partial?.think ?? 'medium',
-    event: partial?.event ?? '',
-    roomId: partial?.roomId ?? '',
-    stream: partial?.stream ?? true,
-    subscriptions: partial?.subscriptions ?? [],
-    type: partial?.type ?? 'temporary',
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-function toPersistedConversation(
-  conversation: Conversation,
-): PersistedConversation {
-  return {
-    id: conversation.id,
-    title: conversation.title,
-    exchanges: conversation.exchanges,
-    savedFileInfos: conversation.savedFileInfos,
-    uploadedImages: conversation.uploadedImages,
-    imageSelectionSnapshot: conversation.imageSelectionSnapshot,
-    conversationId: conversation.conversationId,
-    model: conversation.model,
-    numCtx: conversation.numCtx,
-    think: conversation.think,
-    event: conversation.event,
-    roomId: conversation.roomId,
-    stream: conversation.stream,
-    subscriptions: conversation.subscriptions,
-    type: conversation.type,
-    task: conversation.task,
-    createdAt: conversation.createdAt,
-    updatedAt: conversation.updatedAt,
-  };
-}
-
-function fromPersistedConversation(
-  persisted: PersistedConversation,
-): Conversation {
-  return {
-    ...persisted,
-    files: [],
-    uploadedImages: (persisted.uploadedImages ?? []).map((img) => ({
-      ...img,
-      selected: (img as UploadedImage).selected ?? true,
-    })),
-    imageSelectionSnapshot: persisted.imageSelectionSnapshot ?? {},
-    subscriptions: persisted.subscriptions ?? [],
-    type: persisted.type ?? 'temporary',
-  } as Conversation;
-}
 
 async function loadConversations(): Promise<Conversation[]> {
   try {
@@ -217,9 +66,11 @@ async function loadConversations(): Promise<Conversation[]> {
         } else if (merged.content.updatedAt) {
           updatedAt = new Date(String(merged.content.updatedAt)).getTime();
         }
-        const type = merged.content.type ?? 'temporary';
-        if (type !== 'temporary') return true;
-        return now - updatedAt <= TEMP_SESSION_TTL_MS;
+        return !isTemporaryConversationExpired(
+          merged.content.type,
+          updatedAt,
+          now,
+        );
       })
       .map((merged) =>
         fromPersistedConversation({
@@ -232,11 +83,6 @@ async function loadConversations(): Promise<Conversation[]> {
   }
 }
 
-function getLatestRequestId(conversation: Conversation): string {
-  const latest = [...conversation.exchanges].reverse().find((e) => e.requestId);
-  return latest?.requestId ?? conversation.conversationId;
-}
-
 async function saveConversationToServer(conversation: Conversation) {
   try {
     const content = toPersistedConversation(conversation);
@@ -244,7 +90,7 @@ async function saveConversationToServer(conversation: Conversation) {
       SESSION_ID,
       conversation.conversationId,
       getLatestRequestId(conversation),
-      content as Record<string, unknown>,
+      content as unknown as ConversationContent,
     );
   } catch {
     // Offline — the in-memory store remains usable.
@@ -404,24 +250,19 @@ export const useConversationStore = defineStore('conversation', () => {
       timestamp: Date.now(),
     });
     conversation.updatedAt = Date.now();
-    if (conversation.title === 'New Conversation') {
-      conversation.title = exchange.content.slice(0, 50) || 'New Conversation';
-    }
+    conversation.title = inferConversationTitle(
+      conversation.title,
+      exchange.content,
+    );
     void saveConversationToServer(conversation);
   }
 
   function deleteExchangeAndPrune(conversationId: string, exchangeId: string) {
     const conversation = getConversation(conversationId);
     if (!conversation) return;
-    const idx = conversation.exchanges.findIndex((e) => e.id === exchangeId);
-    if (idx === -1) return;
-    const next = conversation.exchanges[idx + 1];
-    if (
-      next?.role === 'assistant' &&
-      next.requestId === conversation.exchanges[idx].requestId
-    )
-      conversation.exchanges.splice(idx, 2);
-    else conversation.exchanges.splice(idx, 1);
+    const next = prunePairedExchange(conversation.exchanges, exchangeId);
+    if (next === conversation.exchanges) return;
+    conversation.exchanges = next;
 
     void saveConversationToServer(conversation);
   }
@@ -676,28 +517,11 @@ export const useConversationStore = defineStore('conversation', () => {
     const conversation = getConversation(conversationId);
     if (!conversation) return;
     const cid = getConversationId(conversationId);
-    const seen = new Set<string>();
-    const merged: UploadedImage[] = [];
-    for (const img of [...conversation.uploadedImages, ...images]) {
-      const key = `${img.hash}:${img.conversationId ?? cid}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const existing = conversation.uploadedImages.find(
-        (i) =>
-          i.hash === img.hash &&
-          (i.conversationId ?? cid) === (img.conversationId ?? cid),
-      );
-      merged.push({
-        ...img,
-        conversationId: img.conversationId ?? cid,
-        selected: existing?.selected ?? img.selected ?? true,
-        source:
-          img.source === 'cloud'
-            ? ('cloud' as const)
-            : (existing?.source ?? img.source ?? 'local'),
-      });
-    }
-    conversation.uploadedImages = merged;
+    conversation.uploadedImages = mergeUploadedImages(
+      conversation.uploadedImages,
+      images,
+      cid,
+    );
     void saveConversationToServer(conversation);
   }
 
@@ -813,27 +637,12 @@ export const useConversationStore = defineStore('conversation', () => {
   function toggleExchangeIncluded(conversationId: string, exchangeId: string) {
     const conversation = getConversation(conversationId);
     if (!conversation) return;
-    const idx = conversation.exchanges.findIndex((e) => e.id === exchangeId);
-    if (idx === -1) return;
-
-    // Toggle this exchange and its paired partner so both user prompt +
-    // assistant response are included/excluded together.
-    const target = conversation.exchanges[idx];
-    const newVal = target.included !== false ? false : true;
-    target.included = newVal;
-
-    // Check forward for paired assistant, or backward for paired user
-    if (
-      idx < conversation.exchanges.length - 1 &&
-      conversation.exchanges[idx + 1].requestId === target.requestId
-    ) {
-      conversation.exchanges[idx + 1].included = newVal;
-    } else if (
-      idx > 0 &&
-      conversation.exchanges[idx - 1].requestId === target.requestId
-    ) {
-      conversation.exchanges[idx - 1].included = newVal;
-    }
+    const next = togglePairedExchangeIncluded(
+      conversation.exchanges,
+      exchangeId,
+    );
+    if (!next) return;
+    conversation.exchanges = next;
 
     void saveConversationToServer(conversation);
   }
@@ -844,10 +653,15 @@ export const useConversationStore = defineStore('conversation', () => {
     const messages = conversation.exchanges
       .filter((e) => e.included !== false)
       .map((e) => {
-        const message = toPromptMessage(e);
+        const message = toPromptMessage(e, { includeTemplateMarker: false });
         return {
           role: message.role,
-          content: turndown.turndown(message.content),
+          // The classifier marker survives only outside turndown: brackets
+          // would be escaped and the newline collapsed to a space.
+          content: withTemplateMarker(
+            turndown.turndown(message.content),
+            e.harnessTemplate,
+          ),
         };
       })
       .filter(

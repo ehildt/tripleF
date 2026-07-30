@@ -1,6 +1,6 @@
 {
   "name": "@triplef.io/dashboard",
-  "description": "tripleF ({fff}) dashboard — the Vue 3 workbench UI for the {fff} harness: chat, system control, dead-letter replay, image preprocessing.",
+  "description": "tripleF (3F) dashboard — the Vue 3 workbench UI for the 3F harness: chat, system control, dead-letter replay, image preprocessing.",
   "version": "0.3.1",
   "type": "module",
   "license": "MIT",

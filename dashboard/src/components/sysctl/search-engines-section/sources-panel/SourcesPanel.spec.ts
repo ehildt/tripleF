@@ -3,19 +3,19 @@ import { describe, expect, it } from 'vitest';
 
 import SourcesPanel from './SourcesPanel.vue';
 
-function mountPanel(sources = { preferred: ['wikipedia.org'], blocked: [] }) {
+function mountPanel(sources = { preferred: ['bbc.com'], blocked: [] }) {
   return mount(SourcesPanel, { props: { sources } });
 }
 
 describe('SourcesPanel', () => {
   it('prefills the textareas from the sources prop', () => {
     const wrapper = mountPanel({
-      preferred: ['wikipedia.org', 'arstechnica.com'],
+      preferred: ['bbc.com', 'arstechnica.com'],
       blocked: ['pinterest.com'],
     });
     const [preferred, blocked] = wrapper.findAll('textarea');
     expect((preferred.element as HTMLTextAreaElement).value).toBe(
-      'wikipedia.org\narstechnica.com',
+      'bbc.com\narstechnica.com',
     );
     expect((blocked.element as HTMLTextAreaElement).value).toBe(
       'pinterest.com',
@@ -27,9 +27,9 @@ describe('SourcesPanel', () => {
     const preferred = wrapper.findAll('textarea')[0];
     // setValue dispatches input + change (v-model.lazy support) — the
     // textarea's change listener carries the save.
-    await preferred.setValue('https://www.wikipedia.org/x\nNot A Host');
+    await preferred.setValue('https://www.bbc.com/x\nNot A Host');
     expect(wrapper.emitted('patch')).toEqual([
-      [{ key: 'preferred', value: ['wikipedia.org'] }],
+      [{ key: 'preferred', value: ['bbc.com'] }],
     ]);
   });
 

@@ -3,6 +3,8 @@ import { io } from 'socket.io-client';
 import { ref } from 'vue';
 
 import type { SocketDebugEntry } from '../types/socket-debug-entry.model';
+import { buildConnectedPairs } from './helpers/build-connected-pairs.helper';
+import { createEventListener } from './helpers/create-event-listener.helper';
 import { getPersistentSocketSessionId } from './helpers/get-persistent-socket-session-id.helper';
 import { makeDebugEntry } from './helpers/make-debug-entry.helper';
 
@@ -21,22 +23,6 @@ export const useSocketStore = defineStore('socket', () => {
   const connectedRooms = ref<Map<string, Set<string>>>(new Map());
   const connectedPairs = ref<string[]>([]);
 
-  function buildConnectedPairs() {
-    const result: string[] = [];
-    const sortedEvents = Array.from(connectedEvents.value).sort();
-    for (const event of sortedEvents) {
-      const rooms = connectedRooms.value.get(event);
-      if (rooms && rooms.size > 0) {
-        for (const room of Array.from(rooms).sort()) {
-          result.push(`${event}::${room}`);
-        }
-      } else {
-        result.push(event);
-      }
-    }
-    connectedPairs.value = result;
-  }
-
   function bumpSubscription() {
     connectedEvents.value = new Set(connectedEvents.value);
     const cloned = new Map<string, Set<string>>();
@@ -44,7 +30,10 @@ export const useSocketStore = defineStore('socket', () => {
       cloned.set(k, new Set(v));
     }
     connectedRooms.value = cloned;
-    buildConnectedPairs();
+    connectedPairs.value = buildConnectedPairs(
+      connectedEvents.value,
+      connectedRooms.value,
+    );
   }
 
   const eventListeners = new Map<string, (...args: unknown[]) => void>();
@@ -149,75 +138,12 @@ export const useSocketStore = defineStore('socket', () => {
       return;
     }
 
-    const listener = (data: unknown) => {
-      // Inject conversationId into the data before passing to message callback
-      const dataWithSession = data as Record<string, unknown>;
-      if (typeof dataWithSession === 'object' && dataWithSession !== null) {
-        dataWithSession.conversationId = socketId.value;
-      }
-
-      // Route to message store - it will filter based on tracked request IDs
-      addMessageCallback?.(eventName, dataWithSession);
-
-      // Normalize Ollama snake_case fields
-      const raw = dataWithSession as Record<string, unknown>;
-      const promptEvalCount = (raw.promptEvalCount ?? raw.prompt_eval_count) as
-        number | undefined;
-      const evalCount = (raw.evalCount ?? raw.eval_count) as number | undefined;
-      const evalDuration = (raw.evalDuration ?? raw.eval_duration) as
-        number | undefined;
-      const totalDuration = (raw.totalDuration ?? raw.total_duration) as
-        number | undefined;
-
-      // Log socket data received in debug log
-      const d = raw as unknown as {
-        requestId?: string;
-        roomId?: string;
-        meta?: Array<{ requestId?: string }>;
-        stream?: boolean;
-        done?: boolean;
-      };
-      const requestId = d?.requestId || d?.meta?.[0]?.requestId;
-
-      if (requestId) {
-        // First DATA event per requestId
-        if (!loggedRequestIds.value.has(requestId)) {
-          loggedRequestIds.value.add(requestId);
-          addSocketDebugEntryCallback?.(
-            makeDebugEntry({
-              endpoint: `socket.io:${eventName}`,
-              method: 'DATA',
-              status: 'success',
-              direction: 'response',
-              requestId: requestId,
-              roomId: d?.roomId,
-              event: eventName,
-              stream: d?.stream,
-              conversationId: socketId.value || undefined,
-            }),
-          );
-        }
-        // Final event with token data
-        if (d?.done && (promptEvalCount != null || evalCount != null)) {
-          addSocketDebugEntryCallback?.(
-            makeDebugEntry({
-              endpoint: `socket.io:${eventName}`,
-              method: 'DONE',
-              status: 'success',
-              direction: 'response',
-              requestId: requestId,
-              roomId: d?.roomId,
-              event: eventName,
-              conversationId: socketId.value || undefined,
-              promptEvalCount,
-              evalCount,
-              evalDuration,
-              totalDuration,
-            }),
-          );
-        }
-      }
-    };
+    const listener = createEventListener(eventName, {
+      socketId,
+      loggedRequestIds,
+      onMessage: (event, payload) => addMessageCallback?.(event, payload),
+      onDebugEntry: (entry) => addSocketDebugEntryCallback?.(entry),
+    });
 
     eventListeners.set(eventName, listener);
     socket.value!.on(eventName, listener);

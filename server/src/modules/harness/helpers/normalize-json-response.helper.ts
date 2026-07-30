@@ -142,6 +142,11 @@ export function normalizeJsonResponse(
   normalizeField(normalized, 'cons', coerceToObject);
   normalizeField(normalized, 'reviewSummary', coerceToObject);
 
+  // Evaluation lists share the same { text } shape
+  normalizeField(normalized, 'strengths', coerceToObject);
+  normalizeField(normalized, 'weaknesses', coerceToObject);
+  normalizeField(normalized, 'recommendations', coerceToObject);
+
   // Sources (news requires a title)
   normalizeField(normalized, 'sources', (entry) =>
     coerceToSource(entry, template === 'news'),

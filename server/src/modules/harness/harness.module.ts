@@ -21,6 +21,7 @@ import { HarnessStepEngineService } from './services/harness-step-engine.service
 import { HarnessStepLogger } from './services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
+import { ShownMediaService } from './services/shown-media.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
 import { ExecuteStepService } from './services/steps/execute-step.service.js';
 import { InterpretStepService } from './services/steps/interpret-step.service.js';
@@ -51,6 +52,7 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
     ResponseValidatorService,
     MediaUrlValidatorService,
     CloudImageIngestionService,
+    ShownMediaService,
     ToolSelectionService,
     LifecycleService,
   ],
@@ -75,6 +77,7 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
     ResponseValidatorService,
     MediaUrlValidatorService,
     CloudImageIngestionService,
+    ShownMediaService,
     ToolSelectionService,
     LifecycleService,
   ],

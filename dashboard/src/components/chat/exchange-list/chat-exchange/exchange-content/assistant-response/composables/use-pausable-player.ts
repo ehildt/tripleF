@@ -28,8 +28,8 @@ type YouTubePlayerHandle = {
  * Shared player wiring for every embedded video in the app: resolves the
  * embed src with provider API flags and attaches the YouTube IFrame API for
  * true play state. Single-playback is guaranteed structurally — only the
- * active player is mounted at any time (see use-floating-player) — so this
- * composable never needs to pause other players.
+ * app-level floating player is mounted at any time (see use-floating-player-host)
+ * — so this composable never needs to pause other players.
  */
 export function usePausablePlayer(
   videoUrl: Ref<string>,

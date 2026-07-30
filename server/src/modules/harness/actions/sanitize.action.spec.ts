@@ -5,6 +5,7 @@ import { ProviderOverridesService } from '../../provider-overrides/services/prov
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
+import { ShownMediaService } from '../services/shown-media.service.js';
 
 import { SanitizeActionService } from './sanitize.action.js';
 
@@ -40,6 +41,13 @@ describe('SanitizeActionService', () => {
               .mockImplementation((urls: string[]) =>
                 Promise.resolve(urls.map((url) => ({ url, kind: 'unknown' }))),
               ),
+          },
+        },
+        {
+          provide: ShownMediaService,
+          useValue: {
+            lookupKeys: vi.fn().mockResolvedValue(undefined),
+            recordShownMedia: vi.fn().mockResolvedValue(0),
           },
         },
       ],
@@ -161,7 +169,6 @@ describe('SanitizeActionService', () => {
     expect(contextMessage).toContain('[TOOL CONTEXT — DO NOT OUTPUT]');
     expect(contextMessage).not.toContain('toolName');
     expect(contextMessage).not.toContain('"serper"');
-    expect(contextMessage).not.toContain('"brave"');
     expect(contextMessage).toContain('"example"');
     expect(contextMessage).toContain('"BBC"');
   });

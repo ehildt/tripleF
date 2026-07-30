@@ -28,7 +28,7 @@ export function processHarnessResponseEvent(
   // Never re-parse the (possibly invalid) raw deltas over it.
   const doneDataNormalized =
     event.done && event.data != null && typeof event.data === 'object'
-      ? normalizeHarnessResponseData(event.data, event)
+      ? normalizeHarnessResponseData(event.data, event, template)
       : null;
 
   if (doneDataNormalized) {
@@ -39,7 +39,7 @@ export function processHarnessResponseEvent(
     const parsed = parsePartialJson(stripMarkdownFences(accumulatedDelta));
     const normalized =
       parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? normalizeHarnessResponseData(parsed, event)
+        ? normalizeHarnessResponseData(parsed, event, template)
         : null;
     if (normalized) {
       lastValidData = normalized;

@@ -7,14 +7,13 @@ export type ToolCategory =
   | 'reviews'
   | 'places'
   | 'fetch'
-  | 'reference'
   | 'variants'
   | 'other';
 
 /**
  * Map a concrete tool name to a stable activity category. The client groups
- * simultaneous tool calls by category so parallel searches (e.g. serper +
- * brave web search) render as one activity instead of flickering duplicates.
+ * simultaneous tool calls by category so parallel searches (e.g. webSearch
+ * and serperWebSearch) render as one activity instead of flickering duplicates.
  *
  * Order matters: check the most specific suffixes before generic "search".
  */
@@ -26,7 +25,6 @@ export function resolveToolCategory(toolName: string): ToolCategory {
   if (/imageSearch/i.test(toolName)) return 'images';
   if (/videoSearch/i.test(toolName)) return 'videos';
   if (/newsSearch/i.test(toolName)) return 'news';
-  if (/wikipedia|hackerNews/i.test(toolName)) return 'reference';
   if (/fetch|webpage/i.test(toolName)) return 'fetch';
   if (/search|web/i.test(toolName)) return 'web';
   return 'other';

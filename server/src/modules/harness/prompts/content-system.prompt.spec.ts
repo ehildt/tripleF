@@ -7,7 +7,8 @@ describe('buildContentSystemPrompt', () => {
     const prompt = buildContentSystemPrompt({
       template: 'article',
       tools: [],
-      placeholders: ['title', 'summary'],
+      requiredKeys: ['title', 'summary'],
+      optionalKeys: [],
       isImageTask: false,
     });
 
@@ -21,7 +22,8 @@ describe('buildContentSystemPrompt', () => {
     const prompt = buildContentSystemPrompt({
       template: 'text',
       tools: [],
-      placeholders: ['text'],
+      requiredKeys: ['text'],
+      optionalKeys: [],
       isImageTask: false,
     });
 
@@ -35,7 +37,8 @@ describe('buildContentSystemPrompt', () => {
     const prompt = buildContentSystemPrompt({
       template: 'compact',
       tools: [],
-      placeholders: [],
+      requiredKeys: [],
+      optionalKeys: [],
       isImageTask: false,
     });
 
@@ -48,12 +51,14 @@ describe('buildContentSystemPrompt', () => {
     const prompt = buildContentSystemPrompt({
       template: 'describe',
       tools: [],
-      placeholders: ['title', 'galleryItems'],
+      requiredKeys: ['title'],
+      optionalKeys: ['galleryItems'],
       isImageTask: true,
     });
 
     expect(prompt).toContain('valid JSON object');
-    expect(prompt).toContain('title, galleryItems');
+    expect(prompt).toContain('required top-level keys: title');
+    expect(prompt).toContain('galleryItems');
     expect(prompt).toContain('MULTIMODAL RULES');
   });
 
@@ -62,7 +67,8 @@ describe('buildContentSystemPrompt', () => {
       template: 'article',
       instructions: 'Write like a news article.',
       tools: ['webSearch'],
-      placeholders: [],
+      requiredKeys: [],
+      optionalKeys: [],
       isImageTask: false,
     });
 

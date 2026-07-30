@@ -67,16 +67,15 @@ export function useExchangeRenderMode(
   });
 
   // User prompts style their own text bubble inside UserRequest; the image
-  // tiles above it must not sit inside the colored box.
+  // tiles above it must not sit inside the colored box. `content-body` is
+  // the semantic hook class the light mode uses for its code overrides.
   const containerClasses = computed(() => {
     const { isUser, isError, isHighlighted } = toValue(flags);
     if (!isUser || isError) {
       return buildMessageClasses({ isUser, isError, isHighlighted });
     }
-    const highlightClass = isHighlighted
-      ? 'exchange-content__message--highlighted'
-      : '';
-    return `text-sm font-mono content-body ${highlightClass}`;
+    const highlightClass = isHighlighted ? 'exchange-message--highlighted' : '';
+    return `exchange-user-wrap content-body ${highlightClass}`.trim();
   });
 
   const showStreamingCursor = computed(() => toValue(flags).isStreaming);

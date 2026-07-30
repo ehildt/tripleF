@@ -13,7 +13,7 @@ export interface SerperConfig {
   shopping: EndpointConfig;
   reviews: EndpointConfig;
   videos: EndpointConfig;
-  webpageFetch: { enabled: boolean };
+  scrape: { enabled: boolean };
 }
 
 export interface SourcesConfig {

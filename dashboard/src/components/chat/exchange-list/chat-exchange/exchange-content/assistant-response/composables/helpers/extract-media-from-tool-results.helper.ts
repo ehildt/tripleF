@@ -147,9 +147,18 @@ function buildVideoGalleryItems(
   return items;
 }
 
+/**
+ * Templates whose layout has no hero media. Synthesizing a hero from the
+ * first tool-result URL would silently consume that URL (the dedupe pass
+ * marks hero imagery as spent) while the component never renders a hero —
+ * the first imagelist/videolist item would vanish from the grid.
+ */
+const NO_HERO_TEMPLATES = new Set(['imagelist', 'videolist', 'shoplist']);
+
 export function extractMediaFromToolResults(
   toolResults: unknown[],
   data: HarnessResponseData,
+  template?: string,
 ): void {
   const results = (toolResults ?? []).filter(isToolResult);
   if (results.length === 0) return;
@@ -157,15 +166,21 @@ export function extractMediaFromToolResults(
   const { images, videos } = collectMediaUrls(results);
   if (images.length === 0 && videos.length === 0) return;
 
+  const heroAllowed = !template || !NO_HERO_TEMPLATES.has(template);
   const existingHeroImage = data.heroImageUrl?.trim();
   const existingHeroVideo = data.heroVideoUrl?.trim();
 
   // Prefer video hero when available, mirroring the server instructions.
-  if (!existingHeroVideo && videos.length > 0) {
+  if (heroAllowed && !existingHeroVideo && videos.length > 0) {
     data.heroVideoUrl = videos[0].url;
   }
 
-  if (!existingHeroImage && !data.heroVideoUrl && images.length > 0) {
+  if (
+    heroAllowed &&
+    !existingHeroImage &&
+    !data.heroVideoUrl &&
+    images.length > 0
+  ) {
     data.heroImageUrl = images[0].url;
   }
 

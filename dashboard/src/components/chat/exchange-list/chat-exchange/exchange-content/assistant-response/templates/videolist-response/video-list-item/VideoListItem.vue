@@ -132,9 +132,7 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   justify-content: space-between;
   gap: var(--spacing-2);
   /* room for the absolutely positioned playlist toggle in the top-right */
-  padding: var(--spacing-1-5) var(--spacing-8) var(--spacing-1-5)
-    var(--spacing-2);
-  border-bottom: 1px solid var(--color-divider);
+  padding: 0.5rem;
 }
 
 .video-item__title {
@@ -231,7 +229,6 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   gap: var(--spacing-1);
   margin: 0 var(--spacing-2) var(--spacing-2);
   padding: var(--spacing-1-5) var(--spacing-2);
-  border-left: 3px solid var(--color-accent-primary);
   background-color: var(--color-bg-tertiary);
   max-height: 10rem;
   overflow-y: auto;

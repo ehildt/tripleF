@@ -24,7 +24,6 @@ export const DEFAULT_POPOUT_REMEMBER_POSITION = true;
 export const DEFAULT_POPOUT_ENABLED = true;
 export const DEFAULT_POPOUT_HIDE_ON_PLAYLIST = false;
 export const DEFAULT_POPOUT_AUTO_DOCK = true;
-export const DEFAULT_POPOUT_STOP_ON_CLOSE = false;
 
 const POPOUT_ENABLED_STORAGE_KEY = 'vision-popout-enabled';
 const POPOUT_ANCHOR_STORAGE_KEY = 'vision-popout-anchor';
@@ -32,7 +31,6 @@ const POPOUT_REMEMBER_POSITION_STORAGE_KEY = 'vision-popout-remember-position';
 const POPOUT_RECT_STORAGE_KEY = 'vision-popout-rect';
 const POPOUT_HIDE_ON_PLAYLIST_STORAGE_KEY = 'vision-popout-hide-on-playlist';
 const POPOUT_AUTO_DOCK_STORAGE_KEY = 'vision-popout-auto-dock';
-const POPOUT_STOP_ON_CLOSE_STORAGE_KEY = 'vision-popout-stop-on-close';
 
 const POPOUT_ANCHORS: readonly PopoutAnchor[] = [
   'top-left',
@@ -118,15 +116,6 @@ export const popoutHideOnPlaylist = ref<boolean>(
  */
 export const popoutAutoDock = ref<boolean>(
   loadBoolean(POPOUT_AUTO_DOCK_STORAGE_KEY, DEFAULT_POPOUT_AUTO_DOCK),
-);
-
-/**
- * Close semantics for every popout (scroll-out float and playlist player):
- * on — closing stops playback and deselects the video; off — closing docks
- * the video back onto the page and keeps it playing.
- */
-export const popoutStopOnClose = ref<boolean>(
-  loadBoolean(POPOUT_STOP_ON_CLOSE_STORAGE_KEY, DEFAULT_POPOUT_STOP_ON_CLOSE),
 );
 
 /** Example popout shown from SysCtl → Widgets to preview the anchor. */
@@ -222,15 +211,6 @@ export function setPopoutAutoDock(enabled: boolean) {
   }
 }
 
-export function setPopoutStopOnClose(enabled: boolean) {
-  popoutStopOnClose.value = enabled;
-  try {
-    localStorage.setItem(POPOUT_STOP_ON_CLOSE_STORAGE_KEY, String(enabled));
-  } catch {
-    /* storage unavailable — the setting stays in-memory only */
-  }
-}
-
 /**
  * Persist the current popup geometry at the end of a drag/resize gesture —
  * only while position memory is on.
@@ -269,5 +249,4 @@ export function resetPopoutSettings() {
   setPopoutRememberPosition(DEFAULT_POPOUT_REMEMBER_POSITION);
   setPopoutHideOnPlaylist(DEFAULT_POPOUT_HIDE_ON_PLAYLIST);
   setPopoutAutoDock(DEFAULT_POPOUT_AUTO_DOCK);
-  setPopoutStopOnClose(DEFAULT_POPOUT_STOP_ON_CLOSE);
 }

@@ -9,6 +9,7 @@ import type {
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import { priceNumeric } from '../../shared/helpers/price-numeric.helper';
 import ProductProsCons from './product-pros-cons/ProductProsCons.vue';
 import ProductReviewsSection from './product-reviews-section/ProductReviewsSection.vue';
 import ProductSpotlightHero from './product-spotlight-hero/ProductSpotlightHero.vue';
@@ -24,26 +25,10 @@ const offers = computed<ShopOffer[]>(() => {
   );
 });
 
-function priceNumeric(price?: string): number {
-  if (!price) return Infinity;
-  // Installment/subscription prices (e.g. "$29.12/mo") are not comparable
-  // to one-time prices — sort them last instead of letting them win.
-  if (price.includes('/')) return Infinity;
-  const n = parseFloat(price.replace(/[^0-9.]/g, ''));
-  return Number.isFinite(n) ? n : Infinity;
-}
-
 const priceRange = computed(() => {
   if (props.data.priceRange) return props.data.priceRange;
   const cheapest = offers.value[0]?.price;
   return cheapest ? `From ${cheapest}` : '';
-});
-
-const galleryItems = computed(() => {
-  const items = props.data.galleryItems ?? [];
-  const hero = props.data.heroImageUrl;
-  if (!hero) return items;
-  return items.filter((item) => item.imageUrl !== hero);
 });
 
 const hasContent = computed(
@@ -64,8 +49,7 @@ const hasContent = computed(
       :description="data.shortDescription"
       :image-url="data.heroImageUrl"
       :image-alt="data.heroImageAlt"
-      :images="galleryItems"
-      :gallery-title="data.galleryTitle"
+      :image-caption="data.heroCaption"
       :video-url="data.heroVideoUrl"
       :video-title="data.heroVideoTitle"
       :video-caption="data.heroVideoCaption"

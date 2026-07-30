@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Monorepo image for tripleF ({fff}) (pnpm workspace).
+# Monorepo image for tripleF (3F) (pnpm workspace).
 # Single source of truth for dependencies is the ROOT pnpm-lock.yaml;
 # per-app lockfiles must not exist. The pnpm version is pinned via the
 # root package.json "packageManager" field and resolved by corepack.

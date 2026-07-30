@@ -22,6 +22,7 @@ import {
   OCR_VERBATIM_INSTRUCTIONS,
 } from './instructions/ocr.instruction.js';
 import { PRODUCT_INSTRUCTIONS } from './instructions/product.instruction.js';
+import { SHOPLIST_INSTRUCTIONS } from './instructions/shoplist.instruction.js';
 import { SUMMARY_INSTRUCTIONS } from './instructions/summary.instruction.js';
 import {
   TEXT_CODING_INSTRUCTIONS,
@@ -46,6 +47,7 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   summary: ['default'],
   evaluation: ['default'],
   product: ['default'],
+  shoplist: ['default'],
   imagelist: ['default'],
   videolist: ['default'],
   text: ['default', 'coding', 'familiarity'],
@@ -80,6 +82,9 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
 
   // product
   'product:default': PRODUCT_INSTRUCTIONS,
+
+  // shoplist
+  'shoplist:default': SHOPLIST_INSTRUCTIONS,
 
   // imagelist
   'imagelist:default': IMAGELIST_INSTRUCTIONS,

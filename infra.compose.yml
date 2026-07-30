@@ -63,20 +63,6 @@ services:
 #    networks:
 #      - triplef.io
 
-#  searxng:
-#    image: searxng/searxng:latest
-#    container_name: searxng
-#    restart: on-failure
-#    ports:
-#      - "4000:8080"
-#    volumes:
-#      - ./searxng:/etc/searxng:ro
-#    environment:
-#      - SEARXNG_BASE_URL=http://localhost:4000
-#      - SEARXNG_UWSGI=true
-#    networks:
-#      - triplef.io
-
 volumes:
   postgres_data:
   minio_data:

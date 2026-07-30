@@ -34,6 +34,7 @@ export class ToolSelectionService {
     model?: string,
     notify?: (event: string, data?: unknown) => void,
     enabledVariants?: string[],
+    defaultLang?: string,
   ): ToolSet {
     return createEnabledTools(
       {
@@ -46,6 +47,7 @@ export class ToolSelectionService {
           }),
         model,
         notify,
+        defaultLang,
       },
       enabledVariants,
     );
@@ -56,8 +58,14 @@ export class ToolSelectionService {
     notify?: (event: string, data?: unknown) => void,
     onToolEvent?: ToolEventHandler,
     enabledVariants?: string[],
+    defaultLang?: string,
   ): ToolSet {
-    const all = this.getDefaultTools(undefined, notify, enabledVariants);
+    const all = this.getDefaultTools(
+      undefined,
+      notify,
+      enabledVariants,
+      defaultLang,
+    );
     const picked: ToolSet = {};
 
     for (const name of names) {

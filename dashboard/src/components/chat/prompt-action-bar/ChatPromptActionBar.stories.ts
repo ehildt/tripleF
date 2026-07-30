@@ -111,7 +111,7 @@ export const SearchEngineWithSources: Story = {
       { key: 'web', enabled: true },
       { key: 'images', enabled: true },
       { key: 'news', enabled: false },
-      { key: 'webpageFetch', enabled: true },
+      { key: 'scrape', enabled: true },
     ],
   },
 };

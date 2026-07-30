@@ -11,7 +11,7 @@ vi.mock('../../composables/use-socket-subscription', () => ({
   }),
 }));
 
-vi.mock('../../composables/use-submit', () => ({
+vi.mock('./composables/use-submit', () => ({
   useSubmit: () => ({
     arguments_: ref(''),
     submit: vi.fn(),

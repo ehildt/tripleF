@@ -160,9 +160,9 @@ describe('ChatRightPanel', () => {
     });
     setActivePlayback('https://youtu.be/in-list', 'In List');
     await wrapper.vm.$nextTick();
-    expect(wrapper.find('.chat-right-panel__now-playing-text').text()).toBe(
-      'In List',
-    );
+    expect(
+      wrapper.find('.playlist-transport-bar__now-playing-text').text(),
+    ).toBe('In List');
   });
 
   it('shows an outside video title in the now-playing marquee', async () => {
@@ -175,9 +175,9 @@ describe('ChatRightPanel', () => {
     // A video that was never added to the playlist starts playing elsewhere.
     setActivePlayback('https://youtu.be/outside', 'Outside Title');
     await wrapper.vm.$nextTick();
-    expect(wrapper.find('.chat-right-panel__now-playing-text').text()).toBe(
-      'Outside Title',
-    );
+    expect(
+      wrapper.find('.playlist-transport-bar__now-playing-text').text(),
+    ).toBe('Outside Title');
   });
 
   it('prefers the playlist metadata over the engagement title', async () => {
@@ -189,8 +189,8 @@ describe('ChatRightPanel', () => {
     });
     setActivePlayback('https://youtu.be/in-list', 'Raw engagement title');
     await wrapper.vm.$nextTick();
-    expect(wrapper.find('.chat-right-panel__now-playing-text').text()).toBe(
-      'In List',
-    );
+    expect(
+      wrapper.find('.playlist-transport-bar__now-playing-text').text(),
+    ).toBe('In List');
   });
 });

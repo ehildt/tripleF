@@ -54,6 +54,7 @@ export const ModelName = {
   HarnessDlq: 'HarnessDlq',
   HarnessConversation: 'HarnessConversation',
   HarnessConfig: 'HarnessConfig',
+  HarnessShownMedia: 'HarnessShownMedia',
   HarnessProviderOverride: 'HarnessProviderOverride'
 } as const
 
@@ -116,6 +117,18 @@ export const HarnessConfigScalarFieldEnum = {
 } as const
 
 export type HarnessConfigScalarFieldEnum = (typeof HarnessConfigScalarFieldEnum)[keyof typeof HarnessConfigScalarFieldEnum]
+
+
+export const HarnessShownMediaScalarFieldEnum = {
+  sessionId: 'sessionId',
+  conversationId: 'conversationId',
+  kind: 'kind',
+  mediaKey: 'mediaKey',
+  requestId: 'requestId',
+  createdAt: 'createdAt'
+} as const
+
+export type HarnessShownMediaScalarFieldEnum = (typeof HarnessShownMediaScalarFieldEnum)[keyof typeof HarnessShownMediaScalarFieldEnum]
 
 
 export const HarnessProviderOverrideScalarFieldEnum = {

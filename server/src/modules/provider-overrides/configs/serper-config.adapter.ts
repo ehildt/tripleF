@@ -17,7 +17,7 @@ export interface SerperConfig {
   shopping: SerperEndpointConfig;
   reviews: SerperEndpointConfig;
   videos: SerperEndpointConfig;
-  webpageFetch: { enabled: boolean };
+  scrape: { enabled: boolean };
 }
 
 const endpointSchema = Joi.object<SerperEndpointConfig>({
@@ -35,7 +35,7 @@ export const SerperConfigSchema = Joi.object<SerperConfig>({
   shopping: endpointSchema.required(),
   reviews: endpointSchema.required(),
   videos: endpointSchema.required(),
-  webpageFetch: Joi.object({ enabled: Joi.boolean().required() }).required(),
+  scrape: Joi.object({ enabled: Joi.boolean().required() }).required(),
 }).required();
 
 export function SerperConfigAdapter(env = process.env): SerperConfig {
@@ -70,8 +70,8 @@ export function SerperConfigAdapter(env = process.env): SerperConfig {
       enabled: getBooleanEnv(env.SERPER_VIDEOS_ENABLED, false)!,
       results: getNumberEnv(env.SERPER_VIDEOS_RESULTS, 6) as number,
     },
-    webpageFetch: {
-      enabled: getBooleanEnv(env.SERPER_WEBPAGE_FETCH_ENABLED, true)!,
+    scrape: {
+      enabled: getBooleanEnv(env.SERPER_SCRAPE_ENABLED, true)!,
     },
   };
 }

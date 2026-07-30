@@ -4,6 +4,7 @@ import {
   safeMediaUrl,
   safeMediaUrlOrEmpty,
   safeUrl,
+  safeVideoUrlOrEmpty,
 } from '../helpers/url-schema.helper.js';
 
 import {
@@ -17,8 +18,12 @@ const galleryItemSchema = z.object(
     imageUrl: safeMediaUrl({
       message: 'galleryItems.imageUrl must be a valid URL',
     }),
-    imageAlt: z.string().optional(),
-    title: z.string().optional(),
+    imageAlt: z.string().min(1, {
+      message: 'galleryItems.imageAlt must not be empty',
+    }),
+    title: z.string().min(1, {
+      message: 'galleryItems.title must not be empty',
+    }),
     caption: z.string().optional(),
   },
   { message: 'galleryItems entries must be objects with imageUrl' },
@@ -71,7 +76,7 @@ export const articleSchema = z
     author: z.string().optional(),
     publishDate: z.string().optional(),
     readTime: z.string().optional(),
-    heroVideoUrl: z.string().url().optional().or(z.literal('')),
+    heroVideoUrl: safeVideoUrlOrEmpty(),
     heroVideoTitle: z.string().optional(),
     heroVideoCaption: z.string().optional(),
     videoGalleryTitle: z.string().optional(),

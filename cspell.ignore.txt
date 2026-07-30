@@ -182,7 +182,6 @@ requirepass
 rimraf
 safelisted
 scanline
-searxng
 Securityscorecard
 sendfile
 Servicestack

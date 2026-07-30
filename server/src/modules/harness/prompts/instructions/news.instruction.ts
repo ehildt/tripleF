@@ -31,7 +31,7 @@ Optional fields (include only when the data is available; otherwise use "" or []
 - videoGalleryTitle: heading for the video gallery (e.g. 'Related coverage'); empty string if none.
 - keyPoints: an array of 3-5 short bullet points. Each entry MUST be an object with exactly one key: "text".
 - sources: an array of source objects with url, title, sourceName, date, and snippet. Use only real retrieved URLs.
-- relatedStories: an array of up to 6 related story cards. Each card needs title, url, sourceName, date, imageUrl. title, url, and imageUrl MUST be non-empty. Use only real retrieved URLs.
+- relatedStories: an array of up to 6 related story cards. Each card needs title, url, sourceName, date, imageUrl. title and url MUST be non-empty; imageUrl only when a distinct verified imageSearch image remains — drop the card otherwise. Use only real retrieved URLs.
 - dateline: when and where the story is from (e.g. "2026-07-11, Gaza"). Empty string if unknown.
 - byline: the author or originating outlet (e.g. "Reuters" or "Jane Doe, BBC"). Empty string if unknown.
 - publishDate: an ISO date string or human-readable date if known; otherwise empty string.
@@ -39,12 +39,12 @@ Optional fields (include only when the data is available; otherwise use "" or []
 
 MANDATORY MEDIA SEARCH:
 - The news template ALWAYS runs imageSearch and videoSearch in parallel with webSearch and newsSearch.
-- You MUST use the returned image URLs and video URLs. Do not leave heroImageUrl, heroVideoUrl empty when corresponding tool results were provided. Every relatedStories entry in array must have a non-empty imageUrl.
+- You MUST use the returned image URLs and video URLs. Do not leave heroImageUrl, heroVideoUrl empty when corresponding tool results were provided.
 - Only leave these fields empty if the searches genuinely returned no results.
 - When selecting images (including relatedStories thumbnails), prefer 2560×1440 (1440p). 1280×720 (720p) is the enforced minimum; never use images below that resolution.
 - IMAGE DOMAIN RESTRICTION: only use image URLs from trusted sources. Reject Google thumbnail proxies (configured blocked sources), data URIs, localhost, private IPs, and unknown hosts without a direct image file extension.
 - VIDEO PROVIDER RESTRICTION: only use video URLs from supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other platforms that cannot be embedded reliably.
-- Prefer video URLs discovered inside webSearch article results first; fill remaining slots with videoSearch results. Prefer image URLs from imageSearch results first.
+- Pool ownership: every image comes from imageSearch results. heroVideoUrl may take the best vetted video from videoSearch or from links inside web/news article results; videoGalleryItems must come from videoSearch results only.
 
 Hero media priority:
 1. If a relevant video URL is available from videoSearch, set heroVideoUrl.
@@ -67,11 +67,12 @@ Source rules:
 
 Gallery rules:
 - relatedStories thumbnails MUST come from imageSearch results, not from newsSearch thumbnails. newsSearch thumbnails are often below 720p and must not be used as card images.
-- When imageSearch returns 3 or more images, include the additional images in galleryItems for the inline gallery (excluding any hero image) AND assign images to relatedStories card thumbnails as appropriate.
-- relatedStories cards MUST have one real image URL per card. Assign images from imageSearch results (never use newsSearch thumbnails).
+- When imageSearch returns 3 or more images, include the additional images in galleryItems for the inline gallery (excluding any hero image) AND assign distinct images to relatedStories card thumbnails when enough remain.
+- Never reuse an image across hero, gallery, and relatedStories thumbnails — a card without its own distinct image gets an empty imageUrl or is dropped.
 - For videos, only use direct video pages from supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Never use channel, playlist, user, or profile URLs.
 - Do not exceed imageTargetCount for total images or videoTargetCount for total videos.
 - Count heroImageUrl + galleryItems + relatedStories imageUrls together toward imageTargetCount.
+- relatedStories are asides: every card's url must be unique across the response and must not repeat any source url; every card's imageUrl must differ from heroImageUrl and every galleryItems imageUrl; write fresh teaser titles that do not restate the headline, deck, or lead.
 
 No-results rule:
 - If all retrieved results are empty, set headline to a concise statement such as "No results found for <topic>" and use lead to explain that searches did not return authoritative sources.

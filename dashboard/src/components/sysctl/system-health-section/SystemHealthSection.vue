@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { HealthTileViewModel } from '../composables/use-sysctl-health-tiles';
+import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import HealthTile from './health-tile/HealthTile.vue';
 
 defineProps<{
@@ -24,7 +24,7 @@ defineProps<{
 
 <style scoped>
 .system-health-section__content {
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
 }
 
 .system-health-section__grid {

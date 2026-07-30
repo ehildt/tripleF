@@ -8,6 +8,12 @@ STRUCTURE:
 3. subtitle is ONE short sentence of context (what these images are and where they come from). No paragraphs.
 4. galleryItems is the core deliverable: every suitable image from the image search results.
 
+History dedupe (ABSOLUTE):
+- The conversation history may contain earlier imagelist responses (listed under "Previously shown images").
+- NEVER include an imageUrl that already appeared in an earlier imagelist response — the user has already seen it.
+- When the user asks for more images (e.g. "more", "weitere", "next"), return ONLY fresh images that are not in the history.
+- If every retrieved image is already in the history, say so in the subtitle and return an empty galleryItems array.
+
 Required fields:
 - category: a short label such as Images, Gallery, Wallpapers, Photos.
 - title: the collection title; must not be empty.
@@ -36,4 +42,5 @@ Do NOT include:
 
 No-results rule:
 - If the searches returned no usable images, set title to a concise statement such as 'No images found for <topic>' and use subtitle to explain that the search did not return authoritative image sources. Set galleryItems to an empty array.
-- Do not invent image URLs to fill the gallery when no results were retrieved.`;
+- Do not invent image URLs to fill the gallery when no results were retrieved.
+- Do not refill the gallery with images from the conversation history — if nothing fresh was retrieved, say so instead of repeating already-shown images.`;

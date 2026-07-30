@@ -4,7 +4,32 @@ import { isMeaningfulString } from './is-meaningful-string.helper';
 import { isTrustedImageUrl } from './is-trusted-image-url.helper';
 import { isVideoUrl } from './is-video-url.helper';
 
+/**
+ * Link targets the dashboard renders as <a :href> must never carry
+ * javascript:/data: schemes — streamed deltas render before the server's
+ * schema validation runs, so the client enforces http(s) itself. A falsy
+ * or absent URL passes through unchanged (title-only entries stay text).
+ */
+function isSafeLinkUrl(url: string): boolean {
+  try {
+    const protocol = new URL(url).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/** Blank dangerous link URLs in place; safe or absent URLs pass through. */
+function blankUnsafeLink<T extends { url?: string }>(item: T): T {
+  return item.url && !isSafeLinkUrl(item.url)
+    ? { ...item, url: undefined }
+    : item;
+}
+
 export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
+  if (data.heroVideoUrl && !isVideoUrl(data.heroVideoUrl)) {
+    data.heroVideoUrl = undefined;
+  }
   data.galleryItems = filterArray(
     data.galleryItems,
     (item) =>
@@ -13,7 +38,7 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
   data.cards = filterArray(
     data.cards,
     (card) => !!(card.title || card.description || card.url),
-  );
+  )?.map(blankUnsafeLink);
   data.keyFindings = filterArray(data.keyFindings, (finding) =>
     isMeaningfulString(finding.text),
   );
@@ -23,7 +48,7 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
   data.sources = filterArray(
     data.sources,
     (source) => !!(source.title || source.url),
-  );
+  )?.map(blankUnsafeLink);
   data.videoGalleryItems = filterArray(
     data.videoGalleryItems,
     (item) => isMeaningfulString(item.videoUrl) && isVideoUrl(item.videoUrl),
@@ -33,7 +58,7 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
     (story) =>
       !!(story.title || story.url) ||
       (isMeaningfulString(story.imageUrl) && isTrustedImageUrl(story.imageUrl)),
-  );
+  )?.map(blankUnsafeLink);
   data.strengths = filterArray(data.strengths, (item) =>
     isMeaningfulString(item.text),
   );
@@ -50,8 +75,7 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
   );
   data.shopOffers = filterArray(
     data.shopOffers,
-    (offer) =>
-      isMeaningfulString(offer.link) && !!offer.link?.startsWith('http'),
+    (offer) => isMeaningfulString(offer.link) && isSafeLinkUrl(offer.link!),
   );
   data.statHighlights = filterArray(
     data.statHighlights,

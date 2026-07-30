@@ -2,6 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 import { isTrustedImageUrl } from '../../../harness/helpers/is-trusted-image-url.helper.js';
+import { localizedQuerySuffix } from '../../../harness/helpers/localized-query-suffix.helper.js';
 
 import { applyLocaleParams } from './apply-locale-params.helper.js';
 import {
@@ -16,6 +17,7 @@ import {
   MIN_IMAGE_WIDTH,
 } from './image-search.constants.js';
 import { SEARCH_TIMEOUT_MS } from './search-timeout.js';
+import { resolveSerperShopOfferLinks } from './serper-shop-links.js';
 import {
   STANDALONE_QUERY_DESCRIPTION,
   STANDALONE_QUERY_TOOL_CLAUSE,
@@ -67,7 +69,7 @@ export function createSerperWebSearch(deps: ToolDependencies) {
         q: query,
         num: cfg.web.results,
       };
-      applyLocaleParams(body, lang);
+      applyLocaleParams(body, lang ?? deps.defaultLang);
       applyRecencyParam(body, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/search',
@@ -205,7 +207,7 @@ export function createSerperImageSearch(deps: ToolDependencies) {
       );
       const num = Math.min(reqCount ?? cfg.images.results, cfg.images.results);
       const body: Record<string, unknown> = { q: query, num };
-      applyLocaleParams(body, lang);
+      applyLocaleParams(body, lang ?? deps.defaultLang);
       const targetPixels = minWidth * minHeight;
       body.tbs = `isz:lt,islt:${tbsSizeLabelForPixels(targetPixels)}`;
       applyRecencyParam(body, recency);
@@ -314,7 +316,7 @@ export function createSerperNewsSearch(deps: ToolDependencies) {
         q: query,
         num,
       };
-      applyLocaleParams(newsBody, lang);
+      applyLocaleParams(newsBody, lang ?? deps.defaultLang);
       applyRecencyParam(newsBody, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/news',
@@ -385,7 +387,7 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
       deps.logger.log(`Serper.dev Places search for "${query}"`);
       const num = Math.min(reqCount ?? cfg.places.results, cfg.places.results);
       const body: Record<string, unknown> = { q: query, num };
-      applyLocaleParams(body, lang);
+      applyLocaleParams(body, lang ?? deps.defaultLang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/places',
         {
@@ -474,7 +476,8 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
         cfg.shopping.results,
       );
       const body: Record<string, unknown> = { q: query, num };
-      applyLocaleParams(body, lang);
+      const effectiveLang = lang ?? deps.defaultLang;
+      applyLocaleParams(body, effectiveLang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/shopping',
         {
@@ -505,8 +508,9 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
       }
       // NOTE: no liveness HEAD checks here. Serper returns Google shopping
       // redirect links that routinely block HEAD requests — probing them with
-      // a short timeout drops every offer. Link validity is enforced later by
-      // the product schema's safeUrl validation.
+      // a short timeout drops every offer. Google-hosted links are resolved
+      // to merchant URLs below (resolveSerperShopOfferLinks); link validity
+      // is enforced later by the product schema's safeUrl validation.
       const results = data.shopping.map((r) => ({
         title: r.title,
         price: r.price || '',
@@ -517,15 +521,25 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
         rating: r.rating,
         ratingCount: r.ratingCount,
       }));
-      return { results };
+      return {
+        results: await resolveSerperShopOfferLinks(results, {
+          apiKey: cfg.apiKey,
+          lang: effectiveLang,
+          logger: deps.logger,
+        }),
+      };
     },
   });
 }
 
-export function createSerperReviewsSearch(deps: ToolDependencies) {
+export function createSerperBusinessReviewsSearch(deps: ToolDependencies) {
   return tool({
-    description:
-      'Fetch Google Maps reviews for a specific business or place using Serper.dev. Returns individual reviewer snippets with author names, star ratings, dates, and likes. This endpoint reviews BUSINESSES (shops, restaurants, hotels, services) — it does not search editorial product reviews. Identify the business by its exact name plus location via query (e.g. "MediaMarkt Berlin Alexanderplatz"), or pass placeId/cid when a previous places search returned them. Use it to judge seller/business reputation; for product quality opinions use webSearch with a "<product> review" query instead.',
+    description: `Fetch Google Maps reviews for a specific business or place using Serper.dev. 
+      Returns individual reviewer snippets with author names, star ratings, dates, and likes. 
+      This endpoint reviews BUSINESSES (shops, restaurants, hotels, services) — it does not search editorial product reviews. 
+      Identify the business by its exact name plus location via query (e.g. "MediaMarkt Berlin Alexanderplatz"), 
+      or pass placeId/cid when a previous places search returned them. 
+      Use it to judge seller/business reputation; for product quality opinions use webSearch with a "<product> review" query instead.`,
     inputSchema: z.object({
       query: z
         .string()
@@ -583,7 +597,7 @@ export function createSerperReviewsSearch(deps: ToolDependencies) {
       if (placeId) body.placeId = placeId;
       else if (cid) body.cid = cid;
       else body.q = query!.trim();
-      applyLocaleParams(body, lang);
+      applyLocaleParams(body, lang ?? deps.defaultLang);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/reviews',
         {
@@ -649,7 +663,7 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
       query: z
         .string()
         .describe(
-          `${STANDALONE_QUERY_DESCRIPTION} Add the video type (e.g. review, trailer, tutorial, gameplay).`,
+          `${STANDALONE_QUERY_DESCRIPTION} Add the video type (e.g. review, trailer, tutorial, gameplay). When the conversation language is not English, phrase the descriptive words in that language and append the language's own name (e.g. "Review Deutsch") to pull localized results.`,
         ),
       count: z.number().optional().describe('Number of results (max 100)'),
       recency: z
@@ -679,13 +693,19 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
         return { results: [], error: 'Serper.dev videos is not enabled' };
       }
 
-      deps.logger.log(`Serper.dev Video search for "${query}"`);
+      const langSuffix = localizedQuerySuffix(lang ?? deps.defaultLang);
+      const searchQuery =
+        langSuffix && !query.toLowerCase().includes(langSuffix.toLowerCase())
+          ? `${query} ${langSuffix}`
+          : query;
+
+      deps.logger.log(`Serper.dev Video search for "${searchQuery}"`);
       const num = Math.min(reqCount ?? cfg.videos.results, cfg.videos.results);
       const videoBody: Record<string, unknown> = {
-        q: query,
+        q: searchQuery,
         num,
       };
-      applyLocaleParams(videoBody, lang);
+      applyLocaleParams(videoBody, lang ?? deps.defaultLang);
       applyRecencyParam(videoBody, recency);
       const res = await fetchWithTimeout(
         'https://google.serper.dev/videos',
@@ -725,14 +745,14 @@ export function createSerperVideoSearch(deps: ToolDependencies) {
         views: r.views ?? 0,
       }));
       deps.logger.log(
-        `Serper.dev Video search returned ${results.length} results for "${query}"`,
+        `Serper.dev Video search returned ${results.length} results for "${searchQuery}"`,
       );
       return { results };
     },
   });
 }
 
-export function createSerperWebpageFetch(deps: ToolDependencies) {
+export function createSerperWebpageScrape(deps: ToolDependencies) {
   return tool({
     description:
       'Fetch and render a full webpage using Serper.dev scrape API. Returns clean rendered text with its title.',
@@ -741,10 +761,10 @@ export function createSerperWebpageFetch(deps: ToolDependencies) {
     }),
     execute: async ({ url }: { url: string }) => {
       const cfg = deps.getLiveConfig().serper;
-      if (!cfg.apiKey || !cfg.webpageFetch.enabled) {
+      if (!cfg.apiKey || !cfg.scrape.enabled) {
         return {
           content: '',
-          error: 'Serper.dev webpage fetch is not enabled',
+          error: 'Serper.dev webpage scrape is not enabled',
         };
       }
 

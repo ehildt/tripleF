@@ -6,7 +6,10 @@ import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { buildCorrectionPrompt } from '../helpers/build-correction-prompt.helper.js';
 import { selectStepHistory } from '../helpers/select-step-history.helper.js';
-import { getTemplatePlaceholders } from '../helpers/template-placeholders.constant.js';
+import {
+  getOptionalKeys,
+  getRequiredKeys,
+} from '../helpers/template-placeholders.constant.js';
 import { buildContentSystemPrompt } from '../prompts/content-system.prompt.js';
 import { resolveVariantInstructions } from '../prompts/variant-instructions.registry.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
@@ -87,7 +90,8 @@ export class RespondActionService {
     const isImageTask = ['describe', 'compare', 'ocr'].includes(
       params.intent.template,
     );
-    const placeholders = getTemplatePlaceholders(params.intent.template);
+    const requiredKeys = getRequiredKeys(params.intent.template);
+    const optionalKeys = getOptionalKeys(params.intent.template);
     const instructions = resolveVariantInstructions(
       params.intent.template,
       params.intent.prompt,
@@ -97,7 +101,8 @@ export class RespondActionService {
       template: params.intent.template,
       instructions,
       tools: params.intent.tools,
-      placeholders,
+      requiredKeys,
+      optionalKeys,
       isImageTask,
       contextSummary: params.intent.contextSummary,
       language: params.intent.language ?? undefined,

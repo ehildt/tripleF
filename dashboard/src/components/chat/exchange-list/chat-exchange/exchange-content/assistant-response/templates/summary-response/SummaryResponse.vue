@@ -21,13 +21,6 @@ const heroUrl = computed(
   () => props.data.heroVideoUrl || props.data.heroImageUrl,
 );
 
-const galleryItems = computed(() => {
-  const items = props.data.galleryItems ?? [];
-  const hero = heroUrl.value;
-  if (!hero) return items;
-  return items.filter((item) => item.imageUrl !== hero);
-});
-
 const hasAnyContent = computed(() =>
   Boolean(
     props.data.category ||
@@ -38,7 +31,7 @@ const hasAnyContent = computed(() =>
     props.data.sources?.length ||
     heroUrl.value ||
     props.data.videoGalleryItems?.length ||
-    galleryItems.value.length,
+    props.data.galleryItems?.length,
   ),
 );
 </script>
@@ -66,7 +59,7 @@ const hasAnyContent = computed(() =>
 
       <ParagraphSection title="Summary" :content="data.summary" />
       <KeyFindingsSection title="Key Points" :items="data.keyFindings" />
-      <GallerySection :title="data.galleryTitle" :items="galleryItems" />
+      <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
       <VideoGallerySection
         :title="data.videoGalleryTitle"
         :items="data.videoGalleryItems"

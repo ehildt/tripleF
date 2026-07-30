@@ -6,6 +6,7 @@ import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
+import { ShownMediaService } from '../shown-media.service.js';
 
 import { RespondStepService } from './respond-step.service.js';
 
@@ -48,6 +49,13 @@ describe('RespondStepService', () => {
         {
           provide: MinioService,
           useValue: { objectExists: vi.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: ShownMediaService,
+          useValue: {
+            lookupKeys: vi.fn().mockResolvedValue(undefined),
+            recordShownMedia: vi.fn().mockResolvedValue(0),
+          },
         },
       ],
     }).compile();

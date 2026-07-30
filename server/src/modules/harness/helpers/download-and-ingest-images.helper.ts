@@ -2,11 +2,10 @@ import { hashPayload } from '@ehildt/ckir-helpers/hash-payload';
 import type { Metadata } from 'sharp';
 import sharp from 'sharp';
 
-import {
-  BROWSER_USER_AGENT,
-  HARNESS_USER_AGENT,
-} from '../constants/user-agents.constant.js';
 import type { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
+
+import { buildImageFingerprint } from './build-image-fingerprint.helper.js';
+import { fetchImageBuffer } from './fetch-image-buffer.helper.js';
 
 export interface IngestedImage {
   imageUrl: string;
@@ -18,6 +17,15 @@ export interface IngestedImage {
   name: string;
   /** Original external URL this image was downloaded from. */
   sourceUrl: string;
+  /** Pixel dimensions of the stored (resized) image. */
+  width?: number;
+  height?: number;
+  /**
+   * Normalized 512 content fingerprint of the original download — the
+   * identity key the shown-media registry dedupes against across turns,
+   * independent of the stored resize.
+   */
+  fingerprint: string;
 }
 
 interface DownloadAndIngestOptions {
@@ -29,6 +37,8 @@ interface DownloadAndIngestOptions {
   timeoutMs: number;
   /** Maximum pixel dimension for downloaded cloud images before upload. */
   maxDimension?: number;
+  /** Hard cap on the downloaded body size. */
+  maxBytes?: number;
   /** Fingerprints of images that are already available (e.g. user uploads). Matching cloud images are skipped. */
   existingFingerprints?: string[];
   /** Number of images downloaded in parallel. Defaults to {@link INGEST_CONCURRENCY}. */
@@ -92,33 +102,10 @@ async function isValidImageSize(
 }
 
 /**
- * Determine the content type for an ingested image from sharp metadata or the
- * HTTP response headers.
+ * Determine the content type for an ingested image from sharp metadata.
  */
-function resolveContentType(metadata: Metadata, res: Response): string {
-  return (
-    (metadata.format ? `image/${metadata.format}` : undefined) ??
-    res.headers.get('content-type')?.split(';')[0] ??
-    'image/png'
-  );
-}
-
-/**
- * Fetch an image URL with the harness agent, retrying once with a browser
- * agent when a hotlink-protecting CDN answers 403.
- */
-async function fetchImage(
-  url: string,
-  timeoutMs: number,
-): Promise<Response | undefined> {
-  const send = (userAgent: string) =>
-    fetch(url, {
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: { 'User-Agent': userAgent },
-    });
-
-  const initial = await send(HARNESS_USER_AGENT);
-  return initial.status === 403 ? send(BROWSER_USER_AGENT) : initial;
+function resolveContentType(metadata: Metadata): string {
+  return metadata.format ? `image/${metadata.format}` : 'image/png';
 }
 
 /**
@@ -133,12 +120,11 @@ async function ingestImage(
   options: DownloadAndIngestOptions,
 ): Promise<IngestedImage | undefined> {
   try {
-    const res = await fetchImage(item.imageUrl, options.timeoutMs);
-    if (!res || !res.ok) return undefined;
-
-    const arrayBuffer = await res.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    if (buffer.length === 0) return undefined;
+    const buffer = await fetchImageBuffer(item.imageUrl, {
+      timeoutMs: options.timeoutMs,
+      maxBytes: options.maxBytes,
+    });
+    if (!buffer || buffer.length === 0) return undefined;
 
     const validSize = await isValidImageSize(
       buffer,
@@ -147,10 +133,15 @@ async function ingestImage(
     );
     if (!validSize) return undefined;
 
+    // Fingerprint the untouched download: a fixed 512 normalization makes
+    // the same source content collapse onto one key across turns, image
+    // hosts, and registry generations.
+    const fingerprint = await buildImageFingerprint(buffer, 512);
     const resizedBuffer = await resizeDownloadedImage(
       buffer,
       options.maxDimension,
     );
+    const metadata = await sharp(resizedBuffer).metadata();
     const hash = hashPayload(resizedBuffer, 'sha256');
 
     if (
@@ -169,7 +160,6 @@ async function ingestImage(
     );
 
     if (!alreadyExists) {
-      const metadata = await sharp(resizedBuffer).metadata();
       await uploadFn(
         options.sessionId,
         options.conversationId,
@@ -178,7 +168,7 @@ async function ingestImage(
         [
           {
             name,
-            type: resolveContentType(metadata, res),
+            type: resolveContentType(metadata),
             hash,
             variant: 'original',
             size: resizedBuffer.length,
@@ -196,6 +186,9 @@ async function ingestImage(
       hash,
       name,
       sourceUrl: item.imageUrl,
+      width: metadata.width,
+      height: metadata.height,
+      fingerprint,
     };
   } catch {
     return undefined;

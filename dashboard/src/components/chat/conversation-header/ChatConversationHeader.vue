@@ -1,18 +1,13 @@
 <script setup lang="ts">
-import {
-  LoaderCircle,
-  MessagesSquare,
-  PenLine,
-  Pin,
-  PinOff,
-  Shrink,
-  Trash2,
-} from '@lucide/vue';
+import { MessagesSquare } from '@lucide/vue';
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
 import { calcTotalContextPercentage } from '../shared/helpers/calc-token-percent.helper';
+import ContextUsageIndicator from './context-usage-indicator/ContextUsageIndicator.vue';
+import ConversationHeaderActions from './conversation-header-actions/ConversationHeaderActions.vue';
+import ConversationTitleEditor from './conversation-title-editor/ConversationTitleEditor.vue';
 
 const props = defineProps<{
   title: string;
@@ -39,10 +34,6 @@ const conversationType = computed(() => {
   const conversation = conversationStore.getConversation(props.conversationId);
   return conversation?.type ?? 'temporary';
 });
-
-function toggleType() {
-  conversationStore.toggleConversationType(props.conversationId);
-}
 
 const editing = ref(false);
 const editTitle = ref('');
@@ -84,86 +75,65 @@ function onRenameKeydown(e: KeyboardEvent) {
 function onDelete() {
   emit('delete', props.conversationId);
 }
+
+function toggleType() {
+  conversationStore.toggleConversationType(props.conversationId);
+}
+
+function onCompact() {
+  conversationStore.compactExchanges(props.conversationId);
+}
 </script>
 
 <template>
-  <div
-    class="px-4 py-3 bg-secondary border-b border-divider flex items-center gap-2 font-mono"
-  >
-    <MessagesSquare class="w-4 h-4 text-tab-rest shrink-0" />
-    <input
+  <div class="chat-conversation-header">
+    <MessagesSquare class="chat-conversation-header__icon" />
+    <ConversationTitleEditor
       v-if="editing"
       v-model="editTitle"
-      data-rename-input
-      class="flex-1 min-w-0 px-1 py-0 bg-secondary border border-divider text-sm text-fg-primary font-mono focus:outline-none focus:border-tab-rest"
       @keydown="onRenameKeydown"
       @blur="commitRename"
     />
-    <span v-else class="text-sm text-tab-rest flex-1 truncate">{{
-      title
-    }}</span>
+    <span v-else class="chat-conversation-header__title">{{ title }}</span>
 
-    <div class="flex items-center gap-1.5">
-      <span
-        v-if="tokenPercent != null"
-        class="text-xs leading-none font-mono"
-        :class="
-          tokenPercent != null && Number(tokenPercent) > 80
-            ? 'text-status-error'
-            : tokenPercent != null && Number(tokenPercent) > 50
-              ? 'text-status-warning'
-              : 'text-tab-debug'
-        "
-      >
-        {{ `${tokenPercent}%` }}
-      </span>
-    </div>
+    <ContextUsageIndicator :percent="tokenPercent" />
 
-    <button
-      class="p-1 text-fg-muted hover:text-tab-rest transition-colors cursor-pointer"
-      title="Rename"
-      @click="startRename"
-    >
-      <PenLine class="w-3.5 h-3.5" />
-    </button>
-
-    <button
-      class="p-1 text-fg-muted hover:text-status-error transition-colors cursor-pointer"
-      title="Delete conversation"
-      @click="onDelete"
-    >
-      <Trash2 class="w-3.5 h-3.5" />
-    </button>
-
-    <button
-      class="p-1 text-fg-muted hover:text-tab-rest transition-colors cursor-pointer"
-      :title="
-        conversationType === 'temporary'
-          ? 'Pin to persistent'
-          : 'Unpin to temporary'
-      "
-      @click="toggleType"
-    >
-      <PinOff v-if="conversationType === 'temporary'" class="w-3.5 h-3.5" />
-      <Pin v-else class="w-3.5 h-3.5" />
-    </button>
-
-    <button
-      class="p-1 transition-colors cursor-pointer"
-      :class="
-        conversationStore.compacting
-          ? 'text-fg-muted cursor-default'
-          : 'text-fg-muted hover:text-tab-accent'
-      "
-      :title="conversationStore.compacting ? 'Compacting...' : 'Compact'"
-      :disabled="conversationStore.compacting"
-      @click="conversationStore.compactExchanges(conversationId)"
-    >
-      <LoaderCircle
-        v-if="conversationStore.compacting"
-        class="w-3.5 h-3.5 animate-spin"
-      />
-      <Shrink v-else class="w-3.5 h-3.5" />
-    </button>
+    <ConversationHeaderActions
+      :conversation-type="conversationType"
+      :compacting="conversationStore.compacting"
+      @rename="startRename"
+      @delete="onDelete"
+      @toggle-type="toggleType"
+      @compact="onCompact"
+    />
   </div>
 </template>
+
+<style scoped>
+.chat-conversation-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  gap: var(--spacing-2);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-divider);
+  font-family: var(--font-mono);
+}
+
+.chat-conversation-header__icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-tab-rest);
+  flex-shrink: 0;
+}
+
+.chat-conversation-header__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  color: var(--color-tab-rest);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

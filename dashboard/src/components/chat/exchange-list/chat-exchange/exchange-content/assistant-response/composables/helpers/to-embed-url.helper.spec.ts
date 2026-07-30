@@ -143,4 +143,9 @@ describe('toEmbedUrl', () => {
   it('returns null for malformed URLs', () => {
     expect(toEmbedUrl('not a url')).toBeNull();
   });
+
+  it('returns null for non-http(s) schemes, even with a video extension', () => {
+    expect(toEmbedUrl(`${'java'}script:alert(1).mp4`)).toBeNull();
+    expect(toEmbedUrl('data:video/mp4;base64,AAAA')).toBeNull();
+  });
 });

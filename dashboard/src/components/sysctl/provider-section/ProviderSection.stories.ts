@@ -36,7 +36,7 @@ const serperConfig = {
   shopping: { enabled: false, results: 5 },
   reviews: { enabled: false, results: 5 },
   videos: { enabled: false, results: 5 },
-  webpageFetch: { enabled: true },
+  scrape: { enabled: true },
 };
 
 const descriptions = {
@@ -47,7 +47,7 @@ const descriptions = {
   shopping: 'Products with price and seller',
   reviews: 'Place reviews and ratings',
   videos: 'Video results from YouTube and more',
-  webpageFetch: 'Full page content scraping',
+  scrape: 'Full page content scraping',
 };
 
 /** Expanded provider with all endpoints visible. */

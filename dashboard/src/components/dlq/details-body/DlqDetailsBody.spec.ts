@@ -52,10 +52,10 @@ describe('DlqDetailsBody', () => {
     const wrapper = mount(DlqDetailsBody, {
       props: { entry: baseEntry, models: [] },
     });
-    const tabs = wrapper.findAll('.dlq-details-body__tab');
+    const tabs = wrapper.findAll('.tab-panel__tab');
     const payloadTab = tabs[tabs.length - 1];
     await payloadTab.trigger('click');
-    expect(payloadTab.classes()).toContain('dlq-details-body__tab--active');
+    expect(payloadTab.classes()).toContain('tab-panel__tab--active');
   });
 
   it('emits save-payload when a filter is updated', async () => {

@@ -49,7 +49,14 @@ export function createWebSearch(deps: ToolDependencies) {
       const cfg = deps.getLiveConfig();
       const allResults: ResultItem[] = [];
 
-      await searchSerper(query, cfg, deps, allResults, lang, recency);
+      await searchSerper(
+        query,
+        cfg,
+        deps,
+        allResults,
+        lang ?? deps.defaultLang,
+        recency,
+      );
 
       const sorted = sortByPriority(dedupeByUrl(allResults));
 

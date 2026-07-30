@@ -77,16 +77,6 @@ const meta = {
           text: 'Build quality is premium but some find the clamp force a little tight.',
         },
       ],
-      galleryItems: [
-        {
-          imageUrl: 'https://via.placeholder.com/300x200?text=Side+View',
-          imageAlt: 'Side view',
-        },
-        {
-          imageUrl: 'https://via.placeholder.com/300x200?text=Folded',
-          imageAlt: 'Folded position',
-        },
-      ],
       videoGalleryItems: [
         {
           videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',

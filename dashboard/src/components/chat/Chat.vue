@@ -11,16 +11,16 @@ import { useChatContextSize } from '../../composables/use-chat-context-size';
 import { useChatInput } from '../../composables/use-chat-input';
 import { useChatThink } from '../../composables/use-chat-think';
 import { useSocketSubscription } from '../../composables/use-socket-subscription';
-import { useSubmit } from '../../composables/use-submit';
 import { useToast } from '../../composables/use-toast';
 import { useModelsStore } from '../../stores/models';
 import type { SocketProvider } from '../../types/socket-provider.model';
+import { playlistMode } from '../widgets/floating-playlist/composables/playlist-settings.state';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
 import { useChatPanel } from './composables/use-chat-panel';
 import { useSearchEngineAvailability } from './composables/use-search-engine-availability';
-import FloatingPlayer from './floating-player/FloatingPlayer.vue';
+import { useSubmit } from './composables/use-submit';
 import ChatMainColumn from './main-column/ChatMainColumn.vue';
 import ChatRightPanel from './right-panel/ChatRightPanel.vue';
 import { useAttachmentList } from './right-panel/composables/use-attachment-list';
@@ -143,13 +143,22 @@ const {
   supportsVision,
 });
 
-const { playlistVideos, hasPlaylist } = useVideoPlaylist(conversation);
+const { playlistVideos } = useVideoPlaylist(
+  computed(() => conversation.value?.id ?? ''),
+);
+
+// In floating mode the playlist lives in the app-level window (SysCtl →
+// Widgets → Playlist): the right panel drops its playlist tab entirely.
+const panelPlaylistVideos = computed(() =>
+  playlistMode.value === 'floating' ? [] : playlistVideos.value,
+);
+const hasPanelPlaylist = computed(() => panelPlaylistVideos.value.length > 0);
 
 const { rightPanelView, selectPanelView } = useChatPanel(
   hasAttachments,
   computed(() => userExchanges.value.length > 0),
-  hasPlaylist,
-  computed(() => playlistVideos.value.length),
+  hasPanelPlaylist,
+  computed(() => panelPlaylistVideos.value.length),
   computed(() => attachments.value.length),
   computed(() => messageListItems.value.length),
 );
@@ -158,7 +167,7 @@ const shouldShowRightPanel = computed(
   () =>
     conversation.value !== null &&
     (hasAttachments.value ||
-      hasPlaylist.value ||
+      hasPanelPlaylist.value ||
       userExchanges.value.length > 0),
 );
 
@@ -284,7 +293,7 @@ defineExpose({ actionBarRef });
     :attachments="attachments"
     :conversation="conversation"
     :message-list-items="messageListItems"
-    :playlist-videos="playlistVideos"
+    :playlist-videos="panelPlaylistVideos"
     :right-panel-view="rightPanelView"
     @select-view="selectPanelView"
     @remove-attachment="onRemoveAttachment"
@@ -294,6 +303,4 @@ defineExpose({ actionBarRef });
     @delete-item="deleteUserExchange"
     @branch-out="branchUserExchange"
   />
-
-  <FloatingPlayer />
 </template>

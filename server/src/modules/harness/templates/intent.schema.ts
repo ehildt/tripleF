@@ -16,6 +16,7 @@ const TEMPLATES = [
   'summary',
   'evaluation',
   'product',
+  'shoplist',
   'imagelist',
   'videolist',
   'text',
@@ -46,7 +47,7 @@ export const IntentSchema = z.object({
   template: z
     .enum(TEMPLATES)
     .describe(
-      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare uploaded images only — information comparisons use "evaluation"), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "text" (free chat), "compact" (summarize/condense prior conversation).',
+      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare uploaded images only — information comparisons use "evaluation"), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "shoplist" (compact product/shop list for follow-up shopping questions about an already-introduced product), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "text" (free chat), "compact" (summarize/condense prior conversation).',
     ),
 
   prompt: z

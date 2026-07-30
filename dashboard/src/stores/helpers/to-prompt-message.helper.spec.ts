@@ -148,4 +148,70 @@ describe('toPromptMessage', () => {
       content: 'What is this?\n\n[Attached images: photo.png]',
     });
   });
+
+  it('prefixes structured assistant answers with their template marker', () => {
+    const exchange = {
+      id: 'ex-10',
+      role: 'assistant',
+      content: '',
+      status: 'done',
+      timestamp: 10,
+      harnessTemplate: 'product',
+      harnessData: {
+        category: 'Tech',
+        title: 'Sony WH-1000XM5',
+        shopOffers: [
+          { title: 'WH-1000XM5', price: '€289', source: 'MediaMarkt' },
+        ],
+      },
+    } as const;
+
+    const result = toPromptMessage(exchange as any);
+    expect(result.content.startsWith('[Template: product]\n')).toBe(true);
+    expect(result.content).toContain('Sony WH-1000XM5');
+  });
+
+  it('omits the template marker for assistant answers without a harness template', () => {
+    const exchange = {
+      id: 'ex-11',
+      role: 'assistant',
+      content: '',
+      text: 'plain chat answer',
+      status: 'done',
+      timestamp: 11,
+    } as const;
+
+    expect(toPromptMessage(exchange as any).content).toBe('plain chat answer');
+  });
+
+  it('never marks the free-form text template', () => {
+    const exchange = {
+      id: 'ex-12',
+      role: 'assistant',
+      content: 'fallback',
+      text: 'plain chat answer',
+      harnessTemplate: 'text',
+      status: 'done',
+      timestamp: 12,
+    } as const;
+
+    expect(toPromptMessage(exchange as any).content).toBe('plain chat answer');
+  });
+
+  it('omits the marker when includeTemplateMarker is false', () => {
+    const exchange = {
+      id: 'ex-13',
+      role: 'assistant',
+      content: 'fallback',
+      text: 'real text',
+      harnessTemplate: 'article',
+      status: 'done',
+      timestamp: 13,
+    } as const;
+
+    const result = toPromptMessage(exchange as any, {
+      includeTemplateMarker: false,
+    });
+    expect(result.content).toBe('real text');
+  });
 });

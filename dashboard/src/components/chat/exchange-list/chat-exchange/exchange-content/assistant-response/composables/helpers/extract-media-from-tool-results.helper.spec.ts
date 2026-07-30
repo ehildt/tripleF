@@ -119,7 +119,7 @@ describe('extractMediaFromToolResults', () => {
     extractMediaFromToolResults(
       [
         {
-          toolName: 'braveImageSearch',
+          toolName: 'serperImageSearch',
           result: {
             results: [{ image: 'https://example.com/img.jpg' }],
           },
@@ -136,7 +136,7 @@ describe('extractMediaFromToolResults', () => {
     extractMediaFromToolResults(
       [
         {
-          toolName: 'braveVideoSearch',
+          toolName: 'serperVideoSearch',
           result: {
             results: [{ url: 'https://youtube.com/watch?v=abc' }],
           },
@@ -171,5 +171,53 @@ describe('extractMediaFromToolResults', () => {
 
     expect(data.heroImageUrl).toBe('https://example.com/valid.jpg');
     expect(data.galleryItems).toBeUndefined();
+  });
+
+  it('does not synthesize a hero for imagelist — every image stays in the gallery', () => {
+    const data: HarnessResponseData = {};
+    extractMediaFromToolResults(
+      [
+        {
+          toolName: 'serperImageSearch',
+          result: {
+            results: [
+              { imageUrl: '/api/v1/storage/s/c/first', title: 'First' },
+              { imageUrl: '/api/v1/storage/s/c/second', title: 'Second' },
+            ],
+          },
+        },
+      ],
+      data,
+      'imagelist',
+    );
+
+    expect(data.heroImageUrl).toBeUndefined();
+    expect(data.galleryItems).toHaveLength(2);
+    expect(data.galleryItems?.[0].imageUrl).toBe('/api/v1/storage/s/c/first');
+  });
+
+  it('does not synthesize a hero for videolist — every video stays in the playlist', () => {
+    const data: HarnessResponseData = {};
+    extractMediaFromToolResults(
+      [
+        {
+          toolName: 'serperVideoSearch',
+          result: {
+            results: [
+              { videoUrl: 'https://youtube.com/watch?v=first', title: 'First' },
+              { videoUrl: 'https://youtube.com/watch?v=second', title: 'S' },
+            ],
+          },
+        },
+      ],
+      data,
+      'videolist',
+    );
+
+    expect(data.heroVideoUrl).toBeUndefined();
+    expect(data.videoGalleryItems).toHaveLength(2);
+    expect(data.videoGalleryItems?.[0].videoUrl).toBe(
+      'https://youtube.com/watch?v=first',
+    );
   });
 });

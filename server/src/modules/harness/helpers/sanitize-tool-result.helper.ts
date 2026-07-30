@@ -3,8 +3,9 @@ import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
 import { isTrustedUrl } from './is-trusted-url.helper.js';
 
 /**
- * Markdown image syntax in fetched page text: ![alt](url). Fetch tools like
- * Browserbase return markdown, so HTML tag patterns alone are not enough.
+ * Markdown image syntax in fetched page text: ![alt](url). Fetch tools
+ * return markdown (webFetch, Serper scrape), so HTML tag patterns alone
+ * are not enough.
  */
 const MARKDOWN_IMAGE_PATTERN = /!\[[^\]]*\]\([^)]*\)/g;
 
@@ -68,9 +69,17 @@ function isFetchResult(
   );
 }
 
+/** Ingested image replacement: storage URL plus stored (resized) dimensions. */
+interface IngestedReplacement {
+  imageUrl: string;
+  title?: string;
+  width?: number;
+  height?: number;
+}
+
 /** Options shared by the per-tool sanitizers. */
 interface SanitizeToolResultOptions {
-  ingestedByUrl?: Map<string, { imageUrl: string; title?: string }>;
+  ingestedByUrl?: Map<string, IngestedReplacement>;
   /** Image/thumbnail URLs that failed live probing — blanked out in place. */
   brokenImageUrls?: Set<string>;
   /** Article/page URLs that failed live probing — their results are dropped. */
@@ -88,6 +97,21 @@ function scrubThumbnailUrl(
     : item;
 }
 
+function applyIngestedReplacement(
+  item: Record<string, unknown>,
+  replacement: IngestedReplacement | undefined,
+): Record<string, unknown> {
+  if (!replacement) return item;
+  return {
+    ...item,
+    imageUrl: replacement.imageUrl,
+    title: replacement.title ?? item.title,
+    // Dimensions describe the stored (resized) image, not the origin.
+    ...(replacement.width ? { width: replacement.width } : {}),
+    ...(replacement.height ? { height: replacement.height } : {}),
+  };
+}
+
 function sanitizeImageSearchResult(
   result: unknown,
   options?: SanitizeToolResultOptions,
@@ -103,18 +127,12 @@ function sanitizeImageSearchResult(
           isTrustedImageUrl(extractUrlField(r, 'imageUrl')!) &&
           !options?.brokenImageUrls?.has(extractUrlField(r, 'imageUrl')!),
       )
-      .map((r) => {
-        const original = extractUrlField(r, 'imageUrl')!;
-        const replacement = options?.ingestedByUrl?.get(original);
-        if (replacement) {
-          return {
-            ...r,
-            imageUrl: replacement.imageUrl,
-            title: replacement.title ?? r.title,
-          };
-        }
-        return r;
-      }),
+      .map((r) =>
+        applyIngestedReplacement(
+          r,
+          options?.ingestedByUrl?.get(extractUrlField(r, 'imageUrl')!),
+        ),
+      ),
   };
 }
 
@@ -162,15 +180,10 @@ function sanitizeWebSearchResult(
           options?.brokenImageUrls?.has(imageUrl)
         )
           return { ...withThumbnail, imageUrl: '' };
-        const replacement = options?.ingestedByUrl?.get(imageUrl);
-        if (replacement) {
-          return {
-            ...withThumbnail,
-            imageUrl: replacement.imageUrl,
-            title: replacement.title ?? withThumbnail.title,
-          };
-        }
-        return withThumbnail;
+        return applyIngestedReplacement(
+          withThumbnail,
+          options?.ingestedByUrl?.get(imageUrl),
+        );
       }),
   };
 }
@@ -192,7 +205,7 @@ function sanitizeFetchResult(result: unknown): unknown {
 function isFetchTool(toolName: string): boolean {
   return (
     toolName === 'webFetch' ||
-    toolName.endsWith('WebpageFetch') ||
+    toolName.endsWith('WebpageScrape') ||
     toolName.endsWith('Fetch')
   );
 }
@@ -200,7 +213,7 @@ function isFetchTool(toolName: string): boolean {
 /** Replace original external image URLs inside tool results with local storage URLs after ingestion. */
 export function sanitizeToolResultsWithIngestedUrls(
   toolResults: Array<{ toolName: string; result: unknown }>,
-  ingestedByUrl: Map<string, { imageUrl: string; title?: string }>,
+  ingestedByUrl: Map<string, IngestedReplacement>,
   brokenImageUrls?: Set<string>,
   brokenPageUrls?: Set<string>,
 ): Array<{ toolName: string; result: unknown }> {

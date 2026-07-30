@@ -3,8 +3,13 @@ import { computed, type Ref, ref } from 'vue';
 import { useConversationStore } from '@/stores/conversation';
 
 import {
+  floatingPlaylistOpen,
+  playlistMode,
+} from '../../widgets/floating-playlist/composables/playlist-settings.state';
+import {
   activePlaybackVideoUrl,
   isPlaylistVideo,
+  playlistQueueKey,
 } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import type { RightPanelView } from '../types/right-panel-view.type';
 
@@ -18,15 +23,21 @@ export const rightPanelViewState: Ref<RightPanelView> = ref('files');
 
 /**
  * Whether the playlist bar currently carries the scrolling now-playing
- * marquee: only while the playlist tab is visible AND a playlist item is
- * actively playing. The floating popouts animate their own title whenever
- * this is false — the marquee disappears from the popout only when the
- * playlist bar would genuinely show it.
+ * marquee: the chat right panel's playlist tab when it is visible, or the
+ * floating playlist window while it is open in floating mode — in both
+ * cases only when a playlist item is actively playing. The floating
+ * popouts animate their own title whenever this is false — the marquee
+ * disappears from the popout only when the playlist bar would genuinely
+ * show it.
  */
 export const playlistMarqueeVisible = computed(() => {
-  if (rightPanelViewState.value !== 'playlist') return false;
+  if (rightPanelViewState.value !== 'playlist') {
+    if (playlistMode.value !== 'floating' || !floatingPlaylistOpen.value) {
+      return false;
+    }
+  }
   const url = activePlaybackVideoUrl.value;
   if (!url) return false;
   const conversationId = useConversationStore().activeConversationId ?? '';
-  return isPlaylistVideo(conversationId, url);
+  return isPlaylistVideo(playlistQueueKey(conversationId), url);
 });

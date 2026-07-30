@@ -120,7 +120,7 @@ describe('InterpretStepService', () => {
       intent: {
         template: 'compare',
         prompt: 'default',
-        tools: ['webSearch', 'braveImageSearch'],
+        tools: ['webSearch', 'serperImageSearch'],
         reasoning: 'user wants comparison without images',
         needsClarification: false,
         plan: {},

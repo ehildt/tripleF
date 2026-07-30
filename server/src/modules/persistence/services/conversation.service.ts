@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConversationRepository } from './conversation.repository.js';
+import { ShownMediaRepository } from './shown-media.repository.js';
 
 interface ConversationTurn {
   sessionId: string;
@@ -30,7 +31,10 @@ interface MergedConversation {
 
 @Injectable()
 export class ConversationService {
-  constructor(private readonly repository: ConversationRepository) {}
+  constructor(
+    private readonly repository: ConversationRepository,
+    private readonly shownMedia: ShownMediaRepository,
+  ) {}
 
   async listConversations(sessionId: string): Promise<ConversationSnapshot[]> {
     const groups = await this.repository.findDistinctConversations(sessionId);
@@ -78,6 +82,10 @@ export class ConversationService {
   }
 
   async deleteConversation(sessionId: string, conversationId: string) {
+    // Purge the shown-media registry with the conversation — leftovers
+    // would forever block fresh images/videos in any recreated
+    // conversation sharing the id.
+    await this.shownMedia.deleteByConversation(sessionId, conversationId);
     return this.repository.deleteByConversation(sessionId, conversationId);
   }
 

@@ -13,15 +13,15 @@ describe('tool-factory', () => {
     it('returns result count and unique sources', () => {
       const result = summarizeResults({
         results: [
-          { source: 'brave' },
-          { source: 'brave' },
+          { source: 'serperB' },
+          { source: 'serperB' },
           { source: 'serper' },
           {},
         ],
       });
       expect(result).toEqual({
         resultCount: 4,
-        sources: ['brave', 'serper'],
+        sources: ['serperB', 'serper'],
         sampleImageUrls: [],
       });
     });
@@ -44,7 +44,7 @@ describe('tool-factory', () => {
         results: [
           { source: 'serper', imageUrl: 'https://example.com/a.jpg' },
           { source: 'serper', imageUrl: 'https://example.com/b.jpg' },
-          { source: 'brave' },
+          { source: 'serperB' },
         ],
       });
       expect(result.sampleImageUrls).toEqual([
@@ -84,12 +84,12 @@ describe('tool-factory', () => {
   describe('defaultSummarize', () => {
     it('prefers results-array summarization', () => {
       const result = defaultSummarize({
-        results: [{ source: 'searxng' }],
+        results: [{ source: 'serperC' }],
         content: 'irrelevant',
       });
       expect(result).toEqual({
         resultCount: 1,
-        sources: ['searxng'],
+        sources: ['serperC'],
         sampleImageUrls: [],
       });
     });
