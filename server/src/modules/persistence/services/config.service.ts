@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConfigRepository } from './config.repository.js';
+import { ShownMediaRepository } from './shown-media.repository.js';
 
 interface SessionConfig {
   sessionId: string;
@@ -13,7 +14,10 @@ interface SessionConfig {
 
 @Injectable()
 export class ConfigService {
-  constructor(private readonly repository: ConfigRepository) {}
+  constructor(
+    private readonly repository: ConfigRepository,
+    private readonly shownMedia: ShownMediaRepository,
+  ) {}
 
   async getConfig(sessionId: string): Promise<SessionConfig | null> {
     const row = await this.repository.findById(sessionId);
@@ -52,6 +56,9 @@ export class ConfigService {
   }
 
   async deleteConfig(sessionId: string) {
+    // Session deletion purges the shown-media registry for every
+    // conversation in the session.
+    await this.shownMedia.deleteBySession(sessionId);
     return this.repository.deleteById(sessionId);
   }
 }

@@ -41,6 +41,10 @@ import {
   productSchema,
 } from '../schemas/product-json.schema.js';
 import {
+  formatZodIssues as formatShoplistZodIssues,
+  shoplistSchema,
+} from '../schemas/shoplist-json.schema.js';
+import {
   formatZodIssues as formatSummaryZodIssues,
   summarySchema,
 } from '../schemas/summary-json.schema.js';
@@ -256,6 +260,7 @@ export class ResponseValidatorService {
     summary: this.validateSummaryOutput.bind(this),
     evaluation: this.validateEvaluationOutput.bind(this),
     product: this.validateProductOutput.bind(this),
+    shoplist: this.validateShoplistOutput.bind(this),
     imagelist: this.validateImagelistOutput.bind(this),
     videolist: this.validateVideolistOutput.bind(this),
     text: this.validateFreeFormOutput.bind(this),
@@ -408,6 +413,20 @@ export class ResponseValidatorService {
       return {
         valid: false,
         error: `Schema validation failed: ${formatProductZodIssues(schemaResult.error.issues)}`,
+      };
+    }
+
+    return { valid: true, content: JSON.stringify(schemaResult.data) };
+  }
+
+  private validateShoplistOutput(
+    parsed: Record<string, unknown>,
+  ): ValidationResult {
+    const schemaResult = shoplistSchema.safeParse(parsed);
+    if (!schemaResult.success) {
+      return {
+        valid: false,
+        error: `Schema validation failed: ${formatShoplistZodIssues(schemaResult.error.issues)}`,
       };
     }
 

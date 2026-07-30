@@ -34,9 +34,7 @@
   --color-connection-disconnected-source: #ff9933;
   --color-connection-error-source: #ff4466;
   --color-connection-connected: var(--color-connection-connected-source);
-  --color-connection-disconnected: var(
-    --color-connection-disconnected-source
-  );
+  --color-connection-disconnected: var(--color-connection-disconnected-source);
   --color-connection-error: var(--color-connection-error-source);
 
   /* Background Colors - Softened dark palette */

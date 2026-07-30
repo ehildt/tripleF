@@ -228,7 +228,9 @@ describe('useConversationStore', () => {
 
     const messages = JSON.parse(store.buildPrompt(conversation.id));
 
-    expect(messages).toEqual([{ role: 'assistant', content: 'body text' }]);
+    expect(messages).toEqual([
+      { role: 'assistant', content: '[Template: article]\nbody text' },
+    ]);
 
     const conversation2 = store.createNewConversation('temporary');
     store.addExchange(conversation2.id, {

@@ -166,6 +166,10 @@ const TEMPLATE_PLACEHOLDERS: Record<
       'sources',
     ],
   },
+  shoplist: {
+    required: ['category', 'title', 'subtitle'],
+    optional: ['shortDescription', 'shopOffers', 'sources'],
+  },
   imagelist: {
     required: ['category', 'title', 'subtitle', 'galleryItems'],
     optional: ['sources'],
@@ -183,13 +187,6 @@ const TEMPLATE_PLACEHOLDERS: Record<
     optional: [],
   },
 };
-
-/** Returns the data keys the dashboard template expects for a given template. */
-export function getTemplatePlaceholders(template: string): string[] {
-  const entry = TEMPLATE_PLACEHOLDERS[template];
-  if (!entry) return [];
-  return [...entry.required, ...entry.optional];
-}
 
 /** Returns the keys that are actually required for the given template. */
 export function getRequiredKeys(template: string): string[] {

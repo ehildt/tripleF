@@ -6,9 +6,10 @@ import { toPromptMessage } from '@/stores/helpers/to-prompt-message.helper';
  * responses carry structured data (article, news, product, videolist, …)
  * whose visible `content` is only a fallback — reuse the model-history
  * formatting so the copy contains the full response: sections, findings,
- * sources, offers, and media references.
+ * sources, offers, and media references. The `[Template: <name>]`
+ * classifier marker is model-facing metadata and stays out of the copy.
  */
 export function buildExchangeCopyText(exchange: Exchange): string {
   if (exchange.role !== 'assistant') return exchange.content;
-  return toPromptMessage(exchange).content;
+  return toPromptMessage(exchange, { includeTemplateMarker: false }).content;
 }

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 import ArticleCardsSection from '../../sections/article-cards-section/ArticleCardsSection.vue';
@@ -17,20 +15,9 @@ import VideoGallerySection from '../../sections/video-gallery-section/VideoGalle
 import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
 import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 
-const props = defineProps<{
+defineProps<{
   data: HarnessResponseData;
 }>();
-
-const heroUrl = computed(
-  () => props.data.heroVideoUrl || props.data.heroImageUrl,
-);
-
-const galleryItems = computed(() => {
-  const items = props.data.galleryItems ?? [];
-  const hero = heroUrl.value;
-  if (!hero) return items;
-  return items.filter((item) => item.imageUrl !== hero);
-});
 </script>
 
 <template>
@@ -67,7 +54,7 @@ const galleryItems = computed(() => {
       :content="data.sectionContent"
     />
     <ArticleQuoteSection :quote="data.quote" />
-    <GallerySection :title="data.galleryTitle" :items="galleryItems" />
+    <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
     <VideoGallerySection
       :title="data.videoGalleryTitle"
       :items="data.videoGalleryItems"

@@ -8,15 +8,55 @@ withDefaults(defineProps<{ message?: string; submessage?: string }>(), {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center py-12 px-4">
-    <div class="w-12 h-12 bg-tertiary flex items-center justify-center mb-3">
-      <ShieldCheck class="w-6 h-6 text-fg-muted" />
+  <div class="panel-empty-state">
+    <div class="panel-empty-state__icon-wrapper">
+      <ShieldCheck class="panel-empty-state__icon" />
     </div>
-    <p class="text-sm text-fg-muted font-mono">
+    <p class="panel-empty-state__message">
       {{ message }}
     </p>
-    <p class="text-xs text-fg-muted/70 mt-1 font-mono">
+    <p class="panel-empty-state__submessage">
       {{ submessage }}
     </p>
   </div>
 </template>
+
+<style scoped>
+.panel-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem var(--spacing-4);
+}
+
+.panel-empty-state__icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background-color: var(--color-bg-tertiary);
+  margin-bottom: var(--spacing-3);
+}
+
+.panel-empty-state__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-fg-muted);
+}
+
+.panel-empty-state__message {
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+  margin: 0;
+}
+
+.panel-empty-state__submessage {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: color-mix(in srgb, var(--color-fg-muted) 70%, transparent);
+  margin: var(--spacing-1) 0 0;
+}
+</style>

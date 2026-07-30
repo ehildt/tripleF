@@ -2,8 +2,8 @@
  * Hostname matching for the source policy. A URL (or bare hostname) matches
  * a configured entry when its hostname:
  * - equals the hostname of a plain or *.glob entry, or is a subdomain of it
- *   ("en.wikipedia.org" and "wikipedia.org" both match "wikipedia.org"
- *   and "*.wikipedia.org");
+ *   ("en.example.org" and "example.org" both match "example.org"
+ *   and "*.example.org");
  * - satisfies a /slashed/ regex pattern, matched case-insensitively
  *   (e.g. /^lh\d+\.googleusercontent\.com$/).
  * Comparison is lowercase and ignores a leading "www." on both sides.

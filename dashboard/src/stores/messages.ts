@@ -6,10 +6,7 @@ import {
   type HarnessResponseState,
 } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/create-harness-response-state.helper';
 import { processHarnessResponseEvent } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/process-harness-response-event.helper';
-import {
-  type UploadedImage,
-  useConversationStore,
-} from '@/stores/conversation';
+import { useConversationStore } from '@/stores/conversation';
 
 import { useReadTracker } from '../composables/use-read-tracker';
 import { useAppStore } from '../stores/app';
@@ -17,6 +14,11 @@ import { useModelsStore } from '../stores/models';
 import type { HarnessStreamEvent } from '../types/harness-stream-event.model';
 import type { Message } from '../types/message.model';
 import type { MessageData } from '../types/message-data.model';
+import { extractUploadedImagesFromResponse } from './helpers/extract-uploaded-images-from-response.helper';
+import { isErrorStreamEvent } from './helpers/is-error-stream-event.helper';
+import { isHarnessStreamEvent } from './helpers/is-harness-stream-event.helper';
+import { mergeExistingMessageData } from './helpers/merge-existing-message-data.helper';
+import { normalizeRawData } from './helpers/normalize-raw-data.helper';
 
 /**
  * Activity label shown while the model streams response data: the thinking
@@ -32,32 +34,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
 
   function trackRequest(requestId: string) {
     trackedRequestIds.value.add(requestId);
-  }
-
-  function normalizeRawData(raw: Record<string, unknown>) {
-    if (
-      raw.prompt_eval_count !== undefined &&
-      raw.promptEvalCount === undefined
-    ) {
-      raw.promptEvalCount = raw.prompt_eval_count;
-    }
-    if (raw.eval_count !== undefined && raw.evalCount === undefined) {
-      raw.evalCount = raw.eval_count;
-    }
-    if (raw.eval_duration !== undefined && raw.evalDuration === undefined) {
-      raw.evalDuration = raw.eval_duration;
-    }
-    if (raw.total_duration !== undefined && raw.totalDuration === undefined) {
-      raw.totalDuration = raw.total_duration;
-    }
-  }
-
-  function isHarnessStreamEvent(d: MessageData): boolean {
-    return d.template !== undefined && d.delta !== undefined;
-  }
-
-  function isErrorStreamEvent(d: MessageData): boolean {
-    return d.error !== undefined && d.done === true;
   }
 
   function getOrCreateHarnessStreamState(
@@ -103,48 +79,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
   }
 
-  function extractUploadedImagesFromResponse(
-    data: Record<string, unknown>,
-    conversationId: string,
-    conversationStore: ReturnType<typeof useConversationStore>,
-  ): UploadedImage[] {
-    const meta = data.meta as
-      | Array<{
-          name?: string;
-          hash?: string;
-          size?: number;
-          variant?: string;
-          source?: string;
-        }>
-      | undefined;
-    if (!Array.isArray(meta)) return [];
-    const cid = conversationStore.getConversationId(conversationId);
-    return meta
-      .filter(
-        (
-          entry,
-        ): entry is {
-          name: string;
-          hash: string;
-          size?: number;
-          source?: string;
-        } =>
-          typeof entry.name === 'string' &&
-          typeof entry.hash === 'string' &&
-          (!entry.variant || entry.variant === 'original'),
-      )
-      .map((entry) => ({
-        name: entry.name,
-        hash: entry.hash,
-        size: entry.size,
-        uploadedAt: Date.now(),
-        selected: true,
-        conversationId: cid,
-        source:
-          entry.source === 'cloud' ? ('cloud' as const) : ('local' as const),
-      }));
-  }
-
   function updateHarnessSessionExchange(
     conversation: ReturnType<
       typeof useConversationStore
@@ -175,7 +109,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       if (isError) {
         conversationStore.addExchange(conversation.id, {
           role: 'assistant',
-          content: buildErrorText(d.error!),
+          content: `Error: ${d.error}`,
           requestId,
           status,
           event,
@@ -205,7 +139,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
 
     if (isError) {
-      existing.content = buildErrorText(d.error!);
+      existing.content = `Error: ${d.error}`;
       existing.status = status;
     } else {
       existing.content = fallbackContent;
@@ -246,10 +180,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
   }
 
-  function buildErrorText(error: string): string {
-    return `Error: ${error}`;
-  }
-
   function handleHarnessStream(event: string, data: unknown) {
     normalizeRawData(data as Record<string, unknown>);
     const d = data as unknown as MessageData;
@@ -288,8 +218,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       if (conversation.event && conversation.event !== event) continue;
       const uploadedImages = extractUploadedImagesFromResponse(
         data as Record<string, unknown>,
-        conversation.id,
-        conversationStore,
+        conversationStore.getConversationId(conversation.id),
       );
       if (uploadedImages.length > 0) {
         conversationStore.setUploadedImages(conversation.id, uploadedImages);
@@ -577,22 +506,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     if (existingIndex === -1) return false;
 
     const existing = messages.value[existingIndex];
-    const existingContent = existing.data.message?.content;
-    const newContent = d.message?.content;
+    const updatedData = mergeExistingMessageData(existing.data, d);
 
-    const updatedData: MessageData = {
-      ...existing.data,
-      message: newContent
-        ? { content: (existingContent || '') + newContent }
-        : existing.data.message,
-      pending:
-        newContent || d.done === true ? undefined : existing.data.pending,
-      done: d.done === true ? true : existing.data.done,
-      conversationId: d.conversationId || existing.data.conversationId,
-      promptEvalCount:
-        d.done === true ? d.promptEvalCount : existing.data.promptEvalCount,
-      evalCount: d.done === true ? d.evalCount : existing.data.evalCount,
-    };
     messages.value.splice(existingIndex, 1, {
       ...existing,
       data: updatedData,

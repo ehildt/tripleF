@@ -12,7 +12,7 @@ defineProps<{
 
 <style scoped>
 .conclusion {
-  padding-top: 0.75em;
+  padding: 0.5rem;
   border-top: 1px solid var(--color-divider);
   font-size: 0.95em;
   color: var(--color-fg-muted);

@@ -10,10 +10,10 @@ import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
-import type { HealthTileViewModel } from '../composables/use-sysctl-health-tiles';
 import { useSysctlTabVisibility } from '../composables/use-sysctl-tab-visibility';
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
 import TabVisibilitySection from '../tab-visibility-section/TabVisibilitySection.vue';
+import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import { useOllamaConnection } from './composables/use-ollama-connection';
 
 defineProps<{
@@ -141,7 +141,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-1);
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
 }
 
 .system-section__state {

@@ -108,6 +108,7 @@ export class ExecuteActionService {
             undefined,
             undefined,
             availableVariants,
+            intent.language ?? undefined,
           )
         : {};
     const chosenTools = this.wrapToolsWithSearchRecency(

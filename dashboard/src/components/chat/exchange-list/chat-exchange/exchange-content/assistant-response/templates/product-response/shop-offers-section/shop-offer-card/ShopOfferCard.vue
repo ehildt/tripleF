@@ -3,7 +3,7 @@ import { computed } from 'vue';
 
 import type { ShopOffer } from '@/types/harness-response-data.model';
 
-import StarRatingIndicator from '../../star-rating-indicator/StarRatingIndicator.vue';
+import StarRatingIndicator from '../../../../shared/ui/star-rating-indicator/StarRatingIndicator.vue';
 
 const props = defineProps<{ offer: ShopOffer; isBestPrice?: boolean }>();
 

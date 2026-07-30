@@ -1,6 +1,6 @@
 # 1. Server Overview
 
-The {fff} server is a **NestJS 11 application on Fastify 5** with URI versioning (`/api/v1`) and first-class Swagger documentation. One process handles everything: REST intake, queue processing, real-time streaming, and persistence.
+The 3F server is a **NestJS 11 application on Fastify 5** with URI versioning (`/api/v1`) and first-class Swagger documentation. One process handles everything: REST intake, queue processing, real-time streaming, and persistence.
 
 - **Entry:** `server/src/main.ts` → `server/src/main.module.ts`
 - **Dev port:** `3000` · **API base:** `/api/v1` · **Docs:** `/api-docs` (OpenAPI JSON at `/api-docs-json`)

@@ -3,52 +3,56 @@ import { describe, expect, it } from 'vitest';
 import { buildMessageClasses } from './build-message-classes.helper';
 
 describe('buildMessageClasses', () => {
-  it('uses accent right-aligned classes for user role', () => {
+  it('uses user variant for user role', () => {
     const result = buildMessageClasses({
       isUser: true,
       isError: false,
       isHighlighted: false,
     });
-    expect(result).toContain('bg-accent-primary/10');
-    expect(result).toContain('text-right');
+    expect(result).toContain('exchange-message--user');
   });
 
-  it('uses error classes for error status', () => {
+  it('uses error variant for error status', () => {
     const result = buildMessageClasses({
       isUser: false,
       isError: true,
       isHighlighted: false,
     });
-    expect(result).toContain('bg-status-error/5');
-    expect(result).toContain('text-status-error');
+    expect(result).toContain('exchange-message--error');
   });
 
-  it('uses neutral classes for assistant non-error', () => {
+  it('uses assistant variant for assistant non-error', () => {
     const result = buildMessageClasses({
       isUser: false,
       isError: false,
       isHighlighted: false,
     });
-    expect(result).toContain('bg-tertiary');
-    expect(result).toContain('text-left');
+    expect(result).toContain('exchange-message--assistant');
   });
 
-  it('appends highlight class when highlighted', () => {
+  it('appends highlight modifier when highlighted', () => {
     const result = buildMessageClasses({
       isUser: false,
       isError: false,
       isHighlighted: true,
     });
-    expect(result).toContain('exchange-content__message--highlighted');
-    expect(result).not.toContain('animate-pulse');
-    expect(result).not.toContain('ring-2');
+    expect(result).toContain('exchange-message--highlighted');
   });
 
-  it('always includes the content-body class', () => {
+  it('always includes the base exchange-message class', () => {
     const result = buildMessageClasses({
       isUser: true,
       isError: true,
       isHighlighted: true,
+    });
+    expect(result).toContain('exchange-message');
+  });
+
+  it('always includes the content-body hook for light-mode overrides', () => {
+    const result = buildMessageClasses({
+      isUser: false,
+      isError: false,
+      isHighlighted: false,
     });
     expect(result).toContain('content-body');
   });
@@ -59,7 +63,7 @@ describe('buildMessageClasses', () => {
       isError: true,
       isHighlighted: false,
     });
-    expect(result).toContain('bg-accent-primary/10');
-    expect(result).not.toContain('bg-status-error/5');
+    expect(result).toContain('exchange-message--user');
+    expect(result).not.toContain('exchange-message--error');
   });
 });

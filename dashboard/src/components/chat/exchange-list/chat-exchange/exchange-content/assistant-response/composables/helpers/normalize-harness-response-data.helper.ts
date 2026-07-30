@@ -13,6 +13,7 @@ import type {
 import type { HarnessStreamEvent } from '@/types/harness-stream-event.model';
 
 import { cleanHarnessResponseArrays } from './clean-harness-response-arrays.helper';
+import { dedupeResponseMedia } from './dedupe-response-media.helper';
 import { extractMediaFromToolResults } from './extract-media-from-tool-results.helper';
 import { isMeaningfulString } from './is-meaningful-string.helper';
 import { isTrustedImageUrl } from './is-trusted-image-url.helper';
@@ -20,6 +21,7 @@ import { isTrustedImageUrl } from './is-trusted-image-url.helper';
 export function normalizeHarnessResponseData(
   raw: unknown,
   event: HarnessStreamEvent,
+  template?: string,
 ): HarnessResponseData | null {
   if (!isRecord(raw)) return null;
 
@@ -33,13 +35,21 @@ export function normalizeHarnessResponseData(
   cleanHarnessResponseArrays(data);
 
   if (event.toolResults?.length) {
-    extractMediaFromToolResults(event.toolResults, data);
+    extractMediaFromToolResults(
+      event.toolResults,
+      data,
+      template ?? event.template,
+    );
     cleanHarnessResponseArrays(data);
   }
 
   if (data.heroImageUrl && !isTrustedImageUrl(data.heroImageUrl)) {
     data.heroImageUrl = undefined;
   }
+
+  // Run after the hero trust check: a hero that survives may keep gallery
+  // entries out, a hero that was cleared must not strip gallery content.
+  dedupeResponseMedia(data);
 
   if (!hasAnyContent(data)) return null;
 

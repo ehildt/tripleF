@@ -39,10 +39,10 @@ const meta = {
       description: {
         component: `
 Orchestrator for the right-hand pane of the DLQ panel. Composes the
-\`DlqTopBar\`, the tabbed navigation (Error / Metadata / Prompt /
-Preprocess / Variants / Params / Payload), and the per-tab sub-panels
-(\`DlqMetadataSection\`, \`DlqPromptSection\`, etc.). Renders an empty
-state when no entry is selected.
+DlqTopBar, the tabbed navigation (Error / Metadata / Prompt /
+Payload), and the per-tab sub-panels (DlqMetadataSection,
+DlqPromptSection, etc.). Renders an empty state when no entry is
+selected.
 `,
       },
     },

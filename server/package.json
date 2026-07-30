@@ -1,6 +1,6 @@
 {
   "name": "@triplef.io/server",
-  "description": "tripleF ({fff}) server — the agentic AI conversation harness (NestJS + Fastify): step engine, tool-grounded structured outputs, BullMQ, Socket.IO streaming.",
+  "description": "tripleF (3F) server — the agentic AI conversation harness (NestJS + Fastify): step engine, tool-grounded structured outputs, BullMQ, Socket.IO streaming.",
   "version": "1.2.0",
   "license": "MIT",
   "type": "module",
@@ -12,7 +12,7 @@
     "email": "eugen.hildt@gmail.com"
   },
   "scripts": {
-    "prebuild": "rimraf dist && prisma generate",
+    "prebuild": "rimraf dist && dotenv -e ./.env.prisma -- prisma generate",
     "build": "nest build --path ./tsconfig.build.json",
     "build:prod": "nest build --path ./tsconfig.build.prod.json",
     "depcheck": "npx depcheck .",

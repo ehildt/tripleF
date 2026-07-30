@@ -16,7 +16,7 @@ const URL_ALLOWED_KEYS = new Set([
   'reviewlink',
 ]);
 
-const RAW_URL_PATTERN = /https?:\/\/[^\s)"'<>]+/gi;
+const RAW_URL_PATTERN = /(?:https?:\/\/|www\.)[^\s)"'<>]+/gi;
 
 /** Remove raw URLs from a display text and repair the leftover spacing. */
 function stripUrlsFromText(text: string): string {
@@ -33,12 +33,12 @@ function stripUrlsFromText(text: string): string {
 }
 
 /**
- * Recursively strip raw http(s) URLs from every display text field in a
- * structured response. The model sometimes copies URLs from fetched page
- * content into prose fields (sectionContent, shortDescription, spec rows)
- * instead of the designated URL fields — those leak as raw text into the
- * dashboard. URL-designated fields (url, link, imageUrl, videoUrl, …) are
- * left untouched.
+ * Recursively strip raw URLs (absolute http(s) or bare `www.` links) from
+ * every display text field in a structured response. The model sometimes
+ * copies URLs from fetched page content into prose fields (sectionContent,
+ * shortDescription, spec rows) instead of the designated URL fields — those
+ * leak as raw text into the dashboard. URL-designated fields (url, link,
+ * imageUrl, videoUrl, …) are left untouched.
  */
 export function stripUrlsFromTextFields(value: unknown): unknown {
   if (typeof value === 'string') return stripUrlsFromText(value);

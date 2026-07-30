@@ -22,7 +22,7 @@ const baseSnapshot = {
     shopping: { enabled: false, results: 5 },
     reviews: { enabled: false, results: 5 },
     videos: { enabled: false, results: 5 },
-    webpageFetch: { enabled: true },
+    scrape: { enabled: true },
   },
 };
 
@@ -138,8 +138,8 @@ describe('useSysctlConfig', () => {
   it('does not mutate an endpoint that lacks results', async () => {
     const { config, refreshConfig, updateEndpointResults } = useSysctlConfig();
     await refreshConfig();
-    updateEndpointResults('serper', 'webpageFetch', '50');
-    expect(config.value?.serper.webpageFetch).toEqual({ enabled: true });
+    updateEndpointResults('serper', 'scrape', '50');
+    expect(config.value?.serper.scrape).toEqual({ enabled: true });
   });
 
   it('loads the ollama connection from its own overrides API', async () => {

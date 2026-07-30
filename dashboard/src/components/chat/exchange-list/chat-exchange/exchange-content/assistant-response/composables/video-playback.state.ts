@@ -1,15 +1,16 @@
 import { computed, ref } from 'vue';
 
+import { playlistMode } from '@/components/widgets/floating-playlist/composables/playlist-settings.state';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { releaseFloatingPopupRect } from './popout-settings.state';
 
 /**
  * Shared playback state: the URL of the video the user most recently engaged
- * (clicked play on). This is the single mounted player: inline figures
- * render as posters until they become the active playback, so at most one
- * real player exists on the page at a time. Both the videolist response
- * cards and the right-panel playlist read it to highlight the current video.
+ * (clicked play on). This is the single playing video: every engagement
+ * launches it into the app-level floating player (see launchVideo), so at
+ * most one real player exists on the page at a time. Both the video
+ * surfaces and the playlists read it to highlight the current video.
  */
 export const activePlaybackVideoUrl = ref<string | null>(null);
 
@@ -25,8 +26,8 @@ export function setActivePlayback(videoUrl: string, title?: string) {
   if (activePlaybackVideoUrl.value !== videoUrl) {
     nowPlayingTitle.value = title ?? '';
   } else if (title !== undefined) {
-    // A repeated engage (e.g. iframe window blur) may name the video for
-    // the first time — adopt the title without disturbing playback.
+    // A repeated engage may name the video for the first time — adopt the
+    // title without disturbing playback.
     nowPlayingTitle.value = title;
   }
   activePlaybackVideoUrl.value = videoUrl;
@@ -85,9 +86,8 @@ export function toggleActivePlayback() {
 }
 
 /**
- * Stop playback entirely: closes the launched popup or drops the inline
- * figure back to its poster, and clears the highlight everywhere (the
- * highlight is driven by activePlaybackVideoUrl).
+ * Stop playback entirely: closes the launched popup and clears the
+ * highlight everywhere (the highlight is driven by activePlaybackVideoUrl).
  */
 export function stopActivePlayback() {
   if (launchedVideo.value) closeLaunchedVideo();
@@ -96,11 +96,21 @@ export function stopActivePlayback() {
 }
 
 /**
- * The video launched from the playlist panel, rendered by the standalone
- * floating player host. Null when no launched video is up. While a launched
- * video exists it is the only mounted player: inline figures stay posters.
+ * The currently launched video, rendered by the standalone floating player
+ * host mounted at app level. Every play action anywhere in the app (video
+ * list cards, gallery items, hero media, playlist rows) routes through
+ * launchVideo, so this is the only mounted player — it survives tab and
+ * conversation switches, and overlays the source figure via CSS alone when
+ * the figure is in view (see playback-anchor.state).
  */
 export const launchedVideo = ref<VideoGalleryItem | null>(null);
+
+/**
+ * Whether the launched video came from a playlist (a queue was captured at
+ * launch). Gates the hide-on-playlist popout setting so figure-launched
+ * videos always show their window, and drives playlist autoplay.
+ */
+export const launchedFromPlaylist = ref(false);
 
 /**
  * The playlist the launched video came from (ordered, as shown in the
@@ -115,15 +125,15 @@ export function launchVideo(
   playlist?: { videos: VideoGalleryItem[]; conversationId: string },
 ) {
   launchedVideo.value = item;
-  if (playlist) {
-    launchedPlaylistQueue.value = playlist.videos;
-    launchedPlaylistConversationId.value = playlist.conversationId;
-  }
+  launchedFromPlaylist.value = Boolean(playlist);
+  launchedPlaylistQueue.value = playlist?.videos ?? [];
+  launchedPlaylistConversationId.value = playlist?.conversationId ?? '';
   setActivePlayback(item.videoUrl, item.title);
 }
 
 export function closeLaunchedVideo() {
   launchedVideo.value = null;
+  launchedFromPlaylist.value = false;
   launchedPlaylistQueue.value = [];
   launchedPlaylistConversationId.value = '';
   clearActivePlayback();
@@ -131,24 +141,32 @@ export function closeLaunchedVideo() {
 }
 
 /**
- * Dock the launched video back onto the page without stopping it: the
- * floating window closes but the video stays the active playback, so an
- * inline figure with the same URL mounts the player right away (or floats
- * it again while scrolled out). The playlist queue is dropped — playlist
- * autoplay belongs to the launched player only.
+ * Queue key under which the floating playlist stores its videos in
+ * addedPlaylistVideos. The floating playlist is deliberately conversation-
+ * independent — it exists so the queue survives conversation switches and
+ * tab switches — so while the mode is floating, every playlist read and
+ * write (panel surfaces keep their conversation scope in panel mode) goes
+ * through this single global key.
  */
-export function dockLaunchedVideo() {
-  launchedVideo.value = null;
-  launchedPlaylistQueue.value = [];
-  launchedPlaylistConversationId.value = '';
-  releaseFloatingPopupRect();
+export const FLOATING_PLAYLIST_QUEUE_KEY = 'floating-playlist';
+
+/**
+ * Resolve the playlist queue key for the current mode: the global floating
+ * queue while the playlist floats (conversation-independent), the given
+ * conversation id otherwise.
+ */
+export function playlistQueueKey(conversationId: string): string {
+  return playlistMode.value === 'floating'
+    ? FLOATING_PLAYLIST_QUEUE_KEY
+    : conversationId;
 }
 
 /**
  * The conversation's playlist: videos the user explicitly added from a
- * videolist card, keyed by conversation id so playlists do not leak into
- * other conversations. Persisted to localStorage (one record per
- * conversation) so a conversation's playlist survives reloads.
+ * videolist card, keyed by conversation id (or by the global floating key
+ * in floating mode) so playlists do not leak into other conversations.
+ * Persisted to localStorage (one record per key) so a playlist survives
+ * reloads.
  */
 const PLAYLIST_VIDEOS_STORAGE_KEY = 'vision-playlist-videos';
 
@@ -215,7 +233,10 @@ export function addPlaylistVideo(
   writeAddedPlaylistVideos(conversationId, [...current, item]);
 }
 
-/** Remove a video from the conversation's playlist. */
+/** Remove a video from the conversation's playlist. Removing the video
+ *  that is playing right now does not interrupt it: playback keeps going
+ *  until the user clicks another video (mirrors adding, which never
+ *  interrupts either). */
 export function removePlaylistVideo(conversationId: string, videoUrl: string) {
   if (!conversationId) return;
   const current = addedPlaylistVideos.value.get(conversationId) ?? [];
@@ -223,8 +244,27 @@ export function removePlaylistVideo(conversationId: string, videoUrl: string) {
     conversationId,
     current.filter((item) => item.videoUrl !== videoUrl),
   );
+}
 
-  if (launchedVideo.value?.videoUrl === videoUrl) closeLaunchedVideo();
+/**
+ * Replace the conversation's playlist wholesale — how a saved playlist is
+ * loaded. Incoming videos are deduped by URL and capped like manual
+ * additions. A playing video the load leaves behind keeps playing: only
+ * clicking another video switches playback.
+ */
+export function replacePlaylistVideos(
+  conversationId: string,
+  videos: VideoGalleryItem[],
+) {
+  if (!conversationId) return;
+  const deduped = videos
+    .filter((item) => item.videoUrl)
+    .filter(
+      (item, index, all) =>
+        all.findIndex((other) => other.videoUrl === item.videoUrl) === index,
+    )
+    .slice(0, MAX_PLAYLIST_VIDEOS);
+  writeAddedPlaylistVideos(conversationId, deduped);
 }
 
 /**

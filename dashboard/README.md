@@ -1,8 +1,8 @@
 <div align="center">
 
-# {fff} tripleF — Dashboard
+# 3F tripleF — Dashboard
 
-The tripleF workbench UI: a Vue 3 dashboard for the {fff} harness — streaming multi-modal chat with reasoning areas and compaction, system control (providers, preprocessing, health, search engines), dead-letter replay, image preprocessing preview — built with Vite, Pinia, TanStack Query, Tailwind CSS v4, and Socket.IO.
+The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming multi-modal chat with reasoning areas and compaction, system control (providers, preprocessing, health, search engines), dead-letter replay, image preprocessing preview — built with Vite, Pinia, TanStack Query, Tailwind CSS v4, and Socket.IO.
 
 </div>
 

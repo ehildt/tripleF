@@ -27,8 +27,45 @@ function handleKeydown(event: KeyboardEvent) {
     :placeholder="placeholder"
     :disabled="disabled"
     :rows="rows ?? 3"
-    class="w-full px-3 py-2 bg-tertiary border border-divider rounded-none text-sm text-fg-primary placeholder:text-left placeholder:text-fg-muted focus:outline-none focus:border-tab-rest focus:ring-1 focus:ring-tab-rest transition-all font-mono disabled:opacity-50 disabled:cursor-default resize-none"
+    class="input-text-area"
+    :class="{ 'input-text-area--disabled': disabled }"
     @input="handleInput"
     @keydown="handleKeydown"
   />
 </template>
+
+<style scoped>
+.input-text-area {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  font-size: 0.875rem;
+  color: var(--color-fg-primary);
+  font-family: var(--font-mono);
+  outline: none;
+  resize: none;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-text-area::placeholder {
+  text-align: left;
+  color: var(--color-fg-muted);
+}
+
+.input-text-area:focus {
+  border-color: var(--color-tab-rest);
+  box-shadow: 0 0 0 1px var(--color-tab-rest);
+}
+
+.input-text-area:disabled,
+.input-text-area--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+</style>

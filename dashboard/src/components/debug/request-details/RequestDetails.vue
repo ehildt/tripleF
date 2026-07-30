@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Brain, Clock, Copy, Cpu, Link2 } from '@lucide/vue';
+import { Brain, Clock, Cpu, Link2 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { DebugResult } from '../../../types/debug.model';
@@ -8,6 +8,7 @@ import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.v
 import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../../shared/ui/panel-layout/PanelLayout.vue';
+import TabPanel from '../../shared/ui/tab-panel/TabPanel.vue';
 import { useRequestDetails } from './composables/use-request-details';
 import DetailTag from './detail-tag/DetailTag.vue';
 import { formatSize } from './helpers/format-size.helper';
@@ -142,52 +143,35 @@ const {
         </template>
       </div>
 
-      <!-- Tab Menu -->
-      <div v-if="tabs.length" class="request-details__tabs-container">
-        <div class="request-details__tab-bar">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            class="request-details__tab"
-            :class="{ 'request-details__tab--active': activeTab === tab.id }"
-            @click="selectTab(tab.id)"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-
-        <!-- Content Area -->
-        <div v-if="activeContent" class="request-details__panel">
-          <template v-if="activeTab === 'error'">
-            <div class="request-details__error">
-              <pre class="request-details__error-body">{{
-                activeContent.content
-              }}</pre>
-            </div>
-          </template>
-          <template v-else-if="activeTab === 'prompt'">
-            <div class="request-details__prompt">
-              <ExpandableMessageList :items="activeContent.content as any" />
-            </div>
-          </template>
-          <template v-else>
-            <button
-              class="request-details__copy"
-              :class="{ 'request-details__copy--copied': isCopied }"
-              :title="isCopied ? 'Copied!' : 'Copy'"
-              @click="copyActive"
-            >
-              <Copy class="request-details__copy-icon" />
-            </button>
-            <pre class="request-details__content">{{
-              activeContent.content
+      <!-- Tab Panel -->
+      <TabPanel
+        :tabs="tabs"
+        :active-tab="activeTab"
+        :copyable="
+          activeTab !== 'prompt' && activeTab !== 'error' && activeTab !== null
+        "
+        :copied="isCopied"
+        @select="selectTab"
+        @copy="copyActive"
+      >
+        <template v-if="activeTab === 'error'">
+          <div class="request-details__error">
+            <pre class="request-details__error-body">{{
+              activeContent?.content
             }}</pre>
-          </template>
-        </div>
-        <div v-else class="request-details__no-tab">
-          <span>Select a tab to view content</span>
-        </div>
-      </div>
+          </div>
+        </template>
+        <template v-else-if="activeTab === 'prompt'">
+          <div class="request-details__prompt">
+            <ExpandableMessageList :items="activeContent?.content as any" />
+          </div>
+        </template>
+        <template v-else>
+          <pre class="request-details__content">{{
+            activeContent?.content
+          }}</pre>
+        </template>
+      </TabPanel>
     </div>
 
     <PanelEmptyState v-else />
@@ -236,62 +220,6 @@ const {
   width: 100%;
 }
 
-.request-details__tabs-container {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  border-top: 1px solid var(--color-divider);
-  padding-top: var(--spacing-3);
-}
-
-.request-details__tab-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-0-5);
-  margin-bottom: -1px;
-  position: relative;
-  z-index: 10;
-}
-
-.request-details__tab {
-  flex: 1;
-  padding: var(--spacing-1-5) var(--spacing-3);
-  border: none;
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.request-details__tab:hover {
-  color: var(--color-fg-secondary);
-}
-
-.request-details__tab--active {
-  border: 1px solid var(--color-divider);
-  border-bottom: 0;
-  background-color: var(--color-bg-secondary);
-  color: var(--color-accent-primary);
-}
-
-/* Fills the space under the tab bar and scrolls internally — the column
-   wrapper in DebugSection owns the shared panel height. */
-.request-details__panel {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-secondary);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
 .request-details__error {
   padding: var(--spacing-3);
 }
@@ -326,44 +254,5 @@ const {
   font-size: 0.75rem;
   white-space: pre-wrap;
   overflow-wrap: break-word;
-}
-
-.request-details__copy {
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  z-index: 10;
-  padding: var(--spacing-1);
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.request-details__copy:hover {
-  color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 10%,
-    transparent
-  );
-}
-
-.request-details__copy--copied {
-  color: var(--color-accent-primary);
-}
-
-.request-details__copy-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-.request-details__no-tab {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  color: var(--color-fg-muted);
 }
 </style>

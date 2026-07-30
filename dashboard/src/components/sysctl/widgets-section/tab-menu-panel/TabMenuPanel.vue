@@ -105,8 +105,8 @@ function setSide(value: string) {
 .tab-menu-panel__content {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
 }
 
 @media (max-width: 40rem) {
@@ -119,7 +119,7 @@ function setSide(value: string) {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
 }
 
 @media (max-width: 40rem) {

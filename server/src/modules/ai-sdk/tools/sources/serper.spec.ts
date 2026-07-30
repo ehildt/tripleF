@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  createSerperBusinessReviewsSearch,
   createSerperImageSearch,
   createSerperNewsSearch,
   createSerperPlacesSearch,
-  createSerperReviewsSearch,
   createSerperShoppingSearch,
   createSerperVideoSearch,
   createSerperWebSearch,
@@ -367,7 +367,7 @@ describe('standalone query guidance', () => {
   });
 
   it('reviews search demands an explicitly named business resolved from the conversation', () => {
-    const tool = createSerperReviewsSearch(stubDeps());
+    const tool = createSerperBusinessReviewsSearch(stubDeps());
     const queryDescription = (tool.inputSchema as any).shape.query
       .description as string;
     expect(queryDescription).toContain('named explicitly');

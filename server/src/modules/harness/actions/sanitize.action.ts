@@ -4,8 +4,13 @@ import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { applySourcePolicy } from '../helpers/apply-source-policy.helper.js';
 import { buildFinalMessagesForSanitize } from '../helpers/build-final-messages.helper.js';
+import { collectHistoryImageUrls } from '../helpers/collect-history-image-urls.helper.js';
 import { collectHistoryVideoUrls } from '../helpers/collect-history-video-urls.helper.js';
-import { dedupeImagesByFingerprint } from '../helpers/dedupe-images-by-fingerprint.helper.js';
+import {
+  dedupeImagesByFingerprint,
+  type FingerprintedImageItem,
+} from '../helpers/dedupe-images-by-fingerprint.helper.js';
+import type { IngestedImage } from '../helpers/download-and-ingest-images.helper.js';
 import {
   extractArticles,
   extractReferences,
@@ -26,23 +31,32 @@ import { CloudImageIngestionService } from '../services/cloud-image-ingestion.se
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
+import {
+  isShownImage,
+  isShownVideo,
+  type ShownMediaKeys,
+  ShownMediaService,
+} from '../services/shown-media.service.js';
 
 export type SanitizeResult = {
   toolResults: Array<{ toolName: string; result: unknown }>;
   messages: InputMessage[];
   availableImageCount: number;
   availableVideoCount: number;
-  ingestedImages?: Array<{
-    imageUrl: string;
-    imageAlt: string;
-    title: string;
-    caption: string;
-    source: 'cloud';
-    hash: string;
-    name: string;
-    sourceUrl: string;
-  }>;
+  ingestedImages?: IngestedImage[];
+  /** All cloud images ingested for URL rewriting — respond maps their
+   *  fingerprints when recording shown media. */
+  ingestedForRewrite?: IngestedImage[];
 };
+
+/**
+ * Cloud reference images for vision tasks (compare/describe) are fed to the
+ * response model — a small edge keeps them cheap. Cloud images rendered in
+ * user-facing galleries and heroes keep display resolution (the imagelist
+ * grid, lightbox, and article hero would otherwise show a 512px file).
+ */
+const CLOUD_REFERENCE_MAX_DIMENSION = 512;
+const CLOUD_DISPLAY_MAX_DIMENSION = 1600;
 
 @Injectable()
 export class SanitizeActionService {
@@ -53,6 +67,8 @@ export class SanitizeActionService {
     private readonly cloudImageIngestion: CloudImageIngestionService,
     private readonly stepLogger: HarnessStepLogger,
     private readonly providerOverrides: ProviderOverridesService,
+    @Inject(ShownMediaService)
+    private readonly shownMedia: ShownMediaService,
   ) {}
 
   async execute(
@@ -98,7 +114,6 @@ export class SanitizeActionService {
     // 3b. Deduplicate verified images by content fingerprint.
     const { items: dedupedImages, removedCount: removedDuplicateImages } =
       await dedupeImagesByFingerprint(verifiedImages);
-    verifiedImages = dedupedImages;
 
     if (removedDuplicateImages > 0) {
       this.stepLogger.log(
@@ -107,37 +122,28 @@ export class SanitizeActionService {
         'deduplicated images by content hash',
         {
           removedDuplicateImages,
-          remainingImages: verifiedImages.length,
+          remainingImages: dedupedImages.length,
         },
       );
     }
 
-    // 3c. Videolist follow-ups must never repeat videos the user already
-    // saw: drop every candidate whose URL appeared in an earlier videolist
-    // response instead of offering it to the response model again.
-    if (ctx.outputs.intent?.template === 'videolist') {
-      const historyVideoUrls = collectHistoryVideoUrls(ctx.request.messages);
-      if (historyVideoUrls.size > 0) {
-        const beforeCount = verifiedVideos.length;
-        verifiedVideos = verifiedVideos.filter(
-          (video) =>
-            !videoUrlKeys(video.videoUrl).some((key) =>
-              historyVideoUrls.has(key),
-            ),
-        );
-        if (beforeCount !== verifiedVideos.length) {
-          this.stepLogger.log(
-            ctx,
-            'sanitize',
-            'skipped previously shown videos',
-            {
-              removedCount: beforeCount - verifiedVideos.length,
-              remainingCount: verifiedVideos.length,
-            },
-          );
-        }
-      }
-    }
+    // Media-list follow-ups must never repeat media the user already saw:
+    // the persisted shown-media registry covers every template that ever
+    // rendered media; history-text markers cover pre-registry conversations.
+    const template = ctx.outputs.intent?.template;
+    const shownKeys = await this.lookupShownKeys(ctx, template);
+    verifiedImages = this.filterShownImageCandidates(
+      ctx,
+      template,
+      shownKeys,
+      dedupedImages,
+    );
+    verifiedVideos = this.filterShownVideoCandidates(
+      ctx,
+      template,
+      shownKeys,
+      verifiedVideos,
+    );
 
     // 4. Respect explicit counts from intent (default to 6 each).
     const imageTargetCount =
@@ -158,6 +164,13 @@ export class SanitizeActionService {
     //    ingested are dropped and blanked out of the tool results.
     const ingestion = await this.ingestCloudImages(ctx, verifiedImages);
     verifiedImages = ingestion.verifiedImages;
+    verifiedImages = this.filterShownIngestedImages(
+      ctx,
+      template,
+      shownKeys,
+      ingestion,
+      verifiedImages,
+    );
 
     const droppedImageUrls = this.collectExternalImageSearchUrls(
       sanitizedToolResults,
@@ -233,7 +246,141 @@ export class SanitizeActionService {
       availableImageCount: verifiedImages.length,
       availableVideoCount: verifiedVideos.length,
       ingestedImages: ingestion.ingestedImages,
+      ingestedForRewrite: ingestion.ingestedForRewrite,
     };
+  }
+
+  /**
+   * Look the shown-media registry up once per request — but only for
+   * media-list follow-ups, where repeats are pure duplication. Recaps and
+   * reports may legitimately reuse earlier media.
+   */
+  private async lookupShownKeys(
+    ctx: HarnessContext,
+    template: string | undefined,
+  ): Promise<ShownMediaKeys | undefined> {
+    if (template !== 'imagelist' && template !== 'videolist') {
+      return undefined;
+    }
+    return this.shownMedia.lookupKeys(
+      ctx.sessionId,
+      ctx.filters.conversationId,
+    );
+  }
+
+  /**
+   * Imagelist pre-ingest: drop candidates whose normalized fingerprint was
+   * already shown. Runs before ingestion, so repeats are not even
+   * re-downloaded.
+   */
+  private filterShownImageCandidates(
+    ctx: HarnessContext,
+    template: string | undefined,
+    shownKeys: ShownMediaKeys | undefined,
+    dedupedImages: FingerprintedImageItem[],
+  ): ExtractedImageItem[] {
+    const fresh =
+      template === 'imagelist' && shownKeys
+        ? dedupedImages.filter(
+            ({ fingerprint }) => !isShownImage(shownKeys, { fingerprint }),
+          )
+        : dedupedImages;
+
+    const removedCount = dedupedImages.length - fresh.length;
+    if (removedCount > 0) {
+      this.stepLogger.log(ctx, 'sanitize', 'skipped previously shown images', {
+        removedCount,
+        remainingCount: fresh.length,
+      });
+    }
+
+    return fresh.map(({ item }) => item);
+  }
+
+  /**
+   * Videolist: drop every candidate whose canonical key was recorded in the
+   * registry or appeared in an earlier videolist response (legacy history).
+   */
+  private filterShownVideoCandidates(
+    ctx: HarnessContext,
+    template: string | undefined,
+    shownKeys: ShownMediaKeys | undefined,
+    videos: ExtractedVideoItem[],
+  ): ExtractedVideoItem[] {
+    if (template !== 'videolist') return videos;
+
+    const historyVideoUrls = collectHistoryVideoUrls(ctx.request.messages);
+    if (historyVideoUrls.size === 0 && !shownKeys) return videos;
+
+    const fresh = videos.filter((video) => {
+      if (
+        videoUrlKeys(video.videoUrl).some((key) => historyVideoUrls.has(key))
+      ) {
+        return false;
+      }
+      return !shownKeys || !isShownVideo(shownKeys, video.videoUrl);
+    });
+
+    const removedCount = videos.length - fresh.length;
+    if (removedCount > 0) {
+      this.stepLogger.log(ctx, 'sanitize', 'skipped previously shown videos', {
+        removedCount,
+        remainingCount: fresh.length,
+      });
+    }
+
+    return fresh;
+  }
+
+  /**
+   * Imagelist post-ingest: drop ingested images that were already shown —
+   * registry fingerprint/storage hash or legacy history URLs. Removing them
+   * from the rewrite set beforehand blanks their source URLs in the tool
+   * results like any un-ingestable image.
+   */
+  private filterShownIngestedImages(
+    ctx: HarnessContext,
+    template: string | undefined,
+    shownKeys: ShownMediaKeys | undefined,
+    ingestion: { ingestedForRewrite: IngestedImage[] },
+    verifiedImages: ExtractedImageItem[],
+  ): ExtractedImageItem[] {
+    if (template !== 'imagelist' || ingestion.ingestedForRewrite.length === 0) {
+      return verifiedImages;
+    }
+
+    const legacyImageUrls = collectHistoryImageUrls(ctx.request.messages);
+    if (!shownKeys && legacyImageUrls.size === 0) return verifiedImages;
+
+    const droppedFinalUrls = new Set<string>();
+    const freshForRewrite = ingestion.ingestedForRewrite.filter((entry) => {
+      const shown =
+        (shownKeys !== undefined &&
+          isShownImage(shownKeys, {
+            fingerprint: entry.fingerprint,
+            storageUrl: entry.imageUrl,
+          })) ||
+        legacyImageUrls.has(entry.imageUrl);
+      if (shown) droppedFinalUrls.add(entry.imageUrl);
+      return !shown;
+    });
+
+    if (droppedFinalUrls.size === 0) return verifiedImages;
+
+    ingestion.ingestedForRewrite = freshForRewrite;
+    const fresh = verifiedImages.filter(
+      (item) => !droppedFinalUrls.has(item.imageUrl),
+    );
+
+    const removedCount = verifiedImages.length - fresh.length;
+    if (removedCount > 0) {
+      this.stepLogger.log(ctx, 'sanitize', 'skipped previously shown images', {
+        removedCount,
+        remainingCount: fresh.length,
+      });
+    }
+
+    return fresh;
   }
 
   private sanitizeToolResults(
@@ -470,9 +617,9 @@ export class SanitizeActionService {
    */
   private async ingestCloudImages(
     ctx: HarnessContext,
-    verifiedImages: Array<{ imageUrl: string; title?: string }>,
+    verifiedImages: ExtractedImageItem[],
   ): Promise<{
-    verifiedImages: Array<{ imageUrl: string; title?: string }>;
+    verifiedImages: ExtractedImageItem[];
     ingestedImages: SanitizeResult['ingestedImages'];
     ingestedForRewrite: NonNullable<SanitizeResult['ingestedImages']>;
   }> {
@@ -496,6 +643,9 @@ export class SanitizeActionService {
         ctx,
         verifiedImages,
         existingFingerprints,
+        isImageReferenceTask
+          ? CLOUD_REFERENCE_MAX_DIMENSION
+          : CLOUD_DISPLAY_MAX_DIMENSION,
       )) ?? [];
     const ingestedForRewrite = isImageReferenceTask
       ? this.limitCloudReferenceImages(ingested, 3)
@@ -504,7 +654,7 @@ export class SanitizeActionService {
     const ingestedByUrl = new Map(
       ingestedForRewrite.map((img) => [img.sourceUrl, img]),
     );
-    const rewritten: Array<{ imageUrl: string; title?: string }> = [];
+    const rewritten: ExtractedImageItem[] = [];
     const seenUrls = new Set<string>();
     for (const item of verifiedImages) {
       const isExternal = item.imageUrl.startsWith('http');
@@ -517,8 +667,13 @@ export class SanitizeActionService {
 
       seenUrls.add(finalUrl);
       rewritten.push({
+        ...item,
         imageUrl: finalUrl,
         title: match?.title ?? item.title,
+        // Dimensions describe the stored (resized) image, not the origin —
+        // clients badge tiles with them.
+        width: match?.width ?? item.width,
+        height: match?.height ?? item.height,
       });
     }
 
@@ -578,8 +733,9 @@ export class SanitizeActionService {
 
   private async ingestExternalImages(
     ctx: HarnessContext,
-    verifiedImages: Array<{ imageUrl: string; title?: string }>,
+    verifiedImages: ExtractedImageItem[],
     existingFingerprints: string[],
+    maxDimension: number,
   ): Promise<SanitizeResult['ingestedImages']> {
     const externalOnly = verifiedImages.filter(
       (item) =>
@@ -593,17 +749,25 @@ export class SanitizeActionService {
       ctx.sessionId,
       ctx.filters.conversationId,
       ctx.requestId,
-      { existingFingerprints },
+      { existingFingerprints, maxDimension },
     );
   }
 
   private buildIngestedByUrlMap(
     ingestedImages: SanitizeResult['ingestedImages'],
-  ): Map<string, { imageUrl: string; title?: string }> {
+  ): Map<
+    string,
+    { imageUrl: string; title?: string; width?: number; height?: number }
+  > {
     return new Map(
       (ingestedImages ?? []).map((img) => [
         img.sourceUrl,
-        { imageUrl: img.imageUrl, title: img.title },
+        {
+          imageUrl: img.imageUrl,
+          title: img.title,
+          width: img.width,
+          height: img.height,
+        },
       ]),
     );
   }

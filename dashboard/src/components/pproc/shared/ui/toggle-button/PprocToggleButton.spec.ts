@@ -10,18 +10,16 @@ describe('PprocToggleButton', () => {
       slots: { content: 'Original' },
     });
     expect(wrapper.text()).toContain('Original');
-    expect(wrapper.find('button').classes().join(' ')).toContain('bg-primary');
+    expect(wrapper.find('.pproc-toggle-button--selected').exists()).toBe(false);
   });
 
-  it('renders in selected state with different class', () => {
+  it('renders in selected state with selected modifier', () => {
     const wrapper = mount(PprocToggleButton, {
       props: { selected: true },
       slots: { content: 'Grayscale' },
     });
     expect(wrapper.text()).toContain('Grayscale');
-    expect(wrapper.find('button').classes().join(' ')).toContain(
-      'bg-secondary',
-    );
+    expect(wrapper.find('.pproc-toggle-button--selected').exists()).toBe(true);
   });
 
   it('applies disabled styling', () => {
@@ -29,8 +27,7 @@ describe('PprocToggleButton', () => {
       props: { selected: false, disabled: true },
     });
     const btn = wrapper.find('button');
-    expect(btn.classes().join(' ')).toContain('cursor-default');
-    expect(btn.classes().join(' ')).toContain('opacity-60');
+    expect(btn.classes()).toContain('pproc-toggle-button--disabled');
   });
 
   it('applies highlighted styling', () => {
@@ -38,8 +35,7 @@ describe('PprocToggleButton', () => {
       props: { selected: false, highlighted: true },
     });
     const btn = wrapper.find('button');
-    expect(btn.classes().join(' ')).toContain('ring-2');
-    expect(btn.classes().join(' ')).toContain('animate-pulse');
+    expect(btn.classes()).toContain('pproc-toggle-button--highlighted');
   });
 
   it('emits click when not disabled', async () => {
@@ -62,13 +58,13 @@ describe('PprocToggleButton', () => {
     const wrapper = mount(PprocToggleButton, {
       props: { selected: true, disabled: false },
     });
-    expect(wrapper.find('div.absolute').exists()).toBe(true);
+    expect(wrapper.find('.pproc-toggle-button__glow').exists()).toBe(true);
   });
 
   it('does not render gradient when disabled', () => {
     const wrapper = mount(PprocToggleButton, {
       props: { selected: true, disabled: true },
     });
-    expect(wrapper.find('div.absolute').exists()).toBe(false);
+    expect(wrapper.find('.pproc-toggle-button__glow').exists()).toBe(false);
   });
 });

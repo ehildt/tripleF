@@ -1,5 +1,6 @@
 import { buildImageFingerprint } from './build-image-fingerprint.helper.js';
 import type { ExtractedImageItem } from './extract-media-from-tools.helper.js';
+import { fetchImageBuffer } from './fetch-image-buffer.helper.js';
 
 interface DedupeImagesByFingerprintOptions {
   timeoutMs?: number;
@@ -8,8 +9,14 @@ interface DedupeImagesByFingerprintOptions {
 
 type ImageItem = ExtractedImageItem;
 
+/** A candidate that survived dedup, with its content fingerprint when known. */
+export interface FingerprintedImageItem {
+  item: ImageItem;
+  fingerprint?: string;
+}
+
 interface DedupImagesResult {
-  items: ImageItem[];
+  items: FingerprintedImageItem[];
   removedCount: number;
 }
 
@@ -19,7 +26,9 @@ interface DedupImagesResult {
  * CDN-resized variants of the same source image collapse to a single entry.
  *
  * Images whose fingerprint cannot be computed are kept as unique unknowns
- * rather than discarded, because they were already validated upstream.
+ * rather than discarded, because they were already validated upstream. The
+ * fingerprints are exposed so the shown-media registry filter can reuse them
+ * without a second download pass.
  */
 export async function dedupeImagesByFingerprint(
   items: ImageItem[],
@@ -29,7 +38,7 @@ export async function dedupeImagesByFingerprint(
 
   if (items.length === 0) return { items: [], removedCount: 0 };
 
-  const results = new Array<ImageItem | undefined>(items.length);
+  const results = new Array<FingerprintedImageItem | undefined>(items.length);
   const seenHashes = new Set<string>();
   let index = 0;
 
@@ -44,7 +53,7 @@ export async function dedupeImagesByFingerprint(
       results[currentIndex] = undefined;
     } else {
       if (fingerprint) seenHashes.add(fingerprint);
-      results[currentIndex] = item;
+      results[currentIndex] = { item, fingerprint };
     }
 
     await runNext();
@@ -57,7 +66,7 @@ export async function dedupeImagesByFingerprint(
   await Promise.all(workers);
 
   const deduped = results.filter(
-    (item): item is ImageItem => item !== undefined,
+    (result): result is FingerprintedImageItem => result !== undefined,
   );
   return { items: deduped, removedCount: items.length - deduped.length };
 }
@@ -66,19 +75,11 @@ async function fetchImageFingerprint(
   url: string,
   timeoutMs: number,
 ): Promise<string | undefined> {
+  const buffer = await fetchImageBuffer(url, { timeoutMs });
+  if (!buffer || buffer.length === 0) return undefined;
+
   try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: { 'User-Agent': 'triplef-harness/1.0' },
-    });
-
-    if (!response.ok) return undefined;
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    if (buffer.length === 0) return undefined;
-
-    return buildImageFingerprint(buffer, 512);
+    return await buildImageFingerprint(buffer, 512);
   } catch {
     return undefined;
   }

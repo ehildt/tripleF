@@ -57,4 +57,11 @@ describe('isVideoUrl', () => {
     expect(isVideoUrl('')).toBe(false);
     expect(isVideoUrl('not-a-url')).toBe(false);
   });
+
+  it('returns false for non-http(s) schemes, even with a video extension', () => {
+    expect(isVideoUrl(`${'java'}script:alert(1)`)).toBe(false);
+    expect(isVideoUrl(`${'java'}script:alert(1).mp4`)).toBe(false);
+    expect(isVideoUrl('data:video/mp4;base64,AAAA')).toBe(false);
+    expect(isVideoUrl('file:///etc/passwd.mp4')).toBe(false);
+  });
 });

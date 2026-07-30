@@ -23,13 +23,6 @@ const heroUrl = computed(
   () => props.data.heroVideoUrl || props.data.heroImageUrl,
 );
 
-const galleryItems = computed(() => {
-  const items = props.data.galleryItems ?? [];
-  const hero = heroUrl.value;
-  if (!hero) return items;
-  return items.filter((item) => item.imageUrl !== hero);
-});
-
 const hasAnyContent = computed(() =>
   Boolean(
     props.data.headline ||
@@ -81,7 +74,7 @@ const hasAnyContent = computed(() =>
         :content="data.sectionContent"
       />
       <KeyFindingsSection title="Key Points" :items="data.keyPoints" />
-      <GallerySection :title="data.galleryTitle" :items="galleryItems" />
+      <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
       <VideoGallerySection
         :title="data.videoGalleryTitle"
         :items="data.videoGalleryItems"

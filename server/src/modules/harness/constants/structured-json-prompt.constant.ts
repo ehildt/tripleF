@@ -9,7 +9,7 @@ export function buildStructuredJsonPrompt(): string {
   return [
     'OUTPUT FORMAT — you must output ONLY valid JSON matching this exact schema:',
     '{',
-    '  "template": "article|news|describe|compare|ocr|summary|evaluation|product|imagelist|videolist|text|compact",',
+    '  "template": "article|news|describe|compare|ocr|summary|evaluation|product|shoplist|imagelist|videolist|text",',
     '  "prompt": "promptVariant",',
     '  "reasoning": "string (concise, 30 words or fewer)",',
     '  "tools": ["toolName"],',
@@ -34,7 +34,7 @@ export function buildStructuredJsonPrompt(): string {
     '- Never output undefined. Omit optional fields or use null instead.',
     '- Prompt must be one of the valid variants for the selected template.',
     '- Tools array must contain only exact tool names from the enabled list.',
-    '- Do NOT use category names (imageSearch, newsSearch, videoSearch, webpageFetch) as tool names.',
+    '- Do NOT use category names (imageSearch, newsSearch, videoSearch, pageFetch) as tool names.',
     '- contextSummary: MUST be in the language identified by the "language" field.',
     '- clarificationQuestion: MUST be in the language identified by the "language" field.',
     '- reasoning: MUST be in the language identified by the "language" field.',

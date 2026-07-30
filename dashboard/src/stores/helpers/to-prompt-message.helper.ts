@@ -1,6 +1,8 @@
 import { harnessResponseToText } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/harness-response-to-text.helper';
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
+import { withTemplateMarker } from './with-template-marker.helper';
+
 interface PromptExchange {
   role: string;
   content: string;
@@ -68,16 +70,32 @@ function appendImageNames(content: string, exchange: PromptExchange): string {
   return names ? `${content}\n\n[Attached images: ${names}]` : content;
 }
 
+export interface ToPromptMessageOptions {
+  /**
+   * Prefix structured assistant answers with their `[Template: <name>]`
+   * marker so the intent classifier can resolve follow-ups against the
+   * template that produced them (default true). The free-form `text`
+   * template is never marked — it is the default routing anyway.
+   */
+  includeTemplateMarker?: boolean;
+}
+
 /**
  * Convert an exchange into a text-only prompt message for the LLM.
  *
  * For assistant exchanges with structured responses, the template-specific
  * transform (or the plain `text` field) is used instead of the fallback
  * `content`, so follow-up requests can reference actual prior answers.
- * Assistant content that looks like corrupted response JSON is dropped
- * rather than leaked into the history.
+ * Structured assistant answers are prefixed with a `[Template: <name>]`
+ * marker so the intent classifier can resolve follow-ups against the
+ * template that produced them (e.g. compact shopping lists for repeated
+ * product questions). Assistant content that looks like corrupted response
+ * JSON is dropped rather than leaked into the history.
  */
-export function toPromptMessage(exchange: PromptExchange): PromptMessage {
+export function toPromptMessage(
+  exchange: PromptExchange,
+  options: ToPromptMessageOptions = {},
+): PromptMessage {
   let content: unknown =
     exchange.role === 'assistant'
       ? resolveAssistantContent(exchange)
@@ -87,8 +105,13 @@ export function toPromptMessage(exchange: PromptExchange): PromptMessage {
     content = appendImageNames(`${content ?? ''}`, exchange);
   }
 
-  return {
-    role: exchange.role,
-    content: typeof content === 'string' ? content : '',
-  };
+  let text = typeof content === 'string' ? content : '';
+  if (
+    options.includeTemplateMarker !== false &&
+    exchange.role === 'assistant'
+  ) {
+    text = withTemplateMarker(text, exchange.harnessTemplate);
+  }
+
+  return { role: exchange.role, content: text };
 }

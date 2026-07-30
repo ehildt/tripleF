@@ -18,6 +18,7 @@ import ImageListResponse from './templates/imagelist-response/ImageListResponse.
 import NewsResponse from './templates/news-response/NewsResponse.vue';
 import OcrResponse from './templates/ocr-response/OcrResponse.vue';
 import ProductResponse from './templates/product-response/ProductResponse.vue';
+import ShopListResponse from './templates/shoplist-response/ShopListResponse.vue';
 import SummaryResponse from './templates/summary-response/SummaryResponse.vue';
 import TextResponse from './templates/text-response/TextResponse.vue';
 import VideoListResponse from './templates/videolist-response/VideoListResponse.vue';
@@ -46,6 +47,7 @@ const templateMap: Record<string, Component> = {
   news: NewsResponse,
   ocr: OcrResponse,
   product: ProductResponse,
+  shoplist: ShopListResponse,
   summary: SummaryResponse,
   text: TextResponse,
   videolist: VideoListResponse,

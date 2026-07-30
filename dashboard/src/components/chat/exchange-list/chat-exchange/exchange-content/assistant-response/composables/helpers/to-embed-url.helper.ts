@@ -112,6 +112,11 @@ export function toEmbedUrl(input: string): string | null {
     return null;
   }
 
+  // Protocol gate first: the direct-file passthrough returns the input
+  // verbatim, so non-http(s) URLs (javascript:, data:) must never get that
+  // far — they would land in an iframe or <video> source unchanged.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+
   if (YOUTUBE_HOSTS.has(url.hostname)) return buildYouTubeEmbedUrl(url);
   if (VIMEO_HOSTS.has(url.hostname)) return buildVimeoEmbedUrl(url, input);
   if (DAILYMOTION_HOSTS.has(url.hostname)) return buildDailymotionEmbedUrl(url);

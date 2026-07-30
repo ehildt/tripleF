@@ -1,21 +1,16 @@
 import type { IntentResult } from '../templates/intent.schema.js';
 
+import { localizedQuerySuffix } from './localized-query-suffix.helper.js';
 import { type VariantName } from './tool-registry.constants.js';
 
 /** Check if a tool is not suitable for fallback invocation (static input only). */
 export function isNoFallbackTool(toolName: string): boolean {
-  return (
-    toolName === 'webFetch' ||
-    toolName.endsWith('WebpageFetch') ||
-    toolName === 'wikipediaGetPage'
-  );
+  return toolName === 'webFetch' || toolName.endsWith('WebpageScrape');
 }
 
 /** Check if a tool is a pure keyword-based search (no static URL input). */
 export function isPureSearchTool(toolName: string): boolean {
   if (toolName === 'webSearch') return true;
-  if (toolName === 'wikipediaSearch') return true;
-  if (toolName === 'hackerNewsSearch') return true;
   if (toolName.endsWith('ShoppingSearch')) return true;
   if (toolName.endsWith('ReviewsSearch')) return true;
   if (toolName.endsWith('PlacesSearch')) return true;
@@ -87,13 +82,14 @@ const STANDALONE_QUERY_RULES = [
  */
 const PRODUCT_QUERY_GUIDANCE = [
   'QUERY CRAFTING (product task) — phrase each tool query for its endpoint; never reuse one query for all tools:',
+  '- Language: phrase descriptive query words (review/test/unboxing/specs) in the detected user language; keep product names, brand names, and model numbers verbatim.',
   '- *ShoppingSearch: the bare product name with exact model number (e.g. "Sony WH-1000XM5"). No extra words like "buy", "price", or "review".',
   '- *ReviewsSearch: this endpoint reviews BUSINESSES, not products. Call it with the name of a retailer or the product brand (e.g. "MediaMarkt" or the seller names you know) to judge seller reputation. If the user asked about a local business itself, use that business name with its location.',
   '- *PlacesSearch: only when local availability matters (e.g. "where can I buy X in Berlin") — phrase it as "<store type or chain> in <city>".',
   '- webSearch / *WebSearch: factual queries such as "<product> specifications" and "<product> review" for editorial reviews and facts.',
   '- *ImageSearch: "<product>" optionally with "official" for clean product shots.',
   '- *VideoSearch: "<product> review", "<product> hands-on", or "<product> unboxing".',
-  '- *WebpageFetch / webFetch: fetch the most authoritative review or spec page discovered by webSearch when snippets are insufficient.',
+  '- *WebpageScrape / webFetch: fetch the most authoritative review or spec page discovered by webSearch when snippets are insufficient.',
 ].join('\n');
 
 /**
@@ -101,6 +97,7 @@ const PRODUCT_QUERY_GUIDANCE = [
  */
 const GENERAL_QUERY_GUIDANCE = [
   'QUERY CRAFTING — phrase each tool query for its endpoint; never reuse one query for all tools:',
+  '- Language: phrase descriptive query words in the detected user language; keep entity names (products, brands, people, places) verbatim.',
   '- webSearch / *WebSearch: precise factual queries with the key entities and qualifiers (e.g. year, version, location).',
   '- *ReviewsSearch: reviews BUSINESSES only — call it with an exact business or place name, never with a product or topic.',
   '- *PlacesSearch: phrase it like a Google Maps search — a business name or "<business type> in <location>".',
@@ -178,14 +175,15 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
       : 'Do not pass a count to search tools unless imageCount or videoCount is provided above; each tool will default to 6.';
 
   const timestampInstruction = `Current date and time: ${timestamp}. Use this for time-sensitive queries.`;
+  const langSuffix = localizedQuerySuffix(intent?.language ?? undefined);
   // The language comes from the intent classifier; when it could not detect
   // one, the tool model mirrors the user's latest message on its own.
   const langInstruction = intent?.language
-    ? `Detected user language: ${intent.language}. Use this language in all search queries and pass it to tools that accept a language/locale parameter (e.g. search_lang, hl, gl) when available.`
+    ? `Detected user language: ${intent.language}${langSuffix ? ` ("${langSuffix}")` : ''}. Use this language in all search queries and pass it to tools that accept a language/locale parameter (e.g. search_lang, hl, gl) when available.${langSuffix ? ` For video queries, append the language name "${langSuffix}" so results match the user's language.` : ''}`
     : '';
 
   const queryGuidance =
-    intent?.template === 'product'
+    intent?.template === 'product' || intent?.template === 'shoplist'
       ? PRODUCT_QUERY_GUIDANCE
       : GENERAL_QUERY_GUIDANCE;
 

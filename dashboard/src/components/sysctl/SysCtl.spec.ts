@@ -41,7 +41,7 @@ const baseConfig = {
     shopping: { enabled: false, results: 5 },
     reviews: { enabled: false, results: 5 },
     videos: { enabled: false, results: 5 },
-    webpageFetch: { enabled: true },
+    scrape: { enabled: true },
   },
 };
 
@@ -80,7 +80,7 @@ describe('SysCtl', () => {
   ) {
     const tab = wrapper
       .findAll('.sysctl-menu__tab')
-      .find((button) => button.text() === label);
+      .find((button) => button.attributes('title') === label);
     await tab?.trigger('click');
   }
 

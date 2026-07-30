@@ -35,6 +35,7 @@ const reasoningHtml = computed(() => renderMarkdown(props.reasoning ?? ''));
   align-items: flex-start;
   width: 100%;
   min-width: 0;
+  padding: 0.5rem;
 }
 
 .exchange-activity__reasoning {

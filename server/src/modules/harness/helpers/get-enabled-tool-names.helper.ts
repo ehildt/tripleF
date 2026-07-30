@@ -14,15 +14,6 @@ export function getEnabledToolNames(cfg: ProviderConfig): string[] {
 
   addSerperTools(cfg.serper, enabled);
 
-  // Always available
-  enabled.push(
-    'wikipediaSearch',
-    'wikipediaGetPage',
-    'hackerNewsSearch',
-    'hackerNewsGetItem',
-    'hackerNewsGetUser',
-  );
-
   return enabled;
 }
 
@@ -36,7 +27,7 @@ function addSerperTools(
   if (serper.news.enabled) enabled.push('serperNewsSearch');
   if (serper.places.enabled) enabled.push('serperPlacesSearch');
   if (serper.shopping.enabled) enabled.push('serperShoppingSearch');
-  if (serper.reviews.enabled) enabled.push('serperReviewsSearch');
+  if (serper.reviews.enabled) enabled.push('serperBusinessReviewsSearch');
   if (serper.videos.enabled) enabled.push('serperVideoSearch');
-  if (serper.webpageFetch.enabled) enabled.push('serperWebpageFetch');
+  if (serper.scrape.enabled) enabled.push('serperWebpageScrape');
 }

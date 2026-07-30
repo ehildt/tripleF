@@ -40,7 +40,7 @@ const TRUSTED_IMAGE_HOSTS = new Set([
   'cdn.shopify.com',
   'imgix.net',
   'wpmedia.roomsketcher.com',
-  // Brave image CDN
+  // Bing image CDN
   'tse1.mm.bing.net',
   'tse2.mm.bing.net',
   'tse3.mm.bing.net',

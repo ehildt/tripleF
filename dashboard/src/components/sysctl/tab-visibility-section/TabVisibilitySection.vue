@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 <style scoped>
 .tab-visibility-section__content {
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
 }
 
 .tab-visibility-section__grid {

@@ -2,9 +2,10 @@
 /**
  * Video popout settings: where the floating video popout initially
  * appears, whether a moved position is remembered across conversations and
- * reloads, whether the popout docks itself when its video is back in view,
- * whether closing a popout stops playback — and a reset back to the
- * defaults.
+ * reloads, and whether the popout docks itself when its video is back in
+ * view — plus a reset back to the defaults. Closing a popout always hides
+ * the window and keeps playback running; the transport bar's Stop button
+ * ends playback.
  *
  * Initial position is a FieldCard row with two icon-only segmented
  * toggles: vertical (top/middle/bottom) × horizontal (left/center/right),
@@ -18,7 +19,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  CircleStop,
   PictureInPicture2,
   Pin,
 } from '@lucide/vue';
@@ -37,13 +37,11 @@ import {
   popoutAutoDock,
   popoutEnabled,
   popoutRememberPosition,
-  popoutStopOnClose,
   resetPopoutSettings,
   setPopoutAnchor,
   setPopoutAutoDock,
   setPopoutEnabled,
   setPopoutRememberPosition,
-  setPopoutStopOnClose,
   showPopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 
@@ -139,15 +137,6 @@ function setHorizontal(value: string) {
         :disabled="!popoutEnabled"
         @toggle="setPopoutAutoDock(!popoutAutoDock)"
       />
-
-      <FieldCard
-        :icon="CircleStop"
-        label="stop on close"
-        description="stop playing and deselect the video when a popout is closed"
-        :checked="popoutStopOnClose"
-        :disabled="!popoutEnabled"
-        @toggle="setPopoutStopOnClose(!popoutStopOnClose)"
-      />
     </div>
   </div>
 </template>
@@ -160,9 +149,9 @@ function setHorizontal(value: string) {
 
 .video-popout-panel__content {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
 }
 
 @media (max-width: 40rem) {

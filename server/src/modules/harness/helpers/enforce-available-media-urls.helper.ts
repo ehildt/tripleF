@@ -6,13 +6,126 @@ import { videoUrlKeys } from './video-url-keys.helper.js';
 
 type MediaData = Record<string, unknown>;
 
+/** Gallery entries that are allowed and not yet spent (hero or earlier entry). */
+function filterAllowedUnusedImages(
+  items: unknown[],
+  imageUrls: Set<string>,
+  usedImageUrls: Set<string>,
+): MediaData[] {
+  return (items as MediaData[]).filter((item) => {
+    const url = typeof item?.imageUrl === 'string' ? item.imageUrl : '';
+    if (!url || !imageUrls.has(url) || usedImageUrls.has(url)) return false;
+    usedImageUrls.add(url);
+    return true;
+  });
+}
+
 /**
- * Membership enforcement for response media: the model may only use image
- * and video URLs that came back from verified tool results (or uploaded
- * images). Anything else — URLs copied out of fetched page text, or plain
- * hallucinations — is blanked so unvetted media never leaks into the
- * dashboard. Video URLs match on canonical keys so YouTube watch/embed/
- * shorts variants of an allowed video all pass.
+ * The hero image only counts as spent when there is no hero video: with a
+ * video hero the image never renders as hero and stays gallery content,
+ * matching the client's documented hero fallthrough.
+ */
+function spentImageUrls(data: MediaData): Set<string> {
+  const used = new Set<string>();
+  if (
+    !data.heroVideoUrl &&
+    typeof data.heroImageUrl === 'string' &&
+    data.heroImageUrl
+  )
+    used.add(data.heroImageUrl);
+  return used;
+}
+
+/**
+ * Related-story thumbnails are optional decorations: an image URL the model
+ * did not take from the verified results is blanked in place so an unvetted
+ * (possibly client-blocked) origin never reaches the dashboard, a thumbnail
+ * that reuses hero or gallery imagery is blanked as well, and a kept
+ * thumbnail marks its image as spent so later stories cannot reuse it.
+ */
+function blankReusedStoryThumbnails(
+  items: unknown[],
+  imageUrls: Set<string>,
+  usedImageUrls: Set<string>,
+): { stories: unknown[]; changed: boolean } {
+  let changed = false;
+  const stories = items.map((item) => {
+    if (!item || typeof item !== 'object') return item;
+    const story = item as MediaData;
+    if (typeof story.imageUrl !== 'string' || !story.imageUrl) return item;
+    if (imageUrls.has(story.imageUrl) && !usedImageUrls.has(story.imageUrl)) {
+      usedImageUrls.add(story.imageUrl);
+      return item;
+    }
+    changed = true;
+    return { ...story, imageUrl: '' };
+  });
+  return { stories, changed };
+}
+
+/** Video entries that are allowed and not spent on the hero or an earlier entry. */
+function filterAllowedUnusedVideos(
+  items: unknown[],
+  videoKeys: Set<string>,
+  usedVideoKeys: Set<string>,
+): MediaData[] {
+  return (items as MediaData[]).filter((item) => {
+    const url = typeof item?.videoUrl === 'string' ? item.videoUrl : '';
+    if (!url) return false;
+    const keys = videoUrlKeys(url);
+    if (
+      !keys.some((key) => videoKeys.has(key)) ||
+      keys.some((key) => usedVideoKeys.has(key))
+    )
+      return false;
+    keys.forEach((key) => usedVideoKeys.add(key));
+    return true;
+  });
+}
+
+/**
+ * Blank hero URLs that are not part of the verified tool results, so an
+ * unvetted (possibly client-blocked) origin never reaches the dashboard.
+ */
+function blankDisallowedHeroUrls(
+  data: MediaData,
+  imageUrls: Set<string>,
+  videoKeys: Set<string>,
+): boolean {
+  let changed = false;
+
+  if (
+    typeof data.heroVideoUrl === 'string' &&
+    data.heroVideoUrl &&
+    !videoUrlKeys(data.heroVideoUrl).some((key) => videoKeys.has(key))
+  ) {
+    data.heroVideoUrl = '';
+    changed = true;
+  }
+
+  if (
+    typeof data.heroImageUrl === 'string' &&
+    data.heroImageUrl &&
+    !imageUrls.has(data.heroImageUrl)
+  ) {
+    data.heroImageUrl = '';
+    changed = true;
+  }
+
+  return changed;
+}
+
+/**
+ * Membership and uniqueness enforcement for response media: the model may
+ * only use image and video URLs that came back from verified tool results
+ * (or uploaded images). Anything else — URLs copied out of fetched page
+ * text, or plain hallucinations — is blanked so unvetted media never leaks
+ * into the dashboard. Video URLs match on canonical keys so YouTube watch/
+ * embed/shorts variants of an allowed video all pass.
+ *
+ * Uniqueness: a URL the model already spent on a hero must not reappear in
+ * a gallery, gallery entries must not repeat each other, and related-story
+ * thumbnails must not reuse hero or gallery imagery.
  */
 export function enforceAvailableMediaUrls(
   data: MediaData | undefined,
@@ -33,22 +146,15 @@ export function enforceAvailableMediaUrls(
   let changed = false;
   const result: MediaData = { ...data };
 
-  if (
-    typeof result.heroImageUrl === 'string' &&
-    result.heroImageUrl &&
-    !imageUrls.has(result.heroImageUrl)
-  ) {
-    result.heroImageUrl = '';
-    changed = true;
-  }
+  if (blankDisallowedHeroUrls(result, imageUrls, videoKeys)) changed = true;
+
+  const usedImageUrls = spentImageUrls(result);
 
   if (Array.isArray(result.galleryItems)) {
-    const kept = result.galleryItems.filter(
-      (item) =>
-        item &&
-        typeof item === 'object' &&
-        typeof (item as MediaData).imageUrl === 'string' &&
-        imageUrls.has((item as MediaData).imageUrl as string),
+    const kept = filterAllowedUnusedImages(
+      result.galleryItems,
+      imageUrls,
+      usedImageUrls,
     );
     if (kept.length !== result.galleryItems.length) {
       result.galleryItems = kept;
@@ -56,48 +162,28 @@ export function enforceAvailableMediaUrls(
     }
   }
 
-  // Related-story thumbnails are optional decorations: an image URL the
-  // model did not take from the verified results is blanked in place so an
-  // unvetted (possibly client-blocked) origin never reaches the dashboard.
   if (Array.isArray(result.relatedStories)) {
-    let storiesChanged = false;
-    const stories = result.relatedStories.map((item) => {
-      if (!item || typeof item !== 'object') return item;
-      const story = item as MediaData;
-      if (
-        typeof story.imageUrl !== 'string' ||
-        !story.imageUrl ||
-        imageUrls.has(story.imageUrl)
-      )
-        return item;
-
-      storiesChanged = true;
-      return { ...story, imageUrl: '' };
-    });
-    if (storiesChanged) {
-      result.relatedStories = stories;
+    const stories = blankReusedStoryThumbnails(
+      result.relatedStories,
+      imageUrls,
+      usedImageUrls,
+    );
+    if (stories.changed) {
+      result.relatedStories = stories.stories;
       changed = true;
     }
   }
 
-  if (
-    typeof result.heroVideoUrl === 'string' &&
-    result.heroVideoUrl &&
-    !videoUrlKeys(result.heroVideoUrl).some((key) => videoKeys.has(key))
-  ) {
-    result.heroVideoUrl = '';
-    changed = true;
-  }
-
   if (Array.isArray(result.videoGalleryItems)) {
-    const kept = result.videoGalleryItems.filter(
-      (item) =>
-        item &&
-        typeof item === 'object' &&
-        typeof (item as MediaData).videoUrl === 'string' &&
-        videoUrlKeys((item as MediaData).videoUrl as string).some((key) =>
-          videoKeys.has(key),
-        ),
+    const usedVideoKeys = new Set<string>(
+      typeof result.heroVideoUrl === 'string' && result.heroVideoUrl
+        ? videoUrlKeys(result.heroVideoUrl)
+        : [],
+    );
+    const kept = filterAllowedUnusedVideos(
+      result.videoGalleryItems,
+      videoKeys,
+      usedVideoKeys,
     );
     if (kept.length !== result.videoGalleryItems.length) {
       result.videoGalleryItems = kept;

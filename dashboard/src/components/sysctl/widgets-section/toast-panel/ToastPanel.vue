@@ -241,16 +241,16 @@ function setHorizontal(value: string) {
 
 .toast-panel__content {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--spacing-2);
-  padding: var(--spacing-4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
 }
 
 .toast-panel__types {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
 }
 
 /* Checkbox + number box mirroring the FieldCard control styles — the

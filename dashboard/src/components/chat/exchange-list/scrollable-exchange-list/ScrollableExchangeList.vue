@@ -41,7 +41,12 @@ function onScroll() {
 </script>
 
 <template>
-  <div :ref="setContainer" class="scrollable-exchange-list" @scroll="onScroll">
+  <div
+    :ref="setContainer"
+    class="scrollable-exchange-list"
+    data-playback-scroll-root
+    @scroll="onScroll"
+  >
     <Transition name="exchange-list-state" mode="out-in">
       <ExchangeEmptyState v-if="!hasExchanges" key="empty" />
       <div v-else key="exchanges" class="scrollable-exchange-list__exchanges">

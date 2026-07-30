@@ -4,7 +4,10 @@ import { Job } from 'bullmq';
 import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
-import { getTemplatePlaceholders } from '../helpers/template-placeholders.constant.js';
+import {
+  getOptionalKeys,
+  getRequiredKeys,
+} from '../helpers/template-placeholders.constant.js';
 import { buildContentSystemPrompt } from '../prompts/content-system.prompt.js';
 import { resolveVariantInstructions } from '../prompts/variant-instructions.registry.js';
 
@@ -31,7 +34,6 @@ export class HarnessCompactService {
     const exchanges = filters.exchanges;
 
     const instructions = resolveVariantInstructions('compact', 'default');
-    const placeholders = getTemplatePlaceholders('compact');
 
     const messages: InputMessage[] = [
       {
@@ -40,7 +42,8 @@ export class HarnessCompactService {
           template: 'compact',
           instructions,
           tools: [],
-          placeholders,
+          requiredKeys: getRequiredKeys('compact'),
+          optionalKeys: getOptionalKeys('compact'),
           isImageTask: false,
         }),
       },

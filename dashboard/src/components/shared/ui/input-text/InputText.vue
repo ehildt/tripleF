@@ -16,20 +16,76 @@ function handleInput(event: Event) {
 </script>
 
 <template>
-  <div class="relative w-full">
-    <div
-      v-if="$slots['prepend-icon']"
-      class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10"
-    >
+  <div class="input-text">
+    <div v-if="$slots['prepend-icon']" class="input-text__prepend">
       <slot name="prepend-icon" />
     </div>
     <input
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="w-full px-3 py-2 bg-secondary border border-divider rounded-none text-sm text-fg-primary placeholder:text-fg-muted focus:outline-none focus:border-[var(--color-accent-active)] focus:ring-1 focus:ring-[var(--color-accent-active)] transition-all font-mono disabled:opacity-50 disabled:cursor-default"
-      :class="{ 'pl-9': $slots['prepend-icon'] }"
+      class="input-text__field"
+      :class="{
+        'input-text__field--with-prepend': $slots['prepend-icon'],
+        'input-text__field--disabled': disabled,
+      }"
       @input="handleInput"
     />
   </div>
 </template>
+
+<style scoped>
+.input-text {
+  position: relative;
+  width: 100%;
+}
+
+.input-text__prepend {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding-left: var(--spacing-3);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.input-text__field {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  font-size: 0.875rem;
+  color: var(--color-fg-primary);
+  font-family: var(--font-mono);
+  outline: none;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-text__field::placeholder {
+  text-align: left;
+  color: var(--color-fg-muted);
+}
+
+.input-text__field:focus {
+  border-color: var(--color-accent-active);
+  box-shadow: 0 0 0 1px var(--color-accent-active);
+}
+
+.input-text__field:disabled,
+.input-text__field--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.input-text__field--with-prepend {
+  padding-left: 2.25rem;
+}
+</style>

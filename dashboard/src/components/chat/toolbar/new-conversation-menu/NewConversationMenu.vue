@@ -127,7 +127,7 @@ defineEmits<{
   left: 100%;
   top: 0;
   margin-left: var(--spacing-1);
-  z-index: 100;
+  z-index: 150;
   width: 14rem;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);

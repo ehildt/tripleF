@@ -1,3 +1,4 @@
+import { applyLocaleParams } from './apply-locale-params.helper.js';
 import {
   applyRecencyParam,
   type SearchRecency,
@@ -23,8 +24,8 @@ export async function searchSerper(
     const payload: Record<string, unknown> = {
       q: query,
       num: cfg.serper.web.results,
-      ...(lang ? { hl: lang, gl: lang } : {}),
     };
+    applyLocaleParams(payload, lang);
     applyRecencyParam(payload, recency);
 
     const res = await fetchWithTimeout(

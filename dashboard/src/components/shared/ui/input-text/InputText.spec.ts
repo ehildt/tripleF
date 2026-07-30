@@ -36,6 +36,7 @@ describe('InputText', () => {
     });
     const input = wrapper.find('input');
     expect(input.attributes('disabled')).toBeDefined();
-    expect(input.classes().join(' ')).toContain('disabled:opacity-50');
+    expect(input.classes()).toContain('input-text__field');
+    expect(input.classes()).toContain('input-text__field--disabled');
   });
 });

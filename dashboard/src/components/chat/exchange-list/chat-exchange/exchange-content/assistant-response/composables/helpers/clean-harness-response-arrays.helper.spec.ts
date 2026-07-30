@@ -75,12 +75,45 @@ describe('cleanHarnessResponseArrays', () => {
     expect(data.sources).toHaveLength(2);
   });
 
+  it('blanks non-http(s) URLs in sources, cards, and related stories', () => {
+    const jsProtocol = `${'java'}script:`;
+    const data: HarnessResponseData = {
+      sources: [
+        { title: 'Bad', url: `${jsProtocol}alert(1)` },
+        { title: 'Good', url: 'https://example.com' },
+      ],
+      cards: [{ title: 'Card', url: 'data:text/html;base64,abc' }],
+      relatedStories: [{ title: 'Story', url: 'vbscript:msgbox(1)' }],
+    };
+
+    cleanHarnessResponseArrays(data);
+
+    expect(data.sources).toHaveLength(2);
+    expect(data.sources?.[0].url).toBeUndefined();
+    expect(data.sources?.[1].url).toBe('https://example.com');
+    expect(data.cards).toHaveLength(1);
+    expect(data.cards?.[0].url).toBeUndefined();
+    expect(data.relatedStories).toHaveLength(1);
+    expect(data.relatedStories?.[0].url).toBeUndefined();
+  });
+
+  it('clears hero videos that are not valid video URLs', () => {
+    const data: HarnessResponseData = {
+      heroVideoUrl: `${'java'}script:alert(1)`,
+    };
+
+    cleanHarnessResponseArrays(data);
+
+    expect(data.heroVideoUrl).toBeUndefined();
+  });
+
   it('removes video gallery items without a videoUrl', () => {
     const data: HarnessResponseData = {
       videoGalleryItems: [
         { videoUrl: 'https://example.com/v1.mp4' },
         { videoUrl: '' },
         { title: 'No URL' },
+        { videoUrl: `${'java'}script:alert(1).mp4` },
       ],
     };
 

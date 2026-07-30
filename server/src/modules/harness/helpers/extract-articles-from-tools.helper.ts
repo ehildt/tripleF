@@ -91,8 +91,6 @@ function isSearchLikeTool(toolName: string): boolean {
   if (toolName.endsWith('ShoppingSearch') || toolName.endsWith('ReviewsSearch'))
     return true;
   if (toolName.endsWith('PlacesSearch')) return true;
-  if (toolName === 'wikipediaSearch') return true;
-  if (toolName === 'hackerNewsSearch') return true;
   return false;
 }
 

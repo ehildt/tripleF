@@ -11,5 +11,6 @@
 export type * from './models/HarnessDlq.js'
 export type * from './models/HarnessConversation.js'
 export type * from './models/HarnessConfig.js'
+export type * from './models/HarnessShownMedia.js'
 export type * from './models/HarnessProviderOverride.js'
 export type * from './commonInputTypes.js'

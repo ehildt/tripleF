@@ -1,26 +1,20 @@
 import type { ToolSet } from 'ai';
 
-import {
-  createHackerNewsGetItem,
-  createHackerNewsGetUser,
-  createHackerNewsSearch,
-} from './hackernews.js';
 import { createVariantRequestTool } from './image-variants.tool.js';
 import {
+  createSerperBusinessReviewsSearch,
   createSerperImageSearch,
   createSerperNewsSearch,
   createSerperPlacesSearch,
-  createSerperReviewsSearch,
   createSerperShoppingSearch,
   createSerperVideoSearch,
-  createSerperWebpageFetch,
+  createSerperWebpageScrape,
   createSerperWebSearch,
 } from './serper.js';
-import { summarizeFound, withSummary } from './tool-factory.js';
+import { withSummary } from './tool-factory.js';
 import type { ToolDependencies } from './types.js';
 import { createWebFetchTool } from './web-fetch.tool.js';
 import { createWebSearch } from './web-search.tool.js';
-import { createWikipediaGetPage, createWikipediaSearch } from './wikipedia.js';
 
 function addSerperTools(
   tools: ToolSet,
@@ -63,28 +57,13 @@ function addSerperTools(
   if (serper.shopping.enabled)
     tools.serperShoppingSearch = withSummary(createSerperShoppingSearch(deps));
   if (serper.reviews.enabled)
-    tools.serperReviewsSearch = withSummary(createSerperReviewsSearch(deps));
+    tools.serperBusinessReviewsSearch = withSummary(
+      createSerperBusinessReviewsSearch(deps),
+    );
   if (serper.videos.enabled)
     tools.serperVideoSearch = withSummary(createSerperVideoSearch(deps));
-  if (serper.webpageFetch.enabled)
-    tools.serperWebpageFetch = withSummary(createSerperWebpageFetch(deps));
-}
-
-function addWikipediaTools(tools: ToolSet, deps: ToolDependencies): void {
-  tools.wikipediaSearch = withSummary(createWikipediaSearch(deps));
-  tools.wikipediaGetPage = withSummary(
-    createWikipediaGetPage(deps),
-    summarizeFound,
-  );
-}
-
-function addHackerNewsTools(tools: ToolSet, deps: ToolDependencies): void {
-  tools.hackerNewsSearch = withSummary(createHackerNewsSearch(deps));
-  tools.hackerNewsGetItem = withSummary(
-    createHackerNewsGetItem(deps),
-    summarizeFound,
-  );
-  tools.hackerNewsGetUser = withSummary(createHackerNewsGetUser(deps));
+  if (serper.scrape.enabled)
+    tools.serperWebpageScrape = withSummary(createSerperWebpageScrape(deps));
 }
 
 function addVariantTools(tools: ToolSet, enabledVariants: string[]): void {
@@ -120,13 +99,10 @@ export function createEnabledTools(
   const hasWebSearch = Boolean(
     serper.enabled && serper.apiKey && serper.web.enabled,
   );
-  if (hasWebSearch) {
-    tools.webSearch = withSummary(createWebSearch(deps));
-  }
+
+  if (hasWebSearch) tools.webSearch = withSummary(createWebSearch(deps));
 
   addSerperTools(tools, deps, serper.enabled, cfg);
-  addWikipediaTools(tools, deps);
-  addHackerNewsTools(tools, deps);
   addVariantTools(tools, enabledVariants ?? []);
 
   return tools;

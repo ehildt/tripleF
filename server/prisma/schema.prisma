@@ -58,6 +58,33 @@ model HarnessConfig {
   @@map("harness_config")
 }
 
+enum ShownMediaKind {
+  Image
+  Video
+}
+
+/**
+ * Media the user has already been shown inside a conversation, keyed by
+ * deterministic identity: image entries carry the normalized content
+ * fingerprint (fp:) or storage hash (sh:), video entries carry the canonical
+ * provider keys produced by videoUrlKeys. Written at respond time from the
+ * guarded final data; read at sanitize time so media-list follow-ups never
+ * repeat already-shown content. Rows are purged when their conversation or
+ * session is deleted.
+ */
+model HarnessShownMedia {
+  sessionId      String         @db.VarChar(255)
+  conversationId String         @db.VarChar(255)
+  kind           ShownMediaKind
+  mediaKey       String         @db.VarChar(255)
+  requestId      String?        @db.VarChar(255)
+  createdAt      DateTime       @default(now())
+
+  @@id([sessionId, conversationId, kind, mediaKey])
+  @@index([sessionId, conversationId])
+  @@map("harness_shown_media")
+}
+
 model HarnessProviderOverride {
   provider  String   @id @db.VarChar(100)
   values    Json

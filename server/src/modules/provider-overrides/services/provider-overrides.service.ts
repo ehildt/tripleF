@@ -77,6 +77,11 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
       const values = row.values;
       if (!values || typeof values !== 'object') continue;
       const record = values as Record<string, unknown>;
+      // Legacy key from before the webpageFetch → scrape rename.
+      if ('webpageFetch' in record && !('scrape' in record)) {
+        record.scrape = record.webpageFetch;
+      }
+      delete record.webpageFetch;
       const decrypted = decryptOverridesSecrets(
         { [row.provider]: record },
         (payload) => this.cipher.decrypt(payload),

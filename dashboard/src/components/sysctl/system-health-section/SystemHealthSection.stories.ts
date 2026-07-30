@@ -18,7 +18,6 @@ const tiles = [
   { key: 'memory_rss', status: 'up', loading: false, error: false },
   { key: 'postgres', status: 'down', loading: false, error: false },
   { key: 'minio', status: 'up', loading: false, error: false },
-  { key: 'searxng', status: 'ok', loading: false, error: false },
 ];
 
 /** Fully expanded system health grid. */

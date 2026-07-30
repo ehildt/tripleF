@@ -4,8 +4,16 @@
 
   /* Neutral cool surfaces, subtly tinted by the theme accent */
   --color-bg-primary: #ececec;
-  --color-bg-secondary: color-mix(in srgb, var(--color-accent-primary) 6%, #e2e2e2);
-  --color-bg-tertiary: color-mix(in srgb, var(--color-accent-primary) 3%, #f0f0f0);
+  --color-bg-secondary: color-mix(
+    in srgb,
+    var(--color-accent-primary) 6%,
+    #e2e2e2
+  );
+  --color-bg-tertiary: color-mix(
+    in srgb,
+    var(--color-accent-primary) 3%,
+    #f0f0f0
+  );
   --color-bg-elevated: #f2f2f2;
 
   --color-divider: #c7c7cc;
@@ -28,10 +36,26 @@
     #1c1c1e
   );
 
-  --color-harmony-1: color-mix(in srgb, var(--color-harmony-1-source) 40%, #1c1c1e);
-  --color-harmony-2: color-mix(in srgb, var(--color-harmony-2-source) 40%, #1c1c1e);
-  --color-harmony-3: color-mix(in srgb, var(--color-harmony-3-source) 50%, #1c1c1e);
-  --color-harmony-4: color-mix(in srgb, var(--color-harmony-4-source) 35%, #1c1c1e);
+  --color-harmony-1: color-mix(
+    in srgb,
+    var(--color-harmony-1-source) 40%,
+    #1c1c1e
+  );
+  --color-harmony-2: color-mix(
+    in srgb,
+    var(--color-harmony-2-source) 40%,
+    #1c1c1e
+  );
+  --color-harmony-3: color-mix(
+    in srgb,
+    var(--color-harmony-3-source) 50%,
+    #1c1c1e
+  );
+  --color-harmony-4: color-mix(
+    in srgb,
+    var(--color-harmony-4-source) 35%,
+    #1c1c1e
+  );
 
   --color-status-success: color-mix(
     in srgb,

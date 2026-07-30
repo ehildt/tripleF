@@ -4,6 +4,8 @@ import { onBeforeMount, onMounted, onUnmounted } from 'vue';
 import AppFooter from './components/app/app-footer/AppFooter.vue';
 import AppMainContent from './components/app/app-main-content/AppMainContent.vue';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
+import FloatingPlayer from './components/widgets/floating-player/FloatingPlayer.vue';
+import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPlaylist.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
 import { useAppStore } from './stores/app';
@@ -89,6 +91,8 @@ onUnmounted(() => {
 
     <ToastContainer />
     <PopoutPreview />
+    <FloatingPlayer />
+    <FloatingPlaylist />
     <AppFooter :socket-id="socketStore.socketId" />
   </div>
 </template>

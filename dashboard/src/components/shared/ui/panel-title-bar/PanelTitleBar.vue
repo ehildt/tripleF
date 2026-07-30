@@ -8,17 +8,51 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    class="px-4 py-3 bg-secondary border-b border-divider flex items-center gap-2 font-mono"
-  >
+  <div class="panel-title-bar">
     <slot name="icon">
-      <ChevronRight class="w-4 h-4 text-tab-rest" />
+      <ChevronRight class="panel-title-bar__icon" />
     </slot>
-    <span class="text-sm text-tab-rest">{{ title }}</span>
-    <span v-if="count !== undefined && count > 0" class="text-tab-rest text-xs">
+    <span class="panel-title-bar__title">{{ title }}</span>
+    <span
+      v-if="count !== undefined && count > 0"
+      class="panel-title-bar__count"
+    >
       [{{ count }}]
     </span>
-    <div class="flex-1" />
+    <div class="panel-title-bar__spacer" />
     <slot name="actions" />
   </div>
 </template>
+
+<style scoped>
+.panel-title-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-divider);
+  font-family: var(--font-mono);
+}
+
+.panel-title-bar__icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-tab-rest);
+  flex-shrink: 0;
+}
+
+.panel-title-bar__title {
+  font-size: 0.875rem;
+  color: var(--color-tab-rest);
+}
+
+.panel-title-bar__count {
+  font-size: 0.75rem;
+  color: var(--color-tab-rest);
+}
+
+.panel-title-bar__spacer {
+  flex: 1;
+}
+</style>

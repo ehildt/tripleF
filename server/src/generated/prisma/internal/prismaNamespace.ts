@@ -400,6 +400,7 @@ export const ModelName = {
   HarnessDlq: 'HarnessDlq',
   HarnessConversation: 'HarnessConversation',
   HarnessConfig: 'HarnessConfig',
+  HarnessShownMedia: 'HarnessShownMedia',
   HarnessProviderOverride: 'HarnessProviderOverride'
 } as const
 
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessProviderOverride"
+    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -642,6 +643,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HarnessShownMedia: {
+      payload: Prisma.$HarnessShownMediaPayload<ExtArgs>
+      fields: Prisma.HarnessShownMediaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HarnessShownMediaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HarnessShownMediaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>
+        }
+        findFirst: {
+          args: Prisma.HarnessShownMediaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HarnessShownMediaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>
+        }
+        findMany: {
+          args: Prisma.HarnessShownMediaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>[]
+        }
+        create: {
+          args: Prisma.HarnessShownMediaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>
+        }
+        createMany: {
+          args: Prisma.HarnessShownMediaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HarnessShownMediaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>[]
+        }
+        delete: {
+          args: Prisma.HarnessShownMediaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>
+        }
+        update: {
+          args: Prisma.HarnessShownMediaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>
+        }
+        deleteMany: {
+          args: Prisma.HarnessShownMediaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HarnessShownMediaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HarnessShownMediaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>[]
+        }
+        upsert: {
+          args: Prisma.HarnessShownMediaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessShownMediaPayload>
+        }
+        aggregate: {
+          args: Prisma.HarnessShownMediaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessShownMedia>
+        }
+        groupBy: {
+          args: Prisma.HarnessShownMediaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessShownMediaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HarnessShownMediaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessShownMediaCountAggregateOutputType> | number
+        }
+      }
+    }
     HarnessProviderOverride: {
       payload: Prisma.$HarnessProviderOverridePayload<ExtArgs>
       fields: Prisma.HarnessProviderOverrideFieldRefs
@@ -800,6 +875,18 @@ export const HarnessConfigScalarFieldEnum = {
 export type HarnessConfigScalarFieldEnum = (typeof HarnessConfigScalarFieldEnum)[keyof typeof HarnessConfigScalarFieldEnum]
 
 
+export const HarnessShownMediaScalarFieldEnum = {
+  sessionId: 'sessionId',
+  conversationId: 'conversationId',
+  kind: 'kind',
+  mediaKey: 'mediaKey',
+  requestId: 'requestId',
+  createdAt: 'createdAt'
+} as const
+
+export type HarnessShownMediaScalarFieldEnum = (typeof HarnessShownMediaScalarFieldEnum)[keyof typeof HarnessShownMediaScalarFieldEnum]
+
+
 export const HarnessProviderOverrideScalarFieldEnum = {
   provider: 'provider',
   values: 'values',
@@ -931,6 +1018,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ShownMediaKind'
+ */
+export type EnumShownMediaKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ShownMediaKind'>
+    
+
+
+/**
+ * Reference to a field of type 'ShownMediaKind[]'
+ */
+export type ListEnumShownMediaKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ShownMediaKind[]'>
     
 
 
@@ -1101,6 +1202,7 @@ export type GlobalOmitConfig = {
   harnessDlq?: Prisma.HarnessDlqOmit
   harnessConversation?: Prisma.HarnessConversationOmit
   harnessConfig?: Prisma.HarnessConfigOmit
+  harnessShownMedia?: Prisma.HarnessShownMediaOmit
   harnessProviderOverride?: Prisma.HarnessProviderOverrideOmit
 }
 

@@ -74,7 +74,7 @@ export interface SerperPlaceResult {
   cid: string;
 }
 
-/** serperReviewsSearch — individual Google Maps reviews of a business. */
+/** serperBusinessReviewsSearch — individual Google Maps reviews of a business. */
 export interface SerperReviewResult {
   author: string;
   snippet: string;
@@ -92,8 +92,8 @@ export interface SerperReviewPlaceInfo {
   ratingCount?: number;
 }
 
-/** serperWebpageFetch — rendered page text. */
-export interface SerperWebpageFetchResult {
+/** serperWebpageScrape — rendered page text. */
+export interface SerperWebpageScrapeResult {
   content: string;
   title?: string;
   error?: string;
@@ -112,7 +112,7 @@ export type SerperToolResult =
       place?: SerperReviewPlaceInfo;
       error?: string;
     }
-  | SerperWebpageFetchResult;
+  | SerperWebpageScrapeResult;
 
 /** A tool result entry as streamed in harness events. */
 export interface HarnessToolResult<T = unknown> {

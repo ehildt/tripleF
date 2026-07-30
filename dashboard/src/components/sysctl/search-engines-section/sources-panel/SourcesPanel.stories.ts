@@ -8,7 +8,7 @@ const meta = {
   tags: ['autodocs'],
   args: {
     sources: {
-      preferred: ['wikipedia.org', 'arstechnica.com'],
+      preferred: ['bbc.com', 'arstechnica.com'],
       blocked: ['t0.gstatic.com', 'pinterest.com'],
     },
   },

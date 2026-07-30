@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Copy } from '@lucide/vue';
 import { useClipboard } from '@vueuse/core';
 import { computed, ref, toRef, watch } from 'vue';
 
@@ -10,6 +9,9 @@ import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.v
 import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../../shared/ui/panel-layout/PanelLayout.vue';
+import TabPanel, {
+  type TabPanelTab,
+} from '../../shared/ui/tab-panel/TabPanel.vue';
 import { useDlqDetailsState } from './composables/use-dlq-details-state';
 import { useDlqFailureText } from './composables/use-dlq-failure-text';
 import DlqMetadataSection from './metadata-section/DlqMetadataSection.vue';
@@ -35,8 +37,8 @@ const { failureText, failureRaw } = useDlqFailureText(entryRef);
 
 type DetailTab = 'error' | 'metadata' | 'prompt' | 'payload';
 
-const tabs = computed<{ id: DetailTab; label: string }[]>(() => {
-  const items: { id: DetailTab; label: string }[] = [];
+const tabs = computed<TabPanelTab[]>(() => {
+  const items: TabPanelTab[] = [];
   if (failureText.value) {
     items.push({ id: 'error', label: 'Error' });
   }
@@ -48,7 +50,7 @@ const tabs = computed<{ id: DetailTab; label: string }[]>(() => {
   return items;
 });
 
-const activeTab = ref<DetailTab>('metadata');
+const activeTab = ref<DetailTab | null>('metadata');
 
 watch(
   () => props.entry?.requestId,
@@ -103,67 +105,47 @@ function copyPayload() {
         @save-queue="handleSaveQueue"
       />
 
-      <div class="dlq-details-body__tabs-container">
-        <div class="dlq-details-body__tab-bar">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            class="dlq-details-body__tab"
-            :class="{
-              'dlq-details-body__tab--active': activeTab === tab.id,
-            }"
-            @click="selectTab(tab.id)"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-
-        <div class="dlq-details-body__panel">
-          <template v-if="activeTab === 'error'">
-            <div class="dlq-details-body__error">
-              <h4 class="dlq-details-body__error-title">Failed Reason</h4>
-              <div class="dlq-details-body__error-body">
-                {{ failureText }}
-              </div>
-              <pre v-if="failureRaw" class="dlq-details-body__error-raw">{{
-                failureRaw
-              }}</pre>
+      <TabPanel
+        :tabs="tabs"
+        :active-tab="activeTab"
+        :copyable="activeTab === 'payload'"
+        :copied="isCopied"
+        @select="selectTab"
+        @copy="copyPayload"
+      >
+        <template v-if="activeTab === 'error'">
+          <div class="dlq-details-body__error">
+            <h4 class="dlq-details-body__error-title">Failed Reason</h4>
+            <div class="dlq-details-body__error-body">
+              {{ failureText }}
             </div>
-          </template>
+            <pre v-if="failureRaw" class="dlq-details-body__error-raw">{{
+              failureRaw
+            }}</pre>
+          </div>
+        </template>
 
-          <template v-else-if="activeTab === 'metadata'">
-            <div class="dlq-details-body__padded">
-              <DlqMetadataSection :entry="entry" />
-            </div>
-          </template>
+        <template v-else-if="activeTab === 'metadata'">
+          <div class="dlq-details-body__padded">
+            <DlqMetadataSection :entry="entry" />
+          </div>
+        </template>
 
-          <template v-else-if="activeTab === 'prompt'">
-            <div class="dlq-details-body__prompt">
-              <DlqPromptSection :entry="entry" />
-            </div>
-          </template>
+        <template v-else-if="activeTab === 'prompt'">
+          <div class="dlq-details-body__prompt">
+            <DlqPromptSection :entry="entry" />
+          </div>
+        </template>
 
-          <template v-else-if="activeTab === 'payload'">
-            <button
-              v-if="entry.payload"
-              class="dlq-details-body__copy"
-              :class="{
-                'dlq-details-body__copy--copied': isCopied,
-              }"
-              :title="isCopied ? 'Copied!' : 'Copy'"
-              @click="copyPayload"
-            >
-              <Copy class="dlq-details-body__copy-icon" />
-            </button>
-            <DlqPayloadEditor
-              v-if="entry.payload"
-              :entry="entry"
-              :is-immutable="isImmutable(entry)"
-              @save-payload="handleSavePayload"
-            />
-          </template>
-        </div>
-      </div>
+        <template v-else-if="activeTab === 'payload'">
+          <DlqPayloadEditor
+            v-if="entry.payload"
+            :entry="entry"
+            :is-immutable="isImmutable(entry)"
+            @save-payload="handleSavePayload"
+          />
+        </template>
+      </TabPanel>
     </div>
 
     <PanelEmptyState
@@ -182,60 +164,6 @@ function copyPayload() {
   flex-direction: column;
   gap: var(--spacing-4);
   min-height: 0;
-}
-
-.dlq-details-body__tabs-container {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  border-top: 1px solid var(--color-divider);
-  padding-top: var(--spacing-3);
-}
-
-.dlq-details-body__tab-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-0-5);
-  margin-bottom: -1px;
-  position: relative;
-  z-index: 10;
-}
-
-.dlq-details-body__tab {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: var(--spacing-1-5) var(--spacing-3);
-  flex: 1;
-  text-align: center;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.dlq-details-body__tab:hover {
-  color: var(--color-fg-secondary);
-}
-
-.dlq-details-body__tab--active {
-  border: 1px solid var(--color-divider);
-  border-bottom: 0;
-  background-color: var(--color-bg-secondary);
-  color: var(--color-accent-primary);
-}
-
-/* Fills the space under the tab bar and scrolls internally — the column
-   wrapper in Dlq.vue owns the shared panel height. */
-.dlq-details-body__panel {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-secondary);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .dlq-details-body__padded {
@@ -289,36 +217,5 @@ function copyPayload() {
   background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
   overflow-x: auto;
-}
-
-.dlq-details-body__copy {
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  z-index: 10;
-  padding: var(--spacing-1);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.dlq-details-body__copy:hover {
-  color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 10%,
-    transparent
-  );
-}
-
-.dlq-details-body__copy--copied {
-  color: var(--color-accent-primary);
-}
-
-.dlq-details-body__copy-icon {
-  width: 0.875rem;
-  height: 0.875rem;
 }
 </style>

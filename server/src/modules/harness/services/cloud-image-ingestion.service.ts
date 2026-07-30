@@ -32,6 +32,7 @@ export class CloudImageIngestionService {
       minHeight?: number;
       timeoutMs?: number;
       maxDimension?: number;
+      maxBytes?: number;
       existingFingerprints?: string[];
     },
   ): Promise<IngestedImage[]> {
@@ -59,6 +60,7 @@ export class CloudImageIngestionService {
         minHeight: options?.minHeight ?? DEFAULT_MIN_HEIGHT,
         timeoutMs: options?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         maxDimension: options?.maxDimension ?? DEFAULT_MAX_DIMENSION,
+        maxBytes: options?.maxBytes,
         existingFingerprints: options?.existingFingerprints ?? [],
       },
     );

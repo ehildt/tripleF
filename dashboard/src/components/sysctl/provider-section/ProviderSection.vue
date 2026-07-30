@@ -81,7 +81,7 @@ function getResults(value: unknown): number | undefined {
 
 <style scoped>
 .provider-section__content {
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
 }
 
 .provider-section__content--disabled {

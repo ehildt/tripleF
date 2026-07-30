@@ -32,15 +32,13 @@ describe('formatToolCatalog', () => {
   });
 
   it('places unknown tools in the specialized category', () => {
-    const catalog = formatToolCatalog(['wikipediaSearch']);
+    const catalog = formatToolCatalog(['customReferenceTool']);
 
     expect(
       catalog.some(
         (line) =>
           line.includes('  specialized:') &&
-          catalog.includes(
-            `    - wikipediaSearch: Search Wikipedia for articles matching the query. Returns titles, descriptions, and page links.`,
-          ),
+          catalog.includes(`    - customReferenceTool: No description`),
       ),
     ).toBe(true);
   });

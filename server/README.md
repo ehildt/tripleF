@@ -1,6 +1,6 @@
 <div align="center">
 
-# {fff} tripleF — Server
+# 3F tripleF — Server
 
 The tripleF conversation harness: a NestJS + Fastify server driving an agentic step engine (sanitize → interpret → execute → respond) over Ollama models — fully local or Ollama Cloud — with tool-grounded structured answers, BullMQ async processing, a persisted dead-letter queue, Socket.IO streaming, PostgreSQL/Prisma persistence, and MinIO image storage.
 

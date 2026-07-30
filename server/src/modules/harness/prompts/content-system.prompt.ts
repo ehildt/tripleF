@@ -6,12 +6,14 @@ import {
   buildSourcePolicyPrompt,
   COMPACT_INSTRUCTIONS,
   FINAL_REMINDER,
+  HISTORY_URLS_RULES,
   IMAGE_TASK_RULE,
   ITEM_SHAPES,
   JSON_RULES,
   MEDIA_COUNTS,
   MEDIA_RULES,
   MULTIMODAL_POLICY,
+  NOISE_RULES,
   OUTPUT_CONTRACT,
   PRECEDENCE_RULES,
   SEARCH_POLICY,
@@ -24,7 +26,8 @@ export function buildContentSystemPrompt(params: {
   template: string;
   instructions?: string;
   tools: string[];
-  placeholders: string[];
+  requiredKeys: string[];
+  optionalKeys: string[];
   isImageTask: boolean;
   contextSummary?: string;
   language?: string;
@@ -41,7 +44,13 @@ export function buildContentSystemPrompt(params: {
   } else if (isCompactTemplate) {
     returnDirective = 'Return plain text.';
   } else {
-    returnDirective = `Return exactly these top-level keys: ${params.placeholders.join(', ') || '(none)'}.`;
+    const required = params.requiredKeys.join(', ') || '(none)';
+    const optional = params.optionalKeys.join(', ') || '(none)';
+    returnDirective = [
+      `Return a single JSON object with these required top-level keys: ${required}.`,
+      `Optional keys, include only when they add value: ${optional}.`,
+      'Do not add other top-level keys — unknown keys are dropped.',
+    ].join('\n');
   }
 
   const sections: string[] = [
@@ -49,6 +58,7 @@ export function buildContentSystemPrompt(params: {
     buildLanguageRule(params.language),
     SECURITY_RULES,
     PRECEDENCE_RULES,
+    NOISE_RULES,
   ];
 
   if (params.isImageTask) {
@@ -84,7 +94,7 @@ export function buildContentSystemPrompt(params: {
   if (sourcePolicy) sections.push(sourcePolicy);
 
   if (!isFreeForm) {
-    sections.push(MEDIA_RULES, MEDIA_COUNTS);
+    sections.push(MEDIA_RULES, MEDIA_COUNTS, HISTORY_URLS_RULES);
   }
 
   if (params.contextSummary) {

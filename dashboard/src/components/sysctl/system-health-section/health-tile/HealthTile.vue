@@ -68,23 +68,62 @@ const displayStatus = computed(() => {
 </script>
 
 <template>
-  <div
-    class="h-10 overflow-hidden flex items-center justify-between px-2.5 py-1 gap-2 border"
-    :style="{ ...tileBackStyle, ...borderStyle }"
-  >
-    <div class="flex items-center gap-2 min-w-0">
-      <Icon class="w-4 h-4 shrink-0" :style="statusColorStyle" />
-      <span
-        class="text-[10px] font-mono font-bold uppercase tracking-wider text-fg-primary truncate select-text"
-      >
+  <div class="health-tile" :style="{ ...tileBackStyle, ...borderStyle }">
+    <div class="health-tile__main">
+      <Icon class="health-tile__icon" :style="statusColorStyle" />
+      <span class="health-tile__name">
         {{ name }}
       </span>
     </div>
-    <span
-      class="text-[10px] font-mono shrink-0 select-text"
-      :style="statusColorStyle"
-    >
+    <span class="health-tile__status" :style="statusColorStyle">
       {{ displayStatus }}
     </span>
   </div>
 </template>
+
+<style scoped>
+.health-tile {
+  height: 2.5rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-1) 0.625rem;
+  gap: var(--spacing-2);
+  border-width: 1px;
+  border-style: solid;
+}
+
+.health-tile__main {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.health-tile__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.health-tile__name {
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+
+.health-tile__status {
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  user-select: text;
+}
+</style>

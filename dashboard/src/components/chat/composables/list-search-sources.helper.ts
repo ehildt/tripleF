@@ -2,12 +2,7 @@
  * Reserved keys inside a search-engine config that are not toggleable
  * sources and must never become tags.
  */
-const RESERVED_KEYS = new Set([
-  'enabled',
-  'apiKey',
-  'webSearch',
-  'wikipediaSearch',
-]);
+const RESERVED_KEYS = new Set(['enabled', 'apiKey', 'webSearch']);
 
 /**
  * Providers in the overrides snapshot that are not search engines — their

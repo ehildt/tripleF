@@ -1,3 +1,4 @@
+import { canonicalVideoId } from './canonical-video-id.helper.js';
 import { categorizeUrl } from './categorize-url.helper.js';
 import { isEmbeddableVideoUrl } from './is-embeddable-video-url.helper.js';
 import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
@@ -133,68 +134,6 @@ function extractCandidates(
     ...item,
     fromWebSearch: bucket === 'web',
   }));
-}
-
-/**
- * Canonicalize embeddable video URLs to provider-specific IDs for deduplication.
- * Handles YouTube, Vimeo, and Dailymotion. Returns null for unsupported providers.
- */
-function canonicalVideoId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-
-    return (
-      extractYouTubeId(parsed, host) ??
-      extractVimeoId(parsed, host) ??
-      extractDailymotionId(parsed, host)
-    );
-  } catch {
-    return null;
-  }
-}
-
-function extractYouTubeId(parsed: URL, host: string): string | null {
-  const isYouTubeHost =
-    host === 'youtu.be' ||
-    host === 'youtube.com' ||
-    host === 'm.youtube.com' ||
-    host === 'youtube-nocookie.com';
-  if (!isYouTubeHost) return null;
-
-  if (host === 'youtu.be') {
-    return `youtube:${parsed.pathname.slice(1).split('/')[0]}`;
-  }
-
-  if (parsed.pathname.startsWith('/shorts/')) {
-    return `youtube:${parsed.pathname.split('/')[2]}`;
-  }
-
-  if (
-    parsed.pathname.startsWith('/embed/') ||
-    parsed.pathname.startsWith('/v/')
-  ) {
-    return `youtube:${parsed.pathname.split('/')[2]}`;
-  }
-
-  const videoId = parsed.searchParams.get('v');
-  return videoId ? `youtube:${videoId}` : null;
-}
-
-function extractVimeoId(parsed: URL, host: string): string | null {
-  if (host !== 'vimeo.com') return null;
-  const match = parsed.pathname.match(/^\/(\d+)/);
-  return match ? `vimeo:${match[1]}` : null;
-}
-
-function extractDailymotionId(parsed: URL, host: string): string | null {
-  if (host === 'dai.ly') {
-    return `dailymotion:${parsed.pathname.slice(1).split('/')[0]}`;
-  }
-
-  if (host !== 'dailymotion.com') return null;
-  const match = parsed.pathname.match(/\/video\/([a-zA-Z0-9]+)/);
-  return match ? `dailymotion:${match[1]}` : null;
 }
 
 /**

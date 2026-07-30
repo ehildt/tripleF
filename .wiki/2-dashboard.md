@@ -1,6 +1,6 @@
 # 2. Dashboard Overview
 
-The {fff} dashboard is a **Vue 3** single-page workbench — not a thin viewer: it owns sessions, steers the harness, and exposes everything the server can do.
+The 3F dashboard is a **Vue 3** single-page workbench — not a thin viewer: it owns sessions, steers the harness, and exposes everything the server can do.
 
 - **Stack:** Vue 3 (Composition API, `<script setup>`), Vite 8, Pinia, TanStack Query, Tailwind CSS v4, VueUse, Headless UI, socket.io-client, vue3-toastify
 - **Entry:** `dashboard/src/main.ts` → `App.vue` (Pinia + VueQuery plugins, no router — the app shell switches areas via the header nav menu)

@@ -9,7 +9,7 @@ const snapshot = {
     web: { enabled: true, results: 3 },
     images: { enabled: false, results: 6 },
     news: { enabled: true, results: 3 },
-    webpageFetch: { enabled: true },
+    scrape: { enabled: true },
   },
   sources: {
     preferred: [],
@@ -23,7 +23,7 @@ describe('listSearchSources', () => {
       { key: 'web', enabled: true },
       { key: 'images', enabled: false },
       { key: 'news', enabled: true },
-      { key: 'webpageFetch', enabled: true },
+      { key: 'scrape', enabled: true },
     ]);
   });
 
@@ -38,7 +38,7 @@ describe('listSearchSources', () => {
       { key: 'web', enabled: true },
       { key: 'images', enabled: true },
       { key: 'news', enabled: false },
-      { key: 'webpageFetch', enabled: true },
+      { key: 'scrape', enabled: true },
     ]);
   });
 
@@ -56,7 +56,7 @@ describe('listSearchSources', () => {
       { key: 'web', enabled: true },
       { key: 'images', enabled: false },
       { key: 'news', enabled: true },
-      { key: 'webpageFetch', enabled: true },
+      { key: 'scrape', enabled: true },
       { key: 'videos', enabled: true },
     ]);
   });

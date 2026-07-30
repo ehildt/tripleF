@@ -2,8 +2,12 @@ import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 /**
  * Convert an imagelist response into plain text for the model history.
- * The previously shown image URLs are listed explicitly so follow-up
- * requests can reference or skip images the user already saw.
+ *
+ * CONTRACT: the "Previously shown images" marker and the "- label (url)"
+ * line format are parsed server-side by collectHistoryImageUrls as the
+ * legacy fallback for image dedupe (the persisted shown-media registry is
+ * authoritative for new conversations). Do not rename the marker or change
+ * the parenthesized URL format.
  */
 export function imagelistToText(data: HarnessResponseData): string {
   const parts: string[] = [];

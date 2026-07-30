@@ -2,10 +2,14 @@ import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
+import {
+  closeLaunchedVideo,
+  launchedVideo,
+} from '../../composables/video-playback.state';
 import ArticleHeroMediaSection from './ArticleHeroMediaSection.vue';
 
 describe('ArticleHeroMediaSection', () => {
-  it('renders an iframe once an embeddable hero video is engaged', async () => {
+  it('launches the app-level player when the hero video poster is engaged', async () => {
     const wrapper = mount(ArticleHeroMediaSection, {
       global: { plugins: [createPinia()] },
       props: {
@@ -13,16 +17,19 @@ describe('ArticleHeroMediaSection', () => {
       },
     });
 
-    // The player lazy-mounts: only after the figure is in view or engaged.
+    // Figures never mount a player themselves: the poster launches the
+    // app-level floating player, which overlays the figure via CSS alone.
+    expect(wrapper.find('.floating-video-figure__poster').exists()).toBe(true);
+    expect(launchedVideo.value).toBeNull();
+
+    await wrapper.find('.floating-video-figure__poster').trigger('click');
+
     expect(wrapper.find('iframe').exists()).toBe(false);
-
-    await wrapper.find('.floating-video-figure__media').trigger('pointerdown');
-
-    const iframe = wrapper.find('iframe');
-    expect(iframe.exists()).toBe(true);
-    expect(iframe.attributes('src')).toContain(
-      'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    expect(launchedVideo.value?.videoUrl).toBe(
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     );
+
+    closeLaunchedVideo();
   });
 
   it('renders a fallback link when heroVideoUrl is not embeddable', () => {

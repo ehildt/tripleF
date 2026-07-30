@@ -76,13 +76,17 @@ function handleBranchOut(idx: number) {
         </template>
         <template v-else #body>
           <div class="expandable-message-list__body">
-            <!-- eslint-disable vue/no-v-html -- HTML is pre-sanitized by renderHtml, otherwise plain text is safe -->
+            <!-- eslint-disable vue/no-v-html -- HTML is pre-sanitized by the consumer-supplied renderHtml -->
             <div
-              v-html="
-                props.renderHtml ? props.renderHtml(msg.content) : msg.content
-              "
+              v-if="props.renderHtml"
+              v-html="props.renderHtml(msg.content)"
             />
             <!-- eslint-enable vue/no-v-html -->
+            <!-- Plain messages render as interpolated text — raw content must
+                 never reach v-html (it parses markup from untrusted input). -->
+            <div v-else class="expandable-message-list__text">
+              {{ msg.content }}
+            </div>
           </div>
         </template>
       </ExpandableMessageListItem>
@@ -99,5 +103,11 @@ function handleBranchOut(idx: number) {
 
 .expandable-message-list__items > * + * {
   margin-top: var(--spacing-0-5);
+}
+
+/* Plain-text fallback: preserve line breaks the raw v-html path collapsed. */
+.expandable-message-list__text {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 </style>
