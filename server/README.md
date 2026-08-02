@@ -22,6 +22,8 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 <div align="center">
 
+
+
 # Dependencies
 
 [![@ehildt/ckir-helpers](https://img.shields.io/badge/_ehildt_ckir_helpers-v1.5.0-a82947.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=a82947&logoWidth=40&style=flat-square)](https://github.com/ehildt/ckir-helpers)
@@ -40,13 +42,13 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![@nestjs/platform-fastify](https://img.shields.io/badge/_nestjs_platform_fastify-v11.1.28-33cc8f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33cc8f&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@nestjs/swagger](https://img.shields.io/badge/_nestjs_swagger-v11.4.6-225fd8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=225fd8&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@nestjs/terminus](https://img.shields.io/badge/_nestjs_terminus-v11.1.1-9b3dd6.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9b3dd6&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
-[![bullmq](https://img.shields.io/badge/bullmq-v5.81.2-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
+[![bullmq](https://img.shields.io/badge/bullmq-v5.81.3-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
 [![class-transformer](https://img.shields.io/badge/class_transformer-v0.5.1-2bc59c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2bc59c&logoWidth=40&style=flat-square)](https://github.com/typestack/class-transformer)
 [![class-validator](https://img.shields.io/badge/class_validator-v0.15.1-461ddd.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=461ddd&logoWidth=40&style=flat-square)](https://github.com/typestack/class-validator)
-[![fastify](https://img.shields.io/badge/fastify-v5.10.0-29db88.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=29db88&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify)
+[![fastify](https://img.shields.io/badge/fastify-v5.11.0-29db88.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=29db88&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify)
 [![ioredis](https://img.shields.io/badge/ioredis-v5.11.1-b0219a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b0219a&logoWidth=40&style=flat-square)](https://github.com/luin/ioredis)
 [![joi](https://img.shields.io/badge/joi-v18.2.3-9f1eb3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9f1eb3&logoWidth=40&style=flat-square)](https://github.com/sideway/joi)
-[![npm](https://img.shields.io/badge/npm-v11.18.0-2466ae.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2466ae&logoWidth=40&style=flat-square)](https://github.com/npm/cli)
+[![npm](https://img.shields.io/badge/npm-v11.19.0-2466ae.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2466ae&logoWidth=40&style=flat-square)](https://github.com/npm/cli)
 [![pino](https://img.shields.io/badge/pino-v10.3.1-2fc15b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc15b&logoWidth=40&style=flat-square)](https://github.com/pinojs/pino)
 [![pino-pretty](https://img.shields.io/badge/pino_pretty-v13.1.3-28acb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=28acb8&logoWidth=40&style=flat-square)](https://github.com/pinojs/pino-pretty)
 [![reflect-metadata](https://img.shields.io/badge/reflect_metadata-v0.2.2-2489db.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2489db&logoWidth=40&style=flat-square)](https://github.com/rbuckton/reflect-metadata)
@@ -58,6 +60,8 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 <br>
 
 <div align="center">
+
+
 
 # DevDependencies
 
