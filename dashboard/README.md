@@ -22,12 +22,14 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 
 <div align="center">
 
+
+
 # Dependencies
 
 [![@headlessui/vue](https://img.shields.io/badge/_headlessui_vue-v1.7.23-2c60c9.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2c60c9&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/headlessui)
 [![@paralleldrive/cuid2](https://img.shields.io/badge/_paralleldrive_cuid2-v3.3.0-b36e1a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b36e1a&logoWidth=40&style=flat-square)](https://github.com/paralleldrive/cuid2)
 [![@tanstack/vue-query](https://img.shields.io/badge/_tanstack_vue_query-v5.101.4-98d22d.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=98d22d&logoWidth=40&style=flat-square)](https://github.com/tanstack/query)
-[![@vueuse/core](https://img.shields.io/badge/_vueuse_core-v14.3.0-ae2964.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ae2964&logoWidth=40&style=flat-square)](https://github.com/vueuse/vueuse)
+[![@vueuse/core](https://img.shields.io/badge/_vueuse_core-v14.4.0-ae2964.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ae2964&logoWidth=40&style=flat-square)](https://github.com/vueuse/vueuse)
 [![date-fns](https://img.shields.io/badge/date_fns-v4.4.0-271ad5.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=271ad5&logoWidth=40&style=flat-square)](https://github.com/date-fns/date-fns)
 [![pinia](https://img.shields.io/badge/pinia-v3.0.4-2a47c6.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2a47c6&logoWidth=40&style=flat-square)](https://github.com/vuejs/pinia)
 [![socket.io-client](https://img.shields.io/badge/socket_io_client-v4.8.3-6327c4.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=6327c4&logoWidth=40&style=flat-square)](https://github.com/socketio/socket.io)
@@ -39,13 +41,15 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 
 <div align="center">
 
+
+
 # DevDependencies
 
 [![@eslint/css](https://img.shields.io/badge/_eslint_css-v0.14.1-e23728.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e23728&logoWidth=40&style=flat-square)](https://github.com/eslint/eslint)
 [![@eslint/js](https://img.shields.io/badge/_eslint_js-v9.39.5-7a23a9.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=7a23a9&logoWidth=40&style=flat-square)](https://github.com/eslint/eslint)
 [![@eslint/json](https://img.shields.io/badge/_eslint_json-v0.14.0-46b616.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=46b616&logoWidth=40&style=flat-square)](https://github.com/eslint/eslint)
 [![@eslint/markdown](https://img.shields.io/badge/_eslint_markdown-v7.5.1-29c021.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=29c021&logoWidth=40&style=flat-square)](https://github.com/eslint/eslint)
-[![@iconify/json](https://img.shields.io/badge/_iconify_json-v2.2.506-48d624.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=48d624&logoWidth=40&style=flat-square)](https://github.com/iconify/iconify)
+[![@iconify/json](https://img.shields.io/badge/_iconify_json-v2.2.508-48d624.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=48d624&logoWidth=40&style=flat-square)](https://github.com/iconify/iconify)
 [![@iconify/tailwind4](https://img.shields.io/badge/_iconify_tailwind4-v1.2.3-19be19.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=19be19&logoWidth=40&style=flat-square)](https://github.com/iconify/iconify)
 [![@tailwindcss/postcss](https://img.shields.io/badge/_tailwindcss_postcss-v4.3.3-b72ab0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b72ab0&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
 [![@testing-library/jest-dom](https://img.shields.io/badge/_testing_library_jest_dom-v6.10.0-80de21.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=80de21&logoWidth=40&style=flat-square)](https://github.com/testing-library/jest-dom)
@@ -67,14 +71,14 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 [![globals](https://img.shields.io/badge/globals-v16.5.0-2570b1.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2570b1&logoWidth=40&style=flat-square)](https://github.com/sindresorhus/globals)
 [![jsdom](https://img.shields.io/badge/jsdom-v27.4.0-b32623.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b32623&logoWidth=40&style=flat-square)](https://github.com/jsdom/jsdom)
 [![lint-staged](https://img.shields.io/badge/lint_staged-v16.4.0-dfba26.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dfba26&logoWidth=40&style=flat-square)](https://github.com/lint-staged/lint-staged)
-[![postcss](https://img.shields.io/badge/postcss-v8.5.23-4fb31a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4fb31a&logoWidth=40&style=flat-square)](https://github.com/postcss/postcss)
+[![postcss](https://img.shields.io/badge/postcss-v8.5.25-4fb31a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4fb31a&logoWidth=40&style=flat-square)](https://github.com/postcss/postcss)
 [![prettier](https://img.shields.io/badge/prettier-v3.9.6-48bd28.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=48bd28&logoWidth=40&style=flat-square)](https://github.com/prettier/prettier)
 [![tailwindcss](https://img.shields.io/badge/tailwindcss-v4.3.3-ba1ca8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ba1ca8&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
 [![typescript](https://img.shields.io/badge/typescript-~5.9.3-4c2eb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4c2eb8&logoWidth=40&style=flat-square)](https://github.com/Microsoft/TypeScript)
 [![typescript-eslint](https://img.shields.io/badge/typescript_eslint-v8.65.0-dc2e59.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dc2e59&logoWidth=40&style=flat-square)](https://github.com/typescript-eslint/typescript-eslint)
 [![vite](https://img.shields.io/badge/vite-v7.3.6-33cc66.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33cc66&logoWidth=40&style=flat-square)](https://github.com/vitejs/vite)
 [![vitest](https://img.shields.io/badge/vitest-v4.1.10-80c026.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=80c026&logoWidth=40&style=flat-square)](https://github.com/vitest-dev/vitest)
-[![vue-tsc](https://img.shields.io/badge/vue_tsc-v3.3.8-54bc24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=54bc24&logoWidth=40&style=flat-square)](https://github.com/vuejs/language-tools)
+[![vue-tsc](https://img.shields.io/badge/vue_tsc-v3.3.9-54bc24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=54bc24&logoWidth=40&style=flat-square)](https://github.com/vuejs/language-tools)
 
 </div>
 <!-- DEPBADGE:END -->
