@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Job } from 'bullmq';
 
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
@@ -18,13 +18,9 @@ import { HarnessStepLogger } from './harness-step-logger.service.js';
 @Injectable()
 export class HarnessContextService {
   constructor(
-    @Inject(MinioService)
     private readonly minioService: MinioService,
-    @Inject(OllamaConfigService)
     private readonly ollamaConfigService: OllamaConfigService,
-    @Inject(OllamaModelsService)
     private readonly ollamaModelsService: OllamaModelsService,
-    @Inject(SharpService)
     private readonly sharpService: SharpService,
     private readonly stepLogger: HarnessStepLogger,
   ) {}

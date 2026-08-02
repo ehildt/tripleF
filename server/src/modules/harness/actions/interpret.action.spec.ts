@@ -2,10 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { InterpretActionService } from './interpret.action.js';
+
+const playwrightMcpConfigProvider = {
+  provide: PlaywrightMcpConfigService,
+  useValue: { config: { enabled: false, url: 'http://localhost:8931/mcp' } },
+};
 
 describe('InterpretActionService', () => {
   let service: InterpretActionService;
@@ -15,6 +21,7 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        playwrightMcpConfigProvider,
         {
           provide: AiSdkService,
           useValue: {
@@ -214,6 +221,7 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        playwrightMcpConfigProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -281,6 +289,7 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        playwrightMcpConfigProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -370,6 +379,7 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        playwrightMcpConfigProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -434,6 +444,7 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        playwrightMcpConfigProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -498,6 +509,7 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
+        playwrightMcpConfigProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },

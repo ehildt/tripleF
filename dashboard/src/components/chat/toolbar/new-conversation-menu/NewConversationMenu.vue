@@ -39,7 +39,7 @@ const props = defineProps<{
 // stacking context (z-50), so the chat column and video popouts cover it.
 const triggerRef = ref<HTMLElement | null>(null);
 const isOpenRef = computed(() => props.isOpen);
-const { positionStyle } = useMenuPosition(triggerRef, isOpenRef, 'right');
+const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
 </script>
 
 <template>
@@ -61,6 +61,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef, 'right');
         <div
           v-if="isOpen"
           class="new-conversation-menu__dropdown"
+          data-toolbar-menu-dropdown
           :style="positionStyle ?? undefined"
           @click.stop
         >

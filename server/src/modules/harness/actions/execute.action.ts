@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
@@ -42,16 +42,18 @@ export type ToolExecutionEvent = {
 
 type ToolExecutionEventHandler = (event: ToolExecutionEvent) => void;
 
+/**
+ * Browsing needs a step budget: navigate → snapshot → interact, unlike the
+ * single round-trip the search tools use.
+ */
+const BROWSER_MAX_STEPS = 8;
+
 @Injectable()
 export class ExecuteActionService {
   constructor(
-    @Inject(AiSdkService)
     private readonly aiSdkService: AiSdkService,
-    @Inject(ToolSelectionService)
     private readonly toolSelectionService: ToolSelectionService,
-    @Inject(SharpService)
     private readonly sharpService: SharpService,
-    @Inject(OllamaConfigService)
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly stepLogger: HarnessStepLogger,
   ) {}
@@ -101,6 +103,10 @@ export class ExecuteActionService {
 
     // 3. Build the tool set: external tools + variant request tools
     const allToolNames = this.resolveAllToolNames(intent, requestedVariants);
+    // Browser intents chain several browser_* calls within one execute step.
+    const maxSteps = allToolNames.some((name) => name.startsWith('browser_'))
+      ? BROWSER_MAX_STEPS
+      : undefined;
     const selectedTools =
       allToolNames.length > 0
         ? this.toolSelectionService.selectToolsByName(
@@ -137,6 +143,7 @@ export class ExecuteActionService {
         think: ctx.request.think,
         tools: chosenTools as any,
         abortSignal,
+        maxSteps,
       });
 
       toolResults = result.toolResults;

@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import {
   ExecuteActionService,
@@ -13,9 +13,7 @@ import { HarnessStepLogger } from '../harness-step-logger.service.js';
 @Injectable()
 export class ExecuteStepService implements StepHandler {
   constructor(
-    @Inject(ExecuteActionService)
     private readonly executeAction: ExecuteActionService,
-    @Inject(SocketIOService)
     private readonly io: SocketIOService,
     private readonly stepLogger: HarnessStepLogger,
   ) {}

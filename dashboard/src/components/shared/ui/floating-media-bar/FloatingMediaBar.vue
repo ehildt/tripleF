@@ -6,7 +6,7 @@
  * The whole bar acts as a drag handle; interactive controls stop pointer
  * events so they never initiate a drag.
  */
-import { ListCheck, ListPlus, X } from '@lucide/vue';
+import { ListCheck, ListPlus, Minus, X } from '@lucide/vue';
 import { computed } from 'vue';
 
 interface Props {
@@ -18,6 +18,8 @@ interface Props {
   opacityPercent: number;
   /** Whether the video is already in the playlist. */
   isInPlaylist: boolean;
+  /** Accessible label/title of the minimize button. */
+  minimizeTitle?: string;
   /** Accessible label/title of the close button. */
   closeTitle?: string;
 }
@@ -25,6 +27,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   title: '',
   showTitleMarquee: false,
+  minimizeTitle: 'Minimize',
   closeTitle: 'Close video',
 });
 
@@ -33,6 +36,7 @@ const emit = defineEmits<{
   drag: [event: PointerEvent];
   opacityInput: [percent: number];
   togglePlaylist: [];
+  minimize: [];
   close: [];
 }>();
 
@@ -97,6 +101,16 @@ function onOpacityInput(event: Event) {
           class="floating-media-bar__playlist-icon"
         />
         <ListPlus v-else class="floating-media-bar__playlist-icon" />
+      </button>
+      <button
+        type="button"
+        class="floating-media-bar__minimize"
+        :aria-label="minimizeTitle"
+        :title="minimizeTitle"
+        @pointerdown.stop
+        @click.stop="emit('minimize')"
+      >
+        <Minus class="floating-media-bar__minimize-icon" />
       </button>
       <button
         type="button"
@@ -229,6 +243,7 @@ function onOpacityInput(event: Event) {
 
 /* Icon buttons: identical square boxes, identical icon sizes. */
 .floating-media-bar__playlist-toggle,
+.floating-media-bar__minimize,
 .floating-media-bar__close {
   flex-shrink: 0;
   display: grid;
@@ -268,11 +283,16 @@ function onOpacityInput(event: Event) {
   background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
 }
 
+.floating-media-bar__minimize:hover {
+  color: var(--color-fg-primary);
+}
+
 .floating-media-bar__close:hover {
   color: var(--color-status-error);
 }
 
 .floating-media-bar__playlist-icon,
+.floating-media-bar__minimize-icon,
 .floating-media-bar__close-icon {
   width: 0.75rem;
   height: 0.75rem;

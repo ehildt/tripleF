@@ -1,7 +1,8 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { ToolSet } from 'ai';
 
 import { type ToolName } from '../../harness/helpers/tool-registry.constants.js';
+import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwright-mcp-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { createEnabledTools } from '../tools/sources/create-enabled-tools.js';
 import { type ToolWithSummary } from '../tools/sources/tool-factory.js';
@@ -20,10 +21,9 @@ export class ToolSelectionService {
   private readonly logger = new Logger(ToolSelectionService.name);
 
   constructor(
-    @Inject(ProviderOverridesService)
     private readonly providerOverrides: ProviderOverridesService,
-    @Inject(AiSdkService)
     private readonly aiSdkService: AiSdkService,
+    private readonly playwrightMcpClient: PlaywrightMcpClientService,
   ) {}
 
   private get liveConfig() {
@@ -36,7 +36,7 @@ export class ToolSelectionService {
     enabledVariants?: string[],
     defaultLang?: string,
   ): ToolSet {
-    return createEnabledTools(
+    const tools = createEnabledTools(
       {
         getLiveConfig: () => this.liveConfig,
         logger: this.logger,
@@ -51,6 +51,9 @@ export class ToolSelectionService {
       },
       enabledVariants,
     );
+    // Browser tools come from the Playwright MCP sidecar (empty when disabled
+    // or unreachable) and are merged under their canonical browser_* names.
+    return { ...tools, ...this.playwrightMcpClient.tools };
   }
 
   selectToolsByName(

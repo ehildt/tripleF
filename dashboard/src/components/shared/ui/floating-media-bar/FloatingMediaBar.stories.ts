@@ -12,8 +12,8 @@ const meta = {
       description: {
         component: `
 Shared chrome bar for floating media popups. Provides a drag handle,
-static or marquee title, opacity slider, playlist toggle, and close
-button.
+static or marquee title, opacity slider, playlist toggle, minimize
+button, and close button.
 `,
       },
     },
@@ -23,10 +23,12 @@ button.
     showTitleMarquee: false,
     opacityPercent: 75,
     isInPlaylist: false,
+    minimizeTitle: 'Minimize',
     closeTitle: 'Close video',
     onDrag: fn(),
     onOpacityInput: fn(),
     onTogglePlaylist: fn(),
+    onMinimize: fn(),
     onClose: fn(),
   },
 } satisfies Meta<typeof FloatingMediaBar>;

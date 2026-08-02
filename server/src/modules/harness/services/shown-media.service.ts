@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { ShownMediaKind } from '../../../generated/prisma/client.js';
 import { ShownMediaRepository } from '../../persistence/services/shown-media.repository.js';
@@ -28,10 +28,7 @@ export interface ShownMediaKeys {
  */
 @Injectable()
 export class ShownMediaService {
-  constructor(
-    @Inject(ShownMediaRepository)
-    private readonly repository: ShownMediaRepository,
-  ) {}
+  constructor(private readonly repository: ShownMediaRepository) {}
 
   async lookupKeys(
     sessionId: string | undefined,

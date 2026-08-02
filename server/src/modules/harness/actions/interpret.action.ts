@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import {
   buildStructuredJsonPrompt,
@@ -30,6 +31,7 @@ export class InterpretActionService {
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly providerOverrides: ProviderOverridesService,
+    private readonly playwrightMcpConfig: PlaywrightMcpConfigService,
     private readonly stepLogger: HarnessStepLogger,
   ) {}
 
@@ -75,9 +77,10 @@ export class InterpretActionService {
       totalInputTokens += result.totalUsage?.inputTokens ?? 0;
       totalOutputTokens += result.totalUsage?.outputTokens ?? 0;
 
-      const enabledToolNames = getEnabledToolNames(
-        this.providerOverrides.getConfig(),
-      );
+      const enabledToolNames = getEnabledToolNames({
+        ...this.providerOverrides.getConfig(),
+        playwright: this.playwrightMcpConfig.config,
+      });
       const intent = this.parseIntent(
         params.requestId,
         result.text,
@@ -210,9 +213,10 @@ export class InterpretActionService {
   }
 
   private buildClassifyMessages(messages: InputMessage[]): InputMessage[] {
-    const enabledToolNames = getEnabledToolNames(
-      this.providerOverrides.getConfig(),
-    );
+    const enabledToolNames = getEnabledToolNames({
+      ...this.providerOverrides.getConfig(),
+      playwright: this.playwrightMcpConfig.config,
+    });
 
     const prompt = [
       buildIntentSelectionPrompt(enabledToolNames),
