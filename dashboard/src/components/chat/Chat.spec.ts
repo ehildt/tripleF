@@ -1,8 +1,9 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Component } from 'vue';
 import { ref } from 'vue';
+
+import type { SocketProvider } from '../../types/socket-provider.model';
 
 vi.mock('../../composables/use-socket-subscription', () => ({
   useSocketSubscription: () => ({
@@ -80,14 +81,28 @@ import Chat from './Chat.vue';
 
 let activePinia: ReturnType<typeof createPinia>;
 
+function makeSocketProvider(): SocketProvider {
+  return {
+    getSocket: vi.fn(),
+    trackRequest: vi.fn(
+      (_endpoint: string, _method: string, promise: Promise<Response>) =>
+        promise,
+    ),
+    addMessage: vi.fn(),
+    addPendingMessage: vi.fn(),
+    updatePendingMessage: vi.fn(),
+    connectedEvents: new Set<string>(),
+    connectedRooms: new Map<string, Set<string>>(),
+    closeEvent: vi.fn(),
+    closeRoom: vi.fn(),
+  };
+}
+
 function mountChat() {
-  return mount(
-    Chat as Component,
-    {
-      props: { socketProvider: 'mock' as never },
-      global: { plugins: [activePinia] },
-    } as any,
-  );
+  return mount(Chat, {
+    props: { socketProvider: makeSocketProvider() },
+    global: { plugins: [activePinia] },
+  });
 }
 
 describe('Chat', () => {

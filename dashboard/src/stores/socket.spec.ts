@@ -40,6 +40,10 @@ describe('useSocketStore', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('initializes with disconnected state and persistent conversation id', () => {
     const store = useSocketStore();
     expect(store.connectionState).toBe('disconnected');
@@ -48,10 +52,11 @@ describe('useSocketStore', () => {
   });
 
   it('initSocket creates socket with persistent conversation id auth', () => {
+    vi.stubEnv('VITE_SOCKET_URL', 'http://localhost:3000');
     const store = useSocketStore();
     store.initSocket();
     expect(io).toHaveBeenCalledWith(
-      expect.anything(),
+      'http://localhost:3000',
       expect.objectContaining({
         auth: { conversationId: MOCK_SESSION_ID },
       }),

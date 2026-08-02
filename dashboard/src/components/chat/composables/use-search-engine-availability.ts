@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue';
+import { computed, getCurrentInstance, onMounted, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
@@ -235,7 +235,9 @@ export function useSearchEngineAvailability() {
     }
   }
 
-  onMounted(refresh);
+  // Load on mount only when consumed inside a component; bare callers
+  // (tests, stores) drive refresh() explicitly.
+  if (getCurrentInstance()) onMounted(refresh);
 
   return {
     searchEngineState,

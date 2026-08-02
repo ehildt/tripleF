@@ -1,6 +1,11 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sharp } from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
+
+// Negative-path cases exercise failure logging — silence the logger so the
+// expected errors don't pollute CI output.
+vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
 import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 import { SharpOptions } from '../dtos/sharp-options.dto.js';

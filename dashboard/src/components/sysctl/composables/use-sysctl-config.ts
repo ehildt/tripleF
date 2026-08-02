@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue';
+import { getCurrentInstance, onMounted, ref } from 'vue';
 
 import { getApiUrl } from '../../../api/api-url';
 import { fetchConfig, saveConfig } from '../../../api/config.api';
@@ -220,7 +220,9 @@ export function useSysctlConfig() {
     patchConfig(provider, name, { ...endpoint, results: next });
   }
 
-  onMounted(refreshConfig);
+  // Load on mount only when consumed inside a component; bare callers
+  // (tests, stores) drive refreshConfig() explicitly.
+  if (getCurrentInstance()) onMounted(refreshConfig);
 
   return {
     config,
