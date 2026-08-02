@@ -8,11 +8,14 @@ export function categorizeTools(
     newsSearch: [],
     videoSearch: [],
     pageFetch: [],
+    browser: [],
     imageVariants: [],
     specialized: [],
   };
   for (const t of toolNames) {
-    if (t === 'webSearch' || t.endsWith('WebSearch')) cats.webSearch.push(t);
+    if (t.startsWith('browser_')) cats.browser.push(t);
+    else if (t === 'webSearch' || t.endsWith('WebSearch'))
+      cats.webSearch.push(t);
     else if (t.endsWith('ImageSearch')) cats.imageSearch.push(t);
     else if (t.endsWith('NewsSearch')) cats.newsSearch.push(t);
     else if (t.endsWith('VideoSearch')) cats.videoSearch.push(t);

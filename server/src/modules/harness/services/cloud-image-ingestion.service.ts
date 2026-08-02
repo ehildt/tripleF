@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { MinioService } from '../../minio/services/minio.service.js';
 import {
@@ -17,10 +17,7 @@ const DEFAULT_MAX_DIMENSION = 512;
  */
 @Injectable()
 export class CloudImageIngestionService {
-  constructor(
-    @Inject(MinioService)
-    private readonly minioService: MinioService,
-  ) {}
+  constructor(private readonly minioService: MinioService) {}
 
   async ingest(
     imageItems: Array<{ imageUrl: string; title?: string }>,

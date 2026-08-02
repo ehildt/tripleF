@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
@@ -29,11 +29,8 @@ const IMAGE_REQUIRED_TEMPLATE_FALLBACKS: Record<
 @Injectable()
 export class InterpretStepService implements StepHandler {
   constructor(
-    @Inject(InterpretActionService)
     private readonly interpretAction: InterpretActionService,
-    @Inject(SocketIOService)
     private readonly io: SocketIOService,
-    @Inject(AiSdkService)
     private readonly aiSdkService: AiSdkService,
     private readonly stepLogger: HarnessStepLogger,
   ) {}

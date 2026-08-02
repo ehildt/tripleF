@@ -34,6 +34,32 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Search YouTube using the official YouTube Data API. Returns titles, links, channel names, durations, view counts, upload dates, and direct thumbnails. All results are embeddable YouTube videos.',
   webFetch:
     'Fetch the full content of a specific URL. Use only when search snippets are insufficient.',
+  browser_navigate:
+    'Control a real browser: navigate to a URL. Use for interactive browsing — JS-heavy pages, content behind clicks, tabs, scrolling, or forms — that static search/fetch cannot reach. Follow up with browser_snapshot to read the page before acting on it.',
+  browser_navigate_back: 'Go back to the previous page in the browser history.',
+  browser_snapshot:
+    'Read the current browser page as an accessibility snapshot (structured text with element refs). The primary way to see page content and obtain the refs that browser_click/browser_type need.',
+  browser_click:
+    'Click an element in the browser, referenced by a ref from browser_snapshot.',
+  browser_type:
+    'Type text into an editable browser element, referenced by a ref from browser_snapshot, optionally submitting with Enter.',
+  browser_fill_form: 'Fill multiple form fields in the browser in one call.',
+  browser_select_option: 'Select an option in a dropdown in the browser.',
+  browser_press_key:
+    'Press a keyboard key in the browser (Enter, Tab, arrows).',
+  browser_wait_for:
+    'Wait for text to appear or disappear, or for a time period, in the browser.',
+  browser_take_screenshot:
+    'Take a screenshot of the current browser page or a specific element.',
+  browser_tabs: 'List, create, close, or switch browser tabs.',
+  browser_console_messages:
+    'Get console messages from the browser. Use to diagnose JavaScript errors on a page (e.g. when testing a web app).',
+  browser_network_requests:
+    'List network requests the browser made since page load. Use to diagnose failed or slow requests (e.g. when testing a web app).',
+  browser_verify_element_visible:
+    'Assert that an element is visible on the current browser page.',
+  browser_verify_text_visible:
+    'Assert that text is visible on the current browser page.',
   requestGrayscale:
     'Request a grayscale version of the images. Use when color noise or color information is irrelevant, for example when reading text or analyzing shapes.',
   requestDenoised:
@@ -43,6 +69,28 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   requestClahe:
     'Request a CLAHE (contrast-enhanced) version of the images. Use when details are hidden in shadows or highlights.',
 };
+
+/**
+ * Curated allow-list of Playwright MCP browser tools (client-side filter;
+ * the sidecar may offer more — dangerous ones stay suppressed).
+ */
+export const BROWSER_TOOL_NAMES = [
+  'browser_navigate',
+  'browser_navigate_back',
+  'browser_snapshot',
+  'browser_click',
+  'browser_type',
+  'browser_fill_form',
+  'browser_select_option',
+  'browser_press_key',
+  'browser_wait_for',
+  'browser_take_screenshot',
+  'browser_tabs',
+  'browser_console_messages',
+  'browser_network_requests',
+  'browser_verify_element_visible',
+  'browser_verify_text_visible',
+] as const;
 
 export const TOOL_NAMES = [
   'webSearch',
@@ -60,6 +108,7 @@ export const TOOL_NAMES = [
   'requestDenoised',
   'requestSharpened',
   'requestClahe',
+  ...BROWSER_TOOL_NAMES,
 ] as const;
 
 export type ToolName = (typeof TOOL_NAMES)[number];
@@ -81,5 +130,8 @@ export type ProviderConfig = {
     enabled: boolean;
     apiKey?: string;
     videos: { enabled: boolean };
+  };
+  playwright: {
+    enabled: boolean;
   };
 };
