@@ -1,9 +1,7 @@
 import { tryOnScopeDispose } from '@vueuse/core';
 import { nextTick, onMounted, type Ref, ref, watch } from 'vue';
 
-export type MenuPositionStyle = { left: string; top: string; width?: string };
-
-export type MenuPlacement = 'right' | 'below';
+export type MenuPositionStyle = { left: string; top: string };
 
 /**
  * Fixed-position style that anchors the teleported menu to its trigger.
@@ -12,14 +10,13 @@ export type MenuPlacement = 'right' | 'below';
  * re-anchor the menu; listeners and observers detach on close or unmount.
  * scroll is captured because it does not bubble from inner containers.
  *
- * Placement 'right' opens at the trigger's right edge (model menu);
- * 'below' opens under the trigger at its left edge and full width
- * (expandable toolbar lists).
+ * The menu opens at the trigger's right edge (model menu, new-conversation
+ * menu). Expandable toolbar lists stay inline in the toolbar flow instead,
+ * so they push sibling groups down rather than floating over them.
  */
 export function useMenuPosition(
   triggerRef: Ref<HTMLElement | null>,
   isOpen: Ref<boolean>,
-  placement: MenuPlacement = 'right',
 ) {
   const positionStyle = ref<MenuPositionStyle | null>(null);
 
@@ -29,14 +26,7 @@ export function useMenuPosition(
       positionStyle.value = null;
       return;
     }
-    positionStyle.value =
-      placement === 'right'
-        ? { left: `${rect.right}px`, top: `${rect.top}px` }
-        : {
-            left: `${rect.left}px`,
-            top: `${rect.bottom}px`,
-            width: `${rect.width}px`,
-          };
+    positionStyle.value = { left: `${rect.right}px`, top: `${rect.top}px` };
   }
 
   // ResizeObserver on the trigger catches size changes; observing the body

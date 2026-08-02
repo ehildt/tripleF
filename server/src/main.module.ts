@@ -32,6 +32,8 @@ import { MinioHealthIndicator } from './modules/minio/services/minio-health-indi
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
 import { PinoLoggerConfigService } from './modules/pino-logger/configs/pino-logger-config.service.js';
 import { PinoLoggerModule } from './modules/pino-logger/pino-logger.module.js';
+import { PlaywrightMcpConfigService } from './modules/playwright-mcp/configs/playwright-mcp-config.service.js';
+import { PlaywrightMcpModule } from './modules/playwright-mcp/playwright-mcp.module.js';
 import { SerperConfigService } from './modules/provider-overrides/configs/serper-config.service.js';
 import { ProviderOverridesController } from './modules/provider-overrides/controllers/provider-overrides.controller.js';
 import { ProviderOverridesModule } from './modules/provider-overrides/provider-overrides.module.js';
@@ -70,6 +72,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
     MinioModule,
     DeadLetterModule,
     PersistenceModule,
+    PlaywrightMcpModule,
     ProviderOverridesModule,
     SecretsModule,
     SocketIOModule,
@@ -87,6 +90,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
         MinioConfigService,
         NumCtxConfigService,
         PinoLoggerConfigService,
+        PlaywrightMcpConfigService,
         SerperConfigService,
         SharpConfigService,
         SocketIOConfigService,

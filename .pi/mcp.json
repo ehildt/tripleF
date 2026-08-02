@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "transport": "streamable-http",
+      "url": "http://localhost:8931/mcp",
+      "lifecycle": "eager"
+    }
+  }
+}

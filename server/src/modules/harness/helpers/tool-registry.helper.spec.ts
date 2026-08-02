@@ -23,6 +23,7 @@ const fullConfig: ProviderConfig = {
     apiKey: 'youtube-key',
     videos: { enabled: true },
   },
+  playwright: { enabled: false },
 };
 
 describe('tool-registry.helper', () => {

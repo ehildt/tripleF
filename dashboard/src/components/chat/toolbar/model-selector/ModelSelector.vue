@@ -50,7 +50,7 @@ const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
     <div
       v-if="isOpen"
       class="model-selector__dropdown"
-      data-model-menu-dropdown
+      data-toolbar-menu-dropdown
       :style="positionStyle ?? undefined"
       @click.stop
     >

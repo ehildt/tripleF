@@ -38,7 +38,7 @@ This project uses Docker Compose for local development with bind-mounted source 
 Before proposing or implementing any non-trivial change, the agent must:
 
 1. **Investigate and research online.** Use `web_search` and `web_fetch` to consult the official documentation and current best practices for every relevant technology in the change. Do not rely on memory or assumptions when an authoritative, up-to-date source is available.
-2. **Formulate a clear plan.** Summarize findings, the intended approach, affected files, and any trade-offs or open questions.
+2. **Formulate a clear plan.** Summarize findings, the intended approach, affected files, and any trade-offs or open questions. Apply the senior-engineer review from `AGENTS.md` § Senior Engineering Counsel: if a materially better or simpler path exists, challenge the idea plainly before planning around it.
 3. **Prompt the user for explicit go-ahead.** Do not begin implementation until the user confirms the plan with an explicit response such as "go", "approved", "yes", or similar. Read-only exploration, file reading, and planning itself are allowed before confirmation; code edits and command execution that modify the project are not.
 
 # Implementation Guidelines

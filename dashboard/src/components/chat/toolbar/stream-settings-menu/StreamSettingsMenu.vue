@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Network, Radio, RadioTower, Tag } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
+import { useMenuPosition } from '../model-selector/composables/use-menu-position';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
 
-defineProps<{
+const props = defineProps<{
   isOpen: boolean;
   isDisabled: boolean;
   isStreamEnabled: boolean;
@@ -22,12 +24,20 @@ defineEmits<{
   'update:newRoomId': [value: string];
   subscribeToEvent: [];
 }>();
+
+// Same as the model-select and new-conversation popovers: teleport to <body>
+// with a fixed position so the dropdown stays above the lifted chat column
+// (z-60) and the floating video popouts (z-1000) instead of being capped
+// inside the sticky toolbar's stacking context (z-50).
+const triggerRef = ref<HTMLElement | null>(null);
+const isOpenRef = computed(() => props.isOpen);
+const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
 </script>
 
 <template>
   <div class="flex items-center gap-1.5 w-full justify-end">
     <ToolbarLabel value="sockets" />
-    <div class="relative shrink-0">
+    <div ref="triggerRef" class="relative shrink-0">
       <IconButton
         :active="isOpen"
         :disabled="isDisabled"
@@ -39,100 +49,112 @@ defineEmits<{
       >
         <Network class="w-4 h-4" />
       </IconButton>
-      <div v-if="isOpen" class="stream-settings-menu__dropdown" @click.stop>
-        <div class="stream-settings-menu__content">
-          <div class="stream-settings-menu__row">
-            <span class="stream-settings-menu__icon-container">
-              <RadioTower class="stream-settings-menu__icon" />
-            </span>
-            <span class="stream-settings-menu__label">Stream</span>
-            <div class="stream-settings-menu__toggle-group">
-              <button
-                class="stream-settings-menu__toggle"
-                :class="
-                  isStreamEnabled
-                    ? 'stream-settings-menu__toggle--active'
-                    : 'stream-settings-menu__toggle--inactive'
-                "
-                @click.stop="$emit('update:isStreamEnabled', true)"
-              >
-                Word
-              </button>
-              <button
-                class="stream-settings-menu__toggle"
-                :class="
-                  !isStreamEnabled
-                    ? 'stream-settings-menu__toggle--active'
-                    : 'stream-settings-menu__toggle--inactive'
-                "
-                @click.stop="$emit('update:isStreamEnabled', false)"
-              >
-                Text
-              </button>
+      <Teleport to="body">
+        <div
+          v-if="isOpen"
+          class="stream-settings-menu__dropdown"
+          data-toolbar-menu-dropdown
+          :style="positionStyle ?? undefined"
+          @click.stop
+        >
+          <div class="stream-settings-menu__content">
+            <div class="stream-settings-menu__row">
+              <span class="stream-settings-menu__icon-container">
+                <RadioTower class="stream-settings-menu__icon" />
+              </span>
+              <span class="stream-settings-menu__label">Stream</span>
+              <div class="stream-settings-menu__toggle-group">
+                <button
+                  class="stream-settings-menu__toggle"
+                  :class="
+                    isStreamEnabled
+                      ? 'stream-settings-menu__toggle--active'
+                      : 'stream-settings-menu__toggle--inactive'
+                  "
+                  @click.stop="$emit('update:isStreamEnabled', true)"
+                >
+                  Word
+                </button>
+                <button
+                  class="stream-settings-menu__toggle"
+                  :class="
+                    !isStreamEnabled
+                      ? 'stream-settings-menu__toggle--active'
+                      : 'stream-settings-menu__toggle--inactive'
+                  "
+                  @click.stop="$emit('update:isStreamEnabled', false)"
+                >
+                  Text
+                </button>
+              </div>
             </div>
-          </div>
-          <div class="stream-settings-menu__description">
-            <template v-if="isStreamEnabled"
-              >Streams tokens as they arrive for real-time output.</template
+            <div class="stream-settings-menu__description">
+              <template v-if="isStreamEnabled"
+                >Streams tokens as they arrive for real-time output.</template
+              >
+              <template v-else
+                >Renders once the full response arrives.</template
+              >
+            </div>
+            <div class="stream-settings-menu__divider"></div>
+            <div class="stream-settings-menu__input-row">
+              <div class="stream-settings-menu__input-wrapper">
+                <Radio class="stream-settings-menu__input-icon" />
+                <input
+                  :value="newEvent"
+                  placeholder="Socket"
+                  class="stream-settings-menu__input"
+                  @input="
+                    $emit(
+                      'update:newEvent',
+                      ($event.target as HTMLInputElement).value,
+                    )
+                  "
+                />
+              </div>
+              <div class="stream-settings-menu__input-wrapper">
+                <Tag class="stream-settings-menu__input-icon--small" />
+                <input
+                  :value="newRoomId"
+                  placeholder="Channel"
+                  class="stream-settings-menu__input"
+                  @input="
+                    $emit(
+                      'update:newRoomId',
+                      ($event.target as HTMLInputElement).value,
+                    )
+                  "
+                />
+              </div>
+            </div>
+            <button
+              class="stream-settings-menu__subscribe-button"
+              :class="
+                newEvent.trim()
+                  ? 'stream-settings-menu__subscribe-button--enabled'
+                  : 'stream-settings-menu__subscribe-button--disabled'
+              "
+              :disabled="!newEvent.trim()"
+              @click.stop="$emit('subscribeToEvent')"
             >
-            <template v-else>Renders once the full response arrives.</template>
+              Subscribe
+            </button>
           </div>
-          <div class="stream-settings-menu__divider"></div>
-          <div class="stream-settings-menu__input-row">
-            <div class="stream-settings-menu__input-wrapper">
-              <Radio class="stream-settings-menu__input-icon" />
-              <input
-                :value="newEvent"
-                placeholder="Socket"
-                class="stream-settings-menu__input"
-                @input="
-                  $emit(
-                    'update:newEvent',
-                    ($event.target as HTMLInputElement).value,
-                  )
-                "
-              />
-            </div>
-            <div class="stream-settings-menu__input-wrapper">
-              <Tag class="stream-settings-menu__input-icon--small" />
-              <input
-                :value="newRoomId"
-                placeholder="Channel"
-                class="stream-settings-menu__input"
-                @input="
-                  $emit(
-                    'update:newRoomId',
-                    ($event.target as HTMLInputElement).value,
-                  )
-                "
-              />
-            </div>
-          </div>
-          <button
-            class="stream-settings-menu__subscribe-button"
-            :class="
-              newEvent.trim()
-                ? 'stream-settings-menu__subscribe-button--enabled'
-                : 'stream-settings-menu__subscribe-button--disabled'
-            "
-            :disabled="!newEvent.trim()"
-            @click.stop="$emit('subscribeToEvent')"
-          >
-            Subscribe
-          </button>
         </div>
-      </div>
+      </Teleport>
     </div>
   </div>
 </template>
 
 <style scoped>
 .stream-settings-menu__dropdown {
-  position: absolute;
-  left: 100%;
-  top: 0;
+  /* Teleported to <body>: above the lifted chat column (z-60) and the
+     floating video popouts (z-1000), below the lightbox (z-1100) — same
+     layer as the model-select and new-conversation popovers. Position comes
+     from the trigger anchor inline style. */
+  position: fixed;
+  z-index: 1050;
   margin-left: var(--spacing-1);
-  z-index: 100;
   width: 16rem;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);

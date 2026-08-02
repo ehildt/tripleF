@@ -210,7 +210,7 @@ const {
 const toolbarRef = ref<HTMLElement | null>(null);
 
 onClickOutside(toolbarRef, closeAllMenus, {
-  ignore: ['[data-model-menu-dropdown]'],
+  ignore: ['[data-toolbar-menu-dropdown]'],
 });
 
 // ── Lifecycle ─────────────────────────────────────────────
