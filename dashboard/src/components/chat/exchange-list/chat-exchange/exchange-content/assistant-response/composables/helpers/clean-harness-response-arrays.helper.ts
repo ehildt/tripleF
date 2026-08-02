@@ -59,6 +59,10 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
       !!(story.title || story.url) ||
       (isMeaningfulString(story.imageUrl) && isTrustedImageUrl(story.imageUrl)),
   )?.map(blankUnsafeLink);
+  data.internationalCoverage = filterArray(
+    data.internationalCoverage,
+    (entry) => !!(entry.title || entry.url || entry.summary),
+  )?.map(blankUnsafeLink);
   data.strengths = filterArray(data.strengths, (item) =>
     isMeaningfulString(item.text),
   );

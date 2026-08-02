@@ -6,6 +6,7 @@ import type { HarnessResponseData } from '@/types/harness-response-data.model';
 import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
+import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
@@ -106,6 +107,7 @@ const hasAnyContent = computed(() =>
       />
 
       <SourcesSection :items="data.sources" />
+      <InternationalCoverageSection :items="data.internationalCoverage" />
     </template>
 
     <section v-else class="evaluation__empty">

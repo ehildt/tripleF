@@ -9,6 +9,7 @@ import { computed } from 'vue';
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
+import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
 import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
@@ -45,6 +46,7 @@ const hasContent = computed(
     </ul>
 
     <SourcesSection :items="data.sources" />
+    <InternationalCoverageSection :items="data.internationalCoverage" />
   </section>
 
   <!-- Empty state -->

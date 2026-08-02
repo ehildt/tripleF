@@ -11,6 +11,7 @@ import type {
   ShopOffer,
 } from '@/types/harness-response-data.model';
 
+import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import { priceNumeric } from '../../shared/helpers/price-numeric.helper';
 import ShopListOfferCard from './shoplist-offer-card/ShopListOfferCard.vue';
@@ -56,6 +57,7 @@ const hasContent = computed(
     </div>
 
     <SourcesSection :items="data.sources" />
+    <InternationalCoverageSection :items="data.internationalCoverage" />
   </section>
 
   <!-- Empty state -->

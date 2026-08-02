@@ -43,6 +43,11 @@ const baseConfig = {
     videos: { enabled: false, results: 5 },
     scrape: { enabled: true },
   },
+  youtube: {
+    enabled: true,
+    apiKey: 'youtube-key',
+    videos: { enabled: true, results: 6 },
+  },
 };
 
 function mockFetch(config = baseConfig) {

@@ -2,6 +2,7 @@ import type {
   ArticleCard,
   GalleryItem,
   HarnessResponseData,
+  InternationalCoverageEntry,
   KeyFinding,
   RelatedStory,
   ReviewSummary,
@@ -69,6 +70,9 @@ function extractData(raw: Record<string, unknown>): HarnessResponseData {
     byline: toOptionalString(raw.byline),
     keyPoints: normalizeKeyFindings(raw.keyPoints),
     relatedStories: toOptionalArray<RelatedStory>(raw.relatedStories),
+    internationalCoverage: toOptionalArray<InternationalCoverageEntry>(
+      raw.internationalCoverage,
+    ),
     category: toOptionalString(raw.category),
     title: toOptionalString(raw.title),
     subtitle: toOptionalString(raw.subtitle),

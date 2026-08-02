@@ -30,6 +30,11 @@ describe('ToolSelectionService', () => {
                 videos: { enabled: false },
                 scrape: { enabled: false },
               },
+              youtube: {
+                enabled: false,
+                apiKey: undefined,
+                videos: { enabled: false },
+              },
             }),
           },
         },

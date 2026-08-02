@@ -25,12 +25,17 @@ function deriveSourceName(url: string, rawSource?: string): string {
 }
 
 /**
+ * Article-like context entry. `lang` starts unset and is filled later by
+ * language tagging (see sanitize step) — upstream result payloads carry no
+ * language flag except the dedicated YouTube search.
+ */
+export type ExtractedArticle = Record<string, unknown> & { lang?: string };
+
+/**
  * Extract article-like entries from search/fetch results. Deduplicates by URL.
  */
-export function extractArticles(
-  toolResults: ToolEntry[],
-): Array<Record<string, unknown>> {
-  const articles: Array<Record<string, unknown>> = [];
+export function extractArticles(toolResults: ToolEntry[]): ExtractedArticle[] {
+  const articles: ExtractedArticle[] = [];
   const seen = new Set<string>();
 
   for (const tr of toolResults) {

@@ -13,6 +13,7 @@ export function getEnabledToolNames(cfg: ProviderConfig): string[] {
   }
 
   addSerperTools(cfg.serper, enabled);
+  addYoutubeTools(cfg.youtube, enabled);
 
   return enabled;
 }
@@ -30,4 +31,12 @@ function addSerperTools(
   if (serper.reviews.enabled) enabled.push('serperBusinessReviewsSearch');
   if (serper.videos.enabled) enabled.push('serperVideoSearch');
   if (serper.scrape.enabled) enabled.push('serperWebpageScrape');
+}
+
+function addYoutubeTools(
+  youtube: ProviderConfig['youtube'],
+  enabled: string[],
+): void {
+  if (!youtube.enabled || !youtube.apiKey) return;
+  if (youtube.videos.enabled) enabled.push('youtubeVideoSearch');
 }

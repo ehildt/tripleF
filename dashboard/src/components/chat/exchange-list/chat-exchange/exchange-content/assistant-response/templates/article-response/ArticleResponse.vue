@@ -62,6 +62,7 @@ defineProps<{
     <ArticleCardsSection :title="data.cardsTitle" :items="data.cards" />
     <KeyFindingsSection title="Key Findings" :items="data.keyFindings" />
     <SourcesSection :items="data.sources" />
+    <InternationalCoverageSection :items="data.internationalCoverage" />
     <ArticleConclusionSection :conclusion="data.conclusion" />
   </article>
 </template>

@@ -26,4 +26,5 @@ ASIDE ELEMENTS
 - relatedStories, cards, and similar secondary elements are asides. They exist to pique the user's interest, never to repeat primary content.
 - An aside must not reuse any URL, link, image, or video that already appears in the primary elements (hero media, galleries, sectionContent, or sources).
 - An aside must not restate text from the primary elements (title, subtitle, summary, lead, keyFindings). Write fresh teaser copy for every aside.
-- If no distinct material remains for asides after the primary elements are filled, omit the aside elements entirely.`;
+- If no distinct material remains for asides after the primary elements are filled, omit the aside elements entirely.
+- internationalCoverage entries come only from internationalArticles/internationalVideos (other-language finds) and must never use a URL from the primary elements; primary content never draws from the international pools.`;
