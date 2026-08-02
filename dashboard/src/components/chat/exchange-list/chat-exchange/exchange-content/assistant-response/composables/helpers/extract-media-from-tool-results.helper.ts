@@ -109,12 +109,15 @@ function buildGalleryItems(
 
   for (const { url, title } of imageItems) {
     if (seen.has(url)) continue;
+    // Synthesized entries must satisfy the schema (non-empty title/caption)
+    // — a nameless candidate cannot go into a captioned gallery.
+    if (!title) continue;
     seen.add(url);
     items.push({
       imageUrl: url,
       imageAlt: title,
       title,
-      caption: '',
+      caption: title,
     });
   }
 
@@ -136,11 +139,14 @@ function buildVideoGalleryItems(
 
   for (const { url, title } of videoItems) {
     if (seen.has(url)) continue;
+    if (!title) continue;
     seen.add(url);
     items.push({
       videoUrl: url,
       title,
-      caption: '',
+      // The schema requires a non-empty caption; the candidate title is the
+      // only text available when synthesizing, so it doubles as caption.
+      caption: title,
     });
   }
 
@@ -171,8 +177,17 @@ export function extractMediaFromToolResults(
   const existingHeroVideo = data.heroVideoUrl?.trim();
 
   // Prefer video hero when available, mirroring the server instructions.
-  if (heroAllowed && !existingHeroVideo && videos.length > 0) {
+  // Contract: a hero video must carry a title (popout title bar, now-playing
+  // marquee) — only promote a candidate whose title is known.
+  if (
+    heroAllowed &&
+    !existingHeroVideo &&
+    videos.length > 0 &&
+    videos[0].title
+  ) {
     data.heroVideoUrl = videos[0].url;
+    data.heroVideoTitle = data.heroVideoTitle || videos[0].title;
+    data.heroVideoCaption = data.heroVideoCaption || videos[0].title;
   }
 
   if (

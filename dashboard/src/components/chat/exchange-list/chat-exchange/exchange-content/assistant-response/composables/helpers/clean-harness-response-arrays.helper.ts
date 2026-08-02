@@ -30,6 +30,15 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
   if (data.heroVideoUrl && !isVideoUrl(data.heroVideoUrl)) {
     data.heroVideoUrl = undefined;
   }
+  // A hero video without a title has no name in the popout title bar or the
+  // now-playing marquee — drop it like the server-side schema does.
+  if (data.heroVideoUrl && !data.heroVideoTitle?.trim()) {
+    data.heroVideoUrl = undefined;
+  }
+  if (!data.heroVideoUrl) {
+    data.heroVideoTitle = undefined;
+    data.heroVideoCaption = undefined;
+  }
   data.galleryItems = filterArray(
     data.galleryItems,
     (item) =>

@@ -107,6 +107,31 @@ describe('cleanHarnessResponseArrays', () => {
     expect(data.heroVideoUrl).toBeUndefined();
   });
 
+  it('clears hero videos without a title (unnamed in popout and marquee)', () => {
+    const data: HarnessResponseData = {
+      heroVideoUrl: 'https://www.youtube.com/watch?v=abc',
+      heroVideoCaption: 'Some caption',
+    };
+
+    cleanHarnessResponseArrays(data);
+
+    expect(data.heroVideoUrl).toBeUndefined();
+    // Orphaned hero texts must go with the hero.
+    expect(data.heroVideoCaption).toBeUndefined();
+  });
+
+  it('keeps named hero videos untouched', () => {
+    const data: HarnessResponseData = {
+      heroVideoUrl: 'https://www.youtube.com/watch?v=abc',
+      heroVideoTitle: 'Trailer',
+    };
+
+    cleanHarnessResponseArrays(data);
+
+    expect(data.heroVideoUrl).toBe('https://www.youtube.com/watch?v=abc');
+    expect(data.heroVideoTitle).toBe('Trailer');
+  });
+
   it('removes video gallery items without a videoUrl', () => {
     const data: HarnessResponseData = {
       videoGalleryItems: [

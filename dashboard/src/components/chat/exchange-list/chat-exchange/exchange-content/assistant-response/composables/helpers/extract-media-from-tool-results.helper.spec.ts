@@ -63,6 +63,47 @@ describe('extractMediaFromToolResults', () => {
     expect(data.heroImageUrl).toBeUndefined();
   });
 
+  it('names the synthesized hero video from the candidate title', () => {
+    const data: HarnessResponseData = {};
+    extractMediaFromToolResults(
+      [
+        {
+          toolName: 'youtubeVideoSearch',
+          result: {
+            results: [
+              { videoUrl: 'https://youtube.com/watch?v=abc', title: 'Trailer' },
+            ],
+          },
+        },
+      ],
+      data,
+    );
+
+    // The popout title bar and now-playing marquee read the hero title; a
+    // hero without one must never be synthesized (schema contract).
+    expect(data.heroVideoTitle).toBe('Trailer');
+    expect(data.heroVideoCaption).toBe('Trailer');
+  });
+
+  it('does not synthesize a hero from a title-less candidate', () => {
+    const data: HarnessResponseData = {};
+    extractMediaFromToolResults(
+      [
+        {
+          toolName: 'youtubeVideoSearch',
+          result: {
+            results: [{ videoUrl: 'https://youtube.com/watch?v=abc' }],
+          },
+        },
+      ],
+      data,
+    );
+
+    expect(data.heroVideoUrl).toBeUndefined();
+    // Title-less candidates are contract-incomplete: no gallery either.
+    expect(data.videoGalleryItems).toBeUndefined();
+  });
+
   it('populates video gallery items excluding the hero video', () => {
     const data: HarnessResponseData = {};
     extractMediaFromToolResults(
@@ -86,6 +127,9 @@ describe('extractMediaFromToolResults', () => {
     expect(data.videoGalleryItems?.[0].videoUrl).toBe(
       'https://youtube.com/watch?v=a',
     );
+    // Synthesized items must satisfy the schema: non-empty caption, falling
+    // back to the candidate title.
+    expect(data.videoGalleryItems?.[0].caption).toBe('A');
   });
 
   it('does not duplicate URLs already present in JSON fields', () => {
@@ -138,7 +182,12 @@ describe('extractMediaFromToolResults', () => {
         {
           toolName: 'serperVideoSearch',
           result: {
-            results: [{ url: 'https://youtube.com/watch?v=abc' }],
+            results: [
+              {
+                url: 'https://youtube.com/watch?v=abc',
+                title: 'Alt-field video',
+              },
+            ],
           },
         },
       ],

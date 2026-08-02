@@ -1,12 +1,23 @@
 <script setup lang="ts">
 import { CircleGauge, Hash, MessagesSquare, Radio } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
 import ComboBox from '../../../shared/ui/combo-box/ComboBox.vue';
 import Dropdown from '../../../shared/ui/drop-down/DropDown.vue';
+import { useMenuPosition } from '../model-selector/composables/use-menu-position';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
 
-defineProps<{
+defineEmits<{
+  toggleMenu: [];
+  'update:newConversationName': [value: string];
+  'update:newConversationEvent': [value: string];
+  'update:newConversationRoomId': [value: string];
+  createConversation: [type: 'temporary' | 'persistent'];
+  selectNumCtx: [ctx: string];
+}>();
+
+const props = defineProps<{
   isOpen: boolean;
   isDisabled: boolean;
   newConversationName: string;
@@ -23,20 +34,18 @@ defineProps<{
   onMouseLeave?: () => void;
 }>();
 
-defineEmits<{
-  toggleMenu: [];
-  'update:newConversationName': [value: string];
-  'update:newConversationEvent': [value: string];
-  'update:newConversationRoomId': [value: string];
-  createConversation: [type: 'temporary' | 'persistent'];
-  selectNumCtx: [ctx: string];
-}>();
+// Like the model-select menu: teleport the dropdown to <body> with a fixed
+// position — rendered inline (z-150) it sits inside the sticky toolbar's
+// stacking context (z-50), so the chat column and video popouts cover it.
+const triggerRef = ref<HTMLElement | null>(null);
+const isOpenRef = computed(() => props.isOpen);
+const { positionStyle } = useMenuPosition(triggerRef, isOpenRef, 'right');
 </script>
 
 <template>
   <div class="flex items-center gap-1.5 w-full justify-end">
     <ToolbarLabel value="conversations" />
-    <div class="relative shrink-0">
+    <div ref="triggerRef" class="relative shrink-0">
       <IconButton
         :active="isOpen"
         :disabled="isDisabled"
@@ -48,86 +57,96 @@ defineEmits<{
       >
         <MessagesSquare class="w-4 h-4" />
       </IconButton>
-      <div v-if="isOpen" class="new-conversation-menu__dropdown" @click.stop>
-        <div class="new-conversation-menu__content">
-          <div class="new-conversation-menu__input-wrapper">
-            <MessagesSquare class="new-conversation-menu__input-icon" />
-            <input
-              :value="newConversationName"
-              placeholder="Conversation name"
-              class="new-conversation-menu__input"
-              @input="
-                $emit(
-                  'update:newConversationName',
-                  ($event.target as HTMLInputElement).value,
-                )
-              "
-            />
-          </div>
-          <Dropdown
-            label="Context"
-            :options="filteredNumCtxOptions"
-            :model-value="currentNumCtx || defaultNumCtx"
-            :format-value="(v: string) => formatCtx(Number(v))"
-            @update:model-value="$emit('selectNumCtx', $event)"
-          >
-            <CircleGauge class="w-3.5 h-3.5" />
-          </Dropdown>
-          <ComboBox
-            :model-value="newConversationEvent"
-            :options="availableSocketEvents"
-            placeholder="socket"
-            @update:model-value="$emit('update:newConversationEvent', $event)"
-          >
-            <Radio class="w-3.5 h-3.5" />
-          </ComboBox>
-          <ComboBox
-            :model-value="newConversationRoomId"
-            :options="availableRooms"
-            placeholder="channel"
-            @update:model-value="$emit('update:newConversationRoomId', $event)"
-          >
-            <Hash class="w-3.5 h-3.5" />
-          </ComboBox>
-          <div class="new-conversation-menu__button-row">
-            <button
-              class="new-conversation-menu__button"
-              :class="
-                newConversationName.trim()
-                  ? 'new-conversation-menu__button--enabled'
-                  : 'new-conversation-menu__button--disabled'
-              "
-              :disabled="!newConversationName.trim()"
-              @click.stop="$emit('createConversation', 'temporary')"
+      <Teleport to="body">
+        <div
+          v-if="isOpen"
+          class="new-conversation-menu__dropdown"
+          :style="positionStyle ?? undefined"
+          @click.stop
+        >
+          <div class="new-conversation-menu__content">
+            <div class="new-conversation-menu__input-wrapper">
+              <MessagesSquare class="new-conversation-menu__input-icon" />
+              <input
+                :value="newConversationName"
+                placeholder="Conversation name"
+                class="new-conversation-menu__input"
+                @input="
+                  $emit(
+                    'update:newConversationName',
+                    ($event.target as HTMLInputElement).value,
+                  )
+                "
+              />
+            </div>
+            <Dropdown
+              label="Context"
+              :options="filteredNumCtxOptions"
+              :model-value="currentNumCtx || defaultNumCtx"
+              :format-value="(v: string) => formatCtx(Number(v))"
+              @update:model-value="$emit('selectNumCtx', $event)"
             >
-              Temporary
-            </button>
-            <button
-              class="new-conversation-menu__button"
-              :class="
-                newConversationName.trim()
-                  ? 'new-conversation-menu__button--enabled'
-                  : 'new-conversation-menu__button--disabled'
-              "
-              :disabled="!newConversationName.trim()"
-              @click.stop="$emit('createConversation', 'persistent')"
+              <CircleGauge class="w-3.5 h-3.5" />
+            </Dropdown>
+            <ComboBox
+              :model-value="newConversationEvent"
+              :options="availableSocketEvents"
+              placeholder="socket"
+              @update:model-value="$emit('update:newConversationEvent', $event)"
             >
-              Persistent
-            </button>
+              <Radio class="w-3.5 h-3.5" />
+            </ComboBox>
+            <ComboBox
+              :model-value="newConversationRoomId"
+              :options="availableRooms"
+              placeholder="channel"
+              @update:model-value="
+                $emit('update:newConversationRoomId', $event)
+              "
+            >
+              <Hash class="w-3.5 h-3.5" />
+            </ComboBox>
+            <div class="new-conversation-menu__button-row">
+              <button
+                class="new-conversation-menu__button"
+                :class="
+                  newConversationName.trim()
+                    ? 'new-conversation-menu__button--enabled'
+                    : 'new-conversation-menu__button--disabled'
+                "
+                :disabled="!newConversationName.trim()"
+                @click.stop="$emit('createConversation', 'temporary')"
+              >
+                Temporary
+              </button>
+              <button
+                class="new-conversation-menu__button"
+                :class="
+                  newConversationName.trim()
+                    ? 'new-conversation-menu__button--enabled'
+                    : 'new-conversation-menu__button--disabled'
+                "
+                :disabled="!newConversationName.trim()"
+                @click.stop="$emit('createConversation', 'persistent')"
+              >
+                Persistent
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Teleport>
     </div>
   </div>
 </template>
 
 <style scoped>
 .new-conversation-menu__dropdown {
-  position: absolute;
-  left: 100%;
-  top: 0;
+  /* Teleported to <body>: above the chat column (z-60) and the floating
+     video popouts (z-1000), below the lightbox (1100) — same layer as the
+     model-select menu. Position comes from the trigger anchor inline style. */
+  position: fixed;
+  z-index: 1050;
   margin-left: var(--spacing-1);
-  z-index: 150;
   width: 14rem;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
