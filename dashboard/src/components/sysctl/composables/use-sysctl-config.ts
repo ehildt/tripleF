@@ -78,6 +78,10 @@ function applyFrontendDefaults(
 ): ProviderOverridesSnapshot {
   return {
     serper: { ...snapshot.serper, enabled: snapshot.serper.enabled ?? false },
+    youtube: {
+      ...snapshot.youtube,
+      enabled: snapshot.youtube?.enabled ?? false,
+    },
     sources: {
       preferred: snapshot.sources?.preferred ?? [],
       blocked: snapshot.sources?.blocked ?? [],

@@ -16,6 +16,7 @@ import {
 } from './instructions/describe.instruction.js';
 import { EVALUATION_INSTRUCTIONS } from './instructions/evaluation.instruction.js';
 import { IMAGELIST_INSTRUCTIONS } from './instructions/imagelist.instruction.js';
+import { INTERNATIONAL_COVERAGE_INSTRUCTIONS } from './instructions/international-coverage.instruction.js';
 import { NEWS_INSTRUCTIONS } from './instructions/news.instruction.js';
 import {
   OCR_INSTRUCTIONS,
@@ -104,14 +105,17 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
 /**
  * Resolves the style instructions for a selected template variant.
  * Falls back to the template's default variant, then to an empty string.
+ * Every content template gets the internationalCoverage aside appended —
+ * compact is the only internal, instruction-free case.
  */
 export function resolveVariantInstructions(
   template: string,
   variantId: string = DEFAULT_VARIANT_ID,
 ): string {
-  return (
+  const instructions =
     VARIANT_INSTRUCTIONS[`${template}:${variantId}`] ??
     VARIANT_INSTRUCTIONS[`${template}:${DEFAULT_VARIANT_ID}`] ??
-    ''
-  );
+    '';
+  if (!instructions || template === 'compact') return instructions;
+  return `${instructions}\n\n${INTERNATIONAL_COVERAGE_INSTRUCTIONS}`;
 }

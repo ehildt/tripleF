@@ -16,6 +16,12 @@ export interface SerperConfig {
   scrape: { enabled: boolean };
 }
 
+export interface YouTubeConfig {
+  enabled: boolean;
+  apiKey?: string;
+  videos: EndpointConfig;
+}
+
 export interface SourcesConfig {
   preferred: string[];
   blocked: string[];
@@ -30,17 +36,18 @@ export interface OllamaConnectionConfig {
   apiKey?: string;
 }
 
-export type ProviderKey = 'serper' | 'ollama';
+export type ProviderKey = 'serper' | 'ollama' | 'youtube';
 
 /** Resettable top-level config sections (provider or the sources list). */
 export type ConfigSectionKey = ProviderKey | 'sources';
 
-export type ProviderConfig = SerperConfig;
+export type ProviderConfig = SerperConfig | YouTubeConfig;
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
   sources: SourcesConfig;
   ollama: OllamaConnectionConfig;
+  youtube: YouTubeConfig;
 }
 
 export function hasEndpointResults(

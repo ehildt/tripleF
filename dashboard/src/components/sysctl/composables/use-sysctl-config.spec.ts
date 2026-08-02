@@ -24,6 +24,11 @@ const baseSnapshot = {
     videos: { enabled: false, results: 5 },
     scrape: { enabled: true },
   },
+  youtube: {
+    enabled: true,
+    apiKey: 'youtube-key',
+    videos: { enabled: true, results: 6 },
+  },
 };
 
 function mockFetchByUrl(configOverrides?: Record<string, unknown>) {

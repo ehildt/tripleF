@@ -15,6 +15,7 @@ import { withSummary } from './tool-factory.js';
 import type { ToolDependencies } from './types.js';
 import { createWebFetchTool } from './web-fetch.tool.js';
 import { createWebSearch } from './web-search.tool.js';
+import { createYoutubeVideoSearch } from './youtube.js';
 
 function addSerperTools(
   tools: ToolSet,
@@ -66,6 +67,17 @@ function addSerperTools(
     tools.serperWebpageScrape = withSummary(createSerperWebpageScrape(deps));
 }
 
+function addYoutubeTools(
+  tools: ToolSet,
+  deps: ToolDependencies,
+  enabled: boolean,
+  cfg: ReturnType<ToolDependencies['getLiveConfig']>,
+): void {
+  if (!enabled || !cfg.youtube.apiKey) return;
+  if (cfg.youtube.videos.enabled)
+    tools.youtubeVideoSearch = withSummary(createYoutubeVideoSearch(deps));
+}
+
 function addVariantTools(tools: ToolSet, enabledVariants: string[]): void {
   const variantMap: Record<
     string,
@@ -103,6 +115,7 @@ export function createEnabledTools(
   if (hasWebSearch) tools.webSearch = withSummary(createWebSearch(deps));
 
   addSerperTools(tools, deps, serper.enabled, cfg);
+  addYoutubeTools(tools, deps, cfg.youtube.enabled, cfg);
   addVariantTools(tools, enabledVariants ?? []);
 
   return tools;

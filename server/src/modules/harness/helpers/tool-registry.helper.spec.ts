@@ -18,6 +18,11 @@ const fullConfig: ProviderConfig = {
     videos: { enabled: true },
     scrape: { enabled: true },
   },
+  youtube: {
+    enabled: true,
+    apiKey: 'youtube-key',
+    videos: { enabled: true },
+  },
 };
 
 describe('tool-registry.helper', () => {

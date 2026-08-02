@@ -6,6 +6,8 @@ import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
 import type { SourcesConfig } from '../configs/sources-config.adapter.js';
 import { SourcesConfigService } from '../configs/sources-config.service.js';
+import type { YoutubeConfig } from '../configs/youtube-config.adapter.js';
+import { YoutubeConfigService } from '../configs/youtube-config.service.js';
 import { decryptOverridesSecrets } from '../helpers/decrypt-overrides-secrets.helper.js';
 import { encryptOverridesSecrets } from '../helpers/encrypt-overrides-secrets.helper.js';
 import { isMaskedApiKey, maskApiKey } from '../helpers/mask-api-key.helper.js';
@@ -14,6 +16,7 @@ import { retryWithBackoff } from '../helpers/retry-with-backoff.helper.js';
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
   sources: SourcesConfig;
+  youtube: YoutubeConfig;
 }
 
 /** Boot restore: 5 attempts, 500ms → 8s backoff — spans compose cold starts. */
@@ -34,12 +37,14 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
   constructor(
     private readonly serperCfg: SerperConfigService,
     private readonly sourcesCfg: SourcesConfigService,
+    private readonly youtubeCfg: YoutubeConfigService,
     private readonly repository: ProviderOverridesRepository,
     private readonly cipher: SecretsCipherService,
   ) {
     this.snapshot = {
       serper: this.serperCfg.config,
       sources: this.sourcesCfg.config,
+      youtube: this.youtubeCfg.config,
     };
   }
 
@@ -150,6 +155,10 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
         ...config.serper,
         apiKey: maskApiKey(config.serper.apiKey),
       },
+      youtube: {
+        ...config.youtube,
+        apiKey: maskApiKey(config.youtube.apiKey),
+      },
     };
   }
 
@@ -227,6 +236,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
     const result: ProviderOverridesSnapshot = {
       serper: { ...snapshot.serper },
       sources: { ...snapshot.sources },
+      youtube: { ...snapshot.youtube },
     };
     for (const [provider, values] of Object.entries(this.overrides)) {
       if (!(provider in result)) continue;

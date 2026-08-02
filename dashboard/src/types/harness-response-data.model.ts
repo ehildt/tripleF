@@ -42,6 +42,18 @@ export interface RelatedStory {
   imageUrl?: string;
 }
 
+/**
+ * internationalCoverage — noteworthy results found in languages other than
+ * the user's. Title stays in the original language, summary in the user's.
+ */
+export interface InternationalCoverageEntry {
+  title?: string;
+  url?: string;
+  sourceName?: string;
+  language?: string;
+  summary?: string;
+}
+
 export interface ArticleCard {
   title?: string;
   description?: string;
@@ -78,6 +90,7 @@ export interface HarnessResponseData {
   byline?: string;
   keyPoints?: KeyFinding[];
   relatedStories?: RelatedStory[];
+  internationalCoverage?: InternationalCoverageEntry[];
 
   /* Summary / evaluation */
   summary?: string;

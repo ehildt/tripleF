@@ -30,6 +30,8 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year). Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
   serperWebpageScrape:
     'Fetch and render a full webpage using Serper.dev scrape API. Returns clean rendered text with its title.',
+  youtubeVideoSearch:
+    'Search YouTube using the official YouTube Data API. Returns titles, links, channel names, durations, view counts, upload dates, and direct thumbnails. All results are embeddable YouTube videos.',
   webFetch:
     'Fetch the full content of a specific URL. Use only when search snippets are insufficient.',
   requestGrayscale:
@@ -53,6 +55,7 @@ export const TOOL_NAMES = [
   'serperBusinessReviewsSearch',
   'serperVideoSearch',
   'serperWebpageScrape',
+  'youtubeVideoSearch',
   'requestGrayscale',
   'requestDenoised',
   'requestSharpened',
@@ -73,5 +76,10 @@ export type ProviderConfig = {
     reviews: { enabled: boolean };
     videos: { enabled: boolean };
     scrape: { enabled: boolean };
+  };
+  youtube: {
+    enabled: boolean;
+    apiKey?: string;
+    videos: { enabled: boolean };
   };
 };

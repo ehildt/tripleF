@@ -24,8 +24,10 @@ import {
 import { extractPlaces } from '../helpers/extract-places.helper.js';
 import { extractReviews } from '../helpers/extract-reviews.helper.js';
 import { extractShopOffers } from '../helpers/extract-shop-offers.helper.js';
+import { partitionByLanguage } from '../helpers/partition-by-language.helper.js';
 import { sanitizeToolResult } from '../helpers/sanitize-tool-result.helper.js';
 import { sanitizeToolResultsWithIngestedUrls } from '../helpers/sanitize-tool-result.helper.js';
+import { tagLanguage } from '../helpers/tag-language.helper.js';
 import { videoUrlKeys } from '../helpers/video-url-keys.helper.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
@@ -57,6 +59,9 @@ export type SanitizeResult = {
  */
 const CLOUD_REFERENCE_MAX_DIMENSION = 512;
 const CLOUD_DISPLAY_MAX_DIMENSION = 1600;
+/** International pools cap: the aside must never crowd out primary context. */
+const INTERNATIONAL_ARTICLE_LIMIT = 6;
+const INTERNATIONAL_VIDEO_LIMIT = 3;
 
 @Injectable()
 export class SanitizeActionService {
@@ -224,6 +229,38 @@ export class SanitizeActionService {
       placeCount: places.length,
     });
 
+    // 7. Language partition: reliably detected foreign-language articles and
+    //    videos leave the primary pools for the international aside. Nothing
+    //    is dropped — undetermined items stay in the primary pools.
+    const userLang = ctx.outputs.intent?.language;
+    await Promise.all([
+      tagLanguage(articles, (a) => `${a.title ?? ''} ${a.snippet ?? ''}`),
+      tagLanguage(
+        verifiedVideos,
+        (v) => `${v.title ?? ''} ${v.description ?? ''}`,
+      ),
+    ]);
+    const articlePool = partitionByLanguage(articles, userLang);
+    const videoPool = partitionByLanguage(verifiedVideos, userLang);
+    const mainArticles = articlePool.main;
+    verifiedVideos = videoPool.main;
+    const internationalArticles = articlePool.international.slice(
+      0,
+      INTERNATIONAL_ARTICLE_LIMIT,
+    );
+    const internationalVideos = videoPool.international.slice(
+      0,
+      INTERNATIONAL_VIDEO_LIMIT,
+    );
+
+    if (internationalArticles.length || internationalVideos.length) {
+      this.stepLogger.log(ctx, 'sanitize', 'language partition applied', {
+        userLang,
+        internationalArticleCount: internationalArticles.length,
+        internationalVideoCount: internationalVideos.length,
+      });
+    }
+
     const messages = this.scrubBrokenUrlsFromMessages(
       buildFinalMessagesForSanitize(
         ctx,
@@ -231,11 +268,13 @@ export class SanitizeActionService {
         finalToolResults,
         verifiedImages,
         verifiedVideos,
-        articles,
+        mainArticles,
         references,
         shopOffers,
         reviews,
         places,
+        internationalArticles,
+        internationalVideos,
       ),
       new Set([...brokenMediaUrls, ...brokenPageUrls]),
     );
@@ -447,8 +486,7 @@ export class SanitizeActionService {
         continue;
 
       const data = tr.result as
-        | { results?: Array<{ thumbnailUrl?: string }> }
-        | undefined;
+        { results?: Array<{ thumbnailUrl?: string }> } | undefined;
       if (!data?.results) continue;
 
       for (const r of data.results) {
@@ -476,8 +514,7 @@ export class SanitizeActionService {
         continue;
 
       const data = tr.result as
-        | { results?: Array<{ url?: string; link?: string }> }
-        | undefined;
+        { results?: Array<{ url?: string; link?: string }> } | undefined;
       if (!data?.results) continue;
 
       for (const r of data.results) {

@@ -39,14 +39,18 @@ function collectProviderSources(
   for (const [key, value] of Object.entries(
     engine as Record<string, unknown>,
   )) {
-    if (RESERVED_KEYS.has(key) || sources.some((entry) => entry.key === key))
-      continue;
+    if (RESERVED_KEYS.has(key)) continue;
     if (!isSourceToggle(value)) continue;
-    sources.push({
-      key,
-      enabled:
-        sessionSourceEnabled(sessionOverrides, provider, key) ?? value.enabled,
-    });
+    const enabled =
+      sessionSourceEnabled(sessionOverrides, provider, key) ?? value.enabled;
+    const existing = sources.find((entry) => entry.key === key);
+    // Same source offered by several engines (e.g. videos on Serper and
+    // YouTube): one tag, lit if any engine has it on. Toggling affects all.
+    if (existing) {
+      existing.enabled ||= enabled;
+      continue;
+    }
+    sources.push({ key, enabled });
   }
 }
 
@@ -54,11 +58,13 @@ function collectProviderSources(
  * Every toggleable search source across the configured search engines
  * (web, images, news, …) with its effective enabled state, in snapshot
  * order and deduplicated — the tags shown at the top edge of the prompt
- * input. Enabled sources render colored, disabled ones gray; the user
- * flips the state by clicking the tag, so disabled sources stay visible
- * (kill switch off or no API key still hides the strip entirely). Session
- * overrides win over the snapshot, mirroring SysCtl. Any engine added to
- * the provider-overrides response is picked up automatically; non-search
+ * input. A source shared by several engines (e.g. videos) renders once and
+ * lights up when any engine has it enabled; its toggle flips them all.
+ * Enabled sources render colored, disabled ones gray; the user flips the
+ * state by clicking the tag, so disabled sources stay visible (kill switch
+ * off or no API key still hides the strip entirely). Session overrides win
+ * over the snapshot, mirroring SysCtl. Any engine added to the
+ * provider-overrides response is picked up automatically; non-search
  * providers are skipped.
  */
 export function listSearchSources(

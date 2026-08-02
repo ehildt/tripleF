@@ -6,6 +6,7 @@ import type {
   ShopOffer,
 } from '@/types/harness-response-data.model';
 
+import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
@@ -93,6 +94,7 @@ const hasContent = computed(
     />
 
     <SourcesSection :items="data.sources" />
+    <InternationalCoverageSection :items="data.internationalCoverage" />
   </section>
 
   <!-- Empty state -->

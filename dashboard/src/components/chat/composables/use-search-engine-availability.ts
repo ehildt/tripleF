@@ -86,15 +86,17 @@ export function useSearchEngineAvailability() {
     sessionOverrides.value = overrides;
   }
 
-  /** The engine that owns a given source toggle (first match wins). */
-  function findSourceProvider(source: string): string | null {
+  /** All engines that offer a given source toggle, in snapshot order. */
+  function findSourceProviders(source: string): string[] {
+    const providers: string[] = [];
     for (const [provider, engine] of Object.entries(
       snapshotConfig.value ?? {},
     )) {
       if (!engine || typeof engine !== 'object') continue;
-      if (source in (engine as Record<string, unknown>)) return provider;
+      if (source in (engine as Record<string, unknown>))
+        providers.push(provider);
     }
-    return null;
+    return providers;
   }
 
   /** The source's endpoint config, session overrides merged over the snapshot. */
@@ -139,30 +141,45 @@ export function useSearchEngineAvailability() {
    * Toggle one search source (web, images, news, …) from the prompt-bar
    * tags — same dual write as the kill switch and SysCtl source toggles
    * (server overrides + session config), so the setting survives reloads
-   * and server restarts. Disabled sources stay on the prompt bar in gray
-   * and can be re-enabled with another click.
+   * and server restarts. A source shared by several engines (e.g. videos
+   * on Serper and YouTube) flips all of them at once: the toggle counts
+   * as enabled while any engine has it on. Disabled sources stay on the
+   * prompt bar in gray and can be re-enabled with another click.
    */
   async function toggleSource(source: string) {
     if (isToggling.value) return;
-    const provider = findSourceProvider(source);
-    if (!provider) return;
-    // Spread the current endpoint so sibling settings (results, …) survive
-    // the toggle — a bare {enabled} write would drop them.
-    const endpoint = sourceEndpoint(provider, source);
-    const previous = endpoint.enabled === true;
+    const providers = findSourceProviders(source);
+    if (!providers.length) return;
+    // Spread each endpoint so sibling settings (results, …) survive the
+    // toggle — a bare {enabled} write would drop them.
+    const previous = providers.some(
+      (provider) => sourceEndpoint(provider, source).enabled === true,
+    );
     const next = !previous;
-    const nextEndpoint = { ...endpoint, enabled: next };
+    const nextEndpoints = Object.fromEntries(
+      providers.map((provider) => [
+        provider,
+        { ...sourceEndpoint(provider, source), enabled: next },
+      ]),
+    );
     const backupSnapshot = snapshotConfig.value;
     const backupSession = sessionOverrides.value;
-    mirrorSourceLocally(provider, source, nextEndpoint);
+    for (const [provider, endpoint] of Object.entries(nextEndpoints)) {
+      mirrorSourceLocally(provider, source, endpoint);
+    }
     isToggling.value = true;
     try {
       const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          [provider]: { [source]: nextEndpoint },
-        }),
+        body: JSON.stringify(
+          Object.fromEntries(
+            Object.entries(nextEndpoints).map(([provider, endpoint]) => [
+              provider,
+              { [source]: endpoint },
+            ]),
+          ),
+        ),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const sessionId = getPersistentSocketSessionId();
@@ -170,14 +187,16 @@ export function useSearchEngineAvailability() {
       const overrides = {
         ...(config?.providerOverrides ?? {}),
       } as Record<string, Record<string, unknown>>;
-      const existing = (overrides[provider]?.[source] ?? {}) as Record<
-        string,
-        unknown
-      >;
-      overrides[provider] = {
-        ...overrides[provider],
-        [source]: { ...existing, enabled: next },
-      };
+      for (const provider of providers) {
+        const existing = (overrides[provider]?.[source] ?? {}) as Record<
+          string,
+          unknown
+        >;
+        overrides[provider] = {
+          ...overrides[provider],
+          [source]: { ...existing, enabled: next },
+        };
+      }
       await saveConfig(sessionId, { providerOverrides: overrides });
       sessionOverrides.value = overrides;
     } catch {

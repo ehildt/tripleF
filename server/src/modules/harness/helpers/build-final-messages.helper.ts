@@ -1,6 +1,7 @@
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 
+import type { ExtractedArticle } from './extract-articles-from-tools.helper.js';
 import type {
   ExtractedImageItem,
   ExtractedVideoItem,
@@ -8,6 +9,9 @@ import type {
 import type { ExtractedPlace } from './extract-places.helper.js';
 import type { ExtractedReview } from './extract-reviews.helper.js';
 import type { ExtractedShopOffer } from './extract-shop-offers.helper.js';
+
+const INTERNATIONAL_POOLS_LINE =
+  "internationalArticles and internationalVideos hold results in languages other than the user's — they feed only the internationalCoverage aside, never primary content (hero, galleries, sources, lists).";
 
 function dedupeImages<T extends { imageUrl: string }>(images: T[]): T[] {
   const seen = new Set<string>();
@@ -33,6 +37,7 @@ function buildMediaInstructions(
   if (template === 'imagelist') {
     return [
       `You have ${imageCount} image URL(s) in availableImages.`,
+      INTERNATIONAL_POOLS_LINE,
       `Put every suitable image URL into galleryItems (at most ${imageTargetCount}). This template has NO hero image — every image lives in galleryItems.`,
       'Skip any imageUrl that already appeared in an earlier imagelist response in the conversation history ("Previously shown images") — never return images the user has already seen.',
       'You MUST use these exact URLs in the response JSON. Do not ignore them.',
@@ -48,6 +53,7 @@ function buildMediaInstructions(
   if (template === 'videolist') {
     return [
       `You have ${videoCount} video URL(s) in availableVideos.`,
+      INTERNATIONAL_POOLS_LINE,
       `Put every suitable video URL into videoGalleryItems (at most ${videoTargetCount}), ordered like a playlist. This template has NO hero video — every video lives in videoGalleryItems.`,
       'Skip any videoUrl that already appeared in an earlier videolist response in the conversation history — never return videos the user has already seen.',
       'You MUST use these exact URLs in the response JSON. Do not ignore them.',
@@ -62,6 +68,7 @@ function buildMediaInstructions(
   if (template === 'shoplist') {
     return [
       `You have ${imageCount} image URL(s) in availableImages.`,
+      INTERNATIONAL_POOLS_LINE,
       'This template has NO hero media, NO galleries, and NO videos — images only appear as shopOffers[].imageUrl.',
       'Use the shopOffers array from this context verbatim for the shopOffers field — every offer has title, price, source, and link. Sort by ascending price.',
       "Attach the best matching product image from availableImages to each offer's imageUrl. The same product image may be reused across offers of the same product. Leave imageUrl empty when no image matches — never invent URLs.",
@@ -89,7 +96,8 @@ function buildMediaInstructions(
     'Take the next image URLs from availableImages for galleryItems (skip hero image URL). Do not exceed imageTargetCount.',
     `Take the next video URLs from availableVideos for videoGalleryItems. Do not exceed videoTargetCount.`,
     'If fewer URLs are available than target, include all of them.',
-    'Prefer video URLs discovered inside webSearch article results first, then URLs from videoSearch.',
+    'Prefer video URLs discovered inside webSearch article results first, then youtubeVideoSearch results, then other videoSearch sources.',
+    INTERNATIONAL_POOLS_LINE,
     'Each galleryItems entry must be an object with imageUrl, imageAlt, title, and caption.',
     'Each videoGalleryItems entry must be an object with videoUrl, title, and caption.',
     'If media URLs are present, leaving gallery or hero fields empty is a failure.',
@@ -111,11 +119,13 @@ export function buildFinalMessagesForSanitize(
   toolResults: Array<{ toolName: string; result: unknown }>,
   verifiedImages: ExtractedImageItem[],
   verifiedVideos: ExtractedVideoItem[],
-  extractedArticles: Array<Record<string, unknown>>,
+  extractedArticles: ExtractedArticle[],
   extractedReferences: unknown[],
   extractedShopOffers: ExtractedShopOffer[] = [],
   extractedReviews: ExtractedReview[] = [],
   extractedPlaces: ExtractedPlace[] = [],
+  internationalArticles: ExtractedArticle[] = [],
+  internationalVideos: ExtractedVideoItem[] = [],
 ): InputMessage[] {
   const conversation = ctx.request.messages.filter((m) => m.role !== 'system');
 
@@ -159,13 +169,16 @@ export function buildFinalMessagesForSanitize(
     role: 'system',
     content: `[TOOL CONTEXT — DO NOT OUTPUT]\n${JSON.stringify(
       {
-        availableImages: uniqueImages,
         availableVideos: verifiedVideos,
         articles: extractedArticles,
         references: extractedReferences,
         shopOffers: extractedShopOffers,
         reviews: extractedReviews,
         places: extractedPlaces,
+        internationalArticles,
+        internationalVideos,
+        // Images last: text data guides the response; images only fill media slots.
+        availableImages: uniqueImages,
         imageTargetCount,
         videoTargetCount,
         mediaInstructions,

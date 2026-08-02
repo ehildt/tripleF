@@ -43,6 +43,10 @@ const isSerperConfigured = computed(() => !!config.value?.serper.apiKey);
 
 const maskedSerperApiKey = computed(() => config.value?.serper.apiKey ?? '');
 
+const isYoutubeConfigured = computed(() => !!config.value?.youtube.apiKey);
+
+const maskedYoutubeApiKey = computed(() => config.value?.youtube.apiKey ?? '');
+
 const {
   draft: apiKeyDraft,
   selectAllText: selectApiKeyText,
@@ -52,6 +56,23 @@ const {
   maskedSerperApiKey,
 );
 
+const {
+  draft: youtubeApiKeyDraft,
+  selectAllText: selectYoutubeApiKeyText,
+  submit: submitYoutubeApiKey,
+} = useApiKeyForm(
+  (apiKey) => updateApiKey('youtube', apiKey),
+  maskedYoutubeApiKey,
+);
+
+const youtubeDescriptions: Record<string, string> = {
+  videos: 'YouTube videos with views and duration',
+};
+
+const youtubeIcons = {
+  videos: Clapperboard,
+};
+
 const serperDescriptions: Record<string, string> = {
   web: 'Google search results, knowledge graph',
   images: 'Image results with dimensions',
@@ -60,7 +81,7 @@ const serperDescriptions: Record<string, string> = {
   shopping: 'Products with price and seller',
   reviews: 'Place reviews and ratings',
   videos: 'Video results from YouTube and more',
-  webpageFetch: 'Full page content scraping',
+  scrape: 'Full page content scraping',
 };
 
 const serperIcons = {
@@ -71,11 +92,21 @@ const serperIcons = {
   shopping: ShoppingCart,
   reviews: Star,
   videos: Clapperboard,
-  webpageFetch: FileText,
+  scrape: FileText,
 };
 
 function handleUpdateResults({ name, value }: { name: string; value: string }) {
   updateEndpointResults('serper', name, value);
+}
+
+function handleYoutubeUpdateResults({
+  name,
+  value,
+}: {
+  name: string;
+  value: string;
+}) {
+  updateEndpointResults('youtube', name, value);
 }
 
 function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
@@ -143,6 +174,54 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
                   spellcheck="false"
                   @focus="selectApiKeyText"
                   @change="submitApiKey"
+                />
+              </template>
+            </FieldCard>
+          </template>
+        </ProviderSection>
+      </div>
+
+      <div class="search-engines-section__panel panel-glow">
+        <PanelTitleBar title="YouTube API">
+          <template #actions>
+            <ResetButton
+              title="Reset YouTube to defaults"
+              @click="resetProvider('youtube')"
+            />
+            <PowerToggle
+              :enabled="config.youtube.enabled"
+              :disabled="!isYoutubeConfigured"
+              title="Enable YouTube"
+              @toggle="toggleProviderEnabled('youtube')"
+            />
+          </template>
+        </PanelTitleBar>
+
+        <ProviderSection
+          provider-name="YouTube"
+          provider-description="Video search API"
+          :config="config.youtube"
+          :descriptions="youtubeDescriptions"
+          :icons="youtubeIcons"
+          :configured="isYoutubeConfigured"
+          @toggle-endpoint="toggleEndpoint('youtube', $event)"
+          @update-results="handleYoutubeUpdateResults($event)"
+        >
+          <template #prepend>
+            <FieldCard
+              :icon="KeyRound"
+              label="API key"
+              description="Google Cloud YouTube Data API key"
+            >
+              <template #field>
+                <input
+                  v-model="youtubeApiKeyDraft"
+                  type="text"
+                  class="search-engines-section__api-key-input"
+                  autocomplete="off"
+                  spellcheck="false"
+                  @focus="selectYoutubeApiKeyText"
+                  @change="submitYoutubeApiKey"
                 />
               </template>
             </FieldCard>
