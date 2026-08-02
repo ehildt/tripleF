@@ -1,4 +1,5 @@
-import { onScopeDispose, ref } from 'vue';
+import { tryOnScopeDispose } from '@vueuse/core';
+import { ref } from 'vue';
 
 export function useBlink(defaultDuration = 1000) {
   const isBlinking = ref(false);
@@ -24,7 +25,7 @@ export function useBlink(defaultDuration = 1000) {
     }, duration);
   }
 
-  onScopeDispose(stop);
+  tryOnScopeDispose(stop);
 
   return {
     isBlinking,

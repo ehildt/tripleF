@@ -9,9 +9,7 @@ import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.v
 import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../../shared/ui/panel-layout/PanelLayout.vue';
-import TabPanel, {
-  type TabPanelTab,
-} from '../../shared/ui/tab-panel/TabPanel.vue';
+import TabPanel from '../../shared/ui/tab-panel/TabPanel.vue';
 import { useDlqDetailsState } from './composables/use-dlq-details-state';
 import { useDlqFailureText } from './composables/use-dlq-failure-text';
 import DlqMetadataSection from './metadata-section/DlqMetadataSection.vue';
@@ -37,8 +35,8 @@ const { failureText, failureRaw } = useDlqFailureText(entryRef);
 
 type DetailTab = 'error' | 'metadata' | 'prompt' | 'payload';
 
-const tabs = computed<TabPanelTab[]>(() => {
-  const items: TabPanelTab[] = [];
+const tabs = computed<Array<{ id: DetailTab; label: string }>>(() => {
+  const items: Array<{ id: DetailTab; label: string }> = [];
   if (failureText.value) {
     items.push({ id: 'error', label: 'Error' });
   }
@@ -59,8 +57,9 @@ watch(
   },
 );
 
-function selectTab(tabId: DetailTab) {
-  activeTab.value = tabId;
+function selectTab(tabId: string) {
+  const tab = tabs.value.find((t) => t.id === tabId);
+  if (tab) activeTab.value = tab.id;
 }
 
 function handleUpdateFilter(key: string, value: unknown) {

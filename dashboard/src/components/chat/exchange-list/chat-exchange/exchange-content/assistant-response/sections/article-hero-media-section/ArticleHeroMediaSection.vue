@@ -42,6 +42,7 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(heroVideoItem);
 
 const onImageClicked = inject<HarnessImageClickedHandler>(
   harnessImageClickedKey,
+  () => undefined,
 );
 
 const heroItem = computed(() => {

@@ -33,6 +33,7 @@ import type {
   PersistedConversation,
   UploadedImage,
 } from './conversation.model';
+import { type Exchange } from './conversation.model';
 import { useSocketStore } from './socket';
 
 export type {

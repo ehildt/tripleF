@@ -46,6 +46,14 @@ Object.defineProperty(navigator, 'clipboard', {
   writable: true,
 });
 
+// jsdom has no canvas implementation: its default getContext returns null
+// but logs a "Not implemented" error on the virtual console per call.
+// Stub it to return null quietly — canvas consumers guard the null case.
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  value: vi.fn().mockReturnValue(null),
+  writable: true,
+});
+
 Object.defineProperty(globalThis, 'performance', {
   value: { now: vi.fn(() => Date.now()) },
   writable: true,

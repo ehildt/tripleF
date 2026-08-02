@@ -1,4 +1,5 @@
-import { onScopeDispose, type Ref, ref, watch } from 'vue';
+import { tryOnScopeDispose } from '@vueuse/core';
+import { type Ref, ref, watch } from 'vue';
 
 export type MenuPositionStyle = { left: string; top: string };
 
@@ -40,7 +41,7 @@ export function useMenuPosition(
     else stopTracking();
   });
 
-  onScopeDispose(stopTracking);
+  tryOnScopeDispose(stopTracking);
 
   return { positionStyle };
 }

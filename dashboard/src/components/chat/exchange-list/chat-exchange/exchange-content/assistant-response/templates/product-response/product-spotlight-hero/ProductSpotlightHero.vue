@@ -43,6 +43,7 @@ const props = defineProps<{
 
 const onImageClicked = inject<HarnessImageClickedHandler>(
   harnessImageClickedKey,
+  () => undefined,
 );
 
 /** The single hero slide: the trusted product image rendered in the media

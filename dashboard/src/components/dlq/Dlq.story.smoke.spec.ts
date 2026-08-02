@@ -13,15 +13,15 @@ import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, h, provide } from 'vue';
+import { defineComponent, h, provide, ref } from 'vue';
 
 import Dlq from './Dlq.vue';
 
 vi.mock('../../api/queries/use-dlq-query', () => ({
   useDlqQuery: () => ({
-    data: { value: null },
-    error: { value: null },
-    isError: { value: false },
+    data: ref(null),
+    error: ref(null),
+    isError: ref(false),
     refetch: vi.fn(),
   }),
 }));
