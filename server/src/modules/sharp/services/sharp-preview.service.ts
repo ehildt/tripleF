@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 
@@ -22,9 +22,7 @@ interface SharpPreviewVariant {
 @Injectable()
 export class SharpPreviewService {
   constructor(
-    @Inject(SharpService)
     private readonly sharpService: SharpService,
-    @Inject(SharpOverridesService)
     private readonly sharpOverrides: SharpOverridesService,
   ) {}
 

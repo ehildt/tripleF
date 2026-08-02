@@ -169,6 +169,12 @@ export class AiSdkService {
     keepAlive?: string;
     think?: ThinkMode;
     tools: ToolSet;
+    /**
+     * Max generate⇄tool round-trips. Browsing intents navigate, snapshot and
+     * interact step by step, so they pass a higher budget than the single
+     * round-trip searches use.
+     */
+    maxSteps?: number;
     timeout?: TimeoutConfiguration;
     abortSignal?: AbortSignal;
     onToolResult?: (toolResult: { toolName: string; result: unknown }) => void;
@@ -193,7 +199,7 @@ export class AiSdkService {
       messages: messages as any,
       tools: params.tools,
       allowSystemInMessages: false,
-      stopWhen: stepCountIs(1),
+      stopWhen: stepCountIs(params.maxSteps ?? 1),
       ...(hasTools ? { toolChoice: 'required' as const } : {}),
       abortSignal: params.abortSignal,
       timeout,

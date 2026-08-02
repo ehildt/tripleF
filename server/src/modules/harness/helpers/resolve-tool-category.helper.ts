@@ -7,6 +7,7 @@ export type ToolCategory =
   | 'reviews'
   | 'places'
   | 'fetch'
+  | 'browser'
   | 'variants'
   | 'other';
 
@@ -18,6 +19,7 @@ export type ToolCategory =
  * Order matters: check the most specific suffixes before generic "search".
  */
 export function resolveToolCategory(toolName: string): ToolCategory {
+  if (toolName.startsWith('browser_')) return 'browser';
   if (toolName.startsWith('request')) return 'variants';
   if (/shopping/i.test(toolName)) return 'shopping';
   if (/review/i.test(toolName)) return 'reviews';

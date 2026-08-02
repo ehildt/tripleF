@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
@@ -72,13 +72,10 @@ const INTERNATIONAL_VIDEO_LIMIT = 3;
 @Injectable()
 export class SanitizeActionService {
   constructor(
-    @Inject(MediaUrlValidatorService)
     private readonly mediaUrlValidator: MediaUrlValidatorService,
-    @Inject(CloudImageIngestionService)
     private readonly cloudImageIngestion: CloudImageIngestionService,
     private readonly stepLogger: HarnessStepLogger,
     private readonly providerOverrides: ProviderOverridesService,
-    @Inject(ShownMediaService)
     private readonly shownMedia: ShownMediaService,
   ) {}
 

@@ -1,4 +1,5 @@
 import type { ProviderConfig } from './tool-registry.constants.js';
+import { BROWSER_TOOL_NAMES } from './tool-registry.constants.js';
 
 /** Return only the tool names whose search engines are currently enabled. */
 export function getEnabledToolNames(cfg: ProviderConfig): string[] {
@@ -14,6 +15,7 @@ export function getEnabledToolNames(cfg: ProviderConfig): string[] {
 
   addSerperTools(cfg.serper, enabled);
   addYoutubeTools(cfg.youtube, enabled);
+  if (cfg.playwright.enabled) enabled.push(...BROWSER_TOOL_NAMES);
 
   return enabled;
 }

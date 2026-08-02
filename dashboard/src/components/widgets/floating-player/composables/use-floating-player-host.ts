@@ -23,6 +23,7 @@ import {
   launchedVideo,
   playlistAutoplayEnabled,
   playNextPlaylistVideo,
+  stopActivePlayback,
 } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 
 /**
@@ -209,14 +210,22 @@ export function useFloatingPlayerHost() {
   });
 
   /**
-   * Close the popup window: the X is window management, not playback
-   * control — it docks the video (inline over the figure when one is
-   * visible, hidden-but-playing when there is nothing to dock onto), like
-   * the playlist transport's popup-visibility toggle. Killing playback is
-   * the transport bar's dedicated Stop button.
+   * Minimize the popup window (the "_" button): window management, not
+   * playback control — it docks the video (inline over the figure when one
+   * is visible, hidden-but-playing when there is nothing to dock onto), like
+   * the playlist transport's popup-visibility toggle. Playback keeps
+   * running.
    */
-  function close() {
+  function minimize() {
     dockPlayback();
+  }
+
+  /**
+   * Stop playback (the X button): kills the video entirely, clearing the
+   * launched popup, exactly like the transport bar's dedicated Stop button.
+   */
+  function stop() {
+    stopActivePlayback();
   }
 
   return {
@@ -235,6 +244,7 @@ export function useFloatingPlayerHost() {
     setOpacity,
     startDrag,
     startResize,
-    close,
+    minimize,
+    stop,
   };
 }

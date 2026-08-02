@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { normalizeJsonResponse } from '../helpers/normalize-json-response.helper.js';
 import { parseLlmJson } from '../helpers/parse-llm-json.helper.js';
@@ -72,10 +72,7 @@ const OUTPUT_IMAGE_URL_KEYS = new Set([
  */
 @Injectable()
 export class ResponseValidatorService {
-  constructor(
-    @Inject(MediaUrlValidatorService)
-    private readonly mediaUrlValidator: MediaUrlValidatorService,
-  ) {}
+  constructor(private readonly mediaUrlValidator: MediaUrlValidatorService) {}
   /**
    * Full-pipeline validator for raw model output.
    */

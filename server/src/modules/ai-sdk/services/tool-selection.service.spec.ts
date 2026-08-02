@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
+import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwright-mcp-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 
 import { AiSdkService } from './ai-sdk.service.js';
@@ -43,6 +44,10 @@ describe('ToolSelectionService', () => {
           useValue: {
             compactContent: vi.fn(),
           },
+        },
+        {
+          provide: PlaywrightMcpClientService,
+          useValue: { tools: {} },
         },
       ],
     }).compile();

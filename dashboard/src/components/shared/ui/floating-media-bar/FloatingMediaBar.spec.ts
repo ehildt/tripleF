@@ -60,6 +60,12 @@ describe('FloatingMediaBar', () => {
     expect(wrapper.emitted('togglePlaylist')).toBeTruthy();
   });
 
+  it('emits minimize when the minimize button is clicked', async () => {
+    const wrapper = mountComponent();
+    await wrapper.find('.floating-media-bar__minimize').trigger('click');
+    expect(wrapper.emitted('minimize')).toBeTruthy();
+  });
+
   it('emits close when the close button is clicked', async () => {
     const wrapper = mountComponent();
     await wrapper.find('.floating-media-bar__close').trigger('click');

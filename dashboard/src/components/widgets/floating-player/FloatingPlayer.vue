@@ -34,7 +34,8 @@ const {
   setOpacity,
   startDrag,
   startResize,
-  close,
+  minimize,
+  stop,
 } = useFloatingPlayerHost();
 
 const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(launchedVideo);
@@ -61,11 +62,13 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
         :show-title-marquee="!playlistMarqueeVisible"
         :opacity-percent="opacityPercent"
         :is-in-playlist="isInPlaylist"
-        close-title="Close video"
+        minimize-title="Minimize video"
+        close-title="Stop video"
         @drag="startDrag"
         @opacity-input="setOpacity"
         @toggle-playlist="togglePlaylistVideo"
-        @close="close"
+        @minimize="minimize"
+        @close="stop"
       />
     </template>
 

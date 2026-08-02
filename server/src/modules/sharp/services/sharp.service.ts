@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 import { SharpConfigService } from '../configs/sharp-config.service.js';
@@ -20,13 +20,9 @@ export class SharpService {
   private readonly logger = new Logger(SharpService.name);
 
   constructor(
-    @Inject(SharpConfigService)
     private readonly configService: SharpConfigService,
-    @Inject(SharpOverridesService)
     private readonly sharpOverrides: SharpOverridesService,
-    @Inject(ImagePipelineFactory)
     private readonly pipelineFactory: ImagePipelineFactory,
-    @Inject(ImageVariantProcessor)
     private readonly variantProcessor: ImageVariantProcessor,
   ) {}
 

@@ -24,6 +24,7 @@ Use the relevant skill before implementing framework-specific changes:
 - `css` — Styling, design tokens, scoped CSS.
 - `nestjs` — NestJS modules, controllers, services, processors, helpers, DTOs.
 - `lint` — ESLint, TypeScript, depcheck, depcruise.
+- `playwright` — Playwright MCP browser tools for AI models (sidecar ops, browser_* tools, debugging).
 - `tech-stack` — Official docs links and project stack overview.
 
 ## Working Rules
@@ -36,6 +37,16 @@ Agent behavior, planning protocol, dev-environment guidance, and implementation 
 - If a pre-existing error, inconsistency, or broken state exists, treat it as leftover context from a previous session and move forward.
 - Focus on understanding the current request and fixing or improving the project, not on explaining why something went wrong.
 - Keep responses concise and actionable.
+
+## Senior Engineering Counsel
+
+Act as a senior software engineer reviewing the work, not just an implementer:
+
+- Before and during planning, sanity-check the user's idea: architecture fit, hidden costs, security, maintainability, and whether a simpler existing mechanism already covers it.
+- If an idea seems odd, risky, or redundant, say so plainly — once — with the reasoning and a concrete better alternative. A complaint without a viable alternative is noise.
+- Critique ideas, never people, and never the past. The no-argue rule above forbids blame and relitigating decisions; it does not forbid professional pushback before a decision is made.
+- Challenge, then commit. Once the user decides — even against the advice — implement their choice fully and without further resistance. The duty is to surface trade-offs before they commit, not to win the argument.
+- Match depth to risk: small, clearly-correct tasks get no lecture; large or unusual changes get a real review.
 
 ## Safety & Secrets
 
