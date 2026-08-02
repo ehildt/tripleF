@@ -1,14 +1,13 @@
 <div align="center">
 
+![Dashboard](banner.gif)
+
 # tripleF (3F)
 
 **An agentic AI workbench, fully open source.** Chat with free open models — running **fully locally** via Ollama, or on **Ollama Cloud** when you want the headroom. No lock-in, no meter, no black box: reasoning areas, context-size readouts, real cancellation, persisted queues with replay — the whole machine is inspectable, and the whole machine is yours.
 
 Early in development; already a complete chat experience — with features some proprietary chats still miss. Next: speech-to-text, music & image generation, and everyday providers (YouTube, messengers, finance). tripleF aims for the top of the open-source community.
 
-<br>
-
-![Dashboard](banner.gif)
 
 <br>
 

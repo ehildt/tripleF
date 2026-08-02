@@ -40,6 +40,8 @@ vi.mock('./stores/models', () => ({
   useModelsStore: () => ({
     models: ['llama'],
     modelNames: ['llama'],
+    localModels: [],
+    cloudModels: [],
     numCtxOptions: [],
     formatCtx: (n: number) => String(n),
     modelsLoading: false,

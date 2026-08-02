@@ -98,8 +98,10 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
     return tabs.value.find((t) => t.id === activeTab.value) ?? null;
   });
 
-  function selectTab(tabId: DetailTabId) {
-    activeTab.value = activeTab.value === tabId ? null : tabId;
+  function selectTab(tabId: string) {
+    const tab = tabs.value.find((t) => t.id === tabId);
+    if (!tab) return;
+    activeTab.value = activeTab.value === tab.id ? null : tab.id;
   }
 
   const { copy, copied: isCopied } = useClipboard({ legacy: true });

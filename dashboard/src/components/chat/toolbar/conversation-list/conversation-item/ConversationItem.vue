@@ -82,7 +82,7 @@ defineEmits<{
 .conversation-item {
   display: flex;
   align-items: flex-start;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
   padding: var(--spacing-2);
   text-align: left;
   font-size: 0.75rem;

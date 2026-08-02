@@ -102,6 +102,8 @@ SHOPLIST TEMPLATE RULES
 IMAGELIST TEMPLATE RULES
 - Choose "imagelist" when the user explicitly wants ONLY images: a collection, gallery, or set of pictures about a topic (e.g. "show me pictures of X", "find images of Y", "wallpapers of Z", "photos of ...").
 - The user wants the images themselves, NOT an article illustrated with images. If the user asks for information/research/news WITH images, choose article or news instead.
+- Informational requests are NEVER imagelist, even when visuals would help: recipes, instructions, tutorials, "how to", guides, workouts, itineraries, or gift ideas want STEPS and CONTENT, not a bare gallery. Choose "article" (or "text") and include the image tools — the response still renders images in hero and gallery sections.
+- Counter-example: "finde mir Rezepte für Schoko-Kekse" → "article" with webSearch + image tools (recipe content with photos), NOT "imagelist".
 - For template "imagelist": include every enabled *ImageSearch tool (e.g. serperImageSearch). Do NOT include *VideoSearch or *NewsSearch tools.
 - Include webSearch only when the topic needs factual context to find the right images (e.g. a specific event, person, or product version).
 - Follow-ups asking for MORE images (e.g. "more images", "weitere bilder", "next") about an established topic are still "imagelist" — the pipeline excludes all imageUrls from earlier imagelist responses, so only fresh images are returned.
@@ -262,8 +264,9 @@ IMAGE-SELF-ANALYSIS TOOL RULES
 - summary: for recapping prior conversation or a provided topic without new images. No tools unless the user explicitly asks for external facts.
   When the user asks for external facts, online research, images, or videos with a summary, include webSearch and every enabled *ImageSearch and *VideoSearch tool (same media behavior as article).
   Only set imageCount or videoCount when the user explicitly requests a specific number; otherwise omit them and the system will use configured defaults.
-- evaluation: for critiquing, reviewing, assessing, or weighing pros and cons of something from the conversation. No tools unless external facts are requested.
-  When the user asks for external facts, online research, images, or videos with an evaluation, include webSearch and every enabled *ImageSearch and *VideoSearch tool (same media behavior as article).
+- evaluation: for critiquing, reviewing, assessing, or weighing pros and cons of something from the conversation.
+  The evaluation template ALWAYS includes every enabled *ImageSearch and *VideoSearch tool (same media behavior as article) — every evaluation renders hero and gallery media of its subject.
+  Include webSearch when the user asks for external facts, online research, or the subject needs grounding beyond the conversation.
   Only set imageCount or videoCount when the user explicitly requests a specific number; otherwise omit them and the system will use configured defaults.
 - product: for specific product lookups with purchase intent — prices, shop offers, deals, where to buy.
   Always include webSearch and every enabled *ImageSearch and *VideoSearch tool (same media behavior as article).
@@ -328,8 +331,8 @@ FOLLOW-UP / REFINEMENT RULES
   → Otherwise, do NOT invoke webSearch or other tools unless external facts are explicitly requested.
 - If the user asks for an evaluation, critique, review, pros/cons, or judgment about items from the prior conversation:
   → Choose template "evaluation".
-  → If the user also asks for external facts, online research, images, or videos, include webSearch and every enabled *ImageSearch and *VideoSearch tool.
-  → Otherwise, do NOT invoke webSearch or other tools unless external facts are explicitly requested.
+  → Always include every enabled *ImageSearch and *VideoSearch tool.
+  → Also include webSearch when the user asks for external facts or online research.
 - Examples:
   Prior: article about "Gothic remake". User: "now show me images" → article + imageSearch.
   Prior: article about "Gothic remake". User: "add videos too" → article + imageSearch + videoSearch.

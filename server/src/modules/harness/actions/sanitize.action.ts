@@ -59,6 +59,12 @@ export type SanitizeResult = {
  */
 const CLOUD_REFERENCE_MAX_DIMENSION = 512;
 const CLOUD_DISPLAY_MAX_DIMENSION = 1600;
+/**
+ * Image-ingestion rounds per request: round N only retries for the images
+ * still missing below the target, so 3 rounds cover heavy hotlink-blocking
+ * without unbounded download loops.
+ */
+const CLOUD_INGEST_MAX_BATCHES = 3;
 /** International pools cap: the aside must never crowd out primary context. */
 const INTERNATIONAL_ARTICLE_LIMIT = 6;
 const INTERNATIONAL_VIDEO_LIMIT = 3;
@@ -159,15 +165,21 @@ export class SanitizeActionService {
       (ctx.outputs.intent?.videoCount ?? 0) > 0
         ? ctx.outputs.intent!.videoCount
         : 6;
-    verifiedImages = verifiedImages.slice(0, imageTargetCount);
     verifiedVideos = verifiedVideos.slice(0, videoTargetCount);
 
     // 5. Ingest external images into MinIO. Bot-protected CDNs answer our
     //    link probes yet block real clients (UA/Referer/TLS checks), and a
     //    download can fail regardless — so only images we could fetch and
     //    store locally may reach the response: external URLs that were not
-    //    ingested are dropped and blanked out of the tool results.
-    const ingestion = await this.ingestCloudImages(ctx, verifiedImages);
+    //    ingested are dropped and blanked out of the tool results. Instead
+    //    of truncating to the target first (every ingest failure would then
+    //    shrink the gallery), ingest until `imageTargetCount` images made
+    //    it into storage, drawing on the full verified candidate pool.
+    const ingestion = await this.ingestCloudImages(
+      ctx,
+      verifiedImages,
+      imageTargetCount,
+    );
     verifiedImages = ingestion.verifiedImages;
     verifiedImages = this.filterShownIngestedImages(
       ctx,
@@ -655,6 +667,7 @@ export class SanitizeActionService {
   private async ingestCloudImages(
     ctx: HarnessContext,
     verifiedImages: ExtractedImageItem[],
+    imageTargetCount: number,
   ): Promise<{
     verifiedImages: ExtractedImageItem[];
     ingestedImages: SanitizeResult['ingestedImages'];
@@ -669,31 +682,103 @@ export class SanitizeActionService {
     );
 
     if (!isImageReferenceTask && !hasExternalImages) {
-      return { verifiedImages, ingestedImages: [], ingestedForRewrite: [] };
+      return {
+        verifiedImages: verifiedImages.slice(0, imageTargetCount),
+        ingestedImages: [],
+        ingestedForRewrite: [],
+      };
     }
 
-    const existingFingerprints = isImageReferenceTask
-      ? await this.buildUserFingerprints(ctx)
-      : [];
-    const ingested =
-      (await this.ingestExternalImages(
-        ctx,
-        verifiedImages,
-        existingFingerprints,
-        isImageReferenceTask
-          ? CLOUD_REFERENCE_MAX_DIMENSION
-          : CLOUD_DISPLAY_MAX_DIMENSION,
-      )) ?? [];
-    const ingestedForRewrite = isImageReferenceTask
-      ? this.limitCloudReferenceImages(ingested, 3)
-      : ingested;
+    if (isImageReferenceTask) {
+      const sliced = verifiedImages.slice(0, imageTargetCount);
+      const existingFingerprints = await this.buildUserFingerprints(ctx);
+      const ingested =
+        (await this.ingestExternalImages(
+          ctx,
+          sliced,
+          existingFingerprints,
+          CLOUD_REFERENCE_MAX_DIMENSION,
+        )) ?? [];
+      const ingestedForRewrite = this.limitCloudReferenceImages(ingested, 3);
+      const ingestedByUrl = new Map(
+        ingestedForRewrite.map((img) => [img.sourceUrl, img]),
+      );
+
+      return {
+        verifiedImages: this.rewriteCandidatesWithIngested(
+          sliced,
+          ingestedByUrl,
+        ),
+        // Only image-reference tasks surface ingested images as attachments.
+        ingestedImages: ingestedForRewrite,
+        ingestedForRewrite,
+      };
+    }
+
+    // Display path: locals always keep their slot; externals are ingested in
+    // batches sized by what is still missing, so blocked hosts are replaced
+    // by the next candidates instead of shrinking the gallery. Each round
+    // only retries for the remaining shortfall — bounded by the batch cap.
+    const locals = verifiedImages.filter(
+      (item) => !item.imageUrl.startsWith('http'),
+    );
+    const externals = verifiedImages.filter((item) =>
+      item.imageUrl.startsWith('http'),
+    );
+    const externalTarget = Math.max(imageTargetCount - locals.length, 0);
+
+    const ingestedForRewrite: NonNullable<SanitizeResult['ingestedImages']> =
+      [];
+    let offset = 0;
+    let batch = 0;
+    while (
+      ingestedForRewrite.length < externalTarget &&
+      offset < externals.length &&
+      batch < CLOUD_INGEST_MAX_BATCHES
+    ) {
+      const needed = externalTarget - ingestedForRewrite.length;
+      const chunk = externals.slice(offset, offset + needed);
+      const ingested =
+        (await this.ingestExternalImages(
+          ctx,
+          chunk,
+          [],
+          CLOUD_DISPLAY_MAX_DIMENSION,
+        )) ?? [];
+      ingestedForRewrite.push(...ingested);
+      offset += chunk.length;
+      batch++;
+    }
 
     const ingestedByUrl = new Map(
       ingestedForRewrite.map((img) => [img.sourceUrl, img]),
     );
+
+    return {
+      verifiedImages: this.rewriteCandidatesWithIngested(
+        verifiedImages,
+        ingestedByUrl,
+      ).slice(0, imageTargetCount),
+      ingestedImages: [],
+      ingestedForRewrite,
+    };
+  }
+
+  /**
+   * Walk candidates in their original order, rewriting externals to their
+   * ingested storage URL and dropping externals without an ingested match
+   * (never kept as fallback). Identical storage URLs collapse once.
+   */
+  private rewriteCandidatesWithIngested(
+    candidates: ExtractedImageItem[],
+    ingestedByUrl: Map<
+      string,
+      NonNullable<SanitizeResult['ingestedImages']>[number]
+    >,
+  ): ExtractedImageItem[] {
     const rewritten: ExtractedImageItem[] = [];
     const seenUrls = new Set<string>();
-    for (const item of verifiedImages) {
+    for (const item of candidates) {
       const isExternal = item.imageUrl.startsWith('http');
       const match = isExternal ? ingestedByUrl.get(item.imageUrl) : undefined;
       // Un-ingestable external images are dropped, never kept as fallback.
@@ -713,13 +798,7 @@ export class SanitizeActionService {
         height: match?.height ?? item.height,
       });
     }
-
-    return {
-      verifiedImages: rewritten,
-      // Only image-reference tasks surface ingested images as attachments.
-      ingestedImages: isImageReferenceTask ? ingestedForRewrite : [],
-      ingestedForRewrite,
-    };
+    return rewritten;
   }
 
   /**

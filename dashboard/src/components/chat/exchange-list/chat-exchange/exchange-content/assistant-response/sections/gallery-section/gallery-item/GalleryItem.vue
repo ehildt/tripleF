@@ -13,6 +13,7 @@ const props = defineProps<{
 
 const onImageClicked = inject<HarnessImageClickedHandler>(
   harnessImageClickedKey,
+  () => undefined,
 );
 const hasError = ref(false);
 

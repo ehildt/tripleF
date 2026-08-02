@@ -1,6 +1,8 @@
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import type { Conversation } from '@/stores/conversation.model';
+
 import {
   clearActivePlayback,
   closeLaunchedVideo,
@@ -17,9 +19,33 @@ beforeEach(() => {
 const placeholderImage =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
+function makeConversation(): Conversation {
+  return {
+    id: 'conv-1',
+    title: 'Test conversation',
+    exchanges: [],
+    files: [],
+    savedFileInfos: [],
+    uploadedImages: [],
+    imageSelectionSnapshot: {},
+    conversationId: 'conv-1',
+    model: 'llama3',
+    numCtx: '2048',
+    think: 'medium',
+    event: 'harness',
+    roomId: 'conv-1',
+    stream: false,
+    subscriptions: [],
+    type: 'temporary',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+}
+
 function mountComponent(props = {}) {
   return mount(ChatRightPanel, {
     props: {
+      conversation: makeConversation(),
       attachments: [],
       messageListItems: [],
       playlistVideos: [],

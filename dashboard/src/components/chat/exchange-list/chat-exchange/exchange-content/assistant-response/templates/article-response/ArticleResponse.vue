@@ -8,6 +8,7 @@ import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadS
 import ArticleQuoteSection from '../../sections/article-quote-section/ArticleQuoteSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
+import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';

@@ -48,7 +48,7 @@ export function SerperConfigAdapter(env = process.env): SerperConfig {
     },
     images: {
       enabled: getBooleanEnv(env.SERPER_IMAGES_ENABLED, true)!,
-      results: getNumberEnv(env.SERPER_IMAGES_RESULTS, 6) as number,
+      results: getNumberEnv(env.SERPER_IMAGES_RESULTS, 12) as number,
     },
     news: {
       enabled: getBooleanEnv(env.SERPER_NEWS_ENABLED, true)!,
