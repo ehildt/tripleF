@@ -20,28 +20,39 @@ const OPACITY_SNAP_STEP_PERCENT = 25;
 const OPACITY_SNAP_THRESHOLD_PERCENT = 3;
 
 /**
- * CSS anchoring per configured initial popout position (footer/header
- * clearance). Centered anchors use translate offsets; the transform drops
- * away as soon as a remembered rect replaces the anchor styles.
+ * Symmetric popout edge inset (rem) for anchored positions: a corner popout
+ * sits the same distance from its two adjacent screen edges (e.g. top-left
+ * is 3rem down AND 3rem in). Centered anchors use the same inset along the
+ * offset axis. The transform drops away as soon as a remembered rect
+ * replaces the anchor styles.
+ */
+const EDGE_INSET_REM = 3;
+
+const INSET = `${EDGE_INSET_REM}rem`;
+
+/**
+ * CSS anchoring per configured initial popout position, with equal distance
+ * to the adjacent screen edges for symmetry. Centered anchors use translate
+ * offsets.
  */
 export const ANCHOR_STYLES: Record<PopoutAnchor, Record<string, string>> = {
-  'top-left': { left: '1rem', top: '4rem' },
-  'top-center': { left: '50%', top: '4rem', transform: 'translateX(-50%)' },
-  'top-right': { right: '1rem', top: '4rem' },
-  'middle-left': { left: '1rem', top: '50%', transform: 'translateY(-50%)' },
+  'top-left': { left: INSET, top: INSET },
+  'top-center': { left: '50%', top: INSET, transform: 'translateX(-50%)' },
+  'top-right': { right: INSET, top: INSET },
+  'middle-left': { left: INSET, top: '50%', transform: 'translateY(-50%)' },
   'middle-center': {
     left: '50%',
     top: '50%',
     transform: 'translate(-50%, -50%)',
   },
-  'middle-right': { right: '1rem', top: '50%', transform: 'translateY(-50%)' },
-  'bottom-left': { left: '1rem', bottom: '4rem' },
+  'middle-right': { right: INSET, top: '50%', transform: 'translateY(-50%)' },
+  'bottom-left': { left: INSET, bottom: INSET },
   'bottom-center': {
     left: '50%',
-    bottom: '4rem',
+    bottom: INSET,
     transform: 'translateX(-50%)',
   },
-  'bottom-right': { right: '1rem', bottom: '4rem' },
+  'bottom-right': { right: INSET, bottom: INSET },
 };
 
 /**
