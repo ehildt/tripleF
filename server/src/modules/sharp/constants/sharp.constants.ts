@@ -6,7 +6,7 @@ import type { SharpOptions } from '../dtos/sharp-options.dto.js';
 const DEFAULT_PREPROCESSING_OPTIONS: Required<
   Pick<SharpOptions, 'enabled' | 'resize' | 'variants' | 'parameters'>
 > = {
-  enabled: false,
+  enabled: true,
   resize: {
     maxWidth: 768,
     maxHeight: undefined,
@@ -14,10 +14,10 @@ const DEFAULT_PREPROCESSING_OPTIONS: Required<
   },
   variants: {
     original: true,
-    grayscale: true,
-    denoised: true,
+    grayscale: false,
+    denoised: false,
     sharpened: false,
-    clahe: true,
+    clahe: false,
   },
   parameters: {
     blurSigma: 0.5,

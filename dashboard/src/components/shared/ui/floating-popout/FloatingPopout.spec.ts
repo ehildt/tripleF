@@ -42,6 +42,40 @@ describe('FloatingPopout', () => {
     expect(wrapper.find('.media-slot').text()).toBe('media');
   });
 
+  it('keeps the bar visible by default', () => {
+    const wrapper = mountComponent();
+    expect(wrapper.find('.floating-media-bar').classes()).not.toContain(
+      'floating-media-bar--collapsed',
+    );
+  });
+
+  it('collapses the bar when auto-hide is on and the pointer is away', () => {
+    const wrapper = mountComponent({ barAlwaysVisible: false });
+    const bar = wrapper.find('.floating-media-bar');
+    expect(bar.classes()).toContain('floating-media-bar--collapsed');
+  });
+
+  it('reveals the bar on mouse enter and hides it on mouse leave', async () => {
+    const wrapper = mountComponent({ barAlwaysVisible: false });
+    const root = wrapper.find('.floating-popout');
+    const bar = wrapper.find('.floating-media-bar');
+
+    await root.trigger('mouseenter');
+    expect(bar.classes()).not.toContain('floating-media-bar--collapsed');
+
+    await root.trigger('mouseleave');
+    expect(bar.classes()).toContain('floating-media-bar--collapsed');
+  });
+
+  it('never collapses the bar when always visible', async () => {
+    const wrapper = mountComponent({ barAlwaysVisible: true });
+    const root = wrapper.find('.floating-popout');
+    await root.trigger('mouseleave');
+    expect(wrapper.find('.floating-media-bar').classes()).not.toContain(
+      'floating-media-bar--collapsed',
+    );
+  });
+
   it('forwards minimize', async () => {
     const wrapper = mountComponent();
     await wrapper.find('.floating-media-bar__minimize').trigger('click');

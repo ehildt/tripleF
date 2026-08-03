@@ -21,6 +21,9 @@ export default defineConfig({
     },
   },
   server: {
+    // The playwright-mcp sidecar reaches the dashboard by container name
+    // (http://dashboard:5173), so allow that host alongside the defaults.
+    allowedHosts: ['dashboard'],
     proxy: {
       '/api': {
         target: proxyTarget,

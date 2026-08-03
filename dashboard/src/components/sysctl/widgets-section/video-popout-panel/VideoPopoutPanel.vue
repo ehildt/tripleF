@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Menu,
   PictureInPicture2,
   Pin,
 } from '@lucide/vue';
@@ -38,11 +39,13 @@ import {
   popoutEnabled,
   popoutPreviewVisible,
   popoutRememberPosition,
+  popoutShowBarAlways,
   resetPopoutSettings,
   setPopoutAnchor,
   setPopoutAutoDock,
   setPopoutEnabled,
   setPopoutRememberPosition,
+  setPopoutShowBarAlways,
   togglePopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 
@@ -143,6 +146,15 @@ function setHorizontal(value: string) {
         :disabled="!popoutEnabled"
         @toggle="setPopoutAutoDock(!popoutAutoDock)"
       />
+
+      <FieldCard
+        :icon="Menu"
+        label="always show bar"
+        description="keep the player bar visible; off fades it in only on hover"
+        :checked="popoutShowBarAlways"
+        :disabled="!popoutEnabled"
+        @toggle="setPopoutShowBarAlways(!popoutShowBarAlways)"
+      />
     </div>
   </div>
 </template>
@@ -155,7 +167,7 @@ function setHorizontal(value: string) {
 
 .video-popout-panel__content {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-1);
   padding: var(--spacing-1);
 }
