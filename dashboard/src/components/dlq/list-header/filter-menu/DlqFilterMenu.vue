@@ -2,6 +2,8 @@
 import { Check } from '@lucide/vue';
 import type { Component } from 'vue';
 
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+
 defineProps<{
   isOpen: boolean;
   isActive: boolean;
@@ -29,7 +31,9 @@ const emit = defineEmits<{
       :title="title"
       @click.stop="emit('toggle')"
     >
-      <component :is="icon" class="dlq-filter-menu__trigger-icon" />
+      <MotionIcon>
+        <component :is="icon" class="dlq-filter-menu__trigger-icon" />
+      </MotionIcon>
     </button>
     <div
       v-if="isOpen"
@@ -84,12 +88,10 @@ const emit = defineEmits<{
 
 .dlq-filter-menu__trigger:hover {
   color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
 }
 
 .dlq-filter-menu__trigger--active {
   color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
 }
 
 .dlq-filter-menu__trigger-icon {

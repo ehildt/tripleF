@@ -34,6 +34,9 @@ importers:
       markdown-it:
         specifier: ^14.3.0
         version: 14.3.0
+      motion-v:
+        specifier: ^2.3.0
+        version: 2.3.0(@vueuse/core@14.4.0(vue@3.5.40(typescript@5.9.3)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vue@3.5.40(typescript@5.9.3))
       p-wait-for:
         specifier: ^6.0.0
         version: 6.0.0
@@ -3688,6 +3691,23 @@ packages:
       }
     engines: { node: '>=0.4.x' }
 
+  framer-motion@12.43.0:
+    resolution:
+      {
+        integrity: sha512-1eaL3RvR/kAlbG7UYcpMptEyzPoENO0c6w7ZnB3/hh2vSAz/6uGAFn6fdoqTBguNstf3MsFhJHsD/0DHiclG+g==,
+      }
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fsevents@2.3.2:
     resolution:
       {
@@ -3865,6 +3885,12 @@ packages:
         integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==,
       }
     engines: { node: '>= 0.4' }
+
+  hey-listen@1.0.8:
+    resolution:
+      {
+        integrity: sha512-COpmrF2NOg4TBWUJ5UVyaCU2A88wEMkUPK4hNqyCkqHbxT92BbvfjoSozkAIIm6XhicGlJHhFdullInrdhwU8Q==,
+      }
 
   homedir-polyfill@1.0.3:
     resolution:
@@ -4990,6 +5016,27 @@ packages:
         integrity: sha512-t9VmxaqrmANnEOBhpSDI6HD192Ge48k8vmWqQQL7hSFEqHEYwZbbsu49+aKLWZeRvFs3j1pMhXOqqF4kPlvjkQ==,
       }
     engines: { node: '>=18.0.0' }
+
+  motion-dom@12.43.0:
+    resolution:
+      {
+        integrity: sha512-azKON4d9S65PEoFUiQTMTgPheEmzf2QngdRc50AKfJp9Q9mmcBVw22c8eMq9k8kxOFHdL7+WZY7N/5F/lwiDag==,
+      }
+
+  motion-utils@12.39.0:
+    resolution:
+      {
+        integrity: sha512-8nadJAJjTtqRkmRF36FoJTrywK9nnFmnPwnSMyxaOCU7GDjN9RTMJIxx9De8ErM+vpPhMccr/6fo5WciyQLnMQ==,
+      }
+
+  motion-v@2.3.0:
+    resolution:
+      {
+        integrity: sha512-J0CCfXtICCni9RjotDUBOs57xNpYI9yyBSohEOxaRHrmjwOtlw291fhRu/mdgEdSasys96R028YDDOAtWBbRaA==,
+      }
+    peerDependencies:
+      '@vueuse/core': '>=10.0.0'
+      vue: '>=3.0.0'
 
   mrmime@2.0.1:
     resolution:
@@ -8738,6 +8785,15 @@ snapshots:
 
   format@0.2.2: {}
 
+  framer-motion@12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      motion-dom: 12.43.0
+      motion-utils: 12.39.0
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
   fsevents@2.3.2:
     optional: true
 
@@ -8832,6 +8888,8 @@ snapshots:
   hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
+
+  hey-listen@1.0.8: {}
 
   homedir-polyfill@1.0.3:
     dependencies:
@@ -9608,6 +9666,25 @@ snapshots:
   mitt@3.0.1: {}
 
   modern-tar@0.7.7: {}
+
+  motion-dom@12.43.0:
+    dependencies:
+      motion-utils: 12.39.0
+
+  motion-utils@12.39.0: {}
+
+  motion-v@2.3.0(@vueuse/core@14.4.0(vue@3.5.40(typescript@5.9.3)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vue@3.5.40(typescript@5.9.3)):
+    dependencies:
+      '@vueuse/core': 14.4.0(vue@3.5.40(typescript@5.9.3))
+      framer-motion: 12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      hey-listen: 1.0.8
+      motion-dom: 12.43.0
+      motion-utils: 12.39.0
+      vue: 3.5.40(typescript@5.9.3)
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - react
+      - react-dom
 
   mrmime@2.0.1: {}
 

@@ -74,19 +74,13 @@ const emit = defineEmits<{
 
 .nav-menu__item:hover {
   color: var(--color-fg-primary);
-  background-color: color-mix(in srgb, var(--color-fg-muted) 10%, transparent);
 }
 
-/* Active destination: an accent icon on a soft tinted wash — no ring, no
-   border. */
+/* Active destination: the accent icon itself signals the selection — no
+   wash, no ring, no border. */
 .nav-menu__item--active,
 .nav-menu__item--active:hover {
   color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 16%,
-    transparent
-  );
 }
 
 /* Mouse clicks leave the button focused; keep a themed ring for keyboard

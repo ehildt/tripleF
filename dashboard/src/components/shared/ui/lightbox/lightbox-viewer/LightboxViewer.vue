@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from '@lucide/vue';
 
+import MotionIcon from '../../motion-icon/MotionIcon.vue';
+
 defineProps<{
   imageUrl: string;
   hasPrev: boolean;
@@ -21,7 +23,7 @@ const emit = defineEmits<{
       class="lightbox__nav"
       @click.stop="emit('prev')"
     >
-      <ChevronLeft class="lightbox__nav-icon" />
+      <MotionIcon><ChevronLeft class="lightbox__nav-icon" /></MotionIcon>
     </button>
 
     <img :src="imageUrl" class="lightbox__image" @click.stop />
@@ -32,7 +34,7 @@ const emit = defineEmits<{
       class="lightbox__nav"
       @click.stop="emit('next')"
     >
-      <ChevronRight class="lightbox__nav-icon" />
+      <MotionIcon><ChevronRight class="lightbox__nav-icon" /></MotionIcon>
     </button>
   </div>
 </template>
@@ -84,12 +86,6 @@ const emit = defineEmits<{
 
 .lightbox__nav:hover:not(:disabled) {
   color: var(--color-accent-primary);
-  border-color: var(--color-accent-border);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 10%,
-    transparent
-  );
 }
 
 .lightbox__nav:disabled {
