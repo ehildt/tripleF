@@ -1,7 +1,7 @@
 import { onClickOutside } from '@vueuse/core';
 import { type Ref, ref } from 'vue';
 
-export type DlqFilterMenuId = 'status' | 'queue' | 'search';
+export type DlqFilterMenuId = 'status' | 'search';
 
 export function useExclusiveFilterMenu(
   containerRef: Ref<HTMLElement | null>,

@@ -6,7 +6,6 @@ import DlqListHeader from './DlqListHeader.vue';
 const baseProps = {
   showLoading: false,
   filterStatus: '',
-  filterQueue: '',
   filterSearch: '',
   hideRead: false,
   total: 0,

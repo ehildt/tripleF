@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { THEMES, useThemeStore } from './theme';
 
 describe('THEMES', () => {
-  it('includes all 13 themes', () => {
-    expect(THEMES.length).toBe(13);
+  it('includes all 10 themes', () => {
+    expect(THEMES.length).toBe(10);
   });
 
   it('each theme has key and name', () => {
@@ -24,9 +24,9 @@ describe('useThemeStore', () => {
     document.documentElement.removeAttribute('data-theme-mode');
   });
 
-  it('has default theme souls', () => {
+  it('has default theme stellar', () => {
     const store = useThemeStore();
-    expect(store.currentTheme).toBe('souls');
+    expect(store.currentTheme).toBe('stellar');
   });
 
   it('is dark mode by default', () => {
@@ -45,7 +45,7 @@ describe('useThemeStore', () => {
     localStorage.setItem('theme', 'invalid');
     const store = useThemeStore();
     store.initTheme();
-    expect(store.currentTheme).toBe('souls');
+    expect(store.currentTheme).toBe('stellar');
   });
 
   it('initTheme restores saved mode', () => {

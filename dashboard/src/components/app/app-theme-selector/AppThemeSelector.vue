@@ -97,9 +97,8 @@ const {
 
 .theme-selector__dropdown {
   position: absolute;
-  right: 0;
-  top: 100%;
-  margin-top: 0.25rem;
+  right: 100%;
+  top: 0;
   width: 11rem;
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-divider);

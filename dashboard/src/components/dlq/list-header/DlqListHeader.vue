@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CircleAlert, Eye, EyeOff, ListOrdered, Search } from '@lucide/vue';
+import { CircleAlert, Eye, EyeOff, Search } from '@lucide/vue';
 import { ref } from 'vue';
 
 import Pagination from '../../shared/ui/pagination/Pagination.vue';
@@ -12,7 +12,6 @@ import DlqFilterMenu from './filter-menu/DlqFilterMenu.vue';
 const props = defineProps<{
   showLoading: boolean;
   filterStatus: string;
-  filterQueue: string;
   filterSearch: string;
   hideRead: boolean;
   total: number;
@@ -25,7 +24,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'reload'): void;
   (e: 'update:filterStatus', value: string): void;
-  (e: 'update:filterQueue', value: string): void;
   (e: 'update:filterSearch', value: string): void;
   (e: 'update:hideRead', value: boolean): void;
   (e: 'firstPage'): void;
@@ -39,22 +37,15 @@ const emit = defineEmits<{
 const headerRef = ref<HTMLElement | null>(null);
 
 const statusOptions = ['Failed', 'Active', 'Cleared', 'Removed'] as const;
-const queueOptions = ['harness'] as const;
 
 const { isMenuOpen, toggleMenu } = useExclusiveFilterMenu(headerRef, [
   'status',
-  'queue',
   'search',
 ]);
 
 function selectStatus(value: string) {
   emit('update:filterStatus', value);
   toggleMenu('status');
-}
-
-function selectQueue(value: string) {
-  emit('update:filterQueue', value);
-  toggleMenu('queue');
 }
 
 function selectSearch(value: string) {
@@ -82,17 +73,6 @@ function toggleHideRead() {
         :selected-value="props.filterStatus"
         @toggle="toggleMenu('status')"
         @select="selectStatus"
-      />
-      <DlqFilterMenu
-        :is-open="isMenuOpen('queue')"
-        :is-active="props.filterQueue !== ''"
-        :icon="ListOrdered"
-        title="Filter by queue"
-        width="8rem"
-        :options="queueOptions"
-        :selected-value="props.filterQueue"
-        @toggle="toggleMenu('queue')"
-        @select="selectQueue"
       />
       <DlqFilterMenu
         :is-open="isMenuOpen('search')"

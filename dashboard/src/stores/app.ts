@@ -42,6 +42,16 @@ export const useAppStore = defineStore('app', () => {
   const showChatStar = ref(loadStar());
 
   const VIS_KEY = 'harness-tab-visibility';
+  /**
+   * Tabs hidden unless explicitly enabled: dlq and debug start disabled by
+   * default, so the user opts in via SysCtl. `http`/`sysctl` are core.
+   */
+  const DEFAULT_TAB_VISIBILITY: Record<string, boolean> = {
+    http: true,
+    dlq: false,
+    debug: false,
+    sysctl: true,
+  };
   function loadTabVisibility(): Record<string, boolean> {
     try {
       return JSON.parse(localStorage.getItem(VIS_KEY) || '{}');
@@ -61,7 +71,7 @@ export const useAppStore = defineStore('app', () => {
   watch(tabVisibility, saveTabVisibility, { deep: true });
 
   function isTabVisible(tab: string): boolean {
-    return tabVisibility.value[tab] !== false;
+    return tabVisibility.value[tab] ?? DEFAULT_TAB_VISIBILITY[tab] ?? true;
   }
 
   function toggleTabVisibility(tab: string) {
