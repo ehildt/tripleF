@@ -60,7 +60,7 @@ describe('useEventSubscriptions', () => {
   it('subscribeToEvent adds a new subscription', () => {
     const { subscriptions, subscribeToEvent } = useEventSubscriptions();
     subscribeToEvent('harness', 'room1');
-    expect(subscriptions.value.length).toBe(1);
+    expect(subscriptions.value).toHaveLength(1);
     expect(subscriptions.value[0].event).toBe('harness');
     expect(subscriptions.value[0].roomId).toBe('room1');
     expect(subscriptions.value[0].active).toBe(true);
@@ -71,13 +71,13 @@ describe('useEventSubscriptions', () => {
     const { subscriptions, subscribeToEvent } = useEventSubscriptions();
     subscribeToEvent('harness', 'room1');
     subscribeToEvent('harness', 'room1');
-    expect(subscriptions.value.length).toBe(1);
+    expect(subscriptions.value).toHaveLength(1);
   });
 
   it('subscribeToEvent ignores empty event', () => {
     const { subscriptions, subscribeToEvent } = useEventSubscriptions();
     subscribeToEvent('', '');
-    expect(subscriptions.value.length).toBe(0);
+    expect(subscriptions.value).toHaveLength(0);
   });
 
   it('toggleSubscriptionActive deactivates an active subscription', () => {
@@ -160,7 +160,7 @@ describe('useEventSubscriptions', () => {
     subscribeToEvent('harness', 'room1');
     subscribeToEvent('debug', '');
     removeSubscription(0);
-    expect(subscriptions.value.length).toBe(1);
+    expect(subscriptions.value).toHaveLength(1);
     expect(subscriptions.value[0].event).toBe('debug');
   });
 
@@ -259,7 +259,7 @@ describe('useEventSubscriptions', () => {
   it('reactively adds new conversation subscriptions without remounting', async () => {
     const conversationStore = useConversationStore();
     const { subscriptions } = useEventSubscriptions();
-    expect(subscriptions.value.length).toBe(0);
+    expect(subscriptions.value).toHaveLength(0);
 
     conversationStore.createNewConversation(
       'temporary',

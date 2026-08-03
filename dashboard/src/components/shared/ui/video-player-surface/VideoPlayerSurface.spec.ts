@@ -59,7 +59,7 @@ describe('VideoPlayerSurface', () => {
     });
     expect(wrapper.emitted('setPlayerElement')).toBeTruthy();
     const event = wrapper.emitted('setPlayerElement')![0];
-    expect(event[0] instanceof HTMLVideoElement).toBe(true);
+    expect(event[0]).toBeInstanceOf(HTMLVideoElement);
   });
 
   it('uses the provided remount key', () => {

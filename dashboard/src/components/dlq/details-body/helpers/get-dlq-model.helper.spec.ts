@@ -33,7 +33,7 @@ describe('getDlqModel', () => {
     );
   });
 
-  it('reads from filters.model', () => {
+  it('reads a second model from filters.model', () => {
     expect(getDlqModel(makeEntry({ filters: { model: 'mistral' } }))).toBe(
       'mistral',
     );

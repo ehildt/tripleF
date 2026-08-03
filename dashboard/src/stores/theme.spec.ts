@@ -5,7 +5,7 @@ import { THEMES, useThemeStore } from './theme';
 
 describe('THEMES', () => {
   it('includes all 10 themes', () => {
-    expect(THEMES.length).toBe(10);
+    expect(THEMES).toHaveLength(10);
   });
 
   it('each theme has key and name', () => {

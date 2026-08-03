@@ -54,23 +54,21 @@ describe('FloatingMediaBar', () => {
     );
   });
 
-  it('emits togglePlaylist when the playlist button is clicked', async () => {
-    const wrapper = mountComponent();
-    await wrapper.find('.floating-media-bar__playlist-toggle').trigger('click');
-    expect(wrapper.emitted('togglePlaylist')).toBeTruthy();
-  });
-
-  it('emits minimize when the minimize button is clicked', async () => {
-    const wrapper = mountComponent();
-    await wrapper.find('.floating-media-bar__minimize').trigger('click');
-    expect(wrapper.emitted('minimize')).toBeTruthy();
-  });
-
-  it('emits close when the close button is clicked', async () => {
-    const wrapper = mountComponent();
-    await wrapper.find('.floating-media-bar__close').trigger('click');
-    expect(wrapper.emitted('close')).toBeTruthy();
-  });
+  it.each([
+    {
+      selector: '.floating-media-bar__playlist-toggle',
+      event: 'togglePlaylist',
+    },
+    { selector: '.floating-media-bar__minimize', event: 'minimize' },
+    { selector: '.floating-media-bar__close', event: 'close' },
+  ])(
+    'emits $event when the corresponding button is clicked',
+    async ({ selector, event }) => {
+      const wrapper = mountComponent();
+      await wrapper.find(selector).trigger('click');
+      expect(wrapper.emitted(event)).toBeTruthy();
+    },
+  );
 
   it('emits opacityInput with the slider value', async () => {
     const wrapper = mountComponent();

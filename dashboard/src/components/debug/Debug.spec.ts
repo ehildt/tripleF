@@ -93,7 +93,7 @@ describe('Debug', () => {
     const vm = wrapper.vm as any;
     vm.filter = 'http';
     await wrapper.vm.$nextTick();
-    expect(vm.filteredResults.length).toBe(2);
+    expect(vm.filteredResults).toHaveLength(2);
   });
 
   it('filters socket only', async () => {
@@ -103,7 +103,7 @@ describe('Debug', () => {
     const vm = wrapper.vm as any;
     vm.filter = 'socket';
     await wrapper.vm.$nextTick();
-    expect(vm.filteredResults.length).toBe(1);
+    expect(vm.filteredResults).toHaveLength(1);
   });
 
   it('keeps the list order frozen when a result is marked read', async () => {
@@ -135,12 +135,12 @@ describe('Debug', () => {
     const vm = wrapper.vm as any;
     vm.hideRead = true;
     await wrapper.vm.$nextTick();
-    expect(vm.filteredResults.length).toBe(2);
+    expect(vm.filteredResults).toHaveLength(2);
 
     // Click with hide-read on: the row stays put instead of vanishing.
     mockReadIds.push('2');
     await wrapper.vm.$nextTick();
-    expect(vm.filteredResults.length).toBe(2);
+    expect(vm.filteredResults).toHaveLength(2);
 
     // An explicit view change re-applies the read state: now it disappears.
     vm.hideRead = false;
