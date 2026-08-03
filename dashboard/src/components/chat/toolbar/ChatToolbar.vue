@@ -320,7 +320,11 @@ defineExpose({
         @update:new-event="newSubscriptionEvent = $event"
         @update:new-room-id="newSubscriptionRoomId = $event"
         @subscribe-to-event="
-          subscribeToEvent(newSubscriptionEvent, newSubscriptionRoomId)
+          subscribeToEvent(
+            newSubscriptionEvent,
+            newSubscriptionRoomId,
+            isStreamEnabled,
+          )
         "
       />
 

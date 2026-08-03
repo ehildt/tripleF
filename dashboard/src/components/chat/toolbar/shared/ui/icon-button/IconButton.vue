@@ -45,12 +45,10 @@ defineEmits<{
 
 .toolbar-icon-button:hover:not(.toolbar-icon-button--disabled) {
   color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
 }
 
 .toolbar-icon-button--active {
   color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
 }
 
 .toolbar-icon-button--disabled {

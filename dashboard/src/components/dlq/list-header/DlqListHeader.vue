@@ -2,6 +2,7 @@
 import { CircleAlert, Eye, EyeOff, Search } from '@lucide/vue';
 import { ref } from 'vue';
 
+import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Pagination from '../../shared/ui/pagination/Pagination.vue';
 import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
@@ -95,8 +96,10 @@ function toggleHideRead() {
         }"
         @click="toggleHideRead"
       >
-        <Eye v-if="props.hideRead" class="dlq-list-header__hide-read-icon" />
-        <EyeOff v-else class="dlq-list-header__hide-read-icon" />
+        <MotionIcon>
+          <Eye v-if="props.hideRead" class="dlq-list-header__hide-read-icon" />
+          <EyeOff v-else class="dlq-list-header__hide-read-icon" />
+        </MotionIcon>
       </button>
     </div>
   </PanelHeader>

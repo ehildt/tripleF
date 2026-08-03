@@ -5,6 +5,7 @@
  */
 import { Blocks, Cog, Radar, ScanEye } from '@lucide/vue';
 
+import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import type { SysctlTab } from '../composables/use-sysctl-tab';
 
 defineProps<{
@@ -37,7 +38,9 @@ const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
       :class="{ 'sysctl-menu__tab--active': activeTab === tab }"
       @click="emit('selectTab', tab)"
     >
-      <component :is="icon" class="sysctl-menu__tab-icon" />
+      <MotionIcon>
+        <component :is="icon" class="sysctl-menu__tab-icon" />
+      </MotionIcon>
     </button>
   </div>
 </template>
@@ -70,17 +73,11 @@ const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
 
 .sysctl-menu__tab:hover {
   color: var(--color-fg-primary);
-  background-color: color-mix(in srgb, var(--color-fg-muted) 10%, transparent);
 }
 
 .sysctl-menu__tab--active,
 .sysctl-menu__tab--active:hover {
   color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 16%,
-    transparent
-  );
 }
 
 .sysctl-menu__tab:focus {

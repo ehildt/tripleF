@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ChevronDown, GitBranch, SendToBack, Trash2 } from '@lucide/vue';
 
+import MotionIcon from '../../motion-icon/MotionIcon.vue';
+
 function stripHtml(html: string): string {
   let result = '';
   let inTag = false;
@@ -50,12 +52,14 @@ defineEmits<{
       data-testid="expandable-message-list-toggle"
       @click.stop="$emit('toggle')"
     >
-      <ChevronDown
-        :class="{
-          'expandable-message-list__toggle-chevron-icon--expanded': expanded,
-        }"
-        class="expandable-message-list__toggle-chevron-icon"
-      />
+      <MotionIcon>
+        <ChevronDown
+          :class="{
+            'expandable-message-list__toggle-chevron-icon--expanded': expanded,
+          }"
+          class="expandable-message-list__toggle-chevron-icon"
+        />
+      </MotionIcon>
     </span>
     <span v-if="showRole" class="expandable-message-list__toggle-role">{{
       role
@@ -81,7 +85,9 @@ defineEmits<{
         :aria-pressed="!included"
         @click.stop="$emit('toggleInclude')"
       >
-        <SendToBack class="expandable-message-list__include-icon" />
+        <MotionIcon>
+          <SendToBack class="expandable-message-list__include-icon" />
+        </MotionIcon>
       </button>
       <button
         v-if="showBranch"
@@ -91,7 +97,9 @@ defineEmits<{
         aria-label="Branch out into a new conversation"
         @click.stop="$emit('branchOut')"
       >
-        <GitBranch class="expandable-message-list__include-icon" />
+        <MotionIcon>
+          <GitBranch class="expandable-message-list__include-icon" />
+        </MotionIcon>
       </button>
       <button
         v-if="included !== undefined"
@@ -101,7 +109,9 @@ defineEmits<{
         aria-label="Delete from history"
         @click.stop="$emit('deleteItem')"
       >
-        <Trash2 class="expandable-message-list__include-icon" />
+        <MotionIcon>
+          <Trash2 class="expandable-message-list__include-icon" />
+        </MotionIcon>
       </button>
     </span>
   </div>
@@ -141,8 +151,9 @@ defineEmits<{
     border-color 0.2s ease;
 }
 
-.expandable-message-list__toggle-chevron:hover {
-  background-color: color-mix(in srgb, var(--color-tab-debug) 20%, transparent);
+.expandable-message-list__toggle-chevron:hover
+  .expandable-message-list__toggle-chevron-icon {
+  color: var(--color-tab-debug);
 }
 
 .expandable-message-list__toggle-chevron-icon {
