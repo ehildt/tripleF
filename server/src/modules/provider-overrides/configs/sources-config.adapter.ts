@@ -15,11 +15,35 @@ export interface SourcesConfig {
 
 /**
  * Default blocklist: Google's low-resolution thumbnail/user-content proxy
- * hosts. Covers the same scope as the harness BLOCKED_IMAGE_HOSTS list
- * (which provider-overrides must not import — harness depends on this
- * module, never the reverse), collapsed into two glob entries.
+ * hosts, plus analytics/tracker hosts and low-trust platforms. Covers the
+ * same scope as the harness BLOCKED_IMAGE_HOSTS list (which
+ * provider-overrides must not import — harness depends on this module,
+ * never the reverse), collapsed into glob entries.
  */
-const DEFAULT_BLOCKED_SOURCES = ['*.gstatic.com', '*.googleusercontent.com'];
+const DEFAULT_BLOCKED_SOURCES = [
+  '*.gstatic.com',
+  '*.googleusercontent.com',
+  '*.google-analytics.com',
+  '*.googletagmanager.com',
+  '*.doubleclick.net',
+  '*.facebook.net',
+  '*.tiktok.com',
+];
+
+/**
+ * Default preferred sources: the supported video providers plus a few
+ * well-known editorial tech/news sites — rank-boosted ahead of the long tail.
+ */
+const DEFAULT_PREFERRED_SOURCES = [
+  'youtube.com',
+  'vimeo.com',
+  'dailymotion.com',
+  'loom.com',
+  'wistia.com',
+  'heise.com',
+  'heise.de',
+  'thehackernews.com',
+];
 
 /** A /slashed/ entry whose pattern compiles, a *.glob, or a plain hostname. */
 const sourceEntrySchema = Joi.string().custom((value: string, helpers) => {
@@ -65,7 +89,12 @@ function parseHostnameList(value: string | undefined): string[] {
 }
 
 export function SourcesConfigAdapter(env = process.env): SourcesConfig {
-  const preferred = parseHostnameList(env.SOURCES_PREFERRED);
+  const preferred = [
+    ...new Set([
+      ...DEFAULT_PREFERRED_SOURCES,
+      ...parseHostnameList(env.SOURCES_PREFERRED),
+    ]),
+  ];
   const blocked = [
     ...new Set([
       ...DEFAULT_BLOCKED_SOURCES,

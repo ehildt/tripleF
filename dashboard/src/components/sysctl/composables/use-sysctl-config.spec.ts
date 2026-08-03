@@ -18,16 +18,16 @@ const baseSnapshot = {
     web: { enabled: true, results: 10 },
     images: { enabled: true, results: 10 },
     news: { enabled: true, results: 10 },
-    places: { enabled: false, results: 5 },
-    shopping: { enabled: false, results: 5 },
-    reviews: { enabled: false, results: 5 },
-    videos: { enabled: false, results: 5 },
+    places: { enabled: true, results: 10 },
+    shopping: { enabled: true, results: 10 },
+    reviews: { enabled: true, results: 10 },
+    videos: { enabled: true, results: 10 },
     scrape: { enabled: true },
   },
   youtube: {
     enabled: true,
     apiKey: 'youtube-key',
-    videos: { enabled: true, results: 6 },
+    videos: { enabled: true, results: 10 },
   },
 };
 

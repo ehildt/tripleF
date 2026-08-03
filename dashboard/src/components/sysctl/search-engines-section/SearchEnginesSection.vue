@@ -9,7 +9,6 @@ import {
   Globe,
   Image,
   KeyRound,
-  ListFilter,
   MapPin,
   Newspaper,
   ShoppingCart,
@@ -237,7 +236,6 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
               title="Reset sources to defaults"
               @click="resetProvider('sources')"
             />
-            <ListFilter class="search-engines-section__panel-icon" />
           </template>
         </PanelTitleBar>
 
@@ -288,11 +286,5 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
 
 .search-engines-section__state--error {
   color: var(--color-status-error);
-}
-
-.search-engines-section__panel-icon {
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-fg-muted);
 }
 </style>
