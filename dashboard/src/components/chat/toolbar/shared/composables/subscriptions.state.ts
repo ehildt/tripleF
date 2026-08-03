@@ -31,7 +31,11 @@ watch(
   { deep: true },
 );
 
-export function addSubscription(event: string, roomId: string) {
+export function addSubscription(
+  event: string,
+  roomId: string,
+  stream: boolean = true,
+) {
   const e = event.trim();
   const r = roomId.trim();
   if (!e) return;
@@ -40,8 +44,26 @@ export function addSubscription(event: string, roomId: string) {
       event: e,
       roomId: r,
       active: true,
-      stream: true,
+      stream,
     });
+  }
+}
+
+/**
+ * Align every subscription entry for a socket to the given stream mode.
+ * `subscription.stream` is the per-socket copy of the setting that the
+ * harness request actually honors (via the bound conversation's `stream`),
+ * so each entry point must keep the two in sync.
+ */
+export function syncSubscriptionStream(
+  event: string,
+  roomId: string,
+  stream: boolean,
+): void {
+  for (const sub of subscriptions.value) {
+    if (sub.event === event && sub.roomId === roomId && sub.stream !== stream) {
+      sub.stream = stream;
+    }
   }
 }
 

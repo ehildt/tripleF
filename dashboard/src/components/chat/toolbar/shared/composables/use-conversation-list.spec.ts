@@ -160,4 +160,27 @@ describe('useConversationList', () => {
     expect(newConversationEvent.value).toBe('');
     expect(newConversationRoomId.value).toBe('');
   });
+
+  it('createNewConversation inherits the matched socket stream mode', () => {
+    const conversationStore = useConversationStore();
+    subscriptions.value = [
+      { event: 'harness', roomId: 'room1', active: true, stream: false },
+    ];
+
+    const { createNewConversation } = useConversationList();
+    createNewConversation('temporary', 'Conv', 'harness', 'room1');
+
+    const conversation = conversationStore.conversations[0]!;
+    expect(conversation.stream).toBe(false);
+  });
+
+  it('createNewConversation keeps default stream when no socket matches', () => {
+    const conversationStore = useConversationStore();
+    subscriptions.value = [];
+
+    const { createNewConversation } = useConversationList();
+    createNewConversation('temporary', 'Conv', 'harness', 'room1');
+
+    expect(conversationStore.conversations[0]!.stream).toBe(true);
+  });
 });

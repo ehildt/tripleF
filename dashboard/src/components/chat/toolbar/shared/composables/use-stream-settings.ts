@@ -2,6 +2,8 @@ import { computed, ref, watch } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
+import { syncSubscriptionStream } from './subscriptions.state';
+
 /**
  * Manages stream mode (word-by-word vs full-text) and the
  * new subscription form inputs. Syncs with conversation store.
@@ -28,8 +30,20 @@ export function useStreamSettings() {
   );
 
   watch(isStreamEnabled, (v) => {
-    if (conversation.value) {
-      conversationStore.setStream(conversationId.value, v);
+    const activeConversation = conversation.value;
+    if (!activeConversation) return;
+    conversationStore.setStream(conversationId.value, v);
+    // Keep the socket subscription in sync so the socket list shows the
+    // same decision the harness request honors.
+    if (activeConversation.event) {
+      syncSubscriptionStream(
+        activeConversation.event,
+        activeConversation.roomId ?? '',
+        v,
+      );
+    }
+    for (const sub of activeConversation.subscriptions ?? []) {
+      syncSubscriptionStream(sub.event, sub.roomId ?? '', v);
     }
   });
 

@@ -10,6 +10,7 @@ import {
 import { computed, onUnmounted, ref } from 'vue';
 
 import { useDebugStore } from '../../../../../stores/debug';
+import MotionIcon from '../../../../shared/ui/motion-icon/MotionIcon.vue';
 import type { DebugResultFilter } from '../../../helpers/build-filtered-debug-results.helper';
 
 const props = defineProps<{
@@ -107,8 +108,10 @@ onUnmounted(disarmClear);
       :title="hideRead ? 'Show read requests' : 'Hide read requests'"
       @click="emit('update:hideRead', !hideRead)"
     >
-      <Mail v-if="hideRead" class="header-menu__icon" />
-      <MailOpen v-else class="header-menu__icon" />
+      <MotionIcon>
+        <Mail v-if="hideRead" class="header-menu__icon" />
+        <MailOpen v-else class="header-menu__icon" />
+      </MotionIcon>
     </button>
 
     <button
@@ -117,8 +120,10 @@ onUnmounted(disarmClear);
       :title="debugStore.debugPaused ? 'Resume logging' : 'Pause logging'"
       @click="debugStore.toggleDebugPaused()"
     >
-      <CirclePause v-if="!debugStore.debugPaused" class="header-menu__icon" />
-      <CirclePlay v-else class="header-menu__icon" />
+      <MotionIcon>
+        <CirclePause v-if="!debugStore.debugPaused" class="header-menu__icon" />
+        <CirclePlay v-else class="header-menu__icon" />
+      </MotionIcon>
     </button>
 
     <button
@@ -128,7 +133,7 @@ onUnmounted(disarmClear);
       :title="clearArmed ? 'Click again to clear the log' : 'Clear the log'"
       @click="handleClearClick"
     >
-      <Trash2 class="header-menu__icon" />
+      <MotionIcon><Trash2 class="header-menu__icon" /></MotionIcon>
     </button>
   </div>
 </template>

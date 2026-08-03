@@ -1,8 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
+import { subscriptions } from './subscriptions.state';
 import { useStreamSettings } from './use-stream-settings';
 
 vi.mock('../../../../../composables/use-toast', () => ({
@@ -16,6 +18,7 @@ vi.mock('../../../../../composables/use-toast', () => ({
 describe('useStreamSettings', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    subscriptions.value = [];
   });
 
   it('defaults isStreamEnabled to true', () => {
@@ -37,5 +40,23 @@ describe('useStreamSettings', () => {
 
     const { isStreamEnabled } = useStreamSettings();
     expect(isStreamEnabled.value).toBe(false);
+  });
+
+  it('toggling the stream syncs the bound socket subscription', async () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversation.event = 'harness';
+    conversation.roomId = 'room1';
+    conversationStore.setActiveConversation(conversation.id);
+
+    subscriptions.value = [
+      { event: 'harness', roomId: 'room1', active: true, stream: true },
+    ];
+
+    const { isStreamEnabled } = useStreamSettings();
+    isStreamEnabled.value = false;
+    await nextTick();
+
+    expect(subscriptions.value[0].stream).toBe(false);
   });
 });

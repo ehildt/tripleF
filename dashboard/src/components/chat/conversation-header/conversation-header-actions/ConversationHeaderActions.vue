@@ -8,6 +8,8 @@ import {
   Trash2,
 } from '@lucide/vue';
 
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+
 defineProps<{
   conversationType: 'temporary' | 'persistent';
   compacting: boolean;
@@ -29,7 +31,9 @@ const emit = defineEmits<{
       title="Rename"
       @click="emit('rename')"
     >
-      <PenLine class="conversation-header-actions__icon" />
+      <MotionIcon
+        ><PenLine class="conversation-header-actions__icon"
+      /></MotionIcon>
     </button>
 
     <button
@@ -38,7 +42,9 @@ const emit = defineEmits<{
       title="Delete conversation"
       @click="emit('delete')"
     >
-      <Trash2 class="conversation-header-actions__icon" />
+      <MotionIcon
+        ><Trash2 class="conversation-header-actions__icon"
+      /></MotionIcon>
     </button>
 
     <button
@@ -51,11 +57,13 @@ const emit = defineEmits<{
       "
       @click="emit('toggleType')"
     >
-      <PinOff
-        v-if="conversationType === 'temporary'"
-        class="conversation-header-actions__icon"
-      />
-      <Pin v-else class="conversation-header-actions__icon" />
+      <MotionIcon>
+        <PinOff
+          v-if="conversationType === 'temporary'"
+          class="conversation-header-actions__icon"
+        />
+        <Pin v-else class="conversation-header-actions__icon" />
+      </MotionIcon>
     </button>
 
     <button
@@ -68,11 +76,13 @@ const emit = defineEmits<{
       :disabled="compacting"
       @click="emit('compact')"
     >
-      <LoaderCircle
-        v-if="compacting"
-        class="conversation-header-actions__icon conversation-header-actions__icon--spin"
-      />
-      <Shrink v-else class="conversation-header-actions__icon" />
+      <MotionIcon>
+        <LoaderCircle
+          v-if="compacting"
+          class="conversation-header-actions__icon conversation-header-actions__icon--spin"
+        />
+        <Shrink v-else class="conversation-header-actions__icon" />
+      </MotionIcon>
     </button>
   </div>
 </template>

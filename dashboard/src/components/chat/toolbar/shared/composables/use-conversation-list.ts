@@ -126,6 +126,16 @@ export function useConversationList() {
       ]);
     }
 
+    // A conversation bound to a socket inherits that socket's stream mode,
+    // so a socket created (or re-decided) as "full response at once" is
+    // honored by the very first request sent on the conversation.
+    const matchedSubscription = subscriptions.value.find(
+      (s) => s.event === event && (s.roomId ?? '') === (roomId ?? ''),
+    );
+    if (matchedSubscription && newId) {
+      conversationStore.setStream(newId, matchedSubscription.stream);
+    }
+
     newConversationName.value = '';
     newConversationEvent.value = '';
     newConversationRoomId.value = '';

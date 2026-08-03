@@ -108,6 +108,52 @@ describe('useEventSubscriptions', () => {
     expect(subscriptions.value[0].stream).toBe(true);
   });
 
+  it('subscribeToEvent keeps the provided stream mode', () => {
+    const { subscriptions, subscribeToEvent } = useEventSubscriptions();
+    subscribeToEvent('harness', 'room1', false);
+    expect(subscriptions.value[0].stream).toBe(false);
+  });
+
+  it('toggleSubscriptionStream syncs stream onto bound conversations', () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.createNewConversation(
+      'temporary',
+      'harness',
+      'room1',
+    );
+
+    const { subscriptions, subscribeToEvent, toggleSubscriptionStream } =
+      useEventSubscriptions();
+    subscribeToEvent('harness', 'room1');
+
+    expect(conversation.stream).toBe(true);
+    toggleSubscriptionStream(0);
+    expect(subscriptions.value[0].stream).toBe(false);
+    expect(conversationStore.getConversation(conversation.id)?.stream).toBe(
+      false,
+    );
+  });
+
+  it('toggleSubscriptionStream syncs stream onto conversations via extra subscriptions', () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setSubscriptions(conversation.id, [
+      { event: 'shared', roomId: 'room1' },
+    ]);
+
+    const { subscribeToEvent, toggleSubscriptionStream } =
+      useEventSubscriptions();
+    subscribeToEvent('shared', 'room1');
+    expect(conversationStore.getConversation(conversation.id)?.stream).toBe(
+      true,
+    );
+
+    toggleSubscriptionStream(0);
+    expect(conversationStore.getConversation(conversation.id)?.stream).toBe(
+      false,
+    );
+  });
+
   it('removeSubscription removes the entry', () => {
     const { subscriptions, subscribeToEvent, removeSubscription } =
       useEventSubscriptions();
