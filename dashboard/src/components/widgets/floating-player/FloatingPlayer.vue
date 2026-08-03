@@ -11,6 +11,7 @@
  * otherwise lives in the playlist bar.
  */
 import { playlistMarqueeVisible } from '@/components/chat/composables/right-panel-view.state';
+import { popoutShowBarAlways } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import { usePlaylistToggle } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-playlist-toggle';
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
 import type { ResizeDirection } from '@/components/shared/ui/resize-handle-grid/ResizeHandleGrid.vue';
@@ -56,6 +57,7 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
     :class="{ 'floating-player--hidden': windowHidden }"
     :style="dockedInline ? { ...dockedStyle, ...dockedClipStyle } : popupStyle"
     :docked="dockedInline"
+    :bar-always-visible="popoutShowBarAlways"
     data-floating-player
     :title="launchedVideo.title"
     :show-title-marquee="!playlistMarqueeVisible"

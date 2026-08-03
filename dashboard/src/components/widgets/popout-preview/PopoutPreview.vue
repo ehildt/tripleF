@@ -15,6 +15,7 @@ import {
   hidePopoutPreview,
   popoutAnchor,
   popoutPreviewVisible,
+  popoutShowBarAlways,
 } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import { ANCHOR_STYLES } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-popup-geometry';
 
@@ -29,6 +30,7 @@ const anchorStyle = computed(() => ANCHOR_STYLES[popoutAnchor.value]);
     title="Example popout"
     :opacity-percent="100"
     :is-in-playlist="false"
+    :bar-always-visible="popoutShowBarAlways"
     minimize-title="Minimize preview"
     close-title="Close preview"
     @minimize="hidePopoutPreview"
