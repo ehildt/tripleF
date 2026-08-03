@@ -36,13 +36,14 @@ import {
   popoutAnchor,
   popoutAutoDock,
   popoutEnabled,
+  popoutPreviewVisible,
   popoutRememberPosition,
   resetPopoutSettings,
   setPopoutAnchor,
   setPopoutAutoDock,
   setPopoutEnabled,
   setPopoutRememberPosition,
-  showPopoutPreview,
+  togglePopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 
 type PopoutVertical = 'top' | 'middle' | 'bottom';
@@ -81,8 +82,13 @@ function setHorizontal(value: string) {
     <PanelTitleBar title="Video Popout">
       <template #actions>
         <PreviewButton
-          title="Show an example popout"
-          @click="showPopoutPreview"
+          :active="popoutPreviewVisible"
+          :title="
+            popoutPreviewVisible
+              ? 'Hide example popout'
+              : 'Show an example popout'
+          "
+          @click="togglePopoutPreview"
         />
         <ResetButton
           title="Reset popout settings to defaults"

@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   popoutAutoDock,
+  popoutPreviewVisible,
   resetPopoutSettings,
   setPopoutAutoDock,
+  togglePopoutPreview,
 } from './popout-settings.state';
 
 describe('popout-settings.state', () => {
@@ -36,5 +38,13 @@ describe('popout-settings.state', () => {
     resetPopoutSettings();
     expect(popoutAutoDock.value).toBe(true);
     expect(localStorage.getItem('vision-popout-auto-dock')).toBe('true');
+  });
+
+  it('togglePopoutPreview flips the preview on and off', () => {
+    expect(popoutPreviewVisible.value).toBe(false);
+    togglePopoutPreview();
+    expect(popoutPreviewVisible.value).toBe(true);
+    togglePopoutPreview();
+    expect(popoutPreviewVisible.value).toBe(false);
   });
 });

@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { Eye } from '@lucide/vue';
+import { Eye, EyeOff } from '@lucide/vue';
 
-/** Panel-header preview icon button, next to the reset button. */
+/**
+ * Panel-header preview icon button, next to the reset button. When `active`,
+ * the preview it toggles is currently shown — the icon flips to a closed eye
+ * so the button reads as "hide the preview".
+ */
 withDefaults(
   defineProps<{
     title?: string;
     disabled?: boolean;
+    active?: boolean;
   }>(),
-  { title: 'Show an example' },
+  { title: 'Show an example', active: false },
 );
 
 const emit = defineEmits<{
@@ -19,12 +24,15 @@ const emit = defineEmits<{
   <button
     type="button"
     class="preview-button"
+    :class="{ 'preview-button--active': active }"
     :disabled="disabled"
     :title="title"
     :aria-label="title"
+    :aria-pressed="active"
     @click="emit('click')"
   >
-    <Eye class="preview-button__icon" />
+    <EyeOff v-if="active" class="preview-button__icon" />
+    <Eye v-else class="preview-button__icon" />
   </button>
 </template>
 
@@ -43,6 +51,14 @@ const emit = defineEmits<{
 
 .preview-button:hover:not(:disabled) {
   color: var(--color-fg-primary);
+}
+
+.preview-button--active {
+  color: var(--color-accent-primary);
+}
+
+.preview-button--active:hover:not(:disabled) {
+  color: var(--color-accent-primary);
 }
 
 .preview-button:disabled {
