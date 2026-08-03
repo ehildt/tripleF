@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onBeforeMount, onMounted, onUnmounted } from 'vue';
+import { onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 
 import AppFooter from './components/app/app-footer/AppFooter.vue';
 import AppMainContent from './components/app/app-main-content/AppMainContent.vue';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
+import { hidePopoutPreview } from './components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import FloatingPlayer from './components/widgets/floating-player/FloatingPlayer.vue';
 import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPlaylist.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
@@ -31,6 +32,9 @@ const preprocessingStore = usePreprocessingStore();
 // server applies preprocessing from its own effective config, so it needs
 // the client's overrides before the next query runs.
 preprocessingStore.pushSettingsToServer();
+
+// The SysCtl popout preview is transient: switching tabs dismisses it.
+watch(appStore.activeTab, () => hidePopoutPreview());
 
 const DLQ_POLL_INTERVAL = 30_000;
 let dlqPollTimer: ReturnType<typeof setInterval> | null = null;
