@@ -31,7 +31,7 @@ export function YoutubeConfigAdapter(env = process.env): YoutubeConfig {
     apiKey: env.YOUTUBE_API_KEY || undefined,
     videos: {
       enabled: getBooleanEnv(env.YOUTUBE_VIDEOS_ENABLED, true)!,
-      results: getNumberEnv(env.YOUTUBE_VIDEOS_RESULTS, 6) as number,
+      results: getNumberEnv(env.YOUTUBE_VIDEOS_RESULTS, 10) as number,
     },
   };
 }

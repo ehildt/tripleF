@@ -79,7 +79,6 @@ watch(isError, (val) => {
 watch(
   [
     () => dlqStore.filterStatus,
-    () => dlqStore.filterQueue,
     () => dlqStore.filterSearch,
     () => dlqStore.offset,
     () => dlqStore.limit,
@@ -96,7 +95,6 @@ watch(
       <DlqListHeader
         :show-loading="showLoading"
         :filter-status="dlqStore.filterStatus"
-        :filter-queue="dlqStore.filterQueue"
         :filter-search="dlqStore.filterSearch"
         :hide-read="dlqStore.hideRead"
         :total="dlqStore.total"
@@ -106,7 +104,6 @@ watch(
         :offset="dlqStore.offset"
         @reload="handleRefresh"
         @update:filter-status="(value) => (dlqStore.filterStatus = value)"
-        @update:filter-queue="(value) => (dlqStore.filterQueue = value)"
         @update:filter-search="(value) => (dlqStore.filterSearch = value)"
         @update:hide-read="(value) => (dlqStore.hideRead = value)"
         @first-page="dlqStore.setPage(1)"

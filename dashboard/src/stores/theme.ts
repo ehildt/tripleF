@@ -2,25 +2,24 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
 export const THEMES = [
-  { key: 'yakuza', name: 'Yakuza' },
   { key: 'gothic', name: 'Gothic' },
   { key: 'pragmata', name: 'Pragmata' },
   { key: 'souls', name: 'Dark Souls' },
   { key: 'residentevil', name: 'Resident Evil' },
   { key: 'cyberpunk', name: 'Cyberpunk 2077' },
-  { key: 'ghostwire', name: 'Ghostwire Tokyo' },
   { key: 'baldursgate', name: "Baldur's Gate" },
   { key: 'stellar', name: 'Stellar Blade' },
   { key: 'deathspace', name: 'Dead Space' },
   { key: 'wuchang', name: 'Wuchang' },
-  { key: 'wukong', name: 'Wukong' },
   { key: 'nioh', name: 'Nioh' },
 ] as const;
 
 export type ThemeName = (typeof THEMES)[number]['key'];
 
+export const DEFAULT_THEME: ThemeName = 'stellar';
+
 export const useThemeStore = defineStore('theme', () => {
-  const currentTheme = ref<ThemeName>('souls');
+  const currentTheme = ref<ThemeName>(DEFAULT_THEME);
   const isDarkMode = ref(true);
 
   function applyTheme(theme: ThemeName) {

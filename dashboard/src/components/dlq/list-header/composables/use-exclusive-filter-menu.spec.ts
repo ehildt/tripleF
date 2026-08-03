@@ -7,33 +7,31 @@ describe('useExclusiveFilterMenu', () => {
   it('starts with all menus closed', () => {
     const { isMenuOpen } = useExclusiveFilterMenu(ref(null), [
       'status',
-      'queue',
       'search',
     ]);
     expect(isMenuOpen('status')).toBe(false);
-    expect(isMenuOpen('queue')).toBe(false);
     expect(isMenuOpen('search')).toBe(false);
   });
 
   it('opens a single menu at a time', () => {
     const { isMenuOpen, toggleMenu } = useExclusiveFilterMenu(ref(null), [
       'status',
-      'queue',
+      'search',
     ]);
     toggleMenu('status');
     expect(isMenuOpen('status')).toBe(true);
-    expect(isMenuOpen('queue')).toBe(false);
+    expect(isMenuOpen('search')).toBe(false);
   });
 
   it('switches from one open menu to another', () => {
     const { isMenuOpen, toggleMenu } = useExclusiveFilterMenu(ref(null), [
       'status',
-      'queue',
+      'search',
     ]);
     toggleMenu('status');
-    toggleMenu('queue');
+    toggleMenu('search');
     expect(isMenuOpen('status')).toBe(false);
-    expect(isMenuOpen('queue')).toBe(true);
+    expect(isMenuOpen('search')).toBe(true);
   });
 
   it('closes an open menu when toggled', () => {
@@ -48,12 +46,12 @@ describe('useExclusiveFilterMenu', () => {
   it('closeAllMenus closes every open menu', () => {
     const { isMenuOpen, toggleMenu, closeAllMenus } = useExclusiveFilterMenu(
       ref(null),
-      ['status', 'queue', 'search'],
+      ['status', 'search'],
     );
     toggleMenu('status');
-    toggleMenu('queue');
+    toggleMenu('search');
     closeAllMenus();
     expect(isMenuOpen('status')).toBe(false);
-    expect(isMenuOpen('queue')).toBe(false);
+    expect(isMenuOpen('search')).toBe(false);
   });
 });
