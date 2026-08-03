@@ -32,7 +32,8 @@ describe('useSysctlTabVisibility', () => {
     const debugStore = useDebugStore();
     const { toggleTab } = useSysctlTabVisibility();
 
-    expect(debugStore.debugPaused).toBe(false);
+    // Logging is off by default (paused).
+    expect(debugStore.debugPaused).toBe(true);
     toggleTab('debug');
     expect(debugStore.debugPaused).toBe(true);
     toggleTab('debug');

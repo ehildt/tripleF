@@ -7,7 +7,11 @@ vi.stubGlobal('performance', { now: vi.fn().mockReturnValue(100) });
 
 describe('useDebugStore', () => {
   beforeEach(() => {
+    localStorage.clear();
     setActivePinia(createPinia());
+    // Logging is off (paused) by default; unpause so the add/track tests
+    // exercise the real append behavior.
+    useDebugStore().debugPaused = false;
     vi.restoreAllMocks();
   });
 
@@ -17,6 +21,21 @@ describe('useDebugStore', () => {
     expect(store.debugLogCount).toBe(0);
     expect(store.selectedDebugResult).toBeNull();
     expect(store.lastSeenDebugCount).toBe(0);
+  });
+
+  it('starts paused (logging off) by default', () => {
+    localStorage.clear();
+    setActivePinia(createPinia());
+    const store = useDebugStore();
+    expect(store.debugPaused).toBe(true);
+    store.addDebugResult({
+      endpoint: '/api',
+      method: 'GET',
+      status: 'success',
+      responseTime: 1,
+      type: 'http',
+    });
+    expect(store.debugResults).toHaveLength(0);
   });
 
   it('addDebugResult prepends result with generated id and timestamp', () => {

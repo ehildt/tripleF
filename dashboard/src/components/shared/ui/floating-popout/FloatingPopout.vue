@@ -13,6 +13,8 @@
  * live in the bar on top, the media `<slot>` fills the middle, and the
  * eight-direction resize grid wraps the whole window.
  */
+import { computed, ref } from 'vue';
+
 import FloatingMediaBar from '@/components/shared/ui/floating-media-bar/FloatingMediaBar.vue';
 import ResizeHandleGrid, {
   type ResizeDirection,
@@ -37,15 +39,28 @@ interface Props {
    * source. The consumer positions/sizes it via the root style.
    */
   docked?: boolean;
+  /**
+   * Keep the media bar always visible (default). When false, the bar is
+   * hidden until the popup is hovered — it fades in on mouse enter and out
+   * on mouse leave, letting the media fill the freed space.
+   */
+  barAlwaysVisible?: boolean;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   title: '',
   showTitleMarquee: false,
   minimizeTitle: 'Minimize',
   closeTitle: 'Close',
   docked: false,
+  barAlwaysVisible: true,
 });
+
+/** Whether the pointer is currently over the popup (reveals the bar). */
+const barHovered = ref(false);
+
+/** The bar is shown unless auto-hide is on and the pointer is away. */
+const barVisible = computed(() => props.barAlwaysVisible || barHovered.value);
 
 const emit = defineEmits<{
   /** Pointer down on free bar space starts dragging the popup. */
@@ -63,9 +78,15 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
 </script>
 
 <template>
-  <div class="floating-popout" :class="{ 'floating-popout--docked': docked }">
+  <div
+    class="floating-popout"
+    :class="{ 'floating-popout--docked': docked }"
+    @mouseenter="barHovered = true"
+    @mouseleave="barHovered = false"
+  >
     <FloatingMediaBar
       v-if="!docked"
+      :class="{ 'floating-media-bar--collapsed': !barVisible }"
       :title="title"
       :show-title-marquee="showTitleMarquee"
       :opacity-percent="opacityPercent"
@@ -144,5 +165,31 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+/* Auto-hide bar: the bar is a direct child of the popup root (so drag still
+   resolves it via parentElement) and collapses in place — max-height fades
+   the bar away while the media box grows to fill the freed space. */
+.floating-popout :deep(.floating-media-bar) {
+  max-height: 4rem;
+  opacity: 1;
+  overflow: hidden;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease,
+    padding-top 0.3s ease,
+    padding-bottom 0.3s ease,
+    border-bottom-width 0.3s ease;
+}
+
+.floating-popout :deep(.floating-media-bar--collapsed) {
+  max-height: 0;
+  opacity: 0;
+  /* max-height alone leaves the bar's padding + border as residual height
+     (the content box can't go negative) — zero them so the bar fully
+     disappears and the media grows into the freed space. */
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-width: 0;
 }
 </style>

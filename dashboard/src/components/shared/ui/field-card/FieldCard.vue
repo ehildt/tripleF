@@ -17,6 +17,9 @@ withDefaults(
     label: string;
     description?: string;
     checked?: boolean;
+    /** Render the checkbox button (default true). Hide it to keep the
+     *  checked styling (accent border/background) without the box. */
+    showCheckbox?: boolean;
     numberValue?: number;
     numberStep?: number | string;
     numberPlaceholder?: string;
@@ -30,6 +33,7 @@ withDefaults(
     icon: undefined,
     description: undefined,
     checked: undefined,
+    showCheckbox: true,
     numberValue: undefined,
     numberStep: undefined,
     numberPlaceholder: undefined,
@@ -85,7 +89,7 @@ const emit = defineEmits<{
     <slot name="controls" />
 
     <button
-      v-if="checked !== undefined"
+      v-if="checked !== undefined && showCheckbox"
       type="button"
       class="field-card__checkbox"
       :class="{ 'field-card__checkbox--checked': checked }"

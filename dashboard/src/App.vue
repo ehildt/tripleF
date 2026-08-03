@@ -34,7 +34,12 @@ const preprocessingStore = usePreprocessingStore();
 preprocessingStore.pushSettingsToServer();
 
 // The SysCtl popout preview is transient: switching tabs dismisses it.
-watch(appStore.activeTab, () => hidePopoutPreview());
+// Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
+// cannot be used directly as a watch source.
+watch(
+  () => appStore.activeTab,
+  () => hidePopoutPreview(),
+);
 
 const DLQ_POLL_INTERVAL = 30_000;
 let dlqPollTimer: ReturnType<typeof setInterval> | null = null;

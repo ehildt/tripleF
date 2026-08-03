@@ -116,3 +116,21 @@ export const Docked: Story = {
     `,
   }),
 };
+
+/** Auto-hide bar: hidden until the popup is hovered, then it fades in. */
+export const AutoHideBar: Story = {
+  args: { barAlwaysVisible: false },
+  render: (args) => ({
+    components: { FloatingPopout },
+    setup: () => ({ args }),
+    template: `
+      <FloatingPopout v-bind="args">
+        <div style="
+          display:grid; place-items:center; width:100%; height:100%;
+          background: #12141a; color:#9aa3b2; font-family:monospace;
+          font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em;
+        ">hover to reveal the bar</div>
+      </FloatingPopout>
+    `,
+  }),
+};
