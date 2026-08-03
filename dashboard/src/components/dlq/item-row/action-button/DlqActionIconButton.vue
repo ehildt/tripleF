@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { type Component, computed } from 'vue';
 
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+
 const props = defineProps<{
   icon: Component;
   tint: number;
@@ -27,7 +29,9 @@ const iconStyle = computed(() => ({
     :title="title"
     @click.stop="emit('click')"
   >
-    <component :is="icon" class="dlq-action-icon-button__icon" />
+    <MotionIcon>
+      <component :is="icon" class="dlq-action-icon-button__icon" />
+    </MotionIcon>
   </button>
 </template>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ActiveTab } from '../../../../stores/app';
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import type { MenuTab } from '../composables/use-menu-tabs';
 
 defineProps<{
@@ -25,7 +26,9 @@ const emit = defineEmits<{
       :aria-label="tab.label"
       @click="emit('tabChange', tab.tab)"
     >
-      <component :is="tab.icon" class="nav-menu__item-icon" />
+      <MotionIcon>
+        <component :is="tab.icon" class="nav-menu__item-icon" />
+      </MotionIcon>
       <span
         v-if="tab.tab !== activeTab && (tab.count ?? 0) > 0"
         class="nav-menu__badge"

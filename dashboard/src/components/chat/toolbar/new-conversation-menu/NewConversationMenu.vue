@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 
 import ComboBox from '../../../shared/ui/combo-box/ComboBox.vue';
 import Dropdown from '../../../shared/ui/drop-down/DropDown.vue';
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import { useMenuPosition } from '../model-selector/composables/use-menu-position';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
@@ -55,7 +56,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
         title="Sessions"
         @click.stop="$emit('toggleMenu')"
       >
-        <MessagesSquare class="w-4 h-4" />
+        <MotionIcon><MessagesSquare class="w-4 h-4" /></MotionIcon>
       </IconButton>
       <Teleport to="body">
         <div
