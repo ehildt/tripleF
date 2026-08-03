@@ -97,7 +97,7 @@ describe('useConversationList', () => {
 
     const { deleteConversation } = useConversationList();
     await deleteConversation(conversation.id);
-    expect(conversationStore.conversations.length).toBe(lenBefore - 1);
+    expect(conversationStore.conversations).toHaveLength(lenBefore - 1);
   });
 
   it('deleteConversation leaves rooms and removes matching subscriptions', async () => {

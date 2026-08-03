@@ -76,22 +76,17 @@ describe('FloatingPopout', () => {
     );
   });
 
-  it('forwards minimize', async () => {
+  it.each([
+    { selector: '.floating-media-bar__minimize', event: 'minimize' },
+    { selector: '.floating-media-bar__close', event: 'close' },
+    {
+      selector: '.floating-media-bar__playlist-toggle',
+      event: 'togglePlaylist',
+    },
+  ])('forwards $event from the bar', async ({ selector, event }) => {
     const wrapper = mountComponent();
-    await wrapper.find('.floating-media-bar__minimize').trigger('click');
-    expect(wrapper.emitted('minimize')).toBeTruthy();
-  });
-
-  it('forwards close', async () => {
-    const wrapper = mountComponent();
-    await wrapper.find('.floating-media-bar__close').trigger('click');
-    expect(wrapper.emitted('close')).toBeTruthy();
-  });
-
-  it('forwards togglePlaylist', async () => {
-    const wrapper = mountComponent();
-    await wrapper.find('.floating-media-bar__playlist-toggle').trigger('click');
-    expect(wrapper.emitted('togglePlaylist')).toBeTruthy();
+    await wrapper.find(selector).trigger('click');
+    expect(wrapper.emitted(event)).toBeTruthy();
   });
 
   it('forwards drag from the bar', async () => {

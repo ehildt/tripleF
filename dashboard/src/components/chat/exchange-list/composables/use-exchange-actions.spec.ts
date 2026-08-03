@@ -112,7 +112,7 @@ describe('useExchangeActions', () => {
       const { branchExchange } = useExchangeActions(vi.fn());
       branchExchange(userId);
 
-      expect(conversationStore.conversations.length).toBe(
+      expect(conversationStore.conversations).toHaveLength(
         conversationsBefore + 1,
       );
       const branched = conversationStore.conversations[0];

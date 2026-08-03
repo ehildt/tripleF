@@ -13,6 +13,6 @@ describe('SystemHealthSection', () => {
     const wrapper = mount(SystemHealthSection, {
       props: { tiles },
     });
-    expect(wrapper.findAllComponents({ name: 'HealthTile' }).length).toBe(2);
+    expect(wrapper.findAllComponents({ name: 'HealthTile' })).toHaveLength(2);
   });
 });

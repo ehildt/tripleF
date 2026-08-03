@@ -27,29 +27,18 @@ describe('useDlqTopBarFilters', () => {
     expect(modelValue.value).toBe('');
   });
 
-  it('reads the model from filters.model', () => {
-    const entry = ref<DlqEntry | null>(
-      makeEntry({ filters: { model: 'llama3' } }),
-    );
-    const { modelValue } = useDlqTopBarFilters(entry, ref([]));
-    expect(modelValue.value).toBe('llama3');
-  });
-
-  it('reads the model from filters.model', () => {
-    const entry = ref<DlqEntry | null>(
-      makeEntry({ filters: { model: 'mistral' } }),
-    );
-    const { modelValue } = useDlqTopBarFilters(entry, ref([]));
-    expect(modelValue.value).toBe('mistral');
-  });
-
-  it('parses a JSON string model', () => {
-    const entry = ref<DlqEntry | null>(
-      makeEntry({ filters: { model: '{"model":"json-model"}' } }),
-    );
-    const { modelValue } = useDlqTopBarFilters(entry, ref([]));
-    expect(modelValue.value).toBe('json-model');
-  });
+  it.each([
+    [{ filters: { model: 'llama3' } }, 'llama3'],
+    [{ filters: { model: 'mistral' } }, 'mistral'],
+    [{ filters: { model: '{"model":"json-model"}' } }, 'json-model'],
+  ] as Array<[DlqEntry['payload'], string]>)(
+    'reads the model value from filters.model',
+    (payload, expected) => {
+      const entry = ref<DlqEntry | null>(makeEntry(payload));
+      const { modelValue } = useDlqTopBarFilters(entry, ref([]));
+      expect(modelValue.value).toBe(expected);
+    },
+  );
 
   it('marks the model as errored when missing from the available list', () => {
     const entry = ref<DlqEntry | null>(

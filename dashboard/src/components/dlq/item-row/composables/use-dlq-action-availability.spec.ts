@@ -6,44 +6,54 @@ import { useDlqActionAvailability } from './use-dlq-action-availability';
 
 type DlqStatusValue = DlqStatus;
 
+const RETRYABLE_CASES: Array<{
+  status: DlqStatusValue;
+  retryable: boolean;
+  archivable: boolean;
+  deletable: boolean;
+  selectable: boolean;
+}> = [
+  {
+    status: 'Failed',
+    retryable: true,
+    archivable: true,
+    deletable: true,
+    selectable: true,
+  },
+  {
+    status: 'Cleared',
+    retryable: true,
+    archivable: false,
+    deletable: true,
+    selectable: true,
+  },
+  {
+    status: 'Active',
+    retryable: false,
+    archivable: true,
+    deletable: true,
+    selectable: true,
+  },
+  {
+    status: 'Removed',
+    retryable: false,
+    archivable: false,
+    deletable: false,
+    selectable: false,
+  },
+];
+
 describe('useDlqActionAvailability', () => {
-  it('marks Failed entries as retryable, archivable, and deletable', () => {
-    const status = ref<DlqStatusValue>('Failed');
-    const { isRetryable, isArchivable, isDeletable, isSelectable } =
-      useDlqActionAvailability(status);
-    expect(isRetryable.value).toBe(true);
-    expect(isArchivable.value).toBe(true);
-    expect(isDeletable.value).toBe(true);
-    expect(isSelectable.value).toBe(true);
-  });
-
-  it('marks Cleared entries as retryable but not archivable', () => {
-    const status = ref<DlqStatusValue>('Cleared');
-    const { isRetryable, isArchivable, isDeletable, isSelectable } =
-      useDlqActionAvailability(status);
-    expect(isRetryable.value).toBe(true);
-    expect(isArchivable.value).toBe(false);
-    expect(isDeletable.value).toBe(true);
-    expect(isSelectable.value).toBe(true);
-  });
-
-  it('marks Active entries as archivable but not retryable', () => {
-    const status = ref<DlqStatusValue>('Active');
-    const { isRetryable, isArchivable, isDeletable, isSelectable } =
-      useDlqActionAvailability(status);
-    expect(isRetryable.value).toBe(false);
-    expect(isArchivable.value).toBe(true);
-    expect(isDeletable.value).toBe(true);
-    expect(isSelectable.value).toBe(true);
-  });
-
-  it('marks Removed entries as not deletable and not selectable', () => {
-    const status = ref<DlqStatusValue>('Removed');
-    const { isRetryable, isArchivable, isDeletable, isSelectable } =
-      useDlqActionAvailability(status);
-    expect(isRetryable.value).toBe(false);
-    expect(isArchivable.value).toBe(false);
-    expect(isDeletable.value).toBe(false);
-    expect(isSelectable.value).toBe(false);
-  });
+  it.each(RETRYABLE_CASES)(
+    'marks $status entries with retryable=$retryable, archivable=$archivable, deletable=$deletable, selectable=$selectable',
+    ({ status, retryable, archivable, deletable, selectable }) => {
+      const statusRef = ref<DlqStatusValue>(status);
+      const { isRetryable, isArchivable, isDeletable, isSelectable } =
+        useDlqActionAvailability(statusRef);
+      expect(isRetryable.value).toBe(retryable);
+      expect(isArchivable.value).toBe(archivable);
+      expect(isDeletable.value).toBe(deletable);
+      expect(isSelectable.value).toBe(selectable);
+    },
+  );
 });
