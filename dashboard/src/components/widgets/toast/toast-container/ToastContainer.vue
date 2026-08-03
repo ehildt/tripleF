@@ -89,9 +89,11 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
   gap: var(--spacing-2);
 }
 
-/* Newest toast lands nearest the screen edge: top anchors flip the stack. */
+/* Newest toast lands nearest the screen edge: top anchors flip the stack.
+   All edges use the same symmetric inset so an anchored stack sits the
+   same distance from its two adjacent screen edges. */
 .toast-container--top {
-  top: 1rem;
+  top: 3rem;
   flex-direction: column-reverse;
 }
 
@@ -101,11 +103,11 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
 }
 
 .toast-container--bottom {
-  bottom: 5rem;
+  bottom: 3rem;
 }
 
 .toast-container--left {
-  left: 1rem;
+  left: 3rem;
   align-items: flex-start;
 }
 
@@ -119,7 +121,7 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
 }
 
 .toast-container--right {
-  right: 1rem;
+  right: 3rem;
   align-items: flex-end;
 }
 
