@@ -159,6 +159,8 @@ function onFileButtonMouseLeave() {
       :rows="2"
       class="chat-prompt-action-bar__input"
       style="caret-shape: block"
+      aria-label="Prompt"
+      placeholder="Ask the harness…"
       :disabled="props.isCompacting"
       @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
