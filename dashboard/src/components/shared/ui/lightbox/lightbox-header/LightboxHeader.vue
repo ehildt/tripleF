@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
 
+import MotionIcon from '../../motion-icon/MotionIcon.vue';
+
 defineProps<{
   activeTitle?: string;
 }>();
@@ -18,7 +20,7 @@ const emit = defineEmits<{
     <div class="lightbox__header-actions">
       <slot name="actions" />
       <button type="button" class="lightbox__close" @click="emit('close')">
-        <X class="lightbox__close-icon" />
+        <MotionIcon><X class="lightbox__close-icon" /></MotionIcon>
       </button>
     </div>
   </header>

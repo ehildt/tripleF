@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+
+/**
+ * Query params arrive as strings (`'true'`/`'false'`). `@Type(() => Boolean)`
+ * would run `Boolean('false') === true`, so stream=false was always upgraded
+ * to true and non-stream mode silently never worked. Parse explicitly.
+ */
+const parseBoolean = ({ value }: { value: unknown }): boolean =>
+  value === true || value === 'true';
 
 export class HarnessStreamQueryDto {
   @ApiPropertyOptional({
@@ -52,7 +60,7 @@ export class HarnessStreamQueryDto {
     description: 'Stream partial results via Socket.IO.',
   })
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(parseBoolean)
   stream!: boolean;
 
   @ApiPropertyOptional({
@@ -107,6 +115,6 @@ export class HarnessStreamQueryDto {
   })
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(parseBoolean)
   hasNewImages?: boolean;
 }

@@ -14,6 +14,27 @@ import {
 export type { SubscriptionEntry } from './subscriptions.state';
 
 /**
+ * True when a conversation listens on the given socket — either as its own
+ * binding (event + roomId) or through an extra subscription.
+ */
+function isConversationBoundTo(
+  conversation: {
+    event?: string;
+    roomId?: string;
+    subscriptions?: { event: string; roomId?: string }[];
+  },
+  event: string,
+  roomId: string,
+): boolean {
+  return (
+    (conversation.event === event && (conversation.roomId ?? '') === roomId) ||
+    conversation.subscriptions?.some(
+      (sub) => sub.event === event && (sub.roomId ?? '') === roomId,
+    ) === true
+  );
+}
+
+/**
  * Manages the list of subscribed socket events.
  * Handles persistence, toggling, unsubscribing, and merging from conversations.
  */
@@ -105,11 +126,11 @@ export function useEventSubscriptions() {
   });
 
   // ── Actions ──────────────────────────────────────────────
-  function subscribeToEvent(event: string, roomId: string) {
+  function subscribeToEvent(event: string, roomId: string, stream = true) {
     const e = event.trim();
     const r = roomId.trim();
     if (!e) return;
-    addSubscription(e, r);
+    addSubscription(e, r, stream);
     socketStore.ensureSocketConnection();
     socketStore.listenToEvent(e);
     if (r) socketStore.joinRoom(r, e);
@@ -128,10 +149,25 @@ export function useEventSubscriptions() {
     }
   }
 
+  /**
+   * Flip the stream mode of a subscribed socket and push it onto every
+   * conversation bound to that socket so the next harness request honors
+   * the per-socket decision. The request reads `conversation.stream`, not
+   * `subscription.stream`, so the two must stay in sync.
+   */
   function toggleSubscriptionStream(index: number) {
     const sub = subscriptions.value[index];
-    if (sub) {
-      sub.stream = !sub.stream;
+    if (!sub) return;
+    sub.stream = !sub.stream;
+
+    for (const conversation of conversationStore.conversations) {
+      if (
+        !isConversationBoundTo(conversation, sub.event, sub.roomId) ||
+        conversation.stream === sub.stream
+      ) {
+        continue;
+      }
+      conversationStore.setStream(conversation.id, sub.stream);
     }
   }
 
