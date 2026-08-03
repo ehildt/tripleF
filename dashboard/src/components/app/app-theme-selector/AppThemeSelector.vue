@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Moon, Sun, SwatchBook } from '@lucide/vue';
 
+import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import { useThemeSelector } from './composables/use-theme-selector';
 
 const themeSelector = useThemeSelector();
@@ -24,7 +25,7 @@ const {
       title="Switch theme"
       @click="toggleDropdown"
     >
-      <SwatchBook :size="16" />
+      <MotionIcon><SwatchBook :size="16" /></MotionIcon>
     </button>
 
     <button
@@ -32,7 +33,10 @@ const {
       :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
       @click="toggleDarkMode"
     >
-      <component :is="isDarkMode ? Moon : Sun" :size="14" />
+      <MotionIcon>
+        <Sun v-if="isDarkMode" :size="14" />
+        <Moon v-else :size="14" />
+      </MotionIcon>
     </button>
 
     <Transition name="dropdown">
