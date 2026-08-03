@@ -57,7 +57,7 @@ export class AiSdkService {
     keepAlive?: string;
     think?: ThinkMode;
     tools?: ToolSet;
-    timeout?: TimeoutConfiguration;
+    timeout?: TimeoutConfiguration<any>;
     abortSignal?: AbortSignal;
     smoothStream?: boolean;
   }) {
@@ -102,7 +102,7 @@ export class AiSdkService {
     keepAlive?: string;
     think?: ThinkMode;
     tools?: ToolSet;
-    timeout?: TimeoutConfiguration;
+    timeout?: TimeoutConfiguration<any>;
     abortSignal?: AbortSignal;
   }) {
     const model = this.resolveClient(params.model)(params.model);
@@ -133,7 +133,7 @@ export class AiSdkService {
     options: {
       model: string;
       notify?: (event: string, data?: unknown) => void;
-      timeout?: TimeoutConfiguration;
+      timeout?: TimeoutConfiguration<any>;
       abortSignal?: AbortSignal;
     },
   ): Promise<{ text: string; inputTokens?: number; outputTokens?: number }> {
@@ -175,7 +175,7 @@ export class AiSdkService {
      * round-trip searches use.
      */
     maxSteps?: number;
-    timeout?: TimeoutConfiguration;
+    timeout?: TimeoutConfiguration<any>;
     abortSignal?: AbortSignal;
     onToolResult?: (toolResult: { toolName: string; result: unknown }) => void;
   }): Promise<{

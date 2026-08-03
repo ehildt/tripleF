@@ -151,6 +151,11 @@ defineEmits<{
 }
 
 .conversation-item__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
   padding: 0.125rem;
   color: var(--color-fg-muted);
   transition: color 0.2s ease;
