@@ -3,8 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   popoutAutoDock,
   popoutPreviewVisible,
+  popoutShowBarAlways,
   resetPopoutSettings,
   setPopoutAutoDock,
+  setPopoutShowBarAlways,
   togglePopoutPreview,
 } from './popout-settings.state';
 
@@ -46,5 +48,12 @@ describe('popout-settings.state', () => {
     expect(popoutPreviewVisible.value).toBe(true);
     togglePopoutPreview();
     expect(popoutPreviewVisible.value).toBe(false);
+  });
+
+  it('defaults to keeping the bar always visible and persists changes', () => {
+    expect(popoutShowBarAlways.value).toBe(true);
+    setPopoutShowBarAlways(false);
+    expect(popoutShowBarAlways.value).toBe(false);
+    expect(localStorage.getItem('vision-popout-show-bar-always')).toBe('false');
   });
 });

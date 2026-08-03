@@ -24,6 +24,7 @@ export const DEFAULT_POPOUT_REMEMBER_POSITION = true;
 export const DEFAULT_POPOUT_ENABLED = true;
 export const DEFAULT_POPOUT_HIDE_ON_PLAYLIST = false;
 export const DEFAULT_POPOUT_AUTO_DOCK = true;
+export const DEFAULT_POPOUT_SHOW_BAR_ALWAYS = true;
 
 const POPOUT_ENABLED_STORAGE_KEY = 'vision-popout-enabled';
 const POPOUT_ANCHOR_STORAGE_KEY = 'vision-popout-anchor';
@@ -31,6 +32,7 @@ const POPOUT_REMEMBER_POSITION_STORAGE_KEY = 'vision-popout-remember-position';
 const POPOUT_RECT_STORAGE_KEY = 'vision-popout-rect';
 const POPOUT_HIDE_ON_PLAYLIST_STORAGE_KEY = 'vision-popout-hide-on-playlist';
 const POPOUT_AUTO_DOCK_STORAGE_KEY = 'vision-popout-auto-dock';
+const POPOUT_SHOW_BAR_ALWAYS_STORAGE_KEY = 'vision-popout-show-bar-always';
 
 const POPOUT_ANCHORS: readonly PopoutAnchor[] = [
   'top-left',
@@ -118,6 +120,18 @@ export const popoutAutoDock = ref<boolean>(
   loadBoolean(POPOUT_AUTO_DOCK_STORAGE_KEY, DEFAULT_POPOUT_AUTO_DOCK),
 );
 
+/**
+ * Whether the popup's media bar stays always visible. When off, the bar is
+ * hidden until the user hovers the popup (it fades in), and fades out again
+ * on mouse leave, letting the media fill the freed space.
+ */
+export const popoutShowBarAlways = ref<boolean>(
+  loadBoolean(
+    POPOUT_SHOW_BAR_ALWAYS_STORAGE_KEY,
+    DEFAULT_POPOUT_SHOW_BAR_ALWAYS,
+  ),
+);
+
 /** Example popout shown from SysCtl → Widgets to preview the anchor. */
 export const popoutPreviewVisible = ref(false);
 
@@ -203,6 +217,15 @@ export function setPopoutAutoDock(enabled: boolean) {
   }
 }
 
+export function setPopoutShowBarAlways(enabled: boolean) {
+  popoutShowBarAlways.value = enabled;
+  try {
+    localStorage.setItem(POPOUT_SHOW_BAR_ALWAYS_STORAGE_KEY, String(enabled));
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+}
+
 /**
  * Persist the current popup geometry at the end of a drag/resize gesture —
  * only while position memory is on.
@@ -241,4 +264,5 @@ export function resetPopoutSettings() {
   setPopoutRememberPosition(DEFAULT_POPOUT_REMEMBER_POSITION);
   setPopoutHideOnPlaylist(DEFAULT_POPOUT_HIDE_ON_PLAYLIST);
   setPopoutAutoDock(DEFAULT_POPOUT_AUTO_DOCK);
+  setPopoutShowBarAlways(DEFAULT_POPOUT_SHOW_BAR_ALWAYS);
 }

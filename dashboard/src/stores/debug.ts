@@ -20,7 +20,8 @@ export const useDebugStore = defineStore('debug', () => {
   const readTracker = useReadTracker('read-debug-ids');
   const lastSeenDebugCount = ref(0);
   const debugTabVisited = ref(false);
-  const debugPaused = ref(localStorage.getItem('debug-paused') === 'true');
+  // Logging is off by default: only an explicit stored 'false' unpauses it.
+  const debugPaused = ref(localStorage.getItem('debug-paused') !== 'false');
 
   watch(debugPaused, (v) => {
     localStorage.setItem('debug-paused', String(v));
