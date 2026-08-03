@@ -22,28 +22,15 @@ describe('ConversationHeaderActions', () => {
     expect(wrapper.findAll('button')).toHaveLength(4);
   });
 
-  it('emits rename when rename button clicked', async () => {
+  it.each([
+    ['Rename', 'rename'],
+    ['Delete conversation', 'delete'],
+    ['Pin to persistent', 'toggleType'],
+    ['Compact', 'compact'],
+  ])('emits %s when the %s button is clicked', async (title, eventName) => {
     const wrapper = mountComponent({});
-    await wrapper.find('[title="Rename"]').trigger('click');
-    expect(wrapper.emitted('rename')).toBeTruthy();
-  });
-
-  it('emits delete when delete button clicked', async () => {
-    const wrapper = mountComponent({});
-    await wrapper.find('[title="Delete conversation"]').trigger('click');
-    expect(wrapper.emitted('delete')).toBeTruthy();
-  });
-
-  it('emits toggleType when pin button clicked', async () => {
-    const wrapper = mountComponent({});
-    await wrapper.find('[title="Pin to persistent"]').trigger('click');
-    expect(wrapper.emitted('toggleType')).toBeTruthy();
-  });
-
-  it('emits compact when compact button clicked', async () => {
-    const wrapper = mountComponent({});
-    await wrapper.find('[title="Compact"]').trigger('click');
-    expect(wrapper.emitted('compact')).toBeTruthy();
+    await wrapper.find(`[title="${title}"]`).trigger('click');
+    expect(wrapper.emitted(eventName)).toBeTruthy();
   });
 
   it('disables compact button while compacting', () => {

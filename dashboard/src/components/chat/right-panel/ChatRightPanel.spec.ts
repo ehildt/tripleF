@@ -72,7 +72,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    expect(wrapper.findAll('.attachment-card').length).toBe(1);
+    expect(wrapper.findAll('.attachment-card')).toHaveLength(1);
   });
 
   it('renders prompt list when view is history', () => {
@@ -177,46 +177,24 @@ describe('ChatRightPanel', () => {
     );
   });
 
-  it('shows the playlist entry title in the now-playing marquee', async () => {
-    const wrapper = mountComponent({
-      playlistVideos: [
-        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
-      ],
-      rightPanelView: 'playlist',
-    });
-    setActivePlayback('https://youtu.be/in-list', 'In List');
-    await wrapper.vm.$nextTick();
-    expect(
-      wrapper.find('.playlist-transport-bar__now-playing-text').text(),
-    ).toBe('In List');
-  });
-
-  it('shows an outside video title in the now-playing marquee', async () => {
-    const wrapper = mountComponent({
-      playlistVideos: [
-        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
-      ],
-      rightPanelView: 'playlist',
-    });
-    // A video that was never added to the playlist starts playing elsewhere.
-    setActivePlayback('https://youtu.be/outside', 'Outside Title');
-    await wrapper.vm.$nextTick();
-    expect(
-      wrapper.find('.playlist-transport-bar__now-playing-text').text(),
-    ).toBe('Outside Title');
-  });
-
-  it('prefers the playlist metadata over the engagement title', async () => {
-    const wrapper = mountComponent({
-      playlistVideos: [
-        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
-      ],
-      rightPanelView: 'playlist',
-    });
-    setActivePlayback('https://youtu.be/in-list', 'Raw engagement title');
-    await wrapper.vm.$nextTick();
-    expect(
-      wrapper.find('.playlist-transport-bar__now-playing-text').text(),
-    ).toBe('In List');
-  });
+  it.each([
+    ['https://youtu.be/in-list', 'In List', 'In List'],
+    ['https://youtu.be/outside', 'Outside Title', 'Outside Title'],
+    ['https://youtu.be/in-list', 'Raw engagement title', 'In List'],
+  ])(
+    'shows the now-playing title for playback %s',
+    async (url, playbackTitle, expected) => {
+      const wrapper = mountComponent({
+        playlistVideos: [
+          { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
+        ],
+        rightPanelView: 'playlist',
+      });
+      setActivePlayback(url, playbackTitle);
+      await wrapper.vm.$nextTick();
+      expect(
+        wrapper.find('.playlist-transport-bar__now-playing-text').text(),
+      ).toBe(expected);
+    },
+  );
 });

@@ -45,7 +45,7 @@ describe('useAttachmentList', () => {
     });
 
     expect(hasAttachments.value).toBe(true);
-    expect(attachments.value.length).toBe(2);
+    expect(attachments.value).toHaveLength(2);
     expect(attachments.value[0]).toMatchObject({
       id: 'pending-h1-0',
       name: 'cat.png',

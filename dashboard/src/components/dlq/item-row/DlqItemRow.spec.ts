@@ -43,7 +43,7 @@ describe('DlqItemRow', () => {
       },
     });
     const buttons = wrapper.findAll('button');
-    expect(buttons.length).toBe(0);
+    expect(buttons).toHaveLength(0);
   });
 
   it('emits retry when the retry button is clicked', () => {

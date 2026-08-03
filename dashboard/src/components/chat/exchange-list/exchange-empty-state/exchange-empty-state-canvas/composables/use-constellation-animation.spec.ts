@@ -127,7 +127,7 @@ describe('useConstellationAnimation', () => {
     // at a 1000ms offset from the stall instead of the stall frame itself.
     now = 8100;
     frameCallback!(0);
-    expect((context.arc as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
+    expect((context.arc as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(
       40,
     );
 

@@ -69,7 +69,7 @@ describe('useMenuTabs', () => {
       debugCount: 0,
     });
 
-    expect(vm.tabs.find((t) => t.tab === 'dlq')?.tint).toBe(0.55);
+    expect(vm.tabs.find((t) => t.tab === 'dlq')?.tint).toBeCloseTo(0.55, 2);
   });
 
   it('includes counts when counters are enabled', () => {

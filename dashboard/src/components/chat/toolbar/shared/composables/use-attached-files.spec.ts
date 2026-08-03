@@ -80,7 +80,7 @@ describe('useAttachedFiles', () => {
 
     await onFileInputChange(createEvent([file]));
 
-    expect(attachedFiles.value.length).toBe(1);
+    expect(attachedFiles.value).toHaveLength(1);
     expect(attachedFiles.value[0].file.name).toBe('test.txt');
     expect(attachedFiles.value[0].isSelected).toBe(true);
     expect(attachedFiles.value[0].hash).toBe('test.txt');
@@ -93,10 +93,10 @@ describe('useAttachedFiles', () => {
     const file = new File(['hello'], 'test.txt', { type: 'text/plain' });
 
     await first.onFileInputChange(createEvent([file]));
-    expect(first.attachedFiles.value.length).toBe(1);
+    expect(first.attachedFiles.value).toHaveLength(1);
 
     const second = useAttachedFiles();
-    expect(second.attachedFiles.value.length).toBe(1);
+    expect(second.attachedFiles.value).toHaveLength(1);
     expect(second.attachedFiles.value[0].file.name).toBe('test.txt');
   });
 
@@ -113,8 +113,8 @@ describe('useAttachedFiles', () => {
     );
 
     const second = useAttachedFiles();
-    expect(second.attachedFiles.value.length).toBe(0);
-    expect(first.attachedFiles.value.length).toBe(0);
+    expect(second.attachedFiles.value).toHaveLength(0);
+    expect(first.attachedFiles.value).toHaveLength(0);
   });
 
   it('adds existing MinIO files as uploaded metadata instead of pending uploads', async () => {
@@ -125,7 +125,7 @@ describe('useAttachedFiles', () => {
 
     await onFileInputChange(createEvent([file]));
 
-    expect(attachedFiles.value.length).toBe(0);
+    expect(attachedFiles.value).toHaveLength(0);
     expect(
       conversationStore.getUploadedImagesForConversation(conversation.id),
     ).toEqual(
@@ -148,7 +148,7 @@ describe('useAttachedFiles', () => {
     await onFileInputChange(createEvent([file]));
     await onFileInputChange(createEvent([file]));
 
-    expect(attachedFiles.value.length).toBe(1);
+    expect(attachedFiles.value).toHaveLength(1);
   });
 
   it('treats files as pending when the MinIO check fails', async () => {
@@ -159,7 +159,7 @@ describe('useAttachedFiles', () => {
 
     await onFileInputChange(createEvent([file]));
 
-    expect(attachedFiles.value.length).toBe(1);
+    expect(attachedFiles.value).toHaveLength(1);
   });
 
   it('removes a file by index and revokes object URL', async () => {
@@ -173,7 +173,7 @@ describe('useAttachedFiles', () => {
 
     removeAttachedFile(0);
 
-    expect(attachedFiles.value.length).toBe(0);
+    expect(attachedFiles.value).toHaveLength(0);
     expect(revokeSpy).toHaveBeenCalled();
   });
 
@@ -189,13 +189,13 @@ describe('useAttachedFiles', () => {
     const file = new File(['hello'], 'test.txt', { type: 'text/plain' });
     await onFileInputChange(createEvent([file]));
 
-    expect(selectedFiles.value.length).toBe(1);
+    expect(selectedFiles.value).toHaveLength(1);
     toggleAttachedFile(0);
     expect(attachedFiles.value[0].isSelected).toBe(false);
-    expect(selectedFiles.value.length).toBe(0);
+    expect(selectedFiles.value).toHaveLength(0);
     toggleAttachedFile(0);
     expect(attachedFiles.value[0].isSelected).toBe(true);
-    expect(selectedFiles.value.length).toBe(1);
+    expect(selectedFiles.value).toHaveLength(1);
   });
 
   it('revokes all object URLs', async () => {
