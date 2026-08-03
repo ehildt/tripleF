@@ -12,12 +12,9 @@
 @import './palettes/gothic.css';
 @import './palettes/cyberpunk.css';
 @import './palettes/stellar.css';
-@import './palettes/wukong.css';
-@import './palettes/ghostwire.css';
 @import './palettes/deathspace.css';
 @import './palettes/nioh.css';
 @import './palettes/baldursgate.css';
-@import './palettes/yakuza.css';
 @import './palettes/wuchang.css';
 @import './palettes/pragmata.css';
 
@@ -111,7 +108,7 @@ footer,
 
 .panel-glow {
   box-shadow:
-    0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+    0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 6%, transparent);
   transition: box-shadow 0.4s ease;
 }
@@ -123,7 +120,7 @@ footer,
 .panel-glow--active,
 .panel-glow:focus-within {
   box-shadow:
-    0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+    0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
     0 0 1rem color-mix(in srgb, var(--color-accent-glow) 12%, transparent);
 }
@@ -132,15 +129,15 @@ footer,
   0%,
   100% {
     box-shadow:
-      0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+      0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
       inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
       0 0 0.5rem color-mix(in srgb, var(--color-accent-glow) 6%, transparent);
   }
   50% {
     box-shadow:
-      0 0.25rem 0.75rem color-mix(in srgb, black 12%, transparent),
+      0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
       inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
-      0 0 0.75rem color-mix(in srgb, var(--color-accent-glow) 10%, transparent);
+      0 0 0.25rem color-mix(in srgb, var(--color-accent-glow) 10%, transparent);
   }
 }
 

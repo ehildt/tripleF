@@ -11,8 +11,8 @@ const meta = {
     docs: {
       description: {
         component: `
-The header of the DLQ list: title, three filter menus (status, queue,
-search), a reload button, a hide-read toggle, and the pagination row.
+The header of the DLQ list: title, two filter menus (status, search),
+a reload button, a hide-read toggle, and the pagination row.
 `,
       },
     },
@@ -20,7 +20,6 @@ search), a reload button, a hide-read toggle, and the pagination row.
   args: {
     showLoading: false,
     filterStatus: '',
-    filterQueue: '',
     filterSearch: '',
     hideRead: false,
     total: 25,
@@ -30,7 +29,6 @@ search), a reload button, a hide-read toggle, and the pagination row.
     offset: 0,
     onReload: fn(),
     'onUpdate:filterStatus': fn(),
-    'onUpdate:filterQueue': fn(),
     'onUpdate:filterSearch': fn(),
     'onUpdate:hideRead': fn(),
     onFirstPage: fn(),
@@ -52,7 +50,6 @@ export const Default: Story = {};
 export const FiltersActive: Story = {
   args: {
     filterStatus: 'Failed',
-    filterQueue: 'harness',
     filterSearch: 'req-',
     hideRead: true,
   },

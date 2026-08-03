@@ -140,7 +140,7 @@ function selectTab(tab: ActiveTab) {
 }
 
 /* On the left edge the theme dropdown must extend rightward to stay on
-   screen; otherwise it opens downward (default) below the menu. */
+   screen; on the right edge (default) it opens to the left of the menu. */
 .tab-menu--left .tab-menu__footer :deep(.theme-selector__dropdown) {
   right: auto;
   left: 0;

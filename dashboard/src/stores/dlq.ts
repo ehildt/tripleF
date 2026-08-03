@@ -16,7 +16,6 @@ export const useDlqStore = defineStore('dlq', () => {
   const limit = ref(20);
   const offset = ref(0);
   const filterStatus = ref('');
-  const filterQueue = ref('');
   const filterSearch = ref('');
   const hideRead = ref(false);
   const error = ref<string | null>(null);
@@ -104,9 +103,6 @@ export const useDlqStore = defineStore('dlq', () => {
     if (filterStatus.value) {
       params.status = filterStatus.value as any;
     }
-    if (filterQueue.value) {
-      params.queueName = filterQueue.value;
-    }
     if (filterSearch.value) {
       params.search = filterSearch.value;
     }
@@ -129,7 +125,6 @@ export const useDlqStore = defineStore('dlq', () => {
     limit,
     offset,
     filterStatus,
-    filterQueue,
     filterSearch,
     hideRead,
     error,

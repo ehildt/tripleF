@@ -36,6 +36,12 @@ async function clickNavItem(
 describe('TabMenu', () => {
   beforeEach(() => {
     localStorage.clear();
+    // dlq/debug are hidden by default; enable them so these tests exercise
+    // the full menu (the hidden-by-default case is covered in useMenuTabs).
+    localStorage.setItem(
+      'harness-tab-visibility',
+      JSON.stringify({ dlq: true, debug: true }),
+    );
     resetTabMenuSettings();
   });
 

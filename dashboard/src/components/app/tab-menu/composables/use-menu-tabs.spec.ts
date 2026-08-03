@@ -30,7 +30,25 @@ describe('useMenuTabs', () => {
     localStorage.removeItem('harness-tab-visibility');
   });
 
-  it('returns tabs for all visible tabs', () => {
+  /** Opt the hidden-by-default dlq/debug tabs back in. */
+  function enableDlqDebug() {
+    localStorage.setItem(
+      'harness-tab-visibility',
+      JSON.stringify({ dlq: true, debug: true }),
+    );
+  }
+
+  it('hides dlq and debug by default', () => {
+    const vm = mountComposable({
+      activeTab: 'http',
+      debugCount: 0,
+    });
+
+    expect(vm.tabs.map((t) => t.tab)).toEqual(['http', 'sysctl']);
+  });
+
+  it('returns all tabs when dlq/debug are enabled', () => {
+    enableDlqDebug();
     const vm = mountComposable({
       activeTab: 'http',
       debugCount: 0,
@@ -45,6 +63,7 @@ describe('useMenuTabs', () => {
   });
 
   it('uses configured tint values', () => {
+    enableDlqDebug();
     const vm = mountComposable({
       activeTab: 'http',
       debugCount: 0,
@@ -54,6 +73,7 @@ describe('useMenuTabs', () => {
   });
 
   it('includes counts when counters are enabled', () => {
+    enableDlqDebug();
     localStorage.setItem('harness-show-counters', 'true');
     const vm = mountComposable({
       activeTab: 'http',
@@ -66,6 +86,7 @@ describe('useMenuTabs', () => {
   });
 
   it('omits counts when counters are disabled', () => {
+    enableDlqDebug();
     localStorage.setItem('harness-show-counters', 'false');
     const vm = mountComposable({
       activeTab: 'http',
