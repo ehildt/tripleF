@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Eye, EyeOff } from '@lucide/vue';
 
+import MotionIcon from '../motion-icon/MotionIcon.vue';
+
 /**
  * Panel-header preview icon button, next to the reset button. When `active`,
  * the preview it toggles is currently shown — the icon flips to a closed eye
@@ -31,8 +33,10 @@ const emit = defineEmits<{
     :aria-pressed="active"
     @click="emit('click')"
   >
-    <EyeOff v-if="active" class="preview-button__icon" />
-    <Eye v-else class="preview-button__icon" />
+    <MotionIcon>
+      <EyeOff v-if="active" class="preview-button__icon" />
+      <Eye v-else class="preview-button__icon" />
+    </MotionIcon>
   </button>
 </template>
 

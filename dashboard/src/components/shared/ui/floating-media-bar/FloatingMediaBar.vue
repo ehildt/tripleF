@@ -9,6 +9,8 @@
 import { ListCheck, ListPlus, Minus, X } from '@lucide/vue';
 import { computed } from 'vue';
 
+import MotionIcon from '../motion-icon/MotionIcon.vue';
+
 interface Props {
   /** Title shown statically or in the marquee. */
   title?: string;
@@ -96,11 +98,13 @@ function onOpacityInput(event: Event) {
         @pointerdown.stop
         @click.stop="emit('togglePlaylist')"
       >
-        <ListCheck
-          v-if="isInPlaylist"
-          class="floating-media-bar__playlist-icon"
-        />
-        <ListPlus v-else class="floating-media-bar__playlist-icon" />
+        <MotionIcon>
+          <ListCheck
+            v-if="isInPlaylist"
+            class="floating-media-bar__playlist-icon"
+          />
+          <ListPlus v-else class="floating-media-bar__playlist-icon" />
+        </MotionIcon>
       </button>
       <button
         type="button"
@@ -110,7 +114,9 @@ function onOpacityInput(event: Event) {
         @pointerdown.stop
         @click.stop="emit('minimize')"
       >
-        <Minus class="floating-media-bar__minimize-icon" />
+        <MotionIcon
+          ><Minus class="floating-media-bar__minimize-icon"
+        /></MotionIcon>
       </button>
       <button
         type="button"
@@ -120,7 +126,7 @@ function onOpacityInput(event: Event) {
         @pointerdown.stop
         @click.stop="emit('close')"
       >
-        <X class="floating-media-bar__close-icon" />
+        <MotionIcon><X class="floating-media-bar__close-icon" /></MotionIcon>
       </button>
     </span>
   </header>
