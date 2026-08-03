@@ -6,3 +6,26 @@ minimumReleaseAgeExclude:
   - postcss@8.5.25
   - playwright-core@1.62.1
   - playwright@1.62.1
+  - '@iconify/json@2.2.509'
+  - '@storybook/addon-a11y@10.5.6'
+  - '@storybook/addon-docs@10.5.6'
+  - '@storybook/addon-vitest@10.5.6'
+  - '@storybook/builder-vite@10.5.6'
+  - '@storybook/csf-plugin@10.5.6'
+  - '@storybook/react-dom-shim@10.5.6'
+  - '@storybook/vue3-vite@10.5.6'
+  - '@storybook/vue3@10.5.6'
+  - '@typescript-eslint/eslint-plugin@8.66.0'
+  - '@typescript-eslint/parser@8.66.0'
+  - '@typescript-eslint/project-service@8.66.0'
+  - '@typescript-eslint/scope-manager@8.66.0'
+  - '@typescript-eslint/tsconfig-utils@8.66.0'
+  - '@typescript-eslint/type-utils@8.66.0'
+  - '@typescript-eslint/types@8.66.0'
+  - '@typescript-eslint/typescript-estree@8.66.0'
+  - '@typescript-eslint/utils@8.66.0'
+  - '@typescript-eslint/visitor-keys@8.66.0'
+  - dompurify@3.4.13
+  - eslint-plugin-storybook@10.5.6
+  - storybook@10.5.6
+  - typescript-eslint@8.66.0
