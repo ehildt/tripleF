@@ -121,25 +121,17 @@ export const popoutAutoDock = ref<boolean>(
 /** Example popout shown from SysCtl → Widgets to preview the anchor. */
 export const popoutPreviewVisible = ref(false);
 
-let popoutPreviewTimer: ReturnType<typeof setTimeout> | null = null;
-
-const POPOUT_PREVIEW_DURATION_MS = 3000;
-
-export function showPopoutPreview() {
-  popoutPreviewVisible.value = true;
-  if (popoutPreviewTimer) clearTimeout(popoutPreviewTimer);
-  popoutPreviewTimer = setTimeout(() => {
-    popoutPreviewVisible.value = false;
-    popoutPreviewTimer = null;
-  }, POPOUT_PREVIEW_DURATION_MS);
+/**
+ * Toggle the example popout on/off — the preview is persistent, not timed:
+ * it stays visible until the user dismisses it (or the toggle is flipped
+ * again).
+ */
+export function togglePopoutPreview() {
+  popoutPreviewVisible.value = !popoutPreviewVisible.value;
 }
 
 export function hidePopoutPreview() {
   popoutPreviewVisible.value = false;
-  if (popoutPreviewTimer) {
-    clearTimeout(popoutPreviewTimer);
-    popoutPreviewTimer = null;
-  }
 }
 
 /**
