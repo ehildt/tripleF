@@ -2,6 +2,7 @@
 import { Network, Radio, RadioTower, Tag } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import { useMenuPosition } from '../model-selector/composables/use-menu-position';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
@@ -47,7 +48,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
         title="Stream settings"
         @click.stop="$emit('toggleMenu')"
       >
-        <Network class="w-4 h-4" />
+        <MotionIcon><Network class="w-4 h-4" /></MotionIcon>
       </IconButton>
       <Teleport to="body">
         <div

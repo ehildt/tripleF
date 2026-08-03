@@ -3,6 +3,7 @@ import { Brain } from '@lucide/vue';
 import { ref, toRef } from 'vue';
 
 import type { OllamaModel } from '../../../../stores/models';
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
 import { useMenuPosition } from './composables/use-menu-position';
@@ -39,7 +40,7 @@ const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
         title="Select model"
         @click.stop="$emit('toggleMenu')"
       >
-        <Brain class="w-4 h-4" />
+        <MotionIcon><Brain class="w-4 h-4" /></MotionIcon>
       </IconButton>
     </div>
   </div>

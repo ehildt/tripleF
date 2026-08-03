@@ -2,6 +2,7 @@
 import { RefreshCw } from '@lucide/vue';
 
 import ChatPendingIndicator from '../../../../chat/pending-indicator/ChatPendingIndicator.vue';
+import MotionIcon from '../../../../shared/ui/motion-icon/MotionIcon.vue';
 
 defineProps<{
   loading: boolean;
@@ -21,7 +22,7 @@ const emit = defineEmits<{
         class="dlq-reload-button__trigger"
         @click="emit('click')"
       >
-        <RefreshCw class="w-4 h-4" />
+        <MotionIcon><RefreshCw class="w-4 h-4" /></MotionIcon>
       </button>
       <div v-else key="loading" class="dlq-reload-button__indicator">
         <ChatPendingIndicator />

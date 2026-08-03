@@ -19,6 +19,7 @@ import {
 import { computed } from 'vue';
 
 import Dropdown from '../../shared/ui/drop-down/DropDown.vue';
+import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import { type SetDropdownRef } from '../composables/use-chat-dropdowns';
 import type { SearchEngineState } from '../composables/use-search-engine-availability';
 
@@ -173,7 +174,9 @@ function onFileButtonMouseLeave() {
         @update:model-value="emit('selectThink', $event)"
         @open="emit('openThink')"
       >
-        <BrainCircuit class="chat-prompt-action-bar__icon" />
+        <MotionIcon>
+          <BrainCircuit class="chat-prompt-action-bar__icon" />
+        </MotionIcon>
       </Dropdown>
       <Dropdown
         :ref="props.setContextSizeDropdownRef"
@@ -186,7 +189,9 @@ function onFileButtonMouseLeave() {
         @update:model-value="emit('selectContextSize', $event)"
         @open="emit('openContextSize')"
       >
-        <CircleGauge class="chat-prompt-action-bar__icon" />
+        <MotionIcon>
+          <CircleGauge class="chat-prompt-action-bar__icon" />
+        </MotionIcon>
       </Dropdown>
       <button
         :class="fileSelectClass"
@@ -196,7 +201,7 @@ function onFileButtonMouseLeave() {
         @mouseleave="onFileButtonMouseLeave"
         @click="emit('fileSelect')"
       >
-        <Upload class="chat-prompt-action-bar__icon" />
+        <MotionIcon><Upload class="chat-prompt-action-bar__icon" /></MotionIcon>
       </button>
       <button
         v-if="
@@ -208,11 +213,13 @@ function onFileButtonMouseLeave() {
         :aria-label="searchEngineToggleTitle"
         @click="emit('toggleSearchEngine')"
       >
-        <Globe
-          v-if="props.searchEngineState === 'enabled'"
-          class="chat-prompt-action-bar__icon"
-        />
-        <GlobeX v-else class="chat-prompt-action-bar__icon" />
+        <MotionIcon>
+          <Globe
+            v-if="props.searchEngineState === 'enabled'"
+            class="chat-prompt-action-bar__icon"
+          />
+          <GlobeX v-else class="chat-prompt-action-bar__icon" />
+        </MotionIcon>
       </button>
       <span
         v-else-if="props.searchEngineState === 'unavailable'"
