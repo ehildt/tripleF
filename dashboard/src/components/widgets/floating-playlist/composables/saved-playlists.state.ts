@@ -58,12 +58,36 @@ export const savedPlaylists = ref<SavedPlaylist[]>(loadSavedPlaylists());
 /**
  * The saved playlist the current queue belongs to, if any. Set on save and
  * on load, cleared when the playlist is deleted (the queue stays and
- * unnamed) or the conversation changes. In-memory only.
+ * unnamed) or the conversation changes. Persisted so the selected list
+ * survives reloads.
  */
-export const activeSavedPlaylistId = ref<string | null>(null);
+const ACTIVE_PLAYLIST_ID_STORAGE_KEY = 'vision-active-playlist-id';
+
+function loadActivePlaylistId(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_PLAYLIST_ID_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistActivePlaylistId(id: string | null) {
+  try {
+    if (id === null) {
+      localStorage.removeItem(ACTIVE_PLAYLIST_ID_STORAGE_KEY);
+    } else {
+      localStorage.setItem(ACTIVE_PLAYLIST_ID_STORAGE_KEY, id);
+    }
+  } catch {
+    /* storage unavailable — the selection stays in-memory only */
+  }
+}
+
+export const activeSavedPlaylistId = ref<string | null>(loadActivePlaylistId());
 
 export function setActiveSavedPlaylist(id: string | null) {
   activeSavedPlaylistId.value = id;
+  persistActivePlaylistId(id);
 }
 
 /**
@@ -84,6 +108,7 @@ export function savePlaylist(
   if (existing) {
     existing.videos = [...videos];
     activeSavedPlaylistId.value = existing.id;
+    persistActivePlaylistId(existing.id);
     persistSavedPlaylists();
     return existing;
   }
@@ -97,6 +122,7 @@ export function savePlaylist(
   };
   savedPlaylists.value = [...savedPlaylists.value, entry];
   activeSavedPlaylistId.value = entry.id;
+  persistActivePlaylistId(entry.id);
   persistSavedPlaylists();
   return entry;
 }
@@ -133,6 +159,7 @@ export function syncActiveSavedPlaylist(videos: VideoGalleryItem[]) {
   );
   if (!entry) {
     activeSavedPlaylistId.value = null;
+    persistActivePlaylistId(null);
     return;
   }
   entry.videos = [...videos];
@@ -144,6 +171,9 @@ export function deleteSavedPlaylist(id: string): void {
   const next = savedPlaylists.value.filter((entry) => entry.id !== id);
   if (next.length === savedPlaylists.value.length) return;
   savedPlaylists.value = next;
-  if (activeSavedPlaylistId.value === id) activeSavedPlaylistId.value = null;
+  if (activeSavedPlaylistId.value === id) {
+    activeSavedPlaylistId.value = null;
+    persistActivePlaylistId(null);
+  }
   persistSavedPlaylists();
 }

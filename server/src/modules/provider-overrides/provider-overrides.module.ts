@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 
+import { BrightDataConfigService } from './configs/bright-data-config.service.js';
 import { SerperConfigService } from './configs/serper-config.service.js';
 import { SourcesConfigService } from './configs/sources-config.service.js';
 import { YoutubeConfigService } from './configs/youtube-config.service.js';
@@ -9,12 +10,14 @@ import { ProviderOverridesService } from './services/provider-overrides.service.
 @Module({
   providers: [
     ProviderOverridesService,
+    BrightDataConfigService,
     SerperConfigService,
     SourcesConfigService,
     YoutubeConfigService,
   ],
   exports: [
     ProviderOverridesService,
+    BrightDataConfigService,
     SerperConfigService,
     SourcesConfigService,
     YoutubeConfigService,

@@ -8,16 +8,34 @@ export function getEnabledToolNames(cfg: ProviderConfig): string[] {
   enabled.push('webFetch');
 
   const hasWebSearch =
-    cfg.serper.enabled && cfg.serper.apiKey && cfg.serper.web.enabled;
+    (cfg.serper.enabled && cfg.serper.apiKey && cfg.serper.web.enabled) ||
+    (cfg.brightData.enabled &&
+      cfg.brightData.apiKey &&
+      cfg.brightData.web.enabled);
   if (hasWebSearch) {
     enabled.push('webSearch');
   }
 
+  addBrightDataTools(cfg.brightData, enabled);
   addSerperTools(cfg.serper, enabled);
   addYoutubeTools(cfg.youtube, enabled);
   if (cfg.playwright.enabled) enabled.push(...BROWSER_TOOL_NAMES);
 
   return enabled;
+}
+
+function addBrightDataTools(
+  brightData: ProviderConfig['brightData'],
+  enabled: string[],
+): void {
+  if (!brightData.enabled || !brightData.apiKey) return;
+  if (brightData.web.enabled) enabled.push('brightDataWebSearch');
+  if (brightData.images.enabled) enabled.push('brightDataImageSearch');
+  if (brightData.news.enabled) enabled.push('brightDataNewsSearch');
+  if (brightData.places.enabled) enabled.push('brightDataPlacesSearch');
+  if (brightData.shopping.enabled) enabled.push('brightDataShoppingSearch');
+  if (brightData.videos.enabled) enabled.push('brightDataVideoSearch');
+  if (brightData.scrape.enabled) enabled.push('brightDataWebpageScrape');
 }
 
 function addSerperTools(

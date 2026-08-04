@@ -25,8 +25,8 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -48,6 +48,7 @@ import {
   setPopoutShowBarAlways,
   togglePopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
+import { hidePlaylistPreview } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
 
 type PopoutVertical = 'top' | 'middle' | 'bottom';
 type PopoutHorizontal = 'left' | 'center' | 'right';
@@ -78,11 +79,17 @@ function setVertical(value: string) {
 function setHorizontal(value: string) {
   setPopoutAnchor(`${vertical.value}-${value}` as PopoutAnchor);
 }
+
+/** Toggle the popout preview; showing it hides the floating-player preview. */
+function handlePreviewToggle() {
+  hidePlaylistPreview();
+  togglePopoutPreview();
+}
 </script>
 
 <template>
   <div class="video-popout-panel panel-glow">
-    <PanelTitleBar title="Video Popout">
+    <CollapsiblePanel id="videoPopout" title="Video Popout">
       <template #actions>
         <PreviewButton
           :active="popoutPreviewVisible"
@@ -91,7 +98,7 @@ function setHorizontal(value: string) {
               ? 'Hide example popout'
               : 'Show an example popout'
           "
-          @click="togglePopoutPreview"
+          @click="handlePreviewToggle"
         />
         <ResetButton
           title="Reset popout settings to defaults"
@@ -103,59 +110,59 @@ function setHorizontal(value: string) {
           @toggle="setPopoutEnabled(!popoutEnabled)"
         />
       </template>
-    </PanelTitleBar>
 
-    <div class="video-popout-panel__content">
-      <!-- Initial position + remember position side by side -->
-      <FieldCard
-        :icon="PictureInPicture2"
-        label="initial position"
-        description="where the popout first appears"
-        :disabled="!popoutEnabled"
-      >
-        <template #controls>
-          <SegmentedToggle
-            :options="VERTICAL_OPTIONS"
-            :model-value="vertical"
-            aria-label="Vertical position"
-            @update:model-value="setVertical"
-          />
-          <SegmentedToggle
-            :options="HORIZONTAL_OPTIONS"
-            :model-value="horizontal"
-            aria-label="Horizontal position"
-            @update:model-value="setHorizontal"
-          />
-        </template>
-      </FieldCard>
+      <div class="video-popout-panel__content">
+        <!-- Initial position + remember position side by side -->
+        <FieldCard
+          :icon="PictureInPicture2"
+          label="initial position"
+          description="where the popout first appears"
+          :disabled="!popoutEnabled"
+        >
+          <template #controls>
+            <SegmentedToggle
+              :options="VERTICAL_OPTIONS"
+              :model-value="vertical"
+              aria-label="Vertical position"
+              @update:model-value="setVertical"
+            />
+            <SegmentedToggle
+              :options="HORIZONTAL_OPTIONS"
+              :model-value="horizontal"
+              aria-label="Horizontal position"
+              @update:model-value="setHorizontal"
+            />
+          </template>
+        </FieldCard>
 
-      <FieldCard
-        :icon="Pin"
-        label="remember position"
-        description="keep the moved popout position across conversations and app reloads"
-        :checked="popoutRememberPosition"
-        :disabled="!popoutEnabled"
-        @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
-      />
+        <FieldCard
+          :icon="Pin"
+          label="remember position"
+          description="keep the moved popout position across conversations and app reloads"
+          :checked="popoutRememberPosition"
+          :disabled="!popoutEnabled"
+          @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
+        />
 
-      <FieldCard
-        :icon="ArrowDownToLine"
-        label="autodock"
-        description="dock the popout automatically when its video scrolls back into view"
-        :checked="popoutAutoDock"
-        :disabled="!popoutEnabled"
-        @toggle="setPopoutAutoDock(!popoutAutoDock)"
-      />
+        <FieldCard
+          :icon="ArrowDownToLine"
+          label="autodock"
+          description="dock the popout automatically when its video scrolls back into view"
+          :checked="popoutAutoDock"
+          :disabled="!popoutEnabled"
+          @toggle="setPopoutAutoDock(!popoutAutoDock)"
+        />
 
-      <FieldCard
-        :icon="Menu"
-        label="always show bar"
-        description="keep the player bar visible; off fades it in only on hover"
-        :checked="popoutShowBarAlways"
-        :disabled="!popoutEnabled"
-        @toggle="setPopoutShowBarAlways(!popoutShowBarAlways)"
-      />
-    </div>
+        <FieldCard
+          :icon="Menu"
+          label="always show bar"
+          description="keep the player bar visible; off fades it in only on hover"
+          :checked="popoutShowBarAlways"
+          :disabled="!popoutEnabled"
+          @toggle="setPopoutShowBarAlways(!popoutShowBarAlways)"
+        />
+      </div>
+    </CollapsiblePanel>
   </div>
 </template>
 

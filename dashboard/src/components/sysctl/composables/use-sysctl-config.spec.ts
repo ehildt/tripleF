@@ -29,6 +29,19 @@ const baseSnapshot = {
     apiKey: 'youtube-key',
     videos: { enabled: true, results: 10 },
   },
+  brightData: {
+    enabled: true,
+    apiKey: 'bright-data-key',
+    serpZone: 'serp_api',
+    unlockerZone: 'unlocker',
+    web: { enabled: true, results: 10 },
+    images: { enabled: true, results: 10 },
+    news: { enabled: true, results: 10 },
+    places: { enabled: true, results: 10 },
+    shopping: { enabled: true, results: 10 },
+    videos: { enabled: true, results: 10 },
+    scrape: { enabled: true },
+  },
 };
 
 function mockFetchByUrl(configOverrides?: Record<string, unknown>) {

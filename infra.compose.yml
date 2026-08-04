@@ -49,26 +49,6 @@ services:
     networks:
       - triplef.io
 
-        # Headless-chromium MCP sidecar exposing browser automation tools to the
-  # harness models. Internal-only: the server reaches it at
-  # http://playwright-mcp:8931/mcp, no host port is published.
-  playwright-mcp:
-    container_name: playwright-mcp
-    image: mcr.microsoft.com/playwright/mcp
-    init: true
-    restart: on-failure
-    # Chromium wants a larger /dev/shm than Docker's default 64MB.
-    shm_size: 2gb
-    entrypoint: ["node", "/app/cli.js"]
-    # allowed-hosts entries must match the Host header verbatim — port included.
-    command: ["--headless", "--browser", "chromium", "--isolated", "--no-sandbox", "--port", "8931", "--host", "0.0.0.0", "--allowed-hosts", "playwright-mcp:8931,localhost:8931,dashboard:5173,server:3000", "--caps", "testing"]
-    # Loopback-only publish so host-side MCP clients (pi via pi-mcp-extension)
-    # can reach the sidecar at http://localhost:8931/mcp. Not exposed to the LAN.
-    ports:
-      - "127.0.0.1:8931:8931"
-    networks:
-      - triplef.io
-
 #  ollama:
 #    image: ollama/ollama:latest
 #    container_name: ollama

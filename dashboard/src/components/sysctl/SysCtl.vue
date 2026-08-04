@@ -5,6 +5,7 @@ import { hidePopoutPreview } from '../chat/exchange-list/chat-exchange/exchange-
 import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
+import { hidePlaylistPreview } from '../widgets/floating-playlist/composables/playlist-settings.state';
 import { useSysctlHealthTiles } from './composables/use-sysctl-health-tiles';
 import { type SysctlTab, useSysctlTab } from './composables/use-sysctl-tab';
 import PreprocessingSection from './preprocessing-section/PreprocessingSection.vue';
@@ -16,9 +17,12 @@ import WidgetsSection from './widgets-section/WidgetsSection.vue';
 const { activeSysctlTab, selectSysctlTab } = useSysctlTab();
 const { tiles } = useSysctlHealthTiles();
 
-// The SysCtl popout preview is transient: switching the panel's own section
-// (Search Engines → Preprocessing → Widgets → System) dismisses it too.
-watch(activeSysctlTab, () => hidePopoutPreview());
+// The SysCtl popout/player previews are transient: switching the panel's own
+// section (Search Engines → Preprocessing → Widgets → System) dismisses them too.
+watch(activeSysctlTab, () => {
+  hidePopoutPreview();
+  hidePlaylistPreview();
+});
 
 const TAB_TITLES: Record<SysctlTab, string> = {
   'search-engines': 'Search Engines',

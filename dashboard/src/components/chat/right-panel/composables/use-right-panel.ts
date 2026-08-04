@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 
+import { savedPlaylists } from '@/components/widgets/floating-playlist/composables/saved-playlists.state';
 import type { Conversation } from '@/stores/conversation';
 
 import { getApiUrl } from '../../../../api/api-url';
@@ -18,7 +19,11 @@ export function useRightPanel(props: {
 }) {
   const hasAttachments = computed(() => props.attachments.length > 0);
   const hasHistory = computed(() => props.messageListItems.length > 0);
-  const hasPlaylist = computed(() => props.playlistVideos.length > 0);
+  // The player is shown when it holds anything the user can act on: at least
+  // one added video, or a saved playlist to load from an empty queue.
+  const hasPlaylist = computed(
+    () => props.playlistVideos.length > 0 || savedPlaylists.value.length > 0,
+  );
 
   function previewUrl(item: AttachmentItem): string {
     if (!item.isUploaded) return item.previewUrl;

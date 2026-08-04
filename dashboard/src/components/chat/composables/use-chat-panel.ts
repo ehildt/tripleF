@@ -46,6 +46,11 @@ export function useChatPanel(
     () => conversationStore.activeConversationId,
     async () => {
       await nextTick();
+      // Keep the player visible across a conversation switch as long as the
+      // new conversation still has a playlist — don't bounce off to the files
+      // tab just because the view priority changed. An empty new playlist
+      // falls through to the next available tab.
+      if (rightPanelView.value === 'playlist' && hasPlaylist.value) return;
       rightPanelView.value = firstAvailableView();
     },
     { immediate: true },

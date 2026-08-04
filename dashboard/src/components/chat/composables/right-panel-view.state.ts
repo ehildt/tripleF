@@ -1,15 +1,13 @@
 import { computed, type Ref, ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
-
 import {
   floatingPlaylistOpen,
   playlistMode,
 } from '../../widgets/floating-playlist/composables/playlist-settings.state';
 import {
   activePlaybackVideoUrl,
+  FLOATING_PLAYLIST_QUEUE_KEY,
   isPlaylistVideo,
-  playlistQueueKey,
 } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import type { RightPanelView } from '../types/right-panel-view.type';
 
@@ -38,6 +36,5 @@ export const playlistMarqueeVisible = computed(() => {
   }
   const url = activePlaybackVideoUrl.value;
   if (!url) return false;
-  const conversationId = useConversationStore().activeConversationId ?? '';
-  return isPlaylistVideo(playlistQueueKey(conversationId), url);
+  return isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, url);
 });

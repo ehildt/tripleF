@@ -16,6 +16,20 @@ export interface SerperConfig {
   scrape: { enabled: boolean };
 }
 
+export interface BrightDataConfig {
+  enabled: boolean;
+  apiKey?: string;
+  serpZone?: string;
+  unlockerZone?: string;
+  web: EndpointConfig;
+  images: EndpointConfig;
+  news: EndpointConfig;
+  places: EndpointConfig;
+  shopping: EndpointConfig;
+  videos: EndpointConfig;
+  scrape: { enabled: boolean };
+}
+
 export interface YouTubeConfig {
   enabled: boolean;
   apiKey?: string;
@@ -36,15 +50,16 @@ export interface OllamaConnectionConfig {
   apiKey?: string;
 }
 
-export type ProviderKey = 'serper' | 'ollama' | 'youtube';
+export type ProviderKey = 'serper' | 'brightData' | 'ollama' | 'youtube';
 
 /** Resettable top-level config sections (provider or the sources list). */
 export type ConfigSectionKey = ProviderKey | 'sources';
 
-export type ProviderConfig = SerperConfig | YouTubeConfig;
+export type ProviderConfig = SerperConfig | BrightDataConfig | YouTubeConfig;
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
+  brightData: BrightDataConfig;
   sources: SourcesConfig;
   ollama: OllamaConnectionConfig;
   youtube: YouTubeConfig;
