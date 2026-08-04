@@ -75,8 +75,15 @@ const {
   onRemoveItem,
 } = usePlaylistTransport(playlistVideos, conversationId);
 
-const { playlistNameInput, savedPlaylistNames, selectPlaylist } =
-  usePlaylistLibrary(conversationId, playlistVideos);
+const {
+  playlistNameInput,
+  savedPlaylistNames,
+  activePlaylistName,
+  selectPlaylist,
+  createPlaylist,
+  deletePlaylist,
+  renamePlaylist,
+} = usePlaylistLibrary(conversationId, playlistVideos);
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
@@ -102,7 +109,7 @@ const anchorHorizontal = computed(() => playlistAnchor.value.split('-')[1]);
  * name once saved under one — nothing while the queue is unnamed (an
  * unnamed queue is just the queue, not a "temporary" list).
  */
-const activePlaylistLabel = computed(() => playlistNameInput.value.trim());
+const activePlaylistLabel = computed(() => activePlaylistName.value);
 
 /** Launching a video counts as a pick for autoclose. */
 function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
@@ -169,8 +176,12 @@ function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
             <PlaylistMenu
               :playlist-name="playlistNameInput"
               :playlists="savedPlaylistNames"
+              :active-playlist-name="activePlaylistName"
               @update:playlist-name="playlistNameInput = $event"
               @select="selectPlaylist"
+              @create="createPlaylist"
+              @delete="deletePlaylist"
+              @rename="renamePlaylist"
             />
             <button
               type="button"
