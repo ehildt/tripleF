@@ -71,6 +71,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
               <MessagesSquare class="new-conversation-menu__input-icon" />
               <input
                 :value="newConversationName"
+                name="conversation-name"
                 placeholder="Conversation name"
                 class="new-conversation-menu__input"
                 @input="

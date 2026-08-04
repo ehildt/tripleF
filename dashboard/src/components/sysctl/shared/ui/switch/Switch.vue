@@ -1,8 +1,17 @@
 <script setup lang="ts">
-defineProps<{
-  checked: boolean;
-  disabled?: boolean;
-}>();
+import { useId } from 'vue';
+
+withDefaults(
+  defineProps<{
+    checked: boolean;
+    disabled?: boolean;
+    /** Stable id for the checkbox. Auto-generated if omitted. */
+    id?: string;
+    /** Name attribute, aids browser autofill. */
+    name?: string;
+  }>(),
+  { id: () => useId(), name: undefined },
+);
 
 const emit = defineEmits<{
   toggle: [];
@@ -12,8 +21,10 @@ const emit = defineEmits<{
 <template>
   <label class="switch" :class="{ 'switch--disabled': disabled }">
     <input
+      :id="id"
       type="checkbox"
       class="switch__input"
+      :name="name"
       :checked="checked"
       :disabled="disabled"
       @change="emit('toggle')"

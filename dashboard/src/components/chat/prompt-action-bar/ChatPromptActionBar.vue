@@ -156,6 +156,7 @@ function onFileButtonMouseLeave() {
     <span class="chat-prompt-action-bar__prompt">&gt;</span>
     <textarea
       :value="props.value"
+      name="prompt"
       :rows="2"
       class="chat-prompt-action-bar__input"
       style="caret-shape: block"
@@ -244,7 +245,6 @@ function onFileButtonMouseLeave() {
   align-items: flex-start;
   gap: var(--spacing-3);
   background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-divider);
   padding: var(--spacing-3) var(--spacing-4);
   opacity: 0.6;
   transition:
@@ -300,11 +300,8 @@ function onFileButtonMouseLeave() {
 }
 
 .chat-prompt-action-bar:focus-within {
-  border-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 30%,
-    var(--color-divider)
-  );
+  box-shadow: 0 0 0.15rem 0.05rem
+    color-mix(in srgb, var(--color-accent-primary) 30%, var(--color-divider));
   opacity: 1;
 }
 

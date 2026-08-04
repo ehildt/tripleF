@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronsDown, ChevronsUp } from '@lucide/vue';
-import { computed, useTemplateRef } from 'vue';
+import { computed, useTemplateRef, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 import type { ActiveTab } from '../../../stores/app';
 import AppThemeSelector from '../app-theme-selector/AppThemeSelector.vue';
@@ -15,10 +16,6 @@ const props = defineProps<{
   dlqCount?: number;
 }>();
 
-const emit = defineEmits<{
-  tabChange: [tab: ActiveTab];
-}>();
-
 const { tabs } = useMenuTabs(props);
 
 const menuRef = useTemplateRef<HTMLElement>('menuRef');
@@ -27,10 +24,13 @@ const { isOpen, side, toggleMenu, closeOnAutoclose } = useTabMenu(menuRef);
 /** Down to expand (the drawer drops below), up to slide it away again. */
 const handleIcon = computed(() => (isOpen.value ? ChevronsUp : ChevronsDown));
 
-function selectTab(tab: ActiveTab) {
-  emit('tabChange', tab);
-  closeOnAutoclose();
-}
+// Navigation happens through the router now (NavMenu renders router-links), so
+// close the drawer when the route changes instead of on a click event.
+const route = useRoute();
+watch(
+  () => route.fullPath,
+  () => closeOnAutoclose(),
+);
 </script>
 
 <template>
@@ -51,7 +51,7 @@ function selectTab(tab: ActiveTab) {
     </button>
 
     <aside class="tab-menu__drawer shadow-floating" aria-label="Tab menu">
-      <NavMenu :tabs="tabs" :active-tab="activeTab" @tab-change="selectTab" />
+      <NavMenu :tabs="tabs" :active-tab="activeTab" />
       <hr />
       <div class="tab-menu__footer">
         <AppThemeSelector />

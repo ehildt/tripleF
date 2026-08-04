@@ -103,6 +103,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 <Radio class="stream-settings-menu__input-icon" />
                 <input
                   :value="newEvent"
+                  name="stream-event"
                   placeholder="Socket"
                   class="stream-settings-menu__input"
                   @input="
@@ -117,6 +118,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 <Tag class="stream-settings-menu__input-icon--small" />
                 <input
                   :value="newRoomId"
+                  name="stream-channel"
                   placeholder="Channel"
                   class="stream-settings-menu__input"
                   @input="

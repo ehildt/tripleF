@@ -17,6 +17,7 @@ function onInput(event: Event) {
 <template>
   <input
     :value="modelValue"
+    name="conversation-title"
     data-rename-input
     class="conversation-title-editor"
     @input="onInput"

@@ -57,6 +57,7 @@ const {
     <input
       ref="fileInput"
       type="file"
+      name="image-upload"
       accept="image/png,image/jpeg,image/webp"
       class="pproc-tools-panel__file-input"
       @change="onFilePicked"
