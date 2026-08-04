@@ -1,4 +1,3 @@
-import { watchDebounced } from '@vueuse/core';
 import { computed, type Ref, ref, watch } from 'vue';
 
 import { replacePlaylistVideos } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
@@ -15,16 +14,14 @@ import {
   syncActiveSavedPlaylist,
 } from './saved-playlists.state';
 
-const NAME_APPLY_DEBOUNCE_MS = 500;
-
 /**
- * Saved-playlist behavior of the floating playlist, input-driven: naming
- * the queue saves it (type a name), further typing renames the saved
- * playlist, and emptying the field deletes it — the queue stays and
- * unnamed again. While a saved playlist is active it mirrors the
- * queue: queue edits sync into it automatically. Picking a saved playlist
- * in the menu loads it immediately (autoload — replace, not merge) and
- * marks it as the active one.
+ * Saved-playlist behavior of the floating playlist, action-driven: the
+ * name input's Plus button (or Enter) saves the queue under the typed name
+ * and clears the field for the next one; each saved playlist in the list
+ * carries its own Trash button to delete it. Picking a saved playlist in
+ * the menu loads it immediately (autoload — replace, not merge) and marks
+ * it as the active one. While a saved playlist is active it mirrors the
+ * queue: queue edits sync into it automatically.
  */
 export function usePlaylistLibrary(
   conversationId: Ref<string>,
@@ -32,7 +29,7 @@ export function usePlaylistLibrary(
 ) {
   const toast = useToast();
 
-  /** Name of the queue's saved playlist ('' while the queue is unnamed). */
+  /** Name being typed for a new playlist ('' once saved — the field clears). */
   const playlistNameInput = ref('');
 
   const savedPlaylistNames = computed(() =>
@@ -45,51 +42,51 @@ export function usePlaylistLibrary(
     ),
   );
 
-  /** Apply the typed name: save, rename — or delete when emptied. */
-  function applyNameInput(raw: string) {
-    const name = raw.trim();
+  /** Name of the active playlist, for tinting it in the list. */
+  const activePlaylistName = computed(
+    () => activeSavedPlaylist.value?.name ?? '',
+  );
 
-    // Emptied field: the saved playlist is deleted, the queue stays and
-    // unnamed again.
-    if (!name) {
-      const active = activeSavedPlaylist.value;
-      if (active) {
-        deleteSavedPlaylist(active.id);
-        toast.info(`Playlist "${active.name}" deleted`);
-      }
-      return;
-    }
-
-    // An input that already reflects the active playlist's name is settled
-    // (rename attempts revert the input, which would otherwise loop).
-    const active = activeSavedPlaylist.value;
-    if (active) {
-      if (active.name === name) return;
-      const renamed = renameSavedPlaylist(active.id, name);
-      if (!renamed) {
-        toast.error('A playlist with that name already exists');
-        playlistNameInput.value = active.name;
-      }
-      return;
-    }
-
-    // Temporary queue: the name becomes a new (or overwritten) playlist.
+  /** Save the typed name as a new (or overwritten) playlist, then clear the field. */
+  function createPlaylist() {
+    const name = playlistNameInput.value.trim();
+    if (!name) return;
     const saved = savePlaylist(name, playlistVideos.value);
     if (!saved) {
       toast.error(
-        playlistVideos.value.length > 0
-          ? `Playlist could not be saved (limit of ${savedPlaylists.value.length} reached)`
-          : 'Nothing to save — the playlist is empty',
+        `Playlist could not be saved (limit of ${savedPlaylists.value.length} reached)`,
       );
       return;
     }
     toast.info(`Playlist "${saved.name}" saved`);
+    // The field is cleared so the user can name the next playlist.
+    playlistNameInput.value = '';
   }
 
-  // The name applies as the user types, debounced — no save button.
-  watchDebounced(playlistNameInput, (value) => applyNameInput(value), {
-    debounce: NAME_APPLY_DEBOUNCE_MS,
-  });
+  /** Delete a saved playlist by name. */
+  function deletePlaylist(name: string) {
+    const entry = savedPlaylists.value.find(
+      (playlist) => playlist.name === name,
+    );
+    if (!entry) return;
+    deleteSavedPlaylist(entry.id);
+    toast.info(`Playlist "${entry.name}" deleted`);
+    if (activeSavedPlaylistId.value === entry.id) {
+      playlistNameInput.value = '';
+    }
+  }
+
+  /** Rename a saved playlist, showing an error on a taken name. */
+  function renamePlaylist(oldName: string, newName: string) {
+    const entry = savedPlaylists.value.find(
+      (playlist) => playlist.name === oldName,
+    );
+    if (!entry) return;
+    const renamed = renameSavedPlaylist(entry.id, newName);
+    if (!renamed) {
+      toast.error('A playlist with that name already exists');
+    }
+  }
 
   // A named queue mirrors its edits into the saved playlist.
   watch(playlistVideos, (videos) => syncActiveSavedPlaylist(videos));
@@ -108,13 +105,16 @@ export function usePlaylistLibrary(
     if (!entry) return;
     replacePlaylistVideos(conversationId.value, entry.videos);
     setActiveSavedPlaylist(entry.id);
-    playlistNameInput.value = entry.name;
     toast.info(`Playlist "${entry.name}" loaded`);
   }
 
   return {
     playlistNameInput,
     savedPlaylistNames,
+    activePlaylistName,
     selectPlaylist,
+    createPlaylist,
+    deletePlaylist,
+    renamePlaylist,
   };
 }

@@ -78,10 +78,12 @@ describe('saved-playlists.state', () => {
     expect(second?.videos[0].videoUrl).toBe(otherItem.videoUrl);
   });
 
-  it('refuses empty names and empty queues', () => {
+  it('refuses empty names but allows empty queues', () => {
     expect(savePlaylist('   ', [item])).toBeNull();
-    expect(savePlaylist('Focus', [])).toBeNull();
-    expect(savedPlaylists.value).toHaveLength(0);
+    const saved = savePlaylist('Focus', []);
+    expect(saved).not.toBeNull();
+    expect(saved?.videos).toEqual([]);
+    expect(savedPlaylists.value).toHaveLength(1);
   });
 
   it('refuses new playlists past the limit', () => {
