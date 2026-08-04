@@ -40,7 +40,7 @@ export const SerperConfigSchema = Joi.object<SerperConfig>({
 
 export function SerperConfigAdapter(env = process.env): SerperConfig {
   return {
-    enabled: getBooleanEnv(env.SERPER_ENABLED, true)!,
+    enabled: getBooleanEnv(env.SERPER_ENABLED, false)!,
     apiKey: env.SERPER_API_KEY || undefined,
     web: {
       enabled: getBooleanEnv(env.SERPER_WEB_ENABLED, true)!,

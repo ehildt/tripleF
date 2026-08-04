@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 import type { Conversation } from '@/stores/conversation';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import ExpandableMessageList from '../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
 import type { MessageListItem } from '../../shared/ui/expandable-message-list/types';
+import { FLOATING_PLAYLIST_QUEUE_KEY } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import type { RightPanelView } from '../types/right-panel-view.type';
 import AttachmentCard from './attachment-card/AttachmentCard.vue';
 import type { AttachmentItem } from './composables/use-attachment-list';
-import { usePlaylistTransport } from './composables/use-playlist-transport';
 import { useRightPanel } from './composables/use-right-panel';
-import PlaylistItem from './playlist-item/PlaylistItem.vue';
-import PlaylistTransportBar from './playlist-transport-bar/PlaylistTransportBar.vue';
+import PlaylistPanel from './playlist-panel/PlaylistPanel.vue';
 import RightPanelTabs from './right-panel-tabs/RightPanelTabs.vue';
 
 const props = defineProps<{
@@ -35,26 +32,6 @@ const emit = defineEmits<{
 
 const { hasAttachments, hasHistory, hasPlaylist, previewUrl } =
   useRightPanel(props);
-
-const transportPlaylistVideos = computed(() => props.playlistVideos);
-const transportConversationId = computed(() => props.conversation?.id ?? '');
-
-const {
-  activePlaybackPlaying,
-  activePlaybackVideoUrl,
-  activePlaybackTitle,
-  playlistAutoplayEnabled,
-  popoutHidden,
-  hasActivePlayback,
-  canTogglePlayback,
-  playbackToggleTitle,
-  toggleActivePlayback,
-  stopActivePlayback,
-  togglePlaylistAutoplay,
-  toggleHideOnPlaylist,
-  onPlayItem,
-  onRemoveItem,
-} = usePlaylistTransport(transportPlaylistVideos, transportConversationId);
 </script>
 
 <template>
@@ -85,31 +62,7 @@ const {
       v-if="rightPanelView === 'playlist' && hasPlaylist"
       class="chat-right-panel__playlist"
     >
-      <PlaylistTransportBar
-        :playing="activePlaybackPlaying"
-        :can-toggle-playback="canTogglePlayback"
-        :playback-toggle-title="playbackToggleTitle"
-        :has-active-playback="hasActivePlayback"
-        :autoplay-enabled="playlistAutoplayEnabled"
-        :popout-hidden="popoutHidden"
-        :now-playing-title="activePlaybackTitle"
-        @toggle-playback="toggleActivePlayback"
-        @stop-playback="stopActivePlayback"
-        @toggle-autoplay="togglePlaylistAutoplay"
-        @toggle-popout-visibility="toggleHideOnPlaylist"
-      />
-      <div
-        class="chat-right-panel__scrollable chat-right-panel__playlist-items"
-      >
-        <PlaylistItem
-          v-for="(item, index) in playlistVideos"
-          :key="`${item.videoUrl}-${index}`"
-          :item="item"
-          :is-active="activePlaybackVideoUrl === item.videoUrl"
-          @play="onPlayItem(item)"
-          @remove="onRemoveItem(item.videoUrl)"
-        />
-      </div>
+      <PlaylistPanel :conversation-id="FLOATING_PLAYLIST_QUEUE_KEY" />
     </div>
 
     <div v-if="rightPanelView === 'history'" class="chat-right-panel__history">
@@ -145,17 +98,11 @@ const {
   width: 100%;
 }
 
+/* The shared PlaylistPanel fills this column and scrolls its own list. */
 .chat-right-panel__playlist {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.chat-right-panel__playlist-items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
 }
 </style>

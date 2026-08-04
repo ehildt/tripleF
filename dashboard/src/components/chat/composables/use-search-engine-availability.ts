@@ -138,17 +138,34 @@ export function useSearchEngineAvailability() {
   }
 
   /**
+   * The engines a source toggle should affect: only the ones that currently
+   * have that source enabled (so a toggle never flips an engine the user
+   * turned off, e.g. Serper on + Bright Data off → toggling only affects
+   * Serper). When the source is off everywhere, the toggle re-enables it on
+   * the primary engine (Serper, else the first configured engine) so the
+   * tag can light back up without unexpectedly re-enabling every engine.
+   */
+  function resolveSourceTargets(source: string): string[] {
+    const offering = findSourceProviders(source);
+    const active = offering.filter(
+      (provider) => sourceEndpoint(provider, source).enabled === true,
+    );
+    if (active.length) return active;
+    return offering.includes('serper') ? ['serper'] : offering.slice(0, 1);
+  }
+
+  /**
    * Toggle one search source (web, images, news, …) from the prompt-bar
    * tags — same dual write as the kill switch and SysCtl source toggles
    * (server overrides + session config), so the setting survives reloads
-   * and server restarts. A source shared by several engines (e.g. videos
-   * on Serper and YouTube) flips all of them at once: the toggle counts
-   * as enabled while any engine has it on. Disabled sources stay on the
-   * prompt bar in gray and can be re-enabled with another click.
+   * and server restarts. Only the engines that currently have the source
+   * enabled are flipped (or, when none are, the primary engine is turned
+   * on); engines that had the source off stay as-is. The change is
+   * persisted per-engine in the database-backed session config.
    */
   async function toggleSource(source: string) {
     if (isToggling.value) return;
-    const providers = findSourceProviders(source);
+    const providers = resolveSourceTargets(source);
     if (!providers.length) return;
     // Spread each endpoint so sibling settings (results, …) survive the
     // toggle — a bare {enabled} write would drop them.

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * Playlist settings: whether the playlist lives in the chat right panel or
- * floats as an app-level window that survives tab switches — plus the
- * floating window's initial position, whether a dragged position is
- * remembered, whether it closes itself after a pick or an outside click —
+ * Floating player settings: the app's floating player (a video playlist
+ * queue) can be docked into the chat right panel or float as an app-level
+ * window that survives tab switches — plus the floating window's initial
+ * position, whether it closes itself after a pick or an outside click —
  * and a reset back to the defaults.
  *
  * Mirrors the video popout panel: initial position is a FieldCard row with
@@ -23,9 +23,11 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import { hidePopoutPreview } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
+import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
+import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 
@@ -34,10 +36,12 @@ import {
   playlistAnchor,
   playlistAutoClose,
   playlistMode,
+  playlistPreviewVisible,
   resetPlaylistSettings,
   setPlaylistAnchor,
   setPlaylistAutoClose,
   setPlaylistMode,
+  togglePlaylistPreview,
 } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
 
 type PlaylistVertical = 'top' | 'middle' | 'bottom';
@@ -72,64 +76,79 @@ function setVertical(value: string) {
 function setHorizontal(value: string) {
   setPlaylistAnchor(`${vertical.value}-${value}` as PlaylistAnchor);
 }
+
+/** Toggle the floating-player preview; showing it hides the popout preview. */
+function handlePreviewToggle() {
+  hidePopoutPreview();
+  togglePlaylistPreview();
+}
 </script>
 
 <template>
   <div class="playlist-panel panel-glow">
-    <PanelTitleBar title="Playlist">
+    <CollapsiblePanel id="playlist" title="Floating Player">
       <template #actions>
+        <PreviewButton
+          :active="playlistPreviewVisible"
+          :title="
+            playlistPreviewVisible
+              ? 'Hide example floating player'
+              : 'Show an example floating player'
+          "
+          @click="handlePreviewToggle"
+        />
         <ResetButton
-          title="Reset playlist settings to defaults"
+          title="Reset floating player settings to defaults"
           @click="resetPlaylistSettings"
         />
         <PowerToggle
           :enabled="floatingEnabled"
-          title="Float the playlist as an app-level window"
+          title="Float the player as an app-level window"
           @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
         />
       </template>
-    </PanelTitleBar>
 
-    <div class="playlist-panel__content">
-      <FieldCard
-        :icon="LayoutPanelLeft"
-        label="floating playlist"
-        description="float the playlist as a draggable window that survives tab switches; off keeps it in the chat right panel"
-        :checked="floatingEnabled"
-        @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
-      />
+      <div class="playlist-panel__content">
+        <FieldCard
+          :icon="LayoutPanelLeft"
+          label="docking mode"
+          description="checked floats the player as an app-level window; off docks it into the chat right panel"
+          :checked="floatingEnabled"
+          @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
+        />
 
-      <FieldCard
-        :icon="ListVideo"
-        label="initial position"
-        description="where the floating playlist appears — beside the tab menu when anchored to its top side"
-        :disabled="!floatingEnabled"
-      >
-        <template #controls>
-          <SegmentedToggle
-            :options="VERTICAL_OPTIONS"
-            :model-value="vertical"
-            aria-label="Vertical position"
-            @update:model-value="setVertical"
-          />
-          <SegmentedToggle
-            :options="HORIZONTAL_OPTIONS"
-            :model-value="horizontal"
-            aria-label="Horizontal position"
-            @update:model-value="setHorizontal"
-          />
-        </template>
-      </FieldCard>
+        <FieldCard
+          :icon="ListVideo"
+          label="initial position"
+          description="where the floating player appears — beside the tab menu when anchored to its top side"
+          :disabled="!floatingEnabled"
+        >
+          <template #controls>
+            <SegmentedToggle
+              :options="VERTICAL_OPTIONS"
+              :model-value="vertical"
+              aria-label="Vertical position"
+              @update:model-value="setVertical"
+            />
+            <SegmentedToggle
+              :options="HORIZONTAL_OPTIONS"
+              :model-value="horizontal"
+              aria-label="Horizontal position"
+              @update:model-value="setHorizontal"
+            />
+          </template>
+        </FieldCard>
 
-      <FieldCard
-        :icon="PanelRightClose"
-        label="autoclose"
-        description="collapse the floating playlist after a video was launched or a click landed outside"
-        :checked="playlistAutoClose"
-        :disabled="!floatingEnabled"
-        @toggle="setPlaylistAutoClose(!playlistAutoClose)"
-      />
-    </div>
+        <FieldCard
+          :icon="PanelRightClose"
+          label="autoclose"
+          description="collapse the floating player after a video was launched or a click landed outside"
+          :checked="playlistAutoClose"
+          :disabled="!floatingEnabled"
+          @toggle="setPlaylistAutoClose(!playlistAutoClose)"
+        />
+      </div>
+    </CollapsiblePanel>
   </div>
 </template>
 

@@ -78,6 +78,10 @@ function applyFrontendDefaults(
 ): ProviderOverridesSnapshot {
   return {
     serper: { ...snapshot.serper, enabled: snapshot.serper.enabled ?? false },
+    brightData: {
+      ...snapshot.brightData,
+      enabled: snapshot.brightData.enabled ?? false,
+    },
     youtube: {
       ...snapshot.youtube,
       enabled: snapshot.youtube?.enabled ?? false,
@@ -184,6 +188,30 @@ export function useSysctlConfig() {
     }
   }
 
+  const OTHER_SEARCH_ENGINE: Partial<Record<ProviderKey, ProviderKey>> = {
+    serper: 'brightData',
+    brightData: 'serper',
+  };
+
+  /**
+   * Search engines that share the same underlying Google index. Enabling the
+   * second one while the first is already on is allowed but likely redundant
+   * (and double the cost) — warn the user, who can still keep both and assign
+   * specific tools to each engine.
+   */
+  function warnOnBothEnginesEnabled(provider: ProviderKey, next: boolean) {
+    if (!next) return;
+    const other = OTHER_SEARCH_ENGINE[provider];
+    if (!other) return;
+    const otherEngine = config.value?.[other] as
+      { enabled?: boolean } | undefined;
+    if (otherEngine?.enabled) {
+      toast.warning(
+        'You enabled both Serper API and Bright Data. They both query the same Google index, so using both may be redundant and double your search cost. You can still keep both on and assign individual tools (web, images, news, …) to each engine.',
+      );
+    }
+  }
+
   function toggleProviderEnabled(provider: ProviderKey) {
     if (!config.value) return;
     const providerConfig = config.value[provider] as ProviderConfig & {
@@ -192,6 +220,7 @@ export function useSysctlConfig() {
     const next = !providerConfig.enabled;
     providerConfig.enabled = next;
     patchConfig(provider, 'enabled', next);
+    warnOnBothEnginesEnabled(provider, next);
   }
 
   function toggleEndpoint(provider: ProviderKey, name: string) {

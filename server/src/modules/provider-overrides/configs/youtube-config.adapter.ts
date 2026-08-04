@@ -27,7 +27,7 @@ export const YoutubeConfigSchema = Joi.object<YoutubeConfig>({
 
 export function YoutubeConfigAdapter(env = process.env): YoutubeConfig {
   return {
-    enabled: getBooleanEnv(env.YOUTUBE_ENABLED, true)!,
+    enabled: getBooleanEnv(env.YOUTUBE_ENABLED, false)!,
     apiKey: env.YOUTUBE_API_KEY || undefined,
     videos: {
       enabled: getBooleanEnv(env.YOUTUBE_VIDEOS_ENABLED, true)!,
