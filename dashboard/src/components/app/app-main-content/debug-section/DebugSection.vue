@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import Debug from '../../../../components/debug/Debug.vue';
 import RequestDetails from '../../../../components/debug/request-details/RequestDetails.vue';
-import type { DebugResult } from '../../../../types/debug.model';
+import { useAppViewContext } from '../../../../composables/use-app-view-context';
 
-defineProps<{
-  debugResults: DebugResult[];
-  selectedDebugResult: DebugResult | null;
-}>();
-
-const emit = defineEmits<{
-  clearDebugResults: [];
-  selectDebugResult: [result: DebugResult | null];
-  selectDebugMarkRead: [id: string];
-}>();
+const {
+  debugResults,
+  selectedDebugResult,
+  clearDebugResults,
+  selectDebugResult,
+  selectDebugMarkRead,
+} = useAppViewContext();
 </script>
 
 <template>
@@ -23,9 +20,9 @@ const emit = defineEmits<{
       class="debug-column__panel"
       :results="debugResults"
       :selected-result="selectedDebugResult"
-      @clear="emit('clearDebugResults')"
-      @select="emit('selectDebugResult', $event)"
-      @mark-read="emit('selectDebugMarkRead', $event)"
+      @clear="clearDebugResults"
+      @select="selectDebugResult"
+      @mark-read="selectDebugMarkRead"
     />
   </div>
   <div class="debug-column">

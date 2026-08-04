@@ -7,7 +7,7 @@ import { getApiUrl } from '@/api/api-url';
 import { useToast } from '../composables/use-toast';
 import { createId } from '../utils/id.helper';
 
-export type ActiveTab = 'http' | 'dlq' | 'debug' | 'sysctl';
+export type ActiveTab = 'chat' | 'dlq' | 'debug' | 'sysctl';
 
 const STAR_KEY = 'harness-chat-star';
 
@@ -28,7 +28,11 @@ function saveStar(value: boolean) {
 }
 
 export const useAppStore = defineStore('app', () => {
-  const activeTab = ref<ActiveTab>('http');
+  const activeTab = ref<ActiveTab>('chat');
+
+  function setActiveTab(tab: ActiveTab) {
+    activeTab.value = tab;
+  }
   const abortingId = ref<string | null>(null);
   const { copy } = useClipboard({ legacy: true });
   const copiedIndex = ref<number | null>(null);
@@ -47,7 +51,7 @@ export const useAppStore = defineStore('app', () => {
    * default, so the user opts in via SysCtl. `http`/`sysctl` are core.
    */
   const DEFAULT_TAB_VISIBILITY: Record<string, boolean> = {
-    http: true,
+    chat: true,
     dlq: false,
     debug: false,
     sysctl: true,
@@ -105,13 +109,13 @@ export const useAppStore = defineStore('app', () => {
   watch(showChatStar, saveStar);
 
   watch(activeTab, (tab) => {
-    if (tab === 'http') {
+    if (tab === 'chat') {
       showChatStar.value = false;
     }
   });
 
   function notifyChatResponse() {
-    if (activeTab.value !== 'http') {
+    if (activeTab.value !== 'chat') {
       showChatStar.value = true;
     }
   }
@@ -163,6 +167,7 @@ export const useAppStore = defineStore('app', () => {
 
   return {
     activeTab,
+    setActiveTab,
     abortingId,
     copiedIndex,
     showChatStar,

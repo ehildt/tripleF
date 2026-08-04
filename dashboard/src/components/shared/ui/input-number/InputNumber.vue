@@ -1,14 +1,29 @@
 <script setup lang="ts">
 import { ChevronDown, ChevronUp } from '@lucide/vue';
+import { useId } from 'vue';
 
-const props = defineProps<{
-  modelValue: number;
-  placeholder?: string;
-  disabled?: boolean;
-  step?: number | string;
-  min?: number | string;
-  max?: number | string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: number;
+    placeholder?: string;
+    disabled?: boolean;
+    step?: number | string;
+    min?: number | string;
+    max?: number | string;
+    /** Stable id for the field. Auto-generated if omitted. */
+    id?: string;
+    /** Name attribute, aids browser autofill. */
+    name?: string;
+  }>(),
+  {
+    id: () => useId(),
+    name: undefined,
+    placeholder: undefined,
+    step: undefined,
+    min: undefined,
+    max: undefined,
+  },
+);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: number): void;
@@ -62,7 +77,9 @@ function stepDown() {
 <template>
   <div class="input-number">
     <input
+      :id="id"
       type="number"
+      :name="name"
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"

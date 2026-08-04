@@ -74,6 +74,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
             <input
               v-model="apiKeyDraft"
               type="text"
+              name="ollama-api-key"
               class="system-section__input"
               autocomplete="off"
               spellcheck="false"
@@ -92,6 +93,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
             <input
               v-model="hostDraft"
               type="text"
+              name="ollama-host"
               class="system-section__input"
               autocomplete="off"
               spellcheck="false"
