@@ -89,6 +89,7 @@ const {
         <InputText
           :model-value="eventValue"
           :disabled="isImmutable"
+          name="event-filter"
           placeholder="Event"
           @update:model-value="emit('updateFilter', 'event', $event)"
         >
@@ -101,6 +102,7 @@ const {
         <InputText
           :model-value="roomIdValue"
           :disabled="isImmutable"
+          name="room-id-filter"
           placeholder="Room ID"
           @update:model-value="emit('updateFilter', 'roomId', $event)"
         >

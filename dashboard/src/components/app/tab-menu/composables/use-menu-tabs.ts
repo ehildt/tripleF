@@ -5,14 +5,14 @@ import type { ActiveTab } from '../../../../stores/app';
 import { useAppStore } from '../../../../stores/app';
 
 const TAB_TINTS: Record<ActiveTab, number> = {
-  http: 0.15,
+  chat: 0.15,
   dlq: 0.55,
   debug: 0.75,
   sysctl: 1,
 };
 
 const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
-  http: MessageSquare,
+  chat: MessageSquare,
   dlq: MailX,
   debug: Bug,
   sysctl: SlidersHorizontal,
@@ -41,9 +41,9 @@ export function useMenuTabs(props: {
     const allTabs: MenuTab[] = [
       {
         label: 'chat',
-        tab: 'http',
-        icon: TAB_ICONS.http,
-        tint: TAB_TINTS.http,
+        tab: 'chat',
+        icon: TAB_ICONS.chat,
+        tint: TAB_TINTS.chat,
         showStar: props.showChatStar,
       },
       {

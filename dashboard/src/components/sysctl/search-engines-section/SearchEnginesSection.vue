@@ -168,6 +168,7 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
                 <input
                   v-model="apiKeyDraft"
                   type="text"
+                  name="serper-api-key"
                   class="search-engines-section__api-key-input"
                   autocomplete="off"
                   spellcheck="false"
@@ -216,6 +217,7 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
                 <input
                   v-model="youtubeApiKeyDraft"
                   type="text"
+                  name="youtube-api-key"
                   class="search-engines-section__api-key-input"
                   autocomplete="off"
                   spellcheck="false"

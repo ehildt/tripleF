@@ -5,6 +5,7 @@ import { useDeleteDlqMutation } from '../../api/queries/use-delete-dlq-mutation'
 import { useDlqQuery } from '../../api/queries/use-dlq-query';
 import { useRetryDlqMutation } from '../../api/queries/use-retry-dlq-mutation';
 import { useUpdateDlqMutation } from '../../api/queries/use-update-dlq-mutation';
+import { useAppViewContext } from '../../composables/use-app-view-context';
 import { useToast } from '../../composables/use-toast';
 import { useDlqStore } from '../../stores/dlq';
 import { useSocketStore } from '../../stores/socket';
@@ -15,9 +16,7 @@ import DlqDetailsBody from './details-body/DlqDetailsBody.vue';
 import DlqListBody from './list-body/DlqListBody.vue';
 import DlqListHeader from './list-header/DlqListHeader.vue';
 
-const props = defineProps<{
-  models: string[];
-}>();
+const { viewModels } = useAppViewContext();
 
 const dlqStore = useDlqStore();
 const toast = useToast();
@@ -132,7 +131,7 @@ watch(
     <DlqDetailsBody
       class="dlq-column__panel"
       :entry="dlqStore.selectedEntry"
-      :models="props.models"
+      :models="viewModels"
       @save-payload="onSavePayload"
       @save-queue="onSaveQueue"
     />

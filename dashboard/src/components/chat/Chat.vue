@@ -6,6 +6,7 @@ import { useConversationStore } from '@/stores/conversation';
 
 import { deleteUploadedObject } from '../../api/storage.api';
 import { useActionBar } from '../../composables/use-action-bar';
+import { useAppViewContext } from '../../composables/use-app-view-context';
 import { useBlink } from '../../composables/use-blink';
 import { useChatContextSize } from '../../composables/use-chat-context-size';
 import { useChatInput } from '../../composables/use-chat-input';
@@ -13,7 +14,6 @@ import { useChatThink } from '../../composables/use-chat-think';
 import { useSocketSubscription } from '../../composables/use-socket-subscription';
 import { useToast } from '../../composables/use-toast';
 import { useModelsStore } from '../../stores/models';
-import type { SocketProvider } from '../../types/socket-provider.model';
 import { playlistMode } from '../widgets/floating-playlist/composables/playlist-settings.state';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
@@ -27,16 +27,13 @@ import { useAttachmentList } from './right-panel/composables/use-attachment-list
 import { useVideoPlaylist } from './right-panel/composables/use-video-playlist';
 import ChatToolbar from './toolbar/ChatToolbar.vue';
 
-const props = defineProps<{
-  socketProvider: SocketProvider;
-}>();
+const { socketProvider } = useAppViewContext();
 
-const { isEventConnected, isRoomConnected } = useSocketSubscription(
-  props.socketProvider,
-);
+const { isEventConnected, isRoomConnected } =
+  useSocketSubscription(socketProvider);
 
 const { arguments_, submit, persistArguments } = useSubmit({
-  socketProvider: props.socketProvider,
+  socketProvider,
   isEventConnected,
   isRoomConnected,
 });

@@ -1,10 +1,24 @@
 <script setup lang="ts">
-defineProps<{
-  modelValue: string;
-  placeholder?: string;
-  disabled?: boolean;
-  rows?: number;
-}>();
+import { useId } from 'vue';
+
+withDefaults(
+  defineProps<{
+    modelValue: string;
+    placeholder?: string;
+    disabled?: boolean;
+    rows?: number;
+    /** Stable id for the field. Auto-generated if omitted. */
+    id?: string;
+    /** Name attribute, aids browser autofill. */
+    name?: string;
+  }>(),
+  {
+    id: () => useId(),
+    name: undefined,
+    placeholder: undefined,
+    rows: undefined,
+  },
+);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -23,6 +37,8 @@ function handleKeydown(event: KeyboardEvent) {
 
 <template>
   <textarea
+    :id="id"
+    :name="name"
     :value="modelValue"
     :placeholder="placeholder"
     :disabled="disabled"

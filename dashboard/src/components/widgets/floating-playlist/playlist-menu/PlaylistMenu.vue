@@ -54,6 +54,7 @@ function onNameInput(event: Event) {
         <input
           :value="playlistName"
           type="text"
+          name="playlist-name"
           class="playlist-menu__name-input"
           placeholder="Name this playlist"
           title="Type to save the queue under a name — renaming is automatic, emptying the field deletes the playlist and leaves the queue unnamed"
