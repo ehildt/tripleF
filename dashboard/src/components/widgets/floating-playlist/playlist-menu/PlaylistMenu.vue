@@ -1,35 +1,53 @@
 <script setup lang="ts">
 /**
  * Saved-playlists menu of the floating playlist: an icon-only trigger in
- * the toolbar row opens a menu with the playlist name input as the first
- * field, a divider, and the saved playlists below. Picking a saved playlist
- * loads it immediately (autoload — there is deliberately no load button,
- * and no checkmarks on the items). Open/close wiring (click outside,
- * Escape) comes from the shared useDropdown composable.
+ * the toolbar row opens a menu with the playlist name field as the first
+ * row and the saved playlists below. Picking a saved playlist loads it
+ * immediately (autoload — there is deliberately no load button, and no
+ * checkmarks). Open/close wiring (click outside, Escape) comes from the
+ * shared useDropdown composable.
+ *
+ * The name field is a card matching the created entries: a borderless input
+ * plus a Plus button to its right (both inside a bordered surface). The Plus
+ * button (or Enter) saves the typed name as a new playlist and the field
+ * clears for the next one. Each saved playlist in the list is an editable
+ * name input carrying its own Edit and Trash buttons: focusing it loads the
+ * playlist, the Edit button enables renaming, and emptying the field deletes
+ * it. The active playlist is tinted. Styling mirrors the conversations menu
+ * (bg-tertiary inputs and bordered list cards).
  */
-import { Library } from '@lucide/vue';
+import { Library, Plus } from '@lucide/vue';
 import { ref } from 'vue';
 
 import { useDropdown } from '@/components/shared/ui/drop-down/use-dropdown';
 
+import PlaylistMenuItem from './playlist-menu-item/PlaylistMenuItem.vue';
+
 defineProps<{
-  /** Name of the queue's playlist (the v-model of the first input field). */
+  /** Name being typed for a new playlist (the v-model of the input field). */
   playlistName: string;
-  /** Names of the saved playlists, listed below the divider. */
+  /** Names of the saved playlists, listed below the name field. */
   playlists: readonly string[];
+  /** Name of the active playlist, tinted in the list. */
+  activePlaylistName: string;
 }>();
 
 const emit = defineEmits<{
   'update:playlistName': [name: string];
   select: [name: string];
+  /** Save the typed name as a playlist (Plus button or Enter). */
+  create: [];
+  /** Rename the named saved playlist. */
+  rename: [oldName: string, newName: string];
+  /** Delete the named saved playlist (its Trash button). */
+  delete: [name: string];
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
 
-const { open, toggle, select, close } = useDropdown(
-  containerRef,
-  (name: string) => emit('select', name),
-);
+// The list entries handle their own select (load on focus), so the dropdown
+// stays open for management — no select callback here.
+const { open, toggle, close } = useDropdown(containerRef, () => {});
 
 function onNameInput(event: Event) {
   emit('update:playlistName', (event.target as HTMLInputElement).value);
@@ -51,31 +69,42 @@ function onNameInput(event: Event) {
     </button>
     <Transition name="playlist-menu">
       <div v-if="open" class="playlist-menu__menu" @click.stop>
-        <input
-          :value="playlistName"
-          type="text"
-          name="playlist-name"
-          class="playlist-menu__name-input"
-          placeholder="Name this playlist"
-          title="Type to save the queue under a name — renaming is automatic, emptying the field deletes the playlist and leaves the queue unnamed"
-          aria-label="Playlist name"
-          @input="onNameInput"
-          @keydown.esc="close"
-        />
-        <hr class="playlist-menu__divider" />
-        <template v-if="playlists.length > 0">
+        <div class="playlist-menu__name-row">
+          <input
+            :value="playlistName"
+            type="text"
+            name="playlist-name"
+            class="playlist-menu__input"
+            placeholder="Name this playlist"
+            title="Type a name and press the Plus (or Enter) to save it as a new playlist"
+            aria-label="Playlist name"
+            @input="onNameInput"
+            @keydown.enter.prevent="emit('create')"
+            @keydown.esc="close"
+          />
           <button
+            type="button"
+            class="playlist-menu__name-action"
+            title="Save playlist"
+            aria-label="Save playlist"
+            :disabled="!playlistName.trim()"
+            @mousedown.prevent
+            @click="emit('create')"
+          >
+            <Plus class="playlist-menu__name-action-icon" />
+          </button>
+        </div>
+        <template v-if="playlists.length > 0">
+          <PlaylistMenuItem
             v-for="name in playlists"
             :key="name"
-            type="button"
-            class="playlist-menu__item"
-            :class="{ 'playlist-menu__item--active': name === playlistName }"
-            @click="select(name)"
-          >
-            {{ name }}
-          </button>
+            :name="name"
+            :is-active="name === activePlaylistName"
+            @select="emit('select', name)"
+            @rename="(newName) => emit('rename', name, newName)"
+            @delete="emit('delete', name)"
+          />
         </template>
-        <span v-else class="playlist-menu__empty">No saved playlists</span>
       </div>
     </Transition>
   </div>
@@ -120,6 +149,8 @@ function onNameInput(event: Event) {
   height: 0.75rem;
 }
 
+/* Dropdown, styled like the conversations menu: elevated surface, divider
+   border, floating shadow, and a padded column with a gap between fields. */
 .playlist-menu__menu {
   position: absolute;
   z-index: 50;
@@ -127,10 +158,11 @@ function onNameInput(event: Event) {
   right: 0;
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-1);
   width: 14rem;
   max-width: calc(100vw - 2rem);
   margin-top: var(--spacing-1);
-  padding: var(--spacing-1-5);
+  padding: var(--spacing-1);
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
   box-shadow: 0 10px 15px -3px
@@ -160,64 +192,71 @@ function onNameInput(event: Event) {
   opacity: 1;
 }
 
-.playlist-menu__name-input {
-  width: 100%;
-  padding: var(--spacing-1) var(--spacing-1-5);
+/* Name field: a card matching the created entries — bordered surface with a
+   borderless input and the Plus icon button outside the field. */
+.playlist-menu__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1-5) var(--spacing-2);
+  background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
-  background: var(--color-bg-secondary);
-  color: var(--color-fg-primary);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-}
-
-.playlist-menu__name-input::placeholder {
-  color: var(--color-fg-muted);
-}
-
-.playlist-menu__name-input:focus {
-  outline: none;
-  border-color: var(--color-accent-active);
-  box-shadow: 0 0 0 1px var(--color-accent-active);
-}
-
-.playlist-menu__divider {
   width: 100%;
-  margin: var(--spacing-1-5) 0 var(--spacing-1);
-  border: none;
-  border-top: 1px solid var(--color-divider);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-.playlist-menu__item {
-  width: 100%;
-  padding: var(--spacing-1-5) var(--spacing-1);
+.playlist-menu__name-row:focus-within {
+  border-color: var(--color-accent-primary);
+}
+
+.playlist-menu__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
   border: none;
-  background: none;
-  text-align: left;
+  background: transparent;
   font-size: 0.75rem;
   font-family: var(--font-mono);
   color: var(--color-fg-secondary);
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
+  outline: none;
 }
 
-.playlist-menu__item:hover {
+.playlist-menu__input::placeholder {
+  color: var(--color-fg-muted);
+}
+
+.playlist-menu__input:focus {
   color: var(--color-fg-primary);
-  background-color: var(--color-bg-tertiary);
 }
 
-.playlist-menu__item--active {
+/* Plus action button, an icon button like the entries' Edit/Trash. */
+.playlist-menu__name-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0.125rem;
+  color: var(--color-fg-muted);
+  transition: color 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+}
+
+.playlist-menu__name-action:hover:not(:disabled) {
   color: var(--color-accent-primary);
 }
 
-.playlist-menu__empty {
-  padding: var(--spacing-1-5) var(--spacing-1);
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-muted);
+.playlist-menu__name-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.playlist-menu__name-action-icon {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 </style>
