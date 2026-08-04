@@ -1,6 +1,5 @@
 import { computed, ref } from 'vue';
 
-import { playlistMode } from '@/components/widgets/floating-playlist/composables/playlist-settings.state';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { releaseFloatingPopupRect } from './popout-settings.state';
@@ -141,32 +140,20 @@ export function closeLaunchedVideo() {
 }
 
 /**
- * Queue key under which the floating playlist stores its videos in
- * addedPlaylistVideos. The floating playlist is deliberately conversation-
+ * Queue key under which the playlist stores its videos in
+ * addedPlaylistVideos. The playlist is deliberately conversation-
  * independent — it exists so the queue survives conversation switches and
- * tab switches — so while the mode is floating, every playlist read and
- * write (panel surfaces keep their conversation scope in panel mode) goes
- * through this single global key.
+ * tab switches — so every playlist read and write goes through this single
+ * global key, regardless of mode (floating or docked) or the active
+ * conversation.
  */
 export const FLOATING_PLAYLIST_QUEUE_KEY = 'floating-playlist';
 
 /**
- * Resolve the playlist queue key for the current mode: the global floating
- * queue while the playlist floats (conversation-independent), the given
- * conversation id otherwise.
- */
-export function playlistQueueKey(conversationId: string): string {
-  return playlistMode.value === 'floating'
-    ? FLOATING_PLAYLIST_QUEUE_KEY
-    : conversationId;
-}
-
-/**
- * The conversation's playlist: videos the user explicitly added from a
- * videolist card, keyed by conversation id (or by the global floating key
- * in floating mode) so playlists do not leak into other conversations.
- * Persisted to localStorage (one record per key) so a playlist survives
- * reloads.
+ * The playlist: videos the user explicitly added from a videolist card.
+ * Stored under a single global key so the queue does not clear with — or
+ * leak into — a conversation switch; persisted to localStorage so it
+ * survives reloads.
  */
 const PLAYLIST_VIDEOS_STORAGE_KEY = 'vision-playlist-videos';
 

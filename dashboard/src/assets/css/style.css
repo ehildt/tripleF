@@ -106,39 +106,22 @@ footer,
     border-color 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Glassy, restrained panel: a single soft, diffuse shadow for a quiet
+   float — no inset highlight, no tight contact ring, no pulsing glow. */
 .panel-glow {
-  box-shadow:
-    0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 6%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, black 10%, transparent);
   transition: box-shadow 0.4s ease;
 }
 
 .panel-glow:hover {
-  animation: panel-glow-pulse 4s ease-in-out infinite;
+  box-shadow: 0 12px 32px color-mix(in srgb, black 14%, transparent);
 }
 
 .panel-glow--active,
 .panel-glow:focus-within {
   box-shadow:
-    0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
-    0 0 1rem color-mix(in srgb, var(--color-accent-glow) 12%, transparent);
-}
-
-@keyframes panel-glow-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
-      inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
-      0 0 0.5rem color-mix(in srgb, var(--color-accent-glow) 6%, transparent);
-  }
-  50% {
-    box-shadow:
-      0 0.25rem 0.25rem color-mix(in srgb, black 12%, transparent),
-      inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
-      0 0 0.25rem color-mix(in srgb, var(--color-accent-glow) 10%, transparent);
-  }
+    0 8px 24px color-mix(in srgb, black 10%, transparent),
+    0 0 1.25rem color-mix(in srgb, var(--color-accent-glow) 9%, transparent);
 }
 
 @keyframes pulse-fast {

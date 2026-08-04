@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_PLAYLIST_ANCHOR,
   DEFAULT_PLAYLIST_MODE,
+  floatingPlaylistOpen,
   playlistAnchor,
   playlistAutoClose,
   playlistMode,
@@ -49,6 +50,35 @@ describe('playlist-settings.state', () => {
     setPlaylistMode('floating');
     expect(playlistMode.value).toBe('floating');
     expect(localStorage.getItem('vision-playlist-mode')).toBe('floating');
+  });
+
+  it('enabling floating mode opens the player window', () => {
+    setPlaylistMode('floating');
+    expect(floatingPlaylistOpen.value).toBe(true);
+  });
+
+  it('opens the player window when a saved playlist exists', async () => {
+    localStorage.setItem(
+      'vision-saved-playlists',
+      JSON.stringify([{ id: 'p1', name: 'Focus', videos: [] }]),
+    );
+    vi.resetModules();
+    const mod = await import('./playlist-settings.state');
+    expect(mod.floatingPlaylistOpen.value).toBe(true);
+  });
+
+  it('opens the player window when the queue has an added video', async () => {
+    localStorage.setItem(
+      'vision-playlist-videos',
+      JSON.stringify({
+        'floating-playlist': [
+          { videoUrl: 'https://youtu.be/abc', title: 'Some video' },
+        ],
+      }),
+    );
+    vi.resetModules();
+    const mod = await import('./playlist-settings.state');
+    expect(mod.floatingPlaylistOpen.value).toBe(true);
   });
 
   it('persists the anchor', () => {

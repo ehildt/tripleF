@@ -6,7 +6,9 @@ import AppFooter from './components/app/app-footer/AppFooter.vue';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
 import { hidePopoutPreview } from './components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import FloatingPlayer from './components/widgets/floating-player/FloatingPlayer.vue';
+import { hidePlaylistPreview } from './components/widgets/floating-playlist/composables/playlist-settings.state';
 import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPlaylist.vue';
+import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPreview.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
 import { appViewContextKey } from './composables/use-app-view-context';
@@ -40,7 +42,10 @@ preprocessingStore.pushSettingsToServer();
 // cannot be used directly as a watch source.
 watch(
   () => appStore.activeTab,
-  () => hidePopoutPreview(),
+  () => {
+    hidePopoutPreview();
+    hidePlaylistPreview();
+  },
 );
 
 const DLQ_POLL_INTERVAL = 30_000;
@@ -116,6 +121,7 @@ onUnmounted(() => {
 
     <ToastContainer />
     <PopoutPreview />
+    <PlaylistPreview />
     <FloatingPlayer />
     <FloatingPlaylist />
     <AppFooter :socket-id="socketStore.socketId" />

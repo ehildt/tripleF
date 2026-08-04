@@ -1,6 +1,12 @@
 import { ref } from 'vue';
 
 import type { PopoutAnchor } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
+import {
+  addedPlaylistVideos,
+  FLOATING_PLAYLIST_QUEUE_KEY,
+} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+
+import { savedPlaylists } from './saved-playlists.state';
 
 /** Where the playlist lives: pinned inside the chat right panel, or an app-level floating window that survives tab switches. */
 export type PlaylistMode = 'panel' | 'floating';
@@ -79,14 +85,28 @@ export const playlistAutoClose = ref<boolean>(
 );
 
 /**
- * Whether the floating playlist window is open. Starts collapsed every
- * session — the compact handle stays at the anchor until the user opens
- * the window. In-memory only.
+ * Whether the floating playlist window is open. Opens by default whenever it
+ * holds anything to act on — a saved playlist or an added video — so the
+ * player is visible when it has content, and only starts collapsed when
+ * there is nothing in it. In-memory only.
  */
-export const floatingPlaylistOpen = ref(false);
+function loadFloatingPlaylistOpen(): boolean {
+  return (
+    savedPlaylists.value.length > 0 ||
+    (addedPlaylistVideos.value.get(FLOATING_PLAYLIST_QUEUE_KEY)?.length ?? 0) >
+      0
+  );
+}
+
+export const floatingPlaylistOpen = ref(loadFloatingPlaylistOpen());
 
 export function setPlaylistMode(mode: PlaylistMode) {
   playlistMode.value = mode;
+  // Enabling floating mode surfaces the player window immediately — leaving
+  // the compact handle alone reads as "the player disappeared".
+  if (mode === 'floating') {
+    floatingPlaylistOpen.value = true;
+  }
   try {
     localStorage.setItem(PLAYLIST_MODE_STORAGE_KEY, mode);
   } catch {
@@ -106,6 +126,20 @@ export function setPlaylistAnchor(anchor: PlaylistAnchor) {
 export function setPlaylistAutoClose(enabled: boolean) {
   playlistAutoClose.value = enabled;
   saveBoolean(PLAYLIST_AUTO_CLOSE_STORAGE_KEY, enabled);
+}
+
+/**
+ * Example floating player shown from SysCtl → Widgets to preview the
+ * configured anchor. Persistent (not timed); hides on tab switch or close.
+ */
+export const playlistPreviewVisible = ref(false);
+
+export function togglePlaylistPreview() {
+  playlistPreviewVisible.value = !playlistPreviewVisible.value;
+}
+
+export function hidePlaylistPreview() {
+  playlistPreviewVisible.value = false;
 }
 
 /** Restore the playlist settings to their defaults. */

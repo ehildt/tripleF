@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { SearchRecency } from './apply-recency-param.helper.js';
 import { dedupeByUrl } from './dedupe-by-url.js';
+import { searchBrightData } from './search-bright-data.js';
 import { searchSerper } from './search-serper.js';
 import type { ResultItem } from './sort-by-priority.js';
 import { sortByPriority } from './sort-by-priority.js';
@@ -50,6 +51,15 @@ export function createWebSearch(deps: ToolDependencies) {
       const allResults: ResultItem[] = [];
 
       await searchSerper(
+        query,
+        cfg,
+        deps,
+        allResults,
+        lang ?? deps.defaultLang,
+        recency,
+      );
+
+      await searchBrightData(
         query,
         cfg,
         deps,

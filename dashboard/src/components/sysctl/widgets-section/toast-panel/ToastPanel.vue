@@ -27,9 +27,9 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
-import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -132,7 +132,7 @@ function setHorizontal(value: string) {
 
 <template>
   <div class="toast-panel panel-glow">
-    <PanelTitleBar title="Toast Notifications">
+    <CollapsiblePanel id="toast" title="Toast Notifications">
       <template #actions>
         <PreviewButton
           title="Show an example toast"
@@ -148,88 +148,88 @@ function setHorizontal(value: string) {
           @toggle="setToastEnabled(!toastEnabled)"
         />
       </template>
-    </PanelTitleBar>
 
-    <div class="toast-panel__content">
-      <FieldCard
-        :icon="Anchor"
-        label="initial position"
-        description="where the toast stack appears"
-        :disabled="!toastEnabled"
-      >
-        <template #controls>
-          <SegmentedToggle
-            :options="VERTICAL_OPTIONS"
-            :model-value="vertical"
-            aria-label="Vertical position"
-            @update:model-value="setVertical"
-          />
-          <SegmentedToggle
-            :options="HORIZONTAL_OPTIONS"
-            :model-value="horizontal"
-            aria-label="Horizontal position"
-            @update:model-value="setHorizontal"
-          />
-        </template>
-      </FieldCard>
-
-      <FieldCard
-        :icon="Timer"
-        label="auto hide"
-        description="seconds before a toast disappears — off keeps toasts on screen"
-        :disabled="!toastEnabled"
-      >
-        <template #controls>
-          <button
-            type="button"
-            class="toast-panel__checkbox"
-            :class="{ 'toast-panel__checkbox--checked': toastAutoHide }"
-            :disabled="!toastEnabled"
-            :aria-pressed="toastAutoHide"
-            aria-label="Auto hide toasts"
-            @click="setToastAutoHide(!toastAutoHide)"
-          >
-            <Check
-              v-if="toastAutoHide"
-              class="toast-panel__check-icon"
-              stroke-width="3"
-            />
-          </button>
-          <div class="toast-panel__number">
-            <InputNumber
-              :model-value="toastDurationSeconds"
-              :min="1"
-              :max="30"
-              :step="0.5"
-              :disabled="!toastAutoHide || !toastEnabled"
-              @update:model-value="setToastDurationSeconds"
-            />
-          </div>
-        </template>
-      </FieldCard>
-
-      <FieldCard
-        :icon="Pin"
-        label="show pin"
-        description="pin icon on each toast"
-        :checked="toastPinEnabled"
-        :disabled="!toastEnabled"
-        @toggle="setToastPinEnabled(!toastPinEnabled)"
-      />
-
-      <div class="toast-panel__types">
+      <div class="toast-panel__content">
         <FieldCard
-          v-for="{ type, icon, label, description } in TYPE_OPTIONS"
-          :key="type"
-          :icon="icon"
-          :label="label"
-          :description="description"
-          :checked="toastTypeFilters[type]"
+          :icon="Anchor"
+          label="initial position"
+          description="where the toast stack appears"
           :disabled="!toastEnabled"
-          @toggle="setToastTypeFilter(type, !toastTypeFilters[type])"
+        >
+          <template #controls>
+            <SegmentedToggle
+              :options="VERTICAL_OPTIONS"
+              :model-value="vertical"
+              aria-label="Vertical position"
+              @update:model-value="setVertical"
+            />
+            <SegmentedToggle
+              :options="HORIZONTAL_OPTIONS"
+              :model-value="horizontal"
+              aria-label="Horizontal position"
+              @update:model-value="setHorizontal"
+            />
+          </template>
+        </FieldCard>
+
+        <FieldCard
+          :icon="Timer"
+          label="auto hide"
+          description="seconds before a toast disappears — off keeps toasts on screen"
+          :disabled="!toastEnabled"
+        >
+          <template #controls>
+            <button
+              type="button"
+              class="toast-panel__checkbox"
+              :class="{ 'toast-panel__checkbox--checked': toastAutoHide }"
+              :disabled="!toastEnabled"
+              :aria-pressed="toastAutoHide"
+              aria-label="Auto hide toasts"
+              @click="setToastAutoHide(!toastAutoHide)"
+            >
+              <Check
+                v-if="toastAutoHide"
+                class="toast-panel__check-icon"
+                stroke-width="3"
+              />
+            </button>
+            <div class="toast-panel__number">
+              <InputNumber
+                :model-value="toastDurationSeconds"
+                :min="1"
+                :max="30"
+                :step="0.5"
+                :disabled="!toastAutoHide || !toastEnabled"
+                @update:model-value="setToastDurationSeconds"
+              />
+            </div>
+          </template>
+        </FieldCard>
+
+        <FieldCard
+          :icon="Pin"
+          label="show pin"
+          description="pin icon on each toast"
+          :checked="toastPinEnabled"
+          :disabled="!toastEnabled"
+          @toggle="setToastPinEnabled(!toastPinEnabled)"
         />
+
+        <div class="toast-panel__types">
+          <FieldCard
+            v-for="{ type, icon, label, description } in TYPE_OPTIONS"
+            :key="type"
+            :icon="icon"
+            :label="label"
+            :description="description"
+            :checked="toastTypeFilters[type]"
+            :disabled="!toastEnabled"
+            @toggle="setToastTypeFilter(type, !toastTypeFilters[type])"
+          />
+        </div>
       </div>
-    </div>
+    </CollapsiblePanel>
   </div>
 </template>
 

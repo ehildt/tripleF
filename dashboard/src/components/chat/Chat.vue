@@ -15,12 +15,14 @@ import { useSocketSubscription } from '../../composables/use-socket-subscription
 import { useToast } from '../../composables/use-toast';
 import { useModelsStore } from '../../stores/models';
 import { playlistMode } from '../widgets/floating-playlist/composables/playlist-settings.state';
+import { savedPlaylists } from '../widgets/floating-playlist/composables/saved-playlists.state';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
 import { useChatPanel } from './composables/use-chat-panel';
 import { useSearchEngineAvailability } from './composables/use-search-engine-availability';
 import { useSubmit } from './composables/use-submit';
+import { FLOATING_PLAYLIST_QUEUE_KEY } from './exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import ChatMainColumn from './main-column/ChatMainColumn.vue';
 import ChatRightPanel from './right-panel/ChatRightPanel.vue';
 import { useAttachmentList } from './right-panel/composables/use-attachment-list';
@@ -140,8 +142,10 @@ const {
   supportsVision,
 });
 
+// The playlist is global and conversation-independent: one shared queue that
+// the docked and floating players both read, so it persists across switches.
 const { playlistVideos } = useVideoPlaylist(
-  computed(() => conversation.value?.id ?? ''),
+  computed(() => FLOATING_PLAYLIST_QUEUE_KEY),
 );
 
 // In floating mode the playlist lives in the app-level window (SysCtl →
@@ -149,7 +153,11 @@ const { playlistVideos } = useVideoPlaylist(
 const panelPlaylistVideos = computed(() =>
   playlistMode.value === 'floating' ? [] : playlistVideos.value,
 );
-const hasPanelPlaylist = computed(() => panelPlaylistVideos.value.length > 0);
+// The player shows when it has anything to act on: an added video, or a
+// saved playlist to load from an empty queue.
+const hasPanelPlaylist = computed(
+  () => panelPlaylistVideos.value.length > 0 || savedPlaylists.value.length > 0,
+);
 
 const { rightPanelView, selectPanelView } = useChatPanel(
   hasAttachments,

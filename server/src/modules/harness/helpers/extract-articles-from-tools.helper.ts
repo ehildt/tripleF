@@ -7,7 +7,7 @@ type ToolEntry = { toolName: string; result: unknown };
  * Determine the source name from a URL or raw provider slug.
  */
 function deriveSourceName(url: string, rawSource?: string): string {
-  const providerSlugs = new Set(['serper']);
+  const providerSlugs = new Set(['serper', 'brightData']);
   if (rawSource && !providerSlugs.has(rawSource.toLowerCase()))
     return rawSource;
 

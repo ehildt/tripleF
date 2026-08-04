@@ -91,7 +91,7 @@ function getResults(value: unknown): number | undefined {
 
 .provider-section__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--spacing-1);
 }
 </style>
