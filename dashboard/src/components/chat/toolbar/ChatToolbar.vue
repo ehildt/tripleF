@@ -347,6 +347,7 @@ defineExpose({
     <input
       ref="fileInputRef"
       type="file"
+      name="chat-attachments"
       multiple
       accept="image/*"
       class="hidden"

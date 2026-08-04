@@ -57,6 +57,7 @@ function save(key: 'preferred' | 'blocked') {
       </div>
       <textarea
         v-model="preferredDraft"
+        name="preferred-sources"
         class="sources-panel__input"
         rows="6"
         placeholder="bbc.com&#10;arstechnica.com"
@@ -80,6 +81,7 @@ function save(key: 'preferred' | 'blocked') {
       </div>
       <textarea
         v-model="blockedDraft"
+        name="blocked-sources"
         class="sources-panel__input"
         rows="6"
         placeholder="*.pinterest.com&#10;/^lh\d+\.googleusercontent\.com$/"

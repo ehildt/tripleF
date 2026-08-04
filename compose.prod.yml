@@ -1,0 +1,61 @@
+# Production stack for tripleF (3F).
+#
+# Builds and runs the prod-optimized server + dashboard from the
+# workspace-aware root Dockerfile (targets: server-production,
+# dashboard-production). The dashboard-production image ships the compiled
+# static assets behind nginx, which proxies /api and /socket.io to the server.
+#
+# Infra services (postgres, minio, keydb) are expected to be running on the
+# shared `triplef.io` network — e.g. `docker compose -f infra.compose.yml up -d`.
+#
+# Usage:
+#   docker compose -f compose.prod.yml up -d --build
+#
+# Networking note: the dev `./server/.env` points at `localhost`, but inside
+# the container network the infra is reached by service name (postgres, keydb,
+# minio). The `environment:` overrides below retarget those hosts. The
+# POSTGRES_URL defaults reuse the local infra credentials from
+# infra.compose.yml — replace them with real production secrets for a real
+# deployment (e.g. via a top-level `.env` used at `compose` invocation time).
+
+services:
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server-production
+    restart: on-failure
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      # Retarget localhost → container service names.
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-triplef}:${POSTGRES_PASSWORD:-triplef}@postgres:5432/${POSTGRES_DB:-triplef}
+      BULLMQ_HOST: keydb
+      MINIO_ENDPOINT: minio
+    ports:
+      - "3000:3000"
+    networks:
+      - triplef.io
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  dashboard:
+    container_name: dashboard
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dashboard-production
+    restart: on-failure
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+    networks:
+      - triplef.io
+
+networks:
+  triplef.io:
+    external: true
+    name: triplef.io

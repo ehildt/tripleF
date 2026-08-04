@@ -45,6 +45,7 @@ const emit = defineEmits<{
         <div class="dlq-filter-menu__search">
           <input
             :value="selectedValue"
+            name="dlq-filter"
             :placeholder="title"
             class="dlq-filter-menu__search-input"
             @input="emit('select', ($event.target as HTMLInputElement).value)"

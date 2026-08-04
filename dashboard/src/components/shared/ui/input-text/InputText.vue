@@ -1,9 +1,18 @@
 <script setup lang="ts">
-defineProps<{
-  modelValue: string;
-  placeholder?: string;
-  disabled?: boolean;
-}>();
+import { useId } from 'vue';
+
+withDefaults(
+  defineProps<{
+    modelValue: string;
+    placeholder?: string;
+    disabled?: boolean;
+    /** Stable id for the field. Auto-generated if omitted. */
+    id?: string;
+    /** Name attribute, aids browser autofill. */
+    name?: string;
+  }>(),
+  { id: () => useId(), name: undefined, placeholder: undefined },
+);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -21,6 +30,8 @@ function handleInput(event: Event) {
       <slot name="prepend-icon" />
     </div>
     <input
+      :id="id"
+      :name="name"
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"

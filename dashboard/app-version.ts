@@ -11,8 +11,8 @@ import path from 'node:path';
  */
 export function readAppVersion(): string {
   const files = [
-    path.resolve(__dirname, '../package.json'),
-    path.resolve(__dirname, './package.json'),
+    path.resolve(import.meta.dirname, '../package.json'),
+    path.resolve(import.meta.dirname, './package.json'),
   ];
   for (const f of files) {
     try {

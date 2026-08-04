@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
+
 import type { ActiveTab } from '../../../../stores/app';
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import type { MenuTab } from '../composables/use-menu-tabs';
@@ -7,24 +9,19 @@ defineProps<{
   tabs: readonly MenuTab[];
   activeTab: ActiveTab;
 }>();
-
-const emit = defineEmits<{
-  tabChange: [tab: ActiveTab];
-}>();
 </script>
 
 <template>
   <nav class="nav-menu" aria-label="Navigation">
-    <button
+    <RouterLink
       v-for="tab in tabs"
       :key="tab.tab"
-      type="button"
+      :to="`/${tab.tab}`"
       class="nav-menu__item"
       :class="{ 'nav-menu__item--active': tab.tab === activeTab }"
-      :aria-current="tab.tab === activeTab"
+      :aria-current="tab.tab === activeTab ? 'page' : undefined"
       :title="tab.label"
       :aria-label="tab.label"
-      @click="emit('tabChange', tab.tab)"
     >
       <MotionIcon>
         <component :is="tab.icon" class="nav-menu__item-icon" />
@@ -41,7 +38,7 @@ const emit = defineEmits<{
       >
         ✦
       </span>
-    </button>
+    </RouterLink>
   </nav>
 </template>
 
@@ -63,6 +60,7 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   border: none;
+  text-decoration: none;
   color: var(--color-fg-muted);
   background-color: transparent;
   cursor: pointer;

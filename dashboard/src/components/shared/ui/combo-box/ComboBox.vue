@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useId } from 'vue';
 
 import { useComboBox } from './composables/use-combo-box';
 
@@ -11,8 +12,12 @@ const props = withDefaults(
     options?: readonly string[];
     /** Placeholder shown in the input and the empty trigger. */
     placeholder: string;
+    /** Stable id for the field. Auto-generated if omitted. */
+    id?: string;
+    /** Name attribute, aids browser autofill. */
+    name?: string;
   }>(),
-  { options: () => [] },
+  { options: () => [], id: () => useId(), name: undefined },
 );
 
 const emit = defineEmits<{
@@ -41,6 +46,8 @@ function onInput(event: Event) {
         <slot />
       </span>
       <input
+        :id="id"
+        :name="name"
         :value="props.modelValue"
         :placeholder="props.placeholder"
         class="combo-box__input"
@@ -64,7 +71,9 @@ function onInput(event: Event) {
       </button>
       <div v-if="open" class="combo-box__menu" @click.stop>
         <input
+          :id="id"
           ref="menuInputRef"
+          :name="name"
           :value="props.modelValue"
           :placeholder="props.placeholder"
           class="combo-box__input"
