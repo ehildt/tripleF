@@ -23,6 +23,17 @@ const fullConfig: ProviderConfig = {
     apiKey: 'youtube-key',
     videos: { enabled: true },
   },
+  brightData: {
+    enabled: true,
+    apiKey: 'bright-data-key',
+    web: { enabled: true },
+    images: { enabled: true },
+    news: { enabled: true },
+    places: { enabled: true },
+    shopping: { enabled: true },
+    videos: { enabled: true },
+    scrape: { enabled: true },
+  },
   playwright: { enabled: false },
 };
 
@@ -61,15 +72,17 @@ describe('tool-registry.helper', () => {
       expect(enabled).not.toContain('serperImageSearch');
     });
 
-    it('excludes serper tools when the api key is missing', () => {
+    it('excludes web search when no engine has an api key', () => {
       const enabled = getEnabledToolNames({
         ...fullConfig,
         serper: { ...fullConfig.serper, apiKey: undefined },
+        brightData: { ...fullConfig.brightData, apiKey: undefined },
       });
 
       expect(enabled).not.toContain('webSearch');
       expect(enabled).not.toContain('serperWebSearch');
       expect(enabled).not.toContain('serperImageSearch');
+      expect(enabled).not.toContain('brightDataWebSearch');
     });
   });
 

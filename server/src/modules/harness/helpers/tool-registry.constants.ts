@@ -14,6 +14,20 @@ export type VariantName = (typeof VARIANT_NAMES)[number];
 export const TOOL_DESCRIPTIONS: Record<string, string> = {
   webSearch:
     'Web search. Returns titles, snippets, and URLs. Use for general research and fact-finding. Supports an optional recency window (day/week/month/year) for fresh results.',
+  brightDataWebSearch:
+    'Search the web using Bright Data SERP API (Google). Returns organic results with titles, snippets, and links. Supports an optional recency window (day/week/month/year) for fresh results.',
+  brightDataImageSearch:
+    'Search for images using Bright Data SERP API (Google Images). Returns image URLs, source pages, and dimensions. Enforces a minimum of 1280×720 (720p).',
+  brightDataNewsSearch:
+    'Search latest news using Bright Data SERP API. Returns headlines, sources, dates, and snippets. Supports an optional recency window (day/week/month/year).',
+  brightDataPlacesSearch:
+    'Search places and businesses using Bright Data SERP API (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Query with a business name or business type plus location.',
+  brightDataShoppingSearch:
+    'Search for products using Bright Data SERP API (Google Shopping). Returns prices, sellers, images, and ratings. Query with the bare product name and model number.',
+  brightDataVideoSearch:
+    'Search for videos using Bright Data SERP API. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year). Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
+  brightDataWebpageScrape:
+    'Fetch and render a full webpage using Bright Data Web Unlocker API. Returns clean Markdown text. Use for pages behind anti-bot protection that plain fetch cannot reach.',
   serperWebSearch:
     'Search the web using Serper.dev (Google). Returns organic results with titles, snippets, and links. Supports an optional recency window (day/week/month/year) for fresh results.',
   serperImageSearch:
@@ -95,6 +109,13 @@ export const BROWSER_TOOL_NAMES = [
 export const TOOL_NAMES = [
   'webSearch',
   'webFetch',
+  'brightDataWebSearch',
+  'brightDataImageSearch',
+  'brightDataNewsSearch',
+  'brightDataPlacesSearch',
+  'brightDataShoppingSearch',
+  'brightDataVideoSearch',
+  'brightDataWebpageScrape',
   'serperWebSearch',
   'serperImageSearch',
   'serperNewsSearch',
@@ -130,6 +151,17 @@ export type ProviderConfig = {
     enabled: boolean;
     apiKey?: string;
     videos: { enabled: boolean };
+  };
+  brightData: {
+    enabled: boolean;
+    apiKey?: string;
+    web: { enabled: boolean };
+    images: { enabled: boolean };
+    news: { enabled: boolean };
+    places: { enabled: boolean };
+    shopping: { enabled: boolean };
+    videos: { enabled: boolean };
+    scrape: { enabled: boolean };
   };
   playwright: {
     enabled: boolean;

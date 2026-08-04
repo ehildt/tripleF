@@ -1,5 +1,14 @@
 import type { ToolSet } from 'ai';
 
+import {
+  createBrightDataImageSearch,
+  createBrightDataNewsSearch,
+  createBrightDataPlacesSearch,
+  createBrightDataShoppingSearch,
+  createBrightDataVideoSearch,
+  createBrightDataWebpageScrape,
+  createBrightDataWebSearch,
+} from './bright-data.js';
 import { createVariantRequestTool } from './image-variants.tool.js';
 import {
   createSerperBusinessReviewsSearch,
@@ -16,6 +25,40 @@ import type { ToolDependencies } from './types.js';
 import { createWebFetchTool } from './web-fetch.tool.js';
 import { createWebSearch } from './web-search.tool.js';
 import { createYoutubeVideoSearch } from './youtube.js';
+
+function addBrightDataTools(
+  tools: ToolSet,
+  deps: ToolDependencies,
+  enabled: boolean,
+  cfg: ReturnType<ToolDependencies['getLiveConfig']>,
+): void {
+  if (!enabled || !cfg.brightData.apiKey || !cfg.brightData.serpZone) return;
+  const { brightData } = cfg;
+  if (brightData.web.enabled)
+    tools.brightDataWebSearch = withSummary(createBrightDataWebSearch(deps));
+  if (brightData.images.enabled)
+    tools.brightDataImageSearch = withSummary(
+      createBrightDataImageSearch(deps),
+    );
+  if (brightData.news.enabled)
+    tools.brightDataNewsSearch = withSummary(createBrightDataNewsSearch(deps));
+  if (brightData.places.enabled)
+    tools.brightDataPlacesSearch = withSummary(
+      createBrightDataPlacesSearch(deps),
+    );
+  if (brightData.shopping.enabled)
+    tools.brightDataShoppingSearch = withSummary(
+      createBrightDataShoppingSearch(deps),
+    );
+  if (brightData.videos.enabled)
+    tools.brightDataVideoSearch = withSummary(
+      createBrightDataVideoSearch(deps),
+    );
+  if (brightData.scrape.enabled)
+    tools.brightDataWebpageScrape = withSummary(
+      createBrightDataWebpageScrape(deps),
+    );
+}
 
 function addSerperTools(
   tools: ToolSet,
@@ -106,15 +149,20 @@ export function createEnabledTools(
   tools.webFetch = withSummary(createWebFetchTool());
 
   const cfg = deps.getLiveConfig();
-  const { serper } = cfg;
+  const { serper, brightData } = cfg;
 
   const hasWebSearch = Boolean(
-    serper.enabled && serper.apiKey && serper.web.enabled,
+    (serper.enabled && serper.apiKey && serper.web.enabled) ||
+    (brightData.enabled &&
+      brightData.apiKey &&
+      brightData.serpZone &&
+      brightData.web.enabled),
   );
 
   if (hasWebSearch) tools.webSearch = withSummary(createWebSearch(deps));
 
   addSerperTools(tools, deps, serper.enabled, cfg);
+  addBrightDataTools(tools, deps, brightData.enabled, cfg);
   addYoutubeTools(tools, deps, cfg.youtube.enabled, cfg);
   addVariantTools(tools, enabledVariants ?? []);
 

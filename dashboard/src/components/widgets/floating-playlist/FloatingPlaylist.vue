@@ -5,85 +5,38 @@
  * (SysCtl → Widgets → Playlist); the chat right panel hides its playlist
  * tab then.
  *
- * Open, the window's toolbar row holds the transport icons on the left and
- * the saved-playlists menu icon plus the X close icon on the very right —
- * clicking the X collapses the window. The now-playing title animates
- * inside the selected playlist item's row; while the popout itself is
- * hidden (background mode or dismissed), it additionally scrolls in the
- * toolbar so a hidden video still announces what plays. The menu opens
- * with the playlist name input as its first field, a divider, and the
- * saved playlists — picking one autoloads it (there is no load button and
- * no checkmarks). Naming the queue saves it, typing renames it, emptying
- * the field deletes it (the queue is just unnamed again), and queue edits
- * sync into the selected playlist automatically.
+ * The window reuses the shared PlaylistPanel for its content (transport
+ * bar, active playlist name, saved-playlists menu, and the queued list) —
+ * the same player the chat right panel shows when docked. Open, the
+ * toolbar row holds the transport icons on the left and the saved-playlists
+ * menu icon plus the X close icon on the very right — clicking the X
+ * collapses the window. The now-playing title animates inside the selected
+ * playlist item's row. Picking a saved playlist autoloads it; naming the
+ * queue saves it and queue edits sync into the active playlist.
  *
- * Collapsed, the assembly is a compact toggle handle sized like the
- * collapsed tab-menu handle; open/collapse sweeps the window in and out of
- * it. The window is not draggable: it sits at its configured anchor with
- * the tab menu's distance to the screen edges (1vw / 2vh), beside the tab
- * menu when anchored to the menu's top side. Styling mirrors the tab menu:
- * frosted glass, tame floating shadow, no border.
+ * This file only owns the floating chrome: the geometry/anchoring, the
+ * collapse handle, open/collapse visibility, and the window styling. All
+ * player behaviour lives in PlaylistPanel.
  */
 import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
-import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
-import { useConversationStore } from '@/stores/conversation';
-
-import { playlistQueueKey } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
-import { usePlaylistTransport } from '../../chat/right-panel/composables/use-playlist-transport';
-import { useVideoPlaylist } from '../../chat/right-panel/composables/use-video-playlist';
-import PlaylistItem from '../../chat/right-panel/playlist-item/PlaylistItem.vue';
-import PlaylistTransportBar from '../../chat/right-panel/playlist-transport-bar/PlaylistTransportBar.vue';
+import { FLOATING_PLAYLIST_QUEUE_KEY } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import PlaylistPanel from '../../chat/right-panel/playlist-panel/PlaylistPanel.vue';
 import {
   playlistAnchor,
   playlistMode,
 } from './composables/playlist-settings.state';
 import { useFloatingPlaylistGeometry } from './composables/use-floating-playlist-geometry';
 import { useFloatingPlaylistVisibility } from './composables/use-floating-playlist-visibility';
-import { usePlaylistLibrary } from './composables/use-playlist-library';
-import PlaylistMenu from './playlist-menu/PlaylistMenu.vue';
-
-const conversationStore = useConversationStore();
 
 /**
- * Queue the floating playlist shows: the global floating queue (it is
- * deliberately conversation-independent — it survives conversation and tab
- * switches). In panel mode the widget is hidden, so the key only matters
- * for the hidden-state wiring then.
+ * Queue the floating playlist shows: the single global playlist. It is
+ * deliberately conversation-independent — the same list every surface reads,
+ * surviving conversation and tab switches. In panel mode the widget is
+ * hidden; in floating mode it shows this same shared queue.
  */
-const conversationId = computed(() =>
-  playlistQueueKey(conversationStore.activeConversationId ?? ''),
-);
-
-const { playlistVideos, hasPlaylist } = useVideoPlaylist(conversationId);
-
-const {
-  activePlaybackPlaying,
-  activePlaybackVideoUrl,
-  activePlaybackTitle,
-  playlistAutoplayEnabled,
-  popoutHidden,
-  hasActivePlayback,
-  canTogglePlayback,
-  playbackToggleTitle,
-  toggleActivePlayback,
-  stopActivePlayback,
-  togglePlaylistAutoplay,
-  toggleHideOnPlaylist,
-  onPlayItem,
-  onRemoveItem,
-} = usePlaylistTransport(playlistVideos, conversationId);
-
-const {
-  playlistNameInput,
-  savedPlaylistNames,
-  activePlaylistName,
-  selectPlaylist,
-  createPlaylist,
-  deletePlaylist,
-  renamePlaylist,
-} = usePlaylistLibrary(conversationId, playlistVideos);
+const conversationId = FLOATING_PLAYLIST_QUEUE_KEY;
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
@@ -103,19 +56,6 @@ const isBottomAnchored = computed(() => anchorVertical.value === 'bottom');
  * column: the anchor's horizontal component.
  */
 const anchorHorizontal = computed(() => playlistAnchor.value.split('-')[1]);
-
-/**
- * Label of the active playlist shown left of the saved-playlists icon: its
- * name once saved under one — nothing while the queue is unnamed (an
- * unnamed queue is just the queue, not a "temporary" list).
- */
-const activePlaylistLabel = computed(() => activePlaylistName.value);
-
-/** Launching a video counts as a pick for autoclose. */
-function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
-  onPlayItem(item);
-  closeOnAutoclose();
-}
 </script>
 
 <template>
@@ -151,38 +91,11 @@ function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
         class="floating-playlist shadow-floating"
         aria-label="Floating playlist"
       >
-        <div class="floating-playlist__top">
-          <div class="floating-playlist__toolbar">
-            <PlaylistTransportBar
-              :playing="activePlaybackPlaying"
-              :can-toggle-playback="canTogglePlayback"
-              :playback-toggle-title="playbackToggleTitle"
-              :has-active-playback="hasActivePlayback"
-              :autoplay-enabled="playlistAutoplayEnabled"
-              :popout-hidden="popoutHidden"
-              :now-playing-title="activePlaybackTitle"
-              :show-now-playing="popoutHidden"
-              @toggle-playback="toggleActivePlayback"
-              @stop-playback="stopActivePlayback"
-              @toggle-autoplay="togglePlaylistAutoplay"
-              @toggle-popout-visibility="toggleHideOnPlaylist"
-            />
-            <span
-              v-if="activePlaylistLabel"
-              class="floating-playlist__active-name"
-              :title="`Active playlist: ${activePlaylistLabel}`"
-              >{{ activePlaylistLabel }}</span
-            >
-            <PlaylistMenu
-              :playlist-name="playlistNameInput"
-              :playlists="savedPlaylistNames"
-              :active-playlist-name="activePlaylistName"
-              @update:playlist-name="playlistNameInput = $event"
-              @select="selectPlaylist"
-              @create="createPlaylist"
-              @delete="deletePlaylist"
-              @rename="renamePlaylist"
-            />
+        <PlaylistPanel
+          :conversation-id="conversationId"
+          @play="closeOnAutoclose"
+        >
+          <template #toolbar-actions>
             <button
               type="button"
               class="floating-playlist__toggle"
@@ -194,26 +107,8 @@ function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
             >
               <X class="floating-playlist__toggle-icon" />
             </button>
-          </div>
-        </div>
-
-        <div class="floating-playlist__body">
-          <div v-if="hasPlaylist" class="floating-playlist__items">
-            <PlaylistItem
-              v-for="(item, index) in playlistVideos"
-              :key="`${item.videoUrl}-${index}`"
-              :item="item"
-              :is-active="activePlaybackVideoUrl === item.videoUrl"
-              @play="onPlayAndAutoclose(item)"
-              @remove="onRemoveItem(item.videoUrl)"
-            />
-          </div>
-          <PanelEmptyState
-            v-else
-            message="No videos in the playlist"
-            submessage="Add videos from a video card, or pick a saved playlist"
-          />
-        </div>
+          </template>
+        </PlaylistPanel>
       </aside>
     </div>
   </div>
@@ -331,7 +226,8 @@ function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
    negative clip-path lets the playlist-menu dropdown extend beyond the
    window bounds. Open/close is a simple fade — the collapsed assembly
    already yields pointer events so the invisible window never blocks
-   clicks. */
+   clicks. The PlaylistPanel inside fills the column and scrolls its own
+   list. */
 .floating-playlist {
   display: flex;
   flex-direction: column;
@@ -356,46 +252,10 @@ function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
     visibility 0s linear 0.24s;
 }
 
-/* Active playlist name, sitting directly left of the saved-playlists
-   icon: single-line, ellipsized, same tone as the toolbar's icon buttons. */
-.floating-playlist__active-name {
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-muted);
-}
+/* ---------- collapse toggle ---------- */
 
-/* ---------- top rows ---------- */
-
-/* Same glassy tone as the floating popout header, a bit thicker — and no
-   border, like the rest of the playlist. */
-.floating-playlist__top {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-1-5);
-  background: color-mix(in srgb, var(--color-bg-elevated) 35%, transparent);
-  user-select: none;
-}
-
-.floating-playlist__toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-}
-
-/* The transport bar fills the row; the menu and toggle icons sit at the
-   very right. */
-.floating-playlist__toolbar > :first-child {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Collapse toggle, styled like the transport row's icon buttons. */
+/* The X sits in the toolbar row (rendered by PlaylistPanel) at the very
+   right, styled like the transport row's icon buttons. */
 .floating-playlist__toggle {
   flex-shrink: 0;
   display: inline-flex;
@@ -420,21 +280,5 @@ function onPlayAndAutoclose(item: (typeof playlistVideos.value)[number]) {
 .floating-playlist__toggle-icon {
   width: 0.75rem;
   height: 0.75rem;
-}
-
-/* ---------- body ---------- */
-
-.floating-playlist__body {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.floating-playlist__items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
 }
 </style>

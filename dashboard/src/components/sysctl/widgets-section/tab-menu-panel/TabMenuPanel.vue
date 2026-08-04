@@ -21,8 +21,8 @@ import {
   type TabMenuSide,
   tabMenuSide,
 } from '@/components/app/tab-menu/composables/tab-menu-settings.state';
+import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 
@@ -42,57 +42,57 @@ function setSide(value: string) {
 
 <template>
   <div class="tab-menu-panel panel-glow">
-    <PanelTitleBar title="Tab Menu">
+    <CollapsiblePanel id="tabMenu" title="Tab Menu">
       <template #actions>
         <ResetButton
           title="Reset tab menu settings to defaults"
           @click="resetTabMenuSettings"
         />
       </template>
-    </PanelTitleBar>
 
-    <div class="tab-menu-panel__content">
-      <FieldCard
-        :icon="SquareMenu"
-        label="side"
-        description="screen edge the slide-out menu is docked to"
-      >
-        <template #controls>
-          <SegmentedToggle
-            :options="SIDE_OPTIONS"
-            :model-value="tabMenuSide"
-            aria-label="Menu side"
-            @update:model-value="setSide"
+      <div class="tab-menu-panel__content">
+        <FieldCard
+          :icon="SquareMenu"
+          label="side"
+          description="screen edge the slide-out menu is docked to"
+        >
+          <template #controls>
+            <SegmentedToggle
+              :options="SIDE_OPTIONS"
+              :model-value="tabMenuSide"
+              aria-label="Menu side"
+              @update:model-value="setSide"
+            />
+          </template>
+        </FieldCard>
+
+        <FieldCard
+          :icon="X"
+          label="autoclose"
+          description="close the menu after picking a tab or clicking outside — off keeps it toggled by hand"
+          :checked="tabMenuAutoClose"
+          @toggle="setTabMenuAutoClose(!tabMenuAutoClose)"
+        />
+
+        <div class="tab-menu-panel__tabs">
+          <FieldCard
+            :icon="MailX"
+            label="dlq"
+            description="dead letter queue tab"
+            :checked="isTabVisible('dlq')"
+            @toggle="toggleTab('dlq')"
           />
-        </template>
-      </FieldCard>
 
-      <FieldCard
-        :icon="X"
-        label="autoclose"
-        description="close the menu after picking a tab or clicking outside — off keeps it toggled by hand"
-        :checked="tabMenuAutoClose"
-        @toggle="setTabMenuAutoClose(!tabMenuAutoClose)"
-      />
-
-      <div class="tab-menu-panel__tabs">
-        <FieldCard
-          :icon="MailX"
-          label="dlq"
-          description="dead letter queue tab"
-          :checked="isTabVisible('dlq')"
-          @toggle="toggleTab('dlq')"
-        />
-
-        <FieldCard
-          :icon="Bug"
-          label="debug"
-          description="debug tab / logging"
-          :checked="isTabVisible('debug')"
-          @toggle="toggleTab('debug')"
-        />
+          <FieldCard
+            :icon="Bug"
+            label="debug"
+            description="debug tab / logging"
+            :checked="isTabVisible('debug')"
+            @toggle="toggleTab('debug')"
+          />
+        </div>
       </div>
-    </div>
+    </CollapsiblePanel>
   </div>
 </template>
 

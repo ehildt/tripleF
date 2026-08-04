@@ -2,6 +2,8 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 
 import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
 import { SecretsCipherService } from '../../secrets/services/secrets-cipher.service.js';
+import type { BrightDataConfig } from '../configs/bright-data-config.adapter.js';
+import { BrightDataConfigService } from '../configs/bright-data-config.service.js';
 import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
 import type { SourcesConfig } from '../configs/sources-config.adapter.js';
@@ -15,6 +17,7 @@ import { retryWithBackoff } from '../helpers/retry-with-backoff.helper.js';
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
+  brightData: BrightDataConfig;
   sources: SourcesConfig;
   youtube: YoutubeConfig;
 }
@@ -36,6 +39,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
 
   constructor(
     private readonly serperCfg: SerperConfigService,
+    private readonly brightDataCfg: BrightDataConfigService,
     private readonly sourcesCfg: SourcesConfigService,
     private readonly youtubeCfg: YoutubeConfigService,
     private readonly repository: ProviderOverridesRepository,
@@ -43,6 +47,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
   ) {
     this.snapshot = {
       serper: this.serperCfg.config,
+      brightData: this.brightDataCfg.config,
       sources: this.sourcesCfg.config,
       youtube: this.youtubeCfg.config,
     };
@@ -155,6 +160,10 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
         ...config.serper,
         apiKey: maskApiKey(config.serper.apiKey),
       },
+      brightData: {
+        ...config.brightData,
+        apiKey: maskApiKey(config.brightData.apiKey),
+      },
       youtube: {
         ...config.youtube,
         apiKey: maskApiKey(config.youtube.apiKey),
@@ -235,6 +244,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
     // snapshot object would permanently pollute the pristine env config.
     const result: ProviderOverridesSnapshot = {
       serper: { ...snapshot.serper },
+      brightData: { ...snapshot.brightData },
       sources: { ...snapshot.sources },
       youtube: { ...snapshot.youtube },
     };

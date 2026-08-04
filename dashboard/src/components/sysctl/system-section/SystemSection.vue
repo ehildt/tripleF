@@ -6,8 +6,8 @@
  */
 import { KeyRound, Server } from '@lucide/vue';
 
+import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelTitleBar from '@/components/shared/ui/panel-title-bar/PanelTitleBar.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
 import { useSysctlTabVisibility } from '../composables/use-sysctl-tab-visibility';
@@ -38,8 +38,9 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 <template>
   <div class="system-section">
     <div class="system-section__panel panel-glow">
-      <PanelTitleBar title="Health" />
-      <SystemHealthSection :tiles="tiles" />
+      <CollapsiblePanel id="health" title="Health">
+        <SystemHealthSection :tiles="tiles" />
+      </CollapsiblePanel>
     </div>
 
     <div v-if="isLoading" class="system-section__state">Loading…</div>
@@ -52,66 +53,67 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
     </div>
 
     <div v-else class="system-section__panel panel-glow">
-      <PanelTitleBar title="Ollama">
+      <CollapsiblePanel id="ollama" title="Ollama">
         <template #actions>
           <ResetButton
             title="Reset Ollama to defaults"
             @click="resetProvider('ollama')"
           />
         </template>
-      </PanelTitleBar>
 
-      <div class="system-section__grid">
-        <!-- API key field: displays the masked key (****************),
-             patches on change. The real key never reaches the client.
-             Setting a key also unlocks the Ollama Cloud models. -->
-        <FieldCard
-          :icon="KeyRound"
-          label="API key"
-          description="ollama.com cloud access key"
-        >
-          <template #field>
-            <input
-              v-model="apiKeyDraft"
-              type="text"
-              name="ollama-api-key"
-              class="system-section__input"
-              autocomplete="off"
-              spellcheck="false"
-              @focus="selectApiKeyText"
-              @change="submitApiKey"
-            />
-          </template>
-        </FieldCard>
+        <div class="system-section__grid">
+          <!-- API key field: displays the masked key (****************),
+               patches on change. The real key never reaches the client.
+               Setting a key also unlocks the Ollama Cloud models. -->
+          <FieldCard
+            :icon="KeyRound"
+            label="API key"
+            description="ollama.com cloud access key"
+          >
+            <template #field>
+              <input
+                v-model="apiKeyDraft"
+                type="text"
+                name="ollama-api-key"
+                class="system-section__input"
+                autocomplete="off"
+                spellcheck="false"
+                @focus="selectApiKeyText"
+                @change="submitApiKey"
+              />
+            </template>
+          </FieldCard>
 
-        <FieldCard
-          :icon="Server"
-          label="Host"
-          description="http://localhost:11434/api or https://ollama.com/api"
-        >
-          <template #field>
-            <input
-              v-model="hostDraft"
-              type="text"
-              name="ollama-host"
-              class="system-section__input"
-              autocomplete="off"
-              spellcheck="false"
-              @change="submitHost"
-            />
-          </template>
-        </FieldCard>
-      </div>
+          <FieldCard
+            :icon="Server"
+            label="Host"
+            description="http://localhost:11434/api or https://ollama.com/api"
+          >
+            <template #field>
+              <input
+                v-model="hostDraft"
+                type="text"
+                name="ollama-host"
+                class="system-section__input"
+                autocomplete="off"
+                spellcheck="false"
+                @change="submitHost"
+              />
+            </template>
+          </FieldCard>
+        </div>
+      </CollapsiblePanel>
     </div>
 
     <div class="system-section__panel panel-glow">
-      <PanelTitleBar title="Interface" />
-      <TabVisibilitySection
-        :is-sockets-visible="isTabVisible('sockets')"
-        :show-counters="showCounters"
-        @toggle-sockets="toggleTab('sockets')"
-        @toggle-counters="toggleShowCounters"
-      />
+      <CollapsiblePanel id="interface" title="Interface">
+        <TabVisibilitySection
+          :is-sockets-visible="isTabVisible('sockets')"
+          :show-counters="showCounters"
+          @toggle-sockets="toggleTab('sockets')"
+          @toggle-counters="toggleShowCounters"
+        />
+      </CollapsiblePanel>
     </div>
   </div>
 </template>

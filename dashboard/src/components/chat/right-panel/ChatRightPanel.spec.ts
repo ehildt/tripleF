@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { Conversation } from '@/stores/conversation.model';
 
+import { savedPlaylists } from '../../widgets/floating-playlist/composables/saved-playlists.state';
 import {
+  addedPlaylistVideos,
   clearActivePlayback,
   closeLaunchedVideo,
+  FLOATING_PLAYLIST_QUEUE_KEY,
   setActivePlayback,
 } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import ChatRightPanel from './ChatRightPanel.vue';
@@ -14,6 +17,8 @@ beforeEach(() => {
   localStorage.clear();
   closeLaunchedVideo();
   clearActivePlayback();
+  addedPlaylistVideos.value = new Map();
+  savedPlaylists.value = [];
 });
 
 const placeholderImage =
@@ -179,11 +184,16 @@ describe('ChatRightPanel', () => {
 
   it.each([
     ['https://youtu.be/in-list', 'In List', 'In List'],
-    ['https://youtu.be/outside', 'Outside Title', 'Outside Title'],
     ['https://youtu.be/in-list', 'Raw engagement title', 'In List'],
   ])(
-    'shows the now-playing title for playback %s',
+    'shows the now-playing title on the active item row for playback %s',
     async (url, playbackTitle, expected) => {
+      addedPlaylistVideos.value = new Map([
+        [
+          FLOATING_PLAYLIST_QUEUE_KEY,
+          [{ videoUrl: 'https://youtu.be/in-list', title: 'In List' }],
+        ],
+      ]);
       const wrapper = mountComponent({
         playlistVideos: [
           { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
@@ -192,9 +202,38 @@ describe('ChatRightPanel', () => {
       });
       setActivePlayback(url, playbackTitle);
       await wrapper.vm.$nextTick();
-      expect(
-        wrapper.find('.playlist-transport-bar__now-playing-text').text(),
-      ).toBe(expected);
+      expect(wrapper.find('.playlist-item__marquee-text').text()).toBe(
+        expected,
+      );
     },
   );
+
+  it('shows no separate now-playing marquee in the transport bar (matches the floating player)', async () => {
+    addedPlaylistVideos.value = new Map([
+      [
+        FLOATING_PLAYLIST_QUEUE_KEY,
+        [{ videoUrl: 'https://youtu.be/in-list', title: 'In List' }],
+      ],
+    ]);
+    const wrapper = mountComponent({
+      playlistVideos: [
+        { videoUrl: 'https://youtu.be/in-list', title: 'In List' },
+      ],
+      rightPanelView: 'playlist',
+    });
+    setActivePlayback('https://youtu.be/outside', 'Outside Title');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('.playlist-transport-bar__now-playing').exists()).toBe(
+      false,
+    );
+  });
+
+  it('shows the player with an empty queue when a saved playlist exists', () => {
+    savedPlaylists.value = [{ id: 'p1', name: 'Focus', videos: [] }];
+    const wrapper = mountComponent({
+      playlistVideos: [],
+      rightPanelView: 'playlist',
+    });
+    expect(wrapper.find('.playlist-panel').exists()).toBe(true);
+  });
 });

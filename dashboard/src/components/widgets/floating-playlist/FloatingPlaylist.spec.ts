@@ -105,9 +105,7 @@ describe('FloatingPlaylist', () => {
   it('shows no playlist label while the queue is unnamed', () => {
     playlistMode.value = 'floating';
     const wrapper = mountWidget();
-    expect(wrapper.find('.floating-playlist__active-name').exists()).toBe(
-      false,
-    );
+    expect(wrapper.find('.playlist-panel__active-name').exists()).toBe(false);
   });
 
   it('labels the active playlist with its name after picking a saved one', async () => {
@@ -122,9 +120,7 @@ describe('FloatingPlaylist', () => {
     const wrapper = mountWidget();
     await wrapper.find('.playlist-menu__trigger').trigger('click');
     await wrapper.find('.playlist-menu-item__input').trigger('click');
-    expect(wrapper.find('.floating-playlist__active-name').text()).toBe(
-      'Focus',
-    );
+    expect(wrapper.find('.playlist-panel__active-name').text()).toBe('Focus');
   });
 
   it('opens the saved-playlists menu with the name input as first field', async () => {

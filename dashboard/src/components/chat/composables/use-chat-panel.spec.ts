@@ -235,4 +235,39 @@ describe('useChatPanel', () => {
 
     expect(rightPanelView.value).toBe('history');
   });
+
+  it('keeps the player on the playlist tab across a switch with a list', async () => {
+    const conversationStore = useConversationStore();
+    const first = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(first.id);
+    const hasPlaylist = ref(true);
+
+    const { rightPanelView } = useChatPanel(ref(false), ref(true), hasPlaylist);
+    await flushPromises();
+    rightPanelView.value = 'playlist';
+
+    const second = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(second.id);
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('playlist');
+  });
+
+  it('leaves the playlist tab on a switch when the new conversation has no list', async () => {
+    const conversationStore = useConversationStore();
+    const first = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(first.id);
+    const hasPlaylist = ref(true);
+
+    const { rightPanelView } = useChatPanel(ref(false), ref(true), hasPlaylist);
+    await flushPromises();
+    rightPanelView.value = 'playlist';
+
+    const second = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(second.id);
+    hasPlaylist.value = false;
+    await flushPromises();
+
+    expect(rightPanelView.value).toBe('history');
+  });
 });
