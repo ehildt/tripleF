@@ -121,7 +121,7 @@ describe('FloatingPlaylist', () => {
     ];
     const wrapper = mountWidget();
     await wrapper.find('.playlist-menu__trigger').trigger('click');
-    await wrapper.find('.playlist-menu__item').trigger('click');
+    await wrapper.find('.playlist-menu-item__input').trigger('click');
     expect(wrapper.find('.floating-playlist__active-name').text()).toBe(
       'Focus',
     );
@@ -137,11 +137,12 @@ describe('FloatingPlaylist', () => {
     expect(wrapper.find('[aria-label="Load selected playlist"]').exists()).toBe(
       false,
     );
-    expect(wrapper.find('.playlist-menu__name-input').exists()).toBe(false);
+    expect(wrapper.find('.playlist-menu__input').exists()).toBe(false);
     await wrapper.find('.playlist-menu__trigger').trigger('click');
-    expect(wrapper.find('.playlist-menu__name-input').exists()).toBe(true);
-    expect(wrapper.find('.playlist-menu__divider').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Focus');
+    expect(wrapper.find('.playlist-menu__input').exists()).toBe(true);
+    const itemInput = wrapper.find('.playlist-menu-item__input');
+    expect(itemInput.exists()).toBe(true);
+    expect((itemInput.element as HTMLInputElement).value).toBe('Focus');
   });
 
   it('picking a playlist in the menu autoloads it without a load button', async () => {
@@ -156,7 +157,7 @@ describe('FloatingPlaylist', () => {
     addPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item);
     const wrapper = mountWidget();
     await wrapper.find('.playlist-menu__trigger').trigger('click');
-    await wrapper.find('.playlist-menu__item').trigger('click');
+    await wrapper.find('.playlist-menu-item__input').trigger('click');
     expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
       false,
     );

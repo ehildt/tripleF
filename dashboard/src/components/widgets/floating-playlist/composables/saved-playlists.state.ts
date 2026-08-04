@@ -68,16 +68,17 @@ export function setActiveSavedPlaylist(id: string | null) {
 
 /**
  * Save videos under a name. Saving under an existing name overwrites that
- * playlist in place and marks it active. Returns the saved entry, or null
- * when the name is empty, there is nothing to save, or the playlist limit
- * is reached.
+ * playlist in place and marks it active. An empty queue is allowed — the
+ * user can create a playlist first and add items to it later. Returns the
+ * saved entry, or null when the name is empty or the playlist limit is
+ * reached.
  */
 export function savePlaylist(
   name: string,
   videos: VideoGalleryItem[],
 ): SavedPlaylist | null {
   const trimmed = name.trim().slice(0, MAX_SAVED_PLAYLIST_NAME_LENGTH);
-  if (!trimmed || videos.length === 0) return null;
+  if (!trimmed) return null;
 
   const existing = savedPlaylists.value.find((entry) => entry.name === trimmed);
   if (existing) {
