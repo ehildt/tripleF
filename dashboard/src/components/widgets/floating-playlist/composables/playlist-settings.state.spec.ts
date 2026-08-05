@@ -57,17 +57,17 @@ describe('playlist-settings.state', () => {
     expect(floatingPlaylistOpen.value).toBe(true);
   });
 
-  it('opens the player window when a saved playlist exists', async () => {
+  it('does not auto-open from a stored saved playlist (playlists load from the database)', async () => {
     localStorage.setItem(
       'vision-saved-playlists',
       JSON.stringify([{ id: 'p1', name: 'Focus', videos: [] }]),
     );
     vi.resetModules();
     const mod = await import('./playlist-settings.state');
-    expect(mod.floatingPlaylistOpen.value).toBe(true);
+    expect(mod.floatingPlaylistOpen.value).toBe(false);
   });
 
-  it('opens the player window when the queue has an added video', async () => {
+  it('does not auto-open from a stored queue (playlists load from the database)', async () => {
     localStorage.setItem(
       'vision-playlist-videos',
       JSON.stringify({
@@ -78,7 +78,7 @@ describe('playlist-settings.state', () => {
     );
     vi.resetModules();
     const mod = await import('./playlist-settings.state');
-    expect(mod.floatingPlaylistOpen.value).toBe(true);
+    expect(mod.floatingPlaylistOpen.value).toBe(false);
   });
 
   it('persists the anchor', () => {

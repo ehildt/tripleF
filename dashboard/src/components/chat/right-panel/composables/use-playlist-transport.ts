@@ -1,5 +1,6 @@
 import { computed, type Ref } from 'vue';
 
+import { removeVideoFromActivePlaylist } from '@/components/widgets/floating-playlist/composables/playlist.state';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import {
@@ -20,7 +21,6 @@ import {
   launchVideo,
   nowPlayingTitle,
   playlistAutoplayEnabled,
-  removePlaylistVideo,
   stopActivePlayback,
   toggleActivePlayback,
   togglePlaylistAutoplay,
@@ -69,7 +69,7 @@ export function usePlaylistTransport(
   }
 
   function onRemoveItem(videoUrl: string) {
-    removePlaylistVideo(conversationId.value, videoUrl);
+    removeVideoFromActivePlaylist(videoUrl);
   }
 
   /**

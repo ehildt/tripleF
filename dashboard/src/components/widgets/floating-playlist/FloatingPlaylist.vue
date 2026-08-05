@@ -21,7 +21,8 @@
 import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
-import { FLOATING_PLAYLIST_QUEUE_KEY } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import { useConversationStore } from '@/stores/conversation';
+
 import PlaylistPanel from '../../chat/right-panel/playlist-panel/PlaylistPanel.vue';
 import {
   playlistAnchor,
@@ -31,12 +32,15 @@ import { useFloatingPlaylistGeometry } from './composables/use-floating-playlist
 import { useFloatingPlaylistVisibility } from './composables/use-floating-playlist-visibility';
 
 /**
- * Queue the floating playlist shows: the single global playlist. It is
- * deliberately conversation-independent — the same list every surface reads,
- * surviving conversation and tab switches. In panel mode the widget is
- * hidden; in floating mode it shows this same shared queue.
+ * Conversation the floating playlist shows: the active conversation, so the
+ * floating window mirrors the docked panel's playlists. In panel mode the
+ * widget is hidden; in floating mode it shows the active conversation's
+ * playlists.
  */
-const conversationId = FLOATING_PLAYLIST_QUEUE_KEY;
+const conversationStore = useConversationStore();
+const conversationId = computed(
+  () => conversationStore.activeConversationId ?? '',
+);
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 

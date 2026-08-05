@@ -1,117 +1,84 @@
 import { computed, type Ref, ref, watch } from 'vue';
 
-import { replacePlaylistVideos } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import { useToast } from '@/composables/use-toast';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import {
-  activeSavedPlaylistId,
-  deleteSavedPlaylist,
-  renameSavedPlaylist,
-  savedPlaylists,
-  savePlaylist,
-  setActiveSavedPlaylist,
-  syncActiveSavedPlaylist,
-} from './saved-playlists.state';
+  activePlaylistName,
+  createPlaylist as createPlaylistState,
+  deletePlaylist as deletePlaylistState,
+  getPlaylists,
+  loadPlaylists,
+  renamePlaylist as renamePlaylistState,
+  selectPlaylist as selectPlaylistState,
+} from './playlist.state';
 
 /**
- * Saved-playlist behavior of the floating playlist, action-driven: the
- * name input's Plus button (or Enter) saves the queue under the typed name
- * and clears the field for the next one; each saved playlist in the list
- * carries its own Trash button to delete it. Picking a saved playlist in
- * the menu loads it immediately (autoload — replace, not merge) and marks
- * it as the active one. While a saved playlist is active it mirrors the
- * queue: queue edits sync into it automatically.
+ * Playlist behavior of the playlist panel, action-driven and database-backed:
+ * the name input's Plus button (or Enter) creates a new empty playlist and
+ * makes it active; each playlist in the menu carries its own Trash button to
+ * delete it. Picking a playlist in the menu makes it active, which loads its
+ * videos into the queue. Playlists are global across the session — the panel
+ * shows every playlist; the conversation id is only used when creating a new
+ * playlist (it is part of the DB compound key).
  */
-export function usePlaylistLibrary(
-  conversationId: Ref<string>,
-  playlistVideos: Ref<VideoGalleryItem[]>,
-) {
+export function usePlaylistLibrary(conversationId: Ref<string>) {
   const toast = useToast();
 
-  /** Name being typed for a new playlist ('' once saved — the field clears). */
+  /** Name being typed for a new playlist ('' once created — the field clears). */
   const playlistNameInput = ref('');
 
-  const savedPlaylistNames = computed(() =>
-    savedPlaylists.value.map((entry) => entry.name),
+  const playlistNames = computed(() =>
+    getPlaylists().map((playlist) => playlist.name),
   );
 
-  const activeSavedPlaylist = computed(() =>
-    savedPlaylists.value.find(
-      (entry) => entry.id === activeSavedPlaylistId.value,
-    ),
+  const activePlaylistNameValue = computed(() => activePlaylistName.value);
+
+  // Load all playlists for the session from the database, restoring the
+  // active playlist (defaulting to the first one).
+  watch(
+    conversationId,
+    () => {
+      void loadPlaylists();
+    },
+    { immediate: true },
   );
 
-  /** Name of the active playlist, for tinting it in the list. */
-  const activePlaylistName = computed(
-    () => activeSavedPlaylist.value?.name ?? '',
-  );
-
-  /** Save the typed name as a new (or overwritten) playlist, then clear the field. */
+  /** Create a new empty playlist from the typed name, then clear the field. */
   function createPlaylist() {
     const name = playlistNameInput.value.trim();
     if (!name) return;
-    const saved = savePlaylist(name, playlistVideos.value);
-    if (!saved) {
-      toast.error(
-        `Playlist could not be saved (limit of ${savedPlaylists.value.length} reached)`,
-      );
-      return;
-    }
-    toast.info(`Playlist "${saved.name}" saved`);
-    // The field is cleared so the user can name the next playlist.
+    createPlaylistState(conversationId.value, name);
+    toast.info(`Playlist "${name}" created`);
     playlistNameInput.value = '';
   }
 
-  /** Delete a saved playlist by name. */
+  /** Delete a playlist by name. */
   function deletePlaylist(name: string) {
-    const entry = savedPlaylists.value.find(
-      (playlist) => playlist.name === name,
-    );
-    if (!entry) return;
-    deleteSavedPlaylist(entry.id);
-    toast.info(`Playlist "${entry.name}" deleted`);
-    if (activeSavedPlaylistId.value === entry.id) {
+    deletePlaylistState(name);
+    toast.info(`Playlist "${name}" deleted`);
+    if (activePlaylistNameValue.value === name) {
       playlistNameInput.value = '';
     }
   }
 
-  /** Rename a saved playlist, showing an error on a taken name. */
+  /** Rename a playlist, showing an error on a taken name. */
   function renamePlaylist(oldName: string, newName: string) {
-    const entry = savedPlaylists.value.find(
-      (playlist) => playlist.name === oldName,
-    );
-    if (!entry) return;
-    const renamed = renameSavedPlaylist(entry.id, newName);
+    const renamed = renamePlaylistState(oldName, newName);
     if (!renamed) {
       toast.error('A playlist with that name already exists');
     }
   }
 
-  // A named queue mirrors its edits into the saved playlist.
-  watch(playlistVideos, (videos) => syncActiveSavedPlaylist(videos));
-
-  // Queues are conversation-scoped — a switch starts from an unnamed queue.
-  watch(conversationId, () => {
-    setActiveSavedPlaylist(null);
-    playlistNameInput.value = '';
-  });
-
-  /** Load a saved playlist by name, replacing the queue. */
+  /** Make a playlist active, loading its videos into the queue. */
   function selectPlaylist(name: string) {
-    const entry = savedPlaylists.value.find(
-      (playlist) => playlist.name === name,
-    );
-    if (!entry) return;
-    replacePlaylistVideos(conversationId.value, entry.videos);
-    setActiveSavedPlaylist(entry.id);
-    toast.info(`Playlist "${entry.name}" loaded`);
+    selectPlaylistState(name);
+    toast.info(`Playlist "${name}" loaded`);
   }
 
   return {
     playlistNameInput,
-    savedPlaylistNames,
-    activePlaylistName,
+    playlistNames,
+    activePlaylistName: activePlaylistNameValue,
     selectPlaylist,
     createPlaylist,
     deletePlaylist,

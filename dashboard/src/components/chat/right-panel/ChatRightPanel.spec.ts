@@ -1,24 +1,42 @@
-import { mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { fetchAllPlaylists } from '@/api/playlists.api';
+import { useConversationStore } from '@/stores/conversation';
 import type { Conversation } from '@/stores/conversation.model';
 
-import { savedPlaylists } from '../../widgets/floating-playlist/composables/saved-playlists.state';
 import {
-  addedPlaylistVideos,
+  activePlaylistName,
+  playlists,
+  setPlaylists,
+} from '../../widgets/floating-playlist/composables/playlist.state';
+import {
   clearActivePlayback,
   closeLaunchedVideo,
-  FLOATING_PLAYLIST_QUEUE_KEY,
   setActivePlayback,
 } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import ChatRightPanel from './ChatRightPanel.vue';
 
-beforeEach(() => {
+vi.mock('@/api/playlists.api', () => ({
+  fetchAllPlaylists: vi.fn(),
+  fetchPlaylists: vi.fn(),
+  savePlaylist: vi.fn(),
+  deletePlaylist: vi.fn(),
+  renamePlaylist: vi.fn(),
+}));
+
+beforeEach(async () => {
   localStorage.clear();
   closeLaunchedVideo();
   clearActivePlayback();
-  addedPlaylistVideos.value = new Map();
-  savedPlaylists.value = [];
+  playlists.value = [];
+  activePlaylistName.value = '';
+  setActivePinia(createPinia());
+  useConversationStore().activeConversationId = 'conv-1';
+  vi.mocked(fetchAllPlaylists).mockResolvedValue([]);
+  // Flush any pending async playlist load from the previous test.
+  await flushPromises();
 });
 
 const placeholderImage =
@@ -51,6 +69,7 @@ function mountComponent(props = {}) {
   return mount(ChatRightPanel, {
     props: {
       conversation: makeConversation(),
+      conversationId: 'conv-1',
       attachments: [],
       messageListItems: [],
       playlistVideos: [],
@@ -188,11 +207,12 @@ describe('ChatRightPanel', () => {
   ])(
     'shows the now-playing title on the active item row for playback %s',
     async (url, playbackTitle, expected) => {
-      addedPlaylistVideos.value = new Map([
-        [
-          FLOATING_PLAYLIST_QUEUE_KEY,
-          [{ videoUrl: 'https://youtu.be/in-list', title: 'In List' }],
-        ],
+      vi.mocked(fetchAllPlaylists).mockResolvedValue([
+        {
+          name: 'Focus',
+          conversationId: 'conv-1',
+          videos: [{ videoUrl: 'https://youtu.be/in-list', title: 'In List' }],
+        },
       ]);
       const wrapper = mountComponent({
         playlistVideos: [
@@ -200,6 +220,7 @@ describe('ChatRightPanel', () => {
         ],
         rightPanelView: 'playlist',
       });
+      await flushPromises();
       setActivePlayback(url, playbackTitle);
       await wrapper.vm.$nextTick();
       expect(wrapper.find('.playlist-item__marquee-text').text()).toBe(
@@ -209,11 +230,12 @@ describe('ChatRightPanel', () => {
   );
 
   it('shows no separate now-playing marquee in the transport bar (matches the floating player)', async () => {
-    addedPlaylistVideos.value = new Map([
-      [
-        FLOATING_PLAYLIST_QUEUE_KEY,
-        [{ videoUrl: 'https://youtu.be/in-list', title: 'In List' }],
-      ],
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      {
+        name: 'Focus',
+        conversationId: 'conv-1',
+        videos: [{ videoUrl: 'https://youtu.be/in-list', title: 'In List' }],
+      },
     ]);
     const wrapper = mountComponent({
       playlistVideos: [
@@ -221,6 +243,7 @@ describe('ChatRightPanel', () => {
       ],
       rightPanelView: 'playlist',
     });
+    await flushPromises();
     setActivePlayback('https://youtu.be/outside', 'Outside Title');
     await wrapper.vm.$nextTick();
     expect(wrapper.find('.playlist-transport-bar__now-playing').exists()).toBe(
@@ -228,12 +251,16 @@ describe('ChatRightPanel', () => {
     );
   });
 
-  it('shows the player with an empty queue when a saved playlist exists', () => {
-    savedPlaylists.value = [{ id: 'p1', name: 'Focus', videos: [] }];
+  it('shows the player with an empty queue when a playlist exists', async () => {
+    setPlaylists([{ name: 'Focus', videos: [], conversationId: 'conv-1' }]);
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      { name: 'Focus', conversationId: 'conv-1', videos: [] },
+    ]);
     const wrapper = mountComponent({
       playlistVideos: [],
       rightPanelView: 'playlist',
     });
+    await flushPromises();
     expect(wrapper.find('.playlist-panel').exists()).toBe(true);
   });
 });

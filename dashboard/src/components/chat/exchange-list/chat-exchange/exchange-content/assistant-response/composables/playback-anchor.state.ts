@@ -97,6 +97,14 @@ export type PlaybackDockMode = 'auto' | 'float-latched' | 'dock-dismissed';
 
 export const playbackDockMode = ref<PlaybackDockMode>('auto');
 
+/**
+ * Force the player window to show even when the hide-on-playlist background
+ * setting or a dismissal would suppress it. Set on a conversation switch
+ * while a video is playing, so the player stays visible across switches;
+ * cleared on the next launch/stop or a user dismissal.
+ */
+export const forceShowPlayer = ref(false);
+
 // A fresh launch (or a full stop) always returns to auto-following. Sync
 // flush: launch semantics depend on the mode being reset by the time
 // launchVideo returns (callers read dock state synchronously after).
@@ -104,6 +112,7 @@ watch(
   launchedVideo,
   () => {
     playbackDockMode.value = 'auto';
+    forceShowPlayer.value = false;
   },
   { flush: 'sync' },
 );
@@ -155,6 +164,7 @@ export function dockPlayback() {
   playbackDockMode.value = visibleAnchorCandidate.value
     ? 'auto'
     : 'dock-dismissed';
+  forceShowPlayer.value = false;
 }
 
 /**
@@ -166,6 +176,7 @@ export function dockPlayback() {
  */
 export function dismissPlaybackWindow() {
   playbackDockMode.value = 'dock-dismissed';
+  forceShowPlayer.value = false;
 }
 
 /** Latch into floating mode (popout autodock=off and the anchor was lost). */

@@ -73,3 +73,13 @@ export type HarnessShownMedia = Prisma.HarnessShownMediaModel
  * 
  */
 export type HarnessProviderOverride = Prisma.HarnessProviderOverrideModel
+/**
+ * Model HarnessPlaylist
+ * *
+ *  * A named playlist scoped to one conversation. Videos are stored as a Json
+ *  * array of VideoGalleryItem and belong to the playlist (the active playlist
+ *  * is the queue). The compound key is (sessionId, conversationId, name), so
+ *  * playlist names are unique per conversation. Rows are purged when their
+ *  * conversation is deleted.
+ */
+export type HarnessPlaylist = Prisma.HarnessPlaylistModel

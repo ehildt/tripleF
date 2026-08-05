@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue';
-import { computed, provide, ref } from 'vue';
+import { computed, provide, ref, watch } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
@@ -14,8 +14,11 @@ import { useChatThink } from '../../composables/use-chat-think';
 import { useSocketSubscription } from '../../composables/use-socket-subscription';
 import { useToast } from '../../composables/use-toast';
 import { useModelsStore } from '../../stores/models';
+import {
+  getPlaylists,
+  loadPlaylists,
+} from '../widgets/floating-playlist/composables/playlist.state';
 import { playlistMode } from '../widgets/floating-playlist/composables/playlist-settings.state';
-import { savedPlaylists } from '../widgets/floating-playlist/composables/saved-playlists.state';
 import { conversationHasVideos } from './composables/conversation-has-videos.helper';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
@@ -23,7 +26,10 @@ import { useChatDropdowns } from './composables/use-chat-dropdowns';
 import { useChatPanel } from './composables/use-chat-panel';
 import { useSearchEngineAvailability } from './composables/use-search-engine-availability';
 import { useSubmit } from './composables/use-submit';
-import { FLOATING_PLAYLIST_QUEUE_KEY } from './exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import {
+  launchedFromPlaylist,
+  launchedVideo,
+} from './exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import ChatMainColumn from './main-column/ChatMainColumn.vue';
 import ChatRightPanel from './right-panel/ChatRightPanel.vue';
 import { useAttachmentList } from './right-panel/composables/use-attachment-list';
@@ -143,24 +149,30 @@ const {
   supportsVision,
 });
 
-// The playlist is global and conversation-independent: one shared queue that
-// the docked and floating players both read, so it persists across switches.
-const { playlistVideos } = useVideoPlaylist(
-  computed(() => FLOATING_PLAYLIST_QUEUE_KEY),
-);
+// The playlist is scoped to the active conversation: the active playlist's
+// videos are the queue, and switching playlists swaps them.
+const { playlistVideos } = useVideoPlaylist();
+
+// Load the active conversation's playlists from the database so the playlist
+// tab can appear even before the panel mounts.
+watch(conversationId, () => void loadPlaylists(conversationId.value), {
+  immediate: true,
+});
 
 // In floating mode the playlist lives in the app-level window (SysCtl →
 // Widgets → Playlist): the right panel drops its playlist tab entirely.
 const panelPlaylistVideos = computed(() =>
   playlistMode.value === 'floating' ? [] : playlistVideos.value,
 );
-// The player shows when it has anything to act on: an added video, a saved
-// playlist to load from an empty queue, or — in docked mode — a conversation
-// that contains videos (so the empty state and its hints are reachable).
+// The player shows when it has anything to act on: an added video, a
+// playlist to load from an empty queue, a playlist video currently playing,
+// or — in docked mode — a conversation that contains videos (so the empty
+// state and its hints are reachable).
 const hasPanelPlaylist = computed(
   () =>
     panelPlaylistVideos.value.length > 0 ||
-    savedPlaylists.value.length > 0 ||
+    getPlaylists().length > 0 ||
+    (launchedFromPlaylist.value && Boolean(launchedVideo.value)) ||
     (playlistMode.value !== 'floating' &&
       conversationHasVideos(conversation.value)),
 );
@@ -305,6 +317,7 @@ defineExpose({ actionBarRef });
     :conversation="conversation"
     :message-list-items="messageListItems"
     :playlist-videos="panelPlaylistVideos"
+    :conversation-id="conversationId"
     :right-panel-view="rightPanelView"
     @select-view="selectPanelView"
     @remove-attachment="onRemoveAttachment"

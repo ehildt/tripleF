@@ -5,6 +5,7 @@ import {
   dockedAnchorElement,
   dockPlayback,
   engagePlayback,
+  forceShowPlayer,
   latchFloating,
   playbackDockMode,
   visibleAnchorCandidate,
@@ -25,6 +26,7 @@ import {
   playNextPlaylistVideo,
   stopActivePlayback,
 } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import { useConversationStore } from '@/stores/conversation';
 
 /**
  * State for the standalone floating player host — the single mounted player
@@ -107,11 +109,25 @@ export function useFloatingPlayerHost() {
 
   const windowHidden = computed(
     () =>
-      playbackDockMode.value === 'dock-dismissed' ||
-      (popoutHideOnPlaylist.value && launchedFromPlaylist.value) ||
-      (!popoutEnabled.value &&
-        Boolean(launchedVideo.value) &&
-        !dockedInline.value),
+      !forceShowPlayer.value &&
+      (playbackDockMode.value === 'dock-dismissed' ||
+        (popoutHideOnPlaylist.value && launchedFromPlaylist.value) ||
+        (!popoutEnabled.value &&
+          Boolean(launchedVideo.value) &&
+          !dockedInline.value)),
+  );
+
+  // A conversation switch while a video is playing always shows the player:
+  // re-engage auto-following and override the hide-on-playlist background
+  // setting so the window stays visible across the switch.
+  const conversationStore = useConversationStore();
+  watch(
+    () => conversationStore.activeConversationId,
+    () => {
+      if (!launchedVideo.value) return;
+      forceShowPlayer.value = true;
+      engagePlayback();
+    },
   );
 
   // ---------- inline rect tracking ----------
