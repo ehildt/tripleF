@@ -1,14 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createSerperBusinessReviewsSearch,
-  createSerperImageSearch,
-  createSerperNewsSearch,
-  createSerperPlacesSearch,
-  createSerperShoppingSearch,
-  createSerperVideoSearch,
-  createSerperWebSearch,
-} from './serper.js';
+import { createSerperBusinessReviewsSearch } from './serper/business-reviews-search.tool.js';
+import { createSerperImageSearch } from './serper/image-search.tool.js';
+import { createSerperNewsSearch } from './serper/news-search.tool.js';
+import { createSerperPlacesSearch } from './serper/places-search.tool.js';
+import { createSerperShoppingSearch } from './serper/shopping-search.tool.js';
+import { createSerperVideoSearch } from './serper/video-search.tool.js';
+import { createSerperWebSearch } from './serper/web-search.tool.js';
 import {
   STANDALONE_QUERY_DESCRIPTION,
   STANDALONE_QUERY_TOOL_CLAUSE,

@@ -1,25 +1,21 @@
 import type { ToolSet } from 'ai';
 
-import {
-  createBrightDataImageSearch,
-  createBrightDataNewsSearch,
-  createBrightDataPlacesSearch,
-  createBrightDataShoppingSearch,
-  createBrightDataVideoSearch,
-  createBrightDataWebpageScrape,
-  createBrightDataWebSearch,
-} from './bright-data.js';
+import { createBrightDataImageSearch } from './bright-data/image-search.tool.js';
+import { createBrightDataNewsSearch } from './bright-data/news-search.tool.js';
+import { createBrightDataPlacesSearch } from './bright-data/places-search.tool.js';
+import { createBrightDataShoppingSearch } from './bright-data/shopping-search.tool.js';
+import { createBrightDataVideoSearch } from './bright-data/video-search.tool.js';
+import { createBrightDataWebSearch } from './bright-data/web-search.tool.js';
+import { createBrightDataWebpageScrape } from './bright-data/webpage-scrape.tool.js';
+import { createSerperBusinessReviewsSearch } from './serper/business-reviews-search.tool.js';
+import { createSerperImageSearch } from './serper/image-search.tool.js';
+import { createSerperNewsSearch } from './serper/news-search.tool.js';
+import { createSerperPlacesSearch } from './serper/places-search.tool.js';
+import { createSerperShoppingSearch } from './serper/shopping-search.tool.js';
+import { createSerperVideoSearch } from './serper/video-search.tool.js';
+import { createSerperWebSearch } from './serper/web-search.tool.js';
+import { createSerperWebpageScrape } from './serper/webpage-scrape.tool.js';
 import { createVariantRequestTool } from './image-variants.tool.js';
-import {
-  createSerperBusinessReviewsSearch,
-  createSerperImageSearch,
-  createSerperNewsSearch,
-  createSerperPlacesSearch,
-  createSerperShoppingSearch,
-  createSerperVideoSearch,
-  createSerperWebpageScrape,
-  createSerperWebSearch,
-} from './serper.js';
 import { withSummary } from './tool-factory.js';
 import type { ToolDependencies } from './types.js';
 import { createWebFetchTool } from './web-fetch.tool.js';

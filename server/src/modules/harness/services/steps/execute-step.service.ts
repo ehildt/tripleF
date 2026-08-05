@@ -1,11 +1,9 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable } from '@nestjs/common';
 
-import {
-  ExecuteActionService,
-  type ToolExecutionEvent,
-} from '../../actions/execute.action.js';
+import { ExecuteActionService } from '../../actions/execute.action.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import type { ToolExecutionEvent } from '../../helpers/execute/wrap-tools-with-execution-events.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
