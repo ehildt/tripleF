@@ -5,18 +5,12 @@ import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import {
-  buildStructuredJsonPrompt,
-  languageCorrectionPrompt,
-} from '../constants/structured-json-prompt.constant.js';
-import { buildClassifyTranscript } from '../helpers/build-classify-transcript.helper.js';
-import { enforceRequiredTools } from '../helpers/enforce-media-tools.helper.js';
-import { expandToolAliases } from '../helpers/expand-tool-aliases.helper.js';
+import { languageCorrectionPrompt } from '../constants/structured-json-prompt.constant.js';
 import { getEnabledToolNames } from '../helpers/get-enabled-tool-names.helper.js';
-import { parseLlmJson } from '../helpers/parse-llm-json.helper.js';
-import { buildIntentSelectionPrompt } from '../prompts/intent-selection.prompt.js';
+import { buildClassifyMessages } from '../helpers/interpret/build-classify-messages.helper.js';
+import { parseIntent } from '../helpers/interpret/parse-intent.helper.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
-import { type IntentResult, IntentSchema } from '../templates/intent.schema.js';
+import { type IntentResult } from '../templates/intent.schema.js';
 
 const MAX_INTERPRET_RETRIES = 3;
 
@@ -55,8 +49,13 @@ export class InterpretActionService {
     abortSignal?: AbortSignal;
     onIntent?: (intent: IntentResult) => void;
   }): Promise<InterpretResult> {
-    const classifyMessages: InputMessage[] = this.buildClassifyMessages(
+    const enabledToolNames = getEnabledToolNames({
+      ...this.providerOverrides.getConfig(),
+      playwright: this.playwrightMcpConfig.config,
+    });
+    const classifyMessages: InputMessage[] = buildClassifyMessages(
       params.messages,
+      enabledToolNames,
     );
 
     let totalInputTokens = 0;
@@ -77,14 +76,11 @@ export class InterpretActionService {
       totalInputTokens += result.totalUsage?.inputTokens ?? 0;
       totalOutputTokens += result.totalUsage?.outputTokens ?? 0;
 
-      const enabledToolNames = getEnabledToolNames({
-        ...this.providerOverrides.getConfig(),
-        playwright: this.playwrightMcpConfig.config,
-      });
-      const intent = this.parseIntent(
+      const intent = parseIntent(
         params.requestId,
         result.text,
         enabledToolNames,
+        this.stepLogger,
       );
       lastIntent = intent;
       params.onIntent?.(intent);
@@ -162,151 +158,5 @@ export class InterpretActionService {
 
   private buildLanguageCorrectionMessage(): InputMessage {
     return { role: 'system', content: languageCorrectionPrompt };
-  }
-
-  private parseIntent(
-    requestId: string,
-    text: string,
-    enabledToolNames: string[],
-  ): IntentResult {
-    const cleaned = text
-      .trim()
-      .replace(/^```json\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
-
-    if (!cleaned) {
-      throw new Error('Intent classification returned empty output');
-    }
-
-    try {
-      const parsed = parseLlmJson(cleaned) as Record<string, unknown>;
-
-      if (typeof parsed.imageCount === 'number' && parsed.imageCount < 0) {
-        parsed.imageCount = 0;
-      }
-      if (typeof parsed.videoCount === 'number' && parsed.videoCount < 0) {
-        parsed.videoCount = 0;
-      }
-
-      if (Array.isArray(parsed.tools)) {
-        parsed.tools = expandToolAliases(parsed.tools, enabledToolNames);
-      }
-
-      const validated = IntentSchema.parse(parsed);
-      if (validated.tools) {
-        validated.tools = [
-          ...new Set(validated.tools),
-        ] as IntentResult['tools'];
-      }
-      validated.tools = enforceRequiredTools(validated, enabledToolNames);
-      return validated;
-    } catch (error) {
-      this.stepLogger.warn({ requestId }, 'interpret', 'intent parse failed', {
-        rawOutput: text,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw new Error('Intent classification produced invalid JSON', {
-        cause: error,
-      });
-    }
-  }
-
-  private buildClassifyMessages(messages: InputMessage[]): InputMessage[] {
-    const enabledToolNames = getEnabledToolNames({
-      ...this.providerOverrides.getConfig(),
-      playwright: this.playwrightMcpConfig.config,
-    });
-
-    const prompt = [
-      buildIntentSelectionPrompt(enabledToolNames),
-      buildStructuredJsonPrompt(),
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-
-    const systemContent = this.buildSystemPrompt(prompt);
-
-    const hasImages = messages.some(
-      (m) => m.role === 'user' && m.images && m.images.length > 0,
-    );
-
-    const nonSystem = messages.filter((m) => m.role !== 'system');
-
-    // The interpret step is the context gatekeeper: it derives the
-    // query-focused contextSummary that downstream steps rely on, so it must
-    // see the full conversation. Earlier turns move into a delimited
-    // transcript inside the system message — reference-only data that the
-    // classifier cannot confuse with the current request, which stays as
-    // the final user message.
-    const latestUserIndex = nonSystem.findLastIndex((m) => m.role === 'user');
-    const latestUser =
-      latestUserIndex >= 0 ? nonSystem[latestUserIndex] : undefined;
-
-    // The transcript always covers every turn before the latest user
-    // message — including earlier user turns, whose constraints the
-    // classifier needs to resolve follow-ups. Image attachments are not
-    // sent; the latest message carries an attachment marker instead.
-    const transcriptSource = nonSystem.slice(
-      0,
-      latestUserIndex < 0 ? nonSystem.length : latestUserIndex,
-    );
-    const transcript = buildClassifyTranscript(transcriptSource);
-
-    const latestUserContent = hasImages
-      ? this.buildImageUserContent(nonSystem)
-      : (latestUser?.content ?? '');
-
-    return [
-      {
-        role: 'system' as const,
-        content: [systemContent, transcript].filter(Boolean).join('\n\n'),
-      },
-      ...(latestUserContent
-        ? [{ role: 'user' as const, content: latestUserContent }]
-        : []),
-    ];
-  }
-
-  private buildSystemPrompt(basePrompt: string): string {
-    const now = new Date()
-      .toLocaleString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short',
-      })
-      .replace(' at ', ', '); // "Friday, January 3, 2025, 10:30 AM GMT"
-    return [
-      basePrompt,
-      '',
-      `Current date and time: ${now}`,
-      'Use this temporal context when classifying time-sensitive requests.',
-    ].join('\n');
-  }
-
-  /**
-   * Latest user text plus the attachment marker, so the classifier knows
-   * the current request carries images without sending the images.
-   */
-  private buildImageUserContent(messages: InputMessage[]): string {
-    const userMessages = messages.filter((m) => m.role === 'user');
-    const latestText = userMessages.at(-1)?.content ?? '';
-
-    const imageCount =
-      userMessages.findLast((m) => m.images && m.images.length > 0)?.images
-        ?.length ?? 0;
-
-    const marker =
-      imageCount > 0
-        ? imageCount === 1
-          ? ' [1 image attached]'
-          : ` [${imageCount} images attached]`
-        : '';
-
-    return [latestText, marker].filter(Boolean).join(' ');
   }
 }

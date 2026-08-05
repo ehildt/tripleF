@@ -8,56 +8,46 @@ import {
   getOptionalKeys,
   getRequiredKeys,
 } from '../helpers/template-placeholders.constant.js';
-import {
-  articleSchema,
-  formatZodIssues,
-} from '../schemas/article-json.schema.js';
-import {
-  compareSchema,
-  formatZodIssues as formatCompareZodIssues,
-} from '../schemas/compare-json.schema.js';
-import {
-  describeSchema,
-  formatZodIssues as formatDescribeZodIssues,
-} from '../schemas/describe-json.schema.js';
-import {
-  evaluationSchema,
-  formatZodIssues as formatEvaluationZodIssues,
-} from '../schemas/evaluation-json.schema.js';
-import {
-  formatZodIssues as formatImagelistZodIssues,
-  imagelistSchema,
-} from '../schemas/imagelist-json.schema.js';
-import {
-  formatZodIssues as formatNewsZodIssues,
-  newsSchema,
-} from '../schemas/news-json.schema.js';
-import {
-  formatZodIssues as formatOcrZodIssues,
-  ocrSchema,
-} from '../schemas/ocr-json.schema.js';
-import {
-  formatZodIssues as formatProductZodIssues,
-  productSchema,
-} from '../schemas/product-json.schema.js';
-import {
-  formatZodIssues as formatShoplistZodIssues,
-  shoplistSchema,
-} from '../schemas/shoplist-json.schema.js';
-import {
-  formatZodIssues as formatSummaryZodIssues,
-  summarySchema,
-} from '../schemas/summary-json.schema.js';
-import {
-  formatZodIssues as formatVideolistZodIssues,
-  videolistSchema,
-} from '../schemas/videolist-json.schema.js';
+
+import { validateArticleOutput } from './response-validators/article.validator.js';
+import { validateCompareOutput } from './response-validators/compare.validator.js';
+import { validateDescribeOutput } from './response-validators/describe.validator.js';
+import { validateEvaluationOutput } from './response-validators/evaluation.validator.js';
+import { validateFreeFormOutput } from './response-validators/free-form.validator.js';
+import { validateImagelistOutput } from './response-validators/imagelist.validator.js';
+import { validateNewsOutput } from './response-validators/news.validator.js';
+import { validateOcrOutput } from './response-validators/ocr.validator.js';
+import { validateProductOutput } from './response-validators/product.validator.js';
+import { validateShoplistOutput } from './response-validators/shoplist.validator.js';
+import { validateSummaryOutput } from './response-validators/summary.validator.js';
+import type { ValidationResult } from './response-validators/validation-result.type.js';
+import { validateVideolistOutput } from './response-validators/videolist.validator.js';
+
+/**
+ * Per-template response validators. Each entry validates a parsed JSON
+ * payload against its template's zod schema and returns the normalized
+ * content (or a human-readable error) as a ValidationResult.
+ */
+const templateValidators: Record<
+  string,
+  (parsed: Record<string, unknown>) => ValidationResult
+> = {
+  article: validateArticleOutput,
+  news: validateNewsOutput,
+  describe: validateDescribeOutput,
+  compare: validateCompareOutput,
+  ocr: validateOcrOutput,
+  summary: validateSummaryOutput,
+  evaluation: validateEvaluationOutput,
+  product: validateProductOutput,
+  shoplist: validateShoplistOutput,
+  imagelist: validateImagelistOutput,
+  videolist: validateVideolistOutput,
+  text: validateFreeFormOutput,
+  compact: validateFreeFormOutput,
+};
 
 import { MediaUrlValidatorService } from './media-url-validator.service.js';
-
-type ValidationResult =
-  | { valid: true; content: string; error?: undefined }
-  | { valid: false; error: string; content?: undefined };
 
 /** Keys (lowercased) whose string values are display image URLs in template JSON. */
 const OUTPUT_IMAGE_URL_KEYS = new Set([
@@ -241,226 +231,12 @@ export class ResponseValidatorService {
     );
   }
 
-  // --------------------------------------------------------------------------
-  // Per-template schema validators
-  // --------------------------------------------------------------------------
-
-  private readonly templateValidators: Record<
-    string,
-    (parsed: Record<string, unknown>) => ValidationResult
-  > = {
-    article: this.validateArticleOutput.bind(this),
-    news: this.validateNewsOutput.bind(this),
-    describe: this.validateDescribeOutput.bind(this),
-    compare: this.validateCompareOutput.bind(this),
-    ocr: this.validateOcrOutput.bind(this),
-    summary: this.validateSummaryOutput.bind(this),
-    evaluation: this.validateEvaluationOutput.bind(this),
-    product: this.validateProductOutput.bind(this),
-    shoplist: this.validateShoplistOutput.bind(this),
-    imagelist: this.validateImagelistOutput.bind(this),
-    videolist: this.validateVideolistOutput.bind(this),
-    text: this.validateFreeFormOutput.bind(this),
-    compact: this.validateFreeFormOutput.bind(this),
-  };
-
   private validateTemplateSchema(
     parsed: Record<string, unknown>,
     template: string,
   ): ValidationResult {
-    const validator = this.templateValidators[template];
+    const validator = templateValidators[template];
     if (validator) return validator(parsed);
     return { valid: true, content: JSON.stringify(parsed) };
-  }
-
-  private validateFreeFormOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    return { valid: true, content: JSON.stringify(parsed) };
-  }
-
-  private validateArticleOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = articleSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    const article = schemaResult.data;
-    const textToRead = [
-      article.title,
-      article.summary,
-      article.sectionContent,
-      article.conclusion,
-    ]
-      .filter(Boolean)
-      .join(' ');
-
-    const readTime = article.readTime?.trim()
-      ? article.readTime
-      : this.computeReadTime(textToRead);
-
-    return { valid: true, content: JSON.stringify({ ...article, readTime }) };
-  }
-
-  private validateNewsOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = newsSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatNewsZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    const news = schemaResult.data;
-    const textToRead = [
-      news.headline,
-      news.deck,
-      news.lead,
-      news.sectionContent,
-    ]
-      .filter(Boolean)
-      .join(' ');
-
-    const readTime = news.readTime?.trim()
-      ? news.readTime
-      : this.computeReadTime(textToRead);
-    return { valid: true, content: JSON.stringify({ ...news, readTime }) };
-  }
-
-  private validateDescribeOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = describeSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatDescribeZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateCompareOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = compareSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatCompareZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateOcrOutput(parsed: Record<string, unknown>): ValidationResult {
-    const schemaResult = ocrSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatOcrZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateSummaryOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = summarySchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatSummaryZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateEvaluationOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = evaluationSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatEvaluationZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateProductOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = productSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatProductZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateShoplistOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = shoplistSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatShoplistZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateImagelistOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = imagelistSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatImagelistZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private validateVideolistOutput(
-    parsed: Record<string, unknown>,
-  ): ValidationResult {
-    const schemaResult = videolistSchema.safeParse(parsed);
-    if (!schemaResult.success) {
-      return {
-        valid: false,
-        error: `Schema validation failed: ${formatVideolistZodIssues(schemaResult.error.issues)}`,
-      };
-    }
-
-    return { valid: true, content: JSON.stringify(schemaResult.data) };
-  }
-
-  private computeReadTime(text: string): string {
-    const words = text.trim().split(/\s+/).filter(Boolean).length;
-    const minutes = Math.max(1, Math.round(words / 200));
-    return `${minutes} min read`;
   }
 }

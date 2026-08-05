@@ -2,11 +2,7 @@
 
 ![Dashboard](banner.gif)
 
-# tripleF (3F)
-
-**An agentic AI workbench, fully open source.** Chat with free open models — running **fully locally** via Ollama, or on **Ollama Cloud** when you want the headroom. No lock-in, no meter, no black box: reasoning areas, context-size readouts, real cancellation, persisted queues with replay — the whole machine is inspectable, and the whole machine is yours.
-
-Early in development; already a complete chat experience — with features some proprietary chats still miss. Next: speech-to-text, music & image generation, and everyday providers (YouTube, messengers, finance). tripleF aims for the top of the open-source community.
+**An agentic AI workbench, fully open source.** Chat with free open models — running **fully locally** via Ollama, or on **Ollama Cloud** for extra headroom. No lock-in, no meter, no black box — the whole machine is inspectable, and yours. Early in development; already a complete chat experience with features some proprietary chats still miss. Next: speech-to-text, music & image generation, and everyday providers (YouTube, messengers, finance). tripleF aims for the top of the open-source community.
 
 
 <br>
@@ -20,15 +16,7 @@ Early in development; already a complete chat experience — with features some 
 
 </div>
 
-<div align="center">
-
-## What is tripleF?
-
-A NestJS-powered **conversation harness** (agentic step engine: sanitize → interpret → execute → respond, with Serper-grounded tools and schema-validated structured answers) behind a Vue 3 **workbench dashboard** (chat, system control, dead-letter replay, image preprocessing, 13 game-inspired themes) — async over BullMQ/KeyDB, persisted in PostgreSQL/Prisma, streamed live over Socket.IO, images in MinIO. See the [wiki](.wiki/0-introduction.md) for architecture, API, and operations.
-
-### Quick Start
-
-</div>
+## Quick Start
 
 ```bash
 docker compose -f infra.compose.yml up -d    # postgres · minio · keydb
@@ -42,7 +30,7 @@ docker compose up -d                          # deps → server → dashboard
 <div align="center">
 
 Dashboard at `http://localhost:5173/dashboard/` · API at `http://localhost:3000/api/v1` · Swagger at `/api-docs`.  
-Full guide: [0.1-quick-start](.wiki/0.1-quick-start.md) · Docker deep-dive: [0.2-docker](.wiki/0.2-docker.md).
+Architecture, API & operations: [0-introduction](.wiki/0-introduction.md) · Full guide: [0.1-quick-start](.wiki/0.1-quick-start.md) · Docker deep-dive: [0.2-docker](.wiki/0.2-docker.md) · Per-app: [Server](server/README.md) · [Dashboard](dashboard/README.md).
 
 ### Built with AI-Assisted Context Coding, Owned by Humans
 

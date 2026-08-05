@@ -11,8 +11,13 @@ import {
 } from '../constants/user-agents.constant.js';
 import { isEmbeddableVideoUrl } from '../helpers/is-embeddable-video-url.helper.js';
 import { isPrivateOrLocalhost } from '../helpers/is-private-or-localhost.helper.js';
-
-type MediaUrlKind = 'image' | 'video' | 'html' | 'broken' | 'unknown';
+import type { MediaUrlKind } from '../helpers/media-classification/classify-by-content-type.helper.js';
+import { classifyByContentType } from '../helpers/media-classification/classify-by-content-type.helper.js';
+import { classifyByMagicBytes } from '../helpers/media-classification/classify-by-magic-bytes.helper.js';
+import { extractContentType } from '../helpers/media-classification/extract-content-type.helper.js';
+import { hasEmptyContent } from '../helpers/media-classification/has-empty-content.helper.js';
+import { isImageContentType } from '../helpers/media-classification/is-image-content-type.helper.js';
+import { toBuffer } from '../helpers/media-classification/to-buffer.helper.js';
 
 export interface MediaValidationResult {
   url: string;
@@ -65,45 +70,6 @@ const OEMBED_HOST_PROVIDERS: Record<string, OembedProvider> = {
   'www.dailymotion.com': 'dailymotion',
   'dai.ly': 'dailymotion',
 };
-
-const IMAGE_CONTENT_TYPE_PREFIXES = ['image/'];
-const VIDEO_CONTENT_TYPE_PREFIXES = [
-  'video/',
-  'application/x-mpegurl',
-  'application/vnd.apple.mpegurl',
-];
-const HTML_CONTENT_TYPE_PREFIXES = ['text/html', 'application/xhtml'];
-
-const IMAGE_MAGIC_BYTES: Array<{ bytes: number[]; mime: string }> = [
-  { bytes: [0xff, 0xd8, 0xff], mime: 'image/jpeg' },
-  { bytes: [0x89, 0x50, 0x4e, 0x47], mime: 'image/png' },
-  { bytes: [0x47, 0x49, 0x46, 0x38], mime: 'image/gif' },
-];
-
-const VIDEO_MAGIC_BYTES: Array<{ bytes: number[]; mime: string }> = [
-  { bytes: [0x00, 0x00, 0x00], mime: 'video/mp4' },
-  { bytes: [0x1a, 0x45, 0xdf, 0xa3], mime: 'video/webm' },
-  { bytes: [0x4f, 0x67, 0x67, 0x53], mime: 'video/ogg' },
-];
-
-/**
- * ISOBMFF major brands (the 4 letters after "ftyp") that identify image
- * containers rather than video: AVIF and the HEIF family.
- */
-const ISOBMFF_IMAGE_BRANDS = new Set([
-  'avif',
-  'avis',
-  'heic',
-  'heix',
-  'hevc',
-  'hevx',
-  'heim',
-  'heis',
-  'hevm',
-  'hevs',
-  'mif1',
-  'msf1',
-]);
 
 const CACHE_MAX_ENTRIES = 1000;
 const CACHE_HIT_TTL_MS = 5 * 60_000;
@@ -248,7 +214,7 @@ export class MediaUrlValidatorService {
     if (
       options.checkImageDimensions &&
       (headResult.kind === 'image' ||
-        this.isImageContentType(headResult.contentType))
+        isImageContentType(headResult.contentType))
     ) {
       return this.tryImageDimensionCheck(url, options, headResult);
     }
@@ -290,7 +256,7 @@ export class MediaUrlValidatorService {
         };
       }
 
-      const contentType = this.extractContentType(response.headers);
+      const contentType = extractContentType(response.headers);
       const chunks: Buffer[] = [];
       let total = 0;
 
@@ -364,13 +330,6 @@ export class MediaUrlValidatorService {
     }
   }
 
-  private isImageContentType(contentType?: string): boolean {
-    if (!contentType) return false;
-    return IMAGE_CONTENT_TYPE_PREFIXES.some((p) =>
-      contentType.toLowerCase().startsWith(p),
-    );
-  }
-
   /**
    * Verify that an embeddable video page actually exists via the provider's
    * oEmbed endpoint. Returns undefined when the provider has no oEmbed
@@ -430,7 +389,7 @@ export class MediaUrlValidatorService {
         maxRedirects,
       });
 
-      const contentType = this.extractContentType(response.headers);
+      const contentType = extractContentType(response.headers);
       const status = response.status;
 
       if (status >= 400) {
@@ -447,7 +406,7 @@ export class MediaUrlValidatorService {
         };
       }
 
-      if (this.hasEmptyContent(response.headers)) {
+      if (hasEmptyContent(response.headers)) {
         return {
           url,
           kind: 'broken',
@@ -457,7 +416,7 @@ export class MediaUrlValidatorService {
         };
       }
 
-      const kind = this.classifyByContentType(contentType);
+      const kind = classifyByContentType(contentType);
       return { url, kind, status, contentType };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -479,7 +438,7 @@ export class MediaUrlValidatorService {
         headers: { Range: 'bytes=0-1023' },
       });
 
-      const contentType = this.extractContentType(response.headers);
+      const contentType = extractContentType(response.headers);
       const status = response.status;
 
       if (status >= 400) {
@@ -496,7 +455,7 @@ export class MediaUrlValidatorService {
         };
       }
 
-      if (this.hasEmptyContent(response.headers)) {
+      if (hasEmptyContent(response.headers)) {
         return {
           url,
           kind: 'broken',
@@ -506,10 +465,10 @@ export class MediaUrlValidatorService {
         };
       }
 
-      let kind = this.classifyByContentType(contentType);
+      let kind = classifyByContentType(contentType);
       if (kind === 'unknown' || kind === 'html') {
-        const buffer = this.toBuffer(response.data);
-        if (buffer) kind = this.classifyByMagicBytes(buffer);
+        const buffer = toBuffer(response.data);
+        if (buffer) kind = classifyByMagicBytes(buffer);
       }
 
       return { url, kind, status, contentType };
@@ -591,102 +550,5 @@ export class MediaUrlValidatorService {
     } catch {
       return true;
     }
-  }
-
-  /** A zero content-length on a 2xx response means there is nothing to show. */
-  private hasEmptyContent(headers: Record<string, unknown>): boolean {
-    const raw = headers['content-length'];
-    const value = Array.isArray(raw) ? raw[0] : raw;
-    if (typeof value !== 'string' && typeof value !== 'number') return false;
-    return Number(value) === 0;
-  }
-
-  private toBuffer(data: unknown): Buffer | undefined {
-    if (Buffer.isBuffer(data)) return data;
-    if (data instanceof ArrayBuffer) return Buffer.from(data);
-    if (ArrayBuffer.isView(data)) {
-      return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
-    }
-    if (typeof data === 'string') return Buffer.from(data);
-    return undefined;
-  }
-
-  private extractContentType(
-    headers: Record<string, unknown>,
-  ): string | undefined {
-    const value = headers['content-type'];
-    if (typeof value === 'string')
-      return value.split(';')[0].trim().toLowerCase();
-    if (
-      Array.isArray(value) &&
-      value.length > 0 &&
-      typeof value[0] === 'string'
-    ) {
-      return value[0].split(';')[0].trim().toLowerCase();
-    }
-    return undefined;
-  }
-
-  private classifyByContentType(contentType?: string): MediaUrlKind {
-    if (!contentType) return 'unknown';
-
-    if (IMAGE_CONTENT_TYPE_PREFIXES.some((p) => contentType.startsWith(p)))
-      return 'image';
-    if (VIDEO_CONTENT_TYPE_PREFIXES.some((p) => contentType.startsWith(p)))
-      return 'video';
-    if (HTML_CONTENT_TYPE_PREFIXES.some((p) => contentType.startsWith(p)))
-      return 'html';
-
-    return 'unknown';
-  }
-
-  private classifyByMagicBytes(buffer: Buffer): MediaUrlKind {
-    // WebP is a RIFF container with "WEBP" at bytes 8-11.
-    if (
-      buffer.length >= 12 &&
-      buffer[0] === 0x52 &&
-      buffer[1] === 0x49 &&
-      buffer[2] === 0x46 &&
-      buffer[3] === 0x46 &&
-      buffer[8] === 0x57 &&
-      buffer[9] === 0x45 &&
-      buffer[10] === 0x42 &&
-      buffer[11] === 0x50
-    ) {
-      return 'image';
-    }
-
-    // ISOBMFF containers start with a 4-byte size then "ftyp" at offset 4.
-    // The major brand at offset 8 distinguishes videos (mp4, isom, …) from
-    // AVIF/HEIF images, which share the same container format.
-    if (
-      buffer.length >= 8 &&
-      buffer[4] === 0x66 &&
-      buffer[5] === 0x74 &&
-      buffer[6] === 0x79 &&
-      buffer[7] === 0x70
-    ) {
-      if (buffer.length >= 12) {
-        const brand = buffer.toString('ascii', 8, 12);
-        if (ISOBMFF_IMAGE_BRANDS.has(brand)) return 'image';
-      }
-      return 'video';
-    }
-
-    for (const signature of IMAGE_MAGIC_BYTES) {
-      if (this.bufferStartsWith(buffer, signature.bytes)) return 'image';
-    }
-    for (const signature of VIDEO_MAGIC_BYTES) {
-      if (this.bufferStartsWith(buffer, signature.bytes)) return 'video';
-    }
-    return 'unknown';
-  }
-
-  private bufferStartsWith(buffer: Buffer, bytes: number[]): boolean {
-    if (buffer.length < bytes.length) return false;
-    for (let i = 0; i < bytes.length; i++) {
-      if (buffer[i] !== bytes[i]) return false;
-    }
-    return true;
   }
 }
