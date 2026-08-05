@@ -55,7 +55,8 @@ export const ModelName = {
   HarnessConversation: 'HarnessConversation',
   HarnessConfig: 'HarnessConfig',
   HarnessShownMedia: 'HarnessShownMedia',
-  HarnessProviderOverride: 'HarnessProviderOverride'
+  HarnessProviderOverride: 'HarnessProviderOverride',
+  HarnessPlaylist: 'HarnessPlaylist'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -139,6 +140,18 @@ export const HarnessProviderOverrideScalarFieldEnum = {
 } as const
 
 export type HarnessProviderOverrideScalarFieldEnum = (typeof HarnessProviderOverrideScalarFieldEnum)[keyof typeof HarnessProviderOverrideScalarFieldEnum]
+
+
+export const HarnessPlaylistScalarFieldEnum = {
+  sessionId: 'sessionId',
+  conversationId: 'conversationId',
+  name: 'name',
+  videos: 'videos',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessPlaylistScalarFieldEnum = (typeof HarnessPlaylistScalarFieldEnum)[keyof typeof HarnessPlaylistScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -1,21 +1,23 @@
-import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
 import {
-  deleteSavedPlaylist,
-  savedPlaylists,
-  savePlaylist,
-} from '@/components/widgets/floating-playlist/composables/saved-playlists.state';
-import { useConversationStore } from '@/stores/conversation';
+  getActivePlaylistVideos,
+  isVideoInActivePlaylist,
+  setActivePlaylist,
+  setPlaylists,
+} from '@/components/widgets/floating-playlist/composables/playlist.state';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { usePlaylistToggle } from './use-playlist-toggle';
-import {
-  FLOATING_PLAYLIST_QUEUE_KEY,
-  isPlaylistVideo,
-  removePlaylistVideo,
-} from './video-playback.state';
+
+vi.mock('@/api/playlists.api', () => ({
+  fetchAllPlaylists: vi.fn(),
+  fetchPlaylists: vi.fn(),
+  savePlaylist: vi.fn(),
+  deletePlaylist: vi.fn(),
+  renamePlaylist: vi.fn(),
+}));
 
 const item = {
   videoUrl: 'https://www.youtube.com/watch?v=abc',
@@ -25,76 +27,47 @@ const item = {
 describe('usePlaylistToggle', () => {
   beforeEach(() => {
     localStorage.clear();
-    removePlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl);
-    setActivePinia(createPinia());
-    // Adding is gated on a saved playlist existing.
-    savePlaylist('Test', []);
+    // Adding is gated on an active playlist existing.
+    setPlaylists([
+      { name: 'Test', videos: [], conversationId: 'conversation-1' },
+    ]);
+    setActivePlaylist('Test');
   });
 
   it('reports videos outside the playlist as not added', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
     const { isInPlaylist } = usePlaylistToggle(item);
     expect(isInPlaylist.value).toBe(false);
   });
 
-  it('adds the video to the shared global playlist', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
+  it('adds the video to the active playlist', () => {
     const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
     togglePlaylistVideo();
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
-      true,
-    );
+    expect(isVideoInActivePlaylist(item.videoUrl)).toBe(true);
     expect(isInPlaylist.value).toBe(true);
   });
 
   it('removes the video when toggled while added', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
     const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
     togglePlaylistVideo();
     togglePlaylistVideo();
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
-      false,
-    );
+    expect(isVideoInActivePlaylist(item.videoUrl)).toBe(false);
     expect(isInPlaylist.value).toBe(false);
-  });
-
-  it('toggles the shared global playlist regardless of the active conversation', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
-    const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
-    togglePlaylistVideo();
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
-      true,
-    );
-    store.activeConversationId = 'another-conversation';
-    expect(isInPlaylist.value).toBe(true);
   });
 
   it('does not add playlist entries without a videoUrl', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
     const { togglePlaylistVideo } = usePlaylistToggle({ videoUrl: '' });
     togglePlaylistVideo();
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, '')).toBe(false);
+    expect(getActivePlaylistVideos()).toHaveLength(0);
   });
 
   it('reports a null item as not added and toggles nothing', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
     const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(null);
     expect(isInPlaylist.value).toBe(false);
     togglePlaylistVideo();
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
-      false,
-    );
+    expect(getActivePlaylistVideos()).toHaveLength(0);
   });
 
   it('follows a reactive item that becomes available later', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
     const video = ref<VideoGalleryItem | null>(null);
     const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(video);
     expect(isInPlaylist.value).toBe(false);
@@ -103,17 +76,12 @@ describe('usePlaylistToggle', () => {
     expect(isInPlaylist.value).toBe(true);
   });
 
-  it('does not add a video when no saved playlist exists', () => {
-    const store = useConversationStore();
-    store.activeConversationId = 'conversation-1';
-    // Remove the playlist created in beforeEach so the gate blocks adds.
-    const testPlaylist = savedPlaylists.value.find((p) => p.name === 'Test');
-    if (testPlaylist) deleteSavedPlaylist(testPlaylist.id);
+  it('does not add a video when no active playlist exists', () => {
+    setPlaylists([]);
+    setActivePlaylist('');
     const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
     togglePlaylistVideo();
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
-      false,
-    );
+    expect(getActivePlaylistVideos()).toHaveLength(0);
     expect(isInPlaylist.value).toBe(false);
   });
 });

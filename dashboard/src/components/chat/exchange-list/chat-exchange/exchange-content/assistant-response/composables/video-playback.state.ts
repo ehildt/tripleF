@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 
+import { isVideoInActivePlaylist } from '@/components/widgets/floating-playlist/composables/playlist.state';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { releaseFloatingPopupRect } from './popout-settings.state';
@@ -140,121 +141,6 @@ export function closeLaunchedVideo() {
 }
 
 /**
- * Queue key under which the playlist stores its videos in
- * addedPlaylistVideos. The playlist is deliberately conversation-
- * independent — it exists so the queue survives conversation switches and
- * tab switches — so every playlist read and write goes through this single
- * global key, regardless of mode (floating or docked) or the active
- * conversation.
- */
-export const FLOATING_PLAYLIST_QUEUE_KEY = 'floating-playlist';
-
-/**
- * The playlist: videos the user explicitly added from a videolist card.
- * Stored under a single global key so the queue does not clear with — or
- * leak into — a conversation switch; persisted to localStorage so it
- * survives reloads.
- */
-const PLAYLIST_VIDEOS_STORAGE_KEY = 'vision-playlist-videos';
-
-const MAX_PLAYLIST_VIDEOS = 50;
-
-function loadAddedPlaylistVideos(): Map<string, VideoGalleryItem[]> {
-  try {
-    const raw = localStorage.getItem(PLAYLIST_VIDEOS_STORAGE_KEY);
-    if (!raw) return new Map();
-    return new Map(
-      Object.entries(JSON.parse(raw)) as [string, VideoGalleryItem[]][],
-    );
-  } catch {
-    return new Map();
-  }
-}
-
-function persistAddedPlaylistVideos(map: Map<string, VideoGalleryItem[]>) {
-  try {
-    localStorage.setItem(
-      PLAYLIST_VIDEOS_STORAGE_KEY,
-      JSON.stringify(Object.fromEntries(map)),
-    );
-  } catch {
-    /* storage full or unavailable — the playlist stays in-memory only */
-  }
-}
-
-export const addedPlaylistVideos = ref(loadAddedPlaylistVideos());
-
-function writeAddedPlaylistVideos(
-  conversationId: string,
-  videos: VideoGalleryItem[],
-) {
-  const next = new Map(addedPlaylistVideos.value);
-  next.set(conversationId, videos);
-  addedPlaylistVideos.value = next;
-  persistAddedPlaylistVideos(next);
-}
-
-export function isPlaylistVideo(
-  conversationId: string,
-  videoUrl: string,
-): boolean {
-  return (
-    addedPlaylistVideos.value
-      .get(conversationId)
-      ?.some((item) => item.videoUrl === videoUrl) ?? false
-  );
-}
-
-/**
- * Add a video to the conversation's playlist (deduped by URL, capped).
- * Newly added videos append at the end, keeping add order.
- */
-export function addPlaylistVideo(
-  conversationId: string,
-  item: VideoGalleryItem,
-) {
-  if (!conversationId || !item.videoUrl) return;
-  const current = addedPlaylistVideos.value.get(conversationId) ?? [];
-  if (current.some((video) => video.videoUrl === item.videoUrl)) return;
-  if (current.length >= MAX_PLAYLIST_VIDEOS) return;
-  writeAddedPlaylistVideos(conversationId, [...current, item]);
-}
-
-/** Remove a video from the conversation's playlist. Removing the video
- *  that is playing right now does not interrupt it: playback keeps going
- *  until the user clicks another video (mirrors adding, which never
- *  interrupts either). */
-export function removePlaylistVideo(conversationId: string, videoUrl: string) {
-  if (!conversationId) return;
-  const current = addedPlaylistVideos.value.get(conversationId) ?? [];
-  writeAddedPlaylistVideos(
-    conversationId,
-    current.filter((item) => item.videoUrl !== videoUrl),
-  );
-}
-
-/**
- * Replace the conversation's playlist wholesale — how a saved playlist is
- * loaded. Incoming videos are deduped by URL and capped like manual
- * additions. A playing video the load leaves behind keeps playing: only
- * clicking another video switches playback.
- */
-export function replacePlaylistVideos(
-  conversationId: string,
-  videos: VideoGalleryItem[],
-) {
-  if (!conversationId) return;
-  const deduped = videos
-    .filter((item) => item.videoUrl)
-    .filter(
-      (item, index, all) =>
-        all.findIndex((other) => other.videoUrl === item.videoUrl) === index,
-    )
-    .slice(0, MAX_PLAYLIST_VIDEOS);
-  writeAddedPlaylistVideos(conversationId, deduped);
-}
-
-/**
  * Whether the launched player advances to the next playlist video when the
  * current one ends. Persisted so the preference survives reloads.
  */
@@ -299,9 +185,7 @@ export function playNextPlaylistVideo(): boolean {
 
   const next = queue
     .slice(currentIndex + 1)
-    .find((item) =>
-      isPlaylistVideo(launchedPlaylistConversationId.value, item.videoUrl),
-    );
+    .find((item) => isVideoInActivePlaylist(item.videoUrl));
 
   if (!next) return false;
 

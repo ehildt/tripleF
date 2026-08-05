@@ -1,14 +1,12 @@
 import { computed, type Ref, ref } from 'vue';
 
+import { isVideoInActivePlaylist } from '@/components/widgets/floating-playlist/composables/playlist.state';
+
 import {
   floatingPlaylistOpen,
   playlistMode,
 } from '../../widgets/floating-playlist/composables/playlist-settings.state';
-import {
-  activePlaybackVideoUrl,
-  FLOATING_PLAYLIST_QUEUE_KEY,
-  isPlaylistVideo,
-} from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import { activePlaybackVideoUrl } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import type { RightPanelView } from '../types/right-panel-view.type';
 
 /**
@@ -36,5 +34,5 @@ export const playlistMarqueeVisible = computed(() => {
   }
   const url = activePlaybackVideoUrl.value;
   if (!url) return false;
-  return isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, url);
+  return isVideoInActivePlaylist(url);
 });
