@@ -132,6 +132,9 @@ function handleClick() {
   position: relative;
   margin: 0.75em auto 0;
   width: 80%;
+  /* Match the video list/gallery cards: the header row and media sit on a
+     card backdrop, so the header doesn't float on the bare exchange bg. */
+  background: var(--color-bg-secondary);
 }
 
 /* ---------- header row (title + playlist toggle above the video) ---------- */

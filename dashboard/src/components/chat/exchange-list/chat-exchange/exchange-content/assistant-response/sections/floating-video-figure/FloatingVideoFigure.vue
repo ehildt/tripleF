@@ -175,14 +175,23 @@ const {
   background: color-mix(in srgb, black 60%, transparent);
   color: white;
   font-size: 1.1rem;
+  border: none;
   transition:
     transform 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    opacity 0.15s ease,
+    backdrop-filter 0.15s ease;
 }
 
 .floating-video-figure__poster:hover .floating-video-figure__poster-play {
   transform: scale(1.1);
-  background: var(--color-accent-primary);
+  /* Glassy frosted effect instead of a solid fill: translucent accent tint
+     with a backdrop blur, no border, and a slightly transparent button. */
+  opacity: 0.9;
+  background: color-mix(in srgb, var(--color-accent-primary) 28%, transparent);
+  border: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* ---------- placeholder while launched elsewhere ---------- */
