@@ -4,7 +4,6 @@ import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import ExpandableMessageList from '../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
 import type { MessageListItem } from '../../shared/ui/expandable-message-list/types';
-import { FLOATING_PLAYLIST_QUEUE_KEY } from '../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import type { RightPanelView } from '../types/right-panel-view.type';
 import AttachmentCard from './attachment-card/AttachmentCard.vue';
 import type { AttachmentItem } from './composables/use-attachment-list';
@@ -16,6 +15,8 @@ const props = defineProps<{
   attachments: AttachmentItem[];
   messageListItems: MessageListItem[];
   playlistVideos: VideoGalleryItem[];
+  /** Conversation id the playlist is scoped to. */
+  conversationId: string;
   rightPanelView: RightPanelView;
   conversation: Conversation | null;
 }>();
@@ -62,7 +63,7 @@ const { hasAttachments, hasHistory, hasPlaylist, previewUrl } =
       v-if="rightPanelView === 'playlist' && hasPlaylist"
       class="chat-right-panel__playlist"
     >
-      <PlaylistPanel :conversation-id="FLOATING_PLAYLIST_QUEUE_KEY" />
+      <PlaylistPanel :conversation-id="props.conversationId" />
     </div>
 
     <div v-if="rightPanelView === 'history'" class="chat-right-panel__history">

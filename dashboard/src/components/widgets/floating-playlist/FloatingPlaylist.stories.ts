@@ -1,22 +1,15 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/vue3-vite';
 import { createPinia, setActivePinia } from 'pinia';
 
-import {
-  closeLaunchedVideo,
-  replacePlaylistVideos,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import { closeLaunchedVideo } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import { useConversationStore } from '@/stores/conversation';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
+import { setActivePlaylist, setPlaylists } from './composables/playlist.state';
 import {
   floatingPlaylistOpen,
   playlistMode,
 } from './composables/playlist-settings.state';
-import {
-  activeSavedPlaylistId,
-  savedPlaylists,
-  savePlaylist,
-} from './composables/saved-playlists.state';
 import FloatingPlaylist from './FloatingPlaylist.vue';
 
 const sampleVideos: VideoGalleryItem[] = [
@@ -41,8 +34,8 @@ const sampleVideos: VideoGalleryItem[] = [
 ];
 
 /**
- * Prime the shared state the widget reads (mode, open state, conversation
- * queue, saved playlists) the way App.vue and the playback surfaces would
+ * Prime the shared state the widget reads (mode, open state, the active
+ * conversation's playlists) the way App.vue and the playback surfaces would
  * at runtime, then render the story.
  */
 function seedState(options: { open?: boolean; videos?: VideoGalleryItem[] }) {
@@ -52,12 +45,16 @@ function seedState(options: { open?: boolean; videos?: VideoGalleryItem[] }) {
     playlistMode.value = 'floating';
     floatingPlaylistOpen.value = options.open ?? true;
     closeLaunchedVideo();
-    replacePlaylistVideos('storybook', options.videos ?? sampleVideos);
-    savedPlaylists.value = [];
-    savePlaylist('Focus mix', sampleVideos.slice(0, 2));
-    savePlaylist('Long ambient', sampleVideos);
-    // The queue starts temporary — no saved playlist is marked active.
-    activeSavedPlaylistId.value = null;
+    const videos = options.videos ?? sampleVideos;
+    setPlaylists([
+      { name: 'Focus mix', videos, conversationId: 'storybook' },
+      {
+        name: 'Long ambient',
+        videos: sampleVideos,
+        conversationId: 'storybook',
+      },
+    ]);
+    setActivePlaylist('Focus mix');
     return { components: { story }, template: '<story />' };
   };
   return decorator;
@@ -85,7 +82,7 @@ to an edge tab, and capture the queue as a named playlist to load later.
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Open window with a queue and saved playlists, anchored middle-right. */
+/** Open window with a queue and playlists, anchored middle-right. */
 export const Default: Story = {};
 
 /** Collapsed: only the edge tab at the docked side remains. */
@@ -93,7 +90,7 @@ export const Collapsed: Story = {
   decorators: [seedState({ open: false })],
 };
 
-/** Empty queue: the saved playlists row stays reachable for loading. */
+/** Empty queue: the playlists menu stays reachable for loading. */
 export const EmptyQueue: Story = {
   decorators: [seedState({ videos: [] })],
 };

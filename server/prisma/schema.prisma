@@ -93,3 +93,23 @@ model HarnessProviderOverride {
 
   @@map("harness_provider_override")
 }
+
+/**
+ * A named playlist scoped to one conversation. Videos are stored as a Json
+ * array of VideoGalleryItem and belong to the playlist (the active playlist
+ * is the queue). The compound key is (sessionId, conversationId, name), so
+ * playlist names are unique per conversation. Rows are purged when their
+ * conversation is deleted.
+ */
+model HarnessPlaylist {
+  sessionId      String   @db.VarChar(255)
+  conversationId String   @db.VarChar(255)
+  name           String   @db.VarChar(255)
+  videos         Json     @default(dbgenerated())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@id([sessionId, conversationId, name])
+  @@index([sessionId, conversationId])
+  @@map("harness_playlist")
+}

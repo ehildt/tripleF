@@ -1,12 +1,8 @@
 import { ref } from 'vue';
 
 import type { PopoutAnchor } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import {
-  addedPlaylistVideos,
-  FLOATING_PLAYLIST_QUEUE_KEY,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 
-import { savedPlaylists } from './saved-playlists.state';
+import { getActivePlaylistVideos, getPlaylists } from './playlist.state';
 
 /** Where the playlist lives: pinned inside the chat right panel, or an app-level floating window that survives tab switches. */
 export type PlaylistMode = 'panel' | 'floating';
@@ -86,16 +82,12 @@ export const playlistAutoClose = ref<boolean>(
 
 /**
  * Whether the floating playlist window is open. Opens by default whenever it
- * holds anything to act on — a saved playlist or an added video — so the
- * player is visible when it has content, and only starts collapsed when
- * there is nothing in it. In-memory only.
+ * holds anything to act on — a playlist or an added video — so the player is
+ * visible when it has content, and only starts collapsed when there is
+ * nothing in it. In-memory only.
  */
 function loadFloatingPlaylistOpen(): boolean {
-  return (
-    savedPlaylists.value.length > 0 ||
-    (addedPlaylistVideos.value.get(FLOATING_PLAYLIST_QUEUE_KEY)?.length ?? 0) >
-      0
-  );
+  return getPlaylists().length > 0 || getActivePlaylistVideos().length > 0;
 }
 
 export const floatingPlaylistOpen = ref(loadFloatingPlaylistOpen());

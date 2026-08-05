@@ -401,7 +401,8 @@ export const ModelName = {
   HarnessConversation: 'HarnessConversation',
   HarnessConfig: 'HarnessConfig',
   HarnessShownMedia: 'HarnessShownMedia',
-  HarnessProviderOverride: 'HarnessProviderOverride'
+  HarnessProviderOverride: 'HarnessProviderOverride',
+  HarnessPlaylist: 'HarnessPlaylist'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -417,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride"
+    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -791,6 +792,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HarnessPlaylist: {
+      payload: Prisma.$HarnessPlaylistPayload<ExtArgs>
+      fields: Prisma.HarnessPlaylistFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HarnessPlaylistFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HarnessPlaylistFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>
+        }
+        findFirst: {
+          args: Prisma.HarnessPlaylistFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HarnessPlaylistFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>
+        }
+        findMany: {
+          args: Prisma.HarnessPlaylistFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>[]
+        }
+        create: {
+          args: Prisma.HarnessPlaylistCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>
+        }
+        createMany: {
+          args: Prisma.HarnessPlaylistCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HarnessPlaylistCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>[]
+        }
+        delete: {
+          args: Prisma.HarnessPlaylistDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>
+        }
+        update: {
+          args: Prisma.HarnessPlaylistUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>
+        }
+        deleteMany: {
+          args: Prisma.HarnessPlaylistDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HarnessPlaylistUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HarnessPlaylistUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>[]
+        }
+        upsert: {
+          args: Prisma.HarnessPlaylistUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessPlaylistPayload>
+        }
+        aggregate: {
+          args: Prisma.HarnessPlaylistAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessPlaylist>
+        }
+        groupBy: {
+          args: Prisma.HarnessPlaylistGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessPlaylistGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HarnessPlaylistCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HarnessPlaylistCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -895,6 +970,18 @@ export const HarnessProviderOverrideScalarFieldEnum = {
 } as const
 
 export type HarnessProviderOverrideScalarFieldEnum = (typeof HarnessProviderOverrideScalarFieldEnum)[keyof typeof HarnessProviderOverrideScalarFieldEnum]
+
+
+export const HarnessPlaylistScalarFieldEnum = {
+  sessionId: 'sessionId',
+  conversationId: 'conversationId',
+  name: 'name',
+  videos: 'videos',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HarnessPlaylistScalarFieldEnum = (typeof HarnessPlaylistScalarFieldEnum)[keyof typeof HarnessPlaylistScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1204,6 +1291,7 @@ export type GlobalOmitConfig = {
   harnessConfig?: Prisma.HarnessConfigOmit
   harnessShownMedia?: Prisma.HarnessShownMediaOmit
   harnessProviderOverride?: Prisma.HarnessProviderOverrideOmit
+  harnessPlaylist?: Prisma.HarnessPlaylistOmit
 }
 
 /* Types for Logging */

@@ -1,11 +1,15 @@
 import { computed } from 'vue';
 
+import { getPlaylists } from '@/components/widgets/floating-playlist/composables/playlist.state';
 import { playlistMode } from '@/components/widgets/floating-playlist/composables/playlist-settings.state';
-import { savedPlaylists } from '@/components/widgets/floating-playlist/composables/saved-playlists.state';
 import type { Conversation } from '@/stores/conversation';
 
 import { getApiUrl } from '../../../../api/api-url';
 import { conversationHasVideos } from '../../composables/conversation-has-videos.helper';
+import {
+  launchedFromPlaylist,
+  launchedVideo,
+} from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import type { AttachmentItem } from './use-attachment-list';
 
 /**
@@ -22,13 +26,14 @@ export function useRightPanel(props: {
   const hasAttachments = computed(() => props.attachments.length > 0);
   const hasHistory = computed(() => props.messageListItems.length > 0);
   // The player is shown when it holds anything the user can act on: at least
-  // one added video, a saved playlist to load from an empty queue, or — in
-  // docked mode — a conversation that contains videos (so the empty state
-  // and its hints are reachable).
+  // one added video, a playlist to load from an empty queue, a playlist
+  // video currently playing, or — in docked mode — a conversation that
+  // contains videos (so the empty state and its hints are reachable).
   const hasPlaylist = computed(
     () =>
       props.playlistVideos.length > 0 ||
-      savedPlaylists.value.length > 0 ||
+      getPlaylists().length > 0 ||
+      (launchedFromPlaylist.value && Boolean(launchedVideo.value)) ||
       (playlistMode.value !== 'floating' &&
         conversationHasVideos(props.conversation)),
   );

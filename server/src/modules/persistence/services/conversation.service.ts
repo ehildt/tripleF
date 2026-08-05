@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConversationRepository } from './conversation.repository.js';
+import { PlaylistService } from './playlist.service.js';
 import { ShownMediaRepository } from './shown-media.repository.js';
 
 interface ConversationTurn {
@@ -34,6 +35,7 @@ export class ConversationService {
   constructor(
     private readonly repository: ConversationRepository,
     private readonly shownMedia: ShownMediaRepository,
+    private readonly playlists: PlaylistService,
   ) {}
 
   async listConversations(sessionId: string): Promise<ConversationSnapshot[]> {
@@ -86,6 +88,8 @@ export class ConversationService {
     // would forever block fresh images/videos in any recreated
     // conversation sharing the id.
     await this.shownMedia.deleteByConversation(sessionId, conversationId);
+    // Purge the conversation's playlists too.
+    await this.playlists.deleteByConversation(sessionId, conversationId);
     return this.repository.deleteByConversation(sessionId, conversationId);
   }
 
