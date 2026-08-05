@@ -12,6 +12,13 @@ export interface ExtractedImageItem {
   width?: number;
   height?: number;
   source?: string;
+  /**
+   * When true, verification confirms the image is real and reachable but
+   * skips the strict 1280×720 dimension requirement. Used for engines (e.g.
+   * Bright Data) whose results we trust the Google-side size filter for —
+   * Google images are usually og-image size (~1200×630), well below 720p.
+   */
+  skipDimensionCheck?: boolean;
 }
 
 /** Video candidate passed to the respond step, with display metadata. */
@@ -64,6 +71,9 @@ export function extractImageSearchItems(
         width: r.width,
         height: r.height,
         source: r.source || r.domain || undefined,
+        // Bright Data returns no pixel dimensions and we trust its Google-side
+        // `tbs` size filter, so it must not be dropped by the 720p gate.
+        skipDimensionCheck: tr.toolName.startsWith('brightData'),
       });
     }
   }

@@ -26,7 +26,7 @@ import {
 export function createBrightDataVideoSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for videos using Bright Data SERP API. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos. ' +
+      'Search for videos using Bright Data SERP API (Google Videos). Returns titles, links, snippets, and duration. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
       query: z
@@ -76,7 +76,7 @@ export function createBrightDataVideoSearch(deps: ToolDependencies) {
       applyLocaleParams(body, lang ?? deps.defaultLang);
       applyRecencyParam(body, recency);
       const url = buildGoogleUrl(searchQuery, {
-        tbm: 'vid',
+        udm: 7,
         hl: body.hl,
         gl: body.gl,
         tbs: body.tbs,
@@ -86,28 +86,30 @@ export function createBrightDataVideoSearch(deps: ToolDependencies) {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {
           timeoutMs: BRIGHT_DATA_TIMEOUT_MS,
         })) as {
-          videos?: Array<{
+          organic?: Array<{
             title?: string;
             link?: string;
             description?: string;
-            channel?: string;
             duration?: string;
-            date?: string;
-            views?: number;
+            image?: string;
           }>;
         };
-        const videos = data.videos ?? [];
+        // Bright Data returns Google Videos results under `organic` (each with
+        // a duration field), not a dedicated `videos` array.
+        const videos = data.organic ?? [];
         if (!videos.length) return { results: [] };
         const results = videos.map((r) => ({
           title: r.title || '',
           link: r.link || '',
           snippet: r.description || '',
-          channel: r.channel || '',
+          channel: '',
           duration: r.duration || '',
-          date: r.date || '',
+          date: '',
+          // `image` is an embedded base64 thumbnail — derive a direct YouTube
+          // thumbnail from the link instead.
           thumbnailUrl: buildYoutubeThumbnailUrl(r.link || '') ?? '',
           source: SOURCE,
-          views: r.views ?? 0,
+          views: 0,
         }));
         deps.logger.log(
           `Bright Data video search returned ${results.length} results for "${searchQuery}"`,

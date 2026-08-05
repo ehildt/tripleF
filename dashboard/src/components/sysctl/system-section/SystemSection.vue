@@ -136,7 +136,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 }
 
 .system-section__panel {
-  margin: var(--spacing-4) var(--spacing-4) 0;
+  margin: var(--spacing-1) var(--spacing-1) 0;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
 }

@@ -35,11 +35,17 @@ export function normalizeHarnessResponseData(
 
   cleanHarnessResponseArrays(data);
 
-  if (event.toolResults?.length) {
+  if (
+    event.toolResults?.length ||
+    event.availableVideos ||
+    event.availableImages
+  ) {
     extractMediaFromToolResults(
       event.toolResults,
       data,
       template ?? event.template,
+      event.availableImages,
+      event.availableVideos,
     );
     cleanHarnessResponseArrays(data);
   }

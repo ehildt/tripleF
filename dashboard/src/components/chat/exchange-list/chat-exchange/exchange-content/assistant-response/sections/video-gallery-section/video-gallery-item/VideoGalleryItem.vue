@@ -24,6 +24,35 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
 <template>
   <li v-if="item.videoUrl" class="video-gallery__item">
     <figure class="video-gallery__card">
+      <!-- Header row: title linking to the source, and the playlist toggle
+           as a quiet nav-style icon button on the right. -->
+      <div class="video-gallery__header">
+        <a
+          :href="item.videoUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="video-gallery__title"
+          >{{ item.title }}</a
+        >
+        <button
+          type="button"
+          class="video-gallery__playlist-toggle"
+          :class="{ 'video-gallery__playlist-toggle--added': isInPlaylist }"
+          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+          :aria-label="
+            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+          "
+          :aria-pressed="isInPlaylist"
+          @click.stop="togglePlaylistVideo"
+        >
+          <ListCheck
+            v-if="isInPlaylist"
+            class="video-gallery__playlist-toggle-icon"
+          />
+          <ListPlus v-else class="video-gallery__playlist-toggle-icon" />
+        </button>
+      </div>
+
       <!-- The media sits flush inside the card, exactly like the video list:
            no wrapper box, so nothing fights the floating popup. The
            video-gallery__video class lands on the figure's root element and
@@ -34,29 +63,9 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
         :title="item.title"
         :poster-url="posterUrl"
       />
-      <!-- Playlist toggle in the card's top-right corner -->
-      <button
-        type="button"
-        class="video-gallery__playlist-toggle"
-        :class="{ 'video-gallery__playlist-toggle--added': isInPlaylist }"
-        :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-        :aria-pressed="isInPlaylist"
-        @click.stop="togglePlaylistVideo"
-      >
-        <ListCheck
-          v-if="isInPlaylist"
-          class="video-gallery__playlist-toggle-icon"
-        />
-        <ListPlus v-else class="video-gallery__playlist-toggle-icon" />
-      </button>
-      <figcaption
-        v-if="item.title || item.caption"
-        class="video-gallery__caption"
-      >
-        <strong v-if="item.title && item.title !== item.caption">{{
-          item.title
-        }}</strong>
-        <p v-if="item.caption">{{ item.caption }}</p>
+
+      <figcaption v-if="item.caption" class="video-gallery__caption">
+        <p>{{ item.caption }}</p>
       </figcaption>
     </figure>
   </li>
@@ -76,46 +85,70 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   width: 100%;
 }
 
-/* ---------- playlist toggle (top-right corner) ---------- */
+/* ---------- header row (title + playlist toggle above the video) ---------- */
+
+.video-gallery__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: 0.5rem;
+}
+
+.video-gallery__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-fg-primary);
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.video-gallery__title:hover {
+  color: var(--color-accent-primary);
+}
+
+/* ---------- playlist toggle (quiet nav-style icon in the header) ---------- */
 
 .video-gallery__playlist-toggle {
-  position: absolute;
-  top: var(--spacing-1);
-  right: var(--spacing-1);
-  margin: 0.1rem 0.1rem 0 0;
-  z-index: 3;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background-color: transparent;
+  color: var(--color-fg-muted);
   cursor: pointer;
-  background: color-mix(in srgb, black 55%, transparent);
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  box-shadow:
-    0 0.3rem 1rem color-mix(in srgb, black 45%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .video-gallery__playlist-toggle:hover {
-  color: white;
-  background: var(--color-accent-primary);
+  color: var(--color-fg-primary);
 }
 
-.video-gallery__playlist-toggle--added {
-  color: white;
-  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
+.video-gallery__playlist-toggle--added,
+.video-gallery__playlist-toggle--added:hover {
+  color: var(--color-accent-primary);
+}
+
+.video-gallery__playlist-toggle:focus {
+  outline: none;
+}
+
+.video-gallery__playlist-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-primary);
+  outline-offset: -1px;
 }
 
 .video-gallery__playlist-toggle-icon {
-  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
 /* Single-item gallery: constrain the player box and center it. */
@@ -200,13 +233,7 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   color: var(--color-fg-muted);
 }
 
-.video-gallery__caption strong {
-  display: block;
-  color: var(--color-fg-primary);
-  margin-bottom: 0.25em;
-}
-
 .video-gallery__caption p {
-  margin: 0 0 0.5em;
+  margin: 0;
 }
 </style>

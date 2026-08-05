@@ -35,6 +35,9 @@ export type HarnessContext = {
     intent?: IntentResult;
     toolResults: Array<{ toolName: string; result: unknown }>;
     ingestedForRewrite?: IngestedImage[];
+    /** Model-visible (deduped) media for the client render/fallback. */
+    availableImages?: Array<{ url: string; title?: string }>;
+    availableVideos?: Array<{ url: string; title?: string }>;
     finalContent?: string;
     finalData?: Record<string, unknown>;
     inputTokens?: number;
