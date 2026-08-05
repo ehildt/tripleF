@@ -46,7 +46,7 @@ function buildMediaInstructions(
       'If media URLs are present, leaving galleryItems empty is a failure.',
       'Never fabricate URLs — only use availableImages.',
       'IMAGE RESTRICTION: trusted sources only. No Google thumbnails, data URIs, localhost, or private IPs.',
-      'MIN RESOLUTION: images must be at least 1280x720. Prefer 2560x1440.',
+      'RESOLUTION: all availableImages URLs are pre-verified — use them as provided, preferring the higher-resolution ones; do not omit a suitable URL for resolution.',
     ];
   }
 
@@ -105,7 +105,7 @@ function buildMediaInstructions(
     'Use articles for facts and sources. Never fabricate URLs — only use availableImages/availableVideos.',
     'VIDEO RESTRICTION: only YouTube, Vimeo, Dailymotion, Loom, Wistia or direct video files.',
     'IMAGE RESTRICTION: trusted sources only. No Google thumbnails, data URIs, localhost, or private IPs.',
-    'MIN RESOLUTION: images must be at least 1280x720. Prefer 2560x1440.',
+    'RESOLUTION: all availableImages URLs are pre-verified — use them as provided, preferring the higher-resolution ones; do not omit a suitable URL for resolution.',
     ...productInstructions,
   ];
 }

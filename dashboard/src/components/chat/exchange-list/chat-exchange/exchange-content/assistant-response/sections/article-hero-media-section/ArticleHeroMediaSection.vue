@@ -29,12 +29,13 @@ const heroPosterUrl = computed(() =>
 );
 
 /**
- * The hero video as a playlist entry: title falls back to the caption, so a
- * title-less hero still names itself in the playlist panel.
+ * The hero video as a playlist entry: the real title only — the caption is
+ * never used as a title fallback (the figcaption below renders it on its
+ * own, behind a v-if).
  */
 const heroVideoItem = computed<VideoGalleryItem>(() => ({
   videoUrl: props.heroVideoUrl ?? '',
-  title: props.heroVideoTitle || props.heroVideoCaption,
+  title: props.heroVideoTitle,
   caption: props.heroVideoCaption,
 }));
 
@@ -68,26 +69,40 @@ function handleClick() {
 <template>
   <figure v-if="heroVideoUrl || heroItem" class="hero-media-card">
     <template v-if="heroVideoUrl">
+      <!-- Header row: hero video title linking to the source, and the
+           playlist toggle as a quiet nav-style icon button on the right. -->
+      <div class="hero-media-card__header">
+        <a
+          v-if="heroVideoTitle"
+          :href="heroVideoUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hero-media-card__title"
+          >{{ heroVideoTitle }}</a
+        >
+        <button
+          type="button"
+          class="hero-media-card__playlist-toggle"
+          :class="{ 'hero-media-card__playlist-toggle--added': isInPlaylist }"
+          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+          :aria-label="
+            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+          "
+          :aria-pressed="isInPlaylist"
+          @click.stop="togglePlaylistVideo"
+        >
+          <ListCheck
+            v-if="isInPlaylist"
+            class="hero-media-card__playlist-toggle-icon"
+          />
+          <ListPlus v-else class="hero-media-card__playlist-toggle-icon" />
+        </button>
+      </div>
       <FloatingVideoFigure
         :video-url="heroVideoUrl"
-        :title="heroVideoTitle || heroVideoCaption"
+        :title="heroVideoTitle"
         :poster-url="heroPosterUrl"
       />
-      <!-- Playlist toggle in the card's top-right corner -->
-      <button
-        type="button"
-        class="hero-media-card__playlist-toggle"
-        :class="{ 'hero-media-card__playlist-toggle--added': isInPlaylist }"
-        :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-        :aria-pressed="isInPlaylist"
-        @click.stop="togglePlaylistVideo"
-      >
-        <ListCheck
-          v-if="isInPlaylist"
-          class="hero-media-card__playlist-toggle-icon"
-        />
-        <ListPlus v-else class="hero-media-card__playlist-toggle-icon" />
-      </button>
       <figcaption v-if="heroVideoCaption" class="hero-media-card__caption">
         <p>{{ heroVideoCaption }}</p>
       </figcaption>
@@ -119,46 +134,70 @@ function handleClick() {
   width: 80%;
 }
 
-/* ---------- playlist toggle (top-right corner) ---------- */
+/* ---------- header row (title + playlist toggle above the video) ---------- */
+
+.hero-media-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: 0.5rem;
+}
+
+.hero-media-card__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-fg-primary);
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hero-media-card__title:hover {
+  color: var(--color-accent-primary);
+}
+
+/* ---------- playlist toggle (quiet nav-style icon in the header) ---------- */
 
 .hero-media-card__playlist-toggle {
-  position: absolute;
-  top: var(--spacing-1);
-  right: var(--spacing-1);
-  margin: 0.1rem 0.1rem 0 0;
-  z-index: 3;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background-color: transparent;
+  color: var(--color-fg-muted);
   cursor: pointer;
-  background: color-mix(in srgb, black 55%, transparent);
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  box-shadow:
-    0 0.3rem 1rem color-mix(in srgb, black 45%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .hero-media-card__playlist-toggle:hover {
-  color: white;
-  background: var(--color-accent-primary);
+  color: var(--color-fg-primary);
 }
 
-.hero-media-card__playlist-toggle--added {
-  color: white;
-  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
+.hero-media-card__playlist-toggle--added,
+.hero-media-card__playlist-toggle--added:hover {
+  color: var(--color-accent-primary);
+}
+
+.hero-media-card__playlist-toggle:focus {
+  outline: none;
+}
+
+.hero-media-card__playlist-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-primary);
+  outline-offset: -1px;
 }
 
 .hero-media-card__playlist-toggle-icon {
-  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
 .hero-media-card__caption {

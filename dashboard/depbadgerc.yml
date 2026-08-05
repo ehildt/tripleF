@@ -42,26 +42,40 @@ dependencies:
   items:
     - name: '@headlessui/vue'
       link: https://github.com/tailwindlabs/headlessui
+    - name: '@lucide/vue'
+      link: https://github.com/lucide-icons/lucide
     - name: '@paralleldrive/cuid2'
       link: https://github.com/paralleldrive/cuid2
     - name: '@tanstack/vue-query'
       link: https://github.com/tanstack/query
-    - name: '@vueuse/components'
-      link: https://github.com/vueuse/vueuse
+    - name: '@types/turndown'
+      link: https://github.com/DefinitelyTyped/DefinitelyTyped
     - name: '@vueuse/core'
       link: https://github.com/vueuse/vueuse
     - name: date-fns
       link: https://github.com/date-fns/date-fns
-    - name: lucide-vue-next
-      link: https://github.com/lucide-icons/lucide
+    - name: dompurify
+      link: https://github.com/cure53/DOMPurify
+    - name: markdown-it
+      link: https://github.com/markdown-it/markdown-it
+    - name: motion-v
+      link: https://github.com/motiondivision/motion-vue
+    - name: p-wait-for
+      link: https://github.com/sindresorhus/p-wait-for
+    - name: partial-json
+      link: https://github.com/promplate/partial-json-parser-js
     - name: pinia
       link: https://github.com/vuejs/pinia
     - name: socket.io-client
       link: https://github.com/socketio/socket.io
+    - name: ts-unused-exports
+      link: https://github.com/pinterest/ts-unused-exports
+    - name: turndown
+      link: https://github.com/mixmark-io/turndown
     - name: vue
       link: https://github.com/vuejs/core
-    - name: vue3-toastify
-      link: https://github.com/jerrywu001/vue3-toastify
+    - name: vue-router
+      link: https://github.com/vuejs/router
 
 devDependencies:
   layout:
@@ -71,6 +85,8 @@ devDependencies:
     position: center
   badgeStyle: *DEV_DEPENDENCIES_STYLE
   items:
+    - name: '@chromatic-com/storybook'
+      link: https://github.com/chromaui/chromatic
     - name: '@eslint/css'
       link: https://github.com/eslint/eslint
     - name: '@eslint/js'
@@ -83,16 +99,30 @@ devDependencies:
       link: https://github.com/iconify/iconify
     - name: '@iconify/tailwind4'
       link: https://github.com/iconify/iconify
+    - name: '@storybook/addon-a11y'
+      link: https://github.com/storybookjs/storybook
+    - name: '@storybook/addon-docs'
+      link: https://github.com/storybookjs/storybook
+    - name: '@storybook/addon-vitest'
+      link: https://github.com/storybookjs/storybook
+    - name: '@storybook/vue3-vite'
+      link: https://github.com/storybookjs/storybook
     - name: '@tailwindcss/postcss'
       link: https://github.com/tailwindlabs/tailwindcss
     - name: '@testing-library/jest-dom'
       link: https://github.com/testing-library/jest-dom
     - name: '@testing-library/vue'
       link: https://github.com/testing-library/vue-testing-library
+    - name: '@types/dompurify'
+      link: https://github.com/DefinitelyTyped/DefinitelyTyped
+    - name: '@types/markdown-it'
+      link: https://github.com/DefinitelyTyped/DefinitelyTyped
     - name: '@types/node'
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
     - name: '@vitejs/plugin-vue'
       link: https://github.com/vitejs/vite-plugin-vue
+    - name: '@vitest/browser-playwright'
+      link: https://github.com/vitest-dev/vitest
     - name: '@vitest/coverage-v8'
       link: https://github.com/vitest-dev/vitest
     - name: '@vitest/ui'
@@ -115,6 +145,8 @@ devDependencies:
       link: https://github.com/lydell/eslint-plugin-simple-import-sort
     - name: eslint-plugin-sonarjs
       link: https://github.com/SonarSource/eslint-plugin-sonarjs
+    - name: eslint-plugin-storybook
+      link: https://github.com/storybookjs/eslint-plugin-storybook
     - name: eslint-plugin-vue
       link: https://github.com/vuejs/eslint-plugin-vue
     - name: globals
@@ -123,10 +155,14 @@ devDependencies:
       link: https://github.com/jsdom/jsdom
     - name: lint-staged
       link: https://github.com/lint-staged/lint-staged
+    - name: playwright
+      link: https://github.com/microsoft/playwright
     - name: postcss
       link: https://github.com/postcss/postcss
     - name: prettier
       link: https://github.com/prettier/prettier
+    - name: storybook
+      link: https://github.com/storybookjs/storybook
     - name: tailwindcss
       link: https://github.com/tailwindlabs/tailwindcss
     - name: typescript
@@ -137,6 +173,8 @@ devDependencies:
       link: https://github.com/vitejs/vite
     - name: vitest
       link: https://github.com/vitest-dev/vitest
+    - name: vue-eslint-parser
+      link: https://github.com/vuejs/vue-eslint-parser
     - name: vue-tsc
       link: https://github.com/vuejs/language-tools
 
@@ -149,24 +187,24 @@ statusBadges:
     - name: github
       metric: release
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       branch: main
       namedLogo: github
     - name: github
       metric: stars
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       branch: main
       namedLogo: github
     - name: github
       metric: license
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       branch: main
       namedLogo: github
     - name: codecov
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       namedLogo: codecov
       branch: main
       flag: c

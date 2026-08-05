@@ -11,6 +11,14 @@ function mockFetchByUrl(options: {
     enabled?: boolean;
     apiKey?: string;
   } & Record<string, unknown>;
+  brightData?: {
+    enabled?: boolean;
+    apiKey?: string;
+  } & Record<string, unknown>;
+  youtube?: {
+    enabled?: boolean;
+    apiKey?: string;
+  } & Record<string, unknown>;
   sessionOverrides?: Record<string, unknown>;
   providerOverridesOk?: boolean;
 }) {
@@ -39,7 +47,11 @@ function mockFetchByUrl(options: {
     return {
       ok: true,
       status: 200,
-      json: async () => ({ serper: options.serper ?? {} }),
+      json: async () => ({
+        serper: options.serper ?? {},
+        brightData: options.brightData ?? {},
+        youtube: options.youtube ?? {},
+      }),
     };
   });
 }
@@ -333,5 +345,148 @@ describe('useSearchEngineAvailability', () => {
     expect(
       searchSources.value.find((entry) => entry.key === 'news')?.enabled,
     ).toBe(true);
+  });
+
+  it('treats a non-serper engine as available when it has an API key', async () => {
+    const { searchEngineState } = await createLoaded({
+      brightData: { enabled: true, apiKey: 'bd****masked' },
+    });
+    expect(searchEngineState.value).toBe('enabled');
+  });
+
+  it('reports unavailable when no engine has an API key', async () => {
+    const { searchEngineState } = await createLoaded({
+      serper: { enabled: true },
+      brightData: { enabled: true },
+      youtube: { enabled: true },
+    });
+    expect(searchEngineState.value).toBe('unavailable');
+  });
+
+  it('reports enabled when any configured engine is on and disabled when all are off', async () => {
+    const { searchEngineState, refresh } = await createLoaded({
+      serper: { enabled: false, apiKey: 's****masked' },
+      brightData: { enabled: true, apiKey: 'bd****masked' },
+      youtube: { enabled: false, apiKey: 'yt****masked' },
+    });
+    expect(searchEngineState.value).toBe('enabled');
+
+    vi.stubGlobal(
+      'fetch',
+      mockFetchByUrl({
+        serper: { enabled: false, apiKey: 's****masked' },
+        brightData: { enabled: false, apiKey: 'bd****masked' },
+        youtube: { enabled: false, apiKey: 'yt****masked' },
+      }),
+    );
+    await refresh();
+    expect(searchEngineState.value).toBe('disabled');
+  });
+
+  it('kill switch toggles every configured engine in server and session writes', async () => {
+    const fetchMock = mockFetchByUrl({
+      serper: { enabled: true, apiKey: 's****masked' },
+      brightData: { enabled: true, apiKey: 'bd****masked' },
+      youtube: { enabled: true, apiKey: 'yt****masked' },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { searchEngineState, refresh, toggleSearchEngine } =
+      useSearchEngineAvailability();
+    await refresh();
+    expect(searchEngineState.value).toBe('enabled');
+
+    await toggleSearchEngine();
+
+    expect(searchEngineState.value).toBe('disabled');
+    const putBodies = fetchMock.mock.calls
+      .filter(([, init]) => (init as { method?: string })?.method === 'PUT')
+      .map(([url, init]) => ({
+        url: String(url),
+        body: JSON.parse(String((init as { body?: string }).body)),
+      }));
+    // Server write flips all three engines off.
+    expect(
+      putBodies.some(
+        (call) =>
+          !call.url.includes('/api/v1/configs/') &&
+          call.body.serper?.enabled === false &&
+          call.body.brightData?.enabled === false &&
+          call.body.youtube?.enabled === false,
+      ),
+    ).toBe(true);
+    // Session write mirrors all three engines off.
+    expect(
+      putBodies.some(
+        (call) =>
+          call.url.includes('/api/v1/configs/') &&
+          call.body.providerOverrides?.serper?.enabled === false &&
+          call.body.providerOverrides?.brightData?.enabled === false &&
+          call.body.providerOverrides?.youtube?.enabled === false,
+      ),
+    ).toBe(true);
+  });
+
+  it('re-enabling after a kill flips every configured engine back on', async () => {
+    const fetchMock = mockFetchByUrl({
+      serper: { enabled: false, apiKey: 's****masked' },
+      brightData: { enabled: false, apiKey: 'bd****masked' },
+      youtube: { enabled: false, apiKey: 'yt****masked' },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { searchEngineState, refresh, toggleSearchEngine } =
+      useSearchEngineAvailability();
+    await refresh();
+    expect(searchEngineState.value).toBe('disabled');
+
+    await toggleSearchEngine();
+
+    expect(searchEngineState.value).toBe('enabled');
+    const putBodies = fetchMock.mock.calls
+      .filter(([, init]) => (init as { method?: string })?.method === 'PUT')
+      .map(([url, init]) => ({
+        url: String(url),
+        body: JSON.parse(String((init as { body?: string }).body)),
+      }));
+    expect(
+      putBodies.some(
+        (call) =>
+          !call.url.includes('/api/v1/configs/') &&
+          call.body.serper?.enabled === true &&
+          call.body.brightData?.enabled === true &&
+          call.body.youtube?.enabled === true,
+      ),
+    ).toBe(true);
+  });
+
+  it('only toggles engines that are configured (no key means skipped)', async () => {
+    const fetchMock = mockFetchByUrl({
+      serper: { enabled: true, apiKey: 's****masked' },
+      brightData: { enabled: true, apiKey: 'bd****masked' },
+      // youtube has no key — not configured, must be left out of the write.
+      youtube: { enabled: true },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { refresh, toggleSearchEngine } = useSearchEngineAvailability();
+    await refresh();
+    expect(
+      fetchMock.mock.calls.some(
+        ([, init]) => (init as { method?: string })?.method === 'PUT',
+      ),
+    ).toBe(false);
+
+    await toggleSearchEngine();
+
+    const putBodies = fetchMock.mock.calls
+      .filter(([, init]) => (init as { method?: string })?.method === 'PUT')
+      .map(([url, init]) => ({
+        url: String(url),
+        body: JSON.parse(String((init as { body?: string }).body)),
+      }));
+    const serverPut = putBodies.find(
+      (call) => !call.url.includes('/api/v1/configs/'),
+    );
+    expect(serverPut?.body.serper?.enabled).toBe(false);
+    expect(serverPut?.body.brightData?.enabled).toBe(false);
+    expect(serverPut?.body.youtube).toBeUndefined();
   });
 });

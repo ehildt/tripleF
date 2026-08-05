@@ -63,7 +63,7 @@ describe('extractMediaFromToolResults', () => {
     expect(data.heroImageUrl).toBeUndefined();
   });
 
-  it('names the synthesized hero video from the candidate title', () => {
+  it('names the synthesized hero video from the candidate title only', () => {
     const data: HarnessResponseData = {};
     extractMediaFromToolResults(
       [
@@ -80,9 +80,11 @@ describe('extractMediaFromToolResults', () => {
     );
 
     // The popout title bar and now-playing marquee read the hero title; a
-    // hero without one must never be synthesized (schema contract).
+    // hero without one must never be synthesized (schema contract). The
+    // caption is never fabricated from the title — it stays unset so the
+    // figcaption only shows it when a real one exists.
     expect(data.heroVideoTitle).toBe('Trailer');
-    expect(data.heroVideoCaption).toBe('Trailer');
+    expect(data.heroVideoCaption).toBeUndefined();
   });
 
   it('does not synthesize a hero from a title-less candidate', () => {
@@ -127,9 +129,8 @@ describe('extractMediaFromToolResults', () => {
     expect(data.videoGalleryItems?.[0].videoUrl).toBe(
       'https://youtube.com/watch?v=a',
     );
-    // Synthesized items must satisfy the schema: non-empty caption, falling
-    // back to the candidate title.
-    expect(data.videoGalleryItems?.[0].caption).toBe('A');
+    // The caption is optional and never synthesized from the title.
+    expect(data.videoGalleryItems?.[0].caption).toBeUndefined();
   });
 
   it('does not duplicate URLs already present in JSON fields', () => {
@@ -268,5 +269,55 @@ describe('extractMediaFromToolResults', () => {
     expect(data.videoGalleryItems?.[0].videoUrl).toBe(
       'https://youtube.com/watch?v=first',
     );
+  });
+
+  it('prefers the server-provided (deduped) available videos over tool results', () => {
+    const data: HarnessResponseData = {};
+    extractMediaFromToolResults(
+      [
+        {
+          toolName: 'brightDataVideoSearch',
+          result: {
+            results: [
+              {
+                videoUrl: 'https://youtube.com/watch?v=old-repeat',
+                title: 'Repeat',
+              },
+            ],
+          },
+        },
+      ],
+      data,
+      'videolist',
+      [],
+      [{ url: 'https://youtube.com/watch?v=new', title: 'New' }],
+    );
+
+    expect(data.videoGalleryItems).toHaveLength(1);
+    expect(data.videoGalleryItems?.[0].videoUrl).toBe(
+      'https://youtube.com/watch?v=new',
+    );
+  });
+
+  it('does not re-add tool-result media when the server pool is empty (repeat/contradiction guard)', () => {
+    const data: HarnessResponseData = {};
+    extractMediaFromToolResults(
+      [
+        {
+          toolName: 'brightDataVideoSearch',
+          result: {
+            results: [
+              { videoUrl: 'https://youtube.com/watch?v=repeat', title: 'R' },
+            ],
+          },
+        },
+      ],
+      data,
+      'videolist',
+      [],
+      [],
+    );
+
+    expect(data.videoGalleryItems).toBeUndefined();
   });
 });

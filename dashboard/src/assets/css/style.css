@@ -109,18 +109,18 @@ footer,
 /* Glassy, restrained panel: a single soft, diffuse shadow for a quiet
    float — no inset highlight, no tight contact ring, no pulsing glow. */
 .panel-glow {
-  box-shadow: 0 8px 24px color-mix(in srgb, black 10%, transparent);
+  box-shadow: 0 2px 2px color-mix(in srgb, black 10%, transparent);
   transition: box-shadow 0.4s ease;
 }
 
 .panel-glow:hover {
-  box-shadow: 0 12px 32px color-mix(in srgb, black 14%, transparent);
+  box-shadow: 0 2px 2px color-mix(in srgb, black 14%, transparent);
 }
 
 .panel-glow--active,
 .panel-glow:focus-within {
   box-shadow:
-    0 8px 24px color-mix(in srgb, black 10%, transparent),
+    0 2px 2px color-mix(in srgb, black 10%, transparent),
     0 0 1.25rem color-mix(in srgb, var(--color-accent-glow) 9%, transparent);
 }
 
