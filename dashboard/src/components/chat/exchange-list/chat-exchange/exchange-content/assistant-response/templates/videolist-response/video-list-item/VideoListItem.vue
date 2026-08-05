@@ -42,7 +42,8 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
       class="video-item__card"
       :class="{ 'video-item__card--active': isActivePlayback }"
     >
-      <!-- Header row above the video: title linking to the source -->
+      <!-- Header row above the video: title linking to the source, and the
+           playlist toggle as a quiet nav-style icon button on the right. -->
       <div class="video-item__header">
         <a
           :href="item.videoUrl"
@@ -51,6 +52,23 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
           class="video-item__title"
           >{{ item.title }}</a
         >
+        <button
+          type="button"
+          class="video-item__playlist-toggle"
+          :class="{ 'video-item__playlist-toggle--added': isInPlaylist }"
+          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+          :aria-label="
+            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+          "
+          :aria-pressed="isInPlaylist"
+          @click.stop="togglePlaylistVideo"
+        >
+          <ListCheck
+            v-if="isInPlaylist"
+            class="video-item__playlist-toggle-icon"
+          />
+          <ListPlus v-else class="video-item__playlist-toggle-icon" />
+        </button>
       </div>
 
       <!-- Media: poster until clicked, then the single mounted player;
@@ -60,22 +78,6 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
         :title="item.title"
         :poster-url="posterUrl"
       />
-
-      <!-- Playlist toggle in the card's top-right corner -->
-      <button
-        type="button"
-        class="video-item__playlist-toggle"
-        :class="{ 'video-item__playlist-toggle--added': isInPlaylist }"
-        :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-        :aria-pressed="isInPlaylist"
-        @click.stop="togglePlaylistVideo"
-      >
-        <ListCheck
-          v-if="isInPlaylist"
-          class="video-item__playlist-toggle-icon"
-        />
-        <ListPlus v-else class="video-item__playlist-toggle-icon" />
-      </button>
 
       <figcaption class="video-item__caption-bar">
         <span v-if="metaLine" class="video-item__meta">{{ metaLine }}</span>
@@ -124,14 +126,13 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
     color-mix(in srgb, var(--color-accent-primary) 45%, transparent);
 }
 
-/* ---------- header row (title above the video) ---------- */
+/* ---------- header row (title + playlist toggle above the video) ---------- */
 
 .video-item__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--spacing-2);
-  /* room for the absolutely positioned playlist toggle in the top-right */
   padding: 0.5rem;
 }
 
@@ -152,46 +153,45 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   color: var(--color-accent-primary);
 }
 
-/* ---------- playlist toggle (top-right corner) ---------- */
+/* ---------- playlist toggle (quiet nav-style icon in the header) ---------- */
 
 .video-item__playlist-toggle {
-  position: absolute;
-  top: var(--spacing-1);
-  right: var(--spacing-1);
-  margin: 0.1rem 0.1rem 0 0;
-  z-index: 3;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background-color: transparent;
+  color: var(--color-fg-muted);
   cursor: pointer;
-  background: color-mix(in srgb, black 55%, transparent);
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  box-shadow:
-    0 0.3rem 1rem color-mix(in srgb, black 45%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .video-item__playlist-toggle:hover {
-  color: white;
-  background: var(--color-accent-primary);
+  color: var(--color-fg-primary);
 }
 
-.video-item__playlist-toggle--added {
-  color: white;
-  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
+.video-item__playlist-toggle--added,
+.video-item__playlist-toggle--added:hover {
+  color: var(--color-accent-primary);
+}
+
+/* Mouse clicks leave the button focused; keep a themed ring for keyboard
+   navigation only (mirrors the nav menu items). */
+.video-item__playlist-toggle:focus {
+  outline: none;
+}
+
+.video-item__playlist-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-primary);
+  outline-offset: -1px;
 }
 
 .video-item__playlist-toggle-icon {
-  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
 /* ---------- caption bar (meta + caption below the video) ---------- */

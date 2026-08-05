@@ -11,18 +11,16 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 <!-- DEPBADGE:START -->
 <div align="center">
 
-![github](https://img.shields.io/github/release/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/stars/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/license/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-[![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF.io?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
+![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+[![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
 
 </div>
 
 <br>
 
 <div align="center">
-
-
 
 # Dependencies
 
@@ -60,8 +58,6 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 <br>
 
 <div align="center">
-
-
 
 # DevDependencies
 
@@ -103,7 +99,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 <div align="center">
 
-[E-MAIL](mailto:eugen.hildt@gmail.com) &nbsp;—&nbsp; [WIKI](https://github.com/ehildt/tripleF.io/wiki) &nbsp;—&nbsp; [ISSUES](https://github.com/ehildt/tripleF.io/issues) &nbsp;—&nbsp; [DONATE](https://github.com/sponsors/ehildt) &nbsp;—&nbsp; [AI GUIDANCE](https://github.com/ehildt/tripleF.io/wiki/ai-guidance)
+[E-MAIL](mailto:eugen.hildt@gmail.com) &nbsp;—&nbsp; [WIKI](https://github.com/ehildt/tripleF/wiki) &nbsp;—&nbsp; [ISSUES](https://github.com/ehildt/tripleF/issues) &nbsp;—&nbsp; [DONATE](https://github.com/sponsors/ehildt) &nbsp;—&nbsp; [AI GUIDANCE](https://github.com/ehildt/tripleF/wiki/ai-guidance)
 
 </div>
 

@@ -202,6 +202,7 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
     queryGuidance,
     'Emit ALL mandatory tool calls in ONE response, as parallel tool calls. Do not stop after the first tool call.',
     'You may call the same tool more than once with differently phrased queries when the task needs broader coverage.',
+    'When you call the SAME search tool multiple times (same tool, different queries), split the total requested count evenly across the calls so their sum equals the target — never pass the full count to each call. Example: total 10 across 3 queries → pass count 4, 3, 3. If no count is specified, still split the default evenly (e.g. 6 over 3 queries → 2 each).',
     'Each mandatory tool must be called at least once. Missing a mandatory tool is a failure.',
     countInstruction,
     'Example tool call format: { "toolName": "webSearch", "input": { "query": "..." } }',

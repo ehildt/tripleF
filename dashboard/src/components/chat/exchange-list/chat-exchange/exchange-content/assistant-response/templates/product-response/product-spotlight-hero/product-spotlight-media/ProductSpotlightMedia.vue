@@ -41,21 +41,19 @@ const videoPosterUrl = computed(() =>
 
 const heroVideoItem = computed<VideoGalleryItem>(() => ({
   videoUrl: props.videoUrl ?? '',
-  title: props.videoTitle || props.videoCaption,
+  title: props.videoTitle,
   caption: props.videoCaption,
 }));
 
 const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(heroVideoItem);
 
-/** Caption strip mirrors the video gallery card: bold title, muted caption. */
+/** Caption strip mirrors the video gallery card: muted caption below the
+ * header title. */
 const captionTitle = computed(() =>
   hasHeroVideo.value ? props.videoTitle : undefined,
 );
 const captionText = computed(() =>
   hasHeroVideo.value ? props.videoCaption : props.imageCaption,
-);
-const showCaption = computed(
-  () => Boolean(captionTitle.value) || Boolean(captionText.value),
 );
 
 function handleToggle() {
@@ -75,19 +73,23 @@ function openLightbox() {
     class="spotlight__media"
     :class="{ 'spotlight__media--video': hasHeroVideo }"
   >
-    <div class="spotlight__box">
-      <FloatingVideoFigure
-        v-if="hasHeroVideo"
-        :video-url="videoUrl!"
-        :title="videoTitle || videoCaption"
-        :poster-url="videoPosterUrl"
-      />
+    <!-- Header row (video only): title linking to the source, and the
+         playlist toggle as a quiet nav-style icon button on the right. -->
+    <div v-if="hasHeroVideo" class="spotlight__header">
+      <a
+        v-if="captionTitle"
+        :href="videoUrl!"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="spotlight__title"
+        >{{ captionTitle }}</a
+      >
       <button
-        v-if="hasHeroVideo"
         type="button"
         class="spotlight__playlist-toggle"
         :class="{ 'spotlight__playlist-toggle--added': isInPlaylist }"
         :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+        :aria-label="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
         :aria-pressed="isInPlaylist"
         @click.stop="handleToggle"
       >
@@ -97,6 +99,15 @@ function openLightbox() {
         />
         <ListPlus v-else class="spotlight__playlist-toggle-icon" />
       </button>
+    </div>
+
+    <div class="spotlight__box">
+      <FloatingVideoFigure
+        v-if="hasHeroVideo"
+        :video-url="videoUrl!"
+        :title="videoTitle"
+        :poster-url="videoPosterUrl"
+      />
       <button
         v-else-if="selectedSlide"
         type="button"
@@ -116,11 +127,8 @@ function openLightbox() {
       </div>
     </div>
 
-    <figcaption v-if="showCaption" class="spotlight__caption">
-      <strong v-if="captionTitle && captionTitle !== captionText">
-        {{ captionTitle }}
-      </strong>
-      <p v-if="captionText">{{ captionText }}</p>
+    <figcaption v-if="captionText" class="spotlight__caption">
+      <p>{{ captionText }}</p>
     </figcaption>
   </figure>
 </template>
@@ -139,6 +147,31 @@ function openLightbox() {
   background: var(--color-bg-secondary);
 }
 
+.spotlight__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: 0.5rem;
+}
+
+.spotlight__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-fg-primary);
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.spotlight__title:hover {
+  color: var(--color-accent-primary);
+}
+
 .spotlight__box {
   position: relative;
   display: flex;
@@ -154,44 +187,43 @@ function openLightbox() {
   aspect-ratio: 16 / 9;
 }
 
+/* ---------- playlist toggle (quiet nav-style icon in the header) ---------- */
+
 .spotlight__playlist-toggle {
-  position: absolute;
-  top: var(--spacing-1);
-  right: var(--spacing-1);
-  margin: 0.1rem 0.1rem 0 0;
-  z-index: 3;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background-color: transparent;
+  color: var(--color-fg-muted);
   cursor: pointer;
-  background: color-mix(in srgb, black 55%, transparent);
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  box-shadow:
-    0 0.3rem 1rem color-mix(in srgb, black 45%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .spotlight__playlist-toggle:hover {
-  color: white;
-  background: var(--color-accent-primary);
+  color: var(--color-fg-primary);
 }
 
-.spotlight__playlist-toggle--added {
-  color: white;
-  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
+.spotlight__playlist-toggle--added,
+.spotlight__playlist-toggle--added:hover {
+  color: var(--color-accent-primary);
+}
+
+.spotlight__playlist-toggle:focus {
+  outline: none;
+}
+
+.spotlight__playlist-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-primary);
+  outline-offset: -1px;
 }
 
 .spotlight__playlist-toggle-icon {
-  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
 .spotlight__trigger {
@@ -231,12 +263,6 @@ function openLightbox() {
   font-size: 0.85rem;
   color: var(--color-fg-muted);
   border-top: 1px solid var(--color-divider);
-}
-
-.spotlight__caption strong {
-  display: block;
-  color: var(--color-fg-primary);
-  margin-bottom: 0.25em;
 }
 
 .spotlight__caption p {
