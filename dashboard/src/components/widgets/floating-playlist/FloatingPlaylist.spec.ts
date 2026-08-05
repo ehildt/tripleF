@@ -1,30 +1,35 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  addPlaylistVideo,
-  closeLaunchedVideo,
-  FLOATING_PLAYLIST_QUEUE_KEY,
-  isPlaylistVideo,
-  removePlaylistVideo,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import { fetchAllPlaylists } from '@/api/playlists.api';
+import { closeLaunchedVideo } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import { useConversationStore } from '@/stores/conversation';
 
+import { activePlaylistName, playlists } from './composables/playlist.state';
 import {
   floatingPlaylistOpen,
   playlistMode,
   resetPlaylistSettings,
 } from './composables/playlist-settings.state';
-import {
-  activeSavedPlaylistId,
-  savedPlaylists,
-} from './composables/saved-playlists.state';
 import FloatingPlaylist from './FloatingPlaylist.vue';
+
+vi.mock('@/api/playlists.api', () => ({
+  fetchAllPlaylists: vi.fn(),
+  fetchPlaylists: vi.fn(),
+  savePlaylist: vi.fn(),
+  deletePlaylist: vi.fn(),
+  renamePlaylist: vi.fn(),
+}));
 
 const item = {
   videoUrl: 'https://www.youtube.com/watch?v=abc',
   title: 'Some video',
+};
+
+const otherItem = {
+  videoUrl: 'https://youtu.be/other',
+  title: 'Other video',
 };
 
 function mountWidget() {
@@ -32,17 +37,18 @@ function mountWidget() {
 }
 
 describe('FloatingPlaylist', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
     closeLaunchedVideo();
-    removePlaylistVideo('conversation-1', item.videoUrl);
-    removePlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl);
-    savedPlaylists.value = [];
-    activeSavedPlaylistId.value = null;
+    playlists.value = [];
+    activePlaylistName.value = '';
     floatingPlaylistOpen.value = true;
     resetPlaylistSettings();
     setActivePinia(createPinia());
     useConversationStore().activeConversationId = 'conversation-1';
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([]);
+    // Flush any pending async playlist load from the previous test.
+    await flushPromises();
   });
 
   it('renders nothing while the playlist mode is panel', () => {
@@ -78,38 +84,36 @@ describe('FloatingPlaylist', () => {
     expect(floatingPlaylistOpen.value).toBe(true);
   });
 
-  it('lists the queued videos regardless of the active conversation', () => {
+  it('lists the active playlist videos', async () => {
     playlistMode.value = 'floating';
-    addPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item);
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      { name: 'Focus', conversationId: 'conversation-1', videos: [item] },
+    ]);
     const wrapper = mountWidget();
+    await flushPromises();
     expect(wrapper.find('.playlist-item').exists()).toBe(true);
     expect(wrapper.text()).toContain('Some video');
   });
 
-  it('the floating queue survives a conversation switch', () => {
-    playlistMode.value = 'floating';
-    addPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item);
-    const wrapper = mountWidget();
-    useConversationStore().activeConversationId = 'another-conversation';
-    expect(wrapper.find('.playlist-item').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Some video');
-  });
-
-  it('shows the empty state when the queue is empty', () => {
+  it('shows the empty state when there are no playlists', async () => {
     playlistMode.value = 'floating';
     const wrapper = mountWidget();
+    await flushPromises();
     expect(wrapper.find('.playlist-item').exists()).toBe(false);
-    // No saved playlist yet: only the create hint is shown, no message.
+    // No playlist yet: only the create hint is shown, no message.
     expect(wrapper.text()).toContain('Create a playlist');
     expect(wrapper.text()).not.toContain('No videos in the playlist');
     expect(wrapper.text()).not.toContain('Add to playlist');
     expect(wrapper.text()).not.toContain('Remove from playlist');
   });
 
-  it('shows the add/remove hints when a playlist exists but is empty', () => {
+  it('shows the add/remove hints when a playlist exists but is empty', async () => {
     playlistMode.value = 'floating';
-    savedPlaylists.value = [{ id: 'p1', name: 'Focus', videos: [] }];
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      { name: 'Focus', conversationId: 'conversation-1', videos: [] },
+    ]);
     const wrapper = mountWidget();
+    await flushPromises();
     expect(wrapper.find('.playlist-item').exists()).toBe(false);
     expect(wrapper.text()).toContain('No videos in the playlist');
     expect(wrapper.text()).toContain('Add to playlist');
@@ -117,37 +121,32 @@ describe('FloatingPlaylist', () => {
     expect(wrapper.text()).not.toContain('Create a playlist');
   });
 
-  it('shows no playlist label while the queue is unnamed', () => {
+  it('shows no playlist label while no playlist is active', async () => {
     playlistMode.value = 'floating';
     const wrapper = mountWidget();
+    await flushPromises();
     expect(wrapper.find('.playlist-panel__active-name').exists()).toBe(false);
   });
 
-  it('labels the active playlist with its name after picking a saved one', async () => {
+  it('labels the active playlist with its name after picking one', async () => {
     playlistMode.value = 'floating';
-    savedPlaylists.value = [
-      {
-        id: 'p1',
-        name: 'Focus',
-        videos: [{ videoUrl: 'https://youtu.be/other', title: 'Other video' }],
-      },
-    ];
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      { name: 'Focus', conversationId: 'conversation-1', videos: [otherItem] },
+    ]);
     const wrapper = mountWidget();
+    await flushPromises();
     await wrapper.find('.playlist-menu__trigger').trigger('click');
     await wrapper.find('.playlist-menu-item__input').trigger('click');
     expect(wrapper.find('.playlist-panel__active-name').text()).toBe('Focus');
   });
 
-  it('opens the saved-playlists menu with the name input as first field', async () => {
+  it('opens the playlists menu with the name input as first field', async () => {
     playlistMode.value = 'floating';
-    addPlaylistVideo('conversation-1', item);
-    savedPlaylists.value = [{ id: 'p1', name: 'Focus', videos: [item] }];
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      { name: 'Focus', conversationId: 'conversation-1', videos: [item] },
+    ]);
     const wrapper = mountWidget();
-    // No list dropdown row and no load button anymore.
-    expect(wrapper.find('.input-select__button').exists()).toBe(false);
-    expect(wrapper.find('[aria-label="Load selected playlist"]').exists()).toBe(
-      false,
-    );
+    await flushPromises();
     expect(wrapper.find('.playlist-menu__input').exists()).toBe(false);
     await wrapper.find('.playlist-menu__trigger').trigger('click');
     expect(wrapper.find('.playlist-menu__input').exists()).toBe(true);
@@ -156,25 +155,15 @@ describe('FloatingPlaylist', () => {
     expect((itemInput.element as HTMLInputElement).value).toBe('Focus');
   });
 
-  it('picking a playlist in the menu autoloads it without a load button', async () => {
+  it('picking a playlist in the menu loads its videos', async () => {
     playlistMode.value = 'floating';
-    savedPlaylists.value = [
-      {
-        id: 'p1',
-        name: 'Focus',
-        videos: [{ videoUrl: 'https://youtu.be/other', title: 'Other video' }],
-      },
-    ];
-    addPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item);
+    vi.mocked(fetchAllPlaylists).mockResolvedValue([
+      { name: 'Focus', conversationId: 'conversation-1', videos: [otherItem] },
+    ]);
     const wrapper = mountWidget();
+    await flushPromises();
     await wrapper.find('.playlist-menu__trigger').trigger('click');
     await wrapper.find('.playlist-menu-item__input').trigger('click');
-    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
-      false,
-    );
-    expect(
-      isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, 'https://youtu.be/other'),
-    ).toBe(true);
     expect(wrapper.text()).toContain('Other video');
   });
 });

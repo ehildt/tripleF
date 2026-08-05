@@ -1,19 +1,18 @@
 <script setup lang="ts">
 /**
  * The player shared by the chat right panel (docked) and the app-level
- * floating playlist: transport bar, active playlist name, saved-playlists
- * menu, and the queued-video list with its empty state. The only input is
- * the queue key — the active conversation id when docked, the global
- * floating key when mounted in the floating player — so both surfaces get
- * the same behaviour and the same "now playing" treatment (the marquee
- * scrolls inside the active item row; the transport bar shows no separate
- * marquee).
+ * floating playlist: transport bar, active playlist name, playlists menu,
+ * and the queued-video list with its empty state. The only input is the
+ * conversation id — the active conversation when docked or mounted in the
+ * floating player — so both surfaces show the same conversation's playlists
+ * and the same "now playing" treatment (the marquee scrolls inside the
+ * active item row; the transport bar shows no separate marquee).
  *
  * Surfaces mount it only while they own the playlist (floating mode is
- * mutually exclusive with the docked playlist), so the shared saved-playlist
- * state is never touched by two panels at once. Extra toolbar actions (the
- * floating player's collapse button) slot in after the saved-playlists menu
- * via `toolbar-actions`.
+ * mutually exclusive with the docked playlist), so the shared playlist state
+ * is never touched by two panels at once. Extra toolbar actions (the
+ * floating player's collapse button) slot in after the playlists menu via
+ * `toolbar-actions`.
  */
 import { Library, ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
@@ -28,8 +27,7 @@ import PlaylistItem from '../playlist-item/PlaylistItem.vue';
 import PlaylistTransportBar from '../playlist-transport-bar/PlaylistTransportBar.vue';
 
 const props = defineProps<{
-  /** Queue key this panel shows: the active conversation id (docked) or the
-   *  global floating key (mounted in the floating player). */
+  /** Conversation id this panel shows: the active conversation id. */
   conversationId: string;
 }>();
 
@@ -41,7 +39,7 @@ const emit = defineEmits<{
 
 const conversationId = computed(() => props.conversationId);
 
-const { playlistVideos, hasPlaylist } = useVideoPlaylist(conversationId);
+const { playlistVideos, hasPlaylist } = useVideoPlaylist();
 
 const {
   activePlaybackPlaying,
@@ -62,13 +60,13 @@ const {
 
 const {
   playlistNameInput,
-  savedPlaylistNames,
+  playlistNames,
   activePlaylistName,
   selectPlaylist,
   createPlaylist,
   deletePlaylist,
   renamePlaylist,
-} = usePlaylistLibrary(conversationId, playlistVideos);
+} = usePlaylistLibrary(conversationId);
 
 function onItemPlay(item: VideoGalleryItem) {
   onPlayItem(item);
@@ -102,7 +100,7 @@ function onItemPlay(item: VideoGalleryItem) {
         >
         <PlaylistMenu
           :playlist-name="playlistNameInput"
-          :playlists="savedPlaylistNames"
+          :playlists="playlistNames"
           :active-playlist-name="activePlaylistName"
           @update:playlist-name="playlistNameInput = $event"
           @select="selectPlaylist"
@@ -127,13 +125,13 @@ function onItemPlay(item: VideoGalleryItem) {
       </div>
       <div v-else class="playlist-panel__empty">
         <p
-          v-if="savedPlaylistNames.length > 0"
+          v-if="playlistNames.length > 0"
           class="playlist-panel__empty-message"
         >
           No videos in the playlist
         </p>
         <div class="playlist-panel__empty-hints">
-          <template v-if="savedPlaylistNames.length > 0">
+          <template v-if="playlistNames.length > 0">
             <span class="playlist-panel__empty-hint">
               <ListPlus class="playlist-panel__empty-hint-icon" />
               Add to playlist
