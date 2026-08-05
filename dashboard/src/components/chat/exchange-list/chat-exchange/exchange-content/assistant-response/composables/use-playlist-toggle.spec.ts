@@ -2,6 +2,11 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
+import {
+  deleteSavedPlaylist,
+  savedPlaylists,
+  savePlaylist,
+} from '@/components/widgets/floating-playlist/composables/saved-playlists.state';
 import { useConversationStore } from '@/stores/conversation';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
@@ -22,6 +27,8 @@ describe('usePlaylistToggle', () => {
     localStorage.clear();
     removePlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl);
     setActivePinia(createPinia());
+    // Adding is gated on a saved playlist existing.
+    savePlaylist('Test', []);
   });
 
   it('reports videos outside the playlist as not added', () => {
@@ -94,5 +101,19 @@ describe('usePlaylistToggle', () => {
     video.value = item;
     togglePlaylistVideo();
     expect(isInPlaylist.value).toBe(true);
+  });
+
+  it('does not add a video when no saved playlist exists', () => {
+    const store = useConversationStore();
+    store.activeConversationId = 'conversation-1';
+    // Remove the playlist created in beforeEach so the gate blocks adds.
+    const testPlaylist = savedPlaylists.value.find((p) => p.name === 'Test');
+    if (testPlaylist) deleteSavedPlaylist(testPlaylist.id);
+    const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
+    togglePlaylistVideo();
+    expect(isPlaylistVideo(FLOATING_PLAYLIST_QUEUE_KEY, item.videoUrl)).toBe(
+      false,
+    );
+    expect(isInPlaylist.value).toBe(false);
   });
 });
