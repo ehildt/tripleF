@@ -28,7 +28,10 @@ import { partitionByLanguage } from '../helpers/partition-by-language.helper.js'
 import { buildIngestedByUrlMap } from '../helpers/sanitize/build-ingested-by-url-map.helper.js';
 import { buildUserFingerprints } from '../helpers/sanitize/build-user-fingerprints.helper.js';
 import { collectExternalImageSearchUrls } from '../helpers/sanitize/collect-external-image-search-urls.helper.js';
-import { collectImageUrls } from '../helpers/sanitize/collect-image-urls.helper.js';
+import {
+  collectImageUrls,
+  type ImageUrlEntry,
+} from '../helpers/sanitize/collect-image-urls.helper.js';
 import { collectPageUrls } from '../helpers/sanitize/collect-page-urls.helper.js';
 import { collectVideoThumbnailUrls } from '../helpers/sanitize/collect-video-thumbnail-urls.helper.js';
 import { filterVerifiedMedia } from '../helpers/sanitize/filter-verified-media.helper.js';
@@ -61,6 +64,11 @@ export type SanitizeResult = {
   /** All cloud images ingested for URL rewriting — respond maps their
    *  fingerprints when recording shown media. */
   ingestedForRewrite?: IngestedImage[];
+  /** Model-visible (deduped) media URLs the client may render/fall back to.
+   *  Cross-request repeats are already removed, so the client shows exactly
+   *  what the model was given — no re-displaying previously-shown media. */
+  availableImages?: Array<{ url: string; title?: string }>;
+  availableVideos?: Array<{ url: string; title?: string }>;
 };
 
 /**
@@ -311,6 +319,17 @@ export class SanitizeActionService {
       availableVideoCount: verifiedVideos.length,
       ingestedImages: ingestion.ingestedImages,
       ingestedForRewrite: ingestion.ingestedForRewrite,
+      // The client's media fallback must use the same deduped set the model
+      // was given — not the raw tool results — so previously-shown media is
+      // never re-displayed and the model's "no new media" is honoured.
+      availableImages: verifiedImages.map((item) => ({
+        url: item.imageUrl,
+        title: item.title,
+      })),
+      availableVideos: verifiedVideos.map((item) => ({
+        url: item.videoUrl,
+        title: item.title,
+      })),
     };
   }
 
@@ -472,22 +491,47 @@ export class SanitizeActionService {
 
   private async findBrokenImageUrls(
     ctx: HarnessContext,
-    urls: string[],
+    entries: ImageUrlEntry[],
   ): Promise<Set<string>> {
-    if (urls.length === 0) return new Set();
+    if (entries.length === 0) return new Set();
 
-    const results = await this.mediaUrlValidator.validateUrls(urls, {
-      enabled: true,
-      timeoutMs: 5000,
-      maxRedirects: 3,
-      concurrency: 5,
-      checkImageDimensions: true,
-      minWidth: 1280,
-      minHeight: 720,
-      maxProbeBytes: 256 * 1024,
-    });
+    // Strict entries must be real images ≥1280×720; Bright Data images only
+    // need to be real and reachable (we trust its Google-side size filter).
+    const strictUrls = entries
+      .filter((entry) => !entry.skipDimensionCheck)
+      .map((entry) => entry.url);
+    const skipDimUrls = entries
+      .filter((entry) => entry.skipDimensionCheck)
+      .map((entry) => entry.url);
 
-    const broken = results.filter((r) => r.kind !== 'image').map((r) => r.url);
+    const [strictResults, skipDimResults] = await Promise.all([
+      strictUrls.length > 0
+        ? this.mediaUrlValidator.validateUrls(strictUrls, {
+            enabled: true,
+            timeoutMs: 5000,
+            maxRedirects: 3,
+            concurrency: 5,
+            checkImageDimensions: true,
+            minWidth: 1280,
+            minHeight: 720,
+            maxProbeBytes: 256 * 1024,
+          })
+        : Promise.resolve([]),
+      skipDimUrls.length > 0
+        ? this.mediaUrlValidator.validateUrls(skipDimUrls, {
+            enabled: true,
+            timeoutMs: 5000,
+            maxRedirects: 3,
+            concurrency: 5,
+            checkImageDimensions: false,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const broken = [
+      ...strictResults.filter((r) => r.kind !== 'image'),
+      ...skipDimResults.filter((r) => r.kind !== 'image'),
+    ].map((r) => r.url);
 
     if (broken.length > 0) {
       this.stepLogger.log(

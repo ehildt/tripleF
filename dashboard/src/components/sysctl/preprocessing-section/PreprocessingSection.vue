@@ -36,7 +36,7 @@ watch(
 .preprocessing-section {
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-4);
+  padding: var(--spacing-1);
 }
 
 .panel-changed {

@@ -155,6 +155,8 @@ export class HarnessChatStreamingService {
       data: ctx.outputs.finalData,
       images,
       toolResults: ctx.outputs.toolResults,
+      availableImages: ctx.outputs.availableImages,
+      availableVideos: ctx.outputs.availableVideos,
       meta: metaForStream,
       prompt: ctx.lastUserPrompt,
       promptEvalCount: ctx.outputs.inputTokens,

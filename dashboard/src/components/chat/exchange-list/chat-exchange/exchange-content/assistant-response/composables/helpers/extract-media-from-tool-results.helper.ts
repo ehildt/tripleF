@@ -144,9 +144,8 @@ function buildVideoGalleryItems(
     items.push({
       videoUrl: url,
       title,
-      // The schema requires a non-empty caption; the candidate title is the
-      // only text available when synthesizing, so it doubles as caption.
-      caption: title,
+      // Caption is left unset — it is optional and never fabricated from the
+      // title. The caption strip only renders when a real one is present.
     });
   }
 
@@ -165,11 +164,33 @@ export function extractMediaFromToolResults(
   toolResults: unknown[],
   data: HarnessResponseData,
   template?: string,
+  availableImages?: Array<{ url: string; title?: string }>,
+  availableVideos?: Array<{ url: string; title?: string }>,
 ): void {
   const results = (toolResults ?? []).filter(isToolResult);
-  if (results.length === 0) return;
 
-  const { images, videos } = collectMediaUrls(results);
+  // Prefer the server's model-visible (deduped) media pool when the server
+  // provides one: cross-request repeats are already removed server-side, so
+  // we never re-display media the model deliberately excluded (e.g.
+  // previously-shown videos). The pool may be empty (nothing new) — that is
+  // authoritative. Only fall back to scraping raw tool results when the
+  // server sent no pool at all.
+  const serverProvided =
+    availableImages !== undefined || availableVideos !== undefined;
+
+  const { images, videos } = serverProvided
+    ? {
+        images: (availableImages ?? []).map((i) => ({
+          url: i.url,
+          title: i.title,
+        })),
+        videos: (availableVideos ?? []).map((v) => ({
+          url: v.url,
+          title: v.title,
+        })),
+      }
+    : collectMediaUrls(results);
+
   if (images.length === 0 && videos.length === 0) return;
 
   const heroAllowed = !template || !NO_HERO_TEMPLATES.has(template);
@@ -178,7 +199,9 @@ export function extractMediaFromToolResults(
 
   // Prefer video hero when available, mirroring the server instructions.
   // Contract: a hero video must carry a title (popout title bar, now-playing
-  // marquee) — only promote a candidate whose title is known.
+  // marquee) — only promote a candidate whose title is known. The caption is
+  // kept as-is (never synthesized from the title); the figcaption only shows
+  // it when it is actually present.
   if (
     heroAllowed &&
     !existingHeroVideo &&
@@ -187,7 +210,6 @@ export function extractMediaFromToolResults(
   ) {
     data.heroVideoUrl = videos[0].url;
     data.heroVideoTitle = data.heroVideoTitle || videos[0].title;
-    data.heroVideoCaption = data.heroVideoCaption || videos[0].title;
   }
 
   if (

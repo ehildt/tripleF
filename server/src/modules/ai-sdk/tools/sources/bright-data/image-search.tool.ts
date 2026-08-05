@@ -27,7 +27,7 @@ import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
 export function createBrightDataImageSearch(deps: ToolDependencies) {
   return tool({
     description:
-      'Search for images using Bright Data SERP API (Google Images). Returns image URLs, source pages, and dimensions. The tool enforces a minimum of 1280×720 (720p) server-side and drops untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com), data URIs, localhost, and private IPs. Pass minWidth/minHeight to request higher resolutions. ' +
+      'Search for images using Bright Data SERP API (Google Images). Returns image URLs and source pages. The tool passes the appropriate Google Images `tbs=isz:lt,islt:<bucket>` size filter server-side and trusts it for minimum resolution (Bright Data does not return pixel dimensions), while still rejecting untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com), data URIs, localhost, and private IPs. Pass minWidth/minHeight to request higher resolutions. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: z.object({
       query: z
@@ -101,6 +101,9 @@ export function createBrightDataImageSearch(deps: ToolDependencies) {
         })) as {
           images?: Array<{
             title?: string;
+            /** Actual image URL. */
+            original_image?: string;
+            /** Embedded base64 thumbnail (data URI) — not usable directly. */
             image?: string;
             image_url?: string;
             imageUrl?: string;
@@ -121,7 +124,10 @@ export function createBrightDataImageSearch(deps: ToolDependencies) {
         const results = images
           .map((r) => ({
             title: r.title || '',
-            imageUrl: r.image || r.image_url || r.imageUrl || '',
+            // Prefer the real image URL; `image` is a base64 thumbnail data
+            // URI that our trust rules reject.
+            imageUrl:
+              r.original_image || r.image_url || r.imageUrl || r.link || '',
             sourcePageUrl: r.source_link || r.link || '',
             width: r.width,
             height: r.height,
@@ -130,12 +136,13 @@ export function createBrightDataImageSearch(deps: ToolDependencies) {
           }))
           .filter((r) => {
             if (!isTrustedImageUrl(r.imageUrl)) return false;
-            return meetsMinimumImageDimensions(
-              r.width,
-              r.height,
-              minWidth,
-              minHeight,
-            );
+            // Bright Data does not return pixel dimensions, so trust the
+            // Google-side `tbs=isz:lt,islt:<bucket>` filter. Only enforce the
+            // minimum when dimensions happen to be present.
+            const w = r.width ?? 0;
+            const h = r.height ?? 0;
+            if (!w || !h) return true;
+            return meetsMinimumImageDimensions(w, h, minWidth, minHeight);
           });
         deps.logger.log(
           `Bright Data image search returned ${results.length} results for "${query}"`,

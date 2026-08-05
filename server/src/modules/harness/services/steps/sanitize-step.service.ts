@@ -40,6 +40,8 @@ export class SanitizeStepService implements StepHandler {
 
     ctx.outputs.toolResults = result.toolResults;
     ctx.outputs.ingestedForRewrite = result.ingestedForRewrite;
+    ctx.outputs.availableImages = result.availableImages;
+    ctx.outputs.availableVideos = result.availableVideos;
     ctx.request.messages = result.messages;
     this.appendIngestedMeta(ctx, result.ingestedImages);
 

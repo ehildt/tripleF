@@ -10,22 +10,72 @@ import { listSearchSources } from './list-search-sources.helper';
 export type SearchEngineState =
   'unknown' | 'unavailable' | 'disabled' | 'enabled';
 
-interface MaskedSerperSnapshot {
-  enabled?: boolean;
-  apiKey?: string;
+/**
+ * The search engines the chat master toggle controls. Serper and Bright Data
+ * are alternative Google-index engines; YouTube supplies videos. The globe
+ * kill switch flips all of them together.
+ */
+const SEARCH_ENGINES = ['serper', 'brightData', 'youtube'] as const;
+
+type EngineSnapshot = Record<string, unknown>;
+
+function engineObject(
+  snapshot: Record<string, unknown> | null | undefined,
+  name: string,
+): EngineSnapshot | undefined {
+  const engine = snapshot?.[name];
+  return engine && typeof engine === 'object'
+    ? (engine as EngineSnapshot)
+    : undefined;
+}
+
+/** A configured engine exposes a (masked) apiKey server-side. */
+function engineHasApiKey(
+  snapshot: Record<string, unknown> | null | undefined,
+  name: string,
+): boolean {
+  const apiKey = engineObject(snapshot, name)?.apiKey;
+  return typeof apiKey === 'string' && apiKey.length > 0;
+}
+
+/** The engine's effective enabled flag — session override wins, then snapshot. */
+function engineIsEnabled(
+  snapshot: Record<string, unknown> | null | undefined,
+  sessionOverrides:
+    Record<string, Record<string, unknown> | undefined> | null | undefined,
+  name: string,
+): boolean {
+  const session = sessionOverrides?.[name];
+  const sessionEnabled =
+    session &&
+    typeof session === 'object' &&
+    typeof session.enabled === 'boolean'
+      ? session.enabled
+      : undefined;
+  const snapshotEnabled = engineObject(snapshot, name)?.enabled === true;
+  return sessionEnabled ?? snapshotEnabled;
+}
+
+/** Engines currently configured (a key is present server-side). */
+function configuredEngines(
+  snapshot: Record<string, unknown> | null | undefined,
+): readonly string[] {
+  return SEARCH_ENGINES.filter((name) => engineHasApiKey(snapshot, name));
 }
 
 /**
  * Whether the assistant currently has a search engine at its disposal, plus
  * the kill switch to toggle it from the chat view.
  *
- * Reads the masked provider-overrides snapshot (the masked `apiKey` proves a
- * key is configured server-side) and merges the session-persisted
- * `serper.enabled` override, mirroring how SysCtl applies the toggle. The
- * toggle writes both the server overrides and the session overrides — the
- * same pair SysCtl writes — so both views stay consistent. The state is
- * `unknown` while loading or after a failed fetch so the UI does not flash a
- * wrong indicator.
+ * Reads the masked provider-overrides snapshot (a masked `apiKey` proves a
+ * key is configured server-side) across every search engine and merges the
+ * session-persisted `*.enabled` override, mirroring how SysCtl applies each
+ * toggle. Search counts as enabled when at least one configured engine is
+ * on. The master toggle writes `enabled` for ALL configured engines (Serper,
+ * Bright Data, YouTube) to both the server overrides and the session
+ * overrides — the same pair SysCtl writes — so every view stays consistent.
+ * The state is `unknown` while loading or after a failed fetch so the UI
+ * does not flash a wrong indicator.
  */
 export function useSearchEngineAvailability() {
   const toast = useToast();
@@ -58,15 +108,17 @@ export function useSearchEngineAvailability() {
         fetchConfig(getPersistentSocketSessionId()),
       ]);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const snapshot = (await res.json()) as {
-        serper?: MaskedSerperSnapshot;
-      };
+      const snapshot = (await res.json()) as Record<string, unknown>;
       const overridesConfig = (sessionConfig?.providerOverrides ??
         null) as Record<string, Record<string, unknown> | undefined> | null;
-      const sessionEnabled = overridesConfig?.serper?.enabled as
-        boolean | undefined;
-      hasApiKey.value = !!snapshot.serper?.apiKey;
-      isEnabled.value = sessionEnabled ?? snapshot.serper?.enabled ?? false;
+      const configured = configuredEngines(snapshot);
+      hasApiKey.value = configured.length > 0;
+      // Search counts as on when at least one configured engine is enabled.
+      isEnabled.value =
+        configured.length > 0 &&
+        configured.some((name) =>
+          engineIsEnabled(snapshot, overridesConfig, name),
+        );
       snapshotConfig.value = snapshot;
       sessionOverrides.value = overridesConfig;
       isLoaded.value = true;
@@ -75,13 +127,18 @@ export function useSearchEngineAvailability() {
     }
   }
 
-  async function persistSessionEnabled(enabled: boolean) {
+  async function persistSessionEnabled(
+    engines: readonly string[],
+    enabled: boolean,
+  ) {
     const sessionId = getPersistentSocketSessionId();
     const config = await fetchConfig(sessionId);
     const overrides = {
       ...(config?.providerOverrides ?? {}),
     } as Record<string, Record<string, unknown>>;
-    overrides.serper = { ...overrides.serper, enabled };
+    for (const name of engines) {
+      overrides[name] = { ...overrides[name], enabled };
+    }
     await saveConfig(sessionId, { providerOverrides: overrides });
     sessionOverrides.value = overrides;
   }
@@ -234,16 +291,22 @@ export function useSearchEngineAvailability() {
       return;
     }
     const previous = isEnabled.value;
-    isEnabled.value = !previous;
+    const next = !previous;
+    isEnabled.value = next;
     isToggling.value = true;
     try {
+      // Flip every configured search engine together (Serper, Bright Data,
+      // YouTube) so the kill switch is a true master switch.
+      const engines = configuredEngines(snapshotConfig.value);
       const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serper: { enabled: !previous } }),
+        body: JSON.stringify(
+          Object.fromEntries(engines.map((name) => [name, { enabled: next }])),
+        ),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await persistSessionEnabled(!previous);
+      await persistSessionEnabled(engines, next);
     } catch {
       isEnabled.value = previous;
       toast.error('Failed to update search engine');

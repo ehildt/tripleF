@@ -7,10 +7,10 @@
 
 <br>
 
-![github](https://img.shields.io/github/release/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/stars/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/license/ehildt/tripleF.io?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-[![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF.io?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
+![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+[![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
 
 <br>
 
@@ -49,6 +49,6 @@ See [LICENSE](LICENSE) for more information.
 
 <div align="center">
 
-[E-MAIL](mailto:eugen.hildt@gmail.com) · [WIKI](https://github.com/ehildt/tripleF.io/wiki) · [ISSUES](https://github.com/ehildt/tripleF.io/issues) · [DONATE](https://github.com/sponsors/ehildt)
+[E-MAIL](mailto:eugen.hildt@gmail.com) · [WIKI](https://github.com/ehildt/tripleF/wiki) · [ISSUES](https://github.com/ehildt/tripleF/issues) · [DONATE](https://github.com/sponsors/ehildt)
 
 </div>

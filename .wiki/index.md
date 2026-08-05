@@ -32,6 +32,10 @@
 - [3. AI-Assisted Development & Code Ownership](3-ai-assisted-development.md)
 - [3.1. Market Positioning](3.1-market-positioning.md)
 
+### Business Logic
+
+- [4. Business Logic: How the Features Work](4-business-logic.md)
+
 ## Navigation
 
 | Document                                                  | Concern                                        | Key Sections                                                           |
@@ -52,3 +56,4 @@
 | [2.3-theming](2.3-theming.md)                             | Theme system                                   | Theme catalogue, harmony model, tokens                                 |
 | [3-ai-assisted-development](3-ai-assisted-development.md) | How this project is built                      | Context coding, ownership, quality gates                               |
 | [3.1-market-positioning](3.1-market-positioning.md)       | Where 3F competes                           | Proprietary landscape, local-first advantages, strategy                |
+| [4-business-logic](4-business-logic.md)                   | Feature behaviour and their dependencies        | Core loop, media contracts, grounding, trust boundary                   |

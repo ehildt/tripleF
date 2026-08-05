@@ -23,7 +23,7 @@ import VideoPopoutPanel from './video-popout-panel/VideoPopoutPanel.vue';
 .widgets-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
-  padding: var(--spacing-4);
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
 }
 </style>

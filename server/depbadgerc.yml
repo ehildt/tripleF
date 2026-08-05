@@ -40,6 +40,8 @@ dependencies:
     position: center
   badgeStyle: *DEPENDENCIES_STYLE
   items:
+    - name: '@ai-sdk/mcp'
+      link: https://github.com/vercel/ai
     - name: '@ehildt/ckir-helpers'
       link: https://github.com/ehildt/ckir-helpers
     - name: '@ehildt/nestjs-bullmq'
@@ -48,8 +50,6 @@ dependencies:
       link: https://github.com/ehildt/nestjs-bullmq-logger
     - name: '@ehildt/nestjs-config-factory'
       link: https://github.com/ehildt/nestjs-config-factory
-    - name: '@ehildt/nestjs-ollama'
-      link: https://github.com/ehildt/nestjs-ollama
     - name: '@ehildt/nestjs-socket.io'
       link: https://github.com/ehildt/nestjs-socket.io
     - name: '@fastify/compress'
@@ -74,22 +74,36 @@ dependencies:
       link: https://github.com/nestjs/nest
     - name: '@nestjs/terminus'
       link: https://github.com/nestjs/nest
+    - name: '@prisma/adapter-pg'
+      link: https://github.com/prisma/prisma
+    - name: '@prisma/client'
+      link: https://github.com/prisma/prisma
+    - name: ai
+      link: https://github.com/vercel/ai
     - name: bullmq
       link: https://github.com/taskforcesh/bullmq
     - name: class-transformer
       link: https://github.com/typestack/class-transformer
     - name: class-validator
       link: https://github.com/typestack/class-validator
+    - name: cld3-asm
+      link: https://github.com/kwonoj/cld3-asm
     - name: fastify
       link: https://github.com/fastify/fastify
     - name: ioredis
       link: https://github.com/luin/ioredis
     - name: joi
       link: https://github.com/sideway/joi
+    - name: json5
+      link: https://github.com/json5/json5
+    - name: minio
+      link: https://github.com/minio/minio-js
     - name: npm
       link: https://github.com/npm/cli
     - name: ollama
       link: https://github.com/ollama/ollama
+    - name: ollama-ai-provider-v2
+      link: https://github.com/nordwestt/ollama-ai-provider-v2
     - name: pino
       link: https://github.com/pinojs/pino
     - name: pino-pretty
@@ -100,6 +114,8 @@ dependencies:
       link: https://github.com/reactivex/rxjs
     - name: sharp
       link: https://github.com/lovell/sharp
+    - name: zod
+      link: https://github.com/colinhacks/zod
 
 devDependencies:
   layout:
@@ -109,8 +125,6 @@ devDependencies:
     position: center
   badgeStyle: *DEV_DEPENDENCIES_STYLE
   items:
-    - name: '@changesets/cli'
-      link: https://github.com/changesets/changesets
     - name: '@eslint/js'
       link: https://github.com/eslint/eslint
     - name: '@nestjs/cli'
@@ -119,14 +133,16 @@ devDependencies:
       link: https://github.com/nestjs/nest
     - name: '@nestjs/testing'
       link: https://github.com/nestjs/nest
-    - name: '@types/eslint'
-      link: https://github.com/DefinitelyTyped/DefinitelyTyped
+    - name: '@swc/core'
+      link: https://github.com/swc-project/swc
     - name: '@types/node'
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
     - name: '@types/supertest'
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
     - name: '@vitest/coverage-v8'
       link: https://github.com/vitest-dev/vitest
+    - name: '@vue/eslint-config-typescript'
+      link: https://github.com/vuejs/eslint-config-typescript
     - name: depcheck
       link: https://github.com/depcheck/depcheck
     - name: dependency-cruiser
@@ -153,6 +169,8 @@ devDependencies:
       link: https://github.com/lint-staged/lint-staged
     - name: npm-check-updates
       link: https://github.com/raineorshine/npm-check-updates
+    - name: prisma
+      link: https://github.com/prisma/prisma
     - name: rimraf
       link: https://github.com/isaacs/rimraf
     - name: source-map-support
@@ -171,6 +189,8 @@ devDependencies:
       link: https://github.com/Microsoft/TypeScript
     - name: typescript-eslint
       link: https://github.com/typescript-eslint/typescript-eslint
+    - name: unplugin-swc
+      link: https://github.com/unplugin/unplugin-swc
     - name: vitest
       link: https://github.com/vitest-dev/vitest
 
@@ -183,24 +203,24 @@ statusBadges:
     - name: github
       metric: release
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       branch: main
       namedLogo: github
     - name: github
       metric: stars
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       branch: main
       namedLogo: github
     - name: github
       metric: license
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       branch: main
       namedLogo: github
     - name: codecov
       user: ehildt
-      repo: tripleF.io
+      repo: tripleF
       namedLogo: codecov
       branch: main
       flag: c
