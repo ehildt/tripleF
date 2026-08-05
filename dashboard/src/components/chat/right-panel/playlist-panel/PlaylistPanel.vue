@@ -15,9 +15,9 @@
  * floating player's collapse button) slot in after the saved-playlists menu
  * via `toolbar-actions`.
  */
+import { Library, ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
-import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
 import { usePlaylistLibrary } from '@/components/widgets/floating-playlist/composables/use-playlist-library';
 import PlaylistMenu from '@/components/widgets/floating-playlist/playlist-menu/PlaylistMenu.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
@@ -125,11 +125,30 @@ function onItemPlay(item: VideoGalleryItem) {
           @remove="onRemoveItem(item.videoUrl)"
         />
       </div>
-      <PanelEmptyState
-        v-else
-        message="No videos in the playlist"
-        submessage="Add videos from a video card, or pick a saved playlist"
-      />
+      <div v-else class="playlist-panel__empty">
+        <p
+          v-if="savedPlaylistNames.length > 0"
+          class="playlist-panel__empty-message"
+        >
+          No videos in the playlist
+        </p>
+        <div class="playlist-panel__empty-hints">
+          <template v-if="savedPlaylistNames.length > 0">
+            <span class="playlist-panel__empty-hint">
+              <ListPlus class="playlist-panel__empty-hint-icon" />
+              Add to playlist
+            </span>
+            <span class="playlist-panel__empty-hint">
+              <ListMinus class="playlist-panel__empty-hint-icon" />
+              Remove from playlist
+            </span>
+          </template>
+          <span v-else class="playlist-panel__empty-hint">
+            <Library class="playlist-panel__empty-hint-icon" />
+            Create a playlist
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -189,5 +208,44 @@ function onItemPlay(item: VideoGalleryItem) {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
+}
+
+/* Empty state: a short message with the add/remove toggle hints below it. */
+.playlist-panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 3rem var(--spacing-4);
+  text-align: center;
+}
+
+.playlist-panel__empty-message {
+  margin: 0;
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+}
+
+.playlist-panel__empty-hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.playlist-panel__empty-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: color-mix(in srgb, var(--color-fg-muted) 70%, transparent);
+}
+
+.playlist-panel__empty-hint-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
 }
 </style>

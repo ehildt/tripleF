@@ -16,6 +16,7 @@ import { useToast } from '../../composables/use-toast';
 import { useModelsStore } from '../../stores/models';
 import { playlistMode } from '../widgets/floating-playlist/composables/playlist-settings.state';
 import { savedPlaylists } from '../widgets/floating-playlist/composables/saved-playlists.state';
+import { conversationHasVideos } from './composables/conversation-has-videos.helper';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
@@ -153,10 +154,15 @@ const { playlistVideos } = useVideoPlaylist(
 const panelPlaylistVideos = computed(() =>
   playlistMode.value === 'floating' ? [] : playlistVideos.value,
 );
-// The player shows when it has anything to act on: an added video, or a
-// saved playlist to load from an empty queue.
+// The player shows when it has anything to act on: an added video, a saved
+// playlist to load from an empty queue, or — in docked mode — a conversation
+// that contains videos (so the empty state and its hints are reachable).
 const hasPanelPlaylist = computed(
-  () => panelPlaylistVideos.value.length > 0 || savedPlaylists.value.length > 0,
+  () =>
+    panelPlaylistVideos.value.length > 0 ||
+    savedPlaylists.value.length > 0 ||
+    (playlistMode.value !== 'floating' &&
+      conversationHasVideos(conversation.value)),
 );
 
 const { rightPanelView, selectPanelView } = useChatPanel(

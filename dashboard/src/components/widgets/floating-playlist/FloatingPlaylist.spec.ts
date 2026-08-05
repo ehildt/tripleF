@@ -99,7 +99,22 @@ describe('FloatingPlaylist', () => {
     playlistMode.value = 'floating';
     const wrapper = mountWidget();
     expect(wrapper.find('.playlist-item').exists()).toBe(false);
+    // No saved playlist yet: only the create hint is shown, no message.
+    expect(wrapper.text()).toContain('Create a playlist');
+    expect(wrapper.text()).not.toContain('No videos in the playlist');
+    expect(wrapper.text()).not.toContain('Add to playlist');
+    expect(wrapper.text()).not.toContain('Remove from playlist');
+  });
+
+  it('shows the add/remove hints when a playlist exists but is empty', () => {
+    playlistMode.value = 'floating';
+    savedPlaylists.value = [{ id: 'p1', name: 'Focus', videos: [] }];
+    const wrapper = mountWidget();
+    expect(wrapper.find('.playlist-item').exists()).toBe(false);
     expect(wrapper.text()).toContain('No videos in the playlist');
+    expect(wrapper.text()).toContain('Add to playlist');
+    expect(wrapper.text()).toContain('Remove from playlist');
+    expect(wrapper.text()).not.toContain('Create a playlist');
   });
 
   it('shows no playlist label while the queue is unnamed', () => {
