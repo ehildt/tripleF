@@ -3,23 +3,17 @@ import { Injectable } from '@nestjs/common';
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
-import { applySearchRecency } from '../helpers/apply-search-recency.helper.js';
-import { buildContextSummarySection } from '../helpers/build-context-summary-section.helper.js';
+import { buildFallbackInput } from '../helpers/build-execute-prompt.helper.js';
+import { buildExecuteMessages } from '../helpers/execute/build-execute-messages.helper.js';
+import { extractQuery } from '../helpers/execute/extract-query.helper.js';
 import {
-  buildFallbackInput,
-  buildImageExecutePrompt,
-  buildToolExecutePrompt,
-} from '../helpers/build-execute-prompt.helper.js';
-import { buildFilenames } from '../helpers/build-filenames.helper.js';
-import {
-  resolveToolCategory,
-  type ToolCategory,
-} from '../helpers/resolve-tool-category.helper.js';
-import { selectStepHistory } from '../helpers/select-step-history.helper.js';
+  type ToolExecutionEventHandler,
+  wrapToolsWithExecutionEvents,
+} from '../helpers/execute/wrap-tools-with-execution-events.helper.js';
+import { wrapToolsWithSearchRecency } from '../helpers/execute/wrap-tools-with-search-recency.helper.js';
 import { type VariantName } from '../helpers/tool-registry.constants.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
@@ -31,16 +25,6 @@ type ExecuteResult = {
   inputTokens?: number;
   outputTokens?: number;
 };
-
-export type ToolExecutionEvent = {
-  name: string;
-  category: ToolCategory;
-  query?: string;
-  input?: unknown;
-  status: 'start' | 'done' | 'error';
-};
-
-type ToolExecutionEventHandler = (event: ToolExecutionEvent) => void;
 
 /**
  * Browsing needs a step budget: navigate → snapshot → interact, unlike the
@@ -117,8 +101,8 @@ export class ExecuteActionService {
             intent.language ?? undefined,
           )
         : {};
-    const chosenTools = this.wrapToolsWithSearchRecency(
-      this.wrapToolsWithExecutionEvents(selectedTools, onToolEvent),
+    const chosenTools = wrapToolsWithSearchRecency(
+      wrapToolsWithExecutionEvents(selectedTools, onToolEvent),
       intent.getDate !== false,
     );
 
@@ -128,11 +112,12 @@ export class ExecuteActionService {
     let outputTokens = 0;
 
     if (Object.keys(chosenTools).length > 0) {
-      const executeMessages = this.buildExecuteMessages(
+      const executeMessages = buildExecuteMessages(
         ctx,
         buffers,
         processedMeta,
         availableVariants,
+        this.stepLogger,
       );
 
       const result = await this.aiSdkService.generateWithTools({
@@ -235,230 +220,6 @@ export class ExecuteActionService {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
-  /**
-   * Wrap each tool's execute so start/done/error events fire exactly around
-   * execution — covers both model-invoked tools and tools invoked directly
-   * through invokeMissingMandatoryTools.
-   */
-  private wrapToolsWithExecutionEvents(
-    tools: Record<string, unknown>,
-    onToolEvent?: ToolExecutionEventHandler,
-  ): Record<string, unknown> {
-    if (!onToolEvent) return tools;
-
-    const wrapped: Record<string, unknown> = {};
-    for (const [name, toolDef] of Object.entries(tools)) {
-      const execute = (toolDef as { execute?: (...args: any[]) => unknown })
-        ?.execute;
-      if (typeof execute !== 'function') {
-        wrapped[name] = toolDef;
-        continue;
-      }
-      const category = resolveToolCategory(name);
-      wrapped[name] = {
-        ...(toolDef as object),
-        execute: async (...args: any[]) => {
-          const query = this.extractToolQuery(args[0]);
-          onToolEvent({
-            name,
-            category,
-            query,
-            input: args[0],
-            status: 'start',
-          });
-          try {
-            const result = await execute(...args);
-            onToolEvent({
-              name,
-              category,
-              query,
-              input: args[0],
-              status: 'done',
-            });
-            return result;
-          } catch (error) {
-            onToolEvent({
-              name,
-              category,
-              query,
-              input: args[0],
-              status: 'error',
-            });
-            throw error;
-          }
-        },
-      };
-    }
-    return wrapped;
-  }
-
-  /**
-   * Freshness outer-wrap: appends the current date to search queries when
-   * the intent requires recency. Runs outside the execution-event wrapper so
-   * clients display the dated query the tool actually received.
-   */
-  private wrapToolsWithSearchRecency(
-    tools: Record<string, unknown>,
-    enabled: boolean,
-  ): Record<string, unknown> {
-    if (!enabled) return tools;
-
-    const wrapped: Record<string, unknown> = {};
-    for (const [name, toolDef] of Object.entries(tools)) {
-      const execute = (toolDef as { execute?: (...args: any[]) => unknown })
-        ?.execute;
-      if (typeof execute !== 'function') {
-        wrapped[name] = toolDef;
-        continue;
-      }
-      wrapped[name] = {
-        ...(toolDef as object),
-        execute: (...args: any[]) =>
-          execute(applySearchRecency(name, args[0]), ...args.slice(1)),
-      };
-    }
-    return wrapped;
-  }
-
-  /** Pull the search query out of a tool input so clients can display it. */
-  private extractToolQuery(input: unknown): string | undefined {
-    if (!input || typeof input !== 'object') return undefined;
-    const query = (input as Record<string, unknown>).query;
-    return typeof query === 'string' && query.trim() ? query.trim() : undefined;
-  }
-
-  /**
-   * Build the messages for execute mode — system prompt at index 0, followed by conversation.
-   */
-  private buildExecuteMessages(
-    ctx: HarnessContext,
-    buffers: Buffer[],
-    meta: FastifyMultipartMeta[],
-    availableVariants: VariantName[],
-  ): InputMessage[] {
-    const baseSystem = ctx.request.messages
-      .filter((m) => m.role === 'system')
-      .map((m) => m.content)
-      .join('\n\n');
-
-    const executePrompt =
-      buffers.length > 0
-        ? buildImageExecutePrompt(
-            availableVariants,
-            ctx.outputs.intent?.language ?? undefined,
-          )
-        : buildToolExecutePrompt(ctx.outputs.intent);
-
-    const imageInventory = this.buildImageInventory(buffers, meta);
-
-    // Downstream steps see the query-focused context the interpret step
-    // derived, not the full transcript.
-    const contextSummary = ctx.outputs.intent?.contextSummary?.trim();
-    const contextSection = contextSummary
-      ? buildContextSummarySection(contextSummary)
-      : '';
-
-    const systemContent = [
-      baseSystem,
-      executePrompt,
-      imageInventory,
-      contextSection,
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-
-    return [
-      { role: 'system' as const, content: systemContent },
-      ...this.buildConversationMessages(ctx, buffers),
-    ];
-  }
-
-  private buildImageInventory(
-    buffers: Buffer[],
-    meta: FastifyMultipartMeta[],
-  ): string {
-    if (buffers.length === 0) return '';
-    const filenames = buildFilenames(
-      meta as Parameters<typeof buildFilenames>[0],
-    );
-    return `Image attachment(s): ${filenames || '(attached)'}`;
-  }
-
-  private buildConversationMessages(
-    ctx: HarnessContext,
-    buffers: Buffer[],
-  ): InputMessage[] {
-    const fullConversation = ctx.request.messages.filter(
-      (m) => m.role !== 'system',
-    );
-    const selection = selectStepHistory({
-      messages: fullConversation,
-      template: ctx.outputs.intent?.template,
-    });
-
-    this.stepLogger.log(ctx, 'execute', 'history selected', {
-      mode: selection.mode,
-      keptCount: selection.messages.length,
-      droppedCount: fullConversation.length - selection.messages.length,
-    });
-
-    const conversation = selection.messages;
-
-    if (buffers.length === 0) return conversation;
-
-    const lastUserIndex = conversation.findLastIndex((m) => m.role === 'user');
-
-    if (lastUserIndex >= 0) {
-      const original = conversation[lastUserIndex];
-      conversation[lastUserIndex] = {
-        ...original,
-        images: buffers,
-      };
-    } else {
-      conversation.push({
-        role: 'user',
-        content: '',
-        images: buffers,
-      });
-    }
-
-    return conversation;
-  }
-
-  /**
-   * Extract a fallback search query from the context.
-   *
-   * A short follow-up message ("what do the reviews say?", "more media")
-   * carries no searchable subject on its own, so the intent step's
-   * contextSummary — which names the established entities verbatim — leads
-   * the query, with the user's wording appended for the actual request.
-   */
-  private extractQuery(
-    ctx: HarnessContext,
-    intent: NonNullable<HarnessContext['outputs']['intent']>,
-  ): string {
-    const lastUser = [...ctx.request.messages]
-      .reverse()
-      .find((m) => m.role === 'user');
-    const rawQuery = (lastUser?.content ?? ctx.lastUserPrompt)?.trim() ?? '';
-
-    const contextSummary = intent.contextSummary?.trim() ?? '';
-    if (!contextSummary) return rawQuery.slice(0, 300);
-
-    const words = rawQuery.split(/\s+/).filter(Boolean);
-    const hasDependentReference =
-      /\b(this|that|these|those|it|its|he|she|they|them|sie|dies|das|den|dem|dazu|search\s+online|online\s+search)\b/i.test(
-        rawQuery,
-      );
-    const isShortFollowUp = words.length > 0 && words.length < 8;
-
-    if (!isShortFollowUp && !hasDependentReference)
-      return rawQuery.slice(0, 300);
-
-    const subject = contextSummary.replace(/\s+/g, ' ').trim().slice(0, 250);
-    return (rawQuery ? `${subject} — ${rawQuery}` : subject).slice(0, 300);
-  }
-
   private async invokeMissingMandatoryTools(
     chosenTools: Record<string, unknown>,
     ctx: HarnessContext,
@@ -473,7 +234,7 @@ export class ExecuteActionService {
     );
     if (mandatory.length === 0) return [];
 
-    const query = this.extractQuery(ctx, intent);
+    const query = extractQuery(ctx, intent);
     const results: Array<{ toolName: string; result: unknown }> = [];
 
     for (const toolName of mandatory) {

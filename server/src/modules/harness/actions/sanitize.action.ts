@@ -25,8 +25,20 @@ import { extractPlaces } from '../helpers/extract-places.helper.js';
 import { extractReviews } from '../helpers/extract-reviews.helper.js';
 import { extractShopOffers } from '../helpers/extract-shop-offers.helper.js';
 import { partitionByLanguage } from '../helpers/partition-by-language.helper.js';
-import { sanitizeToolResult } from '../helpers/sanitize-tool-result.helper.js';
-import { sanitizeToolResultsWithIngestedUrls } from '../helpers/sanitize-tool-result.helper.js';
+import { buildIngestedByUrlMap } from '../helpers/sanitize/build-ingested-by-url-map.helper.js';
+import { buildUserFingerprints } from '../helpers/sanitize/build-user-fingerprints.helper.js';
+import { collectExternalImageSearchUrls } from '../helpers/sanitize/collect-external-image-search-urls.helper.js';
+import { collectImageUrls } from '../helpers/sanitize/collect-image-urls.helper.js';
+import { collectPageUrls } from '../helpers/sanitize/collect-page-urls.helper.js';
+import { collectVideoThumbnailUrls } from '../helpers/sanitize/collect-video-thumbnail-urls.helper.js';
+import { filterVerifiedMedia } from '../helpers/sanitize/filter-verified-media.helper.js';
+import { limitCloudReferenceImages } from '../helpers/sanitize/limit-cloud-reference-images.helper.js';
+import { rewriteCandidatesWithIngested } from '../helpers/sanitize/rewrite-candidates-with-ingested.helper.js';
+import { scrubBrokenUrlsFromMessages } from '../helpers/sanitize/scrub-broken-urls-from-messages.helper.js';
+import {
+  sanitizeToolResult,
+  sanitizeToolResultsWithIngestedUrls,
+} from '../helpers/sanitize-tool-result.helper.js';
 import { tagLanguage } from '../helpers/tag-language.helper.js';
 import { videoUrlKeys } from '../helpers/video-url-keys.helper.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
@@ -92,9 +104,9 @@ export class SanitizeActionService {
     //    webSearch/newsSearch results, video thumbnails, and the article/page
     //    URLs themselves, so broken media and dead citations cannot leak into
     //    the response.
-    const allImageUrls = this.collectImageUrls(trustSanitized);
-    const videoThumbnailUrls = this.collectVideoThumbnailUrls(trustSanitized);
-    const pageUrls = this.collectPageUrls(trustSanitized);
+    const allImageUrls = collectImageUrls(trustSanitized);
+    const videoThumbnailUrls = collectVideoThumbnailUrls(trustSanitized);
+    const pageUrls = collectPageUrls(trustSanitized);
 
     const [brokenImageUrls, brokenThumbnailUrls, brokenPageUrls] =
       await Promise.all([
@@ -117,7 +129,11 @@ export class SanitizeActionService {
     const rawImageItems = extractImageSearchItems(sanitizedToolResults);
     const rawVideoItems = extractVideoSearchItems(sanitizedToolResults);
     let { images: verifiedImages, videos: verifiedVideos } =
-      await this.filterVerifiedMedia(rawImageItems, rawVideoItems);
+      await filterVerifiedMedia(
+        this.mediaUrlValidator,
+        rawImageItems,
+        rawVideoItems,
+      );
 
     // 3b. Deduplicate verified images by content fingerprint.
     const { items: dedupedImages, removedCount: removedDuplicateImages } =
@@ -186,9 +202,9 @@ export class SanitizeActionService {
       verifiedImages,
     );
 
-    const droppedImageUrls = this.collectExternalImageSearchUrls(
+    const droppedImageUrls = collectExternalImageSearchUrls(
       sanitizedToolResults,
-      ingestion.ingestedForRewrite,
+      (ingestion.ingestedForRewrite ?? []).map((img) => img.sourceUrl),
     );
     if (droppedImageUrls.size > 0) {
       this.stepLogger.warn(
@@ -208,7 +224,7 @@ export class SanitizeActionService {
       ingestion.ingestedForRewrite.length > 0 || droppedImageUrls.size > 0
         ? sanitizeToolResultsWithIngestedUrls(
             sanitizedToolResults,
-            this.buildIngestedByUrlMap(ingestion.ingestedForRewrite),
+            buildIngestedByUrlMap(ingestion.ingestedForRewrite),
             new Set([...brokenMediaUrls, ...droppedImageUrls]),
             brokenPageUrls,
           )
@@ -270,7 +286,7 @@ export class SanitizeActionService {
       });
     }
 
-    const messages = this.scrubBrokenUrlsFromMessages(
+    const messages = scrubBrokenUrlsFromMessages(
       buildFinalMessagesForSanitize(
         ctx,
         buffers,
@@ -454,90 +470,6 @@ export class SanitizeActionService {
     }));
   }
 
-  private collectImageUrls(
-    toolResults: Array<{ toolName: string; result: unknown }>,
-  ): string[] {
-    const urls = new Set<string>();
-
-    for (const tr of toolResults) {
-      const data = tr.result as
-        | {
-            results?: Array<{
-              imageUrl?: string;
-            }>;
-          }
-        | undefined;
-      if (!data?.results) continue;
-
-      for (const r of data.results) {
-        if (typeof r.imageUrl === 'string' && r.imageUrl.trim()) {
-          urls.add(r.imageUrl.trim());
-        }
-      }
-    }
-
-    return Array.from(urls);
-  }
-
-  /** Thumbnail URLs on video candidates from video/web/news search results. */
-  private collectVideoThumbnailUrls(
-    toolResults: Array<{ toolName: string; result: unknown }>,
-  ): string[] {
-    const urls = new Set<string>();
-
-    for (const tr of toolResults) {
-      if (
-        !tr.toolName.endsWith('VideoSearch') &&
-        tr.toolName !== 'webSearch' &&
-        !tr.toolName.endsWith('WebSearch') &&
-        !tr.toolName.endsWith('NewsSearch')
-      )
-        continue;
-
-      const data = tr.result as
-        { results?: Array<{ thumbnailUrl?: string }> } | undefined;
-      if (!data?.results) continue;
-
-      for (const r of data.results) {
-        if (typeof r.thumbnailUrl === 'string' && r.thumbnailUrl.trim()) {
-          urls.add(r.thumbnailUrl.trim());
-        }
-      }
-    }
-
-    return Array.from(urls);
-  }
-
-  /** Article/page URLs from web and news search results. */
-  private collectPageUrls(
-    toolResults: Array<{ toolName: string; result: unknown }>,
-  ): string[] {
-    const urls = new Set<string>();
-
-    for (const tr of toolResults) {
-      if (
-        tr.toolName !== 'webSearch' &&
-        !tr.toolName.endsWith('WebSearch') &&
-        !tr.toolName.endsWith('NewsSearch')
-      )
-        continue;
-
-      const data = tr.result as
-        { results?: Array<{ url?: string; link?: string }> } | undefined;
-      if (!data?.results) continue;
-
-      for (const r of data.results) {
-        const url = [r.url, r.link].find(
-          (candidate): candidate is string =>
-            typeof candidate === 'string' && !!candidate.trim(),
-        );
-        if (url) urls.add(url.trim());
-      }
-    }
-
-    return Array.from(urls);
-  }
-
   private async findBrokenImageUrls(
     ctx: HarnessContext,
     urls: string[],
@@ -631,27 +563,6 @@ export class SanitizeActionService {
     return new Set(broken);
   }
 
-  private scrubBrokenUrlsFromMessages(
-    messages: InputMessage[],
-    brokenImageUrls: Set<string>,
-  ): InputMessage[] {
-    if (brokenImageUrls.size === 0) return messages;
-
-    const replacements = Array.from(brokenImageUrls).map((url) => ({
-      url,
-      escaped: url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-    }));
-
-    return messages.map((message) => {
-      if (typeof message.content !== 'string') return message;
-      let content = message.content;
-      for (const { escaped } of replacements) {
-        content = content.replace(new RegExp(escaped, 'g'), ' ');
-      }
-      return { ...message, content };
-    });
-  }
-
   /**
    * Download verified external images into MinIO and rewrite them to local
    * storage URLs. External candidates the pipeline could not download are
@@ -688,7 +599,7 @@ export class SanitizeActionService {
 
     if (isImageReferenceTask) {
       const sliced = verifiedImages.slice(0, imageTargetCount);
-      const existingFingerprints = await this.buildUserFingerprints(ctx);
+      const existingFingerprints = buildUserFingerprints(ctx.processedMeta);
       const ingested =
         (await this.ingestExternalImages(
           ctx,
@@ -696,16 +607,13 @@ export class SanitizeActionService {
           existingFingerprints,
           CLOUD_REFERENCE_MAX_DIMENSION,
         )) ?? [];
-      const ingestedForRewrite = this.limitCloudReferenceImages(ingested, 3);
+      const ingestedForRewrite = limitCloudReferenceImages(ingested, 3);
       const ingestedByUrl = new Map(
         ingestedForRewrite.map((img) => [img.sourceUrl, img]),
       );
 
       return {
-        verifiedImages: this.rewriteCandidatesWithIngested(
-          sliced,
-          ingestedByUrl,
-        ),
+        verifiedImages: rewriteCandidatesWithIngested(sliced, ingestedByUrl),
         // Only image-reference tasks surface ingested images as attachments.
         ingestedImages: ingestedForRewrite,
         ingestedForRewrite,
@@ -752,96 +660,13 @@ export class SanitizeActionService {
     );
 
     return {
-      verifiedImages: this.rewriteCandidatesWithIngested(
+      verifiedImages: rewriteCandidatesWithIngested(
         verifiedImages,
         ingestedByUrl,
       ).slice(0, imageTargetCount),
       ingestedImages: [],
       ingestedForRewrite,
     };
-  }
-
-  /**
-   * Walk candidates in their original order, rewriting externals to their
-   * ingested storage URL and dropping externals without an ingested match
-   * (never kept as fallback). Identical storage URLs collapse once.
-   */
-  private rewriteCandidatesWithIngested(
-    candidates: ExtractedImageItem[],
-    ingestedByUrl: Map<
-      string,
-      NonNullable<SanitizeResult['ingestedImages']>[number]
-    >,
-  ): ExtractedImageItem[] {
-    const rewritten: ExtractedImageItem[] = [];
-    const seenUrls = new Set<string>();
-    for (const item of candidates) {
-      const isExternal = item.imageUrl.startsWith('http');
-      const match = isExternal ? ingestedByUrl.get(item.imageUrl) : undefined;
-      // Un-ingestable external images are dropped, never kept as fallback.
-      if (isExternal && !match) continue;
-
-      const finalUrl = match?.imageUrl ?? item.imageUrl;
-      if (seenUrls.has(finalUrl)) continue;
-
-      seenUrls.add(finalUrl);
-      rewritten.push({
-        ...item,
-        imageUrl: finalUrl,
-        title: match?.title ?? item.title,
-        // Dimensions describe the stored (resized) image, not the origin —
-        // clients badge tiles with them.
-        width: match?.width ?? item.width,
-        height: match?.height ?? item.height,
-      });
-    }
-    return rewritten;
-  }
-
-  /**
-   * External image URLs in image-search results that were not rewritten to
-   * local storage — the client would fetch them from their origin, which
-   * the pipeline could not ingest. They are blanked as broken media.
-   */
-  private collectExternalImageSearchUrls(
-    toolResults: Array<{ toolName: string; result: unknown }>,
-    ingestedForRewrite: NonNullable<SanitizeResult['ingestedImages']>,
-  ): Set<string> {
-    const keptUrls = new Set(ingestedForRewrite.map((img) => img.sourceUrl));
-    const droppedUrls = new Set<string>();
-
-    for (const tr of toolResults) {
-      if (!tr.toolName.endsWith('ImageSearch')) continue;
-      const results = (
-        tr.result as { results?: Array<{ imageUrl?: string }> } | undefined
-      )?.results;
-      if (!Array.isArray(results)) continue;
-
-      for (const r of results) {
-        const imageUrl =
-          typeof r?.imageUrl === 'string' ? r.imageUrl.trim() : '';
-        if (imageUrl.startsWith('http') && !keptUrls.has(imageUrl)) {
-          droppedUrls.add(imageUrl);
-        }
-      }
-    }
-
-    return droppedUrls;
-  }
-
-  private async buildUserFingerprints(ctx: HarnessContext): Promise<string[]> {
-    const originalEntries = ctx.processedMeta
-      .map((entry, index) => ({ entry, index }))
-      .filter(({ entry }) => !entry.variant || entry.variant === 'original');
-
-    const fingerprints: string[] = [];
-    for (const { entry } of originalEntries) {
-      const fingerprint = entry.fingerprint;
-      if (fingerprint) {
-        fingerprints.push(fingerprint);
-      }
-    }
-    return fingerprints;
   }
 
   private async ingestExternalImages(
@@ -864,101 +689,5 @@ export class SanitizeActionService {
       ctx.requestId,
       { existingFingerprints, maxDimension },
     );
-  }
-
-  private buildIngestedByUrlMap(
-    ingestedImages: SanitizeResult['ingestedImages'],
-  ): Map<
-    string,
-    { imageUrl: string; title?: string; width?: number; height?: number }
-  > {
-    return new Map(
-      (ingestedImages ?? []).map((img) => [
-        img.sourceUrl,
-        {
-          imageUrl: img.imageUrl,
-          title: img.title,
-          width: img.width,
-          height: img.height,
-        },
-      ]),
-    );
-  }
-
-  private limitCloudReferenceImages(
-    ingestedImages: SanitizeResult['ingestedImages'],
-    maxCloud: number,
-  ): SanitizeResult['ingestedImages'] {
-    return (ingestedImages ?? []).slice(0, maxCloud);
-  }
-
-  /**
-   * Verify media URLs against live endpoints. Broken links are dropped; type mismatches (image URL actually pointing to a video or vice versa) are re-routed.
-   */
-  private async filterVerifiedMedia(
-    rawImages: ExtractedImageItem[],
-    rawVideos: ExtractedVideoItem[],
-  ): Promise<{
-    images: ExtractedImageItem[];
-    videos: ExtractedVideoItem[];
-  }> {
-    const imageUrls = rawImages.map((item) => item.imageUrl);
-    const videoUrls = rawVideos.map((item) => item.videoUrl);
-
-    const [imageResults, videoResults] = await Promise.all([
-      this.mediaUrlValidator.validateUrls(imageUrls, {
-        enabled: true,
-        timeoutMs: 5000,
-        maxRedirects: 3,
-        concurrency: 5,
-        checkImageDimensions: true,
-        minWidth: 1280,
-        minHeight: 720,
-        maxProbeBytes: 256 * 1024,
-      }),
-      this.mediaUrlValidator.validateUrls(videoUrls, {
-        enabled: true,
-        timeoutMs: 3000,
-        maxRedirects: 3,
-        concurrency: 5,
-      }),
-    ]);
-
-    const images: ExtractedImageItem[] = [];
-    const videos: ExtractedVideoItem[] = [];
-
-    for (let i = 0; i < rawImages.length; i++) {
-      const item = rawImages[i];
-      const result = imageResults[i];
-      if (
-        !result ||
-        result.kind === 'broken' ||
-        result.kind === 'unknown' ||
-        result.kind === 'html'
-      )
-        continue;
-
-      if (result.kind === 'video')
-        videos.push({ videoUrl: item.imageUrl, title: item.title });
-      else images.push(item);
-    }
-
-    for (let i = 0; i < rawVideos.length; i++) {
-      const item = rawVideos[i];
-      const result = videoResults[i];
-      if (
-        !result ||
-        result.kind === 'broken' ||
-        result.kind === 'unknown' ||
-        result.kind === 'html'
-      )
-        continue;
-
-      if (result.kind === 'image')
-        images.push({ imageUrl: item.videoUrl, title: item.title });
-      else videos.push(item);
-    }
-
-    return { images, videos };
   }
 }
