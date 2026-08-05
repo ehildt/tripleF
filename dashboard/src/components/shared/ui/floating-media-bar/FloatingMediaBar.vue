@@ -263,30 +263,15 @@ function onOpacityInput(event: Event) {
   transition: color 0.2s ease;
 }
 
-/* Glass chip for the playlist toggle. */
-.floating-media-bar__playlist-toggle {
-  color: white;
-  background: color-mix(in srgb, black 55%, transparent);
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  box-shadow:
-    0 0.15rem 0.6rem color-mix(in srgb, black 40%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
+/* Playlist toggle is a quiet nav-style icon like the inline video cards —
+   no glass chip, no backdrop, no box-shadow. */
 .floating-media-bar__playlist-toggle:hover {
-  color: white;
-  background: var(--color-accent-primary);
+  color: var(--color-fg-primary);
 }
 
 .floating-media-bar__playlist-toggle--added,
 .floating-media-bar__playlist-toggle--added:hover {
-  color: white;
-  background: color-mix(in srgb, var(--color-accent-primary) 85%, transparent);
+  color: var(--color-accent-primary);
 }
 
 .floating-media-bar__minimize:hover {
@@ -302,9 +287,5 @@ function onOpacityInput(event: Event) {
 .floating-media-bar__close-icon {
   width: 0.75rem;
   height: 0.75rem;
-}
-
-.floating-media-bar__playlist-icon {
-  filter: drop-shadow(0 1px 2px color-mix(in srgb, black 60%, transparent));
 }
 </style>
