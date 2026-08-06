@@ -13,7 +13,8 @@ describe('buildContentSystemPrompt', () => {
     });
 
     expect(prompt).toContain('deterministic multimodal execution engine');
-    expect(prompt).toContain('Markdown is allowed');
+    expect(prompt).toContain('single valid JSON object');
+    expect(prompt).not.toContain('Markdown is allowed');
     expect(prompt).toContain('JSON RULES');
     expect(prompt).toContain('ITEM SHAPES');
   });
@@ -31,20 +32,6 @@ describe('buildContentSystemPrompt', () => {
       'Return free-form text. Markdown is allowed and encouraged when it improves readability.',
     );
     expect(prompt).not.toContain('JSON RULES');
-  });
-
-  it('uses plain text for the compact template', () => {
-    const prompt = buildContentSystemPrompt({
-      template: 'compact',
-      tools: [],
-      requiredKeys: [],
-      optionalKeys: [],
-      isImageTask: false,
-    });
-
-    expect(prompt).toContain('Return plain text.');
-    expect(prompt).not.toContain('JSON RULES');
-    expect(prompt).toContain('MODE: COMPACT');
   });
 
   it('requires a JSON object for structured templates', () => {

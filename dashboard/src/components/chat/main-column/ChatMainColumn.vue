@@ -8,7 +8,6 @@ import ChatPromptActionBar from '../prompt-action-bar/ChatPromptActionBar.vue';
 
 const props = defineProps<{
   value: string;
-  isCompacting: boolean;
   thinkOptions: readonly string[];
   thinkValue: string;
   contextSizeOptions: readonly string[];
@@ -59,7 +58,6 @@ defineExpose({ exchangeListRef });
     />
     <ChatPromptActionBar
       :value="props.value"
-      :is-compacting="props.isCompacting"
       :think-options="props.thinkOptions"
       :think-value="props.thinkValue"
       :context-size-options="props.contextSizeOptions"

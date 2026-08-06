@@ -1,9 +1,6 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable } from '@nestjs/common';
 
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import {
   buildGalleryItems,
@@ -18,24 +15,10 @@ import { filterExistingGalleryItems } from '../helpers/filter-existing-gallery-i
 import { HarnessContext } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
 
-type CompactStreamParams = {
-  requestId: string;
-  roomId?: string;
-  event: string;
-  model: string;
-  messages: InputMessage[];
-  keepAlive?: string;
-  numCtx?: number;
-  think?: ThinkMode;
-  stream: boolean;
-  abortSignal?: AbortSignal;
-};
-
 @Injectable()
 export class HarnessChatStreamingService {
   constructor(
     private readonly io: SocketIOService,
-    private readonly aiSdkService: AiSdkService,
     private readonly stepLogger: HarnessStepLogger,
     private readonly minioService: MinioService,
   ) {}
@@ -173,76 +156,5 @@ export class HarnessChatStreamingService {
     });
 
     await emitToSocket(this.io, ctx.roomId, ctx.event, streamPayload);
-  }
-
-  async streamCompact(params: CompactStreamParams): Promise<void> {
-    const {
-      requestId,
-      roomId,
-      event,
-      model,
-      messages,
-      keepAlive,
-      numCtx,
-      think,
-      stream,
-      abortSignal,
-    } = params;
-
-    await emitToSocket(this.io, roomId, event, {
-      requestId,
-      compact: true,
-      status: 'compacting',
-    });
-
-    if (stream) {
-      const { fullStream } = await this.aiSdkService.streamChat({
-        model,
-        messages,
-        keepAlive,
-        numCtx,
-        think,
-        abortSignal,
-      });
-
-      let fullContent = '';
-
-      for await (const part of fullStream) {
-        if (part.type === 'text-delta' && part.text) {
-          fullContent += part.text;
-          await emitToSocket(this.io, roomId, event, {
-            requestId,
-            compact: true,
-            message: { role: 'assistant', content: part.text },
-            done: false,
-          });
-        }
-      }
-
-      if (fullContent) {
-        await emitToSocket(this.io, roomId, event, {
-          requestId,
-          compact: true,
-          message: { role: 'assistant', content: fullContent },
-          done: true,
-        });
-      }
-    } else {
-      const { text } = await this.aiSdkService.generateChat({
-        model,
-        messages,
-        keepAlive,
-        numCtx,
-        think,
-        abortSignal,
-      });
-
-      await emitToSocket(this.io, roomId, event, {
-        requestId,
-        compact: true,
-        message: { role: 'assistant', content: text },
-        done: true,
-      });
-    }
   }
 }

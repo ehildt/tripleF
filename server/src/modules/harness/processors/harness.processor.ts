@@ -10,10 +10,8 @@ import {
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
 import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
-import { isCompactTask } from '../helpers/is-compact-task.helper.js';
 import { HarnessCancellationService } from '../services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
-import { HarnessCompactService } from '../services/harness-compact.service.js';
 import { HarnessContextService } from '../services/harness-context.service.js';
 import { HarnessStepEngineService } from '../services/harness-step-engine.service.js';
 import { StepRegistryService } from '../services/step-registry.service.js';
@@ -34,7 +32,6 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
     private readonly cancellationService: HarnessCancellationService,
     private readonly stepEngine: HarnessStepEngineService,
     private readonly chatStreaming: HarnessChatStreamingService,
-    private readonly compactService: HarnessCompactService,
     private readonly interpretStepService: InterpretStepService,
     private readonly executeStepService: ExecuteStepService,
     private readonly respondStepService: RespondStepService,
@@ -68,16 +65,6 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
   }
 
   async process(job: Job<HarnessJobPayload>): Promise<void> {
-    if (isCompactTask(job)) {
-      const requestId = job.name;
-      const controller = this.cancellationService.register(requestId);
-      try {
-        return await this.compactService.runCompact(job, controller.signal);
-      } finally {
-        this.cancellationService.deregister(requestId, { quiet: true });
-      }
-    }
-
     const ctx = await this.contextService.buildContext(job);
     const controller = this.cancellationService.register(ctx.requestId);
     ctx.abortSignal = controller.signal;

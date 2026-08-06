@@ -12,9 +12,10 @@ describe('HarnessChatStreamingService', () => {
   let service: HarnessChatStreamingService;
   let io: SocketIOService;
   let aiSdkService: AiSdkService;
+  let module: TestingModule;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         HarnessChatStreamingService,
         {
@@ -236,41 +237,6 @@ describe('HarnessChatStreamingService', () => {
       prompt: 'describe this',
       promptEvalCount: undefined,
       evalCount: undefined,
-      done: true,
-    });
-  });
-
-  it('emits compacting status and streams compact content', async () => {
-    (aiSdkService.streamChat as any).mockResolvedValue({
-      fullStream: (async function* () {
-        yield { type: 'text-delta', text: 'summary' };
-      })(),
-    });
-
-    await service.streamCompact({
-      requestId: 'req-1',
-      roomId: 'room-1',
-      event: 'harness',
-      model: 'model',
-      messages: [{ role: 'user', content: 'hello' }],
-      keepAlive: '5m',
-      numCtx: 4096,
-      think: false,
-      stream: true,
-    });
-
-    expect(io.emitTo).toHaveBeenNthCalledWith(1, 'harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      compact: true,
-      status: 'compacting',
-    });
-
-    expect(io.emitTo).toHaveBeenLastCalledWith('harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      compact: true,
-      message: { role: 'assistant', content: 'summary' },
       done: true,
     });
   });

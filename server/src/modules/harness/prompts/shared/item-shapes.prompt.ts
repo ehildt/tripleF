@@ -1,4 +1,13 @@
-export const ITEM_SHAPES = `ITEM SHAPES
+export const ITEM_SHAPES = `VALID JSON EXAMPLE
+{
+  "category": "Gaming",
+  "title": "Nioh 3 Review",
+  "sectionContent": "Team Ninja returns with the third entry.\\n\\nCombat remains the core strength.",
+  "keyFindings": [{ "text": "Open-world exploration replaces the mission structure." }],
+  "sources": [{ "url": "https://example.com", "title": "Example" }]
+}
+
+ITEM SHAPES
 - keyFindings, keyPoints, strengths, weaknesses, recommendations, pros, cons, and reviewSummary entries must be objects with exactly one key: "text".
   Example: [{ "text": "The protagonist is a skilled warrior." }]
 

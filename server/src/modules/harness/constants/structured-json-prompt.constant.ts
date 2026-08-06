@@ -51,6 +51,27 @@ export function buildStructuredJsonPrompt(): string {
 }
 
 /**
+ * JSON correction prompt for when the model's intent classification could not
+ * be parsed at all (empty output or output that fails the intent schema).
+ */
+export function buildIntentCorrectionPrompt(error: string): string {
+  return [
+    'Your previous response was not valid.',
+    `Error: ${error}`,
+    '',
+    'Return ONLY a single valid JSON object matching the intent schema exactly.',
+    'All object keys must be quoted with double quotes.',
+    'Do not add markdown code fences, explanations, or extra text.',
+    '',
+    '- plan: must be an object like {"images":{"resize":boolean,"variants":[...]}} — never null, never a string. Omit it when unused.',
+    '- Omit any other optional field instead of setting it to null.',
+    '',
+    'FINAL REMINDER:',
+    '- Return ONLY a single valid JSON object. No markdown code fences, no explanations, no extra text.',
+  ].join('\n');
+}
+
+/**
  * Language correction prompt for when the model's intent classification is missing
  * a valid language field.
  */

@@ -7,7 +7,6 @@ function mountComponent(props = {}) {
   return mount(ChatPromptActionBar, {
     props: {
       value: '',
-      isCompacting: false,
       thinkOptions: ['off', 'medium'],
       thinkValue: 'medium',
       contextSizeOptions: ['4096'],
@@ -49,11 +48,6 @@ describe('ChatPromptActionBar', () => {
     const textarea = wrapper.find('textarea');
     await textarea.trigger('keydown', { key: 'Enter' });
     expect(wrapper.emitted('keydown')).toBeTruthy();
-  });
-
-  it('disables the textarea when isCompacting is true', () => {
-    const wrapper = mountComponent({ isCompacting: true });
-    expect(wrapper.find('textarea').attributes('disabled')).toBeDefined();
   });
 
   it('emits fileSelect when the file button is clicked', async () => {

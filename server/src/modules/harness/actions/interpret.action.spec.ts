@@ -708,4 +708,45 @@ describe('InterpretActionService', () => {
     expect(result.inputTokens).toBe(10 + 12);
     expect(result.outputTokens).toBe(5 + 6);
   });
+
+  it('retries when the JSON is structurally invalid and succeeds on subsequent attempt', async () => {
+    let attempts = 0;
+    (aiSdkService.generateChat as any).mockImplementation(async () => {
+      attempts++;
+      if (attempts === 1) {
+        // First attempt: plan is null → fails the intent schema
+        return {
+          text: JSON.stringify({
+            template: 'article',
+            tools: ['webSearch'],
+            reasoning: 'research',
+            language: 'en',
+            needsClarification: false,
+            plan: null,
+          }),
+          totalUsage: { inputTokens: 10, outputTokens: 5 },
+        };
+      }
+      return {
+        text: JSON.stringify({
+          template: 'article',
+          tools: ['webSearch'],
+          reasoning: 'research',
+          language: 'en',
+          needsClarification: false,
+          plan: {},
+        }),
+        totalUsage: { inputTokens: 12, outputTokens: 6 },
+      };
+    });
+
+    const result = await service.execute({
+      model: 'model',
+      requestId: 'req-1',
+      messages: [{ role: 'user', content: 'research a topic' }],
+    });
+
+    expect(attempts).toBe(2);
+    expect(result.intent.template).toBe('article');
+  });
 });

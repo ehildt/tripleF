@@ -25,7 +25,6 @@ import type { SearchEngineState } from '../composables/use-search-engine-availab
 
 const props = defineProps<{
   value: string;
-  isCompacting: boolean;
   thinkOptions: readonly string[];
   thinkValue: string;
   contextSizeOptions: readonly string[];
@@ -162,7 +161,6 @@ function onFileButtonMouseLeave() {
       style="caret-shape: block"
       aria-label="Prompt"
       placeholder="Ask the harness…"
-      :disabled="props.isCompacting"
       @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
     />

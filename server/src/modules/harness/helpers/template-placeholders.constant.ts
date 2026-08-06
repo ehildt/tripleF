@@ -182,10 +182,6 @@ const TEMPLATE_PLACEHOLDERS: Record<
     required: [],
     optional: [],
   },
-  compact: {
-    required: [],
-    optional: [],
-  },
 };
 
 /** Returns the keys that are actually required for the given template. */
