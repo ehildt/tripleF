@@ -15,9 +15,9 @@ import { usePlaylistLibrary } from './use-playlist-library';
 vi.mock('@/api/playlists.api', () => ({
   fetchAllPlaylists: vi.fn(),
   fetchPlaylists: vi.fn(),
-  savePlaylist: vi.fn(),
-  deletePlaylist: vi.fn(),
-  renamePlaylist: vi.fn(),
+  savePlaylist: vi.fn().mockResolvedValue(undefined),
+  deletePlaylist: vi.fn().mockResolvedValue(undefined),
+  renamePlaylist: vi.fn().mockResolvedValue(undefined),
 }));
 
 const item: VideoGalleryItem = {

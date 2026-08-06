@@ -40,10 +40,12 @@ const relatedStorySchema = z.object(
       .min(1, { message: 'relatedStories entries must have a title' }),
     url: safeUrl({ message: 'relatedStories entries must have a valid url' }),
     sourceName: z.string().optional(),
-    imageUrl: safeMediaUrlOrEmpty(),
+    imageUrl: safeMediaUrl({
+      message: 'relatedStories entries must have a valid imageUrl',
+    }),
     date: z.string().optional(),
   },
-  { message: 'relatedStories entries must have title and url' },
+  { message: 'relatedStories entries must have title, url, and imageUrl' },
 );
 
 const galleryItemSchema = z.object(
