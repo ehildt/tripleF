@@ -27,6 +27,7 @@ import { computed } from 'vue';
 
 import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -88,7 +89,7 @@ function handlePreviewToggle() {
 </script>
 
 <template>
-  <div class="video-popout-panel panel-glow">
+  <PanelLayout class="video-popout-panel">
     <CollapsiblePanel id="videoPopout" title="Video Popout">
       <template #actions>
         <PreviewButton
@@ -163,15 +164,10 @@ function handlePreviewToggle() {
         />
       </div>
     </CollapsiblePanel>
-  </div>
+  </PanelLayout>
 </template>
 
 <style scoped>
-.video-popout-panel {
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-}
-
 .video-popout-panel__content {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

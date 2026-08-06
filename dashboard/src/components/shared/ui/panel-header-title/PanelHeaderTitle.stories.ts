@@ -10,8 +10,7 @@ const meta = {
     docs: {
       description: {
         component: `
-Uppercase monospaced title with a chevron prefix, used in the leading
-slot of PanelHeader.
+Uppercase monospaced title used in the leading slot of PanelHeader.
 `,
       },
     },
