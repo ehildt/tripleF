@@ -26,6 +26,7 @@ import { computed } from 'vue';
 import { hidePopoutPreview } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -85,7 +86,7 @@ function handlePreviewToggle() {
 </script>
 
 <template>
-  <div class="playlist-panel panel-glow">
+  <PanelLayout class="playlist-panel">
     <CollapsiblePanel id="playlist" title="Floating Player">
       <template #actions>
         <PreviewButton
@@ -149,15 +150,10 @@ function handlePreviewToggle() {
         />
       </div>
     </CollapsiblePanel>
-  </div>
+  </PanelLayout>
 </template>
 
 <style scoped>
-.playlist-panel {
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-}
-
 .playlist-panel__content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);

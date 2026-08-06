@@ -8,9 +8,11 @@ import { KeyRound, Server } from '@lucide/vue';
 
 import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
 import { useSysctlTabVisibility } from '../composables/use-sysctl-tab-visibility';
+import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
 import TabVisibilitySection from '../tab-visibility-section/TabVisibilitySection.vue';
 import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
@@ -36,23 +38,14 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 </script>
 
 <template>
-  <div class="system-section">
-    <div class="system-section__panel panel-glow">
+  <SysCtlSection :loading="isLoading" :error="hasError">
+    <PanelLayout>
       <CollapsiblePanel id="health" title="Health">
         <SystemHealthSection :tiles="tiles" />
       </CollapsiblePanel>
-    </div>
+    </PanelLayout>
 
-    <div v-if="isLoading" class="system-section__state">Loading…</div>
-
-    <div
-      v-else-if="hasError"
-      class="system-section__state system-section__state--error"
-    >
-      Failed to load config.
-    </div>
-
-    <div v-else class="system-section__panel panel-glow">
+    <PanelLayout>
       <CollapsiblePanel id="ollama" title="Ollama">
         <template #actions>
           <ResetButton
@@ -103,9 +96,9 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
           </FieldCard>
         </div>
       </CollapsiblePanel>
-    </div>
+    </PanelLayout>
 
-    <div class="system-section__panel panel-glow">
+    <PanelLayout>
       <CollapsiblePanel id="interface" title="Interface">
         <TabVisibilitySection
           :is-sockets-visible="isTabVisible('sockets')"
@@ -114,16 +107,11 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
           @toggle-counters="toggleShowCounters"
         />
       </CollapsiblePanel>
-    </div>
-  </div>
+    </PanelLayout>
+  </SysCtlSection>
 </template>
 
 <style scoped>
-.system-section {
-  display: flex;
-  flex-direction: column;
-}
-
 .system-section__input {
   width: 100%;
   border: none;
@@ -135,27 +123,10 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
   outline: none;
 }
 
-.system-section__panel {
-  margin: var(--spacing-1) var(--spacing-1) 0;
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-}
-
 .system-section__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-1);
   padding: var(--spacing-1);
-}
-
-.system-section__state {
-  padding: var(--spacing-4) var(--spacing-6) var(--spacing-6);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--color-fg-muted);
-}
-
-.system-section__state--error {
-  color: var(--color-status-error);
 }
 </style>
