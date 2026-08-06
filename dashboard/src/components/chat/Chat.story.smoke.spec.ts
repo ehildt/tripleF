@@ -16,6 +16,8 @@ import { defineComponent, h, provide } from 'vue';
 
 import type { SocketProvider } from '@/types/socket-provider.model';
 
+import { appViewContextKey } from '../../composables/use-app-view-context';
+import { mockAppViewContext } from '../../test-utils/mock-app-view-context';
 import Chat from './Chat.vue';
 
 function makeMockSocketProvider(): SocketProvider {
@@ -48,9 +50,15 @@ function mountChatInsideGrid() {
   const AppShell = defineComponent({
     setup() {
       provide('VUE_QUERY_CLIENT', queryClient);
+      provide(
+        appViewContextKey,
+        mockAppViewContext({
+          socketProvider: makeMockSocketProvider(),
+        }),
+      );
       return () =>
         h('div', { class: 'grid grid-cols-1 lg:grid-cols-12 gap-3' }, [
-          h(Chat, { socketProvider: makeMockSocketProvider() }),
+          h(Chat),
         ]);
     },
   });
