@@ -9,11 +9,17 @@ const props = defineProps<{
   items?: RelatedStory[];
 }>();
 
+/**
+ * Related-story cards are designed to hold an image; a card without one
+ * renders as an empty placeholder box. Keep only image-backed cards.
+ */
 const validItems = computed(() =>
   (props.items ?? []).filter(
     (item): item is RelatedStory =>
       typeof item === 'object' &&
       item !== null &&
+      typeof item.imageUrl === 'string' &&
+      item.imageUrl.length > 0 &&
       (typeof (item as RelatedStory).url === 'string' ||
         typeof (item as RelatedStory).title === 'string'),
   ),

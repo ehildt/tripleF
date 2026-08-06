@@ -79,6 +79,9 @@ const emit = defineEmits<{
 }
 
 .dlq-filter-menu__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--spacing-1);
   color: var(--color-fg-muted);
   cursor: pointer;

@@ -83,7 +83,13 @@ describe('cleanHarnessResponseArrays', () => {
         { title: 'Good', url: 'https://example.com' },
       ],
       cards: [{ title: 'Card', url: 'data:text/html;base64,abc' }],
-      relatedStories: [{ title: 'Story', url: 'vbscript:msgbox(1)' }],
+      relatedStories: [
+        {
+          title: 'Story',
+          url: 'vbscript:msgbox(1)',
+          imageUrl: 'https://example.com/img.jpg',
+        },
+      ],
     };
 
     cleanHarnessResponseArrays(data);
@@ -187,27 +193,32 @@ describe('cleanHarnessResponseArrays', () => {
     );
   });
 
-  it('removes related stories with only an untrusted imageUrl', () => {
+  it('keeps only related stories with a trusted image and title', () => {
     const data: HarnessResponseData = {
       relatedStories: [
         { title: 'Story A' },
         {
+          title: 'Untrusted',
           imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcBad',
         },
-        { imageUrl: 'https://example.com/valid.jpg' },
+        {
+          title: 'Story B',
+          url: 'https://b.com',
+          imageUrl: 'https://example.com/valid.jpg',
+        },
       ],
     };
 
     cleanHarnessResponseArrays(data);
 
-    expect(data.relatedStories).toHaveLength(2);
-    expect(data.relatedStories?.[0].title).toBe('Story A');
-    expect(data.relatedStories?.[1].imageUrl).toBe(
+    expect(data.relatedStories).toHaveLength(1);
+    expect(data.relatedStories?.[0].title).toBe('Story B');
+    expect(data.relatedStories?.[0].imageUrl).toBe(
       'https://example.com/valid.jpg',
     );
   });
 
-  it('removes empty related stories', () => {
+  it('removes related stories that lack a title or image', () => {
     const data: HarnessResponseData = {
       relatedStories: [
         { title: 'Story A' },
@@ -218,7 +229,7 @@ describe('cleanHarnessResponseArrays', () => {
 
     cleanHarnessResponseArrays(data);
 
-    expect(data.relatedStories).toHaveLength(2);
+    expect(data.relatedStories).toHaveLength(0);
   });
 
   it('removes placeholder and empty evaluation list items', () => {
