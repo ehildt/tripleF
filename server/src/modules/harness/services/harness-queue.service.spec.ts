@@ -118,28 +118,6 @@ describe('HarnessQueueService', () => {
     expect(job).toBeUndefined();
   });
 
-  it('adds a compact job on emitCompact', async () => {
-    queue.add.mockResolvedValue({ id: 2 });
-
-    const job = await service.emitCompact({
-      exchanges: [{ role: 'user', content: 'hello' }],
-      model: 'model',
-      requestId: 'req-1',
-      event: 'harness',
-    });
-
-    expect(queue.add).toHaveBeenCalledWith('req-1', {
-      meta: [],
-      filters: expect.objectContaining({
-        compact: true,
-        requestId: 'req-1',
-        model: 'model',
-        event: 'harness',
-      }),
-    });
-    expect(job).toEqual({ id: 2 });
-  });
-
   it('removes a waiting job and cleans up MinIO on cancel', async () => {
     const mockJob = { name: 'req-1', remove: vi.fn() };
     queue.getJobs.mockResolvedValue([mockJob]);

@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
@@ -21,7 +20,6 @@ import {
 } from '../decorators/harness.decorator.js';
 import {
   ApiCancelJob,
-  ApiCompact,
   ApiGetModels,
   ApiHarness,
 } from '../decorators/harness.openapi.js';
@@ -29,7 +27,6 @@ import {
   CancelHarnessJobDto,
   CancelHarnessJobResponseDto,
 } from '../dtos/cancel-harness-job.dto.js';
-import { CompactRequestDto, CompactResponseDto } from '../dtos/compact.dto.js';
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
@@ -109,48 +106,6 @@ export class HarnessController {
         sessionMetadata: query.sessionMetadata,
       },
     });
-
-    return {
-      realtime: {
-        event,
-        roomId,
-        requestId,
-      },
-    };
-  }
-
-  @Post('compact')
-  @ApiCompact()
-  @HttpCode(HttpStatus.ACCEPTED)
-  async compact(@Body() body: CompactRequestDto): Promise<CompactResponseDto> {
-    const {
-      exchanges,
-      model,
-      requestId,
-      roomId,
-      stream,
-      event,
-      think,
-      keepAlive,
-      numCtx,
-    } = body;
-
-    if (!exchanges?.length)
-      throw new BadRequestException('No exchanges provided to compact');
-
-    const success = await this.harnessQueueService.emitCompact({
-      exchanges,
-      model,
-      requestId,
-      roomId,
-      stream,
-      event,
-      think: normalizeThink(think),
-      keepAlive,
-      numCtx,
-    });
-
-    if (!success) throw new BadRequestException('Failed to queue compact job');
 
     return {
       realtime: {

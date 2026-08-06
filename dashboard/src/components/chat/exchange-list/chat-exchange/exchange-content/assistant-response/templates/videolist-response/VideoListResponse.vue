@@ -57,14 +57,14 @@ const hasContent = computed(
 .video-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-1);
   width: 100%;
 }
 
 .video-list__header {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
 }
 
 .video-list__playlist {
@@ -73,12 +73,12 @@ const hasContent = computed(
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
 }
 
 @media (min-width: 640px) {
   .video-list__playlist {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

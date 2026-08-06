@@ -21,7 +21,6 @@ import {
   CancelHarnessJobDto,
   CancelHarnessJobResponseDto,
 } from '../dtos/cancel-harness-job.dto.js';
-import { CompactResponseDto } from '../dtos/compact.dto.js';
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 
@@ -189,17 +188,6 @@ export const ApiHarness = () =>
     ApiQueryEvent(),
     ApiQueryStream(),
     ApiQueryNumCtx(),
-  );
-
-export const ApiCompact = () =>
-  applyDecorators(
-    ApiOperation({
-      summary: 'Compact a conversation into a single summary',
-      description:
-        'Accepts a conversation exchange array and compacts it into a single summarized context using the selected model. Results are streamed via Socket.IO.',
-    }),
-    ApiResponse({ status: HttpStatus.ACCEPTED, type: CompactResponseDto }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST }),
   );
 
 export const ApiGetModels = () =>

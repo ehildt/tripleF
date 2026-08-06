@@ -1,7 +1,6 @@
 import type { SourcesConfig } from '../../provider-overrides/configs/sources-config.adapter.js';
 import { buildContextSummarySection } from '../helpers/build-context-summary-section.helper.js';
 
-import { COMPACT_INSTRUCTIONS } from './instructions/compact.instruction.js';
 import { FINAL_REMINDER } from './shared/final-reminder.prompt.js';
 import { HISTORY_URLS_RULES } from './shared/history-urls.prompt.js';
 import { IMAGE_TASK_RULE } from './shared/image-task-rule.prompt.js';
@@ -12,7 +11,7 @@ import { MEDIA_COUNTS } from './shared/media-counts.prompt.js';
 import { MEDIA_RULES } from './shared/media-rules.prompt.js';
 import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
 import { NOISE_RULES } from './shared/noise-rules.prompt.js';
-import { OUTPUT_CONTRACT } from './shared/output-contract.prompt.js';
+import { buildOutputContract } from './shared/output-contract.prompt.js';
 import { PRECEDENCE_RULES } from './shared/precedence-rules.prompt.js';
 import { SEARCH_POLICY } from './shared/search-policy.prompt.js';
 import { SECURITY_RULES } from './shared/security-rules.prompt.js';
@@ -36,15 +35,16 @@ export function buildContentSystemPrompt(
   params: ContentSystemPromptParams,
 ): string {
   const isTextTemplate = params.template === 'text';
-  const isCompactTemplate = params.template === 'compact';
-  const isFreeForm = isTextTemplate || isCompactTemplate;
+  // Only the text template is free-form; every other template is structured
+  // (JSON) and carries media, so it gets the media rules.
+  const isFreeForm = isTextTemplate;
+  const isStructured = !isFreeForm;
+  const isMediaTemplate = isStructured;
 
   let returnDirective: string;
   if (isTextTemplate) {
     returnDirective =
       'Return free-form text. Markdown is allowed and encouraged when it improves readability.';
-  } else if (isCompactTemplate) {
-    returnDirective = 'Return plain text.';
   } else {
     const required = params.requiredKeys.join(', ') || '(none)';
     const optional = params.optionalKeys.join(', ') || '(none)';
@@ -56,7 +56,7 @@ export function buildContentSystemPrompt(
   }
 
   const sections: string[] = [
-    OUTPUT_CONTRACT,
+    buildOutputContract(params.template),
     buildLanguageRule(params.language),
     SECURITY_RULES,
     PRECEDENCE_RULES,
@@ -69,16 +69,15 @@ export function buildContentSystemPrompt(
 
   sections.push(`TEMPLATE: ${params.template}`, returnDirective);
 
-  if (!isFreeForm) {
-    sections.push(JSON_RULES, ITEM_SHAPES);
+  if (isStructured) {
+    sections.push(JSON_RULES);
+    if (isMediaTemplate) {
+      sections.push(ITEM_SHAPES);
+    }
   }
 
   if (params.instructions) {
     sections.push(`EXECUTION INSTRUCTIONS\n${params.instructions}`);
-  }
-
-  if (isCompactTemplate) {
-    sections.push(COMPACT_INSTRUCTIONS);
   }
 
   sections.push(
@@ -95,7 +94,7 @@ export function buildContentSystemPrompt(
   const sourcePolicy = buildSourcePolicyPrompt(params.sources);
   if (sourcePolicy) sections.push(sourcePolicy);
 
-  if (!isFreeForm) {
+  if (isMediaTemplate) {
     sections.push(MEDIA_RULES, MEDIA_COUNTS, HISTORY_URLS_RULES);
   }
 
@@ -103,7 +102,7 @@ export function buildContentSystemPrompt(
     sections.push(buildContextSummarySection(params.contextSummary));
   }
 
-  if (!isFreeForm) {
+  if (isStructured) {
     sections.push(FINAL_REMINDER);
   }
 

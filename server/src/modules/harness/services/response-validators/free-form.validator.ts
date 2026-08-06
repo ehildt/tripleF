@@ -1,6 +1,6 @@
 import type { ValidationResult } from './validation-result.type.js';
 
-/** Free-form templates (text/compact) require no schema validation. */
+/** Free-form templates (text) require no schema validation. */
 export function validateFreeFormOutput(
   parsed: Record<string, unknown>,
 ): ValidationResult {

@@ -29,7 +29,6 @@ type FastifyMultipartFilter = {
   preprocessing?: SharpOptions;
   exchanges?: Array<InputMessage>;
   keepAlive?: string;
-  compact?: boolean;
 };
 
 export type FastifyMultipartDataWithFiltersReq = {

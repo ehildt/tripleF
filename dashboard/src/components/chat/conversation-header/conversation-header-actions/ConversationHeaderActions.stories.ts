@@ -11,7 +11,7 @@ const meta = {
       description: {
         component: `
 Icon-button cluster for conversation header actions: rename, delete,
-pin/unpin, compact.
+pin/unpin.
 `,
       },
     },
@@ -21,11 +21,9 @@ pin/unpin, compact.
       control: 'select',
       options: ['temporary', 'persistent'],
     },
-    compacting: { control: 'boolean' },
   },
   args: {
     conversationType: 'temporary',
-    compacting: false,
   },
 } satisfies Meta<typeof ConversationHeaderActions>;
 
@@ -37,6 +35,3 @@ export const Temporary: Story = {};
 
 /** Persistent conversation — shows Pin. */
 export const Persistent: Story = { args: { conversationType: 'persistent' } };
-
-/** Compacting state — shows spinner and disables compact. */
-export const Compacting: Story = { args: { compacting: true } };

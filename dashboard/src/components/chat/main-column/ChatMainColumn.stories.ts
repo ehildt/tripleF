@@ -19,7 +19,6 @@ Main conversational area of the chat view. Combines the exchange list
   },
   args: {
     value: '',
-    isCompacting: false,
     thinkOptions: ['none', 'low', 'medium', 'high'],
     thinkValue: 'medium',
     contextSizeOptions: ['2048', '4096', '8192'],
