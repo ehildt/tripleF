@@ -18,6 +18,22 @@ type RespondResult = {
   outputTokens?: number;
 };
 
+type RespondParams = {
+  requestId: string;
+  intent: IntentResult;
+  messages: InputMessage[];
+  availableImages?: Array<Record<string, unknown>>;
+  model: string;
+  keepAlive?: string;
+  numCtx?: number;
+  think?: ThinkMode;
+  stream?: boolean;
+  abortSignal?: AbortSignal;
+  onTextDelta?: (delta: string) => void;
+  onReasoningDelta?: (delta: string) => void;
+  onJsonRetry?: (attempt: number) => void;
+};
+
 const MAX_JSON_RETRIES = 3;
 
 @Injectable()
@@ -32,21 +48,7 @@ export class RespondActionService {
   /**
    * Main entry point for the respond step.
    */
-  execute(params: {
-    requestId: string;
-    intent: IntentResult;
-    messages: InputMessage[];
-    availableImages?: Array<Record<string, unknown>>;
-    model: string;
-    keepAlive?: string;
-    numCtx?: number;
-    think?: ThinkMode;
-    stream?: boolean;
-    abortSignal?: AbortSignal;
-    onTextDelta?: (delta: string) => void;
-    onReasoningDelta?: (delta: string) => void;
-    onJsonRetry?: (attempt: number) => void;
-  }): Promise<RespondResult> {
+  execute(params: RespondParams): Promise<RespondResult> {
     const executionMessages = buildExecutionMessages({
       requestId: params.requestId,
       intent: params.intent,
@@ -87,16 +89,7 @@ export class RespondActionService {
    * Retry loop: validate JSON output and retry with correction prompt on failure.
    */
   private async validateWithRetries(
-    params: {
-      requestId: string;
-      intent: IntentResult;
-      model: string;
-      keepAlive?: string;
-      numCtx?: number;
-      think?: ThinkMode;
-      abortSignal?: AbortSignal;
-      onJsonRetry?: (attempt: number) => void;
-    },
+    params: RespondParams,
     baseMessages: InputMessage[],
   ): Promise<RespondResult> {
     const messages: InputMessage[] = [...baseMessages];
@@ -178,18 +171,7 @@ export class RespondActionService {
    * For streaming: forward text deltas to client and run post-stream validation once the stream completes.
    */
   private async streamResponse(
-    params: {
-      requestId: string;
-      intent: IntentResult;
-      model: string;
-      keepAlive?: string;
-      numCtx?: number;
-      think?: ThinkMode;
-      abortSignal?: AbortSignal;
-      onTextDelta?: (delta: string) => void;
-      onReasoningDelta?: (delta: string) => void;
-      onJsonRetry?: (attempt: number) => void;
-    },
+    params: RespondParams,
     messages: InputMessage[],
   ): Promise<RespondResult> {
     const result = await this.aiSdkService.streamChat({
@@ -275,15 +257,7 @@ export class RespondActionService {
    * Plain text response (no JSON validation needed).
    */
   private async generateResponse(
-    params: {
-      requestId: string;
-      intent: IntentResult;
-      model: string;
-      keepAlive?: string;
-      numCtx?: number;
-      think?: ThinkMode;
-      abortSignal?: AbortSignal;
-    },
+    params: RespondParams,
     messages: InputMessage[],
   ): Promise<RespondResult> {
     const result = await this.aiSdkService.generateChat({

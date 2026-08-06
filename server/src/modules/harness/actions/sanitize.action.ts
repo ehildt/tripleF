@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { applySourcePolicy } from '../helpers/apply-source-policy.helper.js';
 import { buildFinalMessagesForSanitize } from '../helpers/build-final-messages.helper.js';
@@ -56,7 +57,7 @@ import {
 } from '../services/shown-media.service.js';
 
 export type SanitizeResult = {
-  toolResults: Array<{ toolName: string; result: unknown }>;
+  toolResults: ToolResult[];
   messages: InputMessage[];
   availableImageCount: number;
   availableVideoCount: number;
@@ -101,7 +102,7 @@ export class SanitizeActionService {
 
   async execute(
     ctx: HarnessContext,
-    toolResults: Array<{ toolName: string; result: unknown }>,
+    toolResults: ToolResult[],
     buffers: Buffer[],
   ): Promise<SanitizeResult> {
     // 1. Trust-based sanitize (drop untrusted hosts, keep only embeddable videos).
@@ -466,9 +467,7 @@ export class SanitizeActionService {
     return fresh;
   }
 
-  private sanitizeToolResults(
-    toolResults: Array<{ toolName: string; result: unknown }>,
-  ): Array<{ toolName: string; result: unknown }> {
+  private sanitizeToolResults(toolResults: ToolResult[]): ToolResult[] {
     return toolResults.map((tr) => ({
       toolName: tr.toolName,
       result: sanitizeToolResult(tr.toolName, tr.result),
@@ -476,10 +475,10 @@ export class SanitizeActionService {
   }
 
   private sanitizeToolResultsWithBrokenUrls(
-    toolResults: Array<{ toolName: string; result: unknown }>,
+    toolResults: ToolResult[],
     brokenImageUrls: Set<string>,
     brokenPageUrls: Set<string>,
-  ): Array<{ toolName: string; result: unknown }> {
+  ): ToolResult[] {
     return toolResults.map((tr) => ({
       toolName: tr.toolName,
       result: sanitizeToolResult(tr.toolName, tr.result, {

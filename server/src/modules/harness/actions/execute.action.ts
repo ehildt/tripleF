@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
+import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
@@ -21,7 +22,7 @@ import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 type ExecuteResult = {
   buffers: Buffer[];
   processedMeta: FastifyMultipartMeta[];
-  toolResults: Array<{ toolName: string; result: unknown }>;
+  toolResults: ToolResult[];
   inputTokens?: number;
   outputTokens?: number;
 };
@@ -107,7 +108,7 @@ export class ExecuteActionService {
     );
 
     // 4. Run the tool model call with resized images
-    let toolResults: Array<{ toolName: string; result: unknown }> = [];
+    let toolResults: ToolResult[] = [];
     let inputTokens = 0;
     let outputTokens = 0;
 
@@ -223,8 +224,8 @@ export class ExecuteActionService {
   private async invokeMissingMandatoryTools(
     chosenTools: Record<string, unknown>,
     ctx: HarnessContext,
-    existingResults: Array<{ toolName: string; result: unknown }>,
-  ): Promise<Array<{ toolName: string; result: unknown }>> {
+    existingResults: ToolResult[],
+  ): Promise<ToolResult[]> {
     const intent = ctx.outputs.intent ?? null;
     if (!intent) return [];
 
@@ -235,7 +236,7 @@ export class ExecuteActionService {
     if (mandatory.length === 0) return [];
 
     const query = extractQuery(ctx, intent);
-    const results: Array<{ toolName: string; result: unknown }> = [];
+    const results: ToolResult[] = [];
 
     for (const toolName of mandatory) {
       const toolDef = chosenTools[toolName];

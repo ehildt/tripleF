@@ -16,6 +16,20 @@ import { buildImageFingerprint } from '../helpers/build-image-fingerprint.helper
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
 
+type CompactExchange = { role: string; content: string };
+
+type EmitCompactPayload = {
+  exchanges: CompactExchange[];
+  model: string;
+  requestId: string;
+  roomId?: string;
+  stream?: boolean;
+  event: string;
+  think?: ThinkMode;
+  keepAlive?: string;
+  numCtx?: number;
+};
+
 @Injectable()
 export class HarnessQueueService {
   constructor(
@@ -103,17 +117,7 @@ export class HarnessQueueService {
     return job;
   }
 
-  async emitCompact(payload: {
-    exchanges: Array<{ role: string; content: string }>;
-    model: string;
-    requestId: string;
-    roomId?: string;
-    stream?: boolean;
-    event: string;
-    think?: ThinkMode;
-    keepAlive?: string;
-    numCtx?: number;
-  }): Promise<Job | undefined> {
+  async emitCompact(payload: EmitCompactPayload): Promise<Job | undefined> {
     try {
       return await this.queue.add(payload.requestId, {
         meta: [],
