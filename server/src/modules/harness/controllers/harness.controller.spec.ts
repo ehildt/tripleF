@@ -22,7 +22,6 @@ describe('HarnessController', () => {
           useValue: {
             toFilePayloads: vi.fn().mockResolvedValue([]),
             emit: vi.fn(),
-            emitCompact: vi.fn().mockResolvedValue({ id: 1 } as any),
             cancel: vi.fn().mockResolvedValue(true),
           },
         },
@@ -75,20 +74,6 @@ describe('HarnessController', () => {
 
     expect(queueService.toFilePayloads).toHaveBeenCalledWith([], undefined);
     expect(queueService.emit).toHaveBeenCalled();
-  });
-
-  it('queues a compact job', async () => {
-    await controller.compact({
-      exchanges: [{ role: 'user', content: 'hi' }],
-      model: 'model',
-      requestId: 'req-1',
-      roomId: 'room-1',
-      stream: false,
-      event: 'harness',
-      think: 'medium',
-    } as any);
-
-    expect(queueService.emitCompact).toHaveBeenCalled();
   });
 
   it('cancels a job', async () => {

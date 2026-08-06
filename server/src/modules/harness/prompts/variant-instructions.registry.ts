@@ -4,7 +4,6 @@ import {
 } from '../templates/intent.schema.js';
 
 import { ARTICLE_INSTRUCTIONS } from './instructions/article.instruction.js';
-import { COMPACT_INSTRUCTIONS } from './instructions/compact.instruction.js';
 import {
   COMPARE_INSTRUCTIONS,
   COMPARE_VISUAL_INSTRUCTIONS,
@@ -52,7 +51,6 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   imagelist: ['default'],
   videolist: ['default'],
   text: ['default', 'coding', 'familiarity'],
-  compact: ['default'],
 };
 
 const VARIANT_INSTRUCTIONS: Record<string, string> = {
@@ -97,16 +95,12 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
   'text:default': TEXT_INSTRUCTIONS,
   'text:coding': TEXT_CODING_INSTRUCTIONS,
   'text:familiarity': TEXT_FAMILIARITY_INSTRUCTIONS,
-
-  // compact
-  'compact:default': COMPACT_INSTRUCTIONS,
 };
 
 /**
  * Resolves the style instructions for a selected template variant.
  * Falls back to the template's default variant, then to an empty string.
- * Every content template gets the internationalCoverage aside appended —
- * compact is the only internal, instruction-free case.
+ * Every content template gets the internationalCoverage aside appended.
  */
 export function resolveVariantInstructions(
   template: string,
@@ -116,6 +110,6 @@ export function resolveVariantInstructions(
     VARIANT_INSTRUCTIONS[`${template}:${variantId}`] ??
     VARIANT_INSTRUCTIONS[`${template}:${DEFAULT_VARIANT_ID}`] ??
     '';
-  if (!instructions || template === 'compact') return instructions;
+  if (!instructions) return instructions;
   return `${instructions}\n\n${INTERNATIONAL_COVERAGE_INSTRUCTIONS}`;
 }

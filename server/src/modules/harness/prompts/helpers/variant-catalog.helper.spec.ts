@@ -21,10 +21,8 @@ describe('formatVariantCatalog', () => {
   });
 
   it('covers all classifier-selectable templates', () => {
-    // "compact" is intentionally excluded: it runs on a dedicated job path.
     expect(formatVariantCatalog().length).toBe(
-      Object.keys(TEMPLATE_VARIANTS).length - 1,
+      Object.keys(TEMPLATE_VARIANTS).length,
     );
-    expect(formatVariantCatalog().join('\n')).not.toContain('compact');
   });
 });

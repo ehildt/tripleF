@@ -79,10 +79,6 @@ function onDelete() {
 function toggleType() {
   conversationStore.toggleConversationType(props.conversationId);
 }
-
-function onCompact() {
-  conversationStore.compactExchanges(props.conversationId);
-}
 </script>
 
 <template>
@@ -100,11 +96,9 @@ function onCompact() {
 
     <ConversationHeaderActions
       :conversation-type="conversationType"
-      :compacting="conversationStore.compacting"
       @rename="startRename"
       @delete="onDelete"
       @toggle-type="toggleType"
-      @compact="onCompact"
     />
   </div>
 </template>
@@ -113,7 +107,7 @@ function onCompact() {
 .chat-conversation-header {
   display: flex;
   align-items: center;
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-1) var(--spacing-2);
   gap: var(--spacing-2);
   background-color: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-divider);

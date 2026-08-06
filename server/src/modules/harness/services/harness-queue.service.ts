@@ -4,7 +4,6 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 
-import { type ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import {
@@ -15,20 +14,6 @@ import { buildImageFingerprint } from '../helpers/build-image-fingerprint.helper
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
-
-type CompactExchange = { role: string; content: string };
-
-type EmitCompactPayload = {
-  exchanges: CompactExchange[];
-  model: string;
-  requestId: string;
-  roomId?: string;
-  stream?: boolean;
-  event: string;
-  think?: ThinkMode;
-  keepAlive?: string;
-  numCtx?: number;
-};
 
 @Injectable()
 export class HarnessQueueService {
@@ -115,34 +100,6 @@ export class HarnessQueueService {
     }
 
     return job;
-  }
-
-  async emitCompact(payload: EmitCompactPayload): Promise<Job | undefined> {
-    try {
-      return await this.queue.add(payload.requestId, {
-        meta: [],
-        filters: {
-          compact: true,
-          requestId: payload.requestId,
-          exchanges: payload.exchanges,
-          model: payload.model,
-          roomId: payload.roomId,
-          stream: payload.stream ?? false,
-          event: payload.event,
-          think: payload.think as any,
-          keepAlive: payload.keepAlive,
-          numCtx: payload.numCtx,
-        },
-      });
-    } catch (err) {
-      this.stepLogger.error(
-        { requestId: payload.requestId },
-        'queue',
-        `Failed to add compact job ${payload.requestId} to queue`,
-        err,
-      );
-      return undefined;
-    }
   }
 
   async cancel(requestId: string): Promise<boolean> {

@@ -239,35 +239,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     useAppStore().notifyChatResponse();
   }
 
-  function handleCompactMode(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    raw: Record<string, unknown>,
-    requestId: string,
-  ) {
-    const conversationStore = useConversationStore();
-    if (raw.done === true) {
-      conversationStore.compacting = false;
-    } else if (!conversationStore.compacting) {
-      conversationStore.compacting = true;
-    }
-
-    if (
-      raw.status === 'compacting' &&
-      !conversation.exchanges.some(
-        (e) => e.requestId === requestId && e.role === 'assistant',
-      )
-    ) {
-      conversationStore.addExchange(conversation.id, {
-        role: 'assistant',
-        content: '',
-        requestId,
-        status: 'pending',
-      });
-    }
-  }
-
   function handlePrompt(
     conversation: ReturnType<
       typeof useConversationStore
@@ -359,14 +330,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       ex.reasoning = undefined;
       ex.toolCalls = undefined;
     }
-
-    if (raw.compact === true) {
-      const ex = findAssistantExchange(conversation, requestId);
-      if (ex && ex.content.trim()) {
-        ex.requestId = undefined;
-        conversation.exchanges = [ex];
-      }
-    }
   }
 
   function handleActivityStatus(
@@ -376,7 +339,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     raw: Record<string, unknown>,
     requestId: string,
   ) {
-    if (raw.compact === true || raw.done === true) return;
+    if (raw.done === true) return;
     const status = raw.status as string | undefined;
     if (!status || status === 'canceled') return;
     const ex = findAssistantExchange(conversation, requestId);
@@ -457,10 +420,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
 
     for (const conversation of conversationStore.conversations) {
       if (conversation.event && conversation.event !== event) continue;
-
-      if (raw.compact === true) {
-        handleCompactMode(conversation, raw, requestId);
-      }
 
       handlePrompt(
         conversation,

@@ -145,6 +145,7 @@ export class RespondActionService {
           template: params.intent.template,
           error: validation.error,
           preview: result.text.slice(0, 500),
+          rawOutput: result.text,
         },
       );
 
@@ -218,6 +219,7 @@ export class RespondActionService {
             template: params.intent.template,
             error: validation.error,
             preview: content.slice(0, 500),
+            rawOutput: content,
           },
         );
         params.onJsonRetry?.(1);

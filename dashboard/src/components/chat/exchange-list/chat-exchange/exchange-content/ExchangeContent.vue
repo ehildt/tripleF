@@ -2,7 +2,6 @@
 import type { Exchange } from '@/stores/conversation';
 
 import AssistantResponse from './assistant-response/AssistantResponse.vue';
-import CompactingIndicator from './compacting-indicator/CompactingIndicator.vue';
 import { useExchangeRenderMode } from './composables/use-exchange-render-mode';
 import { usePromptImageTiles } from './composables/use-prompt-image-tiles';
 import ExchangeActivity from './exchange-activity/ExchangeActivity.vue';
@@ -18,7 +17,6 @@ const props = defineProps<{
   isPending: boolean;
   isStreaming: boolean;
   isHighlighted: boolean;
-  isCompacting: boolean;
 }>();
 
 interface LightboxImage {
@@ -39,7 +37,6 @@ const { dividerVariant, renderMode, containerClasses, showStreamingCursor } =
       isPending: props.isPending,
       isStreaming: props.isStreaming,
       isHighlighted: props.isHighlighted,
-      isCompacting: props.isCompacting,
     }),
   );
 
@@ -59,9 +56,8 @@ const { imageTiles } = usePromptImageTiles(() => props.exchange);
       { 'exchange-message--plain': renderMode === 'plain' },
     ]"
   >
-    <CompactingIndicator v-if="renderMode === 'compacting'" />
     <ExchangeActivity
-      v-else-if="renderMode === 'reasoning'"
+      v-if="renderMode === 'reasoning'"
       :reasoning="exchange.reasoning"
     />
     <StreamingSkeleton v-else-if="renderMode === 'streaming-skeleton'" />

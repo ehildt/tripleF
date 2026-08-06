@@ -33,5 +33,4 @@ export interface MessageData {
   images?: Array<Record<string, string>>;
   toolResults?: Array<{ toolName: string; result: unknown }>;
   error?: string;
-  compact?: boolean;
 }

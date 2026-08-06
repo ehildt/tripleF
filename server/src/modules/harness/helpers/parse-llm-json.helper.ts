@@ -203,6 +203,14 @@ function replaceUndefinedLiterals(text: string): string {
 export function parseLlmJson(text: string): unknown {
   let cleaned = text
     .trim()
+    // Drop thinking-model reasoning: a full <think>…</think> block, or a
+    // dangling preamble that ends in </think> before the actual output. Left
+    // in place it would poison JSON block extraction.
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .replace(/^[\s\S]*?<\/think>/, '')
+    // Drop [Template: <name>] markers the model echoes before the JSON —
+    // their leading "[" would otherwise be mistaken for the JSON start.
+    .replace(/\[Template:\s*[^\]]+\]/g, '')
     .replace(/```json/gi, '')
     .replace(/```/g, '')
     .trim();

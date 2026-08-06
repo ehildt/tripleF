@@ -37,7 +37,6 @@ const isPending = computed(() => props.exchange.status === 'pending');
 const isStreaming = computed(() => props.exchange.status === 'streaming');
 const isError = computed(() => props.exchange.status === 'error');
 const isDone = computed(() => props.exchange.status === 'done');
-const isCompacting = computed(() => conversationStore.compacting);
 
 const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
@@ -116,7 +115,6 @@ function handleCancel(requestId: string) {
         :is-pending="isPending"
         :is-streaming="isStreaming"
         :is-highlighted="highlighted"
-        :is-compacting="isCompacting"
         @image-clicked="handleImageClicked"
       />
     </div>

@@ -1,25 +1,16 @@
 <script setup lang="ts">
-import {
-  LoaderCircle,
-  PenLine,
-  Pin,
-  PinOff,
-  Shrink,
-  Trash2,
-} from '@lucide/vue';
+import { PenLine, Pin, PinOff, Trash2 } from '@lucide/vue';
 
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 
 defineProps<{
   conversationType: 'temporary' | 'persistent';
-  compacting: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'rename'): void;
   (e: 'delete'): void;
   (e: 'toggleType'): void;
-  (e: 'compact'): void;
 }>();
 </script>
 
@@ -65,25 +56,6 @@ const emit = defineEmits<{
         <Pin v-else class="conversation-header-actions__icon" />
       </MotionIcon>
     </button>
-
-    <button
-      type="button"
-      class="conversation-header-actions__button"
-      :class="{
-        'conversation-header-actions__button--disabled': compacting,
-      }"
-      :title="compacting ? 'Compacting...' : 'Compact'"
-      :disabled="compacting"
-      @click="emit('compact')"
-    >
-      <MotionIcon>
-        <LoaderCircle
-          v-if="compacting"
-          class="conversation-header-actions__icon conversation-header-actions__icon--spin"
-        />
-        <Shrink v-else class="conversation-header-actions__icon" />
-      </MotionIcon>
-    </button>
   </div>
 </template>
 
@@ -111,27 +83,8 @@ const emit = defineEmits<{
   color: var(--color-status-error);
 }
 
-.conversation-header-actions__button--disabled,
-.conversation-header-actions__button--disabled:hover {
-  color: var(--color-fg-muted);
-  cursor: default;
-}
-
 .conversation-header-actions__icon {
   width: 0.875rem;
   height: 0.875rem;
-}
-
-.conversation-header-actions__icon--spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

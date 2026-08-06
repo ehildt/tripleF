@@ -5,7 +5,10 @@ import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { languageCorrectionPrompt } from '../constants/structured-json-prompt.constant.js';
+import {
+  buildIntentCorrectionPrompt,
+  languageCorrectionPrompt,
+} from '../constants/structured-json-prompt.constant.js';
 import { getEnabledToolNames } from '../helpers/get-enabled-tool-names.helper.js';
 import { buildClassifyMessages } from '../helpers/interpret/build-classify-messages.helper.js';
 import { parseIntent } from '../helpers/interpret/parse-intent.helper.js';
@@ -78,12 +81,21 @@ export class InterpretActionService {
       totalInputTokens += result.totalUsage?.inputTokens ?? 0;
       totalOutputTokens += result.totalUsage?.outputTokens ?? 0;
 
-      const intent = parseIntent(
-        params.requestId,
-        result.text,
-        enabledToolNames,
-        this.stepLogger,
-      );
+      let intent: IntentResult;
+      try {
+        intent = parseIntent(
+          params.requestId,
+          result.text,
+          enabledToolNames,
+          this.stepLogger,
+        );
+      } catch (error) {
+        // Structurally invalid JSON (incl. empty output) — retry with a
+        // correction prompt, mirroring the response step's validateWithRetries.
+        if (attempt === MAX_INTERPRET_RETRIES) throw error;
+        classifyMessages.push(this.buildJsonCorrectionMessage(error));
+        continue;
+      }
       lastIntent = intent;
       params.onIntent?.(intent);
 
@@ -160,5 +172,15 @@ export class InterpretActionService {
 
   private buildLanguageCorrectionMessage(): InputMessage {
     return { role: 'system', content: languageCorrectionPrompt };
+  }
+
+  private buildJsonCorrectionMessage(error: unknown): InputMessage {
+    const detail =
+      error instanceof Error && error.cause instanceof Error
+        ? error.cause.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    return { role: 'system', content: buildIntentCorrectionPrompt(detail) };
   }
 }

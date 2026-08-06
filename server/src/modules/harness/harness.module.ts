@@ -14,7 +14,6 @@ import { NumCtxConfigService } from './configs/numctx-config.service.js';
 import { CloudImageIngestionService } from './services/cloud-image-ingestion.service.js';
 import { HarnessCancellationService } from './services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from './services/harness-chat-streaming.service.js';
-import { HarnessCompactService } from './services/harness-compact.service.js';
 import { HarnessContextService } from './services/harness-context.service.js';
 import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
@@ -35,7 +34,6 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
     NumCtxConfigService,
     HarnessCancellationService,
     HarnessChatStreamingService,
-    HarnessCompactService,
     HarnessContextService,
     HarnessQueueService,
     HarnessStepEngineService,
@@ -60,7 +58,6 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
     NumCtxConfigService,
     HarnessCancellationService,
     HarnessChatStreamingService,
-    HarnessCompactService,
     HarnessContextService,
     HarnessQueueService,
     HarnessStepEngineService,

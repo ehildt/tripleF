@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import TurndownService from 'turndown';
 import { ref } from 'vue';
 
-import { getApiUrl } from '../api/api-url';
 import {
   deleteConversation as deleteServerConversation,
   fetchConversation,
@@ -33,7 +32,6 @@ import type {
   UploadedImage,
 } from './conversation.model';
 import { type Exchange } from './conversation.model';
-import { useSocketStore } from './socket';
 
 export type {
   Conversation,
@@ -100,7 +98,6 @@ async function saveConversationToServer(conversation: Conversation) {
 export const useConversationStore = defineStore('conversation', () => {
   const conversations = ref<Conversation[]>([]);
   const activeConversationId = ref<string | null>(null);
-  const compacting = ref(false);
   const hydrated = ref(false);
   const conversationFileMap = ref<Record<string, File[]>>({});
 
@@ -274,72 +271,6 @@ export const useConversationStore = defineStore('conversation', () => {
     conversation.type =
       conversation.type === 'temporary' ? 'persistent' : 'temporary';
     void saveConversationToServer(conversation);
-  }
-
-  async function compactExchanges(conversationId: string) {
-    const conversation = getConversation(conversationId);
-    if (
-      !conversation ||
-      conversation.exchanges.length === 0 ||
-      compacting.value
-    )
-      return;
-
-    const model = conversation.model;
-    if (!model) return;
-
-    const requestId = createId();
-    const event = conversation.event || 'harness';
-    const roomId = conversation.roomId;
-
-    const compactPayload = conversation.exchanges
-      .map((e) => toPromptMessage(e))
-      .filter((m) => m.content.trim());
-
-    conversation.exchanges = [];
-
-    const exchangeId = createId();
-    conversation.exchanges.push({
-      id: exchangeId,
-      role: 'assistant',
-      content: '',
-      requestId,
-      status: 'pending',
-      timestamp: Date.now(),
-      model,
-      event,
-      roomId,
-    });
-
-    compacting.value = true;
-
-    const socketStore = useSocketStore();
-    socketStore.ensureSocketConnection();
-
-    if (roomId) socketStore.joinRoom(roomId, event);
-
-    const body = {
-      exchanges: compactPayload,
-      model,
-      requestId,
-      roomId,
-      stream: true,
-      event,
-    };
-
-    try {
-      const res = await fetch(getApiUrl('/api/v1/harness/compact'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) compacting.value = false;
-    } catch {
-      compacting.value = false;
-    }
   }
 
   function updateExchange(
@@ -664,7 +595,6 @@ export const useConversationStore = defineStore('conversation', () => {
   return {
     conversations,
     activeConversationId,
-    compacting,
     hydrated,
     getConversation,
     ensureConversation,
@@ -677,7 +607,6 @@ export const useConversationStore = defineStore('conversation', () => {
     addExchange,
     deleteExchangeAndPrune,
     toggleExchangeIncluded,
-    compactExchanges,
     updateExchange,
     appendExchangeContent,
     markExchangeDone,
