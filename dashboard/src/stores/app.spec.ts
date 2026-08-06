@@ -37,7 +37,7 @@ describe('useAppStore', () => {
 
   it('initializes with correct defaults', () => {
     const store = useAppStore();
-    expect(store.activeTab).toBe('http');
+    expect(store.activeTab).toBe('chat');
     expect(store.copiedIndex).toBeNull();
     expect(store.abortingId).toBeNull();
   });
