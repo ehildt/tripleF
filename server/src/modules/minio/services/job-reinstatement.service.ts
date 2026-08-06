@@ -6,6 +6,11 @@ import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 
+type ReinstateOptions = {
+  requestIds?: string[];
+  batchSize?: number;
+};
+
 @Injectable()
 export class JobReinstatementService {
   private readonly logger = new Logger(JobReinstatementService.name);
@@ -16,7 +21,7 @@ export class JobReinstatementService {
     private readonly dlqRepository: DeadLetterRepository,
   ) {}
 
-  async reinstate(options: { requestIds?: string[]; batchSize?: number }) {
+  async reinstate(options: ReinstateOptions) {
     let records: Awaited<ReturnType<typeof this.dlqRepository.findAll>>['data'];
 
     if (options.requestIds?.length) {

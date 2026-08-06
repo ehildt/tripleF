@@ -12,15 +12,19 @@ import {
 
 const IMAGE_TEMPLATES = ['describe', 'compare', 'ocr'];
 
-/** Assemble the system + context messages the response model sees. */
-export function buildExecutionMessages(params: {
+type BuildExecutionMessagesParams = {
   requestId: string;
   intent: IntentResult;
   messages: InputMessage[];
   availableImages?: Array<Record<string, unknown>>;
   sources: SourcesConfig;
   stepLogger: HarnessStepLogger;
-}): InputMessage[] {
+};
+
+/** Assemble the system + context messages the response model sees. */
+export function buildExecutionMessages(
+  params: BuildExecutionMessagesParams,
+): InputMessage[] {
   const { requestId, intent, messages, availableImages, sources, stepLogger } =
     params;
 

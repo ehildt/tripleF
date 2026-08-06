@@ -1,12 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  generateText,
-  smoothStream,
-  stepCountIs,
-  streamText,
-  type TimeoutConfiguration,
-  type ToolSet,
-} from 'ai';
+import { generateText, smoothStream, stepCountIs, streamText } from 'ai';
 import { createOllama } from 'ollama-ai-provider-v2';
 
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
@@ -14,8 +7,14 @@ import { OLLAMA_CLOUD_HOST } from '../constants/ollama-cloud.constants.js';
 import { toAiSdkMessages } from '../helpers/ai-sdk-message.helper.js';
 import { buildOllamaHeaders } from '../helpers/build-ollama-headers.helper.js';
 import { buildProviderOptions } from '../helpers/provider-options.helper.js';
-import type { InputMessage } from '../types/ai-sdk-messages.types.js';
-import { ThinkMode } from '../types/think-mode.type.js';
+import {
+  type CompactContentParams,
+  type GenerateChatParams,
+  type GenerateWithToolsParams,
+  type GenerateWithToolsResult,
+  type StreamChatParams,
+  type ToolResult,
+} from '../types/ai-sdk-params.types.js';
 
 import { OllamaModelsService } from './ollama-models.service.js';
 import { OllamaOverridesService } from './ollama-overrides.service.js';
@@ -50,17 +49,7 @@ export class AiSdkService {
     return client;
   }
 
-  async streamChat(params: {
-    model: string;
-    messages: InputMessage[];
-    numCtx?: number;
-    keepAlive?: string;
-    think?: ThinkMode;
-    tools?: ToolSet;
-    timeout?: TimeoutConfiguration<any>;
-    abortSignal?: AbortSignal;
-    smoothStream?: boolean;
-  }) {
+  async streamChat(params: StreamChatParams) {
     const model = this.resolveClient(params.model)(params.model);
     const { system, messages } = toAiSdkMessages(params.messages);
 
@@ -95,16 +84,7 @@ export class AiSdkService {
     });
   }
 
-  async generateChat(params: {
-    model: string;
-    messages: InputMessage[];
-    numCtx?: number;
-    keepAlive?: string;
-    think?: ThinkMode;
-    tools?: ToolSet;
-    timeout?: TimeoutConfiguration<any>;
-    abortSignal?: AbortSignal;
-  }) {
+  async generateChat(params: GenerateChatParams) {
     const model = this.resolveClient(params.model)(params.model);
     const { system, messages } = toAiSdkMessages(params.messages);
 
@@ -130,12 +110,7 @@ export class AiSdkService {
 
   async compactContent(
     content: string,
-    options: {
-      model: string;
-      notify?: (event: string, data?: unknown) => void;
-      timeout?: TimeoutConfiguration<any>;
-      abortSignal?: AbortSignal;
-    },
+    options: CompactContentParams,
   ): Promise<{ text: string; inputTokens?: number; outputTokens?: number }> {
     this.logger.log(
       `Compacting ${content.length} chars with model "${options.model}"`,
@@ -162,31 +137,13 @@ export class AiSdkService {
     };
   }
 
-  async generateWithTools(params: {
-    model: string;
-    messages: InputMessage[];
-    numCtx?: number;
-    keepAlive?: string;
-    think?: ThinkMode;
-    tools: ToolSet;
-    /**
-     * Max generate⇄tool round-trips. Browsing intents navigate, snapshot and
-     * interact step by step, so they pass a higher budget than the single
-     * round-trip searches use.
-     */
-    maxSteps?: number;
-    timeout?: TimeoutConfiguration<any>;
-    abortSignal?: AbortSignal;
-    onToolResult?: (toolResult: { toolName: string; result: unknown }) => void;
-  }): Promise<{
-    text: string;
-    toolResults: Array<{ toolName: string; result: unknown }>;
-    totalUsage?: { inputTokens?: number; outputTokens?: number };
-  }> {
+  async generateWithTools(
+    params: GenerateWithToolsParams,
+  ): Promise<GenerateWithToolsResult> {
     const model = this.resolveClient(params.model)(params.model);
     const { system, messages } = toAiSdkMessages(params.messages);
 
-    const capturedResults: Array<{ toolName: string; result: unknown }> = [];
+    const capturedResults: ToolResult[] = [];
 
     const hasTools = Object.keys(params.tools).length > 0;
 

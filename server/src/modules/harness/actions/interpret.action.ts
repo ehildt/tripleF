@@ -20,6 +20,17 @@ type InterpretResult = {
   outputTokens?: number;
 };
 
+type InterpretParams = {
+  requestId: string;
+  model: string;
+  messages: InputMessage[];
+  keepAlive?: string;
+  think?: ThinkMode;
+  numCtx?: number;
+  abortSignal?: AbortSignal;
+  onIntent?: (intent: IntentResult) => void;
+};
+
 @Injectable()
 export class InterpretActionService {
   constructor(
@@ -39,16 +50,7 @@ export class InterpretActionService {
    *
    * No tools are executed and no response is produced here.
    */
-  async execute(params: {
-    requestId: string;
-    model: string;
-    messages: InputMessage[];
-    keepAlive?: string;
-    think?: ThinkMode;
-    numCtx?: number;
-    abortSignal?: AbortSignal;
-    onIntent?: (intent: IntentResult) => void;
-  }): Promise<InterpretResult> {
+  async execute(params: InterpretParams): Promise<InterpretResult> {
     const enabledToolNames = getEnabledToolNames({
       ...this.providerOverrides.getConfig(),
       playwright: this.playwrightMcpConfig.config,

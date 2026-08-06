@@ -37,16 +37,18 @@ export const videoGalleryItemSchema = z.object(
   { message: 'videoGalleryItems entries must be objects with videoUrl' },
 );
 
+type HeroVideoData = {
+  heroVideoUrl?: string;
+  heroVideoTitle?: string;
+};
+
 /**
  * Cross-field rule for the hero video: the hero popout title bar, the hero
  * playlist entry, and the now-playing marquee all read heroVideoTitle, so a
  * hero video without a title must not validate. Empty heroVideoUrl (or no
  * hero video at all) keeps the title optional.
  */
-export function heroVideoHasTitle(data: {
-  heroVideoUrl?: string;
-  heroVideoTitle?: string;
-}): boolean {
+export function heroVideoHasTitle(data: HeroVideoData): boolean {
   return !data.heroVideoUrl?.trim() || Boolean(data.heroVideoTitle?.trim());
 }
 
