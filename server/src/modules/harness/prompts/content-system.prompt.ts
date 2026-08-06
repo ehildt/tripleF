@@ -1,26 +1,24 @@
 import type { SourcesConfig } from '../../provider-overrides/configs/sources-config.adapter.js';
 import { buildContextSummarySection } from '../helpers/build-context-summary-section.helper.js';
 
-import {
-  buildLanguageRule,
-  buildSourcePolicyPrompt,
-  COMPACT_INSTRUCTIONS,
-  FINAL_REMINDER,
-  HISTORY_URLS_RULES,
-  IMAGE_TASK_RULE,
-  ITEM_SHAPES,
-  JSON_RULES,
-  MEDIA_COUNTS,
-  MEDIA_RULES,
-  MULTIMODAL_POLICY,
-  NOISE_RULES,
-  OUTPUT_CONTRACT,
-  PRECEDENCE_RULES,
-  SEARCH_POLICY,
-  SECURITY_RULES,
-  SOURCE_TRUTH_RULES,
-  TOOL_RESULTS_RULES,
-} from './shared/index.js';
+import { COMPACT_INSTRUCTIONS } from './instructions/compact.instruction.js';
+import { FINAL_REMINDER } from './shared/final-reminder.prompt.js';
+import { HISTORY_URLS_RULES } from './shared/history-urls.prompt.js';
+import { IMAGE_TASK_RULE } from './shared/image-task-rule.prompt.js';
+import { ITEM_SHAPES } from './shared/item-shapes.prompt.js';
+import { JSON_RULES } from './shared/json-rules.prompt.js';
+import { buildLanguageRule } from './shared/language-rule.prompt.js';
+import { MEDIA_COUNTS } from './shared/media-counts.prompt.js';
+import { MEDIA_RULES } from './shared/media-rules.prompt.js';
+import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
+import { NOISE_RULES } from './shared/noise-rules.prompt.js';
+import { OUTPUT_CONTRACT } from './shared/output-contract.prompt.js';
+import { PRECEDENCE_RULES } from './shared/precedence-rules.prompt.js';
+import { SEARCH_POLICY } from './shared/search-policy.prompt.js';
+import { SECURITY_RULES } from './shared/security-rules.prompt.js';
+import { buildSourcePolicyPrompt } from './shared/source-policy.prompt.js';
+import { SOURCE_TRUTH_RULES } from './shared/source-truth.prompt.js';
+import { TOOL_RESULTS_RULES } from './shared/tool-results.prompt.js';
 
 export function buildContentSystemPrompt(params: {
   template: string;

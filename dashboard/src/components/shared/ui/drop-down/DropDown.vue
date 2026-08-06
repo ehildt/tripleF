@@ -2,8 +2,9 @@
 import { Check } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
+import { stripHtml } from '@/utils/strip-html.helper';
+
 import { displayValue } from './helpers/display-value.helper';
-import { stripHtml } from './helpers/strip-html.helper';
 import { useDropdown } from './use-dropdown';
 
 const props = withDefaults(

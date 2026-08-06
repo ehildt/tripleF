@@ -1,18 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { ref } from 'vue';
 
 import { buildQueryParams } from './build-query-params.helper';
 
 describe('buildQueryParams', () => {
   it('builds query params', () => {
     const params = buildQueryParams({
-      requestId: ref('req-1'),
-      sessionId: ref('sess-1'),
-      roomId: ref('room-1'),
-      stream: ref(true),
-      event: ref('harness'),
-      numCtx: ref('4096'),
-      think: ref('medium'),
+      requestId: 'req-1',
+      sessionId: 'sess-1',
+      roomId: 'room-1',
+      stream: true,
+      event: 'harness',
+      numCtx: '4096',
+      think: 'medium',
     });
 
     expect(params.get('requestId')).toBe('req-1');
@@ -26,13 +25,13 @@ describe('buildQueryParams', () => {
 
   it('omits empty optional values', () => {
     const params = buildQueryParams({
-      requestId: ref('req-1'),
-      sessionId: ref(''),
-      roomId: ref(''),
-      stream: ref(false),
-      event: ref('harness'),
-      numCtx: ref(''),
-      think: ref(''),
+      requestId: 'req-1',
+      sessionId: '',
+      roomId: '',
+      stream: false,
+      event: 'harness',
+      numCtx: '',
+      think: '',
     });
 
     expect(params.get('sessionId')).toBeNull();
@@ -44,17 +43,17 @@ describe('buildQueryParams', () => {
 
   it('includes hasNewImages and conversationMetadata when provided', () => {
     const params = buildQueryParams({
-      requestId: ref('req-1'),
-      sessionId: ref('sess-1'),
-      roomId: ref('room-1'),
-      stream: ref(true),
-      event: ref('harness'),
-      numCtx: ref('4096'),
-      think: ref('medium'),
-      hasNewImages: ref(false),
-      conversationMetadata: ref({
+      requestId: 'req-1',
+      sessionId: 'sess-1',
+      roomId: 'room-1',
+      stream: true,
+      event: 'harness',
+      numCtx: '4096',
+      think: 'medium',
+      hasNewImages: false,
+      conversationMetadata: {
         images: [{ name: 'a.png', hash: 'hash-a' }],
-      }),
+      },
     });
 
     expect(params.get('hasNewImages')).toBe('false');

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { io } from 'socket.io-client';
+import { io, type Socket } from 'socket.io-client';
 import { ref } from 'vue';
 
 import type { SocketDebugEntry } from '../types/socket-debug-entry.model';
@@ -13,7 +13,7 @@ const SOCKET_SESSION_ID = getPersistentSocketSessionId();
 export type ConnectionState = 'connected' | 'disconnected' | 'error';
 
 export const useSocketStore = defineStore('socket', () => {
-  const socket = ref<any>(null);
+  const socket = ref<Socket | null>(null);
   const connectionState = ref<ConnectionState>('disconnected');
   const socketError = ref<string | null>(null);
   const lastConnectionEvent = ref<string>('disconnected');

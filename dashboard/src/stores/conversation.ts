@@ -103,6 +103,7 @@ export const useConversationStore = defineStore('conversation', () => {
   const activeConversationId = ref<string | null>(null);
   const compacting = ref(false);
   const hydrated = ref(false);
+  const conversationFileMap = ref<Record<string, File[]>>({});
 
   loadConversations().then((loaded) => {
     conversations.value = loaded;
@@ -423,8 +424,6 @@ export const useConversationStore = defineStore('conversation', () => {
     }
   }
 
-  const conversationFileMap = ref<Record<string, File[]>>({});
-
   function setFiles(conversationId: string, newFiles: File[]) {
     conversationFileMap.value = {
       ...conversationFileMap.value,
@@ -448,52 +447,43 @@ export const useConversationStore = defineStore('conversation', () => {
     );
   }
 
-  function setModel(conversationId: string, model: string) {
+  function patchConversation(
+    conversationId: string,
+    patch: Partial<
+      Pick<
+        Conversation,
+        'model' | 'numCtx' | 'think' | 'stream' | 'event' | 'roomId'
+      >
+    >,
+  ) {
     const conversation = getConversation(conversationId);
-    if (conversation) {
-      conversation.model = model;
-      void saveConversationToServer(conversation);
-    }
+    if (!conversation) return;
+    Object.assign(conversation, patch);
+    void saveConversationToServer(conversation);
+  }
+
+  function setModel(conversationId: string, model: string) {
+    patchConversation(conversationId, { model });
   }
 
   function setNumCtx(conversationId: string, numCtx: string) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
-      conversation.numCtx = numCtx;
-      void saveConversationToServer(conversation);
-    }
+    patchConversation(conversationId, { numCtx });
   }
 
   function setThink(conversationId: string, think: string) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
-      conversation.think = think;
-      void saveConversationToServer(conversation);
-    }
+    patchConversation(conversationId, { think });
   }
 
   function setStream(conversationId: string, stream: boolean) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
-      conversation.stream = stream;
-      void saveConversationToServer(conversation);
-    }
+    patchConversation(conversationId, { stream });
   }
 
   function setEvent(conversationId: string, event: string) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
-      conversation.event = event;
-      void saveConversationToServer(conversation);
-    }
+    patchConversation(conversationId, { event });
   }
 
   function setRoomId(conversationId: string, roomId: string) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
-      conversation.roomId = roomId;
-      void saveConversationToServer(conversation);
-    }
+    patchConversation(conversationId, { roomId });
   }
 
   function getConversationId(conversationId: string): string {
