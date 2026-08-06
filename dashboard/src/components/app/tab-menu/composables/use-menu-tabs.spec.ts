@@ -40,22 +40,22 @@ describe('useMenuTabs', () => {
 
   it('hides dlq and debug by default', () => {
     const vm = mountComposable({
-      activeTab: 'http',
+      activeTab: 'chat',
       debugCount: 0,
     });
 
-    expect(vm.tabs.map((t) => t.tab)).toEqual(['http', 'sysctl']);
+    expect(vm.tabs.map((t) => t.tab)).toEqual(['chat', 'sysctl']);
   });
 
   it('returns all tabs when dlq/debug are enabled', () => {
     enableDlqDebug();
     const vm = mountComposable({
-      activeTab: 'http',
+      activeTab: 'chat',
       debugCount: 0,
     });
 
     expect(vm.tabs.map((t) => t.tab)).toEqual([
-      'http',
+      'chat',
       'dlq',
       'debug',
       'sysctl',
@@ -65,7 +65,7 @@ describe('useMenuTabs', () => {
   it('uses configured tint values', () => {
     enableDlqDebug();
     const vm = mountComposable({
-      activeTab: 'http',
+      activeTab: 'chat',
       debugCount: 0,
     });
 
@@ -76,7 +76,7 @@ describe('useMenuTabs', () => {
     enableDlqDebug();
     localStorage.setItem('harness-show-counters', 'true');
     const vm = mountComposable({
-      activeTab: 'http',
+      activeTab: 'chat',
       debugCount: 7,
       dlqCount: 3,
     });
@@ -89,7 +89,7 @@ describe('useMenuTabs', () => {
     enableDlqDebug();
     localStorage.setItem('harness-show-counters', 'false');
     const vm = mountComposable({
-      activeTab: 'http',
+      activeTab: 'chat',
       debugCount: 7,
       dlqCount: 3,
     });
@@ -107,7 +107,7 @@ describe('useMenuTabs', () => {
 
     const TestComponent = defineComponent({
       setup() {
-        return useMenuTabs({ activeTab: 'http', debugCount: 0 });
+        return useMenuTabs({ activeTab: 'chat', debugCount: 0 });
       },
       template: '<div />',
     });

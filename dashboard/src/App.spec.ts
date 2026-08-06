@@ -1,17 +1,19 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 import App from './App.vue';
 
 vi.mock('./stores/app', () => ({
   useAppStore: () => ({
-    activeTab: 'http',
+    activeTab: 'chat',
     blinkLogo: false,
     requestId: 'req-id',
     refreshRequestId: vi.fn(),
     abortJob: vi.fn(),
     handleCopyToClipboard: vi.fn(),
+    setActiveTab: vi.fn(),
     isTabVisible: () => true,
     tabVisibility: {},
   }),
@@ -98,7 +100,19 @@ vi.mock('./stores/theme', () => ({
 describe('App', () => {
   it('renders without crashing', () => {
     setActivePinia(createPinia());
-    const wrapper = mount(App);
+    // App renders TabMenu (RouterLinks) and mirrors the route into the app
+    // store, so a memory router must be installed.
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/:pathMatch(.*)*',
+          name: 'chat',
+          component: { template: '<div />' },
+        },
+      ],
+    });
+    const wrapper = mount(App, { global: { plugins: [router] } });
     expect(wrapper.find('header').exists()).toBe(true);
     expect(wrapper.find('main').exists()).toBe(true);
   });

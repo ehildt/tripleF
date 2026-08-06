@@ -1,6 +1,9 @@
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 
+import { appViewContextKey } from '@/composables/use-app-view-context';
+import { mockAppViewContext } from '@/test-utils/mock-app-view-context';
+
 import DebugSection from './DebugSection.vue';
 
 vi.mock('../../../../components/debug/Debug.vue', () => ({
@@ -23,53 +26,61 @@ vi.mock(
 );
 
 describe('DebugSection', () => {
-  const defaultProps = {
-    debugResults: [],
-    selectedDebugResult: null,
-  };
+  function mountSection() {
+    const clearDebugResults = vi.fn();
+    const selectDebugResult = vi.fn();
+    const selectDebugMarkRead = vi.fn();
+    const wrapper = mount(DebugSection, {
+      global: {
+        provide: {
+          [appViewContextKey]: mockAppViewContext({
+            debugResults: [],
+            selectedDebugResult: null,
+            clearDebugResults,
+            selectDebugResult,
+            selectDebugMarkRead,
+          }),
+        },
+      },
+    });
+
+    return {
+      wrapper,
+      clearDebugResults,
+      selectDebugResult,
+      selectDebugMarkRead,
+    };
+  }
 
   it('renders debug and request details panels', () => {
-    const wrapper = mount(DebugSection, {
-      props: defaultProps,
-    });
+    const { wrapper } = mountSection();
 
     expect(wrapper.find('.debug-mock').exists()).toBe(true);
     expect(wrapper.find('.request-details-mock').exists()).toBe(true);
   });
 
-  it('forwards clearDebugResults event', () => {
-    const wrapper = mount(DebugSection, {
-      props: defaultProps,
-    });
-
+  it('calls clearDebugResults when Debug clears', () => {
+    const { wrapper, clearDebugResults } = mountSection();
     const debug = wrapper.findComponent('.debug-mock') as VueWrapper;
     debug.vm.$emit('clear');
 
-    expect(wrapper.emitted('clearDebugResults')).toBeTruthy();
+    expect(clearDebugResults).toHaveBeenCalled();
   });
 
-  it('forwards selectDebugResult event', () => {
-    const wrapper = mount(DebugSection, {
-      props: defaultProps,
-    });
-
+  it('calls selectDebugResult when Debug selects', () => {
+    const { wrapper, selectDebugResult } = mountSection();
     const debug = wrapper.findComponent('.debug-mock') as VueWrapper;
     const result = { id: '1' };
     debug.vm.$emit('select', result);
 
-    expect(wrapper.emitted('selectDebugResult')).toBeTruthy();
-    expect(wrapper.emitted('selectDebugResult')![0]).toEqual([result]);
+    expect(selectDebugResult).toHaveBeenCalledWith(result);
   });
 
-  it('forwards selectDebugMarkRead event', () => {
-    const wrapper = mount(DebugSection, {
-      props: defaultProps,
-    });
-
+  it('calls selectDebugMarkRead when Debug marks read', () => {
+    const { wrapper, selectDebugMarkRead } = mountSection();
     const debug = wrapper.findComponent('.debug-mock') as VueWrapper;
     debug.vm.$emit('markRead', '1');
 
-    expect(wrapper.emitted('selectDebugMarkRead')).toBeTruthy();
-    expect(wrapper.emitted('selectDebugMarkRead')![0]).toEqual(['1']);
+    expect(selectDebugMarkRead).toHaveBeenCalledWith('1');
   });
 });

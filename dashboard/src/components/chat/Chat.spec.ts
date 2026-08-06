@@ -3,6 +3,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
+import { appViewContextKey } from '../../composables/use-app-view-context';
+import { mockAppViewContext } from '../../test-utils/mock-app-view-context';
 import type { SocketProvider } from '../../types/socket-provider.model';
 
 vi.mock('../../composables/use-socket-subscription', () => ({
@@ -100,8 +102,14 @@ function makeSocketProvider(): SocketProvider {
 
 function mountChat() {
   return mount(Chat, {
-    props: { socketProvider: makeSocketProvider() },
-    global: { plugins: [activePinia] },
+    global: {
+      plugins: [activePinia],
+      provide: {
+        [appViewContextKey]: mockAppViewContext({
+          socketProvider: makeSocketProvider(),
+        }),
+      },
+    },
   });
 }
 

@@ -34,6 +34,8 @@ vi.mock('../../../stores/socket', () => ({
   }),
 }));
 
+import { appViewContextKey } from '../../composables/use-app-view-context';
+import { mockAppViewContext } from '../../test-utils/mock-app-view-context';
 import Dlq from './Dlq.vue';
 
 let activePinia: ReturnType<typeof createPinia>;
@@ -45,9 +47,14 @@ function mountPanel(props?: Record<string, unknown>) {
   return mount(
     Dlq as Component,
     {
-      props: { models: [], ...props },
+      props,
       global: {
         plugins: [activePinia, [VueQueryPlugin, { queryClient }]],
+        provide: {
+          [appViewContextKey]: mockAppViewContext({
+            viewModels: (props?.models as string[]) ?? [],
+          }),
+        },
       },
     } as any,
   );

@@ -1,6 +1,7 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 import {
   resetTabMenuSettings,
@@ -9,21 +10,41 @@ import {
 } from './composables/tab-menu-settings.state';
 import TabMenu from './TabMenu.vue';
 
-function mountMenu(props: Record<string, unknown> = {}) {
-  const pinia = createPinia();
-  setActivePinia(pinia);
-  return mount(TabMenu, {
-    props: {
-      activeTab: 'http',
-      debugCount: 0,
-      ...props,
-    } as any,
-    global: { plugins: [pinia] },
+// TabMenu uses useRoute() (to close on navigation) and NavMenu renders real
+// RouterLinks, so a router must be installed. A memory router gives both a
+// working useRoute and RouterLink without touching the app's routes.
+function createTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      {
+        path: '/:pathMatch(.*)*',
+        name: 'chat',
+        component: { template: '<div />' },
+      },
+    ],
   });
 }
 
+function mountMenu(
+  props: Record<string, unknown> = {},
+  router: ReturnType<typeof createTestRouter> = createTestRouter(),
+) {
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  const wrapper = mount(TabMenu, {
+    props: {
+      activeTab: 'chat',
+      debugCount: 0,
+      ...props,
+    } as any,
+    global: { plugins: [pinia, router] },
+  });
+  return { wrapper, router };
+}
+
 async function clickNavItem(
-  wrapper: ReturnType<typeof mountMenu>,
+  wrapper: ReturnType<typeof mountMenu>['wrapper'],
   label: string,
 ) {
   const item = wrapper
@@ -46,7 +67,7 @@ describe('TabMenu', () => {
   });
 
   it('renders all four tabs in the drawer', () => {
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     const items = wrapper.findAll('.nav-menu__item');
     expect(items.map((item) => item.attributes('aria-label'))).toEqual([
       'chat',
@@ -57,14 +78,14 @@ describe('TabMenu', () => {
   });
 
   it('pins the theme selector to the bottom of the drawer', () => {
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     expect(wrapper.find('.tab-menu__footer .theme-selector').exists()).toBe(
       true,
     );
   });
 
   it('starts open, docked to the right edge by default', () => {
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     expect(wrapper.classes()).toContain('tab-menu--right');
     expect(wrapper.classes()).not.toContain('tab-menu--closed');
     expect(wrapper.find('.tab-menu__handle').attributes('aria-expanded')).toBe(
@@ -74,27 +95,27 @@ describe('TabMenu', () => {
 
   it('docks to the left edge when configured', () => {
     setTabMenuSide('left');
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     expect(wrapper.classes()).toContain('tab-menu--left');
   });
 
-  it('emits tabChange when a tab icon is clicked', async () => {
-    const wrapper = mountMenu();
+  it('navigates to the clicked tab via the router', async () => {
+    const { wrapper, router } = mountMenu();
     await clickNavItem(wrapper, 'dlq');
-    expect(wrapper.emitted('tabChange')).toBeTruthy();
-    expect(wrapper.emitted('tabChange')![0]).toEqual(['dlq']);
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe('/dlq');
   });
 
   it('marks the active tab', () => {
-    const wrapper = mountMenu({ activeTab: 'dlq' });
+    const { wrapper } = mountMenu({ activeTab: 'dlq' });
     const active = wrapper.find('.nav-menu__item--active');
     expect(active.attributes('aria-label')).toBe('dlq');
-    expect(active.attributes('aria-current')).toBe('true');
+    expect(active.attributes('aria-current')).toBe('page');
   });
 
   it('shows per-tab count badges and the star when provided', () => {
     localStorage.setItem('harness-show-counters', 'true');
-    const wrapper = mountMenu({
+    const { wrapper } = mountMenu({
       activeTab: 'sysctl',
       debugCount: 5,
       showChatStar: true,
@@ -109,7 +130,7 @@ describe('TabMenu', () => {
   });
 
   it('toggles the drawer via the edge handle', async () => {
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     const handle = wrapper.find('.tab-menu__handle');
     await handle.trigger('click');
     expect(wrapper.classes()).toContain('tab-menu--closed');
@@ -119,17 +140,17 @@ describe('TabMenu', () => {
   });
 
   it('stays open after picking a tab by default', async () => {
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     await clickNavItem(wrapper, 'debug');
-    expect(wrapper.emitted('tabChange')![0]).toEqual(['debug']);
+    await flushPromises();
     expect(wrapper.classes()).not.toContain('tab-menu--closed');
   });
 
   it('closes after picking a tab when autoclose is on', async () => {
     setTabMenuAutoClose(true);
-    const wrapper = mountMenu();
+    const { wrapper } = mountMenu();
     await clickNavItem(wrapper, 'debug');
-    expect(wrapper.emitted('tabChange')![0]).toEqual(['debug']);
+    await flushPromises();
     expect(wrapper.classes()).toContain('tab-menu--closed');
   });
 });

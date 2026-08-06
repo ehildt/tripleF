@@ -46,6 +46,9 @@ vi.mock('../../stores/socket', () => ({
   }),
 }));
 
+import { appViewContextKey } from '../../composables/use-app-view-context';
+import { mockAppViewContext } from '../../test-utils/mock-app-view-context';
+
 function mountWithAppContext(component: any, props: Record<string, unknown>) {
   const pinia = createPinia();
   setActivePinia(pinia);
@@ -56,6 +59,10 @@ function mountWithAppContext(component: any, props: Record<string, unknown>) {
   const AppShell = defineComponent({
     setup() {
       provide('VUE_QUERY_CLIENT', queryClient);
+      provide(
+        appViewContextKey,
+        mockAppViewContext({ viewModels: (props.models as string[]) ?? [] }),
+      );
       return () => h('div', null, [h(component, props)]);
     },
   });
