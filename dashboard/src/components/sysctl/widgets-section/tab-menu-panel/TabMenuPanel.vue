@@ -23,6 +23,7 @@ import {
 } from '@/components/app/tab-menu/composables/tab-menu-settings.state';
 import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 
@@ -41,7 +42,7 @@ function setSide(value: string) {
 </script>
 
 <template>
-  <div class="tab-menu-panel panel-glow">
+  <PanelLayout class="tab-menu-panel">
     <CollapsiblePanel id="tabMenu" title="Tab Menu">
       <template #actions>
         <ResetButton
@@ -93,15 +94,10 @@ function setSide(value: string) {
         </div>
       </div>
     </CollapsiblePanel>
-  </div>
+  </PanelLayout>
 </template>
 
 <style scoped>
-.tab-menu-panel {
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-}
-
 .tab-menu-panel__content {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
