@@ -79,7 +79,10 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
         :poster-url="posterUrl"
       />
 
-      <figcaption class="video-item__caption-bar">
+      <figcaption
+        v-if="metaLine || item.caption"
+        class="video-item__caption-bar"
+      >
         <span v-if="metaLine" class="video-item__meta">{{ metaLine }}</span>
         <p v-if="item.caption" class="video-item__caption">
           {{ item.caption }}
