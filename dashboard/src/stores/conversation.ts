@@ -4,7 +4,6 @@ import { ref } from 'vue';
 
 import { getApiUrl } from '../api/api-url';
 import {
-  type ConversationContent,
   deleteConversation as deleteServerConversation,
   fetchConversation,
   fetchConversations,
@@ -91,7 +90,7 @@ async function saveConversationToServer(conversation: Conversation) {
       SESSION_ID,
       conversation.conversationId,
       getLatestRequestId(conversation),
-      content as unknown as ConversationContent,
+      content,
     );
   } catch {
     // Offline — the in-memory store remains usable.

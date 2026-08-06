@@ -10,6 +10,17 @@ import { Prisma, PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../constants/postgres.constants.js';
 
+type FindAllOptions = {
+  status?: string;
+  queueName?: string;
+  nextRetryAtBefore?: Date;
+  nextRetryAtAfter?: Date;
+  limit?: number;
+  offset?: number;
+  requestId?: string;
+  search?: string;
+};
+
 @Injectable()
 export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
   private _prisma: PrismaClient | null = null;
@@ -39,16 +50,7 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
     this._prisma = null;
   }
 
-  async findAll(options: {
-    status?: string;
-    queueName?: string;
-    nextRetryAtBefore?: Date;
-    nextRetryAtAfter?: Date;
-    limit?: number;
-    offset?: number;
-    requestId?: string;
-    search?: string;
-  }) {
+  async findAll(options: FindAllOptions) {
     const where: Prisma.HarnessDlqWhereInput = {};
 
     if (options.status)

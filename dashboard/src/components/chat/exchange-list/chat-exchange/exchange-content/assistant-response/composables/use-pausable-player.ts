@@ -17,6 +17,7 @@ import {
 } from './video-playback.state';
 
 type TemplateRefTarget = Element | ComponentPublicInstance | null;
+type PlayerControls = { play(): void; pause(): void };
 type YouTubePlayerHandle = {
   destroy(): void;
   playVideo(): void;
@@ -39,7 +40,7 @@ export function usePausablePlayer(
   const playerElement = ref<HTMLElement | null>(null);
   let ytPlayer: YouTubePlayerHandle | null = null;
   let detachDirectVideoListeners: (() => void) | null = null;
-  let playerControls: { play(): void; pause(): void } | null = null;
+  let playerControls: PlayerControls | null = null;
   let endNotified = false;
   let endPollTimer: number | undefined;
 
@@ -50,7 +51,7 @@ export function usePausablePlayer(
   }
 
   /** Mount means autoplay intent — register transport controls optimistically. */
-  function registerControls(controls: { play(): void; pause(): void }) {
+  function registerControls(controls: PlayerControls) {
     playerControls = controls;
     registerActivePlayerControls(controls);
     setActivePlaybackPlaying(true);

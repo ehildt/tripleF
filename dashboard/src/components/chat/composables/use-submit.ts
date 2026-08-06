@@ -29,6 +29,19 @@ interface UseSubmitOptions {
   isRoomConnected: (eventName: string, roomName: string) => boolean;
 }
 
+type SendRequestOptions = {
+  model: string;
+  requestId: string;
+  sid: string;
+  room: string;
+  event: string;
+  params: URLSearchParams;
+  formData: FormData;
+  socket: ReturnType<SocketProvider['getSocket']>;
+  referencedImages: UploadedImage[];
+  conversationId: string;
+};
+
 export function useSubmit(options: UseSubmitOptions) {
   const { socketProvider, isEventConnected, isRoomConnected } = options;
 
@@ -339,18 +352,7 @@ export function useSubmit(options: UseSubmitOptions) {
     });
   }
 
-  async function sendRequest(options: {
-    model: string;
-    requestId: string;
-    sid: string;
-    room: string;
-    event: string;
-    params: URLSearchParams;
-    formData: FormData;
-    socket: ReturnType<SocketProvider['getSocket']>;
-    referencedImages: UploadedImage[];
-    conversationId: string;
-  }) {
+  async function sendRequest(options: SendRequestOptions) {
     const {
       model,
       requestId,

@@ -14,6 +14,11 @@ type StepHistorySelection = {
   mode: 'full' | 'derived';
 };
 
+type SelectStepHistoryParams = {
+  messages: InputMessage[];
+  template?: string;
+};
+
 /**
  * Select which conversation history a downstream step (execute/respond)
  * sees. The interpret step already derived a query-focused contextSummary
@@ -22,10 +27,9 @@ type StepHistorySelection = {
  * free-form chat — the last exchange to keep the tone. Everything else is
  * replaced by the contextSummary carried in the step's system prompt.
  */
-export function selectStepHistory(params: {
-  messages: InputMessage[];
-  template?: string;
-}): StepHistorySelection {
+export function selectStepHistory(
+  params: SelectStepHistoryParams,
+): StepHistorySelection {
   const { messages, template } = params;
 
   if (
