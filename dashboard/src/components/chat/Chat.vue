@@ -277,7 +277,6 @@ defineExpose({ actionBarRef });
     ref="mainColumnRef"
     class="lg:col-span-8 lg:col-start-3 min-w-0 h-fit lg:sticky lg:top-12"
     :value="arguments_"
-    :is-compacting="conversationStore.compacting"
     :think-options="filteredThinkOptions"
     :think-value="currentThinkValue"
     :context-size-options="filteredContextSizeOptions"

@@ -9,7 +9,6 @@ import { PinoLoggerService } from '../../pino-logger/services/pino-logger.servic
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { HarnessCancellationService } from '../services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
-import { HarnessCompactService } from '../services/harness-compact.service.js';
 import { HarnessContextService } from '../services/harness-context.service.js';
 import { HarnessStepEngineService } from '../services/harness-step-engine.service.js';
 import { StepRegistryService } from '../services/step-registry.service.js';
@@ -39,7 +38,6 @@ describe('HarnessProcessor', () => {
   let contextService: HarnessContextService;
   let stepEngine: HarnessStepEngineService;
   let chatStreaming: HarnessChatStreamingService;
-  let compactService: HarnessCompactService;
   let dlqLifecycleService: LifecycleService;
   let bullMQLogger: BullMQLoggerService;
 
@@ -102,12 +100,6 @@ describe('HarnessProcessor', () => {
           },
         },
         {
-          provide: HarnessCompactService,
-          useValue: {
-            runCompact: vi.fn().mockResolvedValue(undefined),
-          },
-        },
-        {
           provide: InterpretStepService,
           useValue: {
             execute: vi.fn(),
@@ -148,7 +140,6 @@ describe('HarnessProcessor', () => {
     chatStreaming = module.get<HarnessChatStreamingService>(
       HarnessChatStreamingService,
     );
-    compactService = module.get<HarnessCompactService>(HarnessCompactService);
     dlqLifecycleService = module.get<LifecycleService>(LifecycleService);
     bullMQLogger = module.get<BullMQLoggerService>(BullMQLoggerService);
   });
@@ -171,7 +162,7 @@ describe('HarnessProcessor', () => {
     expect(processor).toBeDefined();
   });
 
-  it('runs context, step engine, and streaming for non-compact tasks', async () => {
+  it('runs context, step engine, and streaming', async () => {
     const job = createJob();
 
     await processor.process(job);
@@ -179,25 +170,6 @@ describe('HarnessProcessor', () => {
     expect(contextService.buildContext).toHaveBeenCalledWith(job);
     expect(stepEngine.run).toHaveBeenCalled();
     expect(chatStreaming.streamResult).toHaveBeenCalled();
-    expect(compactService.runCompact).not.toHaveBeenCalled();
-  });
-
-  it('delegates compact tasks to the compact service', async () => {
-    const job = createJob({
-      data: {
-        meta: [],
-        filters: { compact: true, event: 'harness', roomId: 'room-1' },
-      },
-    } as any);
-
-    await processor.process(job);
-
-    expect(compactService.runCompact).toHaveBeenCalledWith(
-      job,
-      expect.any(AbortSignal),
-    );
-    expect(contextService.buildContext).not.toHaveBeenCalled();
-    expect(stepEngine.run).not.toHaveBeenCalled();
   });
 
   describe('onCompleted', () => {

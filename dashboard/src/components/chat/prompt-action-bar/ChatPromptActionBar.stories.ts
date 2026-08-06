@@ -19,7 +19,6 @@ think/context dropdowns, and the file attachment trigger.
   },
   argTypes: {
     value: { control: 'text' },
-    isCompacting: { control: 'boolean' },
     isDisabled: { control: 'boolean' },
     isFileSelectDisabled: { control: 'boolean' },
     fileSelectDisabledReason: { control: 'text' },
@@ -31,7 +30,6 @@ think/context dropdowns, and the file attachment trigger.
   },
   args: {
     value: '',
-    isCompacting: false,
     thinkOptions: ['off', 'low', 'medium', 'high'],
     thinkValue: 'medium',
     contextSizeOptions: ['2048', '4096', '8192'],

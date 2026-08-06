@@ -44,7 +44,6 @@ const templateValidators: Record<
   imagelist: validateImagelistOutput,
   videolist: validateVideolistOutput,
   text: validateFreeFormOutput,
-  compact: validateFreeFormOutput,
 };
 
 import { MediaUrlValidatorService } from './media-url-validator.service.js';
@@ -96,7 +95,7 @@ export class ResponseValidatorService {
     parsed = sanitizeBlockedImageUrls(parsed) as Record<string, unknown>;
     // Free-form templates may reference URLs in plain text; structured
     // templates must keep URLs inside their designated URL fields.
-    if (template !== 'text' && template !== 'compact') {
+    if (template !== 'text') {
       parsed = stripUrlsFromTextFields(parsed) as Record<string, unknown>;
     }
 

@@ -27,7 +27,7 @@ const meta = {
     docs: {
       description: {
         component: `The body of a single exchange: the role-colored divider, the content
-container (compacting/streaming dot indicator, assistant response templates,
+container (streaming dot indicator, assistant response templates,
 or a user request), and the streaming cursor. Emits imageClicked for the
 parent to handle the lightbox.`,
       },
@@ -39,7 +39,6 @@ parent to handle the lightbox.`,
     isPending: { control: 'boolean' },
     isStreaming: { control: 'boolean' },
     isHighlighted: { control: 'boolean' },
-    isCompacting: { control: 'boolean' },
   },
   args: {
     exchange: baseAssistantExchange,
@@ -48,7 +47,6 @@ parent to handle the lightbox.`,
     isPending: false,
     isStreaming: false,
     isHighlighted: false,
-    isCompacting: false,
     onImageClicked: fn(),
   },
 } satisfies Meta<typeof ExchangeContent>;
@@ -80,15 +78,6 @@ export const ErrorState: Story = {
 export const PendingEmpty: Story = {
   args: {
     isPending: true,
-    exchange: { ...baseAssistantExchange, status: 'pending', content: '' },
-  },
-};
-
-/** Pending state with compacting conversation indicator. */
-export const Compacting: Story = {
-  args: {
-    isPending: true,
-    isCompacting: true,
     exchange: { ...baseAssistantExchange, status: 'pending', content: '' },
   },
 };

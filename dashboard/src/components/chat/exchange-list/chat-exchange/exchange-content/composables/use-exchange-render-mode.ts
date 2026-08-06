@@ -10,12 +10,10 @@ export interface ExchangeRenderFlags {
   isPending: boolean;
   isStreaming: boolean;
   isHighlighted: boolean;
-  isCompacting: boolean;
 }
 
 /** What the exchange body renders, in template branch precedence order. */
 export type ExchangeRenderMode =
-  | 'compacting'
   | 'reasoning'
   | 'pending-empty'
   | 'streaming-skeleton'
@@ -41,11 +39,9 @@ export function useExchangeRenderMode(
 
   const renderMode = computed<ExchangeRenderMode>(() => {
     const current = toValue(exchange);
-    const { isUser, isError, isPending, isStreaming, isCompacting } =
-      toValue(flags);
+    const { isUser, isError, isPending, isStreaming } = toValue(flags);
 
     if (isPending && !current.content) {
-      if (isCompacting) return 'compacting';
       return current.reasoning ? 'reasoning' : 'pending-empty';
     }
 
