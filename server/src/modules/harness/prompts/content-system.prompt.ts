@@ -20,7 +20,7 @@ import { buildSourcePolicyPrompt } from './shared/source-policy.prompt.js';
 import { SOURCE_TRUTH_RULES } from './shared/source-truth.prompt.js';
 import { TOOL_RESULTS_RULES } from './shared/tool-results.prompt.js';
 
-export function buildContentSystemPrompt(params: {
+type ContentSystemPromptParams = {
   template: string;
   instructions?: string;
   tools: string[];
@@ -30,7 +30,11 @@ export function buildContentSystemPrompt(params: {
   contextSummary?: string;
   language?: string;
   sources?: SourcesConfig;
-}): string {
+};
+
+export function buildContentSystemPrompt(
+  params: ContentSystemPromptParams,
+): string {
   const isTextTemplate = params.template === 'text';
   const isCompactTemplate = params.template === 'compact';
   const isFreeForm = isTextTemplate || isCompactTemplate;

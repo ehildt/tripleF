@@ -1,3 +1,9 @@
+import type {
+  ConversationSubscription,
+  Exchange,
+  SavedFileInfo,
+  UploadedImage,
+} from '../stores/conversation.model';
 import { getApiUrl } from './api-url';
 
 export interface ConversationContent {
@@ -12,11 +18,11 @@ export interface ConversationContent {
   type?: 'temporary' | 'persistent';
   task?: string;
   conversationId: string;
-  exchanges: Record<string, unknown>[];
-  savedFileInfos?: Record<string, unknown>[];
-  uploadedImages?: Record<string, unknown>[];
+  exchanges: Exchange[];
+  savedFileInfos?: SavedFileInfo[];
+  uploadedImages?: UploadedImage[];
   imageSelectionSnapshot?: Record<string, boolean>;
-  subscriptions?: Record<string, unknown>[];
+  subscriptions?: ConversationSubscription[];
   createdAt?: number;
   updatedAt?: number;
 }

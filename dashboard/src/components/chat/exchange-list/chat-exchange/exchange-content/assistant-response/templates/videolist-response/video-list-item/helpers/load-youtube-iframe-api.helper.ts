@@ -1,3 +1,5 @@
+type YouTubePlayerStateEvent = { data: number };
+
 declare global {
   interface Window {
     YT?: {
@@ -8,7 +10,7 @@ declare global {
           host?: string;
           events?: {
             onReady?: () => void;
-            onStateChange?: (event: { data: number }) => void;
+            onStateChange?: (event: YouTubePlayerStateEvent) => void;
           };
         },
       ) => {

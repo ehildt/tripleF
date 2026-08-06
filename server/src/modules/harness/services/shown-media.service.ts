@@ -19,6 +19,14 @@ export interface ShownMediaKeys {
   videos: Set<string>;
 }
 
+type RecordShownMediaParams = {
+  sessionId: string | undefined;
+  conversationId: string | undefined;
+  requestId: string;
+  data: Record<string, unknown> | undefined;
+  sources: ShownMediaKeySourceOptions;
+};
+
 /**
  * Orchestrates the shown-media registry for the harness pipeline: records
  * rendered media after a response, and looks the registry up while
@@ -49,13 +57,7 @@ export class ShownMediaService {
   }
 
   /** Record the media keys a guarded response rendered, best-effort per key. */
-  async recordShownMedia(params: {
-    sessionId: string | undefined;
-    conversationId: string | undefined;
-    requestId: string;
-    data: Record<string, unknown> | undefined;
-    sources: ShownMediaKeySourceOptions;
-  }): Promise<number> {
+  async recordShownMedia(params: RecordShownMediaParams): Promise<number> {
     const { sessionId, conversationId, requestId, data, sources } = params;
     if (!sessionId || !conversationId || !data) return 0;
 

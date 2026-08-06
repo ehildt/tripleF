@@ -1,5 +1,6 @@
 import { Job } from 'bullmq';
 
+import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
 import type { IngestedImage } from '../helpers/download-and-ingest-images.helper.js';
@@ -33,7 +34,7 @@ export type HarnessContext = {
   steps: Map<StepId, StepState>;
   outputs: {
     intent?: IntentResult;
-    toolResults: Array<{ toolName: string; result: unknown }>;
+    toolResults: ToolResult[];
     ingestedForRewrite?: IngestedImage[];
     /** Model-visible (deduped) media for the client render/fallback. */
     availableImages?: Array<{ url: string; title?: string }>;

@@ -14,10 +14,10 @@ export class DlqEntryResponseDto {
   status!: string;
 
   @ApiProperty({ required: false })
-  payload?: object;
+  payload?: Record<string, unknown>;
 
   @ApiProperty({ required: false })
-  retryConfig?: object;
+  retryConfig?: Record<string, unknown>;
 
   @ApiProperty({ required: false })
   failedReason?: string;
