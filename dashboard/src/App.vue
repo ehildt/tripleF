@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { onBeforeMount, onMounted, onUnmounted, provide, watch } from 'vue';
+import {
+  computed,
+  onBeforeMount,
+  onMounted,
+  onUnmounted,
+  provide,
+  watch,
+} from 'vue';
 import { useRoute } from 'vue-router';
 
 import AppFooter from './components/app/app-footer/AppFooter.vue';
@@ -64,9 +71,13 @@ const socketProvider = createSocketProvider(
 
 provide(appViewContextKey, {
   socketProvider,
-  viewModels: modelsStore.modelNames,
-  debugResults: debugStore.debugResults,
-  selectedDebugResult: debugStore.selectedDebugResult,
+  // Store-derived data is provided as computed refs (not unwrapped values)
+  // so route views react to store changes — e.g. selecting a debug request
+  // must update the details panel, and models must appear in the DLQ selector
+  // once they finish loading.
+  viewModels: computed(() => modelsStore.modelNames),
+  debugResults: computed(() => debugStore.debugResults),
+  selectedDebugResult: computed(() => debugStore.selectedDebugResult),
   clearDebugResults: debugStore.clearDebugResults,
   selectDebugResult: (result) => {
     debugStore.selectedDebugResult = result;
