@@ -136,6 +136,6 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
   }
 
   private getFailedReason(job: Job<HarnessJobPayload>): string | undefined {
-    return (job as any).failedReason;
+    return job.failedReason;
   }
 }
