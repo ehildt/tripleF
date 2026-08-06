@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 
 import type { Exchange } from '@/stores/conversation';
+import { stripHtml } from '@/utils/strip-html.helper';
 
-import { stripHtml } from '../helpers/strip-html.helper';
 import { truncateText } from '../helpers/truncate-text.helper';
 
 const props = defineProps<{
