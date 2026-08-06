@@ -30,6 +30,7 @@ import { computed } from 'vue';
 import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -131,7 +132,7 @@ function setHorizontal(value: string) {
 </script>
 
 <template>
-  <div class="toast-panel panel-glow">
+  <PanelLayout class="toast-panel">
     <CollapsiblePanel id="toast" title="Toast Notifications">
       <template #actions>
         <PreviewButton
@@ -230,15 +231,10 @@ function setHorizontal(value: string) {
         </div>
       </div>
     </CollapsiblePanel>
-  </div>
+  </PanelLayout>
 </template>
 
 <style scoped>
-.toast-panel {
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-}
-
 .toast-panel__content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);

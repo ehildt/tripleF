@@ -4,6 +4,7 @@
  * popout, the floating playlist, the toast notifications, and the
  * slide-out tab menu.
  */
+import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
 import PlaylistPanel from './playlist-panel/PlaylistPanel.vue';
 import TabMenuPanel from './tab-menu-panel/TabMenuPanel.vue';
 import ToastPanel from './toast-panel/ToastPanel.vue';
@@ -11,19 +12,10 @@ import VideoPopoutPanel from './video-popout-panel/VideoPopoutPanel.vue';
 </script>
 
 <template>
-  <div class="widgets-section">
+  <SysCtlSection>
     <VideoPopoutPanel />
     <PlaylistPanel />
     <ToastPanel />
     <TabMenuPanel />
-  </div>
+  </SysCtlSection>
 </template>
-
-<style scoped>
-.widgets-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1);
-}
-</style>

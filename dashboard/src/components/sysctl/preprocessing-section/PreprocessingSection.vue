@@ -8,6 +8,7 @@ import { ref, watch } from 'vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
 import PprocToolsPanel from '../../pproc/tools-panel/PprocToolsPanel.vue';
+import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
 
 const store = usePreprocessingStore();
 
@@ -27,18 +28,12 @@ watch(
 </script>
 
 <template>
-  <div class="preprocessing-section" :class="{ 'panel-changed': panelChanged }">
+  <SysCtlSection :class="{ 'panel-changed': panelChanged }">
     <PprocToolsPanel />
-  </div>
+  </SysCtlSection>
 </template>
 
 <style scoped>
-.preprocessing-section {
-  display: flex;
-  flex-direction: column;
-  padding: var(--spacing-1);
-}
-
 .panel-changed {
   animation: preprocessing-panel-changed 0.4s ease;
 }
