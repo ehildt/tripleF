@@ -224,20 +224,18 @@ export function useSubmit(options: UseSubmitOptions) {
     conversationMetadata: ConversationMetadata,
     conversationId: string,
   ): URLSearchParams {
-    const params = buildQueryParams({
-      requestId: ref(requestId),
-      sessionId: ref(sid ?? ''),
-      conversationId: ref(conversationId),
-      roomId: ref(room),
-      stream: ref(activeConversation.value?.stream ?? true),
-      event: ref(event),
-      numCtx: ref(activeConversation.value?.numCtx ?? ''),
-      think: ref(activeConversation.value?.think ?? 'medium'),
-      hasNewImages: ref(hasNewImages),
-      conversationMetadata: ref(conversationMetadata),
+    return buildQueryParams({
+      requestId,
+      sessionId: sid ?? '',
+      conversationId,
+      roomId: room,
+      stream: activeConversation.value?.stream ?? true,
+      event,
+      numCtx: activeConversation.value?.numCtx ?? '',
+      think: activeConversation.value?.think ?? 'medium',
+      hasNewImages,
+      conversationMetadata,
     });
-
-    return params;
   }
 
   async function submitRest() {

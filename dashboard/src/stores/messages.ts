@@ -6,7 +6,7 @@ import {
   type HarnessResponseState,
 } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/create-harness-response-state.helper';
 import { processHarnessResponseEvent } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/process-harness-response-event.helper';
-import { useConversationStore } from '@/stores/conversation';
+import { type Exchange, useConversationStore } from '@/stores/conversation';
 
 import { useReadTracker } from '../composables/use-read-tracker';
 import { useAppStore } from '../stores/app';
@@ -25,6 +25,19 @@ import { normalizeRawData } from './helpers/normalize-raw-data.helper';
  * phase is over, the response is being assembled token by token.
  */
 const STREAMING_ACTIVITY_LABEL = 'Assembling the response…';
+
+type Conversation = ReturnType<
+  typeof useConversationStore
+>['conversations'][number];
+
+function findAssistantExchange(
+  conversation: Conversation,
+  requestId: string,
+): Exchange | undefined {
+  return conversation.exchanges.find(
+    (e) => e.requestId === requestId && e.role === 'assistant',
+  );
+}
 
 export const useApiMessagesStore = defineStore('apiMessages', () => {
   const messages = ref<Message[]>([]);
@@ -96,9 +109,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       event,
     );
 
-    const existing = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
+    const existing = findAssistantExchange(conversation, requestId);
 
     const isError = isErrorStreamEvent(d);
     const status = d.done === true ? 'done' : 'streaming';
@@ -308,9 +319,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         evalCount: d.evalCount,
       });
     } else {
-      const ex = conversation.exchanges.find(
-        (e) => e.requestId === requestId && e.role === 'assistant',
-      );
+      const ex = findAssistantExchange(conversation, requestId);
       if (ex) {
         ex.toolCalls = undefined;
         // Streamed content ends the thinking phase — see
@@ -344,9 +353,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
 
     ensureConversationNumCtx(conversation);
 
-    const ex = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
+    const ex = findAssistantExchange(conversation, requestId);
     if (ex) {
       ex.activity = undefined;
       ex.reasoning = undefined;
@@ -354,9 +361,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
 
     if (raw.compact === true) {
-      const ex = conversation.exchanges.find(
-        (e) => e.requestId === requestId && e.role === 'assistant',
-      );
+      const ex = findAssistantExchange(conversation, requestId);
       if (ex && ex.content.trim()) {
         ex.requestId = undefined;
         conversation.exchanges = [ex];
@@ -374,9 +379,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     if (raw.compact === true || raw.done === true) return;
     const status = raw.status as string | undefined;
     if (!status || status === 'canceled') return;
-    const ex = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
+    const ex = findAssistantExchange(conversation, requestId);
     if (ex) ex.activity = status;
   }
 
@@ -389,9 +392,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
   ) {
     const delta = raw.reasoningDelta as string | undefined;
     if (!delta) return;
-    const ex = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
+    const ex = findAssistantExchange(conversation, requestId);
     if (ex) ex.reasoning = (ex.reasoning ?? '') + delta;
   }
 
@@ -413,9 +414,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     if (!tc?.name) return;
     const conversationStore = useConversationStore();
 
-    let ex = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
+    let ex = findAssistantExchange(conversation, requestId);
     if (!ex) {
       conversationStore.addExchange(conversation.id, {
         role: 'assistant',
@@ -423,9 +422,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         requestId,
         status: 'pending',
       });
-      ex = conversation.exchanges.find(
-        (e) => e.requestId === requestId && e.role === 'assistant',
-      );
+      ex = findAssistantExchange(conversation, requestId);
     }
     if (!ex) return;
 
