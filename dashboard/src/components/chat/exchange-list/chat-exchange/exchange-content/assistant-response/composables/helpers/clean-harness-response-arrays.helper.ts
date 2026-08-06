@@ -62,11 +62,15 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
     data.videoGalleryItems,
     (item) => isMeaningfulString(item.videoUrl) && isVideoUrl(item.videoUrl),
   );
+  // Related-story cards are designed to hold an image — a card without a
+  // valid, trusted thumbnail renders as an empty placeholder box. Drop it so
+  // the section only ever shows image-backed cards.
   data.relatedStories = filterArray(
     data.relatedStories,
     (story) =>
-      !!(story.title || story.url) ||
-      (isMeaningfulString(story.imageUrl) && isTrustedImageUrl(story.imageUrl)),
+      isMeaningfulString(story.imageUrl) &&
+      isTrustedImageUrl(story.imageUrl) &&
+      !!(story.title || story.url),
   )?.map(blankUnsafeLink);
   data.internationalCoverage = filterArray(
     data.internationalCoverage,

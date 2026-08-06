@@ -6,10 +6,12 @@ import {
   renamePlaylist as renamePlaylistApi,
   savePlaylist as savePlaylistApi,
 } from '@/api/playlists.api';
+import { useToast } from '@/composables/use-toast';
 import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 const SESSION_ID = getPersistentSocketSessionId();
+const toast = useToast();
 
 export interface Playlist {
   name: string;
@@ -78,23 +80,42 @@ export function setActivePlaylist(name: string) {
   persistActivePlaylist();
 }
 
+/**
+ * Monotonic counter bumped on every local playlist mutation. A `loadPlaylists`
+ * fetch that started before a mutation must not clobber the newer in-memory
+ * state with a stale server snapshot — otherwise a just-added video (and its
+ * url) can appear to be lost when a conversation switch triggers a reload.
+ */
+let playlistMutationCount = 0;
+
+function markMutation() {
+  playlistMutationCount += 1;
+}
+
 /** Load all playlists for the session, restoring the active playlist
  *  (defaulting to the first one). */
 export async function loadPlaylists() {
+  const mutationAtStart = playlistMutationCount;
   const fetched = await fetchAllPlaylists(SESSION_ID);
+  // Discard the snapshot if the playlist state changed while we were
+  // fetching — the caller holds fresher data.
+  if (playlistMutationCount !== mutationAtStart) return;
   setPlaylists(fetched);
   if (!activePlaylistName.value && fetched.length > 0) {
     setActivePlaylist(fetched[0].name);
   }
 }
 
+/** Persist a playlist, surfacing a toast if the save fails (never silent). */
 function persistPlaylist(playlist: Playlist) {
-  void savePlaylistApi(
+  savePlaylistApi(
     SESSION_ID,
     playlist.conversationId,
     playlist.name,
     playlist.videos as Array<Record<string, unknown>>,
-  );
+  ).catch(() => {
+    toast.error(`Could not save playlist "${playlist.name}"`);
+  });
 }
 
 /** Add a video to the active playlist (deduped by URL), persisting it. */
@@ -103,6 +124,7 @@ export function addVideoToActivePlaylist(video: VideoGalleryItem) {
   if (!active || !video.videoUrl) return;
   if (active.videos.some((item) => item.videoUrl === video.videoUrl)) return;
   active.videos = [...active.videos, video];
+  markMutation();
   persistPlaylist(active);
 }
 
@@ -111,6 +133,7 @@ export function removeVideoFromActivePlaylist(videoUrl: string) {
   const active = getActivePlaylist();
   if (!active) return;
   active.videos = active.videos.filter((item) => item.videoUrl !== videoUrl);
+  markMutation();
   persistPlaylist(active);
 }
 
@@ -122,6 +145,7 @@ export function createPlaylist(conversationId: string, name: string) {
   const playlist: Playlist = { name: trimmed, videos: [], conversationId };
   setPlaylists([...playlists.value, playlist]);
   setActivePlaylist(trimmed);
+  markMutation();
   persistPlaylist(playlist);
 }
 
@@ -136,7 +160,15 @@ export function renamePlaylist(oldName: string, newName: string): boolean {
   const renamed: Playlist = { ...playlist, name: trimmed };
   setPlaylists(playlists.value.map((p) => (p.name === oldName ? renamed : p)));
   if (activePlaylistName.value === oldName) setActivePlaylist(trimmed);
-  void renamePlaylistApi(SESSION_ID, playlist.conversationId, oldName, trimmed);
+  markMutation();
+  renamePlaylistApi(
+    SESSION_ID,
+    playlist.conversationId,
+    oldName,
+    trimmed,
+  ).catch(() => {
+    toast.error(`Could not rename playlist "${oldName}"`);
+  });
   return true;
 }
 
@@ -150,7 +182,10 @@ export function deletePlaylist(name: string) {
     setActivePlaylist(next[0]?.name ?? '');
   }
   if (playlist) {
-    void deletePlaylistApi(SESSION_ID, playlist.conversationId, name);
+    markMutation();
+    deletePlaylistApi(SESSION_ID, playlist.conversationId, name).catch(() => {
+      toast.error(`Could not delete playlist "${name}"`);
+    });
   }
 }
 

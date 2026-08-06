@@ -7,10 +7,21 @@ export interface PlaylistSnapshot {
   updatedAt?: string;
 }
 
+/**
+ * Playlist names are user input (spaces, slashes, #, ?, …) but live in the
+ * URL path. Always encode each segment so a name never shifts the route or
+ * gets truncated by the fragment/query parsing.
+ */
+function encodeSegment(segment: string): string {
+  return encodeURIComponent(segment);
+}
+
 export async function fetchAllPlaylists(
   sessionId: string,
 ): Promise<PlaylistSnapshot[]> {
-  const res = await fetch(getApiUrl(`/api/v1/playlists/${sessionId}`));
+  const res = await fetch(
+    getApiUrl(`/api/v1/playlists/${encodeSegment(sessionId)}`),
+  );
   if (!res.ok) throw new Error(`Failed to list playlists: ${res.status}`);
   return (await res.json()) as PlaylistSnapshot[];
 }
@@ -20,7 +31,9 @@ export async function fetchPlaylists(
   conversationId: string,
 ): Promise<PlaylistSnapshot[]> {
   const res = await fetch(
-    getApiUrl(`/api/v1/playlists/${sessionId}/${conversationId}`),
+    getApiUrl(
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}`,
+    ),
   );
   if (!res.ok) throw new Error(`Failed to list playlists: ${res.status}`);
   return (await res.json()) as PlaylistSnapshot[];
@@ -33,7 +46,9 @@ export async function savePlaylist(
   videos: Array<Record<string, unknown>>,
 ): Promise<void> {
   const res = await fetch(
-    getApiUrl(`/api/v1/playlists/${sessionId}/${conversationId}/${name}`),
+    getApiUrl(
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}/${encodeSegment(name)}`,
+    ),
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -51,7 +66,7 @@ export async function renamePlaylist(
 ): Promise<void> {
   const res = await fetch(
     getApiUrl(
-      `/api/v1/playlists/${sessionId}/${conversationId}/${name}/rename`,
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}/${encodeSegment(name)}/rename`,
     ),
     {
       method: 'PUT',
@@ -68,7 +83,9 @@ export async function deletePlaylist(
   name: string,
 ): Promise<void> {
   const res = await fetch(
-    getApiUrl(`/api/v1/playlists/${sessionId}/${conversationId}/${name}`),
+    getApiUrl(
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}/${encodeSegment(name)}`,
+    ),
     { method: 'DELETE' },
   );
   if (!res.ok) throw new Error(`Failed to delete playlist: ${res.status}`);

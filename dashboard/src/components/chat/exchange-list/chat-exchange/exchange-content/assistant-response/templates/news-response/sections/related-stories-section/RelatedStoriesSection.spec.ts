@@ -9,12 +9,20 @@ describe('RelatedStoriesSection', () => {
     expect(wrapper.find('section').exists()).toBe(false);
   });
 
-  it('renders story links as a grid of cards', () => {
+  it('renders story links as a grid of image-backed cards', () => {
     const wrapper = mount(RelatedStoriesSection, {
       props: {
         items: [
-          { title: 'Story A', url: 'https://a.com' },
-          { title: 'Story B', url: 'https://b.com' },
+          {
+            title: 'Story A',
+            url: 'https://a.com',
+            imageUrl: 'https://a.com/1.jpg',
+          },
+          {
+            title: 'Story B',
+            url: 'https://b.com',
+            imageUrl: 'https://b.com/2.jpg',
+          },
         ],
       },
     });
@@ -35,6 +43,7 @@ describe('RelatedStoriesSection', () => {
             url: 'https://a.com',
             sourceName: 'A News',
             date: 'Today',
+            imageUrl: 'https://a.com/1.jpg',
           },
         ],
       },
@@ -47,7 +56,12 @@ describe('RelatedStoriesSection', () => {
   it('falls back to the raw url when no title is provided', () => {
     const wrapper = mount(RelatedStoriesSection, {
       props: {
-        items: [{ url: 'https://example.com' }],
+        items: [
+          {
+            url: 'https://example.com',
+            imageUrl: 'https://example.com/img.jpg',
+          },
+        ],
       },
     });
 
@@ -78,7 +92,13 @@ describe('RelatedStoriesSection', () => {
   it('uses a single-column layout for one item', () => {
     const wrapper = mount(RelatedStoriesSection, {
       props: {
-        items: [{ title: 'Solo Story', url: 'https://solo.com' }],
+        items: [
+          {
+            title: 'Solo Story',
+            url: 'https://solo.com',
+            imageUrl: 'https://solo.com/img.jpg',
+          },
+        ],
       },
     });
 
@@ -86,12 +106,18 @@ describe('RelatedStoriesSection', () => {
     expect(wrapper.find('.related-stories--single').exists()).toBe(true);
   });
 
-  it('filters out malformed entries such as plain strings', () => {
+  it('filters out entries without an image', () => {
     const wrapper = mount(RelatedStoriesSection, {
       props: {
         items: [
           'https://ignored.com',
           { title: 'Valid', url: 'https://valid.com' },
+          { title: 'No Image', url: 'https://noimg.com' },
+          {
+            title: 'Image',
+            url: 'https://img.com',
+            imageUrl: 'https://img.com/1.jpg',
+          },
           null as unknown as never,
           {},
         ],
@@ -99,7 +125,9 @@ describe('RelatedStoriesSection', () => {
     });
 
     expect(wrapper.findAll('li')).toHaveLength(1);
-    expect(wrapper.text()).toContain('Valid');
+    expect(wrapper.text()).toContain('Image');
+    expect(wrapper.text()).not.toContain('Valid');
+    expect(wrapper.text()).not.toContain('No Image');
     expect(wrapper.text()).not.toContain('ignored.com');
   });
 
