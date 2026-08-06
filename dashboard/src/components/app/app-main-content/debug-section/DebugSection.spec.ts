@@ -1,8 +1,15 @@
 import { mount, type VueWrapper } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
+import { computed, nextTick } from 'vue';
 
 import { appViewContextKey } from '@/composables/use-app-view-context';
-import { mockAppViewContext } from '@/test-utils/mock-app-view-context';
+import { useDebugStore } from '@/stores/debug';
+import {
+  makeMockSocketProvider,
+  mockAppViewContext,
+} from '@/test-utils/mock-app-view-context';
+import type { DebugResult } from '@/types/debug.model';
 
 import DebugSection from './DebugSection.vue';
 
@@ -82,5 +89,48 @@ describe('DebugSection', () => {
     debug.vm.$emit('markRead', '1');
 
     expect(selectDebugMarkRead).toHaveBeenCalledWith('1');
+  });
+
+  it('updates the details panel reactively when a request is selected', async () => {
+    // Mirrors the real App.vue provide: store-derived fields are computed
+    // refs, and selectDebugResult mutates the store — so selecting a request
+    // must surface in the RequestDetails panel. Regression: the context used
+    // to provide a one-time unwrapped snapshot, so the detail never updated.
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const debugStore = useDebugStore();
+    const result = { id: 'req-1', endpoint: '/api/health' } as DebugResult;
+
+    const wrapper = mount(DebugSection, {
+      global: {
+        provide: {
+          [appViewContextKey]: {
+            socketProvider: makeMockSocketProvider(),
+            viewModels: computed(() => []),
+            debugResults: computed(() => [result]),
+            selectedDebugResult: computed(() => debugStore.selectedDebugResult),
+            clearDebugResults: vi.fn(),
+            selectDebugResult: (r) => {
+              debugStore.selectedDebugResult = r;
+            },
+            selectDebugMarkRead: vi.fn(),
+          },
+        },
+      },
+    });
+
+    // Before selecting, the details mock has no result.
+    expect(
+      wrapper.findComponent('.request-details-mock').props('result'),
+    ).toBeNull();
+
+    const debug = wrapper.findComponent('.debug-mock') as VueWrapper;
+    debug.vm.$emit('select', result);
+    await nextTick();
+
+    // The panel now receives the selected result via the reactive context.
+    expect(
+      wrapper.findComponent('.request-details-mock').props('result'),
+    ).toEqual(result);
   });
 });
