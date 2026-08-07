@@ -14,14 +14,12 @@ const meta = {
       subtitle: 'Premium noise-cancelling over-ear headphones',
       shortDescription:
         'The Sony WH-1000XM5 delivers industry-leading noise cancellation with 30 hours of battery life. A top-tier choice for commuters and audiophiles.',
-      heroImageUrl: 'https://via.placeholder.com/400x400?text=WM+Headphones',
+      heroImageUrl:
+        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200',
       heroImageAlt: 'Sony WH-1000XM5 headphones',
-      priceRange: '€289.00 – €319.00',
       aggregateRating: 4.6,
       aggregateRatingCount: 12847,
       aggregateRatingLabel: 'Excellent',
-      buyAdvice:
-        'Best deal: MediaMarkt at €289.00 with in-store pickup — €30 below the next offer.',
       keyPoints: [
         { text: 'Industry-leading noise cancellation' },
         { text: '30-hour battery life with quick charge' },
@@ -66,21 +64,18 @@ const meta = {
           link: 'https://mediamarkt.com/example',
         },
       ],
-      reviewSummary: [
-        {
-          text: 'Exceptional noise cancellation rivals Bose QuietComfort Ultra.',
-        },
-        {
-          text: 'Battery life consistently exceeds the stated 30-hour claim with ANC on.',
-        },
-        {
-          text: 'Build quality is premium but some find the clamp force a little tight.',
-        },
-      ],
       videoGalleryItems: [
         {
           videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
           title: 'Hands-on Review',
+        },
+        {
+          videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          title: 'Unboxing',
+        },
+        {
+          videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          title: 'Long-term Test',
         },
       ],
       sources: [
@@ -97,7 +92,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Fully populated product response with shop offers, media, and reviews. */
+/** Fully populated product response with banner, specs, videos, and offers. */
 export const Default: Story = {};
 
 /** No data — shows the empty state message. */

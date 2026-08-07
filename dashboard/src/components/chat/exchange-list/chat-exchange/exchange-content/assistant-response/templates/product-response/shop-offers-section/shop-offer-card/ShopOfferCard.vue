@@ -19,46 +19,49 @@ const displayPrice = computed(() => props.offer.price ?? 'Check price');
     class="offer__link offer"
     :class="{ 'offer--best': isBestPrice }"
   >
-    <!-- Store + product info -->
-    <div class="offer__left">
-      <span v-if="offer.source" class="offer__store-badge">
-        {{ offer.source }}
-      </span>
-      <div class="offer__text">
-        <span v-if="offer.title" class="offer__title">{{ offer.title }}</span>
-        <span class="offer__meta">
+    <div class="offer__body">
+      <!-- Shop name as the title, with the shop rating after it -->
+      <div class="offer__header">
+        <div class="offer__header-left">
+          <span v-if="offer.source" class="offer__shop">
+            {{ offer.source }}
+          </span>
           <StarRatingIndicator
             v-if="offer.rating"
             :rating="offer.rating"
             :count="offer.ratingCount"
           />
-          <span v-if="offer.delivery" class="offer__delivery">
-            {{ offer.delivery }}
-          </span>
-        </span>
+        </div>
+        <span v-if="isBestPrice" class="offer__best-badge">Best price</span>
       </div>
-    </div>
 
-    <!-- Price + CTA -->
-    <div class="offer__right">
-      <span v-if="isBestPrice" class="offer__best-badge">Best price</span>
-      <span class="offer__price">{{ displayPrice }}</span>
-      <span class="offer__cta">→</span>
+      <!-- Offer text, delivery, and price in a single row -->
+      <div class="offer__row">
+        <span v-if="offer.title" class="offer__text">{{ offer.title }}</span>
+        <span v-if="offer.delivery" class="offer__delivery">
+          {{ offer.delivery }}
+        </span>
+        <span class="offer__price">{{ displayPrice }}</span>
+      </div>
     </div>
   </a>
 </template>
 
 <style scoped>
 .offer__link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-1);
+  display: block;
+  padding: var(--spacing-0-5);
   text-decoration: none;
   color: inherit;
   border-bottom: 1px solid var(--color-divider);
   transition: background-color 0.2s ease;
+}
+
+/* Reset the global .exchange-message div padding that leaks into the card's
+   inner divs (specificity (0,2,1) beats a bare class). */
+.offer__link .offer__body,
+.offer__link .offer__body div {
+  padding: 0;
 }
 
 .offer__link:first-child {
@@ -73,61 +76,37 @@ const displayPrice = computed(() => props.offer.price ?? 'Check price');
   );
 }
 
-/* Left side: store + info */
-
-.offer__left {
-  display: flex;
-  align-items: baseline;
-  gap: var(--spacing-2);
-  min-width: 0;
-  flex: 1;
-}
-
-.offer__store-badge {
-  flex-shrink: 0;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--color-fg-primary);
-}
-
-.offer__text {
+.offer__body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-0-5);
+}
+
+/* Header: shop name (title) + rating, best-price marker on the right */
+
+.offer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-0-5);
+}
+
+.offer__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
   min-width: 0;
 }
 
-.offer__title {
-  font-size: 0.85rem;
-  line-height: 1.35;
-  color: var(--color-fg-secondary);
+.offer__shop {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-fg-primary);
   overflow-wrap: anywhere;
 }
 
-.offer__meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-2);
-}
-
-.offer__delivery {
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-muted);
-}
-
-/* Right side: best-price marker + price + arrow */
-
-.offer__right {
-  flex-shrink: 0;
-  display: flex;
-  align-items: baseline;
-  gap: var(--spacing-2);
-  text-align: right;
-}
-
 .offer__best-badge {
+  flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 700;
   font-family: var(--font-mono);
@@ -136,26 +115,42 @@ const displayPrice = computed(() => props.offer.price ?? 'Check price');
   color: var(--color-status-success);
 }
 
-.offer--best .offer__price {
-  color: var(--color-status-success);
+/* Row: offer text + delivery + price */
+
+.offer__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-0-5);
+  min-width: 0;
+}
+
+.offer__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--color-fg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer__delivery {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+  white-space: nowrap;
 }
 
 .offer__price {
+  flex-shrink: 0;
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--color-fg-primary);
 }
 
-.offer__cta {
-  font-size: 1rem;
-  color: var(--color-fg-muted);
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.offer__link:hover .offer__cta {
-  color: var(--color-accent-primary);
-  transform: translateX(2px);
+.offer--best .offer__price {
+  color: var(--color-status-success);
 }
 </style>

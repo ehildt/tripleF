@@ -2,10 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
-import type {
-  HarnessResponseData,
-  ShopOffer,
-} from '@/types/harness-response-data.model';
+import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 import ProductResponse from './ProductResponse.vue';
 
@@ -17,44 +14,34 @@ function mountProduct(data: Partial<HarnessResponseData>) {
 }
 
 describe('ProductResponse', () => {
-  it('renders spotlight hero with title and lead description', () => {
+  it('renders banner with title and rating overlay', () => {
     const wrapper = mountProduct({
       title: 'Sony WH-1000XM5',
       shortDescription: 'Premium wireless noise-cancelling headphones.',
       category: 'Tech',
+      aggregateRating: 4.6,
+      aggregateRatingCount: 12847,
+      aggregateRatingLabel: 'Excellent',
+      heroImageUrl: 'https://example.com/hero.jpg',
     });
 
-    expect(wrapper.find('.spotlight__title').text()).toBe('Sony WH-1000XM5');
-    expect(wrapper.find('.spotlight__lead').text()).toContain(
-      'Premium wireless',
+    expect(wrapper.find('.product-banner__title').text()).toBe(
+      'Sony WH-1000XM5',
     );
+    expect(wrapper.find('.product-banner__rating').exists()).toBe(true);
+    expect(wrapper.text()).toContain('4.6');
+    expect(wrapper.text()).toContain('Excellent');
   });
 
-  it('renders cheapest price tag from sorted offers', () => {
-    const offers: ShopOffer[] = [
-      { title: 'A', price: '€399.00', source: 'X', link: 'https://x.com' },
-      { title: 'B', price: '€249.00', source: 'Y', link: 'https://y.com' },
-    ];
-
+  it('renders the brief product description below the banner', () => {
     const wrapper = mountProduct({
       title: 'Widget',
-      shopOffers: offers,
+      shortDescription: 'A concise product overview.',
     });
 
-    expect(wrapper.text()).toContain('From €249.00');
-  });
-
-  it('renders offer count in the buy bar', () => {
-    const wrapper = mountProduct({
-      title: 'Widget',
-      shopOffers: [
-        { title: 'T1', price: '€50', source: 'Store A', link: 'https://a.com' },
-        { title: 'T2', price: '€60', source: 'Store B', link: 'https://b.com' },
-        { title: 'T3', price: '€70', source: 'Store C', link: 'https://c.com' },
-      ],
-    });
-
-    expect(wrapper.text()).toContain('from 3 stores');
+    expect(wrapper.find('.product__lead').text()).toBe(
+      'A concise product overview.',
+    );
   });
 
   it('renders specs as spec-list rows', () => {
@@ -79,6 +66,34 @@ describe('ProductResponse', () => {
     expect(wrapper.find('.stat-highlights__label').text()).toBe('Battery');
     expect(wrapper.find('.spec-list').exists()).toBe(true);
     expect(wrapper.text()).toContain('LDAC');
+  });
+
+  it('renders pros and cons', () => {
+    const wrapper = mountProduct({
+      title: 'Widget',
+      pros: [{ text: 'Great battery' }],
+      cons: [{ text: 'Heavy' }],
+    });
+
+    expect(wrapper.find('.pros-cons').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Great battery');
+    expect(wrapper.text()).toContain('Heavy');
+  });
+
+  it('caps the video gallery at 3 videos', () => {
+    const wrapper = mountProduct({
+      title: 'Widget',
+      videoGalleryItems: [
+        { videoUrl: 'https://youtube.com/watch?v=1', title: 'V1' },
+        { videoUrl: 'https://youtube.com/watch?v=2', title: 'V2' },
+        { videoUrl: 'https://youtube.com/watch?v=3', title: 'V3' },
+        { videoUrl: 'https://youtube.com/watch?v=4', title: 'V4' },
+      ],
+    });
+
+    const items = wrapper.findAll('.video-gallery__item');
+    expect(items).toHaveLength(3);
+    expect(wrapper.find('.video-gallery--columns-3').exists()).toBe(true);
   });
 
   it('renders shop offer cards sorted by price', () => {
@@ -108,21 +123,17 @@ describe('ProductResponse', () => {
       ],
     });
 
-    expect(wrapper.find('.offer__store-badge').text()).toBe('Amazon');
+    expect(wrapper.find('.offer__shop').text()).toBe('Amazon');
   });
 
-  it('renders review highlights in reviews section', () => {
+  it('renders sources section', () => {
     const wrapper = mountProduct({
       title: 'Widget',
-      reviewSummary: [
-        { text: 'Great battery life.' },
-        { text: 'Comfortable fit.' },
-      ],
+      sources: [{ title: 'RTINGS', url: 'https://example.com/rtings' }],
     });
 
-    expect(wrapper.find('.reviews-section').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Review highlights');
-    expect(wrapper.text()).toContain('Great battery life.');
+    expect(wrapper.find('.sources').exists()).toBe(true);
+    expect(wrapper.text()).toContain('RTINGS');
   });
 
   it('renders empty state with no data', () => {
