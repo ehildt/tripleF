@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
 import { appViewContextKey } from '../../composables/use-app-view-context';
@@ -117,6 +117,18 @@ describe('Chat', () => {
   beforeEach(() => {
     activePinia = createPinia();
     setActivePinia(activePinia);
+    // Chat.vue loads playlists on mount via fetch; Node's fetch (undici)
+    // rejects relative URLs, so stub fetch to an empty success here.
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, json: async () => [] }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('renders the prompt input textarea', () => {
