@@ -53,6 +53,8 @@ defineProps<{
   flex-direction: column;
   gap: var(--spacing-1-5);
   min-width: 0;
+  /* Reset the global .exchange-message div padding leak. */
+  padding: 0;
 }
 
 .pros-cons__title {

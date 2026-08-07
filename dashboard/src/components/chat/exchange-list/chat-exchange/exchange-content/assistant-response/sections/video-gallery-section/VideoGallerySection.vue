@@ -8,9 +8,16 @@ import VideoGalleryItemComponent from './video-gallery-item/VideoGalleryItem.vue
 const props = defineProps<{
   title?: string;
   items?: VideoGalleryItem[];
+  /** Optional fixed column count (e.g. 3 review videos in a row). When set,
+   *  overrides the responsive count-based layout. */
+  columns?: number;
 }>();
 
 const count = computed(() => props.items?.length ?? 0);
+
+const columnsClass = computed(() =>
+  props.columns ? `video-gallery--columns-${props.columns}` : '',
+);
 </script>
 
 <template>
@@ -23,11 +30,15 @@ const count = computed(() => props.items?.length ?? 0);
     <ul
       v-if="items.length"
       class="video-gallery"
-      :class="{
-        'video-gallery--count-1': count === 1,
-        'video-gallery--count-2': count === 2,
-        'video-gallery--count-3-plus': count >= 3,
-      }"
+      :class="[
+        columnsClass
+          ? columnsClass
+          : {
+              'video-gallery--count-1': count === 1,
+              'video-gallery--count-2': count === 2,
+              'video-gallery--count-3-plus': count >= 3,
+            },
+      ]"
     >
       <VideoGalleryItemComponent
         v-for="(item, index) in items"
@@ -113,5 +124,12 @@ const count = computed(() => props.items?.length ?? 0);
     width: 100%;
     flex: 0 0 100%;
   }
+}
+
+/* Forced fixed column count (e.g. product template: 3 review videos in a
+   row). Placed last so it overrides the responsive count-based rules. */
+.video-gallery--columns-3 > :deep(li) {
+  flex: 1 1 calc((100% - 2 * var(--spacing-2)) / 3);
+  min-width: calc((100% - 2 * var(--spacing-2)) / 3);
 }
 </style>
