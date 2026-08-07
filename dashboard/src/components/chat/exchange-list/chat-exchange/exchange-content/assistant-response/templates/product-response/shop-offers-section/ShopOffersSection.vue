@@ -38,9 +38,16 @@ defineProps<{ offers: readonly ShopOffer[] }>();
 }
 
 .offers-section__list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-2);
   /* Reset the global .exchange-message div padding leak. */
   padding: 0;
+}
+
+@media (max-width: 40rem) {
+  .offers-section__list {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

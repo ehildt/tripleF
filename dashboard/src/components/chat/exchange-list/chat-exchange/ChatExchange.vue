@@ -7,7 +7,6 @@ import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 
-import { useToast } from '../../../../composables/use-toast';
 import { useAppStore } from '../../../../stores/app';
 import ExchangeCollapsed from './exchange-collapsed/ExchangeCollapsed.vue';
 import ExchangeContent from './exchange-content/ExchangeContent.vue';
@@ -38,13 +37,11 @@ const isStreaming = computed(() => props.exchange.status === 'streaming');
 const isError = computed(() => props.exchange.status === 'error');
 const isDone = computed(() => props.exchange.status === 'done');
 
-const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
 const lightbox = useLightbox();
 
 async function handleCopy() {
   await copy(buildExchangeCopyText(props.exchange));
-  toast.success('Copied to clipboard');
 }
 
 function handleImageClicked(
