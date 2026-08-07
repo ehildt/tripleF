@@ -4,16 +4,14 @@ import { computed } from 'vue';
 import type {
   HarnessResponseData,
   ShopOffer,
+  VideoGalleryItem,
 } from '@/types/harness-response-data.model';
 
-import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
-import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import { priceNumeric } from '../../shared/helpers/price-numeric.helper';
+import ProductBanner from './product-banner/ProductBanner.vue';
 import ProductProsCons from './product-pros-cons/ProductProsCons.vue';
-import ProductReviewsSection from './product-reviews-section/ProductReviewsSection.vue';
-import ProductSpotlightHero from './product-spotlight-hero/ProductSpotlightHero.vue';
 import ProductStatHighlights from './product-stat-highlights/ProductStatHighlights.vue';
 import ShopOffersSection from './shop-offers-section/ShopOffersSection.vue';
 
@@ -26,11 +24,10 @@ const offers = computed<ShopOffer[]>(() => {
   );
 });
 
-const priceRange = computed(() => {
-  if (props.data.priceRange) return props.data.priceRange;
-  const cheapest = offers.value[0]?.price;
-  return cheapest ? `From ${cheapest}` : '';
-});
+/** Product-review videos, capped at 3. */
+const videos = computed<VideoGalleryItem[]>(() =>
+  (props.data.videoGalleryItems ?? []).slice(0, 3),
+);
 
 const hasContent = computed(
   () =>
@@ -42,26 +39,23 @@ const hasContent = computed(
 
 <template>
   <section v-if="hasContent" class="product">
-    <!-- Editorial hero: media at 2/5, decision column at 3/5 -->
-    <ProductSpotlightHero
+    <!-- Full-width product banner with an always-visible rating overlay -->
+    <ProductBanner
       :category="data.category"
       :title="data.title"
       :subtitle="data.subtitle"
-      :description="data.shortDescription"
       :image-url="data.heroImageUrl"
       :image-alt="data.heroImageAlt"
       :image-caption="data.heroCaption"
-      :video-url="data.heroVideoUrl"
-      :video-title="data.heroVideoTitle"
-      :video-caption="data.heroVideoCaption"
       :rating="data.aggregateRating"
       :rating-count="data.aggregateRatingCount"
       :rating-label="data.aggregateRatingLabel"
-      :price-range="priceRange"
-      :offer-count="offers.length"
-      :buy-advice="data.buyAdvice"
-      :best-offer="offers[0]"
     />
+
+    <!-- Brief product description -->
+    <p v-if="data.shortDescription" class="product__lead">
+      {{ data.shortDescription }}
+    </p>
 
     <!-- Big-number stat row with expandable full spec table -->
     <ProductStatHighlights
@@ -72,29 +66,18 @@ const hasContent = computed(
     <!-- Review consensus distilled into strengths and caveats -->
     <ProductProsCons :pros="data.pros" :cons="data.cons" />
 
+    <!-- Product-review videos (max 3, in a row) -->
+    <VideoGallerySection
+      :title="data.videoGalleryTitle"
+      :items="videos"
+      :columns="3"
+    />
+
     <!-- Shop purchase links sorted by ascending price -->
     <ShopOffersSection :offers="offers" />
 
-    <!-- Review highlights from editorial and seller reviews -->
-    <ProductReviewsSection
-      v-if="data.reviewSummary?.length"
-      :reviews="data.reviewSummary"
-    />
-
-    <!-- Optional deep-dive paragraphs -->
-    <ParagraphSection
-      :title="data.sectionTitle"
-      :content="data.sectionContent"
-    />
-
-    <!-- Supplementary content: videos and sources -->
-    <VideoGallerySection
-      :title="data.videoGalleryTitle"
-      :items="data.videoGalleryItems"
-    />
-
+    <!-- Attribution -->
     <SourcesSection :items="data.sources" />
-    <InternationalCoverageSection :items="data.internationalCoverage" />
   </section>
 
   <!-- Empty state -->
@@ -108,6 +91,13 @@ const hasContent = computed(
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
+}
+
+.product__lead {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-fg-secondary);
 }
 
 .product--empty {
