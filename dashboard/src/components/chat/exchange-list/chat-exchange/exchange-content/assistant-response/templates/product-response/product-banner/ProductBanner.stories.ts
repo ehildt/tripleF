@@ -37,7 +37,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Default banner with image and rating overlay. */
-export const Default: Story = {};
+export const Default: Story = {
+  args: {
+    imageCount: 4,
+  },
+};
 
 /** Banner without a rating. */
 export const NoRating: Story = {

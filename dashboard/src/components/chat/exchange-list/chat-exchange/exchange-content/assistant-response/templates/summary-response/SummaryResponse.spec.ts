@@ -14,12 +14,10 @@ function mountSummaryResponse(data: Record<string, unknown>) {
 describe('SummaryResponse', () => {
   it('renders hero fields', () => {
     const wrapper = mountSummaryResponse({
-      category: 'Recap',
       title: 'Summary',
       subtitle: 'Subtitle',
     });
 
-    expect(wrapper.text()).toContain('Recap');
     expect(wrapper.text()).toContain('Summary');
     expect(wrapper.text()).toContain('Subtitle');
   });

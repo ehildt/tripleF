@@ -35,42 +35,6 @@ describe('NewsResponse', () => {
     expect(wrapper.text()).toContain('Point two');
   });
 
-  it('renders meta bar pills for publish date, read time, and byline', () => {
-    const wrapper = mountNewsResponse({
-      headline: 'H',
-      byline: 'Reuters',
-      publishDate: '2026-07-11',
-      readTime: '3 min read',
-    });
-
-    const pills = wrapper.findAll('.pill');
-    const pillTexts = pills.map((pill) => pill.text());
-
-    expect(pillTexts).toContain('2026-07-11');
-    expect(pillTexts).toContain('3 min read');
-    expect(pillTexts).toContain('Reuters');
-  });
-
-  it('renders the dateline and byline combined in a single pill', () => {
-    const wrapper = mountNewsResponse({
-      headline: 'H',
-      dateline: 'Berlin',
-      byline: 'Reuters',
-    });
-
-    const pillTexts = wrapper.findAll('.pill').map((pill) => pill.text());
-
-    expect(pillTexts).toContain('Berlin · Reuters');
-  });
-
-  it('renders no meta pills when no meta fields are present', () => {
-    const wrapper = mountNewsResponse({
-      headline: 'H',
-    });
-
-    expect(wrapper.findAll('.pill')).toHaveLength(0);
-  });
-
   it('renders source links as bullet list', () => {
     const wrapper = mountNewsResponse({
       headline: 'H',

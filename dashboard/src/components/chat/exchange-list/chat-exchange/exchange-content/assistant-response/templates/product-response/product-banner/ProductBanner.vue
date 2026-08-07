@@ -5,6 +5,11 @@
  * image — the same overlay treatment the image list uses for its captions,
  * but permanently shown. Title, subtitle and category sit above the banner;
  * an optional caption sits below. Clicking the image opens the lightbox.
+ *
+ * When the product has more than one image (banner + gallery), a glassy "+N"
+ * badge sits in the top-right corner of the figure — the same frosted look as
+ * the video/iframe play block — telling the user how many images the product
+ * carries total.
  */
 import { computed, inject } from 'vue';
 
@@ -24,6 +29,8 @@ const props = defineProps<{
   imageUrl?: string;
   imageAlt?: string;
   imageCaption?: string;
+  /** Total number of images for this product (banner + gallery). */
+  imageCount?: number;
   rating?: number;
   ratingCount?: number;
   ratingLabel?: string;
@@ -99,6 +106,14 @@ function openLightbox() {
       <div v-else class="product-banner__placeholder">
         <span>NO IMAGE</span>
       </div>
+
+      <span
+        v-if="imageCount && imageCount > 0"
+        class="product-banner__count"
+        aria-hidden="true"
+      >
+        +{{ imageCount }}
+      </span>
 
       <figcaption v-if="imageCaption" class="product-banner__caption">
         <p>{{ imageCaption }}</p>
@@ -213,6 +228,29 @@ function openLightbox() {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: color-mix(in srgb, white 80%, transparent);
+}
+
+/* Glassy "+N" image-count badge pinned to the top-right corner of the
+   figure. Uses the same frosted look as the video/iframe play block:
+   translucent accent tint, backdrop blur, no border. */
+.product-banner__count {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 var(--spacing-1-5);
+  opacity: 0.9;
+  background: color-mix(in srgb, var(--color-accent-primary) 28%, transparent);
+  border: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .product-banner__rating-label {
