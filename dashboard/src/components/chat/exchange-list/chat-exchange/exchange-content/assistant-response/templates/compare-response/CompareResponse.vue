@@ -19,9 +19,15 @@ defineProps<{
       <HeroSection :title="data.title" :subtitle="data.subtitle" />
     </header>
     <GallerySection :items="data.galleryItems" />
-    <ParagraphSection title="Comparison" :content="data.sectionContent" />
+    <ParagraphSection
+      :title="$t('common.comparison')"
+      :content="data.sectionContent"
+    />
     <p v-if="data.note" class="harness-compare__note">{{ data.note }}</p>
-    <KeyFindingsSection title="Key Differences" :items="data.keyFindings" />
+    <KeyFindingsSection
+      :title="$t('common.keyDifferences')"
+      :items="data.keyFindings"
+    />
     <SourcesSection :items="data.sources" />
     <InternationalCoverageSection :items="data.internationalCoverage" />
   </article>

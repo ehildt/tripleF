@@ -17,9 +17,11 @@ import {
   Upload,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import Dropdown from '../../shared/ui/drop-down/DropDown.vue';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 import { type SetDropdownRef } from '../composables/use-chat-dropdowns';
 import type { SearchEngineState } from '../composables/use-search-engine-availability';
 
@@ -61,8 +63,10 @@ const fileSelectClass = computed(() => ({
   'chat-prompt-action-bar__file-button--disabled': props.isFileSelectDisabled,
 }));
 
+const { t } = useI18n();
+
 const fileSelectTitle = computed(
-  () => props.fileSelectDisabledReason || 'Select files',
+  () => props.fileSelectDisabledReason || t('common.selectFiles'),
 );
 
 const actionsClass = computed(() => ({
@@ -104,15 +108,19 @@ const sourceTags = computed(() => {
     icon: SOURCE_META[key]?.icon ?? Search,
     label: SOURCE_META[key]?.label ?? key,
     title: enabled
-      ? `${SOURCE_META[key]?.label ?? key} source enabled — click to disable`
-      : `${SOURCE_META[key]?.label ?? key} source disabled — click to enable`,
+      ? t('common.sourceEnabled', {
+          label: SOURCE_META[key]?.label ?? key,
+        })
+      : t('common.sourceDisabled', {
+          label: SOURCE_META[key]?.label ?? key,
+        }),
   }));
 });
 
 const searchEngineToggleTitle = computed(() =>
   props.searchEngineState === 'enabled'
-    ? 'Search engine connected — click to disable web search'
-    : 'Search engine disabled — click to enable',
+    ? t('common.searchEngineConnected')
+    : t('common.searchEngineDisabled'),
 );
 
 function onFileButtonMouseEnter() {
@@ -132,25 +140,24 @@ function onFileButtonMouseLeave() {
   <div class="chat-prompt-action-bar">
     <!-- Search-source toggle icons floating on the top border, right-aligned. -->
     <div v-if="sourceTags.length" class="chat-prompt-action-bar__source-tags">
-      <button
-        v-for="tag in sourceTags"
-        :key="tag.key"
-        type="button"
-        class="chat-prompt-action-bar__source-tag"
-        :class="{
-          'chat-prompt-action-bar__source-tag--disabled': !tag.enabled,
-        }"
-        :title="tag.title"
-        :aria-label="tag.title"
-        :aria-pressed="tag.enabled"
-        @click="emit('toggleSource', tag.key)"
-      >
-        <component
-          :is="tag.icon"
-          class="chat-prompt-action-bar__source-tag-icon"
-          aria-hidden="true"
-        />
-      </button>
+      <Tooltip v-for="tag in sourceTags" :key="tag.key" :text="tag.title">
+        <button
+          type="button"
+          class="chat-prompt-action-bar__source-tag"
+          :class="{
+            'chat-prompt-action-bar__source-tag--disabled': !tag.enabled,
+          }"
+          :aria-label="tag.title"
+          :aria-pressed="tag.enabled"
+          @click="emit('toggleSource', tag.key)"
+        >
+          <component
+            :is="tag.icon"
+            class="chat-prompt-action-bar__source-tag-icon"
+            aria-hidden="true"
+          />
+        </button>
+      </Tooltip>
     </div>
     <span class="chat-prompt-action-bar__prompt">&gt;</span>
     <textarea
@@ -159,8 +166,8 @@ function onFileButtonMouseLeave() {
       :rows="2"
       class="chat-prompt-action-bar__input"
       style="caret-shape: block"
-      aria-label="Prompt"
-      placeholder="Ask the harness…"
+      :aria-label="$t('common.promptAria')"
+      :placeholder="$t('common.askHarness')"
       @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
     />
@@ -168,7 +175,8 @@ function onFileButtonMouseLeave() {
       <Dropdown
         :ref="props.setThinkDropdownRef"
         variant="icon-only"
-        label="Think level"
+        align="center"
+        :label="$t('common.thinkLevel')"
         :options="props.thinkOptions"
         :model-value="props.thinkValue"
         :disabled="props.isDisabled"
@@ -182,7 +190,8 @@ function onFileButtonMouseLeave() {
       <Dropdown
         :ref="props.setContextSizeDropdownRef"
         variant="icon-only"
-        label="Context"
+        align="center"
+        :label="$t('common.context')"
         :options="props.contextSizeOptions"
         :model-value="props.contextSizeValue"
         :disabled="props.isDisabled"
@@ -194,43 +203,53 @@ function onFileButtonMouseLeave() {
           <CircleGauge class="chat-prompt-action-bar__icon" />
         </MotionIcon>
       </Dropdown>
-      <button
-        :class="fileSelectClass"
-        :disabled="props.isFileSelectDisabled"
-        :title="fileSelectTitle"
-        @mouseenter="onFileButtonMouseEnter"
-        @mouseleave="onFileButtonMouseLeave"
-        @click="emit('fileSelect')"
-      >
-        <MotionIcon><Upload class="chat-prompt-action-bar__icon" /></MotionIcon>
-      </button>
-      <button
+      <Tooltip :text="fileSelectTitle" :disabled="props.isFileSelectDisabled">
+        <button
+          :class="fileSelectClass"
+          :disabled="props.isFileSelectDisabled"
+          :aria-label="fileSelectTitle"
+          @mouseenter="onFileButtonMouseEnter"
+          @mouseleave="onFileButtonMouseLeave"
+          @click="emit('fileSelect')"
+        >
+          <MotionIcon
+            ><Upload class="chat-prompt-action-bar__icon"
+          /></MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip
         v-if="
           props.searchEngineState === 'enabled' ||
           props.searchEngineState === 'disabled'
         "
-        class="chat-prompt-action-bar__search-toggle"
-        :title="searchEngineToggleTitle"
-        :aria-label="searchEngineToggleTitle"
-        @click="emit('toggleSearchEngine')"
+        :text="searchEngineToggleTitle"
       >
-        <MotionIcon>
-          <Globe
-            v-if="props.searchEngineState === 'enabled'"
-            class="chat-prompt-action-bar__icon"
-          />
-          <GlobeX v-else class="chat-prompt-action-bar__icon" />
-        </MotionIcon>
-      </button>
-      <span
+        <button
+          class="chat-prompt-action-bar__search-toggle"
+          :aria-label="searchEngineToggleTitle"
+          @click="emit('toggleSearchEngine')"
+        >
+          <MotionIcon>
+            <Globe
+              v-if="props.searchEngineState === 'enabled'"
+              class="chat-prompt-action-bar__icon"
+            />
+            <GlobeX v-else class="chat-prompt-action-bar__icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip
         v-else-if="props.searchEngineState === 'unavailable'"
-        class="chat-prompt-action-bar__offline-indicator"
-        :title="noSearchEngineTitle"
-        role="img"
-        aria-label="No search engine connected"
+        :text="noSearchEngineTitle"
       >
-        <GlobeOff class="chat-prompt-action-bar__icon" />
-      </span>
+        <span
+          class="chat-prompt-action-bar__offline-indicator"
+          role="img"
+          :aria-label="$t('common.noSearchEngineConnected')"
+        >
+          <GlobeOff class="chat-prompt-action-bar__icon" />
+        </span>
+      </Tooltip>
     </div>
   </div>
 </template>

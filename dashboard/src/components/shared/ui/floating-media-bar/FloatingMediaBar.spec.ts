@@ -40,14 +40,14 @@ describe('FloatingMediaBar', () => {
   it('shows the add-to-playlist icon with an add tooltip', () => {
     const wrapper = mountComponent({ isInPlaylist: false });
     const toggle = wrapper.find('.floating-media-bar__playlist-toggle');
-    expect(toggle.attributes('title')).toBe('Add to playlist');
+    expect(toggle.attributes('aria-label')).toBe('Add to playlist');
     expect(toggle.attributes('aria-pressed')).toBe('false');
   });
 
   it('shows the remove state when the video is in the playlist', () => {
     const wrapper = mountComponent({ isInPlaylist: true });
     const toggle = wrapper.find('.floating-media-bar__playlist-toggle');
-    expect(toggle.attributes('title')).toBe('Remove from playlist');
+    expect(toggle.attributes('aria-label')).toBe('Remove from playlist');
     expect(toggle.attributes('aria-pressed')).toBe('true');
     expect(toggle.classes()).toContain(
       'floating-media-bar__playlist-toggle--added',

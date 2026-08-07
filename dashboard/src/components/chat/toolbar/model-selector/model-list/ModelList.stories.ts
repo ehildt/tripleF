@@ -13,9 +13,8 @@ const meta = {
         component: `
 Dropdown panel displaying available models for selection.
 
-Local models come first; Ollama Cloud models (when an Ollama API key is
-configured) follow below. Both sections get a labeled divider, but only
-when both groups exist — with a single group the lines are omitted. The
+Local models come first, then Ollama Cloud models (when an Ollama API key is
+configured). A search field at the top filters the list by model name. The
 list is height-capped and scrolls. Receives the model groups and selection
 state as props. Emits \`select\` when a model is clicked. Handles loading,
 empty, and populated states internally.`,
@@ -68,10 +67,10 @@ empty, and populated states internally.`,
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Default state with a few local models, one selected — no dividers with a single group. */
+/** Default state with a few local models, one selected. */
 export const Default: Story = {};
 
-/** Local and Ollama Cloud models, each group under its labeled divider. */
+/** Local and Ollama Cloud models — local first, then cloud. */
 export const WithCloudModels: Story = {
   args: {
     cloudModels: [
@@ -81,7 +80,7 @@ export const WithCloudModels: Story = {
   },
 };
 
-/** Cloud-only list (e.g. the configured host is ollama.com itself) — no dividers with a single group. */
+/** Cloud-only list (e.g. the configured host is ollama.com itself). */
 export const CloudOnly: Story = {
   args: {
     localModels: [],

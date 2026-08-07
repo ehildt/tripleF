@@ -1,5 +1,6 @@
 import { computed, type ComputedRef, type Ref, ref, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 
 import type { OllamaModel } from '../stores/models';
@@ -31,9 +32,7 @@ export function useChatThink(
     if (!m || !prevM) return;
     if (selectedThink.value !== 'off' && !supportsThink.value) {
       selectThink('off');
-      toast.warning(
-        `Model "${m.model}" does not support thinking. Think set to off.`,
-      );
+      toast.warning(i18n.global.t('toast.modelNoThink', { model: m.model }));
     }
   });
 

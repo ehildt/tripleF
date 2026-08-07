@@ -19,15 +19,15 @@ const emit = defineEmits<{
     <div class="tab-visibility-section__grid">
       <FieldCard
         :icon="Plug"
-        label="sockets"
-        description="sockets menu + list in the chat toolbar"
+        :label="$t('common.sockets')"
+        :description="$t('common.socketsDesc')"
         :checked="isSocketsVisible"
         @toggle="emit('toggleSockets')"
       />
       <FieldCard
         :icon="Hash"
-        label="counters"
-        description="show unread badge on tabs"
+        :label="$t('common.counters')"
+        :description="$t('common.countersDesc')"
         :checked="showCounters"
         @toggle="emit('toggleCounters')"
       />

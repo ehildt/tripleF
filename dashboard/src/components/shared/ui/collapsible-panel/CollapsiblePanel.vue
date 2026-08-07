@@ -3,6 +3,7 @@ import { ChevronRight } from '@lucide/vue';
 import { ref, watch } from 'vue';
 
 import MotionIcon from '../motion-icon/MotionIcon.vue';
+import Tooltip from '../tooltip/Tooltip.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -51,27 +52,35 @@ watch(expanded, (value) => {
 <template>
   <div class="collapsible-panel">
     <div class="collapsible-panel__header">
-      <button
-        type="button"
-        class="collapsible-panel__toggle"
-        :aria-expanded="expanded"
-        :title="expanded ? 'Collapse section' : 'Expand section'"
-        @click="toggle"
+      <Tooltip
+        :text="
+          expanded ? $t('common.collapseSection') : $t('common.expandSection')
+        "
       >
-        <MotionIcon>
-          <ChevronRight
-            class="collapsible-panel__chevron"
-            :class="{ 'collapsible-panel__chevron--expanded': expanded }"
-          />
-        </MotionIcon>
-        <span class="collapsible-panel__title">{{ title }}</span>
-        <span
-          v-if="count !== undefined && count > 0"
-          class="collapsible-panel__count"
+        <button
+          type="button"
+          class="collapsible-panel__toggle"
+          :aria-expanded="expanded"
+          :aria-label="
+            expanded ? $t('common.collapseSection') : $t('common.expandSection')
+          "
+          @click="toggle"
         >
-          [{{ count }}]
-        </span>
-      </button>
+          <MotionIcon>
+            <ChevronRight
+              class="collapsible-panel__chevron"
+              :class="{ 'collapsible-panel__chevron--expanded': expanded }"
+            />
+          </MotionIcon>
+          <span class="collapsible-panel__title">{{ title }}</span>
+          <span
+            v-if="count !== undefined && count > 0"
+            class="collapsible-panel__count"
+          >
+            [{{ count }}]
+          </span>
+        </button>
+      </Tooltip>
 
       <div class="collapsible-panel__spacer" />
       <slot name="actions" />

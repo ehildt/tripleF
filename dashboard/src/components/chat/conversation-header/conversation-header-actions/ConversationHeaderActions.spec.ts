@@ -26,7 +26,7 @@ describe('ConversationHeaderActions', () => {
     ['Pin to persistent', 'toggleType'],
   ])('emits %s when the %s button is clicked', async (title, eventName) => {
     const wrapper = mountComponent({});
-    await wrapper.find(`[title="${title}"]`).trigger('click');
+    await wrapper.find(`[aria-label="${title}"]`).trigger('click');
     expect(wrapper.emitted(eventName)).toBeTruthy();
   });
 });

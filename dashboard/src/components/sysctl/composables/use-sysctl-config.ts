@@ -1,5 +1,7 @@
 import { getCurrentInstance, onMounted, ref } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import { getApiUrl } from '../../../api/api-url';
 import { fetchConfig, saveConfig } from '../../../api/config.api';
 import { useToast } from '../../../composables/use-toast';
@@ -121,7 +123,7 @@ export function useSysctlConfig() {
       config.value = mergeSessionOverrides(snapshot);
     } catch {
       hasError.value = true;
-      toast.error('Failed to load config');
+      toast.error(i18n.global.t('toast.failedLoadConfig'));
     } finally {
       isLoading.value = false;
     }
@@ -143,7 +145,7 @@ export function useSysctlConfig() {
           : `${configApiUrl(provider)}/${provider}`;
       await fetch(url, { method: 'DELETE' });
     } catch {
-      toast.error('Failed to reset provider config');
+      toast.error(i18n.global.t('toast.failedResetProviderConfig'));
     }
     await refreshConfig();
   }
@@ -180,10 +182,10 @@ export function useSysctlConfig() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await refreshConfig();
-      toast.success('API key saved');
+      toast.success(i18n.global.t('toast.apiKeySaved'));
       return true;
     } catch {
-      toast.error('Failed to save API key');
+      toast.error(i18n.global.t('toast.failedSaveApiKey'));
       return false;
     }
   }
@@ -206,9 +208,7 @@ export function useSysctlConfig() {
     const otherEngine = config.value?.[other] as
       { enabled?: boolean } | undefined;
     if (otherEngine?.enabled) {
-      toast.warning(
-        'You enabled both Serper API and Bright Data. They both query the same Google index, so using both may be redundant and double your search cost. You can still keep both on and assign individual tools (web, images, news, …) to each engine.',
-      );
+      toast.warning(i18n.global.t('toast.serperBrightDataRedundant'));
     }
   }
 

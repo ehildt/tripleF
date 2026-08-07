@@ -50,6 +50,7 @@
     "ts-unused-exports": "^11.0.1",
     "turndown": "^7.2.4",
     "vue": "^3.5.41",
+    "vue-i18n": "^11.4.8",
     "vue-router": "^5.2.0"
   },
   "devDependencies": {

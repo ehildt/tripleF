@@ -37,7 +37,7 @@ const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
       />
       <IconButton
         :active="isOpen"
-        title="Select model"
+        :title="$t('common.selectModel')"
         @click.stop="$emit('toggleMenu')"
       >
         <MotionIcon><Brain class="w-4 h-4" /></MotionIcon>
@@ -82,6 +82,7 @@ const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
   /* Teleported to <body>: above the floating video popouts (z-index 1000)
      and the lifted chat column (z-index 60), below the lightbox (1100). */
   z-index: 1050;
+  width: 14rem;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
   box-shadow: 0 10px 15px -3px

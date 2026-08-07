@@ -12,6 +12,7 @@ import { computed } from 'vue';
 
 import PlaylistTransportBar from '@/components/chat/right-panel/playlist-transport-bar/PlaylistTransportBar.vue';
 import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import {
   hidePlaylistPreview,
@@ -35,13 +36,16 @@ function noop() {
     data-playlist-preview
     :style="previewStyle"
   >
-    <aside class="floating-playlist" aria-label="Floating player preview">
+    <aside
+      class="floating-playlist"
+      :aria-label="$t('common.floatingPlayerPreview')"
+    >
       <div class="floating-playlist__top">
         <div class="floating-playlist__toolbar">
           <PlaylistTransportBar
             :playing="false"
             :can-toggle-playback="false"
-            playback-toggle-title="Play preview"
+            :playback-toggle-title="$t('common.playPreview')"
             :has-active-playback="false"
             :autoplay-enabled="false"
             :popout-hidden="false"
@@ -51,27 +55,30 @@ function noop() {
             @toggle-autoplay="noop"
             @toggle-popout-visibility="noop"
           />
-          <span
-            class="floating-playlist__active-name"
-            title="Active playlist: Example"
-            >Example</span
+          <Tooltip
+            :text="$t('common.activePlaylist', { name: $t('common.example') })"
           >
-          <button
-            type="button"
-            class="floating-playlist__toggle"
-            title="Close preview"
-            aria-label="Close preview"
-            @click="hidePlaylistPreview"
-          >
-            <X class="floating-playlist__toggle-icon" />
-          </button>
+            <span class="floating-playlist__active-name">{{
+              $t('common.example')
+            }}</span>
+          </Tooltip>
+          <Tooltip :text="$t('common.closePreview')">
+            <button
+              type="button"
+              class="floating-playlist__toggle"
+              :aria-label="$t('common.closePreview')"
+              @click="hidePlaylistPreview"
+            >
+              <X class="floating-playlist__toggle-icon" />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
       <div class="floating-playlist__body">
         <PanelEmptyState
-          message="No videos in the playlist"
-          submessage="This is where the floating player appears at the configured position"
+          :message="$t('common.noVideosInPlaylist')"
+          sub:message="$t('common.floatingPlayerPositionHint')"
         />
       </div>
     </aside>

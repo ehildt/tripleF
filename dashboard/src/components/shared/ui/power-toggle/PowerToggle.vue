@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Power } from '@lucide/vue';
 
+import Tooltip from '../tooltip/Tooltip.vue';
+
 /**
  * Header power toggle: a single lucide Power icon button, colored when
  * enabled and greyed out when disabled. The `tone` prop switches the accent
@@ -22,21 +24,22 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <button
-    type="button"
-    class="power-toggle"
-    :class="{
-      'power-toggle--enabled': enabled,
-      'power-toggle--preprocessing': tone === 'preprocessing',
-    }"
-    :disabled="disabled"
-    :aria-pressed="enabled"
-    :title="title"
-    :aria-label="title"
-    @click="emit('toggle')"
-  >
-    <Power class="power-toggle__icon" />
-  </button>
+  <Tooltip :text="title" :disabled="disabled">
+    <button
+      type="button"
+      class="power-toggle"
+      :class="{
+        'power-toggle--enabled': enabled,
+        'power-toggle--preprocessing': tone === 'preprocessing',
+      }"
+      :disabled="disabled"
+      :aria-pressed="enabled"
+      :aria-label="title"
+      @click="emit('toggle')"
+    >
+      <Power class="power-toggle__icon" />
+    </button>
+  </Tooltip>
 </template>
 
 <style scoped>

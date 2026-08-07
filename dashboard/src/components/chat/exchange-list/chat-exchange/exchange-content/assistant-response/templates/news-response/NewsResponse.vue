@@ -58,7 +58,10 @@ const hasAnyContent = computed(() =>
         :title="data.sectionTitle"
         :content="data.sectionContent"
       />
-      <KeyFindingsSection title="Key Points" :items="data.keyPoints" />
+      <KeyFindingsSection
+        :title="$t('common.keyPoints')"
+        :items="data.keyPoints"
+      />
       <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
       <VideoGallerySection
         :title="data.videoGalleryTitle"
@@ -70,9 +73,9 @@ const hasAnyContent = computed(() =>
     </template>
 
     <section v-else class="news__empty">
-      <h3>No results found</h3>
+      <h3>{{ $t('common.noResultsFound') }}</h3>
       <p>
-        The search did not return any authoritative sources for this request.
+        {{ $t('common.noResultsExplain') }}
       </p>
     </section>
   </article>

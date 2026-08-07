@@ -1,3 +1,5 @@
+import { i18n } from '@/i18n/i18n';
+
 export type ToastApi = {
   error: (message: string) => void;
 };
@@ -7,7 +9,7 @@ export function requireModel(
   toast: ToastApi,
 ): boolean {
   if (!model.value.trim()) {
-    toast.error('Model is required (e.g., llama3.2-vision, ministral-3:14b)');
+    toast.error(i18n.global.t('toast.modelRequired'));
     return false;
   }
   return true;

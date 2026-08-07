@@ -1,20 +1,21 @@
-import { CircleAlert } from '@lucide/vue';
+import { CircleAlert, Search } from '@lucide/vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
-import DlqFilterMenu from './DlqFilterMenu.vue';
+import FilterMenu from './FilterMenu.vue';
 
 const meta = {
-  title: 'Dlq/ListHeader/FilterMenu/DlqFilterMenu',
-  component: DlqFilterMenu,
+  title: 'Shared/UI/FilterMenu/FilterMenu',
+  component: FilterMenu,
   tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
         component: `
-A small popover menu used by the DLQ list header for the status, queue,
-and search filters. Renders an option list by default, or a single text
-input when \`hasTextValue\` is true.
+A small popover menu used by list headers for status, queue, and search
+filters. Renders an option list by default, or a single text input when
+\`hasTextValue\` is true. The trigger icon is provided through the default
+slot.
 `,
       },
     },
@@ -22,7 +23,6 @@ input when \`hasTextValue\` is true.
   args: {
     isOpen: true,
     isActive: false,
-    icon: CircleAlert,
     title: 'Status',
     width: '8rem',
     options: ['Failed', 'Active', 'Cleared', 'Removed'],
@@ -31,7 +31,12 @@ input when \`hasTextValue\` is true.
     onToggle: fn(),
     onSelect: fn(),
   },
-} satisfies Meta<typeof DlqFilterMenu>;
+  render: (args) => ({
+    components: { FilterMenu, CircleAlert },
+    setup: () => ({ args }),
+    template: `<FilterMenu v-bind="args"><CircleAlert /></FilterMenu>`,
+  }),
+} satisfies Meta<typeof FilterMenu>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -55,4 +60,9 @@ export const SearchMode: Story = {
     options: [],
     selectedValue: 'req-',
   },
+  render: (args) => ({
+    components: { FilterMenu, Search },
+    setup: () => ({ args }),
+    template: `<FilterMenu v-bind="args"><Search /></FilterMenu>`,
+  }),
 };

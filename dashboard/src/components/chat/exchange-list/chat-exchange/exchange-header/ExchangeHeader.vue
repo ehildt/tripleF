@@ -16,6 +16,7 @@ import {
 } from '@lucide/vue';
 import { computed, toRef } from 'vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { Exchange } from '@/stores/conversation';
 
 import ResponseMetaBarPill from '../exchange-content/assistant-response/shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
@@ -81,7 +82,11 @@ function onCancel() {
     <Bot v-if="!isUser" class="exchange-header__bot-icon" />
     <User v-else class="exchange-header__user-icon" />
 
-    <ExchangeHeaderAction v-if="isDone" title="Copy" @click="emit('copy')">
+    <ExchangeHeaderAction
+      v-if="isDone"
+      :title="$t('common.copy')"
+      @click="emit('copy')"
+    >
       <Copy />
     </ExchangeHeaderAction>
 
@@ -98,7 +103,7 @@ function onCancel() {
     </ResponseMetaBar>
     <ExchangeHeaderAction
       v-if="isError"
-      title="Retry"
+      :title="$t('common.retry')"
       variant="error"
       @click="emit('retry')"
     >
@@ -106,18 +111,22 @@ function onCancel() {
     </ExchangeHeaderAction>
     <ExchangeHeaderAction
       v-if="isUser"
-      title="Toggle context inclusion"
+      :title="$t('common.toggleContextInclusion')"
       :active="exchange.included === false"
       @click="emit('toggleIncluded')"
     >
       <SendToBack />
     </ExchangeHeaderAction>
-    <ExchangeHeaderAction v-if="isUser" title="Branch" @click="emit('branch')">
+    <ExchangeHeaderAction
+      v-if="isUser"
+      :title="$t('common.branch')"
+      @click="emit('branch')"
+    >
       <GitBranch />
     </ExchangeHeaderAction>
     <ExchangeHeaderAction
       v-if="isUser"
-      title="Delete"
+      :title="$t('common.delete')"
       variant="danger"
       @click="emit('delete')"
       @hover-start="emit('hoverDeleteStart')"
@@ -126,17 +135,18 @@ function onCancel() {
       <Trash2 />
     </ExchangeHeaderAction>
 
-    <span
-      v-if="isUser && promptContextPercent != null"
-      class="exchange-header__meta"
-      title="Context window used by this prompt + response"
-    >
-      {{ promptContextPercent }}%
-    </span>
+    <Tooltip :text="$t('common.contextWindowUsed')">
+      <span
+        v-if="isUser && promptContextPercent != null"
+        class="exchange-header__meta"
+      >
+        {{ promptContextPercent }}%
+      </span>
+    </Tooltip>
 
     <ExchangeHeaderAction
       v-if="isLive && exchange.requestId"
-      title="Cancel"
+      :title="$t('common.cancel')"
       @click="onCancel"
     >
       <X />

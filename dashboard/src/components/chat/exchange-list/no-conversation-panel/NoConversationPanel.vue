@@ -8,19 +8,21 @@ import ExchangeEmptyStateCanvas from '../exchange-empty-state/exchange-empty-sta
   <div class="no-conversation-panel">
     <ExchangeEmptyStateCanvas class="no-conversation-panel__canvas" />
     <div class="no-conversation-panel__content">
-      <p class="no-conversation-panel__title">No conversation selected</p>
+      <p class="no-conversation-panel__title">
+        {{ $t('chat.noConversationTitle') }}
+      </p>
       <div class="no-conversation-panel__list">
         <div class="no-conversation-panel__row">
           <Brain class="no-conversation-panel__icon" />
-          <span>Select a model first</span>
+          <span>{{ $t('chat.selectModelFirst') }}</span>
         </div>
         <div class="no-conversation-panel__row">
           <MessagesSquare class="no-conversation-panel__icon" />
-          <span>Create or pick a chat</span>
+          <span>{{ $t('chat.createOrPickChat') }}</span>
         </div>
         <div class="no-conversation-panel__row">
           <Sparkles class="no-conversation-panel__icon" />
-          <span>Start talking</span>
+          <span>{{ $t('chat.startTalking') }}</span>
         </div>
       </div>
     </div>

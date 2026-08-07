@@ -1,5 +1,6 @@
 import { Bug, MailX, MessageSquare, SlidersHorizontal } from '@lucide/vue';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import type { ActiveTab } from '../../../../stores/app';
 import { useAppStore } from '../../../../stores/app';
@@ -34,34 +35,35 @@ export function useMenuTabs(props: {
   showChatStar?: boolean;
 }) {
   const appStore = useAppStore();
+  const { t } = useI18n();
 
   const tabs = computed<MenuTab[]>(() => {
     const showCounters = appStore.showCounters;
 
     const allTabs: MenuTab[] = [
       {
-        label: 'chat',
+        label: t('nav.chat'),
         tab: 'chat',
         icon: TAB_ICONS.chat,
         tint: TAB_TINTS.chat,
         showStar: props.showChatStar,
       },
       {
-        label: 'dlq',
+        label: t('nav.dlq'),
         tab: 'dlq',
         icon: TAB_ICONS.dlq,
         tint: TAB_TINTS.dlq,
         count: showCounters ? (props.dlqCount ?? 0) : undefined,
       },
       {
-        label: 'debug',
+        label: t('nav.debug'),
         tab: 'debug',
         icon: TAB_ICONS.debug,
         tint: TAB_TINTS.debug,
         count: showCounters ? (props.debugCount ?? 0) : undefined,
       },
       {
-        label: 'sysctl',
+        label: t('nav.sysctl'),
         tab: 'sysctl',
         icon: TAB_ICONS.sysctl,
         tint: TAB_TINTS.sysctl,

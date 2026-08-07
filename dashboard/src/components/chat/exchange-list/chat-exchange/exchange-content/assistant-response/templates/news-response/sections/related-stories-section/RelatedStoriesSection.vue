@@ -30,9 +30,9 @@ const validItems = computed(() =>
   <section
     v-if="validItems.length"
     class="related-stories-section"
-    aria-label="Related stories"
+    :aria-label="$t('common.relatedStoriesAria')"
   >
-    <h3>Related Stories</h3>
+    <h3>{{ $t('common.relatedStories') }}</h3>
     <ul
       v-if="validItems.length === 1"
       class="related-stories related-stories--single"

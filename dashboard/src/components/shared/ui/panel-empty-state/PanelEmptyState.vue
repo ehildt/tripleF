@@ -1,21 +1,31 @@
 <script lang="ts" setup>
-import { ShieldCheck } from '@lucide/vue';
+import { PartyPopper } from '@lucide/vue';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-withDefaults(defineProps<{ message?: string; submessage?: string }>(), {
-  message: 'No requests yet',
-  submessage: 'Send a request to see results',
-});
+const props = withDefaults(
+  // eslint-disable-next-line vue/require-default-prop -- fallback is resolved reactively below so it tracks locale changes
+  defineProps<{ message?: string; submessage?: string }>(),
+  {},
+);
+
+const { t } = useI18n();
+
+const message = computed(() => props.message ?? t('common.noRequestsYet'));
+const submessage = computed(
+  () => props.submessage ?? t('common.sendRequestToSeeResults'),
+);
 </script>
 
 <template>
   <div class="panel-empty-state">
     <div class="panel-empty-state__icon-wrapper">
-      <ShieldCheck class="panel-empty-state__icon" />
+      <PartyPopper class="panel-empty-state__icon" />
     </div>
     <p class="panel-empty-state__message">
       {{ message }}
     </p>
-    <p class="panel-empty-state__submessage">
+    <p v-if="submessage" class="panel-empty-state__submessage">
       {{ submessage }}
     </p>
   </div>

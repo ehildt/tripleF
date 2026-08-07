@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
+import { i18n } from '@/i18n/i18n';
 
 import { useToast } from '../composables/use-toast';
 import { createId } from '../utils/id.helper';
@@ -146,7 +147,7 @@ export const useAppStore = defineStore('app', () => {
       if (!res.ok) {
         const text = await res.text();
         console.warn('Abort failed:', text);
-        toast.error('Failed to cancel request');
+        toast.error(i18n.global.t('toast.failedCancelRequest'));
         abortingId.value = null;
         return false;
       }
@@ -154,12 +155,12 @@ export const useAppStore = defineStore('app', () => {
       const data = await res.json();
       abortingId.value = null;
       const success = data.success ?? false;
-      if (success) toast.info('Request cancelled');
-      else toast.error('Failed to cancel request');
+      if (success) toast.info(i18n.global.t('toast.requestCancelled'));
+      else toast.error(i18n.global.t('toast.failedCancelRequest'));
       return success;
     } catch (err) {
       console.error('Failed to abort job:', err);
-      toast.error('Failed to cancel request');
+      toast.error(i18n.global.t('toast.failedCancelRequest'));
       abortingId.value = null;
       return false;
     }

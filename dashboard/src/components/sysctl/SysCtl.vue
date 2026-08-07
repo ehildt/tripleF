@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import { hidePopoutPreview } from '../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
@@ -25,10 +27,10 @@ watch(activeSysctlTab, () => {
 });
 
 const TAB_TITLES: Record<SysctlTab, string> = {
-  'search-engines': 'Search Engines',
-  preprocessing: 'Preprocessing',
-  widgets: 'Widgets',
-  system: 'System',
+  'search-engines': i18n.global.t('common.sysctlSearchEngines'),
+  preprocessing: i18n.global.t('common.sysctlPreprocessing'),
+  widgets: i18n.global.t('common.sysctlWidgets'),
+  system: i18n.global.t('common.sysctlSystem'),
 };
 
 const activeTabTitle = computed(() => TAB_TITLES[activeSysctlTab.value]);

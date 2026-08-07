@@ -11,6 +11,8 @@
 import { Pencil, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 
+import Tooltip from '../../../../shared/ui/tooltip/Tooltip.vue';
+
 const props = defineProps<{
   /** The saved playlist's name. */
   name: string;
@@ -67,32 +69,38 @@ function onBlur() {
       class="playlist-menu-item__input"
       :class="{ 'playlist-menu-item__input--editing': isEditing }"
       :readonly="!isEditing"
-      :aria-label="`Playlist name ${name}`"
+      ::aria-label="$t('common.playlistNameLabel', { name })"
       @click="!isEditing && emit('select')"
       @blur="onBlur"
       @keydown.enter.prevent="finishEditing"
     />
-    <button
-      type="button"
-      class="playlist-menu-item__edit"
-      :class="{ 'playlist-menu-item__edit--active': isEditing }"
-      :title="isEditing ? 'Finish editing' : 'Rename playlist'"
-      :aria-label="isEditing ? 'Finish editing' : 'Rename playlist'"
-      @mousedown.prevent
-      @click="isEditing ? finishEditing() : startEditing()"
+    <Tooltip
+      :text="
+        isEditing ? $t('common.finishEditing') : $t('common.renamePlaylist')
+      "
     >
-      <Pencil class="playlist-menu-item__edit-icon" />
-    </button>
-    <button
-      type="button"
-      class="playlist-menu-item__delete"
-      :title="`Delete playlist ${name}`"
-      :aria-label="`Delete playlist ${name}`"
-      @mousedown.prevent
-      @click="emit('delete')"
-    >
-      <Trash2 class="playlist-menu-item__delete-icon" />
-    </button>
+      <button
+        type="button"
+        class="playlist-menu-item__edit"
+        :class="{ 'playlist-menu-item__edit--active': isEditing }"
+        :aria-label="isEditing ? 'Finish editing' : 'Rename playlist'"
+        @mousedown.prevent
+        @click="isEditing ? finishEditing() : startEditing()"
+      >
+        <Pencil class="playlist-menu-item__edit-icon" />
+      </button>
+    </Tooltip>
+    <Tooltip :text="$t('common.deletePlaylist', { name })">
+      <button
+        type="button"
+        class="playlist-menu-item__delete"
+        :aria-label="$t('common.deletePlaylist', { name })"
+        @mousedown.prevent
+        @click="emit('delete')"
+      >
+        <Trash2 class="playlist-menu-item__delete-icon" />
+      </button>
+    </Tooltip>
   </div>
 </template>
 

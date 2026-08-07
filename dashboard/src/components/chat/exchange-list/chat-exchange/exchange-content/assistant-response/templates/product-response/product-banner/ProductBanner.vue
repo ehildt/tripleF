@@ -78,7 +78,7 @@ function openLightbox() {
         v-if="hasImage"
         type="button"
         class="product-banner__trigger"
-        :aria-label="`View full size: ${label}`"
+        :aria-label="$t('common.viewFullSize', { label })"
         @click="openLightbox"
       >
         <img
@@ -104,7 +104,7 @@ function openLightbox() {
       </button>
 
       <div v-else class="product-banner__placeholder">
-        <span>NO IMAGE</span>
+        <span>{{ $t('common.noImage') }}</span>
       </div>
 
       <span

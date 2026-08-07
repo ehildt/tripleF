@@ -17,6 +17,7 @@
 import { Library, ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { usePlaylistLibrary } from '@/components/widgets/floating-playlist/composables/use-playlist-library';
 import PlaylistMenu from '@/components/widgets/floating-playlist/playlist-menu/PlaylistMenu.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
@@ -92,12 +93,13 @@ function onItemPlay(item: VideoGalleryItem) {
           @toggle-autoplay="togglePlaylistAutoplay"
           @toggle-popout-visibility="toggleHideOnPlaylist"
         />
-        <span
-          v-if="activePlaylistName"
-          class="playlist-panel__active-name"
-          :title="`Active playlist: ${activePlaylistName}`"
-          >{{ activePlaylistName }}</span
+        <Tooltip
+          :text="$t('common.activePlaylist', { name: activePlaylistName })"
         >
+          <span v-if="activePlaylistName" class="playlist-panel__active-name">{{
+            activePlaylistName
+          }}</span>
+        </Tooltip>
         <PlaylistMenu
           :playlist-name="playlistNameInput"
           :playlists="playlistNames"

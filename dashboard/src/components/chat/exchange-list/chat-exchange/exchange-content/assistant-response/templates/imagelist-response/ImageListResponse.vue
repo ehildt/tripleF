@@ -41,7 +41,7 @@ const hasContent = computed(
 
   <!-- Empty state -->
   <section v-else class="image-list image-list--empty">
-    <p>No images found for this request.</p>
+    <p>{{ $t('common.noImagesFound') }}</p>
   </section>
 </template>
 

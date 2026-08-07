@@ -26,7 +26,7 @@ const renderHtml = (content: string) => sanitizeHtml(content);
 <template>
   <ExpandableMessageList :items="prompt" :render-html="renderHtml">
     <template #heading>
-      <h4 class="dlq-prompt-section__heading">Prompt</h4>
+      <h4 class="dlq-prompt-section__heading">{{ $t('common.prompt') }}</h4>
     </template>
     <template #body="{ message }">
       <ExpandableMessageListBody

@@ -7,6 +7,7 @@
 import { Cloud, CloudDownload, X } from '@lucide/vue';
 import { computed } from 'vue';
 
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import type { AttachmentItem } from '../composables/use-attachment-list';
 
 const props = defineProps<{
@@ -39,19 +40,22 @@ const sourceTitle = computed(() =>
       <span class="attachment-card__name">
         {{ item.name }}
       </span>
-      <component
-        :is="sourceIcon"
-        v-if="item.isUploaded"
-        class="attachment-card__uploaded-indicator"
-        :title="sourceTitle"
-      />
-      <button
-        class="attachment-card__remove"
-        title="Remove"
-        @click.stop="emit('remove')"
-      >
-        <X class="attachment-card__remove-icon" />
-      </button>
+      <Tooltip :text="sourceTitle">
+        <component
+          :is="sourceIcon"
+          v-if="item.isUploaded"
+          class="attachment-card__uploaded-indicator"
+        />
+      </Tooltip>
+      <Tooltip :text="$t('common.remove')">
+        <button
+          class="attachment-card__remove"
+          :aria-label="$t('common.remove')"
+          @click.stop="emit('remove')"
+        >
+          <X class="attachment-card__remove-icon" />
+        </button>
+      </Tooltip>
     </div>
     <div
       class="attachment-card__thumb"

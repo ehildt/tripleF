@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { RelatedStory } from '@/types/harness-response-data.model';
 
 defineProps<{
@@ -37,33 +38,34 @@ function linkPropsFor(story: RelatedStory): {
 
 <template>
   <li class="related-story__item">
-    <component
-      :is="linkPropsFor(item).is"
-      :href="linkPropsFor(item).href"
-      :target="linkPropsFor(item).target"
-      :rel="linkPropsFor(item).rel"
-      :title="linkPropsFor(item).title"
-      class="related-story__card"
-    >
-      <figure>
-        <div v-if="item.imageUrl" class="related-story__media">
-          <img
-            :src="encodeURI(item.imageUrl)"
-            :alt="imageAltFor(item)"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-        <figcaption
-          v-if="item.title || item.url || metaFor(item)"
-          class="related-story__caption"
-        >
-          <strong v-if="item.title">{{ item.title }}</strong>
-          <strong v-else-if="item.url">{{ item.url }}</strong>
-          <p v-if="metaFor(item)">{{ metaFor(item) }}</p>
-        </figcaption>
-      </figure>
-    </component>
+    <Tooltip :text="linkPropsFor(item).title ?? ''">
+      <component
+        :is="linkPropsFor(item).is"
+        :href="linkPropsFor(item).href"
+        :target="linkPropsFor(item).target"
+        :rel="linkPropsFor(item).rel"
+        class="related-story__card"
+      >
+        <figure>
+          <div v-if="item.imageUrl" class="related-story__media">
+            <img
+              :src="encodeURI(item.imageUrl)"
+              :alt="imageAltFor(item)"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption
+            v-if="item.title || item.url || metaFor(item)"
+            class="related-story__caption"
+          >
+            <strong v-if="item.title">{{ item.title }}</strong>
+            <strong v-else-if="item.url">{{ item.url }}</strong>
+            <p v-if="metaFor(item)">{{ metaFor(item) }}</p>
+          </figcaption>
+        </figure>
+      </component>
+    </Tooltip>
   </li>
 </template>
 

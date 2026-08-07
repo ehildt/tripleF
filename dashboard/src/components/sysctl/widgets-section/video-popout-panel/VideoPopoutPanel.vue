@@ -32,6 +32,7 @@ import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import { i18n } from '@/i18n/i18n';
 
 import {
   type PopoutAnchor,
@@ -55,15 +56,23 @@ type PopoutVertical = 'top' | 'middle' | 'bottom';
 type PopoutHorizontal = 'left' | 'center' | 'right';
 
 const VERTICAL_OPTIONS = [
-  { value: 'top', icon: ArrowUp, tooltip: 'Top' },
-  { value: 'middle', icon: AlignCenterVertical, tooltip: 'Middle' },
-  { value: 'bottom', icon: ArrowDown, tooltip: 'Bottom' },
+  { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
+  {
+    value: 'middle',
+    icon: AlignCenterVertical,
+    tooltip: i18n.global.t('common.middle'),
+  },
+  { value: 'bottom', icon: ArrowDown, tooltip: i18n.global.t('common.bottom') },
 ] as const;
 
 const HORIZONTAL_OPTIONS = [
-  { value: 'left', icon: ArrowLeft, tooltip: 'Left' },
-  { value: 'center', icon: AlignCenterHorizontal, tooltip: 'Center' },
-  { value: 'right', icon: ArrowRight, tooltip: 'Right' },
+  { value: 'left', icon: ArrowLeft, tooltip: i18n.global.t('common.left') },
+  {
+    value: 'center',
+    icon: AlignCenterHorizontal,
+    tooltip: i18n.global.t('common.center'),
+  },
+  { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
 ] as const;
 
 const vertical = computed(
@@ -90,24 +99,24 @@ function handlePreviewToggle() {
 
 <template>
   <PanelLayout class="video-popout-panel">
-    <CollapsiblePanel id="videoPopout" title="Video Popout">
+    <CollapsiblePanel id="videoPopout" :title="$t('common.videoPopout')">
       <template #actions>
         <PreviewButton
           :active="popoutPreviewVisible"
           :title="
             popoutPreviewVisible
-              ? 'Hide example popout'
-              : 'Show an example popout'
+              ? $t('common.hideExamplePopout')
+              : $t('common.showExamplePopout')
           "
           @click="handlePreviewToggle"
         />
         <ResetButton
-          title="Reset popout settings to defaults"
+          :title="$t('common.resetPopoutSettingsToDefaults')"
           @click="resetPopoutSettings"
         />
         <PowerToggle
           :enabled="popoutEnabled"
-          title="Enable video popout"
+          :title="$t('common.enableVideoPopout')"
           @toggle="setPopoutEnabled(!popoutEnabled)"
         />
       </template>
@@ -116,21 +125,21 @@ function handlePreviewToggle() {
         <!-- Initial position + remember position side by side -->
         <FieldCard
           :icon="PictureInPicture2"
-          label="initial position"
-          description="where the popout first appears"
+          :label="$t('common.initialPosition')"
+          :description="$t('common.popoutPositionDesc')"
           :disabled="!popoutEnabled"
         >
           <template #controls>
             <SegmentedToggle
               :options="VERTICAL_OPTIONS"
               :model-value="vertical"
-              aria-label="Vertical position"
+              :aria-label="$t('common.verticalPosition')"
               @update:model-value="setVertical"
             />
             <SegmentedToggle
               :options="HORIZONTAL_OPTIONS"
               :model-value="horizontal"
-              aria-label="Horizontal position"
+              :aria-label="$t('common.horizontalPosition')"
               @update:model-value="setHorizontal"
             />
           </template>
@@ -138,8 +147,8 @@ function handlePreviewToggle() {
 
         <FieldCard
           :icon="Pin"
-          label="remember position"
-          description="keep the moved popout position across conversations and app reloads"
+          :label="$t('common.rememberPosition')"
+          :description="$t('common.rememberPositionDesc')"
           :checked="popoutRememberPosition"
           :disabled="!popoutEnabled"
           @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
@@ -147,8 +156,8 @@ function handlePreviewToggle() {
 
         <FieldCard
           :icon="ArrowDownToLine"
-          label="autodock"
-          description="dock the popout automatically when its video scrolls back into view"
+          :label="$t('common.autodock')"
+          :description="$t('common.autodockDesc')"
           :checked="popoutAutoDock"
           :disabled="!popoutEnabled"
           @toggle="setPopoutAutoDock(!popoutAutoDock)"
@@ -156,8 +165,8 @@ function handlePreviewToggle() {
 
         <FieldCard
           :icon="Menu"
-          label="always show bar"
-          description="keep the player bar visible; off fades it in only on hover"
+          :label="$t('common.alwaysShowBar')"
+          :description="$t('common.alwaysShowBarDesc')"
           :checked="popoutShowBarAlways"
           :disabled="!popoutEnabled"
           @toggle="setPopoutShowBarAlways(!popoutShowBarAlways)"

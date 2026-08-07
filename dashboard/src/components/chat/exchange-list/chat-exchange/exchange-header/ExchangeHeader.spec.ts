@@ -58,7 +58,7 @@ describe('ExchangeHeader meta bar', () => {
     // The meta-bar sits right after the copy action (first action for a done
     // assistant exchange).
     const copy = actions[0];
-    expect(copy.attributes('title')).toBe('Copy');
+    expect(copy.attributes('aria-label')).toBe('Copy');
   });
 
   it('does not render the meta-bar for user exchanges', () => {

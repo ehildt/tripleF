@@ -30,12 +30,14 @@ and the clear button.
   },
   args: {
     filter: 'all',
+    search: '',
     allCount: 12,
     httpCount: 8,
     socketCount: 4,
     hideRead: false,
     onClear: fn(),
     'onUpdate:filter': fn(),
+    'onUpdate:search': fn(),
     'onUpdate:hideRead': fn(),
   },
 } satisfies Meta<typeof HeaderMenu>;

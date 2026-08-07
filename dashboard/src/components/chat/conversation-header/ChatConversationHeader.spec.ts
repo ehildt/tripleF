@@ -56,7 +56,7 @@ describe('ChatConversationHeader', () => {
       } as any,
     );
 
-    const trashButton = wrapper.find('[title="Delete conversation"]');
+    const trashButton = wrapper.find('[aria-label="Delete conversation"]');
     expect(trashButton.exists()).toBe(true);
 
     await trashButton.trigger('click');

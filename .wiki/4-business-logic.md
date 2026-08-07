@@ -15,7 +15,7 @@ Every conversation follows the same loop, which is what gives tripleF its "workb
 3. **Evidence is gathered.** For research-style intents, the system runs searches against external sources (web, image, video, news, shopping) and pulls content from pages. Everything the model is allowed to use must come from these results; the model is not free to invent facts or URLs.
 4. **A structured answer is composed.** The model writes its answer against a strict shape for the chosen intent. That shape is the contract between the model and the UI.
 5. **The answer is rendered and streamed.** The dashboard paints the structured answer as rich content while it is still being produced, so the user sees progress in real time.
-6. **The answer is remembered.** The conversation is persisted and can be compacted when it grows too long, so context is never silently lost.
+6. **The answer is remembered.** The conversation is persisted, and the user can rename, delete, or pin (temporary↔persistent) it from the header, so context is never silently lost.
 
 **What this relies on:** the real-time transport that streams results to the UI; the queue that decouples the slow model from the fast request; the intent classifier and its catalogue of answer shapes; and the search and grounding tools that supply evidence. The loop degrades gracefully — an open chat needs no search, and an offline setup still works for plain conversation.
 
@@ -36,7 +36,7 @@ This is the capability with the most explicit business rules, because a video an
 - the strict answer shape that rejects videos with missing titles or captions, so the contract is enforced before the UI ever sees the data;
 - an allow-list of embeddable providers (for example YouTube and Vimeo) — a video is only offered if it can actually be embedded and played, so the user never gets a dead "watch elsewhere" card;
 - the deduplication rule that stops already-seen videos from being shown again across the conversation history;
-- the dashboard's persistent playlist, stored in the browser, so the queue survives switching tabs or conversations;
+- the **server-side persistent playlist** (`HarnessPlaylist` via `/api/v1/playlists`), so the queue survives switching tabs, conversations, or a reload;
 - a single shared player that floats over the page, so only one thing plays at a time and playback is not interrupted by scrolling or navigation.
 
 ### Images
@@ -47,7 +47,7 @@ Images follow the same philosophy. They are gathered from image search, filtered
 
 ## 4.4 Structured answers: one model, many shapes
 
-Instead of free-form prose, tripleF renders most answers from structured data. A product answer has ratings, pros and cons, shop offers, and a media area. A news briefing has a headline, key points, sources, and international coverage. A comparison lays out alternatives side by side. The UI knows exactly how to paint each shape.
+Instead of free-form prose, tripleF renders most answers from structured data. A product answer has ratings, pros and cons, shop offers, and a media area; a follow-up shopping question about an already-introduced product returns a compact, price-sorted **shoplist**. A news briefing has a headline, key points, sources, and international coverage. A comparison lays out alternatives side by side. The UI knows exactly how to paint each shape.
 
 **Why this matters.** It turns model output into something the user can act on — click a source, play a video, save a product — rather than just read. It also makes follow-up turns precise: the history handed back to the model preserves the facts (titles, URLs, shown media) instead of losing them in prose.
 
@@ -67,9 +67,9 @@ This is what separates an agentic workbench from a chat that merely happens to h
 
 ## 4.6 Long conversations and context
 
-Because models have a finite attention window, conversations are summarised (compacted) when they grow long. The summary preserves both the shape and the facts — what was shown and what was answered — so the next turn continues seamlessly. Cancellation is cooperative and best-effort: work stops between stages, not mid-call, which keeps the system responsive without wasting a half-finished model run.
+Because models have a finite attention window, the dashboard surfaces a live readout of how much of the window the current thread consumes. Conversation lifecycle is managed directly from the header — **rename**, **delete**, and **pin/unpin** (temporary↔persistent) — so long research sessions stay organised without losing context. Cancellation is cooperative and best-effort: work stops between stages, not mid-call, which keeps the system responsive without wasting a half-finished model run.
 
-**What it relies on:** the compaction job, the persistence layer that stores conversation state, and the real-time channel that tells the UI the conversation is being folded.
+**What it relies on:** the persistence layer that stores conversation state, the context-size readout, and the real-time channel that streams results.
 
 ## 4.7 The whole, at a glance
 
@@ -79,7 +79,7 @@ Because models have a finite attention window, conversations are summarised (com
 | Grounded research | Answers cite real sources and media; nothing is invented | Search tools, scraping, URL trust and safety, dedup across history |
 | Video playlists | Curated, ordered, playable, persistent, deduped | Video search, embeddable-provider allow-list, title/caption contract, browser-persisted playlist, single floating player |
 | Image collections | Quality-filtered, deduped, locally stored | Image search, ingestion and preprocessing, object storage |
-| Long conversations | Auto-summarised and continuous | Compaction, persistence, streaming |
+| Long conversations | Context-size aware, organised via rename/delete/pin | Persistence, context-size readout, streaming |
 | Persistence and reliability | Work survives failure, retries, and restarts | Queue, database, object storage, key store |
 
 ## 4.8 The trust boundary
@@ -89,6 +89,6 @@ Every feature ultimately leans on one principle: **the model proposes, the syste
 ## Related reading
 
 - For the mechanics behind the loop: **1.2 (The Harness)** and **2.2 (The Chat Experience)**.
-- For how conversations are stored and compacted: **1.5 (Data & Storage)** and **1.3 (BullMQ Async Processing)**.
+- For how conversations are stored: **1.5 (Data & Storage)** and **1.3 (BullMQ Async Processing)**.
 - For the real-time transport that streams answers: **1.4 (Socket.IO Real-time Layer)**.
 - For how the UI is architected to render these features: **2.1 (Frontend Architecture)**.

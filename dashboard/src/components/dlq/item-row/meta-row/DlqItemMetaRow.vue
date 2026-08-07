@@ -4,6 +4,8 @@ import { computed } from 'vue';
 
 import { formatDate } from '@/utils/format-date.helper';
 
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
+
 const props = defineProps<{
   queueName: string;
   attemptsMade: number;
@@ -20,20 +22,22 @@ const isExhausted = computed(() => props.attemptsMade >= props.totalAttempts);
     <span class="dlq-item-meta-row__field">
       <Database class="dlq-item-meta-row__icon" />{{ queueName }}
     </span>
-    <span
-      class="dlq-item-meta-row__field"
-      :class="{ 'dlq-item-meta-row__field--exhausted': isExhausted }"
-      :title="
-        isExhausted ? 'Poison pill: exhausted all retry attempts' : undefined
-      "
+    <Tooltip
+      :text="isExhausted ? 'Poison pill: exhausted all retry attempts' : ''"
+      :disabled="!isExhausted"
     >
-      <TriangleAlert
-        v-if="isExhausted"
-        class="dlq-item-meta-row__icon dlq-item-meta-row__icon--warning"
-      />
-      {{ attemptsMade }}/{{ totalAttempts }}
-      {{ attemptsMade === 1 ? 'attempt' : 'attempts' }}
-    </span>
+      <span
+        class="dlq-item-meta-row__field"
+        :class="{ 'dlq-item-meta-row__field--exhausted': isExhausted }"
+      >
+        <TriangleAlert
+          v-if="isExhausted"
+          class="dlq-item-meta-row__icon dlq-item-meta-row__icon--warning"
+        />
+        {{ attemptsMade }}/{{ totalAttempts }}
+        {{ attemptsMade === 1 ? 'attempt' : 'attempts' }}
+      </span>
+    </Tooltip>
     <span class="dlq-item-meta-row__field">
       {{ formatDate(failedAt) }}
     </span>

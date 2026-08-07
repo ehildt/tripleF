@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Copy } from '@lucide/vue';
 
+import Tooltip from '../tooltip/Tooltip.vue';
+
 export interface TabPanelTab {
   id: string;
   label: string;
@@ -45,19 +47,21 @@ function handleSelect(tabId: string) {
     </div>
 
     <div v-if="activeTab" class="tab-panel__panel">
-      <button
-        v-if="copyable"
-        class="tab-panel__copy"
-        :class="{ 'tab-panel__copy--copied': copied }"
-        :title="copied ? 'Copied!' : 'Copy'"
-        @click="emit('copy')"
-      >
-        <Copy class="tab-panel__copy-icon" />
-      </button>
+      <Tooltip :text="copied ? $t('common.copiedShort') : $t('common.copy')">
+        <button
+          v-if="copyable"
+          class="tab-panel__copy"
+          :class="{ 'tab-panel__copy--copied': copied }"
+          :aria-label="copied ? $t('common.copiedShort') : $t('common.copy')"
+          @click="emit('copy')"
+        >
+          <Copy class="tab-panel__copy-icon" />
+        </button>
+      </Tooltip>
       <slot />
     </div>
     <div v-else class="tab-panel__no-tab">
-      <span>Select a tab to view content</span>
+      <span>{{ $t('common.selectTab') }}</span>
     </div>
   </div>
 </template>

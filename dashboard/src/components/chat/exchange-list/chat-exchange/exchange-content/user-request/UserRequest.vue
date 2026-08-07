@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { LightboxImage } from '@/components/shared/ui/lightbox/composables/use-lightbox';
 
+import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
+
 defineProps<{
   content: string;
   images?: LightboxImage[];
@@ -14,17 +16,20 @@ const emit = defineEmits<{
 <template>
   <div class="user-request">
     <div v-if="images?.length" class="user-request__images">
-      <img
+      <Tooltip
         v-for="image in images"
         :key="image.url"
-        :src="image.url"
-        :alt="image.title ?? 'Uploaded image'"
-        :title="image.title"
-        class="user-request__image"
-        loading="lazy"
-        decoding="async"
-        @click="emit('imageClicked', images, image.url)"
-      />
+        :text="image.title ?? ''"
+      >
+        <img
+          :src="image.url"
+          :alt="image.title ?? 'Uploaded image'"
+          class="user-request__image"
+          loading="lazy"
+          decoding="async"
+          @click="emit('imageClicked', images, image.url)"
+        />
+      </Tooltip>
     </div>
     <div class="user-request__body">{{ content }}</div>
   </div>

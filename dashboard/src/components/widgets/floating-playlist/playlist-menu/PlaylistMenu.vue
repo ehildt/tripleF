@@ -20,6 +20,7 @@ import { Library, Plus } from '@lucide/vue';
 import { ref } from 'vue';
 
 import { useDropdown } from '@/components/shared/ui/drop-down/use-dropdown';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import PlaylistMenuItem from './playlist-menu-item/PlaylistMenuItem.vue';
 
@@ -56,43 +57,46 @@ function onNameInput(event: Event) {
 
 <template>
   <div ref="containerRef" class="playlist-menu">
-    <button
-      type="button"
-      class="playlist-menu__trigger"
-      :class="{ 'playlist-menu__trigger--active': open }"
-      title="Saved playlists"
-      aria-label="Saved playlists"
-      @click.stop="toggle"
-      @pointerdown.stop
-    >
-      <Library class="playlist-menu__trigger-icon" />
-    </button>
+    <Tooltip :text="$t('common.savedPlaylists')">
+      <button
+        type="button"
+        class="playlist-menu__trigger"
+        :class="{ 'playlist-menu__trigger--active': open }"
+        :aria-label="$t('common.savedPlaylists')"
+        @click.stop="toggle"
+        @pointerdown.stop
+      >
+        <Library class="playlist-menu__trigger-icon" />
+      </button>
+    </Tooltip>
     <Transition name="playlist-menu">
       <div v-if="open" class="playlist-menu__menu" @click.stop>
         <div class="playlist-menu__name-row">
-          <input
-            :value="playlistName"
-            type="text"
-            name="playlist-name"
-            class="playlist-menu__input"
-            placeholder="Name this playlist"
-            title="Type a name and press the Plus (or Enter) to save it as a new playlist"
-            aria-label="Playlist name"
-            @input="onNameInput"
-            @keydown.enter.prevent="emit('create')"
-            @keydown.esc="close"
-          />
-          <button
-            type="button"
-            class="playlist-menu__name-action"
-            title="Save playlist"
-            aria-label="Save playlist"
-            :disabled="!playlistName.trim()"
-            @mousedown.prevent
-            @click="emit('create')"
-          >
-            <Plus class="playlist-menu__name-action-icon" />
-          </button>
+          <Tooltip :text="$t('common.typeNameToSavePlaylist')">
+            <input
+              :value="playlistName"
+              type="text"
+              name="playlist-name"
+              class="playlist-menu__input"
+              :placeholder="$t('common.nameThisPlaylist')"
+              :aria-label="$t('common.playlistName')"
+              @input="onNameInput"
+              @keydown.enter.prevent="emit('create')"
+              @keydown.esc="close"
+            />
+          </Tooltip>
+          <Tooltip :text="$t('common.savePlaylist')">
+            <button
+              type="button"
+              class="playlist-menu__name-action"
+              :aria-label="$t('common.savePlaylist')"
+              :disabled="!playlistName.trim()"
+              @mousedown.prevent
+              @click="emit('create')"
+            >
+              <Plus class="playlist-menu__name-action-icon" />
+            </button>
+          </Tooltip>
         </div>
         <template v-if="playlists.length > 0">
           <PlaylistMenuItem

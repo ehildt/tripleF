@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { CircleAlert, Eye, EyeOff, Search } from '@lucide/vue';
-import { ref } from 'vue';
+import { CircleAlert, Mail, MailOpen, Search } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
+import FilterMenu from '../../shared/ui/filter-menu/FilterMenu.vue';
+import IconButton from '../../shared/ui/icon-button/IconButton.vue';
 import Pagination from '../../shared/ui/pagination/Pagination.vue';
 import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import DlqReloadButton from '../shared/ui/reload-button/DlqReloadButton.vue';
 import { useExclusiveFilterMenu } from './composables/use-exclusive-filter-menu';
-import DlqFilterMenu from './filter-menu/DlqFilterMenu.vue';
 
 const props = defineProps<{
   showLoading: boolean;
@@ -37,7 +38,14 @@ const emit = defineEmits<{
 
 const headerRef = ref<HTMLElement | null>(null);
 
-const statusOptions = ['Failed', 'Active', 'Cleared', 'Removed'] as const;
+const { t } = useI18n();
+
+const statusOptions = computed(() => [
+  { value: 'Failed', label: t('common.failed') },
+  { value: 'Active', label: t('common.active') },
+  { value: 'Cleared', label: t('common.cleared') },
+  { value: 'Removed', label: t('common.removed') },
+]);
 
 const { isMenuOpen, toggleMenu } = useExclusiveFilterMenu(headerRef, [
   'status',
@@ -61,46 +69,39 @@ function toggleHideRead() {
 <template>
   <PanelHeader>
     <div ref="headerRef" class="dlq-list-header__lead">
-      <PanelHeaderTitle label="Jobs" />
+      <PanelHeaderTitle :label="$t('common.jobs')" />
     </div>
     <div class="dlq-list-header__actions">
-      <DlqFilterMenu
+      <FilterMenu
         :is-open="isMenuOpen('status')"
         :is-active="props.filterStatus !== ''"
-        :icon="CircleAlert"
-        title="Filter by status"
+        :title="$t('common.filterByStatus')"
         width="8rem"
         :options="statusOptions"
         :selected-value="props.filterStatus"
         @toggle="toggleMenu('status')"
         @select="selectStatus"
-      />
-      <DlqFilterMenu
+      >
+        <CircleAlert />
+      </FilterMenu>
+      <FilterMenu
         :is-open="isMenuOpen('search')"
         :is-active="props.filterSearch !== ''"
-        :icon="Search"
-        title="Search"
+        :title="$t('common.search')"
         width="16rem"
         :options="[]"
         :selected-value="props.filterSearch"
         has-text-value
         @toggle="toggleMenu('search')"
         @select="selectSearch"
-      />
-      <DlqReloadButton :loading="props.showLoading" @click="emit('reload')" />
-      <div class="dlq-list-header__divider" />
-      <button
-        class="dlq-list-header__hide-read"
-        :class="{
-          'dlq-list-header__hide-read--active': props.hideRead,
-        }"
-        @click="toggleHideRead"
       >
-        <MotionIcon>
-          <Eye v-if="props.hideRead" class="dlq-list-header__hide-read-icon" />
-          <EyeOff v-else class="dlq-list-header__hide-read-icon" />
-        </MotionIcon>
-      </button>
+        <Search />
+      </FilterMenu>
+      <DlqReloadButton :loading="props.showLoading" @click="emit('reload')" />
+      <IconButton :active="props.hideRead" @click="toggleHideRead">
+        <Mail v-if="props.hideRead" />
+        <MailOpen v-else />
+      </IconButton>
     </div>
   </PanelHeader>
   <div v-if="props.total > 0">
@@ -133,38 +134,5 @@ function toggleHideRead() {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-}
-
-.dlq-list-header__divider {
-  width: 1px;
-  height: 1.25rem;
-  background-color: var(--color-divider);
-}
-
-.dlq-list-header__hide-read {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-0-5) var(--spacing-2);
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.dlq-list-header__hide-read:hover {
-  color: var(--color-fg-primary);
-}
-
-.dlq-list-header__hide-read--active {
-  color: var(--color-accent-primary);
-}
-
-.dlq-list-header__hide-read-icon {
-  width: 1rem;
-  height: 1rem;
 }
 </style>

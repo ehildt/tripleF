@@ -1,6 +1,7 @@
 import { useClipboard } from '@vueuse/core';
 import { computed, type ComputedRef, ref, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
 import { formatBody } from '@/utils/format-body.helper';
 
 import type { DebugResult } from '../../../../types/debug.model';
@@ -39,7 +40,7 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
     if (r.type !== 'socket' && parsedEndpoint.value.params.length) {
       items.push({
         id: 'params',
-        label: 'Params',
+        label: i18n.global.t('common.params'),
         content: formatBody(
           Object.fromEntries(
             parsedEndpoint.value.params.map((p) => [p.key, p.value]),
@@ -50,14 +51,14 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
     if (r.requestHeaders) {
       items.push({
         id: 'headers',
-        label: 'Headers',
+        label: i18n.global.t('common.headers'),
         content: formatBody(r.requestHeaders as any),
       });
     }
     if (r.requestBody) {
       items.push({
         id: 'body',
-        label: 'Body',
+        label: i18n.global.t('common.body'),
         content: formatBody(r.requestBody),
       });
     }

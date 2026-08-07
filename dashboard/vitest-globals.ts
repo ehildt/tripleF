@@ -1,10 +1,17 @@
 import '@testing-library/jest-dom/vitest';
 
+import { config } from '@vue/test-utils';
 import { vi } from 'vitest';
+
+import { i18n } from '@/i18n/i18n';
 
 import { readAppVersion } from './app-version';
 
 globalThis.__APP_VERSION__ = readAppVersion();
+
+// Install i18n in every test mount so `$t` and `useI18n()` work and the
+// English assertions in specs resolve against the default `en` locale.
+config.global.plugins = [...(config.global.plugins ?? []), i18n];
 
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

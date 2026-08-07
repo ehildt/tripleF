@@ -182,11 +182,11 @@ export function extractMediaFromToolResults(
     ? {
         images: (availableImages ?? []).map((i) => ({
           url: i.url,
-          title: i.title,
+          title: i.title ?? '',
         })),
         videos: (availableVideos ?? []).map((v) => ({
           url: v.url,
-          title: v.title,
+          title: v.title ?? '',
         })),
       }
     : collectMediaUrls(results);

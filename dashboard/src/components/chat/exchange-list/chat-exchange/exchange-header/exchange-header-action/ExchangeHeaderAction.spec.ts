@@ -18,7 +18,7 @@ describe('ExchangeHeaderAction', () => {
       slots: { default: '<svg />' },
     });
 
-    await wrapper.trigger('click');
+    await wrapper.find('button').trigger('click');
     expect(wrapper.emitted('click')).toHaveLength(1);
   });
 
@@ -28,9 +28,10 @@ describe('ExchangeHeaderAction', () => {
       slots: { default: '<svg />' },
     });
 
-    expect(wrapper.classes()).not.toContain('header-action--pressed');
-    await wrapper.trigger('click');
-    expect(wrapper.classes()).toContain('header-action--pressed');
+    const button = wrapper.find('button');
+    expect(button.classes()).not.toContain('header-action--pressed');
+    await button.trigger('click');
+    expect(button.classes()).toContain('header-action--pressed');
   });
 
   it('removes the pressed class after the pulse animation', async () => {
@@ -39,12 +40,13 @@ describe('ExchangeHeaderAction', () => {
       slots: { default: '<svg />' },
     });
 
-    await wrapper.trigger('click');
-    expect(wrapper.classes()).toContain('header-action--pressed');
+    const button = wrapper.find('button');
+    await button.trigger('click');
+    expect(button.classes()).toContain('header-action--pressed');
 
     vi.advanceTimersByTime(300);
     await vi.runAllTimersAsync();
-    expect(wrapper.classes()).not.toContain('header-action--pressed');
+    expect(button.classes()).not.toContain('header-action--pressed');
   });
 
   it('emits hover start and end', async () => {
@@ -53,8 +55,9 @@ describe('ExchangeHeaderAction', () => {
       slots: { default: '<svg />' },
     });
 
-    await wrapper.trigger('mouseenter');
-    await wrapper.trigger('mouseleave');
+    const button = wrapper.find('button');
+    await button.trigger('mouseenter');
+    await button.trigger('mouseleave');
     expect(wrapper.emitted('hoverStart')).toHaveLength(1);
     expect(wrapper.emitted('hoverEnd')).toHaveLength(1);
   });
