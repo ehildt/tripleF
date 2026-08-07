@@ -18,12 +18,15 @@ import { computed, toRef } from 'vue';
 
 import type { Exchange } from '@/stores/conversation';
 
+import ResponseMetaBarPill from '../exchange-content/assistant-response/shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
+import ResponseMetaBar from '../exchange-content/assistant-response/shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import { formatExchangeTime } from '../helpers/format-exchange-time.helper';
 import { useActivityLabel } from './composables/use-activity-label';
 import { usePromptContextPercent } from './composables/use-prompt-context-percent';
 import ExchangeActivityLabel from './exchange-activity-label/ExchangeActivityLabel.vue';
 import ExchangeHeaderAction from './exchange-header-action/ExchangeHeaderAction.vue';
 import ExchangeMetaRow from './exchange-meta-row/ExchangeMetaRow.vue';
+import { buildExchangeMetaPills } from './helpers/build-exchange-meta-pills.helper';
 
 const props = defineProps<{
   exchange: Exchange;
@@ -46,6 +49,12 @@ const emit = defineEmits<{
 }>();
 
 const { activityLabel } = useActivityLabel(toRef(props, 'exchange'));
+
+/** Assistant meta-bar pills (category/date/read-time/author) from the
+ *  parsed response, shown after the copy action. */
+const metaPills = computed(() =>
+  buildExchangeMetaPills(props.exchange.harnessData),
+);
 
 /**
  * The exchange is live while pending (pipeline steps, thinking) and while
@@ -75,6 +84,18 @@ function onCancel() {
     <ExchangeHeaderAction v-if="isDone" title="Copy" @click="emit('copy')">
       <Copy />
     </ExchangeHeaderAction>
+
+    <ResponseMetaBar
+      v-if="!isUser && isDone && metaPills.length"
+      class="exchange-header__meta-bar"
+    >
+      <ResponseMetaBarPill
+        v-for="pill in metaPills"
+        :key="pill.text"
+        :variant="pill.variant"
+        >{{ pill.text }}</ResponseMetaBarPill
+      >
+    </ResponseMetaBar>
     <ExchangeHeaderAction
       v-if="isError"
       title="Retry"
@@ -163,5 +184,14 @@ function onCancel() {
   font-size: 0.75rem;
   color: var(--color-fg-muted);
   font-family: var(--font-mono);
+}
+
+.exchange-header__meta-bar {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.exchange-header__meta-bar :deep(.pill) {
+  font-size: 0.675rem;
 }
 </style>

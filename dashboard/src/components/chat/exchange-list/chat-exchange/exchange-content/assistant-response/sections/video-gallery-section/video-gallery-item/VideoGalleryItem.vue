@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ListCheck, ListPlus } from '@lucide/vue';
+import { ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
@@ -45,7 +45,7 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
           :aria-pressed="isInPlaylist"
           @click.stop="togglePlaylistVideo"
         >
-          <ListCheck
+          <ListMinus
             v-if="isInPlaylist"
             class="video-gallery__playlist-toggle-icon"
           />

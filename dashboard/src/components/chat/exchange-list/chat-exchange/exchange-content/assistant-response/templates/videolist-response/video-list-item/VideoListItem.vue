@@ -6,7 +6,7 @@
  * FloatingVideoFigure). The top-right toggle adds the video to the
  * conversation's playlist.
  */
-import { ListCheck, ListPlus } from '@lucide/vue';
+import { ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
@@ -63,7 +63,7 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
           :aria-pressed="isInPlaylist"
           @click.stop="togglePlaylistVideo"
         >
-          <ListCheck
+          <ListMinus
             v-if="isInPlaylist"
             class="video-item__playlist-toggle-icon"
           />

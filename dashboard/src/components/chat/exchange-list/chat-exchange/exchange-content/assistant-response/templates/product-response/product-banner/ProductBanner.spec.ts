@@ -71,4 +71,23 @@ describe('ProductBanner', () => {
     });
     expect(wrapper.find('.product-banner__placeholder').exists()).toBe(true);
   });
+
+  it('renders the glassy +N count badge when imageCount is set', () => {
+    const wrapper = mount(ProductBanner, {
+      props: { ...baseProps, imageCount: 4 },
+    });
+    const badge = wrapper.find('.product-banner__count');
+    expect(badge.exists()).toBe(true);
+    expect(badge.text()).toBe('+4');
+  });
+
+  it('hides the +N badge when imageCount is missing or zero', () => {
+    const without = mount(ProductBanner, { props: baseProps });
+    expect(without.find('.product-banner__count').exists()).toBe(false);
+
+    const zero = mount(ProductBanner, {
+      props: { ...baseProps, imageCount: 0 },
+    });
+    expect(zero.find('.product-banner__count').exists()).toBe(false);
+  });
 });

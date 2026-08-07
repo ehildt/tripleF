@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ListCheck, ListPlus } from '@lucide/vue';
+import { ListMinus, ListPlus } from '@lucide/vue';
 import { computed, inject } from 'vue';
 
 import MediaImageCard from '@/components/shared/media/MediaImageCard.vue';
@@ -91,7 +91,7 @@ function handleClick() {
           :aria-pressed="isInPlaylist"
           @click.stop="togglePlaylistVideo"
         >
-          <ListCheck
+          <ListMinus
             v-if="isInPlaylist"
             class="hero-media-card__playlist-toggle-icon"
           />

@@ -11,8 +11,6 @@ import InternationalCoverageSection from '../../sections/international-coverage-
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
-import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import SourcesSection from './sections/news-sources-section/NewsSourcesSection.vue';
 import RelatedStoriesSection from './sections/related-stories-section/RelatedStoriesSection.vue';
 
@@ -44,20 +42,6 @@ const hasAnyContent = computed(() =>
   <article class="news">
     <template v-if="hasAnyContent">
       <header class="news__hero">
-        <ResponseMetaBar>
-          <ResponseMetaBarPill v-if="data.category" variant="accent">{{
-            data.category
-          }}</ResponseMetaBarPill>
-          <ResponseMetaBarPill v-if="data.publishDate">{{
-            data.publishDate
-          }}</ResponseMetaBarPill>
-          <ResponseMetaBarPill v-if="data.readTime">{{
-            data.readTime
-          }}</ResponseMetaBarPill>
-          <ResponseMetaBarPill v-if="data.dateline || data.byline">{{
-            data.dateline ? `${data.dateline} · ${data.byline}` : data.byline
-          }}</ResponseMetaBarPill>
-        </ResponseMetaBar>
         <HeroSection :title="data.headline" :subtitle="data.deck" />
         <ArticleHeroMediaSection
           :hero-video-url="data.heroVideoUrl"

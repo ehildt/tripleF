@@ -66,6 +66,24 @@ export const AssistantDone: Story = {
   },
 };
 
+/** Done assistant exchange with the meta-bar after the copy icon. */
+export const AssistantMetaBar: Story = {
+  args: {
+    exchange: {
+      ...baseExchange,
+      role: 'assistant',
+      model: 'llama3',
+      harnessData: {
+        category: 'Tech',
+        publishDate: '2026-08-07',
+        readTime: '5 min read',
+        author: 'Ada Lovelace',
+      },
+    },
+    isUser: false,
+  },
+};
+
 /** Error assistant — Retry button visible. */
 export const AssistantError: Story = {
   args: {
