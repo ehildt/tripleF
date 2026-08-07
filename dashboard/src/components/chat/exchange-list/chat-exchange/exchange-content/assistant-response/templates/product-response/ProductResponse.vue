@@ -29,6 +29,12 @@ const videos = computed<VideoGalleryItem[]>(() =>
   (props.data.videoGalleryItems ?? []).slice(0, 3),
 );
 
+/** Total number of product images (banner + gallery). */
+const imageCount = computed(
+  () =>
+    (props.data.heroImageUrl ? 1 : 0) + (props.data.galleryItems?.length ?? 0),
+);
+
 const hasContent = computed(
   () =>
     Boolean(props.data.title) ||
@@ -47,6 +53,7 @@ const hasContent = computed(
       :image-url="data.heroImageUrl"
       :image-alt="data.heroImageAlt"
       :image-caption="data.heroCaption"
+      :image-count="imageCount"
       :rating="data.aggregateRating"
       :rating-count="data.aggregateRatingCount"
       :rating-label="data.aggregateRatingLabel"

@@ -11,8 +11,6 @@ import type { HarnessResponseData } from '@/types/harness-response-data.model';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
-import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import ImageListItem from './image-list-item/ImageListItem.vue';
 
 const props = defineProps<{ data: HarnessResponseData }>();
@@ -26,14 +24,6 @@ const hasContent = computed(
 <template>
   <section v-if="hasContent" class="image-list">
     <header class="image-list__header">
-      <ResponseMetaBar>
-        <ResponseMetaBarPill v-if="data.category" variant="accent">{{
-          data.category
-        }}</ResponseMetaBarPill>
-        <ResponseMetaBarPill v-if="items.length"
-          >{{ items.length }} image{{ items.length === 1 ? '' : 's' }}
-        </ResponseMetaBarPill>
-      </ResponseMetaBar>
       <HeroSection :title="data.title" :subtitle="data.subtitle" />
     </header>
 

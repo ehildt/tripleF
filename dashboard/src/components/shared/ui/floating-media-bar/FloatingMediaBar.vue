@@ -6,7 +6,7 @@
  * The whole bar acts as a drag handle; interactive controls stop pointer
  * events so they never initiate a drag.
  */
-import { ListCheck, ListPlus, Minus, X } from '@lucide/vue';
+import { ListMinus, ListPlus, Minus, X } from '@lucide/vue';
 import { computed } from 'vue';
 
 import MotionIcon from '../motion-icon/MotionIcon.vue';
@@ -99,7 +99,7 @@ function onOpacityInput(event: Event) {
         @click.stop="emit('togglePlaylist')"
       >
         <MotionIcon>
-          <ListCheck
+          <ListMinus
             v-if="isInPlaylist"
             class="floating-media-bar__playlist-icon"
           />

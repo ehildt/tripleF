@@ -10,20 +10,11 @@ import InternationalCoverageSection from '../../sections/international-coverage-
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
-import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import EvaluationListSection from './sections/evaluation-list-section/EvaluationListSection.vue';
 
 const props = defineProps<{
   data: HarnessResponseData;
 }>();
-
-const scoreBadge = computed(() => {
-  const label = props.data.scoreLabel;
-  if (label) return label;
-  if (props.data.score !== undefined) return String(props.data.score);
-  return null;
-});
 
 const heroUrl = computed(
   () => props.data.heroVideoUrl || props.data.heroImageUrl,
@@ -53,14 +44,6 @@ const hasAnyContent = computed(() =>
   <article class="harness-evaluation">
     <template v-if="hasAnyContent">
       <header class="hero">
-        <ResponseMetaBar>
-          <ResponseMetaBarPill v-if="data.category" variant="accent">{{
-            data.category
-          }}</ResponseMetaBarPill>
-          <ResponseMetaBarPill v-if="scoreBadge" variant="accent">{{
-            scoreBadge
-          }}</ResponseMetaBarPill>
-        </ResponseMetaBar>
         <HeroSection :title="data.title" :subtitle="data.subtitle" />
       </header>
 
