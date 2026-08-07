@@ -33,11 +33,55 @@ export default defineConfig({
     },
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/[name].[ext]',
+        codeSplitting: {
+          groups: [
+            {
+              name: 'vue-vendor',
+              test: /node_modules[\\/](vue|vue-router|pinia|vue-i18n|@vueuse)/,
+              priority: 30,
+            },
+            {
+              name: 'markdown',
+              test: /node_modules[\\/](markdown-it|dompurify|turndown)/,
+              priority: 30,
+            },
+            {
+              name: 'socket',
+              test: /node_modules[\\/]socket\.io-client/,
+              priority: 30,
+            },
+            {
+              name: 'query',
+              test: /node_modules[\\/]@tanstack/,
+              priority: 30,
+            },
+            {
+              name: 'motion',
+              test: /node_modules[\\/]motion-v/,
+              priority: 30,
+            },
+            {
+              name: 'ui',
+              test: /node_modules[\\/](@lucide|@headlessui)/,
+              priority: 30,
+            },
+            {
+              name: 'date',
+              test: /node_modules[\\/]date-fns/,
+              priority: 30,
+            },
+            {
+              name: 'cuid',
+              test: /node_modules[\\/]@paralleldrive/,
+              priority: 30,
+            },
+          ],
+        },
       },
     },
   },

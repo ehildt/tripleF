@@ -38,7 +38,9 @@ const ctaLabel = computed(() =>
           <h3 v-if="offer.title" class="shoplist-card__title">
             {{ offer.title }}
           </h3>
-          <span v-if="isBestPrice" class="shoplist-card__best">Best price</span>
+          <span v-if="isBestPrice" class="shoplist-card__best">{{
+            $t('common.bestPrice')
+          }}</span>
           <span v-if="offer.price" class="shoplist-card__price">
             {{ offer.price }}
           </span>

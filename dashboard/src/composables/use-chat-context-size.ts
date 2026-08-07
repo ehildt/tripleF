@@ -1,5 +1,7 @@
 import { computed, type ComputedRef, type Ref, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
 import { useBlink } from './use-blink';
 
@@ -66,7 +68,9 @@ export function useChatContextSize(
     if (maxCtx && Number(ctx) > maxCtx) {
       ctx = String(maxCtx);
       toast.warning(
-        `Selected model supports max ${modelsStore.formatCtx(maxCtx)} context. Clamped to ${modelsStore.formatCtx(maxCtx)}.`,
+        i18n.global.t('toast.contextClamped', {
+          max: modelsStore.formatCtx(maxCtx),
+        }),
       );
     }
     conversationStore.setNumCtx(conversationId.value, ctx);

@@ -3,6 +3,7 @@ import { ref, useTemplateRef } from 'vue';
 import { getApiUrl } from '@/api/api-url';
 import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
 import { useToast } from '@/composables/use-toast';
+import { i18n } from '@/i18n/i18n';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
 /** One preprocessing variant returned by the preview endpoint. */
@@ -56,7 +57,9 @@ export function usePreprocessingPreview() {
       lightbox.openImages(images, images[0].url);
     } catch (e) {
       toast.error(
-        `Preview failed: ${e instanceof Error ? e.message : String(e)}`,
+        i18n.global.t('toast.previewFailed', {
+          error: e instanceof Error ? e.message : String(e),
+        }),
       );
     } finally {
       isPreviewLoading.value = false;

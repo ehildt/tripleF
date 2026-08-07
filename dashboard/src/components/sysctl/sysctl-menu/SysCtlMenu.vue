@@ -5,6 +5,8 @@
  */
 import { Blocks, Cog, Radar, ScanEye } from '@lucide/vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import type { SysctlTab } from '../composables/use-sysctl-tab';
 
@@ -17,10 +19,22 @@ const emit = defineEmits<{
 }>();
 
 const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
-  { tab: 'search-engines', label: 'Search Engines', icon: Radar },
-  { tab: 'preprocessing', label: 'Preprocessing', icon: ScanEye },
-  { tab: 'widgets', label: 'Widgets', icon: Blocks },
-  { tab: 'system', label: 'System', icon: Cog },
+  {
+    tab: 'search-engines',
+    label: i18n.global.t('common.sysctlSearchEngines'),
+    icon: Radar,
+  },
+  {
+    tab: 'preprocessing',
+    label: i18n.global.t('common.sysctlPreprocessing'),
+    icon: ScanEye,
+  },
+  {
+    tab: 'widgets',
+    label: i18n.global.t('common.sysctlWidgets'),
+    icon: Blocks,
+  },
+  { tab: 'system', label: i18n.global.t('common.sysctlSystem'), icon: Cog },
 ];
 </script>
 

@@ -18,7 +18,7 @@ const rows = computed(() =>
 
 <template>
   <section class="spec-list">
-    <h2 class="spec-list__title">Key specs</h2>
+    <h2 class="spec-list__title">{{ $t('common.keySpecs') }}</h2>
     <ul class="spec-list__table">
       <li v-for="(row, idx) in rows" :key="idx" class="spec-list__row">
         <template v-if="row.label">

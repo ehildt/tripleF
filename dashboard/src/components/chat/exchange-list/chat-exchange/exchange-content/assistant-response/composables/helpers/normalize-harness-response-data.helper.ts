@@ -41,7 +41,7 @@ export function normalizeHarnessResponseData(
     event.availableImages
   ) {
     extractMediaFromToolResults(
-      event.toolResults,
+      event.toolResults ?? [],
       data,
       template ?? event.template,
       event.availableImages,

@@ -1,6 +1,8 @@
 import pWaitFor from 'p-wait-for';
 import { computed, type Ref } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import type { ConnectionState } from '../stores/socket';
 import type { SocketProvider } from '../types/socket-provider.model';
 import { useBlink } from './use-blink';
@@ -44,7 +46,7 @@ export function useSocketSubscription(
       try {
         await pWaitFor(() => socket?.connected === true, { timeout: 500 });
       } catch {
-        toast.error('Socket not connected. Unable to subscribe.');
+        toast.error(i18n.global.t('toast.socketNotConnected'));
         return;
       }
     }

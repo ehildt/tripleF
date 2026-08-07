@@ -2,6 +2,7 @@
 import { PenLine, Pin, PinOff, Trash2 } from '@lucide/vue';
 
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 
 defineProps<{
   conversationType: 'temporary' | 'persistent';
@@ -16,46 +17,58 @@ const emit = defineEmits<{
 
 <template>
   <div class="conversation-header-actions">
-    <button
-      type="button"
-      class="conversation-header-actions__button"
-      title="Rename"
-      @click="emit('rename')"
-    >
-      <MotionIcon
-        ><PenLine class="conversation-header-actions__icon"
-      /></MotionIcon>
-    </button>
+    <Tooltip :text="$t('common.rename')">
+      <button
+        type="button"
+        class="conversation-header-actions__button"
+        :aria-label="$t('common.rename')"
+        @click="emit('rename')"
+      >
+        <MotionIcon
+          ><PenLine class="conversation-header-actions__icon"
+        /></MotionIcon>
+      </button>
+    </Tooltip>
 
-    <button
-      type="button"
-      class="conversation-header-actions__button conversation-header-actions__button--danger"
-      title="Delete conversation"
-      @click="emit('delete')"
-    >
-      <MotionIcon
-        ><Trash2 class="conversation-header-actions__icon"
-      /></MotionIcon>
-    </button>
+    <Tooltip :text="$t('common.deleteConversation')">
+      <button
+        type="button"
+        class="conversation-header-actions__button conversation-header-actions__button--danger"
+        :aria-label="$t('common.deleteConversation')"
+        @click="emit('delete')"
+      >
+        <MotionIcon
+          ><Trash2 class="conversation-header-actions__icon"
+        /></MotionIcon>
+      </button>
+    </Tooltip>
 
-    <button
-      type="button"
-      class="conversation-header-actions__button"
-      :title="
+    <Tooltip
+      :text="
         conversationType === 'temporary'
           ? 'Pin to persistent'
           : 'Unpin to temporary'
       "
-      @click="emit('toggleType')"
     >
-      <MotionIcon>
-        <PinOff
-          v-if="conversationType === 'temporary'"
-          class="conversation-header-actions__icon"
-        />
-        <Pin v-else class="conversation-header-actions__icon" />
-      </MotionIcon>
-    </button>
+      <button
+        type="button"
+        class="conversation-header-actions__button"
+        :aria-label="
+          conversationType === 'temporary'
+            ? 'Pin to persistent'
+            : 'Unpin to temporary'
+        "
+        @click="emit('toggleType')"
+      >
+        <MotionIcon>
+          <PinOff
+            v-if="conversationType === 'temporary'"
+            class="conversation-header-actions__icon"
+          />
+          <Pin v-else class="conversation-header-actions__icon" />
+        </MotionIcon>
+      </button>
+    </Tooltip>
   </div>
 </template>
 

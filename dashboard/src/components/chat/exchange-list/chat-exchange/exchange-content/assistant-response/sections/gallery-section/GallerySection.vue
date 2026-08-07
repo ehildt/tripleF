@@ -14,7 +14,7 @@ defineProps<{
   <section
     v-if="items?.length"
     class="harness-gallery-section"
-    aria-label="Image gallery"
+    :aria-label="$t('common.imageGallery')"
   >
     <h3 v-if="title">{{ title }}</h3>
     <ul

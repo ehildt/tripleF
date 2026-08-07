@@ -8,7 +8,6 @@ describe('CapabilityBadge', () => {
     const wrapper = mount(CapabilityBadge, { props: { capability: 'vision' } });
     const badge = wrapper.find('.capability-badge--icon');
     expect(badge.exists()).toBe(true);
-    expect(badge.attributes('title')).toBe('vision');
     expect(badge.attributes('aria-label')).toBe('vision');
     expect(badge.text()).toBe('');
   });
@@ -23,9 +22,9 @@ describe('CapabilityBadge', () => {
     ]) {
       const wrapper = mount(CapabilityBadge, { props: { capability } });
       expect(wrapper.find('.capability-badge--icon').exists()).toBe(true);
-      expect(wrapper.find('.capability-badge--icon').attributes('title')).toBe(
-        capability,
-      );
+      expect(
+        wrapper.find('.capability-badge--icon').attributes('aria-label'),
+      ).toBe(capability);
     }
   });
 

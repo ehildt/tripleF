@@ -6,12 +6,12 @@ import ExchangeEmptyStateCanvas from './exchange-empty-state-canvas/ExchangeEmpt
   <div class="exchange-empty-state">
     <ExchangeEmptyStateCanvas class="exchange-empty-state__canvas" />
     <div class="exchange-empty-state__hint">
-      <p>Send a message to start the conversation.</p>
+      <p>{{ $t('common.sendToStart') }}</p>
       <p>
-        <span class="exchange-empty-state__kbd">Enter</span>
-        sends ·
+        <span class="exchange-empty-state__kbd">{{ $t('common.enter') }}</span>
+        {{ $t('common.kbdSends') }} ·
         <span class="exchange-empty-state__kbd">Ctrl+Enter</span>
-        new line
+        {{ $t('common.kbdNewLine') }}
       </p>
     </div>
   </div>

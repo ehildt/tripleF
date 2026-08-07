@@ -82,7 +82,7 @@ const {
         v-else
         type="button"
         class="floating-video-figure__poster"
-        aria-label="Play video"
+        :aria-label="$t('common.playVideo')"
         @click="engage"
       >
         <img

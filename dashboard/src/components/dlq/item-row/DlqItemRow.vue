@@ -98,7 +98,11 @@ onUnmounted(disarmDelete);
         :tint="1"
         :visible="isDeletable"
         :armed="deleteArmed"
-        :title="deleteArmed ? 'Click again to confirm deletion' : 'Delete'"
+        :title="
+          deleteArmed
+            ? $t('common.clickAgainConfirmDelete')
+            : $t('common.delete')
+        "
         @click="handleDeleteClick"
       />
     </div>

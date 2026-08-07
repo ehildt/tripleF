@@ -40,16 +40,16 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 <template>
   <SysCtlSection :loading="isLoading" :error="hasError">
     <PanelLayout>
-      <CollapsiblePanel id="health" title="Health">
+      <CollapsiblePanel id="health" :title="$t('common.health')">
         <SystemHealthSection :tiles="tiles" />
       </CollapsiblePanel>
     </PanelLayout>
 
     <PanelLayout>
-      <CollapsiblePanel id="ollama" title="Ollama">
+      <CollapsiblePanel id="ollama" :title="$t('common.ollama')">
         <template #actions>
           <ResetButton
-            title="Reset Ollama to defaults"
+            :title="$t('common.resetOllamaToDefaults')"
             @click="resetProvider('ollama')"
           />
         </template>
@@ -60,8 +60,8 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
                Setting a key also unlocks the Ollama Cloud models. -->
           <FieldCard
             :icon="KeyRound"
-            label="API key"
-            description="ollama.com cloud access key"
+            :label="$t('common.apiKey')"
+            :description="$t('common.ollamaCloudAccessKey')"
           >
             <template #field>
               <input
@@ -79,7 +79,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 
           <FieldCard
             :icon="Server"
-            label="Host"
+            :label="$t('common.host')"
             description="http://localhost:11434/api or https://ollama.com/api"
           >
             <template #field>
@@ -99,7 +99,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
     </PanelLayout>
 
     <PanelLayout>
-      <CollapsiblePanel id="interface" title="Interface">
+      <CollapsiblePanel id="interface" :title="$t('common.interfaceSection')">
         <TabVisibilitySection
           :is-sockets-visible="isTabVisible('sockets')"
           :show-counters="showCounters"

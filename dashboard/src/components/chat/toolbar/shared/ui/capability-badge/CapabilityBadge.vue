@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
 import { CAPABILITY_META } from './capability-meta';
 
 const props = defineProps<{
@@ -16,22 +17,22 @@ const meta = computed(() => CAPABILITY_META[props.capability] ?? null);
 </script>
 
 <template>
-  <span
-    v-if="meta"
-    class="capability-badge capability-badge--icon"
-    role="img"
-    :title="meta.label"
-    :aria-label="meta.label"
-  >
-    <component
-      :is="meta.icon"
-      class="capability-badge__icon"
-      aria-hidden="true"
-    />
-  </span>
-  <span v-else class="capability-badge" :title="capability">
-    {{ capability }}
-  </span>
+  <Tooltip v-if="meta" :text="$t(`capabilities.${capability}`)">
+    <span
+      class="capability-badge capability-badge--icon"
+      role="img"
+      :aria-label="$t(`capabilities.${capability}`)"
+    >
+      <component
+        :is="meta.icon"
+        class="capability-badge__icon"
+        aria-hidden="true"
+      />
+    </span>
+  </Tooltip>
+  <Tooltip v-else :text="capability">
+    <span class="capability-badge">{{ capability }}</span>
+  </Tooltip>
 </template>
 
 <style scoped>

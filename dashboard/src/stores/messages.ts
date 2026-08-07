@@ -310,7 +310,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     conversation: ReturnType<
       typeof useConversationStore
     >['conversations'][number],
-    raw: Record<string, unknown>,
     requestId: string,
     d: MessageData,
   ) {
@@ -430,7 +429,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       handleNewContent(conversation, newContent, requestId, d);
       handleActivityStatus(conversation, raw, requestId);
       handleReasoningDelta(conversation, raw, requestId);
-      handleDone(conversation, raw, requestId, d);
+      handleDone(conversation, requestId, d);
       handleToolCall(conversation, raw, requestId);
     }
   }

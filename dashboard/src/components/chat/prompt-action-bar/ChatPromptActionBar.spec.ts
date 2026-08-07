@@ -52,13 +52,13 @@ describe('ChatPromptActionBar', () => {
 
   it('emits fileSelect when the file button is clicked', async () => {
     const wrapper = mountComponent();
-    await wrapper.find('button[title="Select files"]').trigger('click');
+    await wrapper.find('button[aria-label="Select files"]').trigger('click');
     expect(wrapper.emitted('fileSelect')).toBeTruthy();
   });
 
   it('disables the file button when isFileSelectDisabled is true', () => {
     const wrapper = mountComponent({ isFileSelectDisabled: true });
-    const button = wrapper.find('button[title="Select files"]');
+    const button = wrapper.find('button[aria-label="Select files"]');
     expect(button.attributes('disabled')).toBeDefined();
   });
 
@@ -68,12 +68,12 @@ describe('ChatPromptActionBar', () => {
       fileSelectDisabledReason: 'No vision support',
     });
     const button = wrapper.findAll('button').at(-1);
-    expect(button.attributes('title')).toBe('No vision support');
+    expect(button.attributes('aria-label')).toBe('No vision support');
   });
 
   it('emits disabledHoverStart and disabledHoverEnd when file select is disabled', async () => {
     const wrapper = mountComponent({ isFileSelectDisabled: true });
-    const button = wrapper.find('button[title="Select files"]');
+    const button = wrapper.find('button[aria-label="Select files"]');
 
     button.element.dispatchEvent(new MouseEvent('mouseenter'));
     await wrapper.vm.$nextTick();
@@ -100,7 +100,7 @@ describe('ChatPromptActionBar', () => {
       '.chat-prompt-action-bar__offline-indicator',
     );
     expect(indicator.exists()).toBe(true);
-    expect(indicator.attributes('title')).toContain('No search engine');
+    expect(indicator.attributes('aria-label')).toContain('No search engine');
     expect(indicator.attributes('aria-label')).toBe(
       'No search engine connected',
     );
@@ -111,7 +111,7 @@ describe('ChatPromptActionBar', () => {
     const wrapper = mountComponent({ searchEngineState: 'enabled' });
     const toggle = wrapper.find('.chat-prompt-action-bar__search-toggle');
     expect(toggle.exists()).toBe(true);
-    expect(toggle.attributes('title')).toContain('click to disable');
+    expect(toggle.attributes('aria-label')).toContain('click to disable');
 
     await toggle.trigger('click');
     expect(wrapper.emitted('toggleSearchEngine')).toBeTruthy();
@@ -121,7 +121,7 @@ describe('ChatPromptActionBar', () => {
     const wrapper = mountComponent({ searchEngineState: 'disabled' });
     const toggle = wrapper.find('.chat-prompt-action-bar__search-toggle');
     expect(toggle.exists()).toBe(true);
-    expect(toggle.attributes('title')).toContain('click to enable');
+    expect(toggle.attributes('aria-label')).toContain('click to enable');
 
     await toggle.trigger('click');
     expect(wrapper.emitted('toggleSearchEngine')).toBeTruthy();
@@ -136,7 +136,7 @@ describe('ChatPromptActionBar', () => {
       ],
     });
     const tags = wrapper.findAll('.chat-prompt-action-bar__source-tag');
-    expect(tags.map((tag) => tag.attributes('title'))).toEqual([
+    expect(tags.map((tag) => tag.attributes('aria-label'))).toEqual([
       'web source enabled — click to disable',
       'news source disabled — click to enable',
     ]);
@@ -190,7 +190,9 @@ describe('ChatPromptActionBar', () => {
       wrapper.find('.chat-prompt-action-bar__source-tag-icon').exists(),
     ).toBe(true);
     expect(
-      wrapper.find('.chat-prompt-action-bar__source-tag').attributes('title'),
+      wrapper
+        .find('.chat-prompt-action-bar__source-tag')
+        .attributes('aria-label'),
     ).toContain('videos source enabled');
   });
 });

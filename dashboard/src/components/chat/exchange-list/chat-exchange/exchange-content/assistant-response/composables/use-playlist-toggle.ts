@@ -7,6 +7,7 @@ import {
   removeVideoFromActivePlaylist,
 } from '@/components/widgets/floating-playlist/composables/playlist.state';
 import { useToast } from '@/composables/use-toast';
+import { i18n } from '@/i18n/i18n';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 /**
@@ -36,7 +37,7 @@ export function usePlaylistToggle(
       removeVideoFromActivePlaylist(video.videoUrl);
     } else {
       if (!getActivePlaylist()) {
-        toast.warning('Create a playlist before adding videos');
+        toast.warning(i18n.global.t('toast.createPlaylistFirst'));
         return;
       }
       addVideoToActivePlaylist(video);

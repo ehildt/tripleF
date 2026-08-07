@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Eye, EyeOff, Pause, Play, Repeat, Square } from '@lucide/vue';
 
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
+
 withDefaults(
   defineProps<{
     playing: boolean;
@@ -28,65 +30,76 @@ const emit = defineEmits<{
 <template>
   <div class="playlist-transport-bar">
     <div class="playlist-transport-bar__transport">
-      <button
-        type="button"
-        class="playlist-transport-bar__transport-button"
-        :disabled="!canTogglePlayback"
-        :title="playbackToggleTitle"
-        :aria-label="playbackToggleTitle"
-        @click="emit('togglePlayback')"
-      >
-        <Pause v-if="playing" class="playlist-transport-bar__transport-icon" />
-        <Play v-else class="playlist-transport-bar__transport-icon" />
-      </button>
-      <button
-        type="button"
-        class="playlist-transport-bar__transport-button"
-        :disabled="!hasActivePlayback"
-        title="Stop playback"
-        aria-label="Stop playback"
-        @click="emit('stopPlayback')"
-      >
-        <Square class="playlist-transport-bar__transport-icon" />
-      </button>
-      <button
-        type="button"
-        class="playlist-transport-bar__transport-button"
-        :class="{
-          'playlist-transport-bar__transport-button--active': autoplayEnabled,
-        }"
-        :aria-pressed="autoplayEnabled"
-        :title="
+      <Tooltip :text="playbackToggleTitle" :disabled="!canTogglePlayback">
+        <button
+          type="button"
+          class="playlist-transport-bar__transport-button"
+          :disabled="!canTogglePlayback"
+          :aria-label="playbackToggleTitle"
+          @click="emit('togglePlayback')"
+        >
+          <Pause
+            v-if="playing"
+            class="playlist-transport-bar__transport-icon"
+          />
+          <Play v-else class="playlist-transport-bar__transport-icon" />
+        </button>
+      </Tooltip>
+      <Tooltip :text="$t('common.stopPlayback')" :disabled="!hasActivePlayback">
+        <button
+          type="button"
+          class="playlist-transport-bar__transport-button"
+          :disabled="!hasActivePlayback"
+          :aria-label="$t('common.stopPlayback')"
+          @click="emit('stopPlayback')"
+        >
+          <Square class="playlist-transport-bar__transport-icon" />
+        </button>
+      </Tooltip>
+      <Tooltip
+        :text="
           autoplayEnabled
             ? 'Autoplay on: the next video starts when one ends'
             : 'Autoplay off'
         "
-        aria-label="Toggle autoplay"
-        @click="emit('toggleAutoplay')"
       >
-        <Repeat class="playlist-transport-bar__transport-icon" />
-      </button>
-      <button
-        type="button"
-        class="playlist-transport-bar__transport-button"
-        :class="{
-          'playlist-transport-bar__transport-button--active': popoutHidden,
-        }"
-        :aria-pressed="popoutHidden"
-        :title="
+        <button
+          type="button"
+          class="playlist-transport-bar__transport-button"
+          :class="{
+            'playlist-transport-bar__transport-button--active': autoplayEnabled,
+          }"
+          :aria-pressed="autoplayEnabled"
+          :aria-label="$t('common.toggleAutoplay')"
+          @click="emit('toggleAutoplay')"
+        >
+          <Repeat class="playlist-transport-bar__transport-icon" />
+        </button>
+      </Tooltip>
+      <Tooltip
+        :text="
           popoutHidden
             ? 'Popup hidden while playlist videos play'
             : 'Show popup while playlist videos play'
         "
-        aria-label="Toggle popup visibility for playlist videos"
-        @click="emit('togglePopoutVisibility')"
       >
-        <EyeOff
-          v-if="popoutHidden"
-          class="playlist-transport-bar__transport-icon"
-        />
-        <Eye v-else class="playlist-transport-bar__transport-icon" />
-      </button>
+        <button
+          type="button"
+          class="playlist-transport-bar__transport-button"
+          :class="{
+            'playlist-transport-bar__transport-button--active': popoutHidden,
+          }"
+          :aria-pressed="popoutHidden"
+          :aria-label="$t('common.togglePopupVisibilityPlaylist')"
+          @click="emit('togglePopoutVisibility')"
+        >
+          <EyeOff
+            v-if="popoutHidden"
+            class="playlist-transport-bar__transport-icon"
+          />
+          <Eye v-else class="playlist-transport-bar__transport-icon" />
+        </button>
+      </Tooltip>
     </div>
 
     <div

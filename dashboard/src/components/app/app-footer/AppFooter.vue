@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core';
+import { useI18n } from 'vue-i18n';
 
 import { useToast } from '../../../composables/use-toast';
+import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 
 const props = defineProps<{
   socketId?: string | null;
@@ -9,26 +11,36 @@ const props = defineProps<{
 
 const toast = useToast();
 const { copy } = useClipboard({ legacy: true });
+const { t } = useI18n();
 
 /** Game-style session id: click copies it for support/debugging. */
 async function copySessionId() {
   if (!props.socketId) return;
   await copy(props.socketId);
-  toast.success('Copied to clipboard');
+  toast.success(t('common.copiedToClipboard'));
 }
 </script>
 
 <template>
   <footer class="app-footer">
-    <button
-      type="button"
-      class="app-footer__session"
+    <Tooltip
+      :text="
+        socketId ? t('common.sessionIdClickToCopy') : t('common.noSession')
+      "
       :disabled="!socketId"
-      :title="socketId ? 'Session ID — click to copy' : 'No session'"
-      @click="copySessionId"
     >
-      {{ socketId ?? '—' }}
-    </button>
+      <button
+        type="button"
+        class="app-footer__session"
+        :disabled="!socketId"
+        :aria-label="
+          socketId ? t('common.sessionIdClickToCopy') : t('common.noSession')
+        "
+        @click="copySessionId"
+      >
+        {{ socketId ?? '—' }}
+      </button>
+    </Tooltip>
   </footer>
 </template>
 

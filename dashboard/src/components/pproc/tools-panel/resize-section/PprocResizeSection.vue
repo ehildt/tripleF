@@ -30,11 +30,11 @@ function updateMaxWidth(value: PreprocessingSize) {
 </script>
 
 <template>
-  <PprocSection :icon="ArrowDownToLine" title="Resize Settings">
+  <PprocSection :icon="ArrowDownToLine" :title="$t('common.resizeSettings')">
     <div class="pproc-resize-section__grid">
       <FieldCard
         :icon="MoveHorizontal"
-        label="Max Width"
+        :label="$t('common.maxWidth')"
         description="in pixels"
         :disabled="!store.enabled"
         tone="preprocessing"
@@ -50,7 +50,7 @@ function updateMaxWidth(value: PreprocessingSize) {
 
       <FieldCard
         :icon="MoveVertical"
-        label="Max Height"
+        :label="$t('common.maxHeight')"
         description="in pixels"
         :disabled="!store.enabled"
         tone="preprocessing"
@@ -66,7 +66,7 @@ function updateMaxWidth(value: PreprocessingSize) {
 
       <FieldCard
         :icon="Maximize2"
-        label="Prevent Upscaling"
+        :label="$t('common.preventUpscaling')"
         description="skip smaller images"
         :checked="store.resize.withoutEnlargement"
         :disabled="!store.enabled"

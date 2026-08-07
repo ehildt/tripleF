@@ -46,10 +46,7 @@ function select(entry: DlqEntry) {
 
 <template>
   <div v-if="props.error">
-    <PanelEmptyState
-      :message="props.error"
-      submessage="Check network or server status"
-    />
+    <PanelEmptyState :message="props.error" :submessage="''" />
   </div>
 
   <div v-else-if="sortedEntries.length" class="dlq-list-body">
@@ -75,13 +72,13 @@ function select(entry: DlqEntry) {
 
   <PanelEmptyState
     v-else-if="props.entries.length === 0"
-    message="No failed jobs"
-    submessage="DLQ is empty"
+    :message="$t('common.noFailedJobs')"
+    :submessage="''"
   />
   <PanelEmptyState
     v-else
-    message="No unread jobs"
-    submessage="Toggle the eye icon to show all jobs"
+    :message="$t('common.noUnreadJobs')"
+    :submessage="''"
   />
 </template>
 

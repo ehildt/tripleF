@@ -6,6 +6,7 @@ import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import { usePreprocessingStore } from '../../../stores/preprocessing';
 import PprocAdvancedParametersSection from './advanced-parameters-section/PprocAdvancedParametersSection.vue';
@@ -27,21 +28,24 @@ const {
 <template>
   <div class="pproc-tools-panel">
     <div class="pproc-tools-panel__card">
-      <CollapsiblePanel id="preprocessing" title="Image Preprocessing">
+      <CollapsiblePanel
+        id="preprocessing"
+        :title="$t('common.imagePreprocessing')"
+      >
         <template #actions>
           <PreviewButton
-            title="Preview preprocessing on an image"
+            :title="$t('common.previewPreprocessingOnImage')"
             :disabled="isPreviewLoading"
             @click="onPreviewClick"
           />
           <ResetButton
-            title="Reset preprocessing to defaults"
+            :title="$t('common.resetPreprocessingToDefaults')"
             @click="store.resetToDefaults()"
           />
           <PowerToggle
             :enabled="store.enabled"
             tone="preprocessing"
-            title="Enable preprocessing"
+            :title="$t('common.enablePreprocessing')"
             @toggle="store.setEnabled(!store.enabled)"
           />
         </template>
@@ -74,15 +78,16 @@ const {
       @select-index="lightbox.index.value = $event"
     >
       <template #actions>
-        <button
-          type="button"
-          class="pproc-tools-panel__repick"
-          title="Pick a different image"
-          aria-label="Pick a different image"
-          @click="repickImage"
-        >
-          <ImagePlus class="pproc-tools-panel__repick-icon" />
-        </button>
+        <Tooltip :text="$t('common.pickDifferentImage')">
+          <button
+            type="button"
+            class="pproc-tools-panel__repick"
+            :aria-label="$t('common.pickDifferentImage')"
+            @click="repickImage"
+          >
+            <ImagePlus class="pproc-tools-panel__repick-icon" />
+          </button>
+        </Tooltip>
       </template>
     </Lightbox>
   </div>

@@ -7,6 +7,8 @@
  */
 import { ref } from 'vue';
 
+import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
+
 defineProps<{
   title: string;
   variant?: 'error' | 'danger';
@@ -31,21 +33,23 @@ function handleClick() {
 </script>
 
 <template>
-  <button
-    class="header-action"
-    :class="{
-      'header-action--error': variant === 'error',
-      'header-action--danger': variant === 'danger',
-      'header-action--active': active,
-      'header-action--pressed': pressed,
-    }"
-    :title="title"
-    @click="handleClick"
-    @mouseenter="emit('hoverStart')"
-    @mouseleave="emit('hoverEnd')"
-  >
-    <slot />
-  </button>
+  <Tooltip :text="title">
+    <button
+      class="header-action"
+      :class="{
+        'header-action--error': variant === 'error',
+        'header-action--danger': variant === 'danger',
+        'header-action--active': active,
+        'header-action--pressed': pressed,
+      }"
+      :aria-label="title"
+      @click="handleClick"
+      @mouseenter="emit('hoverStart')"
+      @mouseleave="emit('hoverEnd')"
+    >
+      <slot />
+    </button>
+  </Tooltip>
 </template>
 
 <style scoped>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { io, type Socket } from 'socket.io-client';
-import { ref } from 'vue';
+import { type Ref, ref, shallowRef } from 'vue';
 
 import type { SocketDebugEntry } from '../types/socket-debug-entry.model';
 import { buildConnectedPairs } from './helpers/build-connected-pairs.helper';
@@ -12,293 +12,317 @@ const SOCKET_SESSION_ID = getPersistentSocketSessionId();
 
 export type ConnectionState = 'connected' | 'disconnected' | 'error';
 
-export const useSocketStore = defineStore('socket', () => {
-  const socket = ref<Socket | null>(null);
-  const connectionState = ref<ConnectionState>('disconnected');
-  const socketError = ref<string | null>(null);
-  const lastConnectionEvent = ref<string>('disconnected');
-  const socketId = ref<string | null>(SOCKET_SESSION_ID);
+export const useSocketStore = defineStore(
+  'socket',
+  (): {
+    socket: Ref<Socket | null>;
+    connectionState: Ref<ConnectionState>;
+    socketError: Ref<string | null>;
+    lastConnectionEvent: Ref<string>;
+    socketId: Ref<string | null>;
+    connectedEvents: Ref<Set<string>>;
+    connectedRooms: Ref<Map<string, Set<string>>>;
+    connectedPairs: Ref<string[]>;
+    setCallbacks: (
+      onDebug: ((entry: SocketDebugEntry) => void) | null,
+      onMessage: ((event: string, data: unknown) => void) | null,
+    ) => void;
+    initSocket: () => Socket | null;
+    ensureSocketConnection: () => Socket | null;
+    joinRoom: (roomId: string, eventName: string) => void;
+    leaveRoom: (roomId: string, eventName: string) => void;
+    listenToEvent: (eventName: string) => void;
+    stopListening: () => void;
+    closeEvent: (eventName: string) => void;
+    closeRoom: (eventName: string, roomId: string) => void;
+  } => {
+    const socket = shallowRef<Socket | null>(null);
+    const connectionState = ref<ConnectionState>('disconnected');
+    const socketError = ref<string | null>(null);
+    const lastConnectionEvent = ref<string>('disconnected');
+    const socketId = ref<string | null>(SOCKET_SESSION_ID);
 
-  const connectedEvents = ref<Set<string>>(new Set());
-  const connectedRooms = ref<Map<string, Set<string>>>(new Map());
-  const connectedPairs = ref<string[]>([]);
+    const connectedEvents = ref<Set<string>>(new Set());
+    const connectedRooms = ref<Map<string, Set<string>>>(new Map());
+    const connectedPairs = ref<string[]>([]);
 
-  function bumpSubscription() {
-    connectedEvents.value = new Set(connectedEvents.value);
-    const cloned = new Map<string, Set<string>>();
-    for (const [k, v] of connectedRooms.value) {
-      cloned.set(k, new Set(v));
-    }
-    connectedRooms.value = cloned;
-    connectedPairs.value = buildConnectedPairs(
-      connectedEvents.value,
-      connectedRooms.value,
-    );
-  }
-
-  const eventListeners = new Map<string, (...args: unknown[]) => void>();
-
-  const pendingEvents: Set<string> = new Set();
-  const pendingRooms: Array<{ roomId: string; eventName: string }> = [];
-  let addSocketDebugEntryCallback: ((entry: SocketDebugEntry) => void) | null =
-    null;
-  let addMessageCallback: ((event: string, data: unknown) => void) | null =
-    null;
-
-  // Track which request IDs have been logged to avoid duplicates for streaming
-  const loggedRequestIds = ref<Set<string>>(new Set());
-
-  function setCallbacks(
-    onDebug: ((entry: SocketDebugEntry) => void) | null,
-    onMessage: ((event: string, data: unknown) => void) | null,
-  ) {
-    addSocketDebugEntryCallback = onDebug;
-    addMessageCallback = onMessage;
-  }
-
-  function initSocket() {
-    if (socket.value?.connected) return socket.value;
-    if (socket.value) {
-      socket.value.connect();
-      return socket.value;
+    function bumpSubscription() {
+      connectedEvents.value = new Set(connectedEvents.value);
+      const cloned = new Map<string, Set<string>>();
+      for (const [k, v] of connectedRooms.value) {
+        cloned.set(k, new Set(v));
+      }
+      connectedRooms.value = cloned;
+      connectedPairs.value = buildConnectedPairs(
+        connectedEvents.value,
+        connectedRooms.value,
+      );
     }
 
-    socket.value = io(import.meta.env.VITE_SOCKET_URL || undefined, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      auth: { conversationId: SOCKET_SESSION_ID },
-    });
+    const eventListeners = new Map<string, (...args: unknown[]) => void>();
 
-    socket.value.on('connect', () => {
-      connectionState.value = 'connected';
-      socketError.value = null;
-      socketId.value = SOCKET_SESSION_ID;
+    const pendingEvents: Set<string> = new Set();
+    const pendingRooms: Array<{ roomId: string; eventName: string }> = [];
+    let addSocketDebugEntryCallback:
+      ((entry: SocketDebugEntry) => void) | null = null;
+    let addMessageCallback: ((event: string, data: unknown) => void) | null =
+      null;
 
-      if (lastConnectionEvent.value !== 'connected') {
-        lastConnectionEvent.value = 'connected';
-      }
-      for (const ev of pendingEvents) {
-        applyEventListener(ev);
-      }
-      pendingEvents.clear();
-      for (const pr of pendingRooms) {
-        joinRoom(pr.roomId, pr.eventName);
-      }
-      pendingRooms.length = 0;
-    });
+    // Track which request IDs have been logged to avoid duplicates for streaming
+    const loggedRequestIds = ref<Set<string>>(new Set());
 
-    socket.value.on('disconnect', () => {
-      connectionState.value = 'disconnected';
-      if (lastConnectionEvent.value !== 'disconnected') {
-        lastConnectionEvent.value = 'disconnected';
-      }
-    });
+    function setCallbacks(
+      onDebug: ((entry: SocketDebugEntry) => void) | null,
+      onMessage: ((event: string, data: unknown) => void) | null,
+    ) {
+      addSocketDebugEntryCallback = onDebug;
+      addMessageCallback = onMessage;
+    }
 
-    socket.value.on('connect_error', (err: Error) => {
-      connectionState.value = 'error';
-      socketError.value = err.message;
-      if (lastConnectionEvent.value !== 'error') {
-        lastConnectionEvent.value = 'error';
-      }
-    });
-
-    return socket.value;
-  }
-
-  function ensureSocketConnection() {
-    if (socket.value) {
-      if (socket.value.connected) {
+    function initSocket() {
+      if (socket.value?.connected) return socket.value;
+      if (socket.value) {
+        socket.value.connect();
         return socket.value;
       }
-      socket.value.connect();
+
+      socket.value = io(import.meta.env.VITE_SOCKET_URL || undefined, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        auth: { conversationId: SOCKET_SESSION_ID },
+      });
+
+      socket.value.on('connect', () => {
+        connectionState.value = 'connected';
+        socketError.value = null;
+        socketId.value = SOCKET_SESSION_ID;
+
+        if (lastConnectionEvent.value !== 'connected') {
+          lastConnectionEvent.value = 'connected';
+        }
+        for (const ev of pendingEvents) {
+          applyEventListener(ev);
+        }
+        pendingEvents.clear();
+        for (const pr of pendingRooms) {
+          joinRoom(pr.roomId, pr.eventName);
+        }
+        pendingRooms.length = 0;
+      });
+
+      socket.value.on('disconnect', () => {
+        connectionState.value = 'disconnected';
+        if (lastConnectionEvent.value !== 'disconnected') {
+          lastConnectionEvent.value = 'disconnected';
+        }
+      });
+
+      socket.value.on('connect_error', (err: Error) => {
+        connectionState.value = 'error';
+        socketError.value = err.message;
+        if (lastConnectionEvent.value !== 'error') {
+          lastConnectionEvent.value = 'error';
+        }
+      });
+
       return socket.value;
     }
 
-    return initSocket();
-  }
-
-  function listenToEvent(eventName: string) {
-    if (!socket.value?.connected) {
-      if (!socket.value) {
-        ensureSocketConnection();
+    function ensureSocketConnection() {
+      if (socket.value) {
+        if (socket.value.connected) {
+          return socket.value;
+        }
+        socket.value.connect();
+        return socket.value;
       }
-      pendingEvents.add(eventName);
-      return;
+
+      return initSocket();
     }
 
-    applyEventListener(eventName);
-  }
+    function listenToEvent(eventName: string) {
+      if (!socket.value?.connected) {
+        if (!socket.value) {
+          ensureSocketConnection();
+        }
+        pendingEvents.add(eventName);
+        return;
+      }
 
-  function applyEventListener(eventName: string) {
-    if (eventListeners.has(eventName)) {
+      applyEventListener(eventName);
+    }
+
+    function applyEventListener(eventName: string) {
+      if (eventListeners.has(eventName)) {
+        connectedEvents.value.add(eventName);
+        bumpSubscription();
+        return;
+      }
+
+      const listener = createEventListener(eventName, {
+        socketId,
+        loggedRequestIds,
+        onMessage: (event, payload) => addMessageCallback?.(event, payload),
+        onDebugEntry: (entry) => addSocketDebugEntryCallback?.(entry),
+      });
+
+      eventListeners.set(eventName, listener);
+      socket.value!.on(eventName, listener);
       connectedEvents.value.add(eventName);
-      bumpSubscription();
-      return;
-    }
-
-    const listener = createEventListener(eventName, {
-      socketId,
-      loggedRequestIds,
-      onMessage: (event, payload) => addMessageCallback?.(event, payload),
-      onDebugEntry: (entry) => addSocketDebugEntryCallback?.(entry),
-    });
-
-    eventListeners.set(eventName, listener);
-    socket.value!.on(eventName, listener);
-    connectedEvents.value.add(eventName);
-    bumpSubscription();
-
-    addSocketDebugEntryCallback?.(
-      makeDebugEntry({
-        endpoint: `socket.io:${eventName}`,
-        method: 'LISTEN',
-        status: 'success',
-        direction: 'request',
-        conversationId: socketId.value || undefined,
-      }),
-    );
-  }
-
-  function stopListening() {
-    if (!socket.value?.connected || connectedEvents.value.size === 0) return;
-
-    const eventName = Array.from(connectedEvents.value)[0];
-    const listener = eventListeners.get(eventName);
-    if (listener) {
-      socket.value!.off(eventName, listener);
-      eventListeners.delete(eventName);
-    }
-    connectedEvents.value.delete(eventName);
-    bumpSubscription();
-  }
-
-  function closeEvent(eventName: string) {
-    if (connectedEvents.value.has(eventName)) {
-      const listener = eventListeners.get(eventName);
-      if (listener) {
-        socket.value!.off(eventName, listener);
-        eventListeners.delete(eventName);
-      }
-
-      const rooms = connectedRooms.value.get(eventName);
-      if (rooms) {
-        rooms.forEach((roomId) => {
-          socket.value!.emit('leave', roomId);
-        });
-        connectedRooms.value.delete(eventName);
-      }
-
-      connectedEvents.value.delete(eventName);
       bumpSubscription();
 
       addSocketDebugEntryCallback?.(
         makeDebugEntry({
           endpoint: `socket.io:${eventName}`,
-          method: 'UNLISTEN',
+          method: 'LISTEN',
           status: 'success',
           direction: 'request',
           conversationId: socketId.value || undefined,
         }),
       );
     }
-  }
 
-  function closeRoom(eventName: string, roomId: string) {
-    const rooms = connectedRooms.value.get(eventName);
-    if (rooms && rooms.has(roomId)) {
-      socket.value!.emit('leave', roomId);
-      rooms.delete(roomId);
+    function stopListening() {
+      if (!socket.value?.connected || connectedEvents.value.size === 0) return;
 
-      if (rooms.size === 0) {
-        connectedRooms.value.delete(eventName);
+      const eventName = Array.from(connectedEvents.value)[0];
+      const listener = eventListeners.get(eventName);
+      if (listener) {
+        socket.value!.off(eventName, listener);
+        eventListeners.delete(eventName);
       }
+      connectedEvents.value.delete(eventName);
       bumpSubscription();
-      addSocketDebugEntryCallback?.(
-        makeDebugEntry({
-          endpoint: `socket.io:${eventName}:room:${roomId}`,
-          method: 'LEAVE',
-          status: 'success',
-          direction: 'request',
-          event: eventName,
-          roomId: roomId,
-          conversationId: socketId.value || undefined,
-        }),
-      );
     }
-  }
 
-  function joinRoom(roomId: string, eventName: string) {
-    if (connectedRooms.value.get(eventName)?.has(roomId)) return;
-    if (socket.value?.connected) {
-      socket.value.emit('join', roomId);
+    function closeEvent(eventName: string) {
+      if (connectedEvents.value.has(eventName)) {
+        const listener = eventListeners.get(eventName);
+        if (listener) {
+          socket.value!.off(eventName, listener);
+          eventListeners.delete(eventName);
+        }
 
-      if (!connectedRooms.value.has(eventName)) {
-        connectedRooms.value.set(eventName, new Set());
+        const rooms = connectedRooms.value.get(eventName);
+        if (rooms) {
+          rooms.forEach((roomId) => {
+            socket.value!.emit('leave', roomId);
+          });
+          connectedRooms.value.delete(eventName);
+        }
+
+        connectedEvents.value.delete(eventName);
+        bumpSubscription();
+
+        addSocketDebugEntryCallback?.(
+          makeDebugEntry({
+            endpoint: `socket.io:${eventName}`,
+            method: 'UNLISTEN',
+            status: 'success',
+            direction: 'request',
+            conversationId: socketId.value || undefined,
+          }),
+        );
       }
-      connectedRooms.value.get(eventName)!.add(roomId);
-      bumpSubscription();
-      addSocketDebugEntryCallback?.(
-        makeDebugEntry({
-          endpoint: `socket.io:${eventName}:room:${roomId}`,
-          method: 'JOIN',
-          status: 'success',
-          direction: 'request',
-          event: eventName,
-          roomId: roomId,
-          conversationId: socketId.value || undefined,
-        }),
-      );
-    } else {
-      pendingRooms.push({ roomId, eventName });
     }
-  }
 
-  function leaveRoom(roomId: string, eventName: string) {
-    if (socket.value?.connected) {
-      socket.value.emit('leave', roomId);
-
+    function closeRoom(eventName: string, roomId: string) {
       const rooms = connectedRooms.value.get(eventName);
-      if (rooms) {
+      if (rooms && rooms.has(roomId)) {
+        socket.value!.emit('leave', roomId);
         rooms.delete(roomId);
+
         if (rooms.size === 0) {
           connectedRooms.value.delete(eventName);
         }
         bumpSubscription();
+        addSocketDebugEntryCallback?.(
+          makeDebugEntry({
+            endpoint: `socket.io:${eventName}:room:${roomId}`,
+            method: 'LEAVE',
+            status: 'success',
+            direction: 'request',
+            event: eventName,
+            roomId: roomId,
+            conversationId: socketId.value || undefined,
+          }),
+        );
       }
-
-      addSocketDebugEntryCallback?.(
-        makeDebugEntry({
-          endpoint: `socket.io:${eventName}:room:${roomId}`,
-          method: 'LEAVE',
-          status: 'success',
-          direction: 'request',
-          event: eventName,
-          roomId: roomId,
-          conversationId: socketId.value || undefined,
-        }),
-      );
     }
-  }
 
-  return {
-    socket,
-    connectionState,
-    socketError,
-    lastConnectionEvent,
-    socketId,
-    connectedEvents,
-    connectedRooms,
-    connectedPairs,
-    setCallbacks,
-    initSocket,
-    ensureSocketConnection,
-    joinRoom,
-    leaveRoom,
-    listenToEvent,
-    stopListening,
-    closeEvent,
-    closeRoom,
-  };
-});
+    function joinRoom(roomId: string, eventName: string) {
+      if (connectedRooms.value.get(eventName)?.has(roomId)) return;
+      if (socket.value?.connected) {
+        socket.value.emit('join', roomId);
+
+        if (!connectedRooms.value.has(eventName)) {
+          connectedRooms.value.set(eventName, new Set());
+        }
+        connectedRooms.value.get(eventName)!.add(roomId);
+        bumpSubscription();
+        addSocketDebugEntryCallback?.(
+          makeDebugEntry({
+            endpoint: `socket.io:${eventName}:room:${roomId}`,
+            method: 'JOIN',
+            status: 'success',
+            direction: 'request',
+            event: eventName,
+            roomId: roomId,
+            conversationId: socketId.value || undefined,
+          }),
+        );
+      } else {
+        pendingRooms.push({ roomId, eventName });
+      }
+    }
+
+    function leaveRoom(roomId: string, eventName: string) {
+      if (socket.value?.connected) {
+        socket.value.emit('leave', roomId);
+
+        const rooms = connectedRooms.value.get(eventName);
+        if (rooms) {
+          rooms.delete(roomId);
+          if (rooms.size === 0) {
+            connectedRooms.value.delete(eventName);
+          }
+          bumpSubscription();
+        }
+
+        addSocketDebugEntryCallback?.(
+          makeDebugEntry({
+            endpoint: `socket.io:${eventName}:room:${roomId}`,
+            method: 'LEAVE',
+            status: 'success',
+            direction: 'request',
+            event: eventName,
+            roomId: roomId,
+            conversationId: socketId.value || undefined,
+          }),
+        );
+      }
+    }
+
+    return {
+      socket,
+      connectionState,
+      socketError,
+      lastConnectionEvent,
+      socketId,
+      connectedEvents,
+      connectedRooms,
+      connectedPairs,
+      setCallbacks,
+      initSocket,
+      ensureSocketConnection,
+      joinRoom,
+      leaveRoom,
+      listenToEvent,
+      stopListening,
+      closeEvent,
+      closeRoom,
+    };
+  },
+);

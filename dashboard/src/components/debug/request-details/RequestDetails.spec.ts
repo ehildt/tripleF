@@ -8,7 +8,7 @@ describe('RequestDetails', () => {
     const wrapper = mount(RequestDetails, {
       props: { result: null },
     });
-    expect(wrapper.text()).toContain('No requests yet');
+    expect(wrapper.text()).toContain('Select a request');
   });
 
   it('renders property rows and tab menu', () => {

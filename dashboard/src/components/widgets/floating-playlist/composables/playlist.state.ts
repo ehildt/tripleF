@@ -7,6 +7,7 @@ import {
   savePlaylist as savePlaylistApi,
 } from '@/api/playlists.api';
 import { useToast } from '@/composables/use-toast';
+import { i18n } from '@/i18n/i18n';
 import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
@@ -100,9 +101,14 @@ export async function loadPlaylists() {
   // Discard the snapshot if the playlist state changed while we were
   // fetching — the caller holds fresher data.
   if (playlistMutationCount !== mutationAtStart) return;
-  setPlaylists(fetched);
-  if (!activePlaylistName.value && fetched.length > 0) {
-    setActivePlaylist(fetched[0].name);
+  const playlists = fetched.map((snapshot) => ({
+    name: snapshot.name,
+    conversationId: snapshot.conversationId,
+    videos: snapshot.videos as unknown as VideoGalleryItem[],
+  }));
+  setPlaylists(playlists);
+  if (!activePlaylistName.value && playlists.length > 0) {
+    setActivePlaylist(playlists[0].name);
   }
 }
 
@@ -112,9 +118,11 @@ function persistPlaylist(playlist: Playlist) {
     SESSION_ID,
     playlist.conversationId,
     playlist.name,
-    playlist.videos as Array<Record<string, unknown>>,
+    playlist.videos as unknown as Array<Record<string, unknown>>,
   ).catch(() => {
-    toast.error(`Could not save playlist "${playlist.name}"`);
+    toast.error(
+      i18n.global.t('toast.couldNotSavePlaylist', { name: playlist.name }),
+    );
   });
 }
 
@@ -167,7 +175,9 @@ export function renamePlaylist(oldName: string, newName: string): boolean {
     oldName,
     trimmed,
   ).catch(() => {
-    toast.error(`Could not rename playlist "${oldName}"`);
+    toast.error(
+      i18n.global.t('toast.couldNotRenamePlaylist', { name: oldName }),
+    );
   });
   return true;
 }
@@ -184,7 +194,7 @@ export function deletePlaylist(name: string) {
   if (playlist) {
     markMutation();
     deletePlaylistApi(SESSION_ID, playlist.conversationId, name).catch(() => {
-      toast.error(`Could not delete playlist "${name}"`);
+      toast.error(i18n.global.t('toast.couldNotDeletePlaylist', { name }));
     });
   }
 }

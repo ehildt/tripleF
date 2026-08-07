@@ -58,27 +58,30 @@ const hasAnyContent = computed(() =>
 
       <section v-if="data.subject || data.verdict" class="overview">
         <p v-if="data.subject" class="subject">
-          <strong>Subject:</strong> {{ data.subject }}
+          <strong>{{ $t('common.subject') }}</strong> {{ data.subject }}
         </p>
         <p v-if="data.verdict" class="verdict">
-          <strong>Verdict:</strong> {{ data.verdict }}
+          <strong>{{ $t('common.verdict') }}</strong> {{ data.verdict }}
         </p>
       </section>
 
-      <ParagraphSection title="Reasoning" :content="data.reasoning" />
+      <ParagraphSection
+        :title="$t('common.reasoning')"
+        :content="data.reasoning"
+      />
 
       <EvaluationListSection
-        title="Strengths"
+        :title="$t('common.strengths')"
         variant="strength"
         :items="data.strengths"
       />
       <EvaluationListSection
-        title="Weaknesses"
+        :title="$t('common.weaknesses')"
         variant="weakness"
         :items="data.weaknesses"
       />
       <EvaluationListSection
-        title="Recommendations"
+        :title="$t('common.recommendations')"
         variant="recommendation"
         :items="data.recommendations"
       />
@@ -94,9 +97,9 @@ const hasAnyContent = computed(() =>
     </template>
 
     <section v-else class="evaluation__empty">
-      <h3>No results found</h3>
+      <h3>{{ $t('common.noResultsFound') }}</h3>
       <p>
-        The search did not return any authoritative sources for this request.
+        {{ $t('common.noResultsExplain') }}
       </p>
     </section>
   </article>

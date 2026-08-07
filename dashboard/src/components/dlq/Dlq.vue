@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import { useDeleteDlqMutation } from '../../api/queries/use-delete-dlq-mutation';
 import { useDlqQuery } from '../../api/queries/use-dlq-query';
 import { useRetryDlqMutation } from '../../api/queries/use-retry-dlq-mutation';
@@ -68,7 +70,8 @@ watch(dlqData, (val) => {
 watch(isError, (val) => {
   if (val) {
     onError();
-    dlqStore.error = error.value?.message ?? 'Failed to load DLQ entries';
+    dlqStore.error =
+      error.value?.message ?? i18n.global.t('common.failedLoadDlqEntries');
     toast.error(dlqStore.error!);
   } else {
     dlqStore.error = null;
@@ -146,7 +149,7 @@ watch(
     grid-column: span 6 / span 6;
     position: sticky;
     top: 6rem;
-    height: calc(100vh - 10rem);
+    max-height: calc(100vh - 10rem);
   }
 
   .dlq-column__panel {

@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import {
   CLOUD_RETRY_DELAYS_MS,
+  MODELS_CACHE_TTL_MS,
   OLLAMA_CLOUD_HOST,
 } from '../constants/ollama-cloud.constants.js';
 import { buildOllamaHeaders } from '../helpers/build-ollama-headers.helper.js';
@@ -58,7 +59,7 @@ export class OllamaModelsService {
    * Ollama Cloud ('cloud'). When the configured host already is Ollama
    * Cloud, every model is cloud — no second catalog is fetched.
    */
-  @CacheReturnValue({ ttl: 1 })
+  @CacheReturnValue({ ttl: MODELS_CACHE_TTL_MS })
   async getModels() {
     const { host, apiKey } = this.ollamaOverrides.getConfig();
     const hostIsCloud = isOllamaCloudHost(host);

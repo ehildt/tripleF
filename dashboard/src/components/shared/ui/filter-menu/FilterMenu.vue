@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { Check } from '@lucide/vue';
-import type { Component } from 'vue';
 
-import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+import MotionIcon from '../motion-icon/MotionIcon.vue';
+import Tooltip from '../tooltip/Tooltip.vue';
 
 defineProps<{
   isOpen: boolean;
   isActive: boolean;
-  icon: Component;
   title: string;
   width: string;
-  options: readonly string[];
+  options: readonly { value: string; label: string }[];
   selectedValue: string;
   hasTextValue?: boolean;
 }>();
@@ -22,32 +21,36 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="dlq-filter-menu">
-    <button
-      class="dlq-filter-menu__trigger"
-      :class="{
-        'dlq-filter-menu__trigger--active': isOpen || isActive,
-      }"
-      :title="title"
-      @click.stop="emit('toggle')"
-    >
-      <MotionIcon>
-        <component :is="icon" class="dlq-filter-menu__trigger-icon" />
-      </MotionIcon>
-    </button>
+  <div class="filter-menu">
+    <Tooltip :text="title">
+      <button
+        class="filter-menu__trigger"
+        :class="{
+          'filter-menu__trigger--active': isOpen || isActive,
+        }"
+        :aria-label="title"
+        @click.stop="emit('toggle')"
+      >
+        <MotionIcon>
+          <span class="filter-menu__trigger-icon">
+            <slot />
+          </span>
+        </MotionIcon>
+      </button>
+    </Tooltip>
     <div
       v-if="isOpen"
-      class="dlq-filter-menu__dropdown"
+      class="filter-menu__dropdown"
       :style="{ width }"
       @click.stop
     >
       <template v-if="hasTextValue">
-        <div class="dlq-filter-menu__search">
+        <div class="filter-menu__search">
           <input
             :value="selectedValue"
-            name="dlq-filter"
+            name="filter-menu"
             :placeholder="title"
-            class="dlq-filter-menu__search-input"
+            class="filter-menu__search-input"
             @input="emit('select', ($event.target as HTMLInputElement).value)"
           />
         </div>
@@ -55,17 +58,17 @@ const emit = defineEmits<{
       <template v-else>
         <button
           v-for="option in options"
-          :key="option"
-          class="dlq-filter-menu__option"
+          :key="option.value"
+          class="filter-menu__option"
           :class="{
-            'dlq-filter-menu__option--selected': selectedValue === option,
+            'filter-menu__option--selected': selectedValue === option.value,
           }"
-          @click="emit('select', option)"
+          @click="emit('select', option.value)"
         >
-          <span class="dlq-filter-menu__option-label">{{ option }}</span>
+          <span class="filter-menu__option-label">{{ option.label }}</span>
           <Check
-            v-if="selectedValue === option"
-            class="dlq-filter-menu__option-check"
+            v-if="selectedValue === option.value"
+            class="filter-menu__option-check"
           />
         </button>
       </template>
@@ -74,11 +77,11 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.dlq-filter-menu {
+.filter-menu {
   position: relative;
 }
 
-.dlq-filter-menu__trigger {
+.filter-menu__trigger {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,20 +93,28 @@ const emit = defineEmits<{
     background-color 0.2s ease;
 }
 
-.dlq-filter-menu__trigger:hover {
+.filter-menu__trigger:hover {
   color: var(--color-accent-primary);
 }
 
-.dlq-filter-menu__trigger--active {
+.filter-menu__trigger--active {
   color: var(--color-accent-primary);
 }
 
-.dlq-filter-menu__trigger-icon {
+.filter-menu__trigger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 1rem;
   height: 1rem;
 }
 
-.dlq-filter-menu__dropdown {
+.filter-menu__trigger-icon :deep(svg) {
+  width: 1rem;
+  height: 1rem;
+}
+
+.filter-menu__dropdown {
   position: absolute;
   left: 50%;
   top: 100%;
@@ -116,7 +127,7 @@ const emit = defineEmits<{
     color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
 }
 
-.dlq-filter-menu__option {
+.filter-menu__option {
   width: 100%;
   padding: var(--spacing-1-5) var(--spacing-3);
   text-align: left;
@@ -130,30 +141,30 @@ const emit = defineEmits<{
   transition: background-color 0.2s ease;
 }
 
-.dlq-filter-menu__option:hover {
+.filter-menu__option:hover {
   background-color: var(--color-bg-tertiary);
 }
 
-.dlq-filter-menu__option--selected {
+.filter-menu__option--selected {
   color: var(--color-accent-primary);
 }
 
-.dlq-filter-menu__option-label {
+.filter-menu__option-label {
   flex: 1;
   text-align: left;
 }
 
-.dlq-filter-menu__option-check {
+.filter-menu__option-check {
   width: 0.75rem;
   height: 0.75rem;
   flex-shrink: 0;
 }
 
-.dlq-filter-menu__search {
-  padding: var(--spacing-2);
+.filter-menu__search {
+  padding: var(--spacing-1);
 }
 
-.dlq-filter-menu__search-input {
+.filter-menu__search-input {
   width: 100%;
   padding: var(--spacing-1-5) var(--spacing-2);
   font-family: var(--font-mono);
@@ -165,11 +176,11 @@ const emit = defineEmits<{
   transition: border-color 0.2s ease;
 }
 
-.dlq-filter-menu__search-input::placeholder {
+.filter-menu__search-input::placeholder {
   color: var(--color-fg-muted);
 }
 
-.dlq-filter-menu__search-input:focus {
+.filter-menu__search-input:focus {
   border-color: var(--color-accent-primary);
 }
 </style>

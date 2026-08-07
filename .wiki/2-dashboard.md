@@ -2,20 +2,20 @@
 
 The 3F dashboard is a **Vue 3** single-page workbench — not a thin viewer: it owns sessions, steers the harness, and exposes everything the server can do.
 
-- **Stack:** Vue 3 (Composition API, `<script setup>`), Vite 8, Pinia, TanStack Query, Tailwind CSS v4, VueUse, Headless UI, socket.io-client, vue3-toastify
-- **Entry:** `dashboard/src/main.ts` → `App.vue` (Pinia + VueQuery plugins, no router — the app shell switches areas via the header nav menu)
+- **Stack:** Vue 3 (Composition API, `<script setup>`), Vite 8, Pinia, TanStack Query, Tailwind CSS v4, VueUse, Headless UI, socket.io-client, vue3-toastify, vue-router, vue-i18n
+- **Entry:** `dashboard/src/main.ts` → `App.vue` (Pinia + VueQuery + router + i18n plugins). Routing is handled by **vue-router** (`src/router/router.ts`): `/chat`, `/dlq`, `/debug`, `/sysctl`, with `/` redirecting to `/chat`.
 - **Dev URL:** `http://localhost:5173/dashboard/` · proxies API to the server (`VITE_PROXY_TARGET`)
 
 ## The areas
 
 | Area          | Path (`src/components/`) | What it is                                                                                                                                                                  |
 | ------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Chat**      | `chat/`                  | The main stage: conversation header, exchange list, prompt action bar, right panel, floating player, compact view, toolbar. See **2.2**.                                    |
-| **SysCtl**    | `sysctl/`                | System control: provider configuration, preprocessing settings, search-engines (Serper + YouTube tools), system health, tab visibility, widgets, per-session model/config management. |
+| **Chat**      | `chat/`                  | The main stage: conversation header (rename / delete / pin), exchange list, prompt action bar, right panel (incl. playlist), floating player, toolbar. See **2.2**.                                    |
+| **SysCtl**    | `sysctl/`                | System control: provider configuration, preprocessing settings, search-engines (Serper + Bright Data + YouTube tools), system health, tab visibility, widgets, per-session model/config management. |
 | **DLQ**       | `dlq/`                   | Dead-letter management: list of failed envelopes (polled every 30 s), detail view with payload editing, reinstatable back into the queue.                                   |
 | **PProc**     | `pproc/`                 | Image preprocessing workbench: tools panel with file preview pipeline to inspect what variants the server will generate.                                                    |
-| **App shell** | `app/`                   | Header (nav menu, tabs), footer, theme selector, main content switch.                                                                                                       |
-| **Widgets**   | `widgets/`               | Reusable floating UI: popout preview, toast system.                                                                                                                         |
+| **App shell** | `app/`                   | Header (nav menu, tabs), footer, theme selector, language selector, main content switch.                                                                                       |
+| **Widgets**   | `widgets/`               | Reusable floating UI: popout preview, floating playlist, toast system.                                                                                                         |
 
 ## What makes it a workbench
 
@@ -31,6 +31,10 @@ The 3F dashboard is a **Vue 3** single-page workbench — not a thin viewer: it 
 3. Socket connection ensured (`socketStore.ensureSocketConnection()`) with callbacks wired to the debug + messages stores via `createSocketProvider`.
 4. DLQ counter polled every 30 s.
 5. Global UI mounted: `ToastContainer`, `PopoutPreview`.
+
+## Internationalisation
+
+UI copy is translated via **vue-i18n** (`src/i18n/`): typed message catalogs per locale (`src/i18n/locales/`), a `use-locale` composable, and a `LanguageSelector` in the app header. Locale choice is persisted and applied at runtime without a reload.
 
 ## Environment
 

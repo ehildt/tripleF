@@ -26,12 +26,13 @@ import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import { i18n } from '@/i18n/i18n';
 
 import { useSysctlTabVisibility } from '../../composables/use-sysctl-tab-visibility';
 
 const SIDE_OPTIONS = [
-  { value: 'left', icon: PanelLeft, tooltip: 'Left' },
-  { value: 'right', icon: PanelRight, tooltip: 'Right' },
+  { value: 'left', icon: PanelLeft, tooltip: i18n.global.t('common.left') },
+  { value: 'right', icon: PanelRight, tooltip: i18n.global.t('common.right') },
 ] as const;
 
 const { isTabVisible, toggleTab } = useSysctlTabVisibility();
@@ -43,10 +44,10 @@ function setSide(value: string) {
 
 <template>
   <PanelLayout class="tab-menu-panel">
-    <CollapsiblePanel id="tabMenu" title="Tab Menu">
+    <CollapsiblePanel id="tabMenu" :title="$t('common.tabMenuTitle')">
       <template #actions>
         <ResetButton
-          title="Reset tab menu settings to defaults"
+          :title="$t('common.resetTabMenuSettingsToDefaults')"
           @click="resetTabMenuSettings"
         />
       </template>
@@ -54,14 +55,14 @@ function setSide(value: string) {
       <div class="tab-menu-panel__content">
         <FieldCard
           :icon="SquareMenu"
-          label="side"
-          description="screen edge the slide-out menu is docked to"
+          :label="$t('common.side')"
+          :description="$t('common.sideDesc')"
         >
           <template #controls>
             <SegmentedToggle
               :options="SIDE_OPTIONS"
               :model-value="tabMenuSide"
-              aria-label="Menu side"
+              :aria-label="$t('common.menuSide')"
               @update:model-value="setSide"
             />
           </template>
@@ -69,8 +70,8 @@ function setSide(value: string) {
 
         <FieldCard
           :icon="X"
-          label="autoclose"
-          description="close the menu after picking a tab or clicking outside — off keeps it toggled by hand"
+          :label="$t('common.autoclose')"
+          :description="$t('common.tabMenuAutocloseDesc')"
           :checked="tabMenuAutoClose"
           @toggle="setTabMenuAutoClose(!tabMenuAutoClose)"
         />
@@ -78,16 +79,16 @@ function setSide(value: string) {
         <div class="tab-menu-panel__tabs">
           <FieldCard
             :icon="MailX"
-            label="dlq"
-            description="dead letter queue tab"
+            :label="$t('common.dlqTab')"
+            :description="$t('common.dlqTabDesc')"
             :checked="isTabVisible('dlq')"
             @toggle="toggleTab('dlq')"
           />
 
           <FieldCard
             :icon="Bug"
-            label="debug"
-            description="debug tab / logging"
+            :label="$t('common.debugTab')"
+            :description="$t('common.debugTabDesc')"
             :checked="isTabVisible('debug')"
             @toggle="toggleTab('debug')"
           />

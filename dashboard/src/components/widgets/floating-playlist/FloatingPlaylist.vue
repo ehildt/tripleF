@@ -21,6 +21,7 @@
 import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { useConversationStore } from '@/stores/conversation';
 
 import PlaylistPanel from '../../chat/right-panel/playlist-panel/PlaylistPanel.vue';
@@ -79,38 +80,40 @@ const anchorHorizontal = computed(() => playlistAnchor.value.split('-')[1]);
       :style="playlistStyle"
       data-floating-playlist-assembly
     >
-      <button
-        v-if="!isOpen"
-        type="button"
-        class="floating-playlist__handle shadow-floating"
-        title="Open playlist"
-        aria-label="Toggle playlist"
-        :aria-expanded="isOpen"
-        @click="togglePlaylist"
-      >
-        <ListVideo class="floating-playlist__handle-icon" />
-      </button>
+      <Tooltip :text="$t('common.openPlaylist')">
+        <button
+          v-if="!isOpen"
+          type="button"
+          class="floating-playlist__handle shadow-floating"
+          :aria-label="$t('common.togglePlaylist')"
+          :aria-expanded="isOpen"
+          @click="togglePlaylist"
+        >
+          <ListVideo class="floating-playlist__handle-icon" />
+        </button>
+      </Tooltip>
 
       <aside
         class="floating-playlist shadow-floating"
-        aria-label="Floating playlist"
+        :aria-label="$t('common.floatingPlaylist')"
       >
         <PlaylistPanel
           :conversation-id="conversationId"
           @play="closeOnAutoclose"
         >
           <template #toolbar-actions>
-            <button
-              type="button"
-              class="floating-playlist__toggle"
-              title="Collapse playlist"
-              aria-label="Collapse playlist"
-              :aria-expanded="isOpen"
-              @pointerdown.stop
-              @click.stop="togglePlaylist"
-            >
-              <X class="floating-playlist__toggle-icon" />
-            </button>
+            <Tooltip :text="$t('common.collapsePlaylist')">
+              <button
+                type="button"
+                class="floating-playlist__toggle"
+                :aria-label="$t('common.collapsePlaylist')"
+                :aria-expanded="isOpen"
+                @pointerdown.stop
+                @click.stop="togglePlaylist"
+              >
+                <X class="floating-playlist__toggle-icon" />
+              </button>
+            </Tooltip>
           </template>
         </PlaylistPanel>
       </aside>

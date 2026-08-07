@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useToast } from '../../../../../composables/use-toast';
@@ -81,9 +82,7 @@ export function useSelectedModel() {
 
     conversationStore.snapshotImageSelections(conversationIdValue);
     conversationStore.deselectAllImages(conversationIdValue);
-    toast.warning(
-      `Selected model "${s.model}" does not support images. Meta images were deselected.`,
-    );
+    toast.warning(i18n.global.t('toast.modelNoImages', { model: s.model }));
   }
 
   function syncNumCtxForModel(
@@ -126,7 +125,11 @@ export function useSelectedModel() {
         if (current > m.context_length) {
           conversationStore.setNumCtx(conversationId.value, maxOpt);
           toast.warning(
-            `Model "${modelName}" supports max ${modelsStore.formatCtx(m.context_length)} context. numCtx set to ${modelsStore.formatCtx(Number(maxOpt))}.`,
+            i18n.global.t('toast.modelCtxSet', {
+              model: modelName,
+              max: modelsStore.formatCtx(m.context_length),
+              value: modelsStore.formatCtx(Number(maxOpt)),
+            }),
           );
         } else if (maxOpt) {
           conversationStore.setNumCtx(conversationId.value, maxOpt);

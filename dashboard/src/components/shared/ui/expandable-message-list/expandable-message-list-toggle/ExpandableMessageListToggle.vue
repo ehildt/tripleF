@@ -2,6 +2,7 @@
 import { ChevronDown, GitBranch, SendToBack, Trash2 } from '@lucide/vue';
 
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
+import Tooltip from '../../tooltip/Tooltip.vue';
 
 function stripHtml(html: string): string {
   let result = '';
@@ -73,46 +74,55 @@ defineEmits<{
         class="expandable-message-list__toggle-percent"
         >{{ contextPercent }}%</span
       >
-      <button
-        v-if="included !== undefined"
-        type="button"
-        class="expandable-message-list__toggle-include"
-        :class="{
-          'expandable-message-list__toggle-include--excluded': !included,
-        }"
-        :title="included ? 'Exclude from context' : 'Include in context'"
-        :aria-label="included ? 'Exclude from context' : 'Include in context'"
-        :aria-pressed="!included"
-        @click.stop="$emit('toggleInclude')"
+      <Tooltip
+        :text="
+          included
+            ? $t('common.excludeFromContext')
+            : $t('common.includeInContext')
+        "
       >
-        <MotionIcon>
-          <SendToBack class="expandable-message-list__include-icon" />
-        </MotionIcon>
-      </button>
-      <button
-        v-if="showBranch"
-        type="button"
-        class="expandable-message-list__toggle-branch"
-        title="Branch out into a new conversation"
-        aria-label="Branch out into a new conversation"
-        @click.stop="$emit('branchOut')"
-      >
-        <MotionIcon>
-          <GitBranch class="expandable-message-list__include-icon" />
-        </MotionIcon>
-      </button>
-      <button
-        v-if="included !== undefined"
-        type="button"
-        class="expandable-message-list__toggle-delete"
-        title="Delete from history"
-        aria-label="Delete from history"
-        @click.stop="$emit('deleteItem')"
-      >
-        <MotionIcon>
-          <Trash2 class="expandable-message-list__include-icon" />
-        </MotionIcon>
-      </button>
+        <button
+          v-if="included !== undefined"
+          type="button"
+          class="expandable-message-list__toggle-include"
+          :class="{
+            'expandable-message-list__toggle-include--excluded': !included,
+          }"
+          :aria-label="included ? 'Exclude from context' : 'Include in context'"
+          :aria-pressed="!included"
+          @click.stop="$emit('toggleInclude')"
+        >
+          <MotionIcon>
+            <SendToBack class="expandable-message-list__include-icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip :text="$t('common.branchOut')">
+        <button
+          v-if="showBranch"
+          type="button"
+          class="expandable-message-list__toggle-branch"
+          :aria-label="$t('common.branchOut')"
+          @click.stop="$emit('branchOut')"
+        >
+          <MotionIcon>
+            <GitBranch class="expandable-message-list__include-icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip :text="$t('common.deleteFromHistory')">
+        <button
+          v-if="included !== undefined"
+          type="button"
+          class="expandable-message-list__toggle-delete"
+          :aria-label="$t('common.deleteFromHistory')"
+          @click.stop="$emit('deleteItem')"
+        >
+          <MotionIcon>
+            <Trash2 class="expandable-message-list__include-icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
     </span>
   </div>
 </template>
