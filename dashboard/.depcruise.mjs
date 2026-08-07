@@ -2,8 +2,12 @@ const WHITELIST = {
   noOrphans: [
     'src/panels/preprocessing/PreprocessingPanel.OptionsPanel.helper.ts',
     'src/components/buttons/ActionButton.vue',
+    'src/types/youtube-api.model.ts',
   ],
-  notToDevDep: ['src/config.yml.loader.ts'],
+  notToDevDep: [
+    'src/config.yml.loader.ts',
+    'src/test-utils/mock-app-view-context.ts',
+  ],
   notToUnresolvable: [
     'src/stores/models.ts',
     'src/stores/app.ts',
