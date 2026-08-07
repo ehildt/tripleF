@@ -11,8 +11,6 @@ import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsS
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import ResponseMetaBarPill from '../../shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
-import ResponseMetaBar from '../../shared/ui/response-meta-bar/ResponseMetaBar.vue';
 
 const props = defineProps<{
   data: HarnessResponseData;
@@ -41,11 +39,6 @@ const hasAnyContent = computed(() =>
   <article class="harness-summary">
     <template v-if="hasAnyContent">
       <header class="hero">
-        <ResponseMetaBar>
-          <ResponseMetaBarPill v-if="data.category" variant="accent">{{
-            data.category
-          }}</ResponseMetaBarPill>
-        </ResponseMetaBar>
         <HeroSection :title="data.title" :subtitle="data.subtitle" />
       </header>
 

@@ -12,19 +12,14 @@ function mountEvaluationResponse(data: Record<string, unknown>) {
 }
 
 describe('EvaluationResponse', () => {
-  it('renders hero fields and score badge', () => {
+  it('renders hero fields', () => {
     const wrapper = mountEvaluationResponse({
-      category: 'Review',
       title: 'Evaluation',
       subtitle: 'Subtitle',
-      score: 8,
-      scoreLabel: '8/10',
     });
 
-    expect(wrapper.text()).toContain('Review');
     expect(wrapper.text()).toContain('Evaluation');
     expect(wrapper.text()).toContain('Subtitle');
-    expect(wrapper.text()).toContain('8/10');
   });
 
   it('renders subject and verdict', () => {
