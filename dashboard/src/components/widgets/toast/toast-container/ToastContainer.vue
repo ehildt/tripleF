@@ -45,7 +45,7 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
         `toast-container--${anchorHorizontal}`,
       ]"
       role="region"
-      aria-label="Notifications"
+      :aria-label="$t('common.notifications')"
     >
       <div
         v-for="t in toasts"
@@ -65,14 +65,18 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
           v-if="toastPinEnabled"
           class="toast__action"
           :class="{ 'toast__action--pinned': t.pinned }"
-          :aria-label="t.pinned ? 'Unpin toast' : 'Pin toast'"
+          ::aria-label="t.pinned ? $t('common.unpin') : $t('common.pin')"
           :aria-pressed="t.pinned"
           @click="togglePin(t.id)"
         >
           <PinOff v-if="t.pinned" class="toast__action-icon" />
           <Pin v-else class="toast__action-icon" />
         </button>
-        <button class="toast__action" aria-label="Close" @click="remove(t.id)">
+        <button
+          class="toast__action"
+          :aria-label="$t('common.close')"
+          @click="remove(t.id)"
+        >
           <X class="toast__action-icon" />
         </button>
       </div>

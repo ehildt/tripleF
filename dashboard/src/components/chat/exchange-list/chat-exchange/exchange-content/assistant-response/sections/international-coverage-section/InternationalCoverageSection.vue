@@ -21,10 +21,10 @@ const validItems = computed(() =>
   <section
     v-if="validItems.length"
     class="international-coverage-section"
-    aria-label="International coverage"
+    :aria-label="$t('common.internationalCoverage')"
   >
     <h3 class="international-coverage-section__title">
-      International Coverage
+      {{ $t('common.internationalCoverage') }}
     </h3>
     <ul class="international-coverage-section__list">
       <li

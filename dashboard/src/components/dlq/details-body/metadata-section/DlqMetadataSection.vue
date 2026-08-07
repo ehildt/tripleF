@@ -22,37 +22,49 @@ const imageSummary = `${countPayloadImages(props.entry)} (${getPayloadImageNames
 
 <template>
   <div class="dlq-metadata-section">
-    <h4 class="dlq-metadata-section__title">Metadata</h4>
+    <h4 class="dlq-metadata-section__title">{{ $t('common.metadata') }}</h4>
     <div class="dlq-metadata-section__list">
       <DlqMetadataField
         :icon="Layers"
-        label="Job ID"
+        :label="$t('common.jobId')"
         :value="entry.jobId ?? '—'"
       />
-      <DlqMetadataField :icon="Network" label="Status" :value="entry.status" />
+      <DlqMetadataField
+        :icon="Network"
+        :label="$t('common.status')"
+        :value="entry.status"
+      />
       <DlqMetadataField
         :icon="Clock"
-        label="Failed At"
+        :label="$t('common.failedAt')"
         :value="formatDate(entry.failedAt)"
       />
       <DlqMetadataField
         v-if="entry.nextRetryAt"
         :icon="Clock"
-        label="Retry At"
+        :label="$t('common.retryAt')"
         :value="formatDate(entry.nextRetryAt)"
       />
       <DlqMetadataField
         :icon="Clock"
-        label="Created"
+        :label="$t('common.created')"
         :value="formatDate(entry.createdAt)"
       />
       <DlqMetadataField
         :icon="RefreshCw"
-        label="Attempts"
+        :label="$t('common.attempts')"
         :value="String(entry.totalAttempts)"
       />
-      <DlqMetadataField :icon="Image" label="Images" :value="imageSummary" />
-      <DlqMetadataField :icon="Cpu" label="Context" :value="contextSize" />
+      <DlqMetadataField
+        :icon="Image"
+        :label="$t('common.images')"
+        :value="imageSummary"
+      />
+      <DlqMetadataField
+        :icon="Cpu"
+        :label="$t('common.context')"
+        :value="contextSize"
+      />
     </div>
   </div>
 </template>

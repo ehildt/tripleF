@@ -27,18 +27,20 @@ const anchorStyle = computed(() => ANCHOR_STYLES[popoutAnchor.value]);
     v-if="popoutPreviewVisible"
     class="popout-preview"
     :style="anchorStyle"
-    title="Example popout"
+    :title="$t('common.examplePopout')"
     :opacity-percent="100"
     :is-in-playlist="false"
     :bar-always-visible="popoutShowBarAlways"
-    minimize-title="Minimize preview"
-    close-title="Close preview"
+    minimize-:title="$t('common.minimizePreview')"
+    close-:title="$t('common.closePreview')"
     @minimize="hidePopoutPreview"
     @close="hidePopoutPreview"
   >
     <div class="popout-preview__media">
       <PictureInPicture2 class="popout-preview__media-icon" />
-      <span class="popout-preview__media-label">video preview</span>
+      <span class="popout-preview__media-label">{{
+        $t('common.videoPreview')
+      }}</span>
     </div>
   </FloatingPopout>
 </template>

@@ -9,6 +9,7 @@
 import { ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { buildVideoPosterUrl } from '../../../composables/helpers/build-video-poster-url.helper';
@@ -52,23 +53,32 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
           class="video-item__title"
           >{{ item.title }}</a
         >
-        <button
-          type="button"
-          class="video-item__playlist-toggle"
-          :class="{ 'video-item__playlist-toggle--added': isInPlaylist }"
-          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-          :aria-label="
-            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+        <Tooltip
+          :text="
+            isInPlaylist
+              ? $t('common.removeFromPlaylist')
+              : $t('common.addToPlaylist')
           "
-          :aria-pressed="isInPlaylist"
-          @click.stop="togglePlaylistVideo"
         >
-          <ListMinus
-            v-if="isInPlaylist"
-            class="video-item__playlist-toggle-icon"
-          />
-          <ListPlus v-else class="video-item__playlist-toggle-icon" />
-        </button>
+          <button
+            type="button"
+            class="video-item__playlist-toggle"
+            :class="{ 'video-item__playlist-toggle--added': isInPlaylist }"
+            :aria-label="
+              isInPlaylist
+                ? $t('common.removeFromPlaylist')
+                : $t('common.addToPlaylist')
+            "
+            :aria-pressed="isInPlaylist"
+            @click.stop="togglePlaylistVideo"
+          >
+            <ListMinus
+              v-if="isInPlaylist"
+              class="video-item__playlist-toggle-icon"
+            />
+            <ListPlus v-else class="video-item__playlist-toggle-icon" />
+          </button>
+        </Tooltip>
       </div>
 
       <!-- Media: poster until clicked, then the single mounted player;
@@ -91,7 +101,9 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
 
       <!-- Description / lyrics section, only when data is available -->
       <div v-if="item.description" class="video-item__description">
-        <span class="video-item__description-label">Description</span>
+        <span class="video-item__description-label">{{
+          $t('common.description')
+        }}</span>
         <p class="video-item__description-text">{{ item.description }}</p>
       </div>
     </figure>

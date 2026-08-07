@@ -3,12 +3,23 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
 
+import { i18n } from '@/i18n/i18n';
+
 import {
   resetTabMenuSettings,
   setTabMenuAutoClose,
   setTabMenuSide,
 } from './composables/tab-menu-settings.state';
 import TabMenu from './TabMenu.vue';
+
+// Nav aria-labels come from i18n (en default in tests); resolve them through
+// the instance so the assertions stay locale-agnostic.
+const navLabels = {
+  chat: i18n.global.t('nav.chat'),
+  dlq: i18n.global.t('nav.dlq'),
+  debug: i18n.global.t('nav.debug'),
+  sysctl: i18n.global.t('nav.sysctl'),
+} as const;
 
 // TabMenu uses useRoute() (to close on navigation) and NavMenu renders real
 // RouterLinks, so a router must be installed. A memory router gives both a
@@ -70,10 +81,10 @@ describe('TabMenu', () => {
     const { wrapper } = mountMenu();
     const items = wrapper.findAll('.nav-menu__item');
     expect(items.map((item) => item.attributes('aria-label'))).toEqual([
-      'chat',
-      'dlq',
-      'debug',
-      'sysctl',
+      navLabels.chat,
+      navLabels.dlq,
+      navLabels.debug,
+      navLabels.sysctl,
     ]);
   });
 
@@ -101,7 +112,7 @@ describe('TabMenu', () => {
 
   it('navigates to the clicked tab via the router', async () => {
     const { wrapper, router } = mountMenu();
-    await clickNavItem(wrapper, 'dlq');
+    await clickNavItem(wrapper, navLabels.dlq);
     await flushPromises();
     expect(router.currentRoute.value.path).toBe('/dlq');
   });
@@ -109,7 +120,7 @@ describe('TabMenu', () => {
   it('marks the active tab', () => {
     const { wrapper } = mountMenu({ activeTab: 'dlq' });
     const active = wrapper.find('.nav-menu__item--active');
-    expect(active.attributes('aria-label')).toBe('dlq');
+    expect(active.attributes('aria-label')).toBe(navLabels.dlq);
     expect(active.attributes('aria-current')).toBe('page');
   });
 
@@ -141,7 +152,7 @@ describe('TabMenu', () => {
 
   it('stays open after picking a tab by default', async () => {
     const { wrapper } = mountMenu();
-    await clickNavItem(wrapper, 'debug');
+    await clickNavItem(wrapper, navLabels.debug);
     await flushPromises();
     expect(wrapper.classes()).not.toContain('tab-menu--closed');
   });
@@ -149,7 +160,7 @@ describe('TabMenu', () => {
   it('closes after picking a tab when autoclose is on', async () => {
     setTabMenuAutoClose(true);
     const { wrapper } = mountMenu();
-    await clickNavItem(wrapper, 'debug');
+    await clickNavItem(wrapper, navLabels.debug);
     await flushPromises();
     expect(wrapper.classes()).toContain('tab-menu--closed');
   });

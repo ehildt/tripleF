@@ -1,6 +1,7 @@
 import { computed, type Ref, ref, watch } from 'vue';
 
 import { useToast } from '@/composables/use-toast';
+import { i18n } from '@/i18n/i18n';
 
 import {
   activePlaylistName,
@@ -48,14 +49,14 @@ export function usePlaylistLibrary(conversationId: Ref<string>) {
     const name = playlistNameInput.value.trim();
     if (!name) return;
     createPlaylistState(conversationId.value, name);
-    toast.info(`Playlist "${name}" created`);
+    toast.info(i18n.global.t('toast.playlistCreated', { name }));
     playlistNameInput.value = '';
   }
 
   /** Delete a playlist by name. */
   function deletePlaylist(name: string) {
     deletePlaylistState(name);
-    toast.info(`Playlist "${name}" deleted`);
+    toast.info(i18n.global.t('toast.playlistDeleted', { name }));
     if (activePlaylistNameValue.value === name) {
       playlistNameInput.value = '';
     }
@@ -65,14 +66,14 @@ export function usePlaylistLibrary(conversationId: Ref<string>) {
   function renamePlaylist(oldName: string, newName: string) {
     const renamed = renamePlaylistState(oldName, newName);
     if (!renamed) {
-      toast.error('A playlist with that name already exists');
+      toast.error(i18n.global.t('toast.playlistNameExists'));
     }
   }
 
   /** Make a playlist active, loading its videos into the queue. */
   function selectPlaylist(name: string) {
     selectPlaylistState(name);
-    toast.info(`Playlist "${name}" loaded`);
+    toast.info(i18n.global.t('toast.playlistLoaded', { name }));
   }
 
   return {

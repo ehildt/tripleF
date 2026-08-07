@@ -5,7 +5,11 @@
  * the "glassy elevated panel" wrapper is defined once instead of being
  * re-implemented by each section.
  */
-withDefaults(
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const props = withDefaults(
+  /* eslint-disable vue/require-default-prop -- fallbacks resolved reactively below so they track locale changes */
   defineProps<{
     loading?: boolean;
     error?: boolean;
@@ -14,10 +18,17 @@ withDefaults(
     /** Shown (instead of the section content) when `error` is true. */
     errorMessage?: string;
   }>(),
-  {
-    loadingMessage: 'Loading…',
-    errorMessage: 'Failed to load config.',
-  },
+  /* eslint-enable vue/require-default-prop */
+  {},
+);
+
+const { t } = useI18n();
+
+const loadingMessage = computed(
+  () => props.loadingMessage ?? t('common.loading'),
+);
+const errorMessage = computed(
+  () => props.errorMessage ?? t('common.failedLoadConfig'),
 );
 </script>
 

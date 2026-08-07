@@ -90,7 +90,7 @@ onMounted(() => {
     <button
       type="button"
       class="harness-carousel__button harness-carousel__button--prev"
-      aria-label="Previous image"
+      :aria-label="$t('common.previousImage')"
       :disabled="activeIndex <= 0"
       @click="onPrev"
     >
@@ -115,7 +115,7 @@ onMounted(() => {
     <button
       type="button"
       class="harness-carousel__button harness-carousel__button--next"
-      aria-label="Next image"
+      :aria-label="$t('common.nextImage')"
       :disabled="activeIndex >= items.length - 1"
       @click="onNext"
     >
@@ -124,7 +124,7 @@ onMounted(() => {
     <div
       class="harness-carousel__dots"
       role="tablist"
-      aria-label="Image navigation"
+      :aria-label="$t('common.imageNavigation')"
     >
       <button
         v-for="(_, index) in items"
@@ -132,7 +132,7 @@ onMounted(() => {
         type="button"
         class="harness-carousel__dot"
         :data-index="index"
-        :aria-label="`Image ${index + 1}`"
+        ::aria-label="$t('common.imageN', { index: index + 1 })"
         role="tab"
         :aria-selected="index === activeIndex"
         :tabindex="index === activeIndex ? 0 : -1"

@@ -24,7 +24,7 @@ const columnsClass = computed(() =>
   <section
     v-if="items?.length"
     class="video-gallery-section"
-    aria-label="Video gallery"
+    :aria-label="$t('common.videoGallery')"
   >
     <h3 v-if="title">{{ title }}</h3>
     <ul

@@ -33,6 +33,7 @@ function renderStory(icon = Cherry) {
       <div style="display: flex; justify-content: center; padding-top: 120px; height: 300px;">
         <DropDown
           :variant="args.variant"
+          :menu-style="args.menuStyle"
           :align="args.align"
           :side="args.side"
           :label="args.label"
@@ -75,6 +76,10 @@ The menu can be positioned with \`align\` (left, center, right) and \`side\` (to
       control: 'select',
       options: ['labeled', 'icon-only'],
     },
+    menuStyle: {
+      control: 'select',
+      options: ['default', 'centered'],
+    },
     align: {
       control: 'select',
       options: ['left', 'center', 'right'],
@@ -91,6 +96,7 @@ The menu can be positioned with \`align\` (left, center, right) and \`side\` (to
   },
   args: {
     variant: 'labeled',
+    menuStyle: 'default',
     align: 'left',
     side: 'bottom',
     label: 'Fruit',
@@ -240,6 +246,21 @@ export const IconOnlyDisabled: Story = {
     variant: 'icon-only',
     disabled: true,
     modelValue: 'Poison Cherry',
+  },
+};
+
+export const CenteredMenu: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Labeled trigger with a centered menu — no checkmark on the selected item and the option text is centered. Used for the context selector in the conversations menu.',
+      },
+    },
+  },
+  args: {
+    menuStyle: 'centered',
+    modelValue: 'Poison Berry',
   },
 };
 

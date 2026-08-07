@@ -49,9 +49,11 @@ function save(key: 'preferred' | 'blocked') {
           <ThumbsUp class="sources-panel__icon-glyph" />
         </div>
         <div class="sources-panel__content">
-          <span class="sources-panel__label">Preferred sources</span>
+          <span class="sources-panel__label">{{
+            $t('common.preferredSources')
+          }}</span>
           <span class="sources-panel__description">
-            rank boost + prompt guidance · hostname or /regex/ per line
+            {{ $t('common.sourcesPreferredHint') }}
           </span>
         </div>
       </div>
@@ -73,9 +75,11 @@ function save(key: 'preferred' | 'blocked') {
           <Ban class="sources-panel__icon-glyph" />
         </div>
         <div class="sources-panel__content">
-          <span class="sources-panel__label">Blocked sources</span>
+          <span class="sources-panel__label">{{
+            $t('common.blockedSources')
+          }}</span>
           <span class="sources-panel__description">
-            dropped entirely from results · hostname or /regex/ per line
+            {{ $t('common.sourcesBlockedHint') }}
           </span>
         </div>
       </div>

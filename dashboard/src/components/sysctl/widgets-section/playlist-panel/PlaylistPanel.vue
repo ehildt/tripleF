@@ -31,6 +31,7 @@ import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import { i18n } from '@/i18n/i18n';
 
 import {
   type PlaylistAnchor,
@@ -49,15 +50,23 @@ type PlaylistVertical = 'top' | 'middle' | 'bottom';
 type PlaylistHorizontal = 'left' | 'center' | 'right';
 
 const VERTICAL_OPTIONS = [
-  { value: 'top', icon: ArrowUp, tooltip: 'Top' },
-  { value: 'middle', icon: AlignCenterVertical, tooltip: 'Middle' },
-  { value: 'bottom', icon: ArrowDown, tooltip: 'Bottom' },
+  { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
+  {
+    value: 'middle',
+    icon: AlignCenterVertical,
+    tooltip: i18n.global.t('common.middle'),
+  },
+  { value: 'bottom', icon: ArrowDown, tooltip: i18n.global.t('common.bottom') },
 ] as const;
 
 const HORIZONTAL_OPTIONS = [
-  { value: 'left', icon: ArrowLeft, tooltip: 'Left' },
-  { value: 'center', icon: AlignCenterHorizontal, tooltip: 'Center' },
-  { value: 'right', icon: ArrowRight, tooltip: 'Right' },
+  { value: 'left', icon: ArrowLeft, tooltip: i18n.global.t('common.left') },
+  {
+    value: 'center',
+    icon: AlignCenterHorizontal,
+    tooltip: i18n.global.t('common.center'),
+  },
+  { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
 ] as const;
 
 /** Floating mode on/off — off keeps the playlist in the chat right panel. */
@@ -87,24 +96,24 @@ function handlePreviewToggle() {
 
 <template>
   <PanelLayout class="playlist-panel">
-    <CollapsiblePanel id="playlist" title="Floating Player">
+    <CollapsiblePanel id="playlist" :title="$t('common.floatingPlayer')">
       <template #actions>
         <PreviewButton
           :active="playlistPreviewVisible"
           :title="
             playlistPreviewVisible
-              ? 'Hide example floating player'
-              : 'Show an example floating player'
+              ? $t('common.hideExampleFloatingPlayer')
+              : $t('common.showExampleFloatingPlayer')
           "
           @click="handlePreviewToggle"
         />
         <ResetButton
-          title="Reset floating player settings to defaults"
+          :title="$t('common.resetFloatingPlayerSettingsToDefaults')"
           @click="resetPlaylistSettings"
         />
         <PowerToggle
           :enabled="floatingEnabled"
-          title="Float the player as an app-level window"
+          :title="$t('common.floatPlayerAsAppWindow')"
           @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
         />
       </template>
@@ -112,29 +121,29 @@ function handlePreviewToggle() {
       <div class="playlist-panel__content">
         <FieldCard
           :icon="LayoutPanelLeft"
-          label="docking mode"
-          description="checked floats the player as an app-level window; off docks it into the chat right panel"
+          :label="$t('common.dockingMode')"
+          :description="$t('common.dockingModeDesc')"
           :checked="floatingEnabled"
           @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
         />
 
         <FieldCard
           :icon="ListVideo"
-          label="initial position"
-          description="where the floating player appears — beside the tab menu when anchored to its top side"
+          :label="$t('common.initialPosition')"
+          :description="$t('common.floatingPlayerPositionDesc')"
           :disabled="!floatingEnabled"
         >
           <template #controls>
             <SegmentedToggle
               :options="VERTICAL_OPTIONS"
               :model-value="vertical"
-              aria-label="Vertical position"
+              :aria-label="$t('common.verticalPosition')"
               @update:model-value="setVertical"
             />
             <SegmentedToggle
               :options="HORIZONTAL_OPTIONS"
               :model-value="horizontal"
-              aria-label="Horizontal position"
+              :aria-label="$t('common.horizontalPosition')"
               @update:model-value="setHorizontal"
             />
           </template>
@@ -142,8 +151,8 @@ function handlePreviewToggle() {
 
         <FieldCard
           :icon="PanelRightClose"
-          label="autoclose"
-          description="collapse the floating player after a video was launched or a click landed outside"
+          :label="$t('common.autoclose')"
+          :description="$t('common.floatingPlayerAutocloseDesc')"
           :checked="playlistAutoClose"
           :disabled="!floatingEnabled"
           @toggle="setPlaylistAutoClose(!playlistAutoClose)"

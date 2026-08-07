@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fetchAllPlaylists, savePlaylist } from '@/api/playlists.api';
+import { i18n } from '@/i18n/i18n';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import {
@@ -73,7 +74,9 @@ describe('playlist.state', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(getActivePlaylistVideos()[0].videoUrl).toBe(item.videoUrl);
-    expect(toastError).toHaveBeenCalledWith('Could not save playlist "Focus"');
+    expect(toastError).toHaveBeenCalledWith(
+      i18n.global.t('toast.couldNotSavePlaylist', { name: 'Focus' }),
+    );
   });
 
   it('adds a video to the active playlist optimistically', () => {

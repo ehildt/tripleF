@@ -102,7 +102,10 @@ const parameters = [
 </script>
 
 <template>
-  <PprocSection :icon="SlidersHorizontal" title="Advanced Parameters">
+  <PprocSection
+    :icon="SlidersHorizontal"
+    :title="$t('common.advancedParameters')"
+  >
     <div class="pproc-advanced-parameters-section__grid">
       <FieldCard
         v-for="param in parameters"

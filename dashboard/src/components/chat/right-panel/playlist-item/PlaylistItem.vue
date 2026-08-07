@@ -9,6 +9,7 @@
 import { ListMinus } from '@lucide/vue';
 import { computed } from 'vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 const props = defineProps<{
@@ -34,7 +35,7 @@ const metaLine = computed(() =>
     :class="{ 'playlist-item--active': isActive }"
     role="button"
     tabindex="0"
-    :aria-label="`Play: ${item.title || 'video'}`"
+    ::aria-label="$t('common.playItem', { title: item.title || 'video' })"
     @click="emit('play')"
     @keydown.enter="emit('play')"
   >
@@ -52,15 +53,20 @@ const metaLine = computed(() =>
       <span v-else class="playlist-item__title">{{ item.title }}</span>
       <span v-if="metaLine" class="playlist-item__meta">{{ metaLine }}</span>
     </div>
-    <button
-      type="button"
-      class="playlist-item__remove"
-      title="Remove from playlist"
-      :aria-label="`Remove from playlist: ${item.title || 'video'}`"
-      @click.stop="emit('remove')"
-    >
-      <ListMinus class="playlist-item__remove-icon" />
-    </button>
+    <Tooltip :text="$t('common.removeFromPlaylist')">
+      <button
+        type="button"
+        class="playlist-item__remove"
+        :aria-label="
+          $t('common.removeFromPlaylistItem', {
+            title: item.title || 'video',
+          })
+        "
+        @click.stop="emit('remove')"
+      >
+        <ListMinus class="playlist-item__remove-icon" />
+      </button>
+    </Tooltip>
   </div>
 </template>
 

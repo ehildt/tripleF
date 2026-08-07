@@ -94,7 +94,7 @@ function stepDown() {
         type="button"
         :disabled="disabled"
         class="input-number__stepper"
-        aria-label="Increase value"
+        :aria-label="$t('common.increaseValue')"
         @click="stepUp"
       >
         <ChevronUp class="input-number__stepper-icon" />
@@ -103,7 +103,7 @@ function stepDown() {
         type="button"
         :disabled="disabled"
         class="input-number__stepper"
-        aria-label="Decrease value"
+        :aria-label="$t('common.decreaseValue')"
         @click="stepDown"
       >
         <ChevronDown class="input-number__stepper-icon" />

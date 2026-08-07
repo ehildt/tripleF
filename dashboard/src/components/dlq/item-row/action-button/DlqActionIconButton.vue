@@ -2,6 +2,7 @@
 import { type Component, computed } from 'vue';
 
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 
 const props = defineProps<{
   icon: Component;
@@ -21,18 +22,19 @@ const iconStyle = computed(() => ({
 </script>
 
 <template>
-  <button
-    v-if="visible"
-    class="dlq-action-icon-button"
-    :class="{ 'dlq-action-icon-button--armed': armed }"
-    :style="iconStyle"
-    :title="title"
-    @click.stop="emit('click')"
-  >
-    <MotionIcon>
-      <component :is="icon" class="dlq-action-icon-button__icon" />
-    </MotionIcon>
-  </button>
+  <Tooltip v-if="visible" :text="title ?? ''">
+    <button
+      class="dlq-action-icon-button"
+      :class="{ 'dlq-action-icon-button--armed': armed }"
+      :style="iconStyle"
+      :aria-label="title"
+      @click.stop="emit('click')"
+    >
+      <MotionIcon>
+        <component :is="icon" class="dlq-action-icon-button__icon" />
+      </MotionIcon>
+    </button>
+  </Tooltip>
 </template>
 
 <style scoped>

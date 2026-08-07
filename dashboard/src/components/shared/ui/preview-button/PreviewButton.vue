@@ -2,6 +2,7 @@
 import { Eye, EyeOff } from '@lucide/vue';
 
 import MotionIcon from '../motion-icon/MotionIcon.vue';
+import Tooltip from '../tooltip/Tooltip.vue';
 
 /**
  * Panel-header preview icon button, next to the reset button. When `active`,
@@ -23,21 +24,22 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <button
-    type="button"
-    class="preview-button"
-    :class="{ 'preview-button--active': active }"
-    :disabled="disabled"
-    :title="title"
-    :aria-label="title"
-    :aria-pressed="active"
-    @click="emit('click')"
-  >
-    <MotionIcon>
-      <EyeOff v-if="active" class="preview-button__icon" />
-      <Eye v-else class="preview-button__icon" />
-    </MotionIcon>
-  </button>
+  <Tooltip :text="title" :disabled="disabled">
+    <button
+      type="button"
+      class="preview-button"
+      :class="{ 'preview-button--active': active }"
+      :disabled="disabled"
+      :aria-label="title"
+      :aria-pressed="active"
+      @click="emit('click')"
+    >
+      <MotionIcon>
+        <EyeOff v-if="active" class="preview-button__icon" />
+        <Eye v-else class="preview-button__icon" />
+      </MotionIcon>
+    </button>
+  </Tooltip>
 </template>
 
 <style scoped>

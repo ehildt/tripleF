@@ -4,7 +4,9 @@ import { computed, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import type { ActiveTab } from '../../../stores/app';
+import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 import AppThemeSelector from '../app-theme-selector/AppThemeSelector.vue';
+import LanguageSelector from '../language-selector/LanguageSelector.vue';
 import { useMenuTabs } from './composables/use-menu-tabs';
 import { useTabMenu } from './composables/use-tab-menu';
 import NavMenu from './nav-menu/NavMenu.vue';
@@ -24,6 +26,14 @@ const { isOpen, side, toggleMenu, closeOnAutoclose } = useTabMenu(menuRef);
 /** Down to expand (the drawer drops below), up to slide it away again. */
 const handleIcon = computed(() => (isOpen.value ? ChevronsUp : ChevronsDown));
 
+/**
+ * The handle tooltip opens toward the page (away from the docked edge): to
+ * the left when the menu is on the right, to the right when on the left.
+ */
+const handleTooltipPositions = computed(() =>
+  side.value === 'left' ? ['right', 'left'] : ['left', 'right'],
+);
+
 // Navigation happens through the router now (NavMenu renders router-links), so
 // close the drawer when the route changes instead of on a click event.
 const route = useRoute();
@@ -39,22 +49,30 @@ watch(
     class="tab-menu"
     :class="[`tab-menu--${side}`, { 'tab-menu--closed': !isOpen }]"
   >
-    <button
-      type="button"
-      class="tab-menu__handle shadow-floating"
-      title="Toggle tab menu"
-      aria-label="Toggle tab menu"
-      :aria-expanded="isOpen"
-      @click="toggleMenu"
+    <Tooltip
+      :text="$t('app.toggleTabMenu')"
+      :positions="handleTooltipPositions"
     >
-      <component :is="handleIcon" class="tab-menu__handle-icon" />
-    </button>
+      <button
+        type="button"
+        class="tab-menu__handle shadow-floating"
+        aria-label="$t('app.toggleTabMenu')"
+        :aria-expanded="isOpen"
+        @click="toggleMenu"
+      >
+        <component :is="handleIcon" class="tab-menu__handle-icon" />
+      </button>
+    </Tooltip>
 
-    <aside class="tab-menu__drawer shadow-floating" aria-label="Tab menu">
+    <aside
+      class="tab-menu__drawer shadow-floating"
+      :aria-label="$t('common.tabMenuTitle')"
+    >
       <NavMenu :tabs="tabs" :active-tab="activeTab" />
       <hr />
       <div class="tab-menu__footer">
         <AppThemeSelector />
+        <LanguageSelector />
       </div>
     </aside>
   </header>

@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { Cloud, HardDrive } from '@lucide/vue';
 import { computed } from 'vue';
 
+import { formatCtx } from '@/utils/format-ctx.helper';
+
 import type { OllamaModel } from '../../../../../../stores/models';
+import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
 import { CAPABILITY_META } from '../../../shared/ui/capability-badge/capability-meta';
 import { formatParameterSize } from './helpers/format-parameter-size.helper';
 import {
@@ -25,7 +29,9 @@ const metaText = computed(() =>
     props.model.parameter_size
       ? formatParameterSize(props.model.parameter_size)
       : undefined,
-    props.model.quantization_level,
+    props.model.context_length
+      ? formatCtx(props.model.context_length)
+      : undefined,
   ]
     .filter(Boolean)
     .join('  '),
@@ -48,31 +54,50 @@ const capabilityBadges = computed(() =>
     }"
     @click="$emit('select', model.model)"
   >
+    <HardDrive
+      v-if="model.origin !== 'cloud'"
+      class="model-list-item__origin-icon"
+    />
+    <Cloud v-else class="model-list-item__origin-icon" />
     <div class="model-list-item__info">
       <span>{{ model.model }}</span>
-      <span
-        class="model-list-item__meta"
-        :class="{ 'model-list-item__meta--empty': !metaText }"
-      >
-        {{ metaText }}
-      </span>
-      <!-- Capability badges below the metadata — only the capabilities
-           this model supports are shown, nothing when it supports none. -->
-      <div v-if="capabilityBadges.length" class="model-list-item__capabilities">
+      <div class="model-list-item__row">
         <span
-          v-for="badge in capabilityBadges"
-          :key="badge.key"
-          class="model-list-item__capability"
-          role="img"
-          :title="`Supports ${badge.label}`"
-          :aria-label="`Supports ${badge.label}`"
+          class="model-list-item__meta"
+          :class="{ 'model-list-item__meta--empty': !metaText }"
         >
-          <component
-            :is="badge.icon"
-            class="model-list-item__capability-icon"
-            aria-hidden="true"
-          />
+          {{ metaText }}
         </span>
+        <!-- Capability badges beside the metadata — only the capabilities
+             this model supports are shown, nothing when it supports none. -->
+        <div
+          v-if="capabilityBadges.length"
+          class="model-list-item__capabilities"
+        >
+          <Tooltip
+            v-for="badge in capabilityBadges"
+            :key="badge.key"
+            :text="
+              $t('common.supports', { label: $t(`capabilities.${badge.key}`) })
+            "
+          >
+            <span
+              class="model-list-item__capability"
+              role="img"
+              :aria-label="
+                $t('common.supports', {
+                  label: $t(`capabilities.${badge.key}`),
+                })
+              "
+            >
+              <component
+                :is="badge.icon"
+                class="model-list-item__capability-icon"
+                aria-hidden="true"
+              />
+            </span>
+          </Tooltip>
+        </div>
       </div>
     </div>
   </button>
@@ -82,13 +107,17 @@ const capabilityBadges = computed(() =>
 .model-list-item {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--spacing-1-5);
-  padding: var(--spacing-1-5) var(--spacing-3);
-  text-align: center;
+  padding: var(--spacing-2);
+  text-align: left;
   font-size: 0.75rem;
   font-family: var(--font-mono);
   color: var(--color-fg-secondary);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
   transition:
     color 0.2s ease,
     background-color 0.2s ease,
@@ -96,14 +125,29 @@ const capabilityBadges = computed(() =>
 }
 
 .model-list-item:hover {
-  background-color: var(--color-bg-tertiary);
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-tertiary) 80%,
+    transparent
+  );
 }
 
 .model-list-item--selected {
   color: var(--color-accent-primary);
 }
 
-/* Stretched column, centered via the button's text-align: an
+.model-list-item__origin-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.model-list-item--selected .model-list-item__origin-icon {
+  color: var(--color-accent-primary);
+}
+
+/* Stretched column, left-aligned via the button's text-align: an
    align-items: center column would shrink to its content and break the
    meta line's clipping, letting long model names bleed past the edges. */
 .model-list-item__info {
@@ -114,6 +158,8 @@ const capabilityBadges = computed(() =>
 }
 
 .model-list-item__meta {
+  flex: 1;
+  min-width: 0;
   font-size: 0.625rem;
   color: var(--color-fg-muted);
   overflow: hidden;
@@ -125,12 +171,19 @@ const capabilityBadges = computed(() =>
   visibility: hidden;
 }
 
-.model-list-item__capabilities {
+/* Meta and capability badges share one row, each taking half the width. */
+.model-list-item__row {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--spacing-1-5);
-  margin-top: var(--spacing-1);
+}
+
+.model-list-item__capabilities {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-1-5);
   color: var(--color-fg-muted);
 }
 

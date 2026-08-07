@@ -1,15 +1,8 @@
 <script setup lang="ts">
-import {
-  ChevronDown,
-  ChevronRight,
-  Cloud,
-  HardDrive,
-  LoaderCircle,
-} from '@lucide/vue';
-import { computed } from 'vue';
+import { LoaderCircle, Search } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
 import type { OllamaModel } from '../../../../../stores/models';
-import { useModelListGroups } from './composables/use-model-list-groups';
 import ModelListItem from './model-list-item/ModelListItem.vue';
 
 defineEmits<{
@@ -27,62 +20,41 @@ const props = defineProps<{
   loading: boolean;
 }>();
 
-const { localCollapsed, cloudCollapsed, toggleLocal, toggleCloud } =
-  useModelListGroups();
+const searchQuery = ref('');
 
-/** Dividers and collapsing only exist when both groups are present. */
-const groupsSplit = computed(
-  () => props.localModels.length > 0 && props.cloudModels.length > 0,
-);
-const showLocalItems = computed(
-  () => !groupsSplit.value || !localCollapsed.value,
-);
-const showCloudItems = computed(
-  () => !groupsSplit.value || !cloudCollapsed.value,
-);
+/** Local models first, then cloud — each group is already sorted alphabetically. */
+const allModels = computed(() => [...props.localModels, ...props.cloudModels]);
+
+const filteredModels = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return allModels.value;
+  return allModels.value.filter((m) => m.model.toLowerCase().includes(q));
+});
 </script>
 
 <template>
   <div class="model-list-content">
-    <!-- Loading state: only while the very first catalog is missing — a
-         background refresh keeps rendering the models it already has. -->
-    <div
-      v-if="loading && !localModels.length && !cloudModels.length"
-      class="model-list-loading"
-    >
-      <LoaderCircle class="model-list-loading__icon" />
-      <span class="model-list-loading__text">Loading...</span>
+    <div class="model-list-search">
+      <Search class="model-list-search__icon" :size="14" />
+      <input
+        v-model="searchQuery"
+        class="model-list-search__input"
+        :placeholder="$t('common.search')"
+      />
     </div>
 
-    <!-- Model list: local models first, cloud models below a divider.
-         Section dividers only appear when both groups exist — without an
-         Ollama API key there is only the local group and lines are noise. -->
-    <template v-if="!loading || localModels.length || cloudModels.length">
-      <button
-        v-if="localModels.length && cloudModels.length"
-        type="button"
-        class="model-list-divider"
-        :aria-expanded="!localCollapsed"
-        aria-label="Toggle local models"
-        title="Toggle local models"
-        @click="toggleLocal"
-      >
-        <span class="model-list-divider__line" />
-        <span class="model-list-divider__label">
-          <HardDrive class="model-list-divider__icon" />
-          local models
-          <ChevronDown
-            v-if="!localCollapsed"
-            class="model-list-divider__chevron"
-          />
-          <ChevronRight v-else class="model-list-divider__chevron" />
-        </span>
-        <span class="model-list-divider__line" />
-      </button>
+    <div class="model-list-items">
+      <!-- Loading state: only while the very first catalog is missing — a
+           background refresh keeps rendering the models it already has. -->
+      <div v-if="loading && !allModels.length" class="model-list-loading">
+        <LoaderCircle class="model-list-loading__icon" />
+        <span class="model-list-loading__text">{{ $t('common.loading') }}</span>
+      </div>
 
-      <template v-if="showLocalItems">
+      <!-- Model list: local models first, then cloud. -->
+      <template v-if="!loading || allModels.length">
         <ModelListItem
-          v-for="m in localModels"
+          v-for="m in filteredModels"
           :key="m.model"
           :model="m"
           :selected="m.model === selectedModel"
@@ -90,45 +62,17 @@ const showCloudItems = computed(
         />
       </template>
 
-      <button
-        v-if="localModels.length && cloudModels.length"
-        type="button"
-        class="model-list-divider"
-        :aria-expanded="!cloudCollapsed"
-        aria-label="Toggle cloud models"
-        title="Toggle cloud models"
-        @click="toggleCloud"
+      <!-- Empty state -->
+      <div v-if="!allModels.length && !loading" class="model-list-empty">
+        {{ $t('common.noModelsAvailable') }}
+      </div>
+      <!-- Search with no matches -->
+      <div
+        v-if="allModels.length && !filteredModels.length"
+        class="model-list-empty"
       >
-        <span class="model-list-divider__line" />
-        <span class="model-list-divider__label">
-          <Cloud class="model-list-divider__icon" />
-          ollama cloud
-          <ChevronDown
-            v-if="!cloudCollapsed"
-            class="model-list-divider__chevron"
-          />
-          <ChevronRight v-else class="model-list-divider__chevron" />
-        </span>
-        <span class="model-list-divider__line" />
-      </button>
-
-      <template v-if="showCloudItems">
-        <ModelListItem
-          v-for="m in cloudModels"
-          :key="m.model"
-          :model="m"
-          :selected="m.model === selectedModel"
-          @select="$emit('select', $event)"
-        />
-      </template>
-    </template>
-
-    <!-- Empty state -->
-    <div
-      v-if="!localModels.length && !cloudModels.length && !loading"
-      class="model-list-empty"
-    >
-      No models available
+        {{ $t('common.noModelsFound') }}
+      </div>
     </div>
   </div>
 </template>
@@ -142,6 +86,52 @@ const showCloudItems = computed(
   /* The dropdown opens downward from the sticky toolbar, so cap the list
      height and let it scroll instead of growing past the viewport. */
   max-height: min(24rem, 70vh);
+}
+
+/* Sticky search header, styled like the language selector: a full-width bar
+   with a bottom border that stays put while the list scrolls. */
+.model-list-search {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  margin-bottom: var(--spacing-1);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-divider);
+  z-index: 1;
+}
+
+.model-list-search__icon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.model-list-search__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0;
+  border: none;
+  background: none;
+  font-size: 0.75rem;
+  color: var(--color-fg-primary);
+}
+
+.model-list-search__input:focus {
+  outline: none;
+}
+
+.model-list-search__input::placeholder {
+  color: var(--color-fg-muted);
+}
+
+.model-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding-inline: var(--spacing-1);
+  padding-bottom: var(--spacing-1);
 }
 
 .model-list-loading {
@@ -161,50 +151,6 @@ const showCloudItems = computed(
 .model-list-loading__text {
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  color: var(--color-fg-muted);
-}
-
-.model-list-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  padding: var(--spacing-2) var(--spacing-3) var(--spacing-1);
-  background: none;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-}
-
-.model-list-divider:hover .model-list-divider__label {
-  color: var(--color-accent-secondary);
-}
-
-.model-list-divider__line {
-  flex: 1;
-  height: 1px;
-  background-color: var(--color-divider);
-}
-
-.model-list-divider__label {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: 0.625rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-accent-primary);
-  transition: color 0.2s ease;
-}
-
-.model-list-divider__icon {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.model-list-divider__chevron {
-  width: 0.7rem;
-  height: 0.7rem;
   color: var(--color-fg-muted);
 }
 

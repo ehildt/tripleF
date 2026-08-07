@@ -21,6 +21,7 @@ import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import { i18n } from '@/i18n/i18n';
 
 import { useApiKeyForm } from '../composables/use-api-key-form';
 import { useSysctlConfig } from '../composables/use-sysctl-config';
@@ -84,7 +85,7 @@ const {
 );
 
 const youtubeDescriptions: Record<string, string> = {
-  videos: 'YouTube videos with views and duration',
+  videos: i18n.global.t('common.youtubeVideosWithViews'),
 };
 
 const youtubeIcons = {
@@ -92,13 +93,13 @@ const youtubeIcons = {
 };
 
 const brightDataDescriptions: Record<string, string> = {
-  web: 'Google search results (Bright Data SERP)',
-  images: 'Image results with dimensions',
-  news: 'News articles with source and date',
-  places: 'Local businesses, rating, address',
-  shopping: 'Products with price and seller',
-  videos: 'Video results from YouTube and more',
-  scrape: 'Full page scraping via Web Unlocker',
+  web: i18n.global.t('common.searchCapWebBrightData'),
+  images: i18n.global.t('common.searchCapImages'),
+  news: i18n.global.t('common.searchCapNews'),
+  places: i18n.global.t('common.searchCapPlaces'),
+  shopping: i18n.global.t('common.searchCapShopping'),
+  videos: i18n.global.t('common.searchCapVideos'),
+  scrape: i18n.global.t('common.searchCapScrapeBrightData'),
 };
 
 const brightDataIcons = {
@@ -112,14 +113,14 @@ const brightDataIcons = {
 };
 
 const serperDescriptions: Record<string, string> = {
-  web: 'Google search results, knowledge graph',
-  images: 'Image results with dimensions',
-  news: 'News articles with source and date',
-  places: 'Local businesses, rating, address',
-  shopping: 'Products with price and seller',
-  reviews: 'Place reviews and ratings',
-  videos: 'Video results from YouTube and more',
-  scrape: 'Full page content scraping',
+  web: i18n.global.t('common.searchCapWebSerper'),
+  images: i18n.global.t('common.searchCapImages'),
+  news: i18n.global.t('common.searchCapNews'),
+  places: i18n.global.t('common.searchCapPlaces'),
+  shopping: i18n.global.t('common.searchCapShopping'),
+  reviews: i18n.global.t('common.searchCapReviews'),
+  videos: i18n.global.t('common.searchCapVideos'),
+  scrape: i18n.global.t('common.searchCapScrapeSerper'),
 };
 
 const serperIcons = {
@@ -176,16 +177,16 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
 
 <template>
   <SysCtlSection :loading="isLoading" :error="hasError || !config">
-    <PanelLayout>
-      <CollapsiblePanel id="serper" title="Serper API">
+    <PanelLayout v-if="config">
+      <CollapsiblePanel id="serper" :title="$t('common.serperApi')">
         <template #actions>
           <ResetButton
-            title="Reset Serper to defaults"
+            :title="$t('common.resetSerperToDefaults')"
             @click="resetProvider('serper')"
           />
           <PowerToggle
             :enabled="config.serper.enabled"
-            title="Enable Serper"
+            :title="$t('common.enableSerper')"
             @toggle="toggleProviderEnabled('serper')"
           />
         </template>
@@ -206,8 +207,8 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
           <template #prepend>
             <FieldCard
               :icon="KeyRound"
-              label="API key"
-              description="serper.dev access key"
+              :label="$t('common.apiKey')"
+              :description="$t('common.serperAccessKey')"
             >
               <template #field>
                 <input
@@ -227,16 +228,16 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
       </CollapsiblePanel>
     </PanelLayout>
 
-    <PanelLayout>
-      <CollapsiblePanel id="brightData" title="Bright Data">
+    <PanelLayout v-if="config">
+      <CollapsiblePanel id="brightData" :title="$t('common.brightData')">
         <template #actions>
           <ResetButton
-            title="Reset Bright Data to defaults"
+            :title="$t('common.resetBrightDataToDefaults')"
             @click="resetProvider('brightData')"
           />
           <PowerToggle
             :enabled="config.brightData.enabled"
-            title="Enable Bright Data"
+            :title="$t('common.enableBrightData')"
             @toggle="toggleProviderEnabled('brightData')"
           />
         </template>
@@ -254,8 +255,8 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
           <template #prepend>
             <FieldCard
               :icon="KeyRound"
-              label="API key"
-              description="brightdata.com access key"
+              :label="$t('common.apiKey')"
+              :description="$t('common.brightDataAccessKey')"
             >
               <template #field>
                 <input
@@ -272,8 +273,8 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
             </FieldCard>
             <FieldCard
               :icon="Globe"
-              label="SERP zone"
-              description="SERP API zone (search endpoints)"
+              :label="$t('common.serpZone')"
+              :description="$t('common.serpZoneDesc')"
             >
               <template #field>
                 <input
@@ -290,8 +291,8 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
             </FieldCard>
             <FieldCard
               :icon="FileText"
-              label="Unlocker zone"
-              description="Web Unlocker zone (page scraping)"
+              :label="$t('common.unlockerZone')"
+              :description="$t('common.unlockerZoneDesc')"
             >
               <template #field>
                 <input
@@ -311,16 +312,16 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
       </CollapsiblePanel>
     </PanelLayout>
 
-    <PanelLayout>
-      <CollapsiblePanel id="youtube" title="YouTube API">
+    <PanelLayout v-if="config">
+      <CollapsiblePanel id="youtube" :title="$t('common.youtubeApi')">
         <template #actions>
           <ResetButton
-            title="Reset YouTube to defaults"
+            :title="$t('common.resetYouTubeToDefaults')"
             @click="resetProvider('youtube')"
           />
           <PowerToggle
             :enabled="config.youtube.enabled"
-            title="Enable YouTube"
+            :title="$t('common.enableYouTube')"
             @toggle="toggleProviderEnabled('youtube')"
           />
         </template>
@@ -338,8 +339,8 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
           <template #prepend>
             <FieldCard
               :icon="KeyRound"
-              label="API key"
-              description="Google Cloud YouTube Data API key"
+              :label="$t('common.apiKey')"
+              :description="$t('common.youtubeDataApiKey')"
             >
               <template #field>
                 <input
@@ -360,11 +361,11 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
     </PanelLayout>
 
     <!-- Preferred / blocked content domains (dynamic source config) -->
-    <PanelLayout>
-      <CollapsiblePanel id="sources" title="Sources">
+    <PanelLayout v-if="config">
+      <CollapsiblePanel id="sources" :title="$t('common.sources')">
         <template #actions>
           <ResetButton
-            title="Reset sources to defaults"
+            :title="$t('common.resetSourcesToDefaults')"
             @click="resetProvider('sources')"
           />
         </template>

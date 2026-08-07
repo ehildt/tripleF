@@ -82,7 +82,7 @@ function checkboxClass(key: keyof typeof store.variants) {
 </script>
 
 <template>
-  <PprocSection :icon="Images" title="Image Variants">
+  <PprocSection :icon="Images" :title="$t('common.imageVariants')">
     <div class="pproc-variants-section__grid">
       <PprocToggleButton
         v-for="(config, key) in variantConfig"

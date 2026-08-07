@@ -7,10 +7,12 @@ import {
   Search,
   Trash2,
 } from '@lucide/vue';
+import { onClickOutside } from '@vueuse/core';
 import { computed, onUnmounted, ref } from 'vue';
 
 import { useDebugStore } from '../../../../../stores/debug';
-import MotionIcon from '../../../../shared/ui/motion-icon/MotionIcon.vue';
+import FilterMenu from '../../../../shared/ui/filter-menu/FilterMenu.vue';
+import IconButton from '../../../../shared/ui/icon-button/IconButton.vue';
 import type { DebugResultFilter } from '../../../helpers/build-filtered-debug-results.helper';
 
 const props = defineProps<{
@@ -30,6 +32,13 @@ const emit = defineEmits<{
 }>();
 
 const debugStore = useDebugStore();
+
+const headerRef = ref<HTMLElement | null>(null);
+const isSearchOpen = ref(false);
+
+onClickOutside(headerRef, () => {
+  isSearchOpen.value = false;
+});
 
 const disableAll = computed(() => props.allCount === 0);
 const disableHttp = computed(() => props.httpCount === 0);
@@ -61,20 +70,7 @@ onUnmounted(disarmClear);
 </script>
 
 <template>
-  <div class="header-menu">
-    <label class="header-menu__search">
-      <Search class="header-menu__search-icon" />
-      <input
-        :value="search"
-        class="header-menu__search-input"
-        placeholder="filter…"
-        aria-label="Filter requests"
-        @input="
-          emit('update:search', ($event.target as HTMLInputElement).value)
-        "
-      />
-    </label>
-
+  <div ref="headerRef" class="header-menu">
     <div class="header-menu__filters">
       <button
         :disabled="disableAll"
@@ -102,39 +98,55 @@ onUnmounted(disarmClear);
       </button>
     </div>
 
-    <button
-      class="header-menu__icon-button"
-      :class="{ 'header-menu__icon-button--active': hideRead }"
-      :title="hideRead ? 'Show read requests' : 'Hide read requests'"
+    <FilterMenu
+      :is-open="isSearchOpen"
+      :is-active="search !== ''"
+      :title="$t('common.search')"
+      width="16rem"
+      :options="[]"
+      :selected-value="search"
+      has-text-value
+      @toggle="isSearchOpen = !isSearchOpen"
+      @select="emit('update:search', $event)"
+    >
+      <Search />
+    </FilterMenu>
+
+    <IconButton
+      :active="hideRead"
+      :title="
+        hideRead ? $t('common.showReadRequests') : $t('common.hideReadRequests')
+      "
       @click="emit('update:hideRead', !hideRead)"
     >
-      <MotionIcon>
-        <Mail v-if="hideRead" class="header-menu__icon" />
-        <MailOpen v-else class="header-menu__icon" />
-      </MotionIcon>
-    </button>
+      <Mail v-if="hideRead" />
+      <MailOpen v-else />
+    </IconButton>
 
-    <button
-      class="header-menu__icon-button"
-      :class="{ 'header-menu__icon-button--active': debugStore.debugPaused }"
-      :title="debugStore.debugPaused ? 'Resume logging' : 'Pause logging'"
+    <IconButton
+      :active="debugStore.debugPaused"
+      :title="
+        debugStore.debugPaused
+          ? $t('common.resumeLogging')
+          : $t('common.pauseLogging')
+      "
       @click="debugStore.toggleDebugPaused()"
     >
-      <MotionIcon>
-        <CirclePause v-if="!debugStore.debugPaused" class="header-menu__icon" />
-        <CirclePlay v-else class="header-menu__icon" />
-      </MotionIcon>
-    </button>
+      <CirclePause v-if="!debugStore.debugPaused" />
+      <CirclePlay v-else />
+    </IconButton>
 
-    <button
+    <IconButton
       :disabled="disableAll"
-      class="header-menu__icon-button header-menu__icon-button--danger"
-      :class="{ 'header-menu__icon-button--armed': clearArmed }"
-      :title="clearArmed ? 'Click again to clear the log' : 'Clear the log'"
+      danger
+      :armed="clearArmed"
+      :title="
+        clearArmed ? $t('common.clickAgainClearLog') : $t('common.clearLog')
+      "
       @click="handleClearClick"
     >
-      <MotionIcon><Trash2 class="header-menu__icon" /></MotionIcon>
-    </button>
+      <Trash2 />
+    </IconButton>
   </div>
 </template>
 
@@ -144,36 +156,6 @@ onUnmounted(disarmClear);
   align-items: center;
   gap: var(--spacing-2);
   min-width: 0;
-}
-
-/* Inline filter search — borderless like our other field controls */
-.header-menu__search {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  min-width: 0;
-  color: var(--color-fg-muted);
-}
-
-.header-menu__search-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-  flex-shrink: 0;
-}
-
-.header-menu__search-input {
-  width: 8rem;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  color: var(--color-fg-primary);
-  outline: none;
-}
-
-.header-menu__search-input::placeholder {
-  color: var(--color-fg-muted);
 }
 
 .header-menu__filters {
@@ -229,50 +211,5 @@ onUnmounted(disarmClear);
     var(--color-tab-rest) 50%,
     var(--color-tab-accent)
   );
-}
-
-.header-menu__icon-button {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-1);
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.header-menu__icon-button:hover:not(:disabled) {
-  color: var(--color-fg-primary);
-}
-
-.header-menu__icon-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.header-menu__icon-button--active,
-.header-menu__icon-button--active:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-}
-
-.header-menu__icon-button--danger:hover:not(:disabled) {
-  color: var(--color-status-error);
-}
-
-.header-menu__icon-button--armed,
-.header-menu__icon-button--armed:hover:not(:disabled) {
-  color: var(--color-status-error);
-  background-color: color-mix(
-    in srgb,
-    var(--color-status-error) 20%,
-    transparent
-  );
-  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.header-menu__icon {
-  width: 1rem;
-  height: 1rem;
 }
 </style>

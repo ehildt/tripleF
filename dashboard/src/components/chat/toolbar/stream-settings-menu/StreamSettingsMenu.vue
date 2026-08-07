@@ -37,7 +37,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
 
 <template>
   <div class="flex items-center gap-1.5 w-full justify-end">
-    <ToolbarLabel value="sockets" />
+    <ToolbarLabel value="sockets" translate />
     <div ref="triggerRef" class="relative shrink-0">
       <IconButton
         :active="isOpen"
@@ -45,7 +45,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
         :blinking="blinking"
         :on-mouse-enter="onMouseEnter"
         :on-mouse-leave="onMouseLeave"
-        title="Stream settings"
+        title="$t('common.streamTitle')"
         @click.stop="$emit('toggleMenu')"
       >
         <MotionIcon><Network class="w-4 h-4" /></MotionIcon>
@@ -63,7 +63,9 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
               <span class="stream-settings-menu__icon-container">
                 <RadioTower class="stream-settings-menu__icon" />
               </span>
-              <span class="stream-settings-menu__label">Stream</span>
+              <span class="stream-settings-menu__label">{{
+                $t('common.stream')
+              }}</span>
               <div class="stream-settings-menu__toggle-group">
                 <button
                   class="stream-settings-menu__toggle"
@@ -74,7 +76,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                   "
                   @click.stop="$emit('update:isStreamEnabled', true)"
                 >
-                  Word
+                  {{ $t('common.streamWord') }}
                 </button>
                 <button
                   class="stream-settings-menu__toggle"
@@ -85,17 +87,15 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                   "
                   @click.stop="$emit('update:isStreamEnabled', false)"
                 >
-                  Text
+                  {{ $t('common.streamText') }}
                 </button>
               </div>
             </div>
             <div class="stream-settings-menu__description">
-              <template v-if="isStreamEnabled"
-                >Streams tokens as they arrive for real-time output.</template
-              >
-              <template v-else
-                >Renders once the full response arrives.</template
-              >
+              <template v-if="isStreamEnabled">{{
+                $t('common.streamRealTime')
+              }}</template>
+              <template v-else>{{ $t('common.streamRendersOnce') }}</template>
             </div>
             <div class="stream-settings-menu__divider"></div>
             <div class="stream-settings-menu__input-row">
@@ -104,7 +104,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 <input
                   :value="newEvent"
                   name="stream-event"
-                  placeholder="Socket"
+                  :placeholder="$t('common.socket')"
                   class="stream-settings-menu__input"
                   @input="
                     $emit(
@@ -119,7 +119,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 <input
                   :value="newRoomId"
                   name="stream-channel"
-                  placeholder="Channel"
+                  :placeholder="$t('common.channel')"
                   class="stream-settings-menu__input"
                   @input="
                     $emit(

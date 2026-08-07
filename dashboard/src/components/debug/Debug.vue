@@ -80,7 +80,7 @@ function select(result: DebugResult) {
 <template>
   <PanelLayout>
     <PanelHeader>
-      <PanelHeaderTitle label="Request Log" />
+      <PanelHeaderTitle :label="$t('common.requestLog')" />
       <HeaderMenu
         :filter="filter"
         :search="search"
@@ -103,18 +103,18 @@ function select(result: DebugResult) {
     />
     <PanelEmptyState
       v-else-if="results.length === 0"
-      message="No requests yet"
-      submessage="Send a request to see results"
+      :message="$t('common.noRequestsYet')"
+      :submessage="''"
     />
     <PanelEmptyState
       v-else-if="hasHiddenRead"
-      message="No unread requests"
-      submessage="Toggle the eye icon to show all requests"
+      :message="$t('common.noUnreadRequests')"
+      :submessage="''"
     />
     <PanelEmptyState
       v-else
-      message="No matching requests"
-      submessage="Change filter or search to see other requests"
+      :message="$t('common.noMatchingRequests')"
+      :submessage="''"
     />
   </PanelLayout>
 </template>

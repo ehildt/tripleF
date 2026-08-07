@@ -2,6 +2,7 @@
 import { Moon, Sun, SwatchBook } from '@lucide/vue';
 
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 import { useThemeSelector } from './composables/use-theme-selector';
 
 const themeSelector = useThemeSelector();
@@ -19,25 +20,36 @@ const {
 
 <template>
   <div :ref="themeSelector.containerRef" class="theme-selector">
-    <button
-      class="theme-selector__button"
-      :class="{ 'theme-selector__button--active': isDropdownOpen }"
-      title="Switch theme"
-      @click="toggleDropdown"
-    >
-      <MotionIcon><SwatchBook :size="16" /></MotionIcon>
-    </button>
+    <Tooltip :text="$t('app.switchTheme')" :positions="['top', 'bottom']">
+      <button
+        class="theme-selector__button"
+        :class="{ 'theme-selector__button--active': isDropdownOpen }"
+        :aria-label="$t('app.switchTheme')"
+        @click="toggleDropdown"
+      >
+        <MotionIcon><SwatchBook :size="16" /></MotionIcon>
+      </button>
+    </Tooltip>
 
-    <button
-      class="theme-selector__button"
-      :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-      @click="toggleDarkMode"
+    <Tooltip
+      :text="
+        isDarkMode ? $t('app.switchToLightMode') : $t('app.switchToDarkMode')
+      "
+      :positions="['top', 'bottom']"
     >
-      <MotionIcon>
-        <Sun v-if="isDarkMode" :size="14" />
-        <Moon v-else :size="14" />
-      </MotionIcon>
-    </button>
+      <button
+        class="theme-selector__button"
+        :aria-label="
+          isDarkMode ? $t('app.switchToLightMode') : $t('app.switchToDarkMode')
+        "
+        @click="toggleDarkMode"
+      >
+        <MotionIcon>
+          <Sun v-if="isDarkMode" :size="14" />
+          <Moon v-else :size="14" />
+        </MotionIcon>
+      </button>
+    </Tooltip>
 
     <Transition name="dropdown">
       <div v-if="isDropdownOpen" class="theme-selector__dropdown">

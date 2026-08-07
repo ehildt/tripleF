@@ -2,6 +2,7 @@
 import type { ComponentPublicInstance } from 'vue';
 import { computed, provide, ref, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 
 import { deleteUploadedObject } from '../../api/storage.api';
@@ -155,7 +156,7 @@ const { playlistVideos } = useVideoPlaylist();
 
 // Load the active conversation's playlists from the database so the playlist
 // tab can appear even before the panel mounts.
-watch(conversationId, () => void loadPlaylists(conversationId.value), {
+watch(conversationId, () => void loadPlaylists(), {
   immediate: true,
 });
 
@@ -225,8 +226,11 @@ async function onRemoveAttachment(id: string) {
     try {
       await deleteUploadedObject(sid, cid, item.hash);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(`Failed to remove uploaded file: ${msg}`);
+      toast.error(
+        i18n.global.t('toast.failedRemoveFile', {
+          message: e instanceof Error ? e.message : String(e),
+        }),
+      );
       return;
     }
   }

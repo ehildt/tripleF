@@ -3,6 +3,7 @@ import type { LucideIcon } from '@lucide/vue';
 import { computed } from 'vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import { i18n } from '@/i18n/i18n';
 
 import {
   hasEndpointResults,
@@ -28,6 +29,17 @@ const emit = defineEmits<{
 }>();
 
 const EXCLUDED_KEYS = ['apiKey', 'enabled', 'projectId'];
+
+const ENDPOINT_LABELS: Record<string, string> = {
+  web: i18n.global.t('common.endpointWeb'),
+  images: i18n.global.t('common.endpointImages'),
+  news: i18n.global.t('common.endpointNews'),
+  places: i18n.global.t('common.endpointPlaces'),
+  shopping: i18n.global.t('common.endpointShopping'),
+  videos: i18n.global.t('common.endpointVideos'),
+  scrape: i18n.global.t('common.endpointScrape'),
+  reviews: i18n.global.t('common.endpointReviews'),
+};
 
 const isContentDisabled = computed(() => !props.config.enabled);
 
@@ -63,7 +75,7 @@ function getResults(value: unknown): number | undefined {
           v-for="[name, value] in endpointEntries"
           :key="name"
           :icon="icons[name]"
-          :label="name"
+          :label="ENDPOINT_LABELS[name] ?? name"
           :description="descriptions[name] ?? ''"
           :checked="(value as { enabled: boolean }).enabled"
           :number-value="getResults(value)"
