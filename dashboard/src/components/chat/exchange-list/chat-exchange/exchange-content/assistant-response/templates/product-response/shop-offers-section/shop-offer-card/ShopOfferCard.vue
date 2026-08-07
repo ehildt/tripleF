@@ -50,7 +50,7 @@ const displayPrice = computed(() => props.offer.price ?? 'Check price');
 <style scoped>
 .offer__link {
   display: block;
-  padding: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-4);
   text-decoration: none;
   color: inherit;
   border: 1px solid var(--color-divider);

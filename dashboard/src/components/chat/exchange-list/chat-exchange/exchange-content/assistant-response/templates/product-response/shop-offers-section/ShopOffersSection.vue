@@ -40,7 +40,7 @@ defineProps<{ offers: readonly ShopOffer[] }>();
 .offers-section__list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
   /* Reset the global .exchange-message div padding leak. */
   padding: 0;
 }

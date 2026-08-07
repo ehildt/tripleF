@@ -11,7 +11,7 @@
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, provide } from 'vue';
 
 import type { SocketProvider } from '@/types/socket-provider.model';
@@ -71,9 +71,17 @@ function mountChatInsideGrid() {
 describe('Chat story smoke', () => {
   beforeEach(() => {
     localStorage.clear();
+    // Chat.vue loads playlists on mount via fetch; Node's fetch rejects
+    // relative URLs, so stub fetch to an empty success here.
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, json: async () => [] }),
+    );
   });
   afterEach(() => {
-    // no mocks to restore in this file
+    vi.unstubAllGlobals();
   });
 
   it('places the toolbar inside the app grid so lg:col-span-2 takes effect', () => {
