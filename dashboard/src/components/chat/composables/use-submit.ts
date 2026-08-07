@@ -8,6 +8,7 @@ import { classifySelectedFiles } from '@/components/chat/helpers/classify-select
 import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
 import { clearPendingFilesForConversation } from '@/composables/attached-files.state';
 import { useToast } from '@/composables/use-toast';
+import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
 import type { UploadedImage } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
@@ -431,9 +432,7 @@ export function useSubmit(options: UseSubmitOptions) {
     }
 
     if (isTokenContextFull()) {
-      toast.warning(
-        'Token context is full (100%). Increase numCtx to send more requests.',
-      );
+      toast.warning(i18n.global.t('toast.contextFull'));
       return;
     }
 

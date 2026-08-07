@@ -36,8 +36,8 @@ const emit = defineEmits<{
   position: relative;
   display: inline-flex;
   align-items: center;
-  width: 1.625rem;
-  height: 1.625rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .dlq-reload-button__trigger {

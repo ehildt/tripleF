@@ -107,7 +107,7 @@ describe('AppThemeSelector', () => {
     const buttons = wrapper.findAll('button');
 
     const toggle = buttons.find(
-      (b) => b.attributes('title')?.includes('light') ?? false,
+      (b) => b.attributes('aria-label')?.includes('light') ?? false,
     );
     expect(toggle).toBeTruthy();
 

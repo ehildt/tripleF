@@ -10,6 +10,7 @@ import { ListMinus, ListPlus, Minus, X } from '@lucide/vue';
 import { computed } from 'vue';
 
 import MotionIcon from '../motion-icon/MotionIcon.vue';
+import Tooltip from '../tooltip/Tooltip.vue';
 
 interface Props {
   /** Title shown statically or in the marquee. */
@@ -73,61 +74,72 @@ function onOpacityInput(event: Event) {
     </span>
 
     <span class="floating-media-bar__controls">
-      <input
-        type="range"
-        class="floating-media-bar__opacity-slider"
-        min="25"
-        max="100"
-        step="1"
-        :value="opacityPercent"
-        :style="opacitySliderStyle"
-        :aria-label="`Popup opacity: ${opacityPercent}%`"
-        :title="`Opacity: ${opacityPercent}%`"
-        @pointerdown.stop
-        @input="onOpacityInput"
-      />
-      <button
-        type="button"
-        class="floating-media-bar__playlist-toggle"
-        :class="{
-          'floating-media-bar__playlist-toggle--added': isInPlaylist,
-        }"
-        :aria-pressed="isInPlaylist"
-        :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-        :aria-label="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-        @pointerdown.stop
-        @click.stop="emit('togglePlaylist')"
+      <Tooltip
+        class="floating-media-bar__opacity-slider-tooltip"
+        :text="$t('common.opacity', { percent: opacityPercent })"
       >
-        <MotionIcon>
-          <ListMinus
-            v-if="isInPlaylist"
-            class="floating-media-bar__playlist-icon"
-          />
-          <ListPlus v-else class="floating-media-bar__playlist-icon" />
-        </MotionIcon>
-      </button>
-      <button
-        type="button"
-        class="floating-media-bar__minimize"
-        :aria-label="minimizeTitle"
-        :title="minimizeTitle"
-        @pointerdown.stop
-        @click.stop="emit('minimize')"
+        <input
+          type="range"
+          class="floating-media-bar__opacity-slider"
+          min="25"
+          max="100"
+          step="1"
+          :value="opacityPercent"
+          :style="opacitySliderStyle"
+          :aria-label="$t('common.popupOpacity', { percent: opacityPercent })"
+          @pointerdown.stop
+          @input="onOpacityInput"
+        />
+      </Tooltip>
+      <Tooltip
+        :text="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
       >
-        <MotionIcon
-          ><Minus class="floating-media-bar__minimize-icon"
-        /></MotionIcon>
-      </button>
-      <button
-        type="button"
-        class="floating-media-bar__close"
-        :aria-label="closeTitle"
-        :title="closeTitle"
-        @pointerdown.stop
-        @click.stop="emit('close')"
-      >
-        <MotionIcon><X class="floating-media-bar__close-icon" /></MotionIcon>
-      </button>
+        <button
+          type="button"
+          class="floating-media-bar__playlist-toggle"
+          :class="{
+            'floating-media-bar__playlist-toggle--added': isInPlaylist,
+          }"
+          :aria-pressed="isInPlaylist"
+          :aria-label="
+            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+          "
+          @pointerdown.stop
+          @click.stop="emit('togglePlaylist')"
+        >
+          <MotionIcon>
+            <ListMinus
+              v-if="isInPlaylist"
+              class="floating-media-bar__playlist-icon"
+            />
+            <ListPlus v-else class="floating-media-bar__playlist-icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip :text="minimizeTitle">
+        <button
+          type="button"
+          class="floating-media-bar__minimize"
+          :aria-label="minimizeTitle"
+          @pointerdown.stop
+          @click.stop="emit('minimize')"
+        >
+          <MotionIcon
+            ><Minus class="floating-media-bar__minimize-icon"
+          /></MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip :text="closeTitle">
+        <button
+          type="button"
+          class="floating-media-bar__close"
+          :aria-label="closeTitle"
+          @pointerdown.stop
+          @click.stop="emit('close')"
+        >
+          <MotionIcon><X class="floating-media-bar__close-icon" /></MotionIcon>
+        </button>
+      </Tooltip>
     </span>
   </header>
 </template>
@@ -202,15 +214,18 @@ function onOpacityInput(event: Event) {
   gap: var(--spacing-1);
 }
 
+.floating-media-bar__opacity-slider-tooltip {
+  /* The icon buttons carry inner padding around their glyphs on both
+     sides; the track ends flush at its box, so without this margin the
+     playlist icon sits optically closer to the slider than to the close. */
+  margin-right: var(--spacing-1);
+}
+
 .floating-media-bar__opacity-slider {
   flex-shrink: 0;
   appearance: none;
   width: 4.5rem;
   height: 0.25rem;
-  /* The icon buttons carry inner padding around their glyphs on both
-     sides; the track ends flush at its box, so without this margin the
-     playlist icon sits optically closer to the slider than to the close. */
-  margin-right: var(--spacing-1);
   outline: none;
   cursor: pointer;
 }

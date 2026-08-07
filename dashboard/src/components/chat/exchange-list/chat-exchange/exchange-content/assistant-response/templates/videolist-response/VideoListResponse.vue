@@ -39,7 +39,7 @@ const hasContent = computed(
 
   <!-- Empty state -->
   <section v-else class="video-list video-list--empty">
-    <p>No videos found for this request.</p>
+    <p>{{ $t('common.noVideosFound') }}</p>
   </section>
 </template>
 

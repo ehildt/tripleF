@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 
 import { stripHtml } from '@/utils/strip-html.helper';
 
+import Tooltip from '../tooltip/Tooltip.vue';
 import { displayValue } from './helpers/display-value.helper';
 import { useDropdown } from './use-dropdown';
 
@@ -11,6 +12,8 @@ const props = withDefaults(
   defineProps<{
     /** Visual style: `labeled` for input-style trigger, `icon-only` for compact toolbar button. */
     variant?: 'labeled' | 'icon-only';
+    /** Menu item appearance: `default` shows a check on the selected item, `centered` hides it and centers the option text. */
+    menuStyle?: 'default' | 'centered';
     /** Horizontal alignment of the dropdown menu relative to the trigger. */
     align?: 'left' | 'center' | 'right';
     /** Vertical side the menu opens toward. */
@@ -32,6 +35,7 @@ const props = withDefaults(
   }>(),
   {
     variant: 'labeled',
+    menuStyle: 'default',
     align: 'left',
     side: 'top',
     disabled: false,
@@ -87,15 +91,17 @@ defineExpose({ close });
       </button>
     </template>
     <template v-else>
-      <button
-        class="dropdown-trigger--icon-only"
-        :class="{ 'dropdown-trigger--icon-only--active': open }"
-        :disabled="disabled"
-        :title="`Select ${label.toLowerCase()}`"
-        @click.stop="toggle"
-      >
-        <slot />
-      </button>
+      <Tooltip :text="$t('common.selectLabel', { label: label.toLowerCase() })">
+        <button
+          class="dropdown-trigger--icon-only"
+          :class="{ 'dropdown-trigger--icon-only--active': open }"
+          :disabled="disabled"
+          :aria-label="$t('common.selectLabel', { label: label.toLowerCase() })"
+          @click.stop="toggle"
+        >
+          <slot />
+        </button>
+      </Tooltip>
     </template>
     <Transition name="dropdown">
       <div
@@ -109,6 +115,7 @@ defineExpose({ close });
               ? 'dropdown-menu--center'
               : 'dropdown-menu--right',
           variant === 'icon-only' && 'dropdown-menu--icon-only',
+          menuStyle === 'centered' && 'dropdown-menu--centered',
         ]"
         @click.stop
       >
@@ -119,8 +126,10 @@ defineExpose({ close });
           :class="{ 'dropdown-item--selected': modelValue === opt }"
           @click="select(opt)"
         >
-          <Check v-if="modelValue === opt" class="dropdown-item__check" />
-          <span v-else class="dropdown-item__check-placeholder" />
+          <template v-if="variant !== 'icon-only' && menuStyle !== 'centered'">
+            <Check v-if="modelValue === opt" class="dropdown-item__check" />
+            <span v-else class="dropdown-item__check-placeholder" />
+          </template>
           {{ stripHtml(props.formatValue ? props.formatValue(opt) : opt) }}
         </button>
       </div>
@@ -220,7 +229,7 @@ defineExpose({ close });
   border: 1px solid var(--color-divider);
   box-shadow: 0 10px 15px -3px
     color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
-  max-height: 12rem;
+  max-height: 8rem;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -254,7 +263,7 @@ defineExpose({ close });
 
 .dropdown-enter-to,
 .dropdown-leave-from {
-  max-height: 12rem;
+  max-height: 8rem;
   opacity: 1;
 }
 
@@ -307,6 +316,14 @@ defineExpose({ close });
 
 .dropdown-item:hover {
   background-color: var(--color-bg-tertiary);
+}
+
+/* Icon-only and centered menus are compact single-line lists — center the
+   option text. */
+.dropdown-menu--icon-only .dropdown-item,
+.dropdown-menu--centered .dropdown-item {
+  justify-content: center;
+  text-align: center;
 }
 
 .dropdown-item--selected {

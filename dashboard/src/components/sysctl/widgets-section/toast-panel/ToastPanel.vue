@@ -53,6 +53,7 @@ import {
 } from '@/components/widgets/toast/composables/toast-settings.state';
 import type { ToastType } from '@/composables/toast-state';
 import { useToast } from '@/composables/use-toast';
+import { i18n } from '@/i18n/i18n';
 
 const { preview: previewToast } = useToast();
 
@@ -60,15 +61,23 @@ type ToastVertical = 'top' | 'middle' | 'bottom';
 type ToastHorizontal = 'left' | 'center' | 'right';
 
 const VERTICAL_OPTIONS = [
-  { value: 'top', icon: ArrowUp, tooltip: 'Top' },
-  { value: 'middle', icon: AlignCenterVertical, tooltip: 'Middle' },
-  { value: 'bottom', icon: ArrowDown, tooltip: 'Bottom' },
+  { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
+  {
+    value: 'middle',
+    icon: AlignCenterVertical,
+    tooltip: i18n.global.t('common.middle'),
+  },
+  { value: 'bottom', icon: ArrowDown, tooltip: i18n.global.t('common.bottom') },
 ] as const;
 
 const HORIZONTAL_OPTIONS = [
-  { value: 'left', icon: ArrowLeft, tooltip: 'Left' },
-  { value: 'center', icon: AlignCenterHorizontal, tooltip: 'Center' },
-  { value: 'right', icon: ArrowRight, tooltip: 'Right' },
+  { value: 'left', icon: ArrowLeft, tooltip: i18n.global.t('common.left') },
+  {
+    value: 'center',
+    icon: AlignCenterHorizontal,
+    tooltip: i18n.global.t('common.center'),
+  },
+  { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
 ] as const;
 
 const TYPE_OPTIONS: readonly {
@@ -80,38 +89,38 @@ const TYPE_OPTIONS: readonly {
   {
     type: 'info',
     icon: Info,
-    label: 'info',
-    description: 'general information',
+    label: i18n.global.t('common.toastTypeInfo'),
+    description: i18n.global.t('common.toastTypeInfoDesc'),
   },
   {
     type: 'success',
     icon: Check,
-    label: 'success',
-    description: 'completed actions',
+    label: i18n.global.t('common.toastTypeSuccess'),
+    description: i18n.global.t('common.toastTypeSuccessDesc'),
   },
   {
     type: 'warning',
     icon: TriangleAlert,
-    label: 'warning',
-    description: 'needs attention',
+    label: i18n.global.t('common.toastTypeWarning'),
+    description: i18n.global.t('common.toastTypeWarningDesc'),
   },
   {
     type: 'error',
     icon: CircleX,
-    label: 'error',
-    description: 'failures and problems',
+    label: i18n.global.t('common.toastTypeError'),
+    description: i18n.global.t('common.toastTypeErrorDesc'),
   },
   {
     type: 'debug',
     icon: Bug,
-    label: 'debug',
-    description: 'diagnostic details',
+    label: i18n.global.t('common.toastTypeDebug'),
+    description: i18n.global.t('common.toastTypeDebugDesc'),
   },
   {
     type: 'default',
     icon: MessageSquare,
-    label: 'default',
-    description: 'uncategorized messages',
+    label: i18n.global.t('common.toastTypeDefault'),
+    description: i18n.global.t('common.toastTypeDefaultDesc'),
   },
 ];
 
@@ -133,19 +142,21 @@ function setHorizontal(value: string) {
 
 <template>
   <PanelLayout class="toast-panel">
-    <CollapsiblePanel id="toast" title="Toast Notifications">
+    <CollapsiblePanel id="toast" :title="$t('common.toastNotifications')">
       <template #actions>
         <PreviewButton
-          title="Show an example toast"
-          @click="previewToast('Example toast notification')"
+          :title="$t('common.showExampleToast')"
+          @click="
+            previewToast(i18n.global.t('common.exampleToastNotification'))
+          "
         />
         <ResetButton
-          title="Reset toast settings to defaults"
+          :title="$t('common.resetToastSettingsToDefaults')"
           @click="resetToastSettings"
         />
         <PowerToggle
           :enabled="toastEnabled"
-          title="Enable toast notifications"
+          :title="$t('common.enableToastNotifications')"
           @toggle="setToastEnabled(!toastEnabled)"
         />
       </template>
@@ -153,21 +164,21 @@ function setHorizontal(value: string) {
       <div class="toast-panel__content">
         <FieldCard
           :icon="Anchor"
-          label="initial position"
-          description="where the toast stack appears"
+          :label="$t('common.initialPosition')"
+          :description="$t('common.toastPositionDesc')"
           :disabled="!toastEnabled"
         >
           <template #controls>
             <SegmentedToggle
               :options="VERTICAL_OPTIONS"
               :model-value="vertical"
-              aria-label="Vertical position"
+              :aria-label="$t('common.verticalPosition')"
               @update:model-value="setVertical"
             />
             <SegmentedToggle
               :options="HORIZONTAL_OPTIONS"
               :model-value="horizontal"
-              aria-label="Horizontal position"
+              :aria-label="$t('common.horizontalPosition')"
               @update:model-value="setHorizontal"
             />
           </template>
@@ -175,8 +186,8 @@ function setHorizontal(value: string) {
 
         <FieldCard
           :icon="Timer"
-          label="auto hide"
-          description="seconds before a toast disappears — off keeps toasts on screen"
+          :label="$t('common.autoHide')"
+          :description="$t('common.autoHideDesc')"
           :disabled="!toastEnabled"
         >
           <template #controls>
@@ -186,7 +197,7 @@ function setHorizontal(value: string) {
               :class="{ 'toast-panel__checkbox--checked': toastAutoHide }"
               :disabled="!toastEnabled"
               :aria-pressed="toastAutoHide"
-              aria-label="Auto hide toasts"
+              :aria-label="$t('common.autoHideToasts')"
               @click="setToastAutoHide(!toastAutoHide)"
             >
               <Check
@@ -210,8 +221,8 @@ function setHorizontal(value: string) {
 
         <FieldCard
           :icon="Pin"
-          label="show pin"
-          description="pin icon on each toast"
+          :label="$t('common.showPin')"
+          :description="$t('common.showPinDesc')"
           :checked="toastPinEnabled"
           :disabled="!toastEnabled"
           @toggle="setToastPinEnabled(!toastPinEnabled)"

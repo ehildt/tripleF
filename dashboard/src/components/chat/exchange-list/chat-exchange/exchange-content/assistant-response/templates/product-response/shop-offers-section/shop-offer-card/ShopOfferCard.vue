@@ -32,7 +32,9 @@ const displayPrice = computed(() => props.offer.price ?? 'Check price');
             :count="offer.ratingCount"
           />
         </div>
-        <span v-if="isBestPrice" class="offer__best-badge">Best price</span>
+        <span v-if="isBestPrice" class="offer__best-badge">{{
+          $t('common.bestPrice')
+        }}</span>
       </div>
 
       <!-- Offer text, delivery, and price in a single row -->

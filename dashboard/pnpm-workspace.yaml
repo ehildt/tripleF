@@ -2,7 +2,7 @@ allowBuilds:
   esbuild: true
   vue-demi: true
 minimumReleaseAgeExclude:
-  - '@lucide/vue@1.28.0'
+  - '@lucide/vue@1.28.0 || 1.30.0'
   - postcss@8.5.25
   - playwright-core@1.62.1
   - playwright@1.62.1

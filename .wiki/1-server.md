@@ -21,8 +21,8 @@ The 3F server is a **NestJS 11 application on Fastify 5** with URI versioning (`
 
 | Module (`src/modules/…`) | Responsibility                                                                                                                                                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `harness`                | **The conversation engine** — REST intake, BullMQ producer/consumer, step engine (sanitize → interpret → execute → respond), prompts, structured-output schemas, streaming, compaction, cancellation. See **1.2**. |
-| `ai-sdk`                 | Vercel AI SDK integration: Ollama provider config (`OLLAMA_HOST`, keep-alive, timeouts, `OLLAMA_API_KEY`), model catalog (`OllamaModelsService`), tool selection (`ToolSelectionService`), Serper and YouTube tools.  |
+| `harness`                | **The conversation engine** — REST intake, BullMQ producer/consumer, step engine (sanitize → interpret → execute → respond), prompts, structured-output schemas, streaming, cancellation. See **1.2**. |
+| `ai-sdk`                 | Vercel AI SDK integration: Ollama provider config (`OLLAMA_HOST`, keep-alive, timeouts, `OLLAMA_API_KEY`), model catalog (`OllamaModelsService`), tool selection (`ToolSelectionService`), Serper, Bright Data and YouTube tools.  |
 | `bullmq`                 | Queue connection/defaults (KeyDB), retry/backoff config, queue observability controller, job logger via `@ehildt/nestjs-bullmq-logger`.                                                                            |
 | `dead-letter`            | Persisted dead-letter queue (Prisma → PostgreSQL): failed envelopes with payloads, editable and re-instatable. Lifecycle service.                                                                                  |
 | `socket-io`              | Socket.IO gateway config, room emission service (`emitToRoom`, `emitToAll`), cancellation signal. See **1.4**.                                                                                                     |
@@ -30,6 +30,8 @@ The 3F server is a **NestJS 11 application on Fastify 5** with URI versioning (`
 | `minio`                  | S3 storage for user image payloads, bucket lifecycle, job reinstatement on startup (re-queues interrupted jobs after a crash/restart).                                                                             |
 | `sharp`                  | Image preprocessing (variant generation with sharp). Dashboard overrides pushed via config endpoint.                                                                                                               |
 | `provider-overrides`     | Runtime overrides of provider behaviour (sysctl-managed; Serper etc.).                                                                                                                                             |
+| `playwright-mcp`        | Headless-chromium MCP sidecar client: connects to the `playwright-mcp` compose service and merges `browser_*` automation tools into the harness tool set (deny-list enforced). See **1.2**.                          |
+| `secrets`                | AES-256-GCM cipher for provider API keys at rest (`TRIPLEF_SECRETS_KEY`). See **1.5**.                                                                                                                             |
 | `pino-logger`            | Central structured logging (pretty in dev, JSON in prod).                                                                                                                                                          |
 | `health`                 | Terminus probes: memory, disk, PostgreSQL indicator, MinIO indicator.                                                                                                                                              |
 
@@ -60,7 +62,7 @@ A request therefore has **two results**: the synchronous `202` carrying the real
 
 ## Configuration stack
 
-Every subsystem reads through a typed `ConfigService` (Joi schemas at startup — invalid env fails fast). Groups in `server/.env.example`: server base, logger, health thresholds, CORS, Socket.IO, BullMQ (connection/TLS/job options/backoff/logger), Ollama (+ stream timeouts, smooth stream), Postgres, Serper (all tool families), YouTube (Data API v3), MinIO/sharp. Nothing is read ad-hoc from `process.env` in feature code.
+Every subsystem reads through a typed `ConfigService` (Joi schemas at startup — invalid env fails fast). Groups in `server/.env.example`: server base, logger, health thresholds, CORS, Socket.IO, BullMQ (connection/TLS/job options/backoff/logger), Ollama (+ stream timeouts, smooth stream), Postgres, Serper (all tool families), Bright Data (SERP + Web Unlocker), YouTube (Data API v3), MinIO/sharp. Nothing is read ad-hoc from `process.env` in feature code.
 
 ## Error-handling strategy
 

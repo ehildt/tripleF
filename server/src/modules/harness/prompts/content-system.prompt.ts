@@ -7,6 +7,7 @@ import { IMAGE_TASK_RULE } from './shared/image-task-rule.prompt.js';
 import { ITEM_SHAPES } from './shared/item-shapes.prompt.js';
 import { JSON_RULES } from './shared/json-rules.prompt.js';
 import { buildLanguageRule } from './shared/language-rule.prompt.js';
+import { buildLocalizationRule } from './shared/localization-rule.prompt.js';
 import { MEDIA_COUNTS } from './shared/media-counts.prompt.js';
 import { MEDIA_RULES } from './shared/media-rules.prompt.js';
 import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
@@ -101,6 +102,10 @@ export function buildContentSystemPrompt(
   if (params.contextSummary) {
     sections.push(buildContextSummarySection(params.contextSummary));
   }
+
+  // Localization outranks the English example labels in the per-template
+  // instructions; it must land late so it takes precedence.
+  sections.push(buildLocalizationRule(params.language));
 
   if (isStructured) {
     sections.push(FINAL_REMINDER);

@@ -2,6 +2,7 @@ import { computed, getCurrentInstance, onMounted, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
+import { i18n } from '@/i18n/i18n';
 import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
 
 import { useToast } from '../../../composables/use-toast';
@@ -276,7 +277,7 @@ export function useSearchEngineAvailability() {
     } catch {
       snapshotConfig.value = backupSnapshot;
       sessionOverrides.value = backupSession;
-      toast.error('Failed to update search source');
+      toast.error(i18n.global.t('toast.failedUpdateSearchSource'));
     } finally {
       isToggling.value = false;
     }
@@ -309,7 +310,7 @@ export function useSearchEngineAvailability() {
       await persistSessionEnabled(engines, next);
     } catch {
       isEnabled.value = previous;
-      toast.error('Failed to update search engine');
+      toast.error(i18n.global.t('toast.failedUpdateSearchEngine'));
     } finally {
       isToggling.value = false;
     }

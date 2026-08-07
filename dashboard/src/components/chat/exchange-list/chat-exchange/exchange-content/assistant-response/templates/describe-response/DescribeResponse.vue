@@ -19,8 +19,14 @@ defineProps<{
       <HeroSection :title="data.title" :subtitle="data.subtitle" />
     </header>
     <GallerySection :items="data.galleryItems" />
-    <ParagraphSection title="Description" :content="data.sectionContent" />
-    <KeyFindingsSection title="Key Observations" :items="data.keyFindings" />
+    <ParagraphSection
+      :title="$t('common.description')"
+      :content="data.sectionContent"
+    />
+    <KeyFindingsSection
+      :title="$t('common.keyObservations')"
+      :items="data.keyFindings"
+    />
     <SourcesSection :items="data.sources" />
     <InternationalCoverageSection :items="data.internationalCoverage" />
   </article>

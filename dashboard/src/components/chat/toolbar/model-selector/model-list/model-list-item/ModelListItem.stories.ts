@@ -11,11 +11,11 @@ const meta = {
     docs: {
       description: {
         component: `
-A single selectable model row inside the model selector dropdown. Shows the
-model name with optional parameter size and quantization metadata, plus a
-row of capability icons (vision, tools, thinking) for the features the
-model supports. The local/cloud grouping is communicated by the section
-dividers in the list, so the item itself carries no origin icon.`,
+A single selectable model row inside the model selector dropdown. Shows a
+hard-disk icon for local models or a cloud icon for cloud models, the model
+name, optional parameter size and quantization metadata, plus a row of
+capability icons (vision, tools, thinking) for the features the model
+supports.`,
       },
     },
   },
@@ -62,7 +62,7 @@ export const WithQuantization: Story = {
   },
 };
 
-/** Cloud model — rendered identically, grouping comes from the divider. */
+/** Cloud model — shows the cloud origin icon. */
 export const CloudModel: Story = {
   args: {
     model: { model: 'gpt-oss:120b', origin: 'cloud', parameter_size: '120B' },

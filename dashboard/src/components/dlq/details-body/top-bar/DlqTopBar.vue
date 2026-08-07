@@ -15,6 +15,7 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
 import { useModelsStore } from '../../../../stores/models';
 import Dropdown from '../../../shared/ui/drop-down/DropDown.vue';
 import InputText from '../../../shared/ui/input-text/InputText.vue';
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import { useDlqTopBarFilters } from './composables/use-dlq-top-bar-filters';
 
 const props = defineProps<{
@@ -59,7 +60,7 @@ const {
     <div class="dlq-top-bar__row">
       <div class="dlq-top-bar__field">
         <Dropdown
-          label="Model"
+          :label="$t('common.model')"
           :model-value="modelValue"
           :options="modelOptions"
           :disabled="isImmutable"
@@ -74,7 +75,7 @@ const {
       </div>
       <div class="dlq-top-bar__field">
         <Dropdown
-          label="Queue"
+          :label="$t('common.queue')"
           :model-value="entry?.queueName ?? ''"
           :options="queueOptions"
           :disabled="isImmutable"
@@ -90,7 +91,7 @@ const {
           :model-value="eventValue"
           :disabled="isImmutable"
           name="event-filter"
-          placeholder="Event"
+          :placeholder="$t('common.event')"
           @update:model-value="emit('updateFilter', 'event', $event)"
         >
           <template #prepend-icon>
@@ -103,7 +104,7 @@ const {
           :model-value="roomIdValue"
           :disabled="isImmutable"
           name="room-id-filter"
-          placeholder="Room ID"
+          :placeholder="$t('common.roomId')"
           @update:model-value="emit('updateFilter', 'roomId', $event)"
         >
           <template #prepend-icon>
@@ -115,7 +116,7 @@ const {
     <div class="dlq-top-bar__row">
       <div class="dlq-top-bar__field">
         <Dropdown
-          label="Stream"
+          :label="$t('common.stream')"
           :model-value="streamValue"
           :options="['false', 'true']"
           :disabled="isImmutable"
@@ -129,7 +130,7 @@ const {
       <template v-if="numCtxOptions.length > 0">
         <div class="dlq-top-bar__field">
           <Dropdown
-            label="Context"
+            :label="$t('common.context')"
             :options="numCtxOptions"
             :model-value="numCtxValue"
             :disabled="isImmutable"
@@ -140,13 +141,11 @@ const {
           </Dropdown>
         </div>
       </template>
-      <span
-        v-else
-        class="dlq-top-bar__skeleton"
-        title="Loading context size options…"
-      >
-        <span class="dlq-top-bar__skeleton-bar" />
-      </span>
+      <Tooltip :text="$t('common.loadingContextOptions')">
+        <span class="dlq-top-bar__skeleton">
+          <span class="dlq-top-bar__skeleton-bar" />
+        </span>
+      </Tooltip>
     </div>
   </div>
 </template>

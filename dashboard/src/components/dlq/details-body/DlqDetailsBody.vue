@@ -92,7 +92,7 @@ function copyPayload() {
 <template>
   <PanelLayout>
     <PanelHeader>
-      <PanelHeaderTitle label="Details" />
+      <PanelHeaderTitle :label="$t('common.details')" />
     </PanelHeader>
 
     <div v-if="entry" :key="entry.requestId" class="dlq-details-body">
@@ -114,7 +114,9 @@ function copyPayload() {
       >
         <template v-if="activeTab === 'error'">
           <div class="dlq-details-body__error">
-            <h4 class="dlq-details-body__error-title">Failed Reason</h4>
+            <h4 class="dlq-details-body__error-title">
+              {{ $t('common.failedReason') }}
+            </h4>
             <div class="dlq-details-body__error-body">
               {{ failureText }}
             </div>
@@ -149,8 +151,8 @@ function copyPayload() {
 
     <PanelEmptyState
       v-else
-      message="Select a job"
-      submessage="Job details will appear here"
+      :message="$t('common.selectJob')"
+      :submessage="''"
     />
   </PanelLayout>
 </template>

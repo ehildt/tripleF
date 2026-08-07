@@ -3,6 +3,7 @@ import { ListMinus, ListPlus } from '@lucide/vue';
 import { computed, inject } from 'vue';
 
 import MediaImageCard from '@/components/shared/media/MediaImageCard.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type {
   GalleryItem,
   HarnessImageClickedHandler,
@@ -80,23 +81,28 @@ function handleClick() {
           class="hero-media-card__title"
           >{{ heroVideoTitle }}</a
         >
-        <button
-          type="button"
-          class="hero-media-card__playlist-toggle"
-          :class="{ 'hero-media-card__playlist-toggle--added': isInPlaylist }"
-          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-          :aria-label="
-            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
-          "
-          :aria-pressed="isInPlaylist"
-          @click.stop="togglePlaylistVideo"
+        <Tooltip
+          :text="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
         >
-          <ListMinus
-            v-if="isInPlaylist"
-            class="hero-media-card__playlist-toggle-icon"
-          />
-          <ListPlus v-else class="hero-media-card__playlist-toggle-icon" />
-        </button>
+          <button
+            type="button"
+            class="hero-media-card__playlist-toggle"
+            :class="{
+              'hero-media-card__playlist-toggle--added': isInPlaylist,
+            }"
+            :aria-label="
+              isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+            "
+            :aria-pressed="isInPlaylist"
+            @click.stop="togglePlaylistVideo"
+          >
+            <ListMinus
+              v-if="isInPlaylist"
+              class="hero-media-card__playlist-toggle-icon"
+            />
+            <ListPlus v-else class="hero-media-card__playlist-toggle-icon" />
+          </button>
+        </Tooltip>
       </div>
       <FloatingVideoFigure
         :video-url="heroVideoUrl"

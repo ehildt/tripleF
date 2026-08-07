@@ -6,21 +6,12 @@ tripleF is early in development and unapologetic about aiming for the top of the
 
 ## What 3F does today
 
-- **Full chat experience** — multi-image conversations, streaming answers rendered live, reasoning/thinking areas that show the model's chain of thought, session-scoped conversation history, and conversation **compaction** that compresses long threads into a context-efficient summary without losing the plot.
+- **Full chat experience** — multi-image conversations, streaming answers rendered live, reasoning/thinking areas that show the model's chain of thought, and session-scoped conversation history with rename / delete / pin (temporary↔persistent) controls.
 - **Local-first inference** — every request is served by Ollama. Point `OLLAMA_HOST` at your own machine for fully-offline operation, or set `OLLAMA_API_KEY` to use Ollama Cloud models. The workbench treats both as one continuum.
-- **Agentic harness** — requests flow through a deterministic step engine: sanitize → interpret → execute → respond. The harness classifies intent, selects tools (web/image/news/shopping/places/business-reviews/video search via Serper, YouTube Data API video search, webpage scrape/fetch), language-detects results and files foreign-language finds into an international-coverage aside, enforces structured output schemas, and validates responses before they reach the UI.
+- **Agentic harness** — requests flow through a deterministic step engine: sanitize → interpret → execute → respond. The harness classifies intent, selects tools (web/image/news/shopping/places/business-reviews/video search via Serper or Bright Data, YouTube Data API video search, webpage scrape/fetch, and `browser_*` automation via a Playwright MCP sidecar), language-detects results and files foreign-language finds into an international-coverage aside, enforces structured output schemas, and validates responses before they reach the UI.
 - **Structured vision & media answers** — describe, compare, OCR, imagine, news, article, product, image/video list schemas turn image understanding into machine-readable, UI-renderable results instead of plain text blobs.
 - **Real-time by construction** — answers stream token-by-token over Socket.IO rooms; a request can be **cancelled mid-flight** by the user, and the worker honours the cancellation token at step boundaries.
 - **Operability built in** — BullMQ queues with retry/backoff, a persisted dead-letter queue (replay, edit, re-instate), queue and system health consoles, provider-override management, and image preprocessing controls — all exposed in the dashboard's SysCtl area.
-
-## Roadmap
-
-The trajectory is deliberately aggressive:
-
-- **Speech-to-text** input
-- **Music and image generation** alongside understanding
-- **Provider integrations** — YouTube, messengers, finance, and other everyday data sources
-- Anything the proprietary incumbents ship — shipped here, open, first.
 
 ## System Overview
 
@@ -40,7 +31,7 @@ The trajectory is deliberately aggressive:
                       │              step engine: sanitize →         │
                       │      interpret → execute → respond           │
                       │         │              │          │          │
-                      │  Ollama/AI SDK   Serper/YouTube Schemas      │
+                      │  Ollama/AI SDK   Serper/BrightData/YouTube   │
                       └─────┬──────────┬──────────┬──────────┬───────┘
                             │          │          │          │
                      ┌──────▼───┐ ┌────▼─────┐ ┌──▼───────┐ ┌▼────────┐
@@ -73,7 +64,8 @@ triplef.io/
 ├── server/                  # 3F server (NestJS + Fastify)
 │   ├── src/modules/         # harness, ai-sdk, bullmq, dead-letter, minio,
 │   │                        # persistence, sharp, socket-io, provider-overrides ...
-│   ├── prisma/              # schema: HarnessConversation, HarnessDlq, HarnessConfig
+│   ├── prisma/              # schema: HarnessConversation, HarnessDlq, HarnessConfig,
+│   │                        # HarnessShownMedia, HarnessProviderOverride, HarnessPlaylist
 │   └── Dockerfile           # standalone image (kept for a potential repo split)
 ├── dashboard/               # 3F dashboard (Vue 3 + Vite)
 │   ├── src/components/      # chat, sysctl, dlq, pproc, app shell, widgets

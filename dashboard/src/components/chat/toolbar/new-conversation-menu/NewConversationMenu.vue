@@ -45,7 +45,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
 
 <template>
   <div class="flex items-center gap-1.5 w-full justify-end">
-    <ToolbarLabel value="conversations" />
+    <ToolbarLabel value="conversations" translate />
     <div ref="triggerRef" class="relative shrink-0">
       <IconButton
         :active="isOpen"
@@ -53,7 +53,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
         :blinking="blinking"
         :on-mouse-enter="onMouseEnter"
         :on-mouse-leave="onMouseLeave"
-        title="Sessions"
+        :title="$t('common.sessions')"
         @click.stop="$emit('toggleMenu')"
       >
         <MotionIcon><MessagesSquare class="w-4 h-4" /></MotionIcon>
@@ -72,7 +72,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
               <input
                 :value="newConversationName"
                 name="conversation-name"
-                placeholder="Conversation name"
+                :placeholder="$t('common.conversationName')"
                 class="new-conversation-menu__input"
                 @input="
                   $emit(
@@ -83,7 +83,8 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
               />
             </div>
             <Dropdown
-              label="Context"
+              :label="$t('common.context')"
+              menu-style="centered"
               :options="filteredNumCtxOptions"
               :model-value="currentNumCtx || defaultNumCtx"
               :format-value="(v: string) => formatCtx(Number(v))"
@@ -170,10 +171,10 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
 }
 
 .new-conversation-menu__content {
-  padding: var(--spacing-3);
+  padding: var(--spacing-1);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
 }
 
 .new-conversation-menu__input-wrapper {

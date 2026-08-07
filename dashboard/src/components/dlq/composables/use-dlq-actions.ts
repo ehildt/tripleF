@@ -1,5 +1,6 @@
 import type { UseMutationReturnType } from '@tanstack/vue-query';
 
+import { i18n } from '@/i18n/i18n';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useToast } from '../../../composables/use-toast';
@@ -69,7 +70,7 @@ export function useDlqActions(options: DlqActionsOptions) {
       if (roomId && event) ensureSocketSubscription(roomId, event);
 
       const res = await retryMutation.mutateAsync(requestId);
-      toast.success(`Retried ${res.restored} job(s)`);
+      toast.success(i18n.global.t('toast.retried', { count: res.restored }));
 
       for (const reqId of res.requestIds ?? [requestId]) {
         addRetryPendingMessage(reqId, roomId, event, model, entry);
@@ -77,7 +78,7 @@ export function useDlqActions(options: DlqActionsOptions) {
 
       guardedRefetch();
     } catch {
-      toast.error('Retry failed');
+      toast.error(i18n.global.t('toast.retryFailed'));
     }
   }
 
@@ -89,23 +90,23 @@ export function useDlqActions(options: DlqActionsOptions) {
         requestId,
         data: { status: 'Cleared' },
       });
-      toast.success('Cleared');
+      toast.success(i18n.global.t('toast.cleared'));
       dlqStore.updateEntry(updated);
     } catch {
-      toast.error('Archive failed');
+      toast.error(i18n.global.t('toast.archiveFailed'));
     }
   }
 
   async function onDelete(requestId: string) {
     try {
       await deleteMutation.mutateAsync(requestId);
-      toast.success('Marked for deletion');
+      toast.success(i18n.global.t('toast.markedForDeletion'));
       if (dlqStore.selectedEntry?.requestId === requestId) {
         dlqStore.selectEntry(null);
       }
       guardedRefetch();
     } catch {
-      toast.error('Delete failed');
+      toast.error(i18n.global.t('toast.deleteFailed'));
     }
   }
 
@@ -118,10 +119,10 @@ export function useDlqActions(options: DlqActionsOptions) {
         requestId,
         data: { payload },
       });
-      toast.success('Payload updated');
+      toast.success(i18n.global.t('toast.payloadUpdated'));
       dlqStore.updateEntry(updated);
     } catch {
-      toast.error('Payload update failed');
+      toast.error(i18n.global.t('toast.payloadUpdateFailed'));
     }
   }
 
@@ -131,10 +132,10 @@ export function useDlqActions(options: DlqActionsOptions) {
         requestId,
         data: { queueName },
       });
-      toast.success('Queue updated');
+      toast.success(i18n.global.t('toast.queueUpdated'));
       dlqStore.updateEntry(updated);
     } catch {
-      toast.error('Queue update failed');
+      toast.error(i18n.global.t('toast.queueUpdateFailed'));
     }
   }
 

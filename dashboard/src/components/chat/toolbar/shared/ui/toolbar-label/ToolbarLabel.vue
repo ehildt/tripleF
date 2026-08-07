@@ -1,18 +1,25 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
 withDefaults(
   defineProps<{
     value: string;
     active?: boolean;
+    /** When true, `value` is treated as a `common.*` i18n key and translated. */
+    translate?: boolean;
   }>(),
   {
     active: false,
+    translate: false,
   },
 );
+
+const { t } = useI18n();
 </script>
 
 <template>
   <span class="toolbar-label" :class="{ 'toolbar-label--active': active }">{{
-    value
+    translate ? t(`common.${value}`) : value
   }}</span>
 </template>
 

@@ -34,7 +34,7 @@ const {
 <template>
   <PanelLayout>
     <PanelHeader>
-      <PanelHeaderTitle label="Request Details" />
+      <PanelHeaderTitle :label="$t('common.requestDetails')" />
     </PanelHeader>
 
     <div v-if="result" :key="result.id" class="request-details">
@@ -42,7 +42,9 @@ const {
       <div class="request-details__grid">
         <!-- URL (HTTP) -->
         <template v-if="result.type !== 'socket' && parsedEndpoint.path">
-          <span class="request-details__label"><Link2 />URL</span>
+          <span class="request-details__label"
+            ><Link2 />{{ $t('common.url') }}</span
+          >
           <div class="request-details__tags">
             <DetailTag field="endpoint" :value="parsedEndpoint.path" />
           </div>
@@ -50,7 +52,9 @@ const {
 
         <!-- Socket URL + Event + Room -->
         <template v-if="result.type === 'socket'">
-          <span class="request-details__label"><Link2 />URL</span>
+          <span class="request-details__label"
+            ><Link2 />{{ $t('common.url') }}</span
+          >
           <div class="request-details__tags">
             <DetailTag field="endpoint" :value="parsedEndpoint.path" />
             <DetailTag
@@ -134,7 +138,9 @@ const {
             result.model || result.stream !== undefined || result.preprocessing
           "
         >
-          <span class="request-details__label"><Brain />Model</span>
+          <span class="request-details__label"
+            ><Brain />{{ $t('common.model') }}</span
+          >
           <div class="request-details__tags">
             <DetailTag field="model" :value="result.model" />
             <DetailTag field="stream" :value="result.stream" />
@@ -174,7 +180,11 @@ const {
       </TabPanel>
     </div>
 
-    <PanelEmptyState v-else />
+    <PanelEmptyState
+      v-else
+      :message="$t('common.selectRequest')"
+      :submessage="''"
+    />
   </PanelLayout>
 </template>
 

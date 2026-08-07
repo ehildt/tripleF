@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { RotateCcw } from '@lucide/vue';
 
+import Tooltip from '../tooltip/Tooltip.vue';
+
 /** Panel-header reset icon button, next to the power toggle. */
 withDefaults(
   defineProps<{
@@ -16,16 +18,17 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <button
-    type="button"
-    class="reset-button"
-    :disabled="disabled"
-    :title="title"
-    :aria-label="title"
-    @click="emit('click')"
-  >
-    <RotateCcw class="reset-button__icon" />
-  </button>
+  <Tooltip :text="title" :disabled="disabled">
+    <button
+      type="button"
+      class="reset-button"
+      :disabled="disabled"
+      :aria-label="title"
+      @click="emit('click')"
+    >
+      <RotateCcw class="reset-button__icon" />
+    </button>
+  </Tooltip>
 </template>
 
 <style scoped>

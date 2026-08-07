@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { LucideIcon } from '@lucide/vue';
 
+import Tooltip from '../tooltip/Tooltip.vue';
+
 /**
  * Icon-only segmented toggle: a row of joined buttons where exactly one is
  * active. Every button is icon + tooltip only (no text).
@@ -18,21 +20,24 @@ const emit = defineEmits<{
 
 <template>
   <div class="segmented-toggle" role="group" :aria-label="ariaLabel">
-    <button
+    <Tooltip
       v-for="option in options"
       :key="option.value"
-      type="button"
-      class="segmented-toggle__button"
-      :class="{
-        'segmented-toggle__button--active': modelValue === option.value,
-      }"
-      :aria-pressed="modelValue === option.value"
-      :title="option.tooltip"
-      :aria-label="option.tooltip"
-      @click="emit('update:modelValue', option.value)"
+      :text="option.tooltip"
     >
-      <component :is="option.icon" class="segmented-toggle__icon" />
-    </button>
+      <button
+        type="button"
+        class="segmented-toggle__button"
+        :class="{
+          'segmented-toggle__button--active': modelValue === option.value,
+        }"
+        :aria-pressed="modelValue === option.value"
+        :aria-label="option.tooltip"
+        @click="emit('update:modelValue', option.value)"
+      >
+        <component :is="option.icon" class="segmented-toggle__icon" />
+      </button>
+    </Tooltip>
   </div>
 </template>
 

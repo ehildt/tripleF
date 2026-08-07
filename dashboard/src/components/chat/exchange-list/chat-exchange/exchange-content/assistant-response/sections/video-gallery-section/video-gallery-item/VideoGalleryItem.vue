@@ -2,6 +2,7 @@
 import { ListMinus, ListPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { buildVideoPosterUrl } from '../../../composables/helpers/build-video-poster-url.helper';
@@ -34,23 +35,28 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
           class="video-gallery__title"
           >{{ item.title }}</a
         >
-        <button
-          type="button"
-          class="video-gallery__playlist-toggle"
-          :class="{ 'video-gallery__playlist-toggle--added': isInPlaylist }"
-          :title="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-          :aria-label="
-            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
-          "
-          :aria-pressed="isInPlaylist"
-          @click.stop="togglePlaylistVideo"
+        <Tooltip
+          :text="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
         >
-          <ListMinus
-            v-if="isInPlaylist"
-            class="video-gallery__playlist-toggle-icon"
-          />
-          <ListPlus v-else class="video-gallery__playlist-toggle-icon" />
-        </button>
+          <button
+            type="button"
+            class="video-gallery__playlist-toggle"
+            :class="{
+              'video-gallery__playlist-toggle--added': isInPlaylist,
+            }"
+            :aria-label="
+              isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+            "
+            :aria-pressed="isInPlaylist"
+            @click.stop="togglePlaylistVideo"
+          >
+            <ListMinus
+              v-if="isInPlaylist"
+              class="video-gallery__playlist-toggle-icon"
+            />
+            <ListPlus v-else class="video-gallery__playlist-toggle-icon" />
+          </button>
+        </Tooltip>
       </div>
 
       <!-- The media sits flush inside the card, exactly like the video list:

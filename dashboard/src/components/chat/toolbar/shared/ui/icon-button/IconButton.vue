@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
+
 defineProps<{
   title: string;
   active?: boolean;
@@ -14,21 +16,23 @@ defineEmits<{
 </script>
 
 <template>
-  <button
-    class="toolbar-icon-button"
-    :class="{
-      'toolbar-icon-button--active': active,
-      'toolbar-icon-button--disabled': disabled,
-      'toolbar-icon-button--blinking': blinking?.value,
-    }"
-    :disabled="disabled"
-    :title="title"
-    @mouseenter="disabled && onMouseEnter?.()"
-    @mouseleave="disabled && onMouseLeave?.()"
-    @click.stop="$emit('click', $event)"
-  >
-    <slot />
-  </button>
+  <Tooltip :text="title" :disabled="disabled">
+    <button
+      class="toolbar-icon-button"
+      :class="{
+        'toolbar-icon-button--active': active,
+        'toolbar-icon-button--disabled': disabled,
+        'toolbar-icon-button--blinking': blinking?.value,
+      }"
+      :disabled="disabled"
+      :aria-label="title"
+      @mouseenter="disabled && onMouseEnter?.()"
+      @mouseleave="disabled && onMouseLeave?.()"
+      @click.stop="$emit('click', $event)"
+    >
+      <slot />
+    </button>
+  </Tooltip>
 </template>
 
 <style scoped>

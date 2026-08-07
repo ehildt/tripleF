@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Clock, MessageSquareText, Radio, Save, Tag, X } from '@lucide/vue';
+import { Clock, Radio, Save, Tag, X } from '@lucide/vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { Conversation } from '@/stores/conversation';
 
 defineProps<{
@@ -27,52 +28,53 @@ defineEmits<{
     @keydown.space.prevent="$emit('select')"
   >
     <div class="conversation-item__content">
-      <div class="conversation-item__header">
-        <MessageSquareText
-          class="conversation-item__type-icon"
-          :title="
-            conversation.type === 'temporary' ? 'Temporary' : 'Persistent'
-          "
-        />
-        <span class="conversation-item__title">{{
-          conversation.title || '(untitled)'
+      <div class="conversation-item__top">
+        <span class="conversation-item__context">{{
+          contextUsagePercent
         }}</span>
-        <button
-          class="conversation-item__delete"
-          type="button"
-          title="Delete"
-          @click.stop="$emit('delete')"
-        >
-          <X class="w-3 h-3" />
-        </button>
+        <div class="conversation-item__icons">
+          <Tooltip
+            v-if="conversation.event"
+            :text="conversation.event"
+            :positions="['bottom', 'top']"
+          >
+            <Radio class="conversation-item__icon" />
+          </Tooltip>
+          <Tooltip
+            v-if="conversation.roomId"
+            :text="conversation.roomId"
+            :positions="['bottom', 'top']"
+          >
+            <Tag class="conversation-item__icon" />
+          </Tooltip>
+          <Tooltip
+            v-if="conversation.type === 'temporary'"
+            :text="`expires ${expiresLabel}`"
+            :positions="['bottom', 'top']"
+          >
+            <Clock class="conversation-item__icon" />
+          </Tooltip>
+          <Tooltip
+            v-else
+            :text="$t('common.persisted')"
+            :positions="['bottom', 'top']"
+          >
+            <Save class="conversation-item__icon" />
+          </Tooltip>
+          <Tooltip :text="$t('common.delete')" :positions="['top', 'bottom']">
+            <button
+              class="conversation-item__delete"
+              type="button"
+              :aria-label="$t('common.delete')"
+              @click.stop="$emit('delete')"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          </Tooltip>
+        </div>
       </div>
-      <div class="conversation-item__meta">
-        <span v-if="conversation.event" class="conversation-item__meta-group">
-          <Radio class="conversation-item__meta-icon" />
-          <span class="truncate">{{ conversation.event }}</span>
-        </span>
-        <span v-if="conversation.roomId" class="conversation-item__meta-group">
-          <Tag class="conversation-item__meta-icon" />
-          <span class="truncate">{{ conversation.roomId }}</span>
-        </span>
-        <span
-          v-if="conversation.type === 'temporary'"
-          class="conversation-item__meta-group"
-        >
-          <Clock class="conversation-item__meta-icon" />
-          <span class="truncate">expires {{ expiresLabel }}</span>
-        </span>
-        <span v-else class="conversation-item__meta-group">
-          <Save class="conversation-item__meta-icon" />
-          <span class="truncate">persisted</span>
-        </span>
-        <span
-          class="conversation-item__meta-group conversation-item__meta-group--percent"
-        >
-          <span class="conversation-item__context truncate">{{
-            contextUsagePercent
-          }}</span>
-        </span>
+      <div class="conversation-item__title">
+        {{ conversation.title || '(untitled)' }}
       </div>
     </div>
   </div>
@@ -123,25 +125,12 @@ defineEmits<{
   flex-direction: column;
 }
 
-.conversation-item__header {
+.conversation-item__top {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-1-5);
   width: 100%;
-}
-
-.conversation-item__type-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex-shrink: 0;
-  color: var(--color-accent-primary);
-}
-
-.conversation-item__title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .conversation-item__context {
@@ -150,13 +139,25 @@ defineEmits<{
   flex-shrink: 0;
 }
 
+.conversation-item__icons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  flex-shrink: 0;
+}
+
+.conversation-item__icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
 .conversation-item__delete {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5rem;
-  min-height: 1.5rem;
-  padding: 0.125rem;
+  width: 0.75rem;
+  height: 0.75rem;
   color: var(--color-fg-muted);
   transition: color 0.2s ease;
   cursor: pointer;
@@ -169,37 +170,9 @@ defineEmits<{
   color: var(--color-accent-primary);
 }
 
-.conversation-item__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
+.conversation-item__title {
   overflow: hidden;
-  font-size: 10px;
-  color: var(--color-fg-muted);
-}
-
-.conversation-item__meta-group {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.conversation-item__meta-group--percent {
-  flex: 0 0 auto;
-  margin-left: auto;
-  justify-content: flex-end;
-}
-
-.conversation-item__meta-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex-shrink: 0;
-}
-
-.conversation-item__meta-group .truncate {
-  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
+import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
 import { formatCtx } from '@/utils/format-ctx.helper';
@@ -121,7 +122,11 @@ export const useModelsStore = defineStore('models', () => {
     try {
       const res = await fetch(getApiUrl('/api/v1/harness/models'));
       if (!res.ok) {
-        toast.error(`Failed to load models: ${res.status}`);
+        toast.error(
+          i18n.global.t('toast.failedLoadModelsStatus', {
+            status: res.status,
+          }),
+        );
         return;
       }
       const data = await res.json();
@@ -130,11 +135,13 @@ export const useModelsStore = defineStore('models', () => {
       await loadSelectedModel();
       syncSessionsToAvailableModels();
       if (isRefresh) {
-        toast.success(`Loaded ${models.value.length} models`);
+        toast.success(
+          i18n.global.t('toast.loadedModels', { count: models.value.length }),
+        );
       }
     } catch (e) {
       console.error('Failed to fetch models:', e);
-      toast.error('Failed to load models');
+      toast.error(i18n.global.t('toast.failedLoadModels'));
     } finally {
       modelsLoading.value = false;
     }

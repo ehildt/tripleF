@@ -89,7 +89,7 @@ const hasContent = computed(
 
   <!-- Empty state -->
   <section v-else class="product product--empty">
-    <p>No product information found for this request.</p>
+    <p>{{ $t('common.noProductFound') }}</p>
   </section>
 </template>
 

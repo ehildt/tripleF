@@ -19,10 +19,13 @@ defineProps<{
     </header>
     <GallerySection :items="data.galleryItems" />
     <PreformattedSection
-      title="Extracted Text"
+      :title="$t('common.extractedText')"
       :content="data.sectionContent"
     />
-    <KeyFindingsSection title="Observations" :items="data.keyFindings" />
+    <KeyFindingsSection
+      :title="$t('common.observations')"
+      :items="data.keyFindings"
+    />
     <InternationalCoverageSection :items="data.internationalCoverage" />
   </article>
 </template>

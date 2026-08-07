@@ -20,7 +20,7 @@ const validItems = computed(() =>
 
 <template>
   <section v-if="validItems.length" class="sources">
-    <h3>Sources</h3>
+    <h3>{{ $t('common.sources') }}</h3>
     <ul>
       <li v-for="(source, index) in validItems" :key="index">
         <a

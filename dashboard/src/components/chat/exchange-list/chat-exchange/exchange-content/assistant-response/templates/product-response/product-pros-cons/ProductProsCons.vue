@@ -14,7 +14,9 @@ defineProps<{
 <template>
   <section v-if="pros?.length || cons?.length" class="pros-cons">
     <div v-if="pros?.length" class="pros-cons__column">
-      <h2 class="pros-cons__title pros-cons__title--pros">Pros</h2>
+      <h2 class="pros-cons__title pros-cons__title--pros">
+        {{ $t('common.pros') }}
+      </h2>
       <ul class="pros-cons__list">
         <li v-for="(item, idx) in pros" :key="idx" class="pros-cons__row">
           <span class="pros-cons__marker pros-cons__marker--pros">✓</span>
@@ -24,7 +26,9 @@ defineProps<{
     </div>
 
     <div v-if="cons?.length" class="pros-cons__column">
-      <h2 class="pros-cons__title pros-cons__title--cons">Cons</h2>
+      <h2 class="pros-cons__title pros-cons__title--cons">
+        {{ $t('common.cons') }}
+      </h2>
       <ul class="pros-cons__list">
         <li v-for="(item, idx) in cons" :key="idx" class="pros-cons__row">
           <span class="pros-cons__marker pros-cons__marker--cons">✕</span>

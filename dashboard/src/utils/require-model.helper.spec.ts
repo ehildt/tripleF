@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
 import { requireModel } from './require-model.helper';
 
 const mockToast = {
@@ -18,7 +20,7 @@ describe('requireModel', () => {
     const model = ref('  ');
     expect(requireModel(model, mockToast)).toBe(false);
     expect(mockToast.error).toHaveBeenCalledWith(
-      'Model is required (e.g., llama3.2-vision, ministral-3:14b)',
+      i18n.global.t('toast.modelRequired'),
     );
   });
 });

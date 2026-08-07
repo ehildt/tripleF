@@ -3,6 +3,7 @@ import { RouterLink } from 'vue-router';
 
 import type { ActiveTab } from '../../../../stores/app';
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import type { MenuTab } from '../composables/use-menu-tabs';
 
 defineProps<{
@@ -12,33 +13,32 @@ defineProps<{
 </script>
 
 <template>
-  <nav class="nav-menu" aria-label="Navigation">
-    <RouterLink
-      v-for="tab in tabs"
-      :key="tab.tab"
-      :to="`/${tab.tab}`"
-      class="nav-menu__item"
-      :class="{ 'nav-menu__item--active': tab.tab === activeTab }"
-      :aria-current="tab.tab === activeTab ? 'page' : undefined"
-      :title="tab.label"
-      :aria-label="tab.label"
-    >
-      <MotionIcon>
-        <component :is="tab.icon" class="nav-menu__item-icon" />
-      </MotionIcon>
-      <span
-        v-if="tab.tab !== activeTab && (tab.count ?? 0) > 0"
-        class="nav-menu__badge"
+  <nav class="nav-menu" :aria-label="$t('app.navigation')">
+    <Tooltip v-for="tab in tabs" :key="tab.tab" :text="tab.label">
+      <RouterLink
+        :to="`/${tab.tab}`"
+        class="nav-menu__item"
+        :class="{ 'nav-menu__item--active': tab.tab === activeTab }"
+        :aria-current="tab.tab === activeTab ? 'page' : undefined"
+        :aria-label="tab.label"
       >
-        {{ tab.count! > 99 ? '99+' : tab.count }}
-      </span>
-      <span
-        v-else-if="tab.tab !== activeTab && tab.showStar"
-        class="nav-menu__badge nav-menu__badge--star"
-      >
-        ✦
-      </span>
-    </RouterLink>
+        <MotionIcon>
+          <component :is="tab.icon" class="nav-menu__item-icon" />
+        </MotionIcon>
+        <span
+          v-if="tab.tab !== activeTab && (tab.count ?? 0) > 0"
+          class="nav-menu__badge"
+        >
+          {{ tab.count! > 99 ? '99+' : tab.count }}
+        </span>
+        <span
+          v-else-if="tab.tab !== activeTab && tab.showStar"
+          class="nav-menu__badge nav-menu__badge--star"
+        >
+          ✦
+        </span>
+      </RouterLink>
+    </Tooltip>
   </nav>
 </template>
 

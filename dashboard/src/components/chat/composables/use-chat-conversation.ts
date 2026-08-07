@@ -24,7 +24,10 @@ export function useChatConversation() {
   );
 
   const selectedModelObj = computed(() => {
-    const name = conversation.value?.model;
+    // Prefer the conversation's model, but fall back to the globally
+    // selected model so the context-size options stay clamped to the
+    // model's supported numctx even before a conversation exists.
+    const name = conversation.value?.model || modelsStore.selectedModel;
     if (!name) return null;
     return modelsStore.getModel(name) ?? null;
   });

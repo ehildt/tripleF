@@ -140,7 +140,7 @@ describe('SysCtl', () => {
       expect(wrapper.text()).toContain('dlq');
       expect(wrapper.text()).toContain('debug');
       expect(wrapper.text()).toContain('side');
-      expect(wrapper.text()).toContain('autoclose');
+      expect(wrapper.text()).toContain('auto-close');
     });
   });
 
