@@ -40,5 +40,7 @@ defineProps<{ offers: readonly ShopOffer[] }>();
 .offers-section__list {
   display: flex;
   flex-direction: column;
+  /* Reset the global .exchange-message div padding leak. */
+  padding: 0;
 }
 </style>

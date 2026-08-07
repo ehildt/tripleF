@@ -44,7 +44,7 @@ const validItems = computed(() =>
 
 .sources ul {
   list-style: none;
-  padding: 0;
+  padding: var(--spacing-2);
   margin: 0;
 }
 
