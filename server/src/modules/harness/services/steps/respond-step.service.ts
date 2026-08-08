@@ -86,6 +86,7 @@ export class RespondStepService implements StepHandler {
         think: ctx.request.think,
         stream: ctx.stream,
         abortSignal: ctx.abortSignal,
+        language: ctx.filters.language,
         onTextDelta: ctx.stream
           ? (delta) => this.emitStreamDelta(ctx, delta, limitedGalleryItems)
           : undefined,

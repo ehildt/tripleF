@@ -43,11 +43,14 @@ const panelStyle = ref<Record<string, string>>({});
 const resolvedPosition = ref<TooltipPosition>('top');
 
 /** The trigger is the first element child of the `display: contents` wrapper. */
-function triggerElement(): HTMLElement | null {
+function triggerElement(): Element | null {
   const wrapper = wrapperRef.value;
   if (!wrapper) return null;
   const child = wrapper.firstElementChild;
-  return child instanceof HTMLElement ? child : null;
+  // Accept any Element, not just HTMLElement: lucide icons render an <svg>
+  // (an SVGElement), which is not an HTMLElement — rejecting it left icon
+  // tooltips unpositioned at the top-left corner.
+  return child instanceof Element ? child : null;
 }
 
 /** Position the fixed panel against the trigger's bounding box. */

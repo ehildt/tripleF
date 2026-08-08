@@ -55,7 +55,7 @@ export class HarnessController {
   ): Promise<HarnessControllerResponse> {
     if (!model) throw new BadRequestException('Missing x-harness-llm header');
 
-    const { requestId, roomId, stream, numCtx, event, think } = query;
+    const { requestId, roomId, stream, numCtx, event, think, language } = query;
     const sessionMetadata = parseSessionMetadata(query.sessionMetadata);
     const frontendHashes = sessionMetadata?.images?.map((img) => img.hash);
     const results = await this.harnessQueueService.toFilePayloads(
@@ -104,6 +104,7 @@ export class HarnessController {
         think,
         hasNewImages: query.hasNewImages,
         sessionMetadata: query.sessionMetadata,
+        language,
       },
     });
 

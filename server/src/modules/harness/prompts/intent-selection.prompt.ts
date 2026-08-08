@@ -1,7 +1,41 @@
+import { resolveLanguageName } from './helpers/resolve-language-name.helper.js';
 import { formatToolAvailabilityCatalog } from './helpers/tool-catalog.helper.js';
 import { formatVariantCatalog } from './helpers/variant-catalog.helper.js';
 
-export function buildIntentSelectionPrompt(toolNames: string[]): string {
+export function buildIntentSelectionPrompt(
+  toolNames: string[],
+  language?: string,
+): string {
+  const code = language?.trim().toLowerCase() ?? '';
+  const languageLabel = code
+    ? (() => {
+        const name = resolveLanguageName(code);
+        return name === code ? `"${code}"` : `"${code}" (${name})`;
+      })()
+    : "the user's browser/interface language";
+
+  const languageRules = code
+    ? `LANGUAGE RULES (ABSOLUTE)
+- The user's browser/interface language is ${languageLabel}. This is the DEFAULT language for the response.
+- Write the default language into the "language" field as an ISO-639-1 code.
+- OVERRIDE: If the user EXPLICITLY asks you to respond in a different language (e.g. "answer in Spanish", "auf Deutsch antworten", "réponds en français"), use that language instead and write it into the "language" field.
+- Do NOT infer the language from the message content — the browser language is authoritative unless the user explicitly requests a different language.
+- ALL human-readable text you output (reasoning, contextSummary, clarificationQuestion) MUST be in the language identified by the "language" field.
+- Never default to English unless the browser language is English or the user explicitly requests English.
+- If the user explicitly requests a language, judge it by the DOMINANT language of the full sentence or paragraph, never by individual words.
+- Individual foreign words, loanwords, scientific or medical terms, brand or proper names, and quoted fragments must NOT change the detected language.
+- Example: "Why do English speakers say 'déjà vu'?" → language "en" (one French phrase inside an English sentence — not "fr").
+- Do not use English for clarification questions, reasoning, or summaries unless the browser language is English or the user explicitly requests English.`
+    : `LANGUAGE RULES (ABSOLUTE)
+- Detect the language of the latest user message and write it into the "language" field as an ISO-639-1 code.
+- ALL human-readable text you output (reasoning, contextSummary, clarificationQuestion) MUST be in the language identified by the "language" field.
+- If the user wrote in German, respond in German. If the user wrote in Spanish, respond in Spanish. Never default to English.
+- If the latest user message is in mixed languages, use the language that appears to be primary.
+- Judge the language by the DOMINANT language of the full sentence or paragraph, never by individual words.
+- Individual foreign words, loanwords, scientific or medical terms, brand or proper names, and quoted fragments must NOT change the detected language.
+- Example: "Why do English speakers say 'déjà vu'?" → language "en" (one French phrase inside an English sentence — not "fr").
+- Do not use English for clarification questions, reasoning, or summaries unless the user wrote in English.`;
+
   return `You are a deterministic intent-classification engine for a multi-stage AI pipeline.
 You ONLY classify and understand the user request.
 You do NOT answer the user.
@@ -27,15 +61,7 @@ TOPIC SWITCH RULES
 - Example: turn 1 about dinosaurs, turn 2 about anime characters → NEW TOPIC, contextSummary="".
 - Example: turn 1 about the Gothic remake, turn 2 "show me images" → CONTINUATION, contextSummary names the Gothic remake.
 
-LANGUAGE RULES (ABSOLUTE)
-- Detect the language of the latest user message and write it into the "language" field as an ISO-639-1 code.
-- ALL human-readable text you output (reasoning, contextSummary, clarificationQuestion) MUST be in the language identified by the "language" field.
-- If the user wrote in German, respond in German. If the user wrote in Spanish, respond in Spanish. Never default to English.
-- If the latest user message is in mixed languages, use the language that appears to be primary.
-- Judge the language by the DOMINANT language of the full sentence or paragraph, never by individual words.
-- Individual foreign words, loanwords, scientific or medical terms, brand or proper names, and quoted fragments must NOT change the detected language.
-- Example: "Why do English speakers say 'déjà vu'?" → language "en" (one French phrase inside an English sentence — not "fr").
-- Do not use English for clarification questions, reasoning, or summaries unless the user wrote in English.
+${languageRules}
 
 OUTPUT OBJECTIVES
 You must determine:

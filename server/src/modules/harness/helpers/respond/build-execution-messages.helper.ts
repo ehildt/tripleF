@@ -19,14 +19,23 @@ type BuildExecutionMessagesParams = {
   availableImages?: Array<Record<string, unknown>>;
   sources: SourcesConfig;
   stepLogger: HarnessStepLogger;
+  /** ISO-639-1 code of the active UI locale, used as fallback when the intent classifier left the language unset. */
+  language?: string;
 };
 
 /** Assemble the system + context messages the response model sees. */
 export function buildExecutionMessages(
   params: BuildExecutionMessagesParams,
 ): InputMessage[] {
-  const { requestId, intent, messages, availableImages, sources, stepLogger } =
-    params;
+  const {
+    requestId,
+    intent,
+    messages,
+    availableImages,
+    sources,
+    stepLogger,
+    language,
+  } = params;
 
   const isImageTask = IMAGE_TEMPLATES.includes(intent.template);
   const requiredKeys = getRequiredKeys(intent.template);
@@ -44,7 +53,7 @@ export function buildExecutionMessages(
     optionalKeys,
     isImageTask,
     contextSummary: intent.contextSummary,
-    language: intent.language ?? undefined,
+    language: intent.language ?? language,
     sources,
   });
 
