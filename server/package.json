@@ -1,7 +1,7 @@
 {
   "name": "@triplef.io/server",
   "description": "tripleF (3F) server — the agentic AI conversation harness (NestJS + Fastify): step engine, tool-grounded structured outputs, BullMQ, Socket.IO streaming.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "license": "MIT",
   "type": "module",
   "author": {
