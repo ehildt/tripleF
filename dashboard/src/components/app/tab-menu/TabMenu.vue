@@ -4,7 +4,9 @@ import { computed, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import type { ActiveTab } from '../../../stores/app';
-import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
+import Tooltip, {
+  type TooltipPosition,
+} from '../../shared/ui/tooltip/Tooltip.vue';
 import AppThemeSelector from '../app-theme-selector/AppThemeSelector.vue';
 import LanguageSelector from '../language-selector/LanguageSelector.vue';
 import { useMenuTabs } from './composables/use-menu-tabs';
@@ -30,7 +32,7 @@ const handleIcon = computed(() => (isOpen.value ? ChevronsUp : ChevronsDown));
  * The handle tooltip opens toward the page (away from the docked edge): to
  * the left when the menu is on the right, to the right when on the left.
  */
-const handleTooltipPositions = computed(() =>
+const handleTooltipPositions = computed<TooltipPosition[]>(() =>
   side.value === 'left' ? ['right', 'left'] : ['left', 'right'],
 );
 

@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { Languages, Search } from '@lucide/vue';
+import { Globe, Languages, Search } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import { useLocale } from '../../../i18n/composables/use-locale';
+import { resolveLocaleFlag } from '../../../i18n/resolve-locale-flag';
 import { resolveNativeLanguageName } from '../../../i18n/resolve-native-language-name';
 import { useMenuPosition } from '../../chat/toolbar/model-selector/composables/use-menu-position';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
+import LocaleFlag from './LocaleFlag.vue';
 
 const { locale, setLocale, supportedLocales } = useLocale();
 
@@ -27,6 +29,7 @@ const allOptions = computed(() =>
   supportedLocales.map((code) => ({
     code,
     name: resolveNativeLanguageName(code),
+    flag: resolveLocaleFlag(code),
   })),
 );
 
@@ -120,6 +123,8 @@ onUnmounted(() =>
                 :aria-selected="locale === option.code"
                 @click="select(option.code)"
               >
+                <LocaleFlag v-if="option.flag" :country="option.flag" />
+                <Globe v-else class="language-selector__flag-fallback" />
                 <span class="language-selector__code">{{ option.code }}</span>
                 <div class="language-selector__info">
                   <span class="language-selector__name">{{ option.name }}</span>
@@ -286,6 +291,13 @@ onUnmounted(() =>
 
 .language-selector__item--active {
   color: var(--color-accent-primary);
+}
+
+.language-selector__flag-fallback {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-fg-muted);
 }
 
 .language-selector__code {
