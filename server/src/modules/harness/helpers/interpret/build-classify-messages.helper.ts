@@ -57,9 +57,10 @@ function buildImageUserContent(messages: InputMessage[]): string {
 export function buildClassifyMessages(
   messages: InputMessage[],
   enabledToolNames: string[],
+  language?: string,
 ): InputMessage[] {
   const prompt = [
-    buildIntentSelectionPrompt(enabledToolNames),
+    buildIntentSelectionPrompt(enabledToolNames, language),
     buildStructuredJsonPrompt(),
   ]
     .filter(Boolean)

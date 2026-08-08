@@ -32,6 +32,8 @@ type RespondParams = {
   onTextDelta?: (delta: string) => void;
   onReasoningDelta?: (delta: string) => void;
   onJsonRetry?: (attempt: number) => void;
+  /** ISO-639-1 code of the active UI locale, used as fallback when the intent classifier left the language unset. */
+  language?: string;
 };
 
 const MAX_JSON_RETRIES = 3;
@@ -56,6 +58,7 @@ export class RespondActionService {
       availableImages: params.availableImages,
       sources: this.providerOverrides.getConfig().sources,
       stepLogger: this.stepLogger,
+      language: params.language,
     });
 
     const totalImageCount = executionMessages.reduce(

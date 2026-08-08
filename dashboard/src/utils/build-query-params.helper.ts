@@ -18,6 +18,8 @@ export interface FormQueryOptions {
   think: string;
   hasNewImages?: boolean;
   conversationMetadata?: ConversationMetadata | null;
+  /** Active UI locale (browser-detected or user-selected), e.g. 'de'. */
+  language?: string;
 }
 
 export function buildQueryParams(options: FormQueryOptions): URLSearchParams {
@@ -38,5 +40,6 @@ export function buildQueryParams(options: FormQueryOptions): URLSearchParams {
       'sessionMetadata',
       JSON.stringify(options.conversationMetadata),
     );
+  if (options.language) params.append('language', options.language);
   return params;
 }

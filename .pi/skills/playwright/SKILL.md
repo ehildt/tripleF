@@ -65,6 +65,37 @@ open http://dashboard:5173/dashboard/ and report any console errors or failed ne
 - The `/dashboard/` path prefix comes from vite's `base` in `dashboard/vite.config.ts`; a root URL returns `403`, and the proxy target is read from `VITE_PROXY_TARGET` (default `http://localhost:3000`).
 - If a page loads but shows `403 Forbidden`, you hit the wrong path/root, not an app error — retry with `/dashboard/`.
 
+## Using the browser tools from pi (this agent)
+
+The `browser_*` tools are also exposed to pi itself (via `.pi/mcp.json`), so you can drive the same headless chromium to verify UI work. The workflow is **snapshot-driven, not vision-driven** — page content arrives as an accessibility tree, so you don't need to read screenshots.
+
+### Workflow
+
+1. `browser_navigate` to the URL (container hostname + `/dashboard/` base).
+2. `browser_snapshot` — returns the accessibility tree (YAML). This is the source of truth for what's on the page and the element refs to act on.
+3. `browser_find` — search the snapshot for text/regex to locate an element and its ref without dumping the whole tree.
+4. `browser_click` / `browser_type` / `browser_select_option` — act on a ref.
+5. `browser_console_messages` — check for JS errors/warnings after loading or interacting.
+6. `browser_network_requests` — list requests; `browser_network_request <n>` for headers/body of one. Use `filter` to narrow (e.g. `/api/.*`).
+7. `browser_evaluate` — run JS in the page to inspect computed styles, DOM geometry, scroll positions, etc. (e.g. `getComputedStyle`, `getBoundingClientRect`, `scrollHeight`).
+
+### Where screenshots go (and why you usually don't need them)
+
+`browser_take_screenshot` saves PNGs **inside the playwright-mcp container** at `/tmp/.playwright-mcp/…` — they are **not readable from the host**, so you can't open them to look. The tool result embeds a base64 image, but for inspecting rendered output prefer:
+
+- `browser_snapshot` (accessibility tree) to see structure/content, and
+- `browser_evaluate` to read computed styles / geometry.
+
+If you genuinely need the image file, pull it out of the container: `docker cp playwright-mcp:/tmp/.playwright-mcp/<file>.png .`. Don't pass a custom `filename` to `browser_take_screenshot` — it resolves relative to the host and fails with `ENOENT`; use the default.
+
+### Gotchas
+
+- **Element refs are ephemeral.** Refs like `f1e41` change on every navigation/snapshot. Re-find before acting; never reuse a ref across navigations.
+- **Don't batch interactions with `browser_evaluate`.** If you call `browser_click`/`browser_type` and `browser_evaluate` in the same parallel batch, the evaluate runs before the interaction completes. Run them sequentially.
+- **An empty snapshot usually means a render failure.** If `browser_snapshot` returns an empty tree, the app likely failed to mount (e.g. a JS error). Check `browser_console_messages` for the cause.
+- **The `v=` hash on Vite dep URLs is deterministic.** Clearing `node_modules/.vite` won't change it if the lockfile is unchanged. A stale/mismatched optimize-deps cache can cause module-instance errors (e.g. lucide's `inject()` failing with "can only be used inside setup()"). After adding/removing a dependency, restart the dashboard container (`docker compose down dashboard && docker compose up -d dashboard`) so Vite re-optimizes cleanly.
+- **`browser_evaluate` runs in the page context** (safe for inspecting the app). It is distinct from `browser_run_code_unsafe`, which runs arbitrary JS in the MCP server process (RCE-equivalent) — never use that.
+
 ## Extending the tool set
 
 1. Expose more MCP tools: add the `browser_*` name to `BROWSER_TOOL_NAMES` **and** a capability-shaped description (when to use vs. search/fetch — the classifier learns the tool from its description alone) in `TOOL_DESCRIPTIONS` (`tool-registry.constants.ts`). Capability-gated groups (`pdf`, `vision`, `storage`, `network`) additionally need `--caps <group>` in the sidecar command.
@@ -78,5 +109,6 @@ open http://dashboard:5173/dashboard/ and report any console errors or failed ne
 - [ ] `--allowed-hosts` entries include the port
 - [ ] Test prompts use container hostnames, not `localhost`
 - [ ] Dashboard URLs include the `/dashboard/` base path (`http://dashboard:5173/dashboard/`)
+- [ ] Screenshots are inside the container (`/tmp/.playwright-mcp/`), not host-readable — inspect via `browser_snapshot`/`browser_evaluate`
 - [ ] Only loopback port published (`127.0.0.1:8931:8931`), nothing on `0.0.0.0`
 - [ ] Search/intent path still single-step; only browser intents get `BROWSER_MAX_STEPS`

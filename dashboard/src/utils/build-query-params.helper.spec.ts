@@ -61,4 +61,29 @@ describe('buildQueryParams', () => {
       JSON.stringify({ images: [{ name: 'a.png', hash: 'hash-a' }] }),
     );
   });
+
+  it('includes language when provided and omits it when empty', () => {
+    const params = buildQueryParams({
+      requestId: 'req-1',
+      sessionId: 'sess-1',
+      roomId: 'room-1',
+      stream: true,
+      event: 'harness',
+      numCtx: '4096',
+      think: 'medium',
+      language: 'de',
+    });
+    expect(params.get('language')).toBe('de');
+
+    const withoutLanguage = buildQueryParams({
+      requestId: 'req-1',
+      sessionId: 'sess-1',
+      roomId: 'room-1',
+      stream: true,
+      event: 'harness',
+      numCtx: '4096',
+      think: 'medium',
+    });
+    expect(withoutLanguage.get('language')).toBeNull();
+  });
 });
