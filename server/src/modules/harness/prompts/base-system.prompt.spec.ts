@@ -3,28 +3,25 @@ import { describe, expect, it } from 'vitest';
 import { buildBaseSystemPrompt } from './base-system.prompt.js';
 
 describe('buildBaseSystemPrompt', () => {
-  it('includes the core contract', () => {
+  it('carries only step-agnostic rules', () => {
     const prompt = buildBaseSystemPrompt({ hasImages: false });
 
-    expect(prompt).toContain('deterministic multimodal execution engine');
-    expect(prompt).toContain(
-      'Structured templates require a single valid JSON object',
-    );
-    expect(prompt).toContain('Markdown is allowed');
-    expect(prompt).toContain('PRECEDENCE (ABSOLUTE)');
+    expect(prompt).toContain('SECURITY');
+    expect(prompt).toContain('NOISE / BOILERPLATE FILTER');
+    expect(prompt).not.toContain('Markdown is allowed');
+    expect(prompt).not.toContain('PRECEDENCE (ABSOLUTE)');
+    expect(prompt).not.toContain('OUTPUT CONTRACT');
   });
 
-  it('adds multimodal and search policies when images are present', () => {
+  it('adds the multimodal policy when images are present', () => {
     const prompt = buildBaseSystemPrompt({ hasImages: true });
 
     expect(prompt).toContain('MULTIMODAL RULES');
-    expect(prompt).toContain('SEARCH:');
   });
 
-  it('omits multimodal and search policies when no images are present', () => {
+  it('omits the multimodal policy when no images are present', () => {
     const prompt = buildBaseSystemPrompt({ hasImages: false });
 
     expect(prompt).not.toContain('MULTIMODAL RULES');
-    expect(prompt).not.toContain('SEARCH:');
   });
 });

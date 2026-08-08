@@ -8,8 +8,12 @@ import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
 import { hidePlaylistPreview } from '../widgets/floating-playlist/composables/playlist-settings.state';
+import ChatNavigationSection from './chat-navigation-section/ChatNavigationSection.vue';
 import { useSysctlHealthTiles } from './composables/use-sysctl-health-tiles';
-import { type SysctlTab, useSysctlTab } from './composables/use-sysctl-tab';
+import { useSysctlTab } from './composables/use-sysctl-tab';
+import type { SysctlTab } from './composables/use-sysctl-tab.types';
+import InterfaceSection from './interface-section/InterfaceSection.vue';
+import LayoutsSection from './layouts-section/LayoutsSection.vue';
 import PreprocessingSection from './preprocessing-section/PreprocessingSection.vue';
 import SearchEnginesSection from './search-engines-section/SearchEnginesSection.vue';
 import SysCtlMenu from './sysctl-menu/SysCtlMenu.vue';
@@ -29,7 +33,10 @@ watch(activeSysctlTab, () => {
 const TAB_TITLES: Record<SysctlTab, string> = {
   'search-engines': i18n.global.t('common.sysctlSearchEngines'),
   preprocessing: i18n.global.t('common.sysctlPreprocessing'),
+  layouts: i18n.global.t('common.sysctlLayouts'),
   widgets: i18n.global.t('common.sysctlWidgets'),
+  chat: i18n.global.t('common.sysctlChatNavigation'),
+  interface: i18n.global.t('common.sysctlInterface'),
   system: i18n.global.t('common.sysctlSystem'),
 };
 
@@ -47,7 +54,13 @@ const activeTabTitle = computed(() => TAB_TITLES[activeSysctlTab.value]);
 
     <PreprocessingSection v-else-if="activeSysctlTab === 'preprocessing'" />
 
+    <LayoutsSection v-else-if="activeSysctlTab === 'layouts'" />
+
     <WidgetsSection v-else-if="activeSysctlTab === 'widgets'" />
+
+    <ChatNavigationSection v-else-if="activeSysctlTab === 'chat'" />
+
+    <InterfaceSection v-else-if="activeSysctlTab === 'interface'" />
 
     <SystemSection v-else :tiles="tiles" />
   </PanelLayout>
@@ -57,5 +70,7 @@ const activeTabTitle = computed(() => TAB_TITLES[activeSysctlTab.value]);
 .sysctl {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
 }
 </style>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useClipboard } from '@vueuse/core';
 import type { ComponentPublicInstance } from 'vue';
 import { computed, provide, ref, watch } from 'vue';
 
@@ -50,8 +51,14 @@ const { arguments_, submit, persistArguments } = useSubmit({
 
 const { actionBarRef } = useActionBar();
 
-const { searchEngineState, searchSources, toggleSearchEngine, toggleSource } =
-  useSearchEngineAvailability();
+const {
+  searchEngineState,
+  searchSources,
+  eodhdState,
+  toggleSearchEngine,
+  toggleSource,
+  toggleEodhd,
+} = useSearchEngineAvailability();
 
 const modelsStore = useModelsStore();
 const conversationStore = useConversationStore();
@@ -91,6 +98,11 @@ const { onCollapsedKeydown, onPromptInput } = useChatInput(
   persistArguments,
 );
 
+/** Ambient refresh: the server cache owns freshness, so focus just re-asks. */
+function onPromptFocus() {
+  modelsStore.fetchModels({ silent: true });
+}
+
 const {
   setThinkDropdownRef,
   setContextSizeDropdownRef,
@@ -105,6 +117,10 @@ const toolbarRef = ref<InstanceType<typeof ChatToolbar> | null>(null);
 const mainColumnRef = ref<InstanceType<typeof ChatMainColumn> | null>(null);
 const chatListRef = computed(
   () => mainColumnRef.value?.exchangeListRef ?? null,
+);
+
+const activeUserExchangeId = computed(
+  () => mainColumnRef.value?.activeUserExchangeId ?? null,
 );
 
 const hasNoModelSelected = computed(
@@ -186,6 +202,13 @@ const { rightPanelView, selectPanelView } = useChatPanel(
   computed(() => attachments.value.length),
   computed(() => messageListItems.value.length),
 );
+
+const { copy } = useClipboard({ legacy: true });
+
+function handleCopyHistoryItem(index: number) {
+  const content = messageListItems.value[index]?.content;
+  if (content) copy(content);
+}
 
 const shouldShowRightPanel = computed(
   () =>
@@ -294,12 +317,14 @@ defineExpose({ actionBarRef });
     "
     :search-engine-state="searchEngineState"
     :search-sources="searchSources"
+    :eodhd-state="eodhdState"
     :set-action-bar-ref="onSetActionBarRef"
     :set-think-dropdown-ref="setThinkDropdownRef"
     :set-context-size-dropdown-ref="setContextSizeDropdownRef"
     :retry-handler="onRetry"
     @input="onPromptInput"
     @keydown="onCollapsedKeydown"
+    @focus="onPromptFocus"
     @select-think="selectThink"
     @select-context-size="selectContextSize"
     @open-think="onThinkOpen"
@@ -309,8 +334,10 @@ defineExpose({ actionBarRef });
     @file-select="triggerFileSelect"
     @toggle-search-engine="toggleSearchEngine"
     @toggle-source="toggleSource"
+    @toggle-eodhd="toggleEodhd"
     @delete-conversation="onDeleteConversation"
     @toggle-included="selectPanelView('history')"
+    @scroll="selectPanelView('history')"
   />
 
   <ChatRightPanel
@@ -322,10 +349,12 @@ defineExpose({ actionBarRef });
     :playlist-videos="panelPlaylistVideos"
     :conversation-id="conversationId"
     :right-panel-view="rightPanelView"
+    :active-user-exchange-id="activeUserExchangeId"
     @select-view="selectPanelView"
     @remove-attachment="onRemoveAttachment"
     @toggle-attachment="onToggleAttachment"
     @prompt-click="onPromptClick"
+    @copy="handleCopyHistoryItem"
     @toggle-include="toggleUserExchangeIncluded"
     @delete-item="deleteUserExchange"
     @branch-out="branchUserExchange"

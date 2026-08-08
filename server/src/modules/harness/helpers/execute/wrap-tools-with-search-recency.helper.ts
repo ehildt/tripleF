@@ -1,4 +1,4 @@
-import { applySearchRecency } from '../apply-search-recency.helper.js';
+import { applySearchRecency } from './apply-search-recency.helper.js';
 
 /**
  * Freshness outer-wrap: appends the current date to search queries when

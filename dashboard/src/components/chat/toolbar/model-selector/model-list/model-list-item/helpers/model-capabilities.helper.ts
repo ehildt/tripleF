@@ -1,4 +1,4 @@
-import type { OllamaModel } from '@/stores/models';
+import type { OllamaModel } from '@/types/ollama-model.model';
 
 /**
  * Capabilities worth advertising in the model selector, in a stable display

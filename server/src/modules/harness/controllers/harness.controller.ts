@@ -4,12 +4,16 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Post,
+  Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import type { FastifyReply } from 'fastify';
 
+import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.js';
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
@@ -22,6 +26,7 @@ import {
   ApiCancelJob,
   ApiGetModels,
   ApiHarness,
+  ApiWarmModel,
 } from '../decorators/harness.openapi.js';
 import {
   CancelHarnessJobDto,
@@ -30,7 +35,9 @@ import {
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
-import { parseSessionMetadata } from '../helpers/parse-session-metadata.helper.js';
+import { WarmModelDto, WarmModelResponseDto } from '../dtos/warm-model.dto.js';
+import { buildCatalogEtag } from '../helpers/catalog-etag.helper.js';
+import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.helper.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
@@ -41,6 +48,7 @@ export class HarnessController {
     private readonly harnessQueueService: HarnessQueueService,
     private readonly ollamaModelsService: OllamaModelsService,
     private readonly numCtxConfigService: NumCtxConfigService,
+    private readonly modelWarmupService: ModelWarmupService,
     private readonly stepLogger: HarnessStepLogger,
   ) {}
 
@@ -133,10 +141,29 @@ export class HarnessController {
     };
   }
 
+  @Post('warm')
+  @ApiWarmModel()
+  async warmModel(@Body() body: WarmModelDto): Promise<WarmModelResponseDto> {
+    this.modelWarmupService.warm(body.model);
+    return { success: true, model: body.model };
+  }
+
   @Get('models')
   @ApiGetModels()
-  async getModels() {
+  async getModels(
+    @Headers('if-none-match') ifNoneMatch: string | undefined,
+    @Res() res: FastifyReply,
+  ) {
     const models = await this.ollamaModelsService.getModels();
-    return { ...models, numCtxOptions: this.numCtxConfigService.config };
+    const payload = {
+      ...models,
+      numCtxOptions: this.numCtxConfigService.config,
+    };
+    const etag = buildCatalogEtag(payload);
+    res.header('ETag', etag);
+    if (ifNoneMatch === etag) {
+      return res.status(HttpStatus.NOT_MODIFIED).send();
+    }
+    return res.send(payload);
   }
 }

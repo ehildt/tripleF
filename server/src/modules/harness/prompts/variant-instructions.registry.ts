@@ -3,7 +3,6 @@ import {
   TemplateName,
 } from '../templates/intent.schema.js';
 
-import { ARTICLE_INSTRUCTIONS } from './instructions/article.instruction.js';
 import {
   COMPARE_INSTRUCTIONS,
   COMPARE_VISUAL_INSTRUCTIONS,
@@ -13,16 +12,16 @@ import {
   DESCRIBE_DETAILED_INSTRUCTIONS,
   DESCRIBE_INSTRUCTIONS,
 } from './instructions/describe.instruction.js';
-import { EVALUATION_INSTRUCTIONS } from './instructions/evaluation.instruction.js';
 import { IMAGELIST_INSTRUCTIONS } from './instructions/imagelist.instruction.js';
 import { INTERNATIONAL_COVERAGE_INSTRUCTIONS } from './instructions/international-coverage.instruction.js';
-import { NEWS_INSTRUCTIONS } from './instructions/news.instruction.js';
 import {
   OCR_INSTRUCTIONS,
   OCR_VERBATIM_INSTRUCTIONS,
 } from './instructions/ocr.instruction.js';
 import { PRODUCT_INSTRUCTIONS } from './instructions/product.instruction.js';
 import { SHOPLIST_INSTRUCTIONS } from './instructions/shoplist.instruction.js';
+import { STOCKMARKET_ITEM_INSTRUCTIONS } from './instructions/stockmarketitem.instruction.js';
+import { STOCKMARKET_LIST_INSTRUCTIONS } from './instructions/stockmarketlist.instruction.js';
 import { SUMMARY_INSTRUCTIONS } from './instructions/summary.instruction.js';
 import {
   TEXT_CODING_INSTRUCTIONS,
@@ -50,16 +49,12 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   shoplist: ['default'],
   imagelist: ['default'],
   videolist: ['default'],
+  stockmarketitem: ['default'],
+  stockmarketlist: ['default'],
   text: ['default', 'coding', 'familiarity'],
 };
 
 const VARIANT_INSTRUCTIONS: Record<string, string> = {
-  // article
-  'article:default': ARTICLE_INSTRUCTIONS,
-
-  // news
-  'news:default': NEWS_INSTRUCTIONS,
-
   // describe
   'describe:default': DESCRIBE_INSTRUCTIONS,
   'describe:detailed': DESCRIBE_DETAILED_INSTRUCTIONS,
@@ -76,14 +71,17 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
   // summary
   'summary:default': SUMMARY_INSTRUCTIONS,
 
-  // evaluation
-  'evaluation:default': EVALUATION_INSTRUCTIONS,
-
   // product
   'product:default': PRODUCT_INSTRUCTIONS,
 
   // shoplist
   'shoplist:default': SHOPLIST_INSTRUCTIONS,
+
+  // stockmarketitem
+  'stockmarketitem:default': STOCKMARKET_ITEM_INSTRUCTIONS,
+
+  // stockmarketlist
+  'stockmarketlist:default': STOCKMARKET_LIST_INSTRUCTIONS,
 
   // imagelist
   'imagelist:default': IMAGELIST_INSTRUCTIONS,
@@ -111,5 +109,8 @@ export function resolveVariantInstructions(
     VARIANT_INSTRUCTIONS[`${template}:${DEFAULT_VARIANT_ID}`] ??
     '';
   if (!instructions) return instructions;
+  // The text template is free-form: the JSON-only internationalCoverage
+  // aside would contradict its output contract.
+  if (template === 'text') return instructions;
   return `${instructions}\n\n${INTERNATIONAL_COVERAGE_INSTRUCTIONS}`;
 }

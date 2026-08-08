@@ -64,8 +64,12 @@ const emit = defineEmits<{
     </div>
 
     <div class="field-card__content">
-      <span class="field-card__label">{{ label }}</span>
-      <span v-if="description" class="field-card__description">
+      <span class="field-card__label" :title="label">{{ label }}</span>
+      <span
+        v-if="description"
+        class="field-card__description"
+        :title="description"
+      >
         {{ description }}
       </span>
     </div>
@@ -110,10 +114,9 @@ const emit = defineEmits<{
   align-items: center;
   gap: var(--spacing-3);
   padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-tertiary);
   transition:
-    border-color 0.2s ease,
+    background-color 0.2s ease,
     filter 0.2s ease,
     opacity 0.3s ease;
 }
@@ -123,8 +126,7 @@ const emit = defineEmits<{
 }
 
 .field-card:hover {
-  border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
-  filter: brightness(1.05);
+  filter: brightness(1.08);
 }
 
 /* The hover filter above makes every card its own stacking context — an
@@ -136,12 +138,19 @@ const emit = defineEmits<{
 }
 
 .field-card--checked {
-  border-color: color-mix(in srgb, var(--field-accent) 20%, transparent);
-  background-color: var(--color-bg-secondary);
+  background-color: color-mix(
+    in srgb,
+    var(--field-accent) 8%,
+    var(--color-bg-tertiary)
+  );
 }
 
 .field-card--highlighted {
-  border-color: var(--field-accent);
+  background-color: color-mix(
+    in srgb,
+    var(--field-accent) 12%,
+    var(--color-bg-tertiary)
+  );
   filter: brightness(1.1);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -189,7 +198,9 @@ const emit = defineEmits<{
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-fg-secondary);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .field-card--checked .field-card__label {
@@ -201,7 +212,9 @@ const emit = defineEmits<{
   font-size: 0.625rem;
   line-height: 1.4;
   color: var(--color-fg-muted);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Compact inline number box */
@@ -209,8 +222,7 @@ const emit = defineEmits<{
   flex-shrink: 0;
   width: 4.5rem;
   padding: 0 var(--spacing-1);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-secondary);
 }
 
 /* Flexible inline box for #field slot content (e.g. text inputs) */
@@ -218,8 +230,7 @@ const emit = defineEmits<{
   flex: 1;
   min-width: 0;
   padding: 0 var(--spacing-1);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-secondary);
 }
 
 /* Checkbox */

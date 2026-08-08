@@ -1,18 +1,12 @@
-import { computed, type ComputedRef } from 'vue';
+import { computed } from 'vue';
 
 import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 
-type ActiveSession = ReturnType<
-  ReturnType<typeof useConversationStore>['getConversation']
->;
-
-export interface ActiveSessionData {
-  activeConversation: ComputedRef<ActiveSession | null>;
-  exchanges: ComputedRef<readonly Exchange[]>;
-  activeAssistantExchangeId: ComputedRef<string | null>;
-  activeAssistantResponseStarted: ComputedRef<boolean>;
-}
+import type {
+  ActiveSession,
+  ActiveSessionData,
+} from './use-active-conversation.types';
 
 /**
  * Provide the currently active conversation and its exchanges, or `null`/`[]`

@@ -10,7 +10,7 @@ import {
   FastifyMultipartDataWithFiltersReq,
   FastifyMultipartMeta,
 } from '../dtos/harness-job.dto.js';
-import { buildImageFingerprint } from '../helpers/build-image-fingerprint.helper.js';
+import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.helper.js';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';

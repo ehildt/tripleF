@@ -82,8 +82,8 @@ describe('Dlq story smoke', () => {
 
   it('renders without throwing (regression: useDlqQuery needs VueQueryPlugin)', () => {
     const wrapper = mountWithAppContext(Dlq, { models: ['llama3'] });
-    expect(wrapper.text()).toContain('Jobs');
-    expect(wrapper.text()).toContain('Details');
+    expect(wrapper.text()).toContain('Failed jobs');
+    expect(wrapper.text()).toContain('Job details');
     expect(wrapper.text()).toContain('No failed jobs');
   });
 });

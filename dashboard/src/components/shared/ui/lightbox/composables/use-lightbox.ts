@@ -1,10 +1,7 @@
 import { onKeyStroke } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
-export interface LightboxImage {
-  url: string;
-  title?: string;
-}
+import type { LightboxImage } from '@/types/lightbox.model';
 
 export function useLightbox() {
   const isOpen = ref(false);

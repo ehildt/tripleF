@@ -2,10 +2,7 @@ import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 import Joi from 'joi';
 
-interface BrightDataEndpointConfig {
-  enabled: boolean;
-  results: number;
-}
+import type { ProviderEndpointConfig } from './endpoint-config.types.js';
 
 export interface BrightDataConfig {
   enabled: boolean;
@@ -14,16 +11,16 @@ export interface BrightDataConfig {
   serpZone?: string;
   /** Web Unlocker zone name (powering webpage scrape). */
   unlockerZone?: string;
-  web: BrightDataEndpointConfig;
-  images: BrightDataEndpointConfig;
-  news: BrightDataEndpointConfig;
-  places: BrightDataEndpointConfig;
-  shopping: BrightDataEndpointConfig;
-  videos: BrightDataEndpointConfig;
+  web: ProviderEndpointConfig;
+  images: ProviderEndpointConfig;
+  news: ProviderEndpointConfig;
+  places: ProviderEndpointConfig;
+  shopping: ProviderEndpointConfig;
+  videos: ProviderEndpointConfig;
   scrape: { enabled: boolean };
 }
 
-const endpointSchema = Joi.object<BrightDataEndpointConfig>({
+const endpointSchema = Joi.object<ProviderEndpointConfig>({
   enabled: Joi.boolean().required(),
   results: Joi.number().integer().min(1).max(200).required(),
 });

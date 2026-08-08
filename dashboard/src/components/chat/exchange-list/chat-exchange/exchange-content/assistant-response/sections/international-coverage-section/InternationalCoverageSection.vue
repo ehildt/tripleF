@@ -3,6 +3,8 @@ import { computed } from 'vue';
 
 import type { InternationalCoverageEntry } from '@/types/harness-response-data.model';
 
+import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
+
 const props = defineProps<{
   items?: InternationalCoverageEntry[];
 }>();
@@ -23,9 +25,7 @@ const validItems = computed(() =>
     class="international-coverage-section"
     :aria-label="$t('common.internationalCoverage')"
   >
-    <h3 class="international-coverage-section__title">
-      {{ $t('common.internationalCoverage') }}
-    </h3>
+    <SectionTitle :title="$t('common.internationalCoverage')" />
     <ul class="international-coverage-section__list">
       <li
         v-for="(item, index) in validItems"
@@ -66,10 +66,6 @@ const validItems = computed(() =>
   width: 100%;
 }
 
-.international-coverage-section__title {
-  margin-bottom: var(--spacing-2);
-}
-
 .international-coverage-section__list {
   display: flex;
   flex-direction: column;
@@ -84,7 +80,7 @@ const validItems = computed(() =>
   flex-direction: column;
   gap: var(--spacing-1);
   padding: var(--spacing-2) var(--spacing-3);
-  background-color: var(--color-bg-elevated);
+  background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
 }
 

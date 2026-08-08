@@ -4,14 +4,7 @@ import type { Exchange } from '@/stores/conversation';
 
 import { computeCollapsedExchangeIds } from '../helpers/compute-collapsed-exchange-ids.helper';
 import { computeHighlightedExchangeIds } from '../helpers/compute-highlighted-exchange-ids.helper';
-
-export interface ExchangeVisualState {
-  hoveredDeleteId: Ref<string | null>;
-  highlightedIds: Ref<Set<string>>;
-  collapsedIds: Ref<Set<string>>;
-  onHoverDeleteStart: (exchangeId: string) => void;
-  onHoverDeleteEnd: () => void;
-}
+import type { ExchangeVisualState } from './use-exchange-visual-state.types';
 
 /**
  * Track the hovered-delete state and expose the derived highlight and

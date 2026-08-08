@@ -1,28 +1,18 @@
 import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { SourcesConfig } from '../../../provider-overrides/configs/sources-config.adapter.js';
 import { buildContentSystemPrompt } from '../../prompts/content-system.prompt.js';
 import { resolveVariantInstructions } from '../../prompts/variant-instructions.registry.js';
-import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
-import type { IntentResult } from '../../templates/intent.schema.js';
+import { buildSnippetInstruction } from '../../snippets/helpers/build-snippet-instruction.helper.js';
+import { resolveAllowedLayouts } from '../../snippets/helpers/resolve-allowed-layouts.helper.js';
+import { SNIPPET_TEMPLATE_PRESETS } from '../../snippets/snippet-presets.constant.js';
 import { selectStepHistory } from '../select-step-history.helper.js';
 import {
   getOptionalKeys,
   getRequiredKeys,
 } from '../template-placeholders.constant.js';
 
+import type { BuildExecutionMessagesParams } from './build-execution-messages.helper.types.js';
+
 const IMAGE_TEMPLATES = ['describe', 'compare', 'ocr'];
-
-type BuildExecutionMessagesParams = {
-  requestId: string;
-  intent: IntentResult;
-  messages: InputMessage[];
-  availableImages?: Array<Record<string, unknown>>;
-  sources: SourcesConfig;
-  stepLogger: HarnessStepLogger;
-  /** ISO-639-1 code of the active UI locale, used as fallback when the intent classifier left the language unset. */
-  language?: string;
-};
-
 /** Assemble the system + context messages the response model sees. */
 export function buildExecutionMessages(
   params: BuildExecutionMessagesParams,
@@ -40,10 +30,7 @@ export function buildExecutionMessages(
   const isImageTask = IMAGE_TEMPLATES.includes(intent.template);
   const requiredKeys = getRequiredKeys(intent.template);
   const optionalKeys = getOptionalKeys(intent.template);
-  const instructions = resolveVariantInstructions(
-    intent.template,
-    intent.prompt,
-  );
+  const instructions = resolveInstructions(params);
 
   const executionSystem = buildContentSystemPrompt({
     template: intent.template,
@@ -90,6 +77,23 @@ export function buildExecutionMessages(
     ...systemMessages,
     ...contextMessages,
   ];
+}
+
+/**
+ * Resolve the respond-step instruction text: snippet-composed templates
+ * (news, article, evaluation) build from their snippet presets with the
+ * request's enabled layouts; every other template keeps its variant text.
+ */
+function resolveInstructions(params: BuildExecutionMessagesParams): string {
+  const preset = SNIPPET_TEMPLATE_PRESETS[params.intent.template];
+  if (!preset) {
+    return resolveVariantInstructions(
+      params.intent.template,
+      params.intent.prompt,
+    );
+  }
+  const allowed = resolveAllowedLayouts(preset, params.allowedLayouts);
+  return buildSnippetInstruction(preset, allowed);
 }
 
 function buildImageContextMessages(

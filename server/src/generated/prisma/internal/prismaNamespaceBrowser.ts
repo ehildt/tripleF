@@ -56,7 +56,9 @@ export const ModelName = {
   HarnessConfig: 'HarnessConfig',
   HarnessShownMedia: 'HarnessShownMedia',
   HarnessProviderOverride: 'HarnessProviderOverride',
-  HarnessPlaylist: 'HarnessPlaylist'
+  HarnessPlaylist: 'HarnessPlaylist',
+  StockMarketBar: 'StockMarketBar',
+  StockMarketHistoryRange: 'StockMarketHistoryRange'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -152,6 +154,31 @@ export const HarnessPlaylistScalarFieldEnum = {
 } as const
 
 export type HarnessPlaylistScalarFieldEnum = (typeof HarnessPlaylistScalarFieldEnum)[keyof typeof HarnessPlaylistScalarFieldEnum]
+
+
+export const StockMarketBarScalarFieldEnum = {
+  ticker: 'ticker',
+  date: 'date',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  adjustedClose: 'adjustedClose',
+  volume: 'volume',
+  fetchedAt: 'fetchedAt'
+} as const
+
+export type StockMarketBarScalarFieldEnum = (typeof StockMarketBarScalarFieldEnum)[keyof typeof StockMarketBarScalarFieldEnum]
+
+
+export const StockMarketHistoryRangeScalarFieldEnum = {
+  ticker: 'ticker',
+  fromDate: 'fromDate',
+  toDate: 'toDate',
+  fetchedAt: 'fetchedAt'
+} as const
+
+export type StockMarketHistoryRangeScalarFieldEnum = (typeof StockMarketHistoryRangeScalarFieldEnum)[keyof typeof StockMarketHistoryRangeScalarFieldEnum]
 
 
 export const SortOrder = {

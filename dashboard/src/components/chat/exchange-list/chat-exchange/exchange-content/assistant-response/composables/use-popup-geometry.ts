@@ -1,17 +1,16 @@
 import { computed } from 'vue';
 
-import { clampRectToViewport } from './helpers/clamp-rect-to-viewport.helper';
-import { trackPointerGesture } from './helpers/track-pointer-gesture.helper';
+import type { ResizeDirection } from '@/types/resize-direction.model';
+
+import { clampRectToViewport } from './helpers/ui/clamp-rect-to-viewport.helper';
+import { trackPointerGesture } from './helpers/ui/track-pointer-gesture.helper';
 import {
   floatingPopupRect,
-  type PopoutAnchor,
   popoutAnchor,
   rememberFloatingPopupRect,
 } from './popout-settings.state';
+import type { PopoutAnchor } from './popout-settings.state.types';
 import { floatingPopupOpacity } from './video-playback.state';
-
-/** Edges and corners the popup can be resized from. */
-export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 const MIN_POPUP_WIDTH_PX = 240;
 const MIN_POPUP_HEIGHT_PX = 160;

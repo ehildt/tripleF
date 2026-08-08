@@ -10,7 +10,7 @@ const meta = {
   parameters: {
     docs: {
       description: {
-        component: 'Renders a user message as plain text.',
+        component: 'Renders a user message, parsed as markdown.',
       },
     },
   },
@@ -28,7 +28,15 @@ type Story = StoryObj<typeof meta>;
 /** Default plain-text user message. */
 export const Default: Story = {};
 
-/** User message containing text that looks like HTML. */
+/** User message with markdown formatting. */
+export const Markdown: Story = {
+  args: {
+    content:
+      'Compare **Option A** vs *Option B*:\n\n1. Cost\n2. Performance\n\nSee https://example.com for details.',
+  },
+};
+
+/** User message containing text that looks like HTML — stays escaped. */
 export const EscapedMarkup: Story = {
   args: {
     content:

@@ -2,9 +2,9 @@ import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import type { LoggerOptions } from 'pino';
 import pino from 'pino';
 
-export const PINO_LOGGER_OPTIONS = Symbol('PINO_LOGGER_OPTIONS');
+import type { PinoLogMethod } from './pino-logger.service.types.js';
 
-type PinoLogMethod = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export const PINO_LOGGER_OPTIONS = Symbol('PINO_LOGGER_OPTIONS');
 
 @Injectable()
 export class PinoLoggerService implements LoggerService {

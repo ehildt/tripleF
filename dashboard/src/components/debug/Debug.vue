@@ -1,24 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue';
-
-import { useFrozenReadSnapshot } from '../../composables/use-frozen-read-snapshot';
 import { useDebugStore } from '../../stores/debug';
 import type { DebugResult } from '../../types/debug.model';
 import PanelEmptyState from '../shared/ui/panel-empty-state/PanelEmptyState.vue';
 import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
-import {
-  buildFilteredDebugResults,
-  type DebugResultFilter,
-} from './helpers/build-filtered-debug-results.helper';
+import { useDebugFilters } from './composables/use-debug-filters.composable';
 import RequestList from './request-list/RequestList.vue';
 import HeaderMenu from './shared/ui/header-menu/HeaderMenu.vue';
+import type { DebugProps } from './Debug.types';
 
-const props = defineProps<{
-  results: DebugResult[];
-  selectedResult: DebugResult | null;
-}>();
+const props = defineProps<DebugProps>();
 
 const emit = defineEmits<{
   (e: 'clear'): void;
@@ -28,47 +20,15 @@ const emit = defineEmits<{
 
 const debugStore = useDebugStore();
 
-/** Composable-local state: type filter, text search, and hide-read flag. */
-const filter = ref<DebugResultFilter>('all');
-const search = ref('');
-const hideRead = ref(false);
-
-/**
- * Clicking an unread row marks it read immediately (badge counter, row
- * styling) but must not reshuffle the list under the user's cursor — the
- * unread-first sort and the hide-read filter read from a frozen snapshot
- * that refreshes on tab revisit and on explicit view changes only.
- */
-const { frozenReadKeys, refreshReadSnapshot } =
-  useFrozenReadSnapshot<DebugResult>({
-    items: toRef(props, 'results'),
-    itemKey: (result) => result.id,
-    isItemRead: (result) => debugStore.isDebugRead(result.id),
-  });
-
-watch([filter, search, hideRead], refreshReadSnapshot);
-
-const filteredResults = computed(() =>
-  buildFilteredDebugResults(props.results, {
-    filter: filter.value,
-    hideRead: hideRead.value,
-    search: search.value,
-    isRead: (id) => frozenReadKeys.value.has(id),
-  }),
-);
-
-const hasHiddenRead = computed(
-  () =>
-    hideRead.value && props.results.some((r) => debugStore.isDebugRead(r.id)),
-);
-
-const httpCount = computed(
-  () => props.results.filter((r) => r.type === 'http').length,
-);
-
-const socketCount = computed(
-  () => props.results.filter((r) => r.type === 'socket').length,
-);
+const {
+  filter,
+  search,
+  hideRead,
+  filteredResults,
+  hasHiddenRead,
+  httpCount,
+  socketCount,
+} = useDebugFilters(props);
 
 function select(result: DebugResult) {
   emit('markRead', result.id);

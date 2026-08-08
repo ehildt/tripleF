@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Eye, EyeOff, Pause, Play, Repeat, Square } from '@lucide/vue';
 
+import Marquee from '../../../shared/ui/marquee/Marquee.vue';
 import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 
 withDefaults(
@@ -59,8 +60,8 @@ const emit = defineEmits<{
       <Tooltip
         :text="
           autoplayEnabled
-            ? 'Autoplay on: the next video starts when one ends'
-            : 'Autoplay off'
+            ? $t('common.autoplayOnHint')
+            : $t('common.autoplayOff')
         "
       >
         <button
@@ -79,8 +80,8 @@ const emit = defineEmits<{
       <Tooltip
         :text="
           popoutHidden
-            ? 'Popup hidden while playlist videos play'
-            : 'Show popup while playlist videos play'
+            ? $t('common.popupHiddenHint')
+            : $t('common.showPopupHint')
         "
       >
         <button
@@ -102,22 +103,11 @@ const emit = defineEmits<{
       </Tooltip>
     </div>
 
-    <div
+    <Marquee
       v-if="showNowPlaying && hasActivePlayback && nowPlayingTitle"
       class="playlist-transport-bar__now-playing"
-    >
-      <div class="playlist-transport-bar__now-playing-track">
-        <span class="playlist-transport-bar__now-playing-text">
-          {{ nowPlayingTitle }}
-        </span>
-        <span
-          class="playlist-transport-bar__now-playing-text"
-          aria-hidden="true"
-        >
-          {{ nowPlayingTitle }}
-        </span>
-      </div>
-    </div>
+      :text="nowPlayingTitle"
+    />
   </div>
 </template>
 
@@ -176,40 +166,9 @@ const emit = defineEmits<{
 
 .playlist-transport-bar__now-playing {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-
-.playlist-transport-bar__now-playing-track {
-  display: inline-flex;
-  white-space: nowrap;
-  animation: now-playing-scroll 12s linear infinite;
-}
-
-.playlist-transport-bar__now-playing-text {
-  padding-right: var(--spacing-9-5);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   line-height: 1;
   color: var(--color-fg-muted);
-}
-
-/* Endless left-to-right loop: the duplicated span makes the wrap
-   from -50% back to 0 seamless. */
-@keyframes now-playing-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .playlist-transport-bar__now-playing-track {
-    animation: none;
-  }
 }
 </style>

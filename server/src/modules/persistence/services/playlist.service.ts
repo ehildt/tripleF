@@ -3,13 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 import { PlaylistRepository } from './playlist.repository.js';
-
-interface PlaylistSnapshot {
-  name: string;
-  conversationId: string;
-  videos: unknown[];
-  updatedAt?: Date;
-}
+import type { PlaylistSnapshot } from './playlist.service.types.js';
 
 @Injectable()
 export class PlaylistService {

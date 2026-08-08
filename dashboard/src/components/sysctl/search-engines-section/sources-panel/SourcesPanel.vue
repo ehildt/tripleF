@@ -6,7 +6,9 @@
  * against the hostname. Changes apply to new requests on save (change).
  */
 import { Ban, ThumbsUp } from '@lucide/vue';
-import { ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
+
+import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
 import type { SourcesConfig } from '../../sysctl-config.model';
 import { parseSourceList } from './helpers/parse-source-list.helper';
@@ -20,16 +22,29 @@ const emit = defineEmits<{
     e: 'patch',
     payload: { key: 'preferred' | 'blocked'; value: string[] },
   ): void;
+  (e: 'reset', key: 'preferred' | 'blocked'): void;
 }>();
 
 const preferredDraft = ref('');
 const blockedDraft = ref('');
+const preferredInput = ref<HTMLTextAreaElement>();
+const blockedInput = ref<HTMLTextAreaElement>();
+
+/** Grow the textarea with its content until it hits max-height, then scroll. */
+function autoResize(el: HTMLTextAreaElement | undefined) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight, 256)}px`;
+}
 
 watch(
-  () => props.sources,
-  (sources) => {
-    preferredDraft.value = (sources?.preferred ?? []).join('\n');
-    blockedDraft.value = (sources?.blocked ?? []).join('\n');
+  () => [props.sources?.preferred, props.sources?.blocked],
+  async ([preferred, blocked]) => {
+    preferredDraft.value = (preferred ?? []).join('\n');
+    blockedDraft.value = (blocked ?? []).join('\n');
+    await nextTick();
+    autoResize(preferredInput.value);
+    autoResize(blockedInput.value);
   },
   { immediate: true },
 );
@@ -56,8 +71,13 @@ function save(key: 'preferred' | 'blocked') {
             {{ $t('common.sourcesPreferredHint') }}
           </span>
         </div>
+        <ResetButton
+          :title="$t('common.resetPreferredSources')"
+          @click="emit('reset', 'preferred')"
+        />
       </div>
       <textarea
+        ref="preferredInput"
         v-model="preferredDraft"
         name="preferred-sources"
         class="sources-panel__input"
@@ -65,6 +85,7 @@ function save(key: 'preferred' | 'blocked') {
         placeholder="bbc.com&#10;arstechnica.com"
         autocomplete="off"
         spellcheck="false"
+        @input="autoResize(preferredInput)"
         @change="save('preferred')"
       />
     </div>
@@ -82,8 +103,13 @@ function save(key: 'preferred' | 'blocked') {
             {{ $t('common.sourcesBlockedHint') }}
           </span>
         </div>
+        <ResetButton
+          :title="$t('common.resetBlockedSources')"
+          @click="emit('reset', 'blocked')"
+        />
       </div>
       <textarea
+        ref="blockedInput"
         v-model="blockedDraft"
         name="blocked-sources"
         class="sources-panel__input"
@@ -91,6 +117,7 @@ function save(key: 'preferred' | 'blocked') {
         placeholder="*.pinterest.com&#10;/^lh\d+\.googleusercontent\.com$/"
         autocomplete="off"
         spellcheck="false"
+        @input="autoResize(blockedInput)"
         @change="save('blocked')"
       />
     </div>
@@ -100,25 +127,26 @@ function save(key: 'preferred' | 'blocked') {
 <style scoped>
 .sources-panel {
   display: flex;
-  gap: var(--spacing-1);
+  gap: var(--spacing-3);
   padding: var(--spacing-1);
 }
 
 .sources-panel__card {
   flex: 1;
+  gap: var(--spacing-1);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-primary);
+  background-color: color-mix(in srgb, var(--color-fg-muted) 10%, transparent);
 }
 
 .sources-panel__card:hover {
-  border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
+  filter: brightness(1.08);
 }
 
 /* Header row (field-card look): icon tile + label + description */
 .sources-panel__header {
+  background-color: var(--color-bg-tertiary);
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
@@ -166,17 +194,18 @@ function save(key: 'preferred' | 'blocked') {
 
 .sources-panel__input {
   width: 100%;
-  min-height: 6rem;
+  max-height: 16rem;
   padding: var(--spacing-2) var(--spacing-3);
   border: none;
-  border-top: 1px solid var(--color-divider);
-  background: transparent;
+
   color: var(--color-fg-primary);
   font-family: var(--font-mono);
   font-size: 0.75rem;
   line-height: 1.5;
   outline: none;
   resize: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sources-panel__input::placeholder {

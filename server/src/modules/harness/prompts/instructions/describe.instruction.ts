@@ -27,7 +27,7 @@ Required fields:
 - sources: an array of source objects. Empty array unless tool results provide real sources.
 - galleryTitle: optional title for the image gallery (e.g. "Reference images").
 - galleryItems: an array containing the uploaded image and any cloud images from availableImages that were used to verify the description. Each entry MUST include imageUrl, imageAlt, title, and caption.
-- note: optional note shown to the user. Required when cloud images are included.
+- note: a short note shown to the user. Include it whenever cloud reference images were used — it tells the user those images are attached in the Files panel.
 
 FINAL REMINDER:
 - Base everything strictly on what is visible in the image.
@@ -63,7 +63,7 @@ Required fields:
 - sources: an array of source objects. Empty array unless tool results provide real sources.
 - galleryTitle: optional title for the image gallery (e.g. "Reference images").
 - galleryItems: an array containing the uploaded image and any cloud images from availableImages that were used to verify the description. Each entry MUST include imageUrl, imageAlt, title, and caption.
-- note: optional note shown to the user. Required when cloud images are included.
+- note: a short note shown to the user. Include it whenever cloud reference images were used — it tells the user those images are attached in the Files panel.
 
 FINAL REMINDER:
 - Base everything strictly on what is visible in the image.
@@ -98,7 +98,7 @@ Required fields:
 - sources: an array of source objects. Empty array unless tool results provide real sources.
 - galleryTitle: optional title for the image gallery (e.g. "Reference images").
 - galleryItems: an array containing the uploaded image and any cloud images from availableImages that were used to verify the description. Each entry MUST include imageUrl, imageAlt, title, and caption.
-- note: optional note shown to the user. Required when cloud images are included.
+- note: a short note shown to the user. Include it whenever cloud reference images were used — it tells the user those images are attached in the Files panel.
 
 FINAL REMINDER:
 - Base everything strictly on what is visible in the image.

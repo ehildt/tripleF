@@ -3,6 +3,12 @@
  * source list. Entries are hostnames (lowercased; pasted URLs are stripped
  * to their host), *.glob patterns, or /slash-wrapped/ hostname regexes kept
  * verbatim when they compile. Anything else is dropped.
+ *
+ * This is the FORGIVING entry point of the source policy: it normalizes
+ * whatever a user pastes. The server keeps the strict mirror of this logic
+ * in `sources-config.adapter.ts` (sourceEntrySchema) as the second gate for
+ * API/env-provided entries, which are expected to be pre-normalized — keep
+ * the two sides' regex/glob/www handling in sync when changing either.
  */
 const HOSTNAME_PATTERN =
   /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;

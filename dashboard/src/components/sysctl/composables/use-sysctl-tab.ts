@@ -1,15 +1,16 @@
 import { ref } from 'vue';
 
-/** Section tabs inside the SysCtl panel. */
-export type SysctlTab =
-  'search-engines' | 'preprocessing' | 'widgets' | 'system';
+import type { SysctlTab } from './use-sysctl-tab.types';
 
 const SYSCTL_TAB_STORAGE_KEY = 'vision-sysctl-tab';
 
 const SYSCTL_TABS: readonly SysctlTab[] = [
   'search-engines',
   'preprocessing',
+  'layouts',
   'widgets',
+  'chat',
+  'interface',
   'system',
 ];
 

@@ -1,33 +1,20 @@
 <script setup lang="ts">
 /**
  * Shared chrome bar for floating media popups: drag handle, title (static or
- * marquee), opacity slider, playlist toggle, and close button.
+ * marquee), opacity toggle (mirror-rectangular icon), playlist toggle, and
+ * close button.
  *
  * The whole bar acts as a drag handle; interactive controls stop pointer
  * events so they never initiate a drag.
  */
-import { ListMinus, ListPlus, Minus, X } from '@lucide/vue';
-import { computed } from 'vue';
+import { ListMinus, ListPlus, Minus, MirrorRectangular, X } from '@lucide/vue';
 
+import Marquee from '../marquee/Marquee.vue';
 import MotionIcon from '../motion-icon/MotionIcon.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
+import type { FloatingMediaBarProps } from './FloatingMediaBar.types';
 
-interface Props {
-  /** Title shown statically or in the marquee. */
-  title?: string;
-  /** Scroll the title when the playlist panel is not visible. */
-  showTitleMarquee?: boolean;
-  /** Player opacity in percent (25–100). */
-  opacityPercent: number;
-  /** Whether the video is already in the playlist. */
-  isInPlaylist: boolean;
-  /** Accessible label/title of the minimize button. */
-  minimizeTitle?: string;
-  /** Accessible label/title of the close button. */
-  closeTitle?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<FloatingMediaBarProps>(), {
   title: '',
   showTitleMarquee: false,
   minimizeTitle: 'Minimize',
@@ -43,16 +30,12 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-/** Fill the slider track with accent up to the current value. */
-const opacitySliderStyle = computed(() => {
-  const fillPercent = ((props.opacityPercent - 25) / 75) * 100;
-  return {
-    background: `linear-gradient(to right, var(--color-accent-primary) ${fillPercent}%, var(--color-bg-tertiary) ${fillPercent}%)`,
-  };
-});
-
-function onOpacityInput(event: Event) {
-  emit('opacityInput', Number((event.target as HTMLInputElement).value));
+/**
+ * The mirror-rectangular icon toggles the popup between opaque (100%) and
+ * translucent (66%); any other leftover value goes back to opaque.
+ */
+function toggleOpacity() {
+  emit('opacityInput', props.opacityPercent >= 100 ? 66 : 100);
 }
 </script>
 
@@ -61,38 +44,39 @@ function onOpacityInput(event: Event) {
     <span v-if="!showTitleMarquee" class="floating-media-bar__title">{{
       title
     }}</span>
-    <span
+    <Marquee
       v-else
       class="floating-media-bar__title floating-media-bar__title--marquee"
-    >
-      <span class="floating-media-bar__marquee-track">
-        <span class="floating-media-bar__marquee-text">{{ title }}</span>
-        <span class="floating-media-bar__marquee-text" aria-hidden="true">{{
-          title
-        }}</span>
-      </span>
-    </span>
+      :text="title"
+    />
 
     <span class="floating-media-bar__controls">
       <Tooltip
-        class="floating-media-bar__opacity-slider-tooltip"
+        class="floating-media-bar__opacity-toggle-tooltip"
         :text="$t('common.opacity', { percent: opacityPercent })"
       >
-        <input
-          type="range"
-          class="floating-media-bar__opacity-slider"
-          min="25"
-          max="100"
-          step="1"
-          :value="opacityPercent"
-          :style="opacitySliderStyle"
+        <button
+          type="button"
+          class="floating-media-bar__opacity-toggle"
+          :class="{
+            'floating-media-bar__opacity-toggle--translucent':
+              opacityPercent < 100,
+          }"
           :aria-label="$t('common.popupOpacity', { percent: opacityPercent })"
           @pointerdown.stop
-          @input="onOpacityInput"
-        />
+          @click.stop="toggleOpacity"
+        >
+          <MotionIcon>
+            <MirrorRectangular class="floating-media-bar__opacity-icon" />
+          </MotionIcon>
+        </button>
       </Tooltip>
       <Tooltip
-        :text="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
+        :text="
+          isInPlaylist
+            ? $t('common.removeFromPlaylist')
+            : $t('common.addToPlaylist')
+        "
       >
         <button
           type="button"
@@ -102,7 +86,9 @@ function onOpacityInput(event: Event) {
           }"
           :aria-pressed="isInPlaylist"
           :aria-label="
-            isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
+            isInPlaylist
+              ? $t('common.removeFromPlaylist')
+              : $t('common.addToPlaylist')
           "
           @pointerdown.stop
           @click.stop="emit('togglePlaylist')"
@@ -174,36 +160,10 @@ function onOpacityInput(event: Event) {
 }
 
 /* Marquee mode: the duplicated span makes the wrap from -50% back to 0
-   invisible. */
+   invisible. The Marquee component owns the scroll; this only overrides the
+   static title's ellipsis so the track isn't clipped mid-glyph. */
 .floating-media-bar__title--marquee {
-  display: flex;
-  align-items: center;
   text-overflow: clip;
-}
-
-.floating-media-bar__marquee-track {
-  display: inline-flex;
-  white-space: nowrap;
-  animation: floating-media-bar-scroll 12s linear infinite;
-}
-
-.floating-media-bar__marquee-text {
-  padding-right: var(--spacing-9\.5);
-}
-
-@keyframes floating-media-bar-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .floating-media-bar__marquee-track {
-    animation: none;
-  }
 }
 
 /* Right-aligned icon cluster with equal gap-1 spacing. */
@@ -211,58 +171,9 @@ function onOpacityInput(event: Event) {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
 }
 
-.floating-media-bar__opacity-slider-tooltip {
-  /* The icon buttons carry inner padding around their glyphs on both
-     sides; the track ends flush at its box, so without this margin the
-     playlist icon sits optically closer to the slider than to the close. */
-  margin-right: var(--spacing-1);
-}
-
-.floating-media-bar__opacity-slider {
-  flex-shrink: 0;
-  appearance: none;
-  width: 4.5rem;
-  height: 0.25rem;
-  outline: none;
-  cursor: pointer;
-}
-
-.floating-media-bar__opacity-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 0.66rem;
-  height: 0.66rem;
-  background-color: var(--color-accent-primary);
-  border: 2px solid var(--color-bg-elevated);
-  box-shadow: 0 0 0 1px var(--color-accent-border);
-  transition: transform 0.15s ease;
-}
-
-.floating-media-bar__opacity-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-.floating-media-bar__opacity-slider::-moz-range-track {
-  height: 0.25rem;
-  background: transparent;
-}
-
-.floating-media-bar__opacity-slider::-moz-range-thumb {
-  width: 0.55rem;
-  height: 0.55rem;
-  background-color: var(--color-accent-primary);
-  border: 2px solid var(--color-bg-elevated);
-  box-shadow: 0 0 0 1px var(--color-accent-border);
-  transition: transform 0.15s ease;
-}
-
-.floating-media-bar__opacity-slider::-moz-range-thumb:hover {
-  transform: scale(1.2);
-}
-
-/* Icon buttons: identical square boxes, identical icon sizes. */
+.floating-media-bar__opacity-toggle,
 .floating-media-bar__playlist-toggle,
 .floating-media-bar__minimize,
 .floating-media-bar__close {
@@ -278,10 +189,18 @@ function onOpacityInput(event: Event) {
   transition: color 0.2s ease;
 }
 
-/* Playlist toggle is a quiet nav-style icon like the inline video cards —
-   no glass chip, no backdrop, no box-shadow. */
+/* Playlist and opacity toggles are quiet nav-style icons like the inline
+   video cards — no glass chip, no backdrop, no box-shadow. */
+.floating-media-bar__opacity-toggle:hover,
 .floating-media-bar__playlist-toggle:hover {
   color: var(--color-fg-primary);
+}
+
+/* Translucent mode (66%): the mirror icon turns accent so the popup's
+   current opacity state is visible at a glance. */
+.floating-media-bar__opacity-toggle--translucent,
+.floating-media-bar__opacity-toggle--translucent:hover {
+  color: var(--color-accent-primary);
 }
 
 .floating-media-bar__playlist-toggle--added,
@@ -297,6 +216,7 @@ function onOpacityInput(event: Event) {
   color: var(--color-status-error);
 }
 
+.floating-media-bar__opacity-icon,
 .floating-media-bar__playlist-icon,
 .floating-media-bar__minimize-icon,
 .floating-media-bar__close-icon {

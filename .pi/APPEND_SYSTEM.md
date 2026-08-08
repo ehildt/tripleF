@@ -18,6 +18,7 @@ Pi loads `AGENTS.md` at startup for high-level project context. This project use
 | CSS / styling conventions      | `./skills/css/SKILL.md`           |
 | NestJS / server conventions    | `./skills/nestjs/SKILL.md`        |
 | Linting / type-checking        | `./skills/lint/SKILL.md`          |
+| Localization (i18n)            | `./skills/localization/SKILL.md`  |
 | Official docs / stack overview | `./skills/tech-stack/SKILL.md`    |
 
 Use the relevant skill before implementing framework-specific changes.

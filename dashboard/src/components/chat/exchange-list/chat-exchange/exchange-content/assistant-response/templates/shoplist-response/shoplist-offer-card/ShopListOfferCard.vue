@@ -27,7 +27,7 @@ const ctaLabel = computed(() =>
       <div v-if="offer.imageUrl" class="shoplist-card__thumb">
         <img
           :src="offer.imageUrl"
-          :alt="offer.title || 'Product image'"
+          :alt="offer.title || $t('common.productImage')"
           class="shoplist-card__img"
           loading="lazy"
         />

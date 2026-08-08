@@ -1,0 +1,16 @@
+import { CacheReturnValue } from '@ehildt/nestjs-config-factory/cache-return-value';
+import { Injectable } from '@nestjs/common';
+
+import {
+  EodhdConfig,
+  EodhdConfigAdapter,
+  EodhdConfigSchema,
+} from './eodhd-config.adapter.js';
+
+@Injectable()
+export class EodhdConfigService {
+  @CacheReturnValue(EodhdConfigSchema)
+  get config(): EodhdConfig {
+    return EodhdConfigAdapter();
+  }
+}

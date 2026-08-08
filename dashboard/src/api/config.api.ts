@@ -1,11 +1,5 @@
+import type { SessionConfig } from '../types/session-config.model';
 import { getApiUrl } from './api-url';
-
-export interface SessionConfig {
-  sessionId: string;
-  selectedModel?: string | null;
-  preprocessing?: Record<string, unknown> | null;
-  providerOverrides?: Record<string, unknown> | null;
-}
 
 export async function fetchConfig(
   sessionId: string,

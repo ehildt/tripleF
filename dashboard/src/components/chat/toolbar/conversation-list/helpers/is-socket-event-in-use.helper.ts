@@ -1,8 +1,4 @@
-interface SocketEventConsumer {
-  id: string;
-  event?: string;
-  subscriptions?: { event: string }[];
-}
+import type { SocketEventConsumer } from './is-socket-event-in-use.helper.types';
 
 /**
  * True when the socket event is still used on any room: by another

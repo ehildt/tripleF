@@ -1,53 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
-import type {
-  HarnessResponseData,
-  ShopOffer,
-  VideoGalleryItem,
-} from '@/types/harness-response-data.model';
-
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import { priceNumeric } from '../../shared/helpers/price-numeric.helper';
+import { useProductResponseData } from './composables/use-product-response-data.composable';
 import ProductBanner from './product-banner/ProductBanner.vue';
 import ProductProsCons from './product-pros-cons/ProductProsCons.vue';
 import ProductStatHighlights from './product-stat-highlights/ProductStatHighlights.vue';
 import ShopOffersSection from './shop-offers-section/ShopOffersSection.vue';
+import type { ProductResponseProps } from './ProductResponse.types';
 
-const props = defineProps<{ data: HarnessResponseData }>();
+const props = defineProps<ProductResponseProps>();
 
-const offers = computed<ShopOffer[]>(() => {
-  if (!props.data.shopOffers?.length) return [];
-  return [...props.data.shopOffers].sort(
-    (a, b) => priceNumeric(a.price) - priceNumeric(b.price),
-  );
-});
-
-/** Product-review videos, capped at 3. */
-const videos = computed<VideoGalleryItem[]>(() =>
-  (props.data.videoGalleryItems ?? []).slice(0, 3),
-);
-
-/** Total number of product images (banner + gallery). */
-const imageCount = computed(
-  () =>
-    (props.data.heroImageUrl ? 1 : 0) + (props.data.galleryItems?.length ?? 0),
-);
-
-const hasContent = computed(
-  () =>
-    Boolean(props.data.title) ||
-    offers.value.length > 0 ||
-    (props.data.keyPoints?.length ?? 0) > 0,
-);
+const { offers, videos, imageCount, hasContent } =
+  useProductResponseData(props);
 </script>
 
 <template>
   <section v-if="hasContent" class="product">
     <!-- Full-width product banner with an always-visible rating overlay -->
     <ProductBanner
-      :category="data.category"
       :title="data.title"
       :subtitle="data.subtitle"
       :image-url="data.heroImageUrl"

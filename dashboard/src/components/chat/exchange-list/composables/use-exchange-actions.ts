@@ -1,12 +1,7 @@
 import { useConversationStore } from '@/stores/conversation';
 
 import { useBranchExchange } from '../../composables/use-branch-exchange';
-
-export interface ExchangeActions {
-  retryExchange: (exchangeId: string) => void;
-  deleteExchange: (exchangeId: string) => void;
-  branchExchange: (exchangeId: string) => void;
-}
+import type { ExchangeActions } from './use-exchange-actions.types';
 
 /**
  * Wire the orchestrator to the conversation store: delete, retry, and branch an

@@ -83,7 +83,9 @@ function onBlur() {
         type="button"
         class="playlist-menu-item__edit"
         :class="{ 'playlist-menu-item__edit--active': isEditing }"
-        :aria-label="isEditing ? 'Finish editing' : 'Rename playlist'"
+        :aria-label="
+          isEditing ? $t('common.finishEditing') : $t('common.renamePlaylist')
+        "
         @mousedown.prevent
         @click="isEditing ? finishEditing() : startEditing()"
       >

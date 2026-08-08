@@ -41,6 +41,13 @@ describe('buildExchangeMetaPills', () => {
     expect(buildExchangeMetaPills(data)).toEqual([{ text: 'Staff Writer' }]);
   });
 
+  it('falls back to dateline alone when byline is missing (no undefined)', () => {
+    const data: HarnessResponseData = { dateline: '2026-08-11, Deutschland' };
+    expect(buildExchangeMetaPills(data)).toEqual([
+      { text: '2026-08-11, Deutschland' },
+    ]);
+  });
+
   it('omits absent fields', () => {
     const data: HarnessResponseData = { category: 'News' };
     expect(buildExchangeMetaPills(data)).toEqual([

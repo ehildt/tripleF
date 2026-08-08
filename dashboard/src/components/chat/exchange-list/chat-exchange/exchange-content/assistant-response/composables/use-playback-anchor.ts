@@ -1,25 +1,17 @@
-import {
-  type ComponentPublicInstance,
-  computed,
-  onMounted,
-  onUnmounted,
-  type Ref,
-  ref,
-} from 'vue';
+import { computed, onMounted, onUnmounted, type Ref, ref } from 'vue';
 
-import { findAnchorScrollRoot } from './helpers/find-anchor-scroll-root.helper';
-import { toEmbedUrl } from './helpers/to-embed-url.helper';
+import { toEmbedUrl } from './helpers/media/to-embed-url.helper';
+import { findAnchorScrollRoot } from './helpers/ui/find-anchor-scroll-root.helper';
 import {
-  type AnchorCandidate,
   dockedAnchorElement,
   engagePlayback,
   registerAnchorCandidate,
   setAnchorCandidateInView,
   unregisterAnchorCandidate,
 } from './playback-anchor.state';
+import type { AnchorCandidate } from './playback-anchor.state.types';
+import type { TemplateRefTarget } from './use-playback-anchor.types';
 import { launchedVideo, launchVideo } from './video-playback.state';
-
-type TemplateRefTarget = Element | ComponentPublicInstance | null;
 
 /**
  * Clearance from the top of the viewport before a figure counts as "in

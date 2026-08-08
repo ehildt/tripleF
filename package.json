@@ -2,7 +2,7 @@
   "name": "@triplef.io/triplef",
   "description": "tripleF (3F) monorepo — an agentic, open-source AI workbench: conversation harness + dashboard, local-first via Ollama or Ollama Cloud.",
   "version": "1.4.1",
-  "packageManager": "pnpm@11.19.0",
+  "packageManager": "pnpm@11.21.0",
   "license": "MIT",
   "author": {
     "email": "eugen.hildt@gmail.com",
@@ -13,10 +13,10 @@
     "ncu:update": "npx npm-check-updates -u --format group"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
-    "eslint": "^10.5.0",
+    "@changesets/cli": "^3.0.0",
+    "eslint": "^10.8.1",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
-    "prettier": "^3.8.4"
+    "prettier": "^3.9.6"
   }
 }

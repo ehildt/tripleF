@@ -3,19 +3,9 @@ import { computed, type ComputedRef, type Ref, watch } from 'vue';
 import { i18n } from '@/i18n/i18n';
 
 import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
+import type { OllamaModel } from '../types/ollama-model.model';
 import { useBlink } from './use-blink';
-
-interface SessionSnapshot {
-  exchanges: {
-    role: string;
-    status: string;
-    promptEvalCount?: number;
-    evalCount?: number;
-  }[];
-  numCtx: string;
-}
-
-import type { OllamaModel } from '../stores/models';
+import type { SessionSnapshot } from './use-chat-context-size.types';
 import type { useToast } from './use-toast';
 
 export function useChatContextSize(

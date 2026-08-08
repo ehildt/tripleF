@@ -4,11 +4,11 @@ import { useConversationStore } from '@/stores/conversation';
 
 import { checkObjectExists } from '../../../../../api/storage.api';
 import {
-  type AttachedFileEntry,
   clearPendingFilesForConversation,
   makeKey,
   pendingFilesByConversation,
 } from '../../../../../composables/attached-files.state';
+import type { AttachedFileEntry } from '../../../../../composables/attached-files.state.types';
 import { hashFile } from '../../../../../utils/hash-file.helper';
 import { createId } from '../../../../../utils/id.helper';
 

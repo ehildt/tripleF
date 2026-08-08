@@ -1,9 +1,6 @@
 import { ref } from 'vue';
 
-export interface DlqLoadingOptions {
-  refetch: () => Promise<unknown>;
-  minLoadingMs?: number;
-}
+import type { DlqLoadingOptions } from './use-dlq-loading.types';
 
 export function useDlqLoading(options: DlqLoadingOptions) {
   const { refetch, minLoadingMs = 3000 } = options;

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 
-import type { ActiveTab } from '../../../../stores/app';
+import type { ActiveTab } from '../../../../types/app.model';
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
-import type { MenuTab } from '../composables/use-menu-tabs';
+import type { MenuTab } from '../composables/use-menu-tabs.types';
 
 defineProps<{
   tabs: readonly MenuTab[];

@@ -9,24 +9,12 @@ import {
 import { buildOllamaHeaders } from '../helpers/build-ollama-headers.helper.js';
 import { isOllamaCloudHost } from '../helpers/is-ollama-cloud-host.helper.js';
 
+import type {
+  ModelOrigin,
+  ShowResult,
+  TaggedModel,
+} from './ollama-models.service.types.js';
 import { OllamaOverridesService } from './ollama-overrides.service.js';
-
-type ModelOrigin = 'local' | 'cloud';
-
-interface ShowResult {
-  capabilities?: string[];
-  model_info?: Record<string, unknown>;
-  details?: {
-    parameter_size?: string;
-    quantization_level?: string;
-  };
-}
-
-interface TaggedModel {
-  name: string;
-  details?: Record<string, unknown>;
-  origin: ModelOrigin;
-}
 
 @Injectable()
 export class OllamaModelsService {

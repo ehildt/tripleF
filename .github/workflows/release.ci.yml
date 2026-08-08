@@ -18,97 +18,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-        with:
-          run_install: false
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - uses: actions/cache@v6
-        with:
-          path: .pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - run: pnpm -r install --frozen-lockfile
-
-      - name: Lint — Server
-        run: |
-          cd server
-          pnpm lint
-          pnpm depcruise
-          pnpm lint:unused
-
-      - name: Lint — Dashboard
-        run: |
-          cd dashboard
-          pnpm lint
-          pnpm depcruise
-          pnpm lint:unused
-
-      - name: Build — Server
-        run: |
-          cd server
-          pnpm build:prod
-
-      - name: Build — Dashboard
-        run: |
-          cd dashboard
-          pnpm build
-
-      - name: Test — Server
-        run: |
-          cd server
-          pnpm test:cov
-
-      - name: Test — Dashboard
-        run: |
-          cd dashboard
-          pnpm test:cov
-
-      - name: Upload Coverage — Server
-        if: github.event_name == 'push'
-        uses: codecov/codecov-action@v7
-        with:
-          fail_ci_if_error: true
-          flags: server
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload Coverage — Dashboard
-        if: github.event_name == 'push'
-        uses: codecov/codecov-action@v7
-        with:
-          fail_ci_if_error: true
-          flags: dashboard
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build Artifact — Server
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v7
-        with:
-          name: server-dist
-          path: server/dist/
-
-      - name: Build Artifact — Dashboard
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v7
-        with:
-          name: dashboard-dist
-          path: dashboard/dist/
+  # Lint, build and test are shared with the non-release pipeline via ci.yml.
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      production: true
+      upload-coverage: true
+      upload-artifacts: true
+    secrets: inherit
 
   repo-update:
     if: github.event_name == 'push'
-    needs: build-test
+    needs: ci
     runs-on: ubuntu-latest
 
     steps:
@@ -161,7 +82,7 @@ jobs:
 
   wiki:
     if: github.event_name == 'push'
-    needs: build-test
+    needs: ci
     runs-on: ubuntu-latest
 
     steps:

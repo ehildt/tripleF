@@ -21,7 +21,6 @@ direct link per offer. No galleries, videos, or review sections.
   argTypes: { data: { control: 'object' } },
   args: {
     data: {
-      category: 'Tech',
       title: 'Sony WH-1000XM5 Wireless Headphones',
       subtitle: 'Current purchase options',
       shortDescription: 'The MediaMarkt offer dropped €30 since last week.',
@@ -80,7 +79,6 @@ export const Empty: Story = { args: { data: {} } };
 export const SingleOffer: Story = {
   args: {
     data: {
-      category: 'Tech',
       title: 'Sony WH-1000XM5 Wireless Headphones',
       subtitle: 'Current purchase options',
       shopOffers: [

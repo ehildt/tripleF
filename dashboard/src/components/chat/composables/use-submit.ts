@@ -10,38 +10,19 @@ import { clearPendingFilesForConversation } from '@/composables/attached-files.s
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
-import type { UploadedImage } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 import { useModelsStore } from '@/stores/models';
-import type { SocketProvider } from '@/types/socket-provider.model';
+import type {
+  ConversationMetadata,
+  ConversationMetadataImage,
+} from '@/types/form-query-params.model';
 import { buildFormData } from '@/utils/build-form-data.helper';
 import { buildHeaders } from '@/utils/build-headers.helper';
-import {
-  buildQueryParams,
-  type ConversationMetadata,
-  type ConversationMetadataImage,
-} from '@/utils/build-query-params.helper';
+import { buildQueryParams } from '@/utils/build-query-params.helper';
 import { handleResponse } from '@/utils/handle-response.helper';
 import { requireModel } from '@/utils/require-model.helper';
 
-interface UseSubmitOptions {
-  socketProvider: SocketProvider;
-  isEventConnected: (eventName: string) => boolean;
-  isRoomConnected: (eventName: string, roomName: string) => boolean;
-}
-
-type SendRequestOptions = {
-  model: string;
-  requestId: string;
-  sid: string;
-  room: string;
-  event: string;
-  params: URLSearchParams;
-  formData: FormData;
-  socket: ReturnType<SocketProvider['getSocket']>;
-  referencedImages: UploadedImage[];
-  conversationId: string;
-};
+import type { SendRequestOptions, UseSubmitOptions } from './use-submit.types';
 
 export function useSubmit(options: UseSubmitOptions) {
   const { socketProvider, isEventConnected, isRoomConnected } = options;
@@ -196,7 +177,7 @@ export function useSubmit(options: UseSubmitOptions) {
     }
   }
 
-  function buildSubmitContext(): {
+  async function buildSubmitContext(): Promise<{
     sid: string;
     conversationId: string;
     model: string;
@@ -204,7 +185,14 @@ export function useSubmit(options: UseSubmitOptions) {
     room: string;
     requestId: string;
     userContent: string;
-  } | null {
+  } | null> {
+    if (!conversationModel.value) {
+      // Cold-start guard: the models catalog may still be loading (or the
+      // app-load fetch may have failed). Wait for it before failing with
+      // "model required" so a prompt submitted right after reload never
+      // hard-fails on the race.
+      await modelsStore.whenModelsReady();
+    }
     if (!requireModel(conversationModel, toast)) {
       loading.value = false;
       return null;
@@ -254,7 +242,7 @@ export function useSubmit(options: UseSubmitOptions) {
   }
 
   async function submitRest() {
-    const ctx = buildSubmitContext();
+    const ctx = await buildSubmitContext();
     if (!ctx) return;
 
     const { sid, conversationId, model, event, room, requestId, userContent } =

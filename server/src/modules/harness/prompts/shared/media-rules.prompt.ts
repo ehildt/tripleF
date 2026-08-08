@@ -1,12 +1,12 @@
 export const MEDIA_RULES = `MEDIA RULES
-- Media-list templates (imagelist, videolist, shoplist) have NO hero media — their mode rules override every hero-related rule below.
+- Media-list templates (imagelist, videolist, shoplist) have NO hero media, and product has an image-only banner with NO hero video — their mode rules override every hero-related rule below.
 - Use every provided image/video URL whenever applicable.
 - The system removes duplicate media by content hash (images) and canonical provider ID or title (videos). Do not worry if the raw tool results contain duplicates; choose one representative for each unique piece of content.
 - heroVideoUrl takes priority over heroImageUrl when both exist.
 - Fill galleryItems and videoGalleryItems from the supplied media without exceeding imageTargetCount or videoTargetCount.
 - Gallery entries require all mandatory fields.
 - Prefer high-resolution images.
-- Reject untrusted image hosts, thumbnails, private URLs, data URIs, tracking assets, and unsupported video providers.
+- Reject untrusted image hosts, thumbnails, private URLs, data URIs, and tracking assets. Uploaded user images served from our own storage are always trusted. Videos must come from embeddable providers only: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files.
 - URL fields must point to real public webpages, never scripts, APIs, assets, or tracking endpoints.
 - Images and videos are independent; never omit image galleries because videos exist.
 - Every image MUST have a non-empty imageAlt and a non-empty title. If the tool result provides none, derive a concise title and alt from the query/topic/context.
@@ -18,8 +18,8 @@ export const MEDIA_RULES = `MEDIA RULES
 MEDIA POOLS
 - Images come only from the image pool: imageSearch results (and uploaded user images on image tasks). Every image URL in heroImageUrl, galleryItems, image lists, and relatedStories thumbnails must come from the image pool — never from news thumbnails, article pages, or source links.
 - heroVideoUrl may take the best vetted video from videoSearch or from links inside web/news article results; videoGalleryItems and video list items must come from videoSearch results only.
-- shopping results fill shopOffers; reviews results fill reviewSummary and seller-reputation notes; places results only inform local-availability notes.
-- webSearch, webFetch, and news results provide general information: prose, sources, cards, and relatedStories links.
+- shopping results fill shopOffers; reviews and places results only inform business-reputation or local-availability notes in prose — no dedicated output field exists for them.
+- *WebSearch, webFetch, and news results provide general information: prose, sources, cards, and relatedStories links.
 - Spend each pool entry at most once: when a tool result is used in one field it must not reappear in any other field.
 
 ASIDE ELEMENTS

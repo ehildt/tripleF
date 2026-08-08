@@ -6,10 +6,11 @@ import {
   extractShownMediaKeys,
   IMAGE_FINGERPRINT_PREFIX,
   IMAGE_STORAGE_HASH_PREFIX,
-  type ShownMediaKeySourceOptions,
-} from '../helpers/extract-shown-media-keys.helper.js';
-import { extractStorageHash } from '../helpers/extract-storage-hash.helper.js';
-import { videoUrlKeys } from '../helpers/video-url-keys.helper.js';
+} from '../helpers/media/extract-shown-media-keys.helper.js';
+import { extractStorageHash } from '../helpers/media/extract-storage-hash.helper.js';
+import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
+
+import type { RecordShownMediaParams } from './shown-media.service.types.js';
 
 /** Registry keys for one conversation, split for candidate matching. */
 export interface ShownMediaKeys {
@@ -18,14 +19,6 @@ export interface ShownMediaKeys {
   /** Canonical video keys. */
   videos: Set<string>;
 }
-
-type RecordShownMediaParams = {
-  sessionId: string | undefined;
-  conversationId: string | undefined;
-  requestId: string;
-  data: Record<string, unknown> | undefined;
-  sources: ShownMediaKeySourceOptions;
-};
 
 /**
  * Orchestrates the shown-media registry for the harness pipeline: records

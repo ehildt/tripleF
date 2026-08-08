@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TOOL_DESCRIPTIONS,
   TOOL_NAMES,
-} from '../../helpers/tool-registry.constants.js';
+} from '../../helpers/tools/tool-registry.constants.js';
 
 import {
   formatToolAvailabilityCatalog,

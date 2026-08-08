@@ -1,29 +1,20 @@
 import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
 import { NOISE_RULES } from './shared/noise-rules.prompt.js';
-import { buildOutputContract } from './shared/output-contract.prompt.js';
-import { PRECEDENCE_RULES } from './shared/precedence-rules.prompt.js';
-import { SEARCH_POLICY } from './shared/search-policy.prompt.js';
 import { SECURITY_RULES } from './shared/security-rules.prompt.js';
 
 /**
- * Legacy base system prompt used by the direct chat helper.
- * @deprecated Use buildContentSystemPrompt from content-system.prompt.ts for new code.
+ * Base system message attached to every harness request. It carries only the
+ * step-agnostic rules: the output contract, precedence order, and per-template
+ * media rules are added by the respond step per selected template, and the
+ * search/query rules by the execute step — repeating (or pre-empting) them
+ * here made structured responses leak Markdown guidance intended for text.
  */
 export const buildBaseSystemPrompt = ({
   hasImages = false,
 }: {
   hasImages?: boolean;
 }) => {
-  return [
-    buildOutputContract('text'),
-    SECURITY_RULES,
-    PRECEDENCE_RULES,
-    NOISE_RULES,
-    hasImages ? MULTIMODAL_POLICY : '',
-    hasImages ? SEARCH_POLICY : '',
-    'FINAL REMINDER:',
-    '- Structured templates require a single valid JSON object; text is free-form and allows Markdown. No explanations.',
-  ]
-    .filter(Boolean)
-    .join('\n\n');
+  return `${SECURITY_RULES}\n\n${NOISE_RULES}${
+    hasImages ? `\n\n${MULTIMODAL_POLICY}` : ''
+  }`;
 };

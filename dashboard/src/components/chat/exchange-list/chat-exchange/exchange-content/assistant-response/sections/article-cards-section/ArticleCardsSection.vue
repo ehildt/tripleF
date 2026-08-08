@@ -3,9 +3,13 @@ import { computed } from 'vue';
 
 import type { ArticleCard } from '@/types/harness-response-data.model.js';
 
+import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
+
 const props = defineProps<{
   title?: string;
   items?: ArticleCard[];
+  /** First card spans the full grid row (ar5), set by the art direction. */
+  spans?: boolean;
 }>();
 
 const validItems = computed(() =>
@@ -22,8 +26,8 @@ const validItems = computed(() =>
 
 <template>
   <section v-if="validItems.length" class="cards">
-    <h3 v-if="title">{{ title }}</h3>
-    <div class="cards-grid">
+    <SectionTitle v-if="title" :title="title" />
+    <div class="cards-grid" :class="{ 'cards-grid--spans': spans }">
       <article
         v-for="(card, index) in validItems"
         :key="index"
@@ -46,10 +50,6 @@ const validItems = computed(() =>
 </template>
 
 <style scoped>
-.cards > h3 {
-  margin-bottom: 0.5em;
-}
-
 .cards-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -61,12 +61,17 @@ const validItems = computed(() =>
   .cards-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* ar5 merged block: the lead card takes a full-width row. */
+  .cards-grid--spans .card:first-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .card {
   border: 1px solid var(--color-divider);
   padding: 0.6em 0.75em;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
   transition:
     border-color 0.2s ease,
     background 0.2s ease;
@@ -77,7 +82,7 @@ const validItems = computed(() =>
   background: color-mix(
     in srgb,
     var(--color-accent-primary) 4%,
-    var(--color-bg-secondary)
+    var(--color-bg-tertiary)
   );
 }
 

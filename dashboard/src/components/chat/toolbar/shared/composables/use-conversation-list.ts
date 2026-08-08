@@ -85,9 +85,9 @@ export function useConversationList() {
     conversation.subscriptions = [];
   }
 
-  function deleteConversation(id: string) {
+  async function deleteConversation(id: string) {
     releaseConversationSockets(id);
-    conversationStore.deleteCurrentConversation(id);
+    await conversationStore.deleteCurrentConversation(id);
   }
 
   /**

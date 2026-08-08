@@ -25,6 +25,7 @@ Use the relevant skill before implementing framework-specific changes:
 - `nestjs` — NestJS modules, controllers, services, processors, helpers, DTOs.
 - `lint` — ESLint, TypeScript, depcheck, depcruise.
 - `playwright` — Playwright MCP browser tools for AI models (sidecar ops, browser_* tools, debugging).
+- `localization` — i18n conventions: Zod schema, `language` key, auto-discovery, and the en-first test workflow.
 - `tech-stack` — Official docs links and project stack overview.
 
 ## Working Rules

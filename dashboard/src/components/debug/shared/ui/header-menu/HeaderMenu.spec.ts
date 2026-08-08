@@ -16,7 +16,7 @@ describe('HeaderMenu', () => {
         socketCount: 3,
       },
     });
-    expect(wrapper.text()).toContain('ALL');
+    expect(wrapper.text()).toContain('All');
     expect(wrapper.text()).toContain('HTTP');
     expect(wrapper.text()).toContain('SOCKET');
   });
@@ -75,7 +75,7 @@ describe('HeaderMenu', () => {
 
     const allButton = wrapper
       .findAll('button')
-      .find((b) => b.text().includes('ALL'));
+      .find((b) => b.text().includes('All'));
     expect((allButton!.element as HTMLButtonElement).disabled).toBe(true);
 
     const buttons = wrapper.findAll('button');

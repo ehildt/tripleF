@@ -1,9 +1,6 @@
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-export interface DlqPromptMessage {
-  role: string;
-  content: string;
-}
+import type { DlqPromptMessage } from './extract-prompt-messages.helper.types';
 
 function normalizeMessages(raw: unknown): DlqPromptMessage[] {
   if (Array.isArray(raw)) return raw as DlqPromptMessage[];

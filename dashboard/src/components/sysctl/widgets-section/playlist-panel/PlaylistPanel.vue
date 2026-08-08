@@ -24,9 +24,7 @@ import {
 import { computed } from 'vue';
 
 import { hidePopoutPreview } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -34,7 +32,6 @@ import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedTo
 import { i18n } from '@/i18n/i18n';
 
 import {
-  type PlaylistAnchor,
   playlistAnchor,
   playlistAutoClose,
   playlistMode,
@@ -45,9 +42,12 @@ import {
   setPlaylistMode,
   togglePlaylistPreview,
 } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
-
-type PlaylistVertical = 'top' | 'middle' | 'bottom';
-type PlaylistHorizontal = 'left' | 'center' | 'right';
+import type { PlaylistAnchor } from '../../../widgets/floating-playlist/composables/playlist-settings.state.types';
+import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
+import type {
+  PlaylistHorizontal,
+  PlaylistVertical,
+} from './PlaylistPanel.types';
 
 const VERTICAL_OPTIONS = [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -95,30 +95,34 @@ function handlePreviewToggle() {
 </script>
 
 <template>
-  <PanelLayout class="playlist-panel">
-    <CollapsiblePanel id="playlist" :title="$t('common.floatingPlayer')">
-      <template #actions>
-        <PreviewButton
-          :active="playlistPreviewVisible"
-          :title="
-            playlistPreviewVisible
-              ? $t('common.hideExampleFloatingPlayer')
-              : $t('common.showExampleFloatingPlayer')
-          "
-          @click="handlePreviewToggle"
-        />
-        <ResetButton
-          :title="$t('common.resetFloatingPlayerSettingsToDefaults')"
-          @click="resetPlaylistSettings"
-        />
-        <PowerToggle
-          :enabled="floatingEnabled"
-          :title="$t('common.floatPlayerAsAppWindow')"
-          @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
-        />
-      </template>
+  <div class="playlist-panel">
+    <div class="playlist-panel__actions">
+      <PreviewButton
+        :active="playlistPreviewVisible"
+        :title="
+          playlistPreviewVisible
+            ? $t('common.hideExampleFloatingPlayer')
+            : $t('common.showExampleFloatingPlayer')
+        "
+        @click="handlePreviewToggle"
+      />
+      <ResetButton
+        :title="$t('common.resetFloatingPlayerSettingsToDefaults')"
+        @click="resetPlaylistSettings"
+      />
+      <PowerToggle
+        :enabled="floatingEnabled"
+        :title="$t('common.floatPlayerAsAppWindow')"
+        @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
+      />
+    </div>
 
-      <div class="playlist-panel__content">
+    <div class="playlist-panel__group">
+      <SysCtlSectionHeader
+        :icon="LayoutPanelLeft"
+        :title="$t('common.dockingSection')"
+      />
+      <div class="playlist-panel__grid">
         <FieldCard
           :icon="LayoutPanelLeft"
           :label="$t('common.dockingMode')"
@@ -148,7 +152,15 @@ function handlePreviewToggle() {
             />
           </template>
         </FieldCard>
+      </div>
+    </div>
 
+    <div class="playlist-panel__group">
+      <SysCtlSectionHeader
+        :icon="PanelRightClose"
+        :title="$t('common.behaviorSection')"
+      />
+      <div class="playlist-panel__grid">
         <FieldCard
           :icon="PanelRightClose"
           :label="$t('common.autoclose')"
@@ -158,20 +170,53 @@ function handlePreviewToggle() {
           @toggle="setPlaylistAutoClose(!playlistAutoClose)"
         />
       </div>
-    </CollapsiblePanel>
-  </PanelLayout>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.playlist-panel__content {
+.playlist-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+}
+
+.playlist-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: calc(2.25rem + 2 * var(--spacing-2));
+  padding: 0 var(--spacing-3);
+  background:
+    radial-gradient(
+      ellipse 120% 140% at 12% 50%,
+      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 120% 140% at 88% 50%,
+      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-bg-elevated);
+}
+
+.playlist-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.playlist-panel__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--spacing-1);
-  padding: var(--spacing-1);
 }
 
 @media (max-width: 40rem) {
-  .playlist-panel__content {
+  .playlist-panel__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

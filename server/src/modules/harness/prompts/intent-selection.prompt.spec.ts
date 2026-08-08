@@ -35,16 +35,17 @@ describe('buildIntentSelectionPrompt', () => {
     );
     expect(prompt).toContain('"announcements"');
     expect(prompt).toContain('"status"');
-    expect(prompt).toContain('It is NOT a 3-sentence summary');
+    expect(prompt).toContain('It is brief by design');
+    expect(prompt).toContain('in-depth coverage belongs to "article"');
   });
 
   it('includes grouped tools from the enabled list', () => {
     const prompt = buildIntentSelectionPrompt([
-      'webSearch',
+      'serperWebSearch',
       'serperImageSearch',
     ]);
 
-    expect(prompt).toContain('webSearch:');
+    expect(prompt).toContain('serperWebSearch:');
     expect(prompt).toContain('serperImageSearch:');
   });
 

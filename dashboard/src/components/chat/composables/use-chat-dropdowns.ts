@@ -1,13 +1,6 @@
-import type { ComponentPublicInstance } from 'vue';
 import { ref } from 'vue';
 
-export interface DropdownRef {
-  close: () => void;
-}
-
-export type SetDropdownRef = (
-  ref: Element | ComponentPublicInstance | null,
-) => void;
+import type { DropdownRef, SetDropdownRef } from './use-chat-dropdowns.types';
 
 /**
  * Holds the dropdown template refs for the chat action bar and keeps

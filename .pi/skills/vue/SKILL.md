@@ -23,6 +23,8 @@ The full guide with examples and rationale lives in [vue-guide.md](vue-guide.md)
 12. **Every component group has a main orchestrator in the root.** The main component that wires the group together lives as a sibling of the sub-component folders, not inside one of them. The parent folder's name is the kebab-case form of the main orchestrator's name (e.g. `chat/Chat.vue`, `dlq/Dlq.vue`).
 13. **Don't write wrapper functions that rename a field or delegate to a single call.** A function earns its name only if the call site can't already see what it does — branching, default values, side effects, or a meaningful re-shape of the input. Pure rename-wrappers like `function isResultRead(r) { return store.isRead(r.id) }` add indirection without information. Either inline the call at the use site (`store.isRead(r.id)`) or replace the wrapper with a real abstraction (a named `computed`, a Set/Map binding, a `.helper.ts` predicate with its own tests). If you need a _name_ for the result, name the _binding_ — not a one-line function around it.
 14. **Never add barrel files (re-export-only `index.ts`).** Import directly from the file that defines the symbol. A barrel hides where a symbol lives, makes refactors brittle, and is not needed for tree-shaking. The path is the file. See [vue-guide.md §3b](./vue-guide.md#3b-no-barrel-files).
+15. **Props types live in a co-located `.types.ts` file.** No inline `defineProps<{ ... }>()` — extract to a named `XxxProps` interface with JSDoc on each field, in `Xxx.types.ts` next to the component. Composables that derive the component's data import the same props type instead of re-declaring a subset. See [vue-guide.md §1](./vue-guide.md#1-components-presentational-props-in-events-out).
+16. **The orchestrator is thin; template sections become components.** The orchestrator's `<script setup>` is props + store calls that wire child config + one data composable call + template. Every `ref`/`computed`/`watch`/function moves into the composable. Each distinct template block (header, callout, list, panels) becomes a presentational sub-component in its own folder with a story; the orchestrator owns the visibility `v-if`s. See [vue-guide.md §5](./vue-guide.md#5-the-orchestrator-pattern).
 
 ## Folder rules (one-liners)
 
@@ -59,3 +61,6 @@ The Quick Rules and Folder Rules above are the source of truth. Use this checkli
 - [ ] Every component group has a main orchestrator in the root (the group's `Chat.vue` / `Dlq.vue` / …)
 - [ ] The parent folder's name is the kebab-case form of the main orchestrator's name
 - [ ] No new `index.ts` barrel files were added; imports go directly to the file that defines the symbol
+- [ ] Props are typed via a co-located `Xxx.types.ts` — no inline `defineProps<{ ... }>()` types
+- [ ] The orchestrator's script is thin: props type + store wiring + one data composable call
+- [ ] Distinct template blocks are presentational sub-components with their own folder + story; the orchestrator owns the visibility `v-if`s

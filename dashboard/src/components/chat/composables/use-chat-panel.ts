@@ -12,6 +12,10 @@ export type { RightPanelView };
  * including the automatic switches that happen when the active conversation
  * changes or when the available content changes.
  *
+ * Conversation switches land on the new conversation's history tab so its
+ * messages are immediately visible; a conversation without history falls
+ * through to the next available tab.
+ *
  * Tab follow-on-change: whenever a tab's content count changes (a video is
  * added to the playlist, a file is attached, a prompt lands in history),
  * the panel switches to that tab. Conversation switches rebase the counters
@@ -46,12 +50,12 @@ export function useChatPanel(
     () => conversationStore.activeConversationId,
     async () => {
       await nextTick();
-      // Keep the player visible across a conversation switch as long as the
-      // new conversation still has a playlist — don't bounce off to the files
-      // tab just because the view priority changed. An empty new playlist
+      // Switching conversations lands on the new conversation's history so
+      // its messages are immediately visible. A conversation without history
       // falls through to the next available tab.
-      if (rightPanelView.value === 'playlist' && hasPlaylist.value) return;
-      rightPanelView.value = firstAvailableView();
+      rightPanelView.value = hasHistory.value
+        ? 'history'
+        : firstAvailableView();
     },
     { immediate: true },
   );

@@ -1,105 +1,109 @@
 <script setup lang="ts">
-import { MessagesSquare } from '@lucide/vue';
-import { computed, nextTick, ref, watch } from 'vue';
+import {
+  Form,
+  GalleryVerticalEnd,
+  LayersArrowDown,
+  LayersArrowUp,
+  MessagesSquare,
+} from '@lucide/vue';
+import { computed } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
+import { useAppStore } from '@/stores/app';
+import type { ScrollMode } from '@/types/app.model';
+import type { MediaPriority } from '@/types/harness-response-data.model';
 
-import { calcTotalContextPercentage } from '../shared/helpers/calc-token-percent.helper';
-import ContextUsageIndicator from './context-usage-indicator/ContextUsageIndicator.vue';
-import ConversationHeaderActions from './conversation-header-actions/ConversationHeaderActions.vue';
-import ConversationTitleEditor from './conversation-title-editor/ConversationTitleEditor.vue';
+import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 
 const props = defineProps<{
   title: string;
   conversationId: string;
-  count?: number;
 }>();
 
-const emit = defineEmits<{
-  delete: [id: string];
-}>();
+const appStore = useAppStore();
 
-const conversationStore = useConversationStore();
-
-const tokenPercent = computed(() => {
-  const conversation = conversationStore.getConversation(props.conversationId);
-  if (!conversation) return null;
-  return calcTotalContextPercentage(
-    conversation.exchanges,
-    conversation.numCtx ?? '',
-  );
-});
-
-const conversationType = computed(() => {
-  const conversation = conversationStore.getConversation(props.conversationId);
-  return conversation?.type ?? 'temporary';
-});
-
-const editing = ref(false);
-const editTitle = ref('');
-
-watch(
-  () => props.title,
-  (t) => {
-    editTitle.value = t;
-  },
-  { immediate: true },
+const scrollMode = computed(() =>
+  appStore.getConversationScrollMode(props.conversationId),
 );
 
-function startRename() {
-  editing.value = true;
-  nextTick(() => {
-    const input = document.querySelector<HTMLInputElement>(
-      '[data-rename-input]',
-    );
-    input?.focus();
-    input?.select();
-  });
+function toggleScrollMode() {
+  const next: ScrollMode =
+    scrollMode.value === 'carousel' ? 'native' : 'carousel';
+  appStore.setConversationScrollMode(props.conversationId, next);
 }
 
-function commitRename() {
-  if (editTitle.value.trim()) {
-    conversationStore.renameConversation(
-      props.conversationId,
-      editTitle.value.trim(),
-    );
-  }
-  editing.value = false;
-}
+const mediaPriority = computed(() =>
+  appStore.getConversationMediaPriority(props.conversationId),
+);
 
-function onRenameKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter') commitRename();
-  else if (e.key === 'Escape') editing.value = false;
-}
-
-function onDelete() {
-  emit('delete', props.conversationId);
-}
-
-function toggleType() {
-  conversationStore.toggleConversationType(props.conversationId);
+function toggleMediaPriority() {
+  const next: MediaPriority =
+    mediaPriority.value === 'images' ? 'videos' : 'images';
+  appStore.setConversationMediaPriority(props.conversationId, next);
 }
 </script>
 
 <template>
   <div class="chat-conversation-header">
     <MessagesSquare class="chat-conversation-header__icon" />
-    <ConversationTitleEditor
-      v-if="editing"
-      v-model="editTitle"
-      @keydown="onRenameKeydown"
-      @blur="commitRename"
-    />
-    <span v-else class="chat-conversation-header__title">{{ title }}</span>
+    <span class="chat-conversation-header__title">{{ title }}</span>
 
-    <ContextUsageIndicator :percent="tokenPercent" />
+    <Tooltip
+      :text="
+        scrollMode === 'carousel'
+          ? $t('common.scrollModeCarousel')
+          : $t('common.scrollModeNative')
+      "
+    >
+      <button
+        type="button"
+        class="chat-conversation-header__scroll-mode"
+        :aria-label="
+          scrollMode === 'carousel'
+            ? $t('common.scrollModeCarousel')
+            : $t('common.scrollModeNative')
+        "
+        @click="toggleScrollMode"
+      >
+        <MotionIcon>
+          <GalleryVerticalEnd
+            v-if="scrollMode === 'carousel'"
+            class="chat-conversation-header__scroll-mode-icon"
+          />
+          <Form v-else class="chat-conversation-header__scroll-mode-icon" />
+        </MotionIcon>
+      </button>
+    </Tooltip>
 
-    <ConversationHeaderActions
-      :conversation-type="conversationType"
-      @rename="startRename"
-      @delete="onDelete"
-      @toggle-type="toggleType"
-    />
+    <Tooltip
+      :text="
+        mediaPriority === 'images'
+          ? $t('common.mediaPriorityImages')
+          : $t('common.mediaPriorityVideos')
+      "
+    >
+      <button
+        type="button"
+        class="chat-conversation-header__media-priority"
+        :aria-label="
+          mediaPriority === 'images'
+            ? $t('common.mediaPriorityImages')
+            : $t('common.mediaPriorityVideos')
+        "
+        @click="toggleMediaPriority"
+      >
+        <MotionIcon>
+          <LayersArrowUp
+            v-if="mediaPriority === 'images'"
+            class="chat-conversation-header__media-priority-icon"
+          />
+          <LayersArrowDown
+            v-else
+            class="chat-conversation-header__media-priority-icon"
+          />
+        </MotionIcon>
+      </button>
+    </Tooltip>
   </div>
 </template>
 
@@ -129,5 +133,26 @@ function toggleType() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chat-conversation-header__scroll-mode,
+.chat-conversation-header__media-priority {
+  padding: var(--spacing-1);
+  color: var(--color-fg-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.chat-conversation-header__scroll-mode:hover,
+.chat-conversation-header__media-priority:hover {
+  color: var(--color-tab-rest);
+}
+
+.chat-conversation-header__scroll-mode-icon,
+.chat-conversation-header__media-priority-icon {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 </style>

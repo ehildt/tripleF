@@ -3,7 +3,7 @@ import { Job } from 'bullmq';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
-import type { IngestedImage } from '../helpers/download-and-ingest-images.helper.js';
+import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
 export type StepId = 'interpret' | 'execute' | 'sanitize' | 'respond';

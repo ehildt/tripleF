@@ -18,7 +18,7 @@ const baseProps = {
 describe('DlqListHeader', () => {
   it('renders the Jobs title', () => {
     const wrapper = mount(DlqListHeader, { props: baseProps });
-    expect(wrapper.text()).toContain('Jobs');
+    expect(wrapper.text()).toContain('Failed jobs');
   });
 
   it('emits reload when the reload button is clicked', async () => {

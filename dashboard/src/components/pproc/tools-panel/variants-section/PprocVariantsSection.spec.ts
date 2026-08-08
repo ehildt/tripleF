@@ -11,11 +11,6 @@ describe('PprocVariantsSection', () => {
     setActivePinia(createPinia());
   });
 
-  it('renders the section title', () => {
-    const wrapper = mount(PprocVariantsSection);
-    expect(wrapper.text()).toContain('Image Variants');
-  });
-
   it('lists all five image variants', () => {
     const wrapper = mount(PprocVariantsSection);
     expect(wrapper.text()).toContain('Original');
@@ -31,10 +26,10 @@ describe('PprocVariantsSection', () => {
     store.setVariant('original', false);
 
     const wrapper = mount(PprocVariantsSection);
-    const originalButton = wrapper.findAll('.pproc-toggle-button')[0];
-    expect(originalButton.exists()).toBe(true);
+    const originalCard = wrapper.findAll('.field-card')[0];
+    expect(originalCard.exists()).toBe(true);
 
-    await originalButton.trigger('click');
+    await originalCard.find('.field-card__checkbox').trigger('click');
     expect(store.variants.original).toBe(true);
   });
 });

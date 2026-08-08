@@ -1,0 +1,120 @@
+name: CI
+
+# Shared lint / build / test pipeline used by both the non-release and release
+# workflows. Parameterized so each caller only supplies what differs:
+#   - `production`: use production builds (server `build:prod`) vs dev builds
+#   - `upload-coverage`: upload v8 coverage to Codecov (push only)
+#   - `upload-artifacts`: publish server/dashboard dist for the release jobs
+on:
+  workflow_call:
+    inputs:
+      production:
+        description: Use production builds (server `build:prod`).
+        type: boolean
+        required: false
+        default: false
+      upload-coverage:
+        description: Upload coverage to Codecov (push only).
+        type: boolean
+        required: false
+        default: false
+      upload-artifacts:
+        description: Upload server/dashboard dist artifacts for release jobs.
+        type: boolean
+        required: false
+        default: false
+
+env:
+  HUSKY: 0
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm -r install --frozen-lockfile
+
+      - name: Lint — Server
+        run: |
+          cd server
+          pnpm lint
+          pnpm depcruise
+          pnpm lint:unused
+
+      - name: Lint — Dashboard
+        run: |
+          cd dashboard
+          pnpm lint
+          pnpm depcruise
+          pnpm lint:unused
+
+      - name: Build — Server
+        if: ${{ !inputs.production }}
+        run: |
+          cd server
+          pnpm build
+
+      - name: Build — Server (production)
+        if: inputs.production
+        run: |
+          cd server
+          pnpm build:prod
+
+      - name: Build — Dashboard
+        run: |
+          cd dashboard
+          pnpm build
+
+      - name: Test — Server
+        run: |
+          cd server
+          pnpm test:cov
+
+      - name: Test — Dashboard
+        run: |
+          cd dashboard
+          pnpm test:cov
+
+      - name: Upload Coverage — Server
+        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          flags: server
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Coverage — Dashboard
+        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          flags: dashboard
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Build Artifact — Server
+        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: server-dist
+          path: server/dist/
+
+      - name: Build Artifact — Dashboard
+        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: dashboard-dist
+          path: dashboard/dist/

@@ -1,6 +1,7 @@
+import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import type { ConversationMetadataImage } from '../utils/build-query-params.helper';
+import type { ConversationMetadataImage } from '../types/form-query-params.model';
 
 export interface SavedFileInfo {
   name: string;
@@ -46,8 +47,11 @@ export interface Exchange {
     status: string;
   }>;
   // Live activity while the request is processed: the current step or tool
-  // label (fallback for non-thinking models) and the streamed thinking text.
-  activity?: string;
+  // descriptor (fallback for non-thinking models) and the streamed thinking
+  // text. `activity` is a structured i18n key + meta, localized by the client
+  // in `activityLanguage` (the language the model chose to respond in).
+  activity?: HarnessActivityDescriptor;
+  activityLanguage?: string;
   reasoning?: string;
   included?: boolean;
   // Images that were associated with this prompt, either uploaded as new
@@ -56,6 +60,13 @@ export interface Exchange {
   harnessTemplate?: string;
   harnessData?: HarnessResponseData;
   text?: string;
+  /**
+   * Chart data streamed from EODHD tools right after they run, keyed by tool
+   * name. Buffered here but hidden until the respond step starts streaming.
+   */
+  chartData?: Record<string, unknown>;
+  /** True once the respond step emits its first delta — reveal the charts. */
+  revealCharts?: boolean;
 }
 
 export interface ConversationSubscription {
@@ -85,6 +96,11 @@ export interface Conversation {
   task?: string;
   createdAt: number;
   updatedAt: number;
+  /** Stored context-usage percentage ("30.00") so the sidebar shows it without
+   * loading the full conversation. Recalculated and persisted on prompt changes. */
+  contextUsagePercent?: string | null;
+  /** Client-only flag: true once the full content has been fetched from the server. */
+  loaded: boolean;
 }
 
 export interface PersistedConversation {
@@ -106,4 +122,5 @@ export interface PersistedConversation {
   task?: string;
   createdAt: number;
   updatedAt: number;
+  contextUsagePercent?: string | null;
 }

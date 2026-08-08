@@ -1,7 +1,5 @@
-import {
-  formatZodIssues,
-  summarySchema,
-} from '../../schemas/summary-json.schema.js';
+import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
+import { summarySchema } from '../../schemas/summary-json.schema.js';
 
 import type { ValidationResult } from './validation-result.type.js';
 

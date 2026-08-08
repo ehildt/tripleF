@@ -1,24 +1,9 @@
-import { computed, type Ref } from 'vue';
+import { computed } from 'vue';
 
-import type { UploadedImage } from '@/stores/conversation';
-
-import type { AttachedFileEntry } from '../../../../composables/attached-files.state';
-
-export interface AttachmentItem {
-  id: string;
-  name: string;
-  hash: string;
-  previewUrl: string;
-  isUploaded: boolean;
-  isSelected: boolean;
-  pendingIndex: number | null;
-  source?: 'local' | 'cloud';
-}
-
-export interface UseAttachmentListOptions {
-  attachedFiles: Ref<AttachedFileEntry[]>;
-  uploadedImages: Ref<UploadedImage[]>;
-}
+import type {
+  AttachmentItem,
+  UseAttachmentListOptions,
+} from './use-attachment-list.types';
 
 /**
  * Normalizes pending attached files and uploaded image metadata into a

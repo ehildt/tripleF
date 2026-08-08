@@ -8,7 +8,7 @@ defineProps<{ offers: readonly ShopOffer[] }>();
 
 <template>
   <section v-if="offers.length" class="offers-section">
-    <h2 class="offers-section__title">{{ $t('common.whereToBuy') }}</h2>
+    <h3 class="offers-section__title">{{ $t('common.whereToBuy') }}</h3>
     <div class="offers-section__list">
       <ShopOfferCard
         v-for="(offer, index) in offers"

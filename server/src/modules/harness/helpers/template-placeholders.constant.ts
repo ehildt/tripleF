@@ -1,73 +1,18 @@
+import {
+  getSnippetTemplateKeys,
+  isSnippetTemplate,
+} from '../snippets/snippet-presets.constant.js';
+
 /**
- * Placeholder names the dashboard Eta templates expect.
+ * Placeholder lists per template: which JSON keys the client renders.
  *
- * The server no longer owns the HTML templates; it only tells the model which
- * JSON keys the client's Eta templates need. Keeping the lists here avoids
- * sharing template strings between server and dashboard.
+ * news/article/evaluation are snippet-composed — their key lists derive from
+ * their snippet presets (single source of truth) and are not in this table.
  */
 const TEMPLATE_PLACEHOLDERS: Record<
   string,
   { required: string[]; optional: string[] }
 > = {
-  article: {
-    required: [
-      'category',
-      'title',
-      'subtitle',
-      'summary',
-      'sectionTitle',
-      'sectionContent',
-    ],
-    optional: [
-      'heroImageUrl',
-      'heroImageAlt',
-      'heroCaption',
-      'galleryTitle',
-      'galleryItems',
-      'keyFindings',
-      'sources',
-      'conclusion',
-      'author',
-      'publishDate',
-      'readTime',
-      'heroVideoUrl',
-      'heroVideoCaption',
-      'heroVideoTitle',
-      'videoGalleryTitle',
-      'videoGalleryItems',
-      'quote',
-      'cardsTitle',
-      'cards',
-    ],
-  },
-  news: {
-    required: [
-      'category',
-      'headline',
-      'deck',
-      'lead',
-      'sectionTitle',
-      'sectionContent',
-    ],
-    optional: [
-      'heroImageUrl',
-      'heroImageAlt',
-      'heroCaption',
-      'heroVideoUrl',
-      'heroVideoCaption',
-      'heroVideoTitle',
-      'videoGalleryItems',
-      'galleryTitle',
-      'galleryItems',
-      'keyPoints',
-      'sources',
-      'relatedStories',
-      'dateline',
-      'byline',
-      'publishDate',
-      'readTime',
-    ],
-  },
   describe: {
     required: ['category', 'title', 'subtitle', 'sectionContent'],
     optional: [
@@ -76,6 +21,7 @@ const TEMPLATE_PLACEHOLDERS: Record<
       'galleryTitle',
       'galleryItems',
       'note',
+      'internationalCoverage',
     ],
   },
   compare: {
@@ -86,11 +32,18 @@ const TEMPLATE_PLACEHOLDERS: Record<
       'galleryTitle',
       'galleryItems',
       'note',
+      'internationalCoverage',
     ],
   },
   ocr: {
     required: ['category', 'title', 'subtitle', 'sectionContent'],
-    optional: ['keyFindings'],
+    optional: [
+      'keyFindings',
+      'sources',
+      'galleryTitle',
+      'galleryItems',
+      'internationalCoverage',
+    ],
   },
   summary: {
     required: ['category', 'title', 'subtitle', 'summary'],
@@ -107,76 +60,75 @@ const TEMPLATE_PLACEHOLDERS: Record<
       'galleryItems',
       'videoGalleryTitle',
       'videoGalleryItems',
-    ],
-  },
-  evaluation: {
-    required: [
-      'category',
-      'title',
-      'subtitle',
-      'subject',
-      'verdict',
-      'score',
-      'scoreLabel',
-    ],
-    optional: [
-      'reasoning',
-      'strengths',
-      'weaknesses',
-      'recommendations',
-      'sources',
-      'heroImageUrl',
-      'heroImageAlt',
-      'heroCaption',
-      'heroVideoUrl',
-      'heroVideoCaption',
-      'heroVideoTitle',
-      'galleryTitle',
-      'galleryItems',
-      'videoGalleryTitle',
-      'videoGalleryItems',
+      'internationalCoverage',
     ],
   },
   product: {
     required: ['category', 'title', 'subtitle', 'shortDescription'],
     optional: [
-      'priceRange',
       'aggregateRating',
       'aggregateRatingCount',
       'aggregateRatingLabel',
-      'buyAdvice',
       'statHighlights',
       'keyPoints',
       'pros',
       'cons',
       'shopOffers',
-      'reviewSummary',
-      'sectionTitle',
-      'sectionContent',
       'heroImageUrl',
       'heroImageAlt',
       'heroCaption',
-      'heroVideoUrl',
-      'heroVideoCaption',
-      'heroVideoTitle',
       'galleryTitle',
       'galleryItems',
       'videoGalleryTitle',
       'videoGalleryItems',
       'sources',
+      'internationalCoverage',
     ],
   },
   shoplist: {
     required: ['category', 'title', 'subtitle'],
-    optional: ['shortDescription', 'shopOffers', 'sources'],
+    optional: [
+      'shortDescription',
+      'shopOffers',
+      'sources',
+      'internationalCoverage',
+    ],
   },
   imagelist: {
     required: ['category', 'title', 'subtitle', 'galleryItems'],
-    optional: ['sources'],
+    optional: ['sources', 'internationalCoverage'],
   },
   videolist: {
     required: ['category', 'title', 'subtitle', 'videoGalleryItems'],
-    optional: [],
+    optional: ['internationalCoverage'],
+  },
+  stockmarketitem: {
+    required: ['category', 'title', 'subtitle', 'shortDescription'],
+    optional: [
+      'currentPrice',
+      'change',
+      'changeP',
+      'recommendation',
+      'recommendationReasoning',
+      'keyPoints',
+      'fundamentals',
+      'news',
+      'sources',
+      'internationalCoverage',
+      'referenceLines',
+      'markers',
+    ],
+  },
+  stockmarketlist: {
+    required: ['category', 'title', 'subtitle'],
+    optional: [
+      'summary',
+      'items',
+      'sources',
+      'internationalCoverage',
+      'referenceLines',
+      'markers',
+    ],
   },
   text: {
     required: [],
@@ -186,10 +138,16 @@ const TEMPLATE_PLACEHOLDERS: Record<
 
 /** Returns the keys that are actually required for the given template. */
 export function getRequiredKeys(template: string): string[] {
+  if (isSnippetTemplate(template)) {
+    return getSnippetTemplateKeys(template).requiredKeys;
+  }
   return TEMPLATE_PLACEHOLDERS[template]?.required ?? [];
 }
 
 /** Returns keys that are optional for the given template. */
 export function getOptionalKeys(template: string): string[] {
+  if (isSnippetTemplate(template)) {
+    return getSnippetTemplateKeys(template).optionalKeys;
+  }
   return TEMPLATE_PLACEHOLDERS[template]?.optional ?? [];
 }

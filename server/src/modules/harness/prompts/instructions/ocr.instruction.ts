@@ -4,8 +4,8 @@ Goal: produce a JSON object containing the visible text from the attached image(
 
 MANDATORY RULES:
 1. Transcribe only the text visible in the image.
-2. If the extracted text contains URLs, social-media handles, brand names, or other named entities AND the user asks you to identify or explain them, you MAY use webSearch/webFetch to look them up.
-3. If you use webSearch/webFetch, sectionContent MUST:
+2. If the extracted text contains URLs, social-media handles, brand names, or other named entities AND the user asks you to identify or explain them, you MAY use *WebSearch/webFetch to look them up.
+3. If you use *WebSearch/webFetch, sectionContent MUST:
    - state that you searched the internet because of a visible clue,
    - identify the visible clue,
    - clearly label any conclusion drawn from the internet as an assumption,
@@ -18,9 +18,15 @@ Required fields:
 - sectionContent: the extracted text ONLY, as a single JSON string value. Preserve structure and line breaks by using the escaped newline sequence \\n between lines or paragraphs — never literal line breaks inside the JSON string.
 - keyFindings: an array of 0–5 short observations ABOUT the image/text. Each entry MUST be an object with exactly one key: "text".
 
+Optional reference fields (only when you researched visible clues online):
+- sources: an array of source objects with url and title from the tool results.
+- galleryTitle: a short title for the reference images (e.g. "Reference images").
+- galleryItems: the cloud reference images you actually used from availableImages. Each entry MUST include imageUrl, imageAlt, title, and caption.
+
 Rules:
 - Never emit placeholder text such as "undefined", "null", "none", or "n/a". Use an empty string or empty array instead.
 - Transcribe only the text visible in the image.
+- If the image contains no readable text, say so briefly in sectionContent — an honest "no readable text" result is valid; never invent text to fill the field.
 - Do not correct spelling or grammar unless instructed.
 - Preserve the original layout when possible.
 - Do not leave sectionContent empty.
@@ -36,8 +42,8 @@ Goal: produce a JSON object containing the visible text from the attached image(
 
 MANDATORY RULES:
 1. Transcribe the visible text exactly as it appears, without reformatting, summarizing, or correcting errors.
-2. If the extracted text contains URLs, social-media handles, brand names, or other named entities AND the user asks you to identify or explain them, you MAY use webSearch/webFetch to look them up.
-3. If you use webSearch/webFetch, sectionContent MUST:
+2. If the extracted text contains URLs, social-media handles, brand names, or other named entities AND the user asks you to identify or explain them, you MAY use *WebSearch/webFetch to look them up.
+3. If you use *WebSearch/webFetch, sectionContent MUST:
    - state that you searched the internet because of a visible clue,
    - identify the visible clue,
    - clearly label any conclusion drawn from the internet as an assumption,
@@ -50,9 +56,15 @@ Required fields:
 - sectionContent: the extracted text ONLY, as a single JSON string value. Preserve the original structure, line breaks, and formatting by using the escaped newline sequence \\n — never literal line breaks inside the JSON string.
 - keyFindings: an array of 0–5 short observations ABOUT the image/text. Each entry MUST be an object with exactly one key: "text".
 
+Optional reference fields (only when you researched visible clues online):
+- sources: an array of source objects with url and title from the tool results.
+- galleryTitle: a short title for the reference images (e.g. "Reference images").
+- galleryItems: the cloud reference images you actually used from availableImages. Each entry MUST include imageUrl, imageAlt, title, and caption.
+
 Rules:
 - Never emit placeholder text such as "undefined", "null", "none", or "n/a". Use an empty string or empty array instead.
 - Transcribe the visible text exactly as it appears, without reformatting, summarizing, or correcting errors.
+- If the image contains no readable text, say so briefly in sectionContent — an honest "no readable text" result is valid; never invent text to fill the field.
 - Preserve the original layout and formatting when possible.
 - Do not leave sectionContent empty.
 - title and subtitle must describe the image/document. They must NEVER repeat or summarize the extracted text from sectionContent.

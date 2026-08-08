@@ -3,24 +3,10 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 import type { Exchange } from '@/stores/conversation';
 
 import { buildMessageClasses } from '../../helpers/build-message-classes.helper';
-
-export interface ExchangeRenderFlags {
-  isUser: boolean;
-  isError: boolean;
-  isPending: boolean;
-  isStreaming: boolean;
-  isHighlighted: boolean;
-}
-
-/** What the exchange body renders, in template branch precedence order. */
-export type ExchangeRenderMode =
-  | 'reasoning'
-  | 'pending-empty'
-  | 'streaming-skeleton'
-  | 'assistant-response'
-  | 'user-request'
-  | 'error'
-  | 'plain';
+import type {
+  ExchangeRenderFlags,
+  ExchangeRenderMode,
+} from './use-exchange-render-mode.types';
 
 /**
  * Derives what an exchange body renders from the exchange and its status
@@ -55,7 +41,12 @@ export function useExchangeRenderMode(
       !current.harnessData &&
       current.harnessTemplate !== 'text';
 
-    if (isAwaitingFirstHarnessData) return 'streaming-skeleton';
+    if (isAwaitingFirstHarnessData) {
+      // Show the model's thinking while it works; with no reasoning yet,
+      // fall through to an empty body so the streaming cursor is the sole
+      // indicator (the old three-dot loader was removed as redundant).
+      return current.reasoning ? 'reasoning' : 'plain';
+    }
     if (isAssistantResponse) return 'assistant-response';
     if (isUser) return 'user-request';
     if (isError) return 'error';
@@ -74,7 +65,5 @@ export function useExchangeRenderMode(
     return `exchange-user-wrap content-body ${highlightClass}`.trim();
   });
 
-  const showStreamingCursor = computed(() => toValue(flags).isStreaming);
-
-  return { dividerVariant, renderMode, containerClasses, showStreamingCursor };
+  return { dividerVariant, renderMode, containerClasses };
 }

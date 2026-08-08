@@ -54,12 +54,18 @@ export class ConversationRepository implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async findDistinctConversations(sessionId: string) {
-    return this.prisma.harnessConversation.groupBy({
-      by: ['conversationId'],
+  async findLatestBySession(sessionId: string) {
+    const turns = await this.prisma.harnessConversation.findMany({
       where: { sessionId },
-      _max: { updatedAt: true, title: true },
+      orderBy: [{ conversationId: 'asc' }, { updatedAt: 'desc' }],
     });
+    const latest = new Map<string, (typeof turns)[number]>();
+    for (const turn of turns) {
+      if (!latest.has(turn.conversationId)) {
+        latest.set(turn.conversationId, turn);
+      }
+    }
+    return [...latest.values()];
   }
 
   async create(data: Prisma.HarnessConversationCreateInput) {

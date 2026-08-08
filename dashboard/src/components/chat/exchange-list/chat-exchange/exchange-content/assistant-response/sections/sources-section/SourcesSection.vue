@@ -3,8 +3,13 @@ import { computed } from 'vue';
 
 import type { Source } from '@/types/harness-response-data.model';
 
+import { pickCycleColor } from '../../shared/helpers/pick-cycle-color.helper';
+import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
+
 const props = defineProps<{
   items?: Source[];
+  /** Section heading — defaults to the localized "Sources". */
+  title?: string;
 }>();
 
 const validItems = computed(() =>
@@ -20,9 +25,13 @@ const validItems = computed(() =>
 
 <template>
   <section v-if="validItems.length" class="sources">
-    <h3>{{ $t('common.sources') }}</h3>
+    <SectionTitle :title="title ?? $t('common.sources')" />
     <ul>
-      <li v-for="(source, index) in validItems" :key="index">
+      <li
+        v-for="(source, index) in validItems"
+        :key="index"
+        :style="{ '--source-color': pickCycleColor(index) }"
+      >
         <a
           v-if="source.url"
           :href="source.url"
@@ -32,19 +41,18 @@ const validItems = computed(() =>
           {{ source.title || source.url }}
         </a>
         <template v-else-if="source.title">{{ source.title }}</template>
+        <span v-if="source.sourceName" class="sources__source">
+          {{ source.sourceName }}
+        </span>
       </li>
     </ul>
   </section>
 </template>
 
 <style scoped>
-.sources h3 {
-  margin-bottom: 0.5em;
-}
-
 .sources ul {
   list-style: none;
-  padding: var(--spacing-2);
+  padding-inline: var(--spacing-2);
   margin: 0;
 }
 
@@ -52,8 +60,6 @@ const validItems = computed(() =>
   position: relative;
   padding-left: 1.25em;
   margin-bottom: 0.3em;
-  font-size: 0.9em;
-  color: var(--color-fg-secondary);
 }
 
 .sources ul li::before {
@@ -63,23 +69,7 @@ const validItems = computed(() =>
   top: 0.55em;
   width: 0.5em;
   height: 0.5em;
-  background: var(--color-accent-primary);
-}
-
-.sources ul li:nth-child(2)::before {
-  background: var(--color-harmony-1);
-}
-
-.sources ul li:nth-child(3)::before {
-  background: var(--color-harmony-2);
-}
-
-.sources ul li:nth-child(4)::before {
-  background: var(--color-harmony-3);
-}
-
-.sources ul li:nth-child(5)::before {
-  background: var(--color-harmony-4);
+  background: var(--source-color, var(--color-accent-primary));
 }
 
 .sources ul li a {
@@ -89,5 +79,11 @@ const validItems = computed(() =>
 
 .sources ul li a:hover {
   text-decoration: underline;
+}
+
+.sources__source {
+  margin-left: var(--spacing-2);
+  color: var(--color-fg-muted);
+  font-size: 0.8rem;
 }
 </style>

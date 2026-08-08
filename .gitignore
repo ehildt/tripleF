@@ -3,6 +3,7 @@ dist
 coverage
 .depbadge
 TODO.md
+todo.md
 .env
 .eslintcache
 ollama_data

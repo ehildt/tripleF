@@ -10,7 +10,7 @@ import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessQueueService } from './harness-queue.service.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
 
-vi.mock('../helpers/build-image-fingerprint.helper.js', () => ({
+vi.mock('../helpers/media/build-image-fingerprint.helper.js', () => ({
   buildImageFingerprint: vi.fn().mockResolvedValue('fingerprint'),
 }));
 

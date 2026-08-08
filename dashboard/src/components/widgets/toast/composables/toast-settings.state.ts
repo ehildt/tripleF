@@ -2,17 +2,10 @@ import { ref } from 'vue';
 
 import type { ToastType } from '@/types/toast-type.model';
 
-/** Screen corner/edge the toast stack is anchored to. */
-export type ToastAnchor =
-  | 'top-left'
-  | 'top-center'
-  | 'top-right'
-  | 'middle-left'
-  | 'middle-center'
-  | 'middle-right'
-  | 'bottom-left'
-  | 'bottom-center'
-  | 'bottom-right';
+import type {
+  ToastAnchor,
+  ToastTypeFilters,
+} from './toast-settings.state.types';
 
 export const DEFAULT_TOAST_ENABLED = true;
 export const DEFAULT_TOAST_ANCHOR: ToastAnchor = 'bottom-right';
@@ -47,8 +40,6 @@ const TOAST_TYPES: readonly ToastType[] = [
   'debug',
   'default',
 ];
-
-export type ToastTypeFilters = Record<ToastType, boolean>;
 
 function loadBoolean(key: string, fallback: boolean): boolean {
   try {

@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import Joi from 'joi';
 
 import { OllamaConfigAdapter } from './ollama-config.adapter.js';
+import type { OllamaConfig } from './ollama-config.types.js';
 
 const extendedSchema = Joi.object({
   host: Joi.string().optional(),
@@ -13,16 +14,6 @@ const extendedSchema = Joi.object({
   generateTotalTimeoutMs: Joi.number().integer().min(1000).optional(),
   enableSmoothStream: Joi.boolean().optional(),
 });
-
-type OllamaConfig = {
-  host?: string;
-  apiKey?: string;
-  keepAlive: string;
-  streamChunkTimeoutMs: number;
-  streamTotalTimeoutMs: number;
-  generateTotalTimeoutMs: number;
-  enableSmoothStream: boolean;
-};
 
 @Injectable()
 export class OllamaConfigService {

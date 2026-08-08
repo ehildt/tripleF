@@ -1,17 +1,10 @@
-import type { Ref } from 'vue';
 import { ref, watch } from 'vue';
 
 import { useFrozenReadSnapshot } from '@/composables/use-frozen-read-snapshot';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { buildSortedDlqEntries } from '../helpers/build-sorted-dlq-entries.helper';
-
-export interface UseDlqListStateOptions {
-  entries: Ref<DlqEntry[]>;
-  hideRead: Ref<boolean>;
-  isEntryRead: (entry: DlqEntry) => boolean;
-  entryReadKey: (entry: DlqEntry) => string;
-}
+import type { UseDlqListStateOptions } from './use-dlq-list-state.types';
 
 /**
  * Sorted DLQ entries on top of a frozen read snapshot: clicking an entry

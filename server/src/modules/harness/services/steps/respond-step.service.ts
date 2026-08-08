@@ -3,25 +3,29 @@ import { Injectable } from '@nestjs/common';
 
 import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
+import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import {
+  HARNESS_ACTIVITY_KEYS,
+  resolveHarnessActivityLanguage,
+} from '../../helpers/harness-activity.helper.js';
 import {
   buildGalleryItems,
   type GalleryItem,
   limitLocalGalleryItems,
-} from '../../helpers/build-gallery-items.helper.js';
-import { dedupeGalleryItems } from '../../helpers/dedupe-gallery-items.helper.js';
-import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
-import { enforceAvailableMediaUrls } from '../../helpers/enforce-available-media-urls.helper.js';
-import { ensureShopOffers } from '../../helpers/ensure-shop-offers.helper.js';
+} from '../../helpers/media/build-gallery-items.helper.js';
+import { dedupeGalleryItems } from '../../helpers/media/dedupe-gallery-items.helper.js';
 import {
   extractImageSearchItems,
   extractVideoSearchItems,
-} from '../../helpers/extract-media-from-tools.helper.js';
-import { extractShopOffers } from '../../helpers/extract-shop-offers.helper.js';
-import { filterExistingGalleryItems } from '../../helpers/filter-existing-gallery-items.helper.js';
+} from '../../helpers/media/extract-media-from-tools.helper.js';
+import { extractShopOffers } from '../../helpers/media/extract-shop-offers.helper.js';
+import { filterExistingGalleryItems } from '../../helpers/media/filter-existing-gallery-items.helper.js';
 import { mergeLocalImagesIntoResponseData } from '../../helpers/respond/merge-local-images-into-response-data.helper.js';
 import { parseResponseStats } from '../../helpers/respond/parse-response-stats.helper.js';
 import { recordShownMedia } from '../../helpers/respond/record-shown-media.helper.js';
 import { resolveRespondStatus } from '../../helpers/respond/resolve-respond-status.helper.js';
+import { ensureShopOffers } from '../../helpers/sanitize/ensure-shop-offers.helper.js';
+import { enforceAvailableMediaUrls } from '../../helpers/tools/enforce-available-media-urls.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
@@ -94,7 +98,7 @@ export class RespondStepService implements StepHandler {
           ? (delta) => this.emitReasoningDelta(ctx, delta)
           : undefined,
         onJsonRetry: () =>
-          void this.emitStatus(ctx, 'Refining the response format…'),
+          void this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.refining),
       });
 
     const mediaCheckedData = this.applyResponseDataGuards(
@@ -215,15 +219,13 @@ export class RespondStepService implements StepHandler {
     return existing;
   }
 
-  private async emitStatus(
-    ctx: HarnessContext,
-    message: string,
-  ): Promise<void> {
+  private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
     await emitToSocket(this.io, ctx.roomId, ctx.event, {
       requestId: ctx.requestId,
       model: ctx.model,
       template: ctx.outputs.intent?.template,
-      status: message,
+      activity: { key },
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }
@@ -237,6 +239,7 @@ export class RespondStepService implements StepHandler {
       model: ctx.model,
       template: ctx.outputs.intent?.template,
       reasoningDelta,
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }
@@ -252,6 +255,7 @@ export class RespondStepService implements StepHandler {
       template: ctx.outputs.intent?.template,
       delta,
       images: galleryItems,
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }

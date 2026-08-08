@@ -30,7 +30,7 @@ function tabClass(view: RightPanelView) {
       @click="emit('selectView', 'files')"
     >
       <FileImage class="right-panel-tabs__tab-icon" />
-      Files
+      {{ $t('common.files') }}
     </button>
     <button
       v-if="hasPlaylist"
@@ -38,7 +38,7 @@ function tabClass(view: RightPanelView) {
       @click="emit('selectView', 'playlist')"
     >
       <ListVideo class="right-panel-tabs__tab-icon" />
-      Playlist
+      {{ $t('common.playlist') }}
     </button>
     <button
       v-if="hasHistory"
@@ -46,7 +46,7 @@ function tabClass(view: RightPanelView) {
       @click="emit('selectView', 'history')"
     >
       <History class="right-panel-tabs__tab-icon" />
-      History
+      {{ $t('common.history') }}
     </button>
   </div>
 </template>

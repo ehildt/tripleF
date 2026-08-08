@@ -9,26 +9,17 @@ import { retryWithBackoff } from '../../provider-overrides/helpers/retry-with-ba
 import { SecretsCipherService } from '../../secrets/services/secrets-cipher.service.js';
 import { OllamaConfigService } from '../configs/ollama-config.service.js';
 
+import type {
+  OllamaConnectionConfig,
+  OllamaOverridesPatch,
+} from './ollama-overrides.service.types.js';
+
 const OLLAMA_PROVIDER_KEY = 'ollama';
 
 /** Boot restore: 5 attempts, 500ms → 8s backoff — spans compose cold starts. */
 const BOOT_RESTORE_ATTEMPTS = 5;
 /** Minimum pause between lazy restore attempts after a failed boot restore. */
 const LAZY_RESTORE_THROTTLE_MS = 10_000;
-
-interface OllamaConnectionConfig {
-  host: string;
-  apiKey?: string;
-}
-
-/**
- * Partial patch for the Ollama connection. Each key merges into the stored
- * overrides independently, so a patch may touch only the host or the key.
- */
-export type OllamaOverridesPatch = {
-  host?: string;
-  apiKey?: string;
-};
 
 /**
  * Ollama connection overrides layered over the env-backed defaults. The

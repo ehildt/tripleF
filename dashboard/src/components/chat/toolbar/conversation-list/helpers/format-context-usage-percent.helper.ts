@@ -1,16 +1,12 @@
-import type { Exchange } from '@/stores/conversation';
-
-import { calcTotalContextPercentage } from '../../../shared/helpers/calc-token-percent.helper';
-
 /**
- * Format context usage as a human-readable percentage string.
- * Returns "--" when no token data is available (exchange still in flight,
- * or no completed assistant exchange with token counts yet).
+ * Format a context-usage percentage as a human-readable string.
+ * Returns null when no value is available yet, so the caller can hide the
+ * indicator entirely instead of showing a placeholder like "--".
  */
 export function formatContextUsagePercent(
-  exchanges: Exchange[],
-  numCtx: string,
-): string {
-  const percent = calcTotalContextPercentage(exchanges, numCtx);
-  return percent !== null ? `${percent}%` : '--';
+  contextUsagePercent: string | null | undefined,
+): string | null {
+  return contextUsagePercent != null && contextUsagePercent !== ''
+    ? `${contextUsagePercent}%`
+    : null;
 }

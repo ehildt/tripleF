@@ -39,6 +39,6 @@ describe('DlqMetadataSection', () => {
   it('renders the next retry field when set', () => {
     const entry = { ...baseEntry, nextRetryAt: '2024-01-16T00:00:00Z' };
     const wrapper = mount(DlqMetadataSection, { props: { entry } });
-    expect(wrapper.text()).toContain('Retry At');
+    expect(wrapper.text()).toContain('Retry at');
   });
 });

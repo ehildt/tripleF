@@ -7,9 +7,13 @@ import {
 } from '../../actions/sanitize.action.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
 import {
+  HARNESS_ACTIVITY_KEYS,
+  resolveHarnessActivityLanguage,
+} from '../../helpers/harness-activity.helper.js';
+import {
   extractImageSearchItems,
   extractVideoSearchItems,
-} from '../../helpers/extract-media-from-tools.helper.js';
+} from '../../helpers/media/extract-media-from-tools.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
@@ -29,7 +33,7 @@ export class SanitizeStepService implements StepHandler {
 
     // Only announce link verification when there are results to verify.
     if (ctx.outputs.toolResults.length > 0) {
-      await this.emitStatus(ctx, 'Verifying links and cleaning up results…');
+      await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.verifying);
     }
 
     const result = await this.sanitizeAction.execute(
@@ -80,15 +84,13 @@ export class SanitizeStepService implements StepHandler {
     ];
   }
 
-  private async emitStatus(
-    ctx: HarnessContext,
-    message: string,
-  ): Promise<void> {
+  private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
     await emitToSocket(this.io, ctx.roomId, ctx.event, {
       requestId: ctx.requestId,
       model: ctx.model,
       template: ctx.outputs.intent?.template,
-      status: message,
+      activity: { key },
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }

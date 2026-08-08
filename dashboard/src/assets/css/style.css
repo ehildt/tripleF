@@ -21,10 +21,7 @@
 /* 4. Modes — display mode overrides (highest token priority) */
 @import './modes/light.css';
 
-/* 5. Component-level unscoped styles */
-@import './components/chat.css';
-
-/* 6. Global resets, base styles, animations */
+/* 5. Global resets, base styles, animations */
 
 * {
   box-sizing: border-box;
@@ -119,7 +116,7 @@ footer,
 .panel-glow:focus-within {
   box-shadow:
     0 2px 2px color-mix(in srgb, black 10%, transparent),
-    0 0 1.25rem color-mix(in srgb, var(--color-accent-glow) 9%, transparent);
+    0 0 0.25rem color-mix(in srgb, var(--color-accent-glow) 9%, transparent);
 }
 
 @keyframes pulse-fast {
@@ -191,6 +188,7 @@ input[type='number']::-webkit-outer-spin-button {
 
 input[type='number'] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Transition */

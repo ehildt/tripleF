@@ -1,29 +1,17 @@
-import {
-  type ComponentPublicInstance,
-  computed,
-  nextTick,
-  onUnmounted,
-  type Ref,
-  ref,
-  watch,
-} from 'vue';
+import { computed, nextTick, onUnmounted, type Ref, ref, watch } from 'vue';
 
-import { loadYouTubeIframeApi } from '../templates/videolist-response/video-list-item/helpers/load-youtube-iframe-api.helper';
-import { toEmbedUrl } from './helpers/to-embed-url.helper';
+import { loadYouTubeIframeApi } from './helpers/media/load-youtube-iframe-api.helper';
+import { toEmbedUrl } from './helpers/media/to-embed-url.helper';
+import type {
+  PlayerControls,
+  TemplateRefTarget,
+  YouTubePlayerHandle,
+} from './use-pausable-player.types';
 import {
   registerActivePlayerControls,
   setActivePlaybackPlaying,
   unregisterActivePlayerControls,
 } from './video-playback.state';
-
-type TemplateRefTarget = Element | ComponentPublicInstance | null;
-type PlayerControls = { play(): void; pause(): void };
-type YouTubePlayerHandle = {
-  destroy(): void;
-  playVideo(): void;
-  pauseVideo(): void;
-  getPlayerState(): number;
-};
 
 /**
  * Shared player wiring for every embedded video in the app: resolves the

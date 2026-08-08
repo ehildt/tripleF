@@ -29,7 +29,7 @@ describe('ChatExchangeList', () => {
 
   it('renders the no-conversation panel when no conversation is active', () => {
     const wrapper = mountComponent();
-    expect(wrapper.text()).toContain('No conversation selected');
+    expect(wrapper.text()).toContain('No chat selected');
   });
 
   it('hides the conversation header when no conversation is active', () => {
@@ -55,9 +55,7 @@ describe('ChatExchangeList', () => {
     conversationStore.setActiveConversation(conversation.id);
 
     const wrapper = mountComponent();
-    expect(wrapper.text()).toContain(
-      'Send a message to start the conversation.',
-    );
+    expect(wrapper.text()).toContain('Say something to get this chat going.');
   });
 
   it('renders exchanges from the active conversation', () => {
@@ -80,12 +78,17 @@ describe('ChatExchangeList', () => {
     expect(wrapper.text()).toContain('Hi there');
   });
 
-  it('exposes scrollToExchange that scrolls the target into view', async () => {
+  it('exposes scrollToExchange that scrolls the target section into view', async () => {
     const conversationStore = useConversationStore();
     const conversation = conversationStore.ensureConversation();
     conversationStore.addExchange(conversation.id, {
       role: 'user',
       content: 'Hello',
+      status: 'done',
+    });
+    conversationStore.addExchange(conversation.id, {
+      role: 'assistant',
+      content: 'Hi there',
       status: 'done',
     });
     conversationStore.setActiveConversation(conversation.id);
@@ -96,8 +99,8 @@ describe('ChatExchangeList', () => {
 
     expect(targetId).toBeTruthy();
 
-    const scrollIntoView = vi.fn();
-    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const scrollTo = vi.fn();
+    HTMLElement.prototype.scrollTo = scrollTo;
 
     (
       wrapper.vm as unknown as {
@@ -105,9 +108,6 @@ describe('ChatExchangeList', () => {
       }
     ).scrollToExchange(targetId!);
 
-    expect(scrollIntoView).toHaveBeenCalledWith({
-      behavior: 'auto',
-      block: 'nearest',
-    });
+    expect(scrollTo).toHaveBeenCalled();
   });
 });

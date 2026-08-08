@@ -67,10 +67,13 @@ export function useChatConversation() {
             ).toFixed(2)
           : null;
       return {
+        id: ex.id,
         role: ex.role,
         content: ex.content,
         included: ex.included !== false,
-        contextPercent: percent ?? '--',
+        // Leave undefined until the turn's token data is available so the
+        // history item shows no percentage rather than a misleading "--%".
+        contextPercent: percent ?? undefined,
       };
     }),
   );

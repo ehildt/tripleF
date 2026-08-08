@@ -434,7 +434,7 @@ Pattern: Even `:deep()` selectors use `var()` tokens — theme consistency appli
 | Accent               | `var(--color-accent-primary)`   |
 | Accent secondary     | `var(--color-accent-secondary)` |
 | Borders              | `var(--color-divider)`          |
-| Focus ring           | `var(--color-border-focus)`     |
+| Focus ring           | `var(--color-accent-primary)`   |
 | Tab rest             | `var(--color-tab-rest)`         |
 | Tab accent           | `var(--color-tab-accent)`       |
 | Tab debug            | `var(--color-tab-debug)`        |
@@ -478,7 +478,7 @@ border: 1px solid color-mix(in srgb, var(--color-tab-debug) 20%, transparent);
 
 /* Focus ring */
 .my-thing:focus-within {
-  box-shadow: 0 0 0 1px var(--color-border-focus);
+  box-shadow: 0 0 0 1px var(--color-accent-primary);
 }
 
 /* Transition colors */

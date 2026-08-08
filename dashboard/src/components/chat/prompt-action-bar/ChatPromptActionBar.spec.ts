@@ -111,7 +111,7 @@ describe('ChatPromptActionBar', () => {
     const wrapper = mountComponent({ searchEngineState: 'enabled' });
     const toggle = wrapper.find('.chat-prompt-action-bar__search-toggle');
     expect(toggle.exists()).toBe(true);
-    expect(toggle.attributes('aria-label')).toContain('click to disable');
+    expect(toggle.attributes('aria-label')).toContain('Web search on');
 
     await toggle.trigger('click');
     expect(wrapper.emitted('toggleSearchEngine')).toBeTruthy();
@@ -121,7 +121,7 @@ describe('ChatPromptActionBar', () => {
     const wrapper = mountComponent({ searchEngineState: 'disabled' });
     const toggle = wrapper.find('.chat-prompt-action-bar__search-toggle');
     expect(toggle.exists()).toBe(true);
-    expect(toggle.attributes('aria-label')).toContain('click to enable');
+    expect(toggle.attributes('aria-label')).toContain('Web search off');
 
     await toggle.trigger('click');
     expect(wrapper.emitted('toggleSearchEngine')).toBeTruthy();
@@ -137,8 +137,8 @@ describe('ChatPromptActionBar', () => {
     });
     const tags = wrapper.findAll('.chat-prompt-action-bar__source-tag');
     expect(tags.map((tag) => tag.attributes('aria-label'))).toEqual([
-      'web source enabled — click to disable',
-      'news source disabled — click to enable',
+      'web source on',
+      'news source off',
     ]);
     expect(tags[0].classes()).not.toContain(
       'chat-prompt-action-bar__source-tag--disabled',
@@ -193,6 +193,51 @@ describe('ChatPromptActionBar', () => {
       wrapper
         .find('.chat-prompt-action-bar__source-tag')
         .attributes('aria-label'),
-    ).toContain('videos source enabled');
+    ).toContain('videos source on');
+  });
+
+  it('shows a Landmark toggle for EODHD when available and emits toggleEodhd on click', async () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'enabled',
+      eodhdState: { available: true, enabled: true },
+    });
+    const landmark = wrapper.find('.chat-prompt-action-bar__source-tag');
+    expect(landmark.exists()).toBe(true);
+    expect(landmark.attributes('aria-label')).toContain(
+      'EODHD stock market on',
+    );
+    expect(landmark.attributes('aria-pressed')).toBe('true');
+    expect(landmark.classes()).not.toContain(
+      'chat-prompt-action-bar__source-tag--disabled',
+    );
+
+    await landmark.trigger('click');
+    expect(wrapper.emitted('toggleEodhd')).toBeTruthy();
+  });
+
+  it('keeps the EODHD Landmark visible but grayed when the engine is off', () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'enabled',
+      eodhdState: { available: true, enabled: false },
+    });
+    const landmark = wrapper.find('.chat-prompt-action-bar__source-tag');
+    expect(landmark.exists()).toBe(true);
+    expect(landmark.attributes('aria-label')).toContain(
+      'EODHD stock market off',
+    );
+    expect(landmark.attributes('aria-pressed')).toBe('false');
+    expect(landmark.classes()).toContain(
+      'chat-prompt-action-bar__source-tag--disabled',
+    );
+  });
+
+  it('hides the EODHD Landmark toggle when EODHD is not available', () => {
+    const wrapper = mountComponent({
+      searchEngineState: 'enabled',
+      eodhdState: { available: false, enabled: false },
+    });
+    expect(wrapper.find('.chat-prompt-action-bar__source-tag').exists()).toBe(
+      false,
+    );
   });
 });

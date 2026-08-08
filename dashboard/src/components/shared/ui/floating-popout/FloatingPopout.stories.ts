@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component: `
-Standalone floating popup window: a drag bar (title, opacity slider,
+Standalone floating popup window: a drag bar (title, opacity toggle,
 playlist toggle, minimize, close) over a media slot, wrapped in an
 eight-direction resize grid. Position/size/opacity/visibility come from
 the consumer via style/class on the root; all interactions are forwarded

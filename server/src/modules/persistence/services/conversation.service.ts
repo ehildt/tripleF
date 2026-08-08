@@ -3,32 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConversationRepository } from './conversation.repository.js';
+import type {
+  ConversationSnapshot,
+  ConversationTurn,
+  MergedConversation,
+} from './conversation.service.types.js';
 import { PlaylistService } from './playlist.service.js';
 import { ShownMediaRepository } from './shown-media.repository.js';
-
-interface ConversationTurn {
-  sessionId: string;
-  conversationId: string;
-  requestId: string;
-  title?: string;
-  content: Record<string, unknown>;
-}
-
-interface ConversationSnapshot {
-  conversationId: string;
-  title?: string | null;
-  latestRequestId?: string;
-  updatedAt?: Date;
-}
-
-interface MergedConversation {
-  sessionId: string;
-  conversationId: string;
-  latestRequestId?: string;
-  title?: string | null;
-  content: Record<string, unknown>;
-  updatedAt?: Date;
-}
 
 @Injectable()
 export class ConversationService {
@@ -39,13 +20,28 @@ export class ConversationService {
   ) {}
 
   async listConversations(sessionId: string): Promise<ConversationSnapshot[]> {
-    const groups = await this.repository.findDistinctConversations(sessionId);
+    const latestTurns = await this.repository.findLatestBySession(sessionId);
 
-    return groups.map((group) => ({
-      conversationId: group.conversationId,
-      title: group._max.title,
-      updatedAt: group._max.updatedAt ?? undefined,
-    }));
+    return latestTurns.map((turn) => {
+      const content = (turn.content ?? {}) as Record<string, unknown>;
+      return {
+        id: typeof content.id === 'string' ? content.id : turn.conversationId,
+        conversationId: turn.conversationId,
+        title: turn.title,
+        updatedAt: turn.updatedAt,
+        type: (content.type as ConversationSnapshot['type']) ?? 'temporary',
+        event: content.event as string | undefined,
+        roomId: content.roomId as string | undefined,
+        numCtx: content.numCtx as string | undefined,
+        stream: content.stream as boolean | undefined,
+        subscriptions: content.subscriptions as
+          ConversationSnapshot['subscriptions'] | undefined,
+        contextUsagePercent:
+          typeof content.contextUsagePercent === 'string'
+            ? content.contextUsagePercent
+            : null,
+      } as ConversationSnapshot;
+    });
   }
 
   async getConversation(

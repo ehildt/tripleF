@@ -15,7 +15,7 @@ vi.mock('socket.io-client', () => {
   };
 });
 
-vi.mock('./helpers/get-persistent-socket-session-id.helper', () => ({
+vi.mock('./helpers/socket/get-persistent-socket-session-id.helper', () => ({
   getPersistentSocketSessionId: vi.fn(() => 'persistent-conversation-123'),
 }));
 

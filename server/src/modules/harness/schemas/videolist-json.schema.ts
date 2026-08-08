@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { internationalCoverageSchema } from './international-coverage-json.schema.js';
 import { videoGalleryItemSchema } from './video-gallery-item-json.schema.js';
 
 export const videolistSchema = z.object({
@@ -7,13 +8,5 @@ export const videolistSchema = z.object({
   title: z.string().min(1, { message: 'title must not be empty' }),
   subtitle: z.string(),
   videoGalleryItems: z.array(videoGalleryItemSchema),
+  internationalCoverage: internationalCoverageSchema.optional(),
 });
-
-export function formatZodIssues(issues: z.ZodIssue[]): string {
-  return issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
-      return `${path}: ${issue.message}`;
-    })
-    .join('; ');
-}

@@ -1,5 +1,7 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+
 /**
  * Convert an imagelist response into plain text for the model history.
  *
@@ -17,10 +19,7 @@ export function imagelistToText(data: HarnessResponseData): string {
     ['Title', data.title],
     ['Subtitle', data.subtitle],
   ];
-  for (const [label, value] of fields) {
-    const trimmed = value?.trim();
-    if (trimmed) parts.push(`${label}: ${trimmed}`);
-  }
+  appendLabeledFields(parts, fields);
 
   if (data.galleryItems?.length) {
     parts.push('Previously shown images:');

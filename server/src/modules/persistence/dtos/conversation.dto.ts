@@ -79,6 +79,14 @@ class ConversationExchangeDto {
   @IsOptional()
   activity?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Language the model chose to respond in (for activity labels).',
+  })
+  @IsOptional()
+  @IsString()
+  activityLanguage?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   reasoning?: string;
@@ -121,6 +129,21 @@ class ConversationExchangeDto {
   })
   @IsOptional()
   images?: Array<Record<string, unknown>>;
+
+  @ApiPropertyOptional({
+    description:
+      'Chart series streamed from EODHD tools, keyed by tool name:ticker.',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  chartData?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Whether the buffered charts have been revealed.',
+  })
+  @IsOptional()
+  revealCharts?: boolean;
 }
 
 class ConversationContentDto {
@@ -216,6 +239,11 @@ class ConversationContentDto {
   @IsOptional()
   @IsNumber()
   updatedAt?: number;
+
+  @ApiPropertyOptional({ example: '30.00', nullable: true })
+  @IsOptional()
+  @IsString()
+  contextUsagePercent?: string | null;
 }
 
 export class UpsertConversationDto {

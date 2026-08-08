@@ -1,7 +1,5 @@
-import {
-  formatZodIssues,
-  productSchema,
-} from '../../schemas/product-json.schema.js';
+import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
+import { productSchema } from '../../schemas/product-json.schema.js';
 
 import type { ValidationResult } from './validation-result.type.js';
 

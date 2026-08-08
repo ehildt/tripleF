@@ -83,3 +83,19 @@ export type HarnessProviderOverride = Prisma.HarnessProviderOverrideModel
  *  * conversation is deleted.
  */
 export type HarnessPlaylist = Prisma.HarnessPlaylistModel
+/**
+ * Model StockMarketBar
+ * *
+ *  * Cached end-of-day OHLCV bar for one ticker and trading date. Final bars
+ *  * are immutable; the repository refetches the most recent days so late
+ *  * updates (post-close uploads, restated adjusted closes) propagate.
+ */
+export type StockMarketBar = Prisma.StockMarketBarModel
+/**
+ * Model StockMarketHistoryRange
+ * *
+ *  * Ledger of the [from, to) date windows already fetched per ticker. Trading
+ *  * days skip weekends/holidays, so coverage cannot be derived from the bars
+ *  * alone — requests only backfill intervals not in this ledger.
+ */
+export type StockMarketHistoryRange = Prisma.StockMarketHistoryRangeModel

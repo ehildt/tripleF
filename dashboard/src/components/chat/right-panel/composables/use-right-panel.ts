@@ -10,7 +10,7 @@ import {
   launchedFromPlaylist,
   launchedVideo,
 } from '../../exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
-import type { AttachmentItem } from './use-attachment-list';
+import type { AttachmentItem } from './use-attachment-list.types';
 
 /**
  * Panel-level state for the chat right panel: which tabs exist and

@@ -1,5 +1,8 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+import { appendList } from '../../../composables/helpers/sources/append-list.helper';
+
 /**
  * Convert an ocr response into plain text for the model history.
  * The extracted text is labeled so the model can tell it apart from
@@ -14,21 +17,12 @@ export function ocrToText(data: HarnessResponseData): string {
     ['Title', data.title],
     ['Subtitle', data.subtitle],
   ];
-  for (const [label, value] of fields) {
-    const trimmed = value?.trim();
-    if (trimmed) parts.push(`${label}: ${trimmed}`);
-  }
+  appendLabeledFields(parts, fields);
 
   const extracted = data.sectionContent?.trim();
   if (extracted) parts.push(`Extracted text:\n${extracted}`);
 
-  if (data.keyFindings?.length) {
-    parts.push('Observations:');
-    for (const item of data.keyFindings) {
-      const text = item.text?.trim();
-      if (text) parts.push(`- ${text}`);
-    }
-  }
+  appendList(parts, 'Observations:', data.keyFindings);
 
   return parts.join('\n\n');
 }

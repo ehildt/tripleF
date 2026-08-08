@@ -1,7 +1,7 @@
 import {
   resolveToolCategory,
   type ToolCategory,
-} from '../resolve-tool-category.helper.js';
+} from '../tools/resolve-tool-category.helper.js';
 
 export type ToolExecutionEvent = {
   name: string;
