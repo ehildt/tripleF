@@ -16,7 +16,7 @@
  */
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 
-type TooltipPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
+export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
 const props = withDefaults(
   defineProps<{

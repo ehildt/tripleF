@@ -24,8 +24,6 @@
 /* 5. Component-level unscoped styles */
 @import './components/chat.css';
 
-@plugin "@iconify/tailwind4";
-
 /* 6. Global resets, base styles, animations */
 
 * {
