@@ -34,6 +34,19 @@ describe('useMenuPosition', () => {
     expect(positionStyle.value).toEqual({ left: '204px', top: '40px' });
   });
 
+  it('anchors to the trigger left edge when aligned left', async () => {
+    const isOpen = ref(false);
+    const trigger = fakeTrigger({ left: 100, top: 40 });
+    window.innerWidth = 1280;
+
+    const { positionStyle } = useMenuPosition(trigger, isOpen, {
+      align: 'left',
+    });
+    await openMenu(isOpen);
+
+    expect(positionStyle.value).toEqual({ right: '1180px', top: '40px' });
+  });
+
   it('has no position when the trigger is missing', async () => {
     const isOpen = ref(false);
     const { positionStyle } = useMenuPosition(ref(null), isOpen);

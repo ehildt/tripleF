@@ -47,6 +47,7 @@ export class InterpretStepService implements StepHandler {
         think: ctx.request.think,
         numCtx: ctx.request.options?.num_ctx,
         abortSignal: ctx.abortSignal,
+        language: ctx.filters.language,
         onIntent: (intent) => {
           ctx.outputs.intent = intent;
         },

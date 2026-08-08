@@ -249,6 +249,7 @@ export function useSubmit(options: UseSubmitOptions) {
       think: activeConversation.value?.think ?? 'medium',
       hasNewImages,
       conversationMetadata,
+      language: i18n.global.locale.value,
     });
   }
 

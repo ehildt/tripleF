@@ -10,6 +10,9 @@ importers:
       '@headlessui/vue':
         specifier: ^1.7.23
         version: 1.7.23(vue@3.5.41(typescript@5.9.3))
+      '@iconify/vue':
+        specifier: ^5.0.1
+        version: 5.0.1(vue@3.5.41(typescript@5.9.3))
       '@lucide/vue':
         specifier: ^1.30.0
         version: 1.30.0(vue@3.5.41(typescript@5.9.3))
@@ -889,6 +892,14 @@ packages:
       {
         integrity: sha512-b1S7B1k9ohZ+iNTi2ATxbRYG9fTrJmUT0rc46bvVnNxqNRGW7dyo/vRREwyniI5IRN2RSJHDcm+s3BjWrSAjHw==,
       }
+
+  '@iconify/vue@5.0.1':
+    resolution:
+      {
+        integrity: sha512-aumwwooJlFJ5H5qYWB6ZTAyM0C8hpfcSVLB9/a3qnH1GGvIJ+FEbpEs4s/HfErYe/M5qZeLjwmESR5fFm3lXEw==,
+      }
+    peerDependencies:
+      vue: '>=3.0.0'
 
   '@intlify/core-base@11.4.8':
     resolution:
@@ -7161,6 +7172,11 @@ snapshots:
       '@antfu/install-pkg': 1.1.0
       '@iconify/types': 2.0.0
       import-meta-resolve: 4.2.0
+
+  '@iconify/vue@5.0.1(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@iconify/types': 2.0.0
+      vue: 3.5.41(typescript@5.9.3)
 
   '@intlify/core-base@11.4.8':
     dependencies:

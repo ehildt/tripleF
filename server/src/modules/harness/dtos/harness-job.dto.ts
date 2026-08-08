@@ -29,6 +29,8 @@ type FastifyMultipartFilter = {
   preprocessing?: SharpOptions;
   exchanges?: Array<InputMessage>;
   keepAlive?: string;
+  /** ISO-639-1 code of the active UI locale (browser-detected or user-selected). */
+  language?: string;
 };
 
 export type FastifyMultipartDataWithFiltersReq = {
