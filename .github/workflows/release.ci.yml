@@ -33,7 +33,7 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v6
         with:
           path: .pnpm-store
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
