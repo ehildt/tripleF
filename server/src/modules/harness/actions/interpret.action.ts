@@ -32,6 +32,8 @@ type InterpretParams = {
   numCtx?: number;
   abortSignal?: AbortSignal;
   onIntent?: (intent: IntentResult) => void;
+  /** ISO-639-1 code of the active UI locale (browser-detected or user-selected). */
+  language?: string;
 };
 
 @Injectable()
@@ -61,6 +63,7 @@ export class InterpretActionService {
     const classifyMessages: InputMessage[] = buildClassifyMessages(
       params.messages,
       enabledToolNames,
+      params.language,
     );
 
     let totalInputTokens = 0;

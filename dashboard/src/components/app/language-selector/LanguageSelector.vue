@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import { useLocale } from '../../../i18n/composables/use-locale';
 import { resolveNativeLanguageName } from '../../../i18n/resolve-native-language-name';
+import { useMenuPosition } from '../../chat/toolbar/model-selector/composables/use-menu-position';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 
@@ -11,7 +12,15 @@ const { locale, setLocale, supportedLocales } = useLocale();
 
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
+const triggerRef = ref<HTMLElement | null>(null);
+const dropdownRef = ref<HTMLElement | null>(null);
 const searchQuery = ref('');
+
+// Teleported to <body> so the drawer's clip-path/backdrop-filter can't clip
+// the dropdown (the model menu does the same). Opens to the left of the rail.
+const { positionStyle } = useMenuPosition(triggerRef, isOpen, {
+  align: 'left',
+});
 
 /** Locale options with their native (endonym) name, from Intl.DisplayNames. */
 const allOptions = computed(() =>
@@ -43,10 +52,10 @@ function select(code: (typeof supportedLocales)[number]) {
 }
 
 function onDocumentMousedown(event: MouseEvent) {
-  if (
-    containerRef.value &&
-    !containerRef.value.contains(event.target as Node)
-  ) {
+  const target = event.target as Node;
+  const insideContainer = containerRef.value?.contains(target);
+  const insideDropdown = dropdownRef.value?.contains(target);
+  if (!insideContainer && !insideDropdown) {
     isOpen.value = false;
   }
 }
@@ -61,6 +70,7 @@ onUnmounted(() =>
   <div ref="containerRef" class="language-selector">
     <Tooltip :text="$t('app.selectLanguage')" :positions="['top', 'bottom']">
       <button
+        ref="triggerRef"
         class="language-selector__button"
         :class="{ 'language-selector__button--active': isOpen }"
         :aria-label="$t('app.selectLanguage')"
@@ -72,42 +82,54 @@ onUnmounted(() =>
       </button>
     </Tooltip>
 
-    <Transition name="dropdown">
-      <div
-        v-if="isOpen"
-        class="language-selector__dropdown"
-        role="listbox"
-        :aria-label="$t('app.selectLanguage')"
-      >
-        <div class="language-selector__search">
-          <Search class="language-selector__search-icon" :size="14" />
-          <input
-            v-model="searchQuery"
-            class="language-selector__search-input"
-            type="text"
-            :placeholder="$t('common.searchLanguages')"
-            aria-label="$t('common.searchLanguages')"
-          />
-        </div>
-        <p v-if="!options.length" class="language-selector__empty">
-          {{ $t('common.noMatchingRequests') }}
-        </p>
-        <button
-          v-for="option in options"
-          :key="option.code"
-          class="language-selector__item"
-          :class="{
-            'language-selector__item--active': locale === option.code,
-          }"
-          role="option"
-          :aria-selected="locale === option.code"
-          @click="select(option.code)"
+    <!-- Teleported to <body> so the drawer's clip-path/backdrop-filter can't
+         clip the dropdown (the model menu does the same). -->
+    <Teleport to="body">
+      <Transition name="dropdown">
+        <div
+          v-if="isOpen"
+          ref="dropdownRef"
+          class="language-selector__dropdown"
+          :style="positionStyle ?? undefined"
+          role="listbox"
+          :aria-label="$t('app.selectLanguage')"
         >
-          <span class="language-selector__code">{{ option.code }}</span>
-          <span class="language-selector__name">{{ option.name }}</span>
-        </button>
-      </div>
-    </Transition>
+          <div class="language-selector__content">
+            <div class="language-selector__search">
+              <Search class="language-selector__search-icon" :size="14" />
+              <input
+                v-model="searchQuery"
+                class="language-selector__search-input"
+                type="text"
+                :placeholder="$t('common.searchLanguages')"
+                aria-label="$t('common.searchLanguages')"
+              />
+            </div>
+            <div class="language-selector__items">
+              <p v-if="!options.length" class="language-selector__empty">
+                {{ $t('common.noMatchingRequests') }}
+              </p>
+              <button
+                v-for="option in options"
+                :key="option.code"
+                class="language-selector__item"
+                :class="{
+                  'language-selector__item--active': locale === option.code,
+                }"
+                role="option"
+                :aria-selected="locale === option.code"
+                @click="select(option.code)"
+              >
+                <span class="language-selector__code">{{ option.code }}</span>
+                <div class="language-selector__info">
+                  <span class="language-selector__name">{{ option.name }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -146,23 +168,36 @@ onUnmounted(() =>
   outline-offset: 2px;
 }
 
-/* Opens to the left of the menu rail (right edge by default), like the
-   theme dropdown — the drawer is only 3.25rem wide. */
+/* Teleported to <body> and fixed-positioned by useMenuPosition (opens to
+   the left of the rail). Matches the model selector's elevated surface,
+   soft shadow, and stacking level. The surface itself does not scroll; the
+   inner .language-selector__content does, so the list's bottom padding stays
+   visible at the end of the scrollbar. */
 .language-selector__dropdown {
-  position: absolute;
-  right: 100%;
-  top: 0;
-  width: 12.5rem;
-  background-color: var(--color-bg-secondary);
+  position: fixed;
+  width: 14rem;
+  background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
-  box-shadow: 0 20px 25px -5px
-    color-mix(in srgb, var(--color-bg-primary) 20%, transparent);
-  max-height: 20rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  z-index: 50;
+  box-shadow: 0 10px 15px -3px
+    color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
+  /* Above the tab menu it lives in (1200) and every overlay the menu can
+     collide with (floating players 1000, teleported dropdowns 1050, the
+     lightbox 1100). The model menu's 1050 is fine there because it sits in
+     the chat toolbar, not inside the tab menu. */
+  z-index: 1300;
 }
 
+/* Scroll container, matching the model list's .model-list-content: the
+   dropdown surface stays fixed while this inner column scrolls. */
+.language-selector__content {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: contain;
+  max-height: min(24rem, 70vh);
+}
+
+/* Sticky search header, styled like the model list's search bar. */
 .language-selector__search {
   position: sticky;
   top: 0;
@@ -170,8 +205,10 @@ onUnmounted(() =>
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
+  margin-bottom: var(--spacing-1);
   background-color: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-divider);
+  z-index: 1;
 }
 
 .language-selector__search-icon {
@@ -197,34 +234,58 @@ onUnmounted(() =>
   color: var(--color-fg-muted);
 }
 
-.language-selector__empty {
-  margin: 0;
-  padding: 0.625rem 0.75rem;
-  font-size: 0.75rem;
-  color: var(--color-fg-muted);
+/* Card list, matching the model list's item rhythm. */
+.language-selector__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding-inline: var(--spacing-1);
+  padding-bottom: var(--spacing-1);
 }
 
-.language-selector__item {
-  width: 100%;
+.language-selector__empty {
+  padding: var(--spacing-1-5) var(--spacing-3);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+  text-align: center;
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
+  justify-content: center;
+  min-height: 2.5rem;
+}
+
+/* Card item, matching the model list item's surface and selection. */
+.language-selector__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  padding: var(--spacing-2);
   text-align: left;
-  color: var(--color-fg-muted);
-  background-color: transparent;
-  transition: color 0.15s ease;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-secondary);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.language-selector__item:hover,
-.language-selector__item--active {
-  color: var(--color-fg-primary);
+.language-selector__item:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-tertiary) 80%,
+    transparent
+  );
 }
 
 .language-selector__item--active {
-  background-color: color-mix(in srgb, var(--color-fg-primary) 5%, transparent);
+  color: var(--color-accent-primary);
 }
 
 .language-selector__code {
@@ -232,8 +293,18 @@ onUnmounted(() =>
   font-family: var(--font-mono);
   font-size: 0.625rem;
   color: var(--color-fg-muted);
-  border: 1px solid var(--color-divider);
-  padding: 0 var(--spacing-0-5);
+}
+
+.language-selector__item--active .language-selector__code {
+  color: var(--color-accent-primary);
+}
+
+/* Stretched column, left-aligned via the button's text-align. */
+.language-selector__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .language-selector__name {

@@ -117,4 +117,15 @@ export class HarnessStreamQueryDto {
   @IsOptional()
   @Transform(parseBoolean)
   hasNewImages?: boolean;
+
+  @ApiPropertyOptional({
+    name: 'language',
+    type: String,
+    example: 'de',
+    description:
+      'ISO-639-1 code of the active UI locale (browser-detected or user-selected). Used as the default response language; the model overrides it only when the user explicitly requests a different language.',
+  })
+  @IsString()
+  @IsOptional()
+  language?: string;
 }
