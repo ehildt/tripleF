@@ -23,9 +23,6 @@ ignores:
   - '@tailwindcss/postcss'
   - postcss
   - tailwindcss
-  # Required by style.css @plugin
-  - '@iconify/json'
-  - '@iconify/tailwind4'
   # Required for testing (no tests yet)
   - '@testing-library/jest-dom'
   - '@testing-library/vue'

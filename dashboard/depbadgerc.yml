@@ -95,10 +95,6 @@ devDependencies:
       link: https://github.com/eslint/eslint
     - name: '@eslint/markdown'
       link: https://github.com/eslint/eslint
-    - name: '@iconify/json'
-      link: https://github.com/iconify/iconify
-    - name: '@iconify/tailwind4'
-      link: https://github.com/iconify/iconify
     - name: '@storybook/addon-a11y'
       link: https://github.com/storybookjs/storybook
     - name: '@storybook/addon-docs'

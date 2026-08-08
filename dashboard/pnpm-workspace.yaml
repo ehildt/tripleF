@@ -6,7 +6,6 @@ minimumReleaseAgeExclude:
   - postcss@8.5.25
   - playwright-core@1.62.1
   - playwright@1.62.1
-  - '@iconify/json@2.2.509'
   - '@storybook/addon-a11y@10.5.6'
   - '@storybook/addon-docs@10.5.6'
   - '@storybook/addon-vitest@10.5.6'
@@ -29,3 +28,5 @@ minimumReleaseAgeExclude:
   - eslint-plugin-storybook@10.5.6
   - storybook@10.5.6
   - typescript-eslint@8.66.0
+  - '@types/node@26.2.0'
+  - eslint@10.8.1
