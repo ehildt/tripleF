@@ -67,13 +67,11 @@ jobs:
       - name: Test — Server
         run: |
           cd server
-          pnpm test
           pnpm test:cov
 
       - name: Test — Dashboard
         run: |
           cd dashboard
-          pnpm test
           pnpm test:cov
 
       - name: Upload Coverage — Server

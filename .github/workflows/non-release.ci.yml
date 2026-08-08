@@ -38,5 +38,4 @@ jobs:
 
       - name: Test
         run: |
-          pnpm -r test
           pnpm -r test:cov
