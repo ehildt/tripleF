@@ -82,7 +82,6 @@ headlessui
 healthcheck
 Hildt
 Horizonal
-iconify
 iconoir
 Identificator
 imagelist

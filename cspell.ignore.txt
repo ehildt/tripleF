@@ -86,7 +86,6 @@ hangxingliu
 healthcheck
 Hildt
 Horizonal
-iconify
 iconoir
 Identificator
 initdb
@@ -232,3 +231,7 @@ wireframes
 Xmark
 zustand
 triplef
+Covenant
+dependabot
+Linguist
+editorconfig
