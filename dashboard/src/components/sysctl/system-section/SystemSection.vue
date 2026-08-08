@@ -2,19 +2,19 @@
 /**
  * The SysCtl "System" tab: system health tiles on top, then the Ollama
  * connection (host + masked API key, same override contract as the Serper
- * provider), then the interface visibility switches.
+ * provider). Interface visibility switches live on the separate Interface
+ * tab.
  */
-import { KeyRound, Server } from '@lucide/vue';
+import { Activity, KeyRound, Server } from '@lucide/vue';
 
-import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
+import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import { useAppStore } from '@/stores/app';
 
-import { useSysctlTabVisibility } from '../composables/use-sysctl-tab-visibility';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
+import SysCtlSectionHeader from '../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
-import TabVisibilitySection from '../tab-visibility-section/TabVisibilitySection.vue';
 import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import { useOllamaConnection } from './composables/use-ollama-connection';
 
@@ -33,85 +33,107 @@ const {
   submitHost,
 } = useOllamaConnection();
 
-const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
-  useSysctlTabVisibility();
+const { warmModelOnSelect, toggleWarmModelOnSelect } = useAppStore();
 </script>
 
 <template>
   <SysCtlSection :loading="isLoading" :error="hasError">
-    <PanelLayout>
-      <CollapsiblePanel id="health" :title="$t('common.health')">
-        <SystemHealthSection :tiles="tiles" />
-      </CollapsiblePanel>
-    </PanelLayout>
+    <div class="system-section">
+      <SysCtlSectionHeader :icon="Activity" :title="$t('common.health')" />
+      <SystemHealthSection :tiles="tiles" />
+    </div>
 
-    <PanelLayout>
-      <CollapsiblePanel id="ollama" :title="$t('common.ollama')">
-        <template #actions>
-          <ResetButton
-            :title="$t('common.resetOllamaToDefaults')"
-            @click="resetProvider('ollama')"
-          />
-        </template>
+    <div class="system-section">
+      <SysCtlSectionHeader :icon="Server" :title="$t('common.ollama')" />
 
-        <div class="system-section__grid">
-          <!-- API key field: displays the masked key (****************),
+      <div class="system-section__actions">
+        <ResetButton
+          :title="$t('common.resetOllamaToDefaults')"
+          @click="resetProvider('ollama')"
+        />
+      </div>
+
+      <FieldGrid :items-per-row="2">
+        <!-- API key field: displays the masked key (****************),
                patches on change. The real key never reaches the client.
                Setting a key also unlocks the Ollama Cloud models. -->
-          <FieldCard
-            :icon="KeyRound"
-            :label="$t('common.apiKey')"
-            :description="$t('common.ollamaCloudAccessKey')"
-          >
-            <template #field>
-              <input
-                v-model="apiKeyDraft"
-                type="text"
-                name="ollama-api-key"
-                class="system-section__input"
-                autocomplete="off"
-                spellcheck="false"
-                @focus="selectApiKeyText"
-                @change="submitApiKey"
-              />
-            </template>
-          </FieldCard>
+        <FieldCard
+          :icon="KeyRound"
+          :label="$t('common.apiKey')"
+          :description="$t('common.ollamaCloudAccessKey')"
+        >
+          <template #field>
+            <input
+              v-model="apiKeyDraft"
+              type="text"
+              name="ollama-api-key"
+              class="system-section__input"
+              autocomplete="off"
+              spellcheck="false"
+              @focus="selectApiKeyText"
+              @change="submitApiKey"
+            />
+          </template>
+        </FieldCard>
 
-          <FieldCard
-            :icon="Server"
-            :label="$t('common.host')"
-            description="http://localhost:11434/api or https://ollama.com/api"
-          >
-            <template #field>
-              <input
-                v-model="hostDraft"
-                type="text"
-                name="ollama-host"
-                class="system-section__input"
-                autocomplete="off"
-                spellcheck="false"
-                @change="submitHost"
-              />
-            </template>
-          </FieldCard>
-        </div>
-      </CollapsiblePanel>
-    </PanelLayout>
+        <FieldCard
+          :icon="Server"
+          :label="$t('common.host')"
+          description="http://localhost:11434/api or https://ollama.com/api"
+        >
+          <template #field>
+            <input
+              v-model="hostDraft"
+              type="text"
+              name="ollama-host"
+              class="system-section__input"
+              autocomplete="off"
+              spellcheck="false"
+              @change="submitHost"
+            />
+          </template>
+        </FieldCard>
 
-    <PanelLayout>
-      <CollapsiblePanel id="interface" :title="$t('common.interfaceSection')">
-        <TabVisibilitySection
-          :is-sockets-visible="isTabVisible('sockets')"
-          :show-counters="showCounters"
-          @toggle-sockets="toggleTab('sockets')"
-          @toggle-counters="toggleShowCounters"
+        <FieldCard
+          :icon="Server"
+          :label="$t('common.warmModelOnSelect')"
+          :description="$t('common.warmModelOnSelectDesc')"
+          :checked="warmModelOnSelect"
+          @toggle="toggleWarmModelOnSelect"
         />
-      </CollapsiblePanel>
-    </PanelLayout>
+      </FieldGrid>
+    </div>
   </SysCtlSection>
 </template>
 
 <style scoped>
+.system-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.system-section__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: calc(2.25rem + 2 * var(--spacing-2));
+  padding: 0 var(--spacing-3);
+  background:
+    radial-gradient(
+      ellipse 120% 140% at 12% 50%,
+      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 120% 140% at 88% 50%,
+      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-bg-elevated);
+}
+
 .system-section__input {
   width: 100%;
   border: none;
@@ -121,12 +143,5 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
   font-size: 0.8rem;
   text-align: center;
   outline: none;
-}
-
-.system-section__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-1);
-  padding: var(--spacing-1);
 }
 </style>

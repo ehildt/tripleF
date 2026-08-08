@@ -25,7 +25,7 @@ describe('SysCtlMenu', () => {
       props: { activeTab: 'search-engines' },
     });
 
-    const tabs = ['Search Engines', 'Preprocessing', 'Widgets', 'System'];
+    const tabs = ['Search engines', 'Preprocessing', 'Widgets', 'System'];
 
     for (const label of tabs) {
       const button = wrapper

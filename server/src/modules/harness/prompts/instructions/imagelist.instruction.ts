@@ -27,8 +27,6 @@ Gallery item rules:
 - If the tool result provides no title/alt, derive concise values from the query and topic. Never leave them empty.
 - Carry over the metadata from availableImages verbatim: width, height, and source (the site name). Omit a field only when the tool result did not provide it.
 - Use ONLY image URLs that appear in the tool results. Never invent or guess URLs.
-- IMAGE DOMAIN RESTRICTION: only use image URLs from trusted sources. Reject Google thumbnail proxies (configured blocked sources), data URIs, localhost, private IPs, and unknown hosts without a direct image file extension.
-- Prefer 2560×1440 (1440p). 1280×720 (720p) is the enforced minimum; never use images below that resolution.
 - Order images by relevance and visual quality — strongest first.
 - Do not include near-duplicate images; the system deduplicates by content hash, but still pick the best representative yourself.
 

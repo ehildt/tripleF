@@ -16,38 +16,12 @@
 import { computed, ref } from 'vue';
 
 import FloatingMediaBar from '@/components/shared/ui/floating-media-bar/FloatingMediaBar.vue';
-import ResizeHandleGrid, {
-  type ResizeDirection,
-} from '@/components/shared/ui/resize-handle-grid/ResizeHandleGrid.vue';
+import ResizeHandleGrid from '@/components/shared/ui/resize-handle-grid/ResizeHandleGrid.vue';
+import type { ResizeDirection } from '@/types/resize-direction.model';
 
-interface Props {
-  /** Title shown statically or in the marquee. */
-  title?: string;
-  /** Scroll the title when the playlist panel is not visible. */
-  showTitleMarquee?: boolean;
-  /** Media opacity in percent (25–100). */
-  opacityPercent: number;
-  /** Whether the media is already in the playlist. */
-  isInPlaylist: boolean;
-  /** Accessible label/title of the minimize button. */
-  minimizeTitle?: string;
-  /** Accessible label/title of the close button. */
-  closeTitle?: string;
-  /**
-   * Bare mode: hide the bar and resize grid and strip the popup frame, so
-   * the same media stays mounted while the window "docks" inline over its
-   * source. The consumer positions/sizes it via the root style.
-   */
-  docked?: boolean;
-  /**
-   * Keep the media bar always visible (default). When false, the bar is
-   * hidden until the popup is hovered — it fades in on mouse enter and out
-   * on mouse leave, letting the media fill the freed space.
-   */
-  barAlwaysVisible?: boolean;
-}
+import type { FloatingPopoutProps } from './FloatingPopout.types';
 
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<FloatingPopoutProps>(), {
   title: '',
   showTitleMarquee: false,
   minimizeTitle: 'Minimize',
@@ -123,7 +97,7 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
   box-shadow:
     0 0.5rem 2rem color-mix(in srgb, black 45%, transparent),
-    0 0 1.5rem color-mix(in srgb, var(--color-accent-glow) 25%, transparent),
+    0 0 0.5rem color-mix(in srgb, var(--color-accent-glow) 25%, transparent),
     inset 0 0 0 1px color-mix(in srgb, white 6%, transparent);
   transition: border-color 0.2s ease;
   overflow: visible;

@@ -1,23 +1,9 @@
 import { ref } from 'vue';
 
-/** Position where a floating video popout initially appears. */
-export type PopoutAnchor =
-  | 'top-left'
-  | 'top-center'
-  | 'top-right'
-  | 'middle-left'
-  | 'middle-center'
-  | 'middle-right'
-  | 'bottom-left'
-  | 'bottom-center'
-  | 'bottom-right';
-
-export interface FloatingPopupRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import type {
+  FloatingPopupRect,
+  PopoutAnchor,
+} from './popout-settings.state.types';
 
 export const DEFAULT_POPOUT_ANCHOR: PopoutAnchor = 'bottom-right';
 export const DEFAULT_POPOUT_REMEMBER_POSITION = true;

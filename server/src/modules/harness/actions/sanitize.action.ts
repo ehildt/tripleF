@@ -3,32 +3,33 @@ import { Injectable } from '@nestjs/common';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { applySourcePolicy } from '../helpers/apply-source-policy.helper.js';
-import { buildFinalMessagesForSanitize } from '../helpers/build-final-messages.helper.js';
-import { collectHistoryImageUrls } from '../helpers/collect-history-image-urls.helper.js';
-import { collectHistoryVideoUrls } from '../helpers/collect-history-video-urls.helper.js';
-import {
-  dedupeImagesByFingerprint,
-  type FingerprintedImageItem,
-} from '../helpers/dedupe-images-by-fingerprint.helper.js';
-import type { IngestedImage } from '../helpers/download-and-ingest-images.helper.js';
+import { partitionByLanguage } from '../helpers/language/partition-by-language.helper.js';
+import { tagLanguage } from '../helpers/language/tag-language.helper.js';
+import { dedupeImagesByFingerprint } from '../helpers/media/dedupe-images-by-fingerprint.helper.js';
+import type { FingerprintedImageItem } from '../helpers/media/dedupe-images-by-fingerprint.types.js';
+import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
 import {
   extractArticles,
   extractReferences,
-} from '../helpers/extract-articles-from-tools.helper.js';
+} from '../helpers/media/extract-articles-from-tools.helper.js';
 import {
-  type ExtractedImageItem,
-  type ExtractedVideoItem,
   extractImageSearchItems,
   extractVideoSearchItems,
-} from '../helpers/extract-media-from-tools.helper.js';
-import { extractPlaces } from '../helpers/extract-places.helper.js';
-import { extractReviews } from '../helpers/extract-reviews.helper.js';
-import { extractShopOffers } from '../helpers/extract-shop-offers.helper.js';
-import { partitionByLanguage } from '../helpers/partition-by-language.helper.js';
+} from '../helpers/media/extract-media-from-tools.helper.js';
+import type {
+  ExtractedImageItem,
+  ExtractedVideoItem,
+} from '../helpers/media/extract-media-from-tools.types.js';
+import { extractPlaces } from '../helpers/media/extract-places.helper.js';
+import { extractReviews } from '../helpers/media/extract-reviews.helper.js';
+import { extractShopOffers } from '../helpers/media/extract-shop-offers.helper.js';
+import { applySourcePolicy } from '../helpers/sanitize/apply-source-policy.helper.js';
+import { buildFinalMessagesForSanitize } from '../helpers/sanitize/build-final-messages.helper.js';
 import { buildIngestedByUrlMap } from '../helpers/sanitize/build-ingested-by-url-map.helper.js';
 import { buildUserFingerprints } from '../helpers/sanitize/build-user-fingerprints.helper.js';
 import { collectExternalImageSearchUrls } from '../helpers/sanitize/collect-external-image-search-urls.helper.js';
+import { collectHistoryImageUrls } from '../helpers/sanitize/collect-history-image-urls.helper.js';
+import { collectHistoryVideoUrls } from '../helpers/sanitize/collect-history-video-urls.helper.js';
 import {
   collectImageUrls,
   type ImageUrlEntry,
@@ -38,13 +39,12 @@ import { collectVideoThumbnailUrls } from '../helpers/sanitize/collect-video-thu
 import { filterVerifiedMedia } from '../helpers/sanitize/filter-verified-media.helper.js';
 import { limitCloudReferenceImages } from '../helpers/sanitize/limit-cloud-reference-images.helper.js';
 import { rewriteCandidatesWithIngested } from '../helpers/sanitize/rewrite-candidates-with-ingested.helper.js';
-import { scrubBrokenUrlsFromMessages } from '../helpers/sanitize/scrub-broken-urls-from-messages.helper.js';
 import {
   sanitizeToolResult,
   sanitizeToolResultsWithIngestedUrls,
-} from '../helpers/sanitize-tool-result.helper.js';
-import { tagLanguage } from '../helpers/tag-language.helper.js';
-import { videoUrlKeys } from '../helpers/video-url-keys.helper.js';
+} from '../helpers/sanitize/sanitize-tool-result.helper.js';
+import { scrubBrokenUrlsFromMessages } from '../helpers/sanitize/scrub-broken-urls-from-messages.helper.js';
+import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
@@ -110,7 +110,7 @@ export class SanitizeActionService {
 
     // 2. Collect every URL that appears anywhere in the tool results and ping
     //    each one. This covers ImageSearch URLs, article thumbnails embedded in
-    //    webSearch/newsSearch results, video thumbnails, and the article/page
+    //    *WebSearch/NewsSearch results, video thumbnails, and the article/page
     //    URLs themselves, so broken media and dead citations cannot leak into
     //    the response.
     const allImageUrls = collectImageUrls(trustSanitized);

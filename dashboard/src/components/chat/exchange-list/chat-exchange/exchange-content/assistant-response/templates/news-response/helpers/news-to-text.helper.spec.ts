@@ -10,7 +10,7 @@ describe('newsToText', () => {
       deck: 'Team Ninja returns',
       lead: 'The sequel arrives next spring.',
       sectionContent: 'Preorders open Friday.',
-      keyPoints: [{ text: 'New protagonist' }],
+      keyFindings: [{ text: 'New protagonist' }],
       sources: [{ title: 'Gematsu', url: 'https://gematsu.com' }],
       relatedStories: [
         { title: 'Nioh 2 sales', url: 'https://example.com/sales' },
@@ -22,7 +22,7 @@ describe('newsToText', () => {
     expect(result).toContain('Deck: Team Ninja returns');
     expect(result).toContain('Lead: The sequel arrives next spring.');
     expect(result).toContain('Preorders open Friday.');
-    expect(result).toContain('Key points:');
+    expect(result).toContain('Key findings:');
     expect(result).toContain('- New protagonist');
     expect(result).toContain('Sources:');
     expect(result).toContain('- Gematsu (https://gematsu.com)');

@@ -1,6 +1,6 @@
 import type { Tool } from 'ai';
 
-type ToolSummaryFn = (data: Record<string, unknown>) => Record<string, unknown>;
+import type { ToolSummaryFn } from './tool-factory.types.js';
 
 export type ToolWithSummary = Tool & { summarize?: ToolSummaryFn };
 

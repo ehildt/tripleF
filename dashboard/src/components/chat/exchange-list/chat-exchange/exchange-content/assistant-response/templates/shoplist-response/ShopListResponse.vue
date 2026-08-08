@@ -4,39 +4,21 @@
  * already-introduced product: a lean header and a price-sorted list of
  * purchase options — no galleries, videos, or review sections.
  */
-import { computed } from 'vue';
-
-import type {
-  HarnessResponseData,
-  ShopOffer,
-} from '@/types/harness-response-data.model';
-
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import { priceNumeric } from '../../shared/helpers/price-numeric.helper';
+import { useShopListResponseData } from './composables/use-shoplist-response-data.composable';
 import ShopListOfferCard from './shoplist-offer-card/ShopListOfferCard.vue';
+import type { ShopListResponseProps } from './ShopListResponse.types';
 
-const props = defineProps<{ data: HarnessResponseData }>();
+const props = defineProps<ShopListResponseProps>();
 
-const offers = computed<ShopOffer[]>(() => {
-  if (!props.data.shopOffers?.length) return [];
-  return [...props.data.shopOffers].sort(
-    (a, b) => priceNumeric(a.price) - priceNumeric(b.price),
-  );
-});
-
-const hasContent = computed(
-  () => Boolean(props.data.title) || offers.value.length > 0,
-);
+const { offers, hasContent } = useShopListResponseData(props);
 </script>
 
 <template>
   <section v-if="hasContent" class="shoplist">
-    <!-- Lean header: category eyebrow, product name, one line of context -->
+    <!-- Lean header: product name, one line of context -->
     <header class="shoplist__header">
-      <span v-if="data.category" class="shoplist__category">
-        {{ data.category }}
-      </span>
       <h2 class="shoplist__title">{{ data.title }}</h2>
       <p v-if="data.subtitle" class="shoplist__subtitle">
         {{ data.subtitle }}
@@ -56,8 +38,8 @@ const hasContent = computed(
       />
     </div>
 
-    <SourcesSection :items="data.sources" />
     <InternationalCoverageSection :items="data.internationalCoverage" />
+    <SourcesSection :items="data.sources" />
   </section>
 
   <!-- Empty state -->
@@ -77,15 +59,6 @@ const hasContent = computed(
   display: flex;
   flex-direction: column;
   gap: var(--spacing-0-5);
-}
-
-.shoplist__category {
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-fg-muted);
 }
 
 .shoplist__title {

@@ -1,6 +1,8 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import { buildSourceLine } from '../../../composables/helpers/build-source-line.helper';
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+import { appendList } from '../../../composables/helpers/sources/append-list.helper';
+import { buildSourcesLines } from '../../../composables/helpers/sources/build-sources-lines.helper';
 
 /**
  * Convert a summary response into plain text for the model history.
@@ -15,25 +17,13 @@ export function summaryToText(data: HarnessResponseData): string {
     ['Title', data.title],
     ['Subtitle', data.subtitle],
   ];
-  for (const [label, value] of fields) {
-    const trimmed = value?.trim();
-    if (trimmed) parts.push(`${label}: ${trimmed}`);
-  }
+  appendLabeledFields(parts, fields);
 
   if (data.summary?.trim()) parts.push(data.summary.trim());
 
-  if (data.keyFindings?.length) {
-    parts.push('Key points:');
-    for (const item of data.keyFindings) {
-      const text = item.text?.trim();
-      if (text) parts.push(`- ${text}`);
-    }
-  }
+  appendList(parts, 'Key points:', data.keyFindings);
 
-  if (data.sources?.length) {
-    parts.push('Sources:');
-    for (const source of data.sources) parts.push(buildSourceLine(source));
-  }
+  parts.push(...buildSourcesLines(data.sources));
 
   return parts.join('\n\n');
 }

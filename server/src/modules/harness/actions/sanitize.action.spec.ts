@@ -132,7 +132,7 @@ describe('SanitizeActionService', () => {
       ctx,
       [
         {
-          toolName: 'webSearch',
+          toolName: 'serperWebSearch',
           result: {
             results: [
               {
@@ -179,7 +179,7 @@ describe('SanitizeActionService', () => {
       ctx,
       [
         {
-          toolName: 'webSearch',
+          toolName: 'serperWebSearch',
           result: {
             results: [
               {
@@ -229,7 +229,7 @@ describe('SanitizeActionService', () => {
           },
         },
         {
-          toolName: 'webSearch',
+          toolName: 'serperWebSearch',
           result: {
             results: [
               {

@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { Exchange } from '@/stores/conversation';
+import type { LightboxImage } from '@/types/lightbox.model';
 
 import AssistantResponse from './assistant-response/AssistantResponse.vue';
 import { useExchangeRenderMode } from './composables/use-exchange-render-mode';
 import { usePromptImageTiles } from './composables/use-prompt-image-tiles';
 import ExchangeActivity from './exchange-activity/ExchangeActivity.vue';
 import ExchangeDivider from './exchange-divider/ExchangeDivider.vue';
-import StreamingCursor from './streaming-cursor/StreamingCursor.vue';
-import StreamingSkeleton from './streaming-skeleton/StreamingSkeleton.vue';
 import UserRequest from './user-request/UserRequest.vue';
 
 const props = defineProps<{
@@ -19,26 +18,20 @@ const props = defineProps<{
   isHighlighted: boolean;
 }>();
 
-interface LightboxImage {
-  url: string;
-  title?: string;
-}
-
 const emit = defineEmits<{
   (e: 'imageClicked', images: LightboxImage[], clickedUrl: string): void;
 }>();
 
-const { dividerVariant, renderMode, containerClasses, showStreamingCursor } =
-  useExchangeRenderMode(
-    () => props.exchange,
-    () => ({
-      isUser: props.isUser,
-      isError: props.isError,
-      isPending: props.isPending,
-      isStreaming: props.isStreaming,
-      isHighlighted: props.isHighlighted,
-    }),
-  );
+const { dividerVariant, renderMode, containerClasses } = useExchangeRenderMode(
+  () => props.exchange,
+  () => ({
+    isUser: props.isUser,
+    isError: props.isError,
+    isPending: props.isPending,
+    isStreaming: props.isStreaming,
+    isHighlighted: props.isHighlighted,
+  }),
+);
 
 const { imageTiles } = usePromptImageTiles(() => props.exchange);
 </script>
@@ -60,12 +53,13 @@ const { imageTiles } = usePromptImageTiles(() => props.exchange);
       v-if="renderMode === 'reasoning'"
       :reasoning="exchange.reasoning"
     />
-    <StreamingSkeleton v-else-if="renderMode === 'streaming-skeleton'" />
     <AssistantResponse
       v-else-if="renderMode === 'assistant-response'"
       :template="exchange.harnessTemplate ?? ''"
       :data="exchange.harnessData"
       :text="exchange.text"
+      :chart-data="exchange.chartData"
+      :reveal-charts="exchange.revealCharts"
       @image-clicked="(...args) => emit('imageClicked', ...args)"
     />
     <div v-else-if="renderMode === 'user-request'" class="user-request-wrapper">
@@ -78,7 +72,96 @@ const { imageTiles } = usePromptImageTiles(() => props.exchange);
     <template v-else-if="renderMode === 'error' || renderMode === 'plain'">{{
       exchange.content
     }}</template>
-
-    <StreamingCursor v-if="showStreamingCursor" />
   </div>
 </template>
+
+<style scoped>
+/* Message container styles. The container div lives in this component's
+   template, so the base and modifier classes bind directly. Markdown
+   typography (headings, galleries, code, tables) lives in the components
+   that render markdown (TextResponse, ExchangeActivity) instead. */
+
+.exchange-message {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  background-color: var(--color-bg-secondary);
+  text-align: left;
+}
+
+.exchange-message--user {
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 10%,
+    transparent
+  );
+  text-align: right;
+}
+
+.exchange-message--error {
+  background-color: color-mix(
+    in srgb,
+    var(--color-status-error) 5%,
+    transparent
+  );
+  color: var(--color-status-error);
+}
+
+/* Direct children of the message container (component roots and plain
+   wrappers) stretch full-width; :deep needed because most are child
+   component roots. */
+.exchange-message :deep(> *) {
+  flex: 1 1 100%;
+  margin-top: 0;
+  margin-bottom: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.exchange-message--plain {
+  white-space: pre-line;
+}
+
+.exchange-message--highlighted {
+  animation: exchange-message-breathe 2s ease-in-out infinite;
+}
+
+/* NOTE: no filter/transform/opacity here — filter and transform make this
+   container the containing block for position:fixed descendants, and
+   opacity < 1 creates a stacking context that caps the floating video
+   popup's z-index. A box-shadow pulse avoids both. */
+@keyframes exchange-message-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent-primary) 35%, transparent);
+  }
+}
+
+/* User prompts style their own text bubble inside UserRequest; the
+   container is an unboxed right-aligned row (image tiles above the bubble
+   must not sit inside the colored box). */
+.exchange-user-wrap {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+}
+
+.user-request-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+</style>

@@ -98,7 +98,15 @@ function toggleHideRead() {
         <Search />
       </FilterMenu>
       <DlqReloadButton :loading="props.showLoading" @click="emit('reload')" />
-      <IconButton :active="props.hideRead" @click="toggleHideRead">
+      <IconButton
+        :active="props.hideRead"
+        :title="
+          props.hideRead
+            ? $t('common.showReadRequests')
+            : $t('common.hideReadRequests')
+        "
+        @click="toggleHideRead"
+      >
         <Mail v-if="props.hideRead" />
         <MailOpen v-else />
       </IconButton>

@@ -5,6 +5,7 @@ import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { isGoogleHostUrl } from './is-google-host-url.helper.js';
 import { pickMerchantResult } from './pick-merchant-result.helper.js';
 import { SEARCH_TIMEOUT_MS } from './search-timeout.js';
+import type { ResolvableOffer } from './serper-shop-links.types.js';
 import { storeHostToken } from './store-host-token.helper.js';
 
 const SERPER_SEARCH_URL = 'https://google.serper.dev/search';
@@ -12,8 +13,6 @@ const SERPER_SEARCH_URL = 'https://google.serper.dev/search';
 /** Cap parallel resolution look-ups independent of the configured result count. */
 const MAX_LINK_RESOLUTIONS = 12;
 const RESOLUTION_RESULT_COUNT = 3;
-
-type ResolvableOffer = { title?: string; link: string; source?: string };
 
 /**
  * Serper-specific shop-offer link resolution. Google Shopping returns

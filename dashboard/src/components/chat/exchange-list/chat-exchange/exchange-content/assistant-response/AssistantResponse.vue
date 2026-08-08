@@ -8,8 +8,9 @@ import type {
   HarnessResponseData,
 } from '@/types/harness-response-data.model';
 import { harnessImageClickedKey } from '@/types/harness-response-data.model';
+import type { LightboxImage } from '@/types/lightbox.model';
 
-import { isTrustedImageUrl } from './composables/helpers/is-trusted-image-url.helper';
+import { isTrustedImageUrl } from './composables/helpers/media/is-trusted-image-url.helper';
 import ArticleResponse from './templates/article-response/ArticleResponse.vue';
 import CompareResponse from './templates/compare-response/CompareResponse.vue';
 import DescribeResponse from './templates/describe-response/DescribeResponse.vue';
@@ -19,19 +20,20 @@ import NewsResponse from './templates/news-response/NewsResponse.vue';
 import OcrResponse from './templates/ocr-response/OcrResponse.vue';
 import ProductResponse from './templates/product-response/ProductResponse.vue';
 import ShopListResponse from './templates/shoplist-response/ShopListResponse.vue';
+import StockmarketItemResponse from './templates/stockmarket-item-response/StockmarketItemResponse.vue';
+import StockmarketListResponse from './templates/stockmarket-list-response/StockmarketListResponse.vue';
 import SummaryResponse from './templates/summary-response/SummaryResponse.vue';
 import TextResponse from './templates/text-response/TextResponse.vue';
 import VideoListResponse from './templates/videolist-response/VideoListResponse.vue';
-
-interface LightboxImage {
-  url: string;
-  title?: string;
-}
 
 const props = defineProps<{
   template: string;
   data?: HarnessResponseData;
   text?: string;
+  /** Chart data streamed from EODHD tools, keyed by tool name. */
+  chartData?: Record<string, unknown>;
+  /** True once the respond step starts streaming — reveal the charts. */
+  revealCharts?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -48,6 +50,8 @@ const templateMap: Record<string, Component> = {
   ocr: OcrResponse,
   product: ProductResponse,
   shoplist: ShopListResponse,
+  stockmarketitem: StockmarketItemResponse,
+  stockmarketlist: StockmarketListResponse,
   summary: SummaryResponse,
   text: TextResponse,
   videolist: VideoListResponse,
@@ -56,6 +60,20 @@ const templateMap: Record<string, Component> = {
 const activeComponent = computed(
   () => templateMap[props.template] ?? TextResponse,
 );
+
+/**
+ * Only the stockmarket templates consume chartData/revealCharts. Passing
+ * them to every template would leak them as fallthrough DOM attributes (and
+ * warn on the object value), so they are bound only for stockmarket templates.
+ */
+const stockmarketProps = computed(() => {
+  if (
+    props.template !== 'stockmarketitem' &&
+    props.template !== 'stockmarketlist'
+  )
+    return {};
+  return { chartData: props.chartData, revealCharts: props.revealCharts };
+});
 
 const imageList = computed<LightboxImage[]>(() => {
   const items: LightboxImage[] = [];
@@ -114,5 +132,10 @@ provide<HarnessImageClickedHandler>(harnessImageClickedKey, onImageClicked);
 </script>
 
 <template>
-  <component :is="activeComponent" :data="data ?? {}" :text="text" />
+  <component
+    :is="activeComponent"
+    :data="data ?? {}"
+    :text="text"
+    v-bind="stockmarketProps"
+  />
 </template>

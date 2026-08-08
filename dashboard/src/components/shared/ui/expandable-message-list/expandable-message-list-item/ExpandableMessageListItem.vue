@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ChatIconVisibility } from '@/types/app.model';
+
 import ExpandableMessageListToggle from '../expandable-message-list-toggle/ExpandableMessageListToggle.vue';
 import type { MessageListItem } from '../types';
 
@@ -9,11 +11,14 @@ defineProps<{
   renderHtml?: (content: string) => string;
   showRole?: boolean;
   showBranch?: boolean;
+  active?: boolean;
+  iconVisibility?: Partial<ChatIconVisibility>;
 }>();
 
 defineEmits<{
   toggle: [];
   select: [];
+  copy: [];
   toggleInclude: [];
   deleteItem: [];
   branchOut: [];
@@ -25,6 +30,7 @@ defineEmits<{
     class="expandable-message-list__item"
     :class="{
       'expandable-message-list__item--excluded': message.included === false,
+      'expandable-message-list__item--active': active,
     }"
   >
     <ExpandableMessageListToggle
@@ -37,8 +43,11 @@ defineEmits<{
       :context-percent="message.contextPercent"
       :show-role="showRole"
       :show-branch="showBranch"
+      :icon-visibility="iconVisibility"
+      :active="active"
       @toggle="$emit('toggle')"
       @select="$emit('select')"
+      @copy="$emit('copy')"
       @toggle-include="$emit('toggleInclude')"
       @delete-item="$emit('deleteItem')"
       @branch-out="$emit('branchOut')"
@@ -53,13 +62,23 @@ defineEmits<{
 
 <style scoped>
 .expandable-message-list__item {
+  margin: 0.25rem 0;
   background-color: color-mix(in srgb, var(--color-tab-debug) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-tab-debug) 20%, transparent);
   transition: opacity 0.2s ease;
 }
 
 .expandable-message-list__item--excluded {
   opacity: 0.45;
+}
+
+.expandable-message-list__item--active {
+  border-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 60%,
+    transparent
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--color-accent-primary) 40%, transparent);
 }
 
 .expand-enter-active,

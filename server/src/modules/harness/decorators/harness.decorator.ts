@@ -1,12 +1,13 @@
 import { Body, Headers, PipeTransform, Query } from '@nestjs/common';
 
-import { IMAGES, PROMPT, X_HARNESS_LLM } from '../decorators/constants.js';
 import { MultipartFieldPipe } from '../pipes/multipart-field.pipe.js';
 import {
   MultipartFilesPipe,
   MultipartFilesPipeOptions,
 } from '../pipes/multipart-files.pipe.js';
 import { ParsePromptPipe } from '../pipes/parse-prompt.pipe.js';
+
+import { IMAGES, PROMPT, X_HARNESS_LLM } from './constants.js';
 
 const MultiPartFiles = (
   options: MultipartFilesPipeOptions,

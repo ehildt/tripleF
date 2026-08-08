@@ -6,10 +6,7 @@ import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 
-type ReinstateOptions = {
-  requestIds?: string[];
-  batchSize?: number;
-};
+import type { ReinstateOptions } from './job-reinstatement.service.types.js';
 
 @Injectable()
 export class JobReinstatementService {

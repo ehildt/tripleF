@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import ExpandableDivider from './ui/expandable-divider/ExpandableDivider.vue';
 
-defineProps<{
-  isExpanded: boolean;
-  hasItems: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    isExpanded: boolean;
+    hasItems: boolean;
+    /** When false, the collapsible divider row is omitted entirely — used to
+     *  hide the conversations divider when the sockets section below is not
+     *  shown, so the list no longer implies a divider above an empty area. */
+    showDivider?: boolean;
+  }>(),
+  { showDivider: true },
+);
 
-defineEmits<{
+const emit = defineEmits<{
   toggleExpanded: [];
 }>();
 </script>
 
 <template>
   <div v-if="hasItems" class="expandable-list">
-    <div class="expandable-list__divider-row">
+    <div v-if="showDivider" class="expandable-list__divider-row">
       <ExpandableDivider
         :is-expanded="isExpanded"
-        @toggle="$emit('toggleExpanded')"
+        @toggle="emit('toggleExpanded')"
       />
     </div>
 

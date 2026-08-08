@@ -7,18 +7,12 @@
  */
 import { computed } from 'vue';
 
-type PlayerTarget = Element | null;
+import type {
+  PlayerTarget,
+  VideoPlayerSurfaceProps,
+} from './VideoPlayerSurface.types';
 
-interface Props {
-  videoUrl: string;
-  embedSrc: string;
-  isDirectVideo: boolean;
-  isUnembeddable: boolean;
-  /** Optional key used to force remount when the video source changes. */
-  remountKey?: string;
-}
-
-const props = defineProps<Props>();
+const props = defineProps<VideoPlayerSurfaceProps>();
 
 const emit = defineEmits<{
   (e: 'setPlayerElement', el: PlayerTarget): void;
@@ -67,7 +61,7 @@ function setPlayerElement(el: unknown): void {
     rel="noopener noreferrer"
     class="video-player-surface__fallback"
   >
-    Watch on source ↗
+    {{ $t('common.watchOnSource') }}
   </a>
 </template>
 

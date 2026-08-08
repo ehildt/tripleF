@@ -1,11 +1,6 @@
-import type { IngestedImage } from '../download-and-ingest-images.helper.js';
+import type { IngestedImage } from '../media/download-and-ingest-images.types.js';
 
-type DisplayIngested = {
-  imageUrl: string;
-  title?: string;
-  width?: number;
-  height?: number;
-};
+import type { DisplayIngested } from './build-ingested-by-url-map.types.js';
 
 /** Map ingested images by their original source URL for URL rewriting. */
 export function buildIngestedByUrlMap(

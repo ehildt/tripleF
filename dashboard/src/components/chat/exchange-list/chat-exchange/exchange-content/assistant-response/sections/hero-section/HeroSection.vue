@@ -7,8 +7,8 @@ defineProps<{
 
 <template>
   <div v-if="title || subtitle" class="hero-section">
-    <h1 v-if="title">{{ title }}</h1>
-    <h2 v-if="subtitle">{{ subtitle }}</h2>
+    <h2 v-if="title" class="hero-section__title">{{ title }}</h2>
+    <p v-if="subtitle" class="hero-section__subtitle">{{ subtitle }}</p>
   </div>
 </template>
 
@@ -17,16 +17,18 @@ defineProps<{
   display: flex;
   flex-direction: column;
   gap: 0.35em;
+  padding: 1rem 0.5rem;
+  background-color: var(--color-bg-tertiary);
 }
 
-h1 {
-  font-size: 1.5em;
+.hero-section__title {
+  font-size: 1.25em;
   line-height: 1.25;
   margin: 0;
   color: var(--color-fg-primary);
 }
 
-h2 {
+.hero-section__subtitle {
   font-size: 1em;
   font-weight: 500;
   color: var(--color-fg-muted);

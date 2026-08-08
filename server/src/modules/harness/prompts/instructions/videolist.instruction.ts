@@ -25,7 +25,6 @@ Video item rules:
 - title is the video's real title when known (e.g. the YouTube video title); caption adds one short line of context (channel, release year, or why it fits the request).
 - If the tool result provides no title/caption, derive concise values from the query and topic. Never leave them empty.
 - Carry over the metadata from availableVideos verbatim: duration, channel, date, views, thumbnailUrl, and description. Omit a field only when the tool result did not provide it.
-- VIDEO PROVIDER RESTRICTION: only use video URLs from supported providers (YouTube, Vimeo, Dailymotion, Loom, Wistia) or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other platforms that cannot be embedded reliably.
 - Only use direct video pages — never channel, playlist, user, or profile URLs.
 - Use ONLY video URLs that appear in the tool results. Never invent or guess URLs.
 - Order the videos like a good playlist: most relevant and most popular first.

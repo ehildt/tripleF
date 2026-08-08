@@ -9,8 +9,6 @@ import {
   BROWSER_USER_AGENT,
   HARNESS_USER_AGENT,
 } from '../constants/user-agents.constant.js';
-import { isEmbeddableVideoUrl } from '../helpers/is-embeddable-video-url.helper.js';
-import { isPrivateOrLocalhost } from '../helpers/is-private-or-localhost.helper.js';
 import type { MediaUrlKind } from '../helpers/media-classification/classify-by-content-type.helper.js';
 import { classifyByContentType } from '../helpers/media-classification/classify-by-content-type.helper.js';
 import { classifyByMagicBytes } from '../helpers/media-classification/classify-by-magic-bytes.helper.js';
@@ -18,6 +16,19 @@ import { extractContentType } from '../helpers/media-classification/extract-cont
 import { hasEmptyContent } from '../helpers/media-classification/has-empty-content.helper.js';
 import { isImageContentType } from '../helpers/media-classification/is-image-content-type.helper.js';
 import { toBuffer } from '../helpers/media-classification/to-buffer.helper.js';
+import { isEmbeddableVideoUrl } from '../helpers/url-trust/is-embeddable-video-url.helper.js';
+import { isPrivateOrLocalhost } from '../helpers/url-trust/is-private-or-localhost.helper.js';
+import {
+  hasOembedProvider,
+  OEMBED_ENDPOINTS,
+  OEMBED_HOST_PROVIDERS,
+} from '../helpers/url-trust/oembed-provider.helper.js';
+
+import type {
+  HttpResponse,
+  MediaUrlValidatorOptions,
+} from './media-url-validator.service.types.js';
+import { MediaValidationCache } from './media-validation-cache.js';
 
 export interface MediaValidationResult {
   url: string;
@@ -27,53 +38,6 @@ export interface MediaValidationResult {
   error?: string;
 }
 
-interface MediaUrlValidatorOptions {
-  enabled?: boolean;
-  timeoutMs?: number;
-  maxRedirects?: number;
-  concurrency?: number;
-  /** When true, image URLs are fully pinged and dimension-checked. */
-  checkImageDimensions?: boolean;
-  minWidth?: number;
-  minHeight?: number;
-  /** Maximum bytes to download when checking image dimensions. */
-  maxProbeBytes?: number;
-}
-
-/** Structural view of an axios response — avoids a direct axios dependency. */
-type HttpResponse = {
-  status: number;
-  headers: Record<string, unknown>;
-  data: unknown;
-  request?: { res?: { responseUrl?: string } };
-};
-
-type OembedProvider = 'youtube' | 'vimeo' | 'dailymotion';
-
-const OEMBED_ENDPOINTS: Record<OembedProvider, string> = {
-  youtube: 'https://www.youtube.com/oembed',
-  vimeo: 'https://vimeo.com/api/oembed.json',
-  dailymotion: 'https://www.dailymotion.com/services/oembed',
-};
-
-const OEMBED_HOST_PROVIDERS: Record<string, OembedProvider> = {
-  'youtube.com': 'youtube',
-  'www.youtube.com': 'youtube',
-  'm.youtube.com': 'youtube',
-  'youtu.be': 'youtube',
-  'youtube-nocookie.com': 'youtube',
-  'www.youtube-nocookie.com': 'youtube',
-  'vimeo.com': 'vimeo',
-  'www.vimeo.com': 'vimeo',
-  'player.vimeo.com': 'vimeo',
-  'dailymotion.com': 'dailymotion',
-  'www.dailymotion.com': 'dailymotion',
-  'dai.ly': 'dailymotion',
-};
-
-const CACHE_MAX_ENTRIES = 1000;
-const CACHE_HIT_TTL_MS = 5 * 60_000;
-const CACHE_MISS_TTL_MS = 60_000;
 const UNKNOWN_RETRY_DELAY_MS = 200;
 
 @Injectable()
@@ -85,10 +49,7 @@ export class MediaUrlValidatorService {
    * probes within one sanitize pass (image URLs are collected twice) and
    * across follow-up requests in the same conversation.
    */
-  private readonly validationCache = new Map<
-    string,
-    { result: MediaValidationResult; expiresAt: number }
-  >();
+  private readonly validationCache = new MediaValidationCache();
 
   constructor(private readonly httpService: HttpService) {}
 
@@ -103,11 +64,13 @@ export class MediaUrlValidatorService {
     }
 
     const results: MediaValidationResult[] = new Array(urls.length);
-    const cacheKeys = urls.map((url) => this.buildCacheKey(url, options));
+    const cacheKeys = urls.map((url) =>
+      this.validationCache.buildKey(url, options),
+    );
     const pendingIndexes: number[] = [];
 
     for (let i = 0; i < urls.length; i++) {
-      const cached = this.readCache(cacheKeys[i]);
+      const cached = this.validationCache.read(cacheKeys[i]);
       if (cached) results[i] = cached;
       else pendingIndexes.push(i);
     }
@@ -119,7 +82,7 @@ export class MediaUrlValidatorService {
 
       const urlIndex = pendingIndexes[current];
       const result = await this.validateUrl(urls[urlIndex], options);
-      this.writeCache(cacheKeys[urlIndex], result);
+      this.validationCache.write(cacheKeys[urlIndex], result);
       results[urlIndex] = result;
       await runNext();
     };
@@ -131,38 +94,6 @@ export class MediaUrlValidatorService {
 
     await Promise.all(workers);
     return results;
-  }
-
-  private buildCacheKey(
-    url: string,
-    options: MediaUrlValidatorOptions,
-  ): string {
-    const dimensions = options.checkImageDimensions
-      ? `${options.minWidth ?? 1280}x${options.minHeight ?? 720}`
-      : 'no-dimensions';
-    return `${dimensions}|${url}`;
-  }
-
-  private readCache(key: string): MediaValidationResult | undefined {
-    const entry = this.validationCache.get(key);
-    if (!entry) return undefined;
-    if (entry.expiresAt <= Date.now()) {
-      this.validationCache.delete(key);
-      return undefined;
-    }
-    return entry.result;
-  }
-
-  private writeCache(key: string, result: MediaValidationResult): void {
-    if (this.validationCache.size >= CACHE_MAX_ENTRIES) {
-      const oldestKey = this.validationCache.keys().next().value;
-      if (oldestKey) this.validationCache.delete(oldestKey);
-    }
-    const ttl =
-      result.kind === 'broken' || result.kind === 'unknown'
-        ? CACHE_MISS_TTL_MS
-        : CACHE_HIT_TTL_MS;
-    this.validationCache.set(key, { result, expiresAt: Date.now() + ttl });
   }
 
   /**
@@ -189,6 +120,29 @@ export class MediaUrlValidatorService {
     url: string,
     options: MediaUrlValidatorOptions,
   ): Promise<MediaValidationResult> {
+    // Known embeddable video pages (YouTube, Vimeo, Dailymotion, Loom, Wistia)
+    // are verified through the provider's oEmbed endpoint rather than by
+    // probing the watch page. Watch pages are often bot-blocked or
+    // unreachable from the server (YouTube), so a page probe that times out
+    // or returns HTML must not gate the video verdict — the oEmbed lookup is
+    // the authoritative liveness check and would otherwise be skipped
+    // whenever the page probe fails. Direct video files (no oEmbed provider)
+    // fall through to the normal page probe below.
+    if (isEmbeddableVideoUrl(url)) {
+      const oEmbedResult = await this.tryProviderOembed(
+        url,
+        options.timeoutMs ?? 3000,
+      );
+      // oEmbed 200 -> {kind:'video'}; a definitive provider rejection
+      // (404/410) -> {kind:'broken'}. When oEmbed is unreachable (provider
+      // down, or the server cannot reach it) it returns undefined: for a
+      // known provider page that already passed isEmbeddableVideoUrl and
+      // came from a video search, a network failure is not evidence of a
+      // broken video, so keep it.
+      if (oEmbedResult) return oEmbedResult;
+      if (hasOembedProvider(url)) return { url, kind: 'video' };
+    }
+
     let headResult = await this.tryHead(url, options);
 
     if (
@@ -200,15 +154,6 @@ export class MediaUrlValidatorService {
       if (rangeResult.kind !== 'unknown' && rangeResult.kind !== 'broken') {
         headResult = rangeResult;
       }
-    }
-
-    if (headResult.kind === 'html' && isEmbeddableVideoUrl(url)) {
-      const oEmbedResult = await this.tryProviderOembed(
-        url,
-        options.timeoutMs ?? 3000,
-      );
-      if (oEmbedResult) return oEmbedResult;
-      return { ...headResult, kind: 'video' };
     }
 
     if (

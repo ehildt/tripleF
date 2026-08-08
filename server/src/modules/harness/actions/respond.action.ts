@@ -2,39 +2,16 @@ import { Injectable } from '@nestjs/common';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { buildCorrectionPrompt } from '../helpers/build-correction-prompt.helper.js';
+import { buildCorrectionPrompt } from '../helpers/respond/build-correction-prompt.helper.js';
 import { buildExecutionMessages } from '../helpers/respond/build-execution-messages.helper.js';
 import { consumeResponseStream } from '../helpers/respond/consume-response-stream.helper.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
-import type { IntentResult } from '../templates/intent.schema.js';
+import { resolveAllowedLayouts } from '../snippets/helpers/resolve-allowed-layouts.helper.js';
+import { SNIPPET_TEMPLATE_PRESETS } from '../snippets/snippet-presets.constant.js';
 
-type RespondResult = {
-  content: string;
-  data?: Record<string, unknown>;
-  inputTokens?: number;
-  outputTokens?: number;
-};
-
-type RespondParams = {
-  requestId: string;
-  intent: IntentResult;
-  messages: InputMessage[];
-  availableImages?: Array<Record<string, unknown>>;
-  model: string;
-  keepAlive?: string;
-  numCtx?: number;
-  think?: ThinkMode;
-  stream?: boolean;
-  abortSignal?: AbortSignal;
-  onTextDelta?: (delta: string) => void;
-  onReasoningDelta?: (delta: string) => void;
-  onJsonRetry?: (attempt: number) => void;
-  /** ISO-639-1 code of the active UI locale, used as fallback when the intent classifier left the language unset. */
-  language?: string;
-};
+import type { RespondParams, RespondResult } from './respond.action.types.js';
 
 const MAX_JSON_RETRIES = 3;
 
@@ -51,12 +28,14 @@ export class RespondActionService {
    * Main entry point for the respond step.
    */
   execute(params: RespondParams): Promise<RespondResult> {
+    const layouts = this.providerOverrides.getConfig().layouts;
     const executionMessages = buildExecutionMessages({
       requestId: params.requestId,
       intent: params.intent,
       messages: params.messages,
       availableImages: params.availableImages,
       sources: this.providerOverrides.getConfig().sources,
+      allowedLayouts: layouts,
       stepLogger: this.stepLogger,
       language: params.language,
     });
@@ -116,6 +95,7 @@ export class RespondActionService {
       const validation = this.responseValidator.validateValidatedResponse(
         result.text,
         params.intent.template,
+        this.buildLayoutValidationContext(params.intent.template),
       );
 
       if (validation.valid) {
@@ -211,6 +191,7 @@ export class RespondActionService {
       const validation = this.responseValidator.validateValidatedResponse(
         content,
         params.intent.template,
+        this.buildLayoutValidationContext(params.intent.template),
       );
 
       if (!validation.valid) {
@@ -256,6 +237,21 @@ export class RespondActionService {
     } catch {
       return undefined;
     }
+  }
+
+  /**
+   * The layouts enabled for this template right now (user config ∩ preset
+   * support) — the validator coerces out-of-set layout picks to the default.
+   */
+  private buildLayoutValidationContext(template: string) {
+    const preset = SNIPPET_TEMPLATE_PRESETS[template];
+    if (!preset) return undefined;
+    return {
+      allowedLayouts: resolveAllowedLayouts(
+        preset,
+        this.providerOverrides.getConfig().layouts,
+      ),
+    };
   }
 
   /**

@@ -1,6 +1,8 @@
 import { computed, ref, watch } from 'vue';
 
+import { warmModel } from '@/api/warm-model.api';
 import { i18n } from '@/i18n/i18n';
+import { useAppStore } from '@/stores/app';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useToast } from '../../../../../composables/use-toast';
@@ -15,6 +17,7 @@ const VISION_CAPABILITY = 'vision';
 export function useSelectedModel() {
   const modelsStore = useModelsStore();
   const conversationStore = useConversationStore();
+  const appStore = useAppStore();
   const toast = useToast();
 
   const conversationId = computed(
@@ -113,6 +116,13 @@ export function useSelectedModel() {
   function changeModel(modelName: string) {
     selectedModel.value = modelName;
     modelsStore.setSelectedModel(modelName);
+
+    // Opt-in warm-up: pre-load local model weights so the first prompt does
+    // not stall on a cold load. Cloud models are served remotely — skip.
+    if (appStore.warmModelOnSelect) {
+      const origin = modelsStore.getModel(modelName)?.origin;
+      if (origin !== 'cloud') void warmModel(modelName);
+    }
 
     if (conversationId.value) {
       conversationStore.setModel(conversationId.value, modelName);

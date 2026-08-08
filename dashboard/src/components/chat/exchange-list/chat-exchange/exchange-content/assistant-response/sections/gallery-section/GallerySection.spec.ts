@@ -22,6 +22,11 @@ describe('GallerySection', () => {
     expect(wrapper.find('.harness-gallery-section').exists()).toBe(false);
   });
 
+  it('renders no bare title when there are no items', () => {
+    const wrapper = mountSection([], 'Images');
+    expect(wrapper.find('h3').exists()).toBe(false);
+  });
+
   it('renders a single-image gallery without carousel controls', () => {
     const wrapper = mountSection([{ imageUrl: '/a' }]);
 

@@ -14,8 +14,8 @@ import { playlistMarqueeVisible } from '@/components/chat/composables/right-pane
 import { popoutShowBarAlways } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import { usePlaylistToggle } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-playlist-toggle';
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
-import type { ResizeDirection } from '@/components/shared/ui/resize-handle-grid/ResizeHandleGrid.vue';
 import VideoPlayerSurface from '@/components/shared/ui/video-player-surface/VideoPlayerSurface.vue';
+import type { ResizeDirection } from '@/types/resize-direction.model';
 
 import { useFloatingPlayerHost } from './composables/use-floating-player-host';
 

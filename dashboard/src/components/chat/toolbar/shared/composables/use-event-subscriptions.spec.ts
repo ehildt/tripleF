@@ -236,7 +236,19 @@ describe('useEventSubscriptions', () => {
     const conversationStore = useConversationStore();
     useEventSubscriptions();
 
-    conversationStore.createNewConversation('temporary', 'gone', 'gone-room');
+    // Let the store's initial async hydration settle first, otherwise it
+    // resolves to the mocked empty list and wipes the conversation created
+    // below before it can be deleted.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const conversation = conversationStore.createNewConversation(
+      'temporary',
+      'gone',
+      'gone-room',
+    );
+    // Mark it loaded so deleteCurrentConversation can act on it synchronously
+    // instead of trying to hydrate a stub from the (mocked) server.
+    conversation.loaded = true;
     await nextTick();
     subscriptions.value.push({
       event: 'orphan',
@@ -245,9 +257,7 @@ describe('useEventSubscriptions', () => {
       stream: true,
     });
 
-    conversationStore.deleteCurrentConversation(
-      conversationStore.conversations[0]!.id,
-    );
+    await conversationStore.deleteCurrentConversation(conversation.id);
     await nextTick();
 
     expect(subscriptions.value.some((sub) => sub.event === 'orphan')).toBe(

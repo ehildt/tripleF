@@ -1,6 +1,4 @@
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { SharpOptions } from '../../sharp/dtos/sharp-options.dto.js';
-import { Prompt } from '../dtos/prompt.dto.js';
+import type { FastifyMultipartFilter } from './harness-job.dto.types.js';
 
 export type FastifyMultipartMeta = {
   name: string;
@@ -11,26 +9,6 @@ export type FastifyMultipartMeta = {
   source?: 'local' | 'cloud';
   /** Optional canonical 512px content fingerprint used to compare user images with downloaded cloud images. */
   fingerprint?: string;
-};
-
-type FastifyMultipartFilter = {
-  roomId?: string;
-  stream: boolean;
-  prompt: Array<Prompt>;
-  requestId: string;
-  sessionId?: string;
-  conversationId?: string;
-  event: string;
-  model: string;
-  numCtx: number;
-  think: string | boolean;
-  hasNewImages?: boolean;
-  sessionMetadata?: string;
-  preprocessing?: SharpOptions;
-  exchanges?: Array<InputMessage>;
-  keepAlive?: string;
-  /** ISO-639-1 code of the active UI locale (browser-detected or user-selected). */
-  language?: string;
 };
 
 export type FastifyMultipartDataWithFiltersReq = {

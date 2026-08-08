@@ -223,9 +223,7 @@ describe('ChatRightPanel', () => {
       await flushPromises();
       setActivePlayback(url, playbackTitle);
       await wrapper.vm.$nextTick();
-      expect(wrapper.find('.playlist-item__marquee-text').text()).toBe(
-        expected,
-      );
+      expect(wrapper.find('.marquee__text').text()).toBe(expected);
     },
   );
 

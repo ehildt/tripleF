@@ -5,14 +5,7 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useToast } from '../../../composables/use-toast';
 import { extractPromptMessages } from '../helpers/extract-prompt-messages.helper';
-
-export interface DlqRetrySessionSocket {
-  ensureSocketConnection: () => void;
-  joinRoom: (roomId: string, eventName: string) => void;
-  listenToEvent: (eventName: string) => void;
-  connectedEvents: Set<string>;
-  connectedRooms: Map<string, Set<string>>;
-}
+import type { DlqRetrySessionSocket } from './use-dlq-retry-session.types';
 
 /**
  * Side effects that prepare the app to follow a retried DLQ job: make sure

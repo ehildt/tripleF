@@ -402,7 +402,9 @@ export const ModelName = {
   HarnessConfig: 'HarnessConfig',
   HarnessShownMedia: 'HarnessShownMedia',
   HarnessProviderOverride: 'HarnessProviderOverride',
-  HarnessPlaylist: 'HarnessPlaylist'
+  HarnessPlaylist: 'HarnessPlaylist',
+  StockMarketBar: 'StockMarketBar',
+  StockMarketHistoryRange: 'StockMarketHistoryRange'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -418,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist"
+    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist" | "stockMarketBar" | "stockMarketHistoryRange"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -866,6 +868,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    StockMarketBar: {
+      payload: Prisma.$StockMarketBarPayload<ExtArgs>
+      fields: Prisma.StockMarketBarFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StockMarketBarFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StockMarketBarFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>
+        }
+        findFirst: {
+          args: Prisma.StockMarketBarFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StockMarketBarFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>
+        }
+        findMany: {
+          args: Prisma.StockMarketBarFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>[]
+        }
+        create: {
+          args: Prisma.StockMarketBarCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>
+        }
+        createMany: {
+          args: Prisma.StockMarketBarCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StockMarketBarCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>[]
+        }
+        delete: {
+          args: Prisma.StockMarketBarDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>
+        }
+        update: {
+          args: Prisma.StockMarketBarUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>
+        }
+        deleteMany: {
+          args: Prisma.StockMarketBarDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StockMarketBarUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StockMarketBarUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>[]
+        }
+        upsert: {
+          args: Prisma.StockMarketBarUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketBarPayload>
+        }
+        aggregate: {
+          args: Prisma.StockMarketBarAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStockMarketBar>
+        }
+        groupBy: {
+          args: Prisma.StockMarketBarGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StockMarketBarGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StockMarketBarCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StockMarketBarCountAggregateOutputType> | number
+        }
+      }
+    }
+    StockMarketHistoryRange: {
+      payload: Prisma.$StockMarketHistoryRangePayload<ExtArgs>
+      fields: Prisma.StockMarketHistoryRangeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StockMarketHistoryRangeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StockMarketHistoryRangeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>
+        }
+        findFirst: {
+          args: Prisma.StockMarketHistoryRangeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StockMarketHistoryRangeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>
+        }
+        findMany: {
+          args: Prisma.StockMarketHistoryRangeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>[]
+        }
+        create: {
+          args: Prisma.StockMarketHistoryRangeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>
+        }
+        createMany: {
+          args: Prisma.StockMarketHistoryRangeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StockMarketHistoryRangeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>[]
+        }
+        delete: {
+          args: Prisma.StockMarketHistoryRangeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>
+        }
+        update: {
+          args: Prisma.StockMarketHistoryRangeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>
+        }
+        deleteMany: {
+          args: Prisma.StockMarketHistoryRangeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StockMarketHistoryRangeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StockMarketHistoryRangeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>[]
+        }
+        upsert: {
+          args: Prisma.StockMarketHistoryRangeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StockMarketHistoryRangePayload>
+        }
+        aggregate: {
+          args: Prisma.StockMarketHistoryRangeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStockMarketHistoryRange>
+        }
+        groupBy: {
+          args: Prisma.StockMarketHistoryRangeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StockMarketHistoryRangeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StockMarketHistoryRangeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StockMarketHistoryRangeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -982,6 +1132,31 @@ export const HarnessPlaylistScalarFieldEnum = {
 } as const
 
 export type HarnessPlaylistScalarFieldEnum = (typeof HarnessPlaylistScalarFieldEnum)[keyof typeof HarnessPlaylistScalarFieldEnum]
+
+
+export const StockMarketBarScalarFieldEnum = {
+  ticker: 'ticker',
+  date: 'date',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  adjustedClose: 'adjustedClose',
+  volume: 'volume',
+  fetchedAt: 'fetchedAt'
+} as const
+
+export type StockMarketBarScalarFieldEnum = (typeof StockMarketBarScalarFieldEnum)[keyof typeof StockMarketBarScalarFieldEnum]
+
+
+export const StockMarketHistoryRangeScalarFieldEnum = {
+  ticker: 'ticker',
+  fromDate: 'fromDate',
+  toDate: 'toDate',
+  fetchedAt: 'fetchedAt'
+} as const
+
+export type StockMarketHistoryRangeScalarFieldEnum = (typeof StockMarketHistoryRangeScalarFieldEnum)[keyof typeof StockMarketHistoryRangeScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1133,6 +1308,20 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
     
 
 /**
@@ -1292,6 +1481,8 @@ export type GlobalOmitConfig = {
   harnessShownMedia?: Prisma.HarnessShownMediaOmit
   harnessProviderOverride?: Prisma.HarnessProviderOverrideOmit
   harnessPlaylist?: Prisma.HarnessPlaylistOmit
+  stockMarketBar?: Prisma.StockMarketBarOmit
+  stockMarketHistoryRange?: Prisma.StockMarketHistoryRangeOmit
 }
 
 /* Types for Logging */

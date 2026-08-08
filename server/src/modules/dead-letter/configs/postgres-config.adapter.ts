@@ -1,10 +1,7 @@
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 import Joi from 'joi';
 
-interface DlqStageConfig {
-  retainAmount: number;
-  maxAgeMs: number;
-}
+import type { DlqStageConfig } from './postgres-config.types.js';
 
 export interface PostgresConfig {
   url: string;

@@ -115,7 +115,7 @@ describe('FloatingPlaylist', () => {
     const wrapper = mountWidget();
     await flushPromises();
     expect(wrapper.find('.playlist-item').exists()).toBe(false);
-    expect(wrapper.text()).toContain('No videos in the playlist');
+    expect(wrapper.text()).toContain('No videos in this playlist yet');
     expect(wrapper.text()).toContain('Add to playlist');
     expect(wrapper.text()).toContain('Remove from playlist');
     expect(wrapper.text()).not.toContain('Create a playlist');

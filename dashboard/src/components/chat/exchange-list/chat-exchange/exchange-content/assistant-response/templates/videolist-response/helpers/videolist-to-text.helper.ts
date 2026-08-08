@@ -1,5 +1,7 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+
 /**
  * Convert a videolist response into plain text for the model history.
  *
@@ -16,10 +18,7 @@ export function videolistToText(data: HarnessResponseData): string {
     ['Title', data.title],
     ['Subtitle', data.subtitle],
   ];
-  for (const [label, value] of fields) {
-    const trimmed = value?.trim();
-    if (trimmed) parts.push(`${label}: ${trimmed}`);
-  }
+  appendLabeledFields(parts, fields);
 
   if (data.videoGalleryItems?.length) {
     parts.push('Previously shown videos (skip these videoUrls):');

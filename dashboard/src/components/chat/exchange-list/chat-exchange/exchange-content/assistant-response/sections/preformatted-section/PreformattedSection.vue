@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
+
 defineProps<{
   title?: string;
   content?: string;
@@ -7,14 +9,14 @@ defineProps<{
 
 <template>
   <section v-if="content" class="content">
-    <h3 v-if="title">{{ title }}</h3>
+    <SectionTitle v-if="title" :title="title" />
     <pre><code>{{ content }}</code></pre>
   </section>
 </template>
 
 <style scoped>
 .content pre {
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
   padding: 1em;
   overflow-x: auto;

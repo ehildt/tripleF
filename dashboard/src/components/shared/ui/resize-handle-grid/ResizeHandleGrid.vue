@@ -3,7 +3,7 @@
  * Eight-direction resize handles for fixed-position floating surfaces.
  * Pointer events are captured by the parent via the pointerdown event.
  */
-export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+import type { ResizeDirection } from '@/types/resize-direction.model';
 
 defineProps<{
   directions?: ResizeDirection[];

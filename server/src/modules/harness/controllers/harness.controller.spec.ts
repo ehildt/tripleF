@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
+import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.js';
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
@@ -29,6 +30,12 @@ describe('HarnessController', () => {
           provide: OllamaModelsService,
           useValue: {
             getModels: vi.fn().mockResolvedValue({ models: [] }),
+          },
+        },
+        {
+          provide: ModelWarmupService,
+          useValue: {
+            warm: vi.fn(),
           },
         },
         {

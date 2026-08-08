@@ -6,7 +6,6 @@ import { harnessImageClickedKey } from '@/types/harness-response-data.model';
 import ProductBanner from './ProductBanner.vue';
 
 const baseProps = {
-  category: 'Tech',
   title: 'Sony WH-1000XM5 Wireless Headphones',
   subtitle: 'Premium noise-cancelling headphones',
   imageUrl: 'https://example.com/hero.jpg',
@@ -18,7 +17,7 @@ const baseProps = {
 };
 
 describe('ProductBanner', () => {
-  it('renders title, subtitle and category', () => {
+  it('renders title and subtitle', () => {
     const wrapper = mount(ProductBanner, { props: baseProps });
     expect(wrapper.find('.product-banner__title').text()).toContain(
       'Sony WH-1000XM5',
@@ -26,7 +25,6 @@ describe('ProductBanner', () => {
     expect(wrapper.find('.product-banner__subtitle').text()).toContain(
       'Premium noise-cancelling',
     );
-    expect(wrapper.find('.product-banner__eyebrow').text()).toBe('Tech');
   });
 
   it('renders the always-visible rating overlay', () => {

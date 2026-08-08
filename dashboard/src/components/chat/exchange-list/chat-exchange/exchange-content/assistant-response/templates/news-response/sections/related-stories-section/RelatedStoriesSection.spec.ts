@@ -27,7 +27,7 @@ describe('RelatedStoriesSection', () => {
       },
     });
 
-    expect(wrapper.find('h3').text()).toBe('Related Stories');
+    expect(wrapper.find('h3').text()).toBe('Related stories');
     const items = wrapper.findAll('li');
     expect(items).toHaveLength(2);
     expect(items[0].find('a').attributes('href')).toBe('https://a.com');

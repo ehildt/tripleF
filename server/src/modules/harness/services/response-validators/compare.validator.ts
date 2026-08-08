@@ -1,7 +1,5 @@
-import {
-  compareSchema,
-  formatZodIssues,
-} from '../../schemas/compare-json.schema.js';
+import { compareSchema } from '../../schemas/compare-json.schema.js';
+import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
 
 import type { ValidationResult } from './validation-result.type.js';
 

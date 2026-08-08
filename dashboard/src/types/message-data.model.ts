@@ -1,3 +1,5 @@
+import type { HarnessActivityDescriptor } from './harness-activity.model';
+
 export interface MessageData {
   pending?: boolean;
   done?: boolean;
@@ -12,6 +14,10 @@ export interface MessageData {
   aborted?: boolean;
   canceled?: boolean;
   status?: string;
+  /** Structured pipeline activity: an i18n key plus meta, localized by the client. */
+  activity?: HarnessActivityDescriptor;
+  /** Language the model chose to respond in — activity labels are localized in it. */
+  language?: string;
   conversationId?: string;
   promptEvalCount?: number;
   evalCount?: number;
@@ -32,5 +38,7 @@ export interface MessageData {
   prompt?: string;
   images?: Array<Record<string, string>>;
   toolResults?: Array<{ toolName: string; result: unknown }>;
+  /** Chart series streamed right after an EODHD tool ran (buffered, then revealed). */
+  chartData?: { toolName: string; data: unknown };
   error?: string;
 }

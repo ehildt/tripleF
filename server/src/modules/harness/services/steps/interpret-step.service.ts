@@ -4,6 +4,10 @@ import { Injectable } from '@nestjs/common';
 import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import {
+  HARNESS_ACTIVITY_KEYS,
+  resolveHarnessActivityLanguage,
+} from '../../helpers/harness-activity.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
@@ -36,7 +40,7 @@ export class InterpretStepService implements StepHandler {
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
-    await this.emitStatus(ctx, 'Understanding your request…');
+    await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.understanding);
 
     const { intent, inputTokens, outputTokens } =
       await this.interpretAction.execute({
@@ -89,15 +93,13 @@ export class InterpretStepService implements StepHandler {
     }
   }
 
-  private async emitStatus(
-    ctx: HarnessContext,
-    message: string,
-  ): Promise<void> {
+  private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
     await emitToSocket(this.io, ctx.roomId, ctx.event, {
       requestId: ctx.requestId,
       model: ctx.model,
       template: ctx.outputs.intent?.template,
-      status: message,
+      activity: { key },
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }

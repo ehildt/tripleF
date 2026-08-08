@@ -7,21 +7,9 @@ import {
   toastTypeFilters,
 } from '../components/widgets/toast/composables/toast-settings.state';
 import type { ToastType } from '../types/toast-type.model';
+import type { Toast, ToastTimer } from './toast-state.types';
 
 export type { ToastType };
-
-export interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-  pinned: boolean;
-}
-
-interface ToastTimer {
-  timeoutId: ReturnType<typeof setTimeout> | null;
-  remainingMs: number;
-  startedAt: number;
-}
 
 const toasts = reactive<Toast[]>([]);
 const timers = new Map<string, ToastTimer>();

@@ -46,6 +46,12 @@ const DEFAULT_PREFERRED_SOURCES = [
 ];
 
 /** A /slashed/ entry whose pattern compiles, a *.glob, or a plain hostname. */
+// Strict mirror of the dashboard's forgiving textarea normalization
+// (dashboard parse-source-list.helper.ts): entries arriving via env or the
+// overrides API are expected to be pre-normalized — API callers always go
+// through that parser first, and invalid env entries fail validation fast
+// instead of being silently fixed. Keep both sides' regex/glob/www
+// semantics in sync.
 const sourceEntrySchema = Joi.string().custom((value: string, helpers) => {
   const entry = String(value).trim();
   if (!entry) return helpers.error('any.invalid');

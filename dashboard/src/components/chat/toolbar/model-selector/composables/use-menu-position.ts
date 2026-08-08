@@ -1,9 +1,7 @@
 import { tryOnScopeDispose } from '@vueuse/core';
 import { nextTick, onMounted, type Ref, ref, watch } from 'vue';
 
-export type MenuPositionStyle = { left?: string; right?: string; top: string };
-
-export type MenuAlign = 'left' | 'right';
+import type { MenuAlign, MenuPositionStyle } from './use-menu-position.types';
 
 /**
  * Fixed-position style that anchors the teleported menu to its trigger.

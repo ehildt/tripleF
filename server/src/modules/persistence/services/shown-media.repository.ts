@@ -13,10 +13,7 @@ import {
 import type { PostgresConfig } from '../../dead-letter/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../dead-letter/constants/postgres.constants.js';
 
-interface ShownMediaEntry {
-  kind: ShownMediaKind;
-  mediaKey: string;
-}
+import type { ShownMediaEntry } from './shown-media.repository.types.js';
 
 /**
  * Registry of media the user has already been shown, scoped to a

@@ -12,15 +12,14 @@ const meta = {
         component: `
 Full-width product banner for the product response template. Shows a
 detailed product image with an always-visible rating overlay (stars,
-value, count, verdict) pinned to the bottom of the image. Title,
-subtitle and category sit above; an optional caption sits below.
-Clicking the image opens the lightbox.
+value, count, verdict) pinned to the bottom of the image. Title and
+subtitle sit above; an optional caption sits below. Clicking the image
+opens the lightbox.
 `,
       },
     },
   },
   args: {
-    category: 'Tech',
     title: 'Sony WH-1000XM5 Wireless Headphones',
     subtitle: 'Premium noise-cancelling over-ear headphones',
     imageUrl:
@@ -55,7 +54,6 @@ export const NoRating: Story = {
 /** Minimal banner with only a title. */
 export const Minimal: Story = {
   args: {
-    category: undefined,
     subtitle: undefined,
     imageUrl: undefined,
     imageAlt: undefined,

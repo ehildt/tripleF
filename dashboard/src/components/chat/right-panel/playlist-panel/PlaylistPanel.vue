@@ -130,22 +130,22 @@ function onItemPlay(item: VideoGalleryItem) {
           v-if="playlistNames.length > 0"
           class="playlist-panel__empty-message"
         >
-          No videos in the playlist
+          {{ $t('common.noVideosInPlaylist') }}
         </p>
         <div class="playlist-panel__empty-hints">
           <template v-if="playlistNames.length > 0">
             <span class="playlist-panel__empty-hint">
               <ListPlus class="playlist-panel__empty-hint-icon" />
-              Add to playlist
+              {{ $t('common.addToPlaylist') }}
             </span>
             <span class="playlist-panel__empty-hint">
               <ListMinus class="playlist-panel__empty-hint-icon" />
-              Remove from playlist
+              {{ $t('common.removeFromPlaylist') }}
             </span>
           </template>
           <span v-else class="playlist-panel__empty-hint">
             <Library class="playlist-panel__empty-hint-icon" />
-            Create a playlist
+            {{ $t('common.createPlaylist') }}
           </span>
         </div>
       </div>
@@ -218,6 +218,7 @@ function onItemPlay(item: VideoGalleryItem) {
   gap: var(--spacing-2);
   padding: 3rem var(--spacing-4);
   text-align: center;
+  background-color: var(--color-bg-elevated);
 }
 
 .playlist-panel__empty-message {

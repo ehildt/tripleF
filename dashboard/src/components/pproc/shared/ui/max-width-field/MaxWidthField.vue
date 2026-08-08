@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import InputSelect from '@/components/shared/ui/input-select/InputSelect.vue';
-import {
-  PREPROCESSING_SIZES,
-  type PreprocessingSize,
-} from '@/stores/preprocessing';
+import { PREPROCESSING_SIZES } from '@/stores/preprocessing';
+import type { PreprocessingSize } from '@/types/preprocessing.model';
 
 const props = defineProps<{
   modelValue: PreprocessingSize;

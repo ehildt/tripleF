@@ -1,13 +1,11 @@
 import { z } from 'zod';
 
-const keyFindingSchema = z.object(
-  {
-    text: z.string().min(1, {
-      message: 'keyFindings entries must have a non-empty text field',
-    }),
-  },
-  { message: 'keyFindings entries must be objects with text' },
-);
+import { internationalCoverageSchema } from './international-coverage-json.schema.js';
+import { referenceGalleryItemSchema } from './reference-gallery-item-json.schema.js';
+import { sourceSchema } from './source-json.schema.js';
+import { createTextItemSchema } from './text-item-json.schema.js';
+
+const keyFindingSchema = createTextItemSchema('keyFindings');
 
 export const ocrSchema = z.object({
   category: z.string(),
@@ -15,13 +13,9 @@ export const ocrSchema = z.object({
   subtitle: z.string(),
   sectionContent: z.string(),
   keyFindings: z.array(keyFindingSchema).optional(),
+  // Reference material, only when the model researched visible clues online
+  galleryTitle: z.string().optional(),
+  galleryItems: z.array(referenceGalleryItemSchema).optional(),
+  sources: z.array(sourceSchema).optional(),
+  internationalCoverage: internationalCoverageSchema.optional(),
 });
-
-export function formatZodIssues(issues: z.ZodIssue[]): string {
-  return issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
-      return `${path}: ${issue.message}`;
-    })
-    .join('; ');
-}

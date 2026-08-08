@@ -1,7 +1,9 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 
-import ResizeHandleGrid, { type ResizeDirection } from './ResizeHandleGrid.vue';
+import type { ResizeDirection } from '@/types/resize-direction.model';
+
+import ResizeHandleGrid from './ResizeHandleGrid.vue';
 
 describe('ResizeHandleGrid', () => {
   it('renders all eight handles by default', () => {

@@ -2,7 +2,7 @@
 import { Brain } from '@lucide/vue';
 import { ref, toRef } from 'vue';
 
-import type { OllamaModel } from '../../../../stores/models';
+import type { OllamaModel } from '../../../../types/ollama-model.model';
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';

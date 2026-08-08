@@ -1,7 +1,6 @@
-import { type ComputedRef, inject, type InjectionKey } from 'vue';
+import { inject, type InjectionKey } from 'vue';
 
-import type { DebugResult } from '@/types/debug.model';
-import type { SocketProvider } from '@/types/socket-provider.model';
+import type { AppViewContext } from './use-app-view-context.types';
 
 /**
  * Runtime data shared with the top-level views rendered by the router.
@@ -14,16 +13,6 @@ import type { SocketProvider } from '@/types/socket-provider.model';
  * selector) would render stale values forever. Consumers read them in
  * templates, where refs auto-unwrap.
  */
-export interface AppViewContext {
-  socketProvider: SocketProvider;
-  viewModels: ComputedRef<string[]>;
-  debugResults: ComputedRef<DebugResult[]>;
-  selectedDebugResult: ComputedRef<DebugResult | null>;
-  clearDebugResults: () => void;
-  selectDebugResult: (result: DebugResult | null) => void;
-  selectDebugMarkRead: (id: string) => void;
-}
-
 export const appViewContextKey: InjectionKey<AppViewContext> =
   Symbol('app-view-context');
 

@@ -1,11 +1,5 @@
+import type { PlaylistSnapshot } from '../types/playlist.model';
 import { getApiUrl } from './api-url';
-
-export interface PlaylistSnapshot {
-  name: string;
-  conversationId: string;
-  videos: Array<Record<string, unknown>>;
-  updatedAt?: string;
-}
 
 /**
  * Playlist names are user input (spaces, slashes, #, ?, …) but live in the

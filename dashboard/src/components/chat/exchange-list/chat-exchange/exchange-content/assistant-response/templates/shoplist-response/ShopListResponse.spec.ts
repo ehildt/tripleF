@@ -19,13 +19,11 @@ function mountShopList(data: Partial<HarnessResponseData>) {
 describe('ShopListResponse', () => {
   it('renders the header with title, subtitle, and description', () => {
     const wrapper = mountShopList({
-      category: 'Tech',
       title: 'Sony WH-1000XM5',
       subtitle: 'Current purchase options',
       shortDescription: 'The MediaMarkt offer dropped €30 since last week.',
     });
 
-    expect(wrapper.find('.shoplist__category').text()).toBe('Tech');
     expect(wrapper.find('.shoplist__title').text()).toBe('Sony WH-1000XM5');
     expect(wrapper.find('.shoplist__subtitle').text()).toContain(
       'purchase options',

@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, provide, ref } from 'vue';
+
+import { useAppStore } from '@/stores/app';
+import { mediaPriorityKey } from '@/types/harness-response-data.model';
 
 import ChatConversationHeader from '../conversation-header/ChatConversationHeader.vue';
 import { useActiveConversation } from './composables/use-active-conversation';
 import { useExchangeActions } from './composables/use-exchange-actions';
-import { useExchangeScrollContainer } from './composables/use-exchange-scroll-container';
 import { useExchangeVisualState } from './composables/use-exchange-visual-state';
+import { buildExchangeSections } from './helpers/build-exchange-sections.helper';
 import NoConversationPanel from './no-conversation-panel/NoConversationPanel.vue';
 import ScrollableExchangeList from './scrollable-exchange-list/ScrollableExchangeList.vue';
+import type { ChatExchangeListProps } from './ChatExchangeList.types';
 
-const props = defineProps<{
-  compact?: boolean;
-  retryHandler: (text: string) => Promise<void>;
-}>();
+const props = defineProps<ChatExchangeListProps>();
 
 const emit = defineEmits<{
   deleteConversation: [id: string];
   toggleIncluded: [exchangeId: string];
+  scroll: [];
 }>();
 
 const {
@@ -31,32 +33,42 @@ const { highlightedIds, collapsedIds, onHoverDeleteStart, onHoverDeleteEnd } =
 
 const isCompact = computed(() => props.compact ?? false);
 
-const scrollContainerRef = ref<HTMLElement | null>(null);
-
-function onSetScrollContainer(container: HTMLElement | null) {
-  scrollContainerRef.value = container;
-}
-
-const { scrollToBottom, scrollToExchange, onScroll } =
-  useExchangeScrollContainer(
-    isCompact,
-    activeAssistantExchangeId,
-    scrollContainerRef,
-    activeAssistantResponseStarted,
-  );
+const sections = computed(() => buildExchangeSections(exchanges.value));
 
 const { deleteExchange, retryExchange, branchExchange } = useExchangeActions(
   props.retryHandler,
 );
 
-onMounted(() => {
-  scrollToBottom();
-});
+const appStore = useAppStore();
+
+const scrollableListRef = ref<InstanceType<
+  typeof ScrollableExchangeList
+> | null>(null);
+
+function scrollToExchange(exchangeId: string) {
+  scrollableListRef.value?.scrollToExchange(exchangeId);
+}
+
+const activeUserExchangeId = computed(
+  () => scrollableListRef.value?.activeUserExchangeId ?? null,
+);
 
 const isSessionActive = computed(() => activeConversation.value !== null);
 const activeConversationId = computed(() => activeConversation.value?.id ?? '');
 
-defineExpose({ scrollToExchange });
+const scrollMode = computed(() =>
+  appStore.getConversationScrollMode(activeConversationId.value),
+);
+
+// Expose the active conversation's media-priority preference to the deep
+// assistant-response templates (image vs video gallery ordering) without
+// threading a prop through every presentational layer.
+const mediaPriority = computed(() =>
+  appStore.getConversationMediaPriority(activeConversationId.value),
+);
+provide(mediaPriorityKey, mediaPriority);
+
+defineExpose({ scrollToExchange, activeUserExchangeId });
 </script>
 
 <template>
@@ -65,22 +77,25 @@ defineExpose({ scrollToExchange });
       v-if="activeConversation"
       :title="activeConversation.title"
       :conversation-id="activeConversationId"
-      @delete="emit('deleteConversation', activeConversationId)"
     />
 
     <ScrollableExchangeList
       v-if="isSessionActive"
-      :exchanges="exchanges"
+      ref="scrollableListRef"
+      :sections="sections"
+      :mode="scrollMode"
       :highlighted-ids="highlightedIds"
       :collapsed-ids="collapsedIds"
-      @scroll="onScroll"
-      @set-scroll-container="onSetScrollContainer"
+      :is-compact="isCompact"
+      :active-assistant-exchange-id="activeAssistantExchangeId"
+      :active-assistant-response-started="activeAssistantResponseStarted"
       @delete="deleteExchange"
       @retry="retryExchange"
       @branch="branchExchange"
       @toggle-included="emit('toggleIncluded', $event)"
       @hover-delete-start="onHoverDeleteStart"
       @hover-delete-end="onHoverDeleteEnd"
+      @scroll="emit('scroll')"
     />
 
     <NoConversationPanel v-else />

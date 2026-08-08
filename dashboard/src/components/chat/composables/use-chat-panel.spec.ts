@@ -79,7 +79,7 @@ describe('useChatPanel', () => {
     expect(rightPanelView.value).toBe('history');
   });
 
-  it('prefers files over history when attachments exist', async () => {
+  it('shows history on activation even when attachments exist', async () => {
     const conversationStore = useConversationStore();
     const conversation = conversationStore.ensureConversation();
     conversation.uploadedImages = [
@@ -99,7 +99,7 @@ describe('useChatPanel', () => {
     const { rightPanelView } = useChatPanel(ref(true), ref(true));
     await flushPromises();
 
-    expect(rightPanelView.value).toBe('files');
+    expect(rightPanelView.value).toBe('history');
   });
 
   it('follows an added playlist video into the playlist tab', async () => {
@@ -236,7 +236,7 @@ describe('useChatPanel', () => {
     expect(rightPanelView.value).toBe('history');
   });
 
-  it('keeps the player on the playlist tab across a switch with a list', async () => {
+  it('switches to history on a conversation switch even when the new conversation has a playlist', async () => {
     const conversationStore = useConversationStore();
     const first = conversationStore.ensureConversation();
     conversationStore.setActiveConversation(first.id);
@@ -250,7 +250,7 @@ describe('useChatPanel', () => {
     conversationStore.setActiveConversation(second.id);
     await flushPromises();
 
-    expect(rightPanelView.value).toBe('playlist');
+    expect(rightPanelView.value).toBe('history');
   });
 
   it('leaves the playlist tab on a switch when the new conversation has no list', async () => {

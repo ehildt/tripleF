@@ -14,9 +14,9 @@ export function buildChatRequest(
   const hasImages = buffers.length > 0;
 
   const baseSystem = buildBaseSystemPrompt({ hasImages });
-  const systemContent = [baseSystem, visionExclusionNotice]
-    .filter(Boolean)
-    .join('\n\n');
+  const systemContent = `${baseSystem}${
+    visionExclusionNotice ? `\n\n${visionExclusionNotice}` : ''
+  }`;
 
   const systemPrompt = systemContent
     ? {
@@ -34,9 +34,7 @@ export function buildChatRequest(
         role: 'system' as const,
         content: !variants?.length
           ? `Image attachment(s):\n${filenames || '(attached)'}`
-          : ['Image attachment(s):', filenames || '(attached)', variants].join(
-              '\n',
-            ),
+          : `Image attachment(s):\n${filenames || '(attached)'}\n${variants}`,
       }
     : undefined;
 

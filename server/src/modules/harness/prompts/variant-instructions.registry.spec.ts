@@ -24,10 +24,10 @@ describe('resolveVariantInstructions', () => {
   });
 
   it('falls back to the default variant when an unknown variant is requested', () => {
-    const fallback = resolveVariantInstructions('article', 'unknown');
+    const fallback = resolveVariantInstructions('describe', 'unknown');
 
     expect(fallback).toBe(
-      resolveVariantInstructions('article', DEFAULT_VARIANT_ID),
+      resolveVariantInstructions('describe', DEFAULT_VARIANT_ID),
     );
     expect(fallback.length).toBeGreaterThan(0);
   });

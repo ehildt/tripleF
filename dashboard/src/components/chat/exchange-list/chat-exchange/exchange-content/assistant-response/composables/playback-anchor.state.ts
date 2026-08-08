@@ -1,5 +1,9 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 
+import type {
+  AnchorCandidate,
+  PlaybackDockMode,
+} from './playback-anchor.state.types';
 import { popoutEnabled, popoutHideOnPlaylist } from './popout-settings.state';
 import { launchedFromPlaylist, launchedVideo } from './video-playback.state';
 
@@ -14,13 +18,6 @@ import { launchedFromPlaylist, launchedVideo } from './video-playback.state';
  * popup, or across conversations and tab switches, all without ever
  * reloading the player.
  */
-
-export interface AnchorCandidate {
-  el: HTMLElement;
-  /** Scroll container the figure lives in (null = viewport scroller). */
-  scrollRoot: HTMLElement | null;
-  inView: boolean;
-}
 
 const anchorCandidates = shallowRef(new Map<string, AnchorCandidate[]>());
 
@@ -93,8 +90,6 @@ export const visibleAnchorCandidate = computed<AnchorCandidate | null>(
  * - `dock-dismissed` — the user docked while no figure was visible: the
  *   window hides (audio keeps playing) until playback is re-engaged.
  */
-export type PlaybackDockMode = 'auto' | 'float-latched' | 'dock-dismissed';
-
 export const playbackDockMode = ref<PlaybackDockMode>('auto');
 
 /**

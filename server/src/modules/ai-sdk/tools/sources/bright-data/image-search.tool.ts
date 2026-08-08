@@ -1,12 +1,8 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
-import { isTrustedImageUrl } from '../../../../harness/helpers/is-trusted-image-url.helper.js';
+import { isTrustedImageUrl } from '../../../../harness/helpers/url-trust/is-trusted-image-url.helper.js';
 import { applyLocaleParams } from '../apply-locale-params.helper.js';
-import {
-  applyRecencyParam,
-  type SearchRecency,
-} from '../apply-recency-param.helper.js';
+import { applyRecencyParam } from '../apply-recency-param.helper.js';
 import { requestBrightData } from '../bright-data-client.js';
 import {
   meetsMinimumImageDimensions,
@@ -14,47 +10,23 @@ import {
   MIN_IMAGE_WIDTH,
 } from '../image-search.constants.js';
 import { tbsSizeLabelForPixels } from '../image-size-buckets.js';
-import { RECENCY_DESCRIPTION } from '../recency.constants.js';
 import { BRIGHT_DATA_TIMEOUT_MS } from '../search-timeout.js';
-import {
-  STANDALONE_QUERY_DESCRIPTION,
-  STANDALONE_QUERY_TOOL_CLAUSE,
-} from '../standalone-query.constants.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../standalone-query.constants.js';
 import type { ToolDependencies } from '../types.js';
 
 import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
+import {
+  type BrightDataImageSearchInput,
+  brightDataImageSearchSchema,
+} from './image-search.schema.js';
+import type { BrightDataImageSearchResponse } from './image-search.types.js';
 
 export function createBrightDataImageSearch(deps: ToolDependencies) {
   return tool({
     description:
       'Search for images using Bright Data SERP API (Google Images). Returns image URLs and source pages. The tool passes the appropriate Google Images `tbs=isz:lt,islt:<bucket>` size filter server-side and trusts it for minimum resolution (Bright Data does not return pixel dimensions), while still rejecting untrusted domains such as Google thumbnail proxies (encrypted-tbn*.gstatic.com), data URIs, localhost, and private IPs. Pass minWidth/minHeight to request higher resolutions. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe(
-          `${STANDALONE_QUERY_DESCRIPTION} Add short visual qualifiers describing the subject.`,
-        ),
-      count: z.number().optional().describe('Number of results (max 100)'),
-      minWidth: z
-        .number()
-        .optional()
-        .describe('Minimum image width in pixels (floor 1280 / 720p).'),
-      minHeight: z
-        .number()
-        .optional()
-        .describe('Minimum image height in pixels (floor 720 / 720p).'),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-      recency: z
-        .enum(['day', 'week', 'month', 'year'])
-        .optional()
-        .describe(RECENCY_DESCRIPTION),
-    }),
+    inputSchema: brightDataImageSearchSchema,
     execute: async ({
       query,
       count: reqCount,
@@ -62,14 +34,7 @@ export function createBrightDataImageSearch(deps: ToolDependencies) {
       minHeight: requestedMinHeight,
       lang,
       recency,
-    }: {
-      query: string;
-      count?: number;
-      minWidth?: number;
-      minHeight?: number;
-      lang?: string;
-      recency?: SearchRecency;
-    }) => {
+    }: BrightDataImageSearchInput) => {
       const cfg = deps.getLiveConfig().brightData;
       const apiKey = engineEnabled(deps, 'images');
       if (!apiKey)
@@ -85,7 +50,10 @@ export function createBrightDataImageSearch(deps: ToolDependencies) {
         `Bright Data image search for "${query}" min ${minWidth}x${minHeight}`,
       );
       const body: Record<string, unknown> = {};
-      applyLocaleParams(body, lang ?? deps.defaultLang);
+      // Images are language-agnostic: only bias toward a locale when the user
+      // explicitly requested a specific language via `lang`. Never fall back
+      // to the UI language automatically.
+      applyLocaleParams(body, lang);
       applyRecencyParam(body, recency);
       const tbs = `isz:lt,islt:${tbsSizeLabelForPixels(minWidth * minHeight)}`;
       const url = buildGoogleUrl(query, {
@@ -98,22 +66,7 @@ export function createBrightDataImageSearch(deps: ToolDependencies) {
       try {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {
           timeoutMs: BRIGHT_DATA_TIMEOUT_MS,
-        })) as {
-          images?: Array<{
-            title?: string;
-            /** Actual image URL. */
-            original_image?: string;
-            /** Embedded base64 thumbnail (data URI) — not usable directly. */
-            image?: string;
-            image_url?: string;
-            imageUrl?: string;
-            link?: string;
-            source_link?: string;
-            width?: number;
-            height?: number;
-            source?: string;
-          }>;
-        };
+        })) as BrightDataImageSearchResponse;
         const images = data.images ?? [];
         if (!images.length) {
           deps.logger.warn(

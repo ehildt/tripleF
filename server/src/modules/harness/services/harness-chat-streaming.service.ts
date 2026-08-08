@@ -2,15 +2,15 @@ import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable } from '@nestjs/common';
 
 import { MinioService } from '../../minio/services/minio.service.js';
+import { emitToSocket } from '../helpers/emit-to-socket.helper.js';
 import {
   buildGalleryItems,
   type GalleryItem,
   limitLocalGalleryItems,
-} from '../helpers/build-gallery-items.helper.js';
-import { emitToSocket } from '../helpers/emit-to-socket.helper.js';
-import { extractImageCountFromToolResults } from '../helpers/extract-image-count-from-tool-results.helper.js';
-import { extractVideoCountFromToolResults } from '../helpers/extract-video-count-from-tool-results.helper.js';
-import { filterExistingGalleryItems } from '../helpers/filter-existing-gallery-items.helper.js';
+} from '../helpers/media/build-gallery-items.helper.js';
+import { extractImageCountFromToolResults } from '../helpers/media/extract-image-count-from-tool-results.helper.js';
+import { extractVideoCountFromToolResults } from '../helpers/media/extract-video-count-from-tool-results.helper.js';
+import { filterExistingGalleryItems } from '../helpers/media/filter-existing-gallery-items.helper.js';
 
 import { HarnessContext } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';

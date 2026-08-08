@@ -1,13 +1,6 @@
 import type { DebugResult } from '@/types/debug.model';
 
-export type DebugResultFilter = 'all' | 'http' | 'socket';
-
-export interface BuildFilteredDebugResultsOptions {
-  filter: DebugResultFilter;
-  hideRead: boolean;
-  search: string;
-  isRead: (id: string) => boolean;
-}
+import type { BuildFilteredDebugResultsOptions } from './build-filtered-debug-results.helper.types';
 
 function matchesSearch(result: DebugResult, search: string): boolean {
   const haystack = [

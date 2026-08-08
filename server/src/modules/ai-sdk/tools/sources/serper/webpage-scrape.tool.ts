@@ -1,20 +1,22 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { fetchWithTimeout } from '../fetch-with-timeout.js';
 import { SEARCH_TIMEOUT_MS } from '../search-timeout.js';
 import type { ToolDependencies } from '../types.js';
 
 import { HEADERS } from './serper.constants.js';
+import {
+  type SerperWebpageScrapeInput,
+  serperWebpageScrapeSchema,
+} from './webpage-scrape.schema.js';
+import type { SerperWebpageScrapeResponse } from './webpage-scrape.types.js';
 
 export function createSerperWebpageScrape(deps: ToolDependencies) {
   return tool({
     description:
       'Fetch and render a full webpage using Serper.dev scrape API. Returns clean rendered text with its title.',
-    inputSchema: z.object({
-      url: z.string().describe('The URL to fetch and render'),
-    }),
-    execute: async ({ url }: { url: string }) => {
+    inputSchema: serperWebpageScrapeSchema,
+    execute: async ({ url }: SerperWebpageScrapeInput) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.apiKey || !cfg.scrape.enabled) {
         return {
@@ -39,7 +41,7 @@ export function createSerperWebpageScrape(deps: ToolDependencies) {
         );
         return { content: '', error: `HTTP ${res.status}` };
       }
-      const data = (await res.json()) as { text?: string; title?: string };
+      const data = (await res.json()) as SerperWebpageScrapeResponse;
       const content = data.text || '';
       const title = data.title || '';
       deps.logger.log(

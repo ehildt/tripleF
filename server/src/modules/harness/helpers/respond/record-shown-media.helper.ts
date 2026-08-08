@@ -1,7 +1,7 @@
 import type { HarnessContext } from '../../services/harness-context.type.js';
 import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
 import type { ShownMediaService } from '../../services/shown-media.service.js';
-import type { GalleryItem } from '../build-gallery-items.helper.js';
+import type { GalleryItem } from '../media/build-gallery-items.helper.js';
 
 /**
  * Persist the media this response rendered so the next media-list follow-up

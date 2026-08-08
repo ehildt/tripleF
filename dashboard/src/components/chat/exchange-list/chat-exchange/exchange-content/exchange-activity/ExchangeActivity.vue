@@ -94,6 +94,7 @@ const reasoningHtml = computed(() => renderMarkdown(props.reasoning ?? ''));
 .exchange-activity__reasoning :deep(ul),
 .exchange-activity__reasoning :deep(ol) {
   margin: 0 0 0.5em;
+  padding: var(--spacing-2);
   padding-left: var(--spacing-4);
 }
 
@@ -122,9 +123,26 @@ const reasoningHtml = computed(() => renderMarkdown(props.reasoning ?? ''));
 
 .exchange-activity__reasoning :deep(blockquote) {
   margin: 0 0 0.5em;
-  padding-left: var(--spacing-2);
+  padding: var(--spacing-2);
   border-left: 2px solid
     color-mix(in srgb, var(--color-accent-primary) 40%, transparent);
+}
+
+/* Markdown block elements without dedicated rules (divs, tables) plus the
+   element following a heading get the same breathing room as the prose
+   blocks above. */
+.exchange-activity__reasoning :deep(div),
+.exchange-activity__reasoning :deep(table) {
+  padding: var(--spacing-2);
+}
+
+.exchange-activity__reasoning :deep(h1 + *),
+.exchange-activity__reasoning :deep(h2 + *),
+.exchange-activity__reasoning :deep(h3 + *),
+.exchange-activity__reasoning :deep(h4 + *),
+.exchange-activity__reasoning :deep(h5 + *),
+.exchange-activity__reasoning :deep(h6 + *) {
+  padding: var(--spacing-2);
 }
 
 .exchange-activity__reasoning :deep(a) {

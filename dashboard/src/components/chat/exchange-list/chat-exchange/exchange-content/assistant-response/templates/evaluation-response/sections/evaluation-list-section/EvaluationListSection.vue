@@ -3,6 +3,9 @@ import { computed } from 'vue';
 
 import type { KeyFinding } from '@/types/harness-response-data.model';
 
+import { pickCycleColor } from '../../../../shared/helpers/pick-cycle-color.helper';
+import SectionTitle from '../../../../shared/ui/section-title/SectionTitle.vue';
+
 const props = defineProps<{
   title: string;
   items?: KeyFinding[];
@@ -35,9 +38,13 @@ const icon = computed(() => {
 
 <template>
   <section v-if="validItems.length" class="evaluation-list" :class="variant">
-    <h3>{{ title }}</h3>
+    <SectionTitle :title="title" />
     <ul>
-      <li v-for="(item, index) in validItems" :key="index">
+      <li
+        v-for="(item, index) in validItems"
+        :key="index"
+        :style="{ '--item-color': pickCycleColor(index) }"
+      >
         <span class="icon" aria-hidden="true">{{ icon }}</span>
         <span class="text">{{ item.text }}</span>
       </li>
@@ -48,8 +55,9 @@ const icon = computed(() => {
 <style scoped>
 .evaluation-list ul {
   list-style: none;
-  padding: 0;
+  padding: var(--spacing-3);
   margin: 0.5em 0 0;
+  background-color: var(--color-bg-secondary);
 }
 
 .evaluation-list li {
@@ -80,6 +88,8 @@ const icon = computed(() => {
 }
 
 .recommendation .icon {
-  color: var(--color-accent-primary);
+  /* Recommendations are neutral arrows — the colour cycles so the list
+     reads as a row of distinct cards, like sources/key findings. */
+  color: var(--item-color, var(--color-accent-primary));
 }
 </style>

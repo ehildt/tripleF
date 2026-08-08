@@ -29,15 +29,15 @@ describe('EvaluationResponse', () => {
       verdict: 'Promising',
     });
 
-    expect(wrapper.text()).toContain('Subject:');
     expect(wrapper.text()).toContain('NTE');
-    expect(wrapper.text()).toContain('Verdict:');
+    expect(wrapper.text()).toContain('Verdict');
     expect(wrapper.text()).toContain('Promising');
   });
 
   it('renders reasoning', () => {
     const wrapper = mountEvaluationResponse({
       title: 'Evaluation',
+      subject: 'NTE',
       reasoning: 'Because it looks good.',
     });
 
@@ -47,6 +47,7 @@ describe('EvaluationResponse', () => {
   it('renders strengths, weaknesses, and recommendations', () => {
     const wrapper = mountEvaluationResponse({
       title: 'Evaluation',
+      subject: 'NTE',
       strengths: [{ text: 'Fast' }],
       weaknesses: [{ text: 'Buggy' }],
       recommendations: [{ text: 'Patch it' }],

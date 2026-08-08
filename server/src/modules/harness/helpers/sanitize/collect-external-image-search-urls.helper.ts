@@ -1,4 +1,4 @@
-type ToolResult = { toolName: string; result: unknown };
+import type { ToolResult } from './tool-result.types.js';
 
 /**
  * External image URLs in image-search results that were not rewritten to

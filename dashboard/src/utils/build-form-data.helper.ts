@@ -1,6 +1,4 @@
-export interface FormExtras {
-  prompt?: string;
-}
+import type { FormExtras } from './build-form-data.helper.types';
 
 export function buildFormData(files: File[], extras?: FormExtras): FormData {
   const formData = new FormData();

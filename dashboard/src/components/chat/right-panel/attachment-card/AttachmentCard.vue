@@ -8,7 +8,7 @@ import { Cloud, CloudDownload, X } from '@lucide/vue';
 import { computed } from 'vue';
 
 import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
-import type { AttachmentItem } from '../composables/use-attachment-list';
+import type { AttachmentItem } from '../composables/use-attachment-list.types';
 
 const props = defineProps<{
   item: AttachmentItem;

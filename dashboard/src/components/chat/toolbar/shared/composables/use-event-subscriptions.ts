@@ -11,7 +11,7 @@ import {
   subscriptions,
 } from './subscriptions.state';
 
-export type { SubscriptionEntry } from './subscriptions.state';
+export type { SubscriptionEntry } from '@/types/subscription.model';
 
 /**
  * True when a conversation listens on the given socket — either as its own

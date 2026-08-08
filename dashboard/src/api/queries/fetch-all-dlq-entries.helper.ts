@@ -1,12 +1,9 @@
 import { getApiUrl } from '@/api/api-url';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-const PAGE_SIZE = 200;
+import type { DlqEntriesSnapshot } from './fetch-all-dlq-entries.helper.types';
 
-export interface DlqEntriesSnapshot {
-  entries: DlqEntry[];
-  total: number;
-}
+const PAGE_SIZE = 200;
 
 /**
  * Fetch every DLQ entry (paged fan-out) for the unread-count badge.

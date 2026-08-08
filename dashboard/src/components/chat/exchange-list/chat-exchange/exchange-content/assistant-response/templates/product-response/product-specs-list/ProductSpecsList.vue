@@ -7,7 +7,7 @@ import { computed } from 'vue';
 
 import type { KeyFinding } from '@/types/harness-response-data.model';
 
-import { splitSpecLabel } from './helpers/split-spec-label.helper';
+import { splitSpecLabel } from '../../../shared/helpers/split-spec-label.helper';
 
 const props = defineProps<{ items: readonly KeyFinding[] }>();
 
@@ -18,7 +18,7 @@ const rows = computed(() =>
 
 <template>
   <section class="spec-list">
-    <h2 class="spec-list__title">{{ $t('common.keySpecs') }}</h2>
+    <h3 class="spec-list__title">{{ $t('common.keySpecs') }}</h3>
     <ul class="spec-list__table">
       <li v-for="(row, idx) in rows" :key="idx" class="spec-list__row">
         <template v-if="row.label">

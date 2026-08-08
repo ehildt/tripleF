@@ -1,7 +1,4 @@
-interface OllamaConnectionConfig {
-  host?: string;
-  apiKey?: string;
-}
+import type { OllamaConnectionConfig } from './ollama-config.types.js';
 
 function parseIntWithDefault(
   value: string | undefined,

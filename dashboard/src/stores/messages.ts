@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import {
-  createHarnessResponseState,
-  type HarnessResponseState,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/create-harness-response-state.helper';
-import { processHarnessResponseEvent } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/process-harness-response-event.helper';
+import { createHarnessResponseState } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/create-harness-response-state.helper';
+import type { HarnessResponseState } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/create-harness-response-state.helper.types';
+import { processHarnessResponseEvent } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/process-harness-response-event.helper';
+import { i18n } from '@/i18n/i18n';
 import { type Exchange, useConversationStore } from '@/stores/conversation';
+import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
+import { formatTime } from '@/utils/format-time.helper';
 
 import { useReadTracker } from '../composables/use-read-tracker';
 import { useAppStore } from '../stores/app';
@@ -14,21 +15,21 @@ import { useModelsStore } from '../stores/models';
 import type { HarnessStreamEvent } from '../types/harness-stream-event.model';
 import type { Message } from '../types/message.model';
 import type { MessageData } from '../types/message-data.model';
-import { extractUploadedImagesFromResponse } from './helpers/extract-uploaded-images-from-response.helper';
-import { isErrorStreamEvent } from './helpers/is-error-stream-event.helper';
-import { isHarnessStreamEvent } from './helpers/is-harness-stream-event.helper';
-import { mergeExistingMessageData } from './helpers/merge-existing-message-data.helper';
-import { normalizeRawData } from './helpers/normalize-raw-data.helper';
+import { extractUploadedImagesFromResponse } from './helpers/messages/extract-uploaded-images-from-response.helper';
+import { isErrorStreamEvent } from './helpers/messages/is-error-stream-event.helper';
+import { isHarnessStreamEvent } from './helpers/messages/is-harness-stream-event.helper';
+import { mergeExistingMessageData } from './helpers/messages/merge-existing-message-data.helper';
+import { normalizeRawData } from './helpers/messages/normalize-raw-data.helper';
+import type { Conversation } from './conversation.model';
 
 /**
- * Activity label shown while the model streams response data: the thinking
- * phase is over, the response is being assembled token by token.
+ * Structured activity descriptor shown while the model streams response data:
+ * the thinking phase is over, the response is being assembled token by token.
+ * Localized by the client in the model's response language.
  */
-const STREAMING_ACTIVITY_LABEL = 'Assembling the response…';
-
-type Conversation = ReturnType<
-  typeof useConversationStore
->['conversations'][number];
+const STREAMING_ACTIVITY: HarnessActivityDescriptor = {
+  key: 'activity.assembling',
+};
 
 function findAssistantExchange(
   conversation: Conversation,
@@ -37,6 +38,43 @@ function findAssistantExchange(
   return conversation.exchanges.find(
     (e) => e.requestId === requestId && e.role === 'assistant',
   );
+}
+
+/**
+ * Apply the latest streamed state to an existing assistant exchange. The
+ * done event clears the activity even when it carries no delta — structured
+ * responses (e.g. stockmarket) stream no text, so a delta-only guard would
+ * leave the "Assembling…" label stuck after completion.
+ */
+function applyStreamingState(
+  existing: Exchange,
+  state: HarnessResponseState,
+  d: MessageData,
+  status: Exchange['status'],
+  fallbackContent: string,
+  isError: boolean,
+): void {
+  if (isError) {
+    existing.content = `Error: ${d.error}`;
+    existing.status = status;
+    return;
+  }
+  existing.content = fallbackContent;
+  existing.status = status;
+  existing.harnessTemplate = state.template ?? undefined;
+  existing.harnessData = state.lastValidData ?? undefined;
+  existing.text = state.text || undefined;
+  existing.chartData = state.chartData;
+  existing.revealCharts = state.revealCharts;
+  if (d.done === true) {
+    existing.reasoning = undefined;
+    existing.activity = undefined;
+    existing.activityLanguage = undefined;
+  } else if (d.delta) {
+    existing.reasoning = undefined;
+    existing.activity = STREAMING_ACTIVITY;
+    existing.activityLanguage = d.language;
+  }
 }
 
 export const useApiMessagesStore = defineStore('apiMessages', () => {
@@ -83,7 +121,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     } else {
       messages.value = [
         {
-          time: new Date().toLocaleTimeString(),
+          time: formatTime(Date.now(), i18n.global.locale.value),
           event,
           data: { ...d, pending: d.done === true ? undefined : true },
         },
@@ -137,7 +175,10 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
           harnessTemplate: state.template ?? undefined,
           harnessData: state.lastValidData ?? undefined,
           text: state.text || undefined,
-          activity: d.done === true ? undefined : STREAMING_ACTIVITY_LABEL,
+          chartData: state.chartData,
+          revealCharts: state.revealCharts,
+          activity: d.done === true ? undefined : STREAMING_ACTIVITY,
+          activityLanguage: d.language,
           promptEvalCount: d.promptEvalCount,
           evalCount: d.evalCount,
         });
@@ -149,23 +190,12 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       return;
     }
 
-    if (isError) {
-      existing.content = `Error: ${d.error}`;
-      existing.status = status;
-    } else {
-      existing.content = fallbackContent;
-      existing.status = status;
-      existing.harnessTemplate = state.template ?? undefined;
-      existing.harnessData = state.lastValidData ?? undefined;
-      existing.text = state.text || undefined;
-      // A delta means the model left its thinking phase and is emitting the
-      // response: drop the reasoning label and announce the assembly until
-      // the done event clears it.
-      existing.reasoning = undefined;
-      existing.activity =
-        d.done === true ? undefined : STREAMING_ACTIVITY_LABEL;
+    applyStreamingState(existing, state, d, status, fallbackContent, isError);
+    // Only a real response delta (or done) ends the tool phase — chart-series
+    // events must not clear active tool calls.
+    if (d.delta || d.done === true) {
+      existing.toolCalls = undefined;
     }
-    existing.toolCalls = undefined;
     conversation.updatedAt = Date.now();
 
     if (d.done === true) {
@@ -188,6 +218,11 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     const numCtx = modelsStore.maxNumCtxForModel(conversation.model);
     if (numCtx) {
       conversation.numCtx = numCtx;
+      // Persist the auto-derived context size so the stored percentage and
+      // the server snapshot stay in sync — otherwise the sidebar shows
+      // nothing for this conversation after a reload (its saved
+      // contextUsagePercent was computed with an empty numCtx).
+      useConversationStore().setNumCtx(conversation.id, numCtx);
     }
   }
 
@@ -202,6 +237,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       template: d.template,
       delta: d.delta,
       status: d.status,
+      activity: d.activity,
+      language: d.language,
       // Authoritative payload of the non-streaming retry: when the streamed
       // deltas were not valid JSON, this is the only place the validated
       // response reaches the client.
@@ -209,6 +246,9 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
       images: d.images,
       toolResults: d.toolResults,
       done: d.done,
+      // Chart series streamed right after an EODHD tool ran, buffered and
+      // revealed once the respond step streams its first delta.
+      chartData: d.chartData,
     };
 
     const state = processHarnessResponseEvent(
@@ -285,7 +325,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         content: newContent,
         requestId,
         status: d.done ? 'done' : 'streaming',
-        activity: d.done ? undefined : STREAMING_ACTIVITY_LABEL,
+        activity: d.done ? undefined : STREAMING_ACTIVITY,
+        activityLanguage: d.language,
         promptEvalCount: d.promptEvalCount,
         evalCount: d.evalCount,
       });
@@ -296,7 +337,8 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
         // Streamed content ends the thinking phase — see
         // updateHarnessSessionExchange for the same transition.
         ex.reasoning = undefined;
-        ex.activity = d.done ? undefined : STREAMING_ACTIVITY_LABEL;
+        ex.activity = d.done ? undefined : STREAMING_ACTIVITY;
+        ex.activityLanguage = d.language;
       }
       conversationStore.appendExchangeContent(
         conversation.id,
@@ -339,10 +381,14 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     requestId: string,
   ) {
     if (raw.done === true) return;
-    const status = raw.status as string | undefined;
-    if (!status || status === 'canceled') return;
+    const activity = raw.activity as HarnessActivityDescriptor | undefined;
+    if (!activity?.key) return;
+    const language = raw.language as string | undefined;
     const ex = findAssistantExchange(conversation, requestId);
-    if (ex) ex.activity = status;
+    if (ex) {
+      ex.activity = activity;
+      if (language) ex.activityLanguage = language;
+    }
   }
 
   function handleReasoningDelta(
@@ -355,7 +401,11 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     const delta = raw.reasoningDelta as string | undefined;
     if (!delta) return;
     const ex = findAssistantExchange(conversation, requestId);
-    if (ex) ex.reasoning = (ex.reasoning ?? '') + delta;
+    if (ex) {
+      ex.reasoning = (ex.reasoning ?? '') + delta;
+      const language = raw.language as string | undefined;
+      if (language) ex.activityLanguage = language;
+    }
   }
 
   function handleToolCall(
@@ -388,7 +438,17 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
     if (!ex) return;
 
-    const active = (ex.toolCalls ?? []).filter((t) => t.name !== tc.name);
+    // Key active calls by (name, query): the same tool can run several
+    // parallel searches with different queries, and each is a real,
+    // countable search — collapsing them by name alone would under-report
+    // the count (e.g. always "2" for the two video tools).
+    const toolKey = (call: { name?: string; query?: string }) =>
+      `${call.name ?? ''}\u0000${call.query ?? ''}`;
+    const active = (ex.toolCalls ?? []).filter(
+      (t) => toolKey(t) !== toolKey(tc),
+    );
+    const language = raw.language as string | undefined;
+    if (language) ex.activityLanguage = language;
 
     if (tc.status === 'done' || tc.status === 'error') {
       ex.toolCalls = active.length ? active : undefined;
@@ -496,7 +556,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
 
     messages.value = [
       {
-        time: new Date().toLocaleTimeString(),
+        time: formatTime(Date.now(), i18n.global.locale.value),
         event,
         data: d as MessageData,
       },
@@ -517,7 +577,7 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
 
     messages.value = [
       {
-        time: new Date().toLocaleTimeString(),
+        time: formatTime(Date.now(), i18n.global.locale.value),
         event,
         data: {
           pending: true,

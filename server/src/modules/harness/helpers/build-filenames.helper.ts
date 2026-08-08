@@ -1,8 +1,4 @@
-interface MetaEntry {
-  name: string;
-  hash: string;
-  variant?: string;
-}
+import type { MetaEntry } from './build-filenames.helper.types.js';
 
 export function buildFilenames(
   processedMeta: MetaEntry[],

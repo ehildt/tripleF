@@ -1,5 +1,5 @@
 import type { UploadedImage } from '@/stores/conversation';
-import type { ConversationMetadata } from '@/utils/build-query-params.helper';
+import type { ConversationMetadata } from '@/types/form-query-params.model';
 
 /**
  * Build the conversation metadata attached to a submit request: every

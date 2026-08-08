@@ -51,6 +51,7 @@ describe('RespondActionService', () => {
               if (model === 'article-model') {
                 return Promise.resolve({
                   text: JSON.stringify({
+                    layout: 'classic',
                     category: 'Research',
                     title: 'Title',
                     subtitle: '',
@@ -62,7 +63,7 @@ describe('RespondActionService', () => {
                     heroCaption: '',
                     heroVideoUrl: '',
                     heroVideoCaption: '',
-                    summary: '',
+                    summary: 'Summary',
                     sectionTitle: '',
                     sectionContent: '',
                     quote: '',
@@ -120,10 +121,11 @@ describe('RespondActionService', () => {
               if (model === 'news-model') {
                 return Promise.resolve({
                   text: JSON.stringify({
+                    layout: 'classic',
                     category: 'News',
                     headline: 'Headline',
                     deck: '',
-                    lead: '',
+                    lead: 'Lead',
                     sectionTitle: '',
                     sectionContent: '',
                     heroImageUrl: '',
@@ -132,7 +134,7 @@ describe('RespondActionService', () => {
                     heroVideoUrl: '',
                     heroVideoCaption: '',
                     videoGalleryItems: [],
-                    keyPoints: [],
+                    keyFindings: [],
                     sources: [],
                     relatedStories: [],
                     dateline: '',
@@ -311,6 +313,7 @@ describe('RespondActionService', () => {
       }
       return Promise.resolve({
         text: JSON.stringify({
+          layout: 'classic',
           category: 'Research',
           title: 'Title',
           subtitle: '',
@@ -322,7 +325,7 @@ describe('RespondActionService', () => {
           heroCaption: '',
           heroVideoUrl: '',
           heroVideoCaption: '',
-          summary: '',
+          summary: 'Summary',
           sectionTitle: '',
           sectionContent: '',
           quote: '',

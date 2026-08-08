@@ -24,7 +24,7 @@ describe('AssistantResponse', () => {
   it('renders the describe template', () => {
     const wrapper = mountAssistantResponse('describe', { title: 'Image' });
     expect(wrapper.find('.harness-describe').exists()).toBe(true);
-    expect(wrapper.find('h1').text()).toBe('Image');
+    expect(wrapper.find('h2').text()).toBe('Image');
   });
 
   it('renders the compare template', () => {

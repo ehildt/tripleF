@@ -1,3 +1,8 @@
+import type {
+  ImageMediaTypeSignatures,
+  MediaTypeSignature,
+} from './image-media-type.types.js';
+
 export const MEDIA_TYPE = {
   JPEG: 'image/jpeg',
   PNG: 'image/png',
@@ -7,12 +12,6 @@ export const MEDIA_TYPE = {
 
 export type ImageMediaType =
   'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
-
-type MediaTypeSignature = readonly (number | null)[];
-
-type ImageMediaTypeSignatures = {
-  [key in ImageMediaType]: MediaTypeSignature;
-};
 
 export const IMAGE_MEDIA_TYPE_SIGNATURES: ImageMediaTypeSignatures = {
   'image/png': [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],

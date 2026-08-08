@@ -1,34 +1,9 @@
-import type {
-  HarnessResponseData,
-  ShopOffer,
-} from '@/types/harness-response-data.model';
+import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import { appendLabeledFields } from '../../../composables/helpers/append-labeled-fields.helper';
-import { buildSourcesLines } from '../../../composables/helpers/build-sources-lines.helper';
-
-function appendList(
-  parts: string[],
-  title: string,
-  items?: Array<{ text?: string }>,
-): void {
-  if (!items?.length) return;
-  parts.push(title);
-  for (const item of items) {
-    const text = item.text?.trim();
-    if (text) parts.push(`- ${text}`);
-  }
-}
-
-function buildShopOfferLine(offer: ShopOffer): string | undefined {
-  const label = [offer.title, offer.price, offer.source]
-    .filter(Boolean)
-    .join(' — ');
-  if (!label) return undefined;
-  const rating =
-    typeof offer.rating === 'number' ? ` — rating ${offer.rating}` : '';
-  const linkPart = offer.link ? ` (${offer.link})` : '';
-  return `- ${label}${rating}${linkPart}`;
-}
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+import { appendList } from '../../../composables/helpers/sources/append-list.helper';
+import { buildShopOffersLines } from '../../../composables/helpers/sources/build-shop-offers-lines.helper';
+import { buildSourcesLines } from '../../../composables/helpers/sources/build-sources-lines.helper';
 
 /**
  * Convert a product response into plain text for the model history.
@@ -46,20 +21,13 @@ export function productToText(data: HarnessResponseData): string {
 
   if (data.shortDescription?.trim()) parts.push(data.shortDescription.trim());
 
-  const priceRange = data.priceRange?.trim();
-  if (priceRange) parts.push(`Price range: ${priceRange}`);
-
   const rating = formatAggregateRating(data);
   if (rating) parts.push(rating);
-
-  const buyAdvice = data.buyAdvice?.trim();
-  if (buyAdvice) parts.push(`Buy advice: ${buyAdvice}`);
 
   appendStatHighlights(parts, data.statHighlights);
   appendList(parts, 'Pros:', data.pros);
   appendList(parts, 'Cons:', data.cons);
-  appendShopOffers(parts, data.shopOffers);
-  appendList(parts, 'Review summary:', data.reviewSummary);
+  parts.push(...buildShopOffersLines(data.shopOffers));
   appendList(parts, 'Key points:', data.keyPoints);
   parts.push(...buildSourcesLines(data.sources));
 
@@ -88,15 +56,4 @@ function appendStatHighlights(
       .map((stat) => `${stat.label}: ${stat.value}`)
       .join(', ')}`,
   );
-}
-
-function appendShopOffers(
-  parts: string[],
-  offers: HarnessResponseData['shopOffers'],
-): void {
-  if (!offers?.length) return;
-  const lines = offers
-    .map(buildShopOfferLine)
-    .filter((line): line is string => !!line);
-  if (lines.length) parts.push('Shop offers:', ...lines);
 }

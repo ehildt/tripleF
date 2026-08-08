@@ -95,12 +95,10 @@ describe('FloatingPopout', () => {
     expect(wrapper.emitted('drag')).toBeTruthy();
   });
 
-  it('forwards opacityInput with the slider value', async () => {
+  it('forwards opacityInput when the opacity toggle is clicked', async () => {
     const wrapper = mountComponent();
-    const slider = wrapper.find('.floating-media-bar__opacity-slider');
-    (slider.element as HTMLInputElement).value = '55';
-    await slider.trigger('input');
-    expect(wrapper.emitted('opacityInput')).toEqual([[55]]);
+    await wrapper.find('.floating-media-bar__opacity-toggle').trigger('click');
+    expect(wrapper.emitted('opacityInput')).toEqual([[66]]);
   });
 
   it('forwards resize from a handle', async () => {

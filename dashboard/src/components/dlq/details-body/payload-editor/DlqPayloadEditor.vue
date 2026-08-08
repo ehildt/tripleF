@@ -5,6 +5,7 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
 import { formatBody } from '@/utils/format-body.helper';
 
 import InputTextArea from '../../../shared/ui/input-text-area/InputTextArea.vue';
+import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import { useDlqPayloadEdit } from './composables/use-dlq-payload-edit';
 
 const props = defineProps<{
@@ -34,35 +35,41 @@ function handleSave() {
 <template>
   <div v-if="entry?.payload" class="dlq-payload-editor">
     <div class="dlq-payload-editor__toolbar">
-      <button
-        v-if="showBack"
-        class="dlq-payload-editor__toolbar-button"
-        @click="emit('back')"
-      >
-        <Undo2 class="dlq-payload-editor__toolbar-icon" />
-      </button>
+      <Tooltip v-if="showBack" :text="$t('common.back')">
+        <button
+          class="dlq-payload-editor__toolbar-button"
+          @click="emit('back')"
+        >
+          <Undo2 class="dlq-payload-editor__toolbar-icon" />
+        </button>
+      </Tooltip>
       <template v-if="!isImmutable">
         <template v-if="isEditingPayload">
-          <button
-            class="dlq-payload-editor__toolbar-button dlq-payload-editor__toolbar-button--success"
-            @click="handleSave"
-          >
-            <Check class="dlq-payload-editor__toolbar-icon" />
-          </button>
-          <button
-            class="dlq-payload-editor__toolbar-button dlq-payload-editor__toolbar-button--error"
-            @click="cancelEdit"
-          >
-            <X class="dlq-payload-editor__toolbar-icon" />
-          </button>
+          <Tooltip :text="$t('common.save')">
+            <button
+              class="dlq-payload-editor__toolbar-button dlq-payload-editor__toolbar-button--success"
+              @click="handleSave"
+            >
+              <Check class="dlq-payload-editor__toolbar-icon" />
+            </button>
+          </Tooltip>
+          <Tooltip :text="$t('common.cancel')">
+            <button
+              class="dlq-payload-editor__toolbar-button dlq-payload-editor__toolbar-button--error"
+              @click="cancelEdit"
+            >
+              <X class="dlq-payload-editor__toolbar-icon" />
+            </button>
+          </Tooltip>
         </template>
-        <button
-          v-else
-          class="dlq-payload-editor__toolbar-button"
-          @click="startEdit(entry!)"
-        >
-          <FilePenLine class="dlq-payload-editor__toolbar-icon" />
-        </button>
+        <Tooltip v-else :text="$t('common.edit')">
+          <button
+            class="dlq-payload-editor__toolbar-button"
+            @click="startEdit(entry!)"
+          >
+            <FilePenLine class="dlq-payload-editor__toolbar-icon" />
+          </button>
+        </Tooltip>
       </template>
     </div>
     <InputTextArea

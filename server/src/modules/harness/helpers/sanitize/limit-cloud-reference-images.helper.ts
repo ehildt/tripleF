@@ -1,4 +1,4 @@
-import type { IngestedImage } from '../download-and-ingest-images.helper.js';
+import type { IngestedImage } from '../media/download-and-ingest-images.types.js';
 
 /** Cap the number of cloud reference images surfaced to the response model. */
 export function limitCloudReferenceImages(

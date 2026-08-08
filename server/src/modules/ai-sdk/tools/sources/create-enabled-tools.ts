@@ -7,6 +7,13 @@ import { createBrightDataShoppingSearch } from './bright-data/shopping-search.to
 import { createBrightDataVideoSearch } from './bright-data/video-search.tool.js';
 import { createBrightDataWebSearch } from './bright-data/web-search.tool.js';
 import { createBrightDataWebpageScrape } from './bright-data/webpage-scrape.tool.js';
+import { createEodhdFundamentals } from './eodhd/fundamentals.tool.js';
+import { createEodhdHistory } from './eodhd/history.tool.js';
+import { createEodhdIntraday } from './eodhd/intraday.tool.js';
+import { createEodhdNews } from './eodhd/news.tool.js';
+import { createEodhdQuote } from './eodhd/quote.tool.js';
+import { createEodhdSearch } from './eodhd/search.tool.js';
+import { createEodhdTechnical } from './eodhd/technical.tool.js';
 import { createSerperBusinessReviewsSearch } from './serper/business-reviews-search.tool.js';
 import { createSerperImageSearch } from './serper/image-search.tool.js';
 import { createSerperNewsSearch } from './serper/news-search.tool.js';
@@ -19,7 +26,6 @@ import { createVariantRequestTool } from './image-variants.tool.js';
 import { withSummary } from './tool-factory.js';
 import type { ToolDependencies } from './types.js';
 import { createWebFetchTool } from './web-fetch.tool.js';
-import { createWebSearch } from './web-search.tool.js';
 import { createYoutubeVideoSearch } from './youtube.js';
 
 function addBrightDataTools(
@@ -106,6 +112,29 @@ function addSerperTools(
     tools.serperWebpageScrape = withSummary(createSerperWebpageScrape(deps));
 }
 
+function addEodhdTools(
+  tools: ToolSet,
+  deps: ToolDependencies,
+  enabled: boolean,
+  cfg: ReturnType<ToolDependencies['getLiveConfig']>,
+): void {
+  if (!enabled || !cfg.eodhd?.apiKey) return;
+  const { eodhd } = cfg;
+  if (eodhd.search.enabled)
+    tools.eodhdSearch = withSummary(createEodhdSearch(deps));
+  if (eodhd.quote.enabled)
+    tools.eodhdQuote = withSummary(createEodhdQuote(deps));
+  if (eodhd.history.enabled)
+    tools.eodhdHistory = withSummary(createEodhdHistory(deps));
+  if (eodhd.technical.enabled)
+    tools.eodhdTechnical = withSummary(createEodhdTechnical(deps));
+  if (eodhd.intraday.enabled)
+    tools.eodhdIntraday = withSummary(createEodhdIntraday(deps));
+  if (eodhd.news.enabled) tools.eodhdNews = withSummary(createEodhdNews(deps));
+  if (eodhd.fundamentals.enabled)
+    tools.eodhdFundamentals = withSummary(createEodhdFundamentals(deps));
+}
+
 function addYoutubeTools(
   tools: ToolSet,
   deps: ToolDependencies,
@@ -147,18 +176,9 @@ export function createEnabledTools(
   const cfg = deps.getLiveConfig();
   const { serper, brightData } = cfg;
 
-  const hasWebSearch = Boolean(
-    (serper.enabled && serper.apiKey && serper.web.enabled) ||
-    (brightData.enabled &&
-      brightData.apiKey &&
-      brightData.serpZone &&
-      brightData.web.enabled),
-  );
-
-  if (hasWebSearch) tools.webSearch = withSummary(createWebSearch(deps));
-
   addSerperTools(tools, deps, serper.enabled, cfg);
   addBrightDataTools(tools, deps, brightData.enabled, cfg);
+  addEodhdTools(tools, deps, cfg.eodhd?.enabled ?? false, cfg);
   addYoutubeTools(tools, deps, cfg.youtube.enabled, cfg);
   addVariantTools(tools, enabledVariants ?? []);
 

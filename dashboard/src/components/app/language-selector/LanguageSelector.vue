@@ -3,14 +3,13 @@ import { Globe, Languages, Search } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import { useLocale } from '../../../i18n/composables/use-locale';
-import { resolveLocaleFlag } from '../../../i18n/resolve-locale-flag';
-import { resolveNativeLanguageName } from '../../../i18n/resolve-native-language-name';
+import { locales } from '../../../i18n/locale-registry';
 import { useMenuPosition } from '../../chat/toolbar/model-selector/composables/use-menu-position';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 import LocaleFlag from './LocaleFlag.vue';
 
-const { locale, setLocale, supportedLocales } = useLocale();
+const { locale, setLocale } = useLocale();
 
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
@@ -24,12 +23,13 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpen, {
   align: 'left',
 });
 
-/** Locale options with their native (endonym) name, from Intl.DisplayNames. */
+/** Locale options with their native (endonym) name and flag, from the
+ *  auto-discovered locale registry. */
 const allOptions = computed(() =>
-  supportedLocales.map((code) => ({
-    code,
-    name: resolveNativeLanguageName(code),
-    flag: resolveLocaleFlag(code),
+  locales.map((l) => ({
+    code: l.code,
+    name: l.name,
+    flag: l.countryCode,
   })),
 );
 
@@ -49,7 +49,7 @@ function toggle() {
   if (isOpen.value) searchQuery.value = '';
 }
 
-function select(code: (typeof supportedLocales)[number]) {
+function select(code: string) {
   setLocale(code);
   isOpen.value = false;
 }

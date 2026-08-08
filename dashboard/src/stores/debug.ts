@@ -1,18 +1,19 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
 import { extractPrompt } from '@/utils/extract-prompt.helper';
+import { formatTime } from '@/utils/format-time.helper';
 
 import { useReadTracker } from '../composables/use-read-tracker';
 import type { DebugResult } from '../types/debug.model';
+import type { DebugResultInput } from '../types/debug-result-input.model';
 import type { TrackRequestDetails } from '../types/track-request-details.model';
 import { createId } from '../utils/id.helper';
 import { buildFormDataSummary } from './helpers/build-form-data-summary.helper';
-import { createTrackingPromise } from './helpers/create-tracking-promise.helper';
-import { formatResponseBody } from './helpers/format-response-body.helper';
+import { formatResponseBody } from './helpers/messages/format-response-body.helper';
 import { sanitizeRequestBody } from './helpers/sanitize-request-body.helper';
-
-type DebugResultInput = Omit<DebugResult, 'id' | 'timestamp' | 'direction'>;
+import { createTrackingPromise } from './helpers/socket/create-tracking-promise.helper';
 
 export const useDebugStore = defineStore('debug', () => {
   const debugResults = ref<DebugResult[]>([]);
@@ -48,7 +49,7 @@ export const useDebugStore = defineStore('debug', () => {
     if (debugPaused.value) return;
     debugResults.value.unshift({
       id: createId(),
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: formatTime(Date.now(), i18n.global.locale.value),
       direction: 'request',
       ...result,
       epoch: Date.now(),
@@ -73,7 +74,7 @@ export const useDebugStore = defineStore('debug', () => {
     if (debugPaused.value) return;
     debugResults.value.unshift({
       id: createId(),
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: formatTime(Date.now(), i18n.global.locale.value),
       ...result,
       epoch: Date.now(),
     } as DebugResult);

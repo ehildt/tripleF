@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import type { LightboxImage } from '@/components/shared/ui/lightbox/composables/use-lightbox';
+import { computed } from 'vue';
+
+import type { LightboxImage } from '@/types/lightbox.model';
+import { renderMarkdown } from '@/utils/render-markdown.helper';
 
 import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
 
-defineProps<{
+const props = defineProps<{
   content: string;
   images?: LightboxImage[];
 }>();
@@ -11,6 +14,8 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'imageClicked', images: LightboxImage[], clickedUrl: string): void;
 }>();
+
+const renderedHtml = computed(() => renderMarkdown(props.content));
 </script>
 
 <template>
@@ -23,7 +28,7 @@ const emit = defineEmits<{
       >
         <img
           :src="image.url"
-          :alt="image.title ?? 'Uploaded image'"
+          :alt="image.title ?? $t('common.uploadedImage')"
           class="user-request__image"
           loading="lazy"
           decoding="async"
@@ -31,7 +36,9 @@ const emit = defineEmits<{
         />
       </Tooltip>
     </div>
-    <div class="user-request__body">{{ content }}</div>
+    <!-- eslint-disable vue/no-v-html -- HTML is rendered by markdown-it and sanitized by DOMPurify -->
+    <div class="user-request__body" v-html="renderedHtml" />
+    <!-- eslint-enable vue/no-v-html -->
   </div>
 </template>
 
@@ -69,7 +76,9 @@ const emit = defineEmits<{
   max-width: 100%;
   min-width: 0;
   overflow-x: hidden;
-  white-space: pre-line;
+  /* Line breaks come from markdown-it (breaks: true); long unbroken tokens
+     (auto-linked URLs) wrap instead of opening a scrollbar. */
+  overflow-wrap: anywhere;
   text-align: right;
   padding: var(--spacing-2) var(--spacing-3);
   background: color-mix(in srgb, var(--color-accent-primary) 10%, transparent);
@@ -81,5 +90,27 @@ const emit = defineEmits<{
   margin-bottom: 0;
   min-width: 0;
   max-width: 100%;
+}
+
+/* Inline code (backticks) and fenced command blocks. Monospace comes from
+   the global code rule; the chip background makes commands stand out. */
+.user-request__body :deep(code) {
+  font-size: 0.9em;
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+  background-color: color-mix(in srgb, var(--color-fg-primary) 8%, transparent);
+}
+
+.user-request__body :deep(pre) {
+  overflow-x: auto;
+  padding: var(--spacing-2);
+  background-color: color-mix(in srgb, var(--color-fg-primary) 6%, transparent);
+  border-radius: 0.25rem;
+  text-align: left;
+}
+
+.user-request__body :deep(pre code) {
+  padding: 0;
+  background: none;
 }
 </style>

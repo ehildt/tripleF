@@ -1,18 +1,21 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { requestBrightData } from '../bright-data-client.js';
 import { BRIGHT_DATA_TIMEOUT_MS } from '../search-timeout.js';
 import type { ToolDependencies } from '../types.js';
 
+import {
+  type BrightDataWebpageScrapeInput,
+  brightDataWebpageScrapeSchema,
+} from './webpage-scrape.schema.js';
+import type { BrightDataWebpageScrapeResponse } from './webpage-scrape.types.js';
+
 export function createBrightDataWebpageScrape(deps: ToolDependencies) {
   return tool({
     description:
       'Fetch and render a full webpage using Bright Data Web Unlocker API. Returns clean Markdown text with its title. Use for pages behind anti-bot protection that plain fetch cannot reach.',
-    inputSchema: z.object({
-      url: z.string().describe('The URL to fetch and render'),
-    }),
-    execute: async ({ url }: { url: string }) => {
+    inputSchema: brightDataWebpageScrapeSchema,
+    execute: async ({ url }: BrightDataWebpageScrapeInput) => {
       const cfg = deps.getLiveConfig().brightData;
       if (!cfg.enabled || !cfg.apiKey || !cfg.unlockerZone) {
         return {
@@ -34,7 +37,7 @@ export function createBrightDataWebpageScrape(deps: ToolDependencies) {
           cfg.unlockerZone,
           url,
           { markdown: true, timeoutMs: BRIGHT_DATA_TIMEOUT_MS },
-        )) as { text?: string };
+        )) as BrightDataWebpageScrapeResponse;
         const content = data.text || '';
         deps.logger.log(
           `Bright Data webpage scraped ${content.length} chars from "${url}"`,

@@ -2,18 +2,15 @@ import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 import Joi from 'joi';
 
-interface YoutubeEndpointConfig {
-  enabled: boolean;
-  results: number;
-}
+import type { ProviderEndpointConfig } from './endpoint-config.types.js';
 
 export interface YoutubeConfig {
   enabled: boolean;
   apiKey?: string;
-  videos: YoutubeEndpointConfig;
+  videos: ProviderEndpointConfig;
 }
 
-const endpointSchema = Joi.object<YoutubeEndpointConfig>({
+const endpointSchema = Joi.object<ProviderEndpointConfig>({
   enabled: Joi.boolean().required(),
   // YouTube's search.list caps maxResults at 50 — unlike Serper endpoints.
   results: Joi.number().integer().min(1).max(50).required(),

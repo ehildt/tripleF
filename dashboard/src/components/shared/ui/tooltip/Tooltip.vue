@@ -16,7 +16,7 @@
  */
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 
-export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
+import type { TooltipPosition } from './Tooltip.types';
 
 const props = withDefaults(
   defineProps<{
@@ -29,10 +29,16 @@ const props = withDefaults(
     positions?: TooltipPosition[];
     /** When true, no panel is rendered. */
     disabled?: boolean;
+    /**
+     * When set, the panel wraps at this max width (with word-break) instead
+     * of staying a single nowrap line — for long titles and descriptions.
+     */
+    maxWidth?: string;
   }>(),
   {
     positions: () => ['top'],
     disabled: false,
+    maxWidth: undefined,
   },
 );
 
@@ -175,15 +181,20 @@ onBeforeUnmount(() => {
     <slot />
     <Teleport to="body">
       <span
-        v-if="text && !disabled"
+        v-if="!disabled && (text || $slots.content)"
         ref="panelRef"
         class="tooltip__panel"
-        :class="{ 'tooltip__panel--visible': visible }"
+        :class="{
+          'tooltip__panel--visible': visible,
+          'tooltip__panel--wrap': maxWidth !== undefined,
+        }"
         role="tooltip"
         aria-hidden="true"
-        :style="panelStyle"
+        :style="[panelStyle, maxWidth ? { maxWidth } : null]"
       >
-        {{ text }}
+        <!-- Rich tooltip content (e.g. title + description + caption). Falls
+             back to the plain `text` prop when no content slot is given. -->
+        <slot name="content">{{ text }}</slot>
       </span>
     </Teleport>
   </span>
@@ -233,5 +244,13 @@ onBeforeUnmount(() => {
   opacity: 0.85;
   visibility: visible;
   transition: opacity 0.15s ease;
+}
+
+/* Wrapping mode: allow long text to wrap and break mid-word, bounded by the
+   caller-supplied max-width (kept to a reasonable size so the tooltip never
+   spans the whole viewport). */
+.tooltip__panel--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 </style>

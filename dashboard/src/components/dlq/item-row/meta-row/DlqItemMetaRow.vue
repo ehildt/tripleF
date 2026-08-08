@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Database, TriangleAlert } from '@lucide/vue';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import { formatDate } from '@/utils/format-date.helper';
 
@@ -13,8 +14,14 @@ const props = defineProps<{
   failedAt: string | null;
 }>();
 
+const { locale, t } = useI18n();
+
 /** Poison-pill signal: the job exhausted every attempt it was given. */
 const isExhausted = computed(() => props.attemptsMade >= props.totalAttempts);
+
+const attemptsLabel = computed(() =>
+  t('common.attemptsCount', { count: props.attemptsMade }),
+);
 </script>
 
 <template>
@@ -23,7 +30,7 @@ const isExhausted = computed(() => props.attemptsMade >= props.totalAttempts);
       <Database class="dlq-item-meta-row__icon" />{{ queueName }}
     </span>
     <Tooltip
-      :text="isExhausted ? 'Poison pill: exhausted all retry attempts' : ''"
+      :text="isExhausted ? t('common.poisonPill') : ''"
       :disabled="!isExhausted"
     >
       <span
@@ -35,11 +42,11 @@ const isExhausted = computed(() => props.attemptsMade >= props.totalAttempts);
           class="dlq-item-meta-row__icon dlq-item-meta-row__icon--warning"
         />
         {{ attemptsMade }}/{{ totalAttempts }}
-        {{ attemptsMade === 1 ? 'attempt' : 'attempts' }}
+        {{ attemptsLabel }}
       </span>
     </Tooltip>
     <span class="dlq-item-meta-row__field">
-      {{ formatDate(failedAt) }}
+      {{ formatDate(failedAt, locale) }}
     </span>
   </div>
 </template>

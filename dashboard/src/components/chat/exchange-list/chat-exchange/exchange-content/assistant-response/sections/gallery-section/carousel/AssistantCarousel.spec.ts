@@ -24,14 +24,14 @@ describe('AssistantCarousel', () => {
       { imageUrl: '/c', imageAlt: 'c' },
     ]);
 
-    expect(wrapper.find('.harness-carousel--count-3plus').exists()).toBe(true);
+    expect(wrapper.find('.carousel-content--count-3plus').exists()).toBe(true);
     expect(wrapper.findAll('.harness-gallery__item')).toHaveLength(3);
-    expect(wrapper.findAll('.harness-carousel__dot')).toHaveLength(3);
+    expect(wrapper.findAll('.carousel-header__dot')).toHaveLength(3);
     expect(
-      wrapper.find('.harness-carousel__button--prev').attributes('disabled'),
+      wrapper.find('.carousel-content__button--prev').attributes('disabled'),
     ).toBeDefined();
     expect(
-      wrapper.find('.harness-carousel__button--next').attributes('disabled'),
+      wrapper.find('.carousel-content__button--next').attributes('disabled'),
     ).toBeUndefined();
   });
 
@@ -41,7 +41,7 @@ describe('AssistantCarousel', () => {
       { imageUrl: '/b', imageAlt: 'b' },
     ]);
 
-    expect(wrapper.find('.harness-carousel--count-2').exists()).toBe(true);
+    expect(wrapper.find('.carousel-content--count-2').exists()).toBe(true);
   });
 
   it('marks the first item active by default', () => {

@@ -1,11 +1,15 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { applyLocaleParams } from '../apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../fetch-with-timeout.js';
 import { SEARCH_TIMEOUT_MS } from '../search-timeout.js';
 import type { ToolDependencies } from '../types.js';
 
+import {
+  type SerperBusinessReviewsSearchInput,
+  serperBusinessReviewsSearchSchema,
+} from './business-reviews-search.schema.js';
+import type { SerperBusinessReviewsSearchResponse } from './business-reviews-search.types.js';
 import { HEADERS } from './serper.constants.js';
 
 export function createSerperBusinessReviewsSearch(deps: ToolDependencies) {
@@ -15,44 +19,14 @@ export function createSerperBusinessReviewsSearch(deps: ToolDependencies) {
       This endpoint reviews BUSINESSES (shops, restaurants, hotels, services) — it does not search editorial product reviews. 
       Identify the business by its exact name plus location via query (e.g. "MediaMarkt Berlin Alexanderplatz"), 
       or pass placeId/cid when a previous places search returned them. 
-      Use it to judge seller/business reputation; for product quality opinions use webSearch with a "<product> review" query instead.`,
-    inputSchema: z.object({
-      query: z
-        .string()
-        .optional()
-        .describe(
-          'The exact business or place name, ideally with its location, named explicitly and resolved from the conversation. Used when neither placeId nor cid is known.',
-        ),
-      placeId: z
-        .string()
-        .optional()
-        .describe(
-          'Google Place ID of the business. Most precise identifier — prefer it when available.',
-        ),
-      cid: z
-        .string()
-        .optional()
-        .describe(
-          'Google CID of the business, e.g. from a places search result.',
-        ),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-    }),
+      Use it to judge seller/business reputation; for product quality opinions use a *WebSearch tool with a "<product> review" query instead.`,
+    inputSchema: serperBusinessReviewsSearchSchema,
     execute: async ({
       query,
       placeId,
       cid,
       lang,
-    }: {
-      query?: string;
-      placeId?: string;
-      cid?: string;
-      lang?: string;
-    }) => {
+    }: SerperBusinessReviewsSearchInput) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.reviews.enabled) {
         return {
@@ -84,22 +58,7 @@ export function createSerperBusinessReviewsSearch(deps: ToolDependencies) {
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
       if (!res.ok) return { results: [], error: `HTTP ${res.status}` };
-      const data = (await res.json()) as {
-        placeInfo?: {
-          title?: string;
-          address?: string;
-          rating?: number;
-          ratingCount?: number;
-        };
-        reviews?: Array<{
-          snippet?: string;
-          rating?: number;
-          date?: string;
-          isoDate?: string;
-          likes?: number | null;
-          user?: { name?: string };
-        }>;
-      };
+      const data = (await res.json()) as SerperBusinessReviewsSearchResponse;
       if (!data.reviews?.length) {
         deps.logger.warn(
           `Serper.dev Reviews returned 0 results for "${lookup}"`,

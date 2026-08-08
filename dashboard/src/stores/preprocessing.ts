@@ -4,45 +4,16 @@ import { computed, ref, watch } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
-import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
+import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
+import type {
+  PreprocessingParametersOptions,
+  PreprocessingResizeOptions,
+  PreprocessingSettings,
+  PreprocessingSize,
+  PreprocessingVariantsOptions,
+} from '@/types/preprocessing.model';
 
 const SESSION_ID = getPersistentSocketSessionId();
-
-export type PreprocessingSize = 256 | 384 | 512 | 640 | 768 | 1024;
-
-interface PreprocessingResizeOptions {
-  maxWidth: PreprocessingSize;
-  maxHeight: number | null;
-  withoutEnlargement: boolean;
-}
-
-export interface PreprocessingVariantsOptions {
-  original: boolean;
-  grayscale: boolean;
-  denoised: boolean;
-  sharpened: boolean;
-  clahe: boolean;
-}
-
-export interface PreprocessingParametersOptions {
-  blurSigma: number;
-  sharpenSigma: number;
-  sharpenM1: number;
-  sharpenM2: number;
-  brightnessLevel: number;
-  claheWidth: number;
-  claheHeight: number;
-  claheMaxSlope: number;
-  normalizeLower: number;
-  normalizeUpper: number;
-}
-
-export interface PreprocessingSettings {
-  enabled: boolean;
-  resize: PreprocessingResizeOptions;
-  variants: PreprocessingVariantsOptions;
-  parameters: PreprocessingParametersOptions;
-}
 
 export const PREPROCESSING_SIZES: PreprocessingSize[] = [
   256, 384, 512, 640, 768, 1024,

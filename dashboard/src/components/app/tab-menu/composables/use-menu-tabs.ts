@@ -2,8 +2,9 @@ import { Bug, MailX, MessageSquare, SlidersHorizontal } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { ActiveTab } from '../../../../stores/app';
 import { useAppStore } from '../../../../stores/app';
+import type { ActiveTab } from '../../../../types/app.model';
+import type { MenuTab } from './use-menu-tabs.types';
 
 const TAB_TINTS: Record<ActiveTab, number> = {
   chat: 0.15,
@@ -18,15 +19,6 @@ const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
   debug: Bug,
   sysctl: SlidersHorizontal,
 };
-
-export interface MenuTab {
-  label: string;
-  tab: ActiveTab;
-  icon: typeof MessageSquare;
-  tint: number;
-  count?: number;
-  showStar?: boolean;
-}
 
 export function useMenuTabs(props: {
   activeTab: ActiveTab;

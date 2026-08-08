@@ -3,12 +3,20 @@
  * The section tab bar of the SysCtl panel: one icon per settings group
  * (search engines, preprocessing, widgets, system).
  */
-import { Blocks, Cog, Radar, ScanEye } from '@lucide/vue';
+import {
+  Blocks,
+  Cog,
+  Layers,
+  LayoutTemplate,
+  MessagesSquare,
+  Radar,
+  ScanEye,
+} from '@lucide/vue';
 
 import { i18n } from '@/i18n/i18n';
 
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
-import type { SysctlTab } from '../composables/use-sysctl-tab';
+import type { SysctlTab } from '../composables/use-sysctl-tab.types';
 
 defineProps<{
   activeTab: SysctlTab;
@@ -30,9 +38,24 @@ const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
     icon: ScanEye,
   },
   {
+    tab: 'layouts',
+    label: i18n.global.t('common.sysctlLayouts'),
+    icon: Layers,
+  },
+  {
     tab: 'widgets',
     label: i18n.global.t('common.sysctlWidgets'),
     icon: Blocks,
+  },
+  {
+    tab: 'chat',
+    label: i18n.global.t('common.sysctlChatNavigation'),
+    icon: MessagesSquare,
+  },
+  {
+    tab: 'interface',
+    label: i18n.global.t('common.sysctlInterface'),
+    icon: LayoutTemplate,
   },
   { tab: 'system', label: i18n.global.t('common.sysctlSystem'), icon: Cog },
 ];

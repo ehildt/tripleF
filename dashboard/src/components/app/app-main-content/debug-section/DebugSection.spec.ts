@@ -133,4 +133,38 @@ describe('DebugSection', () => {
       wrapper.findComponent('.request-details-mock').props('result'),
     ).toEqual(result);
   });
+
+  it('switches the details panel to dynamic height when a request is selected', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const debugStore = useDebugStore();
+    const result = { id: 'req-1', endpoint: '/api/health' } as DebugResult;
+
+    const wrapper = mount(DebugSection, {
+      global: {
+        provide: {
+          [appViewContextKey]: {
+            socketProvider: makeMockSocketProvider(),
+            viewModels: computed(() => []),
+            debugResults: computed(() => [result]),
+            selectedDebugResult: computed(() => debugStore.selectedDebugResult),
+            clearDebugResults: vi.fn(),
+            selectDebugResult: (r) => {
+              debugStore.selectedDebugResult = r;
+            },
+            selectDebugMarkRead: vi.fn(),
+          },
+        },
+      },
+    });
+
+    const details = wrapper.findComponent('.request-details-mock');
+    expect(details.classes()).not.toContain('debug-column__panel--dynamic');
+
+    const debug = wrapper.findComponent('.debug-mock') as VueWrapper;
+    debug.vm.$emit('select', result);
+    await nextTick();
+
+    expect(details.classes()).toContain('debug-column__panel--dynamic');
+  });
 });

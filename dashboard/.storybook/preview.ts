@@ -1,8 +1,9 @@
 import type { Preview } from '@storybook/vue3-vite';
 import { QueryClient } from '@tanstack/vue-query';
 import { createPinia, setActivePinia } from 'pinia';
-import { defineComponent, h, provide } from 'vue';
+import { defineComponent, getCurrentInstance, h, provide } from 'vue';
 
+import { i18n } from '../src/i18n/i18n';
 import StoryContainer from './StoryContainer.vue';
 
 import '../src/assets/css/style.css';
@@ -45,6 +46,26 @@ const storyContainerDecorator = (story, { parameters }) => {
   const padded = layout !== 'fullscreen';
   const centered = layout !== 'fullscreen';
   return () => h(StoryContainer, { padded, centered }, () => h(story()));
+};
+
+/**
+ * Install the app's i18n plugin on the story's app instance so components
+ * that call `useI18n()` / `t()` in script setup render in stories (the
+ * tooltip rows, tab labels, etc.). `app.use` during a descendant's setup
+ * works because the plugin only provides root-level state, and the story
+ * tree mounts after this wrapper's setup runs.
+ */
+const i18nDecorator = (story) => {
+  const Wrapper = defineComponent({
+    setup() {
+      const app = getCurrentInstance()?.appContext.app;
+      if (app && !(app as unknown as { _i18n?: unknown })._i18n) {
+        app.use(i18n);
+      }
+      return () => h('div', [h(story())]);
+    },
+  });
+  return () => h(Wrapper);
 };
 
 const preview: Preview = {
@@ -102,6 +123,7 @@ const preview: Preview = {
     storyContainerDecorator,
     piniaDecorator,
     vueQueryDecorator,
+    i18nDecorator,
   ],
 };
 

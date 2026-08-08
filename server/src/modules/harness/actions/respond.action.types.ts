@@ -1,0 +1,28 @@
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import type { IntentResult } from '../templates/intent.schema.js';
+
+export type RespondResult = {
+  content: string;
+  data?: Record<string, unknown>;
+  inputTokens?: number;
+  outputTokens?: number;
+};
+
+export type RespondParams = {
+  requestId: string;
+  intent: IntentResult;
+  messages: InputMessage[];
+  availableImages?: Array<Record<string, unknown>>;
+  model: string;
+  keepAlive?: string;
+  numCtx?: number;
+  think?: ThinkMode;
+  stream?: boolean;
+  abortSignal?: AbortSignal;
+  onTextDelta?: (delta: string) => void;
+  onReasoningDelta?: (delta: string) => void;
+  onJsonRetry?: (attempt: number) => void;
+  /** ISO-639-1 code of the active UI locale, used as fallback when the intent classifier left the language unset. */
+  language?: string;
+};

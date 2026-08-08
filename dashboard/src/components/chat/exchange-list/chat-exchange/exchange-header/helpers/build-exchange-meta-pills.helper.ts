@@ -1,9 +1,6 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-export interface ExchangeMetaPill {
-  text: string;
-  variant?: 'accent';
-}
+import type { ExchangeMetaPill } from './build-exchange-meta-pills.helper.types';
 
 /**
  * Build the assistant exchange's meta-bar pills from the structured response
@@ -22,9 +19,7 @@ export function buildExchangeMetaPills(
   if (data.author) pills.push({ text: data.author });
   if (data.dateline || data.byline) {
     pills.push({
-      text: data.dateline
-        ? `${data.dateline} · ${data.byline}`
-        : (data.byline as string),
+      text: [data.dateline, data.byline].filter(Boolean).join(' · '),
     });
   }
   return pills;

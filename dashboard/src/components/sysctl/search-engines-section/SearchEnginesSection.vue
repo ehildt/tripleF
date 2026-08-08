@@ -3,31 +3,17 @@
  * The SysCtl "Search Engines" tab: the Serper provider's master switch,
  * endpoint toggles, and result limits.
  */
-import {
-  Clapperboard,
-  FileText,
-  Globe,
-  Image,
-  KeyRound,
-  MapPin,
-  Newspaper,
-  ShoppingCart,
-  Star,
-} from '@lucide/vue';
-import { computed } from 'vue';
+import { ref } from 'vue';
 
-import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
-import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
-import { i18n } from '@/i18n/i18n';
-
-import { useApiKeyForm } from '../composables/use-api-key-form';
 import { useSysctlConfig } from '../composables/use-sysctl-config';
-import ProviderSection from '../provider-section/ProviderSection.vue';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
+import BrightDataSection from './bright-data-section/BrightDataSection.vue';
+import EodhdSection from './eodhd-section/EodhdSection.vue';
+import type { SearchEngineId } from './search-engines-menu/SearchEnginesMenu.types';
+import SearchEnginesMenu from './search-engines-menu/SearchEnginesMenu.vue';
+import SerperSection from './serper-section/SerperSection.vue';
 import SourcesPanel from './sources-panel/SourcesPanel.vue';
+import YoutubeSection from './youtube-section/YoutubeSection.vue';
 
 const {
   config,
@@ -41,129 +27,22 @@ const {
   updateApiKey,
 } = useSysctlConfig();
 
-const isSerperConfigured = computed(() => !!config.value?.serper.apiKey);
+/** Which engine's panel is shown in the search-engines submenu. */
+const activeEngine = ref<SearchEngineId>('serper');
 
-const maskedSerperApiKey = computed(() => config.value?.serper.apiKey ?? '');
-
-const isBrightDataConfigured = computed(
-  () => !!config.value?.brightData.apiKey,
-);
-
-const maskedBrightDataApiKey = computed(
-  () => config.value?.brightData.apiKey ?? '',
-);
-
-const isYoutubeConfigured = computed(() => !!config.value?.youtube.apiKey);
-
-const maskedYoutubeApiKey = computed(() => config.value?.youtube.apiKey ?? '');
-
-const {
-  draft: apiKeyDraft,
-  selectAllText: selectApiKeyText,
-  submit: submitApiKey,
-} = useApiKeyForm(
-  (apiKey) => updateApiKey('serper', apiKey),
-  maskedSerperApiKey,
-);
-
-const {
-  draft: youtubeApiKeyDraft,
-  selectAllText: selectYoutubeApiKeyText,
-  submit: submitYoutubeApiKey,
-} = useApiKeyForm(
-  (apiKey) => updateApiKey('youtube', apiKey),
-  maskedYoutubeApiKey,
-);
-
-const {
-  draft: brightDataApiKeyDraft,
-  selectAllText: selectBrightDataApiKeyText,
-  submit: submitBrightDataApiKey,
-} = useApiKeyForm(
-  (apiKey) => updateApiKey('brightData', apiKey),
-  maskedBrightDataApiKey,
-);
-
-const youtubeDescriptions: Record<string, string> = {
-  videos: i18n.global.t('common.youtubeVideosWithViews'),
-};
-
-const youtubeIcons = {
-  videos: Clapperboard,
-};
-
-const brightDataDescriptions: Record<string, string> = {
-  web: i18n.global.t('common.searchCapWebBrightData'),
-  images: i18n.global.t('common.searchCapImages'),
-  news: i18n.global.t('common.searchCapNews'),
-  places: i18n.global.t('common.searchCapPlaces'),
-  shopping: i18n.global.t('common.searchCapShopping'),
-  videos: i18n.global.t('common.searchCapVideos'),
-  scrape: i18n.global.t('common.searchCapScrapeBrightData'),
-};
-
-const brightDataIcons = {
-  web: Globe,
-  images: Image,
-  news: Newspaper,
-  places: MapPin,
-  shopping: ShoppingCart,
-  videos: Clapperboard,
-  scrape: FileText,
-};
-
-const serperDescriptions: Record<string, string> = {
-  web: i18n.global.t('common.searchCapWebSerper'),
-  images: i18n.global.t('common.searchCapImages'),
-  news: i18n.global.t('common.searchCapNews'),
-  places: i18n.global.t('common.searchCapPlaces'),
-  shopping: i18n.global.t('common.searchCapShopping'),
-  reviews: i18n.global.t('common.searchCapReviews'),
-  videos: i18n.global.t('common.searchCapVideos'),
-  scrape: i18n.global.t('common.searchCapScrapeSerper'),
-};
-
-const serperIcons = {
-  web: Globe,
-  images: Image,
-  news: Newspaper,
-  places: MapPin,
-  shopping: ShoppingCart,
-  reviews: Star,
-  videos: Clapperboard,
-  scrape: FileText,
-};
-
-function handleBrightDataUpdateResults({
-  name,
-  value,
-}: {
-  name: string;
-  value: string;
-}) {
-  updateEndpointResults('brightData', name, value);
+function handleUpdateResults(
+  provider: 'serper' | 'brightData' | 'youtube' | 'eodhd',
+  maxResults: number,
+  { name, value }: { name: string; value: string },
+) {
+  updateEndpointResults(provider, name, value, maxResults);
 }
 
-/** Patch a non-secret zone value and mirror it into the local config. */
-function handleZoneChange(zone: 'serpZone' | 'unlockerZone', event: Event) {
-  const next = (event.target as HTMLInputElement).value.trim();
+function handleZoneChange(zone: 'serpZone' | 'unlockerZone', value: string) {
   if (!config.value) return;
-  config.value.brightData[zone] = next;
-  patchConfig('brightData', zone, next);
-}
-
-function handleUpdateResults({ name, value }: { name: string; value: string }) {
-  updateEndpointResults('serper', name, value);
-}
-
-function handleYoutubeUpdateResults({
-  name,
-  value,
-}: {
-  name: string;
-  value: string;
-}) {
-  updateEndpointResults('youtube', name, value);
+  // Optimistic local echo — the session-overrides merge keeps it on refresh.
+  config.value.brightData[zone] = value;
+  patchConfig('brightData', zone, value);
 }
 
 function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
@@ -173,221 +52,70 @@ function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
   }
   patchConfig('sources', key, value);
 }
+
+/** Reset just one source list (preferred or blocked) to empty. */
+function handleSourcesReset(key: 'preferred' | 'blocked') {
+  if (config.value?.sources) {
+    config.value.sources[key] = [];
+  }
+  patchConfig('sources', key, []);
+}
 </script>
 
 <template>
   <SysCtlSection :loading="isLoading" :error="hasError || !config">
-    <PanelLayout v-if="config">
-      <CollapsiblePanel id="serper" :title="$t('common.serperApi')">
-        <template #actions>
-          <ResetButton
-            :title="$t('common.resetSerperToDefaults')"
-            @click="resetProvider('serper')"
-          />
-          <PowerToggle
-            :enabled="config.serper.enabled"
-            :title="$t('common.enableSerper')"
-            @toggle="toggleProviderEnabled('serper')"
-          />
-        </template>
+    <SearchEnginesMenu
+      :active-engine="activeEngine"
+      @select-engine="activeEngine = $event"
+    />
 
-        <ProviderSection
-          provider-name="Serper"
-          provider-description="Search API"
-          :config="config.serper"
-          :descriptions="serperDescriptions"
-          :icons="serperIcons"
-          :configured="isSerperConfigured"
-          @toggle-endpoint="toggleEndpoint('serper', $event)"
-          @update-results="handleUpdateResults($event)"
-        >
-          <!-- API key field first in the grid: displays the masked key
-                 (****************), patches on change.
-                 The real key never reaches the client. -->
-          <template #prepend>
-            <FieldCard
-              :icon="KeyRound"
-              :label="$t('common.apiKey')"
-              :description="$t('common.serperAccessKey')"
-            >
-              <template #field>
-                <input
-                  v-model="apiKeyDraft"
-                  type="text"
-                  name="serper-api-key"
-                  class="search-engines-section__api-key-input"
-                  autocomplete="off"
-                  spellcheck="false"
-                  @focus="selectApiKeyText"
-                  @change="submitApiKey"
-                />
-              </template>
-            </FieldCard>
-          </template>
-        </ProviderSection>
-      </CollapsiblePanel>
-    </PanelLayout>
+    <SerperSection
+      v-if="config && activeEngine === 'serper'"
+      :config="config.serper"
+      :update-api-key="(k) => updateApiKey('serper', k)"
+      @toggle-endpoint="toggleEndpoint('serper', $event)"
+      @update-results="handleUpdateResults('serper', 200, $event)"
+      @reset="resetProvider('serper')"
+      @toggle-enabled="toggleProviderEnabled('serper')"
+    />
 
-    <PanelLayout v-if="config">
-      <CollapsiblePanel id="brightData" :title="$t('common.brightData')">
-        <template #actions>
-          <ResetButton
-            :title="$t('common.resetBrightDataToDefaults')"
-            @click="resetProvider('brightData')"
-          />
-          <PowerToggle
-            :enabled="config.brightData.enabled"
-            :title="$t('common.enableBrightData')"
-            @toggle="toggleProviderEnabled('brightData')"
-          />
-        </template>
+    <BrightDataSection
+      v-if="config && activeEngine === 'brightData'"
+      :config="config.brightData"
+      :update-api-key="(k) => updateApiKey('brightData', k)"
+      @toggle-endpoint="toggleEndpoint('brightData', $event)"
+      @update-results="handleUpdateResults('brightData', 200, $event)"
+      @reset="resetProvider('brightData')"
+      @toggle-enabled="toggleProviderEnabled('brightData')"
+      @zone-change="handleZoneChange($event.zone, $event.value)"
+    />
 
-        <ProviderSection
-          provider-name="Bright Data"
-          provider-description="Search engine (alternative to Serper)"
-          :config="config.brightData"
-          :descriptions="brightDataDescriptions"
-          :icons="brightDataIcons"
-          :configured="isBrightDataConfigured"
-          @toggle-endpoint="toggleEndpoint('brightData', $event)"
-          @update-results="handleBrightDataUpdateResults($event)"
-        >
-          <template #prepend>
-            <FieldCard
-              :icon="KeyRound"
-              :label="$t('common.apiKey')"
-              :description="$t('common.brightDataAccessKey')"
-            >
-              <template #field>
-                <input
-                  v-model="brightDataApiKeyDraft"
-                  type="text"
-                  name="bright-data-api-key"
-                  class="search-engines-section__api-key-input"
-                  autocomplete="off"
-                  spellcheck="false"
-                  @focus="selectBrightDataApiKeyText"
-                  @change="submitBrightDataApiKey"
-                />
-              </template>
-            </FieldCard>
-            <FieldCard
-              :icon="Globe"
-              :label="$t('common.serpZone')"
-              :description="$t('common.serpZoneDesc')"
-            >
-              <template #field>
-                <input
-                  :value="config.brightData.serpZone"
-                  type="text"
-                  name="bright-data-serp-zone"
-                  class="search-engines-section__api-key-input"
-                  autocomplete="off"
-                  spellcheck="false"
-                  placeholder="serp_api"
-                  @change="handleZoneChange('serpZone', $event)"
-                />
-              </template>
-            </FieldCard>
-            <FieldCard
-              :icon="FileText"
-              :label="$t('common.unlockerZone')"
-              :description="$t('common.unlockerZoneDesc')"
-            >
-              <template #field>
-                <input
-                  :value="config.brightData.unlockerZone"
-                  type="text"
-                  name="bright-data-unlocker-zone"
-                  class="search-engines-section__api-key-input"
-                  autocomplete="off"
-                  spellcheck="false"
-                  placeholder="unlocker"
-                  @change="handleZoneChange('unlockerZone', $event)"
-                />
-              </template>
-            </FieldCard>
-          </template>
-        </ProviderSection>
-      </CollapsiblePanel>
-    </PanelLayout>
+    <YoutubeSection
+      v-if="config && activeEngine === 'youtube'"
+      :config="config.youtube"
+      :update-api-key="(k) => updateApiKey('youtube', k)"
+      @toggle-endpoint="toggleEndpoint('youtube', $event)"
+      @update-results="handleUpdateResults('youtube', 200, $event)"
+      @reset="resetProvider('youtube')"
+      @toggle-enabled="toggleProviderEnabled('youtube')"
+    />
 
-    <PanelLayout v-if="config">
-      <CollapsiblePanel id="youtube" :title="$t('common.youtubeApi')">
-        <template #actions>
-          <ResetButton
-            :title="$t('common.resetYouTubeToDefaults')"
-            @click="resetProvider('youtube')"
-          />
-          <PowerToggle
-            :enabled="config.youtube.enabled"
-            :title="$t('common.enableYouTube')"
-            @toggle="toggleProviderEnabled('youtube')"
-          />
-        </template>
-
-        <ProviderSection
-          provider-name="YouTube"
-          provider-description="Video search API"
-          :config="config.youtube"
-          :descriptions="youtubeDescriptions"
-          :icons="youtubeIcons"
-          :configured="isYoutubeConfigured"
-          @toggle-endpoint="toggleEndpoint('youtube', $event)"
-          @update-results="handleYoutubeUpdateResults($event)"
-        >
-          <template #prepend>
-            <FieldCard
-              :icon="KeyRound"
-              :label="$t('common.apiKey')"
-              :description="$t('common.youtubeDataApiKey')"
-            >
-              <template #field>
-                <input
-                  v-model="youtubeApiKeyDraft"
-                  type="text"
-                  name="youtube-api-key"
-                  class="search-engines-section__api-key-input"
-                  autocomplete="off"
-                  spellcheck="false"
-                  @focus="selectYoutubeApiKeyText"
-                  @change="submitYoutubeApiKey"
-                />
-              </template>
-            </FieldCard>
-          </template>
-        </ProviderSection>
-      </CollapsiblePanel>
-    </PanelLayout>
+    <EodhdSection
+      v-if="config && activeEngine === 'eodhd'"
+      :config="config.eodhd"
+      :update-api-key="(k) => updateApiKey('eodhd', k)"
+      @toggle-endpoint="toggleEndpoint('eodhd', $event)"
+      @update-results="handleUpdateResults('eodhd', 1000, $event)"
+      @reset="resetProvider('eodhd')"
+      @toggle-enabled="toggleProviderEnabled('eodhd')"
+    />
 
     <!-- Preferred / blocked content domains (dynamic source config) -->
-    <PanelLayout v-if="config">
-      <CollapsiblePanel id="sources" :title="$t('common.sources')">
-        <template #actions>
-          <ResetButton
-            :title="$t('common.resetSourcesToDefaults')"
-            @click="resetProvider('sources')"
-          />
-        </template>
-
-        <SourcesPanel
-          :sources="config.sources"
-          @patch="handleSourcesPatch($event)"
-        />
-      </CollapsiblePanel>
-    </PanelLayout>
+    <SourcesPanel
+      v-if="config && activeEngine === 'sources'"
+      :sources="config.sources"
+      @patch="handleSourcesPatch($event)"
+      @reset="handleSourcesReset($event)"
+    />
   </SysCtlSection>
 </template>
-
-<style scoped>
-.search-engines-section__api-key-input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--color-fg-primary);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  text-align: center;
-  outline: none;
-}
-</style>

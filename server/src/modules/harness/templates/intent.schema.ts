@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   TOOL_NAMES,
   VARIANT_NAMES,
-} from '../helpers/tool-registry.constants.js';
+} from '../helpers/tools/tool-registry.constants.js';
 
 export const DEFAULT_VARIANT_ID = 'default';
 
@@ -19,6 +19,8 @@ const TEMPLATES = [
   'shoplist',
   'imagelist',
   'videolist',
+  'stockmarketitem',
+  'stockmarketlist',
   'text',
 ] as const;
 
@@ -46,7 +48,7 @@ export const IntentSchema = z.object({
   template: z
     .enum(TEMPLATES)
     .describe(
-      'Template name: "article" (research/report), "news" (current events/news brief), "describe" (single/multi image description), "compare" (compare uploaded images only — information comparisons use "evaluation"), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "shoplist" (compact product/shop list for follow-up shopping questions about an already-introduced product), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "text" (free chat).',
+      'Template name: "article" (in-depth research/report — extensive long-form composed from available snippets), "news" (current events — a compact brief composed from available snippets), "describe" (single/multi image description), "compare" (compare uploaded images only — information comparisons use "evaluation"), "ocr" (extract text from images), "summary" (recap prior conversation or topic without new images), "evaluation" (critique/assess something from the conversation), "product" (product details with shop offers and prices), "shoplist" (compact product/shop list for follow-up shopping questions about an already-introduced product), "imagelist" (a pure collection of images about a topic, no article), "videolist" (a pure list/playlist of videos about a topic, no article), "stockmarketitem" (a single stock/ETF/index with price chart, technicals, news, and a recommendation), "stockmarketlist" (a selection of stocks/indices with a market overview), "text" (free chat).',
     ),
 
   prompt: z

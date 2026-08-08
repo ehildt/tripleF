@@ -1,7 +1,7 @@
 export const MULTIMODAL_POLICY = `MULTIMODAL RULES:
 - Only analyze explicitly provided images.
-- Never use external knowledge for images.
-- Never infer hidden or non-visible details.
+- Base every claim about an image on its visible content; never infer hidden or non-visible details.
+- Do not add external knowledge unless the active mode rules explicitly retrieve reference material — never from speculation.
 
 VISIBLE SIGNALS ONLY:
 - OCR text, labels, filenames, codes, identifiers, URLs.

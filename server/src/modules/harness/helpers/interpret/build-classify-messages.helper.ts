@@ -1,7 +1,8 @@
 import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
 import { buildStructuredJsonPrompt } from '../../constants/structured-json-prompt.constant.js';
 import { buildIntentSelectionPrompt } from '../../prompts/intent-selection.prompt.js';
-import { buildClassifyTranscript } from '../build-classify-transcript.helper.js';
+
+import { buildClassifyTranscript } from './build-classify-transcript.helper.js';
 
 function buildSystemPrompt(basePrompt: string): string {
   const now = new Date()
@@ -15,12 +16,7 @@ function buildSystemPrompt(basePrompt: string): string {
       timeZoneName: 'short',
     })
     .replace(' at ', ', '); // "Friday, January 3, 2025, 10:30 AM GMT"
-  return [
-    basePrompt,
-    '',
-    `Current date and time: ${now}`,
-    'Use this temporal context when classifying time-sensitive requests.',
-  ].join('\n');
+  return `${basePrompt}\n\nCurrent date and time: ${now}\nUse this temporal context when classifying time-sensitive requests.`;
 }
 
 /**
@@ -59,12 +55,10 @@ export function buildClassifyMessages(
   enabledToolNames: string[],
   language?: string,
 ): InputMessage[] {
-  const prompt = [
-    buildIntentSelectionPrompt(enabledToolNames, language),
-    buildStructuredJsonPrompt(),
-  ]
-    .filter(Boolean)
-    .join('\n\n');
+  const prompt = `${buildIntentSelectionPrompt(
+    enabledToolNames,
+    language,
+  )}\n\n${buildStructuredJsonPrompt()}`;
 
   const systemContent = buildSystemPrompt(prompt);
 
@@ -95,7 +89,7 @@ export function buildClassifyMessages(
   return [
     {
       role: 'system' as const,
-      content: [systemContent, transcript].filter(Boolean).join('\n\n'),
+      content: `${systemContent}${transcript ? `\n\n${transcript}` : ''}`,
     },
     ...(latestUserContent
       ? [{ role: 'user' as const, content: latestUserContent }]

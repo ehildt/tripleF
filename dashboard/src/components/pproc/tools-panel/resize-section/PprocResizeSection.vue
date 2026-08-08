@@ -7,14 +7,12 @@ import {
 } from '@lucide/vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import {
-  type PreprocessingSize,
-  usePreprocessingStore,
-} from '@/stores/preprocessing';
+import { usePreprocessingStore } from '@/stores/preprocessing';
+import type { PreprocessingSize } from '@/types/preprocessing.model';
 
 import MaxHeightField from '../../shared/ui/max-height-field/MaxHeightField.vue';
 import MaxWidthField from '../../shared/ui/max-width-field/MaxWidthField.vue';
-import PprocSection from '../../shared/ui/section/PprocSection.vue';
+import PprocSectionHeader from '../../shared/ui/section-header/PprocSectionHeader.vue';
 
 const store = usePreprocessingStore();
 
@@ -30,7 +28,11 @@ function updateMaxWidth(value: PreprocessingSize) {
 </script>
 
 <template>
-  <PprocSection :icon="ArrowDownToLine" :title="$t('common.resizeSettings')">
+  <div class="pproc-resize-section">
+    <PprocSectionHeader
+      :icon="ArrowDownToLine"
+      :title="$t('common.resizeSettings')"
+    />
     <div class="pproc-resize-section__grid">
       <FieldCard
         :icon="MoveHorizontal"
@@ -74,10 +76,16 @@ function updateMaxWidth(value: PreprocessingSize) {
         @toggle="store.setWithoutEnlargement(!store.resize.withoutEnlargement)"
       />
     </div>
-  </PprocSection>
+  </div>
 </template>
 
 <style scoped>
+.pproc-resize-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
 .pproc-resize-section__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

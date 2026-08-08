@@ -10,16 +10,7 @@ import { Prisma, PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../constants/postgres.constants.js';
 
-type FindAllOptions = {
-  status?: string;
-  queueName?: string;
-  nextRetryAtBefore?: Date;
-  nextRetryAtAfter?: Date;
-  limit?: number;
-  offset?: number;
-  requestId?: string;
-  search?: string;
-};
+import type { FindAllOptions } from './repository.service.types.js';
 
 @Injectable()
 export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {

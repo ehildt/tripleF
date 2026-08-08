@@ -4,12 +4,8 @@ import sharp, { Sharp } from 'sharp';
 import { SharpOptions } from '../dtos/sharp-options.dto.js';
 import { getEnabledVariants } from '../helpers/get-enabled-variants.helper.js';
 import { getVariantPipeline } from '../helpers/get-variant-pipeline.helper.js';
-import type { Variant, VariantPipeline } from '../types/image-variant.types.js';
 
-interface ImageVariantPipeline {
-  variant: Variant;
-  pipeline: VariantPipeline;
-}
+import type { ImageVariantPipeline } from './image-pipeline-factory.service.types.js';
 
 @Injectable()
 export class ImagePipelineFactory {

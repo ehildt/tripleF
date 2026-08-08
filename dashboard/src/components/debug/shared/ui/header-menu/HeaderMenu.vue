@@ -7,66 +7,31 @@ import {
   Search,
   Trash2,
 } from '@lucide/vue';
-import { onClickOutside } from '@vueuse/core';
-import { computed, onUnmounted, ref } from 'vue';
 
 import { useDebugStore } from '../../../../../stores/debug';
 import FilterMenu from '../../../../shared/ui/filter-menu/FilterMenu.vue';
 import IconButton from '../../../../shared/ui/icon-button/IconButton.vue';
-import type { DebugResultFilter } from '../../../helpers/build-filtered-debug-results.helper';
+import {
+  type HeaderMenuEmits,
+  useHeaderMenu,
+} from './composables/use-header-menu.composable';
+import type { HeaderMenuProps } from './HeaderMenu.types';
 
-const props = defineProps<{
-  filter: DebugResultFilter;
-  search: string;
-  allCount: number;
-  httpCount: number;
-  socketCount: number;
-  hideRead?: boolean;
-}>();
+const props = defineProps<HeaderMenuProps>();
 
-const emit = defineEmits<{
-  (e: 'update:filter', value: DebugResultFilter): void;
-  (e: 'update:search', value: string): void;
-  (e: 'update:hideRead', value: boolean): void;
-  (e: 'clear'): void;
-}>();
+const emit = defineEmits<HeaderMenuEmits>();
 
 const debugStore = useDebugStore();
 
-const headerRef = ref<HTMLElement | null>(null);
-const isSearchOpen = ref(false);
-
-onClickOutside(headerRef, () => {
-  isSearchOpen.value = false;
-});
-
-const disableAll = computed(() => props.allCount === 0);
-const disableHttp = computed(() => props.httpCount === 0);
-const disableSocket = computed(() => props.socketCount === 0);
-
-/** Clear wipes the whole log — arm first, second click within 3 s executes. */
-const clearArmed = ref(false);
-let clearArmTimer: ReturnType<typeof setTimeout> | null = null;
-
-function handleClearClick() {
-  if (clearArmed.value) {
-    disarmClear();
-    emit('clear');
-    return;
-  }
-  clearArmed.value = true;
-  clearArmTimer = setTimeout(() => {
-    clearArmed.value = false;
-  }, 3000);
-}
-
-function disarmClear() {
-  clearArmed.value = false;
-  if (clearArmTimer) clearTimeout(clearArmTimer);
-  clearArmTimer = null;
-}
-
-onUnmounted(disarmClear);
+const {
+  headerRef,
+  isSearchOpen,
+  disableAll,
+  disableHttp,
+  disableSocket,
+  clearArmed,
+  handleClearClick,
+} = useHeaderMenu(props, emit);
 </script>
 
 <template>
@@ -78,7 +43,7 @@ onUnmounted(disarmClear);
         :class="{ 'header-menu__filter--all': filter === 'all' }"
         @click="emit('update:filter', 'all')"
       >
-        ALL
+        {{ $t('common.all') }}
       </button>
       <button
         :disabled="disableHttp"

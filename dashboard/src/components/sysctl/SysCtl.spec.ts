@@ -102,10 +102,20 @@ describe('SysCtl', () => {
     await tab?.trigger('click');
   }
 
+  async function selectSubMenuTab(
+    wrapper: ReturnType<typeof mountPanel>,
+    label: string,
+  ) {
+    const tab = wrapper
+      .findAll('.sysctl-submenu__tab')
+      .find((button) => button.text() === label);
+    await tab?.trigger('click');
+  }
+
   it('opens on the search engines tab by default', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: Search Engines');
+      expect(wrapper.text()).toContain('SysCtl :: Search engines');
     });
   });
 
@@ -120,12 +130,12 @@ describe('SysCtl', () => {
     });
   });
 
-  it('shows the interface switches inside the system tab', async () => {
+  it('shows the interface switches inside the interface tab', async () => {
     const wrapper = mountPanel();
-    await selectMenuTab(wrapper, 'System');
+    await selectMenuTab(wrapper, 'Interface');
 
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: System');
+      expect(wrapper.text()).toContain('SysCtl :: Interface');
       expect(wrapper.text()).toContain('sockets');
       expect(wrapper.text()).toContain('counters');
     });
@@ -134,6 +144,10 @@ describe('SysCtl', () => {
   it('shows the tab menu switches inside the widgets tab', async () => {
     const wrapper = mountPanel();
     await selectMenuTab(wrapper, 'Widgets');
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('.sysctl-submenu__tab').length).toBeGreaterThan(0);
+    });
+    await selectSubMenuTab(wrapper, 'Tab menu');
 
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('SysCtl :: Widgets');

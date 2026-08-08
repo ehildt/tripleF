@@ -12,8 +12,8 @@ const meta = {
       description: {
         component: `
 Shared chrome bar for floating media popups. Provides a drag handle,
-static or marquee title, opacity slider, playlist toggle, minimize
-button, and close button.
+static or marquee title, opacity toggle (mirror-rectangular icon),
+playlist toggle, minimize button, and close button.
 `,
       },
     },
@@ -21,7 +21,7 @@ button, and close button.
   args: {
     title: 'Now Playing — Some video title',
     showTitleMarquee: false,
-    opacityPercent: 75,
+    opacityPercent: 100,
     isInPlaylist: false,
     minimizeTitle: 'Minimize',
     closeTitle: 'Close video',
@@ -47,4 +47,9 @@ export const Marquee: Story = {
 /** Video is already in the playlist. */
 export const InPlaylist: Story = {
   args: { isInPlaylist: true },
+};
+
+/** Translucent popup (66%): the mirror icon turns accent. */
+export const Translucent: Story = {
+  args: { opacityPercent: 66 },
 };

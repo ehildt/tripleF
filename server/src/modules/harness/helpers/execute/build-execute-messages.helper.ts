@@ -3,13 +3,14 @@ import type { FastifyMultipartMeta } from '../../dtos/harness-job.dto.js';
 import type { HarnessContext } from '../../services/harness-context.type.js';
 import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
 import { buildContextSummarySection } from '../build-context-summary-section.helper.js';
+import { buildFilenames } from '../build-filenames.helper.js';
+import { selectStepHistory } from '../select-step-history.helper.js';
+import type { VariantName } from '../tools/tool-registry.constants.js';
+
 import {
   buildImageExecutePrompt,
   buildToolExecutePrompt,
-} from '../build-execute-prompt.helper.js';
-import { buildFilenames } from '../build-filenames.helper.js';
-import { selectStepHistory } from '../select-step-history.helper.js';
-import type { VariantName } from '../tool-registry.constants.js';
+} from './build-execute-prompt.helper.js';
 
 /** Describe the resized image attachments in the execute system prompt. */
 function buildImageInventory(
@@ -100,14 +101,9 @@ export function buildExecuteMessages(
     ? buildContextSummarySection(contextSummary)
     : '';
 
-  const systemContent = [
-    baseSystem,
-    executePrompt,
-    imageInventory,
-    contextSection,
-  ]
-    .filter(Boolean)
-    .join('\n\n');
+  const systemContent = `${baseSystem}\n\n${executePrompt}${
+    imageInventory ? `\n\n${imageInventory}` : ''
+  }${contextSection ? `\n\n${contextSection}` : ''}`;
 
   return [
     { role: 'system' as const, content: systemContent },

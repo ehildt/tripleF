@@ -2,25 +2,22 @@ import { getBooleanEnv } from '@ehildt/ckir-helpers/get-boolean-env';
 import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 import Joi from 'joi';
 
-interface SerperEndpointConfig {
-  enabled: boolean;
-  results: number;
-}
+import type { ProviderEndpointConfig } from './endpoint-config.types.js';
 
 export interface SerperConfig {
   enabled: boolean;
   apiKey?: string;
-  web: SerperEndpointConfig;
-  images: SerperEndpointConfig;
-  news: SerperEndpointConfig;
-  places: SerperEndpointConfig;
-  shopping: SerperEndpointConfig;
-  reviews: SerperEndpointConfig;
-  videos: SerperEndpointConfig;
+  web: ProviderEndpointConfig;
+  images: ProviderEndpointConfig;
+  news: ProviderEndpointConfig;
+  places: ProviderEndpointConfig;
+  shopping: ProviderEndpointConfig;
+  reviews: ProviderEndpointConfig;
+  videos: ProviderEndpointConfig;
   scrape: { enabled: boolean };
 }
 
-const endpointSchema = Joi.object<SerperEndpointConfig>({
+const endpointSchema = Joi.object<ProviderEndpointConfig>({
   enabled: Joi.boolean().required(),
   results: Joi.number().integer().min(1).max(200).required(),
 });

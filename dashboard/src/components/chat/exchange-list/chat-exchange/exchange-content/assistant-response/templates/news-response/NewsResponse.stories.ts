@@ -1,4 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
+import { computed, provide } from 'vue';
+
+import { mediaPriorityKey } from '@/types/harness-response-data.model';
 
 import NewsResponse from './NewsResponse.vue';
 
@@ -25,8 +28,21 @@ const meta = {
       heroCaption: '',
       heroVideoUrl: '',
       heroVideoCaption: '',
-      videoGalleryItems: [],
-      keyPoints: [
+      videoGalleryItems: [
+        {
+          videoUrl: 'https://example.com/videos/nioh-hype.mp4',
+          thumbnailUrl: 'https://via.placeholder.com/480x270?text=Nioh+video',
+          title: 'Fans react to the Nioh 3 rumors',
+        },
+      ],
+      galleryItems: [
+        {
+          imageUrl: 'https://via.placeholder.com/800x450?text=Nioh+3',
+          title: 'Speculative Nioh 3 concept art',
+          imageAlt: 'Concept art for a potential Nioh sequel',
+        },
+      ],
+      keyFindings: [
         { text: 'No official Nioh 3 announcement has been made' },
         {
           text: 'Team Ninja has hinted at interest in returning to the series',
@@ -67,4 +83,19 @@ export const Empty: Story = {
   args: {
     data: {},
   },
+};
+
+/** Video gallery rendered before the image gallery (videos prioritized). */
+export const VideosFirst: Story = {
+  render: (args) => ({
+    components: { NewsResponse },
+    setup() {
+      provide(
+        mediaPriorityKey,
+        computed(() => 'videos' as const),
+      );
+      return { args };
+    },
+    template: '<NewsResponse v-bind="args" />',
+  }),
 };

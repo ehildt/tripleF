@@ -1,5 +1,4 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { applyLocaleParams } from '../apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../fetch-with-timeout.js';
@@ -8,34 +7,22 @@ import { resolveSerperShopOfferLinks } from '../serper-shop-links.js';
 import type { ToolDependencies } from '../types.js';
 
 import { HEADERS } from './serper.constants.js';
+import {
+  type SerperShoppingSearchInput,
+  serperShoppingSearchSchema,
+} from './shopping-search.schema.js';
+import type { SerperShoppingSearchResponse } from './shopping-search.types.js';
 
 export function createSerperShoppingSearch(deps: ToolDependencies) {
   return tool({
     description:
       'Search for products using Serper.dev (Google Shopping). Returns prices, sellers, delivery info, images, and per-offer ratings. Phrase the query as the bare product name with model number (e.g. "Sony WH-1000XM5") — do NOT add words like "review", "test", or long descriptive sentences, they hurt shopping result quality.',
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe(
-          'The exact product name with model number, kept short and standalone — resolve product references from the conversation (e.g. "the headphones we discussed" becomes "Sony WH-1000XM5"). No extra words like "buy", "price", or "review".',
-        ),
-      count: z.number().optional().describe('Number of results (max 100)'),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-    }),
+    inputSchema: serperShoppingSearchSchema,
     execute: async ({
       query,
       count: reqCount,
       lang,
-    }: {
-      query: string;
-      count?: number;
-      lang?: string;
-    }) => {
+    }: SerperShoppingSearchInput) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.shopping.enabled) {
         return {
@@ -62,18 +49,7 @@ export function createSerperShoppingSearch(deps: ToolDependencies) {
         { timeoutMs: SEARCH_TIMEOUT_MS },
       );
       if (!res.ok) return { results: [], error: `HTTP ${res.status}` };
-      const data = (await res.json()) as {
-        shopping?: Array<{
-          title: string;
-          link: string;
-          price: string;
-          source: string;
-          imageUrl?: string;
-          delivery?: string;
-          rating?: number;
-          ratingCount?: number;
-        }>;
-      };
+      const data = (await res.json()) as SerperShoppingSearchResponse;
       if (!data.shopping?.length) {
         deps.logger.warn(
           `Serper.dev Shopping returned 0 results for "${query}"`,

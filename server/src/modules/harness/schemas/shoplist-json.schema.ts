@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { safeMediaUrlOrEmpty, safeUrl } from '../helpers/url-schema.helper.js';
+import {
+  safeMediaUrlOrEmpty,
+  safeUrl,
+} from '../helpers/url-trust/url-schema.helper.js';
+
+import { internationalCoverageSchema } from './international-coverage-json.schema.js';
+import { sourceSchema } from './source-json.schema.js';
 
 const shopOfferSchema = z.object(
   {
@@ -16,17 +22,6 @@ const shopOfferSchema = z.object(
   { message: 'shopOffers entries must be objects with a link' },
 );
 
-const sourceSchema = z.object(
-  {
-    url: safeUrl({ message: 'sources entries must have a valid url' }),
-    title: z.string().optional(),
-    sourceName: z.string().optional(),
-    date: z.string().optional(),
-    snippet: z.string().optional(),
-  },
-  { message: 'sources entries must be objects with url' },
-);
-
 export const shoplistSchema = z.object({
   category: z.string(),
   title: z.string().min(1, { message: 'title must not be empty' }),
@@ -34,13 +29,5 @@ export const shoplistSchema = z.object({
   shortDescription: z.string().optional(),
   shopOffers: z.array(shopOfferSchema).optional(),
   sources: z.array(sourceSchema).optional(),
+  internationalCoverage: internationalCoverageSchema.optional(),
 });
-
-export function formatZodIssues(issues: z.ZodIssue[]): string {
-  return issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
-      return `${path}: ${issue.message}`;
-    })
-    .join('; ');
-}

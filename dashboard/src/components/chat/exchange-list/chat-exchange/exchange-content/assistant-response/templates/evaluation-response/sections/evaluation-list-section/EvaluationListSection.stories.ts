@@ -48,3 +48,14 @@ export const Recommendations: Story = {
     ],
   },
 };
+
+/** Ten recommendations so the icon colour cycle visibly wraps. */
+export const ManyRecommendations: Story = {
+  args: {
+    title: 'Recommendations',
+    variant: 'recommendation',
+    items: Array.from({ length: 10 }, (_, index) => ({
+      text: `Recommendation ${index + 1}`,
+    })),
+  },
+};

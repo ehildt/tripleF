@@ -19,16 +19,16 @@ import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPrevi
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
 import { appViewContextKey } from './composables/use-app-view-context';
-import type { ActiveTab } from './stores/app';
 import { useAppStore } from './stores/app';
 import { useDebugStore } from './stores/debug';
 import { useDlqStore } from './stores/dlq';
-import { createSocketProvider } from './stores/helpers/create-socket-provider.helper';
+import { createSocketProvider } from './stores/helpers/socket/create-socket-provider.helper';
 import { useApiMessagesStore } from './stores/messages';
 import { useModelsStore } from './stores/models';
 import { usePreprocessingStore } from './stores/preprocessing';
 import { useSocketStore } from './stores/socket';
 import { useThemeStore } from './stores/theme';
+import type { ActiveTab } from './types/app.model';
 
 const apiMessagesStore = useApiMessagesStore();
 const debugStore = useDebugStore();
@@ -155,6 +155,7 @@ onUnmounted(() => {
   margin-left: auto;
   margin-right: auto;
   padding-top: 2%;
+  padding-bottom: 2%;
 }
 
 @media (min-width: 640px) {

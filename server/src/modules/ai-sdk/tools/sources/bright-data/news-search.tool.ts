@@ -1,18 +1,10 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { applyLocaleParams } from '../apply-locale-params.helper.js';
-import {
-  applyRecencyParam,
-  type SearchRecency,
-} from '../apply-recency-param.helper.js';
+import { applyRecencyParam } from '../apply-recency-param.helper.js';
 import { requestBrightData } from '../bright-data-client.js';
-import { RECENCY_DESCRIPTION } from '../recency.constants.js';
 import { BRIGHT_DATA_TIMEOUT_MS } from '../search-timeout.js';
-import {
-  STANDALONE_QUERY_DESCRIPTION,
-  STANDALONE_QUERY_TOOL_CLAUSE,
-} from '../standalone-query.constants.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../standalone-query.constants.js';
 import type { ToolDependencies } from '../types.js';
 
 import {
@@ -20,41 +12,24 @@ import {
   engineEnabled,
   SOURCE,
 } from './bright-data.constants.js';
+import {
+  type BrightDataNewsSearchInput,
+  brightDataNewsSearchSchema,
+} from './news-search.schema.js';
+import type { BrightDataNewsSearchResponse } from './news-search.types.js';
 
 export function createBrightDataNewsSearch(deps: ToolDependencies) {
   return tool({
     description:
       'Search the latest news using Bright Data SERP API. Returns headlines, sources, dates, and snippets. Pass recency ("day"|"week"|"month"|"year") to restrict to a recent period. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe(
-          `${STANDALONE_QUERY_DESCRIPTION} Include the newsworthy angle (announcement, release, event, update).`,
-        ),
-      count: z.number().optional().describe('Number of results (max 100)'),
-      recency: z
-        .enum(['day', 'week', 'month', 'year'])
-        .optional()
-        .describe(RECENCY_DESCRIPTION),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-    }),
+    inputSchema: brightDataNewsSearchSchema,
     execute: async ({
       query,
       count: reqCount,
       recency,
       lang,
-    }: {
-      query: string;
-      count?: number;
-      recency?: SearchRecency;
-      lang?: string;
-    }) => {
+    }: BrightDataNewsSearchInput) => {
       const cfg = deps.getLiveConfig().brightData;
       const apiKey = engineEnabled(deps, 'news');
       if (!apiKey)
@@ -74,16 +49,7 @@ export function createBrightDataNewsSearch(deps: ToolDependencies) {
       try {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {
           timeoutMs: BRIGHT_DATA_TIMEOUT_MS,
-        })) as {
-          news?: Array<{
-            title: string;
-            link: string;
-            description: string;
-            date: string;
-            source: string;
-            image_url?: string;
-          }>;
-        };
+        })) as BrightDataNewsSearchResponse;
         const news = data.news ?? [];
         if (!news.length) return { results: [] };
         const results = news.map((r) => ({

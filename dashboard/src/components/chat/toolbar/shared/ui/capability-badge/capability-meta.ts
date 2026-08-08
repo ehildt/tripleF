@@ -1,16 +1,6 @@
-import {
-  AudioLines,
-  BrainCircuit,
-  Eye,
-  type LucideIcon,
-  Sparkles,
-  Wrench,
-} from '@lucide/vue';
+import { AudioLines, BrainCircuit, Eye, Sparkles, Wrench } from '@lucide/vue';
 
-export interface CapabilityMeta {
-  icon: LucideIcon;
-  label: string;
-}
+import type { CapabilityMeta } from './capability-meta.types';
 
 /**
  * Icon and label per known model capability — the single source for every

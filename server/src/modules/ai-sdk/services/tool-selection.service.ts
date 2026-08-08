@@ -1,20 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { ToolSet } from 'ai';
 
-import { type ToolName } from '../../harness/helpers/tool-registry.constants.js';
+import { type ToolName } from '../../harness/helpers/tools/tool-registry.constants.js';
 import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwright-mcp-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 import { createEnabledTools } from '../tools/sources/create-enabled-tools.js';
 import { type ToolWithSummary } from '../tools/sources/tool-factory.js';
 
 import { AiSdkService } from './ai-sdk.service.js';
-
-type ToolEventHandler = (event: {
-  name: string;
-  input?: unknown;
-  status: 'start' | 'done' | 'error' | 'compacting';
-  result?: unknown;
-}) => void;
+import type { ToolEventHandler } from './tool-selection.service.types.js';
 
 @Injectable()
 export class ToolSelectionService {
@@ -24,6 +19,7 @@ export class ToolSelectionService {
     private readonly providerOverrides: ProviderOverridesService,
     private readonly aiSdkService: AiSdkService,
     private readonly playwrightMcpClient: PlaywrightMcpClientService,
+    private readonly stockHistory: StockHistoryService,
   ) {}
 
   private get liveConfig() {
@@ -48,6 +44,8 @@ export class ToolSelectionService {
         model,
         notify,
         defaultLang,
+        getOrFetchHistory: (ticker, from, to) =>
+          this.stockHistory.getHistory(ticker, from, to),
       },
       enabledVariants,
     );

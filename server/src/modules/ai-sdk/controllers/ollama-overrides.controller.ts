@@ -1,10 +1,8 @@
 import { Body, Controller, Delete, Get, Put } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import {
-  type OllamaOverridesPatch,
-  OllamaOverridesService,
-} from '../services/ollama-overrides.service.js';
+import { OllamaOverridesService } from '../services/ollama-overrides.service.js';
+import type { OllamaOverridesPatch } from '../services/ollama-overrides.service.types.js';
 
 @ApiTags('Ollama Overrides')
 @Controller('ollama-overrides')

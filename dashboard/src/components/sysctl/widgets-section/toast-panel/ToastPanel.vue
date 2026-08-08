@@ -27,10 +27,8 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
-import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -43,7 +41,6 @@ import {
   setToastEnabled,
   setToastPinEnabled,
   setToastTypeFilter,
-  type ToastAnchor,
   toastAnchor,
   toastAutoHide,
   toastDurationSeconds,
@@ -51,14 +48,15 @@ import {
   toastPinEnabled,
   toastTypeFilters,
 } from '@/components/widgets/toast/composables/toast-settings.state';
+import type { ToastAnchor } from '@/components/widgets/toast/composables/toast-settings.state.types';
 import type { ToastType } from '@/composables/toast-state';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 
 const { preview: previewToast } = useToast();
 
-type ToastVertical = 'top' | 'middle' | 'bottom';
-type ToastHorizontal = 'left' | 'center' | 'right';
+import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
+import type { ToastHorizontal, ToastVertical } from './ToastPanel.types';
 
 const VERTICAL_OPTIONS = [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -141,27 +139,29 @@ function setHorizontal(value: string) {
 </script>
 
 <template>
-  <PanelLayout class="toast-panel">
-    <CollapsiblePanel id="toast" :title="$t('common.toastNotifications')">
-      <template #actions>
-        <PreviewButton
-          :title="$t('common.showExampleToast')"
-          @click="
-            previewToast(i18n.global.t('common.exampleToastNotification'))
-          "
-        />
-        <ResetButton
-          :title="$t('common.resetToastSettingsToDefaults')"
-          @click="resetToastSettings"
-        />
-        <PowerToggle
-          :enabled="toastEnabled"
-          :title="$t('common.enableToastNotifications')"
-          @toggle="setToastEnabled(!toastEnabled)"
-        />
-      </template>
+  <div class="toast-panel">
+    <div class="toast-panel__actions">
+      <PreviewButton
+        :title="$t('common.showExampleToast')"
+        @click="previewToast(i18n.global.t('common.exampleToastNotification'))"
+      />
+      <ResetButton
+        :title="$t('common.resetToastSettingsToDefaults')"
+        @click="resetToastSettings"
+      />
+      <PowerToggle
+        :enabled="toastEnabled"
+        :title="$t('common.enableToastNotifications')"
+        @toggle="setToastEnabled(!toastEnabled)"
+      />
+    </div>
 
-      <div class="toast-panel__content">
+    <div class="toast-panel__group">
+      <SysCtlSectionHeader
+        :icon="Anchor"
+        :title="$t('common.positionSection')"
+      />
+      <div class="toast-panel__grid">
         <FieldCard
           :icon="Anchor"
           :label="$t('common.initialPosition')"
@@ -183,7 +183,15 @@ function setHorizontal(value: string) {
             />
           </template>
         </FieldCard>
+      </div>
+    </div>
 
+    <div class="toast-panel__group">
+      <SysCtlSectionHeader
+        :icon="Timer"
+        :title="$t('common.behaviorSection')"
+      />
+      <div class="toast-panel__grid">
         <FieldCard
           :icon="Timer"
           :label="$t('common.autoHide')"
@@ -227,34 +235,72 @@ function setHorizontal(value: string) {
           :disabled="!toastEnabled"
           @toggle="setToastPinEnabled(!toastPinEnabled)"
         />
-
-        <div class="toast-panel__types">
-          <FieldCard
-            v-for="{ type, icon, label, description } in TYPE_OPTIONS"
-            :key="type"
-            :icon="icon"
-            :label="label"
-            :description="description"
-            :checked="toastTypeFilters[type]"
-            :disabled="!toastEnabled"
-            @toggle="setToastTypeFilter(type, !toastTypeFilters[type])"
-          />
-        </div>
       </div>
-    </CollapsiblePanel>
-  </PanelLayout>
+    </div>
+
+    <div class="toast-panel__group">
+      <SysCtlSectionHeader
+        :icon="MessageSquare"
+        :title="$t('common.typesSection')"
+      />
+      <div class="toast-panel__types">
+        <FieldCard
+          v-for="{ type, icon, label, description } in TYPE_OPTIONS"
+          :key="type"
+          :icon="icon"
+          :label="label"
+          :description="description"
+          :checked="toastTypeFilters[type]"
+          :disabled="!toastEnabled"
+          @toggle="setToastTypeFilter(type, !toastTypeFilters[type])"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.toast-panel__content {
+.toast-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+}
+
+.toast-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: calc(2.25rem + 2 * var(--spacing-2));
+  padding: 0 var(--spacing-3);
+  background:
+    radial-gradient(
+      ellipse 120% 140% at 12% 50%,
+      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 120% 140% at 88% 50%,
+      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-bg-elevated);
+}
+
+.toast-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.toast-panel__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--spacing-1);
-  padding: var(--spacing-1);
 }
 
 .toast-panel__types {
-  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--spacing-1);
@@ -307,7 +353,7 @@ function setHorizontal(value: string) {
 }
 
 @media (max-width: 40rem) {
-  .toast-panel__content {
+  .toast-panel__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

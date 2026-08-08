@@ -3,10 +3,13 @@ import { computed } from 'vue';
 
 import type { RelatedStory } from '@/types/harness-response-data.model';
 
+import SectionTitle from '../../../../shared/ui/section-title/SectionTitle.vue';
 import RelatedStoryCard from './related-story-card/RelatedStoryCard.vue';
 
 const props = defineProps<{
   items?: RelatedStory[];
+  /** First story spans the full row (ar5), set by the art direction. */
+  spans?: boolean;
 }>();
 
 /**
@@ -32,7 +35,7 @@ const validItems = computed(() =>
     class="related-stories-section"
     :aria-label="$t('common.relatedStoriesAria')"
   >
-    <h3>{{ $t('common.relatedStories') }}</h3>
+    <SectionTitle :title="$t('common.relatedStories')" />
     <ul
       v-if="validItems.length === 1"
       class="related-stories related-stories--single"
@@ -45,6 +48,7 @@ const validItems = computed(() =>
       :class="{
         'related-stories--count-2': validItems.length === 2,
         'related-stories--count-3plus': validItems.length >= 3,
+        'related-stories--spans': spans,
       }"
     >
       <RelatedStoryCard
@@ -101,6 +105,13 @@ const validItems = computed(() =>
   .related-stories-section .related-stories--count-3plus > :deep(li) {
     flex: 1 1 calc((100% - var(--spacing-2)) / 2);
     min-width: calc((100% - var(--spacing-2)) / 2);
+  }
+
+  /* ar5 merged block: the lead story takes a full-width row. */
+  .related-stories-section
+    .related-stories--count-3plus.related-stories--spans
+    > :deep(li:first-child) {
+    flex-basis: 100%;
   }
 }
 

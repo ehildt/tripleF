@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Clock, Cpu, Image, Layers, Network, RefreshCw } from '@lucide/vue';
 import { toRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { formatDate } from '@/utils/format-date.helper';
@@ -13,6 +14,8 @@ import DlqMetadataField from './metadata-field/DlqMetadataField.vue';
 const props = defineProps<{
   entry: DlqEntry;
 }>();
+
+const { locale } = useI18n();
 
 const entryRef = toRef(props, 'entry');
 const { contextSize } = usePayloadContextSize(entryRef);
@@ -37,18 +40,18 @@ const imageSummary = `${countPayloadImages(props.entry)} (${getPayloadImageNames
       <DlqMetadataField
         :icon="Clock"
         :label="$t('common.failedAt')"
-        :value="formatDate(entry.failedAt)"
+        :value="formatDate(entry.failedAt, locale)"
       />
       <DlqMetadataField
         v-if="entry.nextRetryAt"
         :icon="Clock"
         :label="$t('common.retryAt')"
-        :value="formatDate(entry.nextRetryAt)"
+        :value="formatDate(entry.nextRetryAt, locale)"
       />
       <DlqMetadataField
         :icon="Clock"
         :label="$t('common.created')"
-        :value="formatDate(entry.createdAt)"
+        :value="formatDate(entry.createdAt, locale)"
       />
       <DlqMetadataField
         :icon="RefreshCw"

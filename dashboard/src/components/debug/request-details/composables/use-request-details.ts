@@ -6,11 +6,11 @@ import { formatBody } from '@/utils/format-body.helper';
 
 import type { DebugResult } from '../../../../types/debug.model';
 import { calcRequestTokenPercent } from '../helpers/calc-request-token-percent.helper';
-import {
-  type DetailTab,
-  type DetailTabId,
-  parseRequestEndpoint,
-} from '../helpers/parse-request-endpoint.helper';
+import { parseRequestEndpoint } from '../helpers/parse-request-endpoint.helper';
+import type {
+  DetailTab,
+  DetailTabId,
+} from '../helpers/parse-request-endpoint.helper.types';
 
 /**
  * Reactive state for the request details panel: parsed endpoint, the
@@ -32,10 +32,18 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
     const items: DetailTab[] = [];
 
     if (r.errorMessage) {
-      items.push({ id: 'error', label: 'Error', content: r.errorMessage });
+      items.push({
+        id: 'error',
+        label: i18n.global.t('common.error'),
+        content: r.errorMessage,
+      });
     }
     if (r.prompt) {
-      items.push({ id: 'prompt', label: 'Prompt', content: r.prompt });
+      items.push({
+        id: 'prompt',
+        label: i18n.global.t('common.prompt'),
+        content: r.prompt,
+      });
     }
     if (r.type !== 'socket' && parsedEndpoint.value.params.length) {
       items.push({
@@ -65,7 +73,7 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
     if (r.responseBody) {
       items.push({
         id: 'response',
-        label: 'Response',
+        label: i18n.global.t('common.response'),
         content: formatBody(r.responseBody),
       });
     }

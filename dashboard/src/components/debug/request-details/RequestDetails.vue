@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Brain, Clock, Cpu, Link2 } from '@lucide/vue';
+import { Brain, Clock, Cpu, FaceSlightlySmiling, Link2 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { DebugResult } from '../../../types/debug.model';
@@ -151,6 +151,7 @@ const {
 
       <!-- Tab Panel -->
       <TabPanel
+        v-if="tabs.length"
         :tabs="tabs"
         :active-tab="activeTab"
         :copyable="
@@ -182,7 +183,8 @@ const {
 
     <PanelEmptyState
       v-else
-      :message="$t('common.selectRequest')"
+      :icon="FaceSlightlySmiling"
+      :message="$t('common.gotYouBro')"
       :submessage="''"
     />
   </PanelLayout>

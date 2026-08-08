@@ -3,10 +3,9 @@ import { Injectable } from '@nestjs/common';
 import Joi from 'joi';
 
 import { NumCtxConfigAdapter } from './numctx-config.adapter.js';
+import type { NumCtxConfig } from './numctx-config.service.types.js';
 
 const schema = Joi.array().items(Joi.number().integer().min(1));
-
-type NumCtxConfig = number[];
 
 @Injectable()
 export class NumCtxConfigService {

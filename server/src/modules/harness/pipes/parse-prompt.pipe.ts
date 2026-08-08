@@ -9,7 +9,7 @@ import { validate } from 'class-validator';
 
 import { Prompt } from '../dtos/prompt.dto.js';
 
-type Maybe<T> = T | ReadonlyArray<T> | undefined | null;
+import type { Maybe } from './maybe.types.js';
 
 @Injectable()
 export class ParsePromptPipe implements PipeTransform {
