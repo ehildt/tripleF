@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { FaceSlightlySmiling } from '@lucide/vue';
 import { useClipboard } from '@vueuse/core';
 import { computed, ref, toRef, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { formatBody } from '@/utils/format-body.helper';
@@ -16,6 +18,7 @@ import DlqMetadataSection from './metadata-section/DlqMetadataSection.vue';
 import DlqPayloadEditor from './payload-editor/DlqPayloadEditor.vue';
 import DlqPromptSection from './prompt-section/DlqPromptSection.vue';
 import DlqTopBar from './top-bar/DlqTopBar.vue';
+import type { DlqDetailTab } from './DlqDetailsBody.types';
 
 const props = defineProps<{
   entry: DlqEntry | null;
@@ -27,28 +30,28 @@ const emit = defineEmits<{
   (e: 'saveQueue', requestId: string, queueName: string): void;
 }>();
 
+const { t } = useI18n();
+
 const detailsState = useDlqDetailsState(props.models);
 const { isImmutable, buildPayloadWithFilterUpdate } = detailsState;
 
 const entryRef = toRef(props, 'entry');
 const { failureText, failureRaw } = useDlqFailureText(entryRef);
 
-type DetailTab = 'error' | 'metadata' | 'prompt' | 'payload';
-
-const tabs = computed<Array<{ id: DetailTab; label: string }>>(() => {
-  const items: Array<{ id: DetailTab; label: string }> = [];
+const tabs = computed<Array<{ id: DlqDetailTab; label: string }>>(() => {
+  const items: Array<{ id: DlqDetailTab; label: string }> = [];
   if (failureText.value) {
-    items.push({ id: 'error', label: 'Error' });
+    items.push({ id: 'error', label: t('common.error') });
   }
   items.push(
-    { id: 'metadata', label: 'Metadata' },
-    { id: 'prompt', label: 'Prompt' },
-    { id: 'payload', label: 'Payload' },
+    { id: 'metadata', label: t('common.metadata') },
+    { id: 'prompt', label: t('common.prompt') },
+    { id: 'payload', label: t('common.payload') },
   );
   return items;
 });
 
-const activeTab = ref<DetailTab | null>('metadata');
+const activeTab = ref<DlqDetailTab | null>('metadata');
 
 watch(
   () => props.entry?.requestId,
@@ -151,7 +154,8 @@ function copyPayload() {
 
     <PanelEmptyState
       v-else
-      :message="$t('common.selectJob')"
+      :icon="FaceSlightlySmiling"
+      :message="$t('common.gotYouBro')"
       :submessage="''"
     />
   </PanelLayout>

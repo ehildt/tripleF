@@ -1,34 +1,10 @@
-import type { UseMutationReturnType } from '@tanstack/vue-query';
-
 import { i18n } from '@/i18n/i18n';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useToast } from '../../../composables/use-toast';
-import { useDlqStore } from '../../../stores/dlq';
 import { extractEntryFilters } from '../helpers/extract-entry-filters.helper';
-import {
-  type DlqRetrySessionSocket,
-  useDlqRetrySession,
-} from './use-dlq-retry-session';
-
-export interface DlqActionsOptions {
-  dlqStore: ReturnType<typeof useDlqStore>;
-  socketStore: DlqRetrySessionSocket;
-  retryMutation: UseMutationReturnType<
-    { restored: number; requestIds: string[] },
-    Error,
-    string,
-    unknown
-  >;
-  deleteMutation: UseMutationReturnType<void, Error, string, unknown>;
-  updateMutation: UseMutationReturnType<
-    DlqEntry,
-    Error,
-    { requestId: string; data: Record<string, unknown> },
-    unknown
-  >;
-  guardedRefetch: () => void;
-}
+import type { DlqActionsOptions } from './use-dlq-actions.types';
+import { useDlqRetrySession } from './use-dlq-retry-session';
 
 /**
  * DLQ row/detail actions — thin orchestration over the mutations, the

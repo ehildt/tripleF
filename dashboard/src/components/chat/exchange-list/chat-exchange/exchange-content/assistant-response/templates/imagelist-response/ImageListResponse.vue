@@ -4,21 +4,16 @@
  * source labels, and hover captions. Rendered for the "imagelist" harness
  * template.
  */
-import { computed } from 'vue';
-
-import type { HarnessResponseData } from '@/types/harness-response-data.model';
-
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
+import { useImageListResponseData } from './composables/use-imagelist-response-data.composable';
 import ImageListItem from './image-list-item/ImageListItem.vue';
+import type { ImageListResponseProps } from './ImageListResponse.types';
 
-const props = defineProps<{ data: HarnessResponseData }>();
+const props = defineProps<ImageListResponseProps>();
 
-const items = computed(() => props.data.galleryItems ?? []);
-const hasContent = computed(
-  () => Boolean(props.data.title) || items.value.length > 0,
-);
+const { items, hasContent } = useImageListResponseData(props);
 </script>
 
 <template>
@@ -35,8 +30,8 @@ const hasContent = computed(
       />
     </ul>
 
-    <SourcesSection :items="data.sources" />
     <InternationalCoverageSection :items="data.internationalCoverage" />
+    <SourcesSection :items="data.sources" />
   </section>
 
   <!-- Empty state -->
@@ -64,8 +59,8 @@ const hasContent = computed(
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-2);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-1);
 }
 
 .image-list--empty {

@@ -1,8 +1,6 @@
 import { i18n } from '@/i18n/i18n';
 
-export type ToastApi = {
-  error: (message: string) => void;
-};
+import type { ToastApi } from './require-model.helper.types';
 
 export function requireModel(
   model: { value: string },

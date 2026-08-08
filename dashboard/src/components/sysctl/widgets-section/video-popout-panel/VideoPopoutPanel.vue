@@ -25,9 +25,8 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
+import type { PopoutAnchor } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state.types';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -35,7 +34,6 @@ import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedTo
 import { i18n } from '@/i18n/i18n';
 
 import {
-  type PopoutAnchor,
   popoutAnchor,
   popoutAutoDock,
   popoutEnabled,
@@ -51,9 +49,11 @@ import {
   togglePopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import { hidePlaylistPreview } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
-
-type PopoutVertical = 'top' | 'middle' | 'bottom';
-type PopoutHorizontal = 'left' | 'center' | 'right';
+import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
+import type {
+  PopoutHorizontal,
+  PopoutVertical,
+} from './VideoPopoutPanel.types';
 
 const VERTICAL_OPTIONS = [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -98,30 +98,34 @@ function handlePreviewToggle() {
 </script>
 
 <template>
-  <PanelLayout class="video-popout-panel">
-    <CollapsiblePanel id="videoPopout" :title="$t('common.videoPopout')">
-      <template #actions>
-        <PreviewButton
-          :active="popoutPreviewVisible"
-          :title="
-            popoutPreviewVisible
-              ? $t('common.hideExamplePopout')
-              : $t('common.showExamplePopout')
-          "
-          @click="handlePreviewToggle"
-        />
-        <ResetButton
-          :title="$t('common.resetPopoutSettingsToDefaults')"
-          @click="resetPopoutSettings"
-        />
-        <PowerToggle
-          :enabled="popoutEnabled"
-          :title="$t('common.enableVideoPopout')"
-          @toggle="setPopoutEnabled(!popoutEnabled)"
-        />
-      </template>
+  <div class="video-popout-panel">
+    <div class="video-popout-panel__actions">
+      <PreviewButton
+        :active="popoutPreviewVisible"
+        :title="
+          popoutPreviewVisible
+            ? $t('common.hideExamplePopout')
+            : $t('common.showExamplePopout')
+        "
+        @click="handlePreviewToggle"
+      />
+      <ResetButton
+        :title="$t('common.resetPopoutSettingsToDefaults')"
+        @click="resetPopoutSettings"
+      />
+      <PowerToggle
+        :enabled="popoutEnabled"
+        :title="$t('common.enableVideoPopout')"
+        @toggle="setPopoutEnabled(!popoutEnabled)"
+      />
+    </div>
 
-      <div class="video-popout-panel__content">
+    <div class="video-popout-panel__group">
+      <SysCtlSectionHeader
+        :icon="PictureInPicture2"
+        :title="$t('common.positionSection')"
+      />
+      <div class="video-popout-panel__grid">
         <!-- Initial position + remember position side by side -->
         <FieldCard
           :icon="PictureInPicture2"
@@ -153,7 +157,15 @@ function handlePreviewToggle() {
           :disabled="!popoutEnabled"
           @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
         />
+      </div>
+    </div>
 
+    <div class="video-popout-panel__group">
+      <SysCtlSectionHeader
+        :icon="ArrowDownToLine"
+        :title="$t('common.behaviorSection')"
+      />
+      <div class="video-popout-panel__grid">
         <FieldCard
           :icon="ArrowDownToLine"
           :label="$t('common.autodock')"
@@ -172,20 +184,53 @@ function handlePreviewToggle() {
           @toggle="setPopoutShowBarAlways(!popoutShowBarAlways)"
         />
       </div>
-    </CollapsiblePanel>
-  </PanelLayout>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.video-popout-panel__content {
+.video-popout-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+}
+
+.video-popout-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: calc(2.25rem + 2 * var(--spacing-2));
+  padding: 0 var(--spacing-3);
+  background:
+    radial-gradient(
+      ellipse 120% 140% at 12% 50%,
+      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 120% 140% at 88% 50%,
+      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-bg-elevated);
+}
+
+.video-popout-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.video-popout-panel__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-1);
-  padding: var(--spacing-1);
 }
 
 @media (max-width: 40rem) {
-  .video-popout-panel__content {
+  .video-popout-panel__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

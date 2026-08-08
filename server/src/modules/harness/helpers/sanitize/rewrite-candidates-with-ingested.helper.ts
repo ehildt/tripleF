@@ -1,5 +1,5 @@
-import type { IngestedImage } from '../download-and-ingest-images.helper.js';
-import type { ExtractedImageItem } from '../extract-media-from-tools.helper.js';
+import type { IngestedImage } from '../media/download-and-ingest-images.types.js';
+import type { ExtractedImageItem } from '../media/extract-media-from-tools.types.js';
 
 /**
  * Walk candidates in their original order, rewriting externals to their

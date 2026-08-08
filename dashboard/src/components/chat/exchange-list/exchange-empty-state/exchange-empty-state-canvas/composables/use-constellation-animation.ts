@@ -1,6 +1,7 @@
 import { getCurrentInstance, onMounted, onUnmounted, type Ref } from 'vue';
 
 import { calcConnectionOpacity } from '../helpers/calc-connection-opacity.helper';
+import type { Particle } from './use-constellation-animation.types';
 
 const CSS_PARTICLE_COUNT = 40;
 const CSS_CONNECTION_DISTANCE = 120;
@@ -20,15 +21,6 @@ const PARTICLE_FADE_OUT_MS = 900;
 const PARTICLE_LIFETIME_MIN_MS = 4000;
 const PARTICLE_LIFETIME_MAX_MS = 8000;
 const RESPAWN_DELAY_MAX_MS = 2000;
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  birth: number;
-  lifetime: number;
-}
 
 /**
  * Drive a constellation canvas animation: wandering dots that fade in, drift,

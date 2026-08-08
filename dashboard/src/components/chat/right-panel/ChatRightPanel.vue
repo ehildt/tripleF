@@ -1,12 +1,14 @@
 <script setup lang="ts">
+import { useAppStore } from '@/stores/app';
 import type { Conversation } from '@/stores/conversation';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import { renderMarkdown } from '@/utils/render-markdown.helper';
 
 import ExpandableMessageList from '../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
 import type { MessageListItem } from '../../shared/ui/expandable-message-list/types';
 import type { RightPanelView } from '../types/right-panel-view.type';
 import AttachmentCard from './attachment-card/AttachmentCard.vue';
-import type { AttachmentItem } from './composables/use-attachment-list';
+import type { AttachmentItem } from './composables/use-attachment-list.types';
 import { useRightPanel } from './composables/use-right-panel';
 import PlaylistPanel from './playlist-panel/PlaylistPanel.vue';
 import RightPanelTabs from './right-panel-tabs/RightPanelTabs.vue';
@@ -19,6 +21,8 @@ const props = defineProps<{
   conversationId: string;
   rightPanelView: RightPanelView;
   conversation: Conversation | null;
+  /** Id of the user exchange whose section is currently active in the carousel. */
+  activeUserExchangeId?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +30,7 @@ const emit = defineEmits<{
   removeAttachment: [id: string];
   toggleAttachment: [id: string];
   promptClick: [index: number];
+  copy: [index: number];
   toggleInclude: [index: number];
   deleteItem: [index: number];
   branchOut: [index: number];
@@ -33,6 +38,7 @@ const emit = defineEmits<{
 
 const { hasAttachments, hasHistory, hasPlaylist, previewUrl } =
   useRightPanel(props);
+const appStore = useAppStore();
 </script>
 
 <template>
@@ -69,12 +75,16 @@ const { hasAttachments, hasHistory, hasPlaylist, previewUrl } =
     <div v-if="rightPanelView === 'history'" class="chat-right-panel__history">
       <ExpandableMessageList
         :items="messageListItems"
+        :render-html="renderMarkdown"
+        :active-id="props.activeUserExchangeId ?? null"
         :on-click="(i: number) => emit('promptClick', i)"
+        :on-copy="(i: number) => emit('copy', i)"
         :on-toggle-include="(i: number) => emit('toggleInclude', i)"
         :on-delete-item="(i: number) => emit('deleteItem', i)"
         :on-branch-out="(i: number) => emit('branchOut', i)"
         :expand-all="true"
         :show-role="false"
+        :icon-visibility="appStore.chatIconVisibility"
         class="chat-right-panel__scrollable"
       />
     </div>

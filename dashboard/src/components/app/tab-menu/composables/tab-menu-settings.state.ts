@@ -1,7 +1,6 @@
 import { ref } from 'vue';
 
-/** Screen edge the slide-out tab menu is docked to. */
-export type TabMenuSide = 'left' | 'right';
+import type { TabMenuSide } from './tab-menu-settings.state.types';
 
 export const DEFAULT_TAB_MENU_SIDE: TabMenuSide = 'right';
 export const DEFAULT_TAB_MENU_AUTO_CLOSE = false;

@@ -8,18 +8,13 @@ import {
 } from '@/api/playlists.api';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
+import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+
+import type { Playlist } from './playlist.state.types';
 
 const SESSION_ID = getPersistentSocketSessionId();
 const toast = useToast();
-
-export interface Playlist {
-  name: string;
-  videos: VideoGalleryItem[];
-  /** Conversation the playlist belongs to (part of the DB compound key). */
-  conversationId: string;
-}
 
 /**
  * All playlists for the session, across conversations. The playlist is

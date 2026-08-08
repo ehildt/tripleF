@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { ChevronDown, GitBranch, SendToBack, Trash2 } from '@lucide/vue';
+import {
+  ChevronDown,
+  Copy,
+  GitBranch,
+  SquaresExclude,
+  Trash2,
+} from '@lucide/vue';
+import { computed } from 'vue';
 
+import type { ChatIconVisibility } from '@/types/app.model';
+
+import Marquee from '../../marquee/Marquee.vue';
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
 import Tooltip from '../../tooltip/Tooltip.vue';
 
@@ -15,7 +25,7 @@ function stripHtml(html: string): string {
   return result;
 }
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     expanded: boolean;
     role: string;
@@ -26,6 +36,10 @@ withDefaults(
     contextPercent?: string;
     showRole?: boolean;
     showBranch?: boolean;
+    /** Which action icons to show. Omitted keys default to visible. */
+    iconVisibility?: Partial<ChatIconVisibility>;
+    /** Whether this item is the currently-active one (marquee its preview). */
+    active?: boolean;
   }>(),
   {
     renderHtml: undefined,
@@ -33,12 +47,22 @@ withDefaults(
     contextPercent: undefined,
     showRole: true,
     showBranch: false,
+    iconVisibility: undefined,
+    active: false,
   },
+);
+
+/** Plain-text preview of the content (HTML stripped) for the marquee and static preview. */
+const previewText = computed(() =>
+  props.renderHtml
+    ? stripHtml(props.renderHtml(props.content))
+    : stripHtml(props.content),
 );
 
 defineEmits<{
   toggle: [];
   select: [];
+  copy: [];
   toggleInclude: [];
   deleteItem: [];
   branchOut: [];
@@ -65,15 +89,35 @@ defineEmits<{
     <span v-if="showRole" class="expandable-message-list__toggle-role">{{
       role
     }}</span>
-    <span class="expandable-message-list__toggle-preview">
-      {{ renderHtml ? stripHtml(renderHtml(content)) : stripHtml(content) }}
+    <Marquee
+      v-if="active"
+      class="expandable-message-list__toggle-marquee"
+      :text="previewText"
+    />
+    <span v-else class="expandable-message-list__toggle-preview">
+      {{ previewText }}
     </span>
     <span class="expandable-message-list__toggle-actions">
-      <span
-        v-if="contextPercent"
-        class="expandable-message-list__toggle-percent"
-        >{{ contextPercent }}%</span
-      >
+      <Tooltip :text="$t('common.contextWindowUsed')">
+        <span
+          v-if="contextPercent"
+          class="expandable-message-list__toggle-percent"
+          >{{ contextPercent }}%</span
+        >
+      </Tooltip>
+      <Tooltip :text="$t('common.copy')">
+        <button
+          v-if="iconVisibility?.copy !== false"
+          type="button"
+          class="expandable-message-list__toggle-copy"
+          :aria-label="$t('common.copy')"
+          @click.stop="$emit('copy')"
+        >
+          <MotionIcon>
+            <Copy class="expandable-message-list__include-icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
       <Tooltip
         :text="
           included
@@ -82,24 +126,28 @@ defineEmits<{
         "
       >
         <button
-          v-if="included !== undefined"
+          v-if="included !== undefined && iconVisibility?.include !== false"
           type="button"
           class="expandable-message-list__toggle-include"
           :class="{
             'expandable-message-list__toggle-include--excluded': !included,
           }"
-          :aria-label="included ? 'Exclude from context' : 'Include in context'"
+          :aria-label="
+            included
+              ? $t('common.excludeFromContext')
+              : $t('common.includeInContext')
+          "
           :aria-pressed="!included"
           @click.stop="$emit('toggleInclude')"
         >
           <MotionIcon>
-            <SendToBack class="expandable-message-list__include-icon" />
+            <SquaresExclude class="expandable-message-list__include-icon" />
           </MotionIcon>
         </button>
       </Tooltip>
       <Tooltip :text="$t('common.branchOut')">
         <button
-          v-if="showBranch"
+          v-if="showBranch && iconVisibility?.branch !== false"
           type="button"
           class="expandable-message-list__toggle-branch"
           :aria-label="$t('common.branchOut')"
@@ -112,7 +160,7 @@ defineEmits<{
       </Tooltip>
       <Tooltip :text="$t('common.deleteFromHistory')">
         <button
-          v-if="included !== undefined"
+          v-if="included !== undefined && iconVisibility?.delete !== false"
           type="button"
           class="expandable-message-list__toggle-delete"
           :aria-label="$t('common.deleteFromHistory')"
@@ -214,6 +262,22 @@ defineEmits<{
   transition: color 0.2s ease;
 }
 
+.expandable-message-list__toggle-copy {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-0-5);
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandable-message-list__toggle-copy:hover {
+  color: var(--color-accent-primary);
+}
+
 .expandable-message-list__toggle-include:hover,
 .expandable-message-list__toggle-include--excluded {
   color: var(--color-accent-primary);
@@ -263,5 +327,13 @@ defineEmits<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Active item: the preview scrolls as a seamless marquee (the duplicated
+   span makes the -50% wrap invisible), matching the playlist now-playing. */
+.expandable-message-list__toggle-marquee {
+  font-size: 0.625rem;
+  font-family: var(--font-mono);
+  color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
 }
 </style>

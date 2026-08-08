@@ -102,7 +102,6 @@ export const Empty: Story = { args: { data: {} } };
 export const MinimalData: Story = {
   args: {
     data: {
-      category: 'Product',
       title: 'Unknown Widget',
       shortDescription: 'No search results returned for this product.',
       keyPoints: [{ text: 'Availability unknown' }],

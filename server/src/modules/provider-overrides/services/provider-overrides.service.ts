@@ -4,22 +4,52 @@ import { ProviderOverridesRepository } from '../../persistence/services/provider
 import { SecretsCipherService } from '../../secrets/services/secrets-cipher.service.js';
 import type { BrightDataConfig } from '../configs/bright-data-config.adapter.js';
 import { BrightDataConfigService } from '../configs/bright-data-config.service.js';
+import type { EodhdConfig } from '../configs/eodhd-config.adapter.js';
+import { EodhdConfigService } from '../configs/eodhd-config.service.js';
+import type { LayoutsConfig } from '../configs/layouts-config.adapter.js';
+import { LayoutsConfigService } from '../configs/layouts-config.service.js';
 import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
 import type { SourcesConfig } from '../configs/sources-config.adapter.js';
 import { SourcesConfigService } from '../configs/sources-config.service.js';
 import type { YoutubeConfig } from '../configs/youtube-config.adapter.js';
 import { YoutubeConfigService } from '../configs/youtube-config.service.js';
+import { applyOverrides } from '../helpers/apply-overrides.helper.js';
 import { decryptOverridesSecrets } from '../helpers/decrypt-overrides-secrets.helper.js';
 import { encryptOverridesSecrets } from '../helpers/encrypt-overrides-secrets.helper.js';
-import { isMaskedApiKey, maskApiKey } from '../helpers/mask-api-key.helper.js';
+import { maskApiKey } from '../helpers/mask-api-key.helper.js';
 import { retryWithBackoff } from '../helpers/retry-with-backoff.helper.js';
+import { updateApiKeyOverride } from '../helpers/update-api-key-override.helper.js';
+
+import {
+  BrightDataCapabilities,
+  BrightDataDiscoveryService,
+} from './brightdata-discovery.service.js';
+import {
+  type EodhdCapabilities,
+  EodhdDiscoveryService,
+} from './eodhd-discovery.service.js';
+import {
+  SerperCapabilities,
+  SerperDiscoveryService,
+} from './serper-discovery.service.js';
 
 export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
   brightData: BrightDataConfig;
   sources: SourcesConfig;
+  layouts: LayoutsConfig;
   youtube: YoutubeConfig;
+  eodhd: EodhdConfig;
+}
+
+export interface ProviderOverridesMaskedSnapshot extends Omit<
+  ProviderOverridesSnapshot,
+  'serper' | 'brightData' | 'eodhd'
+> {
+  serper: SerperConfig & { capabilities?: SerperCapabilities };
+  brightData: BrightDataConfig & { capabilities?: BrightDataCapabilities };
+  eodhd: EodhdConfig & { capabilities?: EodhdCapabilities };
 }
 
 /** Boot restore: 5 attempts, 500ms → 8s backoff — spans compose cold starts. */
@@ -41,15 +71,22 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
     private readonly serperCfg: SerperConfigService,
     private readonly brightDataCfg: BrightDataConfigService,
     private readonly sourcesCfg: SourcesConfigService,
+    private readonly layoutsCfg: LayoutsConfigService,
     private readonly youtubeCfg: YoutubeConfigService,
+    private readonly eodhdCfg: EodhdConfigService,
     private readonly repository: ProviderOverridesRepository,
     private readonly cipher: SecretsCipherService,
+    private readonly eodhdDiscovery: EodhdDiscoveryService,
+    private readonly serperDiscovery: SerperDiscoveryService,
+    private readonly brightDataDiscovery: BrightDataDiscoveryService,
   ) {
     this.snapshot = {
       serper: this.serperCfg.config,
       brightData: this.brightDataCfg.config,
       sources: this.sourcesCfg.config,
+      layouts: this.layoutsCfg.config,
       youtube: this.youtubeCfg.config,
+      eodhd: this.eodhdCfg.config,
     };
   }
 
@@ -66,6 +103,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
       await retryWithBackoff(() => this.attemptRestore(), {
         attempts: BOOT_RESTORE_ATTEMPTS,
       });
+      this.eodhdDiscovery.refresh(this.getConfig().eodhd.apiKey);
     } catch (error) {
       this.logger.warn(
         `Provider overrides could not be loaded (staying in-memory, retrying lazily on use): ${error instanceof Error ? error.message : error}`,
@@ -145,28 +183,40 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
    */
   getConfig(): ProviderOverridesSnapshot {
     this.scheduleLazyRestore();
-    return this.applyOverrides(this.snapshot);
+    const config = applyOverrides(this.snapshot, this.overrides);
+    // Keep the capability snapshots warm for the effective keys.
+    this.eodhdDiscovery.refresh(config.eodhd.apiKey);
+    this.serperDiscovery.refresh(config.serper.apiKey);
+    this.brightDataDiscovery.refresh(config.brightData.apiKey);
+    return config;
   }
 
   /**
    * The effective config with the API key masked (abcd********wxyz).
    * This is the only config form that may leave the server.
    */
-  getMaskedConfig(): ProviderOverridesSnapshot {
+  getMaskedConfig(): ProviderOverridesMaskedSnapshot {
     const config = this.getConfig();
     return {
       ...config,
       serper: {
         ...config.serper,
         apiKey: maskApiKey(config.serper.apiKey),
+        capabilities: this.serperDiscovery.getCached(),
       },
       brightData: {
         ...config.brightData,
         apiKey: maskApiKey(config.brightData.apiKey),
+        capabilities: this.brightDataDiscovery.getCached(),
       },
       youtube: {
         ...config.youtube,
         apiKey: maskApiKey(config.youtube.apiKey),
+      },
+      eodhd: {
+        ...config.eodhd,
+        apiKey: maskApiKey(config.eodhd.apiKey),
+        capabilities: this.eodhdDiscovery.getCached(),
       },
     };
   }
@@ -191,7 +241,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
       }
       for (const [key, val] of Object.entries(values)) {
         if (key === 'apiKey') {
-          this.updateApiKeyOverride(provider, val);
+          updateApiKeyOverride(this.overrides, provider, val);
           continue;
         }
         this.overrides[provider][key] = val;
@@ -219,44 +269,5 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
         `Failed to persist ${provider} overrides: ${error instanceof Error ? error.message : error}`,
       );
     });
-  }
-
-  /**
-   * API key patch rules: a masked-looking value is ignored (it is the
-   * display form, not a key); an empty value clears the override so the
-   * env key applies again; anything else becomes the new override.
-   */
-  private updateApiKeyOverride(provider: string, value: unknown): void {
-    if (isMaskedApiKey(value)) return;
-    if (typeof value === 'string' && value.trim() === '') {
-      delete this.overrides[provider].apiKey;
-      return;
-    }
-    if (typeof value === 'string') {
-      this.overrides[provider].apiKey = value.trim();
-    }
-  }
-
-  private applyOverrides(
-    snapshot: ProviderOverridesSnapshot,
-  ): ProviderOverridesSnapshot {
-    // Deep-copy the provider configs first — merging into the shared
-    // snapshot object would permanently pollute the pristine env config.
-    const result: ProviderOverridesSnapshot = {
-      serper: { ...snapshot.serper },
-      brightData: { ...snapshot.brightData },
-      sources: { ...snapshot.sources },
-      youtube: { ...snapshot.youtube },
-    };
-    for (const [provider, values] of Object.entries(this.overrides)) {
-      if (!(provider in result)) continue;
-      const target = result[
-        provider as keyof ProviderOverridesSnapshot
-      ] as Record<string, any>;
-      for (const [key, val] of Object.entries(values)) {
-        target[key] = val;
-      }
-    }
-    return result;
   }
 }

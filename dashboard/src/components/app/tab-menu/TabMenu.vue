@@ -3,10 +3,9 @@ import { ChevronsDown, ChevronsUp } from '@lucide/vue';
 import { computed, useTemplateRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-import type { ActiveTab } from '../../../stores/app';
-import Tooltip, {
-  type TooltipPosition,
-} from '../../shared/ui/tooltip/Tooltip.vue';
+import type { ActiveTab } from '../../../types/app.model';
+import type { TooltipPosition } from '../../shared/ui/tooltip/Tooltip.types';
+import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 import AppThemeSelector from '../app-theme-selector/AppThemeSelector.vue';
 import LanguageSelector from '../language-selector/LanguageSelector.vue';
 import { useMenuTabs } from './composables/use-menu-tabs';

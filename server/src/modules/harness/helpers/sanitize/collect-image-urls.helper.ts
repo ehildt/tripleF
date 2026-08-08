@@ -1,4 +1,4 @@
-type ToolResult = { toolName: string; result: unknown };
+import type { ToolResult } from './tool-result.types.js';
 
 /** An image URL found in tool results, plus whether it must skip the 720p gate. */
 export interface ImageUrlEntry {

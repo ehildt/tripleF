@@ -1,5 +1,4 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { applyLocaleParams } from '../apply-locale-params.helper.js';
 import { requestBrightData } from '../bright-data-client.js';
@@ -7,34 +6,22 @@ import { BRIGHT_DATA_TIMEOUT_MS } from '../search-timeout.js';
 import type { ToolDependencies } from '../types.js';
 
 import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
+import {
+  type BrightDataShoppingSearchInput,
+  brightDataShoppingSearchSchema,
+} from './shopping-search.schema.js';
+import type { BrightDataShoppingSearchResponse } from './shopping-search.types.js';
 
 export function createBrightDataShoppingSearch(deps: ToolDependencies) {
   return tool({
     description:
       'Search for products using Bright Data SERP API (Google Shopping). Returns prices, sellers, images, and ratings. Phrase the query as the bare product name with model number (e.g. "Sony WH-1000XM5") — do NOT add words like "review", "test", or long descriptive sentences.',
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe(
-          'The exact product name with model number, kept short and standalone.',
-        ),
-      count: z.number().optional().describe('Number of results (max 100)'),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-    }),
+    inputSchema: brightDataShoppingSearchSchema,
     execute: async ({
       query,
       count: reqCount,
       lang,
-    }: {
-      query: string;
-      count?: number;
-      lang?: string;
-    }) => {
+    }: BrightDataShoppingSearchInput) => {
       const cfg = deps.getLiveConfig().brightData;
       const apiKey = engineEnabled(deps, 'shopping');
       if (!apiKey)
@@ -55,19 +42,7 @@ export function createBrightDataShoppingSearch(deps: ToolDependencies) {
       try {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {
           timeoutMs: BRIGHT_DATA_TIMEOUT_MS,
-        })) as {
-          shopping?: Array<{
-            title?: string;
-            link?: string;
-            price?: string;
-            source?: string;
-            image_url?: string;
-            image?: string;
-            delivery?: string;
-            rating?: number;
-            rating_count?: number;
-          }>;
-        };
+        })) as BrightDataShoppingSearchResponse;
         const shopping = data.shopping ?? [];
         if (!shopping.length) {
           deps.logger.warn(

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { SubscriptionEntry } from '@/types/subscription.model';
+
 import ExpandableList from '../shared/ExpandableList.vue';
-import type { SubscriptionEntry } from './subscribed-event-item/SubscribedEventItem.vue';
 import SubscribedEventItem from './subscribed-event-item/SubscribedEventItem.vue';
 
 defineProps<{

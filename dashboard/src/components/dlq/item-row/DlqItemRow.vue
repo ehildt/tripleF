@@ -85,12 +85,14 @@ onUnmounted(disarmDelete);
         :icon="RotateCcw"
         :tint="0"
         :visible="true"
+        :title="$t('common.retry')"
         @click="emit('retry', entry.requestId)"
       />
       <DlqActionIconButton
         :icon="Archive"
         :tint="0.65"
         :visible="isArchivable"
+        :title="$t('common.archive')"
         @click="emit('archive', entry.requestId)"
       />
       <DlqActionIconButton

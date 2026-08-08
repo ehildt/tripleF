@@ -2,7 +2,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import { tabMenuSide } from '@/components/app/tab-menu/composables/tab-menu-settings.state';
 
-import { type PlaylistAnchor, playlistAnchor } from './playlist-settings.state';
+import { playlistAnchor } from './playlist-settings.state';
+import type { PlaylistAnchor } from './playlist-settings.state.types';
 
 /**
  * CSS anchoring per configured position, with the tab menu's offsets: the

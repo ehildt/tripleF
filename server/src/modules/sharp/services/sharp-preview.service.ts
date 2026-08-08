@@ -4,14 +4,7 @@ import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js
 
 import { SharpService } from './sharp.service.js';
 import { SharpOverridesService } from './sharp-overrides.service.js';
-
-/** One preprocessing variant of the preview upload, encoded for display. */
-interface SharpPreviewVariant {
-  variant: string;
-  name: string;
-  description: string;
-  dataUrl: string;
-}
+import type { SharpPreviewVariant } from './sharp-preview.service.types.js';
 
 /**
  * Preprocessing preview: runs an uploaded image through the same sharp

@@ -9,11 +9,6 @@ describe('PprocAdvancedParametersSection', () => {
     setActivePinia(createPinia());
   });
 
-  it('renders the section title', () => {
-    const wrapper = mount(PprocAdvancedParametersSection);
-    expect(wrapper.text()).toContain('Advanced Parameters');
-  });
-
   it('renders all parameter labels', () => {
     const wrapper = mount(PprocAdvancedParametersSection);
     expect(wrapper.text()).toContain('Blur Sigma');

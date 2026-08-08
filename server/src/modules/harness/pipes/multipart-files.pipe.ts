@@ -1,7 +1,7 @@
 import type { MultipartFile } from '@fastify/multipart';
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
-type Maybe<T> = T | ReadonlyArray<T> | undefined | null;
+import type { Maybe } from './maybe.types.js';
 
 export type MultipartFilesPipeOptions = {
   fieldName: string;

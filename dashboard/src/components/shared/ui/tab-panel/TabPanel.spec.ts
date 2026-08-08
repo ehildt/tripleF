@@ -53,11 +53,11 @@ describe('TabPanel', () => {
     expect(wrapper.find('.tab-panel__panel').exists()).toBe(true);
   });
 
-  it('shows a no selection hint when activeTab is null', () => {
+  it('renders no panel when activeTab is null', () => {
     const wrapper = mount(TabPanel, {
       props: { tabs, activeTab: null },
     });
-    expect(wrapper.text()).toContain('Select a tab to view content');
+    expect(wrapper.find('.tab-panel__panel').exists()).toBe(false);
   });
 
   it('renders a copy button when copyable', () => {

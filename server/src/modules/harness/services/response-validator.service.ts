@@ -1,46 +1,55 @@
 import { Injectable } from '@nestjs/common';
 
-import { normalizeJsonResponse } from '../helpers/normalize-json-response.helper.js';
-import { parseLlmJson } from '../helpers/parse-llm-json.helper.js';
-import { sanitizeBlockedImageUrls } from '../helpers/sanitize-blocked-image-urls.helper.js';
-import { stripUrlsFromTextFields } from '../helpers/strip-urls-from-text-fields.helper.js';
+import { normalizeJsonResponse } from '../helpers/json/normalize-json-response.helper.js';
+import { parseLlmJson } from '../helpers/json/parse-llm-json.helper.js';
+import { sanitizeBlockedImageUrls } from '../helpers/sanitize/sanitize-blocked-image-urls.helper.js';
+import { stripUrlsFromTextFields } from '../helpers/sanitize/strip-urls-from-text-fields.helper.js';
 import {
   getOptionalKeys,
   getRequiredKeys,
 } from '../helpers/template-placeholders.constant.js';
+import { SNIPPET_TEMPLATE_PRESETS } from '../snippets/snippet-presets.constant.js';
 
-import { validateArticleOutput } from './response-validators/article.validator.js';
 import { validateCompareOutput } from './response-validators/compare.validator.js';
+import { createSnippetValidator } from './response-validators/create-snippet-validator.helper.js';
 import { validateDescribeOutput } from './response-validators/describe.validator.js';
-import { validateEvaluationOutput } from './response-validators/evaluation.validator.js';
 import { validateFreeFormOutput } from './response-validators/free-form.validator.js';
 import { validateImagelistOutput } from './response-validators/imagelist.validator.js';
-import { validateNewsOutput } from './response-validators/news.validator.js';
 import { validateOcrOutput } from './response-validators/ocr.validator.js';
 import { validateProductOutput } from './response-validators/product.validator.js';
 import { validateShoplistOutput } from './response-validators/shoplist.validator.js';
+import { validateStockmarketItemOutput } from './response-validators/stockmarketitem.validator.js';
+import { validateStockmarketListOutput } from './response-validators/stockmarketlist.validator.js';
 import { validateSummaryOutput } from './response-validators/summary.validator.js';
-import type { ValidationResult } from './response-validators/validation-result.type.js';
+import type {
+  ValidationContext,
+  ValidationResult,
+} from './response-validators/validation-result.type.js';
 import { validateVideolistOutput } from './response-validators/videolist.validator.js';
 
 /**
- * Per-template response validators. Each entry validates a parsed JSON
- * payload against its template's zod schema and returns the normalized
- * content (or a human-readable error) as a ValidationResult.
+ * Per-template response validators. news/article/evaluation are composed
+ * from their snippet presets; the rest validate against their template zod
+ * schema directly. All return a ValidationResult.
  */
 const templateValidators: Record<
   string,
-  (parsed: Record<string, unknown>) => ValidationResult
+  (
+    parsed: Record<string, unknown>,
+    context?: ValidationContext,
+  ) => ValidationResult
 > = {
-  article: validateArticleOutput,
-  news: validateNewsOutput,
+  article: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.article),
+  news: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.news),
+  evaluation: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.evaluation),
   describe: validateDescribeOutput,
   compare: validateCompareOutput,
   ocr: validateOcrOutput,
   summary: validateSummaryOutput,
-  evaluation: validateEvaluationOutput,
   product: validateProductOutput,
   shoplist: validateShoplistOutput,
+  stockmarketitem: validateStockmarketItemOutput,
+  stockmarketlist: validateStockmarketListOutput,
   imagelist: validateImagelistOutput,
   videolist: validateVideolistOutput,
   text: validateFreeFormOutput,
@@ -70,6 +79,7 @@ export class ResponseValidatorService {
     template: string,
     requiredKeys: string[],
     optionalKeys: string[],
+    context?: ValidationContext,
   ): ValidationResult {
     const cleaned = content
       .trim()
@@ -114,7 +124,7 @@ export class ResponseValidatorService {
       if (key in parsed) sanitized[key] = parsed[key];
     }
 
-    return this.validateTemplateSchema(sanitized, template);
+    return this.validateTemplateSchema(sanitized, template, context);
   }
 
   /**
@@ -219,6 +229,7 @@ export class ResponseValidatorService {
   validateValidatedResponse(
     rawContent: string,
     template: string,
+    context?: ValidationContext,
   ): ValidationResult {
     const requiredKeys = getRequiredKeys(template);
     const optionalKeys = getOptionalKeys(template);
@@ -227,15 +238,17 @@ export class ResponseValidatorService {
       template,
       requiredKeys,
       optionalKeys,
+      context,
     );
   }
 
   private validateTemplateSchema(
     parsed: Record<string, unknown>,
     template: string,
+    context?: ValidationContext,
   ): ValidationResult {
     const validator = templateValidators[template];
-    if (validator) return validator(parsed);
+    if (validator) return validator(parsed, context);
     return { valid: true, content: JSON.stringify(parsed) };
   }
 }

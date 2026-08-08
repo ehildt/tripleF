@@ -1,9 +1,10 @@
 import { vi } from 'vitest';
 import { computed } from 'vue';
 
-import type { AppViewContext } from '@/composables/use-app-view-context';
-import type { DebugResult } from '@/types/debug.model';
+import type { AppViewContext } from '@/composables/use-app-view-context.types';
 import type { SocketProvider } from '@/types/socket-provider.model';
+
+import type { MockAppViewContextInput } from './mock-app-view-context.types';
 
 /**
  * Test double for the app-view-context that `App.vue` provides to its route
@@ -32,16 +33,6 @@ export function makeMockSocketProvider(): SocketProvider {
     closeEvent: () => {},
     closeRoom: () => {},
   };
-}
-
-interface MockAppViewContextInput {
-  socketProvider?: SocketProvider;
-  viewModels?: string[];
-  debugResults?: DebugResult[];
-  selectedDebugResult?: DebugResult | null;
-  clearDebugResults?: () => void;
-  selectDebugResult?: (result: DebugResult | null) => void;
-  selectDebugMarkRead?: (id: string) => void;
 }
 
 export function mockAppViewContext(

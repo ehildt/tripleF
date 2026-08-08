@@ -1,6 +1,6 @@
-import type { GalleryItem } from '../build-gallery-items.helper.js';
-import { dedupeGalleryItems } from '../dedupe-gallery-items.helper.js';
-import { extractStorageHash } from '../extract-storage-hash.helper.js';
+import type { GalleryItem } from '../media/build-gallery-items.helper.js';
+import { dedupeGalleryItems } from '../media/dedupe-gallery-items.helper.js';
+import { extractStorageHash } from '../media/extract-storage-hash.helper.js';
 
 /**
  * Merge uploaded local images into the response gallery, dropping any that

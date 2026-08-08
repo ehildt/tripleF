@@ -68,8 +68,8 @@ describe('Dlq', () => {
 
   it('renders the list header and the details body', () => {
     const wrapper = mountPanel();
-    expect(wrapper.text()).toContain('Jobs');
-    expect(wrapper.text()).toContain('Details');
+    expect(wrapper.text()).toContain('Failed jobs');
+    expect(wrapper.text()).toContain('Job details');
   });
 
   it('renders the empty DLQ state when there are no entries', () => {
@@ -79,6 +79,6 @@ describe('Dlq', () => {
 
   it('renders the select-a-job placeholder in the details body', () => {
     const wrapper = mountPanel();
-    expect(wrapper.text()).toContain('Select a job');
+    expect(wrapper.text()).toContain("You're all set");
   });
 });

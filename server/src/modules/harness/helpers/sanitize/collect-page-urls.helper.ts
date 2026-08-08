@@ -1,4 +1,4 @@
-type ToolResult = { toolName: string; result: unknown };
+import type { ToolResult } from './tool-result.types.js';
 
 /** Article/page URLs from web and news search results. */
 export function collectPageUrls(toolResults: ToolResult[]): string[] {
@@ -6,7 +6,6 @@ export function collectPageUrls(toolResults: ToolResult[]): string[] {
 
   for (const tr of toolResults) {
     if (
-      tr.toolName !== 'webSearch' &&
       !tr.toolName.endsWith('WebSearch') &&
       !tr.toolName.endsWith('NewsSearch')
     )

@@ -1,15 +1,6 @@
 import type { Exchange } from '@/stores/conversation';
-import type { ConversationMetadataImage } from '@/utils/build-query-params.helper';
 
-export interface SeededExchangesOptions {
-  requestId: string;
-  model: string;
-  event: string;
-  roomId: string;
-  conversationId: string;
-  userContent: string;
-  images: ConversationMetadataImage[];
-}
+import type { SeededExchangesOptions } from './build-seeded-exchanges.helper.types';
 
 /**
  * Build the exchange pair seeded when a request is submitted: the user's

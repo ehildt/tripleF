@@ -1,5 +1,5 @@
 import type { Exchange } from '@/stores/conversation';
-import { toPromptMessage } from '@/stores/helpers/to-prompt-message.helper';
+import { toPromptMessage } from '@/stores/helpers/conversation/to-prompt-message.helper';
 
 /**
  * The clipboard text of an exchange. User messages copy verbatim. Assistant

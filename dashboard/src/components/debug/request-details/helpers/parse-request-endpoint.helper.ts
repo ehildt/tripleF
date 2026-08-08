@@ -1,14 +1,6 @@
 import type { DebugResult } from '../../../../types/debug.model';
-import type { TabPanelTab } from '../../../shared/ui/tab-panel/TabPanel.vue';
+import type { ParsedEndpoint } from './parse-request-endpoint.helper.types';
 import { parseUrl } from './parse-url.helper';
-
-export type DetailTabId =
-  'error' | 'params' | 'headers' | 'prompt' | 'body' | 'response';
-
-export interface DetailTab extends TabPanelTab {
-  id: DetailTabId;
-  content: unknown;
-}
 
 const SOCKET_BASE_URL = import.meta.env.VITE_SOCKET_URL || '/socket.io';
 
@@ -23,13 +15,6 @@ const URL_PARAMS_FILTERED_OUT = new Set([
   'stream',
   'preprocessing',
 ]);
-
-export interface ParsedEndpoint {
-  path: string;
-  event: string;
-  room?: string;
-  params: Array<{ key: string; value: string }>;
-}
 
 /**
  * Parse a DebugResult's endpoint into the parts we display in the

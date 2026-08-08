@@ -1,17 +1,15 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { SEARCH_TIMEOUT_MS } from './search-timeout.js';
+import { type WebFetchInput, webFetchSchema } from './web-fetch.schema.js';
 
 export function createWebFetchTool() {
   return tool({
     description:
       'Fetch the full content of a specific URL. Use only when search snippets are insufficient.',
-    inputSchema: z.object({
-      url: z.string().describe('The URL to fetch content from'),
-    }),
-    execute: async ({ url }: { url: string }) => {
+    inputSchema: webFetchSchema,
+    execute: async ({ url }: WebFetchInput) => {
       const response = await fetchWithTimeout(
         url,
         {

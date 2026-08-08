@@ -520,7 +520,7 @@ describe('ExecuteActionService', () => {
       totalUsage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { execute: executeSpy },
+      serperWebSearch: { execute: executeSpy },
     });
 
     const ctx = createContext({
@@ -535,7 +535,7 @@ describe('ExecuteActionService', () => {
       intent: {
         template: 'evaluation',
         prompt: 'default',
-        tools: ['webSearch'],
+        tools: ['serperWebSearch'],
         getDate: false,
         contextSummary:
           'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
@@ -561,7 +561,7 @@ describe('ExecuteActionService', () => {
       totalUsage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { execute: executeSpy },
+      serperWebSearch: { execute: executeSpy },
     });
 
     const ctx = createContext({
@@ -579,7 +579,7 @@ describe('ExecuteActionService', () => {
       intent: {
         template: 'article',
         prompt: 'default',
-        tools: ['webSearch'],
+        tools: ['serperWebSearch'],
         getDate: false,
         contextSummary:
           'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
@@ -605,7 +605,7 @@ describe('ExecuteActionService', () => {
       totalUsage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { execute: executeSpy },
+      serperWebSearch: { execute: executeSpy },
     });
 
     const ctx = createContext({
@@ -623,7 +623,7 @@ describe('ExecuteActionService', () => {
       intent: {
         template: 'article',
         prompt: 'default',
-        tools: ['webSearch'],
+        tools: ['serperWebSearch'],
         getDate: false,
         contextSummary:
           'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
@@ -648,7 +648,7 @@ describe('ExecuteActionService', () => {
       totalUsage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      webSearch: { execute: executeSpy },
+      serperWebSearch: { execute: executeSpy },
     });
 
     const ctx = createContext({
@@ -661,7 +661,7 @@ describe('ExecuteActionService', () => {
       intent: {
         template: 'article',
         prompt: 'default',
-        tools: ['webSearch'],
+        tools: ['serperWebSearch'],
         getDate: false,
         contextSummary: '',
         reasoning: '',

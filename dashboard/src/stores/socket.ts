@@ -2,15 +2,14 @@ import { defineStore } from 'pinia';
 import { io, type Socket } from 'socket.io-client';
 import { type Ref, ref, shallowRef } from 'vue';
 
+import type { ConnectionState } from '../types/connection-state.model';
 import type { SocketDebugEntry } from '../types/socket-debug-entry.model';
-import { buildConnectedPairs } from './helpers/build-connected-pairs.helper';
-import { createEventListener } from './helpers/create-event-listener.helper';
-import { getPersistentSocketSessionId } from './helpers/get-persistent-socket-session-id.helper';
-import { makeDebugEntry } from './helpers/make-debug-entry.helper';
+import { buildConnectedPairs } from './helpers/socket/build-connected-pairs.helper';
+import { createEventListener } from './helpers/socket/create-event-listener.helper';
+import { getPersistentSocketSessionId } from './helpers/socket/get-persistent-socket-session-id.helper';
+import { makeDebugEntry } from './helpers/socket/make-debug-entry.helper';
 
 const SOCKET_SESSION_ID = getPersistentSocketSessionId();
-
-export type ConnectionState = 'connected' | 'disconnected' | 'error';
 
 export const useSocketStore = defineStore(
   'socket',

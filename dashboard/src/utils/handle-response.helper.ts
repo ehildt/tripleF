@@ -2,11 +2,7 @@ import type { Socket } from 'socket.io-client';
 
 import { i18n } from '@/i18n/i18n';
 
-export type ToastApi = {
-  error: (message: string) => void;
-  success: (message: string) => void;
-  warning: (message: string) => void;
-};
+import type { ToastApi } from './handle-response.helper.types';
 
 export function handleResponse(
   res: Response,

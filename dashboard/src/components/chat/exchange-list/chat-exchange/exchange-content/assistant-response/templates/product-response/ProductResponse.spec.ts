@@ -138,7 +138,7 @@ describe('ProductResponse', () => {
 
   it('renders empty state with no data', () => {
     const wrapper = mountProduct({});
-    expect(wrapper.text()).toContain('No product information found');
+    expect(wrapper.text()).toContain('No product info came back for this one.');
   });
 
   it('shows "Check price" when offer has no price', () => {

@@ -6,36 +6,10 @@ on:
   pull_request:
     branches-ignore: [main]
 
-env:
-  HUSKY: 0
-
 jobs:
   ci:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-        with:
-          run_install: false
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm -r install --frozen-lockfile
-
-      - name: Lint
-        run: |
-          pnpm -r lint
-          pnpm -r depcruise
-          pnpm -r lint:unused
-
-      - name: Build
-        run: pnpm -r build
-
-      - name: Test
-        run: |
-          pnpm -r test:cov
+    uses: ./.github/workflows/ci.yml
+    with:
+      production: false
+      upload-coverage: false
+      upload-artifacts: false

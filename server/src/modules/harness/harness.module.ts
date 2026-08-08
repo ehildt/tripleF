@@ -5,6 +5,7 @@ import { AiSdkModule } from '../ai-sdk/ai-sdk.module.js';
 import { ToolSelectionService } from '../ai-sdk/services/tool-selection.service.js';
 import { LifecycleService } from '../dead-letter/services/lifecycle.service.js';
 import { SharpModule } from '../sharp/sharp.module.js';
+import { StockDataModule } from '../stock-data/stock-data.module.js';
 
 import { ExecuteActionService } from './actions/execute.action.js';
 import { InterpretActionService } from './actions/interpret.action.js';
@@ -29,7 +30,7 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
 
 @Global()
 @Module({
-  imports: [AiSdkModule, SharpModule, HttpModule],
+  imports: [AiSdkModule, SharpModule, HttpModule, StockDataModule],
   providers: [
     NumCtxConfigService,
     HarnessCancellationService,

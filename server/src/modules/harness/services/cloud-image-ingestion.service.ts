@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import { MinioService } from '../../minio/services/minio.service.js';
-import {
-  downloadAndIngestImages,
-  type IngestedImage,
-} from '../helpers/download-and-ingest-images.helper.js';
+import { downloadAndIngestImages } from '../helpers/media/download-and-ingest-images.helper.js';
+import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
 
 const DEFAULT_MIN_WIDTH = 1280;
 const DEFAULT_MIN_HEIGHT = 720;

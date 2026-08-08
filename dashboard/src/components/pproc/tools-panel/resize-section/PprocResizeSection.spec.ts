@@ -13,10 +13,9 @@ describe('PprocResizeSection', () => {
 
   it('renders resize section labels', () => {
     const wrapper = mount(PprocResizeSection);
-    expect(wrapper.text()).toContain('Resize Settings');
-    expect(wrapper.text()).toContain('Max Width');
-    expect(wrapper.text()).toContain('Max Height');
-    expect(wrapper.text()).toContain('Prevent Upscaling');
+    expect(wrapper.text()).toContain('Max width');
+    expect(wrapper.text()).toContain('Max height');
+    expect(wrapper.text()).toContain('Prevent upscaling');
   });
 
   it('disables fields when preprocessing is disabled', () => {

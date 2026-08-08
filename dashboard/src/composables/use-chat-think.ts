@@ -3,7 +3,7 @@ import { computed, type ComputedRef, type Ref, ref, watch } from 'vue';
 import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 
-import type { OllamaModel } from '../stores/models';
+import type { OllamaModel } from '../types/ollama-model.model';
 import type { useToast } from './use-toast';
 
 const THINK_KEY = 'harness-selected-think';

@@ -1,20 +1,9 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import { appendLabeledFields } from '../../../composables/helpers/append-labeled-fields.helper';
-import { buildSourcesLines } from '../../../composables/helpers/build-sources-lines.helper';
-
-function appendList(
-  parts: string[],
-  title: string,
-  items?: Array<{ text?: string }>,
-): void {
-  if (!items?.length) return;
-  parts.push(title);
-  for (const item of items) {
-    const text = item.text?.trim();
-    if (text) parts.push(`- ${text}`);
-  }
-}
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+import { appendList } from '../../../composables/helpers/sources/append-list.helper';
+import { buildArticleCardsLines } from '../../../composables/helpers/sources/build-article-cards-lines.helper';
+import { buildSourcesLines } from '../../../composables/helpers/sources/build-sources-lines.helper';
 
 /**
  * Convert an article response into plain text for the model history.
@@ -42,22 +31,8 @@ export function articleToText(data: HarnessResponseData): string {
   const conclusion = data.conclusion?.trim();
   if (conclusion) parts.push(`Conclusion: ${conclusion}`);
 
-  appendCards(parts, data.cards);
+  parts.push(...buildArticleCardsLines(data.cards));
   parts.push(...buildSourcesLines(data.sources));
 
   return parts.join('\n\n');
-}
-
-/** One plain-text line per article card: label, with the URL in parens. */
-function appendCards(
-  parts: string[],
-  cards: HarnessResponseData['cards'],
-): void {
-  if (!cards?.length) return;
-  parts.push('Article cards:');
-  for (const card of cards) {
-    const label = card.title?.trim() || card.linkLabel?.trim() || 'card';
-    const urlPart = card.url ? ` (${card.url})` : '';
-    parts.push(`- ${label}${urlPart}`);
-  }
 }

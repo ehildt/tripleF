@@ -8,6 +8,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import Tooltip from '../../../../shared/ui/tooltip/Tooltip.vue';
+
 const props = withDefaults(
   /* eslint-disable vue/require-default-prop -- fallbacks resolved reactively below so they track locale changes */
   defineProps<{
@@ -34,15 +36,16 @@ const errorMessage = computed(
 
 <template>
   <div class="sysctl-section">
-    <p v-if="loading" class="sysctl-section__state">
-      {{ loadingMessage }}
-    </p>
-    <p
-      v-else-if="error"
-      class="sysctl-section__state sysctl-section__state--error"
-    >
-      {{ errorMessage }}
-    </p>
+    <Tooltip v-if="loading" :text="loadingMessage">
+      <p class="sysctl-section__state">
+        {{ loadingMessage }}
+      </p>
+    </Tooltip>
+    <Tooltip v-else-if="error" :text="errorMessage">
+      <p class="sysctl-section__state sysctl-section__state--error">
+        {{ errorMessage }}
+      </p>
+    </Tooltip>
     <slot v-else />
   </div>
 </template>
@@ -51,7 +54,7 @@ const errorMessage = computed(
 .sysctl-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: var(--spacing-4);
   padding: var(--spacing-1);
 }
 

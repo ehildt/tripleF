@@ -1,10 +1,7 @@
 import type { UploadedImage } from '@/stores/conversation';
 import { hashFile } from '@/utils/hash-file.helper';
 
-export interface ClassifiedSelectedFiles {
-  newFiles: File[];
-  referencedImages: UploadedImage[];
-}
+import type { ClassifiedSelectedFiles } from './classify-selected-files.helper.types';
 
 /**
  * Split the toolbar's selected files into the ones the server has not seen

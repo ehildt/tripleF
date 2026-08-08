@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
-import type { HarnessResponseData } from '@/types/harness-response-data.model';
-
 import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
@@ -11,28 +7,12 @@ import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsS
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import { useSummaryResponseData } from './composables/use-summary-response-data.composable';
+import type { SummaryResponseProps } from './SummaryResponse.types';
 
-const props = defineProps<{
-  data: HarnessResponseData;
-}>();
+const props = defineProps<SummaryResponseProps>();
 
-const heroUrl = computed(
-  () => props.data.heroVideoUrl || props.data.heroImageUrl,
-);
-
-const hasAnyContent = computed(() =>
-  Boolean(
-    props.data.category ||
-    props.data.title ||
-    props.data.subtitle ||
-    props.data.summary ||
-    props.data.keyFindings?.length ||
-    props.data.sources?.length ||
-    heroUrl.value ||
-    props.data.videoGalleryItems?.length ||
-    props.data.galleryItems?.length,
-  ),
-);
+const { videosFirst, hasAnyContent } = useSummaryResponseData(props);
 </script>
 
 <template>
@@ -53,16 +33,25 @@ const hasAnyContent = computed(() =>
 
       <ParagraphSection :title="$t('common.summary')" :content="data.summary" />
       <KeyFindingsSection
-        :title="$t('common.keyPoints')"
         :items="data.keyFindings"
+        :title="$t('common.keyFindings')"
       />
-      <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
-      <VideoGallerySection
-        :title="data.videoGalleryTitle"
-        :items="data.videoGalleryItems"
-      />
-      <SourcesSection :items="data.sources" />
+      <template v-if="videosFirst">
+        <VideoGallerySection
+          :title="data.videoGalleryTitle"
+          :items="data.videoGalleryItems"
+        />
+        <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
+      </template>
+      <template v-else>
+        <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
+        <VideoGallerySection
+          :title="data.videoGalleryTitle"
+          :items="data.videoGalleryItems"
+        />
+      </template>
       <InternationalCoverageSection :items="data.internationalCoverage" />
+      <SourcesSection :items="data.sources" />
     </template>
 
     <section v-else class="summary__empty">
@@ -84,7 +73,7 @@ const hasAnyContent = computed(() =>
 .summary__empty {
   padding: 1.5em;
   border: 1px solid var(--color-divider);
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
   text-align: center;
 }
 

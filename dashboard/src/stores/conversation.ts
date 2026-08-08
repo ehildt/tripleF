@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import TurndownService from 'turndown';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import {
   deleteConversation as deleteServerConversation,
@@ -9,21 +9,24 @@ import {
   saveConversation as saveServerConversation,
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
+import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
 import { createId } from '../utils/id.helper';
-import { calcInputTokenDelta } from './helpers/calc-input-token-delta.helper';
-import { createConversation } from './helpers/create-conversation.helper';
-import { fromPersistedConversation } from './helpers/from-persisted-conversation.helper';
-import { getLatestRequestId } from './helpers/get-latest-request-id.helper';
-import { getPersistentSocketSessionId } from './helpers/get-persistent-socket-session-id.helper';
-import { inferConversationTitle } from './helpers/infer-conversation-title.helper';
-import { isTemporaryConversationExpired } from './helpers/is-temporary-conversation-expired.helper';
-import { mergeUploadedImages } from './helpers/merge-uploaded-images.helper';
-import { prunePairedExchange } from './helpers/prune-paired-exchange.helper';
-import { toPersistedConversation } from './helpers/to-persisted-conversation.helper';
-import { toPromptMessage } from './helpers/to-prompt-message.helper';
-import { togglePairedExchangeIncluded } from './helpers/toggle-paired-exchange-included.helper';
-import { withTemplateMarker } from './helpers/with-template-marker.helper';
+import { calcInputTokenDelta } from './helpers/conversation/calc-input-token-delta.helper';
+import { createConversation } from './helpers/conversation/create-conversation.helper';
+import { fromConversationSnapshot } from './helpers/conversation/from-conversation-snapshot.helper';
+import { fromPersistedConversation } from './helpers/conversation/from-persisted-conversation.helper';
+import { getLatestRequestId } from './helpers/conversation/get-latest-request-id.helper';
+import { inferConversationTitle } from './helpers/conversation/infer-conversation-title.helper';
+import { isTemporaryConversationExpired } from './helpers/conversation/is-temporary-conversation-expired.helper';
+import { mergeUploadedImages } from './helpers/conversation/merge-uploaded-images.helper';
+import { prunePairedExchange } from './helpers/conversation/prune-paired-exchange.helper';
+import { toPersistedConversation } from './helpers/conversation/to-persisted-conversation.helper';
+import { toPromptMessage } from './helpers/conversation/to-prompt-message.helper';
+import { togglePairedExchangeIncluded } from './helpers/conversation/toggle-paired-exchange-included.helper';
+import { withTemplateMarker } from './helpers/conversation/with-template-marker.helper';
+import { getPersistentSocketSessionId } from './helpers/socket/get-persistent-socket-session-id.helper';
+import { useAppStore } from './app';
 import type {
   Conversation,
   ConversationSubscription,
@@ -46,44 +49,100 @@ const turndown = new TurndownService({
 
 const SESSION_ID = getPersistentSocketSessionId();
 
-async function loadConversations(): Promise<Conversation[]> {
-  try {
-    const snapshots = await fetchConversations(SESSION_ID);
-    const now = Date.now();
-    const loaded = await Promise.all(
-      snapshots.map((snapshot) =>
-        fetchConversation(SESSION_ID, snapshot.conversationId),
-      ),
-    );
+/** localStorage key remembering the last opened conversation across reloads. */
+const LAST_ACTIVE_CONVERSATION_KEY = 'last-active-conversation-id';
 
-    return loaded
-      .filter((merged) => {
-        let updatedAt = 0;
-        if (merged.updatedAt) {
-          updatedAt = new Date(merged.updatedAt).getTime();
-        } else if (merged.content.updatedAt) {
-          updatedAt = new Date(String(merged.content.updatedAt)).getTime();
-        }
-        return !isTemporaryConversationExpired(
-          merged.content.type,
-          updatedAt,
-          now,
-        );
-      })
-      .map((merged) =>
-        fromPersistedConversation({
-          ...(merged.content as unknown as PersistedConversation),
-          conversationId: merged.conversationId,
-        }),
-      );
+/** localStorage key holding unpinned (temporary) conversations. */
+const TEMP_CONVERSATIONS_KEY = 'harness-temporary-conversations';
+
+function loadTemporaryConversations(): Record<string, PersistedConversation> {
+  try {
+    return JSON.parse(
+      localStorage.getItem(TEMP_CONVERSATIONS_KEY) || '{}',
+    ) as Record<string, PersistedConversation>;
   } catch {
-    return [];
+    return {};
   }
 }
 
+function saveTemporaryConversations(
+  map: Record<string, PersistedConversation>,
+) {
+  try {
+    localStorage.setItem(TEMP_CONVERSATIONS_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Write an unpinned (temporary) conversation into localStorage. */
+function persistConversationLocally(conversation: Conversation) {
+  const content = toPersistedConversation(conversation);
+  conversation.contextUsagePercent = content.contextUsagePercent;
+  const map = loadTemporaryConversations();
+  map[conversation.conversationId] = content;
+  saveTemporaryConversations(map);
+}
+
+/** Remove an unpinned conversation from localStorage (when pinned or deleted). */
+function removeConversationLocally(conversationId: string) {
+  const map = loadTemporaryConversations();
+  if (conversationId in map) {
+    delete map[conversationId];
+    saveTemporaryConversations(map);
+  }
+}
+
+/**
+ * Load persistent conversations from the server and unpinned (temporary) ones
+ * from localStorage. Temporary conversations are dropped once they have sat
+ * untouched past the configured retention window (0 minutes drops them all).
+ */
+async function loadConversations(): Promise<Conversation[]> {
+  const now = Date.now();
+  const retentionMs = useAppStore().temporaryRetentionMinutes * 60 * 1000;
+
+  const persistent: Conversation[] = [];
+  try {
+    const snapshots = await fetchConversations(SESSION_ID);
+    for (const snapshot of snapshots) {
+      if (snapshot.type !== 'persistent') continue;
+      persistent.push(fromConversationSnapshot(snapshot));
+    }
+  } catch {
+    // Offline — the persistent list stays empty.
+  }
+
+  const localMap = loadTemporaryConversations();
+  const temporary: Conversation[] = [];
+  let pruned = false;
+  for (const [conversationId, persisted] of Object.entries(localMap)) {
+    if (
+      isTemporaryConversationExpired(
+        persisted.type,
+        persisted.updatedAt,
+        now,
+        retentionMs,
+      )
+    ) {
+      delete localMap[conversationId];
+      pruned = true;
+    } else {
+      temporary.push(fromPersistedConversation(persisted));
+    }
+  }
+  if (pruned) saveTemporaryConversations(localMap);
+
+  return [...temporary, ...persistent];
+}
+
+/** Write a pinned (persistent) conversation to the server. */
 async function saveConversationToServer(conversation: Conversation) {
   try {
     const content = toPersistedConversation(conversation);
+    // Keep the in-memory value in sync with what is persisted so the sidebar
+    // shows the freshly calculated context usage without a reload.
+    conversation.contextUsagePercent = content.contextUsagePercent;
     await saveServerConversation(
       SESSION_ID,
       conversation.conversationId,
@@ -95,23 +154,104 @@ async function saveConversationToServer(conversation: Conversation) {
   }
 }
 
+/**
+ * Persist a conversation to its correct store: the server for pinned
+ * (persistent) conversations, localStorage for unpinned (temporary) ones.
+ */
+function persistConversation(conversation: Conversation) {
+  if (conversation.type === 'persistent') {
+    void saveConversationToServer(conversation);
+  } else {
+    persistConversationLocally(conversation);
+  }
+}
+
 export const useConversationStore = defineStore('conversation', () => {
   const conversations = ref<Conversation[]>([]);
   const activeConversationId = ref<string | null>(null);
   const hydrated = ref(false);
   const conversationFileMap = ref<Record<string, File[]>>({});
 
-  loadConversations().then((loaded) => {
-    conversations.value = loaded;
+  loadConversations().then((stubs) => {
+    conversations.value = stubs;
     hydrated.value = true;
+    restoreLastActiveConversation();
   });
+
+  /**
+   * Hydrate a conversation stub with its full content from the server.
+   * No-op when the conversation is already loaded or missing. Resolves true
+   * when the conversation is ready to use (already loaded or just hydrated).
+   */
+  async function loadConversation(id: string): Promise<boolean> {
+    const conversation = getConversation(id);
+    if (!conversation || conversation.loaded) return true;
+    try {
+      const merged = await fetchConversation(
+        SESSION_ID,
+        conversation.conversationId,
+      );
+      const loaded = fromPersistedConversation({
+        ...(merged.content as unknown as PersistedConversation),
+        conversationId: merged.conversationId,
+      });
+      Object.assign(conversation, loaded, { loaded: true });
+      // Refresh the cached percentage from the freshly hydrated exchanges so
+      // the sidebar fallback never shows a stale/null server value for a
+      // conversation that actually has token data.
+      conversation.contextUsagePercent = calcTotalContextPercentage(
+        conversation.exchanges,
+        conversation.numCtx,
+      );
+      return true;
+    } catch {
+      // Offline — the stub remains usable.
+      return false;
+    }
+  }
+
+  /**
+   * Run a write against a conversation, hydrating a stub from the server first
+   * so a partial save can never overwrite its stored history. Loaded
+   * conversations are mutated synchronously so callers can read the result
+   * immediately (e.g. setting a title/stream right after creating one).
+   */
+  function mutateConversation(
+    id: string,
+    fn: (conversation: Conversation) => void,
+  ) {
+    const conversation = getConversation(id);
+    if (!conversation) return;
+    if (!conversation.loaded) {
+      void loadConversation(id).then((ok) => {
+        if (ok) mutateConversation(id, fn);
+      });
+      return;
+    }
+    fn(conversation);
+  }
+
+  /**
+   * Async counterpart for writes that must be awaited (e.g. delete). Returns
+   * the conversation, hydrating a stub from the server first.
+   */
+  async function loadConversationForWrite(
+    id: string,
+  ): Promise<Conversation | undefined> {
+    const conversation = getConversation(id);
+    if (!conversation) return undefined;
+    if (conversation.loaded) return conversation;
+    const ok = await loadConversation(id);
+    if (!ok) return undefined;
+    return getConversation(id);
+  }
 
   function saveActiveConversation() {
     const id = activeConversationId.value;
     if (!id) return;
     const conversation = getConversation(id);
     if (!conversation) return;
-    void saveConversationToServer(conversation);
+    void persistConversation(conversation);
   }
 
   function getConversation(id: string): Conversation | undefined {
@@ -138,8 +278,37 @@ export const useConversationStore = defineStore('conversation', () => {
   function setActiveConversation(id: string) {
     if (getConversation(id)) {
       activeConversationId.value = id;
+      void loadConversation(id);
     }
   }
+
+  /**
+   * Re-open the last viewed conversation after a reload. The stored value is
+   * the stable server `conversationId`; it is matched against the freshly
+   * fetched stubs and hydrated so the chat restores where the user left off.
+   */
+  function restoreLastActiveConversation() {
+    const saved = localStorage.getItem(LAST_ACTIVE_CONVERSATION_KEY);
+    if (!saved) return;
+    const target = conversations.value.find((c) => c.conversationId === saved);
+    if (!target) return;
+    activeConversationId.value = target.id;
+    void loadConversation(target.id);
+  }
+
+  // Persist the active conversation so a reload can restore it. The stable
+  // server conversationId is stored, not the internal id.
+  watch(activeConversationId, (id) => {
+    if (!id) {
+      localStorage.removeItem(LAST_ACTIVE_CONVERSATION_KEY);
+      return;
+    }
+    const conversation = getConversation(id);
+    localStorage.setItem(
+      LAST_ACTIVE_CONVERSATION_KEY,
+      conversation?.conversationId ?? id,
+    );
+  });
 
   function createNewConversation(
     type: ConversationType = 'temporary',
@@ -172,11 +341,15 @@ export const useConversationStore = defineStore('conversation', () => {
       activeConversationId.value = conversations.value[0]?.id ?? null;
     }
 
-    void deleteServerConversation(SESSION_ID, conversationId);
+    // Always drop the local copy; only persistent conversations live on the server.
+    removeConversationLocally(conversationId);
+    if (conversation.type === 'persistent') {
+      void deleteServerConversation(SESSION_ID, conversationId);
+    }
   }
 
   async function deleteCurrentConversation(parentId: string) {
-    const conversation = getConversation(parentId);
+    const conversation = await loadConversationForWrite(parentId);
     if (!conversation) return;
 
     const conversationId = conversation.conversationId;
@@ -222,55 +395,68 @@ export const useConversationStore = defineStore('conversation', () => {
       if (activeConversationId.value === parentId) {
         activeConversationId.value = conversations.value[0]?.id ?? null;
       }
-      void deleteServerConversation(SESSION_ID, conversationId);
+      // Drop the local copy too; only persistent conversations live on the server.
+      removeConversationLocally(conversationId);
+      if (conversation.type === 'persistent') {
+        void deleteServerConversation(SESSION_ID, conversationId);
+      }
     } else {
-      void saveConversationToServer(conversation);
+      void persistConversation(conversation);
     }
   }
 
   function renameConversation(id: string, title: string) {
-    const conversation = getConversation(id);
-    if (conversation) {
+    mutateConversation(id, (conversation) => {
       conversation.title = title;
-      void saveConversationToServer(conversation);
-    }
+      void persistConversation(conversation);
+    });
   }
 
   function addExchange(
     conversationId: string,
     exchange: Omit<Exchange, 'timestamp' | 'id'>,
   ) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    conversation.exchanges.push({
-      ...exchange,
-      id: createId(),
-      timestamp: Date.now(),
+    mutateConversation(conversationId, (conversation) => {
+      conversation.exchanges.push({
+        ...exchange,
+        id: createId(),
+        timestamp: Date.now(),
+      });
+      conversation.updatedAt = Date.now();
+      conversation.title = inferConversationTitle(
+        conversation.title,
+        exchange.content,
+      );
+      void persistConversation(conversation);
     });
-    conversation.updatedAt = Date.now();
-    conversation.title = inferConversationTitle(
-      conversation.title,
-      exchange.content,
-    );
-    void saveConversationToServer(conversation);
   }
 
   function deleteExchangeAndPrune(conversationId: string, exchangeId: string) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const next = prunePairedExchange(conversation.exchanges, exchangeId);
-    if (next === conversation.exchanges) return;
-    conversation.exchanges = next;
+    mutateConversation(conversationId, (conversation) => {
+      const next = prunePairedExchange(conversation.exchanges, exchangeId);
+      if (next === conversation.exchanges) return;
+      conversation.exchanges = next;
 
-    void saveConversationToServer(conversation);
+      void persistConversation(conversation);
+    });
   }
 
   function toggleConversationType(conversationId: string) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    conversation.type =
-      conversation.type === 'temporary' ? 'persistent' : 'temporary';
-    void saveConversationToServer(conversation);
+    mutateConversation(conversationId, (conversation) => {
+      const nextType: ConversationType =
+        conversation.type === 'temporary' ? 'persistent' : 'temporary';
+      conversation.type = nextType;
+
+      if (nextType === 'persistent') {
+        // Unpinned → pinned: leave localStorage and persist on the server.
+        removeConversationLocally(conversation.conversationId);
+        void saveConversationToServer(conversation);
+      } else {
+        // Pinned → unpinned: drop from the server and keep only locally.
+        void deleteServerConversation(SESSION_ID, conversation.conversationId);
+        persistConversationLocally(conversation);
+      }
+    });
   }
 
   function updateExchange(
@@ -314,26 +500,26 @@ export const useConversationStore = defineStore('conversation', () => {
     requestId: string,
     tokenData?: { promptEvalCount?: number; evalCount?: number },
   ) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const exchange = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
-    if (!exchange) return;
+    mutateConversation(conversationId, (conversation) => {
+      const exchange = conversation.exchanges.find(
+        (e) => e.requestId === requestId && e.role === 'assistant',
+      );
+      if (!exchange) return;
 
-    exchange.status = 'done';
-    if (tokenData) {
-      exchange.promptEvalCount = tokenData.promptEvalCount;
-      exchange.evalCount = tokenData.evalCount;
-      if (tokenData.promptEvalCount != null) {
-        exchange.inputTokenDelta = calcInputTokenDelta(
-          conversation.exchanges,
-          tokenData.promptEvalCount,
-        );
+      exchange.status = 'done';
+      if (tokenData) {
+        exchange.promptEvalCount = tokenData.promptEvalCount;
+        exchange.evalCount = tokenData.evalCount;
+        if (tokenData.promptEvalCount != null) {
+          exchange.inputTokenDelta = calcInputTokenDelta(
+            conversation.exchanges,
+            tokenData.promptEvalCount,
+          );
+        }
       }
-    }
-    conversation.updatedAt = Date.now();
-    void saveConversationToServer(conversation);
+      conversation.updatedAt = Date.now();
+      void persistConversation(conversation);
+    });
   }
 
   function markExchangeError(
@@ -341,33 +527,33 @@ export const useConversationStore = defineStore('conversation', () => {
     requestId: string,
     errorMessage?: string,
   ) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const exchange = conversation.exchanges.find(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
-    if (exchange) {
-      exchange.status = 'error';
-      if (errorMessage) exchange.content = errorMessage;
-      conversation.updatedAt = Date.now();
-      void saveConversationToServer(conversation);
-    }
+    mutateConversation(conversationId, (conversation) => {
+      const exchange = conversation.exchanges.find(
+        (e) => e.requestId === requestId && e.role === 'assistant',
+      );
+      if (exchange) {
+        exchange.status = 'error';
+        if (errorMessage) exchange.content = errorMessage;
+        conversation.updatedAt = Date.now();
+        void persistConversation(conversation);
+      }
+    });
   }
 
   function setFiles(conversationId: string, newFiles: File[]) {
-    conversationFileMap.value = {
-      ...conversationFileMap.value,
-      [conversationId]: newFiles,
-    };
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    conversation.files = newFiles;
-    conversation.savedFileInfos = newFiles.map((f) => ({
-      name: f.name,
-      size: f.size,
-      type: f.type,
-    }));
-    void saveConversationToServer(conversation);
+    mutateConversation(conversationId, (conversation) => {
+      conversationFileMap.value = {
+        ...conversationFileMap.value,
+        [conversationId]: newFiles,
+      };
+      conversation.files = newFiles;
+      conversation.savedFileInfos = newFiles.map((f) => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+      }));
+      void persistConversation(conversation);
+    });
   }
 
   function getFiles(conversationId: string): File[] {
@@ -386,10 +572,10 @@ export const useConversationStore = defineStore('conversation', () => {
       >
     >,
   ) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    Object.assign(conversation, patch);
-    void saveConversationToServer(conversation);
+    mutateConversation(conversationId, (conversation) => {
+      Object.assign(conversation, patch);
+      void persistConversation(conversation);
+    });
   }
 
   function setModel(conversationId: string, model: string) {
@@ -427,23 +613,22 @@ export const useConversationStore = defineStore('conversation', () => {
     conversationId: string,
     newConversationId: string,
   ) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
+    mutateConversation(conversationId, (conversation) => {
       conversation.conversationId = newConversationId;
-      void saveConversationToServer(conversation);
-    }
+      void persistConversation(conversation);
+    });
   }
 
   function setUploadedImages(conversationId: string, images: UploadedImage[]) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const cid = getConversationId(conversationId);
-    conversation.uploadedImages = mergeUploadedImages(
-      conversation.uploadedImages,
-      images,
-      cid,
-    );
-    void saveConversationToServer(conversation);
+    mutateConversation(conversationId, (conversation) => {
+      const cid = getConversationId(conversationId);
+      conversation.uploadedImages = mergeUploadedImages(
+        conversation.uploadedImages,
+        images,
+        cid,
+      );
+      void persistConversation(conversation);
+    });
   }
 
   function getUploadedImagesForConversation(
@@ -478,56 +663,58 @@ export const useConversationStore = defineStore('conversation', () => {
     hash: string,
     targetConversationId?: string,
   ) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const cid = targetConversationId ?? getConversationId(conversationId);
-    const image = conversation.uploadedImages.find(
-      (img) => img.hash === hash && (img.conversationId ?? cid) === cid,
-    );
-    if (image) {
-      image.selected = image.selected !== false ? false : true;
-      void saveConversationToServer(conversation);
-    }
+    mutateConversation(conversationId, (conversation) => {
+      const cid = targetConversationId ?? getConversationId(conversationId);
+      const image = conversation.uploadedImages.find(
+        (img) => img.hash === hash && (img.conversationId ?? cid) === cid,
+      );
+      if (image) {
+        image.selected = image.selected !== false ? false : true;
+        void persistConversation(conversation);
+      }
+    });
   }
 
   function snapshotImageSelections(conversationId: string) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const cid = getConversationId(conversationId);
-    const snapshot: Record<string, boolean> = {};
-    for (const img of conversation.uploadedImages) {
-      if ((img.conversationId ?? cid) !== cid) continue;
-      snapshot[img.hash] = img.selected !== false;
-    }
-    conversation.imageSelectionSnapshot = snapshot;
-    void saveConversationToServer(conversation);
+    mutateConversation(conversationId, (conversation) => {
+      const cid = getConversationId(conversationId);
+      const snapshot: Record<string, boolean> = {};
+      for (const img of conversation.uploadedImages) {
+        if ((img.conversationId ?? cid) !== cid) continue;
+        snapshot[img.hash] = img.selected !== false;
+      }
+      conversation.imageSelectionSnapshot = snapshot;
+      void persistConversation(conversation);
+    });
   }
 
   function restoreImageSelections(conversationId: string) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    if (Object.keys(conversation.imageSelectionSnapshot).length === 0) return;
-    const cid = getConversationId(conversationId);
-    for (const img of conversation.uploadedImages) {
-      if ((img.conversationId ?? cid) !== cid) continue;
-      const saved = conversation.imageSelectionSnapshot[img.hash];
-      if (saved !== undefined) {
-        img.selected = saved;
+    mutateConversation(conversationId, (conversation) => {
+      if (Object.keys(conversation.imageSelectionSnapshot).length === 0) {
+        return;
       }
-    }
-    void saveConversationToServer(conversation);
+      const cid = getConversationId(conversationId);
+      for (const img of conversation.uploadedImages) {
+        if ((img.conversationId ?? cid) !== cid) continue;
+        const saved = conversation.imageSelectionSnapshot[img.hash];
+        if (saved !== undefined) {
+          img.selected = saved;
+        }
+      }
+      void persistConversation(conversation);
+    });
   }
 
   function deselectAllImages(conversationId: string) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const cid = getConversationId(conversationId);
-    for (const img of conversation.uploadedImages) {
-      if ((img.conversationId ?? cid) === cid) {
-        img.selected = false;
+    mutateConversation(conversationId, (conversation) => {
+      const cid = getConversationId(conversationId);
+      for (const img of conversation.uploadedImages) {
+        if ((img.conversationId ?? cid) === cid) {
+          img.selected = false;
+        }
       }
-    }
-    void saveConversationToServer(conversation);
+      void persistConversation(conversation);
+    });
   }
 
   function removeUploadedImage(
@@ -535,37 +722,36 @@ export const useConversationStore = defineStore('conversation', () => {
     hash: string,
     targetConversationId?: string,
   ) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const cid = targetConversationId ?? getConversationId(conversationId);
-    conversation.uploadedImages = conversation.uploadedImages.filter(
-      (img) => !(img.hash === hash && (img.conversationId ?? cid) === cid),
-    );
-    void saveConversationToServer(conversation);
+    mutateConversation(conversationId, (conversation) => {
+      const cid = targetConversationId ?? getConversationId(conversationId);
+      conversation.uploadedImages = conversation.uploadedImages.filter(
+        (img) => !(img.hash === hash && (img.conversationId ?? cid) === cid),
+      );
+      void persistConversation(conversation);
+    });
   }
 
   function setSubscriptions(
     conversationId: string,
     subscriptions: ConversationSubscription[],
   ) {
-    const conversation = getConversation(conversationId);
-    if (conversation) {
+    mutateConversation(conversationId, (conversation) => {
       conversation.subscriptions = subscriptions;
-      void saveConversationToServer(conversation);
-    }
+      void persistConversation(conversation);
+    });
   }
 
   function toggleExchangeIncluded(conversationId: string, exchangeId: string) {
-    const conversation = getConversation(conversationId);
-    if (!conversation) return;
-    const next = togglePairedExchangeIncluded(
-      conversation.exchanges,
-      exchangeId,
-    );
-    if (!next) return;
-    conversation.exchanges = next;
+    mutateConversation(conversationId, (conversation) => {
+      const next = togglePairedExchangeIncluded(
+        conversation.exchanges,
+        exchangeId,
+      );
+      if (!next) return;
+      conversation.exchanges = next;
 
-    void saveConversationToServer(conversation);
+      void persistConversation(conversation);
+    });
   }
 
   function buildPrompt(conversationId: string): string {

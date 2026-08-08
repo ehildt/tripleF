@@ -1,4 +1,7 @@
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import type {
+  SelectStepHistoryParams,
+  StepHistorySelection,
+} from './select-step-history.helper.types.js';
 
 /**
  * Templates that recap the prior conversation by definition — they receive
@@ -8,16 +11,6 @@ const FULL_HISTORY_TEMPLATES = new Set(['summary', 'evaluation']);
 
 /** Short conversations never need filtering: there is nothing to lose. */
 const PASSTHROUGH_MAX_MESSAGES = 6;
-
-type StepHistorySelection = {
-  messages: InputMessage[];
-  mode: 'full' | 'derived';
-};
-
-type SelectStepHistoryParams = {
-  messages: InputMessage[];
-  template?: string;
-};
 
 /**
  * Select which conversation history a downstream step (execute/respond)

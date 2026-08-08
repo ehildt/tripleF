@@ -3,9 +3,14 @@ import { computed } from 'vue';
 
 import type { KeyFinding } from '@/types/harness-response-data.model';
 
+import { pickCycleColor } from '../../shared/helpers/pick-cycle-color.helper';
+import { splitSpecLabel } from '../../shared/helpers/split-spec-label.helper';
+import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
+
 const props = defineProps<{
-  title: string;
   items?: KeyFinding[];
+  /** Heading above the list; omit for embedded use (e.g. stockmarket grid). */
+  title?: string;
 }>();
 
 const validItems = computed(() =>
@@ -17,56 +22,69 @@ const validItems = computed(() =>
       (item as KeyFinding).text.trim().length > 0,
   ),
 );
+
+/** Findings as label/value rows, mirroring the fundamentals cards. */
+const rows = computed(() =>
+  validItems.value.map((finding) => splitSpecLabel(finding.text)),
+);
 </script>
 
 <template>
-  <section v-if="validItems.length" class="findings">
-    <h3>{{ title }}</h3>
+  <section v-if="rows.length" class="key-findings">
+    <SectionTitle v-if="title" :title="title" />
     <ul>
-      <li v-for="(finding, index) in validItems" :key="index">
-        {{ finding.text }}
+      <li
+        v-for="(row, index) in rows"
+        :key="index"
+        class="key-findings__tag"
+        :style="{ '--finding-color': pickCycleColor(index) }"
+      >
+        <template v-if="row.label">
+          <span class="key-findings__label">{{ row.label }}</span>
+          <span class="key-findings__value">{{ row.value }}</span>
+        </template>
+        <span v-else class="key-findings__value">{{ row.value }}</span>
       </li>
     </ul>
   </section>
 </template>
 
 <style scoped>
-.findings ul {
+.key-findings ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
   list-style: none;
   padding: 0;
-  margin: 0.5em 0 0;
+  margin: 0;
 }
 
-.findings ul li {
-  position: relative;
-  padding-left: 1.25em;
-  margin-bottom: 0.35em;
-  color: var(--color-fg-secondary);
+/* Same card treatment as the stockmarket fundamentals: muted uppercase
+   label over the prominent value, mono, centered, harmony colour rhythm
+   on the value. */
+.key-findings__tag {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-0-5);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-family: var(--font-mono);
+  text-align: center;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
 }
 
-.findings ul li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 0.5em;
-  height: 0.5em;
-  background: var(--color-accent-primary);
+.key-findings__label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-fg-muted);
+  overflow-wrap: anywhere;
 }
 
-.findings ul li:nth-child(2)::before {
-  background: var(--color-harmony-1);
-}
-
-.findings ul li:nth-child(3)::before {
-  background: var(--color-harmony-2);
-}
-
-.findings ul li:nth-child(4)::before {
-  background: var(--color-harmony-3);
-}
-
-.findings ul li:nth-child(5)::before {
-  background: var(--color-harmony-4);
+.key-findings__value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--finding-color, var(--color-accent-primary));
+  overflow-wrap: anywhere;
 }
 </style>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
-import type { SetDropdownRef } from '../composables/use-chat-dropdowns';
-import type { SearchEngineState } from '../composables/use-search-engine-availability';
+import type { SetDropdownRef } from '../composables/use-chat-dropdowns.types';
+import type { SearchEngineState } from '../composables/use-search-engine-availability.types';
 import ChatExchangeList from '../exchange-list/ChatExchangeList.vue';
 import ChatPromptActionBar from '../prompt-action-bar/ChatPromptActionBar.vue';
 
@@ -20,6 +20,8 @@ const props = defineProps<{
   searchEngineState?: SearchEngineState;
   /** Every toggleable search source (web, images, news, …) + its state. */
   searchSources?: { key: string; enabled: boolean }[];
+  /** EODHD stock-market engine state: available + enabled. */
+  eodhdState?: { available: boolean; enabled: boolean };
   setActionBarRef: SetDropdownRef;
   setThinkDropdownRef: SetDropdownRef;
   setContextSizeDropdownRef: SetDropdownRef;
@@ -29,6 +31,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   input: [event: Event];
   keydown: [event: KeyboardEvent];
+  focus: [];
   selectThink: [think: string];
   selectContextSize: [ctx: string];
   openThink: [];
@@ -38,13 +41,19 @@ const emit = defineEmits<{
   fileSelect: [];
   toggleSearchEngine: [];
   toggleSource: [source: string];
+  toggleEodhd: [];
   deleteConversation: [id: string];
   toggleIncluded: [exchangeId: string];
+  scroll: [];
 }>();
 
 const exchangeListRef = ref<InstanceType<typeof ChatExchangeList> | null>(null);
 
-defineExpose({ exchangeListRef });
+const activeUserExchangeId = computed(
+  () => exchangeListRef.value?.activeUserExchangeId ?? null,
+);
+
+defineExpose({ exchangeListRef, activeUserExchangeId });
 </script>
 
 <template>
@@ -55,6 +64,7 @@ defineExpose({ exchangeListRef });
       :retry-handler="props.retryHandler"
       @delete-conversation="emit('deleteConversation', $event)"
       @toggle-included="emit('toggleIncluded', $event)"
+      @scroll="emit('scroll')"
     />
     <ChatPromptActionBar
       :value="props.value"
@@ -69,11 +79,13 @@ defineExpose({ exchangeListRef });
       :file-select-disabled-reason="props.fileSelectDisabledReason"
       :search-engine-state="props.searchEngineState"
       :search-sources="props.searchSources"
+      :eodhd-state="props.eodhdState"
       :set-action-bar-ref="props.setActionBarRef"
       :set-think-dropdown-ref="props.setThinkDropdownRef"
       :set-context-size-dropdown-ref="props.setContextSizeDropdownRef"
       @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
+      @focus="emit('focus')"
       @select-think="emit('selectThink', $event)"
       @select-context-size="emit('selectContextSize', $event)"
       @open-think="emit('openThink')"
@@ -83,6 +95,7 @@ defineExpose({ exchangeListRef });
       @file-select="emit('fileSelect')"
       @toggle-search-engine="emit('toggleSearchEngine')"
       @toggle-source="emit('toggleSource', $event)"
+      @toggle-eodhd="emit('toggleEodhd')"
     />
   </div>
 </template>

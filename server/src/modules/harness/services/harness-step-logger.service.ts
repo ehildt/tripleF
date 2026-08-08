@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 
-import type { HarnessContext } from './harness-context.type.js';
-
-type StepLoggerContext =
-  Pick<HarnessContext, 'requestId'> | { requestId?: string };
+import type { StepLoggerContext } from './harness-step-logger.service.types.js';
 
 @Injectable()
 export class HarnessStepLogger {

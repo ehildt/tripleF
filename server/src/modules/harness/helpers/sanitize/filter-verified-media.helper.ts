@@ -3,7 +3,7 @@ import type { MediaValidationResult } from '../../services/media-url-validator.s
 import type {
   ExtractedImageItem,
   ExtractedVideoItem,
-} from '../extract-media-from-tools.helper.js';
+} from '../media/extract-media-from-tools.types.js';
 
 /**
  * Verify media URLs against live endpoints. Broken links are dropped; type

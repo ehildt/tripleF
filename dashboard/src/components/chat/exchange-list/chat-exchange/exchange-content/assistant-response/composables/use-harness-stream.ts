@@ -2,8 +2,8 @@ import { computed, ref } from 'vue';
 
 import type { HarnessStreamEvent } from '@/types/harness-stream-event.model';
 
-import { createHarnessResponseState } from './helpers/create-harness-response-state.helper';
-import { processHarnessResponseEvent } from './helpers/process-harness-response-event.helper';
+import { createHarnessResponseState } from './helpers/state/create-harness-response-state.helper';
+import { processHarnessResponseEvent } from './helpers/state/process-harness-response-event.helper';
 
 export function useHarnessStream(requestId: string) {
   const state = ref(createHarnessResponseState(requestId));

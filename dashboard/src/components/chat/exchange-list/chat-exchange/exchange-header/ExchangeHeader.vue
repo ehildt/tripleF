@@ -6,28 +6,29 @@
  */
 import {
   Bot,
+  CircleX,
   Copy,
   GitBranch,
   RefreshCw,
-  SendToBack,
+  SquaresExclude,
   Trash2,
   User,
-  X,
 } from '@lucide/vue';
 import { computed, toRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+import { useAppStore } from '@/stores/app';
 import type { Exchange } from '@/stores/conversation';
+import { formatTime } from '@/utils/format-time.helper';
 
 import ResponseMetaBarPill from '../exchange-content/assistant-response/shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
 import ResponseMetaBar from '../exchange-content/assistant-response/shared/ui/response-meta-bar/ResponseMetaBar.vue';
-import { formatExchangeTime } from '../helpers/format-exchange-time.helper';
 import { useActivityLabel } from './composables/use-activity-label';
-import { usePromptContextPercent } from './composables/use-prompt-context-percent';
 import ExchangeActivityLabel from './exchange-activity-label/ExchangeActivityLabel.vue';
 import ExchangeHeaderAction from './exchange-header-action/ExchangeHeaderAction.vue';
 import ExchangeMetaRow from './exchange-meta-row/ExchangeMetaRow.vue';
 import { buildExchangeMetaPills } from './helpers/build-exchange-meta-pills.helper';
+import WorkingIndicator from './working-indicator/WorkingIndicator.vue';
 
 const props = defineProps<{
   exchange: Exchange;
@@ -49,6 +50,9 @@ const emit = defineEmits<{
   hoverDeleteEnd: [];
 }>();
 
+const { locale } = useI18n();
+const appStore = useAppStore();
+
 const { activityLabel } = useActivityLabel(toRef(props, 'exchange'));
 
 /** Assistant meta-bar pills (category/date/read-time/author) from the
@@ -63,12 +67,8 @@ const metaPills = computed(() =>
  * action stay up for the whole lifecycle and only die with the done event.
  */
 const isLive = computed(() => props.isPending || props.isStreaming);
-const { promptContextPercent } = usePromptContextPercent(
-  toRef(props, 'exchange'),
-  toRef(props, 'isUser'),
-);
 
-const time = computed(() => formatExchangeTime(props.exchange.timestamp));
+const time = computed(() => formatTime(props.exchange.timestamp, locale.value));
 
 function onCancel() {
   if (props.exchange.requestId) {
@@ -83,7 +83,7 @@ function onCancel() {
     <User v-else class="exchange-header__user-icon" />
 
     <ExchangeHeaderAction
-      v-if="isDone"
+      v-if="isDone && appStore.chatIconVisibility.copy"
       :title="$t('common.copy')"
       @click="emit('copy')"
     >
@@ -110,22 +110,22 @@ function onCancel() {
       <RefreshCw />
     </ExchangeHeaderAction>
     <ExchangeHeaderAction
-      v-if="isUser"
+      v-if="isUser && appStore.chatIconVisibility.include"
       :title="$t('common.toggleContextInclusion')"
       :active="exchange.included === false"
       @click="emit('toggleIncluded')"
     >
-      <SendToBack />
+      <SquaresExclude />
     </ExchangeHeaderAction>
     <ExchangeHeaderAction
-      v-if="isUser"
+      v-if="isUser && appStore.chatIconVisibility.branch"
       :title="$t('common.branch')"
       @click="emit('branch')"
     >
       <GitBranch />
     </ExchangeHeaderAction>
     <ExchangeHeaderAction
-      v-if="isUser"
+      v-if="isUser && appStore.chatIconVisibility.delete"
       :title="$t('common.delete')"
       variant="danger"
       @click="emit('delete')"
@@ -135,22 +135,17 @@ function onCancel() {
       <Trash2 />
     </ExchangeHeaderAction>
 
-    <Tooltip :text="$t('common.contextWindowUsed')">
-      <span
-        v-if="isUser && promptContextPercent != null"
-        class="exchange-header__meta"
-      >
-        {{ promptContextPercent }}%
-      </span>
-    </Tooltip>
-
     <ExchangeHeaderAction
       v-if="isLive && exchange.requestId"
       :title="$t('common.cancel')"
       @click="onCancel"
     >
-      <X />
+      <CircleX />
     </ExchangeHeaderAction>
+    <WorkingIndicator
+      v-if="!isUser && isLive"
+      class="exchange-header__working"
+    />
     <ExchangeActivityLabel
       v-if="!isUser && isLive && activityLabel"
       :label="activityLabel"

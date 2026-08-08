@@ -2,20 +2,9 @@
 import { Copy } from '@lucide/vue';
 
 import Tooltip from '../tooltip/Tooltip.vue';
+import type { TabPanelProps } from './TabPanel.types';
 
-export interface TabPanelTab {
-  id: string;
-  label: string;
-}
-
-interface Props {
-  tabs: TabPanelTab[];
-  activeTab: string | null;
-  copyable?: boolean;
-  copied?: boolean;
-}
-
-const props = defineProps<Props>();
+const props = defineProps<TabPanelProps>();
 
 const emit = defineEmits<{
   (e: 'select', tabId: string): void;
@@ -59,9 +48,6 @@ function handleSelect(tabId: string) {
         </button>
       </Tooltip>
       <slot />
-    </div>
-    <div v-else class="tab-panel__no-tab">
-      <span>{{ $t('common.selectTab') }}</span>
     </div>
   </div>
 </template>
@@ -152,11 +138,5 @@ function handleSelect(tabId: string) {
 .tab-panel__copy-icon {
   width: 0.875rem;
   height: 0.875rem;
-}
-
-.tab-panel__no-tab {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  color: var(--color-fg-muted);
 }
 </style>

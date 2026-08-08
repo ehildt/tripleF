@@ -1,7 +1,4 @@
-export interface ParsedUrl {
-  path: string;
-  params: Array<{ key: string; value: string }>;
-}
+import type { ParsedUrl } from './parse-url.helper.types';
 
 /**
  * Parse an endpoint into a path and an array of query-string params.

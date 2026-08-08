@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
+import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
@@ -11,6 +12,11 @@ import { InterpretActionService } from './interpret.action.js';
 const playwrightMcpConfigProvider = {
   provide: PlaywrightMcpConfigService,
   useValue: { config: { enabled: false, url: 'http://localhost:8931/mcp' } },
+};
+
+const eodhdDiscoveryProvider = {
+  provide: EodhdDiscoveryService,
+  useValue: { getCached: vi.fn(() => undefined), refresh: vi.fn() },
 };
 
 describe('InterpretActionService', () => {
@@ -22,6 +28,7 @@ describe('InterpretActionService', () => {
       providers: [
         InterpretActionService,
         playwrightMcpConfigProvider,
+        eodhdDiscoveryProvider,
         {
           provide: AiSdkService,
           useValue: {
@@ -233,6 +240,7 @@ describe('InterpretActionService', () => {
       providers: [
         InterpretActionService,
         playwrightMcpConfigProvider,
+        eodhdDiscoveryProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -243,7 +251,7 @@ describe('InterpretActionService', () => {
             generateChat: vi.fn().mockResolvedValue({
               text: JSON.stringify({
                 template: 'article',
-                tools: ['webSearch'],
+                tools: ['serperWebSearch'],
                 reasoning: 'research',
                 language: 'en',
                 needsClarification: false,
@@ -301,7 +309,7 @@ describe('InterpretActionService', () => {
     });
 
     expect(result.intent.template).toBe('article');
-    expect(result.intent.tools).toContain('webSearch');
+    expect(result.intent.tools).toContain('serperWebSearch');
     expect(result.intent.tools).toContain('serperImageSearch');
     expect(result.intent.tools).toContain('serperVideoSearch');
     expect(result.intent.tools).toHaveLength(3);
@@ -312,6 +320,7 @@ describe('InterpretActionService', () => {
       providers: [
         InterpretActionService,
         playwrightMcpConfigProvider,
+        eodhdDiscoveryProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -322,7 +331,7 @@ describe('InterpretActionService', () => {
             generateChat: vi.fn().mockResolvedValue({
               text: JSON.stringify({
                 template: 'news',
-                tools: ['webSearch', 'serperNewsSearch'],
+                tools: ['serperWebSearch', 'serperNewsSearch'],
                 reasoning: 'current events',
                 language: 'en',
                 needsClarification: false,
@@ -380,7 +389,7 @@ describe('InterpretActionService', () => {
     });
 
     expect(result.intent.template).toBe('news');
-    expect(result.intent.tools).toContain('webSearch');
+    expect(result.intent.tools).toContain('serperWebSearch');
     expect(result.intent.tools).toContain('serperNewsSearch');
     expect(result.intent.tools).toContain('serperImageSearch');
     expect(result.intent.tools).toContain('serperVideoSearch');
@@ -413,6 +422,7 @@ describe('InterpretActionService', () => {
       providers: [
         InterpretActionService,
         playwrightMcpConfigProvider,
+        eodhdDiscoveryProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -423,7 +433,7 @@ describe('InterpretActionService', () => {
             generateChat: vi.fn().mockResolvedValue({
               text: JSON.stringify({
                 template: 'evaluation',
-                tools: ['webSearch'],
+                tools: ['serperWebSearch'],
                 reasoning: 'review',
                 language: 'en',
                 needsClarification: false,
@@ -481,7 +491,7 @@ describe('InterpretActionService', () => {
     });
 
     expect(result.intent.template).toBe('evaluation');
-    expect(result.intent.tools).toEqual(['webSearch']);
+    expect(result.intent.tools).toEqual(['serperWebSearch']);
   });
 
   it('defaults imageCount and videoCount to 6 when media tools are selected', async () => {
@@ -489,6 +499,7 @@ describe('InterpretActionService', () => {
       providers: [
         InterpretActionService,
         playwrightMcpConfigProvider,
+        eodhdDiscoveryProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -565,6 +576,7 @@ describe('InterpretActionService', () => {
       providers: [
         InterpretActionService,
         playwrightMcpConfigProvider,
+        eodhdDiscoveryProvider,
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },

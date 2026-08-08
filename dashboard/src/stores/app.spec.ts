@@ -97,4 +97,119 @@ describe('useAppStore', () => {
     expect(result).toBe(false);
     spyErr.mockRestore();
   });
+
+  describe('scroll mode', () => {
+    it('defaults to carousel', () => {
+      const store = useAppStore();
+      expect(store.defaultScrollMode).toBe('carousel');
+    });
+
+    it('setDefaultScrollMode updates the global default', () => {
+      const store = useAppStore();
+      store.setDefaultScrollMode('native');
+      expect(store.defaultScrollMode).toBe('native');
+    });
+
+    it('conversations inherit the global default when not overridden', () => {
+      const store = useAppStore();
+      store.setDefaultScrollMode('native');
+      expect(store.getConversationScrollMode('conv-1')).toBe('native');
+    });
+
+    it('setConversationScrollMode overrides the default for one conversation', () => {
+      const store = useAppStore();
+      store.setDefaultScrollMode('native');
+      store.setConversationScrollMode('conv-1', 'carousel');
+      expect(store.getConversationScrollMode('conv-1')).toBe('carousel');
+      // Other conversations still inherit the default.
+      expect(store.getConversationScrollMode('conv-2')).toBe('native');
+    });
+  });
+
+  describe('media priority', () => {
+    it('defaults to images', () => {
+      const store = useAppStore();
+      expect(store.defaultMediaPriority).toBe('images');
+    });
+
+    it('setDefaultMediaPriority updates the global default', () => {
+      const store = useAppStore();
+      store.setDefaultMediaPriority('videos');
+      expect(store.defaultMediaPriority).toBe('videos');
+    });
+
+    it('conversations inherit the global default when not overridden', () => {
+      const store = useAppStore();
+      store.setDefaultMediaPriority('videos');
+      expect(store.getConversationMediaPriority('conv-1')).toBe('videos');
+    });
+
+    it('setConversationMediaPriority overrides the default for one conversation', () => {
+      const store = useAppStore();
+      store.setDefaultMediaPriority('videos');
+      store.setConversationMediaPriority('conv-1', 'images');
+      expect(store.getConversationMediaPriority('conv-1')).toBe('images');
+      // Other conversations still inherit the default.
+      expect(store.getConversationMediaPriority('conv-2')).toBe('videos');
+    });
+  });
+
+  describe('temporary retention', () => {
+    it('defaults to 7 days (10080 minutes) when unset', () => {
+      const store = useAppStore();
+      expect(store.temporaryRetentionMinutes).toBe(10080);
+    });
+
+    it('setTemporaryRetentionMinutes clamps negative values to 0', () => {
+      const store = useAppStore();
+      store.setTemporaryRetentionMinutes(-5);
+      expect(store.temporaryRetentionMinutes).toBe(0);
+      store.setTemporaryRetentionMinutes(30);
+      expect(store.temporaryRetentionMinutes).toBe(30);
+    });
+  });
+
+  describe('chat icon visibility', () => {
+    it('defaults every action icon to visible', () => {
+      const store = useAppStore();
+      expect(store.chatIconVisibility).toEqual({
+        copy: true,
+        include: true,
+        branch: true,
+        delete: true,
+      });
+    });
+
+    it('setChatIconVisibility toggles a single icon', () => {
+      const store = useAppStore();
+      store.setChatIconVisibility('copy', false);
+      expect(store.chatIconVisibility.copy).toBe(false);
+      expect(store.chatIconVisibility.include).toBe(true);
+    });
+  });
+
+  describe('chart config', () => {
+    it('defaults to candles, heatmap flow, green colormap, and all annotations on', () => {
+      const store = useAppStore();
+      expect(store.chartConfig).toEqual({
+        priceStyle: 'candles',
+        volumeStyle: 'heatmap',
+        heatmapVariant: 'flow',
+        colormap: 'green',
+        showMarkers: true,
+        showReferenceLines: true,
+        showTooltip: true,
+      });
+    });
+
+    it('setChartConfig merges a partial patch', () => {
+      const store = useAppStore();
+      store.setChartConfig({ priceStyle: 'line', showTooltip: false });
+      expect(store.chartConfig.priceStyle).toBe('line');
+      expect(store.chartConfig.showTooltip).toBe(false);
+      // Untouched fields keep their defaults.
+      expect(store.chartConfig.volumeStyle).toBe('heatmap');
+      expect(store.chartConfig.showMarkers).toBe(true);
+    });
+  });
 });

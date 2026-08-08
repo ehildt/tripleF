@@ -20,6 +20,8 @@ describe('useModelsStore', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: { get: () => null },
         json: () =>
           Promise.resolve({
             models: [{ model: 'llama' }, { model: 'mistral' }],
@@ -37,6 +39,8 @@ describe('useModelsStore', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: { get: () => null },
         json: () =>
           Promise.resolve({
             models: [
@@ -64,6 +68,8 @@ describe('useModelsStore', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: { get: () => null },
         json: () =>
           Promise.resolve({
             models: [
@@ -94,11 +100,13 @@ describe('useModelsStore', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: { get: () => null },
         json: () => Promise.resolve({ models: [{ model: 'x' }] }),
       }),
     );
     const store = useModelsStore();
-    await store.fetchModels(true);
+    await store.fetchModels({ refresh: true });
     expect(store.models).toEqual([{ model: 'x' }]);
   });
 

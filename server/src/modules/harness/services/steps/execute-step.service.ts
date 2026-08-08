@@ -4,6 +4,10 @@ import { Injectable } from '@nestjs/common';
 import { ExecuteActionService } from '../../actions/execute.action.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
 import type { ToolExecutionEvent } from '../../helpers/execute/wrap-tools-with-execution-events.helper.js';
+import {
+  HARNESS_ACTIVITY_KEYS,
+  resolveHarnessActivityLanguage,
+} from '../../helpers/harness-activity.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
@@ -28,6 +32,8 @@ export class ExecuteStepService implements StepHandler {
       ctx,
       ctx.abortSignal,
       (event) => void this.emitToolEvent(ctx, event),
+      (toolName, chartData) =>
+        void this.emitChartData(ctx, toolName, chartData),
     );
 
     ctx.buffers = result.buffers;
@@ -56,9 +62,9 @@ export class ExecuteStepService implements StepHandler {
    */
   private resolveExecuteStatus(ctx: HarnessContext): string | undefined {
     const hasTools = (ctx.outputs.intent?.tools ?? []).length > 0;
-    if (hasTools) return 'Searching the web and fetching media…';
+    if (hasTools) return HARNESS_ACTIVITY_KEYS.searching;
     if (ctx.buffers.length > 0 || ctx.processedMeta.length > 0)
-      return 'Analyzing your images…';
+      return HARNESS_ACTIVITY_KEYS.analyzingImages;
     return undefined;
   }
 
@@ -77,19 +83,40 @@ export class ExecuteStepService implements StepHandler {
         input: event.input,
         status: event.status,
       },
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }
 
-  private async emitStatus(
+  /**
+   * Stream large chart data (OHLCV, technical series) to the client right
+   * after the tool runs, tagged with the same request/session/conversation
+   * ids. The client buffers it and reveals it once the respond step starts
+   * streaming — the model never sees the raw series.
+   */
+  private async emitChartData(
     ctx: HarnessContext,
-    message: string,
+    toolName: string,
+    chartData: unknown,
   ): Promise<void> {
+    await emitToSocket(this.io, ctx.roomId, ctx.event, {
+      requestId: ctx.requestId,
+      sessionId: ctx.filters.sessionId,
+      conversationId: ctx.filters.conversationId,
+      template: ctx.outputs.intent?.template,
+      chartData: { toolName, data: chartData },
+      language: resolveHarnessActivityLanguage(ctx),
+      done: false,
+    });
+  }
+
+  private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
     await emitToSocket(this.io, ctx.roomId, ctx.event, {
       requestId: ctx.requestId,
       model: ctx.model,
       template: ctx.outputs.intent?.template,
-      status: message,
+      activity: { key },
+      language: resolveHarnessActivityLanguage(ctx),
       done: false,
     });
   }

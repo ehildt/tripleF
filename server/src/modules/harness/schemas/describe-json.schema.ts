@@ -1,36 +1,11 @@
 import { z } from 'zod';
 
-import { safeUrl } from '../helpers/url-schema.helper.js';
+import { internationalCoverageSchema } from './international-coverage-json.schema.js';
+import { referenceGalleryItemSchema } from './reference-gallery-item-json.schema.js';
+import { sourceSchema } from './source-json.schema.js';
+import { createTextItemSchema } from './text-item-json.schema.js';
 
-const galleryItemSchema = z.object(
-  {
-    imageUrl: z.string(),
-    imageAlt: z.string().optional(),
-    title: z.string().optional(),
-    caption: z.string().optional(),
-  },
-  { message: 'galleryItems entries must be objects with imageUrl' },
-);
-
-const keyFindingSchema = z.object(
-  {
-    text: z.string().min(1, {
-      message: 'keyFindings entries must have a non-empty text field',
-    }),
-  },
-  { message: 'keyFindings entries must be objects with text' },
-);
-
-const sourceSchema = z.object(
-  {
-    url: safeUrl({ message: 'sources entries must have a valid url' }),
-    title: z.string().optional(),
-    sourceName: z.string().optional(),
-    date: z.string().optional(),
-    snippet: z.string().optional(),
-  },
-  { message: 'sources entries must be objects with url' },
-);
+const keyFindingSchema = createTextItemSchema('keyFindings');
 
 export const describeSchema = z.object({
   category: z.string(),
@@ -38,17 +13,9 @@ export const describeSchema = z.object({
   subtitle: z.string(),
   sectionContent: z.string(),
   galleryTitle: z.string().optional(),
-  galleryItems: z.array(galleryItemSchema).optional(),
+  galleryItems: z.array(referenceGalleryItemSchema).optional(),
   keyFindings: z.array(keyFindingSchema).optional(),
   sources: z.array(sourceSchema).optional(),
   note: z.string().optional(),
+  internationalCoverage: internationalCoverageSchema.optional(),
 });
-
-export function formatZodIssues(issues: z.ZodIssue[]): string {
-  return issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
-      return `${path}: ${issue.message}`;
-    })
-    .join('; ');
-}

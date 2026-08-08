@@ -1,7 +1,8 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { type FilterVariant } from '../../../sharp/types/image-variant.types.js';
+
+import { variantRequestSchema } from './image-variants.schema.js';
 
 export function createVariantRequestTool(variant: FilterVariant) {
   const descriptions: Record<FilterVariant, string> = {
@@ -17,7 +18,7 @@ export function createVariantRequestTool(variant: FilterVariant) {
 
   return tool({
     description: descriptions[variant],
-    inputSchema: z.object({}),
+    inputSchema: variantRequestSchema,
     execute: async () => ({ variant }),
   });
 }

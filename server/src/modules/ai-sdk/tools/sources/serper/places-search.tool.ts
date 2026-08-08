@@ -1,40 +1,27 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import { applyLocaleParams } from '../apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../fetch-with-timeout.js';
 import { SEARCH_TIMEOUT_MS } from '../search-timeout.js';
 import type { ToolDependencies } from '../types.js';
 
+import {
+  type SerperPlacesSearchInput,
+  serperPlacesSearchSchema,
+} from './places-search.schema.js';
+import type { SerperPlacesSearchResponse } from './places-search.types.js';
 import { HEADERS } from './serper.constants.js';
 
 export function createSerperPlacesSearch(deps: ToolDependencies) {
   return tool({
     description:
       'Search for places and businesses using Serper.dev (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Phrase the query like a Google Maps search: a business name, a business type, or a business type plus location (e.g. "MediaMarkt Berlin", "coffee shops in Munich").',
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe(
-          'A standalone places search query that explicitly names the business or business type plus location (e.g. "MediaMarkt Berlin", "coffee shops in Munich") — resolve the subject from the conversation; never copy the user message verbatim.',
-        ),
-      count: z.number().optional().describe('Number of results (max 100)'),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-    }),
+    inputSchema: serperPlacesSearchSchema,
     execute: async ({
       query,
       count: reqCount,
       lang,
-    }: {
-      query: string;
-      count?: number;
-      lang?: string;
-    }) => {
+    }: SerperPlacesSearchInput) => {
       const cfg = deps.getLiveConfig().serper;
       if (!cfg.enabled || !cfg.apiKey || !cfg.places.enabled) {
         return { results: [], error: 'Serper.dev places is not enabled' };
@@ -56,20 +43,7 @@ export function createSerperPlacesSearch(deps: ToolDependencies) {
       if (!res.ok) {
         return { results: [], error: `HTTP ${res.status}` };
       }
-      const data = (await res.json()) as {
-        places?: Array<{
-          title: string;
-          address: string;
-          phoneNumber?: string;
-          latitude?: number;
-          longitude?: number;
-          rating?: number;
-          ratingCount?: number;
-          type?: string;
-          website?: string;
-          cid?: string;
-        }>;
-      };
+      const data = (await res.json()) as SerperPlacesSearchResponse;
       if (!data.places?.length) {
         deps.logger.warn(`Serper.dev Places returned 0 results for "${query}"`);
         return { results: [] };

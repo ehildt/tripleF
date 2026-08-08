@@ -1,3 +1,5 @@
+import type { Overrides } from './list-search-sources.helper.types';
+
 /**
  * Reserved keys inside a search-engine config that are not toggleable
  * sources and must never become tags.
@@ -10,7 +12,12 @@ const RESERVED_KEYS = new Set(['enabled', 'apiKey', 'webSearch']);
  */
 const NON_SEARCH_PROVIDERS = new Set(['sources']);
 
-type Overrides = Record<string, Record<string, unknown> | undefined>;
+/**
+ * Search engines that expose a single on/off toggle instead of per-source
+ * tags (EODHD). Their endpoint flags must not become source tags; the engine
+ * gets one dedicated toggle in the prompt bar instead.
+ */
+const SINGLE_TOGGLE_PROVIDERS = new Set(['eodhd']);
 
 function isSourceToggle(value: unknown): value is { enabled: boolean } {
   return (
@@ -75,6 +82,7 @@ export function listSearchSources(
   if (!snapshot) return sources;
   for (const [provider, engine] of Object.entries(snapshot)) {
     if (NON_SEARCH_PROVIDERS.has(provider)) continue;
+    if (SINGLE_TOGGLE_PROVIDERS.has(provider)) continue;
     collectProviderSources(provider, engine, sessionOverrides, sources);
   }
   return sources;

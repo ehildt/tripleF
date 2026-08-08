@@ -4,7 +4,7 @@ import { computed } from 'vue';
 
 import { formatCtx } from '@/utils/format-ctx.helper';
 
-import type { OllamaModel } from '../../../../../../stores/models';
+import type { OllamaModel } from '../../../../../../types/ollama-model.model';
 import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
 import { CAPABILITY_META } from '../../../shared/ui/capability-badge/capability-meta';
 import { formatParameterSize } from './helpers/format-parameter-size.helper';

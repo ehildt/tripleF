@@ -2,144 +2,47 @@
 import {
   BrainCircuit,
   CircleGauge,
-  FileText,
-  Film,
-  Globe,
   GlobeOff,
   GlobeX,
-  Image,
-  type LucideIcon,
-  MapPin,
-  Newspaper,
-  Search,
-  ShoppingCart,
-  Star,
+  Landmark,
   Upload,
 } from '@lucide/vue';
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 import Dropdown from '../../shared/ui/drop-down/DropDown.vue';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
-import { type SetDropdownRef } from '../composables/use-chat-dropdowns';
-import type { SearchEngineState } from '../composables/use-search-engine-availability';
+import {
+  type ChatPromptActionBarEmits,
+  useChatPromptActionBar,
+} from './composables/use-chat-prompt-action-bar.composable';
+import type { ChatPromptActionBarProps } from './ChatPromptActionBar.types';
 
-const props = defineProps<{
-  value: string;
-  thinkOptions: readonly string[];
-  thinkValue: string;
-  contextSizeOptions: readonly string[];
-  contextSizeValue: string;
-  defaultContextSize: string;
-  formatContextSize: (value: string) => string;
-  isDisabled: boolean;
-  isFileSelectDisabled: boolean;
-  fileSelectDisabledReason?: string;
-  searchEngineState?: SearchEngineState;
-  /** Every toggleable search source (web, images, news, …) + its state. */
-  searchSources?: { key: string; enabled: boolean }[];
-  setActionBarRef: SetDropdownRef;
-  setThinkDropdownRef: SetDropdownRef;
-  setContextSizeDropdownRef: SetDropdownRef;
-}>();
+const props = defineProps<ChatPromptActionBarProps>();
 
-const emit = defineEmits<{
-  input: [event: Event];
-  keydown: [event: KeyboardEvent];
-  selectThink: [think: string];
-  selectContextSize: [ctx: string];
-  openThink: [];
-  openContextSize: [];
-  disabledHoverStart: [];
-  disabledHoverEnd: [];
-  fileSelect: [];
-  toggleSearchEngine: [];
-  toggleSource: [source: string];
-}>();
+const emit = defineEmits<ChatPromptActionBarEmits>();
 
-const fileSelectClass = computed(() => ({
-  'chat-prompt-action-bar__file-button': true,
-  'chat-prompt-action-bar__file-button--disabled': props.isFileSelectDisabled,
-}));
-
-const { t } = useI18n();
-
-const fileSelectTitle = computed(
-  () => props.fileSelectDisabledReason || t('common.selectFiles'),
-);
-
-const actionsClass = computed(() => ({
-  'chat-prompt-action-bar__actions': true,
-  'chat-prompt-action-bar__actions--with-indicator':
-    props.searchEngineState !== undefined &&
-    props.searchEngineState !== 'unknown',
-}));
-
-const noSearchEngineTitle =
-  "No search engine connected — answers come from the model's training data. Enable one in SysCtl → Search Engines.";
-
-/** Icon and label per known search source; unknown sources fall back to Search. */
-const SOURCE_META: Record<string, { icon: LucideIcon; label: string }> = {
-  web: { icon: Globe, label: 'web' },
-  images: { icon: Image, label: 'images' },
-  news: { icon: Newspaper, label: 'news' },
-  shopping: { icon: ShoppingCart, label: 'shopping' },
-  webpageFetch: { icon: FileText, label: 'fetch' },
-  places: { icon: MapPin, label: 'places' },
-  videos: { icon: Film, label: 'videos' },
-  reviews: { icon: Star, label: 'reviews' },
-};
-
-/**
- * The tags at the top edge of the prompt input — toggle buttons, one per
- * search source, shown only while a search engine is enabled. Enabled
- * sources render colored, disabled ones gray; clicking flips the state
- * with immediate visual feedback. Kill switch off or no engine available
- * hides the strip entirely.
- */
-const sourceTags = computed(() => {
-  if (props.searchEngineState !== 'enabled') return [];
-  return (props.searchSources ?? []).map(({ key, enabled }) => ({
-    key,
-    enabled,
-    // Unknown sources fall back to a distinct Search icon — never one of
-    // the mapped icons, so the tags never repeat.
-    icon: SOURCE_META[key]?.icon ?? Search,
-    label: SOURCE_META[key]?.label ?? key,
-    title: enabled
-      ? t('common.sourceEnabled', {
-          label: SOURCE_META[key]?.label ?? key,
-        })
-      : t('common.sourceDisabled', {
-          label: SOURCE_META[key]?.label ?? key,
-        }),
-  }));
-});
-
-const searchEngineToggleTitle = computed(() =>
-  props.searchEngineState === 'enabled'
-    ? t('common.searchEngineConnected')
-    : t('common.searchEngineDisabled'),
-);
-
-function onFileButtonMouseEnter() {
-  if (props.isFileSelectDisabled) {
-    emit('disabledHoverStart');
-  }
-}
-
-function onFileButtonMouseLeave() {
-  if (props.isFileSelectDisabled) {
-    emit('disabledHoverEnd');
-  }
-}
+const {
+  fileSelectClass,
+  fileSelectTitle,
+  actionsClass,
+  sourceTags,
+  searchEngineToggleTitle,
+  eodhdToggleTitle,
+  noSearchEngineTitle,
+  onFileButtonMouseEnter,
+  onFileButtonMouseLeave,
+} = useChatPromptActionBar(props, emit);
 </script>
 
 <template>
   <div class="chat-prompt-action-bar">
-    <!-- Search-source toggle icons floating on the top border, right-aligned. -->
-    <div v-if="sourceTags.length" class="chat-prompt-action-bar__source-tags">
+    <!-- Search-source toggle icons floating on the top border, right-aligned.
+         Serper/Bright Data/YouTube render one toggle per source; EODHD is a
+         single on/off engine, so it gets one Landmark toggle. -->
+    <div
+      v-if="sourceTags.length || eodhdState?.available"
+      class="chat-prompt-action-bar__source-tags"
+    >
       <Tooltip v-for="tag in sourceTags" :key="tag.key" :text="tag.title">
         <button
           type="button"
@@ -158,6 +61,23 @@ function onFileButtonMouseLeave() {
           />
         </button>
       </Tooltip>
+      <Tooltip v-if="eodhdState?.available" :text="eodhdToggleTitle">
+        <button
+          type="button"
+          class="chat-prompt-action-bar__source-tag"
+          :class="{
+            'chat-prompt-action-bar__source-tag--disabled': !eodhdState.enabled,
+          }"
+          :aria-label="eodhdToggleTitle"
+          :aria-pressed="eodhdState.enabled"
+          @click="emit('toggleEodhd')"
+        >
+          <Landmark
+            class="chat-prompt-action-bar__source-tag-icon"
+            aria-hidden="true"
+          />
+        </button>
+      </Tooltip>
     </div>
     <span class="chat-prompt-action-bar__prompt">&gt;</span>
     <textarea
@@ -170,6 +90,7 @@ function onFileButtonMouseLeave() {
       :placeholder="$t('common.askHarness')"
       @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
+      @focus="emit('focus')"
     />
     <div :ref="props.setActionBarRef" :class="actionsClass">
       <Dropdown

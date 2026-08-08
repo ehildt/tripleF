@@ -3,14 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 import { ConfigRepository } from './config.repository.js';
+import type { SessionConfig } from './config.service.types.js';
 import { ShownMediaRepository } from './shown-media.repository.js';
-
-interface SessionConfig {
-  sessionId: string;
-  selectedModel?: string | null;
-  preprocessing?: Record<string, unknown> | null;
-  providerOverrides?: Record<string, unknown> | null;
-}
 
 @Injectable()
 export class ConfigService {

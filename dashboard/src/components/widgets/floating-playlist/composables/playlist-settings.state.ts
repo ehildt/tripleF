@@ -1,13 +1,10 @@
 import { ref } from 'vue';
 
-import type { PopoutAnchor } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-
 import { getActivePlaylistVideos, getPlaylists } from './playlist.state';
-
-/** Where the playlist lives: pinned inside the chat right panel, or an app-level floating window that survives tab switches. */
-export type PlaylistMode = 'panel' | 'floating';
-
-export type PlaylistAnchor = PopoutAnchor;
+import type {
+  PlaylistAnchor,
+  PlaylistMode,
+} from './playlist-settings.state.types';
 
 export const DEFAULT_PLAYLIST_MODE: PlaylistMode = 'panel';
 export const DEFAULT_PLAYLIST_ANCHOR: PlaylistAnchor = 'middle-right';

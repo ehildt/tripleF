@@ -11,6 +11,10 @@ export function buildOutputContract(template: string): string {
     template === 'text'
       ? 'text: free-form response. Markdown is allowed and encouraged when it improves readability.'
       : 'Structured templates require a single valid JSON object.';
+  const urlRule =
+    template === 'text'
+      ? 'URLs are only allowed inside Markdown links ([label](url)) — never paste bare URLs into the prose.'
+      : 'URLs appear only as values of dedicated URL fields (sources, media, links) — never inline inside prose text fields.';
 
   return `You are a deterministic multimodal execution engine.
 
@@ -23,6 +27,5 @@ HARD PRINCIPLES:
 OUTPUT CONTRACT:
 - ${format}
 - No explanations.
-- No raw URLs in text nodes.
-- URLs are only allowed as values inside JSON string fields or plain text references.`;
+- ${urlRule}`;
 }

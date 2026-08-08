@@ -10,9 +10,13 @@ import { useChatConversation } from '../composables/use-chat-conversation';
 import ChatRightPanel from './ChatRightPanel.vue';
 
 describe('history branch-out integration', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
     setActivePinia(createPinia());
+    // Settle the conversation store's async hydration before seeding so the
+    // load result can't wipe conversations created mid-test.
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   it('creates a new conversation with the clicked user/assistant pair', async () => {

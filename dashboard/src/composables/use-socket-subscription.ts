@@ -3,7 +3,7 @@ import { computed, type Ref } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
 
-import type { ConnectionState } from '../stores/socket';
+import type { ConnectionState } from '../types/connection-state.model';
 import type { SocketProvider } from '../types/socket-provider.model';
 import { useBlink } from './use-blink';
 import { useToast } from './use-toast';

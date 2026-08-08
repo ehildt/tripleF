@@ -1,20 +1,22 @@
 import { tool } from 'ai';
-import { z } from 'zod';
 
 import type { SearchRecency } from './apply-recency-param.helper.js';
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { SEARCH_TIMEOUT_MS } from './search-timeout.js';
-import {
-  STANDALONE_QUERY_DESCRIPTION,
-  STANDALONE_QUERY_TOOL_CLAUSE,
-} from './standalone-query.constants.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from './standalone-query.constants.js';
 import type { ToolDependencies } from './types.js';
+import {
+  type YoutubeVideoSearchInput,
+  youtubeVideoSearchSchema,
+} from './youtube.schema.js';
+import type {
+  VideoStats,
+  YoutubeSearchResponse,
+  YoutubeVideosResponse,
+} from './youtube.types.js';
 
 const SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 const VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
-
-const RECENCY_DESCRIPTION =
-  'Restrict results to the given past period (day=24 hours, week=7 days, month=1 month, year=1 year). Use for fresh content such as news, recent releases, or trending topics; leave unset for evergreen, historical, or general queries.';
 
 const RECENCY_DAYS: Record<NonNullable<SearchRecency>, number> = {
   day: 1,
@@ -31,6 +33,22 @@ function publishedAfterFor(recency?: SearchRecency): string | undefined {
   ).toISOString();
 }
 
+/**
+ * Extract the machine-readable reason ("quotaExceeded", "rateLimitExceeded",
+ * …) from a YouTube error envelope so failed calls are visible in the logs
+ * instead of silently degrading to empty result sets.
+ */
+async function readErrorReason(res: Response): Promise<string | undefined> {
+  try {
+    const body = (await res.json()) as {
+      error?: { errors?: { reason?: string }[] };
+    };
+    return body.error?.errors?.[0]?.reason;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Convert an ISO 8601 duration (PT#H#M#S) to an H:MM:SS / M:SS label. */
 function formatIsoDuration(iso?: string): string {
   const match = iso?.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
@@ -44,30 +62,6 @@ function formatIsoDuration(iso?: string): string {
     : `${minutes}:${pad(seconds)}`;
 }
 
-type YoutubeSearchResponse = {
-  items?: Array<{
-    id?: { kind?: string; videoId?: string };
-    snippet?: {
-      title?: string;
-      description?: string;
-      channelTitle?: string;
-      publishedAt?: string;
-      thumbnails?: Record<string, { url?: string } | undefined>;
-    };
-  }>;
-};
-
-type YoutubeVideosResponse = {
-  items?: Array<{
-    id?: string;
-    statistics?: { viewCount?: string };
-    contentDetails?: { duration?: string };
-    snippet?: { defaultLanguage?: string; defaultAudioLanguage?: string };
-  }>;
-};
-
-type VideoStats = { viewCount: number; duration?: string; lang?: string };
-
 /**
  * One batched videos.list call (1 quota unit) enriching search results with
  * view counts, ISO 8601 durations, and the video's declared language —
@@ -76,6 +70,7 @@ type VideoStats = { viewCount: number; duration?: string; lang?: string };
 async function fetchYoutubeVideoStats(
   videoIds: string[],
   apiKey: string,
+  logger: ToolDependencies['logger'],
 ): Promise<Map<string, VideoStats>> {
   const params = new URLSearchParams({
     part: 'statistics,contentDetails,snippet',
@@ -86,9 +81,20 @@ async function fetchYoutubeVideoStats(
     `${VIDEOS_URL}?${params}`,
     {},
     { timeoutMs: SEARCH_TIMEOUT_MS },
-  );
+  ).catch((err: unknown) => {
+    logger.warn(
+      `YouTube stats fetch failed: ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`,
+    );
+    throw err;
+  });
   const map = new Map<string, VideoStats>();
-  if (!res.ok) return map;
+  if (!res.ok) {
+    const reason = await readErrorReason(res);
+    logger.warn(
+      `YouTube stats fetch failed — HTTP ${res.status}${reason ? ` (${reason})` : ''}`,
+    );
+    return map;
+  }
   const data = (await res.json()) as YoutubeVideosResponse;
   for (const item of data.items ?? []) {
     if (!item.id) continue;
@@ -106,35 +112,13 @@ export function createYoutubeVideoSearch(deps: ToolDependencies) {
     description:
       'Search YouTube for videos using the official YouTube Data API. Returns titles, links, channel names, durations, view counts, and upload dates with direct thumbnails. Every result is an embeddable YouTube video. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
-    inputSchema: z.object({
-      query: z
-        .string()
-        .describe(
-          `${STANDALONE_QUERY_DESCRIPTION} Add the video type (e.g. review, trailer, tutorial, gameplay).`,
-        ),
-      count: z.number().optional().describe('Number of results (max 50)'),
-      recency: z
-        .enum(['day', 'week', 'month', 'year'])
-        .optional()
-        .describe(RECENCY_DESCRIPTION),
-      lang: z
-        .string()
-        .optional()
-        .describe(
-          'Two-letter ISO language code for result preference (e.g. en, de, ja)',
-        ),
-    }),
+    inputSchema: youtubeVideoSearchSchema,
     execute: async ({
       query,
       count: reqCount,
       recency,
       lang,
-    }: {
-      query: string;
-      count?: number;
-      recency?: SearchRecency;
-      lang?: string;
-    }) => {
+    }: YoutubeVideoSearchInput) => {
       const cfg = deps.getLiveConfig().youtube;
       if (!cfg.enabled || !cfg.apiKey || !cfg.videos.enabled) {
         return { results: [], error: 'YouTube video search is not enabled' };
@@ -165,8 +149,19 @@ export function createYoutubeVideoSearch(deps: ToolDependencies) {
         `${SEARCH_URL}?${params}`,
         {},
         { timeoutMs: SEARCH_TIMEOUT_MS },
-      );
-      if (!res.ok) return { results: [], error: `HTTP ${res.status}` };
+      ).catch((err: unknown) => {
+        deps.logger.warn(
+          `YouTube video search failed for "${query}": ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`,
+        );
+        throw err;
+      });
+      if (!res.ok) {
+        const reason = await readErrorReason(res);
+        deps.logger.warn(
+          `YouTube video search failed for "${query}" — HTTP ${res.status}${reason ? ` (${reason})` : ''}`,
+        );
+        return { results: [], error: `HTTP ${res.status}` };
+      }
 
       const data = (await res.json()) as YoutubeSearchResponse;
       const items = (data.items ?? []).filter((item) => item.id?.videoId);
@@ -178,6 +173,7 @@ export function createYoutubeVideoSearch(deps: ToolDependencies) {
       const stats = await fetchYoutubeVideoStats(
         items.map((item) => item.id!.videoId!),
         cfg.apiKey,
+        deps.logger,
       );
 
       const results = items.map((item) => {

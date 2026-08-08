@@ -3,32 +3,27 @@ import { fn } from 'storybook/test';
 
 import type { Exchange } from '@/stores/conversation';
 
+import type { ExchangeSection } from '../helpers/build-exchange-sections.helper';
 import ScrollableExchangeList from './ScrollableExchangeList.vue';
 
-const sampleExchanges: Exchange[] = [
+function exchange(
+  id: string,
+  role: 'user' | 'assistant',
+  content: string,
+): Exchange {
+  return { id, role, content, status: 'done', timestamp: Date.now() };
+}
+
+const sampleSections: ExchangeSection[] = [
   {
     id: 'u1',
-    role: 'user',
-    content: 'Hello there',
-    status: 'done',
-    timestamp: Date.now(),
-  },
-  {
-    id: 'a1',
-    role: 'assistant',
-    content: '<p>Hi! How can I help?</p>',
-    status: 'done',
-    timestamp: Date.now(),
-    requestId: 'r1',
+    user: exchange('u1', 'user', 'Hello there'),
+    assistants: [exchange('a1', 'assistant', '<p>Hi! How can I help?</p>')],
   },
   {
     id: 'u2',
-    role: 'user',
-    content: 'Tell me a joke',
-    status: 'done',
-    timestamp: Date.now(),
-    requestId: 'r2',
-    included: false,
+    user: exchange('u2', 'user', 'Tell me a joke'),
+    assistants: [exchange('a2', 'assistant', '<p>Why did the…</p>')],
   },
 ];
 
@@ -40,23 +35,26 @@ const meta = {
     docs: {
       description: {
         component: `
-The scrollable panel that renders the exchange list. Falls back to the
-ExchangeEmptyState when there are no exchanges yet. Emits
-setScrollContainer so the parent can hold the ref and call
-scrollToExchange from outside.
+The vertical carousel that renders the exchange list as full-height
+sections (each a user prompt paired with its assistant response). Scrolling
+snaps between sections and crossfades (blends) between them. Falls back to
+the ExchangeEmptyState when there are no sections yet.
 `,
       },
     },
   },
   args: {
-    exchanges: sampleExchanges,
+    sections: sampleSections,
+    mode: 'carousel',
     highlightedIds: new Set<string>(),
     collapsedIds: new Set<string>(),
-    onScroll: fn(),
-    onSetScrollContainer: fn(),
+    isCompact: false,
+    activeAssistantExchangeId: null,
+    activeAssistantResponseStarted: false,
     onDelete: fn(),
     onRetry: fn(),
     onBranch: fn(),
+    onToggleIncluded: fn(),
     onHoverDeleteStart: fn(),
     onHoverDeleteEnd: fn(),
   },
@@ -65,18 +63,36 @@ scrollToExchange from outside.
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Default with a few exchanges. */
-export const WithExchanges: Story = {};
+/** Default with a few sections. */
+export const WithSections: Story = {};
+
+/** The same sections in native continuous-scroll mode. */
+export const NativeMode: Story = {
+  args: { mode: 'native' },
+};
 
 /** Empty list — falls back to the empty-state placeholder. */
 export const Empty: Story = {
-  args: { exchanges: [] },
+  args: { sections: [] },
 };
 
-/** Collapsed exchange pair (user included=false plus its assistant partner). */
-export const WithCollapsed: Story = {
+/** A section whose assistant response is still pending. */
+export const WithPendingAssistant: Story = {
   args: {
-    exchanges: [sampleExchanges[0], sampleExchanges[1]],
-    collapsedIds: new Set(['u1', 'a1']),
+    sections: [
+      {
+        id: 'u3',
+        user: exchange('u3', 'user', 'What is the weather?'),
+        assistants: [
+          {
+            id: 'a3',
+            role: 'assistant',
+            content: '',
+            status: 'pending',
+            timestamp: Date.now(),
+          },
+        ],
+      },
+    ],
   },
 };

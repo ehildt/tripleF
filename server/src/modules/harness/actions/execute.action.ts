@@ -6,26 +6,26 @@ import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.servi
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
-import { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
-import { buildFallbackInput } from '../helpers/build-execute-prompt.helper.js';
+import { buildEodhdFallbackInput } from '../helpers/execute/build-eodhd-fallback-input.helper.js';
 import { buildExecuteMessages } from '../helpers/execute/build-execute-messages.helper.js';
+import { buildFallbackInput } from '../helpers/execute/build-execute-prompt.helper.js';
+import { extractEodhdTickerFromResults } from '../helpers/execute/extract-eodhd-ticker.helper.js';
 import { extractQuery } from '../helpers/execute/extract-query.helper.js';
+import { isEodhdDataTool } from '../helpers/execute/is-eodhd-data-tool.helper.js';
+import {
+  type ChartDataHandler,
+  wrapToolsWithChartStreaming,
+} from '../helpers/execute/wrap-tools-with-chart-streaming.helper.js';
 import {
   type ToolExecutionEventHandler,
   wrapToolsWithExecutionEvents,
 } from '../helpers/execute/wrap-tools-with-execution-events.helper.js';
 import { wrapToolsWithSearchRecency } from '../helpers/execute/wrap-tools-with-search-recency.helper.js';
-import { type VariantName } from '../helpers/tool-registry.constants.js';
+import { type VariantName } from '../helpers/tools/tool-registry.constants.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
-type ExecuteResult = {
-  buffers: Buffer[];
-  processedMeta: FastifyMultipartMeta[];
-  toolResults: ToolResult[];
-  inputTokens?: number;
-  outputTokens?: number;
-};
+import type { ExecuteResult } from './execute.action.types.js';
 
 /**
  * Browsing needs a step budget: navigate → snapshot → interact, unlike the
@@ -58,6 +58,7 @@ export class ExecuteActionService {
     ctx: HarnessContext,
     abortSignal?: AbortSignal,
     onToolEvent?: ToolExecutionEventHandler,
+    onChartData?: ChartDataHandler,
   ): Promise<ExecuteResult> {
     const intent = ctx.outputs.intent;
     if (!intent) throw new Error('Missing intent — execute cannot run');
@@ -102,9 +103,12 @@ export class ExecuteActionService {
             intent.language ?? undefined,
           )
         : {};
-    const chosenTools = wrapToolsWithSearchRecency(
-      wrapToolsWithExecutionEvents(selectedTools, onToolEvent),
-      intent.getDate !== false,
+    const chosenTools = wrapToolsWithChartStreaming(
+      wrapToolsWithSearchRecency(
+        wrapToolsWithExecutionEvents(selectedTools, onToolEvent),
+        intent.getDate !== false,
+      ),
+      onChartData,
     );
 
     // 4. Run the tool model call with resized images
@@ -237,18 +241,18 @@ export class ExecuteActionService {
 
     const query = extractQuery(ctx, intent);
     const results: ToolResult[] = [];
+    const ticker = await this.resolveMissingEodhdTicker(
+      chosenTools,
+      existingResults,
+      query,
+      mandatory,
+    );
 
     for (const toolName of mandatory) {
       const toolDef = chosenTools[toolName];
       if (!toolDef || typeof (toolDef as any).execute !== 'function') continue;
 
-      const input = buildFallbackInput(
-        toolName,
-        query,
-        intent.imageCount ?? undefined,
-        intent.videoCount ?? undefined,
-        intent.language ?? undefined,
-      );
+      const input = this.buildMissingToolInput(toolName, query, ticker, intent);
       if (!input) continue;
 
       try {
@@ -263,5 +267,59 @@ export class ExecuteActionService {
     }
 
     return results;
+  }
+
+  /**
+   * Resolve a ticker for any missing EODHD data tools, from the search results
+   * the model already produced or by running eodhdSearch ourselves, so the
+   * chart/quote tools can still be invoked when the model skips them.
+   */
+  private async resolveMissingEodhdTicker(
+    chosenTools: Record<string, unknown>,
+    existingResults: ToolResult[],
+    query: string,
+    mandatory: string[],
+  ): Promise<string | undefined> {
+    if (!mandatory.some(isEodhdDataTool)) return undefined;
+    const ticker = extractEodhdTickerFromResults(existingResults);
+    if (ticker) return ticker;
+    return this.resolveEodhdTicker(chosenTools, query);
+  }
+
+  /** Build the fallback input for a missing mandatory tool. */
+  private buildMissingToolInput(
+    toolName: string,
+    query: string,
+    ticker: string | undefined,
+    intent: HarnessContext['outputs']['intent'],
+  ): unknown | undefined {
+    if (isEodhdDataTool(toolName)) {
+      return ticker ? buildEodhdFallbackInput(toolName, ticker) : undefined;
+    }
+    return buildFallbackInput(
+      toolName,
+      query,
+      intent.imageCount ?? undefined,
+      intent.videoCount ?? undefined,
+      intent.language ?? undefined,
+    );
+  }
+
+  /** Resolve a ticker by running eodhdSearch with the extracted query. */
+  private async resolveEodhdTicker(
+    chosenTools: Record<string, unknown>,
+    query: string,
+  ): Promise<string | undefined> {
+    const searchTool = chosenTools['eodhdSearch'] as
+      { execute?: (input: unknown) => Promise<unknown> } | undefined;
+    if (!searchTool?.execute) return undefined;
+    try {
+      const result = await searchTool.execute({ query });
+      const results = (result as { results?: Array<{ code?: string }> })
+        ?.results;
+      return results?.find((r) => r.code)?.code;
+    } catch {
+      return undefined;
+    }
   }
 }

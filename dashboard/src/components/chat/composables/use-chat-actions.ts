@@ -1,22 +1,4 @@
-import { type Ref } from 'vue';
-
-interface ChatListRef {
-  scrollToExchange: (id: string) => void;
-}
-
-interface ToolbarRef {
-  fileInputRef?: { click: () => void } | null;
-  removeFile: (index: number) => void;
-  toggleFileSelected: (index: number) => void;
-}
-
-interface UseChatActionsOptions {
-  chatListRef: Ref<ChatListRef | null>;
-  userExchanges: Ref<Array<{ id: string; role: string; content: string }>>;
-  toolbarRef: Ref<ToolbarRef | null>;
-  hasNoModelSelected: Ref<boolean>;
-  supportsVision: Ref<boolean>;
-}
+import type { UseChatActionsOptions } from './use-chat-actions.types';
 
 /**
  * Provides the action handlers that wire user gestures in the chat view

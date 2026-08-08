@@ -20,7 +20,12 @@ import ExchangeEmptyStateCanvas from './exchange-empty-state-canvas/ExchangeEmpt
 <style scoped>
 .exchange-empty-state {
   position: relative;
-  flex: 1 1 auto;
+  /* The empty state sits directly inside a fixed-height scroll container
+     (.vertical-carousel / .native-scroll), which is not a flex parent — so
+     flex:1 cannot stretch it and it would collapse to its content height,
+     leaving the constellation animation to fill only a small band. Height
+     100% makes it cover the whole scroll area, matching NoConversationPanel. */
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -6,14 +6,9 @@ import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
-/** One preprocessing variant returned by the preview endpoint. */
-interface SharpPreviewVariant {
-  variant: string;
-  name: string;
-  description: string;
-  dataUrl: string;
-}
+import type { SharpPreviewVariant } from './use-preprocessing-preview.types';
 
+/** One preprocessing variant returned by the preview endpoint. */
 /**
  * Preprocessing preview flow: the user picks an image once, it is sent to
  * the server's sharp pipeline immediately, and the resulting variants open

@@ -9,6 +9,8 @@ For the quick rule-of-thumb reference, see [SKILL.md](./SKILL.md).
 Read sections in order on your first pass. When working, jump straight to the section that matches what you're writing:
 
 - **Adding a component or sub-component?** → Section 1 (Components) + Section 5 (Orchestrator Pattern)
+- **Extracting a template block into its own component?** → Section 1 (Componentize template sections)
+- **Typing a component's props?** → Section 1 (Props types live in a `.types.ts` file)
 - **Adding a composable?** → Section 2 (Composables)
 - **Adding a helper?** → Section 3 (Pure Helpers)
 - **Considering a one-line wrapper function?** → Section 3a (Don't Write Wrapper Functions)
@@ -72,11 +74,79 @@ const selectedIndex = computed(() =>
 
 For the full naming conventions on props (`isOpen` not `showMenu`, `selectModel` not `select`), see [Section 8: Reference: Naming Decision Table](#8-reference-naming-decision-table). Naming is documented once, not repeated per section.
 
+### Props types live in a `.types.ts` file
+
+Props are never declared inline in `defineProps<{ ... }>()`. Extract them to a named interface in a co-located `Xxx.types.ts` file, with JSDoc on every field:
+
+```ts
+// StockmarketItemResponse.types.ts
+import type { HarnessResponseData } from "@/types/harness-response-data.model";
+
+export interface StockmarketItemResponseProps {
+  /** The raw harness response for the instrument. */
+  data?: HarnessResponseData;
+  /** Raw text fallback (unused by the card's structured render). */
+  text?: string;
+  /** Streamed tool outputs keyed by `tool:ticker` (history, intraday). */
+  chartData?: Record<string, unknown>;
+  /** Whether the respond step has started streaming (reveals the chart). */
+  revealCharts?: boolean;
+}
+```
+
+```vue
+<script setup lang="ts">
+import type { StockmarketItemResponseProps } from "./StockmarketItemResponse.types";
+
+const props = defineProps<StockmarketItemResponseProps>();
+</script>
+```
+
+The props type is the single source of truth: a composable that derives the component's data takes the same `XxxProps` type instead of re-declaring a subset of the fields.
+
 ### Templates and scoped styles
 
 - Use BEM-style class names for scoped styles.
 - Format data in helpers or computeds — no complex logic in templates.
 - For CSS: use `var()` tokens, BEM class names, real CSS pseudo-classes for state. Follow the [CSS skill](../css/SKILL.md).
+
+### Componentize template sections
+
+When a template block renders a distinct concern — a header, a callout, a list, a panel row — extract it into a presentational sub-component in its own folder with a story. The orchestrator keeps the visibility `v-if` and passes the data; the leaf takes props and renders:
+
+```vue
+<!-- orchestrator -->
+<StockmarketItemRecommendation
+  v-if="data?.recommendation"
+  :recommendation="data.recommendation"
+  :reasoning="data.recommendationReasoning"
+/>
+```
+
+```vue
+<!-- stockmarket-item-recommendation/StockmarketItemRecommendation.vue -->
+<script setup lang="ts">
+defineProps<{
+  recommendation: string;
+  reasoning?: string;
+}>();
+</script>
+
+<template>
+  <div class="stockmarket-item-recommendation">
+    <strong>{{ recommendation }}</strong>
+    <span v-if="reasoning">— {{ reasoning }}</span>
+  </div>
+</template>
+```
+
+Rules for the extracted leaf:
+
+- **Own folder + story.** Every extracted component gets `Xxx.vue` + `Xxx.stories.ts` in its own folder inside the parent's folder.
+- **Presentational only.** No store calls, no computeds, no refs — props in, markup out. Any logic lives in a helper or the orchestrator's composable.
+- **The parent owns visibility.** The `v-if` stays on the component in the orchestrator's template; the leaf does not self-hide.
+- **BEM block per component.** The leaf's root class is its own block (`stockmarket-item-recommendation`), not the parent's (`stockmarket-item-response__recommendation`).
+- **One slot, default.** When a component has a single content area, use the default slot — not a named slot.
 
 ---
 
@@ -184,9 +254,11 @@ export function useSelectedModel() {
 
 Composables access Pinia stores directly — they are the bridge between stores and components. Components never call stores directly (unless it's the orchestrator component wiring composables together).
 
-### No `provide`/`inject` inside composables
+### No `provide` inside composables
 
-`provide` and `inject` belong in the orchestrator component. Composables return values; the orchestrator decides what to `provide` to the tree.
+`provide` belongs in the orchestrator component — it decides what context to expose to the tree. Composables return values; the orchestrator decides what to `provide`.
+
+**Consuming context with `inject` inside a composable is fine** — it is the standard Vue pattern (Vue Router's `useRouter` injects internally). A shared composable that reads an app-level context (e.g. the harness media-priority key) with a default is the right way to dedupe that consumption across components. The rule is about *providing*: only the orchestrator creates context.
 
 ---
 
@@ -506,6 +578,35 @@ The top-level component (e.g., `ChatToolbar.vue`) is an **orchestrator**. It:
 - No direct store calls — composables handle that
 - No complex computed properties — move to composables or helpers
 
+### The thin orchestrator
+
+The orchestrator's `<script setup>` is deliberately thin: props type, store calls that wire child config, one data composable call, template. All data derivation — computeds, refs, watches, event handlers with branching — lives in a co-located data composable:
+
+```vue
+<script setup lang="ts">
+import { useAppStore } from "@/stores/app";
+
+import { useStockmarketItemData } from "./composables/use-stockmarket-item-data.composable";
+import StockmarketItemHeader from "./stockmarket-item-header/StockmarketItemHeader.vue";
+// …
+
+const appStore = useAppStore();
+const props = defineProps<StockmarketItemResponseProps>();
+
+const {
+  displayHistory,
+  showPanels,
+  showChart,
+  mergedItems,
+  newsHeading,
+  onRangeRequest,
+  toggleIntraday,
+} = useStockmarketItemData(props);
+</script>
+```
+
+The data composable takes the component's props type, owns every `ref`/`computed`/`watch`/function, and returns the display values + actions the template binds. The orchestrator keeps only what the template needs that is not data — e.g. a store's chart config passed straight to a child. Cross-cutting wiring (closing menus on deactivation, `provide`) legitimately stays in the orchestrator; data derivation does not.
+
 ### The orchestrator lives in its folder
 
 The orchestrator component shares the **same folder** as its sub-components, composables, helpers, and stories. It is NOT a sibling file outside the folder.
@@ -690,6 +791,31 @@ describe("useExclusiveMenu", () => {
   });
 });
 ```
+
+### Mock external dependencies
+
+Composables that touch the API or i18n mock them at the module level, per the established pattern. `vi.hoisted` keeps the mock reference available to the `vi.mock` factory; a `t` that returns the key lets tests assert on the key itself:
+
+```ts
+import { flushPromises } from "@vue/test-utils";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { reactive } from "vue";
+
+import type { StockHistoryPoint } from "@/api/stock-data.api";
+
+const fetchStockHistory = vi.hoisted(() =>
+  vi.fn<
+    (t: string, from: string, to: string) => Promise<StockHistoryPoint[]>
+  >(),
+);
+
+vi.mock("@/api/stock-data.api", () => ({ fetchStockHistory }));
+vi.mock("vue-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key }),
+}));
+```
+
+Pass the composable a `reactive` props object so changing a field (e.g. the ticker) triggers the composable's watchers, then `await flushPromises()` before asserting on the result.
 
 ---
 

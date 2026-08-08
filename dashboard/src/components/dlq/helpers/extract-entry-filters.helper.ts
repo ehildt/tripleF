@@ -1,10 +1,6 @@
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-export interface DlqEntryFilters {
-  roomId: string;
-  event: string;
-  model: string;
-}
+import type { DlqEntryFilters } from './extract-entry-filters.helper.types';
 
 function readFilter(
   filters: Record<string, unknown> | null,

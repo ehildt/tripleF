@@ -3,9 +3,9 @@ import {
   type IntentResult,
   IntentSchema,
 } from '../../templates/intent.schema.js';
-import { enforceRequiredTools } from '../enforce-media-tools.helper.js';
-import { expandToolAliases } from '../expand-tool-aliases.helper.js';
-import { parseLlmJson } from '../parse-llm-json.helper.js';
+import { parseLlmJson } from '../json/parse-llm-json.helper.js';
+import { enforceRequiredTools } from '../tools/enforce-media-tools.helper.js';
+import { expandToolAliases } from '../tools/expand-tool-aliases.helper.js';
 
 /** Parse + validate the classifier's raw JSON into a typed intent. */
 export function parseIntent(

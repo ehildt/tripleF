@@ -6,7 +6,7 @@
  * harness stream events instead of `unknown`.
  */
 
-/** serperWebSearch / webSearch — organic Google results. */
+/** serperWebSearch — organic Google results. */
 export interface SerperOrganicResult {
   title: string;
   snippet: string;

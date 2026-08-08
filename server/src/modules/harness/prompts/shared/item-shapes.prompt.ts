@@ -1,4 +1,4 @@
-export const ITEM_SHAPES = `VALID JSON EXAMPLE
+export const ITEM_SHAPES = `JSON SHAPE EXAMPLE (article-shaped — the TEMPLATE and required/optional key list above define the actual keys you return)
 {
   "category": "Gaming",
   "title": "Nioh 3 Review",
@@ -8,7 +8,7 @@ export const ITEM_SHAPES = `VALID JSON EXAMPLE
 }
 
 ITEM SHAPES
-- keyFindings, keyPoints, strengths, weaknesses, recommendations, pros, cons, and reviewSummary entries must be objects with exactly one key: "text".
+- keyFindings, keyPoints, strengths, weaknesses, recommendations, pros, and cons entries must be objects with exactly one key: "text".
   Example: [{ "text": "The protagonist is a skilled warrior." }]
 
 - galleryItems entries must include imageUrl, imageAlt, title, and caption. imageAlt and title must be non-empty descriptive strings.

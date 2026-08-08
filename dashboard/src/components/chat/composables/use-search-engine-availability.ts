@@ -3,66 +3,14 @@ import { computed, getCurrentInstance, onMounted, ref } from 'vue';
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
 import { i18n } from '@/i18n/i18n';
-import { getPersistentSocketSessionId } from '@/stores/helpers/get-persistent-socket-session-id.helper';
+import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
 
 import { useToast } from '../../../composables/use-toast';
+import { configuredEngines } from './helpers/configured-engines.helper';
+import { engineIsEnabled } from './helpers/engine-is-enabled.helper';
+import { engineObject } from './helpers/engine-object.helper';
 import { listSearchSources } from './list-search-sources.helper';
-
-export type SearchEngineState =
-  'unknown' | 'unavailable' | 'disabled' | 'enabled';
-
-/**
- * The search engines the chat master toggle controls. Serper and Bright Data
- * are alternative Google-index engines; YouTube supplies videos. The globe
- * kill switch flips all of them together.
- */
-const SEARCH_ENGINES = ['serper', 'brightData', 'youtube'] as const;
-
-type EngineSnapshot = Record<string, unknown>;
-
-function engineObject(
-  snapshot: Record<string, unknown> | null | undefined,
-  name: string,
-): EngineSnapshot | undefined {
-  const engine = snapshot?.[name];
-  return engine && typeof engine === 'object'
-    ? (engine as EngineSnapshot)
-    : undefined;
-}
-
-/** A configured engine exposes a (masked) apiKey server-side. */
-function engineHasApiKey(
-  snapshot: Record<string, unknown> | null | undefined,
-  name: string,
-): boolean {
-  const apiKey = engineObject(snapshot, name)?.apiKey;
-  return typeof apiKey === 'string' && apiKey.length > 0;
-}
-
-/** The engine's effective enabled flag — session override wins, then snapshot. */
-function engineIsEnabled(
-  snapshot: Record<string, unknown> | null | undefined,
-  sessionOverrides:
-    Record<string, Record<string, unknown> | undefined> | null | undefined,
-  name: string,
-): boolean {
-  const session = sessionOverrides?.[name];
-  const sessionEnabled =
-    session &&
-    typeof session === 'object' &&
-    typeof session.enabled === 'boolean'
-      ? session.enabled
-      : undefined;
-  const snapshotEnabled = engineObject(snapshot, name)?.enabled === true;
-  return sessionEnabled ?? snapshotEnabled;
-}
-
-/** Engines currently configured (a key is present server-side). */
-function configuredEngines(
-  snapshot: Record<string, unknown> | null | undefined,
-): readonly string[] {
-  return SEARCH_ENGINES.filter((name) => engineHasApiKey(snapshot, name));
-}
+import type { SearchEngineState } from './use-search-engine-availability.types';
 
 /**
  * Whether the assistant currently has a search engine at its disposal, plus
@@ -100,6 +48,20 @@ export function useSearchEngineAvailability() {
     if (!isLoaded.value) return 'unknown';
     if (!hasApiKey.value) return 'unavailable';
     return isEnabled.value ? 'enabled' : 'disabled';
+  });
+
+  /**
+   * EODHD's own on/off state — a single engine, toggled by its Landmark.
+   * `available` is true whenever EODHD is a recognized engine in the
+   * snapshot (it always is), so the Landmark icon is always visible; the
+   * toggle is inert until a key is configured.
+   */
+  const eodhdState = computed(() => {
+    const snapshot = snapshotConfig.value;
+    const available = !!engineObject(snapshot, 'eodhd');
+    const enabled =
+      available && engineIsEnabled(snapshot, sessionOverrides.value, 'eodhd');
+    return { available, enabled };
   });
 
   async function refresh() {
@@ -297,7 +259,7 @@ export function useSearchEngineAvailability() {
     isToggling.value = true;
     try {
       // Flip every configured search engine together (Serper, Bright Data,
-      // YouTube) so the kill switch is a true master switch.
+      // YouTube, EODHD) so the kill switch is a true master switch.
       const engines = configuredEngines(snapshotConfig.value);
       const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
         method: 'PUT',
@@ -316,6 +278,31 @@ export function useSearchEngineAvailability() {
     }
   }
 
+  /**
+   * Toggle only the EODHD stock-market engine from its Landmark icon — the
+   * same dual write (server overrides + session config) as the master switch,
+   * but scoped to EODHD alone.
+   */
+  async function toggleEodhd() {
+    if (isToggling.value) return;
+    if (!eodhdState.value.available) return;
+    const next = !eodhdState.value.enabled;
+    isToggling.value = true;
+    try {
+      const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eodhd: { enabled: next } }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await persistSessionEnabled(['eodhd'], next);
+    } catch {
+      toast.error(i18n.global.t('toast.failedUpdateSearchEngine'));
+    } finally {
+      isToggling.value = false;
+    }
+  }
+
   // Load on mount only when consumed inside a component; bare callers
   // (tests, stores) drive refresh() explicitly.
   if (getCurrentInstance()) onMounted(refresh);
@@ -323,9 +310,11 @@ export function useSearchEngineAvailability() {
   return {
     searchEngineState,
     searchSources,
+    eodhdState,
     isToggling,
     refresh,
     toggleSearchEngine,
     toggleSource,
+    toggleEodhd,
   };
 }

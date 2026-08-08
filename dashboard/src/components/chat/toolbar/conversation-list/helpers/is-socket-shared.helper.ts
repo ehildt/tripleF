@@ -1,9 +1,4 @@
-interface SocketListeningConversation {
-  id: string;
-  event?: string;
-  roomId?: string;
-  subscriptions?: { event: string; roomId?: string }[];
-}
+import type { SocketListeningConversation } from './is-socket-shared.helper.types';
 
 /**
  * True when another conversation (excluding the given one) still listens on

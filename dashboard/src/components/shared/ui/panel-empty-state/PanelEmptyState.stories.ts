@@ -1,3 +1,4 @@
+import { FaceSlightlySmiling } from '@lucide/vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import PanelEmptyState from './PanelEmptyState.vue';
@@ -19,6 +20,7 @@ defaults match the request-log empty state.
   argTypes: {
     message: { control: 'text' },
     submessage: { control: 'text' },
+    icon: { control: false },
   },
   args: {
     message: 'No requests yet',
@@ -42,3 +44,12 @@ export const CustomMessage: Story = {
 
 /** Message only. */
 export const MessageOnly: Story = { args: { submessage: '' } };
+
+/** Custom icon with no text (used by the debug details panel). */
+export const IconOnly: Story = {
+  args: {
+    icon: FaceSlightlySmiling,
+    message: '',
+    submessage: '',
+  },
+};

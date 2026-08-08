@@ -19,18 +19,17 @@ describe('NewsResponse', () => {
       lead: 'Lead paragraph',
     });
 
-    expect(wrapper.find('h1').text()).toBe('Headline');
+    expect(wrapper.find('h2').text()).toBe('Headline');
     expect(wrapper.text()).toContain('Deck');
     expect(wrapper.text()).toContain('Lead paragraph');
   });
 
-  it('renders key points', () => {
+  it('renders key findings', () => {
     const wrapper = mountNewsResponse({
       headline: 'H',
-      keyPoints: [{ text: 'Point one' }, { text: 'Point two' }],
+      keyFindings: [{ text: 'Point one' }, { text: 'Point two' }],
     });
 
-    expect(wrapper.text()).toContain('Key Points');
     expect(wrapper.text()).toContain('Point one');
     expect(wrapper.text()).toContain('Point two');
   });
@@ -67,7 +66,7 @@ describe('NewsResponse', () => {
       ],
     });
 
-    expect(wrapper.text()).toContain('Related Stories');
+    expect(wrapper.text()).toContain('Related stories');
     expect(wrapper.text()).toContain('Story 1');
     expect(wrapper.find('a').attributes('href')).toBe('https://story.com');
   });

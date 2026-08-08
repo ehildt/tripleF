@@ -1,19 +1,9 @@
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import { buildSourceLine } from '../../../composables/helpers/build-source-line.helper';
-
-function appendList(
-  parts: string[],
-  title: string,
-  items?: Array<{ text?: string }>,
-): void {
-  if (!items?.length) return;
-  parts.push(title);
-  for (const item of items) {
-    const text = item.text?.trim();
-    if (text) parts.push(`- ${text}`);
-  }
-}
+import { appendLabeledFields } from '../../../composables/helpers/sources/append-labeled-fields.helper';
+import { appendList } from '../../../composables/helpers/sources/append-list.helper';
+import { buildRelatedStoriesLines } from '../../../composables/helpers/sources/build-related-stories-lines.helper';
+import { buildSourcesLines } from '../../../composables/helpers/sources/build-sources-lines.helper';
 
 /**
  * Convert a news response into plain text for the model history.
@@ -29,26 +19,16 @@ export function newsToText(data: HarnessResponseData): string {
     ['Deck', data.deck],
     ['Lead', data.lead],
   ];
-  for (const [label, value] of fields) {
-    const trimmed = value?.trim();
-    if (trimmed) parts.push(`${label}: ${trimmed}`);
-  }
+  appendLabeledFields(parts, fields);
 
   if (data.sectionContent?.trim()) parts.push(data.sectionContent.trim());
 
-  appendList(parts, 'Key points:', data.keyPoints);
+  appendList(parts, 'Key findings:', data.keyFindings);
 
-  if (data.sources?.length) {
-    parts.push('Sources:');
-    for (const source of data.sources) parts.push(buildSourceLine(source));
-  }
-
-  if (data.relatedStories?.length) {
-    parts.push('Related stories:');
-    for (const story of data.relatedStories) {
-      parts.push(buildSourceLine(story));
-    }
-  }
+  parts.push(
+    ...buildSourcesLines(data.sources),
+    ...buildRelatedStoriesLines(data.relatedStories),
+  );
 
   return parts.join('\n\n');
 }

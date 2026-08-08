@@ -8,7 +8,8 @@ describe('RequestDetails', () => {
     const wrapper = mount(RequestDetails, {
       props: { result: null },
     });
-    expect(wrapper.text()).toContain('Select a request');
+    expect(wrapper.find('.panel-empty-state').exists()).toBe(true);
+    expect(wrapper.text()).toContain("You're all set");
   });
 
   it('renders property rows and tab menu', () => {
@@ -55,5 +56,23 @@ describe('RequestDetails', () => {
     expect(wrapper.text()).toContain('Params');
     expect(wrapper.text()).toContain('"foo"');
     expect(wrapper.text()).toContain('"bar"');
+  });
+
+  it('does not render the tab panel when there are no tabs', () => {
+    const wrapper = mount(RequestDetails, {
+      props: {
+        result: {
+          id: '1',
+          timestamp: '2024-01-01T00:00:00Z',
+          endpoint: '/api/v1/harness',
+          method: 'GET',
+          status: 'success',
+          responseTime: 0,
+          type: 'http',
+          direction: 'request',
+        },
+      },
+    });
+    expect(wrapper.find('.tab-panel').exists()).toBe(false);
   });
 });

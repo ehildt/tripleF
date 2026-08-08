@@ -7,6 +7,9 @@ import type { HarnessContext } from '../../services/harness-context.type.js';
  * carries no searchable subject on its own, so the intent step's
  * contextSummary — which names the established entities verbatim — leads
  * the query, with the user's wording appended for the actual request.
+ * On a first turn (no contextSummary yet) the classifier's reasoning
+ * carries intent phrasing, so it is appended instead of returning the
+ * bare message verbatim.
  */
 export function extractQuery(
   ctx: HarnessContext,
@@ -18,7 +21,13 @@ export function extractQuery(
   const rawQuery = (lastUser?.content ?? ctx.lastUserPrompt)?.trim() ?? '';
 
   const contextSummary = intent.contextSummary?.trim() ?? '';
-  if (!contextSummary) return rawQuery.slice(0, 300);
+  if (!contextSummary) {
+    const reasoning = intent.reasoning?.trim() ?? '';
+    return [rawQuery, reasoning]
+      .filter((part) => part.length > 0)
+      .join('. ')
+      .slice(0, 300);
+  }
 
   const words = rawQuery.split(/\s+/).filter(Boolean);
   const hasDependentReference =

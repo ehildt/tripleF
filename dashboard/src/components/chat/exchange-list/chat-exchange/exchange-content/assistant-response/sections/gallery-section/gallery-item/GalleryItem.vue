@@ -68,7 +68,7 @@ function handleImageError() {
   margin: 0 auto;
   border: 1px solid var(--color-divider);
   overflow: hidden;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
   display: flex;
   flex-direction: column;
   height: 100%;

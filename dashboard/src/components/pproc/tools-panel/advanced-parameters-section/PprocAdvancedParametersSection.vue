@@ -16,7 +16,7 @@ import {
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
-import PprocSection from '../../shared/ui/section/PprocSection.vue';
+import PprocSectionHeader from '../../shared/ui/section-header/PprocSectionHeader.vue';
 
 const store = usePreprocessingStore();
 
@@ -102,10 +102,11 @@ const parameters = [
 </script>
 
 <template>
-  <PprocSection
-    :icon="SlidersHorizontal"
-    :title="$t('common.advancedParameters')"
-  >
+  <div class="pproc-advanced-parameters-section">
+    <PprocSectionHeader
+      :icon="SlidersHorizontal"
+      :title="$t('common.advancedParameters')"
+    />
     <div class="pproc-advanced-parameters-section__grid">
       <FieldCard
         v-for="param in parameters"
@@ -126,10 +127,16 @@ const parameters = [
         @mouseleave="store.setHoveredParameter(null)"
       />
     </div>
-  </PprocSection>
+  </div>
 </template>
 
 <style scoped>
+.pproc-advanced-parameters-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
 .pproc-advanced-parameters-section__grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

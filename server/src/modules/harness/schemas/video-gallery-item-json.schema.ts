@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   safeMediaUrlOrEmpty,
   safeVideoUrl,
-} from '../helpers/url-schema.helper.js';
+} from '../helpers/url-trust/url-schema.helper.js';
 
 /**
  * One entry of a videoGalleryItems array — shared by every template with a

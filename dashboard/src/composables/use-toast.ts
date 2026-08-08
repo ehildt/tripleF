@@ -1,12 +1,9 @@
 import type { ToastType } from '@/types/toast-type.model';
 
 import { useToastState } from './toast-state';
+import type { ToastOptions } from './use-toast.types';
 
 export type { ToastType };
-
-export interface ToastOptions {
-  duration?: number;
-}
 
 export function useToast() {
   const { add, preview } = useToastState();

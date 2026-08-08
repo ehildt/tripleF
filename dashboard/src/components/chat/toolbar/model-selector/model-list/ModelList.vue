@@ -2,7 +2,7 @@
 import { LoaderCircle, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
-import type { OllamaModel } from '../../../../../stores/models';
+import type { OllamaModel } from '../../../../../types/ollama-model.model';
 import ModelListItem from './model-list-item/ModelListItem.vue';
 
 defineEmits<{

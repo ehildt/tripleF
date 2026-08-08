@@ -1,7 +1,5 @@
-import {
-  formatZodIssues,
-  imagelistSchema,
-} from '../../schemas/imagelist-json.schema.js';
+import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
+import { imagelistSchema } from '../../schemas/imagelist-json.schema.js';
 
 import type { ValidationResult } from './validation-result.type.js';
 

@@ -19,10 +19,11 @@ import { useSelectedModel } from './shared/composables/use-selected-model';
 import { useStreamSettings } from './shared/composables/use-stream-settings';
 import StreamSettingsMenu from './stream-settings-menu/StreamSettingsMenu.vue';
 import SubscribedEventsList from './subscribed-events-list/SubscribedEventsList.vue';
+import type { ChatToolbarProps } from './ChatToolbar.types';
 
 const VISION_CAPABILITY = 'vision';
 
-const props = defineProps<{ chatActive: boolean; promptFocused: boolean }>();
+const props = defineProps<ChatToolbarProps>();
 
 const conversationStore = useConversationStore();
 const modelsStore = useModelsStore();
@@ -102,7 +103,7 @@ function toggleModelMenu() {
   closeAllMenus();
   if (!wasOpen) {
     toggleMenu('model');
-    modelsStore.fetchModels(true);
+    modelsStore.fetchModels({ refresh: true });
   }
 }
 
@@ -128,7 +129,7 @@ function toggleNewConversationMenu() {
   closeAllMenus();
   if (wasOpen) return;
   toggleMenu('newSession');
-  if (!modelsStore.models.length) modelsStore.fetchModels(true);
+  if (!modelsStore.models.length) modelsStore.fetchModels({ refresh: true });
 }
 
 // ── NumCtx ────────────────────────────────────────────────
@@ -283,7 +284,8 @@ defineExpose({
             newConversationName,
             newConversationEvent,
             newConversationRoomId,
-          )
+          );
+          closeAllMenus();
         "
         @select-num-ctx="selectNumCtx"
       />
@@ -295,11 +297,13 @@ defineExpose({
         :conversations="conversationStore.conversations"
         :active-conversation-id="conversationStore.activeConversationId"
         :is-expanded="isConversationListExpanded"
+        :show-divider="areSocketsVisible"
         @toggle-expanded="
           isConversationListExpanded = !isConversationListExpanded
         "
         @select-conversation="switchToConversation"
         @delete-conversation="deleteConversation"
+        @toggle-type="conversationStore.toggleConversationType"
       />
     </div>
 

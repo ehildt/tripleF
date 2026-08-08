@@ -5,7 +5,7 @@ import { buildContentSystemPrompt } from './content-system.prompt.js';
 describe('buildContentSystemPrompt', () => {
   it('declares the output contract', () => {
     const prompt = buildContentSystemPrompt({
-      template: 'article',
+      template: 'product',
       tools: [],
       requiredKeys: ['title', 'summary'],
       optionalKeys: [],
@@ -31,6 +31,12 @@ describe('buildContentSystemPrompt', () => {
     expect(prompt).toContain(
       'Return free-form text. Markdown is allowed and encouraged when it improves readability.',
     );
+    expect(prompt).toContain('MARKDOWN FORMAT (strict CommonMark)');
+    expect(prompt).toContain('Never put spaces inside the markers');
+    expect(prompt).toContain(
+      'Bold only the single most important term in a paragraph',
+    );
+    expect(prompt).toContain('Prefer ## or ### headings to introduce sections');
     expect(prompt).not.toContain('JSON RULES');
   });
 

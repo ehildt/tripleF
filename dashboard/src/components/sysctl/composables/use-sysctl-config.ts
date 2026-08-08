@@ -5,7 +5,7 @@ import { i18n } from '@/i18n/i18n';
 import { getApiUrl } from '../../../api/api-url';
 import { fetchConfig, saveConfig } from '../../../api/config.api';
 import { useToast } from '../../../composables/use-toast';
-import { getPersistentSocketSessionId } from '../../../stores/helpers/get-persistent-socket-session-id.helper';
+import { getPersistentSocketSessionId } from '../../../stores/helpers/socket/get-persistent-socket-session-id.helper';
 import { clampSysctlResults } from '../helpers/clamp-sysctl-results.helper';
 import type {
   ConfigSectionKey,
@@ -88,9 +88,19 @@ function applyFrontendDefaults(
       ...snapshot.youtube,
       enabled: snapshot.youtube?.enabled ?? false,
     },
+    eodhd: {
+      ...snapshot.eodhd,
+      enabled: snapshot.eodhd?.enabled ?? false,
+    },
     sources: {
       preferred: snapshot.sources?.preferred ?? [],
       blocked: snapshot.sources?.blocked ?? [],
+    },
+    layouts: {
+      classic: snapshot.layouts?.classic ?? true,
+      editorial: snapshot.layouts?.editorial ?? true,
+      split: snapshot.layouts?.split ?? true,
+      mosaic: snapshot.layouts?.mosaic ?? true,
     },
     ollama: {
       host: ollama?.host ?? '',

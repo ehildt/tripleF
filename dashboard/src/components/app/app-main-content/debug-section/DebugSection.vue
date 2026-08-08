@@ -26,7 +26,11 @@ const {
     />
   </div>
   <div class="debug-column">
-    <RequestDetails class="debug-column__panel" :result="selectedDebugResult" />
+    <RequestDetails
+      class="debug-column__panel"
+      :class="{ 'debug-column__panel--dynamic': selectedDebugResult }"
+      :result="selectedDebugResult"
+    />
   </div>
 </template>
 
@@ -44,6 +48,12 @@ const {
     flex-direction: column;
     height: 100%;
     min-height: 0;
+  }
+
+  /* When a request is selected the details panel sizes to its content
+     (dynamic height) instead of filling the shared viewport column. */
+  .debug-column__panel--dynamic {
+    height: auto;
   }
 }
 </style>

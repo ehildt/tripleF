@@ -11,7 +11,7 @@ import type {
 } from '@/types/harness-response-data.model';
 import { harnessImageClickedKey } from '@/types/harness-response-data.model';
 
-import { buildVideoPosterUrl } from '../../composables/helpers/build-video-poster-url.helper';
+import { buildVideoPosterUrl } from '../../composables/helpers/media/build-video-poster-url.helper';
 import { usePlaylistToggle } from '../../composables/use-playlist-toggle';
 import FloatingVideoFigure from '../floating-video-figure/FloatingVideoFigure.vue';
 
@@ -109,9 +109,6 @@ function handleClick() {
         :title="heroVideoTitle"
         :poster-url="heroPosterUrl"
       />
-      <figcaption v-if="heroVideoCaption" class="hero-media-card__caption">
-        <p>{{ heroVideoCaption }}</p>
-      </figcaption>
     </template>
 
     <template v-else-if="heroItem">
@@ -137,10 +134,16 @@ function handleClick() {
 .hero-media-card {
   position: relative;
   margin: 0.75em auto 0;
-  width: 80%;
+  width: 100%;
   /* Match the video list/gallery cards: the header row and media sit on a
      card backdrop, so the header doesn't float on the bare exchange bg. */
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
+}
+
+/* The hero video matches the height of a lone last-row gallery banner
+   (16:7) so the two read as the same size. */
+.hero-media-card :deep(.floating-video-figure .floating-video-figure__media) {
+  aspect-ratio: 16 / 7;
 }
 
 /* ---------- header row (title + playlist toggle above the video) ---------- */

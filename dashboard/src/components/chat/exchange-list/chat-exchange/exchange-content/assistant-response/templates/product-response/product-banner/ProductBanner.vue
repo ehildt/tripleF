@@ -3,73 +3,34 @@
  * Product banner: a full-width, detailed product image with an always-visible
  * rating overlay (stars, value, count, verdict) pinned to the bottom of the
  * image — the same overlay treatment the image list uses for its captions,
- * but permanently shown. Title, subtitle and category sit above the banner;
- * an optional caption sits below. Clicking the image opens the lightbox.
+ * but permanently shown. Title and subtitle sit above the banner; an
+ * optional caption sits below. Clicking the image opens the lightbox.
  *
  * When the product has more than one image (banner + gallery), a glassy "+N"
  * badge sits in the top-right corner of the figure — the same frosted look as
  * the video/iframe play block — telling the user how many images the product
  * carries total.
  */
-import { computed, inject } from 'vue';
-
-import type {
-  GalleryItem,
-  HarnessImageClickedHandler,
-} from '@/types/harness-response-data.model';
-import { harnessImageClickedKey } from '@/types/harness-response-data.model';
-
-import { isTrustedImageUrl } from '../../../composables/helpers/is-trusted-image-url.helper';
 import StarRatingIndicator from '../../../shared/ui/star-rating-indicator/StarRatingIndicator.vue';
+import { useProductBanner } from './composables/use-product-banner.composable';
+import type { ProductBannerProps } from './ProductBanner.types';
 
-const props = defineProps<{
-  category?: string;
-  title?: string;
-  subtitle?: string;
-  imageUrl?: string;
-  imageAlt?: string;
-  imageCaption?: string;
-  /** Total number of images for this product (banner + gallery). */
-  imageCount?: number;
-  rating?: number;
-  ratingCount?: number;
-  ratingLabel?: string;
-}>();
+const props = defineProps<ProductBannerProps>();
 
-const onImageClicked = inject<HarnessImageClickedHandler>(
-  harnessImageClickedKey,
-  () => undefined,
-);
-
-const hasImage = computed(
-  () => Boolean(props.imageUrl) && isTrustedImageUrl(props.imageUrl ?? ''),
-);
-
-const hasRating = computed(
-  () => typeof props.rating === 'number' && props.rating > 0,
-);
-
-const slide = computed<GalleryItem | undefined>(() => {
-  if (!hasImage.value) return undefined;
-  return {
-    imageUrl: props.imageUrl!,
-    imageAlt: props.imageAlt,
-    title: props.title,
-  };
-});
-
-const label = computed(() => props.imageAlt || props.title || 'Product image');
-
-function openLightbox() {
-  if (slide.value) onImageClicked?.(slide.value);
-}
+const {
+  hasImage,
+  hasRating,
+  label,
+  ratingCountNumber,
+  reviewsLabel,
+  openLightbox,
+} = useProductBanner(props);
 </script>
 
 <template>
   <section class="product-banner">
     <header class="product-banner__header">
-      <p v-if="category" class="product-banner__eyebrow">{{ category }}</p>
-      <h1 v-if="title" class="product-banner__title">{{ title }}</h1>
+      <h2 v-if="title" class="product-banner__title">{{ title }}</h2>
       <p v-if="subtitle" class="product-banner__subtitle">{{ subtitle }}</p>
     </header>
 
@@ -83,7 +44,7 @@ function openLightbox() {
       >
         <img
           :src="encodeURI(imageUrl!)"
-          :alt="imageAlt || title || 'Product image'"
+          :alt="imageAlt || title || $t('common.productImage')"
           class="product-banner__img"
           loading="lazy"
           decoding="async"
@@ -95,7 +56,7 @@ function openLightbox() {
             {{ rating!.toFixed(1) }}
           </span>
           <span v-if="ratingCount" class="product-banner__rating-count">
-            · {{ ratingCount.toLocaleString() }} reviews
+            · {{ ratingCountNumber }} {{ reviewsLabel }}
           </span>
           <span v-if="ratingLabel" class="product-banner__rating-label">
             {{ ratingLabel }}
@@ -135,15 +96,6 @@ function openLightbox() {
   gap: var(--spacing-1);
 }
 
-.product-banner__eyebrow {
-  margin: 0;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-accent-primary);
-}
-
 .product-banner__title {
   margin: 0;
   font-size: 2rem;
@@ -166,7 +118,7 @@ function openLightbox() {
   width: 100%;
   overflow: hidden;
   border: 1px solid var(--color-divider);
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
 }
 
 .product-banner__trigger {

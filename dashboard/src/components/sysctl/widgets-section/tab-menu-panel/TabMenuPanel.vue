@@ -11,24 +11,31 @@
  * bar. The menu is the app navigation, so there is no enable/disable
  * power toggle.
  */
-import { Bug, MailX, PanelLeft, PanelRight, SquareMenu, X } from '@lucide/vue';
+import {
+  Bug,
+  MailX,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
+  SquareMenu,
+  X,
+} from '@lucide/vue';
 
 import {
   resetTabMenuSettings,
   setTabMenuAutoClose,
   setTabMenuSide,
   tabMenuAutoClose,
-  type TabMenuSide,
   tabMenuSide,
 } from '@/components/app/tab-menu/composables/tab-menu-settings.state';
-import CollapsiblePanel from '@/components/shared/ui/collapsible-panel/CollapsiblePanel.vue';
+import type { TabMenuSide } from '@/components/app/tab-menu/composables/tab-menu-settings.state.types';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
 
 import { useSysctlTabVisibility } from '../../composables/use-sysctl-tab-visibility';
+import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 
 const SIDE_OPTIONS = [
   { value: 'left', icon: PanelLeft, tooltip: i18n.global.t('common.left') },
@@ -43,16 +50,20 @@ function setSide(value: string) {
 </script>
 
 <template>
-  <PanelLayout class="tab-menu-panel">
-    <CollapsiblePanel id="tabMenu" :title="$t('common.tabMenuTitle')">
-      <template #actions>
-        <ResetButton
-          :title="$t('common.resetTabMenuSettingsToDefaults')"
-          @click="resetTabMenuSettings"
-        />
-      </template>
+  <div class="tab-menu-panel">
+    <div class="tab-menu-panel__actions">
+      <ResetButton
+        :title="$t('common.resetTabMenuSettingsToDefaults')"
+        @click="resetTabMenuSettings"
+      />
+    </div>
 
-      <div class="tab-menu-panel__content">
+    <div class="tab-menu-panel__group">
+      <SysCtlSectionHeader
+        :icon="SquareMenu"
+        :title="$t('common.tabMenuSection')"
+      />
+      <div class="tab-menu-panel__grid">
         <FieldCard
           :icon="SquareMenu"
           :label="$t('common.side')"
@@ -75,45 +86,83 @@ function setSide(value: string) {
           :checked="tabMenuAutoClose"
           @toggle="setTabMenuAutoClose(!tabMenuAutoClose)"
         />
-
-        <div class="tab-menu-panel__tabs">
-          <FieldCard
-            :icon="MailX"
-            :label="$t('common.dlqTab')"
-            :description="$t('common.dlqTabDesc')"
-            :checked="isTabVisible('dlq')"
-            @toggle="toggleTab('dlq')"
-          />
-
-          <FieldCard
-            :icon="Bug"
-            :label="$t('common.debugTab')"
-            :description="$t('common.debugTabDesc')"
-            :checked="isTabVisible('debug')"
-            @toggle="toggleTab('debug')"
-          />
-        </div>
       </div>
-    </CollapsiblePanel>
-  </PanelLayout>
+    </div>
+
+    <div class="tab-menu-panel__group">
+      <SysCtlSectionHeader
+        :icon="PanelTop"
+        :title="$t('common.tabMenuTabsSection')"
+      />
+      <div class="tab-menu-panel__tabs">
+        <FieldCard
+          :icon="MailX"
+          :label="$t('common.dlqTab')"
+          :description="$t('common.dlqTabDesc')"
+          :checked="isTabVisible('dlq')"
+          @toggle="toggleTab('dlq')"
+        />
+
+        <FieldCard
+          :icon="Bug"
+          :label="$t('common.debugTab')"
+          :description="$t('common.debugTabDesc')"
+          :checked="isTabVisible('debug')"
+          @toggle="toggleTab('debug')"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.tab-menu-panel__content {
+.tab-menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+}
+
+.tab-menu-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: calc(2.25rem + 2 * var(--spacing-2));
+  padding: 0 var(--spacing-3);
+  background:
+    radial-gradient(
+      ellipse 120% 140% at 12% 50%,
+      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 120% 140% at 88% 50%,
+      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-bg-elevated);
+}
+
+.tab-menu-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.tab-menu-panel__grid {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: var(--spacing-1);
-  padding: var(--spacing-1);
 }
 
 @media (max-width: 40rem) {
-  .tab-menu-panel__content {
+  .tab-menu-panel__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .tab-menu-panel__tabs {
-  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-1);

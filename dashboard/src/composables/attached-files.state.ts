@@ -1,12 +1,6 @@
 import { shallowRef } from 'vue';
 
-export interface AttachedFileEntry {
-  file: File;
-  isSelected: boolean;
-  objectUrl: string;
-  hash: string;
-  conversationId: string;
-}
+import type { AttachedFileEntry } from './attached-files.state.types';
 
 export function makeKey(
   parentConversationId: string,

@@ -7,10 +7,10 @@ import { MinioService } from '../../minio/services/minio.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
-import { buildImageFingerprint } from '../helpers/build-image-fingerprint.helper.js';
 import { buildVisionExclusionNotice } from '../helpers/build-vision-exclusion-notice.helper.js';
-import { parseSessionMetadata } from '../helpers/parse-session-metadata.helper.js';
-import { stripImagesFromMessages } from '../helpers/strip-images-from-messages.helper.js';
+import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.helper.js';
+import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.helper.js';
+import { stripImagesFromMessages } from '../helpers/sanitize/strip-images-from-messages.helper.js';
 
 import { HarnessContext, StepId, StepState } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';

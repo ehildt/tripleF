@@ -13,6 +13,7 @@
 import { computed } from 'vue';
 
 import { usePlaybackAnchor } from '../../composables/use-playback-anchor';
+import { useVideoPosterFallback } from './composables/use-video-poster-fallback';
 
 const props = defineProps<{
   videoUrl: string;
@@ -32,6 +33,13 @@ const {
   isUnembeddable,
   engage,
 } = usePlaybackAnchor(item);
+
+// Poster resolves to the highest-resolution candidate and degrades down the
+// chain (maxresdefault → hqdefault → mqdefault) if that image fails to load.
+const { currentSrc, onPosterError } = useVideoPosterFallback(
+  () => props.posterUrl,
+  () => props.videoUrl,
+);
 </script>
 
 <template>
@@ -55,7 +63,7 @@ const {
         rel="noopener noreferrer"
         class="floating-video-figure__fallback"
       >
-        Watch on source ↗
+        {{ $t('common.watchOnSource') }}
       </a>
 
       <!-- Launched but not docked here (just popped out / hidden window):
@@ -68,10 +76,11 @@ const {
       >
         <img
           v-if="posterUrl"
-          :src="posterUrl"
+          :src="currentSrc"
           alt=""
           class="floating-video-figure__placeholder-image"
           loading="lazy"
+          @error="onPosterError"
         />
       </div>
 
@@ -87,10 +96,11 @@ const {
       >
         <img
           v-if="posterUrl"
-          :src="posterUrl"
+          :src="currentSrc"
           alt=""
           class="floating-video-figure__poster-image"
           loading="lazy"
+          @error="onPosterError"
         />
         <span class="floating-video-figure__poster-play" aria-hidden="true"
           >▶</span
@@ -162,7 +172,7 @@ const {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: fill;
 }
 
 .floating-video-figure__poster-play {

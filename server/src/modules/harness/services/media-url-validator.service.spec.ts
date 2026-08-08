@@ -195,6 +195,57 @@ describe('MediaUrlValidatorService', () => {
     expect(results[0].kind).toBe('video');
   });
 
+  it('keeps an embeddable provider video when the page probe times out (oEmbed reachable)', async () => {
+    // Page probes fail (timeout), but the provider oEmbed endpoint confirms
+    // the video exists — it must not be dropped for an unreachable watch page.
+    vi.mocked(httpService.head).mockImplementation(() => {
+      throw new Error('timeout');
+    });
+    vi.mocked(httpService.get).mockReturnValue(
+      of({
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        data: { type: 'video', title: 'Example' },
+        config: {},
+      }) as never,
+    );
+
+    const results = await service.validateUrls([
+      'https://www.youtube.com/watch?v=abc123',
+    ]);
+
+    expect(results[0].kind).toBe('video');
+  });
+
+  it('keeps an embeddable provider video when oEmbed is unreachable too (network failure)', async () => {
+    vi.mocked(httpService.head).mockImplementation(() => {
+      throw new Error('timeout');
+    });
+    vi.mocked(httpService.get).mockImplementation(() => {
+      throw new Error('timeout');
+    });
+
+    const results = await service.validateUrls([
+      'https://www.youtube.com/watch?v=abc123',
+    ]);
+
+    // A vetted embeddable URL must not be dropped on a network failure.
+    expect(results[0].kind).toBe('video');
+  });
+
+  it('still routes direct video files through the page probe', async () => {
+    // Direct files have no oEmbed provider, so the content-type/status from
+    // the probe is honored rather than a blanket keep.
+    vi.mocked(httpService.head).mockReturnValue(headResponse(200, 'video/mp4'));
+
+    const results = await service.validateUrls([
+      'https://example.com/video.mp4',
+    ]);
+
+    expect(results[0]).toMatchObject({ kind: 'video', status: 200 });
+  });
+
   it('marks broken YouTube oEmbed responses as broken', async () => {
     vi.mocked(httpService.head).mockReturnValue(headResponse(200, 'text/html'));
     vi.mocked(httpService.get).mockReturnValue(

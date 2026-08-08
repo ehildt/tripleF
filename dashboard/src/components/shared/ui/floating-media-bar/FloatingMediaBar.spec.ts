@@ -24,14 +24,12 @@ describe('FloatingMediaBar', () => {
     expect(wrapper.find('.floating-media-bar__title').text()).toBe(
       'Some video',
     );
-    expect(wrapper.find('.floating-media-bar__marquee-track').exists()).toBe(
-      false,
-    );
+    expect(wrapper.find('.marquee__track').exists()).toBe(false);
   });
 
   it('renders the marquee when requested', () => {
     const wrapper = mountComponent({ showTitleMarquee: true });
-    const texts = wrapper.findAll('.floating-media-bar__marquee-text');
+    const texts = wrapper.findAll('.marquee__text');
     expect(texts).toHaveLength(2);
     expect(texts[0].text()).toBe('Some video');
     expect(texts[1].attributes('aria-hidden')).toBe('true');
@@ -70,12 +68,23 @@ describe('FloatingMediaBar', () => {
     },
   );
 
-  it('emits opacityInput with the slider value', async () => {
-    const wrapper = mountComponent();
-    const slider = wrapper.find('.floating-media-bar__opacity-slider');
-    (slider.element as HTMLInputElement).value = '55';
-    await slider.trigger('input');
-    expect(wrapper.emitted('opacityInput')).toEqual([[55]]);
+  it('toggles opacity from 100 to 66 when the mirror icon is clicked', async () => {
+    const wrapper = mountComponent({ opacityPercent: 100 });
+    await wrapper.find('.floating-media-bar__opacity-toggle').trigger('click');
+    expect(wrapper.emitted('opacityInput')).toEqual([[66]]);
+  });
+
+  it('toggles opacity back to 100 when clicked while translucent', async () => {
+    const wrapper = mountComponent({ opacityPercent: 66 });
+    await wrapper.find('.floating-media-bar__opacity-toggle').trigger('click');
+    expect(wrapper.emitted('opacityInput')).toEqual([[100]]);
+  });
+
+  it('marks the opacity toggle as translucent below full opacity', () => {
+    const wrapper = mountComponent({ opacityPercent: 66 });
+    expect(
+      wrapper.find('.floating-media-bar__opacity-toggle').classes(),
+    ).toContain('floating-media-bar__opacity-toggle--translucent');
   });
 
   it('emits drag from free bar space, not from the controls', async () => {

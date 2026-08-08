@@ -1,11 +1,6 @@
 import { ref, watch } from 'vue';
 
-export interface SubscriptionEntry {
-  event: string;
-  roomId: string;
-  active: boolean;
-  stream: boolean;
-}
+import type { SubscriptionEntry } from '@/types/subscription.model';
 
 const LOCAL_STORAGE_SUBSCRIPTIONS_KEY = 'harness-subscriptions';
 

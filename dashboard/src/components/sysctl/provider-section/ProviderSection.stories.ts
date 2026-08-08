@@ -17,7 +17,6 @@ const meta = {
     providerDescription: 'Search API',
     configured: true,
     endpointMaxResults: { search: 25 },
-    onToggleMaster: fn(),
     onToggleEndpoint: fn(),
     onUpdateResults: fn(),
   },
@@ -75,10 +74,43 @@ export const MasterDisabled: Story = {
   },
 };
 
-/** Collapsed provider showing only the header. */
-export const Collapsed: Story = {
+/** Endpoints excluded from the plan are locked off. */
+export const UnavailableEndpoints: Story = {
+  args: {
+    config: serperConfig,
+    descriptions,
+    endpointAvailability: {
+      web: true,
+      images: true,
+      news: true,
+      places: false,
+      shopping: false,
+      reviews: false,
+      videos: true,
+      scrape: true,
+    },
+  },
+};
+
+/** Provider with an API key field and actions in the top row. */
+export const WithPrepend: Story = {
   args: {
     config: serperConfig,
     descriptions,
   },
+  render: (args) => ({
+    components: { ProviderSection },
+    setup: () => ({ args }),
+    template: `
+      <ProviderSection v-bind="args">
+        <template #apiKey>
+          <div class="story-field">API key</div>
+        </template>
+        <template #actions>
+          <div class="story-field">Reset</div>
+          <div class="story-field">Enabled</div>
+        </template>
+      </ProviderSection>
+    `,
+  }),
 };

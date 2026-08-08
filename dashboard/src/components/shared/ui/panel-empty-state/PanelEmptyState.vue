@@ -1,16 +1,18 @@
 <script lang="ts" setup>
 import { PartyPopper } from '@lucide/vue';
+import type { Component } from 'vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = withDefaults(
   // eslint-disable-next-line vue/require-default-prop -- fallback is resolved reactively below so it tracks locale changes
-  defineProps<{ message?: string; submessage?: string }>(),
+  defineProps<{ message?: string; submessage?: string; icon?: Component }>(),
   {},
 );
 
 const { t } = useI18n();
 
+const icon = computed(() => props.icon ?? PartyPopper);
 const message = computed(() => props.message ?? t('common.noRequestsYet'));
 const submessage = computed(
   () => props.submessage ?? t('common.sendRequestToSeeResults'),
@@ -20,9 +22,9 @@ const submessage = computed(
 <template>
   <div class="panel-empty-state">
     <div class="panel-empty-state__icon-wrapper">
-      <PartyPopper class="panel-empty-state__icon" />
+      <component :is="icon" class="panel-empty-state__icon" />
     </div>
-    <p class="panel-empty-state__message">
+    <p v-if="message" class="panel-empty-state__message">
       {{ message }}
     </p>
     <p v-if="submessage" class="panel-empty-state__submessage">

@@ -1,4 +1,4 @@
-type ToolResult = { toolName: string; result: unknown };
+import type { ToolResult } from './tool-result.types.js';
 
 /** Thumbnail URLs on video candidates from video/web/news search results. */
 export function collectVideoThumbnailUrls(toolResults: ToolResult[]): string[] {
@@ -7,7 +7,6 @@ export function collectVideoThumbnailUrls(toolResults: ToolResult[]): string[] {
   for (const tr of toolResults) {
     if (
       !tr.toolName.endsWith('VideoSearch') &&
-      tr.toolName !== 'webSearch' &&
       !tr.toolName.endsWith('WebSearch') &&
       !tr.toolName.endsWith('NewsSearch')
     )

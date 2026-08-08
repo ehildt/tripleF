@@ -9,7 +9,7 @@ import { useMenuPosition } from '../model-selector/composables/use-menu-position
 import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
 
-defineEmits<{
+const emit = defineEmits<{
   toggleMenu: [];
   'update:newConversationName': [value: string];
   'update:newConversationEvent': [value: string];
@@ -41,6 +41,13 @@ const props = defineProps<{
 const triggerRef = ref<HTMLElement | null>(null);
 const isOpenRef = computed(() => props.isOpen);
 const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
+
+/** Pressing Enter in the name field creates a temporary conversation — the
+ *  same as clicking the "temporary" button. */
+function onCreateTemporary() {
+  if (!props.newConversationName.trim()) return;
+  emit('createConversation', 'temporary');
+}
 </script>
 
 <template>
@@ -74,6 +81,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 name="conversation-name"
                 :placeholder="$t('common.conversationName')"
                 class="new-conversation-menu__input"
+                @keydown.enter="onCreateTemporary"
                 @input="
                   $emit(
                     'update:newConversationName',
@@ -121,7 +129,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 :disabled="!newConversationName.trim()"
                 @click.stop="$emit('createConversation', 'temporary')"
               >
-                Temporary
+                {{ $t('common.temporary') }}
               </button>
               <button
                 class="new-conversation-menu__button"
@@ -133,7 +141,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
                 :disabled="!newConversationName.trim()"
                 @click.stop="$emit('createConversation', 'persistent')"
               >
-                Persistent
+                {{ $t('common.persistent') }}
               </button>
             </div>
           </div>

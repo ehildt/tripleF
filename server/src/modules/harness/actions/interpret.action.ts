@@ -2,39 +2,26 @@ import { Injectable } from '@nestjs/common';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
+import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import {
   buildIntentCorrectionPrompt,
   languageCorrectionPrompt,
 } from '../constants/structured-json-prompt.constant.js';
-import { getEnabledToolNames } from '../helpers/get-enabled-tool-names.helper.js';
 import { buildClassifyMessages } from '../helpers/interpret/build-classify-messages.helper.js';
 import { parseIntent } from '../helpers/interpret/parse-intent.helper.js';
+import { filterEodhdToolsByCapabilities } from '../helpers/tools/filter-eodhd-tools-by-capabilities.helper.js';
+import { getEnabledToolNames } from '../helpers/tools/get-enabled-tool-names.helper.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
+import type {
+  InterpretParams,
+  InterpretResult,
+} from './interpret.action.types.js';
+
 const MAX_INTERPRET_RETRIES = 3;
-
-type InterpretResult = {
-  intent: IntentResult;
-  inputTokens?: number;
-  outputTokens?: number;
-};
-
-type InterpretParams = {
-  requestId: string;
-  model: string;
-  messages: InputMessage[];
-  keepAlive?: string;
-  think?: ThinkMode;
-  numCtx?: number;
-  abortSignal?: AbortSignal;
-  onIntent?: (intent: IntentResult) => void;
-  /** ISO-639-1 code of the active UI locale (browser-detected or user-selected). */
-  language?: string;
-};
 
 @Injectable()
 export class InterpretActionService {
@@ -43,6 +30,7 @@ export class InterpretActionService {
     private readonly providerOverrides: ProviderOverridesService,
     private readonly playwrightMcpConfig: PlaywrightMcpConfigService,
     private readonly stepLogger: HarnessStepLogger,
+    private readonly eodhdDiscovery: EodhdDiscoveryService,
   ) {}
 
   /**
@@ -56,10 +44,13 @@ export class InterpretActionService {
    * No tools are executed and no response is produced here.
    */
   async execute(params: InterpretParams): Promise<InterpretResult> {
-    const enabledToolNames = getEnabledToolNames({
-      ...this.providerOverrides.getConfig(),
-      playwright: this.playwrightMcpConfig.config,
-    });
+    const enabledToolNames = filterEodhdToolsByCapabilities(
+      getEnabledToolNames({
+        ...this.providerOverrides.getConfig(),
+        playwright: this.playwrightMcpConfig.config,
+      }),
+      this.eodhdDiscovery.getCached(),
+    );
     const classifyMessages: InputMessage[] = buildClassifyMessages(
       params.messages,
       enabledToolNames,

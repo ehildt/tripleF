@@ -29,14 +29,14 @@ describe('DlqDetailsBody', () => {
     const wrapper = mount(DlqDetailsBody, {
       props: { entry: null, models: [] },
     });
-    expect(wrapper.text()).toContain('Select a job');
+    expect(wrapper.text()).toContain("You're all set");
   });
 
   it('renders the entry details when an entry is provided', () => {
     const wrapper = mount(DlqDetailsBody, {
       props: { entry: baseEntry, models: ['llama3'] },
     });
-    expect(wrapper.text()).toContain('Details');
+    expect(wrapper.text()).toContain('Job details');
     expect(wrapper.text()).toContain('Metadata');
   });
 
