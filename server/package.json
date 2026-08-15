@@ -78,7 +78,7 @@
     "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
-    "@nestjs/testing": "^11.1.28",
+    "@nestjs/testing": "^11.1.29",
     "@swc/core": "^1.15.47",
     "@types/node": "^26.2.0",
     "@types/supertest": "^7.2.1",
