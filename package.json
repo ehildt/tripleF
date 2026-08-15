@@ -13,7 +13,7 @@
     "ncu:update": "npx npm-check-updates -u --format group"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
+    "@changesets/cli": "^3.0.0",
     "eslint": "^10.5.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
