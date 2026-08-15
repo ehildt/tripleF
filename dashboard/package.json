@@ -65,7 +65,7 @@
     "@storybook/addon-vitest": "^10.5.7",
     "@storybook/vue3-vite": "^10.5.7",
     "@tailwindcss/postcss": "^4.3.3",
-    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/vue": "^8.1.0",
     "@types/dompurify": "^3.2.0",
     "@types/markdown-it": "^14.1.2",
