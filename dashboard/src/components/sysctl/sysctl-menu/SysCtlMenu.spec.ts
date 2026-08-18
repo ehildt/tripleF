@@ -11,7 +11,7 @@ describe('SysCtlMenu', () => {
 
     const systemButton = wrapper
       .findAll('.sysctl-menu__tab')
-      .find((button) => button.attributes('title') === 'System');
+      .find((button) => button.attributes('aria-label') === 'System');
 
     expect(systemButton).toBeDefined();
     await systemButton!.trigger('click');
@@ -30,7 +30,7 @@ describe('SysCtlMenu', () => {
     for (const label of tabs) {
       const button = wrapper
         .findAll('.sysctl-menu__tab')
-        .find((b) => b.attributes('title') === label);
+        .find((b) => b.attributes('aria-label') === label);
       expect(button).toBeDefined();
       await button!.trigger('click');
     }

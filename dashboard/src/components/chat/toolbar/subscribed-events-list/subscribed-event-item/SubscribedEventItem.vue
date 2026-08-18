@@ -8,6 +8,7 @@ import {
   Type,
 } from '@lucide/vue';
 
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
@@ -107,21 +108,14 @@ defineEmits<{
         <Tag class="subscribed-event-item__icon" />
       </Tooltip>
 
-      <Tooltip
-        :text="$t('common.unsubscribeFrom', { event: subscription.event })"
-        :positions="['bottom', 'top']"
+      <IconButton
+        size="sm"
+        :title="$t('common.unsubscribeFrom', { event: subscription.event })"
+        :tooltip-positions="['bottom', 'top']"
+        @click.stop="$emit('remove')"
       >
-        <button
-          type="button"
-          class="subscribed-event-item__remove"
-          :aria-label="
-            $t('common.unsubscribeFrom', { event: subscription.event })
-          "
-          @click.stop="$emit('remove')"
-        >
-          <Trash2 class="subscribed-event-item__icon" />
-        </button>
-      </Tooltip>
+        <Trash2 />
+      </IconButton>
     </div>
   </div>
 </template>
@@ -180,8 +174,7 @@ defineEmits<{
 }
 
 .subscribed-event-item__radio-toggle,
-.subscribed-event-item__stream-toggle,
-.subscribed-event-item__remove {
+.subscribed-event-item__stream-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -197,14 +190,6 @@ defineEmits<{
 
 /* Stream mode toggle: accent when streaming per word, muted otherwise. */
 .subscribed-event-item__stream-toggle--on {
-  color: var(--color-accent-primary);
-}
-
-.subscribed-event-item__remove {
-  transition: color 0.2s ease;
-}
-
-.subscribed-event-item__remove:hover {
   color: var(--color-accent-primary);
 }
 </style>

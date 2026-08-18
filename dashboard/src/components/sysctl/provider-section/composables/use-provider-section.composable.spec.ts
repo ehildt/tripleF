@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 
 import type { ProviderConfig } from '../../sysctl-config.model';
 import type { ProviderSectionProps } from '../ProviderSection.types';
@@ -19,6 +19,10 @@ function makeProps(
   });
 }
 
+function makePrependRef() {
+  return ref<HTMLElement>();
+}
+
 describe('useProviderSection', () => {
   it('excludes apiKey, enabled, and projectId from the endpoint entries', () => {
     const { endpointEntries } = useProviderSection(
@@ -29,6 +33,7 @@ describe('useProviderSection', () => {
         web: { enabled: true },
         images: { enabled: false },
       } as ProviderConfig),
+      makePrependRef(),
     );
     expect(endpointEntries.value.map(([name]) => name)).toEqual([
       'web',
@@ -42,6 +47,7 @@ describe('useProviderSection', () => {
         web: { enabled: true, results: 5 },
         images: { enabled: true },
       } as ProviderConfig),
+      makePrependRef(),
     );
     expect(endpointEntries.value.map(([name]) => name)).toEqual([
       'images',
@@ -57,6 +63,7 @@ describe('useProviderSection', () => {
         news: { enabled: true },
         places: { enabled: true },
       } as ProviderConfig),
+      makePrependRef(),
     );
     expect(itemsPerRow.value).toBe(2);
   });
@@ -66,6 +73,7 @@ describe('useProviderSection', () => {
       makeProps({ web: { enabled: true } } as ProviderConfig, {
         endpointAvailability: { web: false },
       }),
+      makePrependRef(),
     );
     expect(isEndpointUnavailable('web')).toBe(true);
     expect(isEndpointUnavailable('images')).toBe(false);

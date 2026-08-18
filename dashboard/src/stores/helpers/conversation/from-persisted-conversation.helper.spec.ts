@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PersistedConversation } from '../conversation.model';
+import type { PersistedConversation } from '../../conversation.model';
 import { fromPersistedConversation } from './from-persisted-conversation.helper';
 
 function makePersisted(

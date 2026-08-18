@@ -1,7 +1,7 @@
 import { computeEma } from './compute-ema.helper.js';
 import type { IndicatorSeries } from './indicators.types.js';
 
-export interface MacdResult {
+interface MacdResult {
   /** EMA(fast) − EMA(slow) per bar. */
   macd: IndicatorSeries;
   /** EMA(signalPeriod) of the macd line. */

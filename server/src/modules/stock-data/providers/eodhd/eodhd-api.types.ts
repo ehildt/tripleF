@@ -24,8 +24,6 @@ export const eodhdSearchApiResultSchema = z.object({
   isPrimary: z.boolean().optional(),
 });
 
-export type EodhdSearchApiResult = z.infer<typeof eodhdSearchApiResultSchema>;
-
 // --- Real-time quote API (snake_case for change_p) --------------------------
 
 export const eodhdQuoteApiResultSchema = z.object({
@@ -42,8 +40,6 @@ export const eodhdQuoteApiResultSchema = z.object({
   change_p: z.number().optional(),
 });
 
-export type EodhdQuoteApiResult = z.infer<typeof eodhdQuoteApiResultSchema>;
-
 // --- End-of-day history API -------------------------------------------------
 
 export const eodhdHistoryApiPointSchema = z.object({
@@ -56,18 +52,6 @@ export const eodhdHistoryApiPointSchema = z.object({
   volume: z.number(),
 });
 
-export type EodhdHistoryApiPoint = z.infer<typeof eodhdHistoryApiPointSchema>;
-
-// --- Technical indicator API (value stored under the function-name key) -----
-
-export const eodhdTechnicalApiPointSchema = z.looseObject({
-  date: z.string(),
-});
-
-export type EodhdTechnicalApiPoint = z.infer<
-  typeof eodhdTechnicalApiPointSchema
->;
-
 // --- Intraday API -----------------------------------------------------------
 
 export const eodhdIntradayApiPointSchema = z.looseObject({
@@ -78,8 +62,6 @@ export const eodhdIntradayApiPointSchema = z.looseObject({
   close: z.number(),
   volume: z.number().optional(),
 });
-
-export type EodhdIntradayApiPoint = z.infer<typeof eodhdIntradayApiPointSchema>;
 
 // --- Financial news API -----------------------------------------------------
 
@@ -101,8 +83,6 @@ export const eodhdNewsApiArticleSchema = z.object({
     .optional(),
 });
 
-export type EodhdNewsApiArticle = z.infer<typeof eodhdNewsApiArticleSchema>;
-
 // --- Fundamentals API (deeply nested, PascalCase sections) ------------------
 
 export const eodhdFundamentalsApiSchema = z.looseObject({
@@ -110,8 +90,6 @@ export const eodhdFundamentalsApiSchema = z.looseObject({
   Highlights: z.looseObject({}).optional(),
   Valuation: z.looseObject({}).optional(),
 });
-
-export type EodhdFundamentalsApi = z.infer<typeof eodhdFundamentalsApiSchema>;
 
 /** Parse a JSON array item-by-item, dropping rows that fail validation. */
 export function parseApiArray<S extends z.ZodType>(

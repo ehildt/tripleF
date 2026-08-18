@@ -4,7 +4,7 @@ import {
 } from '../../../snippets/response-layout.constant.js';
 
 /** Deterministic fallback: classic when allowed, else the first allowed. */
-export function defaultLayoutOf(allowed: ResponseLayout[]): ResponseLayout {
+function defaultLayoutOf(allowed: ResponseLayout[]): ResponseLayout {
   if (allowed.includes('classic')) return 'classic';
   return allowed[0] ?? 'classic';
 }

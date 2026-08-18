@@ -4,12 +4,14 @@ import {
   Copy,
   GitBranch,
   SquaresExclude,
+  SquaresUnite,
   Trash2,
 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { ChatIconVisibility } from '@/types/app.model';
 
+import IconButton from '../../icon-button/IconButton.vue';
 import Marquee from '../../marquee/Marquee.vue';
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
 import Tooltip from '../../tooltip/Tooltip.vue';
@@ -40,6 +42,15 @@ const props = withDefaults(
     iconVisibility?: Partial<ChatIconVisibility>;
     /** Whether this item is the currently-active one (marquee its preview). */
     active?: boolean;
+    /** True while this item is selected for a merge (green). */
+    mergeSelected?: boolean;
+    /** Request id of the merge that consumed this item (red icon). */
+    mergedRequestId?: string;
+    /** False when the conversation has fewer than two merge candidates —
+     * the merge button grays out. */
+    canMerge?: boolean;
+    /** True when at least two user prompts are selected — merge icons pulse. */
+    mergeArmed?: boolean;
   }>(),
   {
     renderHtml: undefined,
@@ -49,6 +60,10 @@ const props = withDefaults(
     showBranch: false,
     iconVisibility: undefined,
     active: false,
+    mergeSelected: false,
+    mergedRequestId: undefined,
+    canMerge: false,
+    mergeArmed: false,
   },
 );
 
@@ -64,6 +79,7 @@ defineEmits<{
   select: [];
   copy: [];
   toggleInclude: [];
+  toggleMerge: [];
   deleteItem: [];
   branchOut: [];
 }>();
@@ -105,19 +121,14 @@ defineEmits<{
           >{{ contextPercent }}%</span
         >
       </Tooltip>
-      <Tooltip :text="$t('common.copy')">
-        <button
-          v-if="iconVisibility?.copy !== false"
-          type="button"
-          class="expandable-message-list__toggle-copy"
-          :aria-label="$t('common.copy')"
-          @click.stop="$emit('copy')"
-        >
-          <MotionIcon>
-            <Copy class="expandable-message-list__include-icon" />
-          </MotionIcon>
-        </button>
-      </Tooltip>
+      <IconButton
+        v-if="iconVisibility?.copy !== false"
+        size="sm"
+        :title="$t('common.copy')"
+        @click.stop="$emit('copy')"
+      >
+        <Copy />
+      </IconButton>
       <Tooltip
         :text="
           included
@@ -142,6 +153,42 @@ defineEmits<{
         >
           <MotionIcon>
             <SquaresExclude class="expandable-message-list__include-icon" />
+          </MotionIcon>
+        </button>
+      </Tooltip>
+      <Tooltip
+        :text="
+          mergedRequestId
+            ? $t('common.mergeConsumedHint', { requestId: mergedRequestId })
+            : included === false
+              ? $t('common.mergeExcludedHint')
+              : $t('common.mergeSelection')
+        "
+      >
+        <button
+          v-if="included !== undefined"
+          type="button"
+          class="expandable-message-list__toggle-merge"
+          :class="{
+            'expandable-message-list__toggle-merge--selected': mergeSelected,
+            'expandable-message-list__toggle-merge--consumed':
+              !mergeSelected && !!mergedRequestId,
+            'expandable-message-list__toggle-merge--pulse':
+              mergeSelected && mergeArmed,
+          }"
+          :aria-label="
+            mergedRequestId
+              ? $t('common.mergeConsumedHint', { requestId: mergedRequestId })
+              : included === false
+                ? $t('common.mergeExcludedHint')
+                : $t('common.mergeSelection')
+          "
+          :aria-pressed="mergeSelected"
+          :disabled="!canMerge || (included === false && !mergedRequestId)"
+          @click.stop="$emit('toggleMerge')"
+        >
+          <MotionIcon>
+            <SquaresUnite class="expandable-message-list__include-icon" />
           </MotionIcon>
         </button>
       </Tooltip>
@@ -262,22 +309,6 @@ defineEmits<{
   transition: color 0.2s ease;
 }
 
-.expandable-message-list__toggle-copy {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-0-5);
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.expandable-message-list__toggle-copy:hover {
-  color: var(--color-accent-primary);
-}
-
 .expandable-message-list__toggle-include:hover,
 .expandable-message-list__toggle-include--excluded {
   color: var(--color-accent-primary);
@@ -297,6 +328,60 @@ defineEmits<{
 
 .expandable-message-list__toggle-delete:hover {
   color: var(--color-status-error);
+}
+
+.expandable-message-list__toggle-merge {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-0-5);
+  border: none;
+  background: none;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandable-message-list__toggle-merge:hover {
+  color: var(--color-merge-selected);
+}
+
+.expandable-message-list__toggle-merge--selected {
+  color: var(--color-merge-selected);
+}
+
+/* Consumed by a completed merge: red, still selectable. Declared before
+   --selected so a fresh selection (green) wins over the red state. */
+.expandable-message-list__toggle-merge--consumed {
+  color: var(--color-merge-consumed);
+}
+
+.expandable-message-list__toggle-merge--consumed:hover {
+  color: var(--color-merge-consumed);
+}
+
+/* Fewer than two candidates: no merge possible, button is inert. */
+.expandable-message-list__toggle-merge:disabled,
+.expandable-message-list__toggle-merge:disabled:hover {
+  color: color-mix(in srgb, var(--color-fg-muted) 40%, transparent);
+  cursor: not-allowed;
+}
+
+/* Armed merge (2+ selected): picked icons pulse to signal readiness. */
+@keyframes expandable-message-list__merge-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.18);
+  }
+}
+
+.expandable-message-list__toggle-merge--pulse {
+  animation: expandable-message-list__merge-pulse 1.1s ease-in-out infinite;
 }
 
 .expandable-message-list__toggle-branch {

@@ -54,10 +54,17 @@ describe('SubscribedEventItem', () => {
       props: { subscription: base, conversationNames: ['Code Review'] },
     });
     const icons = wrapper.findAll('.subscribed-event-item__icons svg');
-    for (const icon of icons) {
-      expect(icon.classes()).toContain('subscribed-event-item__icon');
-    }
     expect(icons.length).toBeGreaterThan(0);
+    // Cluster icons share the size class; the remove action is the canonical
+    // IconButton in its compact variant (the same 0.75rem scale).
+    for (const icon of icons) {
+      if (!icon.element.closest('.icon-button')) {
+        expect(icon.classes()).toContain('subscribed-event-item__icon');
+      }
+    }
+    expect(
+      wrapper.find('.subscribed-event-item__icons .icon-button--sm').exists(),
+    ).toBe(true);
   });
 
   it('marks the active radio with the accent tint', () => {
@@ -71,7 +78,7 @@ describe('SubscribedEventItem', () => {
 
   it('emits its toggle actions from the per-icon buttons', async () => {
     const cases = [
-      ['.subscribed-event-item__remove', 'remove'],
+      ['button[aria-label^="Unsubscribe from"]', 'remove'],
       ['.subscribed-event-item__stream-toggle', 'toggleStream'],
       ['.subscribed-event-item__radio-toggle', 'toggleActive'],
     ] as const;

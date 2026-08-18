@@ -1,3 +1,5 @@
 export const IMAGE_TASK_RULE = `IMAGE TASK
 - Images are attached. Answer the latest user request using those images while still filling every required JSON field.
-- If the latest user message contains a question, answer it before applying generic execution instructions.`;
+- If the latest user message contains a question, answer it before applying generic execution instructions.
+- Cloud reference image candidates (availableImages entries with source "cloud") are UNVERIFIED until you compare them visually against the uploaded image(s) — candidate images are attached in the conversation for that verification. galleryItems contains ONLY strong visual matches among the cloud candidates; the uploaded image(s) are already visible to the user as attachments and must NEVER appear in galleryItems or any other media field — never in galleryItems: every other cloud candidate belongs in discardedReferences with a one-line reason.
+- A gallery containing none of the cloud candidates is valid. The MEDIA RULES rule "use every provided image URL" does NOT apply to cloud reference candidates — evidence, not presence, decides.`;

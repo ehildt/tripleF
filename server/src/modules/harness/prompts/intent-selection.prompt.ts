@@ -83,10 +83,17 @@ AVAILABLE TEMPLATES
 - shoplist
 - imagelist
 - videolist
+- merge
 - text
 
 AVAILABLE PROMPT VARIANTS BY TEMPLATE
 ${formatVariantCatalog().join('\n')}
+
+MERGE REQUEST RULES (ABSOLUTE)
+- When the latest user message starts with the "[MERGE REQUEST]" marker, the user has combined several previous requests and answers into a single request and expects ONE unified response built from new snippets.
+- You MUST choose template "merge" with prompt variant "default". NEVER choose summary, text, videolist, imagelist, article, news, product, shoplist, or any other content template based on the embedded material — the merge template is the only one that consolidates the snippets of the combined answers into new snippets (merged video galleries, merged image galleries, merged sources, merged body sections).
+- Tool selection follows the summary rule: include NO tools merely because the embedded material mentions videos, images, or web content — consolidating existing material never needs fresh research. Only include tools when the ADDITIONAL INSTRUCTION at the end of the message explicitly asks for fresh research, external facts, images, or videos (e.g. "look up", "search for", "find", "more videos", "latest news", "current prices") — then include exactly the enabled tools that request needs (web, image, and/or video search).
+- The contextSummary must cover ALL combined topics and the material they contain, so the response step can consolidate them without re-reading the raw history.
 
 PROMPT SELECTION RULES
 - default: use this unless the user explicitly asks for a specific style.
@@ -286,15 +293,16 @@ TEMPLATE RULES
   The news template ALWAYS includes every enabled *ImageSearch and *VideoSearch tool, even when the user does not explicitly ask for images or videos.
   Also include *ImageSearch and *VideoSearch tools when the user asks for media or when the topic is likely to have visuals.
   Choose "news" (not "article") when the user explicitly asks for "news", "latest", "recent", "breaking", "announcements", "update", "status", or "current events".
-- describe: for describing user-provided images. No tools unless the user explicitly asks for external data or the images contain searchable clues (watermarks, URLs, brands, logos, recognizable named entities).
+- describe: for describing user-provided images. No tools unless the user explicitly asks for external data or the images contain searchable clues (watermarks, URLs, brands, logos, recognizable named entities). When tools are included, select EVERY enabled *WebSearch, EVERY enabled *ImageSearch, and EVERY enabled *VideoSearch tool of every enabled provider (e.g. Serper AND Bright Data when both are on) — search providers return different result sets, and the pipeline verifies reference images visually, so broader coverage costs nothing and improves identification.
 - compare: ONLY for comparing images the user uploaded in the CURRENT request. Information/entity comparisons ("how does X compare to Y", "X vs Y", "vergleiche X mit Y") are NEVER "compare" — they are "evaluation" (verdict wanted) or "article" (neutral report); see COMPARE IS FOR UPLOADED IMAGES ONLY. No tools unless the user explicitly asks for external data or the images contain searchable clues.
-  If the user asks whether the uploaded images match/resemble/reference an external topic (e.g. "are these characters from X?", "is this from game Y?", "do these images show Z?"), keep template "compare" with the default (not visual) variant, include imageSearch tools for reference discovery, and use the search results as reference images for verification. Do NOT switch to evaluation or summary just because the question mentions an external topic.
-- ocr: for extracting text from images. No tools unless the extracted text contains URLs or named entities the user asks you to look up.
+  If the user asks whether the uploaded images match/resemble/reference an external topic (e.g. "are these characters from X?", "is this from game Y?", "do these images show Z?"), keep template "compare" with the default (not visual) variant, include EVERY enabled *ImageSearch tool (one per enabled provider) and EVERY enabled *VideoSearch tool for reference discovery, and use the search results as reference images for verification. Do NOT switch to evaluation or summary just because the question mentions an external topic.
+- ocr: for extracting text from images. No tools unless the extracted text contains URLs or named entities the user asks you to look up. When looking them up, include EVERY enabled provider's *WebSearch tool and EVERY enabled *VideoSearch tool.
 
 IMAGE-SELF-ANALYSIS TOOL RULES
 - For describe, compare, and ocr, the default is visual-only analysis.
 - The model should first look at the image(s) and identify any clues that could be researched online: watermarks, URLs, brand names, logos, social-media handles, recognizable people, products, buildings, or locations.
-- Only include *WebSearch, webFetch, or imageSearch tools if the user explicitly asks for external context OR the images contain a clear searchable clue.
+- Only include *WebSearch, webFetch, imageSearch, or videoSearch tools if the user explicitly asks for external context OR the images contain a clear searchable clue.
+- When external research IS included, include EVERY enabled *WebSearch tool, EVERY enabled *ImageSearch tool, and EVERY enabled *VideoSearch tool across all enabled providers, not just one tool per category: the enabled search providers (e.g. Serper and Bright Data) return different result sets, and wider candidate pools feed the visual verification step — a longer tool list is correct here, not wasteful.
 - If you are unsure whether the user wants external research, default to visual-only analysis without tools; never ask for clarification over a tool choice.
 - When external research is used for describe/compare/ocr, the response must disclose it and label any externally derived information as an assumption (e.g. "I noticed a watermark/URL/brand in the image and searched the internet for more context. The following identification is based on that research and may be an assumption.").
 - summary: for recapping prior conversation or a provided topic without new images. No tools unless the user explicitly asks for external facts.

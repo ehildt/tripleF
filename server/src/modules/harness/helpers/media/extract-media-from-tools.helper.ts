@@ -50,7 +50,7 @@ export function extractImageSearchItems(
         height: r.height,
         source: r.source || r.domain || undefined,
         // Bright Data returns no pixel dimensions and we trust its Google-side
-        // `tbs` size filter, so it must not be dropped by the 720p gate.
+        // `tbs` size filter, so it must not be dropped by the dimension gate.
         skipDimensionCheck: tr.toolName.startsWith('brightData'),
       });
     }

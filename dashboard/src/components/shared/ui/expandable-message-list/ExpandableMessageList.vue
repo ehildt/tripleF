@@ -14,6 +14,7 @@ const props = withDefaults(
     onClick?: (index: number) => void;
     onCopy?: (index: number) => void;
     onToggleInclude?: (index: number) => void;
+    onToggleMerge?: (index: number) => void;
     onDeleteItem?: (index: number) => void;
     onBranchOut?: (index: number) => void;
     expandAll?: boolean;
@@ -22,6 +23,11 @@ const props = withDefaults(
     activeId?: string | null;
     /** Which action icons to show. Omitted keys default to visible. */
     iconVisibility?: Partial<ChatIconVisibility>;
+    /** False when the conversation has fewer than two merge candidates —
+     * the merge button grays out. */
+    canMerge?: boolean;
+    /** True when at least two user prompts are selected — merge icons pulse. */
+    mergeArmed?: boolean;
   }>(),
   {
     items: null,
@@ -29,11 +35,14 @@ const props = withDefaults(
     onClick: undefined,
     onCopy: undefined,
     onToggleInclude: undefined,
+    onToggleMerge: undefined,
     onDeleteItem: undefined,
     onBranchOut: undefined,
     showRole: true,
     activeId: null,
     iconVisibility: undefined,
+    canMerge: false,
+    mergeArmed: false,
   },
 );
 
@@ -55,6 +64,10 @@ function handleCopy(idx: number) {
 
 function handleToggleInclude(idx: number) {
   props.onToggleInclude?.(idx);
+}
+
+function handleToggleMerge(idx: number) {
+  props.onToggleMerge?.(idx);
 }
 
 function handleDeleteItem(idx: number) {
@@ -81,10 +94,13 @@ function handleBranchOut(idx: number) {
         :show-branch="!!props.onBranchOut"
         :active="msg.id != null && msg.id === props.activeId"
         :icon-visibility="props.iconVisibility"
+        :can-merge="props.canMerge"
+        :merge-armed="props.mergeArmed"
         @toggle="toggle(idx)"
         @select="handleSelect(idx)"
         @copy="handleCopy(idx)"
         @toggle-include="handleToggleInclude(idx)"
+        @toggle-merge="handleToggleMerge(idx)"
         @delete-item="handleDeleteItem(idx)"
         @branch-out="handleBranchOut(idx)"
       >

@@ -124,12 +124,12 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    await wrapper.find('.attachment-card__remove').trigger('click');
+    await wrapper.find('button[aria-label="Remove"]').trigger('click');
 
     expect(wrapper.emitted('removeAttachment')).toEqual([['pending-1']]);
   });
 
-  it('emits toggleAttachment when the file thumbnail is clicked', async () => {
+  it('emits toggleAttachment when the include/exclude toggle is clicked', async () => {
     const wrapper = mountComponent({
       attachments: [
         {
@@ -145,7 +145,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    await wrapper.find('.attachment-card__thumb').trigger('click');
+    await wrapper.find('.attachment-card__toggle').trigger('click');
 
     expect(wrapper.emitted('toggleAttachment')).toEqual([['pending-1']]);
   });
@@ -196,9 +196,7 @@ describe('ChatRightPanel', () => {
       rightPanelView: 'files',
     });
 
-    expect(wrapper.find('.attachment-card__uploaded-indicator').exists()).toBe(
-      true,
-    );
+    expect(wrapper.find('.attachment-card__source').exists()).toBe(true);
   });
 
   it.each([

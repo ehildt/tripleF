@@ -11,6 +11,7 @@ import { X } from '@lucide/vue';
 import { computed } from 'vue';
 
 import PlaylistTransportBar from '@/components/chat/right-panel/playlist-transport-bar/PlaylistTransportBar.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
@@ -62,16 +63,13 @@ function noop() {
               $t('common.example')
             }}</span>
           </Tooltip>
-          <Tooltip :text="$t('common.closePreview')">
-            <button
-              type="button"
-              class="floating-playlist__toggle"
-              :aria-label="$t('common.closePreview')"
-              @click="hidePlaylistPreview"
-            >
-              <X class="floating-playlist__toggle-icon" />
-            </button>
-          </Tooltip>
+          <IconButton
+            size="sm"
+            :title="$t('common.closePreview')"
+            @click="hidePlaylistPreview"
+          >
+            <X />
+          </IconButton>
         </div>
       </div>
 
@@ -139,32 +137,6 @@ function noop() {
   font-size: 0.7rem;
   font-family: var(--font-mono);
   color: var(--color-fg-muted);
-}
-
-.floating-playlist__toggle {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-1) var(--spacing-2);
-  border: none;
-  background-color: transparent;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.floating-playlist__toggle:hover {
-  color: var(--color-accent-primary);
-}
-
-.floating-playlist__toggle-icon {
-  width: 0.75rem;
-  height: 0.75rem;
 }
 
 .floating-playlist__body {

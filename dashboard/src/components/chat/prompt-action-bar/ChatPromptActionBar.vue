@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import {
-  BrainCircuit,
-  CircleGauge,
-  GlobeOff,
-  GlobeX,
-  Landmark,
-  Upload,
-} from '@lucide/vue';
-
-import Dropdown from '../../shared/ui/drop-down/DropDown.vue';
-import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
-import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
-import {
   type ChatPromptActionBarEmits,
   useChatPromptActionBar,
 } from './composables/use-chat-prompt-action-bar.composable';
+import PromptActions from './prompt-actions/PromptActions.vue';
+import PromptInput from './prompt-input/PromptInput.vue';
+import SourcesMenu from './source-tags-strip/sources-menu/SourcesMenu.vue';
+import SourceTagsStrip from './source-tags-strip/SourceTagsStrip.vue';
+import ViewMenu from './source-tags-strip/view-menu/ViewMenu.vue';
 import type { ChatPromptActionBarProps } from './ChatPromptActionBar.types';
 
 const props = defineProps<ChatPromptActionBarProps>();
@@ -22,156 +15,97 @@ const props = defineProps<ChatPromptActionBarProps>();
 const emit = defineEmits<ChatPromptActionBarEmits>();
 
 const {
-  fileSelectClass,
   fileSelectTitle,
   actionsClass,
   sourceTags,
   searchEngineToggleTitle,
   eodhdToggleTitle,
   noSearchEngineTitle,
+  scrollMode,
+  toggleScrollMode,
+  scrollModeTitle,
+  sourceMenuCollapsed,
+  toggleSourceMenuCollapsed,
+  sourceMenuToggleTitle,
+  sourceMenuAlwaysShow,
+  viewMenuCollapsed,
+  toggleViewMenuCollapsed,
+  viewMenuToggleTitle,
+  viewMenuAlwaysShow,
+  sectionToggles,
+  toggleSection,
+  presentationToggles,
+  togglePresentation,
   onFileButtonMouseEnter,
   onFileButtonMouseLeave,
 } = useChatPromptActionBar(props, emit);
 </script>
 
 <template>
-  <div class="chat-prompt-action-bar">
-    <!-- Search-source toggle icons floating on the top border, right-aligned.
-         Serper/Bright Data/YouTube render one toggle per source; EODHD is a
-         single on/off engine, so it gets one Landmark toggle. -->
-    <div
-      v-if="sourceTags.length || eodhdState?.available"
-      class="chat-prompt-action-bar__source-tags"
+  <div class="chat-prompt-action-bar panel-glow">
+    <SourceTagsStrip
+      v-if="sourceTags.length || eodhdState?.available || sectionToggles.length"
     >
-      <Tooltip v-for="tag in sourceTags" :key="tag.key" :text="tag.title">
-        <button
-          type="button"
-          class="chat-prompt-action-bar__source-tag"
-          :class="{
-            'chat-prompt-action-bar__source-tag--disabled': !tag.enabled,
-          }"
-          :aria-label="tag.title"
-          :aria-pressed="tag.enabled"
-          @click="emit('toggleSource', tag.key)"
-        >
-          <component
-            :is="tag.icon"
-            class="chat-prompt-action-bar__source-tag-icon"
-            aria-hidden="true"
-          />
-        </button>
-      </Tooltip>
-      <Tooltip v-if="eodhdState?.available" :text="eodhdToggleTitle">
-        <button
-          type="button"
-          class="chat-prompt-action-bar__source-tag"
-          :class="{
-            'chat-prompt-action-bar__source-tag--disabled': !eodhdState.enabled,
-          }"
-          :aria-label="eodhdToggleTitle"
-          :aria-pressed="eodhdState.enabled"
-          @click="emit('toggleEodhd')"
-        >
-          <Landmark
-            class="chat-prompt-action-bar__source-tag-icon"
-            aria-hidden="true"
-          />
-        </button>
-      </Tooltip>
-    </div>
-    <span class="chat-prompt-action-bar__prompt">&gt;</span>
-    <textarea
+      <SourcesMenu
+        v-if="sourceTags.length || eodhdState?.available"
+        :source-tags="sourceTags"
+        :eodhd-state="eodhdState"
+        :eodhd-toggle-title="eodhdToggleTitle"
+        :collapsed="sourceMenuCollapsed"
+        :always-show="sourceMenuAlwaysShow"
+        :toggle-title="sourceMenuToggleTitle"
+        @toggle="toggleSourceMenuCollapsed"
+        @toggle-source="emit('toggleSource', $event)"
+        @toggle-eodhd="emit('toggleEodhd')"
+      />
+      <ViewMenu
+        :scroll-mode="scrollMode"
+        :scroll-mode-title="scrollModeTitle"
+        :section-toggles="sectionToggles"
+        :presentation-toggles="presentationToggles"
+        :collapsed="viewMenuCollapsed"
+        :always-show="viewMenuAlwaysShow"
+        :toggle-title="viewMenuToggleTitle"
+        @toggle="toggleViewMenuCollapsed"
+        @toggle-scroll-mode="toggleScrollMode"
+        @toggle-section="toggleSection"
+        @toggle-presentation="togglePresentation"
+      />
+    </SourceTagsStrip>
+
+    <PromptInput
       :value="props.value"
-      name="prompt"
-      :rows="2"
-      class="chat-prompt-action-bar__input"
-      style="caret-shape: block"
-      :aria-label="$t('common.promptAria')"
-      :placeholder="$t('common.askHarness')"
       @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
       @focus="emit('focus')"
     />
-    <div :ref="props.setActionBarRef" :class="actionsClass">
-      <Dropdown
-        :ref="props.setThinkDropdownRef"
-        variant="icon-only"
-        align="center"
-        :label="$t('common.thinkLevel')"
-        :options="props.thinkOptions"
-        :model-value="props.thinkValue"
-        :disabled="props.isDisabled"
-        @update:model-value="emit('selectThink', $event)"
-        @open="emit('openThink')"
-      >
-        <MotionIcon>
-          <BrainCircuit class="chat-prompt-action-bar__icon" />
-        </MotionIcon>
-      </Dropdown>
-      <Dropdown
-        :ref="props.setContextSizeDropdownRef"
-        variant="icon-only"
-        align="center"
-        :label="$t('common.context')"
-        :options="props.contextSizeOptions"
-        :model-value="props.contextSizeValue"
-        :disabled="props.isDisabled"
-        :format-value="props.formatContextSize"
-        @update:model-value="emit('selectContextSize', $event)"
-        @open="emit('openContextSize')"
-      >
-        <MotionIcon>
-          <CircleGauge class="chat-prompt-action-bar__icon" />
-        </MotionIcon>
-      </Dropdown>
-      <Tooltip :text="fileSelectTitle" :disabled="props.isFileSelectDisabled">
-        <button
-          :class="fileSelectClass"
-          :disabled="props.isFileSelectDisabled"
-          :aria-label="fileSelectTitle"
-          @mouseenter="onFileButtonMouseEnter"
-          @mouseleave="onFileButtonMouseLeave"
-          @click="emit('fileSelect')"
-        >
-          <MotionIcon
-            ><Upload class="chat-prompt-action-bar__icon"
-          /></MotionIcon>
-        </button>
-      </Tooltip>
-      <Tooltip
-        v-if="
-          props.searchEngineState === 'enabled' ||
-          props.searchEngineState === 'disabled'
-        "
-        :text="searchEngineToggleTitle"
-      >
-        <button
-          class="chat-prompt-action-bar__search-toggle"
-          :aria-label="searchEngineToggleTitle"
-          @click="emit('toggleSearchEngine')"
-        >
-          <MotionIcon>
-            <Globe
-              v-if="props.searchEngineState === 'enabled'"
-              class="chat-prompt-action-bar__icon"
-            />
-            <GlobeX v-else class="chat-prompt-action-bar__icon" />
-          </MotionIcon>
-        </button>
-      </Tooltip>
-      <Tooltip
-        v-else-if="props.searchEngineState === 'unavailable'"
-        :text="noSearchEngineTitle"
-      >
-        <span
-          class="chat-prompt-action-bar__offline-indicator"
-          role="img"
-          :aria-label="$t('common.noSearchEngineConnected')"
-        >
-          <GlobeOff class="chat-prompt-action-bar__icon" />
-        </span>
-      </Tooltip>
-    </div>
+
+    <PromptActions
+      :actions-class="actionsClass"
+      :think-options="props.thinkOptions"
+      :think-value="props.thinkValue"
+      :context-size-options="props.contextSizeOptions"
+      :context-size-value="props.contextSizeValue"
+      :default-context-size="props.defaultContextSize"
+      :format-context-size="props.formatContextSize"
+      :is-disabled="props.isDisabled"
+      :file-select-title="fileSelectTitle"
+      :is-file-select-disabled="props.isFileSelectDisabled"
+      :search-engine-state="props.searchEngineState"
+      :search-engine-toggle-title="searchEngineToggleTitle"
+      :no-search-engine-title="noSearchEngineTitle"
+      :set-action-bar-ref="props.setActionBarRef"
+      :set-think-dropdown-ref="props.setThinkDropdownRef"
+      :set-context-size-dropdown-ref="props.setContextSizeDropdownRef"
+      @select-think="emit('selectThink', $event)"
+      @open-think="emit('openThink')"
+      @select-context-size="emit('selectContextSize', $event)"
+      @open-context-size="emit('openContextSize')"
+      @file-select="emit('fileSelect')"
+      @toggle-search-engine="emit('toggleSearchEngine')"
+      @file-button-mouse-enter="onFileButtonMouseEnter"
+      @file-button-mouse-leave="onFileButtonMouseLeave"
+    />
   </div>
 </template>
 
@@ -191,47 +125,6 @@ const {
     opacity 0.3s ease;
 }
 
-/* Search-source icons floating on the prompt area's top border, aligned
-   right; the bar background punches the border line out behind them. The
-   z-index + pointer-events keep the strip clickable — without them the
-   overlapping exchange content swallows the clicks before the buttons. */
-.chat-prompt-action-bar__source-tags {
-  position: absolute;
-  top: 0;
-  right: 1.1rem;
-  z-index: 10;
-  pointer-events: auto;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  padding: 0 var(--spacing-1);
-}
-
-.chat-prompt-action-bar__source-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-accent-primary);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.chat-prompt-action-bar__source-tag--disabled {
-  color: var(--color-fg-muted);
-}
-
-.chat-prompt-action-bar__source-tag:hover {
-  color: var(--color-accent-secondary);
-}
-
-.chat-prompt-action-bar__source-tag-icon {
-  width: 0.8rem;
-  height: 0.8rem;
-}
-
 .chat-prompt-action-bar:hover {
   opacity: 1;
   transition: opacity 0.3s ease;
@@ -241,95 +134,5 @@ const {
   box-shadow: 0 0 0.15rem 0.05rem
     color-mix(in srgb, var(--color-accent-primary) 30%, var(--color-divider));
   opacity: 1;
-}
-
-.chat-prompt-action-bar__prompt {
-  color: var(--color-tab-rest);
-  font-family: var(--font-mono);
-  line-height: 1.5rem;
-  user-select: none;
-}
-
-.chat-prompt-action-bar__input {
-  flex: 1 1 0%;
-  min-width: 0;
-  background-color: transparent;
-  border: none;
-  color: var(--color-fg-primary);
-  font-family: var(--font-mono);
-  resize: none;
-  outline: none;
-}
-
-.chat-prompt-action-bar__input::placeholder {
-  color: var(--color-fg-muted);
-}
-
-.chat-prompt-action-bar__input:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.chat-prompt-action-bar__actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--spacing-1-5);
-  align-self: center;
-}
-
-.chat-prompt-action-bar__actions--with-indicator {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-}
-
-.chat-prompt-action-bar__offline-indicator {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-1);
-  color: var(--color-status-warning);
-  cursor: help;
-}
-
-.chat-prompt-action-bar__search-toggle {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-1);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  border: none;
-  background-color: transparent;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.chat-prompt-action-bar__search-toggle:hover {
-  color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
-}
-
-.chat-prompt-action-bar__icon {
-  width: 1rem;
-  height: 1rem;
-}
-
-.chat-prompt-action-bar__file-button {
-  padding: var(--spacing-1);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-  border: none;
-  background-color: transparent;
-}
-
-.chat-prompt-action-bar__file-button:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
-}
-
-.chat-prompt-action-bar__file-button--disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 </style>

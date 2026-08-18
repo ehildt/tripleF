@@ -71,7 +71,15 @@ Because models have a finite attention window, the dashboard surfaces a live rea
 
 **What it relies on:** the persistence layer that stores conversation state, the context-size readout, and the real-time channel that streams results.
 
-## 4.7 The whole, at a glance
+## 4.7 Stock-market answers
+
+Stock-market intents (`stockmarketitem` / `stockmarketlist`) are grounded in **real market data**, not model memory. The harness detects the ticker, calls the EODHD tool family (quote, search, history, intraday, news, fundamentals, technical), and the dashboard renders the answer with D3 charts over cached end-of-day history.
+
+**How it works.** The server keeps a Postgres cache of daily OHLCV bars plus a coverage ledger of which date windows have been fetched per ticker. A request for a range only backfills intervals the ledger does not know about; the most recent days are always re-fetched so late restatements propagate. Technical indicators (SMA, EMA, RSI, MACD, ATR, ADX, Bollinger Bands, Stochastic) are computed locally from the cached bars. The dashboard's chart paginates against the same cache, so repeated questions about the same ticker cost no provider calls.
+
+**What it relies on:** the EODHD provider client and its API key override (SysCtl), the `StockMarketBar`/`StockMarketHistoryRange` tables, the indicator helpers, and the D3 chart components.
+
+## 4.8 The whole, at a glance
 
 | Feature | How it behaves for the user | What it depends on |
 | --- | --- | --- |
@@ -80,9 +88,11 @@ Because models have a finite attention window, the dashboard surfaces a live rea
 | Video playlists | Curated, ordered, playable, persistent, deduped | Video search, embeddable-provider allow-list, title/caption contract, browser-persisted playlist, single floating player |
 | Image collections | Quality-filtered, deduped, locally stored | Image search, ingestion and preprocessing, object storage |
 | Long conversations | Context-size aware, organised via rename/delete/pin | Persistence, context-size readout, streaming |
+| Custom scroll experience | Two scroll modes (vertical carousel with crossfade, or native continuous scroll), per-conversation choice, auto-scroll that releases when reading | Scroll-mode state (localStorage), `useVerticalCarousel`/`useNativeScroll`, `ScrollableExchangeList` |
+| Stock-market answers | Real OHLCV history, indicators, and charts grounded in cached market data | EODHD provider, Postgres bar cache + coverage ledger, indicator helpers, D3 charts |
 | Persistence and reliability | Work survives failure, retries, and restarts | Queue, database, object storage, key store |
 
-## 4.8 The trust boundary
+## 4.9 The trust boundary
 
 Every feature ultimately leans on one principle: **the model proposes, the system disposes.** The model generates ideas and structure; the system gathers evidence, validates shape, enforces media contracts, and filters out whatever cannot be trusted or embedded. Architects should keep this boundary in mind when extending the product — new features should grow the "system" side (rules, validation, grounding) rather than trusting the "model" side to behave. That design philosophy is what keeps tripleF reliable even though the underlying models are free, local, and fallible.
 

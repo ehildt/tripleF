@@ -12,7 +12,7 @@ export type TechnicalFunction =
   'rsi' | 'macd' | 'adx' | 'sma' | 'ema' | 'bbands' | 'atr' | 'stochastic';
 
 /** Primary chart series plus the latest values of every auxiliary line. */
-export interface ComputedIndicator {
+interface ComputedIndicator {
   points: Array<{ time: string; value: number }>;
   summary: Record<string, number | undefined>;
 }

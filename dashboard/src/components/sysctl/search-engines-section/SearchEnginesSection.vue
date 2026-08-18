@@ -45,10 +45,19 @@ function handleZoneChange(zone: 'serpZone' | 'unlockerZone', value: string) {
   patchConfig('brightData', zone, value);
 }
 
-function handleSourcesPatch({ key, value }: { key: string; value: string[] }) {
+function handleSourcesPatch({
+  key,
+  value,
+}: {
+  key: string;
+  value: string[] | number;
+}) {
   // Optimistic local echo — the session-overrides merge keeps it on refresh.
   if (config.value?.sources && (key === 'preferred' || key === 'blocked')) {
-    config.value.sources[key] = value;
+    config.value.sources[key] = value as string[];
+  }
+  if (config.value?.sources && key === 'imageTaskReferenceCount') {
+    config.value.sources.imageTaskReferenceCount = value as number;
   }
   patchConfig('sources', key, value);
 }

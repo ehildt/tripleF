@@ -5,11 +5,12 @@
  * One entry per line — a hostname (subdomains match) or a /regex/ pattern
  * against the hostname. Changes apply to new requests on save (change).
  */
-import { Ban, ThumbsUp } from '@lucide/vue';
+import { Ban, Images, ThumbsUp } from '@lucide/vue';
 import { nextTick, ref, watch } from 'vue';
 
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
+import { clampSysctlResults } from '../../helpers/clamp-sysctl-results.helper';
 import type { SourcesConfig } from '../../sysctl-config.model';
 import { parseSourceList } from './helpers/parse-source-list.helper';
 
@@ -20,13 +21,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   (
     e: 'patch',
-    payload: { key: 'preferred' | 'blocked'; value: string[] },
+    payload:
+      | { key: 'preferred' | 'blocked'; value: string[] }
+      | { key: 'imageTaskReferenceCount'; value: number },
   ): void;
   (e: 'reset', key: 'preferred' | 'blocked'): void;
 }>();
 
+const MAX_IMAGE_TASK_REFERENCE_COUNT = 50;
+const DEFAULT_IMAGE_TASK_REFERENCE_COUNT = 6;
+
 const preferredDraft = ref('');
 const blockedDraft = ref('');
+const referenceCountDraft = ref('');
 const preferredInput = ref<HTMLTextAreaElement>();
 const blockedInput = ref<HTMLTextAreaElement>();
 
@@ -49,76 +56,131 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => props.sources?.imageTaskReferenceCount,
+  (count) => {
+    referenceCountDraft.value = String(
+      count ?? DEFAULT_IMAGE_TASK_REFERENCE_COUNT,
+    );
+  },
+  { immediate: true },
+);
+
 function save(key: 'preferred' | 'blocked') {
   const draft = key === 'preferred' ? preferredDraft : blockedDraft;
   emit('patch', { key, value: parseSourceList(draft.value) });
+}
+
+/** Commit the image-task reference pool size, clamped to the server bounds. */
+function saveReferenceCount() {
+  const value = clampSysctlResults(
+    Number(referenceCountDraft.value),
+    MAX_IMAGE_TASK_REFERENCE_COUNT,
+  );
+  referenceCountDraft.value = String(value);
+  emit('patch', { key: 'imageTaskReferenceCount', value });
 }
 </script>
 
 <template>
   <div class="sources-panel">
-    <!-- One line, gap-1: label block on top, text input below it -->
-    <div class="sources-panel__card">
-      <div class="sources-panel__header">
-        <div class="sources-panel__icon">
-          <ThumbsUp class="sources-panel__icon-glyph" />
+    <div class="sources-panel__lists">
+      <!-- One line, gap-1: label block on top, text input below it -->
+      <div class="sources-panel__card">
+        <div class="sources-panel__header">
+          <div class="sources-panel__icon">
+            <ThumbsUp class="sources-panel__icon-glyph" />
+          </div>
+          <div class="sources-panel__content">
+            <span class="sources-panel__label">{{
+              $t('common.preferredSources')
+            }}</span>
+            <span class="sources-panel__description">
+              {{ $t('common.sourcesPreferredHint') }}
+            </span>
+          </div>
+          <ResetButton
+            :title="$t('common.resetPreferredSources')"
+            @click="emit('reset', 'preferred')"
+          />
         </div>
-        <div class="sources-panel__content">
-          <span class="sources-panel__label">{{
-            $t('common.preferredSources')
-          }}</span>
-          <span class="sources-panel__description">
-            {{ $t('common.sourcesPreferredHint') }}
-          </span>
-        </div>
-        <ResetButton
-          :title="$t('common.resetPreferredSources')"
-          @click="emit('reset', 'preferred')"
+        <textarea
+          ref="preferredInput"
+          v-model="preferredDraft"
+          name="preferred-sources"
+          class="sources-panel__input"
+          rows="6"
+          placeholder="bbc.com&#10;arstechnica.com"
+          autocomplete="off"
+          spellcheck="false"
+          @input="autoResize(preferredInput)"
+          @change="save('preferred')"
         />
       </div>
-      <textarea
-        ref="preferredInput"
-        v-model="preferredDraft"
-        name="preferred-sources"
-        class="sources-panel__input"
-        rows="6"
-        placeholder="bbc.com&#10;arstechnica.com"
-        autocomplete="off"
-        spellcheck="false"
-        @input="autoResize(preferredInput)"
-        @change="save('preferred')"
-      />
+
+      <div class="sources-panel__card">
+        <div class="sources-panel__header">
+          <div class="sources-panel__icon">
+            <Ban class="sources-panel__icon-glyph" />
+          </div>
+          <div class="sources-panel__content">
+            <span class="sources-panel__label">{{
+              $t('common.blockedSources')
+            }}</span>
+            <span class="sources-panel__description">
+              {{ $t('common.sourcesBlockedHint') }}
+            </span>
+          </div>
+          <ResetButton
+            :title="$t('common.resetBlockedSources')"
+            @click="emit('reset', 'blocked')"
+          />
+        </div>
+        <textarea
+          ref="blockedInput"
+          v-model="blockedDraft"
+          name="blocked-sources"
+          class="sources-panel__input"
+          rows="6"
+          placeholder="*.pinterest.com&#10;/^lh\d+\.googleusercontent\.com$/"
+          autocomplete="off"
+          spellcheck="false"
+          @input="autoResize(blockedInput)"
+          @change="save('blocked')"
+        />
+      </div>
     </div>
 
     <div class="sources-panel__card">
       <div class="sources-panel__header">
         <div class="sources-panel__icon">
-          <Ban class="sources-panel__icon-glyph" />
+          <Images class="sources-panel__icon-glyph" />
         </div>
         <div class="sources-panel__content">
           <span class="sources-panel__label">{{
-            $t('common.blockedSources')
+            $t('common.imageTaskReferences')
           }}</span>
           <span class="sources-panel__description">
-            {{ $t('common.sourcesBlockedHint') }}
+            {{ $t('common.imageTaskReferencesHint') }}
           </span>
         </div>
         <ResetButton
-          :title="$t('common.resetBlockedSources')"
-          @click="emit('reset', 'blocked')"
+          :title="$t('common.resetImageTaskReferences')"
+          @click="
+            referenceCountDraft = String(DEFAULT_IMAGE_TASK_REFERENCE_COUNT);
+            saveReferenceCount();
+          "
         />
       </div>
-      <textarea
-        ref="blockedInput"
-        v-model="blockedDraft"
-        name="blocked-sources"
-        class="sources-panel__input"
-        rows="6"
-        placeholder="*.pinterest.com&#10;/^lh\d+\.googleusercontent\.com$/"
+      <input
+        v-model="referenceCountDraft"
+        type="number"
+        name="image-task-reference-count"
+        class="sources-panel__count"
+        min="1"
+        :max="MAX_IMAGE_TASK_REFERENCE_COUNT"
         autocomplete="off"
-        spellcheck="false"
-        @input="autoResize(blockedInput)"
-        @change="save('blocked')"
+        @change="saveReferenceCount"
       />
     </div>
   </div>
@@ -127,8 +189,14 @@ function save(key: 'preferred' | 'blocked') {
 <style scoped>
 .sources-panel {
   display: flex;
+  flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-1);
+}
+
+.sources-panel__lists {
+  display: flex;
+  gap: var(--spacing-3);
 }
 
 .sources-panel__card {
@@ -211,6 +279,18 @@ function save(key: 'preferred' | 'blocked') {
 .sources-panel__input::placeholder {
   color: var(--color-fg-muted);
   opacity: 0.5;
+}
+
+.sources-panel__count {
+  width: 8rem;
+  margin-left: var(--spacing-4);
+  margin-bottom: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: none;
+  color: var(--color-fg-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  outline: none;
 }
 
 /* Stack the two cards on narrow SysCtl widths */

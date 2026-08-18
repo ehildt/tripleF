@@ -2,9 +2,8 @@
 import { Network, Radio, RadioTower, Tag } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
-import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
+import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
 import { useMenuPosition } from '../model-selector/composables/use-menu-position';
-import IconButton from '../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
 
 const props = defineProps<{
@@ -33,6 +32,16 @@ defineEmits<{
 const triggerRef = ref<HTMLElement | null>(null);
 const isOpenRef = computed(() => props.isOpen);
 const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
+
+/** Hover hints (brain blink on the model selector) only make sense while the
+ *  menu is disabled — an enabled menu needs no "select a model first" cue. */
+function onIconMouseEnter() {
+  if (props.isDisabled) props.onMouseEnter?.();
+}
+
+function onIconMouseLeave() {
+  if (props.isDisabled) props.onMouseLeave?.();
+}
 </script>
 
 <template>
@@ -42,13 +51,13 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpenRef);
       <IconButton
         :active="isOpen"
         :disabled="isDisabled"
-        :blinking="blinking"
-        :on-mouse-enter="onMouseEnter"
-        :on-mouse-leave="onMouseLeave"
-        title="$t('common.streamTitle')"
+        :blinking="blinking?.value"
+        :title="$t('common.streamTitle')"
+        @mouseenter="onIconMouseEnter"
+        @mouseleave="onIconMouseLeave"
         @click.stop="$emit('toggleMenu')"
       >
-        <MotionIcon><Network class="w-4 h-4" /></MotionIcon>
+        <Network />
       </IconButton>
       <Teleport to="body">
         <div

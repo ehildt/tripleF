@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Exchange } from '../conversation.model';
+import type { Exchange } from '../../conversation.model';
 import { prunePairedExchange } from './prune-paired-exchange.helper';
 
 function makeExchange(

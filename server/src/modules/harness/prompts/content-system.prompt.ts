@@ -11,6 +11,10 @@ import { buildLanguageRule } from './shared/language-rule.prompt.js';
 import { buildLocalizationRule } from './shared/localization-rule.prompt.js';
 import { MEDIA_COUNTS } from './shared/media-counts.prompt.js';
 import { MEDIA_RULES } from './shared/media-rules.prompt.js';
+import {
+  MERGE_MEDIA_RULES,
+  MERGE_TOPIC_RULE,
+} from './shared/merge-rules.prompt.js';
 import { MULTIMODAL_POLICY } from './shared/multimodal-policy.prompt.js';
 import { NOISE_RULES } from './shared/noise-rules.prompt.js';
 import { buildOutputContract } from './shared/output-contract.prompt.js';
@@ -20,6 +24,17 @@ import { buildSourcePolicyPrompt } from './shared/source-policy.prompt.js';
 import { SOURCE_TRUTH_RULES } from './shared/source-truth.prompt.js';
 import { TOOL_RESULTS_RULES } from './shared/tool-results.prompt.js';
 import type { ContentSystemPromptParams } from './content-system.prompt.types.js';
+
+/** The topic boundary rule: merge consolidates; every other template stays on topic. */
+function buildTopicRule(template: string): string {
+  if (template === 'merge') return MERGE_TOPIC_RULE;
+  return 'STAY ON TOPIC: this response covers ONLY the subject of the latest user request. Never merge, drift into, or bolt on unrelated topics, stories, facts, sources, or media — even when earlier conversation turns or the retrieved results contain them. If the latest message refers to an earlier topic, use only that topic; otherwise ignore all earlier turns.';
+}
+
+/** Media history rule; merge replaces it (embedded material is vetted). */
+function buildHistoryMediaRule(template: string): string {
+  return template === 'merge' ? MERGE_MEDIA_RULES : HISTORY_URLS_RULES;
+}
 
 export function buildContentSystemPrompt(
   params: ContentSystemPromptParams,
@@ -79,7 +94,7 @@ Do not add other top-level keys — unknown keys are dropped.`;
     params.tools.length === 0
       ? 'No external results are available. Use only the conversation.'
       : 'Retrieved articles and media are authoritative. Prefer them over internal knowledge. Never fabricate facts, citations, or URLs.',
-    'STAY ON TOPIC: this response covers ONLY the subject of the latest user request. Never merge, drift into, or bolt on unrelated topics, stories, facts, sources, or media — even when earlier conversation turns or the retrieved results contain them. If the latest message refers to an earlier topic, use only that topic; otherwise ignore all earlier turns.',
+    buildTopicRule(params.template),
     SOURCE_TRUTH_RULES,
     TOOL_RESULTS_RULES,
   );
@@ -90,7 +105,8 @@ Do not add other top-level keys — unknown keys are dropped.`;
   if (sourcePolicy) sections.push(sourcePolicy);
 
   if (isMediaTemplate) {
-    sections.push(MEDIA_RULES, MEDIA_COUNTS, HISTORY_URLS_RULES);
+    sections.push(MEDIA_RULES, MEDIA_COUNTS);
+    sections.push(buildHistoryMediaRule(params.template));
   }
 
   if (params.contextSummary) {

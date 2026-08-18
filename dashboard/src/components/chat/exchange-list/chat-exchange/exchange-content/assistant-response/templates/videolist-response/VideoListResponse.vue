@@ -4,6 +4,7 @@
  * "videolist" harness template. Videos always render as the responsive grid
  * gallery.
  */
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
@@ -27,9 +28,7 @@ const { items, hasContent } = useVideoListResponseData(props);
   </section>
 
   <!-- Empty state -->
-  <section v-else class="video-list video-list--empty">
-    <p>{{ $t('common.noVideosFound') }}</p>
-  </section>
+  <EmptyStateSection v-else :message="$t('common.noVideosFound')" />
 </template>
 
 <style scoped>
@@ -44,13 +43,5 @@ const { items, hasContent } = useVideoListResponseData(props);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-}
-
-.video-list--empty {
-  padding: var(--spacing-4);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-tertiary);
-  text-align: center;
-  color: var(--color-fg-muted);
 }
 </style>

@@ -73,6 +73,47 @@ describe('normalizeHarnessResponseData', () => {
     ]);
   });
 
+  it('normalizes merge bodySections into per-topic blocks', () => {
+    const result = normalizeHarnessResponseData(
+      {
+        title: 'T',
+        bodySections: [
+          {
+            topic: 'Vision Pro',
+            content: 'Narrative',
+            strengths: [{ text: 'Great display' }, { text: '' }],
+            weaknesses: 'not a list',
+            recommendations: [{ text: 'Try it in store' }],
+            heroImageUrl: 'https://example.com/vision-pro.jpg',
+            heroImageAlt: 'Vision Pro headset',
+            heroVideoUrl: 'https://youtube.com/watch?v=aaa',
+            heroVideoTitle: 'Hands-on',
+          },
+          { topic: '' },
+          'not a record',
+          { heroImageUrl: 'javascript:alert(1)' },
+        ],
+      },
+      {},
+    );
+
+    expect(result?.bodySections).toEqual([
+      {
+        topic: 'Vision Pro',
+        content: 'Narrative',
+        strengths: [{ text: 'Great display' }],
+        weaknesses: undefined,
+        recommendations: [{ text: 'Try it in store' }],
+        heroImageUrl: 'https://example.com/vision-pro.jpg',
+        heroImageAlt: 'Vision Pro headset',
+        heroCaption: undefined,
+        heroVideoUrl: 'https://youtube.com/watch?v=aaa',
+        heroVideoTitle: 'Hands-on',
+        heroVideoCaption: undefined,
+      },
+    ]);
+  });
+
   it('ignores empty string arrays', () => {
     const result = normalizeHarnessResponseData(
       { title: 'T', sectionContent: [], keyFindings: [] },

@@ -11,6 +11,7 @@ import {
 import { extractImageCountFromToolResults } from '../helpers/media/extract-image-count-from-tool-results.helper.js';
 import { extractVideoCountFromToolResults } from '../helpers/media/extract-video-count-from-tool-results.helper.js';
 import { filterExistingGalleryItems } from '../helpers/media/filter-existing-gallery-items.helper.js';
+import { IMAGE_TEMPLATES } from '../helpers/respond/build-execution-messages.helper.js';
 
 import { HarnessContext } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
@@ -103,13 +104,20 @@ export class HarnessChatStreamingService {
       3,
     );
 
+    // Image tasks (describe/compare/ocr): the response gallery is reference
+    // images only — the user's own uploaded images are already visible as
+    // message attachments and must never reach the client gallery/lightbox.
+    const template = ctx.outputs.intent?.template ?? 'text';
+    const responseImages = IMAGE_TEMPLATES.includes(template)
+      ? images.filter((item) => item.source === 'cloud')
+      : images;
+
     const metaForStream = images.map(({ imageUrl, title, source }) => ({
       name: title,
       hash: imageUrl.split('/').pop() ?? '',
       source,
       variant: 'original' as const,
     }));
-    const template = ctx.outputs.intent?.template ?? 'text';
 
     this.stepLogger.log(ctx, 'stream', 'result', {
       sessionId: ctx.sessionId,
@@ -136,7 +144,7 @@ export class HarnessChatStreamingService {
       template,
       delta: ctx.stream ? '' : ctx.outputs.finalContent,
       data: ctx.outputs.finalData,
-      images,
+      images: responseImages,
       toolResults: ctx.outputs.toolResults,
       availableImages: ctx.outputs.availableImages,
       availableVideos: ctx.outputs.availableVideos,

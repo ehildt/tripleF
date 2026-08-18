@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 
@@ -17,16 +19,17 @@ const emit = defineEmits<{
   updateResults: [payload: { name: string; value: string }];
 }>();
 
+const prependRef = ref<HTMLElement>();
+
 const {
   isContentDisabled,
   isEndpointUnavailable,
   endpointEntries,
   getResults,
-  prependRef,
   itemsPerRow,
   prependItemsPerRow,
   ENDPOINT_LABELS,
-} = useProviderSection(props);
+} = useProviderSection(props, prependRef);
 </script>
 
 <template>

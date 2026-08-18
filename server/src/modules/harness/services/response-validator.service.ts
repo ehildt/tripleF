@@ -21,10 +21,7 @@ import { validateShoplistOutput } from './response-validators/shoplist.validator
 import { validateStockmarketItemOutput } from './response-validators/stockmarketitem.validator.js';
 import { validateStockmarketListOutput } from './response-validators/stockmarketlist.validator.js';
 import { validateSummaryOutput } from './response-validators/summary.validator.js';
-import type {
-  ValidationContext,
-  ValidationResult,
-} from './response-validators/validation-result.type.js';
+import type { ValidationResult } from './response-validators/validation-result.type.js';
 import { validateVideolistOutput } from './response-validators/videolist.validator.js';
 
 /**
@@ -34,14 +31,12 @@ import { validateVideolistOutput } from './response-validators/videolist.validat
  */
 const templateValidators: Record<
   string,
-  (
-    parsed: Record<string, unknown>,
-    context?: ValidationContext,
-  ) => ValidationResult
+  (parsed: Record<string, unknown>) => ValidationResult
 > = {
   article: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.article),
   news: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.news),
   evaluation: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.evaluation),
+  merge: createSnippetValidator(SNIPPET_TEMPLATE_PRESETS.merge),
   describe: validateDescribeOutput,
   compare: validateCompareOutput,
   ocr: validateOcrOutput,
@@ -79,7 +74,6 @@ export class ResponseValidatorService {
     template: string,
     requiredKeys: string[],
     optionalKeys: string[],
-    context?: ValidationContext,
   ): ValidationResult {
     const cleaned = content
       .trim()
@@ -124,7 +118,7 @@ export class ResponseValidatorService {
       if (key in parsed) sanitized[key] = parsed[key];
     }
 
-    return this.validateTemplateSchema(sanitized, template, context);
+    return this.validateTemplateSchema(sanitized, template);
   }
 
   /**
@@ -229,7 +223,6 @@ export class ResponseValidatorService {
   validateValidatedResponse(
     rawContent: string,
     template: string,
-    context?: ValidationContext,
   ): ValidationResult {
     const requiredKeys = getRequiredKeys(template);
     const optionalKeys = getOptionalKeys(template);
@@ -238,17 +231,15 @@ export class ResponseValidatorService {
       template,
       requiredKeys,
       optionalKeys,
-      context,
     );
   }
 
   private validateTemplateSchema(
     parsed: Record<string, unknown>,
     template: string,
-    context?: ValidationContext,
   ): ValidationResult {
     const validator = templateValidators[template];
-    if (validator) return validator(parsed, context);
+    if (validator) return validator(parsed);
     return { valid: true, content: JSON.stringify(parsed) };
   }
 }

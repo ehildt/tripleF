@@ -16,6 +16,7 @@ import {
   type ToastType,
   useToastState,
 } from '../../../../composables/toast-state';
+import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
 import {
   toastAnchor,
   toastPinEnabled,
@@ -61,24 +62,24 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
           :class="`toast__icon--${t.type}`"
         />
         <span class="toast__message">{{ t.message }}</span>
-        <button
+        <IconButton
           v-if="toastPinEnabled"
-          class="toast__action"
-          :class="{ 'toast__action--pinned': t.pinned }"
-          ::aria-label="t.pinned ? $t('common.unpin') : $t('common.pin')"
+          size="sm"
+          :active="t.pinned"
+          :aria-label="t.pinned ? $t('common.unpin') : $t('common.pin')"
           :aria-pressed="t.pinned"
           @click="togglePin(t.id)"
         >
-          <PinOff v-if="t.pinned" class="toast__action-icon" />
-          <Pin v-else class="toast__action-icon" />
-        </button>
-        <button
-          class="toast__action"
+          <PinOff v-if="t.pinned" />
+          <Pin v-else />
+        </IconButton>
+        <IconButton
+          size="sm"
           :aria-label="$t('common.close')"
           @click="remove(t.id)"
         >
-          <X class="toast__action-icon" />
-        </button>
+          <X />
+        </IconButton>
       </div>
     </div>
   </Teleport>
@@ -202,27 +203,5 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
   flex: 1;
   min-width: 0;
   user-select: text;
-}
-
-.toast__action {
-  padding: var(--spacing-0-5);
-  flex-shrink: 0;
-  color: var(--color-fg-secondary);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.toast__action:hover {
-  color: var(--color-fg-primary);
-}
-
-.toast__action--pinned,
-.toast__action--pinned:hover {
-  color: var(--color-accent-primary);
-}
-
-.toast__action-icon {
-  width: 0.875rem;
-  height: 0.875rem;
 }
 </style>

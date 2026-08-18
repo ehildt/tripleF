@@ -11,11 +11,14 @@ import { harnessImageClickedKey } from '@/types/harness-response-data.model';
 import type { LightboxImage } from '@/types/lightbox.model';
 
 import { isTrustedImageUrl } from './composables/helpers/media/is-trusted-image-url.helper';
+import { TEMPLATE_PARTS } from './composables/template-parts.constant';
+import { isTemplatePartVisible } from './composables/template-parts-settings.state';
 import ArticleResponse from './templates/article-response/ArticleResponse.vue';
 import CompareResponse from './templates/compare-response/CompareResponse.vue';
 import DescribeResponse from './templates/describe-response/DescribeResponse.vue';
 import EvaluationResponse from './templates/evaluation-response/EvaluationResponse.vue';
 import ImageListResponse from './templates/imagelist-response/ImageListResponse.vue';
+import MergeResponse from './templates/merge-response/MergeResponse.vue';
 import NewsResponse from './templates/news-response/NewsResponse.vue';
 import OcrResponse from './templates/ocr-response/OcrResponse.vue';
 import ProductResponse from './templates/product-response/ProductResponse.vue';
@@ -46,6 +49,7 @@ const templateMap: Record<string, Component> = {
   describe: DescribeResponse,
   evaluation: EvaluationResponse,
   imagelist: ImageListResponse,
+  merge: MergeResponse,
   news: NewsResponse,
   ocr: OcrResponse,
   product: ProductResponse,
@@ -60,6 +64,27 @@ const templateMap: Record<string, Component> = {
 const activeComponent = computed(
   () => templateMap[props.template] ?? TextResponse,
 );
+
+/**
+ * The client-side part visibility (SysCtl → Layouts): drop the data keys of
+ * every disabled part before the template renders. Sections self-hide when
+ * their data is absent, so a disabled part simply never renders — the model
+ * output is untouched.
+ */
+const visibleData = computed<HarnessResponseData>(() => {
+  const parts = TEMPLATE_PARTS[props.template as keyof typeof TEMPLATE_PARTS];
+  if (!parts || parts.length === 0) return props.data ?? {};
+  const hiddenKeys = new Set<string>();
+  for (const part of parts) {
+    if (!isTemplatePartVisible(props.template, part.id)) {
+      for (const key of part.keys) hiddenKeys.add(key);
+    }
+  }
+  if (hiddenKeys.size === 0) return props.data ?? {};
+  const result: Record<string, unknown> = { ...props.data };
+  for (const key of hiddenKeys) delete result[key];
+  return result as HarnessResponseData;
+});
 
 /**
  * Only the stockmarket templates consume chartData/revealCharts. Passing
@@ -87,22 +112,40 @@ const imageList = computed<LightboxImage[]>(() => {
     items.push({ url, title });
   };
 
-  if (props.data?.heroImageUrl && isTrustedImageUrl(props.data.heroImageUrl)) {
+  if (
+    visibleData.value.heroImageUrl &&
+    isTrustedImageUrl(visibleData.value.heroImageUrl)
+  ) {
     pushImage(
-      encodeURI(props.data.heroImageUrl),
+      encodeURI(visibleData.value.heroImageUrl),
       buildImageTitle(
-        props.data.heroImageAlt,
-        props.data.heroCaption,
-        props.data.title,
+        visibleData.value.heroImageAlt,
+        visibleData.value.heroCaption,
+        visibleData.value.title,
       ),
     );
   }
 
-  props.data?.galleryItems?.forEach((item) => {
+  // Merge topic heroes render inline inside their topic block — include
+  // them so clicking one opens a lightbox that actually contains it.
+  visibleData.value.bodySections?.forEach((section) => {
+    if (section.heroImageUrl && isTrustedImageUrl(section.heroImageUrl)) {
+      pushImage(
+        encodeURI(section.heroImageUrl),
+        buildImageTitle(
+          section.heroImageAlt,
+          section.heroCaption,
+          section.topic || visibleData.value.title,
+        ),
+      );
+    }
+  });
+
+  visibleData.value.galleryItems?.forEach((item) => {
     if (item.imageUrl && isTrustedImageUrl(item.imageUrl)) {
       pushImage(
         encodeURI(item.imageUrl),
-        buildImageTitle(item.imageAlt, item.title, props.data?.title),
+        buildImageTitle(item.imageAlt, item.title, visibleData.value?.title),
       );
     }
   });
@@ -134,7 +177,7 @@ provide<HarnessImageClickedHandler>(harnessImageClickedKey, onImageClicked);
 <template>
   <component
     :is="activeComponent"
-    :data="data ?? {}"
+    :data="visibleData"
     :text="text"
     v-bind="stockmarketProps"
   />

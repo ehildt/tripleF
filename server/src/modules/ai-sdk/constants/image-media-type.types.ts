@@ -1,4 +1,5 @@
-import type { ImageMediaType } from './image-media-type.constants.js';
+export type ImageMediaType =
+  'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
 export type MediaTypeSignature = readonly (number | null)[];
 

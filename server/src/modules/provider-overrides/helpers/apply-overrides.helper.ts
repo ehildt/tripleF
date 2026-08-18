@@ -1,4 +1,4 @@
-import type { ProviderOverridesSnapshot } from '../services/provider-overrides.service.js';
+import type { ProviderOverridesSnapshot } from '../services/provider-overrides.types.js';
 
 /**
  * Deep-copy the pristine env snapshot and merge the live overrides on top.
@@ -13,7 +13,6 @@ export function applyOverrides(
     serper: { ...snapshot.serper },
     brightData: { ...snapshot.brightData },
     sources: { ...snapshot.sources },
-    layouts: { ...snapshot.layouts },
     youtube: { ...snapshot.youtube },
     eodhd: { ...snapshot.eodhd },
   };

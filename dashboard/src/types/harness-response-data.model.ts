@@ -43,6 +43,31 @@ export interface RelatedStory {
 }
 
 /**
+ * A retrieved reference the model discarded on an image task (describe,
+ * compare, ocr) after verifying it visually against the uploaded image(s).
+ * Image entries carry the cloud reference's storage URL; link entries carry
+ * the corroborating page URL. `reason` is the model's one-line rationale —
+ * absent on harness-complement entries (candidates the model neither used
+ * nor explicitly discarded), which the UI labels with a localized fallback.
+ */
+export interface DiscardedImageReference {
+  type: 'image';
+  imageUrl: string;
+  title?: string;
+  reason?: string;
+}
+
+export interface DiscardedLinkReference {
+  type: 'link';
+  url: string;
+  title?: string;
+  reason?: string;
+}
+
+export type DiscardedReference =
+  DiscardedImageReference | DiscardedLinkReference;
+
+/**
  * internationalCoverage — noteworthy results found in languages other than
  * the user's. Title stays in the original language, summary in the user's.
  */
@@ -135,6 +160,53 @@ export interface EvaluationComparison {
   criteria?: EvaluationCriterion[];
 }
 
+/**
+ * One merged comparison or critique block (merge template): its own subject
+ * profiles, closing comparison, reasoning, and recommendations — rendered
+ * through the evaluation template's components, one block per match-up.
+ */
+export interface MergedEvaluationGroup {
+  /** The match-up name, e.g. "Wuthering Waves vs Neverness to Everness". */
+  title?: string;
+  /** Explicit note when this match-up is unrelated to the other topics. */
+  relationNote?: string;
+  introduction?: string;
+  subjects?: EvaluationSubject[];
+  comparison?: EvaluationComparison;
+  reasoning?: string;
+  recommendations?: KeyFinding[];
+}
+
+/**
+ * One topic block of a merged narrative (merge template): the topic heading,
+ * its own hero media (a merge has no single hero — each topic shows its
+ * related visual), and the structured snippet content rendered below it —
+ * pros, cons, and actions as proper lists, with plain text only as a
+ * fallback.
+ */
+export interface BodySection {
+  /** The topic heading rendered above its content. */
+  topic?: string;
+  /** Plain-text narrative for material that isn't list-shaped. */
+  content?: string;
+  /** The topic's pros. */
+  strengths?: KeyFinding[];
+  /** The topic's cons. */
+  weaknesses?: KeyFinding[];
+  /** Actionable points for this topic. */
+  recommendations?: KeyFinding[];
+  /** Hero image for this topic. */
+  heroImageUrl?: string;
+  /** Descriptive label required when heroImageUrl is set. */
+  heroImageAlt?: string;
+  heroCaption?: string;
+  /** Hero video for this topic. */
+  heroVideoUrl?: string;
+  /** Required when heroVideoUrl is set. */
+  heroVideoTitle?: string;
+  heroVideoCaption?: string;
+}
+
 /** A dashed horizontal price line with a right-axis value badge. */
 export interface ChartReferenceLine {
   value: number;
@@ -188,6 +260,12 @@ export interface HarnessResponseData {
   /** Closing comparison block across subjects. */
   comparison?: EvaluationComparison;
 
+  /* Merge */
+  /** Per-comparison evaluation blocks, one per merged match-up. */
+  mergedEvaluations?: MergedEvaluationGroup[];
+  /** Per-topic narrative blocks: topic header + snippet content. */
+  bodySections?: BodySection[];
+
   /* Hero */
   category?: string;
   title?: string;
@@ -203,6 +281,11 @@ export interface HarnessResponseData {
   /* Gallery */
   galleryTitle?: string;
   galleryItems?: GalleryItem[];
+  /*
+   * Image tasks (describe/compare/ocr): online references the model examined
+   * but discarded because they did not match the uploaded image(s).
+   */
+  discardedReferences?: DiscardedReference[];
 
   /* Key findings / sources */
   keyFindings?: KeyFinding[];
@@ -275,3 +358,32 @@ export type MediaPriority = 'images' | 'videos';
  * they can order the image vs video galleries without a deep prop thread. */
 export const mediaPriorityKey: InjectionKey<ComputedRef<MediaPriority>> =
   Symbol('mediaPriority');
+
+/** Response content section types the user can hide/show from the prompt bar.
+ * The media sections (gallery, videoGallery) are no longer hidden — they
+ * switch presentations instead — so only the text sections remain. */
+export type CollapsibleSectionKey =
+  'sources' | 'keyFindings' | 'internationalCoverage';
+
+/** Collapse state of every response section type (`true` = hidden). */
+export type CollapsedSections = Record<CollapsibleSectionKey, boolean>;
+
+/** Injected from the orchestrator so response sections hide when their type is
+ * collapsed from the prompt bar, without a deep prop thread. */
+export const sectionCollapsedKey: InjectionKey<ComputedRef<CollapsedSections>> =
+  Symbol('sectionCollapsed');
+
+/** How a media section renders: as a gallery (carousel/mosaic) or as a list (grid). */
+export type MediaPresentation = 'gallery' | 'list';
+
+/** Presentation preference per media type, switched from the prompt bar's view menu. */
+export type MediaPresentations = Record<'image' | 'video', MediaPresentation>;
+
+/** Injected from the orchestrator so the media sections read their presentation
+ * from the prompt bar without a deep prop thread. */
+export const mediaPresentationsKey: InjectionKey<
+  ComputedRef<MediaPresentations>
+> = Symbol('mediaPresentations');
+
+/** A carousel/gallery slide — either an image or a video item. */
+export type MediaItem = GalleryItem | VideoGalleryItem;

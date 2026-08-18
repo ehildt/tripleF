@@ -5,7 +5,6 @@ import type { Component } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
 
-import ChatConversationHeader from '../conversation-header/ChatConversationHeader.vue';
 import ChatExchangeList from './ChatExchangeList.vue';
 
 let activePinia: ReturnType<typeof createPinia>;
@@ -30,23 +29,6 @@ describe('ChatExchangeList', () => {
   it('renders the no-conversation panel when no conversation is active', () => {
     const wrapper = mountComponent();
     expect(wrapper.text()).toContain('No chat selected');
-  });
-
-  it('hides the conversation header when no conversation is active', () => {
-    const wrapper = mountComponent();
-    expect(wrapper.findComponent(ChatConversationHeader).exists()).toBe(false);
-  });
-
-  it('renders the conversation header with the conversation title when active', () => {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
-
-    const wrapper = mountComponent();
-    const header = wrapper.findComponent(ChatConversationHeader);
-
-    expect(header.exists()).toBe(true);
-    expect(header.props('title')).toBe(conversation.title);
   });
 
   it('renders the empty-state hint when an active conversation has no exchanges', () => {

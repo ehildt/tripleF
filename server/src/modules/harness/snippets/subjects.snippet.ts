@@ -4,7 +4,7 @@ import { createTextItemSchema } from '../schemas/text-item-json.schema.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 
-const subjectSchema = z.object({
+export const subjectSchema = z.object({
   name: z
     .string()
     .min(1, { message: 'subject entries must have a non-empty name' }),

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
+import HeroStack from '../../sections/hero-stack/HeroStack.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
@@ -32,10 +34,10 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
           :hero-image-alt="data.heroImageAlt"
           :hero-caption="data.heroCaption"
         />
-        <div class="news__hero-stack">
+        <HeroStack>
           <HeroSection :title="data.headline" :subtitle="data.deck" />
           <ArticleLeadSection :summary="data.lead" />
-        </div>
+        </HeroStack>
       </header>
       <template v-else>
         <header class="news__hero">
@@ -89,12 +91,11 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
       <SourcesSection :items="data.sources" />
     </template>
 
-    <section v-else class="news__empty">
-      <h3>{{ $t('common.noResultsFound') }}</h3>
-      <p>
-        {{ $t('common.noResultsExplain') }}
-      </p>
-    </section>
+    <EmptyStateSection
+      v-else
+      :title="$t('common.noResultsFound')"
+      :message="$t('common.noResultsExplain')"
+    />
   </article>
 </template>
 
@@ -106,18 +107,11 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
 }
 
 /* Split direction (ar2): the hero media panel sits beside the
-   headline/meta-rule/lead stack instead of below the headline. */
+   headline/lead stack instead of below the headline. */
 .news__hero--split {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25em;
-}
-
-.news__hero-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-  min-width: 0;
 }
 
 @media (min-width: 720px) {
@@ -136,24 +130,5 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
     column-gap: 2em;
     column-rule: 1px solid var(--color-divider);
   }
-}
-
-.news__empty {
-  padding: 1.5em;
-  border: 1px solid var(--color-divider);
-  background: var(--color-bg-tertiary);
-  text-align: center;
-}
-
-.news__empty h3 {
-  margin: 0 0 0.5em;
-  font-size: 1.1em;
-  color: var(--color-fg-primary);
-}
-
-.news__empty p {
-  margin: 0;
-  color: var(--color-fg-secondary);
-  font-size: 0.95em;
 }
 </style>

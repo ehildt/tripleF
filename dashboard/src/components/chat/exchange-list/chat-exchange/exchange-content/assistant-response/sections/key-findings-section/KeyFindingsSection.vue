@@ -3,6 +3,7 @@ import { computed } from 'vue';
 
 import type { KeyFinding } from '@/types/harness-response-data.model';
 
+import { useHarnessSectionCollapsed } from '../../shared/composables/use-harness-section-collapsed.composable';
 import { pickCycleColor } from '../../shared/helpers/pick-cycle-color.helper';
 import { splitSpecLabel } from '../../shared/helpers/split-spec-label.helper';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
@@ -27,10 +28,13 @@ const validItems = computed(() =>
 const rows = computed(() =>
   validItems.value.map((finding) => splitSpecLabel(finding.text)),
 );
+
+/** Hidden while the prompt bar collapses the key-findings section type. */
+const isCollapsed = useHarnessSectionCollapsed('keyFindings');
 </script>
 
 <template>
-  <section v-if="rows.length" class="key-findings">
+  <section v-if="rows.length && !isCollapsed" class="key-findings">
     <SectionTitle v-if="title" :title="title" />
     <ul>
       <li

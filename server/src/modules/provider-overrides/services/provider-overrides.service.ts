@@ -6,13 +6,9 @@ import type { BrightDataConfig } from '../configs/bright-data-config.adapter.js'
 import { BrightDataConfigService } from '../configs/bright-data-config.service.js';
 import type { EodhdConfig } from '../configs/eodhd-config.adapter.js';
 import { EodhdConfigService } from '../configs/eodhd-config.service.js';
-import type { LayoutsConfig } from '../configs/layouts-config.adapter.js';
-import { LayoutsConfigService } from '../configs/layouts-config.service.js';
 import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
-import type { SourcesConfig } from '../configs/sources-config.adapter.js';
 import { SourcesConfigService } from '../configs/sources-config.service.js';
-import type { YoutubeConfig } from '../configs/youtube-config.adapter.js';
 import { YoutubeConfigService } from '../configs/youtube-config.service.js';
 import { applyOverrides } from '../helpers/apply-overrides.helper.js';
 import { decryptOverridesSecrets } from '../helpers/decrypt-overrides-secrets.helper.js';
@@ -20,6 +16,10 @@ import { encryptOverridesSecrets } from '../helpers/encrypt-overrides-secrets.he
 import { maskApiKey } from '../helpers/mask-api-key.helper.js';
 import { retryWithBackoff } from '../helpers/retry-with-backoff.helper.js';
 import { updateApiKeyOverride } from '../helpers/update-api-key-override.helper.js';
+
+import type { ProviderOverridesSnapshot } from './provider-overrides.types.js';
+
+export type { ProviderOverridesSnapshot } from './provider-overrides.types.js';
 
 import {
   BrightDataCapabilities,
@@ -34,16 +34,7 @@ import {
   SerperDiscoveryService,
 } from './serper-discovery.service.js';
 
-export interface ProviderOverridesSnapshot {
-  serper: SerperConfig;
-  brightData: BrightDataConfig;
-  sources: SourcesConfig;
-  layouts: LayoutsConfig;
-  youtube: YoutubeConfig;
-  eodhd: EodhdConfig;
-}
-
-export interface ProviderOverridesMaskedSnapshot extends Omit<
+interface ProviderOverridesMaskedSnapshot extends Omit<
   ProviderOverridesSnapshot,
   'serper' | 'brightData' | 'eodhd'
 > {
@@ -71,7 +62,6 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
     private readonly serperCfg: SerperConfigService,
     private readonly brightDataCfg: BrightDataConfigService,
     private readonly sourcesCfg: SourcesConfigService,
-    private readonly layoutsCfg: LayoutsConfigService,
     private readonly youtubeCfg: YoutubeConfigService,
     private readonly eodhdCfg: EodhdConfigService,
     private readonly repository: ProviderOverridesRepository,
@@ -84,7 +74,6 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
       serper: this.serperCfg.config,
       brightData: this.brightDataCfg.config,
       sources: this.sourcesCfg.config,
-      layouts: this.layoutsCfg.config,
       youtube: this.youtubeCfg.config,
       eodhd: this.eodhdCfg.config,
     };

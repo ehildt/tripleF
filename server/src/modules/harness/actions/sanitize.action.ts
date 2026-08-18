@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { SharpService } from '../../sharp/services/sharp.service.js';
 import { partitionByLanguage } from '../helpers/language/partition-by-language.helper.js';
 import { tagLanguage } from '../helpers/language/tag-language.helper.js';
 import { dedupeImagesByFingerprint } from '../helpers/media/dedupe-images-by-fingerprint.helper.js';
@@ -23,6 +24,7 @@ import type {
 import { extractPlaces } from '../helpers/media/extract-places.helper.js';
 import { extractReviews } from '../helpers/media/extract-reviews.helper.js';
 import { extractShopOffers } from '../helpers/media/extract-shop-offers.helper.js';
+import { IMAGE_TEMPLATES } from '../helpers/respond/build-execution-messages.helper.js';
 import { applySourcePolicy } from '../helpers/sanitize/apply-source-policy.helper.js';
 import { buildFinalMessagesForSanitize } from '../helpers/sanitize/build-final-messages.helper.js';
 import { buildIngestedByUrlMap } from '../helpers/sanitize/build-ingested-by-url-map.helper.js';
@@ -37,7 +39,6 @@ import {
 import { collectPageUrls } from '../helpers/sanitize/collect-page-urls.helper.js';
 import { collectVideoThumbnailUrls } from '../helpers/sanitize/collect-video-thumbnail-urls.helper.js';
 import { filterVerifiedMedia } from '../helpers/sanitize/filter-verified-media.helper.js';
-import { limitCloudReferenceImages } from '../helpers/sanitize/limit-cloud-reference-images.helper.js';
 import { rewriteCandidatesWithIngested } from '../helpers/sanitize/rewrite-candidates-with-ingested.helper.js';
 import {
   sanitizeToolResult,
@@ -73,14 +74,13 @@ export type SanitizeResult = {
 };
 
 /**
- * Cloud reference images for vision tasks (compare/describe) are fed to the
- * response model — a small edge keeps them cheap. Cloud images rendered in
- * user-facing galleries and heroes keep display resolution (the imagelist
- * grid, lightbox, and article hero would otherwise show a 512px file).
- */
-const CLOUD_REFERENCE_MAX_DIMENSION = 512;
-const CLOUD_DISPLAY_MAX_DIMENSION = 1600;
-/**
+ * Cloud reference candidates for vision tasks (compare/describe) are fed to
+ * the response model as pixels and stored/shown at the resolution the
+ * effective preprocessing (pproc) config resolves — there is no cloud-only
+ * hardcoded size; ingest honors the same live SysCtl resize as uploads and
+ * rejects sources smaller than that target instead of storing them visibly
+ * small.
+ *
  * Image-ingestion rounds per request: round N only retries for the images
  * still missing below the target, so 3 rounds cover heavy hotlink-blocking
  * without unbounded download loops.
@@ -98,6 +98,7 @@ export class SanitizeActionService {
     private readonly stepLogger: HarnessStepLogger,
     private readonly providerOverrides: ProviderOverridesService,
     private readonly shownMedia: ShownMediaService,
+    private readonly sharpService: SharpService,
   ) {}
 
   async execute(
@@ -142,6 +143,7 @@ export class SanitizeActionService {
         this.mediaUrlValidator,
         rawImageItems,
         rawVideoItems,
+        this.sharpService.effectiveResize(),
       );
 
     // 3b. Deduplicate verified images by content fingerprint.
@@ -178,11 +180,18 @@ export class SanitizeActionService {
       verifiedVideos,
     );
 
-    // 4. Respect explicit counts from intent (default to 6 each).
+    // 4. Respect explicit counts from intent (default: configured target for
+    //    the image-analysis templates' reference pool, 6 elsewhere).
+    const explicitImageCount = ctx.outputs.intent?.imageCount ?? 0;
+    const isImageTemplate = IMAGE_TEMPLATES.includes(
+      ctx.outputs.intent?.template ?? '',
+    );
     const imageTargetCount =
-      (ctx.outputs.intent?.imageCount ?? 0) > 0
-        ? ctx.outputs.intent!.imageCount
-        : 6;
+      explicitImageCount > 0
+        ? explicitImageCount
+        : isImageTemplate
+          ? this.providerOverrides.getConfig().sources.imageTaskReferenceCount
+          : 6;
     const videoTargetCount =
       (ctx.outputs.intent?.videoCount ?? 0) > 0
         ? ctx.outputs.intent!.videoCount
@@ -494,14 +503,16 @@ export class SanitizeActionService {
   ): Promise<Set<string>> {
     if (entries.length === 0) return new Set();
 
-    // Strict entries must be real images ≥1280×720; Bright Data images only
-    // need to be real and reachable (we trust its Google-side size filter).
+    // Strict entries must be real images at or above the configured pproc
+    // resize dimensions; Bright Data images only need to be real and
+    // reachable (we trust its Google-side size filter).
     const strictUrls = entries
       .filter((entry) => !entry.skipDimensionCheck)
       .map((entry) => entry.url);
     const skipDimUrls = entries
       .filter((entry) => entry.skipDimensionCheck)
       .map((entry) => entry.url);
+    const resizeFloor = this.sharpService.effectiveResize();
 
     const [strictResults, skipDimResults] = await Promise.all([
       strictUrls.length > 0
@@ -511,8 +522,8 @@ export class SanitizeActionService {
             maxRedirects: 3,
             concurrency: 5,
             checkImageDimensions: true,
-            minWidth: 1280,
-            minHeight: 720,
+            minWidth: resizeFloor.maxWidth,
+            minHeight: resizeFloor.maxHeight ?? undefined,
             maxProbeBytes: 256 * 1024,
           })
         : Promise.resolve([]),
@@ -536,7 +547,7 @@ export class SanitizeActionService {
       this.stepLogger.log(
         ctx,
         'sanitize',
-        'removed broken or sub-720p image urls',
+        'removed broken or undersized image urls',
         {
           brokenCount: broken.length,
           sampledUrls: broken.slice(0, 5),
@@ -611,8 +622,8 @@ export class SanitizeActionService {
    * storage URLs. External candidates the pipeline could not download are
    * dropped — never handed to the client as a fallback, because links that
    * answered our probes may still refuse real clients. Compare/describe
-   * tasks additionally keep up to three ingested images as cloud reference
-   * attachments returned in `ingestedImages`; other templates only rewrite
+   * tasks additionally keep every ingested image as a cloud reference
+   * attachment returned in `ingestedImages`; other templates only rewrite
    * URLs, so search images never appear as user-gallery attachments.
    */
   private async ingestCloudImages(
@@ -643,14 +654,16 @@ export class SanitizeActionService {
     if (isImageReferenceTask) {
       const sliced = verifiedImages.slice(0, imageTargetCount);
       const existingFingerprints = buildUserFingerprints(ctx.processedMeta);
+      // keepBuffers: the reference candidates feed the response model
+      // visually, so the resized bytes travel with the ingested entry.
       const ingested =
         (await this.ingestExternalImages(
           ctx,
           sliced,
           existingFingerprints,
-          CLOUD_REFERENCE_MAX_DIMENSION,
+          true,
         )) ?? [];
-      const ingestedForRewrite = limitCloudReferenceImages(ingested, 3);
+      const ingestedForRewrite = ingested;
       const ingestedByUrl = new Map(
         ingestedForRewrite.map((img) => [img.sourceUrl, img]),
       );
@@ -686,13 +699,7 @@ export class SanitizeActionService {
     ) {
       const needed = externalTarget - ingestedForRewrite.length;
       const chunk = externals.slice(offset, offset + needed);
-      const ingested =
-        (await this.ingestExternalImages(
-          ctx,
-          chunk,
-          [],
-          CLOUD_DISPLAY_MAX_DIMENSION,
-        )) ?? [];
+      const ingested = (await this.ingestExternalImages(ctx, chunk, [])) ?? [];
       ingestedForRewrite.push(...ingested);
       offset += chunk.length;
       batch++;
@@ -716,7 +723,7 @@ export class SanitizeActionService {
     ctx: HarnessContext,
     verifiedImages: ExtractedImageItem[],
     existingFingerprints: string[],
-    maxDimension: number,
+    keepBuffers = false,
   ): Promise<SanitizeResult['ingestedImages']> {
     const externalOnly = verifiedImages.filter(
       (item) =>
@@ -730,7 +737,7 @@ export class SanitizeActionService {
       ctx.sessionId,
       ctx.filters.conversationId,
       ctx.requestId,
-      { existingFingerprints, maxDimension },
+      { existingFingerprints, keepBuffers },
     );
   }
 }

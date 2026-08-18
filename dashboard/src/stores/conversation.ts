@@ -11,6 +11,7 @@ import {
 import { deleteUploadedObject } from '../api/storage.api';
 import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
+import { resolvePendingMerge } from '../composables/merge-selection.state';
 import { createId } from '../utils/id.helper';
 import { calcInputTokenDelta } from './helpers/conversation/calc-input-token-delta.helper';
 import { createConversation } from './helpers/conversation/create-conversation.helper';
@@ -517,6 +518,30 @@ export const useConversationStore = defineStore('conversation', () => {
           );
         }
       }
+
+      // A completed merge finalizes its sources: the exchanges consolidated
+      // into this unified response become excluded (dropped from future
+      // prompts) and marked as merged-away (purple). Only once the response
+      // actually arrived, so a failed or canceled merge leaves the
+      // originals untouched and retryable. The pending merge selection
+      // resolves at the same time: the source icons stop pulsing and switch
+      // to the consumed (red) state.
+      const pairUser = conversation.exchanges.find(
+        (e) => e.role === 'user' && e.requestId === requestId,
+      );
+      if (pairUser?.mergeOrigin?.length) {
+        const originRequestIds = new Set(pairUser.mergeOrigin);
+        const sourceExchangeIds: string[] = [];
+        for (const source of conversation.exchanges) {
+          if (source.requestId && originRequestIds.has(source.requestId)) {
+            source.included = false;
+            source.mergedInto = requestId;
+            sourceExchangeIds.push(source.id);
+          }
+        }
+        resolvePendingMerge(conversationId, requestId, sourceExchangeIds);
+      }
+
       conversation.updatedAt = Date.now();
       void persistConversation(conversation);
     });
@@ -536,6 +561,20 @@ export const useConversationStore = defineStore('conversation', () => {
         if (errorMessage) exchange.content = errorMessage;
         conversation.updatedAt = Date.now();
         void persistConversation(conversation);
+      }
+
+      // A failed merge resolves its pending selection without consuming the
+      // sources: the icons stop pulsing and the originals stay included so
+      // the user can re-select and retry.
+      const failedPairUser = conversation.exchanges.find(
+        (e) => e.role === 'user' && e.requestId === requestId,
+      );
+      if (failedPairUser?.mergeOrigin?.length) {
+        const originRequestIds = new Set(failedPairUser.mergeOrigin);
+        const sourceExchangeIds = conversation.exchanges
+          .filter((e) => e.requestId && originRequestIds.has(e.requestId))
+          .map((e) => e.id);
+        resolvePendingMerge(conversationId, requestId, sourceExchangeIds);
       }
     });
   }

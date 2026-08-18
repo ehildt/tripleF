@@ -4,6 +4,7 @@
  * already-introduced product: a lean header and a price-sorted list of
  * purchase options — no galleries, videos, or review sections.
  */
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import { useShopListResponseData } from './composables/use-shoplist-response-data.composable';
@@ -43,9 +44,7 @@ const { offers, hasContent } = useShopListResponseData(props);
   </section>
 
   <!-- Empty state -->
-  <section v-else class="shoplist shoplist--empty">
-    <p>{{ $t('common.noPurchaseOptions') }}</p>
-  </section>
+  <EmptyStateSection v-else :message="$t('common.noPurchaseOptions')" />
 </template>
 
 <style scoped>
@@ -86,13 +85,5 @@ const { offers, hasContent } = useShopListResponseData(props);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1-5);
-}
-
-.shoplist--empty {
-  padding: var(--spacing-4);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-tertiary);
-  text-align: center;
-  color: var(--color-fg-muted);
 }
 </style>

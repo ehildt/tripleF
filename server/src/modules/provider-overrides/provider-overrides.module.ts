@@ -2,7 +2,6 @@ import { Global, Module } from '@nestjs/common';
 
 import { BrightDataConfigService } from './configs/bright-data-config.service.js';
 import { EodhdConfigService } from './configs/eodhd-config.service.js';
-import { LayoutsConfigService } from './configs/layouts-config.service.js';
 import { SerperConfigService } from './configs/serper-config.service.js';
 import { SourcesConfigService } from './configs/sources-config.service.js';
 import { YoutubeConfigService } from './configs/youtube-config.service.js';
@@ -20,7 +19,6 @@ import { SerperDiscoveryService } from './services/serper-discovery.service.js';
     BrightDataDiscoveryService,
     BrightDataConfigService,
     EodhdConfigService,
-    LayoutsConfigService,
     SerperConfigService,
     SourcesConfigService,
     YoutubeConfigService,
@@ -32,7 +30,6 @@ import { SerperDiscoveryService } from './services/serper-discovery.service.js';
     BrightDataDiscoveryService,
     BrightDataConfigService,
     EodhdConfigService,
-    LayoutsConfigService,
     SerperConfigService,
     SourcesConfigService,
     YoutubeConfigService,

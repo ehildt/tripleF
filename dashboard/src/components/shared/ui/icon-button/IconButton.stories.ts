@@ -12,8 +12,12 @@ const meta = {
     docs: {
       description: {
         component: `
-A small icon-only button with hover/active/danger/armed states, used for
-toolbar and header actions. The icon is provided through the default slot.
+A small icon-only button with hover/active/danger/armed/blinking states, used
+for toolbar and header actions. The icon is provided through the default slot.
+
+Emits \`click\` (with the native MouseEvent), \`mouseenter\`, \`mouseleave\`,
+\`focus\`, and \`blur\`, so consumers can react to hover and keyboard focus
+without re-implementing the button.
 `,
       },
     },
@@ -21,6 +25,8 @@ toolbar and header actions. The icon is provided through the default slot.
   args: {
     title: 'Action',
     onClick: fn(),
+    onMouseEnter: fn(),
+    onMouseLeave: fn(),
   },
   render: (args) => ({
     components: { IconButton, Search },
@@ -44,8 +50,19 @@ export const Danger: Story = { args: { danger: true } };
 /** Armed (destructive confirm pulse). */
 export const Armed: Story = { args: { armed: true } };
 
+/** Blinking (attention pulse ring). */
+export const Blinking: Story = { args: { blinking: true } };
+
+/** Compact row-action scale. */
+export const Small: Story = { args: { size: 'sm', title: 'Compact action' } };
+
 /** Disabled. */
 export const Disabled: Story = { args: { disabled: true } };
+
+/** Hover and focus callbacks fire on the button. */
+export const HoverCallbacks: Story = {
+  args: { title: 'Hover me', onMouseEnter: fn(), onMouseLeave: fn() },
+};
 
 /** Mail icon example. */
 export const MailIcon: Story = {

@@ -27,9 +27,9 @@ withDefaults(
       <div v-if="row.icon" class="capabilities-panel__icon">
         <component :is="row.icon" class="capabilities-panel__icon-glyph" />
       </div>
-      <span class="capabilities-panel__label" :title="row.label">{{
-        row.label
-      }}</span>
+      <Tooltip :text="row.label" max-width="16rem">
+        <span class="capabilities-panel__label">{{ row.label }}</span>
+      </Tooltip>
       <span
         class="capabilities-panel__value"
         :class="{
@@ -46,9 +46,11 @@ withDefaults(
         :key="status.label"
         class="capabilities-panel__status"
       >
-        <span class="capabilities-panel__status-label" :title="status.label">
-          {{ status.label }}
-        </span>
+        <Tooltip :text="status.label" max-width="16rem">
+          <span class="capabilities-panel__status-label">
+            {{ status.label }}
+          </span>
+        </Tooltip>
         <span
           class="capabilities-panel__dot"
           :class="

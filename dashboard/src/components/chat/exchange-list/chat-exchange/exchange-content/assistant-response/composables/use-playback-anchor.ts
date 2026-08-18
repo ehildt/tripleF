@@ -42,11 +42,14 @@ const FULLY_VISIBLE_RATIO = 0.99;
  */
 export function usePlaybackAnchor(
   item: Ref<{ videoUrl: string; title?: string }>,
+  options?: { dockCondition?: () => boolean },
 ) {
   const anchorElement = ref<HTMLElement | null>(null);
 
   let candidate: AnchorCandidate | null = null;
   let observer: IntersectionObserver | null = null;
+
+  const dockCondition = options?.dockCondition ?? (() => true);
 
   const videoUrl = computed(() => item.value.videoUrl);
   const isUnembeddable = computed(
@@ -86,6 +89,7 @@ export function usePlaybackAnchor(
       videoUrl.value,
       anchorElement.value,
       scrollRoot,
+      dockCondition,
     );
     observer = new IntersectionObserver(
       ([entry]) => {

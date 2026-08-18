@@ -71,6 +71,17 @@ function buildMediaInstructions(
     ];
   }
 
+  if (['describe', 'compare', 'ocr'].includes(template ?? '')) {
+    return [
+      `You have ${imageCount} image URL(s) in availableImages.`,
+      'availableImages mixes the uploaded user images and UNVERIFIED cloud reference candidates downloaded from imageSearch results. Each cloud candidate is also attached visually in the conversation with its imageUrl label — verify it against the uploaded image(s) before trusting it.',
+      'galleryItems MUST contain every uploaded user image and ONLY the cloud candidates backed by strong visual evidence of the same subject. A gallery without any cloud candidate is valid — never include one on weak or missing evidence.',
+      'List every excluded cloud candidate in discardedReferences with { "type": "image", imageUrl, title, reason } and a one-line reason; retrieved links that failed to corroborate may be listed with { "type": "link", url, title, reason }.',
+      'Each galleryItems entry must be an object with imageUrl, imageAlt, title, and caption. imageAlt and title must be non-empty.',
+      INTERNATIONAL_POOLS_LINE,
+    ];
+  }
+
   const productInstructions =
     template === 'product'
       ? [

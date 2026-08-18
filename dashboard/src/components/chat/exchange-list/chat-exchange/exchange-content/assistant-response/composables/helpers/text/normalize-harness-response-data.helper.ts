@@ -1,5 +1,6 @@
 import type {
   ArticleCard,
+  BodySection,
   ChartMarker,
   ChartReferenceLine,
   EvaluationComparison,
@@ -39,7 +40,15 @@ export function normalizeHarnessResponseData(
 
   migrateLegacyNewsKeyPoints(data, template ?? event.template);
 
-  if (event.images?.length) {
+  // Image-self-analysis tasks (describe/compare/ocr): the gallery is the
+  // verified cloud reference images only — the user's uploaded images are
+  // already rendered as message attachments and must never be merged into
+  // the response gallery (or the lightbox built from it).
+  const imageTaskTemplates = new Set(['describe', 'compare', 'ocr']);
+  if (
+    event.images?.length &&
+    !imageTaskTemplates.has(template ?? event.template ?? '')
+  ) {
     const uploaded = event.images as unknown as GalleryItem[];
     data.galleryItems = mergeGalleryItems(uploaded, data.galleryItems ?? []);
   }
@@ -147,6 +156,8 @@ function extractData(raw: Record<string, unknown>): HarnessResponseData {
     cards: toOptionalArray<ArticleCard>(raw.cards),
     videoGalleryTitle: toOptionalString(raw.videoGalleryTitle),
     videoGalleryItems: toOptionalArray<VideoGalleryItem>(raw.videoGalleryItems),
+    // Merge-only fields
+    bodySections: normalizeBodySections(raw.bodySections),
     // Evaluation-only fields
     subject: toOptionalString(raw.subject),
     verdict: toOptionalString(raw.verdict),
@@ -189,6 +200,44 @@ function extractData(raw: Record<string, unknown>): HarnessResponseData {
     referenceLines: toOptionalArray<ChartReferenceLine>(raw.referenceLines),
     markers: toOptionalArray<ChartMarker>(raw.markers),
   };
+}
+
+function normalizeBodySections(value: unknown): BodySection[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+
+  const sections = value
+    .filter(isRecord)
+    .map((item) => {
+      const heroImageUrl = toOptionalString(item.heroImageUrl);
+      return {
+        topic: toOptionalString(item.topic),
+        content: toOptionalString(item.content),
+        strengths: normalizeKeyFindings(item.strengths),
+        weaknesses: normalizeKeyFindings(item.weaknesses),
+        recommendations: normalizeKeyFindings(item.recommendations),
+        heroImageUrl:
+          heroImageUrl && isTrustedImageUrl(heroImageUrl)
+            ? heroImageUrl
+            : undefined,
+        heroImageAlt: toOptionalString(item.heroImageAlt),
+        heroCaption: toOptionalString(item.heroCaption),
+        heroVideoUrl: toOptionalString(item.heroVideoUrl),
+        heroVideoTitle: toOptionalString(item.heroVideoTitle),
+        heroVideoCaption: toOptionalString(item.heroVideoCaption),
+      };
+    })
+    .filter(
+      (section) =>
+        section.topic ||
+        section.content ||
+        section.heroImageUrl ||
+        section.heroVideoUrl ||
+        section.strengths?.length ||
+        section.weaknesses?.length ||
+        section.recommendations?.length,
+    );
+
+  return sections.length > 0 ? sections : undefined;
 }
 
 function normalizeSectionContent(value: unknown): string | undefined {
@@ -364,6 +413,7 @@ function hasAnyContent(data: HarnessResponseData): boolean {
     data.score !== undefined ||
     hasItems(data.subjects) ||
     data.comparison !== undefined ||
+    hasItems(data.bodySections) ||
     hasItems(data.galleryItems) ||
     hasItems(data.keyFindings) ||
     hasItems(data.sources) ||

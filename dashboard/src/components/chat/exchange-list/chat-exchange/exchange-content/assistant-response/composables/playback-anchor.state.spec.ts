@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { ref } from 'vue';
 
 import {
   dockedAnchorCandidate,
@@ -28,9 +29,13 @@ const otherVideo = {
 /** Track registrations per test so they can be unregistered afterwards. */
 let cleanups: Array<() => void> = [];
 
-function register(url: string, scrollRoot: HTMLElement | null = null) {
+function register(
+  url: string,
+  scrollRoot: HTMLElement | null = null,
+  dockCondition?: () => boolean,
+) {
   const el = document.createElement('div');
-  const candidate = registerAnchorCandidate(url, el, scrollRoot);
+  const candidate = registerAnchorCandidate(url, el, scrollRoot, dockCondition);
   cleanups.push(() => unregisterAnchorCandidate(url, candidate));
   return candidate;
 }
@@ -74,6 +79,21 @@ describe('playback-anchor.state', () => {
     launchVideo(video);
     setAnchorCandidateInView(video.videoUrl, hidden, false);
     expect(visibleAnchorCandidate.value).toBe(visible);
+  });
+
+  it('ignores an in-view candidate whose dock condition is false (carousel side slide)', () => {
+    const dockable = ref(true);
+    const candidate = register(video.videoUrl, null, () => dockable.value);
+    launchVideo(video);
+    expect(visibleAnchorCandidate.value).toBe(candidate);
+    expect(dockedAnchorElement.value).toBe(candidate.el);
+
+    dockable.value = false;
+    expect(visibleAnchorCandidate.value).toBeNull();
+    expect(dockedAnchorElement.value).toBeNull();
+
+    dockable.value = true;
+    expect(visibleAnchorCandidate.value).toBe(candidate);
   });
 
   it('docked anchor follows visibility with popouts enabled', () => {

@@ -3,14 +3,14 @@ import { Injectable } from '@nestjs/common';
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
+import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { buildEodhdFallbackInput } from '../helpers/execute/build-eodhd-fallback-input.helper.js';
 import { buildExecuteMessages } from '../helpers/execute/build-execute-messages.helper.js';
-import { buildFallbackInput } from '../helpers/execute/build-execute-prompt.helper.js';
+import { buildMissingToolsPrompt } from '../helpers/execute/build-missing-tools-prompt.helper.js';
 import { extractEodhdTickerFromResults } from '../helpers/execute/extract-eodhd-ticker.helper.js';
-import { extractQuery } from '../helpers/execute/extract-query.helper.js';
 import { isEodhdDataTool } from '../helpers/execute/is-eodhd-data-tool.helper.js';
 import {
   type ChartDataHandler,
@@ -147,15 +147,19 @@ export class ExecuteActionService {
         });
       }
 
-      const missingResults = await this.invokeMissingMandatoryTools(
+      const missing = await this.invokeMissingMandatoryTools(
         chosenTools,
         ctx,
         toolResults,
+        executeMessages,
+        abortSignal,
       );
-      if (missingResults.length > 0) {
-        toolResults.push(...missingResults);
+      inputTokens += missing.inputTokens;
+      outputTokens += missing.outputTokens;
+      if (missing.results.length > 0) {
+        toolResults.push(...missing.results);
         this.stepLogger.log(ctx, 'execute', 'missing tools invoked', {
-          tools: missingResults.map((r) => r.toolName),
+          tools: missing.results.map((r) => r.toolName),
         });
       }
 
@@ -225,39 +229,152 @@ export class ExecuteActionService {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
+  /**
+   * Invoke mandatory tools the model skipped. Only the model writes tool
+   * inputs — the harness has no understanding of the request, so a
+   * harness-built query can only fabricate garbage. Skipped tools are sent
+   * back to the model once with the same messages and just the missing
+   * tools, so it calls them with purpose-built queries from the images and
+   * context it already has. Search tools that are still skipped afterwards
+   * are logged and dropped; EODHD data tools take no query text, so a ticker
+   * parsed from existing search results may still invoke them directly.
+   */
   private async invokeMissingMandatoryTools(
     chosenTools: Record<string, unknown>,
     ctx: HarnessContext,
     existingResults: ToolResult[],
-  ): Promise<ToolResult[]> {
+    executeMessages: InputMessage[],
+    abortSignal?: AbortSignal,
+  ): Promise<{
+    results: ToolResult[];
+    inputTokens: number;
+    outputTokens: number;
+  }> {
     const intent = ctx.outputs.intent ?? null;
-    if (!intent) return [];
+    if (!intent) return { results: [], inputTokens: 0, outputTokens: 0 };
 
     const invoked = new Set<string>(existingResults.map((tr) => tr.toolName));
-    const mandatory = (intent.tools ?? []).filter(
+    const missing = (intent.tools ?? []).filter(
       (t) => !t.startsWith('request') && !invoked.has(t),
     );
-    if (mandatory.length === 0) return [];
+    if (missing.length === 0)
+      return { results: [], inputTokens: 0, outputTokens: 0 };
 
-    const query = extractQuery(ctx, intent);
-    const results: ToolResult[] = [];
-    const ticker = await this.resolveMissingEodhdTicker(
+    const completion = await this.completeMissingToolsWithModel(
+      ctx,
+      missing,
       chosenTools,
-      existingResults,
-      query,
-      mandatory,
+      executeMessages,
+      abortSignal,
     );
+    const {
+      results,
+      inputTokens: completionInputTokens,
+      outputTokens: completionOutputTokens,
+    } = completion;
 
-    for (const toolName of mandatory) {
+    const stillMissing = missing.filter(
+      (t) => !results.some((r) => r.toolName === t),
+    );
+    const eodhdResults = await this.invokeMissingEodhdDataTools(
+      chosenTools,
+      ctx,
+      [...existingResults, ...results],
+      stillMissing,
+    );
+    results.push(...eodhdResults);
+
+    const dropped = stillMissing.filter(
+      (t) => !results.some((r) => r.toolName === t),
+    );
+    if (dropped.length > 0) {
+      this.stepLogger.warn(ctx, 'execute', 'skipped missing tools', {
+        tools: dropped,
+      });
+    }
+
+    return {
+      results,
+      inputTokens: completionInputTokens,
+      outputTokens: completionOutputTokens,
+    };
+  }
+
+  /**
+   * Re-invoke the model once with only the skipped tools, so it authors
+   * purpose-built inputs for them instead of the harness guessing.
+   */
+  private async completeMissingToolsWithModel(
+    ctx: HarnessContext,
+    missing: string[],
+    chosenTools: Record<string, unknown>,
+    executeMessages: InputMessage[],
+    abortSignal?: AbortSignal,
+  ): Promise<{
+    results: ToolResult[];
+    inputTokens: number;
+    outputTokens: number;
+  }> {
+    const missingTools = Object.fromEntries(
+      missing
+        .filter((name) => name in chosenTools)
+        .map((name) => [name, chosenTools[name]]),
+    );
+    if (Object.keys(missingTools).length === 0)
+      return { results: [], inputTokens: 0, outputTokens: 0 };
+
+    try {
+      const completion = await this.aiSdkService.generateWithTools({
+        model: ctx.model,
+        messages: [
+          ...executeMessages,
+          { role: 'system', content: buildMissingToolsPrompt(missing) },
+        ],
+        keepAlive: this.ollamaConfigService.config.keepAlive,
+        numCtx: ctx.request.options?.num_ctx,
+        think: ctx.request.think,
+        tools: missingTools as any,
+        abortSignal,
+      });
+      return {
+        results: completion.toolResults,
+        inputTokens: completion.totalUsage?.inputTokens ?? 0,
+        outputTokens: completion.totalUsage?.outputTokens ?? 0,
+      };
+    } catch (err) {
+      this.stepLogger.warn(ctx, 'execute', 'missing tools completion failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return { results: [], inputTokens: 0, outputTokens: 0 };
+    }
+  }
+
+  /**
+   * Invoke EODHD data tools that are still missing when a ticker can be
+   * parsed from the search results already produced — a deterministic input,
+   * not a fabricated query.
+   */
+  private async invokeMissingEodhdDataTools(
+    chosenTools: Record<string, unknown>,
+    ctx: HarnessContext,
+    results: ToolResult[],
+    stillMissing: string[],
+  ): Promise<ToolResult[]> {
+    const dataTools = stillMissing.filter(isEodhdDataTool);
+    if (dataTools.length === 0) return [];
+
+    const ticker = extractEodhdTickerFromResults(results);
+    if (!ticker) return [];
+
+    const invocations: ToolResult[] = [];
+    for (const toolName of dataTools) {
       const toolDef = chosenTools[toolName];
       if (!toolDef || typeof (toolDef as any).execute !== 'function') continue;
-
-      const input = this.buildMissingToolInput(toolName, query, ticker, intent);
-      if (!input) continue;
-
       try {
-        const result = await (toolDef as any).execute(input);
-        results.push({ toolName, result });
+        const result = await (toolDef as any).execute(
+          buildEodhdFallbackInput(toolName, ticker),
+        );
+        invocations.push({ toolName, result });
       } catch (err) {
         this.stepLogger.warn(ctx, 'execute', 'missing tool error', {
           toolName,
@@ -265,61 +382,6 @@ export class ExecuteActionService {
         });
       }
     }
-
-    return results;
-  }
-
-  /**
-   * Resolve a ticker for any missing EODHD data tools, from the search results
-   * the model already produced or by running eodhdSearch ourselves, so the
-   * chart/quote tools can still be invoked when the model skips them.
-   */
-  private async resolveMissingEodhdTicker(
-    chosenTools: Record<string, unknown>,
-    existingResults: ToolResult[],
-    query: string,
-    mandatory: string[],
-  ): Promise<string | undefined> {
-    if (!mandatory.some(isEodhdDataTool)) return undefined;
-    const ticker = extractEodhdTickerFromResults(existingResults);
-    if (ticker) return ticker;
-    return this.resolveEodhdTicker(chosenTools, query);
-  }
-
-  /** Build the fallback input for a missing mandatory tool. */
-  private buildMissingToolInput(
-    toolName: string,
-    query: string,
-    ticker: string | undefined,
-    intent: HarnessContext['outputs']['intent'],
-  ): unknown | undefined {
-    if (isEodhdDataTool(toolName)) {
-      return ticker ? buildEodhdFallbackInput(toolName, ticker) : undefined;
-    }
-    return buildFallbackInput(
-      toolName,
-      query,
-      intent.imageCount ?? undefined,
-      intent.videoCount ?? undefined,
-      intent.language ?? undefined,
-    );
-  }
-
-  /** Resolve a ticker by running eodhdSearch with the extracted query. */
-  private async resolveEodhdTicker(
-    chosenTools: Record<string, unknown>,
-    query: string,
-  ): Promise<string | undefined> {
-    const searchTool = chosenTools['eodhdSearch'] as
-      { execute?: (input: unknown) => Promise<unknown> } | undefined;
-    if (!searchTool?.execute) return undefined;
-    try {
-      const result = await searchTool.execute({ query });
-      const results = (result as { results?: Array<{ code?: string }> })
-        ?.results;
-      return results?.find((r) => r.code)?.code;
-    } catch {
-      return undefined;
-    }
+    return invocations;
   }
 }

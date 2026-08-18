@@ -70,8 +70,9 @@ function rangeDays(bars: number): number {
  * the trading-day conversion). "All" always stays.
  */
 const visibleRanges = computed(() => {
-  if (!props.availableDays) return RANGES;
-  return RANGES.filter((r) => rangeDays(r.bars) <= props.availableDays + 30);
+  const availableDays = props.availableDays;
+  if (!availableDays) return RANGES;
+  return RANGES.filter((r) => rangeDays(r.bars) <= availableDays + 30);
 });
 
 const activeRange = ref<number | null>(props.defaultBars ?? null);

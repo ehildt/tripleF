@@ -2,6 +2,8 @@ import type { SetDropdownRef } from '../composables/use-chat-dropdowns.types';
 import type { SearchEngineState } from '../composables/use-search-engine-availability.types';
 
 export interface ChatPromptActionBarProps {
+  /** Active conversation id; drives the per-conversation scroll-mode toggle. */
+  conversationId: string;
   value: string;
   thinkOptions: readonly string[];
   thinkValue: string;

@@ -64,7 +64,10 @@ import {
   type SplitMarkerText,
   splitMarkerText,
 } from '../helpers/split-marker-text.helper';
-import { stackMarkerLayouts } from '../helpers/stack-marker-layouts.helper';
+import {
+  type StackedMarkerLayout,
+  stackMarkerLayouts,
+} from '../helpers/stack-marker-layouts.helper';
 import {
   type D3ChartRenderContext,
   type D3CrosshairEvent,
@@ -1002,7 +1005,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
       .selectAll<
         SVGGElement,
         {
-          layout: MarkerLayout;
+          layout: StackedMarkerLayout;
           split: SplitMarkerText;
           textShift: number;
         }

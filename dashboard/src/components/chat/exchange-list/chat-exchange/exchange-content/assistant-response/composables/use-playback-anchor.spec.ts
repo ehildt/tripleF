@@ -45,13 +45,16 @@ const videoUrl = 'https://www.youtube.com/watch?v=abc';
 let wrappers: Array<{ unmount(): void }> = [];
 
 /** Mount a figure, returning the composable API. */
-function mountFigure(title?: string) {
+function mountFigure(
+  title?: string,
+  options?: { dockCondition?: () => boolean },
+) {
   const item = ref({ videoUrl, title });
   let api!: ReturnType<typeof usePlaybackAnchor>;
   const wrapper = mount(
     defineComponent({
       setup() {
-        api = usePlaybackAnchor(item);
+        api = usePlaybackAnchor(item, options);
         api.setAnchorElement(document.createElement('div'));
         return () => h('div');
       },
@@ -97,6 +100,22 @@ describe('usePlaybackAnchor', () => {
     expect(api.isDockedHere.value).toBe(false);
     expect(visibleAnchorCandidate.value).toBeNull();
     intersect(true);
+    expect(api.isDockedHere.value).toBe(true);
+  });
+
+  it('pops out while the dock condition is false, docks back when true', () => {
+    const dockable = ref(true);
+    const api = mountFigure(undefined, {
+      dockCondition: () => dockable.value,
+    });
+    api.engage();
+    expect(api.isDockedHere.value).toBe(true);
+
+    dockable.value = false;
+    expect(api.isDockedHere.value).toBe(false);
+    expect(visibleAnchorCandidate.value).toBeNull();
+
+    dockable.value = true;
     expect(api.isDockedHere.value).toBe(true);
   });
 

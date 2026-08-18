@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Exchange } from '../conversation.model';
+import type { Exchange } from '../../conversation.model';
 import { togglePairedExchangeIncluded } from './toggle-paired-exchange-included.helper';
 
 function makeExchange(

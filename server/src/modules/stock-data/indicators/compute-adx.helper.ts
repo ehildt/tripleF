@@ -1,6 +1,6 @@
 import type { IndicatorSeries, OhlcBar } from './indicators.types.js';
 
-export interface AdxResult {
+interface AdxResult {
   adx: IndicatorSeries;
   plusDi: IndicatorSeries;
   minusDi: IndicatorSeries;
