@@ -12,7 +12,7 @@ describe('PlaylistMenuItem', () => {
     const wrapper = mountItem('Focus');
     const input = wrapper.find('.playlist-menu-item__input');
     expect(input.attributes('readonly')).toBeDefined();
-    await wrapper.find('.playlist-menu-item__edit').trigger('click');
+    await wrapper.find('button[aria-label="Rename playlist"]').trigger('click');
     expect(
       wrapper.find('.playlist-menu-item__input').attributes('readonly'),
     ).toBeUndefined();
@@ -27,7 +27,7 @@ describe('PlaylistMenuItem', () => {
   it('blurring an unchanged field emits nothing', async () => {
     const wrapper = mountItem('Focus');
     const input = wrapper.find('.playlist-menu-item__input');
-    await wrapper.find('.playlist-menu-item__edit').trigger('click');
+    await wrapper.find('button[aria-label="Rename playlist"]').trigger('click');
     await input.trigger('blur');
     expect(wrapper.emitted('rename')).toBeFalsy();
     expect(wrapper.emitted('delete')).toBeFalsy();
@@ -36,7 +36,7 @@ describe('PlaylistMenuItem', () => {
   it('blurring an edited field renames the playlist', async () => {
     const wrapper = mountItem('Focus');
     const input = wrapper.find('.playlist-menu-item__input');
-    await wrapper.find('.playlist-menu-item__edit').trigger('click');
+    await wrapper.find('button[aria-label="Rename playlist"]').trigger('click');
     await input.setValue('Chill');
     await input.trigger('blur');
     expect(wrapper.emitted('rename')).toEqual([['Chill']]);
@@ -45,7 +45,7 @@ describe('PlaylistMenuItem', () => {
   it('blurring an emptied field deletes the playlist', async () => {
     const wrapper = mountItem('Focus');
     const input = wrapper.find('.playlist-menu-item__input');
-    await wrapper.find('.playlist-menu-item__edit').trigger('click');
+    await wrapper.find('button[aria-label="Rename playlist"]').trigger('click');
     await input.setValue('   ');
     await input.trigger('blur');
     expect(wrapper.emitted('delete')).toBeTruthy();
@@ -54,7 +54,9 @@ describe('PlaylistMenuItem', () => {
 
   it('the Trash button deletes the playlist', async () => {
     const wrapper = mountItem('Focus');
-    await wrapper.find('.playlist-menu-item__delete').trigger('click');
+    await wrapper
+      .find('button[aria-label="Delete playlist Focus"]')
+      .trigger('click');
     expect(wrapper.emitted('delete')).toBeTruthy();
   });
 });

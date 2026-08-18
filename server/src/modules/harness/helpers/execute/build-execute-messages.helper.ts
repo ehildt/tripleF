@@ -89,6 +89,7 @@ export function buildExecuteMessages(
       ? buildImageExecutePrompt(
           availableVariants,
           ctx.outputs.intent?.language ?? undefined,
+          ctx.outputs.intent?.tools ?? [],
         )
       : buildToolExecutePrompt(ctx.outputs.intent);
 

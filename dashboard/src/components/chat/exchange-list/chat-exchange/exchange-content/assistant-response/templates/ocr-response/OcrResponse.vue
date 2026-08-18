@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import DiscardedReferencesSection from '../../sections/discarded-references-section/DiscardedReferencesSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import PreformattedSection from '../../sections/preformatted-section/PreformattedSection.vue';
+import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import type { OcrResponseProps } from './OcrResponse.types';
 
 defineProps<OcrResponseProps>();
@@ -19,10 +21,15 @@ defineProps<OcrResponseProps>();
       :title="$t('common.extractedText')"
       :content="data.sectionContent"
     />
+    <VideoGallerySection
+      :title="data.videoGalleryTitle"
+      :items="data.videoGalleryItems"
+    />
     <KeyFindingsSection
       :items="data.keyFindings"
       :title="$t('common.keyFindings')"
     />
+    <DiscardedReferencesSection :items="data.discardedReferences" />
     <InternationalCoverageSection :items="data.internationalCoverage" />
   </article>
 </template>

@@ -1,7 +1,7 @@
 import { computeSma } from './compute-sma.helper.js';
 import type { IndicatorSeries } from './indicators.types.js';
 
-export interface BollingerResult {
+interface BollingerResult {
   upper: IndicatorSeries;
   middle: IndicatorSeries;
   lower: IndicatorSeries;

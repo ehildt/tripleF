@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MessageData } from '../../types/message-data.model';
+import type { MessageData } from '../../../types/message-data.model';
 import { isHarnessStreamEvent } from './is-harness-stream-event.helper';
 
 describe('isHarnessStreamEvent', () => {

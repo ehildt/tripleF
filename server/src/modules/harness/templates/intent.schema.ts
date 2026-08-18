@@ -21,6 +21,7 @@ const TEMPLATES = [
   'videolist',
   'stockmarketitem',
   'stockmarketlist',
+  'merge',
   'text',
 ] as const;
 

@@ -95,12 +95,7 @@ function applyFrontendDefaults(
     sources: {
       preferred: snapshot.sources?.preferred ?? [],
       blocked: snapshot.sources?.blocked ?? [],
-    },
-    layouts: {
-      classic: snapshot.layouts?.classic ?? true,
-      editorial: snapshot.layouts?.editorial ?? true,
-      split: snapshot.layouts?.split ?? true,
-      mosaic: snapshot.layouts?.mosaic ?? true,
+      imageTaskReferenceCount: snapshot.sources?.imageTaskReferenceCount ?? 6,
     },
     ollama: {
       host: ollama?.host ?? '',

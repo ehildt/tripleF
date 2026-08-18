@@ -45,6 +45,7 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   ocr: ['default', 'verbatim'],
   summary: ['default'],
   evaluation: ['default'],
+  merge: ['default'],
   product: ['default'],
   shoplist: ['default'],
   imagelist: ['default'],

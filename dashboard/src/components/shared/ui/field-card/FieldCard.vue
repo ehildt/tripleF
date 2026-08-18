@@ -2,6 +2,7 @@
 import { Check, type LucideIcon } from '@lucide/vue';
 
 import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 /**
  * Full-width field row in the image-variant design: icon tile, label +
@@ -64,14 +65,12 @@ const emit = defineEmits<{
     </div>
 
     <div class="field-card__content">
-      <span class="field-card__label" :title="label">{{ label }}</span>
-      <span
-        v-if="description"
-        class="field-card__description"
-        :title="description"
-      >
-        {{ description }}
-      </span>
+      <Tooltip :text="label" max-width="16rem">
+        <span class="field-card__label">{{ label }}</span>
+      </Tooltip>
+      <Tooltip v-if="description" :text="description" max-width="20rem">
+        <span class="field-card__description">{{ description }}</span>
+      </Tooltip>
     </div>
 
     <div v-if="numberValue !== undefined" class="field-card__number">

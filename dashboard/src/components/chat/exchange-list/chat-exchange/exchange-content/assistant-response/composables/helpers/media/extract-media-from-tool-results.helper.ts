@@ -150,9 +150,33 @@ function buildVideoGalleryItems(
  * Templates whose layout has no hero media. Synthesizing a hero from the
  * first tool-result URL would silently consume that URL (the dedupe pass
  * marks hero imagery as spent) while the component never renders a hero —
- * the first imagelist/videolist item would vanish from the grid.
+ * the first imagelist/videolist item would vanish from the grid. The
+ * image-self-analysis templates (describe/compare/ocr) are included for the
+ * same reason: their gallery IS the verified reference images, and a
+ * synthesized hero would drop the first downloaded web image from the
+ * gallery while the lightbox (hero + galleryItems) still shows it.
+ *
+ * Merge is included because a merge has no single hero — each topic shows
+ * its own hero inside bodySections; a synthesized response-level hero would
+ * be meaningless and would consume a URL better spent on a topic.
  */
-const NO_HERO_TEMPLATES = new Set(['imagelist', 'videolist', 'shoplist']);
+const NO_HERO_TEMPLATES = new Set([
+  'imagelist',
+  'videolist',
+  'shoplist',
+  'describe',
+  'compare',
+  'ocr',
+  'merge',
+]);
+
+/**
+ * Image-self-analysis templates: the gallery is the model's visually
+ * verified matches only. The server already reconciled discards, so the
+ * client fallback must never re-append availableImages — that would
+ * resurrect candidates the model (or the discard reconciliation) excluded.
+ */
+const IMAGE_TASK_TEMPLATES = new Set(['describe', 'compare', 'ocr']);
 
 export function extractMediaFromToolResults(
   toolResults: unknown[],
@@ -220,7 +244,7 @@ export function extractMediaFromToolResults(
     data.heroImageUrl,
     data.galleryItems,
   );
-  if (newGallery.length > 0) {
+  if (newGallery.length > 0 && !IMAGE_TASK_TEMPLATES.has(template ?? '')) {
     data.galleryItems = [...(data.galleryItems ?? []), ...newGallery];
   }
 
@@ -229,7 +253,7 @@ export function extractMediaFromToolResults(
     data.heroVideoUrl,
     data.videoGalleryItems,
   );
-  if (newVideos.length > 0) {
+  if (newVideos.length > 0 && !IMAGE_TASK_TEMPLATES.has(template ?? '')) {
     data.videoGalleryItems = [...(data.videoGalleryItems ?? []), ...newVideos];
   }
 }

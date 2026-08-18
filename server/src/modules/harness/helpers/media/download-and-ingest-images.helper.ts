@@ -1,4 +1,5 @@
 import { hashPayload } from '@ehildt/ckir-helpers/hash-payload';
+import { Logger } from '@nestjs/common';
 import type { Metadata } from 'sharp';
 import sharp from 'sharp';
 
@@ -14,42 +15,45 @@ import { fetchImageBuffer } from './fetch-image-buffer.helper.js';
 
 const INGEST_CONCURRENCY = 3;
 
+const ingestDebugLogger = new Logger('DownloadAndIngestImages');
+
 /**
- * Resize a downloaded image down to a maximum dimension, preserving aspect ratio.
- * Images already within the limit are converted to PNG without resize.
+ * Resize a downloaded image with the effective preprocessing (pproc) resize
+ * settings — the same dimensions user uploads get (fit inside, never
+ * enlarge), converted to PNG. `resize` always comes from the caller's
+ * resolved config; when absent the image is only converted, not scaled.
  */
 async function resizeDownloadedImage(
   buffer: Buffer,
-  maxDimension: number | undefined,
+  resize: DownloadAndIngestOptions['resize'],
 ): Promise<Buffer> {
-  const target = maxDimension ?? 512;
-  const { width, height } = await sharp(buffer).metadata();
+  if (!resize) return sharp(buffer).png().toBuffer();
 
-  const shouldResize =
-    (width ?? target) > target || (height ?? target) > target;
-  const pipeline = shouldResize
-    ? sharp(buffer).resize({
-        width: target,
-        height: target,
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-    : sharp(buffer);
-
-  return pipeline.png().toBuffer();
+  return sharp(buffer)
+    .resize({
+      width: resize.maxWidth ?? undefined,
+      height: resize.maxHeight ?? undefined,
+      withoutEnlargement: resize.withoutEnlargement,
+      fit: 'inside',
+    })
+    .png()
+    .toBuffer();
 }
 
 /**
- * Verify a downloaded buffer satisfies the minimum dimension requirements.
+ * Verify a downloaded buffer satisfies the size floor: at least as large as
+ * the configured pproc resize dimensions, so a stored (never enlarged)
+ * image always fills the display target. An unset axis is not gated.
  */
-async function isValidImageSize(
+async function meetsResizeFloor(
   buffer: Buffer,
-  minWidth: number,
-  minHeight: number,
+  resize: DownloadAndIngestOptions['resize'],
 ): Promise<boolean> {
   const metadata = await sharp(buffer).metadata();
   if (!metadata.width || !metadata.height) return false;
-  return metadata.width >= minWidth && metadata.height >= minHeight;
+  if (resize?.maxWidth && metadata.width < resize.maxWidth) return false;
+  if (resize?.maxHeight && metadata.height < resize.maxHeight) return false;
+  return true;
 }
 
 /**
@@ -73,31 +77,32 @@ async function ingestImage(
   try {
     const buffer = await fetchImageBuffer(item.imageUrl, {
       timeoutMs: options.timeoutMs,
-      maxBytes: options.maxBytes,
     });
     if (!buffer || buffer.length === 0) return undefined;
 
-    const validSize = await isValidImageSize(
-      buffer,
-      options.minWidth,
-      options.minHeight,
-    );
-    if (!validSize) return undefined;
+    const fitsDisplay = await meetsResizeFloor(buffer, options.resize);
+    if (!fitsDisplay) return undefined;
 
-    // Fingerprint the untouched download: a fixed 512 normalization makes
-    // the same source content collapse onto one key across turns, image
-    // hosts, and registry generations.
+    // Identity key: a fixed 512 normalization collapses CDN variants of the
+    // same source onto one key across turns, image hosts, and registry
+    // generations. Never a stored or displayed image.
     const fingerprint = await buildImageFingerprint(buffer, 512);
-    const resizedBuffer = await resizeDownloadedImage(
-      buffer,
-      options.maxDimension,
-    );
-    const metadata = await sharp(resizedBuffer).metadata();
-    const hash = hashPayload(resizedBuffer, 'sha256');
 
+    // The model's pixel attachment: resized to the effective pproc
+    // dimensions. Only these bytes travel with the entry (keepBuffers) —
+    // MinIO stores the ORIGINAL download, so the gallery and lightbox show
+    // full resolution.
+    const resizedBuffer = await resizeDownloadedImage(buffer, options.resize);
+
+    // The stored object is the original download, hashed as-is.
+    const metadata = await sharp(buffer).metadata();
+    const hash = hashPayload(buffer, 'sha256');
+
+    // Skip cloud candidates identical to the user's own uploads (same 512
+    // fingerprint) — the user's image is already visible as an attachment.
     if (
       options.existingFingerprints?.length &&
-      options.existingFingerprints.includes(hash)
+      options.existingFingerprints.includes(fingerprint)
     ) {
       return undefined;
     }
@@ -115,14 +120,14 @@ async function ingestImage(
         options.sessionId,
         options.conversationId,
         options.requestId,
-        [resizedBuffer],
+        [buffer],
         [
           {
             name,
             type: resolveContentType(metadata),
             hash,
             variant: 'original',
-            size: resizedBuffer.length,
+            size: buffer.length,
           },
         ],
       );
@@ -140,8 +145,15 @@ async function ingestImage(
       width: metadata.width,
       height: metadata.height,
       fingerprint,
+      ...(options.keepBuffers ? { buffer: resizedBuffer } : {}),
     };
-  } catch {
+  } catch (error) {
+    // TEMP DEBUG: surface the real ingest failure for the current
+    // investigation — remove once the drop cause is identified.
+    ingestDebugLogger.error(
+      `[ingest-debug] failed to ingest ${item.imageUrl}:`,
+      error instanceof Error ? error.message : String(error),
+    );
     return undefined;
   }
 }

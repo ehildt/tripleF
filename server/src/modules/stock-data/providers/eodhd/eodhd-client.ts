@@ -33,7 +33,7 @@ export class EodhdApiError extends Error {
   }
 }
 
-export interface EodhdSearchResult {
+interface EodhdSearchResult {
   code: string;
   name?: string;
   exchange?: string;
@@ -46,7 +46,7 @@ export interface EodhdSearchResult {
   isPrimary?: boolean;
 }
 
-export interface EodhdQuote {
+interface EodhdQuote {
   code: string;
   timestamp?: number;
   open?: number;
@@ -59,7 +59,7 @@ export interface EodhdQuote {
   changeP?: number;
 }
 
-export interface EodhdHistoryPoint {
+interface EodhdHistoryPoint {
   date: string;
   open: number;
   high: number;
@@ -69,7 +69,7 @@ export interface EodhdHistoryPoint {
   volume: number;
 }
 
-export interface EodhdTechnicalPoint {
+interface EodhdTechnicalPoint {
   date: string;
   value: number;
 }
@@ -83,7 +83,7 @@ export interface EodhdIntradayPoint {
   volume?: number;
 }
 
-export interface EodhdNewsArticle {
+interface EodhdNewsArticle {
   title?: string;
   link: string;
   date?: string;
@@ -93,7 +93,7 @@ export interface EodhdNewsArticle {
   tags?: string[];
 }
 
-export interface EodhdFundamentals {
+interface EodhdFundamentals {
   general?: Record<string, unknown>;
   highlights?: Record<string, unknown>;
   valuation?: Record<string, unknown>;

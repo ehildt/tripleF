@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /**
- * One file card in the Files panel: name header with an upload-source
- * indicator and a remove button, above a clickable thumbnail that toggles
- * whether the attachment is included in the next prompt.
+ * One file card in the Files panel: name header with the include/exclude
+ * toggle (mirroring the history items' control) and a trash remove button,
+ * above a thumbnail whose overlay shows the upload-source indicator.
  */
-import { Cloud, CloudDownload, X } from '@lucide/vue';
+import { Cloud, CloudDownload, SquaresExclude, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
+import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import type { AttachmentItem } from '../composables/use-attachment-list.types';
 
@@ -40,27 +42,42 @@ const sourceTitle = computed(() =>
       <span class="attachment-card__name">
         {{ item.name }}
       </span>
-      <Tooltip :text="sourceTitle">
-        <component
-          :is="sourceIcon"
-          v-if="item.isUploaded"
-          class="attachment-card__uploaded-indicator"
-        />
-      </Tooltip>
-      <Tooltip :text="$t('common.remove')">
+      <Tooltip
+        :text="
+          item.isSelected
+            ? $t('common.excludeFromQuery')
+            : $t('common.includeInQuery')
+        "
+      >
         <button
-          class="attachment-card__remove"
-          :aria-label="$t('common.remove')"
-          @click.stop="emit('remove')"
+          type="button"
+          class="attachment-card__toggle"
+          :class="{ 'attachment-card__toggle--excluded': !item.isSelected }"
+          :aria-label="
+            item.isSelected
+              ? $t('common.excludeFromQuery')
+              : $t('common.includeInQuery')
+          "
+          :aria-pressed="!item.isSelected"
+          @click.stop="emit('toggle')"
         >
-          <X class="attachment-card__remove-icon" />
+          <MotionIcon>
+            <SquaresExclude class="attachment-card__toggle-icon" />
+          </MotionIcon>
         </button>
       </Tooltip>
+      <IconButton
+        size="sm"
+        danger
+        :title="$t('common.remove')"
+        @click.stop="emit('remove')"
+      >
+        <Trash2 />
+      </IconButton>
     </div>
     <div
       class="attachment-card__thumb"
       :class="{ 'attachment-card__thumb--unselected': !item.isSelected }"
-      @click="emit('toggle')"
     >
       <img
         :src="imageSrc"
@@ -70,6 +87,11 @@ const sourceTitle = computed(() =>
         loading="lazy"
         decoding="async"
       />
+      <Tooltip :text="sourceTitle">
+        <span class="attachment-card__source">
+          <component :is="sourceIcon" class="attachment-card__source-icon" />
+        </span>
+      </Tooltip>
     </div>
   </div>
 </template>
@@ -118,34 +140,30 @@ const sourceTitle = computed(() =>
   color: var(--color-fg-secondary);
 }
 
-.attachment-card__remove {
+.attachment-card__toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
   padding: var(--spacing-0-5);
+  border: none;
+  background: none;
   color: var(--color-fg-muted);
   cursor: pointer;
   transition: color 0.2s ease;
-  border: none;
-  background-color: transparent;
-  flex-shrink: 0;
 }
 
-.attachment-card__remove:hover {
-  color: var(--color-status-error);
-}
-
-.attachment-card__remove-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.attachment-card__uploaded-indicator {
-  width: 0.75rem;
-  height: 0.75rem;
+.attachment-card__toggle:hover,
+.attachment-card__toggle--excluded {
   color: var(--color-accent-primary);
-  flex-shrink: 0;
+}
+
+.attachment-card__toggle-icon {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .attachment-card__thumb {
-  cursor: pointer;
+  position: relative;
   transition: filter 250ms ease;
 }
 
@@ -158,10 +176,31 @@ const sourceTitle = computed(() =>
   width: 100%;
   height: 20dvh;
   object-fit: cover;
+  display: block;
   transition: filter 250ms ease;
 }
 
 .attachment-card__image--unselected {
   filter: grayscale(100%);
+}
+
+/* Upload-source indicator pinned to the thumbnail's top-right corner: a
+   frosted-glass chip at 0.85 opacity, no border, no radius. */
+.attachment-card__source {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-0-5);
+  background: color-mix(in srgb, var(--color-bg-primary) 85%, transparent);
+  backdrop-filter: blur(4px);
+  color: var(--color-accent-primary);
+  opacity: 0.85;
+}
+
+.attachment-card__source-icon {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 </style>

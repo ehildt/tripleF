@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { UploadedImage } from '../conversation.model';
+import type { UploadedImage } from '../../conversation.model';
 import { mergeUploadedImages } from './merge-uploaded-images.helper';
 
 function makeImage(

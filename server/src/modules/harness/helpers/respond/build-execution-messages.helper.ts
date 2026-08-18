@@ -2,7 +2,6 @@ import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.j
 import { buildContentSystemPrompt } from '../../prompts/content-system.prompt.js';
 import { resolveVariantInstructions } from '../../prompts/variant-instructions.registry.js';
 import { buildSnippetInstruction } from '../../snippets/helpers/build-snippet-instruction.helper.js';
-import { resolveAllowedLayouts } from '../../snippets/helpers/resolve-allowed-layouts.helper.js';
 import { SNIPPET_TEMPLATE_PRESETS } from '../../snippets/snippet-presets.constant.js';
 import { selectStepHistory } from '../select-step-history.helper.js';
 import {
@@ -12,7 +11,18 @@ import {
 
 import type { BuildExecutionMessagesParams } from './build-execution-messages.helper.types.js';
 
-const IMAGE_TEMPLATES = ['describe', 'compare', 'ocr'];
+export const IMAGE_TEMPLATES = ['describe', 'compare', 'ocr'];
+
+/**
+ * A cloud reference image candidate the response model must verify visually:
+ * `imageUrl`/`title` map to the same availableImages entry, `buffer` is the
+ * resized bytes attached to the message.
+ */
+export type CloudReferenceImage = {
+  imageUrl: string;
+  title?: string;
+  buffer: Buffer;
+};
 /** Assemble the system + context messages the response model sees. */
 export function buildExecutionMessages(
   params: BuildExecutionMessagesParams,
@@ -31,6 +41,7 @@ export function buildExecutionMessages(
   const requiredKeys = getRequiredKeys(intent.template);
   const optionalKeys = getOptionalKeys(intent.template);
   const instructions = resolveInstructions(params);
+  const { cloudReferenceImages } = params;
 
   const executionSystem = buildContentSystemPrompt({
     template: intent.template,
@@ -70,7 +81,11 @@ export function buildExecutionMessages(
     ];
   }
 
-  const contextMessages = buildImageContextMessages(messages, availableImages);
+  const contextMessages = buildImageContextMessages(
+    messages,
+    availableImages,
+    cloudReferenceImages,
+  );
 
   return [
     { role: 'system', content: executionSystem },
@@ -92,13 +107,13 @@ function resolveInstructions(params: BuildExecutionMessagesParams): string {
       params.intent.prompt,
     );
   }
-  const allowed = resolveAllowedLayouts(preset, params.allowedLayouts);
-  return buildSnippetInstruction(preset, allowed);
+  return buildSnippetInstruction(preset, preset.supportedLayouts);
 }
 
 function buildImageContextMessages(
   allMessages: InputMessage[],
   availableImages?: Array<Record<string, unknown>>,
+  cloudReferenceImages?: CloudReferenceImage[],
 ): InputMessage[] {
   const isToolContextMessage = (m: InputMessage) =>
     m.role === 'system' &&
@@ -136,5 +151,28 @@ function buildImageContextMessages(
     });
   }
 
+  if (cloudReferenceImages && cloudReferenceImages.length > 0) {
+    contextMessages.push(buildCloudReferenceMessage(cloudReferenceImages));
+  }
+
   return contextMessages;
+}
+
+/**
+ * Attach the cloud reference candidates with explicit imageUrl/title labels
+ * so the model can map each attached image to its availableImages entry
+ * without index heuristics.
+ */
+function buildCloudReferenceMessage(refs: CloudReferenceImage[]): InputMessage {
+  const lines = refs.map(
+    (ref, index) =>
+      `#${index + 1} — imageUrl: ${ref.imageUrl}${ref.title ? `, title: ${JSON.stringify(ref.title)}` : ''}`,
+  );
+  return {
+    role: 'user',
+    content: `CLOUD REFERENCE IMAGE CANDIDATES attached to this message, in order (each maps to the availableImages entry with the same imageUrl — the uploaded user image(s) are in the earlier user message):\n${lines.join(
+      '\n',
+    )}\nVisually verify each candidate against the uploaded image(s) before using it. Only a strong visual match — same subject, scene, character, artwork, or document — may appear in galleryItems. List every candidate that fails in discardedReferences with a one-line reason.`,
+    images: refs.map((ref) => ref.buffer),
+  };
 }

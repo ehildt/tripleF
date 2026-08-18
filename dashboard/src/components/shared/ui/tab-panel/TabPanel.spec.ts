@@ -64,21 +64,21 @@ describe('TabPanel', () => {
     const wrapper = mount(TabPanel, {
       props: { tabs, activeTab: 'one', copyable: true },
     });
-    expect(wrapper.find('.tab-panel__copy').exists()).toBe(true);
+    expect(wrapper.find('.tab-panel__panel button').exists()).toBe(true);
   });
 
   it('does not render a copy button when not copyable', () => {
     const wrapper = mount(TabPanel, {
       props: { tabs, activeTab: 'one', copyable: false },
     });
-    expect(wrapper.find('.tab-panel__copy').exists()).toBe(false);
+    expect(wrapper.find('.tab-panel__panel button').exists()).toBe(false);
   });
 
   it('emits copy when the copy button is clicked', async () => {
     const wrapper = mount(TabPanel, {
       props: { tabs, activeTab: 'one', copyable: true },
     });
-    await wrapper.find('.tab-panel__copy').trigger('click');
+    await wrapper.find('.tab-panel__panel button').trigger('click');
     expect(wrapper.emitted('copy')).toEqual([[]]);
   });
 });

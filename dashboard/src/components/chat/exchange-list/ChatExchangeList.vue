@@ -2,9 +2,12 @@
 import { computed, provide, ref } from 'vue';
 
 import { useAppStore } from '@/stores/app';
-import { mediaPriorityKey } from '@/types/harness-response-data.model';
+import {
+  mediaPresentationsKey,
+  mediaPriorityKey,
+  sectionCollapsedKey,
+} from '@/types/harness-response-data.model';
 
-import ChatConversationHeader from '../conversation-header/ChatConversationHeader.vue';
 import { useActiveConversation } from './composables/use-active-conversation';
 import { useExchangeActions } from './composables/use-exchange-actions';
 import { useExchangeVisualState } from './composables/use-exchange-visual-state';
@@ -18,6 +21,7 @@ const props = defineProps<ChatExchangeListProps>();
 const emit = defineEmits<{
   deleteConversation: [id: string];
   toggleIncluded: [exchangeId: string];
+  toggleMerge: [exchangeId: string];
   scroll: [];
 }>();
 
@@ -68,17 +72,23 @@ const mediaPriority = computed(() =>
 );
 provide(mediaPriorityKey, mediaPriority);
 
+// Expose the prompt-bar media presentation choices (image/video → gallery
+// vs list) so the deep media sections switch presentation without a deep
+// prop thread.
+const mediaPresentations = computed(() => appStore.mediaPresentations);
+provide(mediaPresentationsKey, mediaPresentations);
+
+// Expose the prompt-bar collapse/expand choices for response sections
+// (gallery, video gallery, sources, key findings, snippets) so the deep
+// templates hide their sections without a deep prop thread.
+const collapsedSections = computed(() => appStore.collapsedSections);
+provide(sectionCollapsedKey, collapsedSections);
+
 defineExpose({ scrollToExchange, activeUserExchangeId });
 </script>
 
 <template>
   <div class="chat-exchange-list panel-glow">
-    <ChatConversationHeader
-      v-if="activeConversation"
-      :title="activeConversation.title"
-      :conversation-id="activeConversationId"
-    />
-
     <ScrollableExchangeList
       v-if="isSessionActive"
       ref="scrollableListRef"
@@ -93,6 +103,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
       @retry="retryExchange"
       @branch="branchExchange"
       @toggle-included="emit('toggleIncluded', $event)"
+      @toggle-merge="emit('toggleMerge', $event)"
       @hover-delete-start="onHoverDeleteStart"
       @hover-delete-end="onHoverDeleteEnd"
       @scroll="emit('scroll')"

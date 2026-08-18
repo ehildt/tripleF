@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useModelsStore } from '../../../stores/models';
+import { useMergeSelection } from '../exchange-list/composables/use-merge-selection';
 import { useBranchExchange } from './use-branch-exchange';
 
 /**
@@ -14,6 +15,7 @@ export function useChatConversation() {
   const conversationStore = useConversationStore();
   const modelsStore = useModelsStore();
   const { branchExchange } = useBranchExchange();
+  const mergeSelection = useMergeSelection();
 
   const conversationId = computed(
     () => conversationStore.activeConversationId ?? '',
@@ -71,6 +73,11 @@ export function useChatConversation() {
         role: ex.role,
         content: ex.content,
         included: ex.included !== false,
+        mergeSelected: conversation.value
+          ? mergeSelection.isMergeSelected(conversation.value.id, ex.id)
+          : false,
+        merged: ex.mergedInto != null,
+        mergedRequestId: ex.mergedInto ?? undefined,
         // Leave undefined until the turn's token data is available so the
         // history item shows no percentage rather than a misleading "--%".
         contextPercent: percent ?? undefined,
@@ -87,6 +94,29 @@ export function useChatConversation() {
       conversation.value.id,
       exchange.id,
     );
+  }
+
+  /** Merge availability for the active conversation: icons gray out with
+   * fewer than two completed user prompts. */
+  const canMerge = computed(() =>
+    conversation.value
+      ? mergeSelection.hasMergeCandidates(conversation.value.id)
+      : false,
+  );
+
+  /** Merge armed when at least two user prompts are selected: icons pulse. */
+  const mergeArmed = computed(() =>
+    conversation.value
+      ? mergeSelection.isMergeArmed(conversation.value.id)
+      : false,
+  );
+
+  /** Select/deselect the user prompt at the given history index for a
+   * merge (pairs its assistant response automatically). */
+  function toggleUserExchangeMerge(index: number) {
+    const exchange = userExchanges.value[index];
+    if (!conversation.value || !exchange) return;
+    mergeSelection.toggleMergeSelection(conversation.value.id, exchange.id);
   }
 
   /** Delete the user prompt at the given history index (pairs its
@@ -115,6 +145,9 @@ export function useChatConversation() {
     userExchanges,
     messageListItems,
     toggleUserExchangeIncluded,
+    toggleUserExchangeMerge,
+    canMerge,
+    mergeArmed,
     deleteUserExchange,
     branchUserExchange,
   };

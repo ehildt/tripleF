@@ -1,7 +1,17 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
+import { computed } from 'vue';
+
+import type { CollapsedSections } from '@/types/harness-response-data.model';
+import { sectionCollapsedKey } from '@/types/harness-response-data.model';
 
 import SourcesSection from './SourcesSection.vue';
+
+const COLLAPSED_SOURCES: CollapsedSections = {
+  sources: true,
+  keyFindings: false,
+  internationalCoverage: false,
+};
 
 describe('SourcesSection', () => {
   it('renders nothing when items is empty', () => {
@@ -62,6 +72,19 @@ describe('SourcesSection', () => {
     const wrapper = mount(SourcesSection, {
       props: {
         items: ['plain', null, {}] as unknown as never[],
+      },
+    });
+
+    expect(wrapper.find('section').exists()).toBe(false);
+  });
+
+  it('hides when the sources section type is collapsed from the prompt bar', () => {
+    const wrapper = mount(SourcesSection, {
+      props: { items: [{ title: 'Source A', url: 'https://a.com' }] },
+      global: {
+        provide: {
+          [sectionCollapsedKey]: computed(() => COLLAPSED_SOURCES),
+        },
       },
     });
 

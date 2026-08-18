@@ -44,4 +44,33 @@ describe('harnessDataToPromptText', () => {
   it('returns empty string for empty data', () => {
     expect(harnessDataToPromptText({})).toBe('');
   });
+
+  it('serializes merge bodySections as topic blocks with lists', () => {
+    const result = harnessDataToPromptText({
+      sectionTitle: 'Details',
+      bodySections: [
+        {
+          topic: 'Vision Pro',
+          content: 'A narrative line.',
+          strengths: [{ text: 'Great display' }],
+          weaknesses: [{ text: 'High price' }],
+          recommendations: [{ text: 'Try it in store' }],
+          heroImageUrl: 'https://example.com/vision-pro.jpg',
+          heroVideoUrl: 'https://youtube.com/watch?v=aaa',
+        },
+      ],
+    });
+
+    expect(result).toContain('Section: Details');
+    expect(result).toContain('Topic: Vision Pro');
+    expect(result).toContain('Hero image: https://example.com/vision-pro.jpg');
+    expect(result).toContain('Hero video: https://youtube.com/watch?v=aaa');
+    expect(result).toContain('A narrative line.');
+    expect(result).toContain('Strengths:');
+    expect(result).toContain('- Great display');
+    expect(result).toContain('Weaknesses:');
+    expect(result).toContain('- High price');
+    expect(result).toContain('Recommendations:');
+    expect(result).toContain('- Try it in store');
+  });
 });

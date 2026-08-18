@@ -55,7 +55,6 @@ function tabClass(view: RightPanelView) {
 .right-panel-tabs {
   display: flex;
   gap: var(--spacing-1);
-  margin-bottom: var(--spacing-2);
 }
 
 .right-panel-tabs__tab {
@@ -68,7 +67,7 @@ function tabClass(view: RightPanelView) {
     color 0.2s ease,
     background-color 0.2s ease;
   color: var(--color-fg-muted);
-  background-color: transparent;
+  background-color: var(--color-bg-secondary);
   border: none;
 }
 

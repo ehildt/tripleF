@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Exchange } from '../conversation.model';
+import type { Exchange } from '../../conversation.model';
 import { createConversation } from './create-conversation.helper';
 import { getLatestRequestId } from './get-latest-request-id.helper';
 

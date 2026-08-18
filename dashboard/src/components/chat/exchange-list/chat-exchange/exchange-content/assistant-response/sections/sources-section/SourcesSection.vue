@@ -3,6 +3,7 @@ import { computed } from 'vue';
 
 import type { Source } from '@/types/harness-response-data.model';
 
+import { useHarnessSectionCollapsed } from '../../shared/composables/use-harness-section-collapsed.composable';
 import { pickCycleColor } from '../../shared/helpers/pick-cycle-color.helper';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
 
@@ -21,10 +22,13 @@ const validItems = computed(() =>
         typeof (item as Source).title === 'string'),
   ),
 );
+
+/** Hidden while the prompt bar collapses the sources section type. */
+const isCollapsed = useHarnessSectionCollapsed('sources');
 </script>
 
 <template>
-  <section v-if="validItems.length" class="sources">
+  <section v-if="validItems.length && !isCollapsed" class="sources">
     <SectionTitle :title="title ?? $t('common.sources')" />
     <ul>
       <li

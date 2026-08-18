@@ -14,6 +14,7 @@ describe('applySourcePolicy', () => {
       { url: 'https://ok.com/a' },
     ];
     const result = applySourcePolicy(items, {
+      imageTaskReferenceCount: 6,
       preferred: [],
       blocked: ['blocked.com'],
     });
@@ -25,6 +26,7 @@ describe('applySourcePolicy', () => {
       { url: 'https://ok.com/a', imageUrl: 'https://blocked.com/i.jpg' },
     ];
     const result = applySourcePolicy(items, {
+      imageTaskReferenceCount: 6,
       preferred: [],
       blocked: ['blocked.com'],
     });
@@ -38,6 +40,7 @@ describe('applySourcePolicy', () => {
       { url: 'https://preferred.com/a' },
     ];
     const result = applySourcePolicy(items, {
+      imageTaskReferenceCount: 6,
       preferred: ['preferred.com'],
       blocked: [],
     });

@@ -7,6 +7,7 @@ const WHITELIST = {
   notToDevDep: [
     'src/config.yml.loader.ts',
     'src/test-utils/mock-app-view-context.ts',
+    'src/test-utils/run-in-setup.ts',
   ],
   notToUnresolvable: [
     'src/stores/models.ts',

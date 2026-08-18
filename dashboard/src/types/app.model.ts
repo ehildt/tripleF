@@ -15,6 +15,22 @@ export interface ChatIconVisibility {
 
 export type ChatIconKey = keyof ChatIconVisibility;
 
+/** Collapse state of the prompt bar's floating icon menus: the search-source
+ * menu (orange) and the per-conversation view-toggle menu (blue). `true`
+ * means the menu is collapsed to its expand arrow. */
+export interface SourceTagsMenuCollapsed {
+  sources: boolean;
+  view: boolean;
+}
+
+/** Whether each prompt-bar icon menu is pinned open (never collapses to its
+ * arrow). When `true` the menu always shows its icons; when `false` the menu
+ * is collapsible behind the expand arrow. */
+export interface SourceTagsMenuAlwaysShow {
+  sources: boolean;
+  view: boolean;
+}
+
 /** Default chart style preferences, set from the SysCtl chat-navigation tab. */
 export type ChartPriceStyle = 'candles' | 'line' | 'area';
 export type ChartVolumeStyle = 'histogram' | 'heatmap';

@@ -6,6 +6,7 @@ import { compareToText } from '../../../templates/compare-response/helpers/compa
 import { describeToText } from '../../../templates/describe-response/helpers/describe-to-text.helper';
 import { evaluationToText } from '../../../templates/evaluation-response/helpers/evaluation-to-text.helper';
 import { imagelistToText } from '../../../templates/imagelist-response/helpers/imagelist-to-text.helper';
+import { mergeToText } from '../../../templates/merge-response/helpers/merge-to-text.helper';
 import { newsToText } from '../../../templates/news-response/helpers/news-to-text.helper';
 import { ocrToText } from '../../../templates/ocr-response/helpers/ocr-to-text.helper';
 import { productToText } from '../../../templates/product-response/helpers/product-to-text.helper';
@@ -18,6 +19,7 @@ const transformers: Record<string, (data: HarnessResponseData) => string> = {
   describe: describeToText,
   evaluation: evaluationToText,
   imagelist: imagelistToText,
+  merge: mergeToText,
   news: newsToText,
   ocr: ocrToText,
   product: productToText,

@@ -2,7 +2,7 @@ allowBuilds:
   esbuild: true
   vue-demi: true
 minimumReleaseAgeExclude:
-  - '@lucide/vue@1.28.0 || 1.30.0'
+  - '@lucide/vue@1.28.0 || 1.30.0 || 1.33.0'
   - postcss@8.5.25
   - playwright-core@1.62.1
   - playwright@1.62.1
@@ -24,7 +24,7 @@ minimumReleaseAgeExclude:
   - '@typescript-eslint/typescript-estree@8.66.0'
   - '@typescript-eslint/utils@8.66.0'
   - '@typescript-eslint/visitor-keys@8.66.0'
-  - dompurify@3.4.13
+  - dompurify@3.4.13 || 3.4.14
   - eslint-plugin-storybook@10.5.6 || 10.5.8
   - storybook@10.5.6 || 10.5.8
   - typescript-eslint@8.66.0

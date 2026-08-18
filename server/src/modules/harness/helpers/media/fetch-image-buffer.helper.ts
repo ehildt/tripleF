@@ -8,7 +8,6 @@ import { isPrivateOrLocalhost } from '../url-trust/is-private-or-localhost.helpe
 import type { FetchImageBufferOptions } from './fetch-image-buffer.types.js';
 
 const MAX_REDIRECTS = 3;
-const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
 
 /**
  * A URL is only fetchable when it is a public http(s) address that is
@@ -31,26 +30,19 @@ function isFetchableImageUrl(value: string): boolean {
   return true;
 }
 
-/** Read a response body up to a hard byte cap; oversized bodies are rejected. */
-async function readCappedBody(
-  res: Response,
-  maxBytes: number,
-): Promise<{ body: Buffer } | undefined> {
+/** Read a response body fully into memory — no size ceiling, only the
+ * fetch timeout bounds the download. The resolution floor (not a byte cap)
+ * is what keeps low-quality images out. */
+async function readBody(res: Response): Promise<{ body: Buffer } | undefined> {
   if (!res.body) return undefined;
 
   const reader = res.body.getReader();
   const chunks: Buffer[] = [];
-  let total = 0;
 
   try {
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-      total += value.byteLength;
-      if (total > maxBytes) {
-        await reader.cancel().catch(() => undefined);
-        return undefined;
-      }
       chunks.push(Buffer.from(value));
     }
   } catch {
@@ -97,7 +89,6 @@ async function fetchImageBufferOnce(
   userAgent: string,
   options: FetchImageBufferOptions,
 ): Promise<{ body: Buffer } | { forbidden: true } | undefined> {
-  const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   let current = url;
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
@@ -119,16 +110,17 @@ async function fetchImageBufferOnce(
     }
 
     if (!res.ok) return undefined;
-    return readCappedBody(res, maxBytes);
+    return readBody(res);
   }
 
   return undefined;
 }
 
 /**
- * Download an image URL into a bounded buffer, retrying once with a browser
- * user agent when a hotlink-protecting CDN answers 403. Returns undefined
- * for unreachable, oversized, non-public, or blocked URLs.
+ * Download an image URL into a buffer, retrying once with a browser user
+ * agent when a hotlink-protecting CDN answers 403. Returns undefined for
+ * unreachable, non-public, or blocked URLs. No byte cap — the resolution
+ * floor is the quality gate, and the fetch timeout bounds the download.
  */
 export async function fetchImageBuffer(
   url: string,

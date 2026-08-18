@@ -108,3 +108,16 @@ export const UserExcluded: Story = {
     exchange: { ...baseExchange, included: false },
   },
 };
+
+/** Merged user exchange — the source request tags sit between the header
+ *  and the meta row. */
+export const UserMerged: Story = {
+  args: {
+    exchange: {
+      ...baseExchange,
+      requestId: 'req-9',
+      model: 'llama3',
+      mergeOrigin: ['req-7f3a9c21', 'req-2b81d0e4', 'req-9c44f1a7'],
+    },
+  },
+};

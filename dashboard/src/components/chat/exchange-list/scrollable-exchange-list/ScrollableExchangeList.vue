@@ -14,6 +14,7 @@ const emit = defineEmits<{
   retry: [exchangeId: string];
   branch: [exchangeId: string];
   toggleIncluded: [exchangeId: string];
+  toggleMerge: [exchangeId: string];
   hoverDeleteStart: [exchangeId: string];
   hoverDeleteEnd: [];
   /** Fired on a user-initiated scroll (not a programmatic auto-scroll). */
@@ -202,6 +203,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
           @retry="emit('retry', $event)"
           @branch="emit('branch', $event)"
           @toggle-included="emit('toggleIncluded', $event)"
+          @toggle-merge="emit('toggleMerge', $event)"
           @hover-delete-start="emit('hoverDeleteStart', $event)"
           @hover-delete-end="emit('hoverDeleteEnd')"
         />
@@ -230,6 +232,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
         @retry="emit('retry', $event)"
         @branch="emit('branch', $event)"
         @toggle-included="emit('toggleIncluded', $event)"
+        @toggle-merge="emit('toggleMerge', $event)"
         @hover-delete-start="emit('hoverDeleteStart', $event)"
         @hover-delete-end="emit('hoverDeleteEnd')"
       />
@@ -240,7 +243,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
 <style scoped>
 .vertical-carousel {
   position: relative;
-  height: calc(100vh - 15rem);
+  height: calc(100vh - 12rem);
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   overscroll-behavior: contain;
@@ -262,7 +265,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
 /* Native mode: a normal scrollable list with its own scrollbar. */
 .native-scroll {
   position: relative;
-  height: calc(100vh - 15rem);
+  height: calc(100vh - 12rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }

@@ -7,6 +7,8 @@ import ChatExchangeList from '../exchange-list/ChatExchangeList.vue';
 import ChatPromptActionBar from '../prompt-action-bar/ChatPromptActionBar.vue';
 
 const props = defineProps<{
+  /** Active conversation id; drives the per-conversation scroll-mode toggle. */
+  conversationId: string;
   value: string;
   thinkOptions: readonly string[];
   thinkValue: string;
@@ -67,6 +69,7 @@ defineExpose({ exchangeListRef, activeUserExchangeId });
       @scroll="emit('scroll')"
     />
     <ChatPromptActionBar
+      :conversation-id="props.conversationId"
       :value="props.value"
       :think-options="props.thinkOptions"
       :think-value="props.thinkValue"

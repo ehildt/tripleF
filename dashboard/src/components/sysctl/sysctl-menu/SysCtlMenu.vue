@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * The section tab bar of the SysCtl panel: one icon per settings group
- * (search engines, preprocessing, widgets, system).
+ * (search engines, preprocessing, layouts, templates, widgets, system).
  */
 import {
   Blocks,
@@ -13,6 +13,7 @@ import {
   ScanEye,
 } from '@lucide/vue';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { i18n } from '@/i18n/i18n';
 
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
@@ -63,22 +64,25 @@ const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
 
 <template>
   <div class="sysctl-menu" role="tablist">
-    <button
+    <Tooltip
       v-for="{ tab, label, icon } in TAB_LABELS"
       :key="tab"
-      type="button"
-      role="tab"
-      :title="label"
-      :aria-label="label"
-      :aria-selected="activeTab === tab"
-      class="sysctl-menu__tab"
-      :class="{ 'sysctl-menu__tab--active': activeTab === tab }"
-      @click="emit('selectTab', tab)"
+      :text="label"
     >
-      <MotionIcon>
-        <component :is="icon" class="sysctl-menu__tab-icon" />
-      </MotionIcon>
-    </button>
+      <button
+        type="button"
+        role="tab"
+        :aria-label="label"
+        :aria-selected="activeTab === tab"
+        class="sysctl-menu__tab"
+        :class="{ 'sysctl-menu__tab--active': activeTab === tab }"
+        @click="emit('selectTab', tab)"
+      >
+        <MotionIcon>
+          <component :is="icon" class="sysctl-menu__tab-icon" />
+        </MotionIcon>
+      </button>
+    </Tooltip>
   </div>
 </template>
 

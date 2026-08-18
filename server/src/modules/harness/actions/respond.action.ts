@@ -8,8 +8,6 @@ import { buildExecutionMessages } from '../helpers/respond/build-execution-messa
 import { consumeResponseStream } from '../helpers/respond/consume-response-stream.helper.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
-import { resolveAllowedLayouts } from '../snippets/helpers/resolve-allowed-layouts.helper.js';
-import { SNIPPET_TEMPLATE_PRESETS } from '../snippets/snippet-presets.constant.js';
 
 import type { RespondParams, RespondResult } from './respond.action.types.js';
 
@@ -28,14 +26,13 @@ export class RespondActionService {
    * Main entry point for the respond step.
    */
   execute(params: RespondParams): Promise<RespondResult> {
-    const layouts = this.providerOverrides.getConfig().layouts;
     const executionMessages = buildExecutionMessages({
       requestId: params.requestId,
       intent: params.intent,
       messages: params.messages,
       availableImages: params.availableImages,
+      cloudReferenceImages: params.cloudReferenceImages,
       sources: this.providerOverrides.getConfig().sources,
-      allowedLayouts: layouts,
       stepLogger: this.stepLogger,
       language: params.language,
     });
@@ -95,7 +92,6 @@ export class RespondActionService {
       const validation = this.responseValidator.validateValidatedResponse(
         result.text,
         params.intent.template,
-        this.buildLayoutValidationContext(params.intent.template),
       );
 
       if (validation.valid) {
@@ -191,7 +187,6 @@ export class RespondActionService {
       const validation = this.responseValidator.validateValidatedResponse(
         content,
         params.intent.template,
-        this.buildLayoutValidationContext(params.intent.template),
       );
 
       if (!validation.valid) {
@@ -237,21 +232,6 @@ export class RespondActionService {
     } catch {
       return undefined;
     }
-  }
-
-  /**
-   * The layouts enabled for this template right now (user config ∩ preset
-   * support) — the validator coerces out-of-set layout picks to the default.
-   */
-  private buildLayoutValidationContext(template: string) {
-    const preset = SNIPPET_TEMPLATE_PRESETS[template];
-    if (!preset) return undefined;
-    return {
-      allowedLayouts: resolveAllowedLayouts(
-        preset,
-        this.providerOverrides.getConfig().layouts,
-      ),
-    };
   }
 
   /**

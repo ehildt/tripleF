@@ -13,6 +13,8 @@ defineProps<{
   showBranch?: boolean;
   active?: boolean;
   iconVisibility?: Partial<ChatIconVisibility>;
+  canMerge?: boolean;
+  mergeArmed?: boolean;
 }>();
 
 defineEmits<{
@@ -20,6 +22,7 @@ defineEmits<{
   select: [];
   copy: [];
   toggleInclude: [];
+  toggleMerge: [];
   deleteItem: [];
   branchOut: [];
 }>();
@@ -30,6 +33,7 @@ defineEmits<{
     class="expandable-message-list__item"
     :class="{
       'expandable-message-list__item--excluded': message.included === false,
+      'expandable-message-list__item--merged': message.merged,
       'expandable-message-list__item--active': active,
     }"
   >
@@ -45,10 +49,15 @@ defineEmits<{
       :show-branch="showBranch"
       :icon-visibility="iconVisibility"
       :active="active"
+      :merge-selected="message.mergeSelected"
+      :merged-request-id="message.mergedRequestId"
+      :can-merge="canMerge"
+      :merge-armed="mergeArmed"
       @toggle="$emit('toggle')"
       @select="$emit('select')"
       @copy="$emit('copy')"
       @toggle-include="$emit('toggleInclude')"
+      @toggle-merge="$emit('toggleMerge')"
       @delete-item="$emit('deleteItem')"
       @branch-out="$emit('branchOut')"
     />
@@ -69,6 +78,18 @@ defineEmits<{
 
 .expandable-message-list__item--excluded {
   opacity: 0.45;
+}
+
+/* Consumed by a completed merge: purple border marks the consolidated
+   section while the item stays readable in the history list. */
+.expandable-message-list__item--merged {
+  border: 1px solid
+    color-mix(in srgb, var(--color-merge-merged) 45%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--color-merge-merged) 8%,
+    transparent
+  );
 }
 
 .expandable-message-list__item--active {

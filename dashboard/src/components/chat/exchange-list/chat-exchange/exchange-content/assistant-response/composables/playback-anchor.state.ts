@@ -32,8 +32,14 @@ export function registerAnchorCandidate(
   videoUrl: string,
   el: HTMLElement,
   scrollRoot: HTMLElement | null,
+  dockCondition?: () => boolean,
 ): AnchorCandidate {
-  const candidate: AnchorCandidate = { el, scrollRoot, inView: true };
+  const candidate: AnchorCandidate = {
+    el,
+    scrollRoot,
+    inView: true,
+    dockCondition,
+  };
   const next = new Map(anchorCandidates.value);
   const list = [...(next.get(videoUrl) ?? []), candidate];
   next.set(videoUrl, list);
@@ -76,9 +82,12 @@ export const launchedAnchorCandidates = computed<AnchorCandidate[]>(() =>
     : [],
 );
 
-/** The in-view anchor for the currently launched video, if any. */
+/** The in-view, dockable anchor for the currently launched video, if any. */
 export const visibleAnchorCandidate = computed<AnchorCandidate | null>(
-  () => launchedAnchorCandidates.value.find((entry) => entry.inView) ?? null,
+  () =>
+    launchedAnchorCandidates.value.find(
+      (entry) => entry.inView && (entry.dockCondition?.() ?? true),
+    ) ?? null,
 );
 
 /**

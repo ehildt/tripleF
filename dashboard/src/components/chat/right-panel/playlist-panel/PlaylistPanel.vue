@@ -159,6 +159,7 @@ function onItemPlay(item: VideoGalleryItem) {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  gap: var(--spacing-0-5);
 }
 
 /* Header strip holding the toolbar — the glassy tone of the floating player
@@ -167,7 +168,7 @@ function onItemPlay(item: VideoGalleryItem) {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-1-5);
+  padding: var(--spacing-1-5);
   background: color-mix(in srgb, var(--color-bg-elevated) 35%, transparent);
   user-select: none;
 }

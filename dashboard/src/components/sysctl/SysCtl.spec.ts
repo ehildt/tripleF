@@ -98,7 +98,7 @@ describe('SysCtl', () => {
   ) {
     const tab = wrapper
       .findAll('.sysctl-menu__tab')
-      .find((button) => button.attributes('title') === label);
+      .find((button) => button.attributes('aria-label') === label);
     await tab?.trigger('click');
   }
 
@@ -108,7 +108,7 @@ describe('SysCtl', () => {
   ) {
     const tab = wrapper
       .findAll('.sysctl-submenu__tab')
-      .find((button) => button.text() === label);
+      .find((button) => button.attributes('aria-label') === label);
     await tab?.trigger('click');
   }
 

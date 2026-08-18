@@ -9,7 +9,6 @@ import {
   BROWSER_USER_AGENT,
   HARNESS_USER_AGENT,
 } from '../constants/user-agents.constant.js';
-import type { MediaUrlKind } from '../helpers/media-classification/classify-by-content-type.helper.js';
 import { classifyByContentType } from '../helpers/media-classification/classify-by-content-type.helper.js';
 import { classifyByMagicBytes } from '../helpers/media-classification/classify-by-magic-bytes.helper.js';
 import { extractContentType } from '../helpers/media-classification/extract-content-type.helper.js';
@@ -29,14 +28,9 @@ import type {
   MediaUrlValidatorOptions,
 } from './media-url-validator.service.types.js';
 import { MediaValidationCache } from './media-validation-cache.js';
+import type { MediaValidationResult } from './media-validation-cache.types.js';
 
-export interface MediaValidationResult {
-  url: string;
-  kind: MediaUrlKind;
-  status?: number;
-  contentType?: string;
-  error?: string;
-}
+export type { MediaValidationResult } from './media-validation-cache.types.js';
 
 const UNKNOWN_RETRY_DELAY_MS = 200;
 
@@ -175,8 +169,8 @@ export class MediaUrlValidatorService {
     const {
       timeoutMs = 3000,
       maxRedirects = 3,
-      minWidth = 1280,
-      minHeight = 720,
+      minWidth,
+      minHeight,
       maxProbeBytes = 256 * 1024,
     } = options;
 
@@ -247,7 +241,7 @@ export class MediaUrlValidatorService {
       if (!metadata || !metadata.width || !metadata.height) {
         // Dimension checking was requested but we could not read dimensions
         // from the first probe bytes. Reject the URL rather than risking a
-        // broken or sub-720p image in the gallery.
+        // undersized image in the gallery.
         return {
           url,
           kind: 'broken',
@@ -257,13 +251,16 @@ export class MediaUrlValidatorService {
         };
       }
 
-      if (metadata.width < minWidth || metadata.height < minHeight) {
+      if (
+        (minWidth !== undefined && metadata.width < minWidth) ||
+        (minHeight !== undefined && metadata.height < minHeight)
+      ) {
         return {
           url,
           kind: 'broken',
           status,
           contentType,
-          error: `image dimensions ${metadata.width}x${metadata.height} below ${minWidth}x${minHeight}`,
+          error: `image dimensions ${metadata.width}x${metadata.height} below ${minWidth ?? 0}x${minHeight ?? 0}`,
         };
       }
 

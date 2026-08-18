@@ -7,6 +7,7 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import IconButton from '../icon-button/IconButton.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
 
 const props = defineProps<{
@@ -66,26 +67,20 @@ const displayedPages = computed(() => {
     </span>
 
     <div class="pagination__pages">
-      <Tooltip :text="$t('common.firstPage')">
-        <button
-          class="pagination__button"
-          :disabled="currentPage <= 1"
-          :aria-label="$t('common.firstPage')"
-          @click="$emit('first')"
-        >
-          <ChevronsLeft class="pagination__icon" />
-        </button>
-      </Tooltip>
-      <Tooltip :text="$t('common.previousPage')">
-        <button
-          class="pagination__button"
-          :disabled="currentPage <= 1"
-          :aria-label="$t('common.previousPage')"
-          @click="$emit('prev')"
-        >
-          <ChevronLeft class="pagination__icon" />
-        </button>
-      </Tooltip>
+      <IconButton
+        :title="$t('common.firstPage')"
+        :disabled="currentPage <= 1"
+        @click="$emit('first')"
+      >
+        <ChevronsLeft />
+      </IconButton>
+      <IconButton
+        :title="$t('common.previousPage')"
+        :disabled="currentPage <= 1"
+        @click="$emit('prev')"
+      >
+        <ChevronLeft />
+      </IconButton>
 
       <template v-for="(page, idx) in displayedPages" :key="idx">
         <button
@@ -99,26 +94,20 @@ const displayedPages = computed(() => {
         <span v-else class="pagination__ellipsis">...</span>
       </template>
 
-      <Tooltip :text="$t('common.nextPage')">
-        <button
-          class="pagination__button"
-          :disabled="currentPage >= totalPages"
-          :aria-label="$t('common.nextPage')"
-          @click="$emit('next')"
-        >
-          <ChevronRight class="pagination__icon" />
-        </button>
-      </Tooltip>
-      <Tooltip :text="$t('common.lastPage')">
-        <button
-          class="pagination__button"
-          :disabled="currentPage >= totalPages"
-          :aria-label="$t('common.lastPage')"
-          @click="$emit('last')"
-        >
-          <ChevronsRight class="pagination__icon" />
-        </button>
-      </Tooltip>
+      <IconButton
+        :title="$t('common.nextPage')"
+        :disabled="currentPage >= totalPages"
+        @click="$emit('next')"
+      >
+        <ChevronRight />
+      </IconButton>
+      <IconButton
+        :title="$t('common.lastPage')"
+        :disabled="currentPage >= totalPages"
+        @click="$emit('last')"
+      >
+        <ChevronsRight />
+      </IconButton>
     </div>
 
     <div class="pagination__sizes">
@@ -162,29 +151,6 @@ const displayedPages = computed(() => {
 
 .pagination__sizes {
   gap: var(--spacing-0-5);
-}
-
-.pagination__button {
-  padding: var(--spacing-1) var(--spacing-2);
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.pagination__button:hover:not(:disabled) {
-  color: var(--color-fg-primary);
-}
-
-.pagination__button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.pagination__icon {
-  width: 0.875rem;
-  height: 0.875rem;
 }
 
 .pagination__page {

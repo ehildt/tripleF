@@ -93,6 +93,45 @@ describe('dedupeResponseMedia', () => {
     ]);
   });
 
+  it('spends per-topic hero media against the merged galleries', () => {
+    const data: HarnessResponseData = {
+      title: 'T',
+      bodySections: [
+        {
+          topic: 'A',
+          heroImageUrl: 'https://example.com/topic-a.jpg',
+        },
+        {
+          topic: 'B',
+          heroImageUrl: 'https://example.com/topic-b.jpg',
+          heroVideoUrl: 'https://www.youtube.com/watch?v=aaaaaaaaaaa',
+        },
+      ],
+      galleryItems: [
+        image('https://example.com/topic-a.jpg'),
+        image('https://example.com/topic-b.jpg'),
+        image('https://example.com/fresh.jpg'),
+      ],
+      videoGalleryItems: [
+        video('https://youtu.be/aaaaaaaaaaa'),
+        video('https://www.youtube.com/watch?v=bbbbbbbbbbb'),
+      ],
+    };
+
+    dedupeResponseMedia(data);
+
+    // Topic A's hero image is spent (image hero, no video). Topic B has a
+    // video hero, so its image is NOT spent — it stays gallery content;
+    // its video is spent against the video gallery.
+    expect(data.galleryItems?.map((item) => item.imageUrl)).toEqual([
+      'https://example.com/topic-b.jpg',
+      'https://example.com/fresh.jpg',
+    ]);
+    expect(data.videoGalleryItems?.map((item) => item.videoUrl)).toEqual([
+      'https://www.youtube.com/watch?v=bbbbbbbbbbb',
+    ]);
+  });
+
   it('drops duplicate videos inside the video gallery', () => {
     const data: HarnessResponseData = {
       title: 'T',

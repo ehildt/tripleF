@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { SharpService } from '../../sharp/services/sharp.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
@@ -48,6 +49,14 @@ describe('SanitizeActionService', () => {
           useValue: {
             lookupKeys: vi.fn().mockResolvedValue(undefined),
             recordShownMedia: vi.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: SharpService,
+          useValue: {
+            effectiveResize: vi
+              .fn()
+              .mockReturnValue({ maxWidth: 768, maxHeight: null }),
           },
         },
       ],

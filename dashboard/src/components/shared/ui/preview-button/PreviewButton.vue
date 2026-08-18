@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Eye, EyeOff } from '@lucide/vue';
 
-import MotionIcon from '../motion-icon/MotionIcon.vue';
-import Tooltip from '../tooltip/Tooltip.vue';
+import IconButton from '../icon-button/IconButton.vue';
 
 /**
  * Panel-header preview icon button, next to the reset button. When `active`,
@@ -24,56 +23,15 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <Tooltip :text="title" :disabled="disabled">
-    <button
-      type="button"
-      class="preview-button"
-      :class="{ 'preview-button--active': active }"
-      :disabled="disabled"
-      :aria-label="title"
-      :aria-pressed="active"
-      @click="emit('click')"
-    >
-      <MotionIcon>
-        <EyeOff v-if="active" class="preview-button__icon" />
-        <Eye v-else class="preview-button__icon" />
-      </MotionIcon>
-    </button>
-  </Tooltip>
+  <IconButton
+    :title="title"
+    :disabled="disabled"
+    :active="active"
+    :aria-label="title"
+    :aria-pressed="active"
+    @click="emit('click')"
+  >
+    <EyeOff v-if="active" />
+    <Eye v-else />
+  </IconButton>
 </template>
-
-<style scoped>
-.preview-button {
-  display: grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.preview-button:hover:not(:disabled) {
-  color: var(--color-fg-primary);
-}
-
-.preview-button--active {
-  color: var(--color-accent-primary);
-}
-
-.preview-button--active:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-}
-
-.preview-button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.preview-button__icon {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-</style>

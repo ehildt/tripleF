@@ -26,7 +26,11 @@ export function useActiveConversation(): ActiveSessionData {
 
   const exchanges = computed<readonly Exchange[]>(() =>
     (activeConversation.value?.exchanges ?? []).filter(
-      (exchange) => exchange.included !== false,
+      (exchange) =>
+        // Excluded exchanges drop out of the list — except merged-away ones,
+        // which stay visible (purple) so the user can see what the unified
+        // response consolidated.
+        exchange.included !== false || exchange.mergedInto != null,
     ),
   );
 

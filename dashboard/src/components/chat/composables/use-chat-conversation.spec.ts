@@ -52,6 +52,8 @@ describe('useChatConversation', () => {
         role: 'user',
         content: 'hello',
         included: true,
+        mergeSelected: false,
+        merged: false,
         contextPercent: undefined,
       },
     ]);

@@ -3,8 +3,17 @@ export interface ConversationMetadataImage {
   hash: string;
 }
 
+/**
+ * Merge-request payload carried through sessionMetadata: the request ids of
+ * the exchanges the user selected to consolidate into one unified response.
+ */
+export interface ConversationMetadataMerge {
+  fromRequestIds: string[];
+}
+
 export interface ConversationMetadata {
   images?: ConversationMetadataImage[];
+  merge?: ConversationMetadataMerge;
 }
 
 export interface FormQueryOptions {

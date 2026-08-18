@@ -4,6 +4,7 @@
  * (and the sources list), so users can jump straight to the engine they want
  * to configure instead of scrolling through every collapsible panel.
  */
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { i18n } from '@/i18n/i18n';
 
 import type { SearchEngineId } from './SearchEnginesMenu.types';
@@ -27,20 +28,20 @@ const emit = defineEmits<{
 
 <template>
   <div class="search-engines-menu" role="tablist">
-    <button
-      v-for="engine in ENGINES"
-      :key="engine.id"
-      type="button"
-      role="tab"
-      :aria-selected="activeEngine === engine.id"
-      class="search-engines-menu__tab"
-      :class="{
-        'search-engines-menu__tab--active': activeEngine === engine.id,
-      }"
-      @click="emit('selectEngine', engine.id)"
-    >
-      {{ engine.label }}
-    </button>
+    <Tooltip v-for="engine in ENGINES" :key="engine.id" :text="engine.label">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="activeEngine === engine.id"
+        class="search-engines-menu__tab"
+        :class="{
+          'search-engines-menu__tab--active': activeEngine === engine.id,
+        }"
+        @click="emit('selectEngine', engine.id)"
+      >
+        {{ engine.label }}
+      </button>
+    </Tooltip>
   </div>
 </template>
 

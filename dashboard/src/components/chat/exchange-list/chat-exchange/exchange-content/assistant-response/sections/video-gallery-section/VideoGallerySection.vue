@@ -1,14 +1,17 @@
 <script setup lang="ts">
 /**
- * A video gallery: an optional title and a responsive card grid of videos
- * (1/2/3 columns depending on count and viewport), with special handling for
- * a lone last-row item. Rendered by the article/news/evaluation/summary/
- * product templates and by the videolist template.
+ * A video gallery: two presentations switched from the prompt bar's view
+ * menu — the default responsive card grid (list) and a scroll-snap carousel
+ * (gallery) in the style of the image gallery. Rendered by the
+ * article/news/evaluation/summary/product templates and by the videolist
+ * template.
  */
 import { computed, useId } from 'vue';
 
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
+import { useHarnessMediaPresentation } from '../../shared/composables/use-harness-media-presentation.composable';
+import AssistantCarousel from '../../shared/ui/media-carousel/AssistantCarousel.vue';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
 import VideoGalleryItemComponent from './video-gallery-item/VideoGalleryItem.vue';
 
@@ -16,7 +19,7 @@ const props = defineProps<{
   title?: string;
   items?: VideoGalleryItem[];
   /** Optional fixed column count (e.g. 3 review videos in a row). When set,
-   *  overrides the responsive count-based layout. */
+   *  overrides the responsive count-based layout of the list presentation. */
   columns?: number;
 }>();
 
@@ -28,6 +31,9 @@ const columnsClass = computed(() =>
 
 /** Lets the section reference its own title when one is shown. */
 const titleId = useId();
+
+/** The prompt-bar presentation switch: carousel (gallery) or card grid (list). */
+const presentation = useHarnessMediaPresentation('video');
 </script>
 
 <template>
@@ -37,25 +43,36 @@ const titleId = useId();
     :aria-labelledby="title ? titleId : undefined"
     :aria-label="title ? undefined : $t('common.videoGallery')"
   >
-    <SectionTitle v-if="title" :id="titleId" :title="title" />
-    <ul
-      class="video-gallery"
-      :class="[
-        columnsClass
-          ? columnsClass
-          : {
-              'video-gallery--count-1': count === 1,
-              'video-gallery--count-2': count === 2,
-              'video-gallery--count-3-plus': count >= 3,
-            },
-      ]"
-    >
-      <VideoGalleryItemComponent
-        v-for="(item, index) in items"
-        :key="`${item.videoUrl}-${index}`"
-        :item="item"
-      />
-    </ul>
+    <!-- Gallery presentation: the shared media carousel, which renders the
+         title inside its own header row. -->
+    <AssistantCarousel
+      v-if="presentation === 'gallery'"
+      :items="items"
+      :title="title"
+      :title-id="titleId"
+    />
+    <!-- List presentation: the responsive card grid. -->
+    <template v-else>
+      <SectionTitle v-if="title" :id="titleId" :title="title" />
+      <ul
+        class="video-gallery"
+        :class="[
+          columnsClass
+            ? columnsClass
+            : {
+                'video-gallery--count-1': count === 1,
+                'video-gallery--count-2': count === 2,
+                'video-gallery--count-3-plus': count >= 3,
+              },
+        ]"
+      >
+        <VideoGalleryItemComponent
+          v-for="(item, index) in items"
+          :key="`${item.videoUrl}-${index}`"
+          :item="item"
+        />
+      </ul>
+    </template>
   </section>
 </template>
 

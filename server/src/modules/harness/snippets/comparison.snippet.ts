@@ -19,7 +19,7 @@ const criterionSchema = z.object({
   scores: z.array(criterionScoreSchema).optional(),
 });
 
-const comparisonSchema = z.object({
+export const comparisonSchema = z.object({
   summary: z
     .string()
     .min(1, { message: 'comparison summary must not be empty' }),
@@ -41,5 +41,5 @@ export const comparisonSnippet: TemplateSnippet = {
 - Include whenever two or more subjects are evaluated; omit for a single-subject critique.
 - summary: a short paragraph comparing the subjects head-to-head. REQUIRED when the snippet is emitted.
 - verdict: the overall conclusion (e.g. "A is the better choice for X"). winner: the exact name of the leading subject (identical to its subjects[].name); omit when there is no clear winner.
-- criteria: 0-5 shared criteria, each entry: name (the criterion) and scores — one { subject, score } object per subject with a 0-10 JSON number, using the exact subject names from subjects[].name. Include a criterion only when at least one subject has enough evidence for a score.`,
+- criteria: 0-5 shared criteria. Each entry MUST be exactly: { "name": "<the criterion>", "scores": [ { "subject": "<exact subjects[].name>", "score": <0-10 JSON number> }, ... ] } — scores is an ARRAY of { subject, score } objects, never a subject→score map. Include a criterion only when at least one subject has enough evidence for a score.`,
 };

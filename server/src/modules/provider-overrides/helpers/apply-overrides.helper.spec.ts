@@ -9,7 +9,6 @@ const snapshot = (): ProviderOverridesSnapshot =>
     serper: { apiKey: 'serper-key' },
     brightData: { apiKey: 'bd-key' },
     sources: { preferred: ['serper'], blocked: [] },
-    layouts: { classic: true, editorial: true, split: true, mosaic: true },
     youtube: { apiKey: 'yt-key' },
     eodhd: { apiKey: 'eodhd-key' },
   }) as ProviderOverridesSnapshot;

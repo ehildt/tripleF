@@ -11,6 +11,7 @@ import {
   GitBranch,
   RefreshCw,
   SquaresExclude,
+  SquaresUnite,
   Trash2,
   User,
 } from '@lucide/vue';
@@ -26,6 +27,7 @@ import ResponseMetaBar from '../exchange-content/assistant-response/shared/ui/re
 import { useActivityLabel } from './composables/use-activity-label';
 import ExchangeActivityLabel from './exchange-activity-label/ExchangeActivityLabel.vue';
 import ExchangeHeaderAction from './exchange-header-action/ExchangeHeaderAction.vue';
+import ExchangeMergeTags from './exchange-merge-tags/ExchangeMergeTags.vue';
 import ExchangeMetaRow from './exchange-meta-row/ExchangeMetaRow.vue';
 import { buildExchangeMetaPills } from './helpers/build-exchange-meta-pills.helper';
 import WorkingIndicator from './working-indicator/WorkingIndicator.vue';
@@ -37,6 +39,14 @@ const props = defineProps<{
   isError: boolean;
   isPending: boolean;
   isStreaming: boolean;
+  /** Whether this exchange is selected for a merge (green). */
+  isMergeSelected: boolean;
+  /** False when the conversation has fewer than two merge candidates — the
+   * merge action grays out. */
+  canMerge: boolean;
+  /** True when at least two user prompts are selected — selected merge
+   * icons pulse. */
+  mergeArmed: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -45,6 +55,7 @@ const emit = defineEmits<{
   branch: [];
   delete: [];
   toggleIncluded: [];
+  toggleMerge: [];
   cancel: [requestId: string];
   hoverDeleteStart: [];
   hoverDeleteEnd: [];
@@ -118,6 +129,28 @@ function onCancel() {
       <SquaresExclude />
     </ExchangeHeaderAction>
     <ExchangeHeaderAction
+      v-if="isUser && isDone"
+      :title="
+        exchange.mergedInto
+          ? $t('common.mergeConsumedHint', {
+              requestId: exchange.mergedInto,
+            })
+          : exchange.included === false
+            ? $t('common.mergeExcludedHint')
+            : $t('common.mergeSelection')
+      "
+      :selected="isMergeSelected"
+      :consumed="exchange.mergedInto != null"
+      :disabled="
+        !canMerge ||
+        (exchange.included === false && exchange.mergedInto == null)
+      "
+      :pulse="isMergeSelected && mergeArmed"
+      @click="emit('toggleMerge')"
+    >
+      <SquaresUnite />
+    </ExchangeHeaderAction>
+    <ExchangeHeaderAction
       v-if="isUser && appStore.chatIconVisibility.branch"
       :title="$t('common.branch')"
       @click="emit('branch')"
@@ -151,6 +184,10 @@ function onCancel() {
       :label="activityLabel"
     />
   </div>
+  <ExchangeMergeTags
+    v-if="isUser && exchange.mergeOrigin?.length"
+    :request-ids="exchange.mergeOrigin"
+  />
   <ExchangeMetaRow
     v-if="isUser"
     :request-id="exchange.requestId"

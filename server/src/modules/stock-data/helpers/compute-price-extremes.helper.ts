@@ -1,13 +1,13 @@
 import type { MarketDailyBar } from '../market-data.types.js';
 
 /** One extreme price with the trading day it occurred on. */
-export interface PriceExtreme {
+interface PriceExtreme {
   value: number;
   date: string;
 }
 
 /** The highest high and lowest low over a bar window. */
-export interface PriceExtremes {
+interface PriceExtremes {
   high: PriceExtreme;
   low: PriceExtreme;
 }

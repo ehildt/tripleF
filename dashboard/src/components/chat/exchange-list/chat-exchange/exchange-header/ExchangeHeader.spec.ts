@@ -94,4 +94,42 @@ describe('ExchangeHeader meta bar', () => {
 
     expect(wrapper.find('.exchange-header__meta-bar').exists()).toBe(false);
   });
+
+  it('renders the merge tags between the header and the meta row for a merged user exchange', () => {
+    const wrapper = mountHeader(
+      makeExchange({
+        role: 'user',
+        status: 'done',
+        requestId: 'req-9',
+        model: 'model-a',
+        mergeOrigin: ['req-1', 'req-2'],
+      }),
+      true,
+    );
+
+    const tags = wrapper.find('.merge-tags');
+    expect(tags.exists()).toBe(true);
+    expect(tags.findAll('.merge-tags__tag')).toHaveLength(2);
+
+    const order = wrapper
+      .findAll('.exchange-header, .merge-tags, .meta-row')
+      .map((el) =>
+        el
+          .classes()
+          .find(
+            (c) =>
+              c === 'exchange-header' || c === 'merge-tags' || c === 'meta-row',
+          ),
+      );
+    expect(order).toEqual(['exchange-header', 'merge-tags', 'meta-row']);
+  });
+
+  it('omits the merge tags for a plain user exchange', () => {
+    const wrapper = mountHeader(
+      makeExchange({ role: 'user', status: 'done', content: 'hi' }),
+      true,
+    );
+
+    expect(wrapper.find('.merge-tags').exists()).toBe(false);
+  });
 });

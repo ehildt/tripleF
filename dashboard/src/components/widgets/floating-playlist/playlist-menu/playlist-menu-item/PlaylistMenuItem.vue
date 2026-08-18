@@ -11,7 +11,7 @@
 import { Pencil, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 
-import Tooltip from '../../../../shared/ui/tooltip/Tooltip.vue';
+import IconButton from '../../../../shared/ui/icon-button/IconButton.vue';
 
 const props = defineProps<{
   /** The saved playlist's name. */
@@ -69,40 +69,31 @@ function onBlur() {
       class="playlist-menu-item__input"
       :class="{ 'playlist-menu-item__input--editing': isEditing }"
       :readonly="!isEditing"
-      ::aria-label="$t('common.playlistNameLabel', { name })"
+      :aria-label="$t('common.playlistNameLabel', { name })"
       @click="!isEditing && emit('select')"
       @blur="onBlur"
       @keydown.enter.prevent="finishEditing"
     />
-    <Tooltip
-      :text="
+    <IconButton
+      size="sm"
+      :active="isEditing"
+      :title="
         isEditing ? $t('common.finishEditing') : $t('common.renamePlaylist')
       "
+      @mousedown.prevent
+      @click="isEditing ? finishEditing() : startEditing()"
     >
-      <button
-        type="button"
-        class="playlist-menu-item__edit"
-        :class="{ 'playlist-menu-item__edit--active': isEditing }"
-        :aria-label="
-          isEditing ? $t('common.finishEditing') : $t('common.renamePlaylist')
-        "
-        @mousedown.prevent
-        @click="isEditing ? finishEditing() : startEditing()"
-      >
-        <Pencil class="playlist-menu-item__edit-icon" />
-      </button>
-    </Tooltip>
-    <Tooltip :text="$t('common.deletePlaylist', { name })">
-      <button
-        type="button"
-        class="playlist-menu-item__delete"
-        :aria-label="$t('common.deletePlaylist', { name })"
-        @mousedown.prevent
-        @click="emit('delete')"
-      >
-        <Trash2 class="playlist-menu-item__delete-icon" />
-      </button>
-    </Tooltip>
+      <Pencil />
+    </IconButton>
+    <IconButton
+      size="sm"
+      danger
+      :title="$t('common.deletePlaylist', { name })"
+      @mousedown.prevent
+      @click="emit('delete')"
+    >
+      <Trash2 />
+    </IconButton>
   </div>
 </template>
 
@@ -149,36 +140,5 @@ function onBlur() {
 .playlist-menu-item__input:read-only {
   cursor: pointer;
   opacity: 0.8;
-}
-
-.playlist-menu-item__edit,
-.playlist-menu-item__delete {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  min-height: 1.5rem;
-  padding: 0.125rem;
-  color: var(--color-fg-muted);
-  transition: color 0.2s ease;
-  cursor: pointer;
-  flex-shrink: 0;
-  border: none;
-  background: transparent;
-}
-
-.playlist-menu-item__edit:hover,
-.playlist-menu-item__edit--active {
-  color: var(--color-accent-primary);
-}
-
-.playlist-menu-item__delete:hover {
-  color: var(--color-status-error);
-}
-
-.playlist-menu-item__edit-icon,
-.playlist-menu-item__delete-icon {
-  width: 0.75rem;
-  height: 0.75rem;
 }
 </style>

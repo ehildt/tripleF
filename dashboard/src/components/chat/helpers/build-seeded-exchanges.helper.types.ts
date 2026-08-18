@@ -8,4 +8,6 @@ export interface SeededExchangesOptions {
   conversationId: string;
   userContent: string;
   images: ConversationMetadataImage[];
+  /** Request ids of the exchanges this pair consolidates (merge submit). */
+  mergeOrigin?: string[];
 }

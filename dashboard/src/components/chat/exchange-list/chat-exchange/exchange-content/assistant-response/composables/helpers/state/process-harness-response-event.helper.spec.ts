@@ -43,7 +43,7 @@ describe('processHarnessResponseEvent', () => {
     let state = createHarnessResponseState('req-1');
 
     state = processHarnessResponseEvent(state, {
-      template: 'describe',
+      template: 'article',
       delta: '{"title":"Image"}',
       images: [
         {
