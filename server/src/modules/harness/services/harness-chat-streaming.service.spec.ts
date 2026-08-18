@@ -169,15 +169,9 @@ describe('HarnessChatStreamingService', () => {
       template: 'describe',
       delta: '',
       data: undefined,
-      images: [
-        {
-          imageUrl: '/api/v1/storage/sess-1/conv-1/h',
-          imageAlt: 'img.png',
-          title: 'img.png',
-          caption: 'img.png',
-          source: 'local',
-        },
-      ],
+      // Image tasks: the response gallery is cloud reference images only —
+      // the user's uploaded local image never reaches the client gallery.
+      images: [],
       toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
       meta: [
         { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
@@ -221,15 +215,9 @@ describe('HarnessChatStreamingService', () => {
       template: 'describe',
       delta: '{"title":"Image"}',
       data: { title: 'Image' },
-      images: [
-        {
-          imageUrl: '/api/v1/storage/sess-1/conv-1/h',
-          imageAlt: 'img.png',
-          title: 'img.png',
-          caption: 'img.png',
-          source: 'local',
-        },
-      ],
+      // Image tasks: the response gallery is cloud reference images only —
+      // the user's uploaded local image never reaches the client gallery.
+      images: [],
       toolResults: [],
       meta: [
         { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },

@@ -5,7 +5,7 @@ import {
   type EodhdUserInfo,
 } from '../../stock-data/providers/eodhd/eodhd-client.js';
 
-export type EodhdEndpointKey =
+type EodhdEndpointKey =
   | 'search'
   | 'quote'
   | 'history'
@@ -14,7 +14,7 @@ export type EodhdEndpointKey =
   | 'news'
   | 'fundamentals';
 
-export const EODHD_ENDPOINT_KEYS: EodhdEndpointKey[] = [
+const EODHD_ENDPOINT_KEYS: EodhdEndpointKey[] = [
   'search',
   'quote',
   'history',

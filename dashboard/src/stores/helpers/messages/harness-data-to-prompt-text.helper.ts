@@ -81,6 +81,17 @@ function appendBodyFields(parts: string[], data: HarnessResponseData): void {
   if (data.sectionTitle?.trim())
     parts.push(`Section: ${data.sectionTitle.trim()}`);
   if (data.sectionContent?.trim()) parts.push(data.sectionContent.trim());
+  for (const section of data.bodySections ?? []) {
+    if (section.topic?.trim()) parts.push(`Topic: ${section.topic.trim()}`);
+    if (section.heroVideoUrl?.trim())
+      parts.push(`Hero video: ${section.heroVideoUrl.trim()}`);
+    if (section.heroImageUrl?.trim())
+      parts.push(`Hero image: ${section.heroImageUrl.trim()}`);
+    if (section.content?.trim()) parts.push(section.content.trim());
+    appendList(parts, 'Strengths:', section.strengths);
+    appendList(parts, 'Weaknesses:', section.weaknesses);
+    appendList(parts, 'Recommendations:', section.recommendations);
+  }
   if (data.reasoning?.trim()) parts.push(`Reasoning: ${data.reasoning.trim()}`);
 }
 

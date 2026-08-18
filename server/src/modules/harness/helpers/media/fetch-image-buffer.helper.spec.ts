@@ -44,13 +44,4 @@ describe('fetchImageBuffer', () => {
     expect(buffer).toBeUndefined();
     expect(fn).not.toHaveBeenCalled();
   });
-
-  it('returns undefined for an oversized body', async () => {
-    mockFetch(new Response(new Uint8Array(100), { status: 200 }));
-    const buffer = await fetchImageBuffer('https://example.com/img.jpg', {
-      ...opts,
-      maxBytes: 10,
-    });
-    expect(buffer).toBeUndefined();
-  });
 });

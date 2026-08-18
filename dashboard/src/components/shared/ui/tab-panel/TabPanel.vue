@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Copy } from '@lucide/vue';
 
-import Tooltip from '../tooltip/Tooltip.vue';
+import IconButton from '../icon-button/IconButton.vue';
 import type { TabPanelProps } from './TabPanel.types';
 
 const props = defineProps<TabPanelProps>();
@@ -36,17 +36,14 @@ function handleSelect(tabId: string) {
     </div>
 
     <div v-if="activeTab" class="tab-panel__panel">
-      <Tooltip :text="copied ? $t('common.copiedShort') : $t('common.copy')">
-        <button
-          v-if="copyable"
-          class="tab-panel__copy"
-          :class="{ 'tab-panel__copy--copied': copied }"
-          :aria-label="copied ? $t('common.copiedShort') : $t('common.copy')"
-          @click="emit('copy')"
-        >
-          <Copy class="tab-panel__copy-icon" />
-        </button>
-      </Tooltip>
+      <IconButton
+        v-if="copyable"
+        :active="copied"
+        :title="copied ? $t('common.copiedShort') : $t('common.copy')"
+        @click="emit('copy')"
+      >
+        <Copy />
+      </IconButton>
       <slot />
     </div>
   </div>
@@ -107,36 +104,13 @@ function handleSelect(tabId: string) {
   overscroll-behavior: contain;
 }
 
-.tab-panel__copy {
+/* The canonical IconButton is positioned into the panel corner. Its Tooltip
+   wrapper is `display: contents`, so the button itself is the direct
+   participant in the panel's layout and can be absolutely positioned. */
+.tab-panel__panel :deep(.icon-button) {
   position: absolute;
   top: var(--spacing-2);
   right: var(--spacing-2);
   z-index: 10;
-  padding: var(--spacing-1);
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.tab-panel__copy:hover {
-  color: var(--color-accent-primary);
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 10%,
-    transparent
-  );
-}
-
-.tab-panel__copy--copied {
-  color: var(--color-accent-primary);
-}
-
-.tab-panel__copy-icon {
-  width: 0.875rem;
-  height: 0.875rem;
 }
 </style>

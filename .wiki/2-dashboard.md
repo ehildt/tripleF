@@ -2,7 +2,7 @@
 
 The 3F dashboard is a **Vue 3** single-page workbench — not a thin viewer: it owns sessions, steers the harness, and exposes everything the server can do.
 
-- **Stack:** Vue 3 (Composition API, `<script setup>`), Vite 8, Pinia, TanStack Query, Tailwind CSS v4, VueUse, Headless UI, socket.io-client, vue3-toastify, vue-router, vue-i18n
+- **Stack:** Vue 3 (Composition API, `<script setup>`), Vite 8, Pinia, TanStack Query, Tailwind CSS v4, VueUse, Headless UI, socket.io-client, vue3-toastify, vue-router, vue-i18n, D3 (axis/scale/selection/shape/time-format/zoom) for stock-market charts
 - **Entry:** `dashboard/src/main.ts` → `App.vue` (Pinia + VueQuery + router + i18n plugins). Routing is handled by **vue-router** (`src/router/router.ts`): `/chat`, `/dlq`, `/debug`, `/sysctl`, with `/` redirecting to `/chat`.
 - **Dev URL:** `http://localhost:5173/dashboard/` · proxies API to the server (`VITE_PROXY_TARGET`)
 
@@ -11,7 +11,7 @@ The 3F dashboard is a **Vue 3** single-page workbench — not a thin viewer: it 
 | Area          | Path (`src/components/`) | What it is                                                                                                                                                                  |
 | ------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Chat**      | `chat/`                  | The main stage: conversation header (rename / delete / pin), exchange list, prompt action bar, right panel (incl. playlist), floating player, toolbar. See **2.2**.                                    |
-| **SysCtl**    | `sysctl/`                | System control: provider configuration, preprocessing settings, search-engines (Serper + Bright Data + YouTube tools), system health, tab visibility, widgets, per-session model/config management. |
+| **SysCtl**    | `sysctl/`                | System control: provider configuration, preprocessing settings, search-engines (per-provider sections for Serper, Bright Data, EODHD + YouTube tools), layouts, interface visibility, chat navigation (scroll mode, media priority), system health, tab visibility, widgets, per-session model/config management. |
 | **DLQ**       | `dlq/`                   | Dead-letter management: list of failed envelopes (polled every 30 s), detail view with payload editing, reinstatable back into the queue.                                   |
 | **PProc**     | `pproc/`                 | Image preprocessing workbench: tools panel with file preview pipeline to inspect what variants the server will generate.                                                    |
 | **App shell** | `app/`                   | Header (nav menu, tabs), footer, theme selector, language selector, main content switch.                                                                                       |

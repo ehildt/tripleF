@@ -4,11 +4,12 @@
  * source labels, and hover captions. Rendered for the "imagelist" harness
  * template.
  */
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
+import ImageListItem from '../../shared/ui/image-list-item/ImageListItem.vue';
 import { useImageListResponseData } from './composables/use-imagelist-response-data.composable';
-import ImageListItem from './image-list-item/ImageListItem.vue';
 import type { ImageListResponseProps } from './ImageListResponse.types';
 
 const props = defineProps<ImageListResponseProps>();
@@ -35,9 +36,7 @@ const { items, hasContent } = useImageListResponseData(props);
   </section>
 
   <!-- Empty state -->
-  <section v-else class="image-list image-list--empty">
-    <p>{{ $t('common.noImagesFound') }}</p>
-  </section>
+  <EmptyStateSection v-else :message="$t('common.noImagesFound')" />
 </template>
 
 <style scoped>
@@ -61,13 +60,5 @@ const { items, hasContent } = useImageListResponseData(props);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-1);
-}
-
-.image-list--empty {
-  padding: var(--spacing-4);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-tertiary);
-  text-align: center;
-  color: var(--color-fg-muted);
 }
 </style>

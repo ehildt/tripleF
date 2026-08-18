@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
@@ -54,12 +55,11 @@ const { videosFirst, hasAnyContent } = useSummaryResponseData(props);
       <SourcesSection :items="data.sources" />
     </template>
 
-    <section v-else class="summary__empty">
-      <h3>{{ $t('common.noResultsFound') }}</h3>
-      <p>
-        {{ $t('common.noResultsExplain') }}
-      </p>
-    </section>
+    <EmptyStateSection
+      v-else
+      :title="$t('common.noResultsFound')"
+      :message="$t('common.noResultsExplain')"
+    />
   </article>
 </template>
 
@@ -68,24 +68,5 @@ const { videosFirst, hasAnyContent } = useSummaryResponseData(props);
   display: flex;
   flex-direction: column;
   gap: 1.25em;
-}
-
-.summary__empty {
-  padding: 1.5em;
-  border: 1px solid var(--color-divider);
-  background: var(--color-bg-tertiary);
-  text-align: center;
-}
-
-.summary__empty h3 {
-  margin: 0 0 0.5em;
-  font-size: 1.1em;
-  color: var(--color-fg-primary);
-}
-
-.summary__empty p {
-  margin: 0;
-  color: var(--color-fg-secondary);
-  font-size: 0.95em;
 }
 </style>

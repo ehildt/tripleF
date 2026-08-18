@@ -10,6 +10,7 @@ const emit = defineEmits<{
   retry: [exchangeId: string];
   branch: [exchangeId: string];
   toggleIncluded: [exchangeId: string];
+  toggleMerge: [exchangeId: string];
   hoverDeleteStart: [exchangeId: string];
   hoverDeleteEnd: [];
 }>();
@@ -35,6 +36,7 @@ const { opacity, setSectionElement } = useCarouselSection(props);
       @retry="emit('retry', $event)"
       @branch="emit('branch', $event)"
       @toggle-included="emit('toggleIncluded', $event)"
+      @toggle-merge="emit('toggleMerge', $event)"
       @hover-delete-start="emit('hoverDeleteStart', $event)"
       @hover-delete-end="emit('hoverDeleteEnd')"
     />
@@ -48,6 +50,7 @@ const { opacity, setSectionElement } = useCarouselSection(props);
       @retry="emit('retry', $event)"
       @branch="emit('branch', $event)"
       @toggle-included="emit('toggleIncluded', $event)"
+      @toggle-merge="emit('toggleMerge', $event)"
       @hover-delete-start="emit('hoverDeleteStart', $event)"
       @hover-delete-end="emit('hoverDeleteEnd')"
     />

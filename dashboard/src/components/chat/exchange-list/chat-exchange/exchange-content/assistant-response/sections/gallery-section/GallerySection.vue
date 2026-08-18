@@ -3,9 +3,11 @@ import { useId } from 'vue';
 
 import type { GalleryItem } from '@/types/harness-response-data.model';
 
+import { useHarnessMediaPresentation } from '../../shared/composables/use-harness-media-presentation.composable';
+import ImageListItem from '../../shared/ui/image-list-item/ImageListItem.vue';
+import AssistantCarousel from '../../shared/ui/media-carousel/AssistantCarousel.vue';
+import GalleryItemComponent from '../../shared/ui/media-carousel/gallery-item/GalleryItem.vue';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
-import AssistantCarousel from './carousel/AssistantCarousel.vue';
-import GalleryItemComponent from './gallery-item/GalleryItem.vue';
 
 defineProps<{
   title?: string;
@@ -16,6 +18,9 @@ defineProps<{
 
 /** Lets the section reference its own title when one is shown. */
 const titleId = useId();
+
+/** The prompt-bar presentation switch: gallery (carousel/mosaic/single) or list. */
+const presentation = useHarnessMediaPresentation('image');
 </script>
 
 <template>
@@ -26,29 +31,43 @@ const titleId = useId();
     :aria-label="title ? undefined : $t('common.imageGallery')"
   >
     <SectionTitle
-      v-if="title && (items.length === 1 || mosaic)"
+      v-if="title && (presentation === 'list' || items.length === 1 || mosaic)"
       :id="titleId"
       :title="title"
     />
+    <!-- List presentation: a responsive grid of tiles, like the imagelist
+         template's grid. -->
     <ul
-      v-if="items.length === 1"
-      class="harness-gallery harness-gallery--single"
+      v-if="presentation === 'list'"
+      class="harness-gallery harness-gallery--list"
     >
-      <GalleryItemComponent :item="items[0]" />
-    </ul>
-    <ul v-else-if="mosaic" class="harness-gallery harness-gallery--mosaic">
-      <GalleryItemComponent
+      <ImageListItem
         v-for="(item, index) in items"
-        :key="index"
+        :key="`${item.imageUrl}-${index}`"
         :item="item"
       />
     </ul>
-    <AssistantCarousel
-      v-else
-      :items="items"
-      :title="title"
-      :title-id="titleId"
-    />
+    <template v-else>
+      <ul
+        v-if="items.length === 1"
+        class="harness-gallery harness-gallery--single"
+      >
+        <GalleryItemComponent :item="items[0]" />
+      </ul>
+      <ul v-else-if="mosaic" class="harness-gallery harness-gallery--mosaic">
+        <GalleryItemComponent
+          v-for="(item, index) in items"
+          :key="index"
+          :item="item"
+        />
+      </ul>
+      <AssistantCarousel
+        v-else
+        :items="items"
+        :title="title"
+        :title-id="titleId"
+      />
+    </template>
   </section>
 </template>
 
@@ -79,6 +98,13 @@ const titleId = useId();
   max-width: none;
   width: 100%;
   height: 100%;
+}
+
+/* List presentation: responsive tile grid, denser than the carousel. */
+.harness-gallery--list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-2);
 }
 
 /* Mosaic direction (ar4): a dense span-grid of fixed-height rows. Captions

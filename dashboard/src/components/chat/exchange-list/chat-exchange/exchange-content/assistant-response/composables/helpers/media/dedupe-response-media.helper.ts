@@ -47,7 +47,8 @@ function blankReusedThumbnail(
  *
  * - Hero media never reappears in galleries. The hero image counts as spent
  *   only when there is no hero video — with a video hero the image never
- *   renders as hero, so it may stay gallery content.
+ *   renders as hero, so it may stay gallery content. In a merge, every topic
+ *   hero in bodySections counts the same way against the merged galleries.
  * - Galleries contain no duplicates (images by URL, videos by canonical
  *   provider key so YouTube watch/shorts/embed/youtu.be variants collapse).
  * - Aside elements (relatedStories, cards) reuse neither the URLs spent on
@@ -56,10 +57,33 @@ function blankReusedThumbnail(
  *
  * Arrays may end up empty — sections hide themselves on empty input.
  */
+/**
+ * The hero media that renders on screen: the response-level hero plus every
+ * per-topic hero in a merge. An image hero counts as spent only when no
+ * video hero renders instead (with a video hero the image never shows, so
+ * it may stay gallery content).
+ */
+function collectRenderedHeroes(data: HarnessResponseData): {
+  imageUrls: string[];
+  videoKeys: string[];
+} {
+  const imageUrls: string[] = [];
+  const videoKeys: string[] = [];
+  const heroes: Array<{
+    heroImageUrl?: string;
+    heroVideoUrl?: string;
+  }> = [data, ...(data.bodySections ?? [])];
+  for (const hero of heroes) {
+    if (hero.heroImageUrl && !hero.heroVideoUrl)
+      imageUrls.push(hero.heroImageUrl);
+    if (hero.heroVideoUrl) videoKeys.push(...videoUrlKeys(hero.heroVideoUrl));
+  }
+  return { imageUrls, videoKeys };
+}
+
 export function dedupeResponseMedia(data: HarnessResponseData): void {
-  const seenImageUrls = new Set<string>();
-  if (data.heroImageUrl && !data.heroVideoUrl)
-    seenImageUrls.add(data.heroImageUrl);
+  const { imageUrls, videoKeys } = collectRenderedHeroes(data);
+  const seenImageUrls = new Set<string>(imageUrls);
 
   if (data.galleryItems) {
     data.galleryItems = dedupeUnseenByKeys(
@@ -70,9 +94,7 @@ export function dedupeResponseMedia(data: HarnessResponseData): void {
   }
 
   if (data.videoGalleryItems) {
-    const seenVideoKeys = new Set<string>(
-      data.heroVideoUrl ? videoUrlKeys(data.heroVideoUrl) : [],
-    );
+    const seenVideoKeys = new Set<string>(videoKeys);
     data.videoGalleryItems = dedupeUnseenByKeys(
       data.videoGalleryItems,
       (item: VideoGalleryItem) => videoUrlKeys(item.videoUrl),

@@ -4,7 +4,14 @@
  * popout, the floating playlist, the toast notifications, and the
  * slide-out tab menu. A submenu jumps straight to the widget to configure.
  */
-import { LayoutGrid } from '@lucide/vue';
+import type { LucideIcon } from '@lucide/vue';
+import {
+  Bell,
+  LayoutGrid,
+  ListVideo,
+  PanelRight,
+  PictureInPicture2,
+} from '@lucide/vue';
 import { ref } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
@@ -18,11 +25,27 @@ import ToastPanel from './toast-panel/ToastPanel.vue';
 import VideoPopoutPanel from './video-popout-panel/VideoPopoutPanel.vue';
 import type { WidgetId } from './WidgetsSection.types';
 
-const WIDGETS: { id: WidgetId; label: string }[] = [
-  { id: 'videoPopout', label: i18n.global.t('common.videoPopout') },
-  { id: 'playlist', label: i18n.global.t('common.floatingPlayer') },
-  { id: 'toast', label: i18n.global.t('common.toastNotifications') },
-  { id: 'tabMenu', label: i18n.global.t('common.tabMenuTitle') },
+const WIDGETS: { id: WidgetId; label: string; icon: LucideIcon }[] = [
+  {
+    id: 'videoPopout',
+    label: i18n.global.t('common.videoPopout'),
+    icon: PictureInPicture2,
+  },
+  {
+    id: 'playlist',
+    label: i18n.global.t('common.floatingPlayer'),
+    icon: ListVideo,
+  },
+  {
+    id: 'toast',
+    label: i18n.global.t('common.toastNotifications'),
+    icon: Bell,
+  },
+  {
+    id: 'tabMenu',
+    label: i18n.global.t('common.tabMenuTitle'),
+    icon: PanelRight,
+  },
 ];
 
 const activeWidget = ref<WidgetId>('videoPopout');

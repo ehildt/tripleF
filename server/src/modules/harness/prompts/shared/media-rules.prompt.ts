@@ -16,7 +16,8 @@ export const MEDIA_RULES = `MEDIA RULES
 - Every media URL may appear exactly once in the response: a URL used in heroImageUrl, heroVideoUrl, galleryItems, or videoGalleryItems must not reappear in any other media field or aside element.
 
 MEDIA POOLS
-- Images come only from the image pool: imageSearch results (and uploaded user images on image tasks). Every image URL in heroImageUrl, galleryItems, image lists, and relatedStories thumbnails must come from the image pool — never from news thumbnails, article pages, or source links.
+- Images come only from the image pool: imageSearch results (plus uploaded user images, except on image-self-analysis tasks, where the gallery is cloud reference images only). Every image URL in heroImageUrl, galleryItems, image lists, and relatedStories thumbnails must come from the image pool — never from news thumbnails, article pages, or source links.
+- Image-self-analysis templates (describe, compare, ocr) are the exception to "use every provided image": their cloud imageSearch entries are unverified reference candidates governed by the IMAGE TASK rules — excluded candidates go to discardedReferences, not the gallery, and spending rules never apply to them.
 - heroVideoUrl may take the best vetted video from videoSearch or from links inside web/news article results; videoGalleryItems and video list items must come from videoSearch results only.
 - shopping results fill shopOffers; reviews and places results only inform business-reputation or local-availability notes in prose — no dedicated output field exists for them.
 - *WebSearch, webFetch, and news results provide general information: prose, sources, cards, and relatedStories links.

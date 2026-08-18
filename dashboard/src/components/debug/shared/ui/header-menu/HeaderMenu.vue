@@ -7,6 +7,7 @@ import {
   Search,
   Trash2,
 } from '@lucide/vue';
+import { ref } from 'vue';
 
 import { useDebugStore } from '../../../../../stores/debug';
 import FilterMenu from '../../../../shared/ui/filter-menu/FilterMenu.vue';
@@ -23,15 +24,16 @@ const emit = defineEmits<HeaderMenuEmits>();
 
 const debugStore = useDebugStore();
 
+const headerRef = ref<HTMLElement | null>(null);
+
 const {
-  headerRef,
   isSearchOpen,
   disableAll,
   disableHttp,
   disableSocket,
   clearArmed,
   handleClearClick,
-} = useHeaderMenu(props, emit);
+} = useHeaderMenu(props, emit, headerRef);
 </script>
 
 <template>

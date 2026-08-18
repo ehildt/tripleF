@@ -12,8 +12,18 @@ import type {
   ChatIconKey,
   ChatIconVisibility,
   ScrollMode,
+  SourceTagsMenuAlwaysShow,
+  SourceTagsMenuCollapsed,
 } from '../types/app.model';
-import type { MediaPriority } from '../types/harness-response-data.model';
+import type {
+  CollapsedSections,
+  CollapsibleSectionKey,
+} from '../types/harness-response-data.model';
+import type {
+  MediaPresentation,
+  MediaPresentations,
+  MediaPriority,
+} from '../types/harness-response-data.model';
 import { createId } from '../utils/id.helper';
 
 const DEFAULT_CHAT_ICON_VISIBILITY: ChatIconVisibility = {
@@ -306,6 +316,153 @@ export const useAppStore = defineStore('app', () => {
     chartConfig.value = { ...chartConfig.value, ...patch };
   }
 
+  const SOURCE_TAGS_MENU_KEY = 'harness-source-tags-menu';
+  const DEFAULT_SOURCE_TAGS_MENU_COLLAPSED: SourceTagsMenuCollapsed = {
+    sources: false,
+    view: false,
+  };
+  function loadSourceTagsMenuCollapsed(): SourceTagsMenuCollapsed {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(SOURCE_TAGS_MENU_KEY) || '{}',
+      );
+      return { ...DEFAULT_SOURCE_TAGS_MENU_COLLAPSED, ...saved };
+    } catch {
+      return { ...DEFAULT_SOURCE_TAGS_MENU_COLLAPSED };
+    }
+  }
+  function saveSourceTagsMenuCollapsed(v: SourceTagsMenuCollapsed) {
+    try {
+      localStorage.setItem(SOURCE_TAGS_MENU_KEY, JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Whether each prompt-bar icon menu is collapsed to its expand arrow. */
+  const sourceTagsMenuCollapsed = ref<SourceTagsMenuCollapsed>(
+    loadSourceTagsMenuCollapsed(),
+  );
+  watch(sourceTagsMenuCollapsed, saveSourceTagsMenuCollapsed, { deep: true });
+
+  function setSourceTagsMenuCollapsed(
+    menu: keyof SourceTagsMenuCollapsed,
+    collapsed: boolean,
+  ) {
+    sourceTagsMenuCollapsed.value[menu] = collapsed;
+  }
+
+  const SOURCE_TAGS_MENU_ALWAYS_SHOW_KEY =
+    'harness-source-tags-menu-always-show';
+  const DEFAULT_SOURCE_TAGS_MENU_ALWAYS_SHOW: SourceTagsMenuAlwaysShow = {
+    sources: true,
+    view: true,
+  };
+  function loadSourceTagsMenuAlwaysShow(): SourceTagsMenuAlwaysShow {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(SOURCE_TAGS_MENU_ALWAYS_SHOW_KEY) || '{}',
+      );
+      return { ...DEFAULT_SOURCE_TAGS_MENU_ALWAYS_SHOW, ...saved };
+    } catch {
+      return { ...DEFAULT_SOURCE_TAGS_MENU_ALWAYS_SHOW };
+    }
+  }
+  function saveSourceTagsMenuAlwaysShow(v: SourceTagsMenuAlwaysShow) {
+    try {
+      localStorage.setItem(SOURCE_TAGS_MENU_ALWAYS_SHOW_KEY, JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Whether each prompt-bar icon menu is pinned open (no collapse arrow). */
+  const sourceTagsMenuAlwaysShow = ref<SourceTagsMenuAlwaysShow>(
+    loadSourceTagsMenuAlwaysShow(),
+  );
+  watch(sourceTagsMenuAlwaysShow, saveSourceTagsMenuAlwaysShow, { deep: true });
+
+  function setSourceTagsMenuAlwaysShow(
+    menu: keyof SourceTagsMenuAlwaysShow,
+    alwaysShow: boolean,
+  ) {
+    sourceTagsMenuAlwaysShow.value[menu] = alwaysShow;
+  }
+
+  const COLLAPSED_SECTIONS_KEY = 'harness-collapsed-sections';
+  const DEFAULT_COLLAPSED_SECTIONS: CollapsedSections = {
+    sources: false,
+    keyFindings: false,
+    internationalCoverage: false,
+  };
+  function loadCollapsedSections(): CollapsedSections {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(COLLAPSED_SECTIONS_KEY) || '{}',
+      );
+      return { ...DEFAULT_COLLAPSED_SECTIONS, ...saved };
+    } catch {
+      return { ...DEFAULT_COLLAPSED_SECTIONS };
+    }
+  }
+  function saveCollapsedSections(v: CollapsedSections) {
+    try {
+      localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Whether each response section type (gallery, sources, …) is collapsed. */
+  const collapsedSections = ref<CollapsedSections>(loadCollapsedSections());
+  watch(collapsedSections, saveCollapsedSections, { deep: true });
+
+  function setSectionCollapsed(
+    section: CollapsibleSectionKey,
+    collapsed: boolean,
+  ) {
+    collapsedSections.value[section] = collapsed;
+  }
+
+  function toggleSectionCollapsed(section: CollapsibleSectionKey) {
+    collapsedSections.value[section] = !collapsedSections.value[section];
+  }
+
+  const MEDIA_PRESENTATIONS_KEY = 'harness-media-presentations';
+  const DEFAULT_MEDIA_PRESENTATIONS: MediaPresentations = {
+    image: 'gallery',
+    video: 'list',
+  };
+  function loadMediaPresentations(): MediaPresentations {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(MEDIA_PRESENTATIONS_KEY) || '{}',
+      );
+      return { ...DEFAULT_MEDIA_PRESENTATIONS, ...saved };
+    } catch {
+      return { ...DEFAULT_MEDIA_PRESENTATIONS };
+    }
+  }
+  function saveMediaPresentations(v: MediaPresentations) {
+    try {
+      localStorage.setItem(MEDIA_PRESENTATIONS_KEY, JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Which presentation each media section renders in (gallery or list). */
+  const mediaPresentations = ref<MediaPresentations>(loadMediaPresentations());
+  watch(mediaPresentations, saveMediaPresentations, { deep: true });
+
+  function setMediaPresentation(
+    media: 'image' | 'video',
+    presentation: MediaPresentation,
+  ) {
+    mediaPresentations.value[media] = presentation;
+  }
+
+  function toggleMediaPresentation(media: 'image' | 'video') {
+    mediaPresentations.value[media] =
+      mediaPresentations.value[media] === 'gallery' ? 'list' : 'gallery';
+  }
+
   const CNT_KEY = 'harness-show-counters';
   function loadShowCounters(): boolean {
     try {
@@ -429,6 +586,10 @@ export const useAppStore = defineStore('app', () => {
     temporaryRetentionMinutes,
     chatIconVisibility,
     chartConfig,
+    sourceTagsMenuCollapsed,
+    sourceTagsMenuAlwaysShow,
+    collapsedSections,
+    mediaPresentations,
     refreshRequestId,
     setDefaultScrollMode,
     getConversationScrollMode,
@@ -439,6 +600,12 @@ export const useAppStore = defineStore('app', () => {
     setTemporaryRetentionMinutes,
     setChatIconVisibility,
     setChartConfig,
+    setSourceTagsMenuCollapsed,
+    setSourceTagsMenuAlwaysShow,
+    setSectionCollapsed,
+    toggleSectionCollapsed,
+    setMediaPresentation,
+    toggleMediaPresentation,
     notifyChatResponse,
     handleCopyToClipboard,
     abortJob,

@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, type Ref, ref } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
 
@@ -28,7 +28,10 @@ const ENDPOINT_LABELS: Record<string, string> = {
  * endpoint entries (sorted, with excluded keys dropped), the per-endpoint
  * availability, and the field-grid items-per-row counts.
  */
-export function useProviderSection(props: ProviderSectionProps) {
+export function useProviderSection(
+  props: ProviderSectionProps,
+  prependRef: Ref<HTMLElement | undefined>,
+) {
   const isContentDisabled = computed(() => !props.config.enabled);
 
   function isEndpointUnavailable(name: string): boolean {
@@ -54,7 +57,6 @@ export function useProviderSection(props: ProviderSectionProps) {
   }
 
   /** The prepend slot's FieldCards, counted after mount (static per provider). */
-  const prependRef = ref<HTMLElement>();
   const prependCount = ref(0);
 
   onMounted(() => {
@@ -80,7 +82,6 @@ export function useProviderSection(props: ProviderSectionProps) {
     isEndpointUnavailable,
     endpointEntries,
     getResults,
-    prependRef,
     itemsPerRow,
     prependItemsPerRow,
     ENDPOINT_LABELS,

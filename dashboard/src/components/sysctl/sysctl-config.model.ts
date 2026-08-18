@@ -96,17 +96,12 @@ export interface EodhdConfig {
 export interface SourcesConfig {
   preferred: string[];
   blocked: string[];
-}
-
-/**
- * Which art-direction layouts the response model may compose
- * news/article/evaluation answers with. All four default to enabled.
- */
-export interface LayoutsConfig {
-  classic: boolean;
-  editorial: boolean;
-  split: boolean;
-  mosaic: boolean;
+  /**
+   * How many web image candidates the pipeline pools for the image-analysis
+   * templates (describe/compare/ocr) for the model to verify visually. An
+   * explicit count in the user's prompt still wins.
+   */
+  imageTaskReferenceCount: number;
 }
 
 /**
@@ -121,8 +116,8 @@ export interface OllamaConnectionConfig {
 export type ProviderKey =
   'serper' | 'brightData' | 'ollama' | 'youtube' | 'eodhd';
 
-/** Resettable top-level config sections (provider, the sources list, or the layouts set). */
-export type ConfigSectionKey = ProviderKey | 'sources' | 'layouts';
+/** Resettable top-level config sections (provider or the sources list). */
+export type ConfigSectionKey = ProviderKey | 'sources';
 
 export type ProviderConfig =
   SerperConfig | BrightDataConfig | YouTubeConfig | EodhdConfig;
@@ -131,7 +126,6 @@ export interface ProviderOverridesSnapshot {
   serper: SerperConfig;
   brightData: BrightDataConfig;
   sources: SourcesConfig;
-  layouts: LayoutsConfig;
   ollama: OllamaConnectionConfig;
   youtube: YouTubeConfig;
   eodhd: EodhdConfig;

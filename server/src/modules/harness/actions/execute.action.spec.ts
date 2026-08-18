@@ -14,6 +14,7 @@ describe('ExecuteActionService', () => {
   let sharpService: SharpService;
   let aiSdkService: AiSdkService;
   let toolSelectionService: ToolSelectionService;
+  let stepLogger: HarnessStepLogger;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -58,6 +59,7 @@ describe('ExecuteActionService', () => {
     aiSdkService = module.get<AiSdkService>(AiSdkService);
     toolSelectionService =
       module.get<ToolSelectionService>(ToolSelectionService);
+    stepLogger = module.get<HarnessStepLogger>(HarnessStepLogger);
   });
 
   function createContext(
@@ -394,16 +396,21 @@ describe('ExecuteActionService', () => {
     );
   });
 
-  it('falls back to direct invocation without counts when no explicit media counts are set', async () => {
-    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: 'I will not call any tools',
-      toolResults: [],
-      totalUsage: {},
-    });
+  it('re-invokes the model with only the skipped mandatory tools so the model authors the queries', async () => {
+    (aiSdkService.generateWithTools as any)
+      .mockResolvedValueOnce({
+        text: 'I will not call any tools',
+        toolResults: [],
+        totalUsage: { inputTokens: 10, outputTokens: 5 },
+      })
+      .mockResolvedValueOnce({
+        text: '',
+        toolResults: [{ toolName: 'serperImageSearch', result: { x: 2 } }],
+        totalUsage: { inputTokens: 7, outputTokens: 3 },
+      });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperImageSearch: { execute: executeSpy },
-      serperVideoSearch: { execute: executeSpy },
+      serperImageSearch: { execute: vi.fn() },
+      serperVideoSearch: { execute: vi.fn() },
     });
 
     const ctx = createContext({
@@ -426,12 +433,28 @@ describe('ExecuteActionService', () => {
       },
     });
 
-    await service.execute(ctx);
+    const result = await service.execute(ctx);
 
-    expect(executeSpy).toHaveBeenCalledWith({ query: 'find media' });
+    expect(aiSdkService.generateWithTools).toHaveBeenCalledTimes(2);
+    const completionCall = (aiSdkService.generateWithTools as any).mock
+      .calls[1][0];
+    expect(Object.keys(completionCall.tools).sort()).toEqual([
+      'serperImageSearch',
+      'serperVideoSearch',
+    ]);
+    const completionSystem = completionCall.messages.at(-1);
+    expect(completionSystem.role).toBe('system');
+    expect(completionSystem.content).toContain('COMPLETION REQUIRED');
+    expect(completionSystem.content).toContain('serperImageSearch');
+    expect(completionSystem.content).toContain('never copy the user message');
+    expect(result.toolResults).toEqual([
+      { toolName: 'serperImageSearch', result: { x: 2 } },
+    ]);
+    expect(result.inputTokens).toBe(17);
+    expect(result.outputTokens).toBe(8);
   });
 
-  it('falls back to direct invocation with counts for image and video search tools', async () => {
+  it('logs and drops a skipped search tool when the completion pass does not call it — the harness never builds a query', async () => {
     const executeSpy = vi.fn().mockResolvedValue({ results: [] });
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: 'I will not call any tools',
@@ -439,8 +462,7 @@ describe('ExecuteActionService', () => {
       totalUsage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperImageSearch: { execute: executeSpy },
-      serperVideoSearch: { execute: executeSpy },
+      serperWebSearch: { execute: executeSpy },
     });
 
     const ctx = createContext({
@@ -448,15 +470,15 @@ describe('ExecuteActionService', () => {
       meta: [],
       messages: [
         { role: 'system', content: 'base' },
-        { role: 'user', content: 'find media' },
+        { role: 'user', content: 'what do the reviews say?' },
       ],
       intent: {
-        template: 'article',
+        template: 'evaluation',
         prompt: 'default',
-        tools: ['serperImageSearch', 'serperVideoSearch'],
+        tools: ['serperWebSearch'],
         getDate: false,
-        imageCount: 7,
-        videoCount: 4,
+        contextSummary:
+          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
         reasoning: '',
         needsClarification: false,
         plan: {},
@@ -465,8 +487,13 @@ describe('ExecuteActionService', () => {
 
     await service.execute(ctx);
 
-    expect(executeSpy).toHaveBeenCalledWith({ query: 'find media', count: 7 });
-    expect(executeSpy).toHaveBeenCalledWith({ query: 'find media', count: 4 });
+    expect(executeSpy).not.toHaveBeenCalled();
+    expect(stepLogger.warn).toHaveBeenCalledWith(
+      expect.anything(),
+      'execute',
+      'skipped missing tools',
+      { tools: ['serperWebSearch'] },
+    );
   });
 
   it('attaches images to the latest user message for image tasks', async () => {
@@ -510,168 +537,5 @@ describe('ExecuteActionService', () => {
     expect(call.messages[1].images).toHaveLength(1);
     // The "[N image attached]" marker is added by the interpret step, not here.
     expect(call.messages[1].content).toBe('describe this');
-  });
-
-  it('composes fallback queries for short follow-ups from the context summary', async () => {
-    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: 'I will not call any tools',
-      toolResults: [],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperWebSearch: { execute: executeSpy },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'news about Neverness to Everness' },
-        { role: 'assistant', content: 'NTE 1.2 "999 Nights" coverage' },
-        { role: 'user', content: 'what do the reviews say?' },
-      ],
-      intent: {
-        template: 'evaluation',
-        prompt: 'default',
-        tools: ['serperWebSearch'],
-        getDate: false,
-        contextSummary:
-          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    await service.execute(ctx);
-
-    expect(executeSpy).toHaveBeenCalledWith({
-      query:
-        'Subject: the game Neverness to Everness (NTE) by Hotta Studio. — what do the reviews say?',
-    });
-  });
-
-  it('composes fallback queries for follow-ups with dependent references', async () => {
-    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: 'I will not call any tools',
-      toolResults: [],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperWebSearch: { execute: executeSpy },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'news about Neverness to Everness' },
-        { role: 'assistant', content: 'NTE 1.2 "999 Nights" coverage' },
-        {
-          role: 'user',
-          content: 'Are there any known performance issues with it?',
-        },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['serperWebSearch'],
-        getDate: false,
-        contextSummary:
-          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    await service.execute(ctx);
-
-    expect(executeSpy).toHaveBeenCalledWith({
-      query:
-        'Subject: the game Neverness to Everness (NTE) by Hotta Studio. — Are there any known performance issues with it?',
-    });
-  });
-
-  it('keeps standalone user messages as the fallback query even with a context summary', async () => {
-    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: 'I will not call any tools',
-      toolResults: [],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperWebSearch: { execute: executeSpy },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'news about Neverness to Everness' },
-        { role: 'assistant', content: 'NTE 1.2 "999 Nights" coverage' },
-        {
-          role: 'user',
-          content: 'Find detailed critic reviews for the NTE 1.2 update',
-        },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['serperWebSearch'],
-        getDate: false,
-        contextSummary:
-          'Subject: the game Neverness to Everness (NTE) by Hotta Studio.',
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    await service.execute(ctx);
-
-    expect(executeSpy).toHaveBeenCalledWith({
-      query: 'Find detailed critic reviews for the NTE 1.2 update',
-    });
-  });
-
-  it('falls back to the raw message when no context summary exists', async () => {
-    const executeSpy = vi.fn().mockResolvedValue({ results: [] });
-    (aiSdkService.generateWithTools as any).mockResolvedValue({
-      text: 'I will not call any tools',
-      toolResults: [],
-      totalUsage: {},
-    });
-    (toolSelectionService.selectToolsByName as any).mockReturnValue({
-      serperWebSearch: { execute: executeSpy },
-    });
-
-    const ctx = createContext({
-      buffers: [],
-      meta: [],
-      messages: [
-        { role: 'system', content: 'base' },
-        { role: 'user', content: 'find media' },
-      ],
-      intent: {
-        template: 'article',
-        prompt: 'default',
-        tools: ['serperWebSearch'],
-        getDate: false,
-        contextSummary: '',
-        reasoning: '',
-        needsClarification: false,
-        plan: {},
-      },
-    });
-
-    await service.execute(ctx);
-
-    expect(executeSpy).toHaveBeenCalledWith({ query: 'find media' });
   });
 });

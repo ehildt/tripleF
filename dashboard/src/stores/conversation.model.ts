@@ -54,6 +54,14 @@ export interface Exchange {
   activityLanguage?: string;
   reasoning?: string;
   included?: boolean;
+  /**
+   * Merge bookkeeping: `mergeOrigin` lists the request ids of the exchanges
+   * this pair consolidated (set on the merged pair's user exchange at submit
+   * time), and `mergedInto` carries the request id of the merge that consumed
+   * this exchange (set on the source exchanges once the merged response
+   * completed). No DB schema impact — the fields are JSON-tolerant. */
+  mergeOrigin?: string[];
+  mergedInto?: string;
   // Images that were associated with this prompt, either uploaded as new
   // files in the form data or referenced through conversation metadata.
   images?: ConversationMetadataImage[];

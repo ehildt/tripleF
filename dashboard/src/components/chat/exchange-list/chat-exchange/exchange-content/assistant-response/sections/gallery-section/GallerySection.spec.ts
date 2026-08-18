@@ -1,16 +1,28 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import { computed } from 'vue';
 
-import { harnessImageClickedKey } from '@/types/harness-response-data.model';
+import {
+  harnessImageClickedKey,
+  mediaPresentationsKey,
+} from '@/types/harness-response-data.model';
 
 import GallerySection from './GallerySection.vue';
 
-function mountSection(items: { imageUrl: string }[], title?: string) {
+function mountSection(
+  items: { imageUrl: string }[],
+  title?: string,
+  presentation: 'gallery' | 'list' = 'gallery',
+) {
   return mount(GallerySection, {
     props: { title, items },
     global: {
       provide: {
         [harnessImageClickedKey as symbol]: vi.fn(),
+        [mediaPresentationsKey as symbol]: computed(() => ({
+          image: presentation,
+          video: 'list',
+        })),
       },
     },
   });
@@ -45,5 +57,17 @@ describe('GallerySection', () => {
     const wrapper = mountSection([{ imageUrl: '/a' }], 'Images');
 
     expect(wrapper.find('h3').text()).toBe('Images');
+  });
+
+  it('renders a tile list when the image presentation is list', () => {
+    const wrapper = mountSection(
+      [{ imageUrl: '/a' }, { imageUrl: '/b' }],
+      'Images',
+      'list',
+    );
+
+    expect(wrapper.find('.harness-gallery--list').exists()).toBe(true);
+    expect(wrapper.find('.harness-carousel').exists()).toBe(false);
+    expect(wrapper.findAll('.image-item')).toHaveLength(2);
   });
 });

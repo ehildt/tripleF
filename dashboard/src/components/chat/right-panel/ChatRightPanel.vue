@@ -23,6 +23,10 @@ const props = defineProps<{
   conversation: Conversation | null;
   /** Id of the user exchange whose section is currently active in the carousel. */
   activeUserExchangeId?: string | null;
+  /** False when the conversation has fewer than two merge candidates. */
+  canMerge: boolean;
+  /** True when at least two user prompts are selected (merge icons pulse). */
+  mergeArmed: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -32,6 +36,7 @@ const emit = defineEmits<{
   promptClick: [index: number];
   copy: [index: number];
   toggleInclude: [index: number];
+  toggleMerge: [index: number];
   deleteItem: [index: number];
   branchOut: [index: number];
 }>();
@@ -80,11 +85,14 @@ const appStore = useAppStore();
         :on-click="(i: number) => emit('promptClick', i)"
         :on-copy="(i: number) => emit('copy', i)"
         :on-toggle-include="(i: number) => emit('toggleInclude', i)"
+        :on-toggle-merge="(i: number) => emit('toggleMerge', i)"
         :on-delete-item="(i: number) => emit('deleteItem', i)"
         :on-branch-out="(i: number) => emit('branchOut', i)"
         :expand-all="true"
         :show-role="false"
         :icon-visibility="appStore.chatIconVisibility"
+        :can-merge="props.canMerge"
+        :merge-armed="props.mergeArmed"
         class="chat-right-panel__scrollable"
       />
     </div>
@@ -96,6 +104,7 @@ const appStore = useAppStore();
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 7rem);
+  gap: var(--spacing-0-5);
 }
 
 .chat-right-panel__scrollable {

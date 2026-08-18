@@ -18,6 +18,8 @@ Required fields:
 - keyFindings: an array of 0–5 short takeaways. Each entry MUST be an object with exactly one key: "text".
 - sources: an array of source objects with url and title. Only include real sources from previous tool results; otherwise use an empty array.
 
+MERGE REQUESTS are handled by the dedicated "merge" template; summary never receives them.
+
 Optional media fields (use only when online research returns real images or videos):
 - heroImageUrl: the single best image URL related to the summary.
 - heroImageAlt: a short accessibility description for the hero image. If heroImageUrl is set, heroImageAlt MUST be a non-empty descriptive label.

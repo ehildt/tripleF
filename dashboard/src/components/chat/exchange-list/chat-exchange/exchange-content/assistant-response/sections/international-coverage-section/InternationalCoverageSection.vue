@@ -3,11 +3,15 @@ import { computed } from 'vue';
 
 import type { InternationalCoverageEntry } from '@/types/harness-response-data.model';
 
+import { useHarnessSectionCollapsed } from '../../shared/composables/use-harness-section-collapsed.composable';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
 
 const props = defineProps<{
   items?: InternationalCoverageEntry[];
 }>();
+
+/** Hidden while the prompt bar collapses the international-coverage section type. */
+const isCollapsed = useHarnessSectionCollapsed('internationalCoverage');
 
 const validItems = computed(() =>
   (props.items ?? []).filter(
@@ -21,7 +25,7 @@ const validItems = computed(() =>
 
 <template>
   <section
-    v-if="validItems.length"
+    v-if="validItems.length && !isCollapsed"
     class="international-coverage-section"
     :aria-label="$t('common.internationalCoverage')"
   >

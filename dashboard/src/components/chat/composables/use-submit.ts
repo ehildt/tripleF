@@ -1,15 +1,19 @@
 import { computed, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
+import { useMergeSelection } from '@/components/chat/exchange-list/composables/use-merge-selection';
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
+import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
 import { buildModelVisionWarning } from '@/components/chat/helpers/build-model-vision-warning.helper';
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
 import { classifySelectedFiles } from '@/components/chat/helpers/classify-selected-files.helper';
 import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
 import { clearPendingFilesForConversation } from '@/composables/attached-files.state';
+import { markMergePending } from '@/composables/merge-selection.state';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
+import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 import { useModelsStore } from '@/stores/models';
 import type {
@@ -101,7 +105,10 @@ export function useSubmit(options: UseSubmitOptions) {
     }
   }
 
-  function buildConversation(): string {
+  function buildConversation(mergedContent?: string): string {
+    if (mergedContent) {
+      return JSON.stringify([{ role: 'user', content: mergedContent }]);
+    }
     const id = conversationStore.activeConversationId;
     if (!id)
       return JSON.stringify([
@@ -119,6 +126,7 @@ export function useSubmit(options: UseSubmitOptions) {
     requestId: string,
     userContent: string,
     images: ConversationMetadataImage[],
+    mergeOrigin?: string[],
   ) {
     for (const seeded of buildSeededExchanges({
       requestId,
@@ -128,6 +136,7 @@ export function useSubmit(options: UseSubmitOptions) {
       conversationId,
       userContent,
       images,
+      mergeOrigin,
     })) {
       conversationStore.addExchange(sid, seeded);
     }
@@ -185,6 +194,9 @@ export function useSubmit(options: UseSubmitOptions) {
     room: string;
     requestId: string;
     userContent: string;
+    isMergeSubmit: boolean;
+    mergeFromRequestIds: string[];
+    selectedForMerge: Exchange[];
   } | null> {
     if (!conversationModel.value) {
       // Cold-start guard: the models catalog may still be loading (or the
@@ -206,6 +218,12 @@ export function useSubmit(options: UseSubmitOptions) {
     const sid = conversationStore.activeConversationId;
     const conversationId = sid ? conversationStore.getConversationId(sid) : '';
 
+    const mergeSelection = useMergeSelection();
+    const selectedForMerge = sid ? mergeSelection.selectedExchanges(sid) : [];
+    const isMergeSubmit = selectedForMerge.length > 0;
+    const mergeFromRequestIds =
+      sid && isMergeSubmit ? mergeSelection.selectedRequestIds(sid) : [];
+
     return {
       sid: sid ?? '',
       conversationId,
@@ -214,6 +232,9 @@ export function useSubmit(options: UseSubmitOptions) {
       room,
       requestId,
       userContent,
+      isMergeSubmit,
+      mergeFromRequestIds,
+      selectedForMerge,
     };
   }
 
@@ -245,8 +266,18 @@ export function useSubmit(options: UseSubmitOptions) {
     const ctx = await buildSubmitContext();
     if (!ctx) return;
 
-    const { sid, conversationId, model, event, room, requestId, userContent } =
-      ctx;
+    const {
+      sid,
+      conversationId,
+      model,
+      event,
+      room,
+      requestId,
+      userContent,
+      isMergeSubmit,
+      mergeFromRequestIds,
+      selectedForMerge,
+    } = ctx;
 
     ensureSocketSubscription(event, room);
     const socket = socketProvider.getSocket();
@@ -275,9 +306,22 @@ export function useSubmit(options: UseSubmitOptions) {
       referencedImages,
       preUploadImages,
       conversationId,
+      mergeFromRequestIds,
     );
 
     const promptImages = conversationMetadata.images ?? [];
+
+    // A merge submit consolidates the selected exchanges into one user
+    // message; the typed prompt text (if any) rides along as an additional
+    // instruction. The seeded bubble renders a "Merged | <tags>" row from
+    // mergeOrigin instead of the model-facing consolidated document, and the
+    // seeded user exchange is kept even without typed text so the merge
+    // marker always shows.
+    const mergedPromptContent = isMergeSubmit
+      ? buildMergedPromptContent(selectedForMerge, {
+          extraInstruction: userContent,
+        })
+      : undefined;
 
     if (sid) {
       setupActiveSession(
@@ -289,10 +333,11 @@ export function useSubmit(options: UseSubmitOptions) {
         requestId,
         userContent,
         promptImages,
+        mergeFromRequestIds,
       );
     }
 
-    const conv = buildConversation();
+    const conv = buildConversation(mergedPromptContent);
 
     const formData = buildFormData(newFiles, {
       prompt: conv,
@@ -300,6 +345,15 @@ export function useSubmit(options: UseSubmitOptions) {
 
     arguments_.value = '';
     persistArguments();
+
+    // The selection is NOT consumed by the submit: the source icons keep
+    // pulsing while the merged request is in flight. Only when the unified
+    // response arrives (or fails) does the conversation store resolve the
+    // pending merge — marking the sources as merged respectively leaving
+    // them untouched for a retry.
+    if (sid && isMergeSubmit) {
+      markMergePending(sid, requestId);
+    }
 
     addCrossSessionExchanges(
       sid,

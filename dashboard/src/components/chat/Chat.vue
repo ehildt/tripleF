@@ -71,6 +71,9 @@ const {
   userExchanges,
   messageListItems,
   toggleUserExchangeIncluded,
+  toggleUserExchangeMerge,
+  canMerge,
+  mergeArmed,
   deleteUserExchange,
   branchUserExchange,
 } = useChatConversation();
@@ -303,6 +306,7 @@ defineExpose({ actionBarRef });
   <ChatMainColumn
     ref="mainColumnRef"
     class="lg:col-span-8 lg:col-start-3 min-w-0 h-fit lg:sticky lg:top-12"
+    :conversation-id="conversationId"
     :value="arguments_"
     :think-options="filteredThinkOptions"
     :think-value="currentThinkValue"
@@ -346,6 +350,8 @@ defineExpose({ actionBarRef });
     :attachments="attachments"
     :conversation="conversation"
     :message-list-items="messageListItems"
+    :can-merge="canMerge"
+    :merge-armed="mergeArmed"
     :playlist-videos="panelPlaylistVideos"
     :conversation-id="conversationId"
     :right-panel-view="rightPanelView"
@@ -356,6 +362,7 @@ defineExpose({ actionBarRef });
     @prompt-click="onPromptClick"
     @copy="handleCopyHistoryItem"
     @toggle-include="toggleUserExchangeIncluded"
+    @toggle-merge="toggleUserExchangeMerge"
     @delete-item="deleteUserExchange"
     @branch-out="branchUserExchange"
   />

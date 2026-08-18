@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
+import { useAppStore } from '@/stores/app';
+
 import ChatPromptActionBar from './ChatPromptActionBar.vue';
 
 const meta = {
@@ -29,6 +31,7 @@ think/context dropdowns, and the file attachment trigger.
     searchSources: { control: 'object' },
   },
   args: {
+    conversationId: '',
     value: '',
     thinkOptions: ['off', 'low', 'medium', 'high'],
     thinkValue: 'medium',
@@ -110,6 +113,49 @@ export const SearchEngineWithSources: Story = {
       { key: 'images', enabled: true },
       { key: 'news', enabled: false },
       { key: 'scrape', enabled: true },
+    ],
+  },
+};
+
+/** Active conversation — per-conversation view toggles on the top edge. */
+export const WithViewToggles: Story = {
+  args: {
+    conversationId: 'conversation-1',
+  },
+};
+
+/** Active conversation plus search sources — toggles after the tags. */
+export const ViewTogglesWithSources: Story = {
+  args: {
+    conversationId: 'conversation-1',
+    searchEngineState: 'enabled',
+    searchSources: [
+      { key: 'web', enabled: true },
+      { key: 'news', enabled: false },
+    ],
+  },
+};
+
+/** Both menus collapsed to their expand arrows (menus set collapsible). */
+export const CollapsedMenus: Story = {
+  render: (args) => ({
+    components: { ChatPromptActionBar },
+    setup() {
+      const appStore = useAppStore();
+      appStore.setSourceTagsMenuAlwaysShow('sources', false);
+      appStore.setSourceTagsMenuAlwaysShow('view', false);
+      appStore.setSourceTagsMenuCollapsed('sources', true);
+      appStore.setSourceTagsMenuCollapsed('view', true);
+      return { args };
+    },
+    template: '<ChatPromptActionBar v-bind="args" />',
+  }),
+  args: {
+    conversationId: 'conversation-1',
+    searchEngineState: 'enabled',
+    searchSources: [
+      { key: 'web', enabled: true },
+      { key: 'news', enabled: false },
     ],
   },
 };

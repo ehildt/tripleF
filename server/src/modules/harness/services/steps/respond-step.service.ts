@@ -20,8 +20,13 @@ import {
 } from '../../helpers/media/extract-media-from-tools.helper.js';
 import { extractShopOffers } from '../../helpers/media/extract-shop-offers.helper.js';
 import { filterExistingGalleryItems } from '../../helpers/media/filter-existing-gallery-items.helper.js';
+import {
+  type CloudReferenceImage,
+  IMAGE_TEMPLATES,
+} from '../../helpers/respond/build-execution-messages.helper.js';
 import { mergeLocalImagesIntoResponseData } from '../../helpers/respond/merge-local-images-into-response-data.helper.js';
 import { parseResponseStats } from '../../helpers/respond/parse-response-stats.helper.js';
+import { reconcileDiscardedReferences } from '../../helpers/respond/reconcile-discarded-references.helper.js';
 import { recordShownMedia } from '../../helpers/respond/record-shown-media.helper.js';
 import { resolveRespondStatus } from '../../helpers/respond/resolve-respond-status.helper.js';
 import { ensureShopOffers } from '../../helpers/sanitize/ensure-shop-offers.helper.js';
@@ -65,13 +70,22 @@ export class RespondStepService implements StepHandler {
 
     const limitedGalleryItems = limitLocalGalleryItems(galleryItems, 3);
 
+    // Image tasks (describe/compare/ocr): the response gallery is reference
+    // images only — the downloaded/ingested cloud candidates. The user's own
+    // uploaded images are already rendered as message attachments and must
+    // never be offered or merged into the response gallery.
+    const isImageTask = IMAGE_TEMPLATES.includes(ctx.outputs.intent.template);
+    const responseGalleryItems = isImageTask
+      ? limitedGalleryItems.filter((item) => item.source === 'cloud')
+      : limitedGalleryItems;
+
     this.stepLogger.log(ctx, 'respond', 'preparing final response', {
       hasNewImages: ctx.hasNewImages,
       galleryItemCount: galleryItems.length,
-      localItemCount: limitedGalleryItems.filter(
+      localItemCount: responseGalleryItems.filter(
         (item) => item.source === 'local',
       ).length,
-      cloudItemCount: limitedGalleryItems.filter(
+      cloudItemCount: responseGalleryItems.filter(
         (item) => item.source === 'cloud',
       ).length,
       imageCount: ctx.processedMeta.length,
@@ -83,7 +97,11 @@ export class RespondStepService implements StepHandler {
         requestId: ctx.requestId,
         intent: ctx.outputs.intent,
         messages: ctx.request.messages,
-        availableImages: limitedGalleryItems,
+        availableImages: responseGalleryItems,
+        cloudReferenceImages: this.buildCloudReferenceImages(
+          ctx,
+          limitedGalleryItems,
+        ),
         model: ctx.model,
         keepAlive: ctx.request.keep_alive,
         numCtx: ctx.request.options?.num_ctx,
@@ -92,7 +110,7 @@ export class RespondStepService implements StepHandler {
         abortSignal: ctx.abortSignal,
         language: ctx.filters.language,
         onTextDelta: ctx.stream
-          ? (delta) => this.emitStreamDelta(ctx, delta, limitedGalleryItems)
+          ? (delta) => this.emitStreamDelta(ctx, delta, responseGalleryItems)
           : undefined,
         onReasoningDelta: ctx.stream
           ? (delta) => this.emitReasoningDelta(ctx, delta)
@@ -105,6 +123,7 @@ export class RespondStepService implements StepHandler {
       ctx,
       data,
       limitedGalleryItems,
+      responseGalleryItems,
     );
 
     ctx.outputs.finalContent = content;
@@ -115,7 +134,7 @@ export class RespondStepService implements StepHandler {
     await recordShownMedia(
       ctx,
       mediaCheckedData,
-      limitedGalleryItems,
+      responseGalleryItems,
       this.shownMedia,
       this.stepLogger,
     );
@@ -137,46 +156,95 @@ export class RespondStepService implements StepHandler {
   }
 
   /**
-   * Post-generation data guards: merge uploaded images into the gallery,
-   * re-inject shop offers the model dropped, and blank media URLs that did
-   * not come from verified tool results.
+   * Post-generation data guards: merge uploaded images into the gallery
+   * (non-image templates only), re-inject shop offers the model dropped, and
+   * blank media URLs that did not come from verified tool results.
    */
   private applyResponseDataGuards(
     ctx: HarnessContext,
     data: Record<string, unknown> | undefined,
     limitedGalleryItems: GalleryItem[],
+    responseGalleryItems: GalleryItem[],
   ): Record<string, unknown> | undefined {
-    const mergedData = mergeLocalImagesIntoResponseData(
-      data,
-      limitedGalleryItems,
+    const isImageTask = IMAGE_TEMPLATES.includes(
+      ctx.outputs.intent?.template ?? '',
     );
+
+    // Image tasks: the uploaded local images must never enter the response
+    // gallery — they are visible as attachments and are not evidence. All
+    // other templates still get their local uploads merged in.
+    const mergedData = isImageTask
+      ? data
+      : mergeLocalImagesIntoResponseData(data, limitedGalleryItems);
+
+    // Discard verdicts: a reference the model excluded must not also appear
+    // as used media or a source — the discard wins. Image tasks additionally
+    // enforce full coverage: every offered cloud candidate ends up either in
+    // the gallery or in the discard aside, otherwise it silently vanishes
+    // (the pool is visible in Files, so unaccounted entries break the count).
+    const {
+      data: dataWithDiscardVerdicts,
+      removedGalleryCount,
+      removedSourceCount,
+      droppedDiscardCount,
+      complementedCount,
+    } = reconcileDiscardedReferences(
+      mergedData,
+      limitedGalleryItems
+        .filter((item) => item.source === 'cloud')
+        .map((item) => ({ imageUrl: item.imageUrl, title: item.title })),
+      isImageTask,
+    );
+    if (
+      removedGalleryCount > 0 ||
+      removedSourceCount > 0 ||
+      droppedDiscardCount > 0 ||
+      complementedCount > 0
+    ) {
+      this.stepLogger.warn(ctx, 'respond', 'discarded references applied', {
+        removedGalleryCount,
+        removedSourceCount,
+        droppedDiscardCount,
+        complementedCount,
+      });
+    }
 
     // Shop-offers guard: shopping results existed but the model dropped the
     // field — inject the extracted offers so the card never shows 0 stores.
     const withOffers = ensureShopOffers(
-      mergedData,
+      dataWithDiscardVerdicts,
       ctx.outputs.intent?.template,
       extractShopOffers(ctx.outputs.toolResults),
     );
-    if (withOffers !== mergedData) {
+    if (withOffers !== dataWithDiscardVerdicts && withOffers) {
       this.stepLogger.warn(
         ctx,
         'respond',
         'shop offers injected from context',
         {
-          offerCount: (withOffers?.shopOffers as unknown[]).length,
+          offerCount: Array.isArray(withOffers.shopOffers)
+            ? withOffers.shopOffers.length
+            : 0,
         },
       );
     }
 
     // Media membership enforcement: the model may only use URLs from verified
-    // tool results (or uploaded images) — everything else is blanked.
-    const mediaCheckedData = enforceAvailableMediaUrls(
-      withOffers,
-      extractImageSearchItems(ctx.outputs.toolResults),
-      extractVideoSearchItems(ctx.outputs.toolResults),
-      limitedGalleryItems.map((item) => item.imageUrl),
-    );
+    // tool results (or uploaded images) — everything else is blanked. For
+    // image tasks the local uploads are excluded from the allow-list, so any
+    // user-image URL the model copied into the gallery is stripped.
+    // Merge responses are exempt: their media URLs come from the conversation
+    // history, i.e. answers that already passed this same check. With no fresh
+    // media tools running, the allow-list would strip the merged galleries.
+    const mediaCheckedData =
+      ctx.outputs.intent?.template === 'merge'
+        ? withOffers
+        : enforceAvailableMediaUrls(
+            withOffers,
+            extractImageSearchItems(ctx.outputs.toolResults),
+            extractVideoSearchItems(ctx.outputs.toolResults),
+            responseGalleryItems.map((item) => item.imageUrl),
+          );
     if (mediaCheckedData !== withOffers) {
       this.stepLogger.warn(ctx, 'respond', 'unverified media urls blanked', {
         heroImageUrl: mediaCheckedData?.heroImageUrl === '',
@@ -193,6 +261,41 @@ export class RespondStepService implements StepHandler {
     }
 
     return mediaCheckedData;
+  }
+
+  /**
+   * The response model verifies cloud reference candidates visually on
+   * image-self-analysis tasks, so the ingested bytes travel with the message
+   * — aligned with their availableImages entry by storage hash. Vision-less
+   * models and non-image templates get none.
+   */
+  private buildCloudReferenceImages(
+    ctx: HarnessContext,
+    galleryItems: GalleryItem[],
+  ): CloudReferenceImage[] {
+    if (ctx.visionExcluded) return [];
+    if (!IMAGE_TEMPLATES.includes(ctx.outputs.intent?.template ?? '')) {
+      return [];
+    }
+
+    const ingestedByHash = new Map(
+      (ctx.outputs.ingestedForRewrite ?? []).map((img) => [img.hash, img]),
+    );
+
+    return galleryItems
+      .filter((item) => item.source === 'cloud')
+      .flatMap((item) => {
+        const hash = item.imageUrl.split('/').pop() ?? '';
+        const ingested = ingestedByHash.get(hash);
+        if (!ingested?.buffer) return [];
+        return [
+          {
+            imageUrl: item.imageUrl,
+            title: item.title,
+            buffer: ingested.buffer,
+          },
+        ];
+      });
   }
 
   /**

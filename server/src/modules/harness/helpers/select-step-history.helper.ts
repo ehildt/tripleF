@@ -7,7 +7,7 @@ import type {
  * Templates that recap the prior conversation by definition — they receive
  * the full transcript no matter what.
  */
-const FULL_HISTORY_TEMPLATES = new Set(['summary', 'evaluation']);
+const FULL_HISTORY_TEMPLATES = new Set(['summary', 'evaluation', 'merge']);
 
 /** Short conversations never need filtering: there is nothing to lose. */
 const PASSTHROUGH_MAX_MESSAGES = 6;

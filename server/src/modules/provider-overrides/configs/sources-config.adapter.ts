@@ -1,3 +1,4 @@
+import { getNumberEnv } from '@ehildt/ckir-helpers/get-number-env';
 import Joi from 'joi';
 
 /**
@@ -11,7 +12,19 @@ import Joi from 'joi';
 export interface SourcesConfig {
   preferred: string[];
   blocked: string[];
+  /**
+   * How many web image candidates the pipeline pools for the image-analysis
+   * templates (describe/compare/ocr): fetched via the enabled image-search
+   * providers, verified, and offered to the response model for visual
+   * matching. An explicit count in the user's prompt still wins.
+   */
+  imageTaskReferenceCount: number;
 }
+
+/** Default pool size for image-task reference candidates. */
+const DEFAULT_IMAGE_TASK_REFERENCE_COUNT = 6;
+/** Upper bound: pool entries are also fed to the response model as pixels. */
+const MAX_IMAGE_TASK_REFERENCE_COUNT = 50;
 
 /**
  * Default blocklist: Google's low-resolution thumbnail/user-content proxy
@@ -79,6 +92,11 @@ const hostnameListSchema = Joi.array().items(sourceEntrySchema).required();
 export const SourcesConfigSchema = Joi.object<SourcesConfig>({
   preferred: hostnameListSchema,
   blocked: hostnameListSchema,
+  imageTaskReferenceCount: Joi.number()
+    .integer()
+    .min(1)
+    .max(MAX_IMAGE_TASK_REFERENCE_COUNT)
+    .required(),
 }).required();
 
 /** Parse a comma-separated env list into deduped lowercase hostnames. */
@@ -107,5 +125,12 @@ export function SourcesConfigAdapter(env = process.env): SourcesConfig {
       ...parseHostnameList(env.SOURCES_BLOCKED),
     ]),
   ];
-  return { preferred, blocked };
+  return {
+    preferred,
+    blocked,
+    imageTaskReferenceCount: getNumberEnv(
+      env.SOURCES_IMAGE_TASK_REFERENCE_COUNT,
+      DEFAULT_IMAGE_TASK_REFERENCE_COUNT,
+    ) as number,
+  };
 }

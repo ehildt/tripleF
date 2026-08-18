@@ -15,11 +15,20 @@ import { computed } from 'vue';
 import { usePlaybackAnchor } from '../../composables/use-playback-anchor';
 import { useVideoPosterFallback } from './composables/use-video-poster-fallback';
 
-const props = defineProps<{
-  videoUrl: string;
-  title?: string;
-  posterUrl?: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    videoUrl: string;
+    title?: string;
+    posterUrl?: string | null;
+    /** When false, the floating player never docks to this figure (e.g. a
+     * carousel side slide) — it stays floating until the figure becomes
+     * dockable again. Defaults to true. */
+    dockable?: boolean;
+  }>(),
+  // Vue resolves an absent boolean prop to false; the explicit default keeps
+  // every figure (video list cards, hero media) dockable unless opted out.
+  { dockable: true, title: '', posterUrl: null },
+);
 
 const item = computed(() => ({
   videoUrl: props.videoUrl,
@@ -32,7 +41,9 @@ const {
   isDockedHere,
   isUnembeddable,
   engage,
-} = usePlaybackAnchor(item);
+} = usePlaybackAnchor(item, {
+  dockCondition: () => props.dockable !== false,
+});
 
 // Poster resolves to the highest-resolution candidate and degrades down the
 // chain (maxresdefault → hqdefault → mqdefault) if that image fails to load.

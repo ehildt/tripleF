@@ -1,5 +1,5 @@
 import { onClickOutside } from '@vueuse/core';
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onUnmounted, type Ref, ref } from 'vue';
 
 import type { HeaderMenuProps } from '../HeaderMenu.types';
 
@@ -14,8 +14,11 @@ export interface HeaderMenuEmits {
  * Owns the debug header menu's interaction state: the search popover
  * open/close, the per-filter disabled flags, and the armed two-step clear.
  */
-export function useHeaderMenu(props: HeaderMenuProps, emit: HeaderMenuEmits) {
-  const headerRef = ref<HTMLElement | null>(null);
+export function useHeaderMenu(
+  props: HeaderMenuProps,
+  emit: HeaderMenuEmits,
+  headerRef: Ref<HTMLElement | null>,
+) {
   const isSearchOpen = ref(false);
 
   onClickOutside(headerRef, () => {
@@ -51,7 +54,6 @@ export function useHeaderMenu(props: HeaderMenuProps, emit: HeaderMenuEmits) {
   onUnmounted(disarmClear);
 
   return {
-    headerRef,
     isSearchOpen,
     disableAll,
     disableHttp,

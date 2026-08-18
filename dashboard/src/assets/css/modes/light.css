@@ -57,6 +57,22 @@
     #1c1c1e
   );
 
+  --color-merge-selected: color-mix(
+    in srgb,
+    var(--color-merge-selected-source) 50%,
+    #1c1c1e
+  );
+  --color-merge-merged: color-mix(
+    in srgb,
+    var(--color-merge-merged-source) 40%,
+    #1c1c1e
+  );
+  --color-merge-consumed: color-mix(
+    in srgb,
+    var(--color-merge-consumed-source) 55%,
+    #1c1c1e
+  );
+
   --color-status-success: color-mix(
     in srgb,
     var(--color-status-success-source) 50%,
@@ -75,6 +91,11 @@
   --color-status-info: color-mix(
     in srgb,
     var(--color-status-info-source) 40%,
+    #1c1c1e
+  );
+  --color-status-violet: color-mix(
+    in srgb,
+    var(--color-status-violet-source) 45%,
     #1c1c1e
   );
 

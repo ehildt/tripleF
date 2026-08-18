@@ -32,6 +32,7 @@ vi.mock('@vueuse/core', () => ({
 describe('useAppStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    localStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -185,6 +186,99 @@ describe('useAppStore', () => {
       store.setChatIconVisibility('copy', false);
       expect(store.chatIconVisibility.copy).toBe(false);
       expect(store.chatIconVisibility.include).toBe(true);
+    });
+  });
+
+  describe('source tags menu collapse', () => {
+    it('defaults both menus to expanded', () => {
+      const store = useAppStore();
+      expect(store.sourceTagsMenuCollapsed).toEqual({
+        sources: false,
+        view: false,
+      });
+    });
+
+    it('setSourceTagsMenuCollapsed toggles a single menu', () => {
+      const store = useAppStore();
+      store.setSourceTagsMenuCollapsed('sources', true);
+      expect(store.sourceTagsMenuCollapsed.sources).toBe(true);
+      expect(store.sourceTagsMenuCollapsed.view).toBe(false);
+
+      store.setSourceTagsMenuCollapsed('view', true);
+      expect(store.sourceTagsMenuCollapsed.view).toBe(true);
+    });
+  });
+
+  describe('source tags menu always show', () => {
+    it('defaults both menus to always show', () => {
+      const store = useAppStore();
+      expect(store.sourceTagsMenuAlwaysShow).toEqual({
+        sources: true,
+        view: true,
+      });
+    });
+
+    it('setSourceTagsMenuAlwaysShow toggles a single menu', () => {
+      const store = useAppStore();
+      store.setSourceTagsMenuAlwaysShow('sources', false);
+      expect(store.sourceTagsMenuAlwaysShow.sources).toBe(false);
+      expect(store.sourceTagsMenuAlwaysShow.view).toBe(true);
+
+      store.setSourceTagsMenuAlwaysShow('view', false);
+      expect(store.sourceTagsMenuAlwaysShow.view).toBe(false);
+    });
+  });
+
+  describe('collapsed sections', () => {
+    it('defaults every section type to expanded', () => {
+      const store = useAppStore();
+      expect(store.collapsedSections).toEqual({
+        sources: false,
+        keyFindings: false,
+        internationalCoverage: false,
+      });
+    });
+
+    it('setSectionCollapsed sets a single section type', () => {
+      const store = useAppStore();
+      store.setSectionCollapsed('sources', true);
+      expect(store.collapsedSections.sources).toBe(true);
+      expect(store.collapsedSections.keyFindings).toBe(false);
+    });
+
+    it('toggleSectionCollapsed flips one section type', () => {
+      const store = useAppStore();
+      store.toggleSectionCollapsed('sources');
+      expect(store.collapsedSections.sources).toBe(true);
+      expect(store.collapsedSections.keyFindings).toBe(false);
+      store.toggleSectionCollapsed('sources');
+      expect(store.collapsedSections.sources).toBe(false);
+    });
+  });
+
+  describe('media presentations', () => {
+    it('defaults to image gallery and video list', () => {
+      const store = useAppStore();
+      expect(store.mediaPresentations).toEqual({
+        image: 'gallery',
+        video: 'list',
+      });
+    });
+
+    it('setMediaPresentation sets a single media type', () => {
+      const store = useAppStore();
+      store.setMediaPresentation('video', 'gallery');
+      expect(store.mediaPresentations.video).toBe('gallery');
+      expect(store.mediaPresentations.image).toBe('gallery');
+    });
+
+    it('toggleMediaPresentation flips one media type', () => {
+      const store = useAppStore();
+      store.toggleMediaPresentation('image');
+      expect(store.mediaPresentations.image).toBe('list');
+      expect(store.mediaPresentations.video).toBe('list');
+      store.toggleMediaPresentation('image');
+      expect(store.mediaPresentations.image).toBe('gallery');
     });
   });
 

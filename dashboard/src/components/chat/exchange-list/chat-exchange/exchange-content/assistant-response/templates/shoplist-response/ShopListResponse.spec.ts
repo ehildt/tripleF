@@ -120,6 +120,6 @@ describe('ShopListResponse', () => {
   it('shows the empty state when nothing is present', () => {
     const wrapper = mountShopList({});
 
-    expect(wrapper.find('.shoplist--empty').exists()).toBe(true);
+    expect(wrapper.find('.empty-state-section').exists()).toBe(true);
   });
 });

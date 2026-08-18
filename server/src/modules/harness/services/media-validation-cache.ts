@@ -1,5 +1,7 @@
-import type { MediaValidationResult } from './media-url-validator.service.js';
-import type { CacheEntry } from './media-validation-cache.types.js';
+import type {
+  CacheEntry,
+  MediaValidationResult,
+} from './media-validation-cache.types.js';
 
 const CACHE_MAX_ENTRIES = 1000;
 const CACHE_HIT_TTL_MS = 5 * 60_000;
@@ -23,7 +25,7 @@ export class MediaValidationCache {
     },
   ): string {
     const dimensions = options.checkImageDimensions
-      ? `${options.minWidth ?? 1280}x${options.minHeight ?? 720}`
+      ? `${options.minWidth ?? 'any'}x${options.minHeight ?? 'any'}`
       : 'no-dimensions';
     return `${dimensions}|${url}`;
   }

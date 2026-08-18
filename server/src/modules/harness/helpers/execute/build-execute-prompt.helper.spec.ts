@@ -3,12 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { IntentResult } from '../../templates/intent.schema.js';
 
 import {
-  buildFallbackInput,
   buildImageExecutePrompt,
   buildToolExecutePrompt,
-  enrichSearchInput,
-  isNoFallbackTool,
-  isPureSearchTool,
 } from './build-execute-prompt.helper.js';
 
 const buildIntent = (overrides: Partial<IntentResult> = {}): IntentResult =>
@@ -25,84 +21,6 @@ const buildIntent = (overrides: Partial<IntentResult> = {}): IntentResult =>
     plan: {},
     ...overrides,
   }) as IntentResult;
-
-describe('isNoFallbackTool', () => {
-  it('marks URL/title-based tools as unsuitable for fallback invocation', () => {
-    expect(isNoFallbackTool('webFetch')).toBe(true);
-    expect(isNoFallbackTool('serperWebpageScrape')).toBe(true);
-  });
-
-  it('allows search tools for fallback invocation', () => {
-    expect(isNoFallbackTool('webSearch')).toBe(false);
-    expect(isNoFallbackTool('serperImageSearch')).toBe(false);
-  });
-});
-
-describe('isPureSearchTool', () => {
-  it('recognizes keyword-based search tools', () => {
-    expect(isPureSearchTool('serperWebSearch')).toBe(true);
-    expect(isPureSearchTool('brightDataWebSearch')).toBe(true);
-    expect(isPureSearchTool('serperShoppingSearch')).toBe(true);
-    expect(isPureSearchTool('serperBusinessReviewsSearch')).toBe(true);
-    expect(isPureSearchTool('serperPlacesSearch')).toBe(true);
-  });
-
-  it('rejects non-search tools', () => {
-    expect(isPureSearchTool('webFetch')).toBe(false);
-    expect(isPureSearchTool('serperImageSearch')).toBe(false);
-  });
-});
-
-describe('enrichSearchInput', () => {
-  it('adds count and language when provided', () => {
-    const base: Record<string, unknown> = { query: 'q' };
-    enrichSearchInput(base, 5, 'de');
-    expect(base).toEqual({ query: 'q', count: 5, lang: 'de' });
-  });
-
-  it('skips invalid counts and missing language', () => {
-    const base: Record<string, unknown> = { query: 'q' };
-    enrichSearchInput(base, 0);
-    expect(base).toEqual({ query: 'q' });
-  });
-});
-
-describe('buildFallbackInput', () => {
-  it('returns undefined for non-fallback tools', () => {
-    expect(buildFallbackInput('webFetch', 'q')).toBeUndefined();
-    expect(buildFallbackInput('serperWebpageScrape', 'q')).toBeUndefined();
-  });
-
-  it('builds image search input with count and no language', () => {
-    // Images are language-agnostic: the fallback never injects a locale.
-    expect(buildFallbackInput('serperImageSearch', 'q', 7, 3, 'en')).toEqual({
-      query: 'q',
-      count: 7,
-    });
-    expect(buildFallbackInput('serperImageSearch', 'q', 0, 3, 'en')).toEqual({
-      query: 'q',
-    });
-  });
-
-  it('builds video and news search input with count and language', () => {
-    expect(buildFallbackInput('serperVideoSearch', 'q', 7, 4, 'de')).toEqual({
-      query: 'q',
-      count: 4,
-      lang: 'de',
-    });
-    expect(buildFallbackInput('serperNewsSearch', 'q', 7, 4)).toEqual({
-      query: 'q',
-      count: 4,
-    });
-  });
-
-  it('builds pure search input with language only', () => {
-    expect(buildFallbackInput('serperWebSearch', 'q', 7, 4, 'ja')).toEqual({
-      query: 'q',
-      lang: 'ja',
-    });
-  });
-});
 
 describe('buildToolExecutePrompt', () => {
   it('states the standalone query rules for every search query', () => {
@@ -182,15 +100,25 @@ describe('buildToolExecutePrompt', () => {
 });
 
 describe('buildImageExecutePrompt', () => {
-  it('requires standalone search queries that combine the visible signal with the established subject', () => {
+  it('teaches per-endpoint query crafting from visible signals', () => {
     const prompt = buildImageExecutePrompt([], 'en');
 
-    expect(prompt).toContain('Every search query must be standalone');
+    expect(prompt).toContain('QUERY CRAFTING (image task)');
     expect(prompt).toContain(
-      'combining the visible signal with the established subject from the conversation or CONTEXT SUMMARY',
+      '*WebSearch: short factual identification queries',
     );
     expect(prompt).toContain(
-      'Never emit a bare generic description or the user message verbatim',
+      '*ImageSearch: a short standalone visual description of the subject',
+    );
+    expect(prompt).toContain("never with the user's verbatim message");
+    expect(prompt).toContain('Filenames are hints, never verbatim queries');
+  });
+
+  it('requires every selected tool as parallel calls in one response', () => {
+    const prompt = buildImageExecutePrompt([], 'en');
+
+    expect(prompt).toContain(
+      'Emit EVERY selected tool call in ONE response as parallel tool calls',
     );
   });
 

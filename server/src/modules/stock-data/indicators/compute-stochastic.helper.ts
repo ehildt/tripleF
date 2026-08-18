@@ -1,6 +1,6 @@
 import type { IndicatorSeries, OhlcBar } from './indicators.types.js';
 
-export interface StochasticResult {
+interface StochasticResult {
   /** %K: close position within the recent high/low range, 0..100. */
   k: IndicatorSeries;
   /** %D: 3-bar SMA of %K. */

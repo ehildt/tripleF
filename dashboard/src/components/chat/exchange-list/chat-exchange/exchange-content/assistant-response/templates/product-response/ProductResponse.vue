@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import { useProductResponseData } from './composables/use-product-response-data.composable';
@@ -58,9 +59,7 @@ const { offers, videos, imageCount, hasContent } =
   </section>
 
   <!-- Empty state -->
-  <section v-else class="product product--empty">
-    <p>{{ $t('common.noProductFound') }}</p>
-  </section>
+  <EmptyStateSection v-else :message="$t('common.noProductFound')" />
 </template>
 
 <style scoped>
@@ -75,13 +74,5 @@ const { offers, videos, imageCount, hasContent } =
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--color-fg-secondary);
-}
-
-.product--empty {
-  padding: var(--spacing-4);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-tertiary);
-  text-align: center;
-  color: var(--color-fg-muted);
 }
 </style>

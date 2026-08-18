@@ -19,10 +19,14 @@ export function buildSeededExchanges(
     conversationId,
     userContent,
     images,
+    mergeOrigin,
   } = options;
   const exchanges: Array<Omit<Exchange, 'timestamp' | 'id'>> = [];
 
-  if (userContent) {
+  // A merge submit seeds the user bubble even without typed text so its
+  // "Merged | <tags>" marker always shows; plain submits only seed when
+  // there is something to display.
+  if (userContent || mergeOrigin?.length) {
     exchanges.push({
       role: 'user',
       content: userContent,
@@ -33,6 +37,7 @@ export function buildSeededExchanges(
       roomId,
       conversationId,
       images,
+      mergeOrigin,
     });
   }
 

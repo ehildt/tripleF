@@ -5,6 +5,7 @@ import ArticleHeroMediaSection from '../../sections/article-hero-media-section/A
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
 import HeroSection from '../../sections/hero-section/HeroSection.vue';
+import HeroStack from '../../sections/hero-stack/HeroStack.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
@@ -33,11 +34,10 @@ const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
         :hero-image-alt="data.heroImageAlt"
         :hero-caption="data.heroCaption"
       />
-      <div class="article__hero-stack">
+      <HeroStack>
         <HeroSection :title="data.title" :subtitle="data.subtitle" />
-        <hr class="article__meta-rule" />
         <ArticleLeadSection :summary="data.summary" />
-      </div>
+      </HeroStack>
     </header>
     <header v-else class="hero">
       <HeroSection :title="data.title" :subtitle="data.subtitle" />
@@ -115,24 +115,11 @@ const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
 }
 
 /* Split direction (ar2): the hero media panel sits beside the
-   title/meta-rule/summary stack instead of below the title. */
+   title/summary stack instead of below the title. */
 .article__hero--split {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25em;
-}
-
-.article__hero-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75em;
-  min-width: 0;
-}
-
-.article__meta-rule {
-  border: none;
-  border-top: 1px solid var(--color-divider);
-  margin: 0;
 }
 
 @media (min-width: 720px) {

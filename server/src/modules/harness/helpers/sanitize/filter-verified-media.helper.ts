@@ -8,14 +8,20 @@ import type {
 /**
  * Verify media URLs against live endpoints. Broken links are dropped; type
  * mismatches (image URL actually pointing to a video or vice versa) are
- * re-routed. Images flagged `skipDimensionCheck` (e.g. Bright Data, which we
+ * re-routed. Strict images must meet `resizeFloor` — the effective pproc
+ * resize dimensions, i.e. the size the image will actually be stored and
+ * shown at. Images flagged `skipDimensionCheck` (e.g. Bright Data, which we
  * trust the Google-side size filter for) are confirmed to be real reachable
- * images but are not held to the 1280×720 floor.
+ * images but are not held to the floor.
  */
 export async function filterVerifiedMedia(
   mediaUrlValidator: MediaUrlValidatorService,
   rawImages: ExtractedImageItem[],
   rawVideos: ExtractedVideoItem[],
+  resizeFloor: {
+    maxWidth?: number;
+    maxHeight?: number | null;
+  },
 ): Promise<{
   images: ExtractedImageItem[];
   videos: ExtractedVideoItem[];
@@ -34,8 +40,8 @@ export async function filterVerifiedMedia(
           maxRedirects: 3,
           concurrency: 5,
           checkImageDimensions: true,
-          minWidth: 1280,
-          minHeight: 720,
+          minWidth: resizeFloor.maxWidth,
+          minHeight: resizeFloor.maxHeight ?? undefined,
           maxProbeBytes: 256 * 1024,
         },
       ),

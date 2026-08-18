@@ -118,13 +118,13 @@ describe('useApiMessagesStore', () => {
     const store = useApiMessagesStore();
     store.addMessage('harness', {
       requestId: 'req-1',
-      template: 'describe',
+      template: 'article',
       delta: '{"title":"Image"',
       done: false,
     });
     store.addMessage('harness', {
       requestId: 'req-1',
-      template: 'describe',
+      template: 'article',
       delta: ',"sectionContent":"A scene"}',
       images: [
         {

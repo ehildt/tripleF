@@ -9,8 +9,8 @@
 import { ListMinus } from '@lucide/vue';
 import { computed } from 'vue';
 
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import Marquee from '@/components/shared/ui/marquee/Marquee.vue';
-import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 const props = defineProps<{
@@ -36,7 +36,7 @@ const metaLine = computed(() =>
     :class="{ 'playlist-item--active': isActive }"
     role="button"
     tabindex="0"
-    ::aria-label="$t('common.playItem', { title: item.title || 'video' })"
+    :aria-label="$t('common.playItem', { title: item.title || 'video' })"
     @click="emit('play')"
     @keydown.enter="emit('play')"
   >
@@ -51,20 +51,19 @@ const metaLine = computed(() =>
       <span v-else class="playlist-item__title">{{ item.title }}</span>
       <span v-if="metaLine" class="playlist-item__meta">{{ metaLine }}</span>
     </div>
-    <Tooltip :text="$t('common.removeFromPlaylist')">
-      <button
-        type="button"
-        class="playlist-item__remove"
-        :aria-label="
-          $t('common.removeFromPlaylistItem', {
-            title: item.title || 'video',
-          })
-        "
-        @click.stop="emit('remove')"
-      >
-        <ListMinus class="playlist-item__remove-icon" />
-      </button>
-    </Tooltip>
+    <IconButton
+      size="sm"
+      danger
+      :title="$t('common.removeFromPlaylist')"
+      :aria-label="
+        $t('common.removeFromPlaylistItem', {
+          title: item.title || 'video',
+        })
+      "
+      @click.stop="emit('remove')"
+    >
+      <ListMinus />
+    </IconButton>
   </div>
 </template>
 
@@ -129,27 +128,5 @@ const metaLine = computed(() =>
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.playlist-item__remove {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: none;
-  background: none;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.playlist-item__remove:hover {
-  color: var(--color-status-error);
-}
-
-.playlist-item__remove-icon {
-  width: 0.75rem;
-  height: 0.75rem;
 }
 </style>

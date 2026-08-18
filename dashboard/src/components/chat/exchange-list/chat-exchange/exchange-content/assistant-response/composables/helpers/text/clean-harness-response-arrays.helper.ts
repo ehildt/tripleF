@@ -84,6 +84,51 @@ export function cleanHarnessResponseArrays(data: HarnessResponseData): void {
       isMeaningfulString(item.text),
     ),
   }));
+  // Merge topic blocks: each snippet list gets the same empty-text
+  // treatment as the top-level assessment lists, and the per-topic hero
+  // follows the top-level hero rules (invalid video URL dropped, video hero
+  // without title dropped, untrusted image URL dropped). A block left with
+  // no content after cleaning drops with the rest.
+  data.bodySections = data.bodySections
+    ?.map((section) => {
+      const heroImageUrl =
+        section.heroImageUrl && isTrustedImageUrl(section.heroImageUrl)
+          ? section.heroImageUrl
+          : undefined;
+      let heroVideoUrl = section.heroVideoUrl;
+      if (heroVideoUrl && !isVideoUrl(heroVideoUrl)) heroVideoUrl = undefined;
+      if (heroVideoUrl && !section.heroVideoTitle?.trim()) {
+        heroVideoUrl = undefined;
+      }
+      return {
+        ...section,
+        heroImageUrl,
+        heroImageAlt: heroImageUrl ? section.heroImageAlt : undefined,
+        heroCaption: heroImageUrl ? section.heroCaption : undefined,
+        heroVideoUrl,
+        heroVideoTitle: heroVideoUrl ? section.heroVideoTitle : undefined,
+        heroVideoCaption: heroVideoUrl ? section.heroVideoCaption : undefined,
+        strengths: filterArray(section.strengths, (item) =>
+          isMeaningfulString(item.text),
+        ),
+        weaknesses: filterArray(section.weaknesses, (item) =>
+          isMeaningfulString(item.text),
+        ),
+        recommendations: filterArray(section.recommendations, (item) =>
+          isMeaningfulString(item.text),
+        ),
+      };
+    })
+    .filter(
+      (section) =>
+        isMeaningfulString(section.topic) ||
+        isMeaningfulString(section.content) ||
+        isMeaningfulString(section.heroImageUrl) ||
+        isMeaningfulString(section.heroVideoUrl) ||
+        (section.strengths?.length ?? 0) > 0 ||
+        (section.weaknesses?.length ?? 0) > 0 ||
+        (section.recommendations?.length ?? 0) > 0,
+    );
   if (data.comparison?.criteria) {
     data.comparison = {
       ...data.comparison,

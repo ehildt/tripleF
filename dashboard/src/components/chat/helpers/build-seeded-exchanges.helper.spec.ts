@@ -48,4 +48,26 @@ describe('buildSeededExchanges', () => {
     expect(exchanges).toHaveLength(1);
     expect(exchanges[0].role).toBe('assistant');
   });
+
+  it('keeps the user exchange for a merge even without typed text', () => {
+    const exchanges = buildSeededExchanges({
+      ...baseOptions,
+      userContent: '',
+      mergeOrigin: ['req-a', 'req-b'],
+    });
+
+    expect(exchanges).toHaveLength(2);
+    expect(exchanges[0]).toEqual({
+      role: 'user',
+      content: '',
+      requestId: 'req-1',
+      status: 'done',
+      model: 'model-a',
+      event: 'harness',
+      roomId: 'room-1',
+      conversationId: 'conv-1',
+      images: [{ name: 'a.png', hash: 'has-a' }],
+      mergeOrigin: ['req-a', 'req-b'],
+    });
+  });
 });
