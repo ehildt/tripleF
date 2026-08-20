@@ -57,7 +57,7 @@ watch(
       <button
         type="button"
         class="tab-menu__handle shadow-floating"
-        aria-label="$t('app.toggleTabMenu')"
+        :aria-label="$t('app.toggleTabMenu')"
         :aria-expanded="isOpen"
         @click="toggleMenu"
       >

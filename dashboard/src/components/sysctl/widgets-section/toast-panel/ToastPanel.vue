@@ -55,10 +55,10 @@ import { i18n } from '@/i18n/i18n';
 
 const { preview: previewToast } = useToast();
 
-import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 import type { ToastHorizontal, ToastVertical } from './ToastPanel.types';
 
-const VERTICAL_OPTIONS = [
+const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
   {
     value: 'middle',
@@ -66,9 +66,9 @@ const VERTICAL_OPTIONS = [
     tooltip: i18n.global.t('common.middle'),
   },
   { value: 'bottom', icon: ArrowDown, tooltip: i18n.global.t('common.bottom') },
-] as const;
+]);
 
-const HORIZONTAL_OPTIONS = [
+const HORIZONTAL_OPTIONS = computed(() => [
   { value: 'left', icon: ArrowLeft, tooltip: i18n.global.t('common.left') },
   {
     value: 'center',
@@ -76,14 +76,16 @@ const HORIZONTAL_OPTIONS = [
     tooltip: i18n.global.t('common.center'),
   },
   { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
-] as const;
+]);
 
-const TYPE_OPTIONS: readonly {
-  type: ToastType;
-  icon: LucideIcon;
-  label: string;
-  description: string;
-}[] = [
+const TYPE_OPTIONS = computed<
+  readonly {
+    type: ToastType;
+    icon: LucideIcon;
+    label: string;
+    description: string;
+  }[]
+>(() => [
   {
     type: 'info',
     icon: Info,
@@ -120,7 +122,7 @@ const TYPE_OPTIONS: readonly {
     label: i18n.global.t('common.toastTypeDefault'),
     description: i18n.global.t('common.toastTypeDefaultDesc'),
   },
-];
+]);
 
 const vertical = computed(
   () => toastAnchor.value.split('-')[0] as ToastVertical,
@@ -157,10 +159,7 @@ function setHorizontal(value: string) {
     </div>
 
     <div class="toast-panel__group">
-      <SysCtlSectionHeader
-        :icon="Anchor"
-        :title="$t('common.positionSection')"
-      />
+      <SectionHeader :icon="Anchor" :title="$t('common.positionSection')" />
       <div class="toast-panel__grid">
         <FieldCard
           :icon="Anchor"
@@ -187,10 +186,7 @@ function setHorizontal(value: string) {
     </div>
 
     <div class="toast-panel__group">
-      <SysCtlSectionHeader
-        :icon="Timer"
-        :title="$t('common.behaviorSection')"
-      />
+      <SectionHeader :icon="Timer" :title="$t('common.behaviorSection')" />
       <div class="toast-panel__grid">
         <FieldCard
           :icon="Timer"
@@ -239,10 +235,7 @@ function setHorizontal(value: string) {
     </div>
 
     <div class="toast-panel__group">
-      <SysCtlSectionHeader
-        :icon="MessageSquare"
-        :title="$t('common.typesSection')"
-      />
+      <SectionHeader :icon="MessageSquare" :title="$t('common.typesSection')" />
       <div class="toast-panel__types">
         <FieldCard
           v-for="{ type, icon, label, description } in TYPE_OPTIONS"

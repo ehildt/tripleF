@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Eye, EyeOff } from '@lucide/vue';
+import { ScanSearch } from '@lucide/vue';
 
 import IconButton from '../icon-button/IconButton.vue';
 
 /**
  * Panel-header preview icon button, next to the reset button. When `active`,
- * the preview it toggles is currently shown — the icon flips to a closed eye
- * so the button reads as "hide the preview".
+ * the preview it toggles is currently shown — the button keeps the scan icon
+ * and relies on the active state styling to read as "hide the preview".
  */
 withDefaults(
   defineProps<{
@@ -31,7 +31,6 @@ const emit = defineEmits<{
     :aria-pressed="active"
     @click="emit('click')"
   >
-    <EyeOff v-if="active" />
-    <Eye v-else />
+    <ScanSearch />
   </IconButton>
 </template>

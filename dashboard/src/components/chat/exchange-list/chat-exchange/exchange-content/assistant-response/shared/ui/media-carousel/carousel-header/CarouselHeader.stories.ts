@@ -12,12 +12,18 @@ const meta = {
     count: { control: { type: 'range', min: 1, max: 6 } },
     playingIndex: { control: { type: 'range', min: -1, max: 4 } },
     title: { control: 'text' },
+    itemTitles: { control: 'object' },
   },
   args: {
     activeIndex: 1,
     count: 3,
     playingIndex: 2,
     title: 'Gallery',
+    itemTitles: [
+      'First slide title',
+      'Second slide title',
+      'Third slide title',
+    ],
     onSelect: fn(),
   },
 } satisfies Meta<typeof CarouselHeader>;

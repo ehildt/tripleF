@@ -12,8 +12,8 @@ import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import { useAppStore } from '@/stores/app';
 
+import SectionHeader from '../../shared/ui/section-header/SectionHeader.vue';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSectionHeader from '../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
 import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import { useOllamaConnection } from './composables/use-ollama-connection';
@@ -39,12 +39,12 @@ const { warmModelOnSelect, toggleWarmModelOnSelect } = useAppStore();
 <template>
   <SysCtlSection :loading="isLoading" :error="hasError">
     <div class="system-section">
-      <SysCtlSectionHeader :icon="Activity" :title="$t('common.health')" />
+      <SectionHeader :icon="Activity" :title="$t('common.health')" />
       <SystemHealthSection :tiles="tiles" />
     </div>
 
     <div class="system-section">
-      <SysCtlSectionHeader :icon="Server" :title="$t('common.ollama')" />
+      <SectionHeader :icon="Server" :title="$t('common.ollama')" />
 
       <div class="system-section__actions">
         <ResetButton

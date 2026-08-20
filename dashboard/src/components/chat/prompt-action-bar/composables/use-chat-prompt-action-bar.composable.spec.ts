@@ -122,27 +122,29 @@ describe('useChatPromptActionBar', () => {
     expect(sourceMenuCollapsed.value).toBe(true);
   });
 
-  it('toggles the sources menu collapse state', () => {
+  it('toggles the sources menu collapse state per conversation', () => {
     const appStore = useAppStore();
     const { sourceMenuCollapsed, toggleSourceMenuCollapsed } =
-      useChatPromptActionBar(makeProps(), vi.fn());
+      useChatPromptActionBar(makeProps({ conversationId: 'conv-1' }), vi.fn());
 
     expect(sourceMenuCollapsed.value).toBe(false);
     toggleSourceMenuCollapsed();
     expect(sourceMenuCollapsed.value).toBe(true);
-    expect(appStore.sourceTagsMenuCollapsed.sources).toBe(true);
+    expect(appStore.getSourceMenuCollapsed('conv-1', 'sources')).toBe(true);
+    // Other conversations keep the global default.
+    expect(appStore.getSourceMenuCollapsed('conv-2', 'sources')).toBe(false);
   });
 
-  it('toggles the view menu collapse state independently', () => {
+  it('toggles the view menu collapse state independently per conversation', () => {
     const appStore = useAppStore();
     const { viewMenuCollapsed, toggleViewMenuCollapsed } =
-      useChatPromptActionBar(makeProps(), vi.fn());
+      useChatPromptActionBar(makeProps({ conversationId: 'conv-1' }), vi.fn());
 
     expect(viewMenuCollapsed.value).toBe(false);
     toggleViewMenuCollapsed();
     expect(viewMenuCollapsed.value).toBe(true);
-    expect(appStore.sourceTagsMenuCollapsed.view).toBe(true);
-    expect(appStore.sourceTagsMenuCollapsed.sources).toBe(false);
+    expect(appStore.getSourceMenuCollapsed('conv-1', 'view')).toBe(true);
+    expect(appStore.getSourceMenuCollapsed('conv-1', 'sources')).toBe(false);
   });
 
   it('defaults both menus to always show', () => {

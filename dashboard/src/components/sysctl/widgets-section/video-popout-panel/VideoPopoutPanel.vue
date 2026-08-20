@@ -48,14 +48,14 @@ import {
   setPopoutShowBarAlways,
   togglePopoutPreview,
 } from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 import { hidePlaylistPreview } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
-import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 import type {
   PopoutHorizontal,
   PopoutVertical,
 } from './VideoPopoutPanel.types';
 
-const VERTICAL_OPTIONS = [
+const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
   {
     value: 'middle',
@@ -63,9 +63,9 @@ const VERTICAL_OPTIONS = [
     tooltip: i18n.global.t('common.middle'),
   },
   { value: 'bottom', icon: ArrowDown, tooltip: i18n.global.t('common.bottom') },
-] as const;
+]);
 
-const HORIZONTAL_OPTIONS = [
+const HORIZONTAL_OPTIONS = computed(() => [
   { value: 'left', icon: ArrowLeft, tooltip: i18n.global.t('common.left') },
   {
     value: 'center',
@@ -73,7 +73,7 @@ const HORIZONTAL_OPTIONS = [
     tooltip: i18n.global.t('common.center'),
   },
   { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
-] as const;
+]);
 
 const vertical = computed(
   () => popoutAnchor.value.split('-')[0] as PopoutVertical,
@@ -121,7 +121,7 @@ function handlePreviewToggle() {
     </div>
 
     <div class="video-popout-panel__group">
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="PictureInPicture2"
         :title="$t('common.positionSection')"
       />
@@ -161,7 +161,7 @@ function handlePreviewToggle() {
     </div>
 
     <div class="video-popout-panel__group">
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="ArrowDownToLine"
         :title="$t('common.behaviorSection')"
       />

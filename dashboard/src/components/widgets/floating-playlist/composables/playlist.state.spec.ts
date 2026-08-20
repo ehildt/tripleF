@@ -40,6 +40,26 @@ describe('playlist.state', () => {
     vi.mocked(savePlaylist).mockResolvedValue(undefined);
   });
 
+  it('shares one fetch across concurrent loadPlaylists calls', async () => {
+    let resolveFetch!: (value: never[]) => void;
+    vi.mocked(fetchAllPlaylists).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    const first = loadPlaylists();
+    const second = loadPlaylists();
+
+    expect(fetchAllPlaylists).toHaveBeenCalledTimes(1);
+
+    resolveFetch([{ name: 'A', conversationId: 'c1', videos: [] }]);
+    await Promise.all([first, second]);
+
+    expect(getPlaylists().map((p) => p.name)).toEqual(['A']);
+  });
+
   it('discards a stale load that started before a local mutation', async () => {
     // The fetch resolves late, after the user has already added a playlist.
     vi.mocked(fetchAllPlaylists).mockImplementation(

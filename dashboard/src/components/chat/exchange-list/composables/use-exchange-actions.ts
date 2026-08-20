@@ -1,23 +1,17 @@
 import { useConversationStore } from '@/stores/conversation';
 
-import { useBranchExchange } from '../../composables/use-branch-exchange';
 import type { ExchangeActions } from './use-exchange-actions.types';
 
 /**
- * Wire the orchestrator to the conversation store: delete, retry, and branch an
- * exchange from the active conversation.
+ * Wire the orchestrator to the conversation store: retry the failed
+ * assistant exchange of the active conversation. Delete and branch moved
+ * with their icons to the right-panel history items (use-chat-conversation's
+ * deleteUserExchange / branchUserExchange).
  */
 export function useExchangeActions(
   retryHandler: (text: string) => Promise<void>,
 ): ExchangeActions {
   const conversationStore = useConversationStore();
-  const { branchExchange } = useBranchExchange();
-
-  function deleteExchange(exchangeId: string) {
-    const id = conversationStore.activeConversationId;
-    if (!id) return;
-    conversationStore.deleteExchangeAndPrune(id, exchangeId);
-  }
 
   function retryExchange(exchangeId: string) {
     const id = conversationStore.activeConversationId;
@@ -34,7 +28,5 @@ export function useExchangeActions(
 
   return {
     retryExchange,
-    deleteExchange,
-    branchExchange,
   };
 }

@@ -73,6 +73,15 @@ const countClass = computed(() =>
 <style scoped>
 .carousel-content {
   position: relative;
+
+  /* The peek/dim values for side slides, shared with VideoCarouselItem so
+     image and video slides stay visually identical. */
+  --carousel-peek-transform: scale(0.9);
+  --carousel-peek-opacity: 0.55;
+  --carousel-peek-filter: brightness(0.85) grayscale(0.75) blur(2px);
+  --carousel-active-transform: scale(1);
+  --carousel-active-opacity: 1;
+  --carousel-active-filter: brightness(1) grayscale(0) blur(0);
 }
 
 /* -------- scroll track (shared harness-gallery block) -------- */
@@ -156,23 +165,31 @@ const countClass = computed(() =>
   right: 2.5rem;
 }
 
-/* -------- count variants (peek layout for 2 slides, side-by-side for 3+) -------- */
+/* -------- slide geometry: peek layout shared by both count variants
+   (2 slides and 3+); count-2 only forces a min-width on its slides -------- */
 
-.carousel-content--count-2 .harness-gallery--carousel {
+.carousel-content .harness-gallery--carousel {
   gap: 0;
   padding-inline: 25%;
   scroll-padding-inline: 25%;
+}
+
+.carousel-content .harness-gallery--carousel > :deep(li) {
+  flex: 0 0 100%;
+  max-width: 100%;
+  min-height: 360px;
+  aspect-ratio: 3 / 2;
 }
 
 .carousel-content--count-2 .harness-gallery--carousel > :deep(li) {
-  flex: 0 0 100%;
   min-width: 100%;
-  max-width: 100%;
-  min-height: 360px;
-  aspect-ratio: 3 / 2;
 }
 
-.carousel-content--count-2 :deep(.harness-gallery__item) figure {
+/* Side slides shrink into dimmed peeks; the centered slide is bright and
+   full size. Values come from the shared --carousel-* tokens, also used by
+   VideoCarouselItem, so image and video slides stay visually identical. */
+
+.carousel-content :deep(.harness-gallery__item) figure {
   position: absolute;
   left: -25%;
   right: -25%;
@@ -181,89 +198,35 @@ const countClass = computed(() =>
   width: auto;
   max-width: none;
   margin: 0;
-  transform: scale(0.9);
-  opacity: 0.55;
-  filter: brightness(0.85) grayscale(0.75) blur(2px);
+  transform: var(--carousel-peek-transform);
+  opacity: var(--carousel-peek-opacity);
+  filter: var(--carousel-peek-filter);
   transition:
     transform 0.35s ease,
     opacity 0.35s ease,
     filter 0.35s ease;
 }
 
-.carousel-content--count-2
+.carousel-content
   :deep(.harness-gallery__item.harness-gallery__item--active)
   figure {
-  transform: scale(1);
-  opacity: 1;
-  filter: brightness(1) grayscale(0) blur(0);
+  transform: var(--carousel-active-transform);
+  opacity: var(--carousel-active-opacity);
+  filter: var(--carousel-active-filter);
 }
 
-.carousel-content--count-2
+.carousel-content
   :deep(.harness-gallery__item.harness-gallery__item--prev)
   figure,
-.carousel-content--count-2
+.carousel-content
   :deep(.harness-gallery__item.harness-gallery__item--next)
   figure {
-  transform: scale(0.9);
-  opacity: 0.55;
-  filter: brightness(0.85) grayscale(0.75) blur(2px);
+  transform: var(--carousel-peek-transform);
+  opacity: var(--carousel-peek-opacity);
+  filter: var(--carousel-peek-filter);
 }
 
-.carousel-content--count-2 :deep(.harness-gallery__trigger) {
-  height: 100%;
-  min-height: 260px;
-  aspect-ratio: 3 / 2;
-}
-
-.carousel-content--count-3plus .harness-gallery--carousel {
-  gap: 0;
-  padding-inline: 25%;
-  scroll-padding-inline: 25%;
-}
-
-.carousel-content--count-3plus .harness-gallery--carousel > :deep(li) {
-  flex: 0 0 100%;
-  max-width: 100%;
-  min-height: 360px;
-  aspect-ratio: 3 / 2;
-}
-
-.carousel-content--count-3plus :deep(.harness-gallery__item) figure {
-  position: absolute;
-  left: -25%;
-  right: -25%;
-  top: 0;
-  bottom: 0;
-  width: auto;
-  max-width: none;
-  margin: 0;
-  transform: scale(0.9);
-  opacity: 0.55;
-  filter: brightness(0.85) grayscale(0.75) blur(2px);
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease,
-    filter 0.35s ease;
-}
-
-.carousel-content--count-3plus
-  :deep(.harness-gallery__item.harness-gallery__item--active)
-  figure {
-  transform: scale(1);
-  opacity: 1;
-  filter: brightness(1) grayscale(0) blur(0);
-}
-
-.carousel-content--count-3plus
-  :deep(.harness-gallery__item.harness-gallery__item--prev)
-  figure,
-.carousel-content--count-3plus
-  :deep(.harness-gallery__item.harness-gallery__item--next)
-  figure {
-  transform: scale(0.9);
-}
-
-.carousel-content--count-3plus :deep(.harness-gallery__trigger) {
+.carousel-content :deep(.harness-gallery__trigger) {
   height: 100%;
   min-height: 260px;
   aspect-ratio: 3 / 2;

@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { MediaItem } from '@/types/harness-response-data.model';
 import { harnessImageClickedKey } from '@/types/harness-response-data.model';
 
@@ -72,7 +73,7 @@ describe('AssistantCarousel', () => {
     ]);
 
     expect(wrapper.findAll('.video-carousel-item')).toHaveLength(1);
-    expect(wrapper.find('.video-carousel-item__title').text()).toBe('V');
+    expect(wrapper.find('.media-card-header__title').text()).toBe('V');
   });
 
   it('marks only the centered video slide as active', () => {
@@ -84,6 +85,38 @@ describe('AssistantCarousel', () => {
     const slides = wrapper.findAllComponents(VideoCarouselItem);
     expect(slides[0].props('active')).toBe(true);
     expect(slides[1].props('active')).toBe(false);
+  });
+
+  it('gives every dot a tooltip with its slide title', () => {
+    const wrapper = mountCarousel([
+      { imageUrl: '/a', imageAlt: 'a', title: 'Alpha' },
+      { imageUrl: '/b', imageAlt: 'b', title: 'Beta' },
+      { videoUrl: 'https://www.youtube.com/watch?v=c', title: 'Gamma' },
+    ]);
+
+    const tooltips = wrapper
+      .find('.carousel-header__dots')
+      .findAllComponents(Tooltip);
+    expect(tooltips).toHaveLength(3);
+    expect(tooltips.map((t) => t.props('text'))).toEqual([
+      'Alpha',
+      'Beta',
+      'Gamma',
+    ]);
+  });
+
+  it('skips tooltips for slides without a title', () => {
+    const wrapper = mountCarousel([
+      { imageUrl: '/a', imageAlt: 'a' },
+      { imageUrl: '/b', imageAlt: 'b', title: 'Beta' },
+    ]);
+
+    const tooltips = wrapper
+      .find('.carousel-header__dots')
+      .findAllComponents(Tooltip);
+    expect(tooltips).toHaveLength(2);
+    expect(tooltips[0].props('disabled')).toBe(true);
+    expect(tooltips[1].props('disabled')).toBe(false);
   });
 
   it('marks the dot of the currently playing video as playing', () => {

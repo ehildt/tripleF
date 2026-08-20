@@ -20,11 +20,18 @@ const emit = defineEmits<{
     :disabled="disabled"
     :positions="tooltipPositions"
   >
+    <!-- Rich tooltip content (e.g. title + description + caption) for the
+         rare buttons whose tooltip is more than a label. Falls back to the
+         `title` prop when the slot is absent. -->
+    <template v-if="$slots['tooltip-content']" #content>
+      <slot name="tooltip-content" />
+    </template>
     <button
       type="button"
       class="icon-button"
       :class="{
         'icon-button--sm': size === 'sm',
+        'icon-button--lg': size === 'lg',
         'icon-button--active': active,
         'icon-button--danger': danger,
         'icon-button--armed': armed,
@@ -67,6 +74,12 @@ const emit = defineEmits<{
 .icon-button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* Large scale for media-surface actions (video-card playlist/info
+   toggles): a 1.75rem hit box with the standard 1rem icon. */
+.icon-button--lg {
+  padding: var(--spacing-1-5);
 }
 
 /* Compact scale for row-action buttons (list items, toasts, menu rows). */

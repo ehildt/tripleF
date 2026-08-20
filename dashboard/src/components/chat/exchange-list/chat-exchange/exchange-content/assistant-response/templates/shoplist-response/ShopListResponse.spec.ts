@@ -24,8 +24,10 @@ describe('ShopListResponse', () => {
       shortDescription: 'The MediaMarkt offer dropped €30 since last week.',
     });
 
-    expect(wrapper.find('.shoplist__title').text()).toBe('Sony WH-1000XM5');
-    expect(wrapper.find('.shoplist__subtitle').text()).toContain(
+    expect(wrapper.find('.response-header__title').text()).toBe(
+      'Sony WH-1000XM5',
+    );
+    expect(wrapper.find('.response-header__subtitle').text()).toContain(
       'purchase options',
     );
     expect(wrapper.text()).toContain('dropped €30');
@@ -112,7 +114,7 @@ describe('ShopListResponse', () => {
       ],
     });
 
-    expect(wrapper.find('.shoplist-card__img').attributes('src')).toBe(
+    expect(wrapper.find('.async-image__img').attributes('src')).toBe(
       'https://img.example/widget.jpg',
     );
   });

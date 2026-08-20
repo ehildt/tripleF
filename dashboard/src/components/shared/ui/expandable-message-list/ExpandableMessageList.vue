@@ -149,7 +149,6 @@ function handleBranchOut(idx: number) {
 .expandable-message-list__body :deep(code) {
   font-size: 0.9em;
   padding: 0.1em 0.3em;
-  border-radius: 0.25rem;
   background-color: color-mix(in srgb, var(--color-fg-primary) 8%, transparent);
 }
 
@@ -157,7 +156,6 @@ function handleBranchOut(idx: number) {
   overflow-x: auto;
   padding: var(--spacing-2);
   background-color: color-mix(in srgb, var(--color-fg-primary) 6%, transparent);
-  border-radius: 0.25rem;
 }
 
 .expandable-message-list__body :deep(pre code) {

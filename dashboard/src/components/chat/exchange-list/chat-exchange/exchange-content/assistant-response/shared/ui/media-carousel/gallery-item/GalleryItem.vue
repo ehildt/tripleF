@@ -1,32 +1,21 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-import type {
-  GalleryItem,
-  HarnessImageClickedHandler,
-} from '@/types/harness-response-data.model';
-import { harnessImageClickedKey } from '@/types/harness-response-data.model';
+import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
+import type { GalleryItem } from '@/types/harness-response-data.model';
+
+import { useGalleryImageTile } from '../../../composables/use-gallery-image-tile.composable';
+import MediaCaptionScrim from '../../media-caption-scrim/MediaCaptionScrim.vue';
 
 const props = defineProps<{
   item: GalleryItem;
 }>();
 
-const onImageClicked = inject<HarnessImageClickedHandler>(
-  harnessImageClickedKey,
-  () => undefined,
+const { t } = useI18n();
+const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
+  props.item,
+  t('common.imageFallback'),
 );
-const hasError = ref(false);
-
-const encodedSrc = encodeURI(props.item.imageUrl);
-const label = props.item.imageAlt || props.item.title || 'Image';
-
-function handleClick() {
-  onImageClicked?.(props.item);
-}
-
-function handleImageError() {
-  hasError.value = true;
-}
 </script>
 
 <template>
@@ -35,30 +24,27 @@ function handleImageError() {
       <button
         type="button"
         class="harness-gallery__trigger"
-        :class="{ 'harness-gallery__trigger--error': hasError }"
-        :aria-label="`View full size: ${label}`"
-        :data-gallery-src="encodedSrc"
-        @click.stop="handleClick"
+        :class="{ 'harness-gallery__trigger--error': isBroken }"
+        :aria-label="$t('common.viewFullSize', { label })"
+        :data-gallery-src="src"
+        @click.stop="open"
       >
-        <img
-          :src="encodedSrc"
+        <AsyncImage
+          :src="src"
           :alt="item.imageAlt || ''"
-          loading="lazy"
-          decoding="async"
-          class="harness-gallery__thumb"
-          :class="{ 'harness-gallery__thumb--error': hasError }"
           @error="handleImageError"
         />
       </button>
-      <figcaption
+      <MediaCaptionScrim
         v-if="item.title || item.caption"
+        as="figcaption"
         class="harness-gallery__caption"
       >
         <strong v-if="item.title && item.title !== item.caption">{{
           item.title
         }}</strong>
         <p v-if="item.caption">{{ item.caption }}</p>
-      </figcaption>
+      </MediaCaptionScrim>
     </figure>
   </li>
 </template>
@@ -93,45 +79,12 @@ function handleImageError() {
   outline-offset: 2px;
 }
 
-.harness-gallery__trigger img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: opacity 0.2s ease;
-}
-
 .harness-gallery__trigger--error {
   cursor: default;
 }
 
-.harness-gallery__thumb--error {
-  opacity: 0;
-}
-
-.harness-gallery__trigger--error::after {
-  content: '⚠ Image unavailable';
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--color-fg-muted);
-  font-size: 0.85em;
-}
-
-.harness-gallery__caption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
-  opacity: 0.85;
-}
-
+/* Overlay positioning and the scrim live in MediaCaptionScrim; the rules
+   below style its slotted title/caption text. */
 .harness-gallery__caption strong {
   display: block;
   color: var(--color-fg-primary);

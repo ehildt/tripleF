@@ -16,10 +16,14 @@ export async function fetchConversations(
 export async function fetchConversation(
   sessionId: string,
   conversationId: string,
-): Promise<MergedConversation> {
+): Promise<MergedConversation | null> {
   const res = await fetch(
     getApiUrl(`/api/v1/conversations/${sessionId}/${conversationId}`),
   );
+  // 404 is a definitive answer (the conversation no longer exists on the
+  // server — e.g. its id was superseded by setConversationId) and lets the
+  // restore flow drop a stale bookmark instead of retrying forever.
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Failed to load conversation: ${res.status}`);
   return (await res.json()) as MergedConversation;
 }

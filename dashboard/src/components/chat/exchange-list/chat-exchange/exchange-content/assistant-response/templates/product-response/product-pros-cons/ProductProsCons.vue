@@ -5,6 +5,8 @@
  */
 import type { KeyFinding } from '@/types/harness-response-data.model';
 
+import EyebrowTitle from '../../../shared/ui/eyebrow-title/EyebrowTitle.vue';
+
 defineProps<{
   pros?: readonly KeyFinding[];
   cons?: readonly KeyFinding[];
@@ -14,9 +16,7 @@ defineProps<{
 <template>
   <section v-if="pros?.length || cons?.length" class="pros-cons">
     <div v-if="pros?.length" class="pros-cons__column">
-      <h3 class="pros-cons__title pros-cons__title--pros">
-        {{ $t('common.pros') }}
-      </h3>
+      <EyebrowTitle :title="$t('common.pros')" tone="success" ruled />
       <ul class="pros-cons__list">
         <li v-for="(item, idx) in pros" :key="idx" class="pros-cons__row">
           <span class="pros-cons__marker pros-cons__marker--pros">✓</span>
@@ -26,9 +26,7 @@ defineProps<{
     </div>
 
     <div v-if="cons?.length" class="pros-cons__column">
-      <h3 class="pros-cons__title pros-cons__title--cons">
-        {{ $t('common.cons') }}
-      </h3>
+      <EyebrowTitle :title="$t('common.cons')" tone="error" ruled />
       <ul class="pros-cons__list">
         <li v-for="(item, idx) in cons" :key="idx" class="pros-cons__row">
           <span class="pros-cons__marker pros-cons__marker--cons">✕</span>
@@ -59,25 +57,6 @@ defineProps<{
   min-width: 0;
   /* Reset the global .exchange-message div padding leak. */
   padding: 0;
-}
-
-.pros-cons__title {
-  margin: 0;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding-bottom: var(--spacing-1-5);
-  border-bottom: 1px solid var(--color-divider);
-}
-
-.pros-cons__title--pros {
-  color: var(--color-status-success);
-}
-
-.pros-cons__title--cons {
-  color: var(--color-status-error);
 }
 
 .pros-cons__list {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import DiscardedReferencesSection from '../../sections/discarded-references-section/DiscardedReferencesSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import type { DescribeResponseProps } from './DescribeResponse.types';
 
 defineProps<DescribeResponseProps>();
@@ -15,7 +15,7 @@ defineProps<DescribeResponseProps>();
 <template>
   <article class="harness-describe">
     <header class="hero">
-      <HeroSection :title="data.title" :subtitle="data.subtitle" />
+      <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
     <p v-if="data.note" class="harness-describe__note">{{ data.note }}</p>
     <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />

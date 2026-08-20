@@ -377,5 +377,6 @@ defineExpose({
 
 .chat-toolbar__list {
   width: 100%;
+  margin-top: var(--spacing-2);
 }
 </style>

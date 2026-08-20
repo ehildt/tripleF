@@ -9,6 +9,7 @@ export interface CapabilityRow {
 }
 
 export interface CapabilityStatus {
+  icon?: LucideIcon;
   label: string;
   available: boolean;
 }

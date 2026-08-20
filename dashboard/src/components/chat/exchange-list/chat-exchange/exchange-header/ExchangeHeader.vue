@@ -1,20 +1,14 @@
 <script setup lang="ts">
 /**
- * Orchestrates the exchange header: role icon, conditional action buttons,
- * context percentage (user), and the pending activity label + cancel action
- * (assistant). Sub-components render the details; composables own the state.
+ * Orchestrates the exchange header. Assistant exchanges keep their header:
+ * role icon, copy action, response meta-bar pills, retry on error, and the
+ * pending/streaming activity label + cancel action. User exchanges carry no
+ * header actions (those live on the right-panel history items); their header
+ * is the meta row — an AI icon on the far left with the request id, model,
+ * and formatted time right-aligned. Sub-components render the details;
+ * composables own the state.
  */
-import {
-  Bot,
-  CircleX,
-  Copy,
-  GitBranch,
-  RefreshCw,
-  SquaresExclude,
-  SquaresUnite,
-  Trash2,
-  User,
-} from '@lucide/vue';
+import { Bot, CircleX, Copy, RefreshCw } from '@lucide/vue';
 import { computed, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -39,26 +33,12 @@ const props = defineProps<{
   isError: boolean;
   isPending: boolean;
   isStreaming: boolean;
-  /** Whether this exchange is selected for a merge (green). */
-  isMergeSelected: boolean;
-  /** False when the conversation has fewer than two merge candidates — the
-   * merge action grays out. */
-  canMerge: boolean;
-  /** True when at least two user prompts are selected — selected merge
-   * icons pulse. */
-  mergeArmed: boolean;
 }>();
 
 const emit = defineEmits<{
   copy: [];
   retry: [];
-  branch: [];
-  delete: [];
-  toggleIncluded: [];
-  toggleMerge: [];
   cancel: [requestId: string];
-  hoverDeleteStart: [];
-  hoverDeleteEnd: [];
 }>();
 
 const { locale } = useI18n();
@@ -89,9 +69,10 @@ function onCancel() {
 </script>
 
 <template>
-  <div class="exchange-header" :class="isUser ? 'exchange-header--user' : ''">
-    <Bot v-if="!isUser" class="exchange-header__bot-icon" />
-    <User v-else class="exchange-header__user-icon" />
+  <!-- Assistant: role icon, copy, response meta-bar pills, retry on error,
+       and the pending/streaming activity label + cancel action. -->
+  <div v-if="!isUser" class="exchange-header">
+    <Bot class="exchange-header__bot-icon" />
 
     <ExchangeHeaderAction
       v-if="isDone && appStore.chatIconVisibility.copy"
@@ -102,7 +83,7 @@ function onCancel() {
     </ExchangeHeaderAction>
 
     <ResponseMetaBar
-      v-if="!isUser && isDone && metaPills.length"
+      v-if="isDone && metaPills.length"
       class="exchange-header__meta-bar"
     >
       <ResponseMetaBarPill
@@ -120,53 +101,6 @@ function onCancel() {
     >
       <RefreshCw />
     </ExchangeHeaderAction>
-    <ExchangeHeaderAction
-      v-if="isUser && appStore.chatIconVisibility.include"
-      :title="$t('common.toggleContextInclusion')"
-      :active="exchange.included === false"
-      @click="emit('toggleIncluded')"
-    >
-      <SquaresExclude />
-    </ExchangeHeaderAction>
-    <ExchangeHeaderAction
-      v-if="isUser && isDone"
-      :title="
-        exchange.mergedInto
-          ? $t('common.mergeConsumedHint', {
-              requestId: exchange.mergedInto,
-            })
-          : exchange.included === false
-            ? $t('common.mergeExcludedHint')
-            : $t('common.mergeSelection')
-      "
-      :selected="isMergeSelected"
-      :consumed="exchange.mergedInto != null"
-      :disabled="
-        !canMerge ||
-        (exchange.included === false && exchange.mergedInto == null)
-      "
-      :pulse="isMergeSelected && mergeArmed"
-      @click="emit('toggleMerge')"
-    >
-      <SquaresUnite />
-    </ExchangeHeaderAction>
-    <ExchangeHeaderAction
-      v-if="isUser && appStore.chatIconVisibility.branch"
-      :title="$t('common.branch')"
-      @click="emit('branch')"
-    >
-      <GitBranch />
-    </ExchangeHeaderAction>
-    <ExchangeHeaderAction
-      v-if="isUser && appStore.chatIconVisibility.delete"
-      :title="$t('common.delete')"
-      variant="danger"
-      @click="emit('delete')"
-      @hover-start="emit('hoverDeleteStart')"
-      @hover-end="emit('hoverDeleteEnd')"
-    >
-      <Trash2 />
-    </ExchangeHeaderAction>
 
     <ExchangeHeaderAction
       v-if="isLive && exchange.requestId"
@@ -175,24 +109,24 @@ function onCancel() {
     >
       <CircleX />
     </ExchangeHeaderAction>
-    <WorkingIndicator
-      v-if="!isUser && isLive"
-      class="exchange-header__working"
-    />
+    <WorkingIndicator v-if="isLive" class="exchange-header__working" />
     <ExchangeActivityLabel
-      v-if="!isUser && isLive && activityLabel"
+      v-if="isLive && activityLabel"
       :label="activityLabel"
     />
   </div>
-  <ExchangeMergeTags
-    v-if="isUser && exchange.mergeOrigin?.length"
-    :request-ids="exchange.mergeOrigin"
-  />
+
+  <!-- User: no header actions (they live on the right-panel history items),
+       so the meta row is the header. -->
   <ExchangeMetaRow
-    v-if="isUser"
+    v-else
     :request-id="exchange.requestId"
     :model="exchange.model"
     :time="time"
+  />
+  <ExchangeMergeTags
+    v-if="isUser && exchange.mergeOrigin?.length"
+    :request-ids="exchange.mergeOrigin"
   />
 </template>
 
@@ -204,28 +138,11 @@ function onCancel() {
   margin-bottom: var(--spacing-1);
 }
 
-.exchange-header--user {
-  flex-direction: row-reverse;
-}
-
 .exchange-header__bot-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
   color: var(--color-tab-rest);
-}
-
-.exchange-header__user-icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-  color: var(--color-tab-accent);
-}
-
-.exchange-header__meta {
-  font-size: 0.75rem;
-  color: var(--color-fg-muted);
-  font-family: var(--font-mono);
 }
 
 .exchange-header__meta-bar {

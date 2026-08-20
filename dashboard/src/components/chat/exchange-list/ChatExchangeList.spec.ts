@@ -21,14 +21,39 @@ function mountComponent(props?: Record<string, unknown>) {
 }
 
 describe('ChatExchangeList', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     activePinia = createPinia();
     setActivePinia(activePinia);
+    // Settle the store's async boot (stub-list fetch) so `hydrated` flips
+    // true and the loading skeleton doesn't cover the content under test.
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   it('renders the no-conversation panel when no conversation is active', () => {
     const wrapper = mountComponent();
+    expect(wrapper.find('.exchange-skeleton').exists()).toBe(false);
     expect(wrapper.text()).toContain('No chat selected');
+  });
+
+  it('shows the loading skeleton while the conversation list is still booting', () => {
+    // A fresh, un-settled store: the list fetch has not resolved yet.
+    activePinia = createPinia();
+    setActivePinia(activePinia);
+    const wrapper = mountComponent();
+    expect(wrapper.find('.exchange-skeleton').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('No chat selected');
+  });
+
+  it('shows the loading skeleton while the active conversation hydrates', () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    // Simulate a server stub that is still waiting for its full content.
+    conversation.loaded = false;
+    conversationStore.setActiveConversation(conversation.id);
+
+    const wrapper = mountComponent();
+    expect(wrapper.find('.exchange-skeleton').exists()).toBe(true);
   });
 
   it('renders the empty-state hint when an active conversation has no exchanges', () => {
@@ -37,7 +62,8 @@ describe('ChatExchangeList', () => {
     conversationStore.setActiveConversation(conversation.id);
 
     const wrapper = mountComponent();
-    expect(wrapper.text()).toContain('Say something to get this chat going.');
+    expect(wrapper.find('.exchange-skeleton').exists()).toBe(false);
+    expect(wrapper.text()).toContain('Say something to get this chat going');
   });
 
   it('renders exchanges from the active conversation', () => {
@@ -56,6 +82,7 @@ describe('ChatExchangeList', () => {
     conversationStore.setActiveConversation(conversation.id);
 
     const wrapper = mountComponent();
+    expect(wrapper.find('.exchange-skeleton').exists()).toBe(false);
     expect(wrapper.text()).toContain('Hello');
     expect(wrapper.text()).toContain('Hi there');
   });

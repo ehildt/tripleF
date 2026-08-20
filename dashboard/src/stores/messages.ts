@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import { createHarnessResponseState } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/create-harness-response-state.helper';
 import type { HarnessResponseState } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/create-harness-response-state.helper.types';
 import { processHarnessResponseEvent } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/process-harness-response-event.helper';
+import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { type Exchange, useConversationStore } from '@/stores/conversation';
 import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
@@ -151,6 +152,13 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
 
     const isError = isErrorStreamEvent(d);
     const status = d.done === true ? 'done' : 'streaming';
+
+    // Terminal error events surface the provider's message both in the
+    // exchange and as a toast — e.g. quota/rate-limit rejections from the
+    // model provider carry actionable instructions in the message body.
+    if (isError && d.error) {
+      useToast().error(String(d.error));
+    }
 
     const fallbackContent = state.text || state.lastValidData?.title || '';
 

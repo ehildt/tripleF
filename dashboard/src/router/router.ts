@@ -24,7 +24,7 @@ const router = createRouter({
       path: '/sysctl',
       name: 'sysctl',
       component: () =>
-        import('@/components/app/app-main-content/sysctl-section/SysCtlSection.vue'),
+        import('@/components/app/app-main-content/sysctl-view/SysCtlView.vue'),
     },
   ],
 });

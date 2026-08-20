@@ -18,8 +18,8 @@ function loadSysctlTab(): SysctlTab {
   try {
     const saved = localStorage.getItem(SYSCTL_TAB_STORAGE_KEY);
     // Legacy: the widgets tab was called "popout" before it gained the toast
-    // panel; the interface tab was folded into the system tab.
-    if (saved === 'popout' || saved === 'interface') return 'system';
+    // and tab-menu panels.
+    if (saved === 'popout') return 'widgets';
     return SYSCTL_TABS.includes(saved as SysctlTab)
       ? (saved as SysctlTab)
       : 'search-engines';

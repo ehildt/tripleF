@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<ProviderSectionProps>(), {
   endpointMaxResults: undefined,
   endpointAvailability: undefined,
   prependItemsPerRow: undefined,
+  itemsPerRow: undefined,
 });
 
 const emit = defineEmits<{
@@ -47,6 +48,8 @@ const {
       class="provider-section__columns"
       :class="{
         'provider-section__columns--no-metadata': !$slots.metadata,
+        'provider-section__columns--no-secondary':
+          $slots.metadata && !$slots.metadataSecondary,
       }"
     >
       <div
@@ -55,6 +58,14 @@ const {
         :class="{ 'provider-section__metadata--disabled': isContentDisabled }"
       >
         <slot name="metadata" />
+      </div>
+
+      <div
+        v-if="$slots.metadataSecondary"
+        class="provider-section__metadata-secondary"
+        :class="{ 'provider-section__metadata--disabled': isContentDisabled }"
+      >
+        <slot name="metadataSecondary" />
       </div>
 
       <div class="provider-section__fields">
@@ -151,12 +162,23 @@ const {
 
 .provider-section__columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 4fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 3fr);
   gap: var(--spacing-3);
 }
 
 .provider-section__columns--no-metadata {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* Without a second metadata column, fall back to the classic two-way split
+   (metadata | fields) so single-panel providers keep their current look. */
+.provider-section__columns--no-secondary {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 4fr);
+}
+
+.provider-section__metadata-secondary {
+  min-width: 0;
+  transition: opacity 0.3s ease;
 }
 
 .provider-section__metadata {

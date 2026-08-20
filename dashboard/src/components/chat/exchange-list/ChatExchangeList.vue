@@ -11,6 +11,7 @@ import {
 import { useActiveConversation } from './composables/use-active-conversation';
 import { useExchangeActions } from './composables/use-exchange-actions';
 import { useExchangeVisualState } from './composables/use-exchange-visual-state';
+import ExchangeSkeleton from './exchange-skeleton/ExchangeSkeleton.vue';
 import { buildExchangeSections } from './helpers/build-exchange-sections.helper';
 import NoConversationPanel from './no-conversation-panel/NoConversationPanel.vue';
 import ScrollableExchangeList from './scrollable-exchange-list/ScrollableExchangeList.vue';
@@ -20,8 +21,6 @@ const props = defineProps<ChatExchangeListProps>();
 
 const emit = defineEmits<{
   deleteConversation: [id: string];
-  toggleIncluded: [exchangeId: string];
-  toggleMerge: [exchangeId: string];
   scroll: [];
 }>();
 
@@ -30,18 +29,16 @@ const {
   exchanges,
   activeAssistantExchangeId,
   activeAssistantResponseStarted,
+  isExchangesLoading,
 } = useActiveConversation();
 
-const { highlightedIds, collapsedIds, onHoverDeleteStart, onHoverDeleteEnd } =
-  useExchangeVisualState(exchanges);
+const { highlightedIds, collapsedIds } = useExchangeVisualState(exchanges);
 
 const isCompact = computed(() => props.compact ?? false);
 
 const sections = computed(() => buildExchangeSections(exchanges.value));
 
-const { deleteExchange, retryExchange, branchExchange } = useExchangeActions(
-  props.retryHandler,
-);
+const { retryExchange } = useExchangeActions(props.retryHandler);
 
 const appStore = useAppStore();
 
@@ -89,8 +86,13 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
 
 <template>
   <div class="chat-exchange-list panel-glow">
+    <!-- While the list is still booting or the active conversation is being
+         hydrated, show a skeleton instead of the empty states so the chat
+         never flashes "no conversation" before content arrives. -->
+    <ExchangeSkeleton v-if="isExchangesLoading" />
+
     <ScrollableExchangeList
-      v-if="isSessionActive"
+      v-else-if="isSessionActive"
       ref="scrollableListRef"
       :sections="sections"
       :mode="scrollMode"
@@ -99,13 +101,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
       :is-compact="isCompact"
       :active-assistant-exchange-id="activeAssistantExchangeId"
       :active-assistant-response-started="activeAssistantResponseStarted"
-      @delete="deleteExchange"
       @retry="retryExchange"
-      @branch="branchExchange"
-      @toggle-included="emit('toggleIncluded', $event)"
-      @toggle-merge="emit('toggleMerge', $event)"
-      @hover-delete-start="onHoverDeleteStart"
-      @hover-delete-end="onHoverDeleteEnd"
       @scroll="emit('scroll')"
     />
 

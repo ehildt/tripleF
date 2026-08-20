@@ -83,8 +83,6 @@ defineEmits<{
 /* Consumed by a completed merge: purple border marks the consolidated
    section while the item stays readable in the history list. */
 .expandable-message-list__item--merged {
-  border: 1px solid
-    color-mix(in srgb, var(--color-merge-merged) 45%, transparent);
   background-color: color-mix(
     in srgb,
     var(--color-merge-merged) 8%,

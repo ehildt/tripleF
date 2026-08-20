@@ -80,7 +80,7 @@ describe('FloatingPopout', () => {
     { selector: '.floating-media-bar__minimize', event: 'minimize' },
     { selector: '.floating-media-bar__close', event: 'close' },
     {
-      selector: '.floating-media-bar__playlist-toggle',
+      selector: '.icon-button',
       event: 'togglePlaylist',
     },
   ])('forwards $event from the bar', async ({ selector, event }) => {

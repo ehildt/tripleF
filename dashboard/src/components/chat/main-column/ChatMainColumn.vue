@@ -45,7 +45,6 @@ const emit = defineEmits<{
   toggleSource: [source: string];
   toggleEodhd: [];
   deleteConversation: [id: string];
-  toggleIncluded: [exchangeId: string];
   scroll: [];
 }>();
 
@@ -65,7 +64,6 @@ defineExpose({ exchangeListRef, activeUserExchangeId });
       :compact="true"
       :retry-handler="props.retryHandler"
       @delete-conversation="emit('deleteConversation', $event)"
-      @toggle-included="emit('toggleIncluded', $event)"
       @scroll="emit('scroll')"
     />
     <ChatPromptActionBar

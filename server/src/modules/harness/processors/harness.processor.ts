@@ -77,6 +77,20 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
       });
     }
 
+    // A user cancel aborts the controller with an Error reason; the quiet
+    // deregister above only fires when the run finished on its own.
+    const cancelledByUser = controller.signal.reason !== 'deregister-quiet';
+
+    // Application-level step failures complete the job (the step engine
+    // catches step errors), so they reach the DLQ from the completed hook
+    // instead of the failed one. User-cancelled runs are not DLQ material.
+    if (ctx.doneReason === 'error' && !cancelledByUser) {
+      this.dlqLifecycleService.markApplicationFailure(
+        ctx.requestId,
+        ctx.error ?? 'An unexpected error occurred',
+      );
+    }
+
     await this.chatStreaming.streamResult(ctx);
   }
 

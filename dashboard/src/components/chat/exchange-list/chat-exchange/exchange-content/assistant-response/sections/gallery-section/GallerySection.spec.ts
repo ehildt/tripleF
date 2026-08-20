@@ -66,7 +66,7 @@ describe('GallerySection', () => {
       'list',
     );
 
-    expect(wrapper.find('.harness-gallery--list').exists()).toBe(true);
+    expect(wrapper.find('.image-grid').exists()).toBe(true);
     expect(wrapper.find('.harness-carousel').exists()).toBe(false);
     expect(wrapper.findAll('.image-item')).toHaveLength(2);
   });

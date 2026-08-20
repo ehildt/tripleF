@@ -34,14 +34,13 @@ const {
 
 <template>
   <ProviderSection
-    provider-name="EODHD"
-    :provider-description="$t('common.stockMarketDataApi')"
     :config="config"
     :descriptions="descriptions"
     :icons="icons"
     :configured="configured"
     :endpoint-max-results="{ history: 1000 }"
     :endpoint-availability="endpointAvailability"
+    :items-per-row="2"
     @toggle-endpoint="emit('toggleEndpoint', $event)"
     @update-results="emit('updateResults', $event)"
   >
@@ -79,11 +78,11 @@ const {
     </template>
 
     <template #metadata>
-      <CapabilitiesPanel
-        v-if="capabilityRows.length"
-        :rows="capabilityRows"
-        :statuses="sourceStatus"
-      />
+      <CapabilitiesPanel v-if="capabilityRows.length" :rows="capabilityRows" />
+    </template>
+
+    <template #metadataSecondary>
+      <CapabilitiesPanel v-if="sourceStatus.length" :statuses="sourceStatus" />
     </template>
   </ProviderSection>
 </template>

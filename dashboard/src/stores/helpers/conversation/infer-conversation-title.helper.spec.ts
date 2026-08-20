@@ -8,14 +8,12 @@ describe('inferConversationTitle', () => {
   });
 
   it('adopts the first 50 characters of the first exchange', () => {
-    expect(inferConversationTitle('New Conversation', 'x'.repeat(80))).toBe(
+    expect(inferConversationTitle('New chat', 'x'.repeat(80))).toBe(
       'x'.repeat(50),
     );
   });
 
   it('falls back to the default title for empty content', () => {
-    expect(inferConversationTitle('New Conversation', '')).toBe(
-      'New Conversation',
-    );
+    expect(inferConversationTitle('New chat', '')).toBe('New chat');
   });
 });

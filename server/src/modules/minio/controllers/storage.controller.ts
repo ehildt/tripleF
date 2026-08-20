@@ -10,7 +10,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { FastifyReply } from 'fastify';
+import type { FastifyReply } from 'fastify';
 
 import {
   ApiDeleteObject,

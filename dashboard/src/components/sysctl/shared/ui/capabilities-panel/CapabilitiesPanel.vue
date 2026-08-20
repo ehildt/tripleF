@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+
 import type {
   CapabilityRow,
   CapabilityStatus,
@@ -8,14 +10,17 @@ import type {
  * Read-only provider account/usage metadata, rendered in the same visual
  * language as FieldCard (icon tile + mono label + value). Used in the
  * sysctl search-engines metadata column. `statuses` renders an optional
- * available/not-in-plan list (e.g. EODHD endpoints).
+ * available/not-in-plan list (e.g. EODHD endpoints). Rows and statuses
+ * render independently, so the panel can be split across the provider's
+ * two metadata columns (rows | statuses).
  */
 withDefaults(
   defineProps<{
-    rows: CapabilityRow[];
+    rows?: CapabilityRow[];
     statuses?: CapabilityStatus[];
   }>(),
   {
+    rows: () => [],
     statuses: undefined,
   },
 );
@@ -40,16 +45,17 @@ withDefaults(
       </span>
     </div>
 
-    <div v-if="statuses?.length" class="capabilities-panel__statuses">
+    <template v-if="statuses?.length">
       <div
         v-for="status in statuses"
         :key="status.label"
-        class="capabilities-panel__status"
+        class="capabilities-panel__row"
       >
+        <div v-if="status.icon" class="capabilities-panel__icon">
+          <component :is="status.icon" class="capabilities-panel__icon-glyph" />
+        </div>
         <Tooltip :text="status.label" max-width="16rem">
-          <span class="capabilities-panel__status-label">
-            {{ status.label }}
-          </span>
+          <span class="capabilities-panel__label">{{ status.label }}</span>
         </Tooltip>
         <span
           class="capabilities-panel__dot"
@@ -60,7 +66,7 @@ withDefaults(
           "
         />
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -76,7 +82,7 @@ withDefaults(
   background-color: var(--color-bg-tertiary);
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: var(--spacing-4);
   padding: var(--spacing-2) var(--spacing-3);
 }
 
@@ -120,28 +126,11 @@ withDefaults(
   color: var(--color-status-warning);
 }
 
-.capabilities-panel__statuses {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2) var(--spacing-3);
-  padding-left: var(--spacing-4);
-  background-color: var(--color-bg-tertiary);
-}
-
-.capabilities-panel__status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  font-size: 0.75rem;
-}
-
 .capabilities-panel__dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
   flex-shrink: 0;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
 }
 
 .capabilities-panel__dot--on {
@@ -150,15 +139,5 @@ withDefaults(
 
 .capabilities-panel__dot--off {
   background-color: var(--color-status-error);
-}
-
-.capabilities-panel__status-label {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-mono);
-  color: var(--color-fg-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>

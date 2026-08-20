@@ -6,6 +6,7 @@
  */
 import { computed } from 'vue';
 
+import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 import type { ShopOffer } from '@/types/harness-response-data.model';
 
 import StarRatingIndicator from '../../../shared/ui/star-rating-indicator/StarRatingIndicator.vue';
@@ -25,11 +26,13 @@ const ctaLabel = computed(() =>
     <!-- Concrete product info with a single product image -->
     <div class="shoplist-card__body">
       <div v-if="offer.imageUrl" class="shoplist-card__thumb">
-        <img
+        <!-- The thumb is only 4.5rem — no room for a fallback message; the
+             shared image settles on a quiet empty thumb on failure. -->
+        <AsyncImage
           :src="offer.imageUrl"
           :alt="offer.title || $t('common.productImage')"
-          class="shoplist-card__img"
-          loading="lazy"
+          fit="contain"
+          :show-error-label="false"
         />
       </div>
 
@@ -107,17 +110,11 @@ const ctaLabel = computed(() =>
 
 .shoplist-card__thumb {
   flex-shrink: 0;
+  position: relative;
   width: 4.5rem;
   height: 4.5rem;
   overflow: hidden;
   background-color: var(--color-bg-tertiary);
-}
-
-.shoplist-card__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
 
 .shoplist-card__info {

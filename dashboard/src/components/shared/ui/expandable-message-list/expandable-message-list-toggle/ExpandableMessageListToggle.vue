@@ -227,8 +227,8 @@ defineEmits<{
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-2);
+  gap: var(--spacing-0-5);
+  padding: var(--spacing-1);
   text-align: left;
   cursor: pointer;
   transition:

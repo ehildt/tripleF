@@ -45,7 +45,7 @@ const capabilityRows = computed(() =>
   buildSerperCapabilityRows(props.config.capabilities),
 );
 
-const descriptions: Record<string, string> = {
+const descriptions = computed<Record<string, string>>(() => ({
   web: i18n.global.t('common.searchCapWebSerper'),
   images: i18n.global.t('common.searchCapImages'),
   news: i18n.global.t('common.searchCapNews'),
@@ -54,7 +54,7 @@ const descriptions: Record<string, string> = {
   reviews: i18n.global.t('common.searchCapReviews'),
   videos: i18n.global.t('common.searchCapVideos'),
   scrape: i18n.global.t('common.searchCapScrapeSerper'),
-};
+}));
 
 const icons = {
   web: Globe,
@@ -70,8 +70,6 @@ const icons = {
 
 <template>
   <ProviderSection
-    provider-name="Serper"
-    :provider-description="$t('common.searchApi')"
     :config="config"
     :descriptions="descriptions"
     :icons="icons"

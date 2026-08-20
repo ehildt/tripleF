@@ -105,7 +105,7 @@ export function useSubmit(options: UseSubmitOptions) {
     }
   }
 
-  function buildConversation(mergedContent?: string): string {
+  async function buildConversation(mergedContent?: string): Promise<string> {
     if (mergedContent) {
       return JSON.stringify([{ role: 'user', content: mergedContent }]);
     }
@@ -337,7 +337,7 @@ export function useSubmit(options: UseSubmitOptions) {
       );
     }
 
-    const conv = buildConversation(mergedPromptContent);
+    const conv = await buildConversation(mergedPromptContent);
 
     const formData = buildFormData(newFiles, {
       prompt: conv,
