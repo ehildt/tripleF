@@ -4,41 +4,26 @@
  * hover overlay revealing title, caption, and source. Click opens the
  * lightbox through the shared inject.
  */
-import { computed, inject, ref } from 'vue';
+import { computed } from 'vue';
 
-import type {
-  GalleryItem,
-  HarnessImageClickedHandler,
-} from '@/types/harness-response-data.model';
-import { harnessImageClickedKey } from '@/types/harness-response-data.model';
+import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
+import type { GalleryItem } from '@/types/harness-response-data.model';
 
+import { useGalleryImageTile } from '../../composables/use-gallery-image-tile.composable';
 import { formatDimensions } from './helpers/format-dimensions.helper';
 
 const props = defineProps<{
   item: GalleryItem;
 }>();
 
-const onImageClicked = inject<HarnessImageClickedHandler>(
-  harnessImageClickedKey,
-  () => undefined,
+const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
+  props.item,
+  'Image',
 );
-const hasError = ref(false);
 
 const dimensions = computed(() =>
   formatDimensions(props.item.width, props.item.height),
 );
-const label = computed(
-  () => props.item.imageAlt || props.item.title || 'Image',
-);
-
-function handleClick() {
-  if (hasError.value) return;
-  onImageClicked?.(props.item);
-}
-
-function handleImageError() {
-  hasError.value = true;
-}
 </script>
 
 <template>
@@ -46,17 +31,13 @@ function handleImageError() {
     <button
       type="button"
       class="image-item__trigger"
-      :class="{ 'image-item__trigger--error': hasError }"
+      :class="{ 'image-item__trigger--error': isBroken }"
       :aria-label="`View full size: ${label}`"
-      @click="handleClick"
+      @click="open"
     >
-      <img
-        :src="encodeURI(item.imageUrl)"
+      <AsyncImage
+        :src="src"
         :alt="item.imageAlt || ''"
-        loading="lazy"
-        decoding="async"
-        class="image-item__img"
-        :class="{ 'image-item__img--error': hasError }"
         @error="handleImageError"
       />
 
@@ -105,30 +86,8 @@ function handleImageError() {
   outline-offset: 2px;
 }
 
-.image-item__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: opacity 0.2s ease;
-}
-
 .image-item__trigger--error {
   cursor: default;
-}
-
-.image-item__img--error {
-  opacity: 0;
-}
-
-.image-item__trigger--error::after {
-  content: '⚠ Image unavailable';
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--color-fg-muted);
-  font-size: 0.85rem;
 }
 
 .image-item__badge {

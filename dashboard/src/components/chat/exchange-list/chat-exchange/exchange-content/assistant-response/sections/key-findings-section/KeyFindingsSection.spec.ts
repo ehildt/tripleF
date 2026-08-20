@@ -20,7 +20,7 @@ describe('KeyFindingsSection', () => {
     expect(wrapper.find('h3').exists()).toBe(false);
   });
 
-  it('assigns a cycling color to each tag via the --finding-color variable', () => {
+  it('assigns a cycling color to each tag via the --stat-tile-color variable', () => {
     const wrapper = mount(KeyFindingsSection, {
       props: {
         items: Array.from({ length: 10 }, (_, index) => ({
@@ -31,14 +31,14 @@ describe('KeyFindingsSection', () => {
 
     const items = wrapper.findAll('li');
     expect(items[0].attributes('style')).toContain(
-      '--finding-color: var(--color-accent-primary)',
+      '--stat-tile-color: var(--color-accent-primary)',
     );
     expect(items[5].attributes('style')).toContain(
-      '--finding-color: var(--color-status-info)',
+      '--stat-tile-color: var(--color-status-info)',
     );
     // The 10th tag wraps back to the start of the cycle.
     expect(items[9].attributes('style')).toContain(
-      '--finding-color: var(--color-accent-primary)',
+      '--stat-tile-color: var(--color-accent-primary)',
     );
   });
 

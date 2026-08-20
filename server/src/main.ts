@@ -50,7 +50,12 @@ void (async () => {
   await APP.register(compress as any, {
     threshold: 1024, // minimum payload size to compress
     encodings: ['br', 'gzip'], // optional: restrict Brotli/gzip
-    global: false, // default behavior – compress all
+    // Compress every response matching the custom types below. `global: false`
+    // would require a per-route opt-in, leaving API payloads (conversation
+    // JSON, models, DLQ) uncompressed — the browser connection budget on
+    // HTTP/1.1 makes that a first-paint tax. Non-JSON responses (storage
+    // image proxying) are excluded by customTypes.
+    global: true,
     customTypes: /json/i, // only compress JSON responses (fixes Swagger UI empty page issue)
   });
 

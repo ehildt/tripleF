@@ -7,7 +7,7 @@ export interface SubMenuItem {
   icon?: LucideIcon;
   /**
    * Tooltip text shown on hover. Defaults to the label when omitted — set
-   * it when the label alone is not informative (e.g. template subtabs).
+   * it only when the tooltip should say something more than the label.
    */
   tooltip?: string;
 }

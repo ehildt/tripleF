@@ -149,7 +149,6 @@ function press(action: 'pin' | 'delete') {
   font-size: 0.75rem;
   font-family: var(--font-mono);
   background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-divider);
   width: 100%;
   box-sizing: border-box;
   cursor: pointer;

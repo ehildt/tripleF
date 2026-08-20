@@ -7,7 +7,7 @@ import {
   VARIANT_DESCRIPTIONS,
 } from '@/stores/preprocessing';
 
-import PprocSectionHeader from '../../shared/ui/section-header/PprocSectionHeader.vue';
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 
 const store = usePreprocessingStore();
 
@@ -50,7 +50,7 @@ function toggleVariant(key: keyof typeof store.variants) {
 
 <template>
   <div class="pproc-variants-section">
-    <PprocSectionHeader :icon="Images" :title="$t('common.imageVariants')" />
+    <SectionHeader :icon="Images" :title="$t('common.imageVariants')" />
     <div class="pproc-variants-section__grid">
       <FieldCard
         v-for="(config, key) in variantConfig"

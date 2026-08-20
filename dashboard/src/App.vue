@@ -41,8 +41,9 @@ const preprocessingStore = usePreprocessingStore();
 
 // Push the persisted preprocessing settings to the server on boot: the
 // server applies preprocessing from its own effective config, so it needs
-// the client's overrides before the next query runs.
-preprocessingStore.pushSettingsToServer();
+// the client's overrides before the next query runs. Deferred to idle — it
+// is a write, not something first paint depends on.
+scheduleIdle(() => preprocessingStore.pushSettingsToServer());
 
 // The SysCtl popout preview is transient: switching tabs dismisses it.
 // Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
@@ -57,6 +58,21 @@ watch(
 
 const DLQ_POLL_INTERVAL = 30_000;
 let dlqPollTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Run a callback when the browser is idle, falling back to a macrotask when
+ * requestIdleCallback is unavailable (jsdom, older engines). Used to push
+ * non-critical boot work (DLQ badge, preprocessing push) off the first-paint
+ * path so it doesn't compete with the conversation restore and route chunks
+ * for the connection budget on HTTP/1.1.
+ */
+function scheduleIdle(callback: () => void) {
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(callback, { timeout: 2000 });
+  } else {
+    window.setTimeout(callback, 0);
+  }
+}
 
 socketStore.setCallbacks(
   debugStore.addSocketDebugEntry,
@@ -102,7 +118,10 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  dlqStore.fetchDlqCount();
+  // The DLQ badge is not on the first-paint path: defer the initial fetch so
+  // it doesn't queue behind the conversation restore and route chunks. The
+  // 30s poll keeps it fresh from here on.
+  scheduleIdle(() => dlqStore.fetchDlqCount());
   dlqPollTimer = setInterval(() => dlqStore.fetchDlqCount(), DLQ_POLL_INTERVAL);
   socketStore.ensureSocketConnection();
 });

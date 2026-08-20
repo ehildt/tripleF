@@ -16,7 +16,7 @@ import {
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
-import PprocSectionHeader from '../../shared/ui/section-header/PprocSectionHeader.vue';
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 
 const store = usePreprocessingStore();
 
@@ -103,7 +103,7 @@ const parameters = [
 
 <template>
   <div class="pproc-advanced-parameters-section">
-    <PprocSectionHeader
+    <SectionHeader
       :icon="SlidersHorizontal"
       :title="$t('common.advancedParameters')"
     />

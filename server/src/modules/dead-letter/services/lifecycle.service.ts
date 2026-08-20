@@ -16,7 +16,27 @@ export class LifecycleService {
     private readonly bullMQConfigService: BullMQConfigService,
   ) {}
 
+  /**
+   * Request ids whose run ended in an application-level error. Application
+   * failures complete the BullMQ job (the step engine catches step errors),
+   * so they reach the DLQ from the completed hook instead of the failed one.
+   */
+  private readonly applicationFailures = new Map<string, string>();
+
+  /** Mark a completed-with-error run so the completed hook records a DLQ
+   *  entry for it instead of clearing one. */
+  markApplicationFailure(requestId: string, failedReason: string): void {
+    this.applicationFailures.set(requestId, failedReason);
+  }
+
   async onJobCompleted(job: Job<HarnessJobPayload>): Promise<void> {
+    const failedReason = this.applicationFailures.get(job.name);
+    if (failedReason !== undefined) {
+      this.applicationFailures.delete(job.name);
+      await this.recordFinalFailure(job, this.getRetryDelayMs(), failedReason);
+      return;
+    }
+
     const dlqEntry = await this.dlqRepository.findById(job.name);
     if (!dlqEntry) return;
 
@@ -32,6 +52,7 @@ export class LifecycleService {
     job: Job<HarnessJobPayload>,
     failedReason?: string,
   ): Promise<void> {
+    this.applicationFailures.delete(job.name);
     if (!this.hasReachedMaxAttempts(job)) return;
     await this.recordFinalFailure(job, this.getRetryDelayMs(), failedReason);
     await this.removeJob(job);

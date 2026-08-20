@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import TurndownService from 'turndown';
 import { ref, watch } from 'vue';
 
 import {
@@ -12,6 +11,7 @@ import { deleteUploadedObject } from '../api/storage.api';
 import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
 import { resolvePendingMerge } from '../composables/merge-selection.state';
+import type { MergedConversation } from '../types/conversation.model';
 import { createId } from '../utils/id.helper';
 import { calcInputTokenDelta } from './helpers/conversation/calc-input-token-delta.helper';
 import { createConversation } from './helpers/conversation/create-conversation.helper';
@@ -20,6 +20,7 @@ import { fromPersistedConversation } from './helpers/conversation/from-persisted
 import { getLatestRequestId } from './helpers/conversation/get-latest-request-id.helper';
 import { inferConversationTitle } from './helpers/conversation/infer-conversation-title.helper';
 import { isTemporaryConversationExpired } from './helpers/conversation/is-temporary-conversation-expired.helper';
+import { loadTurndown } from './helpers/conversation/load-turndown.helper';
 import { mergeUploadedImages } from './helpers/conversation/merge-uploaded-images.helper';
 import { prunePairedExchange } from './helpers/conversation/prune-paired-exchange.helper';
 import { toPersistedConversation } from './helpers/conversation/to-persisted-conversation.helper';
@@ -42,11 +43,6 @@ export type {
   Exchange,
   UploadedImage,
 } from './conversation.model';
-
-const turndown = new TurndownService({
-  headingStyle: 'atx',
-  codeBlockStyle: 'fenced',
-});
 
 const SESSION_ID = getPersistentSocketSessionId();
 
@@ -173,41 +169,178 @@ export const useConversationStore = defineStore('conversation', () => {
   const hydrated = ref(false);
   const conversationFileMap = ref<Record<string, File[]>>({});
 
-  loadConversations().then((stubs) => {
-    conversations.value = stubs;
-    hydrated.value = true;
-    restoreLastActiveConversation();
-  });
+  /**
+   * Full-content fetches in flight, keyed by the stable server conversationId
+   * (not the internal id). The boot restore registers under the saved id, and
+   * a user click on the same conversation joins that request instead of
+   * issuing a duplicate GET.
+   */
+  const inFlightLoads = new Map<string, Promise<boolean>>();
+
+  // Boot: fetch the stub list (sidebar) while the last active conversation's
+  // full content fetches in parallel — the saved id is known synchronously
+  // from localStorage, so the chat restore never waits for the list.
+  void bootstrapConversations();
+
+  /**
+   * Boot sequence: fetch the conversation stubs for the sidebar while the
+   * last active conversation's full content fetches in parallel. The saved id
+   * is the stable server conversationId, known synchronously from
+   * localStorage, so the single-conversation fetch never waits for the list —
+   * the chat renders after max(list, content) instead of their sum.
+   */
+  async function bootstrapConversations() {
+    const savedId = localStorage.getItem(LAST_ACTIVE_CONVERSATION_KEY);
+    const savedIsLocal = savedId
+      ? loadTemporaryConversations()[savedId] !== undefined
+      : false;
+
+    // The list settle promise is shared with the restore apply so a fast
+    // content fetch can never run ahead of the stub assignment below — the
+    // apply awaits it before reading `conversations`.
+    const listSettled = loadConversations().then((stubs) => {
+      conversations.value = stubs;
+      hydrated.value = true;
+    });
+
+    // Kick the content fetch off immediately. Temporary conversations are
+    // already fully hydrated from localStorage, so a server fetch would be a
+    // guaranteed 404 with nothing to gain.
+    const restoreApply =
+      savedId && !savedIsLocal
+        ? applyRestoredConversation(
+            savedId,
+            fetchConversation(SESSION_ID, savedId),
+            listSettled,
+          )
+        : null;
+    if (savedId && restoreApply) inFlightLoads.set(savedId, restoreApply);
+
+    await listSettled;
+
+    if (!savedId) return;
+
+    if (savedIsLocal) {
+      const local = conversations.value.find(
+        (c) => c.conversationId === savedId,
+      );
+      if (local) activeConversationId.value = local.id;
+      return;
+    }
+
+    // Join the parallel restore. If a user click on the same conversation
+    // already ran it (via the shared in-flight entry), there is nothing left
+    // to do — the apply resolved and activated the conversation.
+    const joined = inFlightLoads.get(savedId);
+    if (!joined) return;
+    try {
+      await joined;
+    } finally {
+      inFlightLoads.delete(savedId);
+    }
+  }
+
+  /**
+   * Fetch a saved conversation's full content and apply it to the matching
+   * stub once the list has settled — or insert it when the list has no match
+   * (the snapshot raced a save). Resolves true when the conversation is ready
+   * to use. A 404 clears a stale bookmark; a network failure keeps it for a
+   * reload retry.
+   */
+  async function applyRestoredConversation(
+    savedId: string,
+    fetchPromise: Promise<MergedConversation | null>,
+    listSettled: Promise<void>,
+  ): Promise<boolean> {
+    let merged: MergedConversation | null;
+    try {
+      merged = await fetchPromise;
+    } catch {
+      // Network failure — the conversation may still exist; the stub (if any)
+      // stays lazily loadable and the bookmark is kept for a reload retry.
+      await listSettled;
+      const stub = conversations.value.find(
+        (c) => c.conversationId === savedId,
+      );
+      if (stub) activeConversationId.value = stub.id;
+      return false;
+    }
+    await listSettled;
+    if (!merged) {
+      // 404 — the conversation no longer exists on the server. Drop the stale
+      // bookmark unless the list still shows a stub (then it stays lazily
+      // openable).
+      const stub = conversations.value.find(
+        (c) => c.conversationId === savedId,
+      );
+      if (stub) activeConversationId.value = stub.id;
+      else localStorage.removeItem(LAST_ACTIVE_CONVERSATION_KEY);
+      return false;
+    }
+
+    const loaded = fromPersistedConversation({
+      ...(merged.content as unknown as PersistedConversation),
+      conversationId: merged.conversationId,
+    });
+    const stub = conversations.value.find((c) => c.conversationId === savedId);
+    if (stub) {
+      Object.assign(stub, loaded, { loaded: true });
+      // Refresh the cached percentage from the freshly hydrated exchanges so
+      // the sidebar fallback never shows a stale/null server value for a
+      // conversation that actually has token data.
+      stub.contextUsagePercent = calcTotalContextPercentage(
+        stub.exchanges,
+        stub.numCtx,
+      );
+      activeConversationId.value = stub.id;
+    } else {
+      conversations.value.unshift(loaded);
+      activeConversationId.value = loaded.id;
+    }
+    return true;
+  }
 
   /**
    * Hydrate a conversation stub with its full content from the server.
    * No-op when the conversation is already loaded or missing. Resolves true
    * when the conversation is ready to use (already loaded or just hydrated).
+   * Concurrent loads of the same conversation share a single request.
    */
   async function loadConversation(id: string): Promise<boolean> {
     const conversation = getConversation(id);
     if (!conversation || conversation.loaded) return true;
+    const inFlight = inFlightLoads.get(conversation.conversationId);
+    if (inFlight) return inFlight;
+    const promise = (async () => {
+      try {
+        const merged = await fetchConversation(
+          SESSION_ID,
+          conversation.conversationId,
+        );
+        if (!merged) return false; // 404 — nothing left to hydrate
+        const loaded = fromPersistedConversation({
+          ...(merged.content as unknown as PersistedConversation),
+          conversationId: merged.conversationId,
+        });
+        Object.assign(conversation, loaded, { loaded: true });
+        // Refresh the cached percentage from the freshly hydrated exchanges so
+        // the sidebar fallback never shows a stale/null server value for a
+        // conversation that actually has token data.
+        conversation.contextUsagePercent = calcTotalContextPercentage(
+          conversation.exchanges,
+          conversation.numCtx,
+        );
+        return true;
+      } catch {
+        // Offline — the stub remains usable.
+        return false;
+      }
+    })();
+    inFlightLoads.set(conversation.conversationId, promise);
     try {
-      const merged = await fetchConversation(
-        SESSION_ID,
-        conversation.conversationId,
-      );
-      const loaded = fromPersistedConversation({
-        ...(merged.content as unknown as PersistedConversation),
-        conversationId: merged.conversationId,
-      });
-      Object.assign(conversation, loaded, { loaded: true });
-      // Refresh the cached percentage from the freshly hydrated exchanges so
-      // the sidebar fallback never shows a stale/null server value for a
-      // conversation that actually has token data.
-      conversation.contextUsagePercent = calcTotalContextPercentage(
-        conversation.exchanges,
-        conversation.numCtx,
-      );
-      return true;
-    } catch {
-      // Offline — the stub remains usable.
-      return false;
+      return await promise;
+    } finally {
+      inFlightLoads.delete(conversation.conversationId);
     }
   }
 
@@ -281,20 +414,6 @@ export const useConversationStore = defineStore('conversation', () => {
       activeConversationId.value = id;
       void loadConversation(id);
     }
-  }
-
-  /**
-   * Re-open the last viewed conversation after a reload. The stored value is
-   * the stable server `conversationId`; it is matched against the freshly
-   * fetched stubs and hydrated so the chat restores where the user left off.
-   */
-  function restoreLastActiveConversation() {
-    const saved = localStorage.getItem(LAST_ACTIVE_CONVERSATION_KEY);
-    if (!saved) return;
-    const target = conversations.value.find((c) => c.conversationId === saved);
-    if (!target) return;
-    activeConversationId.value = target.id;
-    void loadConversation(target.id);
   }
 
   // Persist the active conversation so a reload can restore it. The stable
@@ -793,9 +912,16 @@ export const useConversationStore = defineStore('conversation', () => {
     });
   }
 
-  function buildPrompt(conversationId: string): string {
+  /**
+   * Build the model-facing prompt for a conversation. Async since the markdown
+   * converter loads on demand (see load-turndown.helper).
+   */
+  async function buildPrompt(conversationId: string): Promise<string> {
     const conversation = getConversation(conversationId);
     if (!conversation) return '[]';
+    // Turndown is only needed at submit time, so it loads on demand instead
+    // of weighing down the boot chunk graph.
+    const turndown = await loadTurndown();
     const messages = conversation.exchanges
       .filter((e) => e.included !== false)
       .map((e) => {

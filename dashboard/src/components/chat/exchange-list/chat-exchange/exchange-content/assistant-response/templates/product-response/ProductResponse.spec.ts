@@ -25,7 +25,7 @@ describe('ProductResponse', () => {
       heroImageUrl: 'https://example.com/hero.jpg',
     });
 
-    expect(wrapper.find('.product-banner__title').text()).toBe(
+    expect(wrapper.find('.response-header__title').text()).toBe(
       'Sony WH-1000XM5',
     );
     expect(wrapper.find('.product-banner__rating').exists()).toBe(true);

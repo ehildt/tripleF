@@ -129,6 +129,19 @@ footer,
   }
 }
 
+/* Standard skeleton pulse (2s) — the calmer counterpart of pulse-fast.
+   Scoped component styles reference this by name: keyframes are global even
+   when declared once here, so every loading skeleton animates identically. */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .animate-pulse-fast {
   animation: pulse-fast 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

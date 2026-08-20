@@ -10,6 +10,15 @@ import { Prisma, PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../../dead-letter/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../dead-letter/constants/postgres.constants.js';
 
+/** One row of `findLatestBySession`: the latest turn per conversation. The
+ * `content` JSONB column arrives as a parsed object through the pg driver. */
+interface LatestConversationRow {
+  conversationId: string;
+  title: string | null;
+  content: unknown;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class ConversationRepository implements OnModuleInit, OnModuleDestroy {
   private _prisma: PrismaClient | null = null;
@@ -54,18 +63,23 @@ export class ConversationRepository implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async findLatestBySession(sessionId: string) {
-    const turns = await this.prisma.harnessConversation.findMany({
-      where: { sessionId },
-      orderBy: [{ conversationId: 'asc' }, { updatedAt: 'desc' }],
-    });
-    const latest = new Map<string, (typeof turns)[number]>();
-    for (const turn of turns) {
-      if (!latest.has(turn.conversationId)) {
-        latest.set(turn.conversationId, turn);
-      }
-    }
-    return [...latest.values()];
+  /**
+   * Latest turn per conversation for a session. Postgres `DISTINCT ON` keeps
+   * this at exactly one row per conversation: the previous implementation
+   * fetched every turn with its full JSON content (N conversations × M turns)
+   * and deduped in JS, which moved all those blobs DB→server for nothing.
+   * (Prisma's `distinct` option is avoided — its interaction with a secondary
+   * `orderBy` is documented-unreliable.)
+   */
+  async findLatestBySession(
+    sessionId: string,
+  ): Promise<LatestConversationRow[]> {
+    return this.prisma.$queryRaw<LatestConversationRow[]>`
+      SELECT DISTINCT ON ("conversationId") "conversationId", "title", "content", "updatedAt"
+      FROM "harness_conversation"
+      WHERE "sessionId" = ${sessionId}
+      ORDER BY "conversationId" ASC, "updatedAt" DESC
+    `;
   }
 
   async create(data: Prisma.HarnessConversationCreateInput) {

@@ -52,9 +52,6 @@ const SOURCE_META: Record<string, { icon: LucideIcon; label: string }> = {
   reviews: { icon: Star, label: 'reviews' },
 };
 
-const noSearchEngineTitle =
-  "No search engine connected — answers come from the model's training data. Enable one in SysCtl → Search Engines.";
-
 /** Response-content section types the blue menu can collapse/expand. The
  * media sections (gallery, videoGallery) are not here — they switch
  * presentations instead of hiding. */
@@ -108,6 +105,11 @@ export function useChatPromptActionBar(
   const { t } = useI18n();
   const appStore = useAppStore();
 
+  /** Tooltip shown on the engine toggle when no search engine is configured. */
+  const noSearchEngineTitle = computed(() =>
+    t('common.noSearchEngineConnectedDesc'),
+  );
+
   const scrollMode = computed(() =>
     appStore.getConversationScrollMode(props.conversationId),
   );
@@ -124,28 +126,36 @@ export function useChatPromptActionBar(
       : t('common.scrollModeNative'),
   );
 
-  const sourceMenuCollapsed = computed(
-    () => appStore.sourceTagsMenuCollapsed.sources,
+  const sourceMenuCollapsed = computed(() =>
+    appStore.getSourceMenuCollapsed(props.conversationId, 'sources'),
   );
 
-  const viewMenuCollapsed = computed(
-    () => appStore.sourceTagsMenuCollapsed.view,
+  const viewMenuCollapsed = computed(() =>
+    appStore.getSourceMenuCollapsed(props.conversationId, 'view'),
   );
 
-  const sourceMenuAlwaysShow = computed(
-    () => appStore.sourceTagsMenuAlwaysShow.sources,
+  const sourceMenuAlwaysShow = computed(() =>
+    appStore.getSourceMenuAlwaysShow(props.conversationId, 'sources'),
   );
 
-  const viewMenuAlwaysShow = computed(
-    () => appStore.sourceTagsMenuAlwaysShow.view,
+  const viewMenuAlwaysShow = computed(() =>
+    appStore.getSourceMenuAlwaysShow(props.conversationId, 'view'),
   );
 
   function toggleSourceMenuCollapsed() {
-    appStore.setSourceTagsMenuCollapsed('sources', !sourceMenuCollapsed.value);
+    appStore.setSourceMenuCollapsed(
+      props.conversationId,
+      'sources',
+      !sourceMenuCollapsed.value,
+    );
   }
 
   function toggleViewMenuCollapsed() {
-    appStore.setSourceTagsMenuCollapsed('view', !viewMenuCollapsed.value);
+    appStore.setSourceMenuCollapsed(
+      props.conversationId,
+      'view',
+      !viewMenuCollapsed.value,
+    );
   }
 
   const sourceMenuToggleTitle = computed(() =>

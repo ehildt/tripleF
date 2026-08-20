@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { resolveErrorMessage } from '../helpers/resolve-error-message.helper.js';
+
 import { HarnessContext, StepId, StepState } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
 import { StepRegistry, StepRegistryService } from './step-registry.service.js';
@@ -66,7 +68,7 @@ export class HarnessStepEngineService {
       await registration.handler.execute(ctx);
       ctx.steps.set(stepId, { status: 'done' } as StepState);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = resolveErrorMessage(error);
       ctx.steps.set(stepId, { status: 'error', error: message });
       ctx.done = true;
       ctx.doneReason = 'error';

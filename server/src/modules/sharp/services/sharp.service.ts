@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
+import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 import { SharpConfigService } from '../configs/sharp-config.service.js';
 import { mergeSharpOptions } from '../constants/sharp.constants.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';

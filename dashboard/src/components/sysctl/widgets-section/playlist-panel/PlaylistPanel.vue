@@ -31,6 +31,7 @@ import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
 
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 import {
   playlistAnchor,
   playlistAutoClose,
@@ -43,13 +44,12 @@ import {
   togglePlaylistPreview,
 } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
 import type { PlaylistAnchor } from '../../../widgets/floating-playlist/composables/playlist-settings.state.types';
-import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 import type {
   PlaylistHorizontal,
   PlaylistVertical,
 } from './PlaylistPanel.types';
 
-const VERTICAL_OPTIONS = [
+const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
   {
     value: 'middle',
@@ -57,9 +57,9 @@ const VERTICAL_OPTIONS = [
     tooltip: i18n.global.t('common.middle'),
   },
   { value: 'bottom', icon: ArrowDown, tooltip: i18n.global.t('common.bottom') },
-] as const;
+]);
 
-const HORIZONTAL_OPTIONS = [
+const HORIZONTAL_OPTIONS = computed(() => [
   { value: 'left', icon: ArrowLeft, tooltip: i18n.global.t('common.left') },
   {
     value: 'center',
@@ -67,7 +67,7 @@ const HORIZONTAL_OPTIONS = [
     tooltip: i18n.global.t('common.center'),
   },
   { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
-] as const;
+]);
 
 /** Floating mode on/off — off keeps the playlist in the chat right panel. */
 const floatingEnabled = computed(() => playlistMode.value === 'floating');
@@ -118,7 +118,7 @@ function handlePreviewToggle() {
     </div>
 
     <div class="playlist-panel__group">
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="LayoutPanelLeft"
         :title="$t('common.dockingSection')"
       />
@@ -156,7 +156,7 @@ function handlePreviewToggle() {
     </div>
 
     <div class="playlist-panel__group">
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="PanelRightClose"
         :title="$t('common.behaviorSection')"
       />

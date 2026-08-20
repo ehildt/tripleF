@@ -2,16 +2,14 @@
 import { computed } from 'vue';
 
 import ArticleCardsSection from '../../sections/article-cards-section/ArticleCardsSection.vue';
-import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
-import GallerySection from '../../sections/gallery-section/GallerySection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ArticleHero from '../../shared/ui/article-hero/ArticleHero.vue';
+import MediaGalleries from '../../shared/ui/media-galleries/MediaGalleries.vue';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
 import { useEvaluationResponseData } from '../evaluation-response/composables/use-evaluation-response-data.composable';
 import EvaluationComparisonSection from '../evaluation-response/sections/evaluation-comparison-section/EvaluationComparisonSection.vue';
@@ -59,11 +57,10 @@ const hasAnyContent = computed(() =>
 <template>
   <article class="harness-merge">
     <template v-if="hasAnyContent">
-      <header class="hero">
-        <HeroSection :title="data.title" :subtitle="data.subtitle" />
-      </header>
-
-      <ArticleHeroMediaSection
+      <ArticleHero
+        :title="data.title"
+        :subtitle="data.subtitle"
+        :split="false"
         :hero-video-url="data.heroVideoUrl"
         :hero-video-caption="data.heroVideoCaption"
         :hero-video-title="data.heroVideoTitle"
@@ -149,20 +146,13 @@ const hasAnyContent = computed(() =>
         :title="$t('common.keyFindings')"
       />
 
-      <template v-if="videosFirst">
-        <VideoGallerySection
-          :title="data.videoGalleryTitle"
-          :items="data.videoGalleryItems"
-        />
-        <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
-      </template>
-      <template v-else>
-        <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
-        <VideoGallerySection
-          :title="data.videoGalleryTitle"
-          :items="data.videoGalleryItems"
-        />
-      </template>
+      <MediaGalleries
+        :videos-first="videosFirst"
+        :video-gallery-title="data.videoGalleryTitle"
+        :video-gallery-items="data.videoGalleryItems"
+        :gallery-title="data.galleryTitle"
+        :gallery-items="data.galleryItems"
+      />
 
       <ArticleCardsSection :title="data.cardsTitle" :items="data.cards" />
       <InternationalCoverageSection :items="data.internationalCoverage" />

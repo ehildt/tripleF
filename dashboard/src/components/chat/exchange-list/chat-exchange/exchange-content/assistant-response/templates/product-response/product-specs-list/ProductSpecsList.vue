@@ -8,6 +8,7 @@ import { computed } from 'vue';
 import type { KeyFinding } from '@/types/harness-response-data.model';
 
 import { splitSpecLabel } from '../../../shared/helpers/split-spec-label.helper';
+import EyebrowTitle from '../../../shared/ui/eyebrow-title/EyebrowTitle.vue';
 
 const props = defineProps<{ items: readonly KeyFinding[] }>();
 
@@ -18,7 +19,7 @@ const rows = computed(() =>
 
 <template>
   <section class="spec-list">
-    <h3 class="spec-list__title">{{ $t('common.keySpecs') }}</h3>
+    <EyebrowTitle :title="$t('common.keySpecs')" />
     <ul class="spec-list__table">
       <li v-for="(row, idx) in rows" :key="idx" class="spec-list__row">
         <template v-if="row.label">
@@ -38,16 +39,6 @@ const rows = computed(() =>
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1-5);
-}
-
-.spec-list__title {
-  margin: 0;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-fg-muted);
 }
 
 .spec-list__table {

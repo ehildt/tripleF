@@ -45,7 +45,7 @@ const capabilityRows = computed(() =>
   buildBrightDataCapabilityRows(props.config.capabilities),
 );
 
-const descriptions: Record<string, string> = {
+const descriptions = computed<Record<string, string>>(() => ({
   web: i18n.global.t('common.searchCapWebBrightData'),
   images: i18n.global.t('common.searchCapImages'),
   news: i18n.global.t('common.searchCapNews'),
@@ -53,7 +53,7 @@ const descriptions: Record<string, string> = {
   shopping: i18n.global.t('common.searchCapShopping'),
   videos: i18n.global.t('common.searchCapVideos'),
   scrape: i18n.global.t('common.searchCapScrapeBrightData'),
-};
+}));
 
 const icons = {
   web: Globe,
@@ -75,8 +75,6 @@ function onZoneChange(zone: 'serpZone' | 'unlockerZone', event: Event) {
 
 <template>
   <ProviderSection
-    provider-name="Bright Data"
-    :provider-description="$t('common.searchEngineAltSerper')"
     :config="config"
     :descriptions="descriptions"
     :icons="icons"

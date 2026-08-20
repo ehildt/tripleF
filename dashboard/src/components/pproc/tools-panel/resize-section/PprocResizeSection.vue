@@ -10,9 +10,9 @@ import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 import type { PreprocessingSize } from '@/types/preprocessing.model';
 
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 import MaxHeightField from '../../shared/ui/max-height-field/MaxHeightField.vue';
 import MaxWidthField from '../../shared/ui/max-width-field/MaxWidthField.vue';
-import PprocSectionHeader from '../../shared/ui/section-header/PprocSectionHeader.vue';
 
 const store = usePreprocessingStore();
 
@@ -29,7 +29,7 @@ function updateMaxWidth(value: PreprocessingSize) {
 
 <template>
   <div class="pproc-resize-section">
-    <PprocSectionHeader
+    <SectionHeader
       :icon="ArrowDownToLine"
       :title="$t('common.resizeSettings')"
     />

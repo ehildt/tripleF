@@ -4,7 +4,7 @@ import { useId } from 'vue';
 import type { GalleryItem } from '@/types/harness-response-data.model';
 
 import { useHarnessMediaPresentation } from '../../shared/composables/use-harness-media-presentation.composable';
-import ImageListItem from '../../shared/ui/image-list-item/ImageListItem.vue';
+import ImageGrid from '../../shared/ui/image-grid/ImageGrid.vue';
 import AssistantCarousel from '../../shared/ui/media-carousel/AssistantCarousel.vue';
 import GalleryItemComponent from '../../shared/ui/media-carousel/gallery-item/GalleryItem.vue';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
@@ -35,18 +35,9 @@ const presentation = useHarnessMediaPresentation('image');
       :id="titleId"
       :title="title"
     />
-    <!-- List presentation: a responsive grid of tiles, like the imagelist
-         template's grid. -->
-    <ul
-      v-if="presentation === 'list'"
-      class="harness-gallery harness-gallery--list"
-    >
-      <ImageListItem
-        v-for="(item, index) in items"
-        :key="`${item.imageUrl}-${index}`"
-        :item="item"
-      />
-    </ul>
+    <!-- List presentation: the shared responsive tile grid, also used by the
+         imagelist template, so both grids stay identical. -->
+    <ImageGrid v-if="presentation === 'list'" :items="items" />
     <template v-else>
       <ul
         v-if="items.length === 1"
@@ -98,13 +89,6 @@ const presentation = useHarnessMediaPresentation('image');
   max-width: none;
   width: 100%;
   height: 100%;
-}
-
-/* List presentation: responsive tile grid, denser than the carousel. */
-.harness-gallery--list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--spacing-2);
 }
 
 /* Mosaic direction (ar4): a dense span-grid of fixed-height rows. Captions

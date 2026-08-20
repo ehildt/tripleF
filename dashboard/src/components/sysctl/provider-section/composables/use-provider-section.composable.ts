@@ -7,20 +7,21 @@ import type { ProviderSectionProps } from '../ProviderSection.types';
 
 const EXCLUDED_KEYS = ['apiKey', 'enabled', 'projectId'];
 
-const ENDPOINT_LABELS: Record<string, string> = {
-  web: i18n.global.t('common.endpointWeb'),
-  images: i18n.global.t('common.endpointImages'),
-  news: i18n.global.t('common.endpointNews'),
-  places: i18n.global.t('common.endpointPlaces'),
-  shopping: i18n.global.t('common.endpointShopping'),
-  videos: i18n.global.t('common.endpointVideos'),
-  scrape: i18n.global.t('common.endpointScrape'),
-  reviews: i18n.global.t('common.endpointReviews'),
-  search: i18n.global.t('common.endpointSearch'),
-  quote: i18n.global.t('common.endpointQuote'),
-  history: i18n.global.t('common.endpointHistory'),
-  technical: i18n.global.t('common.endpointTechnical'),
-  fundamentals: i18n.global.t('common.endpointFundamentals'),
+const ENDPOINT_LABEL_KEYS: Record<string, string> = {
+  web: 'common.endpointWeb',
+  images: 'common.endpointImages',
+  news: 'common.endpointNews',
+  places: 'common.endpointPlaces',
+  shopping: 'common.endpointShopping',
+  videos: 'common.endpointVideos',
+  scrape: 'common.endpointScrape',
+  reviews: 'common.endpointReviews',
+  search: 'common.endpointSearch',
+  quote: 'common.endpointQuote',
+  history: 'common.endpointHistory',
+  technical: 'common.endpointTechnical',
+  fundamentals: 'common.endpointFundamentals',
+  intraday: 'common.endpointIntraday',
 };
 
 /**
@@ -69,12 +70,21 @@ export function useProviderSection(
     return Math.min(5, Math.max(1, Math.ceil(count / 2)));
   }
 
-  const itemsPerRow = computed(() =>
-    itemsPerRowFor(endpointEntries.value.length),
+  const itemsPerRow = computed(
+    () => props.itemsPerRow ?? itemsPerRowFor(endpointEntries.value.length),
   );
 
   const prependItemsPerRow = computed(
     () => props.prependItemsPerRow ?? itemsPerRowFor(prependCount.value),
+  );
+
+  const ENDPOINT_LABELS = computed<Record<string, string>>(() =>
+    Object.fromEntries(
+      Object.entries(ENDPOINT_LABEL_KEYS).map(([name, key]) => [
+        name,
+        i18n.global.t(key),
+      ]),
+    ),
   );
 
   return {

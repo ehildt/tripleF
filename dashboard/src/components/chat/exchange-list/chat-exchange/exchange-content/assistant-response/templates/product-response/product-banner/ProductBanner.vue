@@ -11,6 +11,9 @@
  * the video/iframe play block — telling the user how many images the product
  * carries total.
  */
+import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
+
+import ResponseHeader from '../../../shared/ui/response-header/ResponseHeader.vue';
 import StarRatingIndicator from '../../../shared/ui/star-rating-indicator/StarRatingIndicator.vue';
 import { useProductBanner } from './composables/use-product-banner.composable';
 import type { ProductBannerProps } from './ProductBanner.types';
@@ -29,10 +32,12 @@ const {
 
 <template>
   <section class="product-banner">
-    <header class="product-banner__header">
-      <h2 v-if="title" class="product-banner__title">{{ title }}</h2>
-      <p v-if="subtitle" class="product-banner__subtitle">{{ subtitle }}</p>
-    </header>
+    <ResponseHeader
+      v-if="title || subtitle"
+      :title="title"
+      :subtitle="subtitle"
+      size="xl"
+    />
 
     <figure class="product-banner__figure">
       <button
@@ -42,12 +47,12 @@ const {
         :aria-label="$t('common.viewFullSize', { label })"
         @click="openLightbox"
       >
-        <img
+        <!-- Pulse skeleton + fade-in + error handling live in AsyncImage;
+             the banner image is an LCP candidate, so it loads eagerly. -->
+        <AsyncImage
           :src="encodeURI(imageUrl!)"
           :alt="imageAlt || title || $t('common.productImage')"
-          class="product-banner__img"
-          loading="lazy"
-          decoding="async"
+          eager
         />
 
         <span v-if="hasRating" class="product-banner__rating">
@@ -134,13 +139,6 @@ const {
 .product-banner__trigger:focus-visible {
   outline: 2px solid var(--color-accent-primary);
   outline-offset: -2px;
-}
-
-.product-banner__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .product-banner__placeholder {

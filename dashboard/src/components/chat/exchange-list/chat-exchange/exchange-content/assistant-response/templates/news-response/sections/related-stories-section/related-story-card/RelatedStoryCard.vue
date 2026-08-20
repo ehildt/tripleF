@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { RelatedStory } from '@/types/harness-response-data.model';
 
@@ -48,11 +49,9 @@ function linkPropsFor(story: RelatedStory): {
       >
         <figure>
           <div v-if="item.imageUrl" class="related-story__media">
-            <img
+            <AsyncImage
               :src="encodeURI(item.imageUrl)"
               :alt="imageAltFor(item)"
-              loading="lazy"
-              decoding="async"
             />
           </div>
           <figcaption
@@ -114,21 +113,6 @@ a.related-story__card:hover figure {
   border: none !important;
   padding: 0 !important;
   flex: 1 1 auto;
-}
-
-.related-story__media img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100% !important;
-  max-height: none !important;
-  object-fit: cover;
-  display: block;
-}
-
-.related-story__media img:hover {
-  animation: none !important;
-  box-shadow: none !important;
 }
 
 .related-story__caption {

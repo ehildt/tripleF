@@ -209,6 +209,23 @@ describe('useAppStore', () => {
     });
   });
 
+  describe('per-conversation source tags menu collapse', () => {
+    it('falls back to the global default without an override', () => {
+      const store = useAppStore();
+      store.setSourceTagsMenuCollapsed('sources', true);
+      expect(store.getSourceMenuCollapsed('conv-1', 'sources')).toBe(true);
+    });
+
+    it('overrides one conversation without leaking to others', () => {
+      const store = useAppStore();
+      store.setSourceMenuCollapsed('conv-1', 'sources', true);
+      expect(store.getSourceMenuCollapsed('conv-1', 'sources')).toBe(true);
+      expect(store.getSourceMenuCollapsed('conv-2', 'sources')).toBe(false);
+      // Only the toggled menu is overridden.
+      expect(store.getSourceMenuCollapsed('conv-1', 'view')).toBe(false);
+    });
+  });
+
   describe('source tags menu always show', () => {
     it('defaults both menus to always show', () => {
       const store = useAppStore();
@@ -226,6 +243,22 @@ describe('useAppStore', () => {
 
       store.setSourceTagsMenuAlwaysShow('view', false);
       expect(store.sourceTagsMenuAlwaysShow.view).toBe(false);
+    });
+  });
+
+  describe('per-conversation source tags menu always show', () => {
+    it('falls back to the global default without an override', () => {
+      const store = useAppStore();
+      store.setSourceTagsMenuAlwaysShow('sources', false);
+      expect(store.getSourceMenuAlwaysShow('conv-1', 'sources')).toBe(false);
+    });
+
+    it('overrides one conversation without leaking to others', () => {
+      const store = useAppStore();
+      store.setSourceMenuAlwaysShow('conv-1', 'view', false);
+      expect(store.getSourceMenuAlwaysShow('conv-1', 'view')).toBe(false);
+      expect(store.getSourceMenuAlwaysShow('conv-2', 'view')).toBe(true);
+      expect(store.getSourceMenuAlwaysShow('conv-1', 'sources')).toBe(true);
     });
   });
 

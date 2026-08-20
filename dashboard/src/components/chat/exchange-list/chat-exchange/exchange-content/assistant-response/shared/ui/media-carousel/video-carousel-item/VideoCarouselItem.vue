@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ListMinus, ListPlus } from '@lucide/vue';
-import { computed } from 'vue';
-
-import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
-import { buildVideoPosterUrl } from '../../../../composables/helpers/media/build-video-poster-url.helper';
-import { usePlaylistToggle } from '../../../../composables/use-playlist-toggle';
 import FloatingVideoFigure from '../../../../sections/floating-video-figure/FloatingVideoFigure.vue';
+import { useVideoGalleryTile } from '../../../../shared/composables/use-video-gallery-tile.composable';
+import MediaCaptionScrim from '../../media-caption-scrim/MediaCaptionScrim.vue';
+import MediaCardHeader from '../../media-card-header/MediaCardHeader.vue';
+import PlaylistToggleButton from '../../playlist-toggle-button/PlaylistToggleButton.vue';
 
 const props = defineProps<{
   item: VideoGalleryItem;
@@ -16,16 +14,8 @@ const props = defineProps<{
   active?: boolean;
 }>();
 
-const posterUrl = computed(
-  () => props.item.thumbnailUrl || buildVideoPosterUrl(props.item.videoUrl),
-);
-
-const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
+const { posterUrl, isInPlaylist, togglePlaylistVideo } = useVideoGalleryTile(
   () => props.item,
-);
-
-const playlistToggleTitle = computed(() =>
-  isInPlaylist.value ? 'Remove from playlist' : 'Add to playlist',
 );
 </script>
 
@@ -43,44 +33,32 @@ const playlistToggleTitle = computed(() =>
         :poster-url="posterUrl"
         :dockable="active"
       />
-      <div class="video-carousel-item__caption">
-        <div class="video-carousel-item__row">
-          <a
-            v-if="item.title"
-            :href="item.videoUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="video-carousel-item__title"
-            >{{ item.title }}</a
-          >
+      <MediaCaptionScrim
+        class="video-carousel-item__caption"
+        :class="{ 'video-carousel-item__caption--no-caption': !item.caption }"
+      >
+        <!-- Header row: the title linking to its source. Without a caption
+             line the add-to button joins the actions column here and the
+             row pins to the bar's bottom edge via the modifier class. -->
+        <MediaCardHeader :title="item.title" :url="item.videoUrl" flush>
+          <template #actions>
+            <PlaylistToggleButton
+              v-if="!item.caption"
+              :active="isInPlaylist"
+              @toggle="togglePlaylistVideo"
+            />
+          </template>
+        </MediaCardHeader>
+        <!-- Caption line with the add-to button on its right; the row only
+             renders when the slide carries a caption. -->
+        <div v-if="item.caption" class="video-carousel-item__caption-row">
+          <p class="video-carousel-item__caption-text">{{ item.caption }}</p>
+          <PlaylistToggleButton
+            :active="isInPlaylist"
+            @toggle="togglePlaylistVideo"
+          />
         </div>
-        <div class="video-carousel-item__caption-row">
-          <p v-if="item.caption" class="video-carousel-item__caption-text">
-            {{ item.caption }}
-          </p>
-          <Tooltip :text="playlistToggleTitle">
-            <button
-              type="button"
-              class="video-carousel-item__playlist-toggle"
-              :class="{
-                'video-carousel-item__playlist-toggle--added': isInPlaylist,
-              }"
-              :aria-label="playlistToggleTitle"
-              :aria-pressed="isInPlaylist"
-              @click.stop="togglePlaylistVideo"
-            >
-              <ListMinus
-                v-if="isInPlaylist"
-                class="video-carousel-item__playlist-toggle-icon"
-              />
-              <ListPlus
-                v-else
-                class="video-carousel-item__playlist-toggle-icon"
-              />
-            </button>
-          </Tooltip>
-        </div>
-      </div>
+      </MediaCaptionScrim>
     </div>
   </li>
 </template>
@@ -103,9 +81,12 @@ const playlistToggleTitle = computed(() =>
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transform: scale(0.9);
-  opacity: 0.55;
-  filter: brightness(0.85) grayscale(0.75) blur(2px);
+  transform: var(--carousel-peek-transform, scale(0.9));
+  opacity: var(--carousel-peek-opacity, 0.55);
+  filter: var(
+    --carousel-peek-filter,
+    brightness(0.85) grayscale(0.75) blur(2px)
+  );
   transition:
     transform 0.35s ease,
     opacity 0.35s ease,
@@ -113,16 +94,19 @@ const playlistToggleTitle = computed(() =>
 }
 
 .video-carousel-item--active .video-carousel-item__media {
-  transform: scale(1);
-  opacity: 1;
-  filter: brightness(1) grayscale(0) blur(0);
+  transform: var(--carousel-active-transform, scale(1));
+  opacity: var(--carousel-active-opacity, 1);
+  filter: var(--carousel-active-filter, brightness(1) grayscale(0) blur(0));
 }
 
 .video-carousel-item--prev .video-carousel-item__media,
 .video-carousel-item--next .video-carousel-item__media {
-  transform: scale(0.9);
-  opacity: 0.55;
-  filter: brightness(0.85) grayscale(0.75) blur(2px);
+  transform: var(--carousel-peek-transform, scale(0.9));
+  opacity: var(--carousel-peek-opacity, 0.55);
+  filter: var(
+    --carousel-peek-filter,
+    brightness(0.85) grayscale(0.75) blur(2px)
+  );
 }
 
 /* The figure fills the media box above the caption bar; the poster crops
@@ -143,49 +127,26 @@ const playlistToggleTitle = computed(() =>
   object-fit: cover;
 }
 
-/* -------- caption bar (overlays the media's bottom, full width) -------- */
+/* -------- caption bar (scrim overlay styles live in MediaCaptionScrim) -------- */
 
 .video-carousel-item__caption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
-  opacity: 0.85;
+  /* Reserve the header row plus one caption line: the bar keeps its height
+     whether or not the slide carries a caption, so the add-to button stays
+     anchored and slides never shift. */
+  min-height: 4.5rem;
 }
 
-.video-carousel-item__row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  min-width: 0;
-}
-
-.video-carousel-item__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--color-fg-primary);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.video-carousel-item__title:hover {
-  color: var(--color-accent-primary);
+/* No caption line: the header row (title + add-to) pins to the bar's
+   bottom edge, so the add-to button sits flush at the video's
+   bottom-right. */
+.video-carousel-item__caption--no-caption {
+  justify-content: flex-end;
 }
 
 .video-carousel-item__caption-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: 1rem;
   min-width: 0;
 }
 
@@ -198,41 +159,6 @@ const playlistToggleTitle = computed(() =>
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* -------- playlist toggle (quiet nav-style icon at the row's right) -------- */
-
-.video-carousel-item__playlist-toggle {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  background-color: transparent;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.video-carousel-item__playlist-toggle:hover {
-  color: var(--color-fg-primary);
-}
-
-.video-carousel-item__playlist-toggle--added,
-.video-carousel-item__playlist-toggle--added:hover {
-  color: var(--color-accent-primary);
-}
-
-.video-carousel-item__playlist-toggle:focus-visible {
-  outline: 1px solid var(--color-accent-primary);
-  outline-offset: -1px;
-}
-
-.video-carousel-item__playlist-toggle-icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
 }
 
 /* -------- play affordance (centered slide only) --------

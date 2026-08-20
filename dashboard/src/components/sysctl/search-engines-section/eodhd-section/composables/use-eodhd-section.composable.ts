@@ -1,19 +1,13 @@
-import {
-  Activity,
-  BarChart3,
-  Building2,
-  Gauge,
-  Newspaper,
-  Search,
-  TrendingUp,
-} from '@lucide/vue';
 import { computed } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
 
 import { useApiKeyForm } from '../../../composables/use-api-key-form';
 import { buildEodhdCapabilityRows } from '../../helpers/build-eodhd-capability-rows.helper';
-import { buildEodhdSourceStatus } from '../../helpers/build-eodhd-source-status.helper';
+import {
+  buildEodhdSourceStatus,
+  EODHD_ENDPOINT_ICONS,
+} from '../../helpers/build-eodhd-source-status.helper';
 import type { EodhdSectionProps } from '../EodhdSection.types';
 
 /**
@@ -39,7 +33,7 @@ export function useEodhdSection(props: EodhdSectionProps) {
   /** Lock endpoint toggles that the key's plan does not include. */
   const endpointAvailability = computed(() => capabilities.value?.endpoints);
 
-  const descriptions: Record<string, string> = {
+  const descriptions = computed<Record<string, string>>(() => ({
     search: i18n.global.t('common.eodhdSearchDesc'),
     quote: i18n.global.t('common.eodhdQuoteDesc'),
     history: i18n.global.t('common.eodhdHistoryDesc'),
@@ -47,17 +41,9 @@ export function useEodhdSection(props: EodhdSectionProps) {
     intraday: i18n.global.t('common.eodhdIntradayDesc'),
     news: i18n.global.t('common.eodhdNewsDesc'),
     fundamentals: i18n.global.t('common.eodhdFundamentalsDesc'),
-  };
+  }));
 
-  const icons = {
-    search: Search,
-    quote: Activity,
-    history: TrendingUp,
-    technical: Gauge,
-    intraday: BarChart3,
-    news: Newspaper,
-    fundamentals: Building2,
-  };
+  const icons = EODHD_ENDPOINT_ICONS;
 
   return {
     configured,

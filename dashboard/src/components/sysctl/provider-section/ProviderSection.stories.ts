@@ -8,13 +8,9 @@ const meta = {
   component: ProviderSection,
   tags: ['autodocs'],
   argTypes: {
-    providerName: { control: 'text' },
-    providerDescription: { control: 'text' },
     configured: { control: 'boolean' },
   },
   args: {
-    providerName: 'Serper',
-    providerDescription: 'Search API',
     configured: true,
     endpointMaxResults: { search: 25 },
     onToggleEndpoint: fn(),

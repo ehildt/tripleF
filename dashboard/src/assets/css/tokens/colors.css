@@ -34,12 +34,12 @@
   --color-status-warning-source: #ff9933;
   --color-status-error-source: #ff4466;
   --color-status-info-source: #00cccc;
-  --color-status-violet-source: #9932cc;
+  --color-status-gallery-source: #9932cc;
   --color-status-success: var(--color-status-success-source);
   --color-status-warning: var(--color-status-warning-source);
   --color-status-error: var(--color-status-error-source);
   --color-status-info: var(--color-status-info-source);
-  --color-status-violet: var(--color-status-violet-source);
+  --color-status-gallery: var(--color-status-gallery-source);
 
   /* Connection State Colors */
   --color-connection-connected-source: #ffcc00;

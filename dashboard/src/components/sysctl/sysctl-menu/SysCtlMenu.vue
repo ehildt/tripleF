@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * The section tab bar of the SysCtl panel: one icon per settings group
- * (search engines, preprocessing, layouts, templates, widgets, system).
+ * (search engines, preprocessing, layouts, widgets, chat navigation,
+ * interface, system).
  */
 import {
   Blocks,
@@ -12,6 +13,7 @@ import {
   Radar,
   ScanEye,
 } from '@lucide/vue';
+import { computed } from 'vue';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { i18n } from '@/i18n/i18n';
@@ -27,7 +29,9 @@ const emit = defineEmits<{
   selectTab: [tab: SysctlTab];
 }>();
 
-const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
+const TAB_LABELS = computed<
+  { tab: SysctlTab; label: string; icon: typeof Cog }[]
+>(() => [
   {
     tab: 'search-engines',
     label: i18n.global.t('common.sysctlSearchEngines'),
@@ -59,7 +63,7 @@ const TAB_LABELS: { tab: SysctlTab; label: string; icon: typeof Cog }[] = [
     icon: LayoutTemplate,
   },
   { tab: 'system', label: i18n.global.t('common.sysctlSystem'), icon: Cog },
-];
+]);
 </script>
 
 <template>

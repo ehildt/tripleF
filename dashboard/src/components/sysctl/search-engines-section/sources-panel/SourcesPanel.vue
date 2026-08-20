@@ -6,183 +6,72 @@
  * against the hostname. Changes apply to new requests on save (change).
  */
 import { Ban, Images, ThumbsUp } from '@lucide/vue';
-import { nextTick, ref, watch } from 'vue';
 
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 
-import { clampSysctlResults } from '../../helpers/clamp-sysctl-results.helper';
-import type { SourcesConfig } from '../../sysctl-config.model';
-import { parseSourceList } from './helpers/parse-source-list.helper';
+import {
+  MAX_IMAGE_TASK_REFERENCE_COUNT,
+  useSourcesPanel,
+} from './composables/use-sources-panel.composable';
+import SourceListCard from './source-list-card/SourceListCard.vue';
+import type {
+  SourcesPanelEmits,
+  SourcesPanelProps,
+} from './SourcesPanel.types';
 
-const props = defineProps<{
-  sources: SourcesConfig;
-}>();
+const props = defineProps<SourcesPanelProps>();
+const emit = defineEmits<SourcesPanelEmits>();
 
-const emit = defineEmits<{
-  (
-    e: 'patch',
-    payload:
-      | { key: 'preferred' | 'blocked'; value: string[] }
-      | { key: 'imageTaskReferenceCount'; value: number },
-  ): void;
-  (e: 'reset', key: 'preferred' | 'blocked'): void;
-}>();
-
-const MAX_IMAGE_TASK_REFERENCE_COUNT = 50;
-const DEFAULT_IMAGE_TASK_REFERENCE_COUNT = 6;
-
-const preferredDraft = ref('');
-const blockedDraft = ref('');
-const referenceCountDraft = ref('');
-const preferredInput = ref<HTMLTextAreaElement>();
-const blockedInput = ref<HTMLTextAreaElement>();
-
-/** Grow the textarea with its content until it hits max-height, then scroll. */
-function autoResize(el: HTMLTextAreaElement | undefined) {
-  if (!el) return;
-  el.style.height = 'auto';
-  el.style.height = `${Math.min(el.scrollHeight, 256)}px`;
-}
-
-watch(
-  () => [props.sources?.preferred, props.sources?.blocked],
-  async ([preferred, blocked]) => {
-    preferredDraft.value = (preferred ?? []).join('\n');
-    blockedDraft.value = (blocked ?? []).join('\n');
-    await nextTick();
-    autoResize(preferredInput.value);
-    autoResize(blockedInput.value);
-  },
-  { immediate: true },
-);
-
-watch(
-  () => props.sources?.imageTaskReferenceCount,
-  (count) => {
-    referenceCountDraft.value = String(
-      count ?? DEFAULT_IMAGE_TASK_REFERENCE_COUNT,
-    );
-  },
-  { immediate: true },
-);
-
-function save(key: 'preferred' | 'blocked') {
-  const draft = key === 'preferred' ? preferredDraft : blockedDraft;
-  emit('patch', { key, value: parseSourceList(draft.value) });
-}
-
-/** Commit the image-task reference pool size, clamped to the server bounds. */
-function saveReferenceCount() {
-  const value = clampSysctlResults(
-    Number(referenceCountDraft.value),
-    MAX_IMAGE_TASK_REFERENCE_COUNT,
-  );
-  referenceCountDraft.value = String(value);
-  emit('patch', { key: 'imageTaskReferenceCount', value });
-}
+const {
+  referenceCount,
+  referenceCountEnabled,
+  saveReferenceCount,
+  toggleReferenceCount,
+  handleListChange,
+} = useSourcesPanel(props, emit);
 </script>
 
 <template>
   <div class="sources-panel">
     <div class="sources-panel__lists">
       <!-- One line, gap-1: label block on top, text input below it -->
-      <div class="sources-panel__card">
-        <div class="sources-panel__header">
-          <div class="sources-panel__icon">
-            <ThumbsUp class="sources-panel__icon-glyph" />
-          </div>
-          <div class="sources-panel__content">
-            <span class="sources-panel__label">{{
-              $t('common.preferredSources')
-            }}</span>
-            <span class="sources-panel__description">
-              {{ $t('common.sourcesPreferredHint') }}
-            </span>
-          </div>
-          <ResetButton
-            :title="$t('common.resetPreferredSources')"
-            @click="emit('reset', 'preferred')"
-          />
-        </div>
-        <textarea
-          ref="preferredInput"
-          v-model="preferredDraft"
-          name="preferred-sources"
-          class="sources-panel__input"
-          rows="6"
-          placeholder="bbc.com&#10;arstechnica.com"
-          autocomplete="off"
-          spellcheck="false"
-          @input="autoResize(preferredInput)"
-          @change="save('preferred')"
-        />
-      </div>
+      <SourceListCard
+        :list="sources.preferred ?? []"
+        :icon="ThumbsUp"
+        :label="$t('common.preferredSources')"
+        :description="$t('common.sourcesPreferredHint')"
+        :reset-title="$t('common.resetPreferredSources')"
+        placeholder="bbc.com&#10;arstechnica.com"
+        @change="handleListChange('preferred', $event)"
+        @reset="emit('reset', 'preferred')"
+      />
 
-      <div class="sources-panel__card">
-        <div class="sources-panel__header">
-          <div class="sources-panel__icon">
-            <Ban class="sources-panel__icon-glyph" />
-          </div>
-          <div class="sources-panel__content">
-            <span class="sources-panel__label">{{
-              $t('common.blockedSources')
-            }}</span>
-            <span class="sources-panel__description">
-              {{ $t('common.sourcesBlockedHint') }}
-            </span>
-          </div>
-          <ResetButton
-            :title="$t('common.resetBlockedSources')"
-            @click="emit('reset', 'blocked')"
-          />
-        </div>
-        <textarea
-          ref="blockedInput"
-          v-model="blockedDraft"
-          name="blocked-sources"
-          class="sources-panel__input"
-          rows="6"
-          placeholder="*.pinterest.com&#10;/^lh\d+\.googleusercontent\.com$/"
-          autocomplete="off"
-          spellcheck="false"
-          @input="autoResize(blockedInput)"
-          @change="save('blocked')"
-        />
-      </div>
-    </div>
-
-    <div class="sources-panel__card">
-      <div class="sources-panel__header">
-        <div class="sources-panel__icon">
-          <Images class="sources-panel__icon-glyph" />
-        </div>
-        <div class="sources-panel__content">
-          <span class="sources-panel__label">{{
-            $t('common.imageTaskReferences')
-          }}</span>
-          <span class="sources-panel__description">
-            {{ $t('common.imageTaskReferencesHint') }}
-          </span>
-        </div>
-        <ResetButton
-          :title="$t('common.resetImageTaskReferences')"
-          @click="
-            referenceCountDraft = String(DEFAULT_IMAGE_TASK_REFERENCE_COUNT);
-            saveReferenceCount();
-          "
-        />
-      </div>
-      <input
-        v-model="referenceCountDraft"
-        type="number"
-        name="image-task-reference-count"
-        class="sources-panel__count"
-        min="1"
-        :max="MAX_IMAGE_TASK_REFERENCE_COUNT"
-        autocomplete="off"
-        @change="saveReferenceCount"
+      <SourceListCard
+        :list="sources.blocked ?? []"
+        :icon="Ban"
+        :label="$t('common.blockedSources')"
+        :description="$t('common.sourcesBlockedHint')"
+        :reset-title="$t('common.resetBlockedSources')"
+        placeholder="*.pinterest.com&#10;/^lh\d+\.googleusercontent\.com$/"
+        @change="handleListChange('blocked', $event)"
+        @reset="emit('reset', 'blocked')"
       />
     </div>
+
+    <!-- Serper-style field row: icon tile + label + description + number +
+         checkbox. Checkbox off ⇔ pool size 0 (no reference images verified). -->
+    <FieldCard
+      :icon="Images"
+      :label="$t('common.imageTaskReferences')"
+      :description="$t('common.imageTaskReferencesHint')"
+      :checked="referenceCountEnabled"
+      :number-value="referenceCount"
+      :number-min="1"
+      :number-max="MAX_IMAGE_TASK_REFERENCE_COUNT"
+      :number-disabled="!referenceCountEnabled"
+      @toggle="toggleReferenceCount"
+      @update:number-value="saveReferenceCount"
+    />
   </div>
 </template>
 
@@ -199,103 +88,9 @@ function saveReferenceCount() {
   gap: var(--spacing-3);
 }
 
-.sources-panel__card {
-  flex: 1;
-  gap: var(--spacing-1);
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background-color: color-mix(in srgb, var(--color-fg-muted) 10%, transparent);
-}
-
-.sources-panel__card:hover {
-  filter: brightness(1.08);
-}
-
-/* Header row (field-card look): icon tile + label + description */
-.sources-panel__header {
-  background-color: var(--color-bg-tertiary);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-3);
-}
-
-.sources-panel__icon {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  background-color: color-mix(in srgb, var(--color-fg-muted) 10%, transparent);
-  color: var(--color-fg-muted);
-}
-
-.sources-panel__icon-glyph {
-  width: 1rem;
-  height: 1rem;
-}
-
-.sources-panel__content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.sources-panel__label {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-fg-secondary);
-  overflow-wrap: anywhere;
-}
-
-.sources-panel__description {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  line-height: 1.4;
-  color: var(--color-fg-muted);
-  overflow-wrap: anywhere;
-}
-
-.sources-panel__input {
-  width: 100%;
-  max-height: 16rem;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: none;
-
-  color: var(--color-fg-primary);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  outline: none;
-  resize: none;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.sources-panel__input::placeholder {
-  color: var(--color-fg-muted);
-  opacity: 0.5;
-}
-
-.sources-panel__count {
-  width: 8rem;
-  margin-left: var(--spacing-4);
-  margin-bottom: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2);
-  border: none;
-  color: var(--color-fg-primary);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  outline: none;
-}
-
 /* Stack the two cards on narrow SysCtl widths */
 @media (max-width: 720px) {
-  .sources-panel {
+  .sources-panel__lists {
     flex-direction: column;
   }
 }

@@ -5,9 +5,9 @@
  * gallery.
  */
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import { useVideoListResponseData } from './composables/use-videolist-response-data.composable';
 import type { VideoListResponseProps } from './VideoListResponse.types';
 
@@ -19,7 +19,7 @@ const { items, hasContent } = useVideoListResponseData(props);
 <template>
   <section v-if="hasContent" class="video-list">
     <header class="video-list__header">
-      <HeroSection :title="data.title" :subtitle="data.subtitle" />
+      <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
 
     <VideoGallerySection :items="items" />

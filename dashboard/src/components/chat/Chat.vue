@@ -340,7 +340,6 @@ defineExpose({ actionBarRef });
     @toggle-source="toggleSource"
     @toggle-eodhd="toggleEodhd"
     @delete-conversation="onDeleteConversation"
-    @toggle-included="selectPanelView('history')"
     @scroll="selectPanelView('history')"
   />
 

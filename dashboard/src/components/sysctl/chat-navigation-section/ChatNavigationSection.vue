@@ -37,6 +37,7 @@ import {
   WavesHorizontal,
   ZodiacAquarius,
 } from '@lucide/vue';
+import { computed } from 'vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
@@ -53,16 +54,14 @@ import type {
 } from '@/types/app.model';
 import type { MediaPriority } from '@/types/harness-response-data.model';
 
+import SectionHeader from '../../shared/ui/section-header/SectionHeader.vue';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSectionHeader from '../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 
 const appStore = useAppStore();
 
-const SCROLL_MODE_OPTIONS: readonly {
-  value: ScrollMode;
-  icon: LucideIcon;
-  tooltip: string;
-}[] = [
+const SCROLL_MODE_OPTIONS = computed<
+  readonly { value: ScrollMode; icon: LucideIcon; tooltip: string }[]
+>(() => [
   {
     value: 'carousel',
     icon: GalleryVerticalEnd,
@@ -73,13 +72,11 @@ const SCROLL_MODE_OPTIONS: readonly {
     icon: Form,
     tooltip: i18n.global.t('common.scrollModeNative'),
   },
-];
+]);
 
-const MEDIA_PRIORITY_OPTIONS: readonly {
-  value: MediaPriority;
-  icon: LucideIcon;
-  tooltip: string;
-}[] = [
+const MEDIA_PRIORITY_OPTIONS = computed<
+  readonly { value: MediaPriority; icon: LucideIcon; tooltip: string }[]
+>(() => [
   {
     value: 'images',
     icon: LayersArrowUp,
@@ -90,13 +87,11 @@ const MEDIA_PRIORITY_OPTIONS: readonly {
     icon: LayersArrowDown,
     tooltip: i18n.global.t('common.mediaPriorityVideos'),
   },
-];
+]);
 
-const PRICE_STYLE_OPTIONS: readonly {
-  value: ChartPriceStyle;
-  icon: LucideIcon;
-  tooltip: string;
-}[] = [
+const PRICE_STYLE_OPTIONS = computed<
+  readonly { value: ChartPriceStyle; icon: LucideIcon; tooltip: string }[]
+>(() => [
   {
     value: 'candles',
     icon: ChartCandlestick,
@@ -112,13 +107,11 @@ const PRICE_STYLE_OPTIONS: readonly {
     icon: ChartArea,
     tooltip: i18n.global.t('common.chartArea'),
   },
-];
+]);
 
-const VOLUME_STYLE_OPTIONS: readonly {
-  value: ChartVolumeStyle;
-  icon: LucideIcon;
-  tooltip: string;
-}[] = [
+const VOLUME_STYLE_OPTIONS = computed<
+  readonly { value: ChartVolumeStyle; icon: LucideIcon; tooltip: string }[]
+>(() => [
   {
     value: 'histogram',
     icon: ChartColumnStacked,
@@ -129,13 +122,11 @@ const VOLUME_STYLE_OPTIONS: readonly {
     icon: WavesHorizontal,
     tooltip: i18n.global.t('common.chartHeatmap'),
   },
-];
+]);
 
-const HEATMAP_VARIANT_OPTIONS: readonly {
-  value: ChartHeatmapVariant;
-  icon: LucideIcon;
-  tooltip: string;
-}[] = [
+const HEATMAP_VARIANT_OPTIONS = computed<
+  readonly { value: ChartHeatmapVariant; icon: LucideIcon; tooltip: string }[]
+>(() => [
   {
     value: 'cells',
     icon: TableCellsSplit,
@@ -146,13 +137,11 @@ const HEATMAP_VARIANT_OPTIONS: readonly {
     icon: ZodiacAquarius,
     tooltip: i18n.global.t('common.chartFlow'),
   },
-];
+]);
 
-const COLORMAP_OPTIONS: readonly {
-  value: ChartColormap;
-  icon: LucideIcon;
-  tooltip: string;
-}[] = [
+const COLORMAP_OPTIONS = computed<
+  readonly { value: ChartColormap; icon: LucideIcon; tooltip: string }[]
+>(() => [
   {
     value: 'turbo',
     icon: Palette,
@@ -168,7 +157,7 @@ const COLORMAP_OPTIONS: readonly {
     icon: Sparkles,
     tooltip: i18n.global.t('common.chartColormapPurple'),
   },
-];
+]);
 
 const ICON_OPTIONS: readonly {
   key: ChatIconKey;
@@ -241,7 +230,7 @@ function toggleChartAnnotation(
   <SysCtlSection>
     <div class="chat-navigation-section">
       <!-- Conversation: how chats scroll and how long temporary chats are kept -->
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="MessagesSquare"
         :title="$t('common.conversationSection')"
       />
@@ -271,7 +260,7 @@ function toggleChartAnnotation(
       </FieldGrid>
 
       <!-- Media: how response media is ordered -->
-      <SysCtlSectionHeader :icon="Image" :title="$t('common.mediaSection')" />
+      <SectionHeader :icon="Image" :title="$t('common.mediaSection')" />
       <FieldGrid :items-per-row="3">
         <FieldCard
           :icon="LayersArrowUp"
@@ -290,7 +279,7 @@ function toggleChartAnnotation(
       </FieldGrid>
 
       <!-- Header actions: which action icons appear on the exchange header -->
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="MousePointerClick"
         :title="$t('common.headerActionsSection')"
       />
@@ -307,7 +296,7 @@ function toggleChartAnnotation(
       </FieldGrid>
 
       <!-- Charts: default style/annotation preferences for stock charts -->
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="ChartCandlestick"
         :title="$t('common.chartSection')"
       />

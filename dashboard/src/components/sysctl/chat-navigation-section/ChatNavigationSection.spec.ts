@@ -13,7 +13,7 @@ describe('ChatNavigationSection', () => {
 
   it('renders a section header per config group', () => {
     const wrapper = mount(ChatNavigationSection);
-    for (const title of ['Conversation', 'Media', 'Header actions', 'Charts']) {
+    for (const title of ['Chat', 'Media', 'Header actions', 'Charts']) {
       expect(wrapper.text()).toContain(title);
     }
   });

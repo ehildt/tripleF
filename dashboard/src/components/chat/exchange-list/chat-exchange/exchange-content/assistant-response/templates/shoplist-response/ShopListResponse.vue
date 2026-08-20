@@ -7,6 +7,7 @@
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import { useShopListResponseData } from './composables/use-shoplist-response-data.composable';
 import ShopListOfferCard from './shoplist-offer-card/ShopListOfferCard.vue';
 import type { ShopListResponseProps } from './ShopListResponse.types';
@@ -19,15 +20,10 @@ const { offers, hasContent } = useShopListResponseData(props);
 <template>
   <section v-if="hasContent" class="shoplist">
     <!-- Lean header: product name, one line of context -->
-    <header class="shoplist__header">
-      <h2 class="shoplist__title">{{ data.title }}</h2>
-      <p v-if="data.subtitle" class="shoplist__subtitle">
-        {{ data.subtitle }}
-      </p>
-      <p v-if="data.shortDescription" class="shoplist__description">
-        {{ data.shortDescription }}
-      </p>
-    </header>
+    <ResponseHeader :title="data.title" :subtitle="data.subtitle" />
+    <p v-if="data.shortDescription" class="shoplist__description">
+      {{ data.shortDescription }}
+    </p>
 
     <!-- Purchase options sorted by ascending price -->
     <div v-if="offers.length" class="shoplist__offers">
@@ -58,20 +54,6 @@ const { offers, hasContent } = useShopListResponseData(props);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-0-5);
-}
-
-.shoplist__title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--color-fg-primary);
-}
-
-.shoplist__subtitle {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-fg-secondary);
 }
 
 .shoplist__description {

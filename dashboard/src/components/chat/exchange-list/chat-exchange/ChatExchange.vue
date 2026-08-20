@@ -24,13 +24,8 @@ const {
   handleCopy,
   handleImageClicked,
   handleSelectIndex,
-  handleToggleIncluded,
-  handleToggleMerge,
-  isMergeSelected,
-  canMerge,
-  mergeArmed,
   handleCancel,
-} = useChatExchange(props, emit);
+} = useChatExchange(props);
 </script>
 
 <template>
@@ -52,18 +47,9 @@ const {
         :is-error="isError"
         :is-pending="isPending"
         :is-streaming="isStreaming"
-        :is-merge-selected="isMergeSelected"
-        :can-merge="canMerge"
-        :merge-armed="mergeArmed"
         @copy="handleCopy"
         @retry="emit('retry', exchange.id)"
-        @branch="emit('branch', exchange.id)"
-        @delete="emit('delete', exchange.id)"
-        @toggle-included="handleToggleIncluded"
-        @toggle-merge="handleToggleMerge"
         @cancel="handleCancel"
-        @hover-delete-start="emit('hover-delete-start', exchange.id)"
-        @hover-delete-end="emit('hover-delete-end')"
       />
 
       <ExchangeCollapsed

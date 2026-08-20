@@ -84,27 +84,39 @@ export function setActivePlaylist(name: string) {
  */
 let playlistMutationCount = 0;
 
+/** In-flight `loadPlaylists` fetch: concurrent callers (the chat's immediate
+ * conversation watcher and the floating playlist library) share one request
+ * instead of issuing duplicates at boot. */
+let playlistsFetchInFlight: Promise<void> | null = null;
+
 function markMutation() {
   playlistMutationCount += 1;
 }
 
 /** Load all playlists for the session, restoring the active playlist
- *  (defaulting to the first one). */
-export async function loadPlaylists() {
-  const mutationAtStart = playlistMutationCount;
-  const fetched = await fetchAllPlaylists(SESSION_ID);
-  // Discard the snapshot if the playlist state changed while we were
-  // fetching — the caller holds fresher data.
-  if (playlistMutationCount !== mutationAtStart) return;
-  const playlists = fetched.map((snapshot) => ({
-    name: snapshot.name,
-    conversationId: snapshot.conversationId,
-    videos: snapshot.videos as unknown as VideoGalleryItem[],
-  }));
-  setPlaylists(playlists);
-  if (!activePlaylistName.value && playlists.length > 0) {
-    setActivePlaylist(playlists[0].name);
-  }
+ *  (defaulting to the first one). Concurrent calls share one fetch. */
+export async function loadPlaylists(): Promise<void> {
+  if (playlistsFetchInFlight) return playlistsFetchInFlight;
+  const promise = (async () => {
+    const mutationAtStart = playlistMutationCount;
+    const fetched = await fetchAllPlaylists(SESSION_ID);
+    // Discard the snapshot if the playlist state changed while we were
+    // fetching — the caller holds fresher data.
+    if (playlistMutationCount !== mutationAtStart) return;
+    const playlists = fetched.map((snapshot) => ({
+      name: snapshot.name,
+      conversationId: snapshot.conversationId,
+      videos: snapshot.videos as unknown as VideoGalleryItem[],
+    }));
+    setPlaylists(playlists);
+    if (!activePlaylistName.value && playlists.length > 0) {
+      setActivePlaylist(playlists[0].name);
+    }
+  })().finally(() => {
+    playlistsFetchInFlight = null;
+  });
+  playlistsFetchInFlight = promise;
+  return promise;
 }
 
 /** Persist a playlist, surfacing a toast if the save fails (never silent). */
