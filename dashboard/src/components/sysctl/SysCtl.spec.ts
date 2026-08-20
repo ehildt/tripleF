@@ -115,7 +115,7 @@ describe('SysCtl', () => {
   it('opens on the search engines tab by default', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: Search engines');
+      expect(wrapper.text()).toContain('Search engines');
     });
   });
 
@@ -125,8 +125,8 @@ describe('SysCtl', () => {
       expect(wrapper.find('button[aria-label="Enable Serper"]').exists()).toBe(
         true,
       );
-      expect(wrapper.text()).toContain('web');
-      expect(wrapper.text()).toContain('images');
+      expect(wrapper.text()).toContain('Web');
+      expect(wrapper.text()).toContain('Images');
     });
   });
 
@@ -135,9 +135,9 @@ describe('SysCtl', () => {
     await selectMenuTab(wrapper, 'Interface');
 
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: Interface');
-      expect(wrapper.text()).toContain('sockets');
-      expect(wrapper.text()).toContain('counters');
+      expect(wrapper.text()).toContain('Interface');
+      expect(wrapper.text()).toContain('Sockets');
+      expect(wrapper.text()).toContain('Counters');
     });
   });
 
@@ -150,11 +150,11 @@ describe('SysCtl', () => {
     await selectSubMenuTab(wrapper, 'Tab menu');
 
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: Widgets');
-      expect(wrapper.text()).toContain('dlq');
-      expect(wrapper.text()).toContain('debug');
-      expect(wrapper.text()).toContain('side');
-      expect(wrapper.text()).toContain('auto-close');
+      expect(wrapper.text()).toContain('Widgets');
+      expect(wrapper.text()).toContain('Dead letter');
+      expect(wrapper.text()).toContain('Debug');
+      expect(wrapper.text()).toContain('Side');
+      expect(wrapper.text()).toContain('Auto-close');
     });
   });
 
@@ -163,7 +163,7 @@ describe('SysCtl', () => {
     await selectMenuTab(wrapper, 'System');
 
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('SysCtl :: System');
+      expect(wrapper.text()).toContain('System');
       expect(wrapper.text()).toContain('disk');
     });
   });
@@ -175,7 +175,7 @@ describe('SysCtl', () => {
 
     const remounted = mountPanel();
     await vi.waitFor(() => {
-      expect(remounted.text()).toContain('SysCtl :: System');
+      expect(remounted.text()).toContain('System');
     });
   });
 });

@@ -30,9 +30,9 @@ const { draft, selectAllText, submit } = useApiKeyForm(
   maskedApiKey,
 );
 
-const descriptions: Record<string, string> = {
+const descriptions = computed<Record<string, string>>(() => ({
   videos: i18n.global.t('common.youtubeVideosWithViews'),
-};
+}));
 
 const icons = {
   videos: Clapperboard,
@@ -41,8 +41,6 @@ const icons = {
 
 <template>
   <ProviderSection
-    provider-name="YouTube"
-    :provider-description="$t('common.videoSearchApi')"
     :config="config"
     :descriptions="descriptions"
     :icons="icons"

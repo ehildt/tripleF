@@ -10,8 +10,6 @@ function makeProps(
   overrides: Partial<ProviderSectionProps> = {},
 ): ProviderSectionProps {
   return reactive({
-    providerName: 'Test',
-    providerDescription: 'desc',
     config,
     descriptions: {},
     configured: true,
@@ -66,6 +64,22 @@ describe('useProviderSection', () => {
       makePrependRef(),
     );
     expect(itemsPerRow.value).toBe(2);
+  });
+
+  it('honors an explicit items-per-row override', () => {
+    const { itemsPerRow } = useProviderSection(
+      makeProps(
+        {
+          web: { enabled: true },
+          images: { enabled: true },
+          news: { enabled: true },
+          places: { enabled: true },
+        } as ProviderConfig,
+        { itemsPerRow: 3 },
+      ),
+      makePrependRef(),
+    );
+    expect(itemsPerRow.value).toBe(3);
   });
 
   it('locks endpoints that are explicitly unavailable', () => {

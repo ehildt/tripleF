@@ -5,19 +5,12 @@
  * slide-out tab menu. A submenu jumps straight to the widget to configure.
  */
 import type { LucideIcon } from '@lucide/vue';
-import {
-  Bell,
-  LayoutGrid,
-  ListVideo,
-  PanelRight,
-  PictureInPicture2,
-} from '@lucide/vue';
-import { ref } from 'vue';
+import { Bell, ListVideo, PanelRight, PictureInPicture2 } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
 
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSectionHeader from '../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 import PlaylistPanel from './playlist-panel/PlaylistPanel.vue';
 import TabMenuPanel from './tab-menu-panel/TabMenuPanel.vue';
@@ -25,28 +18,30 @@ import ToastPanel from './toast-panel/ToastPanel.vue';
 import VideoPopoutPanel from './video-popout-panel/VideoPopoutPanel.vue';
 import type { WidgetId } from './WidgetsSection.types';
 
-const WIDGETS: { id: WidgetId; label: string; icon: LucideIcon }[] = [
-  {
-    id: 'videoPopout',
-    label: i18n.global.t('common.videoPopout'),
-    icon: PictureInPicture2,
-  },
-  {
-    id: 'playlist',
-    label: i18n.global.t('common.floatingPlayer'),
-    icon: ListVideo,
-  },
-  {
-    id: 'toast',
-    label: i18n.global.t('common.toastNotifications'),
-    icon: Bell,
-  },
-  {
-    id: 'tabMenu',
-    label: i18n.global.t('common.tabMenuTitle'),
-    icon: PanelRight,
-  },
-];
+const WIDGETS = computed<{ id: WidgetId; label: string; icon: LucideIcon }[]>(
+  () => [
+    {
+      id: 'videoPopout',
+      label: i18n.global.t('common.videoPopout'),
+      icon: PictureInPicture2,
+    },
+    {
+      id: 'playlist',
+      label: i18n.global.t('common.floatingPlayer'),
+      icon: ListVideo,
+    },
+    {
+      id: 'toast',
+      label: i18n.global.t('common.toastNotifications'),
+      icon: Bell,
+    },
+    {
+      id: 'tabMenu',
+      label: i18n.global.t('common.tabMenuTitle'),
+      icon: PanelRight,
+    },
+  ],
+);
 
 const activeWidget = ref<WidgetId>('videoPopout');
 </script>
@@ -54,11 +49,6 @@ const activeWidget = ref<WidgetId>('videoPopout');
 <template>
   <SysCtlSection>
     <div class="widgets-section">
-      <SysCtlSectionHeader
-        :icon="LayoutGrid"
-        :title="$t('common.widgetsSection')"
-      />
-
       <SysCtlSubMenu
         :items="WIDGETS"
         :active="activeWidget"

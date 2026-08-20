@@ -33,6 +33,9 @@ const { activeIndex, onScroll, onPrev, onNext, onKeyDown, scrollToIndex } =
     // Land on the currently playing video when the gallery opens.
     Math.max(0, playingIndex.value),
   );
+
+/** Slide titles for the dot tooltips; undefined slots get no tooltip. */
+const itemTitles = computed(() => props.items.map((item) => item.title));
 </script>
 
 <template>
@@ -43,6 +46,7 @@ const { activeIndex, onScroll, onPrev, onNext, onKeyDown, scrollToIndex } =
       :playing-index="playingIndex"
       :title="title"
       :title-id="titleId"
+      :item-titles="itemTitles"
       @select="scrollToIndex"
     />
     <CarouselContent

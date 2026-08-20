@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ShopOffer } from '@/types/harness-response-data.model';
 
+import EyebrowTitle from '../../../shared/ui/eyebrow-title/EyebrowTitle.vue';
 import ShopOfferCard from './shop-offer-card/ShopOfferCard.vue';
 
 defineProps<{ offers: readonly ShopOffer[] }>();
@@ -8,7 +9,7 @@ defineProps<{ offers: readonly ShopOffer[] }>();
 
 <template>
   <section v-if="offers.length" class="offers-section">
-    <h3 class="offers-section__title">{{ $t('common.whereToBuy') }}</h3>
+    <EyebrowTitle :title="$t('common.whereToBuy')" />
     <div class="offers-section__list">
       <ShopOfferCard
         v-for="(offer, index) in offers"
@@ -25,16 +26,6 @@ defineProps<{ offers: readonly ShopOffer[] }>();
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1-5);
-}
-
-.offers-section__title {
-  margin: 0;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-fg-muted);
 }
 
 .offers-section__list {

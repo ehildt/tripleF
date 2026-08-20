@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ResponseHeader from '../../../../shared/ui/response-header/ResponseHeader.vue';
 import EvaluationListSection from '../evaluation-list-section/EvaluationListSection.vue';
 import type { EvaluationSubjectProfileProps } from './EvaluationSubjectProfile.types';
 
@@ -7,12 +8,11 @@ defineProps<EvaluationSubjectProfileProps>();
 
 <template>
   <section class="evaluation-subject-profile">
-    <header class="evaluation-subject-profile__header">
-      <h3 class="evaluation-subject-profile__name">{{ name }}</h3>
+    <ResponseHeader as="h3" size="sm" :title="name" ruled>
       <span v-if="scoreText" class="evaluation-subject-profile__score">
         {{ scoreText }}
       </span>
-    </header>
+    </ResponseHeader>
     <p v-if="description" class="evaluation-subject-profile__description">
       {{ description }}
     </p>
@@ -36,21 +36,6 @@ defineProps<EvaluationSubjectProfileProps>();
   gap: 0.5em;
   background-color: var(--color-bg-tertiary);
   padding: var(--spacing-3);
-}
-
-.evaluation-subject-profile__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1em;
-  padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--color-divider);
-}
-
-.evaluation-subject-profile__name {
-  margin: 0;
-  font-size: 1.1em;
-  color: var(--color-fg-primary);
 }
 
 .evaluation-subject-profile__score {

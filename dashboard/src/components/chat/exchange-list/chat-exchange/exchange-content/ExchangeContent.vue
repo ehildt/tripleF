@@ -89,7 +89,6 @@ const { imageTiles } = usePromptImageTiles(() => props.exchange);
   width: 100%;
   min-width: 0;
   overflow-x: hidden;
-  padding: var(--spacing-1) var(--spacing-2);
   font-size: 0.875rem;
   font-family: var(--font-mono);
   background-color: var(--color-bg-secondary);

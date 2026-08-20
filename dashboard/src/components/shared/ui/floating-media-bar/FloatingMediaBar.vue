@@ -7,7 +7,9 @@
  * The whole bar acts as a drag handle; interactive controls stop pointer
  * events so they never initiate a drag.
  */
-import { ListMinus, ListPlus, Minus, MirrorRectangular, X } from '@lucide/vue';
+import { Minus, MirrorRectangular, X } from '@lucide/vue';
+
+import PlaylistToggleButton from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
 
 import Marquee from '../marquee/Marquee.vue';
 import MotionIcon from '../motion-icon/MotionIcon.vue';
@@ -71,37 +73,11 @@ function toggleOpacity() {
           </MotionIcon>
         </button>
       </Tooltip>
-      <Tooltip
-        :text="
-          isInPlaylist
-            ? $t('common.removeFromPlaylist')
-            : $t('common.addToPlaylist')
-        "
-      >
-        <button
-          type="button"
-          class="floating-media-bar__playlist-toggle"
-          :class="{
-            'floating-media-bar__playlist-toggle--added': isInPlaylist,
-          }"
-          :aria-pressed="isInPlaylist"
-          :aria-label="
-            isInPlaylist
-              ? $t('common.removeFromPlaylist')
-              : $t('common.addToPlaylist')
-          "
-          @pointerdown.stop
-          @click.stop="emit('togglePlaylist')"
-        >
-          <MotionIcon>
-            <ListMinus
-              v-if="isInPlaylist"
-              class="floating-media-bar__playlist-icon"
-            />
-            <ListPlus v-else class="floating-media-bar__playlist-icon" />
-          </MotionIcon>
-        </button>
-      </Tooltip>
+      <PlaylistToggleButton
+        :active="isInPlaylist"
+        size="sm"
+        @toggle="emit('togglePlaylist')"
+      />
       <Tooltip :text="minimizeTitle">
         <button
           type="button"
@@ -174,7 +150,6 @@ function toggleOpacity() {
 }
 
 .floating-media-bar__opacity-toggle,
-.floating-media-bar__playlist-toggle,
 .floating-media-bar__minimize,
 .floating-media-bar__close {
   flex-shrink: 0;
@@ -189,10 +164,9 @@ function toggleOpacity() {
   transition: color 0.2s ease;
 }
 
-/* Playlist and opacity toggles are quiet nav-style icons like the inline
-   video cards — no glass chip, no backdrop, no box-shadow. */
-.floating-media-bar__opacity-toggle:hover,
-.floating-media-bar__playlist-toggle:hover {
+/* Opacity toggle is a quiet nav-style icon like the inline video cards —
+   no glass chip, no backdrop, no box-shadow. */
+.floating-media-bar__opacity-toggle:hover {
   color: var(--color-fg-primary);
 }
 
@@ -200,11 +174,6 @@ function toggleOpacity() {
    current opacity state is visible at a glance. */
 .floating-media-bar__opacity-toggle--translucent,
 .floating-media-bar__opacity-toggle--translucent:hover {
-  color: var(--color-accent-primary);
-}
-
-.floating-media-bar__playlist-toggle--added,
-.floating-media-bar__playlist-toggle--added:hover {
   color: var(--color-accent-primary);
 }
 
@@ -217,7 +186,6 @@ function toggleOpacity() {
 }
 
 .floating-media-bar__opacity-icon,
-.floating-media-bar__playlist-icon,
 .floating-media-bar__minimize-icon,
 .floating-media-bar__close-icon {
   width: 0.75rem;

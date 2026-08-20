@@ -19,9 +19,11 @@ export interface IconButtonProps {
   ariaPressed?: boolean;
   /**
    * Icon/padding scale: 'md' (default) for toolbars and headers, 'sm' for
-   * compact row actions (list items, toasts, menu rows).
+   * compact row actions (list items, toasts, menu rows), 'lg' for media-
+   * surface actions (playlist/info toggles in video cards — a 1.75rem hit
+   * box with the standard 1rem icon).
    */
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   /** Tooltip sides in priority order; forwarded to the Tooltip (default: top). */
   tooltipPositions?: TooltipPosition[];
 }

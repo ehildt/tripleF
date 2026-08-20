@@ -14,14 +14,17 @@ const meta = {
       {
         imageUrl: 'https://via.placeholder.com/300x200?text=1',
         imageAlt: 'One',
+        title: 'First image slide',
       },
       {
         imageUrl: 'https://via.placeholder.com/300x200?text=2',
         imageAlt: 'Two',
+        title: 'Second image slide',
       },
       {
         imageUrl: 'https://via.placeholder.com/300x200?text=3',
         imageAlt: 'Three',
+        title: 'Third image slide',
       },
     ],
   },
@@ -35,8 +38,16 @@ export const ThreeImages: Story = {};
 export const TwoImages: Story = {
   args: {
     items: [
-      { imageUrl: 'https://via.placeholder.com/300x200?text=A', imageAlt: 'A' },
-      { imageUrl: 'https://via.placeholder.com/300x200?text=B', imageAlt: 'B' },
+      {
+        imageUrl: 'https://via.placeholder.com/300x200?text=A',
+        imageAlt: 'A',
+        title: 'Image A',
+      },
+      {
+        imageUrl: 'https://via.placeholder.com/300x200?text=B',
+        imageAlt: 'B',
+        title: 'Image B',
+      },
     ],
   },
 };

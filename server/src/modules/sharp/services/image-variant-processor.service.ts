@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import sharp, { Sharp } from 'sharp';
 
-import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
+import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 import { VARIANT_DESCRIPTIONS } from '../constants/sharp.constants.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';
 import { buildVariantMeta } from '../helpers/build-variant-meta.helper.js';

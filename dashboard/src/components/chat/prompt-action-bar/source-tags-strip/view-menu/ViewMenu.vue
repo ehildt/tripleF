@@ -160,14 +160,15 @@ const emit = defineEmits<{
   color: var(--color-fg-muted);
 }
 
-/* The gallery presentation reads violet; the list presentation stays in
-   the blueish info hue, so the active presentation is visible at a glance. */
+/* The gallery presentation uses the gallery status hue (theme-driven, not a
+   fixed color); the list presentation stays in the blueish info hue, so the
+   active presentation is visible at a glance. */
 .view-menu__tag--gallery {
-  color: var(--color-status-violet);
+  color: var(--color-status-gallery);
 }
 
 .view-menu__tag--gallery:hover {
-  color: color-mix(in srgb, var(--color-status-violet) 60%, white);
+  color: color-mix(in srgb, var(--color-status-gallery) 60%, white);
 }
 
 .view-menu__tag-icon {

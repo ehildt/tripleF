@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import ArticleCardsSection from '../../sections/article-cards-section/ArticleCardsSection.vue';
 import ArticleConclusionSection from '../../sections/article-conclusion-section/ArticleConclusionSection.vue';
-import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
-import GallerySection from '../../sections/gallery-section/GallerySection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
-import HeroStack from '../../sections/hero-stack/HeroStack.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import { useArtDirection } from '../../shared/composables/use-art-direction.composable';
 import { useHarnessMediaPriority } from '../../shared/composables/use-harness-media-priority.composable';
+import ArticleHero from '../../shared/ui/article-hero/ArticleHero.vue';
+import MediaGalleries from '../../shared/ui/media-galleries/MediaGalleries.vue';
 import ArticleBody from './article-body/ArticleBody.vue';
 import ArticleEditorialBody from './article-editorial-body/ArticleEditorialBody.vue';
 import type { ArticleResponseProps } from './ArticleResponse.types';
@@ -25,31 +22,21 @@ const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
 
 <template>
   <article class="article" :class="`article--${direction}`">
-    <header v-if="splitHero" class="article__hero article__hero--split">
-      <ArticleHeroMediaSection
-        :hero-video-url="data.heroVideoUrl"
-        :hero-video-caption="data.heroVideoCaption"
-        :hero-video-title="data.heroVideoTitle"
-        :hero-image-url="data.heroImageUrl"
-        :hero-image-alt="data.heroImageAlt"
-        :hero-caption="data.heroCaption"
-      />
-      <HeroStack>
-        <HeroSection :title="data.title" :subtitle="data.subtitle" />
+    <ArticleHero
+      :title="data.title"
+      :subtitle="data.subtitle"
+      :split="splitHero"
+      :hero-video-url="data.heroVideoUrl"
+      :hero-video-caption="data.heroVideoCaption"
+      :hero-video-title="data.heroVideoTitle"
+      :hero-image-url="data.heroImageUrl"
+      :hero-image-alt="data.heroImageAlt"
+      :hero-caption="data.heroCaption"
+    >
+      <template #lead>
         <ArticleLeadSection :summary="data.summary" />
-      </HeroStack>
-    </header>
-    <header v-else class="hero">
-      <HeroSection :title="data.title" :subtitle="data.subtitle" />
-      <ArticleHeroMediaSection
-        :hero-video-url="data.heroVideoUrl"
-        :hero-video-caption="data.heroVideoCaption"
-        :hero-video-title="data.heroVideoTitle"
-        :hero-image-url="data.heroImageUrl"
-        :hero-image-alt="data.heroImageAlt"
-        :hero-caption="data.heroCaption"
-      />
-    </header>
+      </template>
+    </ArticleHero>
 
     <!-- Editorial direction (ar1): body prose beside an enlarged pull-quote
          aside; the quote leaves its classic inline slot. -->
@@ -70,28 +57,14 @@ const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
       :multicol="multicolBody"
     />
 
-    <template v-if="videosFirst">
-      <VideoGallerySection
-        :title="data.videoGalleryTitle"
-        :items="data.videoGalleryItems"
-      />
-      <GallerySection
-        :title="data.galleryTitle"
-        :items="data.galleryItems"
-        :mosaic="mosaicGallery"
-      />
-    </template>
-    <template v-else>
-      <GallerySection
-        :title="data.galleryTitle"
-        :items="data.galleryItems"
-        :mosaic="mosaicGallery"
-      />
-      <VideoGallerySection
-        :title="data.videoGalleryTitle"
-        :items="data.videoGalleryItems"
-      />
-    </template>
+    <MediaGalleries
+      :videos-first="videosFirst"
+      :video-gallery-title="data.videoGalleryTitle"
+      :video-gallery-items="data.videoGalleryItems"
+      :gallery-title="data.galleryTitle"
+      :gallery-items="data.galleryItems"
+      :mosaic="mosaicGallery"
+    />
     <ArticleCardsSection
       :title="data.cardsTitle"
       :items="data.cards"
@@ -112,24 +85,5 @@ const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
   display: flex;
   flex-direction: column;
   gap: 1.25em;
-}
-
-/* Split direction (ar2): the hero media panel sits beside the
-   title/summary stack instead of below the title. */
-.article__hero--split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25em;
-}
-
-@media (min-width: 720px) {
-  .article__hero--split {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-
-  .article__hero--split :deep(.hero-media-card) {
-    margin-top: 0;
-  }
 }
 </style>

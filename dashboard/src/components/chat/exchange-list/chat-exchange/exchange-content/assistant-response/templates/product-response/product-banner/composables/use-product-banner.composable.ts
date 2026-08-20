@@ -13,6 +13,7 @@ import type { ProductBannerProps } from '../ProductBanner.types';
 /**
  * Derives the product banner's display values from its props: the trusted
  * image slide, the rating presence, and the locale-formatted rating labels.
+ * The image load/error state lives in the shared AsyncImage.
  */
 export function useProductBanner(props: ProductBannerProps) {
   const onImageClicked = inject<HarnessImageClickedHandler>(

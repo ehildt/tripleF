@@ -93,9 +93,9 @@
     var(--color-status-info-source) 40%,
     #1c1c1e
   );
-  --color-status-violet: color-mix(
+  --color-status-gallery: color-mix(
     in srgb,
-    var(--color-status-violet-source) 45%,
+    var(--color-status-gallery-source) 45%,
     #1c1c1e
   );
 

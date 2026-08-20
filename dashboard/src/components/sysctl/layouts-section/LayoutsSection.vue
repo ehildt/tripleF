@@ -14,7 +14,6 @@ import {
   Images,
   ListChecks,
   type LucideIcon,
-  MessageSquare,
   Newspaper,
   Scale,
   ScanText,
@@ -40,7 +39,6 @@ import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import { i18n } from '@/i18n/i18n';
 
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSectionHeader from '../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 
 const TEMPLATE_META: Record<TemplateName, { icon: LucideIcon }> = {
@@ -57,7 +55,6 @@ const TEMPLATE_META: Record<TemplateName, { icon: LucideIcon }> = {
   videolist: { icon: Video },
   stockmarketitem: { icon: ChartCandlestick },
   stockmarketlist: { icon: TrendingUp },
-  text: { icon: MessageSquare },
 };
 
 /**
@@ -69,7 +66,6 @@ interface LayoutSubtab {
   id: string;
   templates: TemplateName[];
   labelKey: string;
-  tooltipKey: string;
   icon: LucideIcon;
 }
 
@@ -78,7 +74,6 @@ function singleTemplateSubtab(template: TemplateName): LayoutSubtab {
     id: template,
     templates: [template],
     labelKey: templateLabelKey(template),
-    tooltipKey: templateTooltipKey(template),
     icon: TEMPLATE_META[template].icon,
   };
 }
@@ -87,22 +82,24 @@ const STOCKMARKET_SUBTAB: LayoutSubtab = {
   id: 'stockmarket',
   templates: ['stockmarketitem', 'stockmarketlist'],
   labelKey: 'common.templateStockmarket',
-  tooltipKey: 'common.templateStockmarketTooltip',
   icon: ChartCandlestick,
 };
 
 const SUBTABS: LayoutSubtab[] = TEMPLATE_NAMES.flatMap((name) => {
+  // The plain-text template has no toggleable parts, so no subtab for it.
+  if (name === 'text') return [];
   if (name === 'stockmarketitem') return [STOCKMARKET_SUBTAB];
   if (name === 'stockmarketlist') return [];
   return [singleTemplateSubtab(name)];
 });
 
-const SUBTAB_ITEMS = SUBTABS.map((subtab) => ({
-  id: subtab.id,
-  label: i18n.global.t(subtab.labelKey),
-  tooltip: i18n.global.t(subtab.tooltipKey),
-  icon: subtab.icon,
-}));
+const SUBTAB_ITEMS = computed(() =>
+  SUBTABS.map((subtab) => ({
+    id: subtab.id,
+    label: i18n.global.t(subtab.labelKey),
+    icon: subtab.icon,
+  })),
+);
 
 const activeSubtabId = ref(SUBTABS[0].id);
 const activeSubtab = computed(
@@ -114,13 +111,6 @@ const activeSubtab = computed(
 const activeParts = computed(
   () => TEMPLATE_PARTS[activeSubtab.value.templates[0]],
 );
-
-/** Subtabs whose responses keep the always-on discarded-references aside. */
-const DISCARDED_ASIDE_TEMPLATES: readonly TemplateName[] = [
-  'describe',
-  'compare',
-  'ocr',
-];
 
 function isPartChecked(partId: string): boolean {
   return activeSubtab.value.templates.every((template) =>
@@ -137,11 +127,6 @@ function togglePart(partId: string) {
 /** The label key for a template name, e.g. "common.templateArticle". */
 function templateLabelKey(template: TemplateName): string {
   return `common.template${template.charAt(0).toUpperCase()}${template.slice(1)}`;
-}
-
-/** The tooltip key for a template name, e.g. "common.templateArticleTooltip". */
-function templateTooltipKey(template: TemplateName): string {
-  return `common.template${template.charAt(0).toUpperCase()}${template.slice(1)}Tooltip`;
 }
 
 /** The label key for a part id, e.g. "common.templateSectionGallery". */
@@ -164,25 +149,7 @@ function partLabelKey(partId: string): string {
         @select="activeSubtabId = $event as string"
       />
 
-      <SysCtlSectionHeader
-        :icon="activeSubtab.icon"
-        :title="$t(activeSubtab.labelKey)"
-      />
-      <p
-        v-if="
-          activeSubtab.templates.some((template) =>
-            DISCARDED_ASIDE_TEMPLATES.includes(template),
-          )
-        "
-        class="layouts-section__hint"
-      >
-        {{ $t('common.layoutsDiscardedAsideNote') }}
-      </p>
-
-      <p v-if="activeParts.length === 0" class="layouts-section__none">
-        {{ $t('common.layoutsNoParts') }}
-      </p>
-      <FieldGrid v-else :items-per-row="5">
+      <FieldGrid :items-per-row="5">
         <FieldCard
           v-for="part in activeParts"
           :key="part.id"
@@ -201,20 +168,5 @@ function partLabelKey(partId: string): string {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-}
-
-.layouts-section__hint {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  line-height: 1.5;
-  color: var(--color-fg-muted);
-  margin: 0;
-}
-
-.layouts-section__none {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--color-fg-muted);
-  margin: 0;
 }
 </style>

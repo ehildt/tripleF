@@ -387,6 +387,129 @@ export const useAppStore = defineStore('app', () => {
     sourceTagsMenuAlwaysShow.value[menu] = alwaysShow;
   }
 
+  /* ---- per-conversation prompt-bar menu overrides ----
+   * The collapse / always-show state of each prompt-bar icon menu (sources,
+   * view) is remembered per conversation, falling back to the global default
+   * above when the conversation has no override yet. Mirrors the per-
+   * conversation scroll-mode overrides. */
+  const CONVERSATION_SOURCE_TAGS_MENU_KEY =
+    'harness-conversation-source-tags-menu';
+  function loadConversationSourceTagsMenuCollapsed(): Record<
+    string,
+    SourceTagsMenuCollapsed
+  > {
+    try {
+      return JSON.parse(
+        localStorage.getItem(CONVERSATION_SOURCE_TAGS_MENU_KEY) || '{}',
+      );
+    } catch {
+      return {};
+    }
+  }
+  function saveConversationSourceTagsMenuCollapsed(
+    v: Record<string, SourceTagsMenuCollapsed>,
+  ) {
+    try {
+      localStorage.setItem(
+        CONVERSATION_SOURCE_TAGS_MENU_KEY,
+        JSON.stringify(v),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+  const conversationSourceTagsMenuCollapsed = ref<
+    Record<string, SourceTagsMenuCollapsed>
+  >(loadConversationSourceTagsMenuCollapsed());
+  watch(
+    conversationSourceTagsMenuCollapsed,
+    saveConversationSourceTagsMenuCollapsed,
+    { deep: true },
+  );
+
+  function getSourceMenuCollapsed(
+    conversationId: string,
+    menu: keyof SourceTagsMenuCollapsed,
+  ): boolean {
+    return (
+      conversationSourceTagsMenuCollapsed.value[conversationId]?.[menu] ??
+      sourceTagsMenuCollapsed.value[menu]
+    );
+  }
+
+  function setSourceMenuCollapsed(
+    conversationId: string,
+    menu: keyof SourceTagsMenuCollapsed,
+    collapsed: boolean,
+  ) {
+    if (!conversationSourceTagsMenuCollapsed.value[conversationId]) {
+      conversationSourceTagsMenuCollapsed.value[conversationId] = {
+        ...sourceTagsMenuCollapsed.value,
+      };
+    }
+    conversationSourceTagsMenuCollapsed.value[conversationId][menu] = collapsed;
+  }
+
+  const CONVERSATION_SOURCE_TAGS_MENU_ALWAYS_SHOW_KEY =
+    'harness-conversation-source-tags-menu-always-show';
+  function loadConversationSourceTagsMenuAlwaysShow(): Record<
+    string,
+    SourceTagsMenuAlwaysShow
+  > {
+    try {
+      return JSON.parse(
+        localStorage.getItem(CONVERSATION_SOURCE_TAGS_MENU_ALWAYS_SHOW_KEY) ||
+          '{}',
+      );
+    } catch {
+      return {};
+    }
+  }
+  function saveConversationSourceTagsMenuAlwaysShow(
+    v: Record<string, SourceTagsMenuAlwaysShow>,
+  ) {
+    try {
+      localStorage.setItem(
+        CONVERSATION_SOURCE_TAGS_MENU_ALWAYS_SHOW_KEY,
+        JSON.stringify(v),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+  const conversationSourceTagsMenuAlwaysShow = ref<
+    Record<string, SourceTagsMenuAlwaysShow>
+  >(loadConversationSourceTagsMenuAlwaysShow());
+  watch(
+    conversationSourceTagsMenuAlwaysShow,
+    saveConversationSourceTagsMenuAlwaysShow,
+    { deep: true },
+  );
+
+  function getSourceMenuAlwaysShow(
+    conversationId: string,
+    menu: keyof SourceTagsMenuAlwaysShow,
+  ): boolean {
+    return (
+      conversationSourceTagsMenuAlwaysShow.value[conversationId]?.[menu] ??
+      sourceTagsMenuAlwaysShow.value[menu]
+    );
+  }
+
+  function setSourceMenuAlwaysShow(
+    conversationId: string,
+    menu: keyof SourceTagsMenuAlwaysShow,
+    alwaysShow: boolean,
+  ) {
+    if (!conversationSourceTagsMenuAlwaysShow.value[conversationId]) {
+      conversationSourceTagsMenuAlwaysShow.value[conversationId] = {
+        ...sourceTagsMenuAlwaysShow.value,
+      };
+    }
+    conversationSourceTagsMenuAlwaysShow.value[conversationId][menu] =
+      alwaysShow;
+  }
+
   const COLLAPSED_SECTIONS_KEY = 'harness-collapsed-sections';
   const DEFAULT_COLLAPSED_SECTIONS: CollapsedSections = {
     sources: false,
@@ -591,6 +714,10 @@ export const useAppStore = defineStore('app', () => {
     collapsedSections,
     mediaPresentations,
     refreshRequestId,
+    getSourceMenuCollapsed,
+    setSourceMenuCollapsed,
+    getSourceMenuAlwaysShow,
+    setSourceMenuAlwaysShow,
     setDefaultScrollMode,
     getConversationScrollMode,
     setConversationScrollMode,

@@ -25,7 +25,6 @@
   /* Split hero: keep the media panel top-aligned while the title stack
      centers vertically beside it. */
   align-self: center;
-  background-color: var(--color-bg-tertiary);
   padding: var(--spacing-3);
 }
 </style>

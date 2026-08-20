@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import { Info, ListMinus, ListPlus } from '@lucide/vue';
-import { computed } from 'vue';
+import { Info } from '@lucide/vue';
 
-import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
-import { buildVideoPosterUrl } from '../../../composables/helpers/media/build-video-poster-url.helper';
-import { usePlaylistToggle } from '../../../composables/use-playlist-toggle';
+import { useVideoGalleryTile } from '../../../shared/composables/use-video-gallery-tile.composable';
+import MediaCaptionScrim from '../../../shared/ui/media-caption-scrim/MediaCaptionScrim.vue';
+import MediaCardHeader from '../../../shared/ui/media-card-header/MediaCardHeader.vue';
+import PlaylistToggleButton from '../../../shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
 import FloatingVideoFigure from '../../floating-video-figure/FloatingVideoFigure.vue';
 
 const props = defineProps<{
   item: VideoGalleryItem;
 }>();
 
-const posterUrl = computed(
-  () => props.item.thumbnailUrl || buildVideoPosterUrl(props.item.videoUrl),
-);
-
-const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
+const { posterUrl, isInPlaylist, togglePlaylistVideo } = useVideoGalleryTile(
   () => props.item,
 );
 </script>
@@ -28,74 +25,40 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
          figure inside another figure; padding: 0 overrides the global
          .exchange-message div padding so the media stays flush. -->
     <div class="video-gallery__card">
-      <!-- Header row: title linking to the source, and on the right the
-           info toggle (description/caption) next to the playlist toggle. -->
-      <div class="video-gallery__header">
-        <Tooltip v-if="item.title" :text="item.title" :max-width="'280px'">
-          <a
-            :href="item.videoUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="video-gallery__title"
-            >{{ item.title }}</a
-          >
-        </Tooltip>
-
-        <div class="video-gallery__header-actions">
-          <!-- Info toggle: only shown when the video carries a description or
-               caption; its tooltip shows them. -->
-          <Tooltip
-            v-if="item.description || item.caption"
-            :text="item.title ?? ''"
-            :max-width="'280px'"
-          >
-            <button
-              type="button"
-              class="video-gallery__info-toggle"
+      <!-- Caption overlay anchored to the top edge, so the video fills the
+           whole card. The title + actions row stays adjacent to the edge,
+           keeping the add-to-playlist toggle pinned to the top corner. -->
+      <MediaCaptionScrim edge="top">
+        <MediaCardHeader :title="item.title" :url="item.videoUrl" tooltip flush>
+          <template #actions>
+            <!-- Info toggle: only shown when the video carries a description;
+                 the caption itself is visible in the row below. -->
+            <IconButton
+              v-if="item.description"
+              :title="item.title ?? ''"
               :aria-label="$t('common.moreInfo')"
+              size="lg"
             >
               <Info class="video-gallery__info-icon" />
-            </button>
-            <template #content>
-              <div class="video-gallery__tooltip">
-                <span
-                  v-if="item.description"
-                  class="video-gallery__tooltip-desc"
-                  >{{ item.description }}</span
-                >
-                <span
-                  v-if="item.caption"
-                  class="video-gallery__tooltip-caption"
-                  >{{ item.caption }}</span
-                >
-              </div>
-            </template>
-          </Tooltip>
+              <template #tooltip-content>
+                <div class="video-gallery__tooltip">
+                  <span class="video-gallery__tooltip-desc">{{
+                    item.description
+                  }}</span>
+                </div>
+              </template>
+            </IconButton>
 
-          <Tooltip
-            :text="isInPlaylist ? 'Remove from playlist' : 'Add to playlist'"
-          >
-            <button
-              type="button"
-              class="video-gallery__playlist-toggle"
-              :class="{
-                'video-gallery__playlist-toggle--added': isInPlaylist,
-              }"
-              :aria-label="
-                isInPlaylist ? 'Remove from playlist' : 'Add to playlist'
-              "
-              :aria-pressed="isInPlaylist"
-              @click.stop="togglePlaylistVideo"
-            >
-              <ListMinus
-                v-if="isInPlaylist"
-                class="video-gallery__playlist-toggle-icon"
-              />
-              <ListPlus v-else class="video-gallery__playlist-toggle-icon" />
-            </button>
-          </Tooltip>
-        </div>
-      </div>
+            <PlaylistToggleButton
+              :active="isInPlaylist"
+              @toggle="togglePlaylistVideo"
+            />
+          </template>
+        </MediaCardHeader>
+        <p v-if="item.caption" class="video-gallery__caption-text">
+          {{ item.caption }}
+        </p>
+      </MediaCaptionScrim>
 
       <!-- The media sits flush inside the card, exactly like the video list:
            no wrapper box, so nothing fights the floating popup. The
@@ -127,37 +90,6 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   width: 100%;
 }
 
-/* ---------- header row (title + playlist toggle above the video) ---------- */
-
-/* The chained selector beats the global .exchange-message div padding rule
-   (specificity 0-2-1) so the header doesn't inherit --spacing-2. */
-.video-gallery__item .video-gallery__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  padding: 0.5rem;
-}
-
-.video-gallery__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--color-fg-primary);
-  text-decoration: none;
-  /* Single-line ellipsis: titles are truncated to one row; the full title
-     is available on hover via the tooltip. */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.video-gallery__title:hover {
-  color: var(--color-accent-primary);
-}
-
 /* ---------- rich tooltip content (description + caption) ----------
    The panel is teleported to <body>; the slot elements keep this component's
    scope id, so these scoped rules still apply. */
@@ -168,95 +100,23 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   gap: 0.3rem;
 }
 
-.video-gallery__tooltip-desc,
-.video-gallery__tooltip-caption {
+.video-gallery__tooltip-desc {
   font-weight: 500;
   color: var(--color-fg-secondary);
 }
 
-.video-gallery__tooltip-caption {
+/* Second row of the top caption overlay: the caption line under the header,
+   mirroring the carousel's caption text. */
+.video-gallery__caption-text {
+  margin: 0;
+  font-size: 0.8rem;
   color: var(--color-fg-muted);
-  font-style: italic;
-}
-
-/* ---------- header actions (info + playlist toggle) ---------- */
-
-/* Chained selector beats the global div padding rule; the actions row has
-   no padding of its own. */
-.video-gallery__item .video-gallery__header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.video-gallery__info-toggle {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  background-color: transparent;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.video-gallery__info-toggle:hover {
-  color: var(--color-fg-primary);
-}
-
-.video-gallery__info-toggle:focus {
-  outline: none;
-}
-
-.video-gallery__info-toggle:focus-visible {
-  outline: 1px solid var(--color-accent-primary);
-  outline-offset: -1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .video-gallery__info-icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
-
-/* ---------- playlist toggle (quiet nav-style icon in the header) ---------- */
-
-.video-gallery__playlist-toggle {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  background-color: transparent;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.video-gallery__playlist-toggle:hover {
-  color: var(--color-fg-primary);
-}
-
-.video-gallery__playlist-toggle--added,
-.video-gallery__playlist-toggle--added:hover {
-  color: var(--color-accent-primary);
-}
-
-.video-gallery__playlist-toggle:focus {
-  outline: none;
-}
-
-.video-gallery__playlist-toggle:focus-visible {
-  outline: 1px solid var(--color-accent-primary);
-  outline-offset: -1px;
-}
-
-.video-gallery__playlist-toggle-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
@@ -279,14 +139,6 @@ const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   aspect-ratio: 16 / 9;
   height: auto;
   max-height: 100%;
-}
-
-@media (min-width: 640px) {
-  /* 3+ items in 2-column mode: a lone last-row item is wide and centered. */
-}
-
-@media (min-width: 1024px) {
-  /* 3+ items in 3-column mode: a lone last-row item is wide and centered. */
 }
 
 /* Layout constraints for the FloatingVideoFigure root (class fallthrough).

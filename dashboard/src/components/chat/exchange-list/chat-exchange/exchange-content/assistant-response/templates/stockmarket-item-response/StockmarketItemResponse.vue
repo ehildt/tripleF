@@ -4,10 +4,10 @@ import { useAppStore } from '@/stores/app';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import ChartRow from '../../shared/ui/chart-row/ChartRow.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import D3UnifiedStockChart from '../stockmarket-response/d3-charts/D3UnifiedStockChart.vue';
 import { useStockmarketItemData } from './composables/use-stockmarket-item-data.composable';
 import StockmarketItemDescription from './stockmarket-item-description/StockmarketItemDescription.vue';
-import StockmarketItemHeader from './stockmarket-item-header/StockmarketItemHeader.vue';
 import StockmarketItemPanels from './stockmarket-item-panels/StockmarketItemPanels.vue';
 import StockmarketItemRecommendation from './stockmarket-item-recommendation/StockmarketItemRecommendation.vue';
 import type { StockmarketItemResponseProps } from './StockmarketItemResponse.types';
@@ -36,7 +36,7 @@ const {
 
 <template>
   <div class="stockmarket-item-response">
-    <StockmarketItemHeader :title="data?.title" :subtitle="data?.subtitle" />
+    <ResponseHeader :title="data?.title" :subtitle="data?.subtitle" />
 
     <StockmarketItemDescription
       v-if="data?.shortDescription"

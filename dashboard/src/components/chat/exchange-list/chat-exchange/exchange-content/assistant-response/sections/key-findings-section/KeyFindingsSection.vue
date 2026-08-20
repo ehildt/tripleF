@@ -7,6 +7,7 @@ import { useHarnessSectionCollapsed } from '../../shared/composables/use-harness
 import { pickCycleColor } from '../../shared/helpers/pick-cycle-color.helper';
 import { splitSpecLabel } from '../../shared/helpers/split-spec-label.helper';
 import SectionTitle from '../../shared/ui/section-title/SectionTitle.vue';
+import StatTile from '../../shared/ui/stat-tile/StatTile.vue';
 
 const props = defineProps<{
   items?: KeyFinding[];
@@ -37,18 +38,13 @@ const isCollapsed = useHarnessSectionCollapsed('keyFindings');
   <section v-if="rows.length && !isCollapsed" class="key-findings">
     <SectionTitle v-if="title" :title="title" />
     <ul>
-      <li
+      <StatTile
         v-for="(row, index) in rows"
         :key="index"
-        class="key-findings__tag"
-        :style="{ '--finding-color': pickCycleColor(index) }"
-      >
-        <template v-if="row.label">
-          <span class="key-findings__label">{{ row.label }}</span>
-          <span class="key-findings__value">{{ row.value }}</span>
-        </template>
-        <span v-else class="key-findings__value">{{ row.value }}</span>
-      </li>
+        :label="row.label"
+        :value="row.value"
+        :tint="pickCycleColor(index)"
+      />
     </ul>
   </section>
 </template>
@@ -61,34 +57,5 @@ const isCollapsed = useHarnessSectionCollapsed('keyFindings');
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-/* Same card treatment as the stockmarket fundamentals: muted uppercase
-   label over the prominent value, mono, centered, harmony colour rhythm
-   on the value. */
-.key-findings__tag {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-0-5);
-  padding: var(--spacing-2) var(--spacing-3);
-  font-family: var(--font-mono);
-  text-align: center;
-  background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-divider);
-}
-
-.key-findings__label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-fg-muted);
-  overflow-wrap: anywhere;
-}
-
-.key-findings__value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--finding-color, var(--color-accent-primary));
-  overflow-wrap: anywhere;
 }
 </style>

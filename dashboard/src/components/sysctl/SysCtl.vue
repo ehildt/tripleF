@@ -23,30 +23,32 @@ import WidgetsSection from './widgets-section/WidgetsSection.vue';
 const { activeSysctlTab, selectSysctlTab } = useSysctlTab();
 const { tiles } = useSysctlHealthTiles();
 
-// The SysCtl popout/player previews are transient: switching the panel's own
-// section (Search Engines → Preprocessing → Widgets → System) dismisses them too.
+// The SysCtl previews are transient: switching the panel's own section
+// (Search engines → Preprocessing → … → System) dismisses them too.
 watch(activeSysctlTab, () => {
   hidePopoutPreview();
   hidePlaylistPreview();
 });
 
-const TAB_TITLES: Record<SysctlTab, string> = {
-  'search-engines': i18n.global.t('common.sysctlSearchEngines'),
-  preprocessing: i18n.global.t('common.sysctlPreprocessing'),
-  layouts: i18n.global.t('common.sysctlLayouts'),
-  widgets: i18n.global.t('common.sysctlWidgets'),
-  chat: i18n.global.t('common.sysctlChatNavigation'),
-  interface: i18n.global.t('common.sysctlInterface'),
-  system: i18n.global.t('common.sysctlSystem'),
+const TAB_TITLE_KEYS: Record<SysctlTab, string> = {
+  'search-engines': 'common.sysctlSearchEngines',
+  preprocessing: 'common.sysctlPreprocessing',
+  layouts: 'common.sysctlLayouts',
+  widgets: 'common.sysctlWidgets',
+  chat: 'common.sysctlChatNavigation',
+  interface: 'common.sysctlInterface',
+  system: 'common.sysctlSystem',
 };
 
-const activeTabTitle = computed(() => TAB_TITLES[activeSysctlTab.value]);
+const activeTabTitle = computed(() =>
+  i18n.global.t(TAB_TITLE_KEYS[activeSysctlTab.value]),
+);
 </script>
 
 <template>
   <PanelLayout class="sysctl">
     <PanelHeader>
-      <PanelHeaderTitle :label="`SysCtl :: ${activeTabTitle}`" />
+      <PanelHeaderTitle :label="activeTabTitle" />
       <SysCtlMenu :active-tab="activeSysctlTab" @select-tab="selectSysctlTab" />
     </PanelHeader>
 

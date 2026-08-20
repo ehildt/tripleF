@@ -37,24 +37,22 @@ describe('FloatingMediaBar', () => {
 
   it('shows the add-to-playlist icon with an add tooltip', () => {
     const wrapper = mountComponent({ isInPlaylist: false });
-    const toggle = wrapper.find('.floating-media-bar__playlist-toggle');
+    const toggle = wrapper.find('.icon-button');
     expect(toggle.attributes('aria-label')).toBe('Add to playlist');
     expect(toggle.attributes('aria-pressed')).toBe('false');
   });
 
   it('shows the remove state when the video is in the playlist', () => {
     const wrapper = mountComponent({ isInPlaylist: true });
-    const toggle = wrapper.find('.floating-media-bar__playlist-toggle');
+    const toggle = wrapper.find('.icon-button');
     expect(toggle.attributes('aria-label')).toBe('Remove from playlist');
     expect(toggle.attributes('aria-pressed')).toBe('true');
-    expect(toggle.classes()).toContain(
-      'floating-media-bar__playlist-toggle--added',
-    );
+    expect(toggle.classes()).toContain('icon-button--active');
   });
 
   it.each([
     {
-      selector: '.floating-media-bar__playlist-toggle',
+      selector: '.icon-button',
       event: 'togglePlaylist',
     },
     { selector: '.floating-media-bar__minimize', event: 'minimize' },
@@ -93,9 +91,7 @@ describe('FloatingMediaBar', () => {
     expect(wrapper.emitted('drag')).toBeTruthy();
 
     const clean = mountComponent();
-    await clean
-      .find('.floating-media-bar__playlist-toggle')
-      .trigger('pointerdown');
+    await clean.find('.icon-button').trigger('pointerdown');
     expect(clean.emitted('drag')).toBeFalsy();
   });
 });

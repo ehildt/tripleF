@@ -47,7 +47,11 @@ export default defineConfig({
             },
             {
               name: 'markdown',
-              test: /node_modules[\\/](markdown-it|dompurify|turndown)/,
+              // turndown is deliberately excluded: it is only used at submit
+              // time (load-turndown.helper), so a dynamic import gives it its
+              // own on-demand chunk instead of dragging it into the eagerly
+              // loaded markdown bundle.
+              test: /node_modules[\\/](markdown-it|dompurify)/,
               priority: 30,
             },
             {

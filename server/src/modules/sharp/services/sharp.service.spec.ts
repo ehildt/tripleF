@@ -6,7 +6,7 @@ import { describe, expect, it, type Mocked, vi } from 'vitest';
 // expected errors don't pollute CI output.
 vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
-import { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
+import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 import { SharpConfigService } from '../configs/sharp-config.service.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';
 

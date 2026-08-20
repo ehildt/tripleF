@@ -5,10 +5,10 @@
  * template.
  */
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import ImageListItem from '../../shared/ui/image-list-item/ImageListItem.vue';
+import ImageGrid from '../../shared/ui/image-grid/ImageGrid.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import { useImageListResponseData } from './composables/use-imagelist-response-data.composable';
 import type { ImageListResponseProps } from './ImageListResponse.types';
 
@@ -20,16 +20,10 @@ const { items, hasContent } = useImageListResponseData(props);
 <template>
   <section v-if="hasContent" class="image-list">
     <header class="image-list__header">
-      <HeroSection :title="data.title" :subtitle="data.subtitle" />
+      <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
 
-    <ul v-if="items.length" class="image-list__grid">
-      <ImageListItem
-        v-for="(item, index) in items"
-        :key="`${item.imageUrl}-${index}`"
-        :item="item"
-      />
-    </ul>
+    <ImageGrid v-if="items.length" :items="items" />
 
     <InternationalCoverageSection :items="data.internationalCoverage" />
     <SourcesSection :items="data.sources" />
@@ -51,14 +45,5 @@ const { items, hasContent } = useImageListResponseData(props);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
-}
-
-.image-list__grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-1);
 }
 </style>

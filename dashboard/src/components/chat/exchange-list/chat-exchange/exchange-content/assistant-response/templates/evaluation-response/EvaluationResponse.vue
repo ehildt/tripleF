@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
-import GallerySection from '../../sections/gallery-section/GallerySection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
-import HeroStack from '../../sections/hero-stack/HeroStack.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import { useArtDirection } from '../../shared/composables/use-art-direction.composable';
+import ArticleHero from '../../shared/ui/article-hero/ArticleHero.vue';
+import MediaGalleries from '../../shared/ui/media-galleries/MediaGalleries.vue';
 import { useEvaluationResponseData } from './composables/use-evaluation-response-data.composable';
 import EvaluationComparisonSection from './sections/evaluation-comparison-section/EvaluationComparisonSection.vue';
 import EvaluationListSection from './sections/evaluation-list-section/EvaluationListSection.vue';
@@ -34,34 +31,21 @@ const { direction, splitHero, mosaicGallery } = useArtDirection(props);
     :class="`harness-evaluation--${direction}`"
   >
     <template v-if="hasAnyContent">
-      <header v-if="splitHero" class="hero hero--split">
-        <ArticleHeroMediaSection
-          :hero-video-url="data.heroVideoUrl"
-          :hero-video-caption="data.heroVideoCaption"
-          :hero-video-title="data.heroVideoTitle"
-          :hero-image-url="data.heroImageUrl"
-          :hero-image-alt="data.heroImageAlt"
-          :hero-caption="data.heroCaption"
-        />
-        <HeroStack>
-          <HeroSection :title="data.title" :subtitle="data.subtitle" />
+      <ArticleHero
+        :title="data.title"
+        :subtitle="data.subtitle"
+        :split="splitHero"
+        :hero-video-url="data.heroVideoUrl"
+        :hero-video-caption="data.heroVideoCaption"
+        :hero-video-title="data.heroVideoTitle"
+        :hero-image-url="data.heroImageUrl"
+        :hero-image-alt="data.heroImageAlt"
+        :hero-caption="data.heroCaption"
+      >
+        <template #lead>
           <ArticleLeadSection :summary="data.introduction" />
-        </HeroStack>
-      </header>
-      <template v-else>
-        <header class="hero">
-          <HeroSection :title="data.title" :subtitle="data.subtitle" />
-        </header>
-
-        <ArticleHeroMediaSection
-          :hero-video-url="data.heroVideoUrl"
-          :hero-video-caption="data.heroVideoCaption"
-          :hero-video-title="data.heroVideoTitle"
-          :hero-image-url="data.heroImageUrl"
-          :hero-image-alt="data.heroImageAlt"
-          :hero-caption="data.heroCaption"
-        />
-      </template>
+        </template>
+      </ArticleHero>
 
       <ParagraphSection
         v-if="data.introduction && !splitHero"
@@ -89,28 +73,14 @@ const { direction, splitHero, mosaicGallery } = useArtDirection(props);
         :items="data.recommendations"
       />
 
-      <template v-if="videosFirst">
-        <VideoGallerySection
-          :title="data.videoGalleryTitle"
-          :items="data.videoGalleryItems"
-        />
-        <GallerySection
-          :title="data.galleryTitle"
-          :items="data.galleryItems"
-          :mosaic="mosaicGallery"
-        />
-      </template>
-      <template v-else>
-        <GallerySection
-          :title="data.galleryTitle"
-          :items="data.galleryItems"
-          :mosaic="mosaicGallery"
-        />
-        <VideoGallerySection
-          :title="data.videoGalleryTitle"
-          :items="data.videoGalleryItems"
-        />
-      </template>
+      <MediaGalleries
+        :videos-first="videosFirst"
+        :video-gallery-title="data.videoGalleryTitle"
+        :video-gallery-items="data.videoGalleryItems"
+        :gallery-title="data.galleryTitle"
+        :gallery-items="data.galleryItems"
+        :mosaic="mosaicGallery"
+      />
 
       <InternationalCoverageSection :items="data.internationalCoverage" />
       <SourcesSection :items="data.sources" />
@@ -129,30 +99,5 @@ const { direction, splitHero, mosaicGallery } = useArtDirection(props);
   display: flex;
   flex-direction: column;
   gap: 1.25em;
-}
-
-.hero {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75em;
-}
-
-/* Split direction (ar2): the hero media panel sits beside the
-   header stack instead of below the title. */
-.hero--split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25em;
-}
-
-@media (min-width: 720px) {
-  .hero--split {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-
-  .hero--split :deep(.hero-media-card) {
-    margin-top: 0;
-  }
 }
 </style>

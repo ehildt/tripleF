@@ -20,6 +20,7 @@ import {
   SquareMenu,
   X,
 } from '@lucide/vue';
+import { computed } from 'vue';
 
 import {
   resetTabMenuSettings,
@@ -34,13 +35,13 @@ import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
 
+import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 import { useSysctlTabVisibility } from '../../composables/use-sysctl-tab-visibility';
-import SysCtlSectionHeader from '../../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 
-const SIDE_OPTIONS = [
+const SIDE_OPTIONS = computed(() => [
   { value: 'left', icon: PanelLeft, tooltip: i18n.global.t('common.left') },
   { value: 'right', icon: PanelRight, tooltip: i18n.global.t('common.right') },
-] as const;
+]);
 
 const { isTabVisible, toggleTab } = useSysctlTabVisibility();
 
@@ -59,10 +60,7 @@ function setSide(value: string) {
     </div>
 
     <div class="tab-menu-panel__group">
-      <SysCtlSectionHeader
-        :icon="SquareMenu"
-        :title="$t('common.tabMenuSection')"
-      />
+      <SectionHeader :icon="SquareMenu" :title="$t('common.tabMenuSection')" />
       <div class="tab-menu-panel__grid">
         <FieldCard
           :icon="SquareMenu"
@@ -90,7 +88,7 @@ function setSide(value: string) {
     </div>
 
     <div class="tab-menu-panel__group">
-      <SysCtlSectionHeader
+      <SectionHeader
         :icon="PanelTop"
         :title="$t('common.tabMenuTabsSection')"
       />

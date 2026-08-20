@@ -1,4 +1,14 @@
-import { Coins, Gauge, Wallet } from '@lucide/vue';
+import {
+  Activity,
+  BarChart3,
+  Building2,
+  Coins,
+  Gauge,
+  Newspaper,
+  Search,
+  TrendingUp,
+  Wallet,
+} from '@lucide/vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import CapabilitiesPanel from './CapabilitiesPanel.vue';
@@ -42,11 +52,37 @@ export const WithStatuses: Story = {
   args: {
     rows: [{ icon: Coins, label: 'Quota remaining', value: '99,905' }],
     statuses: [
-      { label: 'Resolve company/index names to tickers', available: true },
-      { label: 'Technical indicators (RSI, MACD, ADX)', available: false },
-      { label: 'Company fundamentals and valuation', available: false },
+      {
+        icon: Search,
+        label: 'Resolve company/index names to tickers',
+        available: true,
+      },
+      {
+        icon: TrendingUp,
+        label: 'End-of-day OHLCV price history',
+        available: true,
+      },
+      {
+        icon: Activity,
+        label: 'Live (delayed) quote snapshot',
+        available: false,
+      },
+      {
+        icon: Gauge,
+        label: 'Technical indicators (RSI, MACD, ADX)',
+        available: false,
+      },
+      {
+        icon: BarChart3,
+        label: 'Intraday volume profile (per price band)',
+        available: false,
+      },
+      { icon: Newspaper, label: 'Company financial news', available: false },
+      {
+        icon: Building2,
+        label: 'Company fundamentals and valuation',
+        available: false,
+      },
     ],
-    availableText: 'Available',
-    notInPlanText: 'Not in plan',
   },
 };

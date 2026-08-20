@@ -10,13 +10,7 @@ import type { ScrollableExchangeListProps } from './ScrollableExchangeList.types
 const props = defineProps<ScrollableExchangeListProps>();
 
 const emit = defineEmits<{
-  delete: [exchangeId: string];
   retry: [exchangeId: string];
-  branch: [exchangeId: string];
-  toggleIncluded: [exchangeId: string];
-  toggleMerge: [exchangeId: string];
-  hoverDeleteStart: [exchangeId: string];
-  hoverDeleteEnd: [];
   /** Fired on a user-initiated scroll (not a programmatic auto-scroll). */
   scroll: [];
 }>();
@@ -199,13 +193,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
           mode="carousel"
           :highlighted-ids="highlightedIds"
           :collapsed-ids="collapsedIds"
-          @delete="emit('delete', $event)"
           @retry="emit('retry', $event)"
-          @branch="emit('branch', $event)"
-          @toggle-included="emit('toggleIncluded', $event)"
-          @toggle-merge="emit('toggleMerge', $event)"
-          @hover-delete-start="emit('hoverDeleteStart', $event)"
-          @hover-delete-end="emit('hoverDeleteEnd')"
         />
       </div>
     </Transition>
@@ -228,13 +216,7 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
         mode="native"
         :highlighted-ids="highlightedIds"
         :collapsed-ids="collapsedIds"
-        @delete="emit('delete', $event)"
         @retry="emit('retry', $event)"
-        @branch="emit('branch', $event)"
-        @toggle-included="emit('toggleIncluded', $event)"
-        @toggle-merge="emit('toggleMerge', $event)"
-        @hover-delete-start="emit('hoverDeleteStart', $event)"
-        @hover-delete-end="emit('hoverDeleteEnd')"
       />
     </div>
   </div>

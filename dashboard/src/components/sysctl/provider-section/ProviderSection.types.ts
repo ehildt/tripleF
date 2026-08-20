@@ -3,8 +3,6 @@ import type { LucideIcon } from '@lucide/vue';
 import type { ProviderConfig } from '../sysctl-config.model';
 
 export interface ProviderSectionProps {
-  providerName: string;
-  providerDescription: string;
   config: ProviderConfig;
   descriptions: Record<string, string>;
   configured: boolean;
@@ -17,4 +15,7 @@ export interface ProviderSectionProps {
   /** Override the prepend slot's items-per-row (defaults to half the
    *  prepend field count, capped at 5). */
   prependItemsPerRow?: number;
+  /** Override the endpoint fields' items-per-row (defaults to half the
+   *  endpoint count, capped at 5). */
+  itemsPerRow?: number;
 }

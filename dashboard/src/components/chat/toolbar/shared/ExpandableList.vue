@@ -52,11 +52,11 @@ const emit = defineEmits<{
 .expandable-list__content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: var(--spacing-0-5);
   flex: 1;
   width: 100%;
   min-width: 0;
-  padding-inline: var(--spacing-2);
+  padding-inline: var(--spacing-1);
   overflow-y: auto;
 }
 </style>

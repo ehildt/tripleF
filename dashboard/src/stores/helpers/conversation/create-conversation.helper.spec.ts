@@ -7,7 +7,7 @@ describe('createConversation', () => {
     const conversation = createConversation();
 
     expect(conversation).toMatchObject({
-      title: 'New Conversation',
+      title: 'New chat',
       exchanges: [],
       files: [],
       savedFileInfos: [],

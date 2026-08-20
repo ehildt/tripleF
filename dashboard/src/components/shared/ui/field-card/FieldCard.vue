@@ -26,6 +26,9 @@ withDefaults(
     numberPlaceholder?: string;
     numberMin?: number | string;
     numberMax?: number | string;
+    /** Disable only the inline number field — the checkbox stays clickable.
+     *  Unlike `disabled`, this does not dim the card or block the toggle. */
+    numberDisabled?: boolean;
     disabled?: boolean;
     highlighted?: boolean;
     tone?: 'accent' | 'preprocessing';
@@ -40,6 +43,7 @@ withDefaults(
     numberPlaceholder: undefined,
     numberMin: undefined,
     numberMax: undefined,
+    numberDisabled: false,
     tone: 'accent',
   },
 );
@@ -80,7 +84,7 @@ const emit = defineEmits<{
         :placeholder="numberPlaceholder"
         :min="numberMin"
         :max="numberMax"
-        :disabled="disabled"
+        :disabled="disabled || numberDisabled"
         @update:model-value="emit('update:numberValue', $event)"
       />
     </div>

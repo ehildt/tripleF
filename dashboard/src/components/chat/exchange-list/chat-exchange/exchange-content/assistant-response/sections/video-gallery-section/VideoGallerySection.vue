@@ -128,19 +128,13 @@ const presentation = useHarnessMediaPresentation('video');
   }
 
   /* The lone last-row item keeps full width but is shorter (banner-like):
-     the video height is reduced to ~78% of a 16:9 frame. */
+     a 2:1 frame, ~89% of a 16:9 video's height. The header became a caption
+     overlay, so its former height now belongs to the video. */
   .video-gallery--count-3-plus
     > :deep(li:nth-child(2n + 1):last-child)
     .video-gallery__card {
     flex: 0 0 auto;
     min-height: 0;
-    width: 100%;
-  }
-
-  /* Header spans the full card: title left, playlist toggle right. */
-  .video-gallery--count-3-plus
-    > :deep(li:nth-child(2n + 1):last-child)
-    .video-gallery__header {
     width: 100%;
   }
 
@@ -150,7 +144,7 @@ const presentation = useHarnessMediaPresentation('video');
     flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    aspect-ratio: 16 / 7;
+    aspect-ratio: 2 / 1;
     height: auto;
     max-height: 100%;
   }
@@ -177,19 +171,13 @@ const presentation = useHarnessMediaPresentation('video');
   }
 
   /* The lone last-row item keeps full width but is shorter (banner-like):
-     the video height is reduced to ~78% of a 16:9 frame. */
+     a 2:1 frame, ~89% of a 16:9 video's height. The header became a caption
+     overlay, so its former height now belongs to the video. */
   .video-gallery--count-3-plus
     > :deep(li:nth-child(3n + 1):last-child)
     .video-gallery__card {
     flex: 0 0 auto;
     min-height: 0;
-    width: 100%;
-  }
-
-  /* Header spans the full card: title left, playlist toggle right. */
-  .video-gallery--count-3-plus
-    > :deep(li:nth-child(3n + 1):last-child)
-    .video-gallery__header {
     width: 100%;
   }
 
@@ -199,7 +187,7 @@ const presentation = useHarnessMediaPresentation('video');
     flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    aspect-ratio: 16 / 7;
+    aspect-ratio: 2 / 1;
     height: auto;
     max-height: 100%;
   }

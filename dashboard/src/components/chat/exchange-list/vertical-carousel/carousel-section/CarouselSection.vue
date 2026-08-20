@@ -6,13 +6,7 @@ import type { CarouselSectionProps } from './CarouselSection.types';
 const props = defineProps<CarouselSectionProps>();
 
 const emit = defineEmits<{
-  delete: [exchangeId: string];
   retry: [exchangeId: string];
-  branch: [exchangeId: string];
-  toggleIncluded: [exchangeId: string];
-  toggleMerge: [exchangeId: string];
-  hoverDeleteStart: [exchangeId: string];
-  hoverDeleteEnd: [];
 }>();
 
 const { opacity, setSectionElement } = useCarouselSection(props);
@@ -32,13 +26,7 @@ const { opacity, setSectionElement } = useCarouselSection(props);
       :exchange="section.user"
       :highlighted="highlightedIds.has(section.user.id)"
       :collapsed="collapsedIds.has(section.user.id)"
-      @delete="emit('delete', $event)"
       @retry="emit('retry', $event)"
-      @branch="emit('branch', $event)"
-      @toggle-included="emit('toggleIncluded', $event)"
-      @toggle-merge="emit('toggleMerge', $event)"
-      @hover-delete-start="emit('hoverDeleteStart', $event)"
-      @hover-delete-end="emit('hoverDeleteEnd')"
     />
     <ChatExchange
       v-for="assistant in section.assistants"
@@ -46,13 +34,7 @@ const { opacity, setSectionElement } = useCarouselSection(props);
       :exchange="assistant"
       :highlighted="highlightedIds.has(assistant.id)"
       :collapsed="collapsedIds.has(assistant.id)"
-      @delete="emit('delete', $event)"
       @retry="emit('retry', $event)"
-      @branch="emit('branch', $event)"
-      @toggle-included="emit('toggleIncluded', $event)"
-      @toggle-merge="emit('toggleMerge', $event)"
-      @hover-delete-start="emit('hoverDeleteStart', $event)"
-      @hover-delete-end="emit('hoverDeleteEnd')"
     />
   </div>
 </template>

@@ -10,3 +10,4 @@ ollama_data
 .pnpm-store/
 *storybook.log
 storybook-static
+.playwright-mcp

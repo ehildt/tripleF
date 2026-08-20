@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+
 import SectionTitle from '../../section-title/SectionTitle.vue';
 import type { CarouselHeaderProps } from './CarouselHeader.types';
 
@@ -17,19 +19,25 @@ const emit = defineEmits<{ select: [index: number] }>();
       role="tablist"
       :aria-label="$t('common.imageNavigation')"
     >
-      <button
+      <Tooltip
         v-for="(_, index) in count"
         :key="index"
-        type="button"
-        class="carousel-header__dot"
-        :class="{ 'carousel-header__dot--playing': index === playingIndex }"
-        :data-index="index"
-        :aria-label="$t('common.imageN', { index: index + 1 })"
-        role="tab"
-        :aria-selected="index === activeIndex"
-        :tabindex="index === activeIndex ? 0 : -1"
-        @click="emit('select', index)"
-      ></button>
+        :text="itemTitles?.[index] ?? ''"
+        :disabled="!itemTitles?.[index]"
+        max-width="16rem"
+      >
+        <button
+          type="button"
+          class="carousel-header__dot"
+          :class="{ 'carousel-header__dot--playing': index === playingIndex }"
+          :data-index="index"
+          :aria-label="$t('common.imageN', { index: index + 1 })"
+          role="tab"
+          :aria-selected="index === activeIndex"
+          :tabindex="index === activeIndex ? 0 : -1"
+          @click="emit('select', index)"
+        ></button>
+      </Tooltip>
     </div>
   </div>
 </template>
@@ -72,18 +80,31 @@ const emit = defineEmits<{ select: [index: number] }>();
     transform 0.2s ease;
 }
 
+.carousel-header__dot:hover {
+  /* A distinct tone from the active dot's accent, so hovering reads as a
+     preview rather than a selection — the same gallery hue the video
+     gallery's playing dot uses. Follows the selected palette via the
+     --color-status-gallery-source overrides in palettes/*.css. */
+  background: var(--color-status-gallery);
+  opacity: 1;
+  transform: scale(1.15);
+}
+
 .carousel-header__dot[aria-selected='true'] {
   opacity: 1;
   transform: scale(1.25);
   background: var(--color-accent-primary);
 }
 
-/* The dot of the currently playing video — violet. The higher-specificity
-   selector keeps it violet even when the playing slide is also the
-   centered (active) one. */
+/* The dot of the currently playing video — the gallery status hue. The
+   higher-specificity selector keeps it gallery-hued even when the playing
+   slide is also the centered (active) one. Hovered playing dots stay
+   gallery-hued too, so the playback indicator survives the hover. */
 .carousel-header__dot--playing,
-.carousel-header__dot[aria-selected='true'].carousel-header__dot--playing {
-  background: var(--color-status-violet);
+.carousel-header__dot[aria-selected='true'].carousel-header__dot--playing,
+.carousel-header__dot--playing:hover,
+.carousel-header__dot[aria-selected='true'].carousel-header__dot--playing:hover {
+  background: var(--color-status-gallery);
   opacity: 1;
 }
 </style>

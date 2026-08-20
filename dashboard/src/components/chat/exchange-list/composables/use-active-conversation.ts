@@ -59,10 +59,23 @@ export function useActiveConversation(): ActiveSessionData {
     );
   });
 
+  /**
+   * True while the main column should show the loading skeleton instead of
+   * content: before the conversation list has hydrated, or while the active
+   * conversation's full content is still being fetched.
+   */
+  const isExchangesLoading = computed<boolean>(() => {
+    const active = activeConversation.value;
+    // `ActiveSession` is `Conversation | undefined` — cover both nullish
+    // shapes so the stub's `loaded` flag is only read when it exists.
+    return !conversationStore.hydrated || (active != null && !active.loaded);
+  });
+
   return {
     activeConversation,
     exchanges,
     activeAssistantExchangeId,
     activeAssistantResponseStarted,
+    isExchangesLoading,
   };
 }

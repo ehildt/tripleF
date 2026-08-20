@@ -10,7 +10,7 @@
  * (scrolling), and it survives tab and conversation switches. Unembeddable
  * URLs degrade to an external link.
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import { usePlaybackAnchor } from '../../composables/use-playback-anchor';
 import { useVideoPosterFallback } from './composables/use-video-poster-fallback';
@@ -51,6 +51,14 @@ const { currentSrc, onPosterError } = useVideoPosterFallback(
   () => props.posterUrl,
   () => props.videoUrl,
 );
+
+// The poster image is hidden (and a pulse skeleton shown) until it has
+// actually loaded, so the media box never flashes blank on slow thumbnails.
+const posterLoaded = ref(false);
+
+function handlePosterLoad() {
+  posterLoaded.value = true;
+}
 </script>
 
 <template>
@@ -105,12 +113,22 @@ const { currentSrc, onPosterError } = useVideoPosterFallback(
         :aria-label="$t('common.playVideo')"
         @click="engage"
       >
+        <!-- Pulse skeleton while the poster is still fetching. -->
+        <span
+          v-if="!posterLoaded"
+          class="floating-video-figure__poster-skeleton"
+          aria-hidden="true"
+        />
         <img
           v-if="posterUrl"
           :src="currentSrc"
           alt=""
           class="floating-video-figure__poster-image"
+          :class="{
+            'floating-video-figure__poster-image--loaded': posterLoaded,
+          }"
           loading="lazy"
+          @load="handlePosterLoad"
           @error="onPosterError"
         />
         <span class="floating-video-figure__poster-play" aria-hidden="true"
@@ -184,6 +202,21 @@ const { currentSrc, onPosterError } = useVideoPosterFallback(
   width: 100%;
   height: 100%;
   object-fit: fill;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Fade the poster in only once it has actually loaded — before that the
+   skeleton below carries the media box so nothing blank flashes. */
+.floating-video-figure__poster-image--loaded {
+  opacity: 1;
+}
+
+.floating-video-figure__poster-skeleton {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-bg-tertiary);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .floating-video-figure__poster-play {

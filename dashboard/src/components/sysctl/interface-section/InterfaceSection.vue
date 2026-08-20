@@ -12,7 +12,6 @@ import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import { useSysctlMenuVisibility } from '../composables/use-sysctl-menu-visibility';
 import { useSysctlTabVisibility } from '../composables/use-sysctl-tab-visibility';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSectionHeader from '../shared/ui/sysctl-section-header/SysCtlSectionHeader.vue';
 
 const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
   useSysctlTabVisibility();
@@ -28,11 +27,6 @@ const {
 <template>
   <SysCtlSection>
     <div class="interface-section">
-      <SysCtlSectionHeader
-        :icon="Plug"
-        :title="$t('common.interfaceSection')"
-      />
-
       <FieldGrid :items-per-row="2">
         <FieldCard
           :icon="Plug"

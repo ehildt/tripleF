@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import ArticleHeroMediaSection from '../../sections/article-hero-media-section/ArticleHeroMediaSection.vue';
 import ArticleLeadSection from '../../sections/article-lead-section/ArticleLeadSection.vue';
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
-import GallerySection from '../../sections/gallery-section/GallerySection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
-import HeroStack from '../../sections/hero-stack/HeroStack.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import { useArtDirection } from '../../shared/composables/use-art-direction.composable';
+import ArticleHero from '../../shared/ui/article-hero/ArticleHero.vue';
+import MediaGalleries from '../../shared/ui/media-galleries/MediaGalleries.vue';
 import { useNewsResponseData } from './composables/use-news-response-data.composable';
 import RelatedStoriesSection from './sections/related-stories-section/RelatedStoriesSection.vue';
 import type { NewsResponseProps } from './NewsResponse.types';
@@ -25,34 +22,23 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
 <template>
   <article class="news" :class="`news--${direction}`">
     <template v-if="hasAnyContent">
-      <header v-if="splitHero" class="news__hero news__hero--split">
-        <ArticleHeroMediaSection
-          :hero-video-url="data.heroVideoUrl"
-          :hero-video-caption="data.heroVideoCaption"
-          :hero-video-title="data.heroVideoTitle"
-          :hero-image-url="data.heroImageUrl"
-          :hero-image-alt="data.heroImageAlt"
-          :hero-caption="data.heroCaption"
-        />
-        <HeroStack>
-          <HeroSection :title="data.headline" :subtitle="data.deck" />
+      <ArticleHero
+        :title="data.headline"
+        :subtitle="data.deck"
+        :split="splitHero"
+        :hero-video-url="data.heroVideoUrl"
+        :hero-video-caption="data.heroVideoCaption"
+        :hero-video-title="data.heroVideoTitle"
+        :hero-image-url="data.heroImageUrl"
+        :hero-image-alt="data.heroImageAlt"
+        :hero-caption="data.heroCaption"
+      >
+        <template #lead>
           <ArticleLeadSection :summary="data.lead" />
-        </HeroStack>
-      </header>
-      <template v-else>
-        <header class="news__hero">
-          <HeroSection :title="data.headline" :subtitle="data.deck" />
-          <ArticleHeroMediaSection
-            :hero-video-url="data.heroVideoUrl"
-            :hero-video-caption="data.heroVideoCaption"
-            :hero-video-title="data.heroVideoTitle"
-            :hero-image-url="data.heroImageUrl"
-            :hero-image-alt="data.heroImageAlt"
-            :hero-caption="data.heroCaption"
-          />
-        </header>
-        <ArticleLeadSection :summary="data.lead" />
-      </template>
+        </template>
+      </ArticleHero>
+      <!-- Stacked direction: the lead sits below the hero region. -->
+      <ArticleLeadSection v-if="!splitHero" :summary="data.lead" />
 
       <div :class="['news__body', { 'news__body--multicol': multicolBody }]">
         <ParagraphSection
@@ -60,28 +46,14 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
           :content="data.sectionContent"
         />
       </div>
-      <template v-if="videosFirst">
-        <VideoGallerySection
-          :title="data.videoGalleryTitle"
-          :items="data.videoGalleryItems"
-        />
-        <GallerySection
-          :title="data.galleryTitle"
-          :items="data.galleryItems"
-          :mosaic="mosaicGallery"
-        />
-      </template>
-      <template v-else>
-        <GallerySection
-          :title="data.galleryTitle"
-          :items="data.galleryItems"
-          :mosaic="mosaicGallery"
-        />
-        <VideoGallerySection
-          :title="data.videoGalleryTitle"
-          :items="data.videoGalleryItems"
-        />
-      </template>
+      <MediaGalleries
+        :videos-first="videosFirst"
+        :video-gallery-title="data.videoGalleryTitle"
+        :video-gallery-items="data.videoGalleryItems"
+        :gallery-title="data.galleryTitle"
+        :gallery-items="data.galleryItems"
+        :mosaic="mosaicGallery"
+      />
       <RelatedStoriesSection :items="data.relatedStories" :spans="spans" />
       <KeyFindingsSection
         :items="data.keyFindings"
@@ -106,25 +78,8 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
   gap: 1.25em;
 }
 
-/* Split direction (ar2): the hero media panel sits beside the
-   headline/lead stack instead of below the headline. */
-.news__hero--split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25em;
-}
-
+/* Newspaper columns: multicol auto-balances variable-length copy. */
 @media (min-width: 720px) {
-  .news__hero--split {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-
-  .news__hero--split :deep(.hero-media-card) {
-    margin-top: 0;
-  }
-
-  /* Newspaper columns: multicol auto-balances variable-length copy. */
   .news__body--multicol :deep(.content p) {
     columns: 2;
     column-gap: 2em;

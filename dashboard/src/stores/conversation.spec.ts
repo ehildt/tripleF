@@ -183,7 +183,7 @@ describe('useConversationStore', () => {
     expect(store.activeConversationId).toBeNull();
   });
 
-  it('buildPrompt returns text-only messages for included exchanges', () => {
+  it('buildPrompt returns text-only messages for included exchanges', async () => {
     const store = useConversationStore();
     const conversation = store.createNewConversation('temporary');
     const conversationId = conversation.conversationId;
@@ -210,7 +210,7 @@ describe('useConversationStore', () => {
       included: false,
     });
 
-    const prompt = store.buildPrompt(conversation.id);
+    const prompt = await store.buildPrompt(conversation.id);
     const messages = JSON.parse(prompt);
 
     expect(messages).toHaveLength(2);
@@ -218,7 +218,7 @@ describe('useConversationStore', () => {
     expect(messages[1]).toEqual({ role: 'assistant', content: 'Hi there' });
   });
 
-  it('buildPrompt prefers text field and serializes harness data when text is absent', () => {
+  it('buildPrompt prefers text field and serializes harness data when text is absent', async () => {
     const store = useConversationStore();
     const conversation = store.createNewConversation('temporary');
 
@@ -233,7 +233,7 @@ describe('useConversationStore', () => {
       model: 'llama3',
     });
 
-    const messages = JSON.parse(store.buildPrompt(conversation.id));
+    const messages = JSON.parse(await store.buildPrompt(conversation.id));
 
     expect(messages).toEqual([
       { role: 'assistant', content: '[Template: article]\nbody text' },
@@ -254,16 +254,16 @@ describe('useConversationStore', () => {
       model: 'llama3',
     });
 
-    const messages2 = JSON.parse(store.buildPrompt(conversation2.id));
+    const messages2 = JSON.parse(await store.buildPrompt(conversation2.id));
     expect(messages2).toHaveLength(1);
     expect(messages2[0].role).toBe('assistant');
     expect(messages2[0].content).toContain('Title: Neverness to Everness');
     expect(messages2[0].content).toContain('An open-world RPG.');
   });
 
-  it('buildPrompt returns an empty array for unknown conversation ids', () => {
+  it('buildPrompt returns an empty array for unknown conversation ids', async () => {
     const store = useConversationStore();
-    expect(store.buildPrompt('missing-id')).toBe('[]');
+    expect(await store.buildPrompt('missing-id')).toBe('[]');
   });
 
   it('hydrates conversations lazily as stubs from the list endpoint', async () => {
@@ -451,6 +451,242 @@ describe('useConversationStore', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const store = useConversationStore();
+    expect(store.activeConversationId).toBe('local-1');
+  });
+
+  /** Resolve/reject outside the promise constructor for timing control. */
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  function conversationContent(
+    exchanges: unknown[] = [],
+  ): Record<string, unknown> {
+    return {
+      id: 'local-1',
+      conversationId: 'conv-1',
+      title: 'Hello',
+      exchanges,
+      savedFileInfos: [],
+      uploadedImages: [],
+      model: 'llama3',
+      numCtx: '4096',
+      think: 'medium',
+      event: '',
+      roomId: '',
+      stream: true,
+      type: 'persistent',
+      createdAt: 1,
+      updatedAt: 1,
+      contextUsagePercent: null,
+    };
+  }
+
+  function stubSnapshot(): Record<string, unknown> {
+    return {
+      id: 'local-1',
+      conversationId: 'conv-1',
+      title: 'Hello',
+      type: 'persistent',
+      contextUsagePercent: '25.00',
+      updatedAt: '2025-01-01T00:00:00.000Z',
+    };
+  }
+
+  it('fetches the saved conversation in parallel with the stub list', async () => {
+    const list = deferred<unknown[]>();
+    const single = deferred<unknown>();
+    vi.mocked(fetchConversations).mockReturnValueOnce(
+      list.promise as Promise<never>,
+    );
+    vi.mocked(fetchConversation).mockReturnValueOnce(
+      single.promise as Promise<never>,
+    );
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+
+    // Both requests are issued before either resolves — the restore no longer
+    // waits for the list.
+    expect(fetchConversations).toHaveBeenCalled();
+    expect(fetchConversation).toHaveBeenCalledWith(
+      expect.any(String),
+      'conv-1',
+    );
+
+    single.resolve({
+      sessionId: 's',
+      conversationId: 'conv-1',
+      content: conversationContent(),
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    list.resolve([stubSnapshot()]);
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    expect(store.activeConversationId).toBe('local-1');
+    expect(store.getConversation('local-1')!.loaded).toBe(true);
+  });
+
+  it('lands a restore that resolves before the list without duplicates', async () => {
+    const list = deferred<unknown[]>();
+    vi.mocked(fetchConversations).mockReturnValueOnce(
+      list.promise as Promise<never>,
+    );
+    vi.mocked(fetchConversation).mockResolvedValueOnce({
+      sessionId: 's',
+      conversationId: 'conv-1',
+      content: conversationContent([
+        { id: 'ex-1', role: 'assistant', content: 'Hi', status: 'done' },
+      ]),
+    });
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+
+    list.resolve([stubSnapshot()]);
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    expect(store.getConversation('local-1')).toBeDefined();
+    expect(store.conversations).toHaveLength(1);
+    expect(store.getConversation('local-1')!.loaded).toBe(true);
+    expect(store.getConversation('local-1')!.exchanges).toHaveLength(1);
+    expect(store.activeConversationId).toBe('local-1');
+  });
+
+  it('inserts a restored conversation absent from the snapshot list', async () => {
+    vi.mocked(fetchConversations).mockResolvedValueOnce([]);
+    vi.mocked(fetchConversation).mockResolvedValueOnce({
+      sessionId: 's',
+      conversationId: 'conv-1',
+      content: conversationContent(),
+    });
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    expect(store.conversations).toHaveLength(1);
+    expect(store.activeConversationId).toBe('local-1');
+    expect(store.getConversation('local-1')!.loaded).toBe(true);
+  });
+
+  it('clears a stale bookmark when the saved conversation 404s and is absent from the list', async () => {
+    vi.mocked(fetchConversations).mockResolvedValueOnce([]);
+    vi.mocked(fetchConversation).mockResolvedValueOnce(null);
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    expect(localStorage.getItem('last-active-conversation-id')).toBeNull();
+    expect(store.activeConversationId).toBeNull();
+  });
+
+  it('keeps a stub active and the bookmark on a 404 when the list still has it', async () => {
+    vi.mocked(fetchConversations).mockResolvedValueOnce([stubSnapshot()]);
+    vi.mocked(fetchConversation).mockResolvedValueOnce(null);
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    expect(store.activeConversationId).toBe('local-1');
+    expect(store.getConversation('local-1')!.loaded).toBe(false);
+    expect(localStorage.getItem('last-active-conversation-id')).toBe('conv-1');
+  });
+
+  it('keeps the bookmark on network failure and leaves the stub lazily loadable', async () => {
+    vi.mocked(fetchConversations).mockResolvedValueOnce([stubSnapshot()]);
+    vi.mocked(fetchConversation).mockRejectedValueOnce(new Error('offline'));
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    expect(localStorage.getItem('last-active-conversation-id')).toBe('conv-1');
+    expect(store.activeConversationId).toBe('local-1');
+    expect(store.getConversation('local-1')!.loaded).toBe(false);
+  });
+
+  it('does not fetch a saved temporary conversation from the server', async () => {
+    const store = useConversationStore();
+    const conversation = store.createNewConversation('temporary', 'evt');
+    store.addExchange(conversation.id, {
+      role: 'user',
+      content: 'hi',
+      status: 'done',
+      conversationId: conversation.conversationId,
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    localStorage.setItem(
+      'last-active-conversation-id',
+      conversation.conversationId,
+    );
+    vi.mocked(fetchConversation).mockClear();
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const fresh = useConversationStore();
+    expect(fetchConversation).not.toHaveBeenCalled();
+    expect(fresh.activeConversationId).toBe(conversation.id);
+    expect(fresh.getConversation(conversation.id)!.loaded).toBe(true);
+  });
+
+  it('dedupes a user click on the restoring conversation into the boot fetch', async () => {
+    const single = deferred<unknown>();
+    vi.mocked(fetchConversations).mockResolvedValueOnce([stubSnapshot()]);
+    vi.mocked(fetchConversation).mockReturnValueOnce(
+      single.promise as Promise<never>,
+    );
+    localStorage.setItem('last-active-conversation-id', 'conv-1');
+
+    setActivePinia(createPinia());
+    useConversationStore();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const store = useConversationStore();
+    store.setActiveConversation('local-1');
+    store.setActiveConversation('local-1');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(fetchConversation).toHaveBeenCalledTimes(1);
+
+    single.resolve({
+      sessionId: 's',
+      conversationId: 'conv-1',
+      content: conversationContent(),
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(store.getConversation('local-1')!.loaded).toBe(true);
     expect(store.activeConversationId).toBe('local-1');
   });
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import DiscardedReferencesSection from '../../sections/discarded-references-section/DiscardedReferencesSection.vue';
 import GallerySection from '../../sections/gallery-section/GallerySection.vue';
-import HeroSection from '../../sections/hero-section/HeroSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import PreformattedSection from '../../sections/preformatted-section/PreformattedSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import type { OcrResponseProps } from './OcrResponse.types';
 
 defineProps<OcrResponseProps>();
@@ -14,7 +14,7 @@ defineProps<OcrResponseProps>();
 <template>
   <article class="harness-ocr">
     <header class="hero">
-      <HeroSection :title="data.title" :subtitle="data.subtitle" />
+      <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
     <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
     <PreformattedSection

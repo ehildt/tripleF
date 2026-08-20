@@ -9,7 +9,7 @@ describe('PprocToolsPanel', () => {
     setActivePinia(createPinia());
     const wrapper = mount(PprocToolsPanel);
     expect(
-      wrapper.find('button[aria-label="Enable preprocessing"]').exists(),
+      wrapper.find('button[aria-label="Enable image preprocessing"]').exists(),
     ).toBe(true);
   });
 

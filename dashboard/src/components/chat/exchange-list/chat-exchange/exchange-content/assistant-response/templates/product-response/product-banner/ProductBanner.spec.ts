@@ -17,12 +17,35 @@ const baseProps = {
 };
 
 describe('ProductBanner', () => {
+  it('shows the skeleton until the image fires its load event', async () => {
+    const wrapper = mount(ProductBanner, { props: baseProps });
+
+    expect(wrapper.find('.async-image__skeleton').exists()).toBe(true);
+    expect(wrapper.find('img').classes()).not.toContain(
+      'async-image__img--loaded',
+    );
+
+    await wrapper.find('img').trigger('load');
+
+    expect(wrapper.find('.async-image__skeleton').exists()).toBe(false);
+    expect(wrapper.find('img').classes()).toContain('async-image__img--loaded');
+  });
+
+  it('replaces the skeleton with the error state on image failure', async () => {
+    const wrapper = mount(ProductBanner, { props: baseProps });
+
+    await wrapper.find('img').trigger('error');
+
+    expect(wrapper.find('.async-image__skeleton').exists()).toBe(false);
+    expect(wrapper.find('img').classes()).toContain('async-image__img--error');
+  });
+
   it('renders title and subtitle', () => {
     const wrapper = mount(ProductBanner, { props: baseProps });
-    expect(wrapper.find('.product-banner__title').text()).toContain(
+    expect(wrapper.find('.response-header__title').text()).toContain(
       'Sony WH-1000XM5',
     );
-    expect(wrapper.find('.product-banner__subtitle').text()).toContain(
+    expect(wrapper.find('.response-header__subtitle').text()).toContain(
       'Premium noise-cancelling',
     );
   });

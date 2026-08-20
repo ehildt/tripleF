@@ -3,6 +3,7 @@ import { useAppStore } from '@/stores/app';
 
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
+import ResponseHeader from '../../shared/ui/response-header/ResponseHeader.vue';
 import D3StackedAreaChart from '../stockmarket-response/d3-charts/D3StackedAreaChart.vue';
 import D3UnifiedStockChart from '../stockmarket-response/d3-charts/D3UnifiedStockChart.vue';
 import { buildChangeLabel } from '../stockmarket-response/helpers/build-change-label.helper';
@@ -32,12 +33,7 @@ const {
 
 <template>
   <div class="stockmarket-list-response">
-    <header class="stockmarket-list-response__header">
-      <h2 class="stockmarket-list-response__title">{{ data?.title }}</h2>
-      <p v-if="data?.subtitle" class="stockmarket-list-response__subtitle">
-        {{ data.subtitle }}
-      </p>
-    </header>
+    <ResponseHeader :title="data?.title" :subtitle="data?.subtitle" />
 
     <p v-if="data?.summary" class="stockmarket-list-response__summary">
       {{ data.summary }}
@@ -117,17 +113,6 @@ const {
   padding: var(--spacing-4);
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-divider);
-}
-
-.stockmarket-list-response__title {
-  margin: 0;
-  font-size: 1.25rem;
-  color: var(--color-fg-primary);
-}
-
-.stockmarket-list-response__subtitle {
-  margin: 0;
-  color: var(--color-fg-muted);
 }
 
 .stockmarket-list-response__summary {

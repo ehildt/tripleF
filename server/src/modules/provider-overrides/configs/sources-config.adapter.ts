@@ -16,7 +16,8 @@ export interface SourcesConfig {
    * How many web image candidates the pipeline pools for the image-analysis
    * templates (describe/compare/ocr): fetched via the enabled image-search
    * providers, verified, and offered to the response model for visual
-   * matching. An explicit count in the user's prompt still wins.
+   * matching. An explicit count in the user's prompt still wins. 0 disables
+   * the reference pool entirely (no images verified).
    */
   imageTaskReferenceCount: number;
 }
@@ -94,7 +95,7 @@ export const SourcesConfigSchema = Joi.object<SourcesConfig>({
   blocked: hostnameListSchema,
   imageTaskReferenceCount: Joi.number()
     .integer()
-    .min(1)
+    .min(0)
     .max(MAX_IMAGE_TASK_REFERENCE_COUNT)
     .required(),
 }).required();

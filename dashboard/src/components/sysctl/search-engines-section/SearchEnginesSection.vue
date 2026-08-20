@@ -1,7 +1,9 @@
 <script setup lang="ts">
 /**
- * The SysCtl "Search Engines" tab: the Serper provider's master switch,
- * endpoint toggles, and result limits.
+ * The SysCtl "Search Engines" tab: one panel per provider (Serper,
+ * Bright Data, YouTube, EODHD) with its master switch, API key, endpoint
+ * toggles and result limits — plus the sources panel for preferred/blocked
+ * domains.
  */
 import { ref } from 'vue';
 
