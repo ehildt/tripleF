@@ -51,12 +51,13 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  HarnessDlq: 'HarnessDlq',
+  DeadLetterJob: 'DeadLetterJob',
   HarnessConversation: 'HarnessConversation',
   HarnessConfig: 'HarnessConfig',
   HarnessShownMedia: 'HarnessShownMedia',
   HarnessProviderOverride: 'HarnessProviderOverride',
   HarnessPlaylist: 'HarnessPlaylist',
+  MemoryCognitionProfile: 'MemoryCognitionProfile',
   StockMarketBar: 'StockMarketBar',
   StockMarketHistoryRange: 'StockMarketHistoryRange'
 } as const
@@ -77,10 +78,11 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const HarnessDlqScalarFieldEnum = {
-  requestId: 'requestId',
+export const DeadLetterJobScalarFieldEnum = {
+  id: 'id',
   queueName: 'queueName',
   jobId: 'jobId',
+  jobName: 'jobName',
   status: 'status',
   payload: 'payload',
   retryConfig: 'retryConfig',
@@ -94,7 +96,7 @@ export const HarnessDlqScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type HarnessDlqScalarFieldEnum = (typeof HarnessDlqScalarFieldEnum)[keyof typeof HarnessDlqScalarFieldEnum]
+export type DeadLetterJobScalarFieldEnum = (typeof DeadLetterJobScalarFieldEnum)[keyof typeof DeadLetterJobScalarFieldEnum]
 
 
 export const HarnessConversationScalarFieldEnum = {
@@ -115,6 +117,8 @@ export const HarnessConfigScalarFieldEnum = {
   selectedModel: 'selectedModel',
   preprocessing: 'preprocessing',
   providerOverrides: 'providerOverrides',
+  memoryPartition: 'memoryPartition',
+  memoryCognition: 'memoryCognition',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -154,6 +158,19 @@ export const HarnessPlaylistScalarFieldEnum = {
 } as const
 
 export type HarnessPlaylistScalarFieldEnum = (typeof HarnessPlaylistScalarFieldEnum)[keyof typeof HarnessPlaylistScalarFieldEnum]
+
+
+export const MemoryCognitionProfileScalarFieldEnum = {
+  space: 'space',
+  profile: 'profile',
+  lastSessionId: 'lastSessionId',
+  lastConversationId: 'lastConversationId',
+  lastRequestId: 'lastRequestId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryCognitionProfileScalarFieldEnum = (typeof MemoryCognitionProfileScalarFieldEnum)[keyof typeof MemoryCognitionProfileScalarFieldEnum]
 
 
 export const StockMarketBarScalarFieldEnum = {

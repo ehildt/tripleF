@@ -25,6 +25,8 @@ export class ConfigService {
         string,
         unknown
       > | null,
+      memoryPartition: row.memoryPartition,
+      memoryCognition: row.memoryCognition,
     };
   }
 
@@ -34,6 +36,8 @@ export class ConfigService {
       selectedModel?: string;
       preprocessing?: Record<string, unknown>;
       providerOverrides?: Record<string, unknown>;
+      memoryPartition?: string | null;
+      memoryCognition?: string | null;
     },
   ) {
     const data: Partial<Omit<Prisma.HarnessConfigCreateInput, 'sessionId'>> =
@@ -45,6 +49,10 @@ export class ConfigService {
       data.preprocessing = patch.preprocessing as Prisma.InputJsonValue;
     if (patch.providerOverrides !== undefined)
       data.providerOverrides = patch.providerOverrides as Prisma.InputJsonValue;
+    if (patch.memoryPartition !== undefined)
+      data.memoryPartition = patch.memoryPartition;
+    if (patch.memoryCognition !== undefined)
+      data.memoryCognition = patch.memoryCognition;
 
     return this.repository.upsert(sessionId, data);
   }

@@ -7,9 +7,10 @@ import DlqItemRow from './DlqItemRow.vue';
 
 const makeEntry = (overrides: Partial<DlqEntry> = {}): DlqEntry =>
   ({
-    requestId: 'req-1',
+    id: 'rec-1',
     queueName: 'harness',
-    jobId: null,
+    jobId: 'job-1',
+    jobName: 'req-1',
     status: 'Failed',
     payload: null,
     failedReason: null,
@@ -53,7 +54,7 @@ describe('DlqItemRow', () => {
     const buttons = wrapper.findAll('button');
     const retryBtn = buttons[0];
     retryBtn.trigger('click');
-    expect(wrapper.emitted('retry')?.[0]).toEqual(['req-1']);
+    expect(wrapper.emitted('retry')?.[0]).toEqual(['rec-1']);
   });
 
   it('emits archive when the archive button is clicked', () => {
@@ -62,7 +63,7 @@ describe('DlqItemRow', () => {
     });
     const buttons = wrapper.findAll('button');
     buttons[1].trigger('click');
-    expect(wrapper.emitted('archive')?.[0]).toEqual(['req-1']);
+    expect(wrapper.emitted('archive')?.[0]).toEqual(['rec-1']);
   });
 
   it('emits delete only after a confirming second click', async () => {
@@ -73,6 +74,6 @@ describe('DlqItemRow', () => {
     await buttons[2].trigger('click');
     expect(wrapper.emitted('delete')).toBeUndefined();
     await buttons[2].trigger('click');
-    expect(wrapper.emitted('delete')?.[0]).toEqual(['req-1']);
+    expect(wrapper.emitted('delete')?.[0]).toEqual(['rec-1']);
   });
 });

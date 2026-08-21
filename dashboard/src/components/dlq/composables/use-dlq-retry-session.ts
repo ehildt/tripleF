@@ -92,7 +92,7 @@ export function useDlqRetrySession(socketStore: DlqRetrySessionSocket) {
     const conversationStore = useConversationStore();
 
     debugStore.addDebugResult({
-      endpoint: `/api/v1/dlq/${requestId}`,
+      endpoint: '/api/v1/dlq/reinstate',
       method: 'RETRY',
       status: 'success',
       statusCode: 200,

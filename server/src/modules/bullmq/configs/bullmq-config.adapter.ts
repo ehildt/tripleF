@@ -45,7 +45,8 @@ export function BullMQConfigAdapter(env = process.env): ExtendedBullMQConfig {
         10,
       ) as number,
       backoff: {
-        type: env.BULLMQ_BACKOFF_TYPE as 'exponential' | 'fixed',
+        type: (env.BULLMQ_BACKOFF_TYPE || 'exponential') as
+          'exponential' | 'fixed',
         delay: getNumberEnv(env.BULLMQ_BACKOFF_DELAY, 10000) as number,
       },
       removeOnComplete: { count: 1, age: 0 },

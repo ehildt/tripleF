@@ -35,6 +35,8 @@ export class ConfigController {
       selectedModel: body.selectedModel,
       preprocessing: body.preprocessing,
       providerOverrides: body.providerOverrides,
+      memoryPartition: body.memoryPartition,
+      memoryCognition: body.memoryCognition,
     });
   }
 

@@ -1,4 +1,4 @@
 export type ReinstateOptions = {
-  requestIds?: string[];
+  ids?: string[];
   batchSize?: number;
 };

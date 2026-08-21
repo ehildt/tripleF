@@ -18,9 +18,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'retry', requestId: string): void;
-  (e: 'archive', requestId: string): void;
-  (e: 'delete', requestId: string): void;
+  (e: 'retry', id: string): void;
+  (e: 'archive', id: string): void;
+  (e: 'delete', id: string): void;
 }>();
 
 const entryStatus = computed(() => props.entry.status);
@@ -40,7 +40,7 @@ let deleteArmTimer: ReturnType<typeof setTimeout> | null = null;
 function handleDeleteClick() {
   if (deleteArmed.value) {
     disarmDelete();
-    emit('delete', props.entry.requestId);
+    emit('delete', props.entry.id);
     return;
   }
   deleteArmed.value = true;
@@ -68,7 +68,7 @@ onUnmounted(disarmDelete);
   >
     <div class="dlq-item-row__lead">
       <div class="dlq-item-row__header">
-        <DlqRequestIdBadge :request-id="entry.requestId" />
+        <DlqRequestIdBadge :job-name="entry.jobName" />
         <DlqStatusBadge :status="entry.status" />
       </div>
       <DlqItemMetaRow
@@ -86,14 +86,14 @@ onUnmounted(disarmDelete);
         :tint="0"
         :visible="true"
         :title="$t('common.retry')"
-        @click="emit('retry', entry.requestId)"
+        @click="emit('retry', entry.id)"
       />
       <DlqActionIconButton
         :icon="Archive"
         :tint="0.65"
         :visible="isArchivable"
         :title="$t('common.archive')"
-        @click="emit('archive', entry.requestId)"
+        @click="emit('archive', entry.id)"
       />
       <DlqActionIconButton
         :icon="Trash2"

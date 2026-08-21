@@ -9,8 +9,8 @@ export function useDeleteDlqMutation(): UseMutationReturnType<
   unknown
 > {
   return useMutation<void, Error, string>({
-    mutationFn: async (requestId: string) => {
-      const res = await fetch(getApiUrl(`/api/v1/dlq/${requestId}`), {
+    mutationFn: async (id: string) => {
+      const res = await fetch(getApiUrl(`/api/v1/dlq/${id}`), {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Delete failed');

@@ -250,6 +250,10 @@ export function useSubmit(options: UseSubmitOptions) {
     return buildQueryParams({
       requestId,
       sessionId: sid ?? '',
+      // Memory partition override (sysctl → system): empty = the session id is the partition.
+      memoryPartition: appStore.memoryPartition,
+      // Cognition space override (sysctl → system): empty = cognition lives in the memory partition.
+      memoryCognition: appStore.memoryCognition,
       conversationId,
       roomId: room,
       stream: activeConversation.value?.stream ?? true,

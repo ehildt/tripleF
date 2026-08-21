@@ -6,7 +6,7 @@ import DlqRequestIdBadge from './DlqRequestIdBadge.vue';
 describe('DlqRequestIdBadge', () => {
   it('renders the request id', () => {
     const wrapper = mount(DlqRequestIdBadge, {
-      props: { requestId: 'req-1' },
+      props: { jobName: 'req-1' },
     });
     expect(wrapper.text()).toBe('req-1');
   });

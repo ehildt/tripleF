@@ -9,6 +9,10 @@ export type FastifyMultipartFilter = {
   prompt: Array<Prompt>;
   requestId: string;
   sessionId?: string;
+  /** Memory partition override (sysctl → system) — the user's memory space: defaults to the session id, a custom value survives browser rotation. */
+  memoryPartition?: string;
+  /** Memory cognition override (sysctl → system) — the AI's understanding-of-the-user space: defaults to the memory partition. */
+  memoryCognition?: string;
   conversationId?: string;
   event: string;
   model: string;

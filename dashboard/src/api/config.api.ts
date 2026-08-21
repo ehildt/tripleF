@@ -16,6 +16,8 @@ export async function saveConfig(
     selectedModel?: string;
     preprocessing?: Record<string, unknown>;
     providerOverrides?: Record<string, unknown>;
+    memoryPartition?: string | null;
+    memoryCognition?: string | null;
   },
 ): Promise<void> {
   const res = await fetch(getApiUrl(`/api/v1/configs/${sessionId}`), {

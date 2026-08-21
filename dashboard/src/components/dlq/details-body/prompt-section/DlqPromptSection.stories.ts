@@ -21,7 +21,9 @@ messages (extracted from \`payload.filters.prompt\`).
   },
   args: {
     entry: {
-      requestId: 'req-1',
+      id: 'rec-1',
+      jobId: 'job-1',
+      jobName: 'req-1',
       queueName: 'harness',
       jobId: null,
       status: 'Failed',

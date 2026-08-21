@@ -15,6 +15,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 
 import { Prisma } from '../../../generated/prisma/client.js';
+import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { JobReinstatementService } from '../../minio/services/job-reinstatement.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import {
@@ -47,17 +48,17 @@ export class DeadLetterController {
     return this.dlqRepository.findAll({
       status: query.status,
       queueName: query.queueName,
-      requestId: query.requestId,
+      jobName: query.jobName,
       limit: query.limit ? Number(query.limit) : undefined,
       offset: query.offset ? Number(query.offset) : undefined,
       search: query.search,
     });
   }
 
-  @Get(':requestId')
+  @Get(':id')
   @ApiFindOneDlqEntry()
-  async findOne(@Param('requestId') requestId: string) {
-    const result = await this.dlqRepository.findById(requestId);
+  async findOne(@Param('id') id: string) {
+    const result = await this.dlqRepository.findById(id);
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -66,11 +67,11 @@ export class DeadLetterController {
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateDlqEntry()
   async create(@Body() body: CreateDlqEntryDto) {
-    const data: Prisma.HarnessDlqCreateInput = {
-      requestId: body.requestId,
+    const data: Prisma.DeadLetterJobCreateInput = {
       queueName: body.queueName,
       jobId: body.jobId,
-      status: body.status as Prisma.HarnessDlqCreateInput['status'],
+      jobName: body.jobName,
+      status: body.status as Prisma.DeadLetterJobCreateInput['status'],
       payload: body.payload as Prisma.InputJsonValue,
       retryConfig: body.retryConfig as Prisma.InputJsonValue,
       failedReason: body.failedReason,
@@ -83,13 +84,10 @@ export class DeadLetterController {
     return this.dlqRepository.create(data);
   }
 
-  @Patch(':requestId')
+  @Patch(':id')
   @ApiUpdateDlqEntry()
-  async update(
-    @Param('requestId') requestId: string,
-    @Body() body: UpdateDlqEntryDto,
-  ) {
-    const existing = await this.dlqRepository.findById(requestId);
+  async update(@Param('id') id: string, @Body() body: UpdateDlqEntryDto) {
+    const existing = await this.dlqRepository.findById(id);
     if (!existing) throw new NotFoundException();
     if (existing.status === 'Removed') {
       throw new BadRequestException(
@@ -97,10 +95,11 @@ export class DeadLetterController {
       );
     }
 
-    const data: Prisma.HarnessDlqUpdateInput = {
+    const data: Prisma.DeadLetterJobUpdateInput = {
       queueName: body.queueName,
       jobId: body.jobId,
-      status: body.status satisfies Prisma.HarnessDlqUpdateInput['status'],
+      jobName: body.jobName,
+      status: body.status satisfies Prisma.DeadLetterJobUpdateInput['status'],
       payload: body.payload as Prisma.InputJsonValue,
       retryConfig: body.retryConfig as Prisma.InputJsonValue,
       failedReason: body.failedReason,
@@ -110,43 +109,49 @@ export class DeadLetterController {
       failureHistory: body.failureHistory as Prisma.InputJsonValue,
       nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
     };
-    return this.dlqRepository.update(requestId, data);
+    return this.dlqRepository.update(id, data);
   }
 
-  @Patch(':requestId/upsert')
+  @Patch(':id/upsert')
   @ApiUpsertDlqEntry()
-  async upsert(
-    @Param('requestId') requestId: string,
-    @Body() body: UpdateDlqEntryDto,
-  ) {
-    const existing = await this.dlqRepository.findById(requestId);
-    if (existing && existing.status === 'Removed') {
+  async upsert(@Param('id') id: string, @Body() body: UpdateDlqEntryDto) {
+    const existing = await this.dlqRepository.findById(id);
+    if (!existing) throw new NotFoundException();
+    if (existing.status === 'Removed') {
       throw new BadRequestException(
         `Cannot modify a job with status 'Removed'`,
       );
     }
 
-    return this.dlqRepository.upsert(requestId, {
-      queueName: body.queueName,
-      jobId: body.jobId,
-      status: body.status satisfies Prisma.HarnessDlqCreateInput['status'],
-      payload: body.payload as Prisma.InputJsonValue,
-      retryConfig: body.retryConfig as Prisma.InputJsonValue,
-      failedReason: body.failedReason,
-      failedAt: body.failedAt ? new Date(body.failedAt) : undefined,
-      attemptsMade: body.attemptsMade,
-      totalAttempts: body.totalAttempts,
-      failureHistory: body.failureHistory as Prisma.InputJsonValue,
-      nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
-    });
+    return this.dlqRepository.upsertByQueueJob(
+      {
+        queueName: existing.queueName,
+        jobId: existing.jobId,
+        jobName: existing.jobName,
+      },
+      {
+        queueName: body.queueName,
+        jobId: body.jobId,
+        jobName: body.jobName,
+        status: body.status satisfies Prisma.DeadLetterJobCreateInput['status'],
+        payload: body.payload as Prisma.InputJsonValue,
+        retryConfig: body.retryConfig as Prisma.InputJsonValue,
+        failedReason: body.failedReason,
+        failedAt: body.failedAt ? new Date(body.failedAt) : undefined,
+        attemptsMade: body.attemptsMade,
+        totalAttempts: body.totalAttempts,
+        failureHistory: body.failureHistory as Prisma.InputJsonValue,
+        nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
+      },
+    );
   }
 
-  @Delete(':requestId')
+  @Delete(':id')
   @ApiDeleteDlqEntry()
-  async remove(@Param('requestId') requestId: string) {
-    const existing = await this.dlqRepository.findById(requestId);
+  async remove(@Param('id') id: string) {
+    const existing = await this.dlqRepository.findById(id);
     if (!existing) throw new NotFoundException();
-    return this.dlqRepository.remove(requestId);
+    return this.dlqRepository.remove(id);
   }
 
   @Post('reinstate')
@@ -157,7 +162,7 @@ export class DeadLetterController {
     @Body() body?: ReinstateDlqDto,
   ) {
     return this.jobReinstatementService.reinstate({
-      requestIds: body?.requestIds,
+      ids: body?.ids,
       batchSize: batchSize ? Number(batchSize) : undefined,
     });
   }
@@ -174,24 +179,26 @@ export class DeadLetterController {
     );
 
     for (const record of toDelete) {
+      // Only harness turns have buffers; vectorize/queue-agnostic records do not.
+      if (record.queueName !== HARNESS_QUEUE) continue;
       try {
-        await this.minioService.deleteBuffers(record.requestId);
+        await this.minioService.deleteBuffers(record.jobName);
       } catch {
         // buffer cleanup is best-effort
       }
     }
     const deletedCount = (
-      await this.dlqRepository.hardDeleteMany(toDelete.map((r) => r.requestId))
+      await this.dlqRepository.hardDeleteMany(toDelete.map((r) => r.id))
     ).count;
 
-    const toDeleted = await this.dlqRepository.findEligible(
+    const toRemoved = await this.dlqRepository.findEligible(
       'Cleared',
       cleared.retainAmount,
       cleared.maxAgeMs,
     );
 
     await this.dlqRepository.moveStatus(
-      toDeleted.map((r) => r.requestId),
+      toRemoved.map((r) => r.id),
       'Removed',
     );
 
@@ -202,7 +209,7 @@ export class DeadLetterController {
     );
 
     await this.dlqRepository.moveStatus(
-      toCleared.map((r) => r.requestId),
+      toCleared.map((r) => r.id),
       'Cleared',
     );
 

@@ -3,7 +3,6 @@ import { Job } from 'bullmq';
 import { vi } from 'vitest';
 
 import { BullMQConfigService } from '../../bullmq/configs/bullmq-config.service.js';
-import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 
 import { LifecycleService } from './lifecycle.service.js';
 import { DeadLetterRepository } from './repository.service.js';
@@ -19,9 +18,10 @@ describe('LifecycleService', () => {
         {
           provide: DeadLetterRepository,
           useValue: {
+            findByQueueJob: vi.fn(),
             findById: vi.fn(),
             update: vi.fn(),
-            upsert: vi.fn(),
+            upsertByQueueJob: vi.fn(),
           },
         },
         {
@@ -40,9 +40,7 @@ describe('LifecycleService', () => {
     dlqRepository = module.get<DeadLetterRepository>(DeadLetterRepository);
   });
 
-  function createJob(
-    overrides: Partial<Job<HarnessJobPayload>> = {},
-  ): Job<HarnessJobPayload> {
+  function createJob(overrides: Partial<Job> = {}): Job {
     return {
       name: 'req-1',
       queueName: 'harness',
@@ -51,25 +49,29 @@ describe('LifecycleService', () => {
       data: { meta: [], filters: {} },
       remove: vi.fn().mockResolvedValue(undefined),
       ...overrides,
-    } as Job<HarnessJobPayload>;
+    } as Job;
   }
 
   describe('onJobCompleted', () => {
     it('clears the DLQ entry when one exists', async () => {
-      vi.mocked(dlqRepository.findById).mockResolvedValue({
-        requestId: 'req-1',
-      } as any);
+      vi.mocked(dlqRepository.findByQueueJob).mockResolvedValue({
+        id: 'record-1',
+      } as never);
 
       await service.onJobCompleted(createJob());
 
-      expect(dlqRepository.update).toHaveBeenCalledWith('req-1', {
+      expect(dlqRepository.findByQueueJob).toHaveBeenCalledWith(
+        'harness',
+        'job-1',
+      );
+      expect(dlqRepository.update).toHaveBeenCalledWith('record-1', {
         status: 'Cleared',
         failedReason: null,
       });
     });
 
     it('does nothing when no DLQ entry exists', async () => {
-      vi.mocked(dlqRepository.findById).mockResolvedValue(null);
+      vi.mocked(dlqRepository.findByQueueJob).mockResolvedValue(null);
 
       await service.onJobCompleted(createJob());
 
@@ -77,44 +79,87 @@ describe('LifecycleService', () => {
     });
   });
 
-  describe('onJobFailed', () => {
+  describe('onJobFailed/handleFailed', () => {
     it('is currently a no-op', async () => {
       await expect(service.onJobFailed()).resolves.toBeUndefined();
     });
-  });
 
-  describe('handleFailed', () => {
-    it('does nothing when max attempts have not been reached', async () => {
-      const job = createJob({ attemptsMade: 1 });
-
+    it('records the final failure by (queueName, jobId) and removes the job', async () => {
+      const now = Date.now();
+      const job = createJob();
       await service.handleFailed(job, 'boom');
 
-      expect(dlqRepository.upsert).not.toHaveBeenCalled();
+      expect(dlqRepository.upsertByQueueJob).toHaveBeenCalledWith(
+        { queueName: 'harness', jobId: 'job-1', jobName: 'req-1' },
+        expect.objectContaining({
+          queueName: 'harness',
+          jobId: 'job-1',
+          jobName: 'req-1',
+          status: 'Failed',
+          failedReason: 'boom',
+          attemptsMade: 3,
+          nextRetryAt: expect.any(Date),
+          payload: { meta: [], filters: {} },
+        }),
+      );
+      expect(job.remove).toHaveBeenCalled();
+
+      const [, data] = vi.mocked(dlqRepository.upsertByQueueJob).mock.calls[0];
+      const nextRetryAt = data.nextRetryAt as Date;
+      expect(nextRetryAt.getTime()).toBeGreaterThanOrEqual(now + 1000);
+      expect(nextRetryAt.getTime()).toBeLessThan(now + 2000);
+    });
+
+    it('skips recording while retry attempts remain', async () => {
+      const job = createJob({ attemptsMade: 1 });
+      await service.handleFailed(job, 'boom');
+
+      expect(dlqRepository.upsertByQueueJob).not.toHaveBeenCalled();
       expect(job.remove).not.toHaveBeenCalled();
     });
 
-    it('records final failure and removes the job at max attempts', async () => {
-      const now = Date.now();
-      const job = createJob({ attemptsMade: 3 });
-
-      await service.handleFailed(job, 'boom');
-
-      expect(dlqRepository.upsert).toHaveBeenCalledWith('req-1', {
-        queueName: 'harness',
-        jobId: 'job-1',
-        status: 'Failed',
-        failedAt: expect.any(Date),
-        failedReason: 'boom',
-        attemptsMade: 3,
-        nextRetryAt: expect.any(Date),
-        payload: { meta: [], filters: {} },
+    it('works for any queue (vectorize job)', async () => {
+      const job = createJob({
+        name: 'vectorize',
+        queueName: 'vectorize',
+        id: 'vjob-9',
+        data: {
+          userId: 'sess-1',
+          sessionId: 'sess-1',
+          requestId: 'req-42',
+          tier: 'episodic',
+          role: 'user',
+          text: 'Hello',
+        },
       });
-      expect(job.remove).toHaveBeenCalled();
+      await service.handleFailed(job, 'embed 404');
 
-      const args = vi.mocked(dlqRepository.upsert).mock.calls[0][1];
-      const nextRetryAt = args.nextRetryAt as Date;
-      expect(nextRetryAt.getTime()).toBeGreaterThanOrEqual(now + 1000);
-      expect(nextRetryAt.getTime()).toBeLessThan(now + 2000);
+      expect(dlqRepository.upsertByQueueJob).toHaveBeenCalledWith(
+        { queueName: 'vectorize', jobId: 'vjob-9', jobName: 'vectorize' },
+        expect.objectContaining({
+          queueName: 'vectorize',
+          jobId: 'vjob-9',
+          jobName: 'vectorize',
+          status: 'Failed',
+          nextRetryAt: expect.any(Date),
+          payload: expect.objectContaining({ requestId: 'req-42' }),
+        }),
+      );
+    });
+  });
+
+  describe('recordPermanentFailure', () => {
+    it('records regardless of remaining attempts', async () => {
+      const job = createJob({ attemptsMade: 1 });
+      await service.recordPermanentFailure(job, 'model not found');
+
+      expect(dlqRepository.upsertByQueueJob).toHaveBeenCalledWith(
+        { queueName: 'harness', jobId: 'job-1', jobName: 'req-1' },
+        expect.objectContaining({
+          status: 'Failed',
+          failedReason: 'model not found',
+        }),
+      );
     });
   });
 });

@@ -470,6 +470,37 @@ const en: LocaleMessages = {
     warmModelOnSelect: 'Warm up model on selection',
     warmModelOnSelectDesc:
       'Pre-load local model weights so the first prompt starts fast',
+    memoryPartition: 'Memory partition',
+    memoryPartitionDesc:
+      'Stable id your memories are stored under — set it once to keep them across browsers/sessions (empty = current session). The AI also keeps a separate, disclosable cognition of you in this space',
+    memoryCognition: 'Memory cognition',
+    memoryCognitionKeyDesc:
+      "Separate key space for the AI's understanding of you — empty = cognition lives in the memory partition",
+    memoryCognitionDesc:
+      "The AI's accumulated understanding of you: a structured profile plus probed insights — ask it in chat to disclose or forget this anytime",
+    memoryCognitionInsights: 'Insights (probed while you chat)',
+    memoryCognitionCap: 'Cognition limit',
+    memoryCognitionCapDesc:
+      'Character cap for the AI cognition profile document — a system variable (env baseline MEMORY_COGNITION_LIMIT, default 5000, clamped 500–32000)',
+    memoryCognitionEmpty: 'Nothing learned yet — this builds up as you chat',
+    memoryCognitionUnavailable: 'Memory is off or unreachable',
+    memoryCognitionRefresh: 'Reload cognition',
+    memoryCognitionWipe: 'Wipe cognition',
+    memoryCognitionSpacesLabel: 'Cognition spaces',
+    memoryCognitionSpaceDefault: 'Memory partition (default)',
+    memoryCognitionSpaceSearch: 'Search or create a space',
+    memoryCognitionSpaceCreate: 'Create space "{text}"',
+    memoryCognitionSpacesEmpty:
+      'No saved spaces yet — type a name to create one',
+    memoryCognitionSpaceRemove: 'Remove space from list (data is kept)',
+    memoryPartitionFacts: 'Memory partition',
+    memoryPartitionFactsDesc:
+      'Your stored fact records — statements you made or asked the AI to remember; the cognition lane is separate and shown above',
+    memoryPartitionRefresh: 'Reload facts',
+    memoryPartitionWipe: 'Wipe partition facts',
+    memoryPartitionEmpty: 'Nothing stored yet — facts accrue as you chat',
+    memoryPartitionUnavailable: 'Memory is off or unreachable',
+    memoryPartitionLimited: 'Showing the most recent {count} records',
     youtubeVideosWithViews: 'YouTube videos with views and duration',
     socketsDesc: 'Show the sockets menu and list in the toolbar',
     counters: 'Counters',
@@ -546,6 +577,7 @@ const en: LocaleMessages = {
     tools: 'tools',
     thinking: 'thinking',
     completion: 'completion',
+    embedding: 'embedding',
   },
   chat: {
     noConversationTitle: 'No chat selected',

@@ -397,12 +397,13 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  HarnessDlq: 'HarnessDlq',
+  DeadLetterJob: 'DeadLetterJob',
   HarnessConversation: 'HarnessConversation',
   HarnessConfig: 'HarnessConfig',
   HarnessShownMedia: 'HarnessShownMedia',
   HarnessProviderOverride: 'HarnessProviderOverride',
   HarnessPlaylist: 'HarnessPlaylist',
+  MemoryCognitionProfile: 'MemoryCognitionProfile',
   StockMarketBar: 'StockMarketBar',
   StockMarketHistoryRange: 'StockMarketHistoryRange'
 } as const
@@ -420,81 +421,81 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "harnessDlq" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist" | "stockMarketBar" | "stockMarketHistoryRange"
+    modelProps: "deadLetterJob" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist" | "memoryCognitionProfile" | "stockMarketBar" | "stockMarketHistoryRange"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
-    HarnessDlq: {
-      payload: Prisma.$HarnessDlqPayload<ExtArgs>
-      fields: Prisma.HarnessDlqFieldRefs
+    DeadLetterJob: {
+      payload: Prisma.$DeadLetterJobPayload<ExtArgs>
+      fields: Prisma.DeadLetterJobFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.HarnessDlqFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload> | null
+          args: Prisma.DeadLetterJobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.HarnessDlqFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
+          args: Prisma.DeadLetterJobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>
         }
         findFirst: {
-          args: Prisma.HarnessDlqFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload> | null
+          args: Prisma.DeadLetterJobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.HarnessDlqFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
+          args: Prisma.DeadLetterJobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>
         }
         findMany: {
-          args: Prisma.HarnessDlqFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>[]
+          args: Prisma.DeadLetterJobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>[]
         }
         create: {
-          args: Prisma.HarnessDlqCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
+          args: Prisma.DeadLetterJobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>
         }
         createMany: {
-          args: Prisma.HarnessDlqCreateManyArgs<ExtArgs>
+          args: Prisma.DeadLetterJobCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.HarnessDlqCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>[]
+          args: Prisma.DeadLetterJobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>[]
         }
         delete: {
-          args: Prisma.HarnessDlqDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
+          args: Prisma.DeadLetterJobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>
         }
         update: {
-          args: Prisma.HarnessDlqUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
+          args: Prisma.DeadLetterJobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>
         }
         deleteMany: {
-          args: Prisma.HarnessDlqDeleteManyArgs<ExtArgs>
+          args: Prisma.DeadLetterJobDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.HarnessDlqUpdateManyArgs<ExtArgs>
+          args: Prisma.DeadLetterJobUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.HarnessDlqUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>[]
+          args: Prisma.DeadLetterJobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>[]
         }
         upsert: {
-          args: Prisma.HarnessDlqUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$HarnessDlqPayload>
+          args: Prisma.DeadLetterJobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeadLetterJobPayload>
         }
         aggregate: {
-          args: Prisma.HarnessDlqAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateHarnessDlq>
+          args: Prisma.DeadLetterJobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeadLetterJob>
         }
         groupBy: {
-          args: Prisma.HarnessDlqGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.HarnessDlqGroupByOutputType>[]
+          args: Prisma.DeadLetterJobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeadLetterJobGroupByOutputType>[]
         }
         count: {
-          args: Prisma.HarnessDlqCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.HarnessDlqCountAggregateOutputType> | number
+          args: Prisma.DeadLetterJobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeadLetterJobCountAggregateOutputType> | number
         }
       }
     }
@@ -868,6 +869,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MemoryCognitionProfile: {
+      payload: Prisma.$MemoryCognitionProfilePayload<ExtArgs>
+      fields: Prisma.MemoryCognitionProfileFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemoryCognitionProfileFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemoryCognitionProfileFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>
+        }
+        findFirst: {
+          args: Prisma.MemoryCognitionProfileFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemoryCognitionProfileFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>
+        }
+        findMany: {
+          args: Prisma.MemoryCognitionProfileFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>[]
+        }
+        create: {
+          args: Prisma.MemoryCognitionProfileCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>
+        }
+        createMany: {
+          args: Prisma.MemoryCognitionProfileCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemoryCognitionProfileCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>[]
+        }
+        delete: {
+          args: Prisma.MemoryCognitionProfileDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>
+        }
+        update: {
+          args: Prisma.MemoryCognitionProfileUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>
+        }
+        deleteMany: {
+          args: Prisma.MemoryCognitionProfileDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemoryCognitionProfileUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemoryCognitionProfileUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>[]
+        }
+        upsert: {
+          args: Prisma.MemoryCognitionProfileUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryCognitionProfilePayload>
+        }
+        aggregate: {
+          args: Prisma.MemoryCognitionProfileAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemoryCognitionProfile>
+        }
+        groupBy: {
+          args: Prisma.MemoryCognitionProfileGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryCognitionProfileGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemoryCognitionProfileCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryCognitionProfileCountAggregateOutputType> | number
+        }
+      }
+    }
     StockMarketBar: {
       payload: Prisma.$StockMarketBarPayload<ExtArgs>
       fields: Prisma.StockMarketBarFieldRefs
@@ -1055,10 +1130,11 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const HarnessDlqScalarFieldEnum = {
-  requestId: 'requestId',
+export const DeadLetterJobScalarFieldEnum = {
+  id: 'id',
   queueName: 'queueName',
   jobId: 'jobId',
+  jobName: 'jobName',
   status: 'status',
   payload: 'payload',
   retryConfig: 'retryConfig',
@@ -1072,7 +1148,7 @@ export const HarnessDlqScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type HarnessDlqScalarFieldEnum = (typeof HarnessDlqScalarFieldEnum)[keyof typeof HarnessDlqScalarFieldEnum]
+export type DeadLetterJobScalarFieldEnum = (typeof DeadLetterJobScalarFieldEnum)[keyof typeof DeadLetterJobScalarFieldEnum]
 
 
 export const HarnessConversationScalarFieldEnum = {
@@ -1093,6 +1169,8 @@ export const HarnessConfigScalarFieldEnum = {
   selectedModel: 'selectedModel',
   preprocessing: 'preprocessing',
   providerOverrides: 'providerOverrides',
+  memoryPartition: 'memoryPartition',
+  memoryCognition: 'memoryCognition',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1132,6 +1210,19 @@ export const HarnessPlaylistScalarFieldEnum = {
 } as const
 
 export type HarnessPlaylistScalarFieldEnum = (typeof HarnessPlaylistScalarFieldEnum)[keyof typeof HarnessPlaylistScalarFieldEnum]
+
+
+export const MemoryCognitionProfileScalarFieldEnum = {
+  space: 'space',
+  profile: 'profile',
+  lastSessionId: 'lastSessionId',
+  lastConversationId: 'lastConversationId',
+  lastRequestId: 'lastRequestId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryCognitionProfileScalarFieldEnum = (typeof MemoryCognitionProfileScalarFieldEnum)[keyof typeof MemoryCognitionProfileScalarFieldEnum]
 
 
 export const StockMarketBarScalarFieldEnum = {
@@ -1475,12 +1566,13 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
  */
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
-  harnessDlq?: Prisma.HarnessDlqOmit
+  deadLetterJob?: Prisma.DeadLetterJobOmit
   harnessConversation?: Prisma.HarnessConversationOmit
   harnessConfig?: Prisma.HarnessConfigOmit
   harnessShownMedia?: Prisma.HarnessShownMediaOmit
   harnessProviderOverride?: Prisma.HarnessProviderOverrideOmit
   harnessPlaylist?: Prisma.HarnessPlaylistOmit
+  memoryCognitionProfile?: Prisma.MemoryCognitionProfileOmit
   stockMarketBar?: Prisma.StockMarketBarOmit
   stockMarketHistoryRange?: Prisma.StockMarketHistoryRangeOmit
 }

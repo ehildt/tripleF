@@ -73,6 +73,8 @@ export class HarnessController {
 
     this.stepLogger.log({ requestId }, 'receive', 'request received', {
       sessionId: query.sessionId,
+      memoryPartition: query.memoryPartition ?? query.sessionId,
+      memoryCognition: query.memoryCognition,
       conversationId: query.conversationId,
       roomId,
       hasNewImages: query.hasNewImages,
@@ -103,6 +105,8 @@ export class HarnessController {
         model,
         requestId,
         sessionId: query.sessionId,
+        memoryPartition: query.memoryPartition,
+        memoryCognition: query.memoryCognition,
         conversationId: query.conversationId,
         roomId,
         stream,

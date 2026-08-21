@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { QDRANT_CONFIG } from '../../qdrant/constants/qdrant.constants.js';
+import type { QdrantConfig } from '../../qdrant/models/qdrant-config.model.js';
 import {
   buildIntentCorrectionPrompt,
   languageCorrectionPrompt,
@@ -31,6 +33,7 @@ export class InterpretActionService {
     private readonly playwrightMcpConfig: PlaywrightMcpConfigService,
     private readonly stepLogger: HarnessStepLogger,
     private readonly eodhdDiscovery: EodhdDiscoveryService,
+    @Inject(QDRANT_CONFIG) private readonly qdrantConfig: QdrantConfig,
   ) {}
 
   /**
@@ -45,10 +48,16 @@ export class InterpretActionService {
    */
   async execute(params: InterpretParams): Promise<InterpretResult> {
     const enabledToolNames = filterEodhdToolsByCapabilities(
-      getEnabledToolNames({
-        ...this.providerOverrides.getConfig(),
-        playwright: this.playwrightMcpConfig.config,
-      }),
+      getEnabledToolNames(
+        {
+          ...this.providerOverrides.getConfig(),
+          playwright: this.playwrightMcpConfig.config,
+        },
+        // Memory tools (remember/recall) are classifier-visible only when the
+        // memory feature is on — they are gated by QDRANT_CONFIG, not the
+        // provider overrides, so they are merged here.
+        this.qdrantConfig.enabled,
+      ),
       this.eodhdDiscovery.getCached(),
     );
     const classifyMessages: InputMessage[] = buildClassifyMessages(

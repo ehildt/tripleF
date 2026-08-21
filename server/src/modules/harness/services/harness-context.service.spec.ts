@@ -10,6 +10,7 @@ import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 
 import { HarnessContextService } from './harness-context.service.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
+import { StepRegistryService } from './step-registry.service.js';
 
 function createJob(payload: HarnessJobPayload): Job<HarnessJobPayload> {
   return {
@@ -55,6 +56,18 @@ describe('HarnessContextService', () => {
             log: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
+          },
+        },
+        {
+          provide: StepRegistryService,
+          useValue: {
+            registry: new Map([
+              ['interpret', { handler: {}, deps: [] }],
+              ['execute', { handler: {}, deps: ['interpret'] }],
+              ['sanitize', { handler: {}, deps: ['execute'] }],
+              ['respond', { handler: {}, deps: ['sanitize'] }],
+              ['vectorize', { handler: {}, deps: ['respond'] }],
+            ]),
           },
         },
       ],
@@ -114,6 +127,9 @@ describe('HarnessContextService', () => {
       true,
     );
     expect(ctx.steps.has('execute')).toBe(true);
+    // Every registered step (including vectorize) is seeded — a hardcoded map
+    // would silently starve newly-registered steps of the engine.
+    expect(ctx.steps.has('vectorize')).toBe(true);
   });
 
   it('downloads referenced images from sessionMetadata and merges them with new images', async () => {

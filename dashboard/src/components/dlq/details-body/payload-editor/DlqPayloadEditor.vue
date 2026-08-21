@@ -16,7 +16,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'savePayload', requestId: string, payload: Record<string, unknown>): void;
+  (e: 'savePayload', id: string, payload: Record<string, unknown>): void;
   (e: 'back'): void;
 }>();
 
@@ -27,7 +27,7 @@ function handleSave() {
   if (!props.entry) return;
   const result = saveEdit(props.entry);
   if (result) {
-    emit('savePayload', props.entry.requestId, result);
+    emit('savePayload', props.entry.id, result);
   }
 }
 </script>

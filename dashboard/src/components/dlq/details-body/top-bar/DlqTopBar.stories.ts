@@ -23,7 +23,9 @@ selector. All controls derive their initial value from
   },
   args: {
     entry: {
-      requestId: 'req-1',
+      id: 'rec-1',
+      jobId: 'job-1',
+      jobName: 'req-1',
       queueName: 'harness',
       jobId: null,
       status: 'Failed',
