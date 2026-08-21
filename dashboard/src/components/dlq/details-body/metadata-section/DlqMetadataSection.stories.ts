@@ -19,7 +19,9 @@ stack of \`DlqMetadataField\` rows.
   },
   args: {
     entry: {
-      requestId: 'req-1',
+      id: 'rec-1',
+      jobId: 'job-1',
+      jobName: 'req-1',
       queueName: 'harness',
       jobId: 'job-5',
       status: 'Failed',
@@ -47,7 +49,9 @@ export const Default: Story = {};
 export const NoRetry: Story = {
   args: {
     entry: {
-      requestId: 'req-1',
+      id: 'rec-1',
+      jobId: 'job-1',
+      jobName: 'req-1',
       queueName: 'harness',
       jobId: 'job-5',
       status: 'Active',

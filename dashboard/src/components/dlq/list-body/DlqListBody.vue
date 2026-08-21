@@ -24,9 +24,9 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'select', entry: DlqEntry): void;
-  (e: 'retry', requestId: string): void;
-  (e: 'archive', requestId: string): void;
-  (e: 'delete', requestId: string): void;
+  (e: 'retry', id: string): void;
+  (e: 'archive', id: string): void;
+  (e: 'delete', id: string): void;
 }>();
 
 const entriesRef = toRef(props, 'entries');
@@ -52,18 +52,18 @@ function select(entry: DlqEntry) {
   <div v-else-if="sortedEntries.length" class="dlq-list-body">
     <div
       v-for="entry in sortedEntries"
-      :key="entry.requestId"
+      :key="entry.id"
       class="dlq-list-body__row"
       :class="{
-        'dlq-list-body__row--active': props.selectedEntryId === entry.requestId,
+        'dlq-list-body__row--active': props.selectedEntryId === entry.id,
       }"
       @click="select(entry)"
     >
       <DlqItemRow
         :entry="entry"
         :is-read="props.isEntryRead(entry)"
-        :is-active="props.selectedEntryId === entry.requestId"
-        @retry="(requestId: string) => emit('retry', requestId)"
+        :is-active="props.selectedEntryId === entry.id"
+        @retry="(id: string) => emit('retry', id)"
         @archive="emit('archive', $event)"
         @delete="emit('delete', $event)"
       />

@@ -3,6 +3,50 @@ import { describe, expect, it } from 'vitest';
 import { buildIntentSelectionPrompt } from './intent-selection.prompt.js';
 
 describe('buildIntentSelectionPrompt', () => {
+  it('instructs the growth loop: probe, gather, capture preferences, honor explicit asks', () => {
+    const prompt = buildIntentSelectionPrompt([
+      'memoryRecall',
+      'memoryRemember',
+    ]);
+
+    expect(prompt).toContain('MEMORY RULES');
+    expect(prompt).toContain('active growth loop');
+    // The probe is unconditional: the classifier can't know whether user
+    // memory exists without checking, so memoryRecall is included in EVERY
+    // request when memory tools are enabled — never gated on topic.
+    expect(prompt).toContain('ALWAYS-PROBE');
+    expect(prompt).toContain(
+      'include the enabled memoryRecall tool in EVERY request',
+    );
+    // The model gathers more general knowledge about subjects AND stores the
+    // findings — GATHER-TO-REMEMBER must include memoryRemember, not just the
+    // web searches, or the gathered facts are never persisted.
+    expect(prompt).toContain('GATHER-TO-REMEMBER');
+    expect(prompt).toContain(
+      'include BOTH the enabled *WebSearch tools AND the enabled memoryRemember tool',
+    );
+    expect(prompt).toContain(
+      'the memoryRemember call stores the notable facts that were found',
+    );
+    // Stated preferences are recorded even without an explicit "remember".
+    expect(prompt).toContain('PREFERENCE CAPTURE');
+    expect(prompt).toContain('even when the user did not say "remember"');
+    // Explicit remember/track/learn/ follow asks are honored in any language.
+    expect(prompt).toContain('EXPLICIT INSTRUCTION');
+    expect(prompt).toContain('remember, track, follow, or learn something');
+    // The probe is never replaced by web search.
+    expect(prompt).toContain('never replace memoryRecall with web search');
+    expect(prompt).toContain('CONTINUATION');
+    expect(prompt).toContain('UPDATE-LOOP');
+  });
+
+  it('disambiguates familiarity questions from memory questions', () => {
+    const prompt = buildIntentSelectionPrompt([]);
+
+    expect(prompt).toContain('FAMILIARITY QUESTION RULES');
+    expect(prompt).toContain('only when the subject is public world knowledge');
+  });
+
   it('includes the role of the classifier', () => {
     const prompt = buildIntentSelectionPrompt([]);
 

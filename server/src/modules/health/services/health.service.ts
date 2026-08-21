@@ -10,6 +10,7 @@ import {
 import { AppConfigService } from '../../../configs/app-config.service.js';
 import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
+import { QdrantHealthIndicator } from '../../qdrant/services/qdrant-health-indicator.service.js';
 
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
 
@@ -24,6 +25,7 @@ export class HealthService {
     private readonly acfg: AppConfigService,
     private readonly pgIndicator: PostgresHealthIndicator,
     private readonly minioIndicator: MinioHealthIndicator,
+    private readonly qdrantIndicator: QdrantHealthIndicator,
   ) {}
 
   @HealthCheck()
@@ -35,16 +37,17 @@ export class HealthService {
           thresholdPercent:
             this.acfg.config.health!.diskThresholdPercent ?? 0.8,
         }),
-      () => this.http.pingCheck('ollama', this.buildOllamaPingUrl()),
       () =>
         this.memory.checkHeap(
           'memory_heap',
-          this.acfg.config.health!.memoryHeap,
+          this.acfg.config.health!.memoryHeap!,
         ),
       () =>
-        this.memory.checkRSS('memory_rss', this.acfg.config.health!.memoryRSS),
+        this.memory.checkRSS('memory_rss', this.acfg.config.health!.memoryRSS!),
+      () => this.http.pingCheck('ollama', this.buildOllamaPingUrl()),
       () => this.pgIndicator.check('postgres'),
       () => this.minioIndicator.check('minio'),
+      () => this.qdrantIndicator.check('qdrant'),
     ]);
   }
 

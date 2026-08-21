@@ -42,10 +42,10 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
   }
 
   async findAll(options: FindAllOptions) {
-    const where: Prisma.HarnessDlqWhereInput = {};
+    const where: Prisma.DeadLetterJobWhereInput = {};
 
     if (options.status)
-      where.status = options.status as Prisma.HarnessDlqWhereInput['status'];
+      where.status = options.status as Prisma.DeadLetterJobWhereInput['status'];
 
     if (options.queueName)
       where.queueName = { contains: options.queueName, mode: 'insensitive' };
@@ -59,34 +59,32 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
       else where.nextRetryAt = { gte: options.nextRetryAtAfter };
     }
 
-    if (options.requestId)
-      where.requestId = { contains: options.requestId, mode: 'insensitive' };
+    if (options.jobName)
+      where.jobName = { contains: options.jobName, mode: 'insensitive' };
 
     if (options.search) {
       const searchTerm = `%${options.search}%`;
       where.OR = [
-        { requestId: { contains: options.search, mode: 'insensitive' } },
+        { jobName: { contains: options.search, mode: 'insensitive' } },
         { queueName: { contains: options.search, mode: 'insensitive' } },
         { failedReason: { contains: options.search, mode: 'insensitive' } },
       ];
 
-      const jsonRows = await this.prisma.$queryRaw<
-        Array<{ requestId: string }>
-      >(
-        Prisma.sql`SELECT "requestId" FROM "harness_dlq" WHERE "payload"::text ILIKE ${searchTerm}`,
+      const jsonRows = await this.prisma.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`SELECT "id" FROM "dead_letter_job" WHERE "payload"::text ILIKE ${searchTerm}`,
       );
 
       if (jsonRows.length > 0)
-        where.OR.push({ requestId: { in: jsonRows.map((r) => r.requestId) } });
+        where.OR.push({ id: { in: jsonRows.map((r) => r.id) } });
     }
 
     const [rows, total] = await Promise.all([
-      this.prisma.harnessDlq.findMany({
+      this.prisma.deadLetterJob.findMany({
         where,
         take: options.limit ?? 50,
         skip: options.offset ?? 0,
       }),
-      this.prisma.harnessDlq.count({ where }),
+      this.prisma.deadLetterJob.count({ where }),
     ]);
 
     return {
@@ -97,39 +95,56 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async findById(requestId: string) {
-    return this.prisma.harnessDlq.findUnique({
-      where: { requestId },
+  async findById(id: string) {
+    return this.prisma.deadLetterJob.findUnique({
+      where: { id },
     });
   }
 
-  async create(data: Prisma.HarnessDlqCreateInput) {
-    return this.prisma.harnessDlq.create({ data });
+  async findByQueueJob(queueName: string, jobId: string) {
+    return this.prisma.deadLetterJob.findUnique({
+      where: { queueName_jobId: { queueName, jobId } },
+    });
   }
 
-  async update(requestId: string, data: Prisma.HarnessDlqUpdateInput) {
-    return this.prisma.harnessDlq.update({
-      where: { requestId },
+  async create(data: Prisma.DeadLetterJobCreateInput) {
+    return this.prisma.deadLetterJob.create({ data });
+  }
+
+  async update(id: string, data: Prisma.DeadLetterJobUpdateInput) {
+    return this.prisma.deadLetterJob.update({
+      where: { id },
       data,
     });
   }
 
-  async upsert(
-    requestId: string,
-    data: Partial<Omit<Prisma.HarnessDlqCreateInput, 'requestId'>>,
+  /**
+   * Upsert keyed by the technical job identity (queueName + jobId). Repeated
+   * failures of the same logical job accumulate into failureHistory and bump
+   * the attempt counters (reinstate refreshes jobId, keeping one record per
+   * logical job across cycles).
+   */
+  async upsertByQueueJob(
+    input: {
+      queueName: string;
+      jobId: string;
+      jobName: string;
+    },
+    data: Partial<Prisma.DeadLetterJobCreateInput>,
   ) {
-    const existing = await this.findById(requestId);
+    const existing = await this.findByQueueJob(input.queueName, input.jobId);
 
     if (!existing) {
       return this.create({
-        requestId,
-        queueName: data.queueName ?? 'unknown',
+        queueName: input.queueName,
+        jobId: input.jobId,
+        jobName: input.jobName,
         payload: (data.payload ?? {}) as Prisma.InputJsonValue,
         status:
-          (data.status satisfies Prisma.HarnessDlqCreateInput['status']) ??
+          (data.status satisfies Prisma.DeadLetterJobCreateInput['status']) ??
           'Failed',
         ...data,
-      } satisfies Prisma.HarnessDlqCreateInput);
+      } satisfies Prisma.DeadLetterJobCreateInput);
     }
 
     const failureEntry = {
@@ -144,8 +159,8 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
       failureEntry,
     ];
 
-    return this.prisma.harnessDlq.update({
-      where: { requestId },
+    return this.prisma.deadLetterJob.update({
+      where: { id: existing.id },
       data: {
         ...data,
         totalAttempts: (existing.totalAttempts ?? 0) + 1,
@@ -155,8 +170,8 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async remove(requestId: string) {
-    return this.update(requestId, { status: 'Removed' });
+  async remove(id: string) {
+    return this.update(id, { status: 'Removed' });
   }
 
   async findEligible(
@@ -166,9 +181,9 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
   ) {
     const cutoff = new Date(Date.now() - olderThanMs);
 
-    return this.prisma.harnessDlq.findMany({
+    return this.prisma.deadLetterJob.findMany({
       where: {
-        status: status as Prisma.HarnessDlqWhereInput['status'],
+        status: status as Prisma.DeadLetterJobWhereInput['status'],
         createdAt: { lt: cutoff },
       },
       orderBy: { createdAt: 'desc' },
@@ -176,13 +191,13 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async moveStatus(requestIds: string[], newStatus: string) {
-    if (!requestIds.length) return { moved: 0 };
+  async moveStatus(ids: string[], newStatus: string) {
+    if (!ids.length) return { moved: 0 };
 
-    const result = await this.prisma.harnessDlq.updateMany({
-      where: { requestId: { in: requestIds } },
+    const result = await this.prisma.deadLetterJob.updateMany({
+      where: { id: { in: ids } },
       data: {
-        status: newStatus as Prisma.HarnessDlqUpdateInput['status'],
+        status: newStatus as Prisma.DeadLetterJobUpdateInput['status'],
         updatedAt: new Date(),
       },
     });
@@ -190,11 +205,11 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
     return { moved: result.count };
   }
 
-  async hardDeleteMany(requestIds: string[]) {
-    if (!requestIds.length) return { count: 0 };
+  async hardDeleteMany(ids: string[]) {
+    if (!ids.length) return { count: 0 };
 
-    const result = await this.prisma.harnessDlq.deleteMany({
-      where: { requestId: { in: requestIds } },
+    const result = await this.prisma.deadLetterJob.deleteMany({
+      where: { id: { in: ids } },
     });
 
     return { count: result.count };

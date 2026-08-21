@@ -2,28 +2,47 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
-import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
+import {
+  HARNESS_QUEUE,
+  VECTORIZE_QUEUE,
+} from '../../bullmq/constants/bullmq.constants.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
-import { HarnessJobPayload } from '../../harness/dtos/harness-job.dto.js';
 
 import type { ReinstateOptions } from './job-reinstatement.service.types.js';
 
+/**
+ * Re-enqueues dead-lettered jobs back into their origin queue. The queue is
+ * resolved from the record's queueName via the registry — new queues join the
+ * registry to become reinstatable. Re-adding produces a fresh BullMQ job id;
+ * the record is updated in place (status Active + new jobId) so one logical
+ * job keeps a single failure/retry history across reinstate cycles.
+ */
 @Injectable()
 export class JobReinstatementService {
   private readonly logger = new Logger(JobReinstatementService.name);
+  private readonly queues: Map<string, Queue>;
 
   constructor(
     @InjectQueue(HARNESS_QUEUE)
-    private readonly queue: Queue,
+    private readonly harnessQueue: Queue,
+    @InjectQueue(VECTORIZE_QUEUE)
+    private readonly vectorizeQueue: Queue,
     private readonly dlqRepository: DeadLetterRepository,
-  ) {}
+  ) {
+    this.queues = new Map<string, Queue>([
+      [HARNESS_QUEUE, this.harnessQueue],
+      [VECTORIZE_QUEUE, this.vectorizeQueue],
+    ]);
+  }
 
   async reinstate(options: ReinstateOptions) {
-    let records: Awaited<ReturnType<typeof this.dlqRepository.findAll>>['data'];
+    let records: NonNullable<
+      Awaited<ReturnType<typeof this.dlqRepository.findById>>
+    >[];
 
-    if (options.requestIds?.length) {
+    if (options.ids?.length) {
       const rows = await Promise.all(
-        options.requestIds.map((id) => this.dlqRepository.findById(id)),
+        options.ids.map((id) => this.dlqRepository.findById(id)),
       );
       records = rows.filter(
         (r): r is NonNullable<typeof r> =>
@@ -41,24 +60,25 @@ export class JobReinstatementService {
     const restored: string[] = [];
 
     for (const record of records) {
+      const queue = this.queues.get(record.queueName);
+      if (!queue) {
+        this.logger.warn(
+          `No queue registered for "${record.queueName}" — skipping ${record.id}`,
+        );
+        continue;
+      }
       try {
-        const payload: HarnessJobPayload = {
-          meta: (record.payload as any)?.meta ?? [],
-          filters: (record.payload as any)?.filters ?? {},
-        };
-
-        await this.queue.add(record.requestId, payload);
-
-        await this.dlqRepository.update(record.requestId, {
+        const newJob = await queue.add(record.jobName, record.payload as never);
+        await this.dlqRepository.update(record.id, {
           status: 'Active',
+          jobId: String(newJob.id),
         });
-
-        restored.push(record.requestId);
+        restored.push(record.id);
       } catch (err) {
-        this.logger.error(`Failed to reinstate job ${record.requestId}:`, err);
+        this.logger.error(`Failed to reinstate DLQ record ${record.id}:`, err);
       }
     }
 
-    return { restored: restored.length, requestIds: restored };
+    return { restored: restored.length, ids: restored };
   }
 }

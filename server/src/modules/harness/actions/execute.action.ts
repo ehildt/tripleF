@@ -33,6 +33,13 @@ import type { ExecuteResult } from './execute.action.types.js';
  */
 const BROWSER_MAX_STEPS = 8;
 
+/**
+ * memoryDelete needs recall → delete chaining: the model recalls the verbatim
+ * statement, then deletes it. One blind round can never express that, so
+ * delete intents get a small step budget like the browser tools.
+ */
+const MEMORY_DELETE_MAX_STEPS = 3;
+
 @Injectable()
 export class ExecuteActionService {
   constructor(
@@ -89,10 +96,13 @@ export class ExecuteActionService {
 
     // 3. Build the tool set: external tools + variant request tools
     const allToolNames = this.resolveAllToolNames(intent, requestedVariants);
-    // Browser intents chain several browser_* calls within one execute step.
+    // Browser intents chain several browser_* calls within one execute step;
+    // a delete intent chains memoryRecall → memoryDelete for the verbatim text.
     const maxSteps = allToolNames.some((name) => name.startsWith('browser_'))
       ? BROWSER_MAX_STEPS
-      : undefined;
+      : allToolNames.includes('memoryDelete')
+        ? MEMORY_DELETE_MAX_STEPS
+        : undefined;
     const selectedTools =
       allToolNames.length > 0
         ? this.toolSelectionService.selectToolsByName(
@@ -101,6 +111,22 @@ export class ExecuteActionService {
             undefined,
             availableVariants,
             intent.language ?? undefined,
+            // Memory tools are partition-scoped: bind them to this turn's
+            // partition so remember/recall/delete can never cross space
+            // boundaries. The request id traces remembers back to the turn
+            // that stored them.
+            {
+              memoryPartition:
+                ctx.memoryPartition ?? ctx.sessionId ?? ctx.requestId,
+              memoryCognition:
+                ctx.memoryCognition ??
+                ctx.memoryPartition ??
+                ctx.sessionId ??
+                ctx.requestId,
+              sessionId: ctx.sessionId,
+              conversationId: ctx.filters.conversationId,
+              requestId: ctx.requestId,
+            },
           )
         : {};
     const chosenTools = wrapToolsWithChartStreaming(
@@ -202,7 +228,10 @@ export class ExecuteActionService {
   ): string[] {
     const allToolNames = [];
     const externalTools = (intent?.tools ?? []).filter(
-      (t) => !t.startsWith('request'),
+      // memoryRemember is deferred to the dedicated memory-write step: the
+      // execute wave is a single blind round, so a remember call here could
+      // never include the data this wave is about to gather.
+      (t) => !t.startsWith('request') && t !== 'memoryRemember',
     ) as string[];
     allToolNames.push(...externalTools);
 
@@ -255,7 +284,8 @@ export class ExecuteActionService {
 
     const invoked = new Set<string>(existingResults.map((tr) => tr.toolName));
     const missing = (intent.tools ?? []).filter(
-      (t) => !t.startsWith('request') && !invoked.has(t),
+      (t) =>
+        !t.startsWith('request') && t !== 'memoryRemember' && !invoked.has(t),
     );
     if (missing.length === 0)
       return { results: [], inputTokens: 0, outputTokens: 0 };

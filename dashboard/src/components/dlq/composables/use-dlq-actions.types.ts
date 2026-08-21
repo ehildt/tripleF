@@ -9,7 +9,7 @@ export interface DlqActionsOptions {
   dlqStore: ReturnType<typeof useDlqStore>;
   socketStore: DlqRetrySessionSocket;
   retryMutation: UseMutationReturnType<
-    { restored: number; requestIds: string[] },
+    { restored: number; ids: string[] },
     Error,
     string,
     unknown
@@ -18,7 +18,7 @@ export interface DlqActionsOptions {
   updateMutation: UseMutationReturnType<
     DlqEntry,
     Error,
-    { requestId: string; data: Record<string, unknown> },
+    { id: string; data: Record<string, unknown> },
     unknown
   >;
   guardedRefetch: () => void;

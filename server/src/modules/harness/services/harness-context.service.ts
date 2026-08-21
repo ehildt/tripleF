@@ -12,8 +12,9 @@ import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.hel
 import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.helper.js';
 import { stripImagesFromMessages } from '../helpers/sanitize/strip-images-from-messages.helper.js';
 
-import { HarnessContext, StepId, StepState } from './harness-context.type.js';
+import { HarnessContext } from './harness-context.type.js';
 import { HarnessStepLogger } from './harness-step-logger.service.js';
+import { StepRegistryService } from './step-registry.service.js';
 
 @Injectable()
 export class HarnessContextService {
@@ -23,12 +24,15 @@ export class HarnessContextService {
     private readonly ollamaModelsService: OllamaModelsService,
     private readonly sharpService: SharpService,
     private readonly stepLogger: HarnessStepLogger,
+    private readonly stepRegistryService: StepRegistryService,
   ) {}
 
   async buildContext(job: Job<HarnessJobPayload>): Promise<HarnessContext> {
     const { filters } = job.data;
     const requestId = job.name;
     const sessionId = filters.sessionId;
+    const memoryPartition = filters.memoryPartition;
+    const memoryCognition = filters.memoryCognition;
     const { meta } = job.data;
 
     const sessionMetadata = parseSessionMetadata(filters.sessionMetadata);
@@ -115,16 +119,19 @@ export class HarnessContextService {
       ?.filter((p) => p.role === 'user')
       ?.at(-1)?.content;
 
-    const steps = new Map<StepId, StepState>([
-      ['interpret', { status: 'idle' }],
-      ['execute', { status: 'idle' }],
-      ['sanitize', { status: 'idle' }],
-      ['respond', { status: 'idle' }],
-    ]);
+    // Seed every registered step as idle — derived from the registry so a new
+    // step (e.g. vectorize) is picked up automatically instead of being
+    // silently invisible to the engine.
+    const stepsMap: HarnessContext['steps'] = new Map();
+    for (const id of this.stepRegistryService.registry.keys()) {
+      stepsMap.set(id, { status: 'idle' });
+    }
 
     return {
       requestId,
       sessionId,
+      memoryPartition,
+      memoryCognition,
       job,
       // Preprocessing resolves from the live server-side config at execution
       // time: the next query — fresh or requeued — always uses the latest
@@ -144,7 +151,7 @@ export class HarnessContextService {
       visionExcluded,
       lastUserPrompt,
       abortSignal: new AbortController().signal,
-      steps,
+      steps: stepsMap,
       outputs: {
         toolResults: [],
       },

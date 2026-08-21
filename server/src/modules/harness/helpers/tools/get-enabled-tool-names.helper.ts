@@ -1,8 +1,18 @@
 import type { ProviderConfig } from './tool-registry.constants.js';
-import { BROWSER_TOOL_NAMES } from './tool-registry.constants.js';
+import {
+  BROWSER_TOOL_NAMES,
+  MEMORY_TOOL_NAMES,
+} from './tool-registry.constants.js';
 
-/** Return only the tool names whose search engines are currently enabled. */
-export function getEnabledToolNames(cfg: ProviderConfig): string[] {
+/**
+ * Return only the tool names whose search engines are currently enabled.
+ * Memory tools join the classifier vocabulary when the memory feature is
+ * enabled — they are gated by QDRANT_CONFIG, not the provider overrides.
+ */
+export function getEnabledToolNames(
+  cfg: ProviderConfig,
+  memoryEnabled = false,
+): string[] {
   const enabled: string[] = [];
 
   enabled.push('webFetch');
@@ -12,6 +22,7 @@ export function getEnabledToolNames(cfg: ProviderConfig): string[] {
   addEodhdTools(cfg.eodhd, enabled);
   addYoutubeTools(cfg.youtube, enabled);
   if (cfg.playwright.enabled) enabled.push(...BROWSER_TOOL_NAMES);
+  if (memoryEnabled) enabled.push(...MEMORY_TOOL_NAMES);
 
   return enabled;
 }

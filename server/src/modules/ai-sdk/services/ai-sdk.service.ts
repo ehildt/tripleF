@@ -157,7 +157,9 @@ export class AiSdkService {
       tools: params.tools,
       allowSystemInMessages: false,
       stopWhen: stepCountIs(params.maxSteps ?? 1),
-      ...(hasTools ? { toolChoice: 'required' as const } : {}),
+      ...(hasTools
+        ? { toolChoice: params.toolChoice ?? ('required' as const) }
+        : {}),
       abortSignal: params.abortSignal,
       timeout,
       providerOptions: buildProviderOptions({

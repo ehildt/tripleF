@@ -11,11 +11,15 @@ import { HarnessCancellationService } from '../services/harness-cancellation.ser
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
 import { HarnessContextService } from '../services/harness-context.service.js';
 import { HarnessStepEngineService } from '../services/harness-step-engine.service.js';
+import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { StepRegistryService } from '../services/step-registry.service.js';
 import { ExecuteStepService } from '../services/steps/execute-step.service.js';
 import { InterpretStepService } from '../services/steps/interpret-step.service.js';
+import { MemoryProfileStepService } from '../services/steps/memory-profile-step.service.js';
+import { MemoryWriteStepService } from '../services/steps/memory-write-step.service.js';
 import { RespondStepService } from '../services/steps/respond-step.service.js';
 import { SanitizeStepService } from '../services/steps/sanitize-step.service.js';
+import { VectorizeStepService } from '../services/steps/vectorize-step.service.js';
 
 import { HarnessProcessor } from './harness.processor.js';
 
@@ -121,6 +125,32 @@ describe('HarnessProcessor', () => {
           provide: SanitizeStepService,
           useValue: {
             execute: vi.fn(),
+          },
+        },
+        {
+          provide: MemoryWriteStepService,
+          useValue: {
+            execute: vi.fn(),
+          },
+        },
+        {
+          provide: MemoryProfileStepService,
+          useValue: {
+            execute: vi.fn(),
+          },
+        },
+        {
+          provide: VectorizeStepService,
+          useValue: {
+            execute: vi.fn(),
+          },
+        },
+        {
+          provide: HarnessStepLogger,
+          useValue: {
+            log: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
           },
         },
         {

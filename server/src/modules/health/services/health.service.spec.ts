@@ -12,6 +12,7 @@ import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.s
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
+import { QdrantHealthIndicator } from '../../qdrant/services/qdrant-health-indicator.service.js';
 
 import { HealthService } from './health.service.js';
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
@@ -99,6 +100,12 @@ describe('HealthService', () => {
             },
           },
         },
+        {
+          provide: QdrantHealthIndicator,
+          useValue: {
+            check: vi.fn().mockReturnValue({ status: 'up' }),
+          },
+        },
       ],
     }).compile();
 
@@ -114,7 +121,7 @@ describe('HealthService', () => {
       expect(healthCheckService.check).toHaveBeenCalled();
       const checkCall = (healthCheckService.check as ReturnType<typeof vi.fn>)
         .mock.calls[0][0];
-      expect(checkCall).toHaveLength(6);
+      expect(checkCall).toHaveLength(7);
       expect(result).toEqual({ status: 'ok' });
     });
 
@@ -205,6 +212,12 @@ describe('HealthService', () => {
               config: {}, // health is undefined
             },
           },
+          {
+            provide: QdrantHealthIndicator,
+            useValue: {
+              check: vi.fn().mockReturnValue({ status: 'up' }),
+            },
+          },
         ],
       }).compile();
 
@@ -213,7 +226,7 @@ describe('HealthService', () => {
 
       expect(checkFn).toHaveBeenCalled();
       const checkCall = checkFn.mock.calls[0][0];
-      expect(checkCall).toHaveLength(6);
+      expect(checkCall).toHaveLength(7);
     });
   });
 });

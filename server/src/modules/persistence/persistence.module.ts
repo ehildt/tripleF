@@ -7,6 +7,7 @@ import { ConfigRepository } from './services/config.repository.js';
 import { ConfigService } from './services/config.service.js';
 import { ConversationRepository } from './services/conversation.repository.js';
 import { ConversationService } from './services/conversation.service.js';
+import { MemoryCognitionProfileRepository } from './services/memory-cognition-profile.repository.js';
 import { PlaylistRepository } from './services/playlist.repository.js';
 import { PlaylistService } from './services/playlist.service.js';
 import { ProviderOverridesRepository } from './services/provider-overrides.repository.js';
@@ -20,6 +21,7 @@ import { ShownMediaRepository } from './services/shown-media.repository.js';
     ConversationService,
     ConfigRepository,
     ConfigService,
+    MemoryCognitionProfileRepository,
     PlaylistRepository,
     PlaylistService,
     ProviderOverridesRepository,
@@ -28,6 +30,7 @@ import { ShownMediaRepository } from './services/shown-media.repository.js';
   exports: [
     ConversationService,
     ConfigService,
+    MemoryCognitionProfileRepository,
     PlaylistService,
     ProviderOverridesRepository,
     ShownMediaRepository,

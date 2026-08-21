@@ -117,7 +117,7 @@ watch(
       />
       <DlqListBody
         :entries="dlqStore.entries"
-        :selected-entry-id="dlqStore.selectedEntry?.requestId ?? null"
+        :selected-entry-id="dlqStore.selectedEntry?.id ?? null"
         :error="dlqStore.error"
         :hide-read="dlqStore.hideRead"
         :is-entry-read="(entry) => dlqStore.isEntryRead(entry)"

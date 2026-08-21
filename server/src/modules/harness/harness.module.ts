@@ -25,8 +25,11 @@ import { ShownMediaService } from './services/shown-media.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
 import { ExecuteStepService } from './services/steps/execute-step.service.js';
 import { InterpretStepService } from './services/steps/interpret-step.service.js';
+import { MemoryProfileStepService } from './services/steps/memory-profile-step.service.js';
+import { MemoryWriteStepService } from './services/steps/memory-write-step.service.js';
 import { RespondStepService } from './services/steps/respond-step.service.js';
 import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
+import { VectorizeStepService } from './services/steps/vectorize-step.service.js';
 
 @Global()
 @Module({
@@ -48,6 +51,9 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
     SanitizeActionService,
     RespondStepService,
     RespondActionService,
+    MemoryWriteStepService,
+    MemoryProfileStepService,
+    VectorizeStepService,
     ResponseValidatorService,
     MediaUrlValidatorService,
     CloudImageIngestionService,
@@ -72,6 +78,9 @@ import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
     SanitizeActionService,
     RespondStepService,
     RespondActionService,
+    MemoryWriteStepService,
+    MemoryProfileStepService,
+    VectorizeStepService,
     ResponseValidatorService,
     MediaUrlValidatorService,
     CloudImageIngestionService,

@@ -43,7 +43,10 @@ describe('BullMQConfigAdapter', () => {
       type?: string;
       delay: number;
     };
-    expect(backoff.type).toBeUndefined();
+    // Unset BULLMQ_BACKOFF_TYPE used to produce `{ type: undefined }` and
+    // crash retries with "Unknown backoff strategy undefined" — the adapter
+    // defaults to exponential (see the backoff fix in todo.md round 3).
+    expect(backoff.type).toBe('exponential');
     expect(backoff.delay).toBe(10000);
     expect(config.failedJobRetryDelayMs).toBe(300_000);
     expect(config.failedJobReinstateBatchSize).toBe(10);

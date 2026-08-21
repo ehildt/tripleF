@@ -49,6 +49,13 @@ export type GenerateWithToolsParams = {
    * round-trip searches use.
    */
   maxSteps?: number;
+  /**
+   * Tool-call enforcement. Defaults to 'required' (a tool call must happen in
+   * every round). 'auto' lets the model decline when no tool call is
+   * warranted — used by steps where the model judges whether to act, e.g. the
+   * memory write step deciding if the turn produced anything durable.
+   */
+  toolChoice?: 'required' | 'auto';
   timeout?: TimeoutConfiguration<any>;
   abortSignal?: AbortSignal;
   onToolResult?: (toolResult: ToolResult) => void;

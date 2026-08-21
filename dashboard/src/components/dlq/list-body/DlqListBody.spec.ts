@@ -7,9 +7,10 @@ import DlqListBody from './DlqListBody.vue';
 
 const makeEntry = (id: string): DlqEntry =>
   ({
-    requestId: id,
+    id,
     queueName: 'harness',
-    jobId: null,
+    jobId: `job-${id}`,
+    jobName: id,
     status: 'Failed',
     payload: null,
     failedReason: null,
@@ -28,7 +29,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: null,
         isEntryRead: () => false,
-        entryReadKey: (entry: DlqEntry) => entry.requestId,
+        entryReadKey: (entry: DlqEntry) => entry.id,
       },
     });
     expect(wrapper.text()).toContain('No failed jobs');
@@ -41,7 +42,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: 'Network error',
         isEntryRead: () => false,
-        entryReadKey: (entry: DlqEntry) => entry.requestId,
+        entryReadKey: (entry: DlqEntry) => entry.id,
       },
     });
     expect(wrapper.text()).toContain('Network error');
@@ -54,7 +55,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: null,
         isEntryRead: () => false,
-        entryReadKey: (entry: DlqEntry) => entry.requestId,
+        entryReadKey: (entry: DlqEntry) => entry.id,
       },
     });
     expect(wrapper.text()).toContain('a');
@@ -68,7 +69,7 @@ describe('DlqListBody', () => {
         selectedEntryId: null,
         error: null,
         isEntryRead: () => false,
-        entryReadKey: (entry: DlqEntry) => entry.requestId,
+        entryReadKey: (entry: DlqEntry) => entry.id,
       },
     });
     wrapper.find('.dlq-list-body__row').trigger('click');

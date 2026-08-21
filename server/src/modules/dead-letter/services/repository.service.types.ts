@@ -5,6 +5,6 @@ export type FindAllOptions = {
   nextRetryAtAfter?: Date;
   limit?: number;
   offset?: number;
-  requestId?: string;
+  jobName?: string;
   search?: string;
 };

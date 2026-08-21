@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { MemoryCognitionService } from '../../qdrant/services/memory-cognition.service.js';
+import { MemorySearchService } from '../../qdrant/services/memory-search.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
@@ -57,6 +59,19 @@ describe('SanitizeActionService', () => {
             effectiveResize: vi
               .fn()
               .mockReturnValue({ maxWidth: 768, maxHeight: null }),
+          },
+        },
+        {
+          provide: MemoryCognitionService,
+          useValue: {
+            getProfile: vi.fn().mockResolvedValue(undefined),
+            hasInsights: vi.fn().mockResolvedValue(false),
+          },
+        },
+        {
+          provide: MemorySearchService,
+          useValue: {
+            searchByText: vi.fn().mockResolvedValue([]),
           },
         },
       ],

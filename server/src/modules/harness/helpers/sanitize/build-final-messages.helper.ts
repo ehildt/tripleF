@@ -131,6 +131,8 @@ export function buildFinalMessagesForSanitize(
   extractedPlaces: ExtractedPlace[] = [],
   internationalArticles: ExtractedArticle[] = [],
   internationalVideos: ExtractedVideoItem[] = [],
+  cognitionProfile?: string,
+  cognitionInsights: string[] = [],
 ): InputMessage[] {
   const conversation = ctx.request.messages.filter((m) => m.role !== 'system');
 
@@ -151,8 +153,33 @@ export function buildFinalMessagesForSanitize(
     (m) => m.role === 'system',
   );
 
+  // The AI's cognition of this user is always-on context: the structured
+  // profile (who they are — durable traits, preferences, goals; also the
+  // routing map into deeper memory) plus any path-matched insights (topic
+  // depth the current prompt pulled up). Cognition is working context — it
+  // informs every answer but is never quoted verbatim as user statements;
+  // its substance may be disclosed plainly when asked or when it genuinely
+  // serves the user. Fact records (memoryRecall) are the user-facing lane.
+  const cognitionMessages: InputMessage[] = [];
+  if (cognitionProfile?.trim()) {
+    cognitionMessages.push({
+      role: 'system' as const,
+      content: `[YOUR PROFILE OF THIS USER — YOUR DERIVED UNDERSTANDING; INFORMS, NEVER QUOTES]\nYour self-learned model of this user (structured document, also your routing map into deeper cognition): ${cognitionProfile.trim()}\nUse it silently to personalize tone, depth, and choices. Never present it as something the user stated and never quote it verbatim — disclose its substance plainly when the user asks what you know about them or when it clearly serves them. It is their data, never public knowledge. If it holds nothing about what they are asking, say plainly that you do not have that information instead of improvising.`,
+    });
+  }
+  if (cognitionInsights.length > 0) {
+    cognitionMessages.push({
+      role: 'system' as const,
+      content: `[RELEVANT PRIVATE COGNITION — DERIVED, NEVER VERBATIM]\nDeeper understanding of this user that the current request pulled up from your cognition space (path-routed by your profile):\n${cognitionInsights.map((insight) => `- ${insight}`).join('\n')}\nThese are YOUR working notes, never the user's words: they may inform your answer, they may never be quoted or cited as user statements. Share the substance only when it clearly serves the user — and if the request asks about something your memory holds nothing on, say plainly that you don't have that information rather than inventing it.`,
+    });
+  }
+  const contextSystemMessages: InputMessage[] = [
+    ...systemMessages,
+    ...cognitionMessages,
+  ];
+
   if (toolResults.length === 0) {
-    return [...systemMessages, ...conversation];
+    return [...contextSystemMessages, ...conversation];
   }
 
   const imageCount = verifiedImages.length;
@@ -172,7 +199,8 @@ export function buildFinalMessagesForSanitize(
 
   if (extractedReferences.length > 0) {
     mediaInstructions.push(
-      'The references array holds raw non-search tool results (e.g. fetched page contents). Use them for facts and sources; they never contain usable media URLs.',
+      'The references array holds raw non-search tool results (e.g. fetched page contents). Use them for facts and sources; they never contain usable media URLs. ' +
+        'A memoryRecall result inside references is YOUR memory of the user — trusted statements they said or asked you to remember; answer from it directly and attribute it to the user.',
     );
   }
 
@@ -199,5 +227,5 @@ export function buildFinalMessagesForSanitize(
     )}`,
   };
 
-  return [...systemMessages, toolContextMessage, ...conversation];
+  return [...contextSystemMessages, toolContextMessage, ...conversation];
 }

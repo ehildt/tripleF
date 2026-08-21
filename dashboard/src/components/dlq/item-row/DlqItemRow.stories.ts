@@ -4,7 +4,8 @@ import { fn } from 'storybook/test';
 import DlqItemRow from './DlqItemRow.vue';
 
 const baseEntry = {
-  requestId: 'req-1',
+  id: 'rec-1',
+  jobName: 'req-1',
   queueName: 'harness',
   jobId: 'job-5',
   status: 'Failed' as const,

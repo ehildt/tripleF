@@ -1,11 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { ToolSet } from 'ai';
 
 import { type ToolName } from '../../harness/helpers/tools/tool-registry.constants.js';
 import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwright-mcp-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { QDRANT_CONFIG } from '../../qdrant/constants/qdrant.constants.js';
+import type { QdrantConfig } from '../../qdrant/models/qdrant-config.model.js';
+import { MemoryCognitionService } from '../../qdrant/services/memory-cognition.service.js';
+import { MemorySearchService } from '../../qdrant/services/memory-search.service.js';
+import { VectorizeService } from '../../qdrant/services/vectorize.service.js';
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 import { createEnabledTools } from '../tools/sources/create-enabled-tools.js';
+import { createMemoryDeleteTool } from '../tools/sources/memory/memory-delete.tool.js';
+import { createMemoryRecallTool } from '../tools/sources/memory/memory-recall.tool.js';
+import {
+  createMemoryRememberTool,
+  type MemoryToolScope,
+} from '../tools/sources/memory/memory-remember.tool.js';
 import { type ToolWithSummary } from '../tools/sources/tool-factory.js';
 
 import { AiSdkService } from './ai-sdk.service.js';
@@ -20,6 +31,10 @@ export class ToolSelectionService {
     private readonly aiSdkService: AiSdkService,
     private readonly playwrightMcpClient: PlaywrightMcpClientService,
     private readonly stockHistory: StockHistoryService,
+    private readonly memorySearch: MemorySearchService,
+    private readonly memoryCognition: MemoryCognitionService,
+    private readonly vectorize: VectorizeService,
+    @Inject(QDRANT_CONFIG) private readonly qdrantConfig: QdrantConfig,
   ) {}
 
   private get liveConfig() {
@@ -31,6 +46,7 @@ export class ToolSelectionService {
     notify?: (event: string, data?: unknown) => void,
     enabledVariants?: string[],
     defaultLang?: string,
+    memoryScope?: MemoryToolScope,
   ): ToolSet {
     const tools = createEnabledTools(
       {
@@ -51,7 +67,29 @@ export class ToolSelectionService {
     );
     // Browser tools come from the Playwright MCP sidecar (empty when disabled
     // or unreachable) and are merged under their canonical browser_* names.
-    return { ...tools, ...this.playwrightMcpClient.tools };
+    // Memory tools are agentic: remember/recall/delete are offered only when
+    // the memory feature is enabled AND a partition scope is threaded from
+    // the turn.
+    const memoryTools =
+      memoryScope && this.qdrantConfig.enabled
+        ? {
+            memoryRemember: createMemoryRememberTool({
+              scope: memoryScope,
+              storeRecord: (input) => this.vectorize.storeRecord(input),
+            }),
+            memoryRecall: createMemoryRecallTool({
+              scope: memoryScope,
+              searchByText: (input) => this.memorySearch.searchByText(input),
+            }),
+            memoryDelete: createMemoryDeleteTool({
+              scope: memoryScope,
+              deleteRecords: (input) => this.vectorize.deleteRecords(input),
+              deleteCognition: (partition) =>
+                this.memoryCognition.deleteCognition(partition),
+            }),
+          }
+        : {};
+    return { ...tools, ...this.playwrightMcpClient.tools, ...memoryTools };
   }
 
   selectToolsByName(
@@ -60,12 +98,14 @@ export class ToolSelectionService {
     onToolEvent?: ToolEventHandler,
     enabledVariants?: string[],
     defaultLang?: string,
+    memoryScope?: MemoryToolScope,
   ): ToolSet {
     const all = this.getDefaultTools(
       undefined,
       notify,
       enabledVariants,
       defaultLang,
+      memoryScope,
     );
     const picked: ToolSet = {};
 
