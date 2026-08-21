@@ -3,7 +3,12 @@ import { Injectable } from '@nestjs/common';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { INSIGHT_TAGS } from '../../qdrant/models/memory-cognition.model.js';
+import { MemoryCognitionService } from '../../qdrant/services/memory-cognition.service.js';
+import { MemorySearchService } from '../../qdrant/services/memory-search.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
+import { flattenProfilePaths } from '../helpers/cognition/flatten-profile-paths.helper.js';
+import { matchProfilePaths } from '../helpers/cognition/match-profile-paths.helper.js';
 import { partitionByLanguage } from '../helpers/language/partition-by-language.helper.js';
 import { tagLanguage } from '../helpers/language/tag-language.helper.js';
 import { dedupeImagesByFingerprint } from '../helpers/media/dedupe-images-by-fingerprint.helper.js';
@@ -90,6 +95,9 @@ const CLOUD_INGEST_MAX_BATCHES = 3;
 const INTERNATIONAL_ARTICLE_LIMIT = 6;
 const INTERNATIONAL_VIDEO_LIMIT = 3;
 
+/** Topic-probe fan-out: at most this many derived insights enter the respond context. */
+const COGNITION_PROBE_LIMIT = 3;
+
 @Injectable()
 export class SanitizeActionService {
   constructor(
@@ -99,6 +107,8 @@ export class SanitizeActionService {
     private readonly providerOverrides: ProviderOverridesService,
     private readonly shownMedia: ShownMediaService,
     private readonly sharpService: SharpService,
+    private readonly memoryCognition: MemoryCognitionService,
+    private readonly memorySearch: MemorySearchService,
   ) {}
 
   async execute(
@@ -304,6 +314,14 @@ export class SanitizeActionService {
       });
     }
 
+    // The AI's cognition of this user is always-on context for the respond
+    // step: the structured profile always, probed insights when the current
+    // prompt matches a profile path (likes.cars, interests.ai, …) or embeds
+    // near one. Read failures degrade to no injection, never to a failed
+    // turn — personalization is a bonus layer.
+    const { profile: cognitionProfile, insights: cognitionInsights } =
+      await this.getCognitionContext(ctx);
+
     const messages = scrubBrokenUrlsFromMessages(
       buildFinalMessagesForSanitize(
         ctx,
@@ -318,6 +336,8 @@ export class SanitizeActionService {
         places,
         internationalArticles,
         internationalVideos,
+        cognitionProfile,
+        cognitionInsights,
       ),
       new Set([...brokenMediaUrls, ...brokenPageUrls]),
     );
@@ -341,6 +361,49 @@ export class SanitizeActionService {
         title: item.title,
       })),
     };
+  }
+
+  /**
+   * The AI's cognition of this user, once per respond: the structured
+   * profile (always-on) plus probed insights (topic-triggered). The profile
+   * doubles as the routing map — profile values that token-match the prompt
+   * ("cars" hits `likes.cars`) sharpen the insight query for that facet.
+   * The existence check keeps cold spaces off the embed round-trip entirely.
+   * Silent no-op on any failure — personalization must never fail a turn.
+   */
+  private async getCognitionContext(ctx: HarnessContext): Promise<{
+    profile?: string;
+    insights: string[];
+  }> {
+    const cognitionKey =
+      ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
+    if (!cognitionKey) return { insights: [] };
+    try {
+      const profile = await this.memoryCognition.getProfile(cognitionKey);
+      const prompt = ctx.lastUserPrompt?.trim();
+      const profileText = profile ? JSON.stringify(profile) : undefined;
+      if (!prompt || !(await this.memoryCognition.hasInsights(cognitionKey))) {
+        return { profile: profileText, insights: [] };
+      }
+
+      // The stored document is a Postgres JSONB row — already parsed, so
+      // probe shaping uses the object directly (no text round-trip).
+      const matched = matchProfilePaths(prompt, flattenProfilePaths(profile));
+      const query =
+        matched.length > 0
+          ? `${prompt}\nUser profile signals: ${matched.map((m) => `${m.path}: ${m.value}`).join('; ')}`
+          : prompt;
+
+      const hits = await this.memorySearch.searchByText({
+        memoryCognition: cognitionKey,
+        text: query,
+        tags: [...INSIGHT_TAGS],
+        limit: COGNITION_PROBE_LIMIT,
+      });
+      return { profile: profileText, insights: hits.map((hit) => hit.text) };
+    } catch {
+      return { insights: [] };
+    }
   }
 
   /**

@@ -5,6 +5,7 @@ import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { QDRANT_CONFIG } from '../../qdrant/constants/qdrant.constants.js';
 import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { InterpretActionService } from './interpret.action.js';
@@ -29,6 +30,14 @@ describe('InterpretActionService', () => {
         InterpretActionService,
         playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
+        {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
+        {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
         {
           provide: AiSdkService,
           useValue: {
@@ -242,6 +251,10 @@ describe('InterpretActionService', () => {
         playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
+        {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
         },
@@ -321,6 +334,10 @@ describe('InterpretActionService', () => {
         InterpretActionService,
         playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
+        {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
@@ -424,6 +441,10 @@ describe('InterpretActionService', () => {
         playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
+        {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
         },
@@ -501,6 +522,10 @@ describe('InterpretActionService', () => {
         playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
+        {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },
         },
@@ -577,6 +602,10 @@ describe('InterpretActionService', () => {
         InterpretActionService,
         playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
+        {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
+        },
         {
           provide: HarnessStepLogger,
           useValue: { log: vi.fn(), warn: vi.fn() },

@@ -3,7 +3,9 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
+import { fetchConfig, saveConfig } from '@/api/config.api';
 import { i18n } from '@/i18n/i18n';
+import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
 
 import { useToast } from '../composables/use-toast';
 import type {
@@ -633,6 +635,183 @@ export const useAppStore = defineStore('app', () => {
     warmModelOnSelect.value = !warmModelOnSelect.value;
   }
 
+  const MEMORY_PARTITION_KEY = 'harness-memory-partition';
+  const LEGACY_MEMORY_TENANT_KEY = 'harness-memory-tenant-id';
+  function loadMemoryPartition(): string {
+    try {
+      // One-time migration of the pre-rename key, then the old slot is dropped.
+      const current = localStorage.getItem(MEMORY_PARTITION_KEY);
+      if (current !== null) return current.trim();
+      const legacy =
+        localStorage.getItem(LEGACY_MEMORY_TENANT_KEY)?.trim() ?? '';
+      if (legacy) {
+        localStorage.setItem(MEMORY_PARTITION_KEY, legacy);
+        localStorage.removeItem(LEGACY_MEMORY_TENANT_KEY);
+      }
+      return legacy;
+    } catch {
+      return '';
+    }
+  }
+  function saveMemoryPartition(v: string) {
+    try {
+      if (v) localStorage.setItem(MEMORY_PARTITION_KEY, v);
+      else localStorage.removeItem(MEMORY_PARTITION_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+  /**
+   * Memory partition id — the user's memory space. Overrides the default
+   * (the session id) so memory survives browser-session rotation. Empty
+   * string = session is the partition. Persisted to localStorage (fast
+   * cache) AND the server config (Postgres), which is the source of truth
+   * across browsers/sessions.
+   */
+  const memoryPartition = ref(loadMemoryPartition());
+
+  watch(memoryPartition, saveMemoryPartition);
+
+  /**
+   * Adopt the server-persisted partition id at boot (the server wins over
+   * any stale localStorage value — it is the source of truth). Deferred to
+   * idle.
+   */
+  async function syncMemoryPartitionFromServer() {
+    try {
+      const config = await fetchConfig(getPersistentSocketSessionId());
+      if (config?.memoryPartition) {
+        memoryPartition.value = config.memoryPartition;
+      }
+    } catch {
+      // Offline — keep the local value; the next set persists.
+    }
+  }
+
+  function setMemoryPartition(value: string) {
+    memoryPartition.value = value.trim();
+    // Persist server-side so the value survives localStorage clears.
+    saveConfig(getPersistentSocketSessionId(), {
+      memoryPartition: value.trim(),
+    }).catch(() => {
+      // Offline — the local value is kept; a later set retries.
+    });
+  }
+
+  const MEMORY_COGNITION_KEY = 'harness-memory-cognition';
+  function loadMemoryCognition(): string {
+    try {
+      return localStorage.getItem(MEMORY_COGNITION_KEY)?.trim() ?? '';
+    } catch {
+      return '';
+    }
+  }
+  function saveMemoryCognition(v: string) {
+    try {
+      if (v) localStorage.setItem(MEMORY_COGNITION_KEY, v);
+      else localStorage.removeItem(MEMORY_COGNITION_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+  /**
+   * Memory cognition id — the AI's own understanding-of-the-user space.
+   * Empty string = cognition lives in the memory partition (same rules as
+   * memoryPartition: localStorage fast cache + Postgres source of truth).
+   */
+  const memoryCognition = ref(loadMemoryCognition());
+
+  watch(memoryCognition, saveMemoryCognition);
+
+  /** Adopt the server-persisted cognition id at boot (server wins). Deferred to idle. */
+  async function syncMemoryCognitionFromServer() {
+    try {
+      const config = await fetchConfig(getPersistentSocketSessionId());
+      if (config?.memoryCognition) {
+        memoryCognition.value = config.memoryCognition;
+        rememberMemoryCognitionSpace(config.memoryCognition);
+      }
+    } catch {
+      // Offline — keep the local value; the next set persists.
+    }
+  }
+
+  function setMemoryCognition(value: string) {
+    memoryCognition.value = value.trim();
+    rememberMemoryCognitionSpace(value);
+    saveConfig(getPersistentSocketSessionId(), {
+      memoryCognition: value.trim(),
+    }).catch(() => {
+      // Offline — the local value is kept; a later set retries.
+    });
+  }
+
+  const MEMORY_COGNITION_SPACES_KEY = 'harness-memory-cognition-spaces';
+  const MEMORY_COGNITION_SPACES_MAX = 20;
+  function loadMemoryCognitionSpaces(): string[] {
+    try {
+      const raw = localStorage.getItem(MEMORY_COGNITION_SPACES_KEY);
+      if (!raw) return [];
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((entry): entry is string => typeof entry === 'string')
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .slice(0, MEMORY_COGNITION_SPACES_MAX);
+    } catch {
+      return [];
+    }
+  }
+  function saveMemoryCognitionSpaces(spaces: string[]) {
+    try {
+      if (spaces.length) {
+        localStorage.setItem(
+          MEMORY_COGNITION_SPACES_KEY,
+          JSON.stringify(spaces),
+        );
+      } else {
+        localStorage.removeItem(MEMORY_COGNITION_SPACES_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  /**
+   * Cognition space history — the previously used memory-cognition space ids,
+   * most-recent-first, deduped and capped. localStorage-local convenience
+   * list powering the sysctl space selector (select / remove / create);
+   * spaces are implicit Qdrant keys, so "create" is just selecting a new id.
+   */
+  const memoryCognitionSpaces = ref<string[]>(loadMemoryCognitionSpaces());
+
+  watch(memoryCognitionSpaces, saveMemoryCognitionSpaces);
+
+  /**
+   * Record a space id at the front of the history (deduped, capped). Empty
+   * ids are ignored — the empty value is the default, not a usable space.
+   */
+  function rememberMemoryCognitionSpace(space: string) {
+    const trimmed = space.trim();
+    if (!trimmed) return;
+    memoryCognitionSpaces.value = [
+      trimmed,
+      ...memoryCognitionSpaces.value.filter((entry) => entry !== trimmed),
+    ].slice(0, MEMORY_COGNITION_SPACES_MAX);
+  }
+
+  /**
+   * Drop a space id from the history list. List-only: the space's data in
+   * Qdrant is untouched (wiping lives in the cognition panel). Removing the
+   * active space resets the field to the default (empty).
+   */
+  function removeMemoryCognitionSpace(space: string) {
+    memoryCognitionSpaces.value = memoryCognitionSpaces.value.filter(
+      (entry) => entry !== space,
+    );
+    if (memoryCognition.value === space) setMemoryCognition('');
+  }
+
   watch(showChatStar, saveStar);
 
   watch(activeTab, (tab) => {
@@ -702,6 +881,15 @@ export const useAppStore = defineStore('app', () => {
     tabVisibility,
     showCounters,
     warmModelOnSelect,
+    memoryPartition,
+    setMemoryPartition,
+    syncMemoryPartitionFromServer,
+    memoryCognition,
+    setMemoryCognition,
+    syncMemoryCognitionFromServer,
+    memoryCognitionSpaces,
+    rememberMemoryCognitionSpace,
+    removeMemoryCognitionSpace,
     defaultScrollMode,
     conversationScrollModes,
     defaultMediaPriority,

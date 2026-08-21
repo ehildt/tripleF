@@ -27,6 +27,8 @@ export type AggregateHarnessConfig = {
 export type HarnessConfigMinAggregateOutputType = {
   sessionId: string | null
   selectedModel: string | null
+  memoryPartition: string | null
+  memoryCognition: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -34,6 +36,8 @@ export type HarnessConfigMinAggregateOutputType = {
 export type HarnessConfigMaxAggregateOutputType = {
   sessionId: string | null
   selectedModel: string | null
+  memoryPartition: string | null
+  memoryCognition: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -43,6 +47,8 @@ export type HarnessConfigCountAggregateOutputType = {
   selectedModel: number
   preprocessing: number
   providerOverrides: number
+  memoryPartition: number
+  memoryCognition: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -52,6 +58,8 @@ export type HarnessConfigCountAggregateOutputType = {
 export type HarnessConfigMinAggregateInputType = {
   sessionId?: true
   selectedModel?: true
+  memoryPartition?: true
+  memoryCognition?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -59,6 +67,8 @@ export type HarnessConfigMinAggregateInputType = {
 export type HarnessConfigMaxAggregateInputType = {
   sessionId?: true
   selectedModel?: true
+  memoryPartition?: true
+  memoryCognition?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -68,6 +78,8 @@ export type HarnessConfigCountAggregateInputType = {
   selectedModel?: true
   preprocessing?: true
   providerOverrides?: true
+  memoryPartition?: true
+  memoryCognition?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -150,6 +162,8 @@ export type HarnessConfigGroupByOutputType = {
   selectedModel: string | null
   preprocessing: runtime.JsonValue | null
   providerOverrides: runtime.JsonValue | null
+  memoryPartition: string | null
+  memoryCognition: string | null
   createdAt: Date
   updatedAt: Date
   _count: HarnessConfigCountAggregateOutputType | null
@@ -180,6 +194,8 @@ export type HarnessConfigWhereInput = {
   selectedModel?: Prisma.StringNullableFilter<"HarnessConfig"> | string | null
   preprocessing?: Prisma.JsonNullableFilter<"HarnessConfig">
   providerOverrides?: Prisma.JsonNullableFilter<"HarnessConfig">
+  memoryPartition?: Prisma.StringNullableFilter<"HarnessConfig"> | string | null
+  memoryCognition?: Prisma.StringNullableFilter<"HarnessConfig"> | string | null
   createdAt?: Prisma.DateTimeFilter<"HarnessConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"HarnessConfig"> | Date | string
 }
@@ -189,6 +205,8 @@ export type HarnessConfigOrderByWithRelationInput = {
   selectedModel?: Prisma.SortOrderInput | Prisma.SortOrder
   preprocessing?: Prisma.SortOrderInput | Prisma.SortOrder
   providerOverrides?: Prisma.SortOrderInput | Prisma.SortOrder
+  memoryPartition?: Prisma.SortOrderInput | Prisma.SortOrder
+  memoryCognition?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -201,6 +219,8 @@ export type HarnessConfigWhereUniqueInput = Prisma.AtLeast<{
   selectedModel?: Prisma.StringNullableFilter<"HarnessConfig"> | string | null
   preprocessing?: Prisma.JsonNullableFilter<"HarnessConfig">
   providerOverrides?: Prisma.JsonNullableFilter<"HarnessConfig">
+  memoryPartition?: Prisma.StringNullableFilter<"HarnessConfig"> | string | null
+  memoryCognition?: Prisma.StringNullableFilter<"HarnessConfig"> | string | null
   createdAt?: Prisma.DateTimeFilter<"HarnessConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"HarnessConfig"> | Date | string
 }, "sessionId">
@@ -210,6 +230,8 @@ export type HarnessConfigOrderByWithAggregationInput = {
   selectedModel?: Prisma.SortOrderInput | Prisma.SortOrder
   preprocessing?: Prisma.SortOrderInput | Prisma.SortOrder
   providerOverrides?: Prisma.SortOrderInput | Prisma.SortOrder
+  memoryPartition?: Prisma.SortOrderInput | Prisma.SortOrder
+  memoryCognition?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.HarnessConfigCountOrderByAggregateInput
@@ -225,6 +247,8 @@ export type HarnessConfigScalarWhereWithAggregatesInput = {
   selectedModel?: Prisma.StringNullableWithAggregatesFilter<"HarnessConfig"> | string | null
   preprocessing?: Prisma.JsonNullableWithAggregatesFilter<"HarnessConfig">
   providerOverrides?: Prisma.JsonNullableWithAggregatesFilter<"HarnessConfig">
+  memoryPartition?: Prisma.StringNullableWithAggregatesFilter<"HarnessConfig"> | string | null
+  memoryCognition?: Prisma.StringNullableWithAggregatesFilter<"HarnessConfig"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"HarnessConfig"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"HarnessConfig"> | Date | string
 }
@@ -234,6 +258,8 @@ export type HarnessConfigCreateInput = {
   selectedModel?: string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: string | null
+  memoryCognition?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -243,6 +269,8 @@ export type HarnessConfigUncheckedCreateInput = {
   selectedModel?: string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: string | null
+  memoryCognition?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -252,6 +280,8 @@ export type HarnessConfigUpdateInput = {
   selectedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  memoryCognition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -261,6 +291,8 @@ export type HarnessConfigUncheckedUpdateInput = {
   selectedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  memoryCognition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -270,6 +302,8 @@ export type HarnessConfigCreateManyInput = {
   selectedModel?: string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: string | null
+  memoryCognition?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -279,6 +313,8 @@ export type HarnessConfigUpdateManyMutationInput = {
   selectedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  memoryCognition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -288,6 +324,8 @@ export type HarnessConfigUncheckedUpdateManyInput = {
   selectedModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preprocessing?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   providerOverrides?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  memoryPartition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  memoryCognition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -297,6 +335,8 @@ export type HarnessConfigCountOrderByAggregateInput = {
   selectedModel?: Prisma.SortOrder
   preprocessing?: Prisma.SortOrder
   providerOverrides?: Prisma.SortOrder
+  memoryPartition?: Prisma.SortOrder
+  memoryCognition?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -304,6 +344,8 @@ export type HarnessConfigCountOrderByAggregateInput = {
 export type HarnessConfigMaxOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
   selectedModel?: Prisma.SortOrder
+  memoryPartition?: Prisma.SortOrder
+  memoryCognition?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -311,6 +353,8 @@ export type HarnessConfigMaxOrderByAggregateInput = {
 export type HarnessConfigMinOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
   selectedModel?: Prisma.SortOrder
+  memoryPartition?: Prisma.SortOrder
+  memoryCognition?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -322,6 +366,8 @@ export type HarnessConfigSelect<ExtArgs extends runtime.Types.Extensions.Interna
   selectedModel?: boolean
   preprocessing?: boolean
   providerOverrides?: boolean
+  memoryPartition?: boolean
+  memoryCognition?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["harnessConfig"]>
@@ -331,6 +377,8 @@ export type HarnessConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   selectedModel?: boolean
   preprocessing?: boolean
   providerOverrides?: boolean
+  memoryPartition?: boolean
+  memoryCognition?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["harnessConfig"]>
@@ -340,6 +388,8 @@ export type HarnessConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   selectedModel?: boolean
   preprocessing?: boolean
   providerOverrides?: boolean
+  memoryPartition?: boolean
+  memoryCognition?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["harnessConfig"]>
@@ -349,11 +399,13 @@ export type HarnessConfigSelectScalar = {
   selectedModel?: boolean
   preprocessing?: boolean
   providerOverrides?: boolean
+  memoryPartition?: boolean
+  memoryCognition?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type HarnessConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"sessionId" | "selectedModel" | "preprocessing" | "providerOverrides" | "createdAt" | "updatedAt", ExtArgs["result"]["harnessConfig"]>
+export type HarnessConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"sessionId" | "selectedModel" | "preprocessing" | "providerOverrides" | "memoryPartition" | "memoryCognition" | "createdAt" | "updatedAt", ExtArgs["result"]["harnessConfig"]>
 
 export type $HarnessConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HarnessConfig"
@@ -363,6 +415,8 @@ export type $HarnessConfigPayload<ExtArgs extends runtime.Types.Extensions.Inter
     selectedModel: string | null
     preprocessing: runtime.JsonValue | null
     providerOverrides: runtime.JsonValue | null
+    memoryPartition: string | null
+    memoryCognition: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["harnessConfig"]>
@@ -792,6 +846,8 @@ export interface HarnessConfigFieldRefs {
   readonly selectedModel: Prisma.FieldRef<"HarnessConfig", 'String'>
   readonly preprocessing: Prisma.FieldRef<"HarnessConfig", 'Json'>
   readonly providerOverrides: Prisma.FieldRef<"HarnessConfig", 'Json'>
+  readonly memoryPartition: Prisma.FieldRef<"HarnessConfig", 'String'>
+  readonly memoryCognition: Prisma.FieldRef<"HarnessConfig", 'String'>
   readonly createdAt: Prisma.FieldRef<"HarnessConfig", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"HarnessConfig", 'DateTime'>
 }

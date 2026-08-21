@@ -6,7 +6,9 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
 import DlqDetailsBody from './DlqDetailsBody.vue';
 
 const baseEntry: DlqEntry = {
-  requestId: 'req-1',
+  id: 'rec-1',
+  jobId: 'job-1',
+  jobName: 'req-1',
   queueName: 'harness',
   jobId: 'job-5',
   status: 'Failed',

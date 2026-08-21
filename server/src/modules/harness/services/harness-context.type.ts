@@ -6,7 +6,14 @@ import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
 import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
-export type StepId = 'interpret' | 'execute' | 'sanitize' | 'respond';
+export type StepId =
+  | 'interpret'
+  | 'execute'
+  | 'sanitize'
+  | 'respond'
+  | 'memoryWrite'
+  | 'vectorize'
+  | 'memoryProfile';
 
 export type StepState =
   | { status: 'idle' }
@@ -17,6 +24,10 @@ export type StepState =
 export type HarnessContext = {
   requestId: string;
   sessionId?: string;
+  /** Memory partition for this turn — the user-set partition id when configured, else the session id. */
+  memoryPartition?: string;
+  /** Cognition space key for this turn — the user-set cognition id when configured, else the memory partition (else the session id). */
+  memoryCognition?: string;
   job: Job<HarnessJobPayload>;
   filters: HarnessJobPayload['filters'];
   model: string;

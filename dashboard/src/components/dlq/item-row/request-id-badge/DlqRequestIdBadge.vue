@@ -1,11 +1,12 @@
 <script setup lang="ts">
 defineProps<{
-  requestId: string;
+  /** BullMQ job name — for harness turns it is the originating request id. */
+  jobName: string;
 }>();
 </script>
 
 <template>
-  <span class="dlq-request-id-badge">{{ requestId }}</span>
+  <span class="dlq-request-id-badge">{{ jobName }}</span>
 </template>
 
 <style scoped>

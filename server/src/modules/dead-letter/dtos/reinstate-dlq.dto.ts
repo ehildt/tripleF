@@ -4,5 +4,5 @@ export class ReinstateDlqDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  requestIds?: string[];
+  ids?: string[];
 }

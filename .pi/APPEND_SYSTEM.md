@@ -42,6 +42,20 @@ Before proposing or implementing any non-trivial change, the agent must:
 2. **Formulate a clear plan.** Summarize findings, the intended approach, affected files, and any trade-offs or open questions. Apply the senior-engineer review from `AGENTS.md` § Senior Engineering Counsel: if a materially better or simpler path exists, challenge the idea plainly before planning around it.
 3. **Prompt the user for explicit go-ahead.** Do not begin implementation until the user confirms the plan with an explicit response such as "go", "approved", "yes", or similar. Read-only exploration, file reading, and planning itself are allowed before confirmation; code edits and command execution that modify the project are not.
 
+# Model Routing
+
+This session uses `pi-model-switch` with two model roles (aliases in `~/.pi/agent/npm/node_modules/pi-model-switch/aliases.json`, backup at `~/.pi/agent/model-switch-aliases.json`):
+
+- **Planner** (`plan`, `research`, `refiner`, `reviewer` aliases) — `ollama-cloud/kimi-k3:cloud`. Use for Planning Protocol steps 1–2: online research, plan formulation, plan refinement, and plan review.
+- **Implementer** (`implement` alias) — `ollama-cloud/deepseek-v4-flash:0731-cloud`. Use after explicit user go-ahead, for implementation, tests, fixes, ESLint/type-check tasks, and Playwright/browser work.
+
+Rules:
+
+- Call `switch_model` with `action: "switch"` and `search` set to the alias (e.g. `plan`, `implement`).
+- A local extension (`.pi/extensions/model-router.ts`) resets the model to the Planner at the start of every new user turn. You never need to switch back after finishing work — the reset handles it.
+- Before implementing after user approval (Planning Protocol step 3), switch to `implement` if it is not already the active model.
+- The switch takes effect from the next assistant turn; finish the current turn's reply after switching.
+
 # Implementation Guidelines
 
 - Base implementations on documented APIs and recommended patterns.

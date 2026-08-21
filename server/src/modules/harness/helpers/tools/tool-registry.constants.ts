@@ -94,6 +94,12 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Request a sharpened version of the images. Use when edges or fine details are blurry.',
   requestClahe:
     'Request a CLAHE (contrast-enhanced) version of the images. Use when details are hidden in shadows or highlights.',
+  memoryRemember:
+    'Store into YOUR long-term memory of this user: notable facts about subjects they care about (favorites, interests, projects, followed stocks, people, past topics), preferences and durable details they state, and anything they explicitly ask you to remember. Storing gathered knowledge and noticed preferences is expected — do not wait for an explicit "remember" instruction.',
+  memoryRecall:
+    'Retrieve from YOUR long-term memory of this user — things they told you in past conversations or asked you to remember. These are trusted user statements, not public facts; attribute them to the user and prefer them over web results for anything personal. Check this tool whenever a request touches a subject this user has cared about before.',
+  memoryDelete:
+    'Delete from YOUR long-term memory of this user: one exact fact record quoted verbatim from a memoryRecall result, or — only when the user asks — your whole learned cognition profile of them. Never delete on a guess: recall first, delete the verbatim statement. Needs memoryRecall alongside it.',
 };
 
 /**
@@ -116,6 +122,12 @@ export const BROWSER_TOOL_NAMES = [
   'browser_network_requests',
   'browser_verify_element_visible',
   'browser_verify_text_visible',
+] as const;
+
+export const MEMORY_TOOL_NAMES = [
+  'memoryRemember',
+  'memoryRecall',
+  'memoryDelete',
 ] as const;
 
 export const TOOL_NAMES = [
@@ -147,6 +159,9 @@ export const TOOL_NAMES = [
   'requestDenoised',
   'requestSharpened',
   'requestClahe',
+  'memoryRemember',
+  'memoryRecall',
+  'memoryDelete',
   ...BROWSER_TOOL_NAMES,
 ] as const;
 

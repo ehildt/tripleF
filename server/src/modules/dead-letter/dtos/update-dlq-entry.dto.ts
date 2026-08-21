@@ -22,6 +22,10 @@ export class UpdateDlqEntryDto {
   jobId?: string;
 
   @IsOptional()
+  @IsString()
+  jobName?: string;
+
+  @IsOptional()
   @IsEnum(statuses)
   status?: (typeof statuses)[number];
 

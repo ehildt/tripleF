@@ -49,6 +49,49 @@ services:
     networks:
       - triplef.io
 
+  # Qdrant vector store for the dual-tier semantic memory feature (Ticket 6).
+  # REST 6333 only — the server talks to it via @qdrant/js-client-rest at
+  # http://qdrant:6333 (gRPC 6334 deliberately not published; REST is the
+  # chosen protocol for the JS client). Loopback-only publish matches the
+  # playwright-mcp precedent — not exposed to the LAN.
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: on-failure
+    ports:
+      - "127.0.0.1:6333:6333"
+    environment:
+      # Auth OFF for local dev (internal network only). For shared/prod
+      # deployments set QDRANT__SERVICE__API_KEY (+ READ_ONLY_API_KEY for
+      # query-only consumers) here and mirror it into the server env — never
+      # commit keys.
+      QDRANT__TELEMETRY_DISABLED: "true"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      # The qdrant image ships no curl/wget/nc — use bash /dev/tcp to issue a
+      # real GET /healthz and assert a 200 response.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333; printf \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; head -1 <&3 | grep -q \"200 OK\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - triplef.io
+
+#  ollama:
+#    image: ollama/ollama:latest
+#    container_name: ollama
+#    restart: unless-stopped
+#    ports:
+#      - "11434:11434"
+#    volumes:
+#      - ./ollama_data:/root/.ollama
+#    gpus: all
+#    environment:
+#      - OLLAMA_HOST=0.0.0.0
+#    networks:
+#      - triplef.io
+
   # Headless-chromium MCP sidecar exposing browser automation tools to the
   # harness models. Internal-only: the server reaches it at
   # http://playwright-mcp:8931/mcp, no host port is published.
@@ -69,24 +112,11 @@ services:
     networks:
       - triplef.io
 
-#  ollama:
-#    image: ollama/ollama:latest
-#    container_name: ollama
-#    restart: unless-stopped
-#    ports:
-#      - "11434:11434"
-#    volumes:
-#      - ./ollama_data:/root/.ollama
-#    gpus: all
-#    environment:
-#      - OLLAMA_HOST=0.0.0.0
-#    networks:
-#      - triplef.io
-
 volumes:
   postgres_data:
   minio_data:
   keydb_data:
+  qdrant_data:
 #  ollama_data:
 
 networks:

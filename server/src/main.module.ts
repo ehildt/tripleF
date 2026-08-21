@@ -11,7 +11,10 @@ import { AiSdkModule } from './modules/ai-sdk/ai-sdk.module.js';
 import { OllamaConfigService } from './modules/ai-sdk/configs/ollama-config.service.js';
 import { BullMQConfigService } from './modules/bullmq/configs/bullmq-config.service.js';
 import { BullMQLoggerConfigService } from './modules/bullmq/configs/bullmq-logger-config.service.js';
-import { HARNESS_QUEUE } from './modules/bullmq/constants/bullmq.constants.js';
+import {
+  HARNESS_QUEUE,
+  VECTORIZE_QUEUE,
+} from './modules/bullmq/constants/bullmq.constants.js';
 import { BullMQController } from './modules/bullmq/controllers/bullmq.controller.js';
 import { PostgresConfigService } from './modules/dead-letter/configs/postgres-config.service.js';
 import { DeadLetterController } from './modules/dead-letter/controllers/dead-letter.controller.js';
@@ -38,6 +41,10 @@ import { BrightDataConfigService } from './modules/provider-overrides/configs/br
 import { SerperConfigService } from './modules/provider-overrides/configs/serper-config.service.js';
 import { ProviderOverridesController } from './modules/provider-overrides/controllers/provider-overrides.controller.js';
 import { ProviderOverridesModule } from './modules/provider-overrides/provider-overrides.module.js';
+import { QdrantConfigService } from './modules/qdrant/configs/qdrant-config.service.js';
+import { VectorizeProcessor } from './modules/qdrant/processors/vectorize.processor.js';
+import { QdrantModule } from './modules/qdrant/qdrant.module.js';
+import { QdrantHealthIndicator } from './modules/qdrant/services/qdrant-health-indicator.service.js';
 import { SecretsModule } from './modules/secrets/secrets.module.js';
 import { SharpConfigService } from './modules/sharp/configs/sharp-config.service.js';
 import { SharpModule } from './modules/sharp/sharp.module.js';
@@ -60,6 +67,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
     JobReinstatementService,
     MinioHealthIndicator,
     PostgresHealthIndicator,
+    QdrantHealthIndicator,
     SocketIOEventsService,
     LifecycleService,
   ],
@@ -96,6 +104,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
         SerperConfigService,
         SharpConfigService,
         SocketIOConfigService,
+        QdrantConfigService,
       ],
     }),
     SocketIOCoreModule.registerAsync({
@@ -112,8 +121,13 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
       global: true,
       inject: [BullMQConfigService],
       useFactory: async ({ config }: BullMQConfigService) => config,
-      processors: [HarnessProcessor],
-      queues: [HARNESS_QUEUE],
+      processors: [HarnessProcessor, VectorizeProcessor],
+      queues: [HARNESS_QUEUE, VECTORIZE_QUEUE],
+    }),
+    QdrantModule.registerAsync({
+      global: true,
+      inject: [QdrantConfigService],
+      useFactory: async ({ config }: QdrantConfigService) => config,
     }),
   ],
 })

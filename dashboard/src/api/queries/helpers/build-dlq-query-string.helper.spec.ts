@@ -11,14 +11,14 @@ describe('buildDlqQueryString', () => {
     const result = buildDlqQueryString({
       status: 'Failed',
       queueName: 'harness',
-      requestId: 'req-1',
+      jobName: 'req-1',
       search: 'error',
       limit: 10,
       offset: 20,
     });
     expect(result).toContain('status=Failed');
     expect(result).toContain('queueName=harness');
-    expect(result).toContain('requestId=req-1');
+    expect(result).toContain('jobName=req-1');
     expect(result).toContain('search=error');
     expect(result).toContain('limit=10');
     expect(result).toContain('offset=20');

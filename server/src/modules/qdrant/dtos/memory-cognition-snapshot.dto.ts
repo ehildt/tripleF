@@ -1,0 +1,20 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { MemoryItemDto } from './memory-item.dto.js';
+
+/** The AI's cognition of one space: the structured profile document plus the derived insight records. */
+export class MemoryCognitionSnapshotDto {
+  @ApiPropertyOptional({
+    description:
+      'The structured profile document (serialized JSON) — null when nothing learned yet.',
+    example: '{"name":"Sam","likes":["cars"]}',
+  })
+  profile!: string | null;
+
+  @ApiProperty({
+    type: [MemoryItemDto],
+    description:
+      'Derived insight records (topic-probed at respond time, path-routed into the profile).',
+  })
+  insights!: MemoryItemDto[];
+}

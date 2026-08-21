@@ -3,6 +3,10 @@ import { vi } from 'vitest';
 
 import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwright-mcp-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
+import { QDRANT_CONFIG } from '../../qdrant/constants/qdrant.constants.js';
+import { MemoryCognitionService } from '../../qdrant/services/memory-cognition.service.js';
+import { MemorySearchService } from '../../qdrant/services/memory-search.service.js';
+import { VectorizeService } from '../../qdrant/services/vectorize.service.js';
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 
 import { AiSdkService } from './ai-sdk.service.js';
@@ -67,6 +71,22 @@ describe('ToolSelectionService', () => {
         {
           provide: PlaywrightMcpClientService,
           useValue: { tools: {} },
+        },
+        {
+          provide: MemorySearchService,
+          useValue: { searchByText: vi.fn() },
+        },
+        {
+          provide: MemoryCognitionService,
+          useValue: { deleteCognition: vi.fn() },
+        },
+        {
+          provide: VectorizeService,
+          useValue: { storeFact: vi.fn() },
+        },
+        {
+          provide: QDRANT_CONFIG,
+          useValue: { enabled: false },
         },
       ],
     }).compile();

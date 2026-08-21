@@ -9,7 +9,9 @@ import { useDlqRetrySession } from './use-dlq-retry-session';
 /**
  * DLQ row/detail actions — thin orchestration over the mutations, the
  * store, and the retry-session side effects (socket rooms, conversation
- * seeding, debug log).
+ * seeding, debug log). Entries are identified by their DLQ record id; the
+ * socket/conversation tracking uses the entry's jobName (for harness turns
+ * that name IS the originating request id).
  */
 export function useDlqActions(options: DlqActionsOptions) {
   const {
@@ -24,32 +26,37 @@ export function useDlqActions(options: DlqActionsOptions) {
   const { ensureSocketSubscription, addRetryPendingMessage } =
     useDlqRetrySession(options.socketStore);
 
-  function findEntry(requestId: string) {
-    return dlqStore.entries.find((e) => e.requestId === requestId);
+  function findEntry(id: string) {
+    return dlqStore.entries.find((e) => e.id === id);
   }
 
   function onSelect(entry: DlqEntry) {
-    if (dlqStore.selectedEntry?.requestId !== entry.requestId) {
+    if (dlqStore.selectedEntry?.id !== entry.id) {
       dlqStore.markEntryAsRead(entry);
     }
     dlqStore.selectEntry(
-      dlqStore.selectedEntry?.requestId === entry.requestId ? null : entry,
+      dlqStore.selectedEntry?.id === entry.id ? null : entry,
     );
   }
 
-  async function onRetry(requestId: string) {
+  async function onRetry(id: string) {
     dlqStore.error = null;
     try {
-      const entry = findEntry(requestId);
+      const entry = findEntry(id);
+      // Session seeding only makes sense for harness turns — a reinstated
+      // harness job streams back under its request id (= jobName). Background
+      // queue records (vectorize, ...) just re-run silently.
+      const isHarnessTurn = entry?.queueName === 'harness';
       const { roomId, event, model } = extractEntryFilters(entry);
 
-      if (roomId && event) ensureSocketSubscription(roomId, event);
+      if (isHarnessTurn && roomId && event)
+        ensureSocketSubscription(roomId, event);
 
-      const res = await retryMutation.mutateAsync(requestId);
+      const res = await retryMutation.mutateAsync(id);
       toast.success(i18n.global.t('toast.retried', { count: res.restored }));
 
-      for (const reqId of res.requestIds ?? [requestId]) {
-        addRetryPendingMessage(reqId, roomId, event, model, entry);
+      if (entry && isHarnessTurn) {
+        addRetryPendingMessage(entry.jobName, roomId, event, model, entry);
       }
 
       guardedRefetch();
@@ -58,12 +65,12 @@ export function useDlqActions(options: DlqActionsOptions) {
     }
   }
 
-  async function onArchive(requestId: string) {
-    const entry = findEntry(requestId);
+  async function onArchive(id: string) {
+    const entry = findEntry(id);
     if (entry && entry.status === 'Removed') return;
     try {
       const updated = await updateMutation.mutateAsync({
-        requestId,
+        id,
         data: { status: 'Cleared' },
       });
       toast.success(i18n.global.t('toast.cleared'));
@@ -73,11 +80,11 @@ export function useDlqActions(options: DlqActionsOptions) {
     }
   }
 
-  async function onDelete(requestId: string) {
+  async function onDelete(id: string) {
     try {
-      await deleteMutation.mutateAsync(requestId);
+      await deleteMutation.mutateAsync(id);
       toast.success(i18n.global.t('toast.markedForDeletion'));
-      if (dlqStore.selectedEntry?.requestId === requestId) {
+      if (dlqStore.selectedEntry?.id === id) {
         dlqStore.selectEntry(null);
       }
       guardedRefetch();
@@ -86,13 +93,10 @@ export function useDlqActions(options: DlqActionsOptions) {
     }
   }
 
-  async function onSavePayload(
-    requestId: string,
-    payload: Record<string, unknown>,
-  ) {
+  async function onSavePayload(id: string, payload: Record<string, unknown>) {
     try {
       const updated = await updateMutation.mutateAsync({
-        requestId,
+        id,
         data: { payload },
       });
       toast.success(i18n.global.t('toast.payloadUpdated'));
@@ -102,10 +106,10 @@ export function useDlqActions(options: DlqActionsOptions) {
     }
   }
 
-  async function onSaveQueue(requestId: string, queueName: string) {
+  async function onSaveQueue(id: string, queueName: string) {
     try {
       const updated = await updateMutation.mutateAsync({
-        requestId,
+        id,
         data: { queueName },
       });
       toast.success(i18n.global.t('toast.queueUpdated'));

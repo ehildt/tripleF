@@ -45,6 +45,14 @@ const preprocessingStore = usePreprocessingStore();
 // is a write, not something first paint depends on.
 scheduleIdle(() => preprocessingStore.pushSettingsToServer());
 
+// The memory partition id is server-persisted (Postgres) so it survives
+// localStorage clears — adopt it at boot, deferred to idle like the
+// preprocessing push.
+scheduleIdle(() => appStore.syncMemoryPartitionFromServer());
+
+// Same contract for the cognition space id (the AI's memory space).
+scheduleIdle(() => appStore.syncMemoryCognitionFromServer());
+
 // The SysCtl popout preview is transient: switching tabs dismisses it.
 // Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
 // cannot be used directly as a watch source.

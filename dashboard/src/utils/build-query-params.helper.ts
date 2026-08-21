@@ -4,6 +4,10 @@ export function buildQueryParams(options: FormQueryOptions): URLSearchParams {
   const params = new URLSearchParams();
   params.append('requestId', options.requestId);
   if (options.sessionId) params.append('sessionId', options.sessionId);
+  if (options.memoryPartition)
+    params.append('memoryPartition', options.memoryPartition);
+  if (options.memoryCognition)
+    params.append('memoryCognition', options.memoryCognition);
   if (options.conversationId)
     params.append('conversationId', options.conversationId);
   if (options.roomId) params.append('roomId', options.roomId);

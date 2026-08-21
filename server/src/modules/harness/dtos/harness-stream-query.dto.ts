@@ -33,6 +33,28 @@ export class HarnessStreamQueryDto {
   sessionId?: string;
 
   @ApiPropertyOptional({
+    name: 'memoryPartition',
+    type: String,
+    example: 'christopher',
+    description:
+      "Memory partition override (sysctl → system) — the user's memory space. Defaults to the session id; a custom value keeps memory stable across browser-session rotation.",
+  })
+  @IsString()
+  @IsOptional()
+  memoryPartition?: string;
+
+  @ApiPropertyOptional({
+    name: 'memoryCognition',
+    type: String,
+    example: 'christopher',
+    description:
+      "Memory cognition override (sysctl → system) — the AI's understanding-of-the-user space. Defaults to the memory partition; a custom value lets the AI's cognition live in its own space.",
+  })
+  @IsString()
+  @IsOptional()
+  memoryCognition?: string;
+
+  @ApiPropertyOptional({
     name: 'conversationId',
     type: String,
     example: 'conv-1234',

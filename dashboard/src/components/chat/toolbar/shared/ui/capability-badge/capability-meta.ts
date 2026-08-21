@@ -1,4 +1,11 @@
-import { AudioLines, BrainCircuit, Eye, Sparkles, Wrench } from '@lucide/vue';
+import {
+  AudioLines,
+  BrainCircuit,
+  Eye,
+  Sparkles,
+  VectorSquare,
+  Wrench,
+} from '@lucide/vue';
 
 import type { CapabilityMeta } from './capability-meta.types';
 
@@ -14,4 +21,5 @@ export const CAPABILITY_META: Record<string, CapabilityMeta> = {
   tools: { icon: Wrench, label: 'tools' },
   thinking: { icon: BrainCircuit, label: 'thinking' },
   completion: { icon: Sparkles, label: 'completion' },
+  embedding: { icon: VectorSquare, label: 'embedding' },
 };

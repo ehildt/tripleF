@@ -15,15 +15,15 @@ export const STATUSES = DLQ_STATUSES;
 export class CreateDlqEntryDto {
   @IsString()
   @IsNotEmpty()
-  requestId!: string;
+  queueName!: string;
 
   @IsString()
   @IsNotEmpty()
-  queueName!: string;
+  jobId!: string;
 
-  @IsOptional()
   @IsString()
-  jobId?: string;
+  @IsNotEmpty()
+  jobName!: string;
 
   @IsOptional()
   @IsEnum(STATUSES)

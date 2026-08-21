@@ -27,7 +27,7 @@ export const useDlqStore = defineStore('dlq', () => {
     () => Math.floor(offset.value / limit.value) + 1,
   );
   function entryReadKey(e: DlqEntry): string {
-    return `${e.requestId}::${e.failedAt ?? ''}::${e.attemptsMade}`;
+    return `${e.id}::${e.failedAt ?? ''}::${e.attemptsMade}`;
   }
 
   const unreadDlqCount = computed(() => {
@@ -53,19 +53,16 @@ export const useDlqStore = defineStore('dlq', () => {
 
     if (selectedEntry.value) {
       selectedEntry.value =
-        res.data.find((e) => e.requestId === selectedEntry.value!.requestId) ??
-        null;
+        res.data.find((e) => e.id === selectedEntry.value!.id) ?? null;
     }
   }
 
   function updateEntry(updated: DlqEntry) {
-    const idx = entries.value.findIndex(
-      (e) => e.requestId === updated.requestId,
-    );
+    const idx = entries.value.findIndex((e) => e.id === updated.id);
     if (idx !== -1) {
       entries.value.splice(idx, 1, updated);
     }
-    if (selectedEntry.value?.requestId === updated.requestId) {
+    if (selectedEntry.value?.id === updated.id) {
       selectedEntry.value = updated;
     }
   }

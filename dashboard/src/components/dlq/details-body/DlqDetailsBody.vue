@@ -26,8 +26,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'savePayload', requestId: string, payload: Record<string, unknown>): void;
-  (e: 'saveQueue', requestId: string, queueName: string): void;
+  (e: 'savePayload', id: string, payload: Record<string, unknown>): void;
+  (e: 'saveQueue', id: string, queueName: string): void;
 }>();
 
 const { t } = useI18n();
@@ -54,7 +54,7 @@ const tabs = computed<Array<{ id: DlqDetailTab; label: string }>>(() => {
 const activeTab = ref<DlqDetailTab | null>('metadata');
 
 watch(
-  () => props.entry?.requestId,
+  () => props.entry?.id,
   () => {
     activeTab.value = 'metadata';
   },
@@ -68,19 +68,16 @@ function selectTab(tabId: string) {
 function handleUpdateFilter(key: string, value: unknown) {
   if (!props.entry) return;
   const payload = buildPayloadWithFilterUpdate(props.entry, key, value);
-  emit('savePayload', props.entry.requestId, payload);
+  emit('savePayload', props.entry.id, payload);
 }
 
-function handleSavePayload(
-  requestId: string,
-  payload: Record<string, unknown>,
-) {
-  emit('savePayload', requestId, payload);
+function handleSavePayload(id: string, payload: Record<string, unknown>) {
+  emit('savePayload', id, payload);
 }
 
 function handleSaveQueue(queueName: string) {
   if (!props.entry) return;
-  emit('saveQueue', props.entry.requestId, queueName);
+  emit('saveQueue', props.entry.id, queueName);
 }
 
 const { copy, copied: isCopied } = useClipboard({ legacy: true });
@@ -98,7 +95,7 @@ function copyPayload() {
       <PanelHeaderTitle :label="$t('common.details')" />
     </PanelHeader>
 
-    <div v-if="entry" :key="entry.requestId" class="dlq-details-body">
+    <div v-if="entry" :key="entry.id" class="dlq-details-body">
       <DlqTopBar
         :entry="entry"
         :models="models"

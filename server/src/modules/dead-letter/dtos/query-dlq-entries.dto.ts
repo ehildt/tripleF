@@ -15,7 +15,7 @@ export class QueryDlqEntriesDto {
 
   @IsOptional()
   @IsString()
-  requestId?: string;
+  jobName?: string;
 
   @IsOptional()
   @IsNumberString()

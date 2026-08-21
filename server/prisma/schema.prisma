@@ -14,10 +14,12 @@ enum DlqStatus {
   Removed
 }
 
-model HarnessDlq {
-  requestId      String    @id @db.VarChar(255)
+model DeadLetterJob {
+  id             String    @id @default(uuid())
   queueName      String    @db.VarChar(100)
-  jobId          String?   @db.VarChar(255)
+  jobId          String    @db.VarChar(255)
+  /** BullMQ job name — the logical identity (harness jobs: the request id). */
+  jobName        String    @db.VarChar(255)
   status         DlqStatus @default(Failed)
   payload        Json      @default(dbgenerated())
   retryConfig    Json?
@@ -30,7 +32,11 @@ model HarnessDlq {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @default(now()) @updatedAt
 
-  @@map("harness_dlq")
+  // The technical job identity; reinstate refreshes jobId in place so one
+  // logical job keeps a single record across reinstate cycles.
+  @@unique([queueName, jobId])
+  @@index([jobName])
+  @@map("dead_letter_job")
 }
 
 model HarnessConversation {
@@ -52,6 +58,8 @@ model HarnessConfig {
   selectedModel     String?  @db.VarChar(255)
   preprocessing     Json?
   providerOverrides Json?
+  memoryPartition   String?  @db.VarChar(255)
+  memoryCognition   String?  @db.VarChar(255)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
@@ -112,6 +120,28 @@ model HarnessPlaylist {
   @@id([sessionId, conversationId, name])
   @@index([sessionId, conversationId])
   @@map("harness_playlist")
+}
+
+/**
+ * The AI's structured cognition profile of one person (the memory_cognition
+ * lane): a single living JSON document of derived understanding (identity,
+ * likes, goals, communication style). One row per cognition key; updates are
+ * MERGED in code (mergeCognitionProfiles) and the row is atomically upserted
+ * — never whole-document replaced from a model verdict. The document is the
+ * routing map: its values are short topic strings that path-match the
+ * insight vectors in Qdrant (path payload like `likes.cars`). Provenance
+ * columns trace the last harness turn that updated the document.
+ */
+model MemoryCognitionProfile {
+  space              String   @id @db.VarChar(255)
+  profile            Json
+  lastSessionId      String?  @db.VarChar(255)
+  lastConversationId String?  @db.VarChar(255)
+  lastRequestId      String?  @db.VarChar(255)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+
+  @@map("memory_cognition_profile")
 }
 
 /**

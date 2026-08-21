@@ -18,10 +18,10 @@ export { Prisma }
 export * as $Enums from './enums.js'
 export * from './enums.js';
 /**
- * Model HarnessDlq
+ * Model DeadLetterJob
  * 
  */
-export type HarnessDlq = Prisma.HarnessDlqModel
+export type DeadLetterJob = Prisma.DeadLetterJobModel
 /**
  * Model HarnessConversation
  * 
@@ -59,6 +59,19 @@ export type HarnessProviderOverride = Prisma.HarnessProviderOverrideModel
  *  * conversation is deleted.
  */
 export type HarnessPlaylist = Prisma.HarnessPlaylistModel
+/**
+ * Model MemoryCognitionProfile
+ * *
+ *  * The AI's structured cognition profile of one person (the memory_cognition
+ *  * lane): a single living JSON document of derived understanding (identity,
+ *  * likes, goals, communication style). One row per cognition key; updates are
+ *  * MERGED in code (mergeCognitionProfiles) and the row is atomically upserted
+ *  * — never whole-document replaced from a model verdict. The document is the
+ *  * routing map: its values are short topic strings that path-match the
+ *  * insight vectors in Qdrant (path payload like `likes.cars`). Provenance
+ *  * columns trace the last harness turn that updated the document.
+ */
+export type MemoryCognitionProfile = Prisma.MemoryCognitionProfileModel
 /**
  * Model StockMarketBar
  * *

@@ -7,7 +7,9 @@ const makeEntry = (
   id: string,
   status: 'Failed' | 'Active' | 'Cleared' | 'Removed' = 'Failed',
 ): any => ({
-  requestId: id,
+  id,
+  jobId: `job-${id}`,
+  jobName: id,
   queueName: 'harness',
   jobId: null,
   status,

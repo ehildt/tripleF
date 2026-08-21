@@ -339,4 +339,85 @@ describe('useAppStore', () => {
       expect(store.chartConfig.showMarkers).toBe(true);
     });
   });
+
+  describe('memory cognition space history', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    });
+
+    it('starts empty and records every non-empty setMemoryCognition', () => {
+      const store = useAppStore();
+      expect(store.memoryCognitionSpaces).toEqual([]);
+
+      store.setMemoryCognition('alice');
+      store.setMemoryCognition('work');
+      expect(store.memoryCognitionSpaces).toEqual(['work', 'alice']);
+    });
+
+    it('trims, ignores empty values, and dedupes most-recent-first', () => {
+      const store = useAppStore();
+      store.setMemoryCognition('  alice  ');
+      store.setMemoryCognition('');
+      store.setMemoryCognition('work');
+      store.setMemoryCognition('alice');
+      expect(store.memoryCognitionSpaces).toEqual(['alice', 'work']);
+    });
+
+    it('caps the history at 20 entries', () => {
+      const store = useAppStore();
+      for (let i = 0; i < 25; i++) store.setMemoryCognition(`space-${i}`);
+      expect(store.memoryCognitionSpaces).toHaveLength(20);
+      expect(store.memoryCognitionSpaces[0]).toBe('space-24');
+    });
+
+    it('persists to and reloads from localStorage', async () => {
+      const store = useAppStore();
+      store.setMemoryCognition('alice');
+      await new Promise((r) => setTimeout(r, 10));
+      expect(localStorage.getItem('harness-memory-cognition-spaces')).toBe(
+        JSON.stringify(['alice']),
+      );
+
+      // A fresh pinia re-runs the setup store and loads the persisted list.
+      setActivePinia(createPinia());
+      const reloaded = useAppStore();
+      expect(reloaded.memoryCognitionSpaces).toEqual(['alice']);
+    });
+
+    it('drops malformed persisted history entries', () => {
+      localStorage.setItem(
+        'harness-memory-cognition-spaces',
+        JSON.stringify(['alice', 42, '  ', { id: 'x' }, 'work']),
+      );
+      const store = useAppStore();
+      expect(store.memoryCognitionSpaces).toEqual(['alice', 'work']);
+    });
+
+    it('removeMemoryCognitionSpace drops the entry and clears an active match', async () => {
+      const store = useAppStore();
+      store.setMemoryCognition('alice');
+      store.setMemoryCognition('work');
+
+      store.removeMemoryCognitionSpace('work');
+      expect(store.memoryCognitionSpaces).toEqual(['alice']);
+      expect(store.memoryCognition).toBe('');
+
+      store.removeMemoryCognitionSpace('alice');
+      expect(store.memoryCognitionSpaces).toEqual([]);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(
+        localStorage.getItem('harness-memory-cognition-spaces'),
+      ).toBeNull();
+    });
+
+    it('removeMemoryCognitionSpace keeps a different active space', () => {
+      const store = useAppStore();
+      store.setMemoryCognition('alice');
+      store.setMemoryCognition('work');
+
+      store.removeMemoryCognitionSpace('alice');
+      expect(store.memoryCognitionSpaces).toEqual(['work']);
+      expect(store.memoryCognition).toBe('work');
+    });
+  });
 });
