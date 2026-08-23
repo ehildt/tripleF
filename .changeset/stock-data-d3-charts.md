@@ -1,6 +1,5 @@
 ---
-"@triplef.io/server": minor
-"@triplef.io/dashboard": minor
+"@triplef/triplef": minor
 ---
 
 - Server: new `stock-data` module — provider-agnostic end-of-day market history cached in Postgres (`StockMarketBar` + `StockMarketHistoryRange` coverage ledger), gap backfill from the configured provider (EODHD), locally computed technical indicators (SMA, EMA, RSI, MACD, ATR, ADX, Bollinger Bands, Stochastic), and REST endpoints `GET /api/v1/stock-data/history` + `GET /api/v1/stock-data/coverage`

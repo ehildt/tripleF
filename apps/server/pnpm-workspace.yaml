@@ -1,0 +1,9 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  '@swc/core': true
+  fastify-socket.io: true
+  msgpackr-extract: true
+  prisma: true
+minimumReleaseAgeExclude:
+  - '@triplef/helpers@1.5.1'

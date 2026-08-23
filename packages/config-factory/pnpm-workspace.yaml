@@ -1,0 +1,6 @@
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': true
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@triplef/helpers@1.5.1'

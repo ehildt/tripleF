@@ -1,0 +1,20 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    ".storybook",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "src/**/*.stories.?sx",
+    "**/read-depbadgerc-with-defaults.ts",
+    "**/depbadgerc.type.ts",
+    "**/vitest.config.ts",
+    "src/cache-return-value/index.ts",
+    "src/config-factory/index.ts",
+    "src/validate-return-value/index.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

@@ -6,7 +6,7 @@
 # static assets behind nginx, which proxies /api and /socket.io to the server.
 #
 # Infra services (postgres, minio, keydb) are expected to be running on the
-# shared `triplef.io` network — e.g. `docker compose -f infra.compose.yml up -d`.
+# shared `triplef` network — e.g. `docker compose -f infra.compose.yml up -d`.
 #
 # Usage:
 #   docker compose -f compose.prod.yml up -d --build
@@ -37,7 +37,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - triplef.io
+      - triplef
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -53,9 +53,9 @@ services:
     ports:
       - "80:80"
     networks:
-      - triplef.io
+      - triplef
 
 networks:
-  triplef.io:
+  triplef:
     external: true
-    name: triplef.io
+    name: triplef

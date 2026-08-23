@@ -1,0 +1,33 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    ".storybook",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "src/**/*.stories.?sx",
+    "**/read-depbadgerc-with-defaults.ts",
+    "**/depbadgerc.type.ts",
+    "**/vitest.config.ts",
+    "src/bootstrap/index.ts",
+    "src/bootstrap/bootstrap.constants.ts",
+    "src/bootstrap/global-validation-pipeline.helper.ts",
+    "src/bootstrap/log-config-object.helper.ts",
+    "src/bootstrap/log-server-path.helper.ts",
+    "src/bootstrap/log-swagger-path.helper.ts",
+    "src/bootstrap/swagger-document-builder.helper.ts",
+    "src/bootstrap/read-package-json-from-root.helper.ts",
+    "src/find-up/index.ts",
+    "src/get-boolean-env/index.ts",
+    "src/get-byte-size-env/index.ts",
+    "src/get-number-env/index.ts",
+    "src/hash-payload/index.ts",
+    "src/is-buffer-or-serialized/index.ts",
+    "src/object-io/index.ts",
+    "src/text-to-lines/index.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

@@ -36,6 +36,26 @@
 
 - [4. Business Logic: How the Features Work](4-business-logic.md)
 
+### Helpers
+
+- [5. The @triplef/helpers Library](5-helpers.md)
+- [5.1. Bootstrap](5.1-bootstrap.md)
+- [5.2. Environment Variables](5.2-environment-variables.md)
+- [5.3. Find Up](5.3-find-up.md)
+- [5.4. Hash Payload](5.4-hash-payload.md)
+- [5.5. Is Buffer or Serialized](5.5-is-buffer-or-serialized.md)
+- [5.6. Object I/O](5.6-object-io.md)
+- [5.7. Text To Lines](5.7-text-to-lines.md)
+- [5.8. Quick Start](5.8-quick-start.md)
+
+### Config-Factory
+
+- [6. The @triplef/config-factory Library](6-config-factory.md)
+- [6.1. Config-Factory Module](6.1-config-factory.md)
+- [6.2. Cache Return Value](6.2-cache-return-value.md)
+- [6.3. Validate Return Value](6.3-validate-return-value.md)
+- [6.4. Quick Start](6.4-quick-start.md)
+
 ## Navigation
 
 | Document                                                  | Concern                                        | Key Sections                                                           |
@@ -57,3 +77,12 @@
 | [3-ai-assisted-development](3-ai-assisted-development.md) | How this project is built                      | Context coding, ownership, quality gates                               |
 | [3.1-market-positioning](3.1-market-positioning.md)       | Where 3F competes                           | Proprietary landscape, local-first advantages, strategy                |
 | [4-business-logic](4-business-logic.md)                   | Feature behaviour and their dependencies        | Core loop, media contracts, grounding, trust boundary                   |
+| [5-helpers](5-helpers.md)                                 | `@triplef/helpers` library overview             | Modules, installation, peer dependencies                                |
+| [5.1-bootstrap](5.1-bootstrap.md)                         | NestJS bootstrap utilities                      | App config schema, validation pipeline, swagger, logging                |
+| [5.2-environment-variables](5.2-environment-variables.md) | Env parsing utilities                           | Boolean / number / byte-size parsing                                    |
+| [5.3-find-up](5.3-find-up.md)                             | File discovery                                  | Traverse up the tree, read package.json from root                       |
+| [5.4-hash-payload](5.4-hash-payload.md)                   | Hashing helpers                                 | SHA-256/384/512, object/buffer support                                  |
+| [5.5-is-buffer-or-serialized](5.5-is-buffer-or-serialized.md) | Cross-platform buffer detection             | Buffer, ArrayBuffer, TypedArray, DataView, serialized                   |
+| [5.6-object-io](5.6-object-io.md)                         | Object utilities                               | Clone, merge, pick, omit, is-empty                                     |
+| [5.7-text-to-lines](5.7-text-to-lines.md)                 | Sentence splitting                              | Western + CJK punctuation, chainable API                                |
+| [5.8-quick-start](5.8-quick-start.md)                     | Using the helpers package                       | Install, env parsing, object-io, hashing                                 |

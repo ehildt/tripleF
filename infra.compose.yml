@@ -18,7 +18,7 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - triplef.io
+      - triplef
 
   minio:
     image: minio/minio:latest
@@ -34,7 +34,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     networks:
-      - triplef.io
+      - triplef
 
   keydb:
     image: eqalpha/keydb
@@ -44,10 +44,10 @@ services:
       - "6379:6379"
     volumes:
       - keydb_data:/data
-      - ./server/keydb.conf:/usr/local/etc/keydb/keydb.conf
+      - ./apps/server/keydb.conf:/usr/local/etc/keydb/keydb.conf
     command: keydb-server /usr/local/etc/keydb/keydb.conf
     networks:
-      - triplef.io
+      - triplef
 
   # Qdrant vector store for the dual-tier semantic memory feature (Ticket 6).
   # REST 6333 only — the server talks to it via @qdrant/js-client-rest at
@@ -76,7 +76,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - triplef.io
+      - triplef
 
 #  ollama:
 #    image: ollama/ollama:latest
@@ -90,7 +90,7 @@ services:
 #    environment:
 #      - OLLAMA_HOST=0.0.0.0
 #    networks:
-#      - triplef.io
+#      - triplef
 
   # Headless-chromium MCP sidecar exposing browser automation tools to the
   # harness models. Internal-only: the server reaches it at
@@ -110,7 +110,7 @@ services:
     ports:
       - "127.0.0.1:8931:8931"
     networks:
-      - triplef.io
+      - triplef
 
 volumes:
   postgres_data:
@@ -120,6 +120,6 @@ volumes:
 #  ollama_data:
 
 networks:
-  triplef.io:
+  triplef:
     #    external: true
-    name: triplef.io
+    name: triplef

@@ -17,28 +17,55 @@ services:
     volumes:
       - ./:/repo
     networks:
-      - triplef.io
+      - triplef
 
   server:
     container_name: server
     image: triplef-local
     user: "1000:1000"
     restart: on-failure
-    working_dir: /repo/server
+    working_dir: /repo/apps/server
+    entrypoint: ["pnpm", "start:dev"]
+    depends_on:
+      deps:
+        condition: service_completed_successfully
+      memory:
+        condition: service_started
+    environment:
+      NODE_OPTIONS: --max-old-space-size=2048
+      MEMORY_URL: http://memory:3400
+    volumes:
+      - ./:/repo
+    env_file:
+      - ./apps/server/.env
+    ports:
+      - "3000:3000"
+    networks:
+      - triplef
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  memory:
+    container_name: memory
+    image: triplef-local
+    user: "1000:1000"
+    restart: on-failure
+    working_dir: /repo/apps/memory
     entrypoint: ["pnpm", "start:dev"]
     depends_on:
       deps:
         condition: service_completed_successfully
     environment:
       NODE_OPTIONS: --max-old-space-size=2048
+      PORT: 3400
     volumes:
       - ./:/repo
     env_file:
-      - ./server/.env
+      - ./apps/memory/.env
     ports:
-      - "3000:3000"
+      - "3400:3400"
     networks:
-      - triplef.io
+      - triplef
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -47,7 +74,7 @@ services:
     image: triplef-local
     user: "1000:1000"
     restart: on-failure
-    working_dir: /repo/dashboard
+    working_dir: /repo/apps/dashboard
     entrypoint: ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]
     depends_on:
       deps:
@@ -59,13 +86,13 @@ services:
     volumes:
       - ./:/repo
     env_file:
-      - ./dashboard/.env
+      - ./apps/dashboard/.env
     ports:
       - "5173:5173"
     networks:
-      - triplef.io
+      - triplef
 
 networks:
-  triplef.io:
+  triplef:
     external: true
-    name: triplef.io
+    name: triplef
