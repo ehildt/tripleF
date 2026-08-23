@@ -44,16 +44,16 @@ Before proposing or implementing any non-trivial change, the agent must:
 
 # Model Routing
 
-This session uses `pi-model-switch` with two model roles (aliases in `~/.pi/agent/npm/node_modules/pi-model-switch/aliases.json`, backup at `~/.pi/agent/model-switch-aliases.json`):
+This session uses `pi-model-switch` with role→model mappings defined in `~/.pi/agent/model-switch-aliases.json` (user-maintained config; the pi-model-switch package's own `aliases.json` is third-party and not edited):
 
-- **Planner** (`plan`, `research`, `refiner`, `reviewer` aliases) — `ollama-cloud/kimi-k3:cloud`. Use for Planning Protocol steps 1–2: online research, plan formulation, plan refinement, and plan review.
-- **Implementer** (`implement` alias) — `ollama-cloud/deepseek-v4-flash:0731-cloud`. Use after explicit user go-ahead, for implementation, tests, fixes, ESLint/type-check tasks, and Playwright/browser work.
+- **Planner** — `planer`, `refiner`, `reviewer` → `ollama-cloud/deepseek-v4-pro:cloud`; `researcher` → `ollama-cloud/kimi-k3:cloud`. Use for Planning Protocol steps 1–2: online research, plan formulation, plan refinement, and plan review.
+- **Implementer** (`implementer` role) — `ollama-cloud/deepseek-v4-flash:cloud`. Use after explicit user go-ahead, for implementation, tests, fixes, ESLint/type-check tasks, and Playwright/browser work.
 
 Rules:
 
-- Call `switch_model` with `action: "switch"` and `search` set to the alias (e.g. `plan`, `implement`).
-- A local extension (`.pi/extensions/model-router.ts`) resets the model to the Planner at the start of every new user turn. You never need to switch back after finishing work — the reset handles it.
-- Before implementing after user approval (Planning Protocol step 3), switch to `implement` if it is not already the active model.
+- Call `switch_model` with `action: "switch"` and `search` set to the role's model id (e.g. `deepseek-v4-pro`, `kimi-k3`, `deepseek-v4-flash`) — the extension resolves by provider/model id; its bundled alias names are legacy.
+- A local extension (`.pi/extensions/model-router.ts`) resets the model to the Planner (`planer`, i.e. `deepseek-v4-pro`) at the start of every new user turn. You never need to switch back after finishing work — the reset handles it.
+- Before implementing after user approval (Planning Protocol step 3), switch to the Implementer (`deepseek-v4-flash`) if it is not already the active model.
 - The switch takes effect from the next assistant turn; finish the current turn's reply after switching.
 
 # Implementation Guidelines

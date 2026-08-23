@@ -14,10 +14,15 @@
  * `before_agent_start` fires once per user prompt, before the agent loop, so
  * this never interrupts a tool loop mid-implementation.
  *
- * Aliases are read from the same sources APPEND_SYSTEM.md documents:
- *   1. ~/.pi/agent/npm/node_modules/pi-model-switch/aliases.json
- *   2. ~/.pi/agent/model-switch-aliases.json (backup)
+ * Role config lives in the user-maintained aliases file (APPEND_SYSTEM.md
+ * documents the mapping). The pi-model-switch package's own aliases.json is
+ * third-party and read-only — it is consulted only as a legacy fallback:
+ *   1. ~/.pi/agent/model-switch-aliases.json   (ours — authoritative)
+ *   2. ~/.pi/agent/npm/node_modules/pi-model-switch/aliases.json (3rd-party)
  *   3. compiled-in defaults
+ *
+ * Both `plan`/`planer` and `implement`/`implementer` spellings are accepted so
+ * the router keeps working regardless of which file provides the keys.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -28,13 +33,16 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 type AliasConfig = Record<string, string | string[]>;
 
 const DEFAULT_ALIASES: AliasConfig = {
-	plan: "ollama-cloud/kimi-k3:cloud",
-	implement: "ollama-cloud/deepseek-v4-flash:0731-cloud",
+	planer: "ollama-cloud/deepseek-v4-pro:cloud",
+	researcher: "ollama-cloud/kimi-k3:cloud",
+	refiner: "ollama-cloud/deepseek-v4-pro:cloud",
+	reviewer: "ollama-cloud/deepseek-v4-pro:cloud",
+	implementer: "ollama-cloud/deepseek-v4-flash:cloud",
 };
 
 const ALIAS_SOURCES = [
-	join(homedir(), ".pi/agent/npm/node_modules/pi-model-switch/aliases.json"),
 	join(homedir(), ".pi/agent/model-switch-aliases.json"),
+	join(homedir(), ".pi/agent/npm/node_modules/pi-model-switch/aliases.json"),
 ];
 
 function parseModelSpec(spec: string): { provider: string; modelId: string } | null {
@@ -78,7 +86,7 @@ function loadAliases(): AliasConfig {
 					aliases[key] = values.length === 1 ? values[0] : values;
 				}
 			}
-			if (aliases.plan || aliases.implement) {
+			if (aliases.plan || aliases.planer || aliases.implement || aliases.implementer) {
 				return aliases;
 			}
 		} catch {
@@ -107,8 +115,8 @@ function matchesModel(spec: string, provider: string, id: string): boolean {
 
 export default function modelRouter(pi: ExtensionAPI) {
 	const aliases = loadAliases();
-	const implementerTargets = aliasTargets(aliases, "implement");
-	const plannerTargets = aliasTargets(aliases, "plan");
+	const implementerTargets = [...aliasTargets(aliases, "implement"), ...aliasTargets(aliases, "implementer")];
+	const plannerTargets = [...aliasTargets(aliases, "plan"), ...aliasTargets(aliases, "planer")];
 
 	pi.on("before_agent_start", async (_event, ctx) => {
 		const current = ctx.model;

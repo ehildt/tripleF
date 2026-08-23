@@ -1,0 +1,227 @@
+integrity: 662563bfe130054f706f254fa71a4f6d41fa7d30993b53be27e66c17acc4263c
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ehildt/depbadge/refs/heads/main/depbadgerc.schema.json
+
+target: README.md
+
+manifest: package.json
+
+output:
+  - markdown
+
+dependenciesLayout: &DEPENDENCIES_LAYOUT
+  position: center
+  showHeader: false
+
+dependenciesStyle: &DEPENDENCIES_STYLE
+  labelColor: '333'
+  isError: false
+  namedLogo: npm
+  logoWidth: 40
+  style: flat-square
+  cacheSeconds: 3600
+
+devDependenciesStyle: &DEV_DEPENDENCIES_STYLE
+  <<: *DEPENDENCIES_STYLE
+  style: flat-square
+
+statusBadgesStyle: &STATUS_BADGES_STYLE
+  labelColor: '333'
+  isError: false
+  namedLogo: github
+  logoWidth: 40
+  style: for-the-badge
+  cacheSeconds: 3600
+
+dependencies:
+  layout:
+    <<: *DEPENDENCIES_LAYOUT
+    header: Dependencies
+    showHeader: true
+    position: center
+  badgeStyle: *DEPENDENCIES_STYLE
+  items:
+    - name: '@ai-sdk/mcp'
+      link: https://github.com/vercel/ai
+    - name: '@triplef/helpers'
+      link: https://github.com/ehildt/tripleF
+    - name: '@ehildt/nestjs-bullmq'
+      link: https://github.com/ehildt/nestjs-bullmq
+    - name: '@ehildt/nestjs-bullmq-logger'
+      link: https://github.com/ehildt/nestjs-bullmq-logger
+    - name: '@triplef/config-factory'
+      link: https://github.com/ehildt/tripleF
+    - name: '@ehildt/nestjs-socket.io'
+      link: https://github.com/ehildt/nestjs-socket.io
+    - name: '@fastify/compress'
+      link: https://github.com/fastify/fastify-compress
+    - name: '@fastify/multipart'
+      link: https://github.com/fastify/fastify-multipart
+    - name: '@fastify/static'
+      link: https://github.com/fastify/fastify-static
+    - name: '@nestjs/axios'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/bullmq'
+      link: https://github.com/nestjs/bullmq
+    - name: '@nestjs/common'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/core'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/microservices'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/platform-fastify'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/swagger'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/terminus'
+      link: https://github.com/nestjs/nest
+    - name: '@prisma/adapter-pg'
+      link: https://github.com/prisma/prisma
+    - name: '@prisma/client'
+      link: https://github.com/prisma/prisma
+    - name: ai
+      link: https://github.com/vercel/ai
+    - name: bullmq
+      link: https://github.com/taskforcesh/bullmq
+    - name: class-transformer
+      link: https://github.com/typestack/class-transformer
+    - name: class-validator
+      link: https://github.com/typestack/class-validator
+    - name: cld3-asm
+      link: https://github.com/kwonoj/cld3-asm
+    - name: fastify
+      link: https://github.com/fastify/fastify
+    - name: ioredis
+      link: https://github.com/luin/ioredis
+    - name: joi
+      link: https://github.com/sideway/joi
+    - name: json5
+      link: https://github.com/json5/json5
+    - name: minio
+      link: https://github.com/minio/minio-js
+    - name: npm
+      link: https://github.com/npm/cli
+    - name: ollama
+      link: https://github.com/ollama/ollama
+    - name: ollama-ai-provider-v2
+      link: https://github.com/nordwestt/ollama-ai-provider-v2
+    - name: pino
+      link: https://github.com/pinojs/pino
+    - name: pino-pretty
+      link: https://github.com/pinojs/pino-pretty
+    - name: reflect-metadata
+      link: https://github.com/rbuckton/reflect-metadata
+    - name: rxjs
+      link: https://github.com/reactivex/rxjs
+    - name: sharp
+      link: https://github.com/lovell/sharp
+    - name: zod
+      link: https://github.com/colinhacks/zod
+
+devDependencies:
+  layout:
+    <<: *DEPENDENCIES_LAYOUT
+    header: DevDependencies
+    showHeader: true
+    position: center
+  badgeStyle: *DEV_DEPENDENCIES_STYLE
+  items:
+    - name: '@eslint/js'
+      link: https://github.com/eslint/eslint
+    - name: '@nestjs/cli'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/schematics'
+      link: https://github.com/nestjs/nest
+    - name: '@nestjs/testing'
+      link: https://github.com/nestjs/nest
+    - name: '@swc/core'
+      link: https://github.com/swc-project/swc
+    - name: '@types/node'
+      link: https://github.com/DefinitelyTyped/DefinitelyTyped
+    - name: '@types/supertest'
+      link: https://github.com/DefinitelyTyped/DefinitelyTyped
+    - name: '@vitest/coverage-v8'
+      link: https://github.com/vitest-dev/vitest
+    - name: '@vue/eslint-config-typescript'
+      link: https://github.com/vuejs/eslint-config-typescript
+    - name: depcheck
+      link: https://github.com/depcheck/depcheck
+    - name: dependency-cruiser
+      link: https://github.com/sverweij/dependency-cruiser
+    - name: dotenv-cli
+      link: https://github.com/entropia/dotenv-cli
+    - name: eslint
+      link: https://github.com/eslint/eslint
+    - name: eslint-config-prettier
+      link: https://github.com/prettier/eslint-config-prettier
+    - name: eslint-plugin-prettier
+      link: https://github.com/prettier/eslint-plugin-prettier
+    - name: eslint-plugin-simple-import-sort
+      link: https://github.com/lydell/eslint-plugin-simple-import-sort
+    - name: eslint-plugin-sonarjs
+      link: https://github.com/SonarSource/eslint-plugin-sonarjs
+    - name: globals
+      link: https://github.com/sindresorhus/globals
+    - name: husky
+      link: https://github.com/typicode/husky
+    - name: jiti
+      link: https://github.com/unjs/jiti
+    - name: lint-staged
+      link: https://github.com/lint-staged/lint-staged
+    - name: npm-check-updates
+      link: https://github.com/raineorshine/npm-check-updates
+    - name: prisma
+      link: https://github.com/prisma/prisma
+    - name: rimraf
+      link: https://github.com/isaacs/rimraf
+    - name: source-map-support
+      link: https://github.com/evanw/source-map-support
+    - name: supertest
+      link: https://github.com/visionmedia/supertest
+    - name: ts-loader
+      link: https://github.com/TypeStrong/ts-loader
+    - name: ts-node
+      link: https://github.com/TypeStrong/ts-node
+    - name: ts-unused-exports
+      link: https://github.com/pinterest/ts-unused-exports
+    - name: tsconfig-paths
+      link: https://github.com/david-driscoll/tsconfig-paths
+    - name: typescript
+      link: https://github.com/Microsoft/TypeScript
+    - name: typescript-eslint
+      link: https://github.com/typescript-eslint/typescript-eslint
+    - name: unplugin-swc
+      link: https://github.com/unplugin/unplugin-swc
+    - name: vitest
+      link: https://github.com/vitest-dev/vitest
+
+statusBadges:
+  layout:
+    position: center
+    showHeader: false
+  badgeStyle: *STATUS_BADGES_STYLE
+  items:
+    - name: github
+      metric: release
+      user: ehildt
+      repo: tripleF
+      branch: main
+      namedLogo: github
+    - name: github
+      metric: stars
+      user: ehildt
+      repo: tripleF
+      branch: main
+      namedLogo: github
+    - name: github
+      metric: license
+      user: ehildt
+      repo: tripleF
+      branch: main
+      namedLogo: github
+    - name: codecov
+      user: ehildt
+      repo: tripleF
+      namedLogo: codecov
+      branch: main
+      flag: c
+      link: https://about.codecov.io/

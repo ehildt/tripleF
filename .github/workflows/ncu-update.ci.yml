@@ -1,0 +1,70 @@
+name: NCU_UPDATE
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+env:
+  HUSKY: 0
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ncu-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Update dependencies — Helpers
+        run: pnpm --filter @triplef/helpers run ncu:update
+
+      # ncu:update only rewrites package.json — regenerate the lockfile so the
+      # PR stays installable with `--frozen-lockfile` in CI.
+      - name: Sync lockfile
+        run: pnpm install
+
+      # Keep the README badges in sync with the updated manifests.
+      - name: Regenerate badges — Helpers
+        working-directory: packages/helpers
+        run: npx @ehildt/depbadge
+
+      - name: Update dependencies — Config-Factory
+        run: pnpm --filter @triplef/config-factory run ncu:update
+
+      # Keep the README badges in sync with the updated manifests.
+      - name: Regenerate badges — Config-Factory
+        working-directory: packages/config-factory
+        run: npx @ehildt/depbadge
+
+      - name: Create PR
+        if: github.event_name == 'schedule'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.CICD_ACTIONS }}
+          commit-message: "chore(deps): update dependencies"
+          title: "chore(deps): update dependencies"
+          body: |
+            This PR updates npm dependencies.
+          branch: ncu-update/deps
+          delete-branch: true
+          labels: dependencies

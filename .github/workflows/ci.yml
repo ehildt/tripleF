@@ -4,7 +4,11 @@ name: CI
 # workflows. Parameterized so each caller only supplies what differs:
 #   - `production`: use production builds (server `build:prod`) vs dev builds
 #   - `upload-coverage`: upload v8 coverage to Codecov (push only)
-#   - `upload-artifacts`: publish server/dashboard dist for the release jobs
+#   - `upload-artifacts`: publish server/dashboard/helpers/config-factory dist for the release jobs
+#
+# Single pnpm workspace (pnpm-workspace.yaml: `packages/*` + `apps/*` + root):
+# one root `pnpm install --frozen-lockfile` installs everything, then each
+# package is verified with `pnpm --filter <pkg> run <script>`.
 on:
   workflow_call:
     inputs:
@@ -19,7 +23,7 @@ on:
         required: false
         default: false
       upload-artifacts:
-        description: Upload server/dashboard dist artifacts for release jobs.
+        description: Upload dist artifacts for the release jobs.
         type: boolean
         required: false
         default: false
@@ -44,48 +48,61 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - run: pnpm -r install --frozen-lockfile
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
       - name: Lint — Server
         run: |
-          cd server
-          pnpm lint
-          pnpm depcruise
-          pnpm lint:unused
+          pnpm --filter @triplef/server run lint
+          pnpm --filter @triplef/server run depcruise
+          pnpm --filter @triplef/server run lint:unused
 
       - name: Lint — Dashboard
         run: |
-          cd dashboard
-          pnpm lint
-          pnpm depcruise
-          pnpm lint:unused
+          pnpm --filter @triplef/dashboard run lint
+          pnpm --filter @triplef/dashboard run depcruise
+          pnpm --filter @triplef/dashboard run lint:unused
+
+      - name: Lint — Helpers
+        run: |
+          pnpm --filter @triplef/helpers run lint
+          pnpm --filter @triplef/helpers run depcruise
+          pnpm --filter @triplef/helpers run lint:unused
+
+      - name: Lint — Config-Factory
+        run: |
+          pnpm --filter @triplef/config-factory run lint
+          pnpm --filter @triplef/config-factory run depcruise
+          pnpm --filter @triplef/config-factory run lint:unused
 
       - name: Build — Server
         if: ${{ !inputs.production }}
-        run: |
-          cd server
-          pnpm build
+        run: pnpm --filter @triplef/server run build
 
       - name: Build — Server (production)
         if: inputs.production
-        run: |
-          cd server
-          pnpm build:prod
+        run: pnpm --filter @triplef/server run build:prod
 
       - name: Build — Dashboard
-        run: |
-          cd dashboard
-          pnpm build
+        run: pnpm --filter @triplef/dashboard run build
+
+      - name: Build — Helpers
+        run: pnpm --filter @triplef/helpers run build
+
+      - name: Build — Config-Factory
+        run: pnpm --filter @triplef/config-factory run build
 
       - name: Test — Server
-        run: |
-          cd server
-          pnpm test:cov
+        run: pnpm --filter @triplef/server run test:cov
 
       - name: Test — Dashboard
-        run: |
-          cd dashboard
-          pnpm test:cov
+        run: pnpm --filter @triplef/dashboard run test:cov
+
+      - name: Test — Helpers
+        run: pnpm --filter @triplef/helpers run test:cov
+
+      - name: Test — Config-Factory
+        run: pnpm --filter @triplef/config-factory run test:cov
 
       - name: Upload Coverage — Server
         if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
@@ -105,16 +122,48 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Upload Coverage — Helpers
+        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          flags: helpers
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Coverage — Config-Factory
+        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          flags: config-factory
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Build Artifact — Server
         if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
         uses: actions/upload-artifact@v7
         with:
           name: server-dist
-          path: server/dist/
+          path: apps/server/dist/
 
       - name: Build Artifact — Dashboard
         if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
         uses: actions/upload-artifact@v7
         with:
           name: dashboard-dist
-          path: dashboard/dist/
+          path: apps/dashboard/dist/
+
+      - name: Build Artifact — Helpers
+        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: helpers-dist
+          path: packages/helpers/dist/
+
+      - name: Build Artifact — Config-Factory
+        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: config-factory-dist
+          path: packages/config-factory/dist/

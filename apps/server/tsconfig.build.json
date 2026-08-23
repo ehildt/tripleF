@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "declaration": false,
+    "incremental": false,
+    "sourceMap": true,
+    "removeComments": false
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*.spec.ts",
+    ".prettierrc.mjs",
+    "jest.config.ts",
+    "**/*.test.ts",
+    "eslint.config.ts",
+    "vitest.config.ts",
+    "prettier.config.mjs",
+    "prisma.config.ts"
+  ]
+}

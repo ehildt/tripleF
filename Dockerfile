@@ -26,15 +26,16 @@ WORKDIR /repo
 # implicit installs at service start must never rewrite it.
 FROM base AS local
 ENV pnpm_config_verify_deps_before_run=false
-EXPOSE 3000 5173
+EXPOSE 3000 3400 5173
 
 # Stage: deps (workspace install, shared by all build stages)
 # NOTE: pnpm 11 requires pnpm_config_* env vars; legacy PNPM_STORE_DIR is ignored.
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY server/package.json server/
-COPY server/prisma server/prisma
-COPY dashboard/package.json dashboard/
+COPY apps/server/package.json apps/server/
+COPY apps/server/prisma apps/server/prisma
+COPY apps/memory/package.json apps/memory/
+COPY apps/dashboard/package.json apps/dashboard/
 RUN --mount=type=cache,id=pnpm,target=/repo/.pnpm-store \
     pnpm install --frozen-lockfile
 
@@ -42,26 +43,40 @@ RUN --mount=type=cache,id=pnpm,target=/repo/.pnpm-store \
 # NOTE: keep the copied file set minimal — stray root-level .ts files shift
 # tsc's computed rootDir and would nest the output into dist/src/.
 FROM deps AS buildserver-dev
-COPY server/tsconfig*.json server/shims.d.ts server/
-COPY server/src server/src
+COPY apps/server/tsconfig*.json apps/server/shims.d.ts apps/server/
+COPY apps/server/src apps/server/src
 RUN pnpm --filter "{server}" run build \
     && pnpm deploy --legacy --filter "{server}" /prod/server
 
 # Stage: buildserver-prod (compile for the prod-stage runtime)
 FROM deps AS buildserver-prod
-COPY server/tsconfig*.json server/shims.d.ts server/
-COPY server/src server/src
+COPY apps/server/tsconfig*.json apps/server/shims.d.ts apps/server/
+COPY apps/server/src apps/server/src
 RUN pnpm --filter "{server}" run build:prod \
     && pnpm deploy --legacy --filter "{server}" --prod /prod/server
 
+# Stage: buildmemory-dev (compile for the dev-stage runtime)
+FROM deps AS buildmemory-dev
+COPY apps/memory/tsconfig*.json apps/memory/shims.d.ts apps/memory/
+COPY apps/memory/src apps/memory/src
+RUN pnpm --filter "{memory}" run build \
+    && pnpm deploy --legacy --filter "{memory}" /prod/memory
+
+# Stage: buildmemory-prod (compile for the prod-stage runtime)
+FROM deps AS buildmemory-prod
+COPY apps/memory/tsconfig*.json apps/memory/shims.d.ts apps/memory/
+COPY apps/memory/src apps/memory/src
+RUN pnpm --filter "{memory}" run build:prod \
+    && pnpm deploy --legacy --filter "{memory}" --prod /prod/memory
+
 # Stage: builddashboard-dev (isolated install for the dev-stage runtime)
 FROM deps AS builddashboard-dev
-COPY dashboard/ dashboard/
+COPY apps/dashboard/ apps/dashboard/
 RUN pnpm deploy --legacy --filter "{dashboard}" /prod/dashboard
 
 # Stage: builddashboard (compile static assets)
 FROM deps AS builddashboard
-COPY dashboard/ dashboard/
+COPY apps/dashboard/ apps/dashboard/
 RUN pnpm --filter "{dashboard}" run build
 
 # Target: server-development (entrypoint for dev-stage)
@@ -71,7 +86,7 @@ ENV NODE_OPTIONS="--max-old-space-size=2048" \
     NODE_ENV="development" \
     pnpm_config_verify_deps_before_run=false
 COPY --chown=node:node --from=buildserver-dev /prod/server ./
-COPY --chown=node:node --from=buildserver-dev /repo/server/dist ./dist
+COPY --chown=node:node --from=buildserver-dev /repo/apps/server/dist ./dist
 EXPOSE 3000
 USER node
 ENTRYPOINT ["pnpm", "run", "start:node"]
@@ -82,8 +97,31 @@ WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=2048" \
     pnpm_config_verify_deps_before_run=false
 COPY --chown=node:node --from=buildserver-prod /prod/server ./
-COPY --chown=node:node --from=buildserver-prod /repo/server/dist ./dist
+COPY --chown=node:node --from=buildserver-prod /repo/apps/server/dist ./dist
 EXPOSE 3000
+USER node
+ENTRYPOINT ["pnpm", "run", "start:node"]
+
+# Target: memory-development (entrypoint for dev-stage)
+FROM base AS memory-development
+WORKDIR /app
+ENV NODE_OPTIONS="--max-old-space-size=2048" \
+    NODE_ENV="development" \
+    pnpm_config_verify_deps_before_run=false
+COPY --chown=node:node --from=buildmemory-dev /prod/memory ./
+COPY --chown=node:node --from=buildmemory-dev /repo/apps/memory/dist ./dist
+EXPOSE 3400
+USER node
+ENTRYPOINT ["pnpm", "run", "start:node"]
+
+# Target: memory-production (entrypoint for prod-stage)
+FROM base AS memory-production
+WORKDIR /app
+ENV NODE_OPTIONS="--max-old-space-size=2048" \
+    pnpm_config_verify_deps_before_run=false
+COPY --chown=node:node --from=buildmemory-prod /prod/memory ./
+COPY --chown=node:node --from=buildmemory-prod /repo/apps/memory/dist ./dist
+EXPOSE 3400
 USER node
 ENTRYPOINT ["pnpm", "run", "start:node"]
 
@@ -100,7 +138,7 @@ ENTRYPOINT ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]
 
 # Target: dashboard-production (static, served by nginx)
 FROM nginx:alpine AS dashboard-production
-COPY dashboard/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builddashboard /repo/dashboard/dist/ /usr/share/nginx/html
+COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builddashboard /repo/apps/dashboard/dist/ /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
