@@ -1,10 +1,16 @@
 name: NON_RELEASE_CI
 
+# CI for everything that is not a `main` merge: feature branches, `dev`, and
+# cross-branch PRs. Runs on `pull_request` only — the `push` event is omitted
+# so a commit pushed to a branch with an open PR is not tested twice
+# (GitHub fires both events for the same commit).
 on:
-  push:
-    branches-ignore: [main]
   pull_request:
     branches-ignore: [main]
+
+concurrency:
+  group: non-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:

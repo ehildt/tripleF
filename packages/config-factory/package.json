@@ -6,7 +6,10 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": null,
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
     "./cache-return-value": {
       "types": "./dist/cache-return-value/index.d.ts",
       "import": "./dist/cache-return-value/index.mjs"

@@ -4,7 +4,7 @@ name: CI
 # workflows. Parameterized so each caller only supplies what differs:
 #   - `production`: use production builds (server `build:prod`) vs dev builds
 #   - `upload-coverage`: upload v8 coverage to Codecov (push only)
-#   - `upload-artifacts`: publish server/dashboard/helpers/config-factory dist for the release jobs
+#   - `upload-artifacts`: publish helpers/config-factory dist for the release jobs
 #
 # Single pnpm workspace (pnpm-workspace.yaml: `packages/*` + `apps/*` + root):
 # one root `pnpm install --frozen-lockfile` installs everything, then each
@@ -139,20 +139,6 @@ jobs:
           flags: config-factory
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build Artifact — Server
-        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: server-dist
-          path: apps/server/dist/
-
-      - name: Build Artifact — Dashboard
-        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: dashboard-dist
-          path: apps/dashboard/dist/
 
       - name: Build Artifact — Helpers
         if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}

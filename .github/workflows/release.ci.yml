@@ -67,30 +67,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download Server dist
-        uses: actions/download-artifact@v8
-        with:
-          name: server-dist
-          path: apps/server/dist/
-
-      - name: Download Dashboard dist
-        uses: actions/download-artifact@v8
-        with:
-          name: dashboard-dist
-          path: apps/dashboard/dist/
-
-      - name: Download Helpers dist
-        uses: actions/download-artifact@v8
-        with:
-          name: helpers-dist
-          path: packages/helpers/dist/
-
-      - name: Download Config-Factory dist
-        uses: actions/download-artifact@v8
-        with:
-          name: config-factory-dist
-          path: packages/config-factory/dist/
-
       - name: Depbadge — Server
         run: cd apps/server && npx @ehildt/depbadge
 

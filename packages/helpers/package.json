@@ -10,6 +10,14 @@
       "types": "./dist/bootstrap/index.d.ts",
       "import": "./dist/bootstrap/index.mjs"
     },
+    "./decrypt-secret": {
+      "types": "./dist/decrypt-secret/index.d.ts",
+      "import": "./dist/decrypt-secret/index.mjs"
+    },
+    "./encrypt-secret": {
+      "types": "./dist/encrypt-secret/index.d.ts",
+      "import": "./dist/encrypt-secret/index.mjs"
+    },
     "./find-up": {
       "types": "./dist/find-up/index.d.ts",
       "import": "./dist/find-up/index.mjs"
@@ -34,9 +42,25 @@
       "types": "./dist/is-buffer-or-serialized/index.d.ts",
       "import": "./dist/is-buffer-or-serialized/index.mjs"
     },
+    "./key-fingerprint": {
+      "types": "./dist/key-fingerprint/index.d.ts",
+      "import": "./dist/key-fingerprint/index.mjs"
+    },
+    "./mask-api-key": {
+      "types": "./dist/mask-api-key/index.d.ts",
+      "import": "./dist/mask-api-key/index.mjs"
+    },
     "./object-io": {
       "types": "./dist/object-io/index.d.ts",
       "import": "./dist/object-io/index.mjs"
+    },
+    "./parse-llm-json": {
+      "types": "./dist/parse-llm-json/index.d.ts",
+      "import": "./dist/parse-llm-json/index.mjs"
+    },
+    "./retry-with-backoff": {
+      "types": "./dist/retry-with-backoff/index.d.ts",
+      "import": "./dist/retry-with-backoff/index.mjs"
     },
     "./text-to-lines": {
       "types": "./dist/text-to-lines/index.d.ts",
@@ -76,6 +100,9 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "lint:unused": "npx ts-unused-exports ./tsconfig.exclude.json --maxIssues=6"
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
