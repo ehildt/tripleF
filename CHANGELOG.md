@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.5.0
+
+### Minor Changes
+
+- 3368f54: - Onboarded the publishable packages at `packages/*`: `@triplef/helpers` (ex-`@ehildt/ckir-helpers`) and `@triplef/config-factory` (ex-`@ehildt/nestjs-config-factory`), both rebranded to the `@triplef` scope and released from this repo via `publish-helpers` / `publish-config-factory` pipelines using npm trusted publishing (OIDC + provenance, no long-lived npm tokens)
+  - Converted to a single pnpm workspace: root `pnpm-workspace.yaml` declares `.` + `packages/*` + `apps/*`, one consolidated root lockfile replaces the per-app/package lockfiles, and the root package `@triplef/triplef` remains a changeset-versioned member
+  - CI reworked for the workspace: `ci.yml` does one root `pnpm install --frozen-lockfile` and verifies each workspace with `pnpm --filter <pkg>` (lint, depcruise, lint:unused, build, test:cov), uploading per-package dist artifacts for the release jobs
+  - Added `ncu-update.ci.yml` for scheduled dependency-update PRs covering `@triplef/helpers` and `@triplef/config-factory`
+  - Package docs migrated into the root `.wiki/`: helpers in sections `5.*`, config-factory in `6.*`; the `RELEASE_CI` wiki sync now covers them
+  - Apps (`@triplef/server`, `@triplef/memory`, `@triplef/dashboard`) renamed from the old `@triplef.io/*` scheme and updated to depend on / import the published `@triplef/helpers` and `@triplef/config-factory`
+  - Root changeset flow aligned with the workspace: `baseBranch` moved to `main`, stale `server/`/`dashboard/` changelog links fixed
+- fc782ce: - Server: new `stock-data` module — provider-agnostic end-of-day market history cached in Postgres (`StockMarketBar` + `StockMarketHistoryRange` coverage ledger), gap backfill from the configured provider (EODHD), locally computed technical indicators (SMA, EMA, RSI, MACD, ATR, ADX, Bollinger Bands, Stochastic), and REST endpoints `GET /api/v1/stock-data/history` + `GET /api/v1/stock-data/coverage`
+  - Server: EODHD tool family added to the AI SDK tool set — `quote`, `search`, `history`, `intraday`, `news`, `fundamentals`, `technical` — with a fallback input builder and chart-streaming wrappers in the execute step; stock-market intents get a dedicated note in the execute prompt
+  - Server: harness templates rebuilt as snippet-composed presets — `news`, `article`, and `evaluation` are now composed from reusable snippets (`snippets/`) with per-preset schemas and validators (`create-snippet-validator.helper`), replacing the rigid per-template instructions/schemas
+  - Server: harness media pipeline extended — article/places/reviews/shop-offers extraction from tool results, image fingerprinting + dedupe, download-and-ingest helpers, shown-media recording, and URL-trust helpers (canonical video id, embeddable video, trusted image/URL, domain matching)
+  - Server: provider overrides gain a `layouts` config surface; API-key override handling, secrets encryption/decryption, and retry-with-backoff extracted into tested helpers
+  - Server: model warm-up service (`model-warmup.service`) exposed via `POST /api/v1/harness/warm`; tool-selection refinements; persistence services (conversation, config, playlist, shown-media) refactored with typed helper surfaces
+  - Dashboard: **custom scroll experience** — the exchange list now supports two scroll modes, switchable per conversation from SysCtl (chat-navigation section) and persisted in localStorage: `carousel` (a vertical carousel of full-height sections that snap and crossfade via `useVerticalCarousel`/`useCarouselBlend`) and `native` (continuous scroll via `useNativeScroll`). New `ScrollableExchangeList`, `CarouselSection`, `ChatMainColumn`, `ExchangeEmptyState`, and `NoConversationPanel` components; auto-scroll/pin behavior releases once the first response content arrives
+  - Dashboard: media priority setting (images vs videos) with per-conversation scroll-mode overrides; temporary-conversation retention configurable in SysCtl (default 7 days)
+  - Dashboard: stock-market responses now render with a new D3 chart suite — `D3UnifiedStockChart` (OHLC/heatmap/HLC-area with tooltips, zoom, range controls) and `D3StackedAreaChart` — replacing `lightweight-charts`/`fancy-canvas` (deps removed, `d3-*` added)
+  - Dashboard: gallery carousel — scroll-snap track with prev/next controls, active-index tracking, and header; `AssistantCarousel` + `CarouselContent`/`CarouselHeader` components
+  - Dashboard: conversation store reworked — temporary conversations persisted to localStorage with retention expiry, last-active conversation restored across reloads, helpers reorganized under `stores/helpers/conversation|socket`
+  - Dashboard: i18n locale files now validated against a shared Zod schema (`locale-schema.ts`) with auto-discovery registry; locale bundles regenerated
+  - Dashboard: SysCtl search-engines section split into per-provider sections (Serper, Bright Data, EODHD) with capability rows; layouts, interface, system, and chat-navigation sections added; provider section composables extracted
+  - Dashboard: assistant-response media helpers reorganized into `media/`, `sources/`, `state/`, `text/`, `ui/` subfolders; conversation header consolidated (context-usage indicator, header actions, and title editor folded into `ChatConversationHeader`)
+  - Dashboard: prompt action bar logic extracted into `use-chat-prompt-action-bar`; debug filters and header-menu composables extracted; new toolbar menus (new-conversation, stream-settings, subscribed-events, capabilities row) and shared `MediaImageCard`; Storybook stories pruned for removed components
+  - Dependency upgrades: NestJS 11.2.1, AI SDK 7.0.66, `@ai-sdk/mcp` 2.0.32, Storybook 10.5.8, typescript-eslint 8.67, vue-tsc 3.3.10, and related tooling; lockfiles regenerated
+
 tripleF is a pnpm monorepo. Releases are managed with [Changesets](https://github.com/changesets/changesets).
 
 - **Server** — see [`apps/server/CHANGELOG.md`](apps/server/CHANGELOG.md)
