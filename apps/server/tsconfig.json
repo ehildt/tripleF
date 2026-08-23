@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["vitest/globals"]
+  },
+  "files": ["shims.d.ts"],
+  "include": [
+    "src",
+    "eslint.config.ts",
+    "prettier.config.mjs",
+    "vitest.config.ts",
+    "prisma.config.ts"
+  ]
+}

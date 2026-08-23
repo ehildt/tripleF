@@ -4,7 +4,7 @@ The 3F server is a **NestJS 11 application on Fastify 5** with URI versioning (`
 
 - **Entry:** `server/src/main.ts` → `server/src/main.module.ts`
 - **Dev port:** `3000` · **API base:** `/api/v1` · **Docs:** `/api-docs` (OpenAPI JSON at `/api-docs-json`)
-- **Config:** Joi-validated environment via `@ehildt/nestjs-config-factory`, typed `*ConfigService` classes per subsystem
+- **Config:** Joi-validated environment via `@triplef/config-factory`, typed `*ConfigService` classes per subsystem
 
 ## Boot sequence
 
@@ -74,4 +74,4 @@ Every subsystem reads through a typed `ConfigService` (Joi schemas at startup �
 
 ## Cross-cutting packages
 
-The server builds on several `@ehildt/*` packages maintained alongside this project: `@ehildt/nestjs-bullmq` (queue module), `@ehildt/nestjs-bullmq-logger`, `@ehildt/nestjs-config-factory`, `@ehildt/nestjs-ollama`, `@ehildt/nestjs-socket.io`, and `@ehildt/ckir-helpers` (bootstrap utilities like `getBodyLimit`).
+The server builds on several `@ehildt/*` packages maintained alongside this project: `@ehildt/nestjs-bullmq` (queue module), `@ehildt/nestjs-bullmq-logger`, `@triplef/config-factory`, `@ehildt/nestjs-ollama`, `@ehildt/nestjs-socket.io`, and `@triplef/helpers` (bootstrap utilities like `getBodyLimit`).

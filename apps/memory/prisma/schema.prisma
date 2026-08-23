@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * Shared tables owned by the main server (its prisma migrations create and
+ * manage them). This app only generates a client against them — never run
+ * `prisma migrate` here.
+ */
+
+enum DlqStatus {
+  Failed
+  Active
+  Cleared
+  Removed
+}
+
+model DeadLetterJob {
+  id             String    @id @default(uuid())
+  queueName      String    @db.VarChar(100)
+  jobId          String    @db.VarChar(255)
+  /** BullMQ job name — the logical identity (vectorize jobs: the job id). */
+  jobName        String    @db.VarChar(255)
+  status         DlqStatus @default(Failed)
+  payload        Json      @default(dbgenerated())
+  retryConfig    Json?
+  failedReason   String?
+  failedAt       DateTime?
+  attemptsMade   Int       @default(1)
+  totalAttempts  Int       @default(1)
+  failureHistory Json?
+  nextRetryAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+
+  // The technical job identity; reinstate refreshes jobId in place so one
+  // logical job keeps a single record across reinstate cycles.
+  @@unique([queueName, jobId])
+  @@index([jobName])
+  @@map("dead_letter_job")
+}
+model HarnessProviderOverride {
+  provider  String   @id @db.VarChar(100)
+  values    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("harness_provider_override")
+}
+
+/**
+ * The AI's structured cognition profile of one person (the memory_cognition
+ * lane): a single living JSON document of derived understanding (identity,
+ * likes, goals, communication style). One row per cognition key; updates are
+ * MERGED in code (mergeCognitionProfiles) and the row is atomically upserted
+ * — never whole-document replaced from a model verdict. The document is the
+ * routing map: its values are short topic strings that path-match the
+ * insight vectors in Qdrant (path payload like `likes.cars`). Provenance
+ * columns trace the last harness turn that updated the document.
+ */
+model MemoryCognitionProfile {
+  space              String   @id @db.VarChar(255)
+  profile            Json
+  lastSessionId      String?  @db.VarChar(255)
+  lastConversationId String?  @db.VarChar(255)
+  lastRequestId      String?  @db.VarChar(255)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+
+  @@map("memory_cognition_profile")
+}

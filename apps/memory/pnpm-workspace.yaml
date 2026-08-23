@@ -1,0 +1,8 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  '@swc/core': true
+  msgpackr-extract: true
+  prisma: true
+minimumReleaseAgeExclude:
+  - '@triplef/helpers@1.5.1'

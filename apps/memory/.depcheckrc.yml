@@ -1,0 +1,22 @@
+skip-missing: true
+ignores:
+  - "@nestjs/schematics"
+  - "@types/jest"
+  - "@types/prettier"
+  - "@changesets/cli"
+  - "@vitest/coverage-v8"
+  - "conventional-changelog-conventionalcommits"
+  - "dependency-cruiser"
+  - "husky"
+  - "jest-junit"
+  - "source-map-support"
+  - "ts-jest"
+  - "ts-loader"
+  - "ts-node"
+  - "tsconfig-paths"
+  - "pino-pretty"
+  - "@types/supertest"
+  - rimraf
+  - supertest
+  - "@vue/eslint-config-typescript"
+  - "fastify"
