@@ -14,6 +14,8 @@ A NestJS configuration library providing decorators and modules for caching retu
 <!-- DEPBADGE:START -->
 <div align="center">
 
+
+
 # StatusBadges
 
 ![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
@@ -26,6 +28,8 @@ A NestJS configuration library providing decorators and modules for caching retu
 
 <div align="center">
 
+
+
 # DevDependencies
 
 ![@changesets/cli](https://img.shields.io/badge/_changesets_cli-v3.0.1-82ba21.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=82ba21&logoWidth=40&style=flat-square)
@@ -35,7 +39,7 @@ A NestJS configuration library providing decorators and modules for caching retu
 ![@vitest/coverage-v8](https://img.shields.io/badge/_vitest_coverage_v8-4.1.11-92d435.svg?labelColor=333&cacheSeconds=3600&logo=vitest&logoColor=92d435&logoWidth=40&style=flat-square)
 ![depcheck](https://img.shields.io/badge/depcheck-v1.4.7-28a95e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=28a95e&logoWidth=40&style=flat-square)
 ![dependency-cruiser](https://img.shields.io/badge/dependency_cruiser-v18.2.0-c22431.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c22431&logoWidth=40&style=flat-square)
-![eslint](https://img.shields.io/badge/eslint-v10.8.1-3f2ab7.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=3f2ab7&logoWidth=40&style=flat-square)
+![eslint](https://img.shields.io/badge/eslint-v10.9.0-3f2ab7.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=3f2ab7&logoWidth=40&style=flat-square)
 ![eslint-config-prettier](https://img.shields.io/badge/eslint_config_prettier-v10.1.8-c4921c.svg?labelColor=333&cacheSeconds=3600&logo=prettier&logoColor=c4921c&logoWidth=40&style=flat-square)
 ![eslint-plugin-prettier](https://img.shields.io/badge/eslint_plugin_prettier-v5.5.6-d19d2e.svg?labelColor=333&cacheSeconds=3600&logo=prettier&logoColor=d19d2e&logoWidth=40&style=flat-square)
 ![eslint-plugin-simple-import-sort](https://img.shields.io/badge/eslint_plugin_simple_import_sort-v14.0.0-39d025.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=39d025&logoWidth=40&style=flat-square)
@@ -57,9 +61,11 @@ A NestJS configuration library providing decorators and modules for caching retu
 
 <div align="center">
 
+
+
 # PeerDependencies
 
-[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v1.5.1-a82947.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=a82947&logoWidth=40&style=flat)](https://github.com/ehildt/tripleF)
+[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v1.5.2-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=flat)](https://github.com/ehildt/tripleF)
 [![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v11.1.17-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 [![joi](https://img.shields.io/badge/joi-v18.0.2-9f1eb3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9f1eb3&logoWidth=40&style=flat)](https://github.com/sideway/joi)
 
