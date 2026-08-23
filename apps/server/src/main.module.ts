@@ -4,7 +4,7 @@ import { SocketIOModule as SocketIOCoreModule } from '@ehildt/nestjs-socket.io';
 import { HttpModule } from '@nestjs/axios';
 import { Logger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { ConfigFactoryModule } from '@triplef/config-factory/config-factory';
+import { ConfigFactoryModule } from '@triplef/config-factory';
 
 import { AppConfigService } from './configs/app-config.service.js';
 import { AiSdkModule } from './modules/ai-sdk/ai-sdk.module.js';

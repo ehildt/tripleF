@@ -1,7 +1,12 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/cache-return-value/index.ts', 'src/config-factory/index.ts', 'src/validate-return-value/index.ts'],
+  entry: [
+    'src/index.ts',
+    'src/cache-return-value/index.ts',
+    'src/config-factory/index.ts',
+    'src/validate-return-value/index.ts',
+  ],
   format: ['esm'],
   target: 'node24',
   platform: 'node',
