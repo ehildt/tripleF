@@ -4,6 +4,7 @@ import { PostgresConfigService } from '../postgres/configs/postgres-config.servi
 import { POSTGRES_CONFIG } from '../postgres/constants/postgres.constants.js';
 
 import { MemoryCognitionProfileRepository } from './services/memory-cognition-profile.repository.js';
+import { MemoryInsertLedgerRepository } from './services/memory-insert-ledger.repository.js';
 import { ProviderOverridesRepository } from './services/provider-overrides.repository.js';
 
 /**
@@ -23,12 +24,14 @@ import { ProviderOverridesRepository } from './services/provider-overrides.repos
         configService.config,
     },
     MemoryCognitionProfileRepository,
+    MemoryInsertLedgerRepository,
     ProviderOverridesRepository,
   ],
   exports: [
     PostgresConfigService,
     POSTGRES_CONFIG,
     MemoryCognitionProfileRepository,
+    MemoryInsertLedgerRepository,
     ProviderOverridesRepository,
   ],
 })

@@ -132,6 +132,12 @@ export interface MemoryWriteJobData {
   userRequest: string;
   /** Summarized tool results of the turn (pre-capped by the harness step). */
   gathered?: string;
+  /**
+   * The turn's memoryRecall hits (provenance-labeled, pre-capped) — what the
+   * probe already surfaced this turn. Treated as ALREADY KNOWN: extend or
+   * update, never re-store.
+   */
+  probedMemory?: string;
   /** Harness model that produced the turn — reused for the write judgment. */
   model: string;
   /** Thinking preference of the originating turn. */
@@ -163,4 +169,19 @@ export interface MemoryProfileJobData {
   model: string;
   think?: ThinkMode;
   numCtx?: number;
+}
+
+/**
+ * Consolidate sweep job payload: adjudicate pending ledger inserts of one
+ * partition against their near-duplicates (LLM verdicts keep/redundant/merge).
+ */
+export interface MemoryConsolidateJobData {
+  /** The user's fact partition to sweep. */
+  memoryPartition: string;
+  /** Chat model for the merge verdicts (resolved at enqueue: body model or MEMORY_CONSOLIDATE_MODEL). */
+  model: string;
+  /** Max pending inserts processed per run (default 100, capped 500). */
+  limit?: number;
+  /** Compute and log verdicts without applying or marking anything. */
+  dryRun?: boolean;
 }

@@ -1,4 +1,5 @@
-import { parseLlmJson } from '../../ai-sdk/helpers/parse-llm-json.helper.js';
+import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
+
 import {
   ExtractionSchema,
   type MemoryExtraction,

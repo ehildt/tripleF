@@ -33,6 +33,12 @@ export interface MemoryWriteJobData {
   userRequest: string;
   /** Summarized tool results of the turn (pre-capped by the harness step). */
   gathered?: string;
+  /**
+   * The turn's memoryRecall hits (provenance-labeled, pre-capped) — what the
+   * probe already surfaced this turn. The write job treats these as ALREADY
+   * KNOWN, so it extends/updates instead of re-storing them.
+   */
+  probedMemory?: string;
   /** Harness model that produced the turn — reused for the write judgment. */
   model: string;
   /** Thinking preference of the originating turn. */

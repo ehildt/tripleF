@@ -21,6 +21,12 @@ YOUR TASK — decide what is worth remembering:
 - Tags: 2 to 6 stable, reusable, lowercase topic labels describing what the text is about (e.g. "work", "rust", "contacts"). They are the vocabulary for topic-filtered recall later.
 - If nothing durable is found, return an empty facts array; tags may still label the topic when useful.
 
+PRIOR MEMORY (when the user message ends with an "ALREADY STORED IN MEMORY" section):
+- That section lists facts already stored in YOUR long-term memory from prior turns. NEVER emit a fact already covered there.
+- If this turn refines, corrects, or completes a stored fact, DO emit it — as one fuller, self-contained restatement (a full restatement of the corrected claim overwrites the old record in place; it is never a diff).
+- A statement that flips or adds negation to a stored fact is NEW information — always emit it.
+- Everything not covered by the section is extracted as usual.
+
 RULES:
 - Return ONLY a single valid JSON object matching the exact schema above.
 - No markdown code fences, no explanations, preamble, or postscript.

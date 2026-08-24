@@ -405,7 +405,8 @@ export const ModelName = {
   HarnessPlaylist: 'HarnessPlaylist',
   MemoryCognitionProfile: 'MemoryCognitionProfile',
   StockMarketBar: 'StockMarketBar',
-  StockMarketHistoryRange: 'StockMarketHistoryRange'
+  StockMarketHistoryRange: 'StockMarketHistoryRange',
+  MemoryInsertLedger: 'MemoryInsertLedger'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -421,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "deadLetterJob" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist" | "memoryCognitionProfile" | "stockMarketBar" | "stockMarketHistoryRange"
+    modelProps: "deadLetterJob" | "harnessConversation" | "harnessConfig" | "harnessShownMedia" | "harnessProviderOverride" | "harnessPlaylist" | "memoryCognitionProfile" | "stockMarketBar" | "stockMarketHistoryRange" | "memoryInsertLedger"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1091,6 +1092,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MemoryInsertLedger: {
+      payload: Prisma.$MemoryInsertLedgerPayload<ExtArgs>
+      fields: Prisma.MemoryInsertLedgerFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemoryInsertLedgerFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemoryInsertLedgerFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>
+        }
+        findFirst: {
+          args: Prisma.MemoryInsertLedgerFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemoryInsertLedgerFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>
+        }
+        findMany: {
+          args: Prisma.MemoryInsertLedgerFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>[]
+        }
+        create: {
+          args: Prisma.MemoryInsertLedgerCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>
+        }
+        createMany: {
+          args: Prisma.MemoryInsertLedgerCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemoryInsertLedgerCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>[]
+        }
+        delete: {
+          args: Prisma.MemoryInsertLedgerDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>
+        }
+        update: {
+          args: Prisma.MemoryInsertLedgerUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>
+        }
+        deleteMany: {
+          args: Prisma.MemoryInsertLedgerDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemoryInsertLedgerUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemoryInsertLedgerUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>[]
+        }
+        upsert: {
+          args: Prisma.MemoryInsertLedgerUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryInsertLedgerPayload>
+        }
+        aggregate: {
+          args: Prisma.MemoryInsertLedgerAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemoryInsertLedger>
+        }
+        groupBy: {
+          args: Prisma.MemoryInsertLedgerGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryInsertLedgerGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemoryInsertLedgerCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryInsertLedgerCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1248,6 +1323,20 @@ export const StockMarketHistoryRangeScalarFieldEnum = {
 } as const
 
 export type StockMarketHistoryRangeScalarFieldEnum = (typeof StockMarketHistoryRangeScalarFieldEnum)[keyof typeof StockMarketHistoryRangeScalarFieldEnum]
+
+
+export const MemoryInsertLedgerScalarFieldEnum = {
+  id: 'id',
+  memoryPartition: 'memoryPartition',
+  pointId: 'pointId',
+  role: 'role',
+  text: 'text',
+  requestId: 'requestId',
+  createdAt: 'createdAt',
+  sweptAt: 'sweptAt'
+} as const
+
+export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1575,6 +1664,7 @@ export type GlobalOmitConfig = {
   memoryCognitionProfile?: Prisma.MemoryCognitionProfileOmit
   stockMarketBar?: Prisma.StockMarketBarOmit
   stockMarketHistoryRange?: Prisma.StockMarketHistoryRangeOmit
+  memoryInsertLedger?: Prisma.MemoryInsertLedgerOmit
 }
 
 /* Types for Logging */

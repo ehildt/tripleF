@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   DeadLetterJob: 'DeadLetterJob',
   HarnessProviderOverride: 'HarnessProviderOverride',
-  MemoryCognitionProfile: 'MemoryCognitionProfile'
+  MemoryCognitionProfile: 'MemoryCognitionProfile',
+  MemoryInsertLedger: 'MemoryInsertLedger'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -114,6 +115,20 @@ export const MemoryCognitionProfileScalarFieldEnum = {
 } as const
 
 export type MemoryCognitionProfileScalarFieldEnum = (typeof MemoryCognitionProfileScalarFieldEnum)[keyof typeof MemoryCognitionProfileScalarFieldEnum]
+
+
+export const MemoryInsertLedgerScalarFieldEnum = {
+  id: 'id',
+  memoryPartition: 'memoryPartition',
+  pointId: 'pointId',
+  role: 'role',
+  text: 'text',
+  requestId: 'requestId',
+  createdAt: 'createdAt',
+  sweptAt: 'sweptAt'
+} as const
+
+export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
 
 
 export const SortOrder = {

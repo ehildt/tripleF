@@ -8,10 +8,19 @@ import { VectorizeService } from './vectorize.service.js';
 function makeService() {
   const embed = vi.fn();
   const upsertBatch = vi.fn().mockResolvedValue(undefined);
+  const ledger = {
+    insertMany: vi.fn().mockResolvedValue(undefined),
+    countPending: vi.fn().mockResolvedValue(0),
+  };
+  const memoryEnqueue = {
+    enqueueConsolidateJob: vi.fn().mockResolvedValue(undefined),
+  };
   const service = new VectorizeService(
     { embed } as never,
     { upsertBatch } as never,
-    { enabled: true } as QdrantConfig,
+    ledger as never,
+    memoryEnqueue as never,
+    { enabled: true, consolidateThreshold: 50 } as QdrantConfig,
   );
   embed.mockImplementation((input: string[]) =>
     Promise.resolve(input.map((_, i) => [i, 0, 1])),
@@ -77,7 +86,9 @@ describe('VectorizeService.storeRecord', () => {
     const disabled = new VectorizeService(
       { embed } as never,
       { upsertBatch } as never,
-      { enabled: false } as QdrantConfig,
+      { insertMany: vi.fn(), countPending: vi.fn() } as never,
+      { enqueueConsolidateJob: vi.fn() } as never,
+      { enabled: false, consolidateThreshold: 50 } as QdrantConfig,
     );
 
     await expect(

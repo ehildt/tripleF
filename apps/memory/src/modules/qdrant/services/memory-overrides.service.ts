@@ -4,9 +4,9 @@ import {
   Logger,
   OnApplicationBootstrap,
 } from '@nestjs/common';
+import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
 
 import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
-import { retryWithBackoff } from '../../provider-overrides/helpers/retry-with-backoff.helper.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { clampCognitionLimit } from '../models/memory-cognition.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';

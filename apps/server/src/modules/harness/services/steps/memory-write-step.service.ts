@@ -54,6 +54,20 @@ export class MemoryWriteStepService implements StepHandler {
       .slice(0, GATHERED_DATA_LIMIT)
       .trim();
 
+    // What the probe already surfaced this turn — passed separately from
+    // `gathered` so the write job can treat it as ALREADY KNOWN (extend or
+    // update, never re-store) rather than as newly gathered data.
+    const probedMemory = ctx.outputs.toolResults
+      .filter((r) => r.toolName === 'memoryRecall')
+      .map((r) =>
+        typeof r.result === 'string'
+          ? r.result
+          : JSON.stringify(r.result ?? ''),
+      )
+      .join('\n')
+      .slice(0, GATHERED_DATA_LIMIT)
+      .trim();
+
     await this.memoryEnqueue.enqueueWriteJob({
       memoryPartition,
       sessionId: ctx.sessionId,
@@ -61,6 +75,7 @@ export class MemoryWriteStepService implements StepHandler {
       requestId: ctx.requestId,
       userRequest: ctx.lastUserPrompt ?? '',
       gathered: gathered || undefined,
+      probedMemory: probedMemory || undefined,
       model: ctx.model,
       think: ctx.request.think,
       numCtx: ctx.request.options?.num_ctx,

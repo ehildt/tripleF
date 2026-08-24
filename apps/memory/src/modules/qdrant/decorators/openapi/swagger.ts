@@ -2,6 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { MemoryCognitionSnapshotDto } from '../../dtos/memory-cognition-snapshot.dto.js';
+import { MemoryConsolidateResponseDto } from '../../dtos/memory-consolidate-response.dto.js';
 import { MemoryDeleteResponseDto } from '../../dtos/memory-delete-response.dto.js';
 import { MemoryItemDto } from '../../dtos/memory-item.dto.js';
 import { MemoryPruneResponseDto } from '../../dtos/memory-prune-response.dto.js';
@@ -75,6 +76,15 @@ export const ApeDeleteQdrantMemory = () =>
     ApiOperation({
       summary:
         'Prune the caller partition: its fact records only (or one conversation of it) — the AI cognition lane has its own wipe endpoint',
+    }),
+  );
+
+export const ApePostQdrantConsolidate = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryConsolidateResponseDto }),
+    ApiOperation({
+      summary:
+        'Enqueue a memory consolidation sweep (LLM-judged keep/redundant/merge over pending inserts) — per partition or all pending partitions',
     }),
   );
 

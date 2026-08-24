@@ -178,3 +178,28 @@ model StockMarketHistoryRange {
   @@id([ticker, fromDate, toDate])
   @@map("stock_market_history_range")
 }
+
+/**
+ * Write ledger of the user's fact space (memory_partition lane in Qdrant): one
+ * row per stored fact record, written by the vectorize store step and the
+ * memoryRemember sync path. Powers the incremental consolidation sweep
+ * (sweptAt null = pending) and doubles as the write-side audit trail — the
+ * text snapshot survives even when a sweep later merges or deletes the point.
+ */
+model MemoryInsertLedger {
+  id              String    @id @default(uuid())
+  memoryPartition String    @db.VarChar(255)
+  /** The Qdrant point id this row tracks (deterministic id from the store path). */
+  pointId         String    @db.VarChar(64)
+  role            String    @db.VarChar(16)
+  /** Snapshot of the stored record text — the sweep's adjudication input. */
+  text            String
+  /** Harness turn id that wrote the record, when initiated by a turn. */
+  requestId       String?   @db.VarChar(255)
+  createdAt       DateTime  @default(now())
+  /** null = pending consolidation; set once the sweep processed this insert. */
+  sweptAt         DateTime?
+
+  @@index([memoryPartition, sweptAt])
+  @@map("memory_insert_ledger")
+}

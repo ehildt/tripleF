@@ -1,4 +1,4 @@
-import { isMaskedApiKey } from './mask-api-key.helper.js';
+import { isMaskedApiKey } from '@triplef/helpers/mask-api-key';
 
 /**
  * API key patch rules: a masked-looking value is ignored (it is the display

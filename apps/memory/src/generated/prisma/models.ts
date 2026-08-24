@@ -11,4 +11,5 @@
 export type * from './models/DeadLetterJob.js'
 export type * from './models/HarnessProviderOverride.js'
 export type * from './models/MemoryCognitionProfile.js'
+export type * from './models/MemoryInsertLedger.js'
 export type * from './commonInputTypes.js'

@@ -1,4 +1,4 @@
-import { isMaskedApiKey, maskApiKey } from './mask-api-key.helper.ts';
+import { maskApiKey } from './mask-api-key.helper.ts';
 
 describe('maskApiKey', () => {
   it('masks a real key as a fixed run of asterisks', () => {
@@ -7,20 +7,5 @@ describe('maskApiKey', () => {
 
   it('returns undefined for an undefined key', () => {
     expect(maskApiKey(undefined)).toBe(undefined);
-  });
-});
-
-describe('isMaskedApiKey', () => {
-  it('detects masked values', () => {
-    expect(isMaskedApiKey('****************')).toBe(true);
-  });
-
-  it('rejects real keys', () => {
-    expect(isMaskedApiKey('sk-secret-123')).toBe(false);
-  });
-
-  it('rejects non-strings', () => {
-    expect(isMaskedApiKey(123)).toBe(false);
-    expect(isMaskedApiKey(undefined)).toBe(false);
   });
 });

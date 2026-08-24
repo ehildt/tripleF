@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { decryptSecret } from '@triplef/helpers/decrypt-secret';
+import { encryptSecret } from '@triplef/helpers/encrypt-secret';
+import { keyFingerprint } from '@triplef/helpers/key-fingerprint';
 
 import { SecretsConfigService } from '../configs/secrets-config.service.js';
-import { decryptSecret } from '../helpers/decrypt-secret.helper.js';
-import { encryptSecret } from '../helpers/encrypt-secret.helper.js';
-import { keyFingerprint } from '../helpers/key-fingerprint.helper.js';
 
 /**
  * AES-256-GCM cipher for provider API keys persisted in the database. The

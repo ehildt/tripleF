@@ -18,7 +18,8 @@ minimumReleaseAgeExclude:
   - '@intlify/devtools-types@11.4.9'
   - '@intlify/message-compiler@11.4.9'
   - '@intlify/shared@11.4.9'
-  - '@tanstack/query-core@5.102.1'
-  - '@tanstack/vue-query@5.102.1'
+  - '@tanstack/query-core@5.102.1 || 5.102.2'
+  - '@tanstack/vue-query@5.102.1 || 5.102.2'
   - '@triplef/*'
   - vue-i18n@11.4.9
+  - npm-check-updates@23.1.0

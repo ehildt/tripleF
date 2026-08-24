@@ -22,13 +22,28 @@ function makeCtx(overrides: Partial<VectorizeContext> = {}): VectorizeContext {
   };
 }
 
+function makeStep() {
+  const upsertBatch = vi.fn().mockResolvedValue(undefined);
+  const ledger = {
+    insertMany: vi.fn().mockResolvedValue(undefined),
+    countPending: vi.fn().mockResolvedValue(0),
+  };
+  const memoryEnqueue = {
+    enqueueConsolidateJob: vi.fn().mockResolvedValue(undefined),
+  };
+  const step = new StoreStepService(
+    { upsertBatch } as never,
+    { log: vi.fn(), warn: vi.fn() } as never,
+    ledger as never,
+    memoryEnqueue as never,
+    { consolidateThreshold: 50 } as never,
+  );
+  return { step, upsertBatch, ledger, memoryEnqueue };
+}
+
 describe('StoreStepService', () => {
   it('upserts one point per fact with deterministic ids and tags', async () => {
-    const upsertBatch = vi.fn().mockResolvedValue(undefined);
-    const step = new StoreStepService(
-      { upsertBatch } as never,
-      { log: vi.fn() } as never,
-    );
+    const { step, upsertBatch } = makeStep();
 
     const ctx = makeCtx({
       outputs: {
@@ -58,11 +73,7 @@ describe('StoreStepService', () => {
   });
 
   it('stores nothing when the turn produced no facts', async () => {
-    const upsertBatch = vi.fn().mockResolvedValue(undefined);
-    const step = new StoreStepService(
-      { upsertBatch } as never,
-      { log: vi.fn() } as never,
-    );
+    const { step, upsertBatch } = makeStep();
 
     await step.execute(makeCtx());
 

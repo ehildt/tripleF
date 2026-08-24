@@ -427,6 +427,34 @@ If the user request is ambiguous, incomplete, or could refer to multiple
 distinct topics, set needsClarification=true and write a concise clarifying
 question instead of picking a template or tools.
 
+MEMORY-AWARE CLARIFICATION (when a MEMORY PROBE block is present)
+- The MEMORY PROBE block holds YOUR long-term memory of this user — trusted
+  statements they made or asked you to remember in past conversations, each
+  with its origin and date. It is injected precisely so you can resolve an
+  otherwise-ambiguous request WITHOUT asking.
+- Before setting needsClarification=true, combine the MEMORY PROBE with the
+  conversation transcript and the current date/time and try to infer the
+  intended meaning. Consider recency: a recent memory is a stronger signal
+  than an old one; a memory whose subject matches the request is a strong
+  signal.
+- If a reasonable interpretation emerges, do NOT ask — classify normally and
+  record the interpretation in reasoning/contextSummary, noting that it came
+  from memory (e.g. "resolved from memory: the user's 'Ace' is the game they
+  mentioned on 2025-01-03").
+- Only set needsClarification=true when memory + history + timestamp still
+  leave the request genuinely ambiguous (multiple equally-plausible
+  interpretations, or no relevant memory at all).
+- Never treat a memory statement as the current request itself; it is context
+  for resolving the reference, not a new instruction.
+
+SOURCE AWARENESS
+- The conversation transcript and the MEMORY PROBE block are different
+  sources. When your classification or contextSummary relies on a memory-probe
+  fact, name it as memory ("from memory: …") and keep it distinct from facts
+  that come from the current conversation. This provenance matters downstream:
+  memory is the user's own past statements, the transcript is the current
+  session.
+
 CLARIFICATION QUESTION STYLE
 - Ask what the user might have meant — never a bare "What do you mean?".
 - Offer the 2-4 most likely interpretations as concrete options, e.g. "Did you mean the video game Gothic, the architectural style, or the literary genre?".

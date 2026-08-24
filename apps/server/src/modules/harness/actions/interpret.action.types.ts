@@ -19,4 +19,10 @@ export type InterpretParams = {
   onIntent?: (intent: IntentResult) => void;
   /** ISO-639-1 code of the active UI locale (browser-detected or user-selected). */
   language?: string;
+  /**
+   * Rendered memory-probe block injected into the classify system message for
+   * a second-chance interpretation pass (see InterpretStepService). Absent on
+   * the first pass.
+   */
+  memoryProbe?: string;
 };

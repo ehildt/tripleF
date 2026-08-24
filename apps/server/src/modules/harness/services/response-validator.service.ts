@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { normalizeJsonResponse } from '../helpers/json/normalize-json-response.helper.js';
-import { parseLlmJson } from '../helpers/json/parse-llm-json.helper.js';
 import { sanitizeBlockedImageUrls } from '../helpers/sanitize/sanitize-blocked-image-urls.helper.js';
 import { stripUrlsFromTextFields } from '../helpers/sanitize/strip-urls-from-text-fields.helper.js';
 import {

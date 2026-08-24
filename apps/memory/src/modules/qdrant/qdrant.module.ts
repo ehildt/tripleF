@@ -12,6 +12,7 @@ import { MemoryOverridesService } from './services/memory-overrides.service.js';
 import { MemorySearchService } from './services/memory-search.service.js';
 import { QdrantClientService } from './services/qdrant-client.service.js';
 import { VectorizeService } from './services/vectorize.service.js';
+import { MemoryConsolidateJobService } from './services/vectorize/jobs/memory-consolidate-job.service.js';
 import { MemoryProfileJobService } from './services/vectorize/jobs/memory-profile-job.service.js';
 import { MemoryWriteJobService } from './services/vectorize/jobs/memory-write-job.service.js';
 import { EmbedStepService } from './services/vectorize/steps/embed-step.service.js';
@@ -52,6 +53,8 @@ export class QdrantModule {
         // Cognition write jobs (memory-write / memory-profile handlers).
         MemoryWriteJobService,
         MemoryProfileJobService,
+        // Consolidation sweep job (memory-consolidate handler).
+        MemoryConsolidateJobService,
       ],
       exports: [
         QDRANT_CONFIG,
@@ -72,6 +75,7 @@ export class QdrantModule {
         StoreStepService,
         MemoryWriteJobService,
         MemoryProfileJobService,
+        MemoryConsolidateJobService,
       ],
       imports: options.imports,
     };

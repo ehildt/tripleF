@@ -23,5 +23,10 @@ export function QdrantConfigAdapter(env = process.env): QdrantConfig {
         COGNITION_LIMIT_DEFAULT,
       ) as number,
     ),
+    consolidateThreshold: getNumberEnv(
+      env.MEMORY_CONSOLIDATE_THRESHOLD,
+      50,
+    ) as number,
+    consolidateModel: env.MEMORY_CONSOLIDATE_MODEL || undefined,
   };
 }
