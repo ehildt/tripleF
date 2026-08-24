@@ -11,3 +11,7 @@ ollama_data
 *storybook.log
 storybook-static
 .playwright-mcp
+
+# Nested workspace lockfiles (root pnpm-lock.yaml is the source of truth)
+apps/*/pnpm-lock.yaml
+packages/*/pnpm-lock.yaml

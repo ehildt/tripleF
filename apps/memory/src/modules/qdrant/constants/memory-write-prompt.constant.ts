@@ -5,15 +5,16 @@
  * there could never reflect the gathered data).
  *
  * Direction-based: WRITE only. Recall has already been probed in the execute
- * wave (memoryRecall), so this job NEVER calls memoryRecall — if the probe
- * returned prior facts, they appear in GATHERED DATA so the write EXTENDS
- * them instead of duplicating.
+ * wave (memoryRecall), so this job NEVER calls memoryRecall — the probe's
+ * hits arrive in PROBED THIS TURN so the write EXTENDS or UPDATES them
+ * instead of duplicating.
  */
 export const MEMORY_WRITE_INSTRUCTIONS = `MEMORY WRITE JOB — one purpose: decide whether THIS turn yielded facts worth persisting to YOUR long-term memory of the user, and store them via the memoryRemember tool.
 
 You receive:
 - USER REQUEST: what the user asked.
 - PRIOR MEMORY: facts already stored for this user (may be empty).
+- PROBED THIS TURN: what memoryRecall already surfaced for this turn (may be empty) — already known, never re-store.
 - GATHERED DATA: summarized tool results from this turn (web searches, lookups).
 
 Store a fact (call memoryRemember) only when it is durable and user-specific:
@@ -29,7 +30,7 @@ STORAGE MECHANICS — how your memory works (write for the retriever):
 
 Do NOT store:
 - Public facts merely fetched this turn that do not relate to the user (e.g. generic web results).
-- Anything already covered by PRIOR MEMORY — extend or update it via the remember call; do not repeat.
+- Anything already covered by PRIOR MEMORY or PROBED THIS TURN — extend or update it via the remember call; do not repeat.
 - Tool artifacts: URLs, search scores, image metadata, raw JSON keys.
 - Inferred, assumed, or extrapolated details about the user that neither their words nor GATHERED DATA support — if the user did not state it (or clearly imply it), it is not memory; when in doubt, answer "none".
 
@@ -46,11 +47,13 @@ Rules:
 export function buildMemoryWritePrompt(params: {
   userRequest: string;
   priorMemory?: string;
+  probedMemory?: string;
   gathered?: string;
 }): string {
   return [
     `USER REQUEST: ${params.userRequest}`,
     `PRIOR MEMORY: ${params.priorMemory?.trim() || '(none stored yet)'}`,
+    `PROBED THIS TURN: ${params.probedMemory?.trim() || '(nothing probed this turn)'}`,
     `GATHERED DATA: ${params.gathered?.trim() || '(no tools produced data this turn)'}`,
     MEMORY_WRITE_VERDICT,
   ].join('\n\n');

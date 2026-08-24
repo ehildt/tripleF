@@ -6,22 +6,28 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Post,
   Query,
 } from '@nestjs/common';
 
+import { MemoryInsertLedgerRepository } from '../../persistence/services/memory-insert-ledger.repository.js';
+import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import {
   ApeDeleteQdrantMemory,
   ApeDeleteQdrantText,
   ApeGetQdrantMemory,
   ApeGetQdrantMemoryCognition,
   ApeGetQdrantStatus,
+  ApePostQdrantConsolidate,
   ApePostQdrantSearchText,
   ApePostQdrantSearchVector,
   ApePostQdrantText,
   ApeTagsQdrant,
 } from '../decorators/openapi/swagger.js';
 import { MemoryCognitionSnapshotDto } from '../dtos/memory-cognition-snapshot.dto.js';
+import { MemoryConsolidateBodyDto } from '../dtos/memory-consolidate-body.dto.js';
+import { MemoryConsolidateResponseDto } from '../dtos/memory-consolidate-response.dto.js';
 import { MemoryDeleteQueryDto } from '../dtos/memory-delete-query.dto.js';
 import { MemoryDeleteResponseDto } from '../dtos/memory-delete-response.dto.js';
 import { MemoryListQueryDto } from '../dtos/memory-list-query.dto.js';
@@ -32,8 +38,10 @@ import { MemorySearchVectorDto } from '../dtos/memory-search-vector.dto.js';
 import { MemorySendTextDto } from '../dtos/memory-send-text.dto.js';
 import { QdrantStatusResponseDto } from '../dtos/qdrant-status.dto.js';
 import type { MemoryPoint } from '../models/memory.model.js';
+import type { QdrantConfig } from '../models/qdrant-config.model.js';
 import { MemoryRepository } from '../services/memory.repository.js';
 import { MemoryCognitionService } from '../services/memory-cognition.service.js';
+import { MemoryEnqueueService } from '../services/memory-enqueue.service.js';
 import { MemorySearchService } from '../services/memory-search.service.js';
 import { QdrantClientService } from '../services/qdrant-client.service.js';
 import { VectorizeService } from '../services/vectorize.service.js';
@@ -47,6 +55,9 @@ export class QdrantController {
     private readonly memorySearchService: MemorySearchService,
     private readonly memoryCognitionService: MemoryCognitionService,
     private readonly vectorizeService: VectorizeService,
+    private readonly ledger: MemoryInsertLedgerRepository,
+    private readonly memoryEnqueue: MemoryEnqueueService,
+    @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
   @Get('status')
@@ -195,6 +206,41 @@ export class QdrantController {
       tags: body.tags,
       contains: body.contains,
     });
+  }
+
+  @Post('memory/consolidate')
+  @HttpCode(HttpStatus.OK)
+  @ApePostQdrantConsolidate()
+  async consolidate(
+    @Body() body: MemoryConsolidateBodyDto,
+  ): Promise<MemoryConsolidateResponseDto> {
+    const partitions = body.memoryPartition?.trim()
+      ? [body.memoryPartition.trim()]
+      : (await this.ledger.listPendingPartitions()).map(
+          (p) => p.memoryPartition,
+        );
+
+    const model = body.model?.trim() || this.config.consolidateModel;
+    if (!model) {
+      throw new BadRequestException(
+        'An adjudication model is required — pass "model" or set MEMORY_CONSOLIDATE_MODEL',
+      );
+    }
+
+    const limit = Math.min(body.limit ?? 100, 500);
+    const sweeps: Array<{ memoryPartition: string; pending: number }> = [];
+    for (const memoryPartition of partitions) {
+      const pending = await this.ledger.countPending(memoryPartition);
+      if (pending === 0) continue;
+      await this.memoryEnqueue.enqueueConsolidateJob({
+        memoryPartition,
+        model,
+        limit,
+        dryRun: body.dryRun === true,
+      });
+      sweeps.push({ memoryPartition, pending });
+    }
+    return { accepted: true, sweeps };
   }
 
   @Delete('memory')

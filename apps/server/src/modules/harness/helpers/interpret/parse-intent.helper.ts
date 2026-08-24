@@ -1,9 +1,10 @@
+import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
+
 import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
 import {
   type IntentResult,
   IntentSchema,
 } from '../../templates/intent.schema.js';
-import { parseLlmJson } from '../json/parse-llm-json.helper.js';
 import { enforceRequiredTools } from '../tools/enforce-media-tools.helper.js';
 import { expandToolAliases } from '../tools/expand-tool-aliases.helper.js';
 

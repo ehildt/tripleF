@@ -35,4 +35,14 @@ export interface QdrantConfig {
    * memory-overrides value wins at runtime.
    */
   cognitionLimit: number;
+  /**
+   * Pending-inserts per partition that auto-trigger a consolidation sweep
+   * (MEMORY_CONSOLIDATE_THRESHOLD, default 50).
+   */
+  consolidateThreshold: number;
+  /**
+   * Chat model for sweep adjudication (MEMORY_CONSOLIDATE_MODEL) — no
+   * default; the consolidate endpoint body may pass a model instead.
+   */
+  consolidateModel?: string;
 }

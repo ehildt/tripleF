@@ -1,5 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { MemoryInsertLedgerRepository } from '../../persistence/services/memory-insert-ledger.repository.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { deterministicPointId } from '../helpers/deterministic-point-id.helper.js';
 import type { MemoryScopeFilters } from '../models/memory.model.js';
@@ -7,6 +8,7 @@ import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 import { EmbeddingService } from './embedding.service.js';
 import { MemoryRepository } from './memory.repository.js';
+import { MemoryEnqueueService } from './memory-enqueue.service.js';
 
 /** A filtered delete removes at most this many records per call. */
 const DELETE_RECORDS_CAP = 50;
@@ -29,9 +31,13 @@ interface DeleteRecordsOutcome {
  */
 @Injectable()
 export class VectorizeService {
+  private readonly logger = new Logger(VectorizeService.name);
+
   constructor(
     private readonly embeddingService: EmbeddingService,
     private readonly memoryRepository: MemoryRepository,
+    private readonly ledger: MemoryInsertLedgerRepository,
+    private readonly memoryEnqueue: MemoryEnqueueService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -68,6 +74,36 @@ export class VectorizeService {
       requestId: input.requestId,
       points: [{ id, vector, text, tags: input.tags ?? [] }],
     });
+
+    // Ledger + auto-trigger (warn-and-continue — a missed ledger row degrades
+    // to no-sweep-coverage, never a failed store).
+    try {
+      await this.ledger.insertMany([
+        {
+          memoryPartition: input.memoryPartition,
+          pointId: id,
+          role: 'user',
+          text,
+          requestId: input.requestId,
+        },
+      ]);
+      if (
+        (await this.ledger.countPending(input.memoryPartition)) >=
+          this.config.consolidateThreshold &&
+        this.config.consolidateModel
+      ) {
+        await this.memoryEnqueue.enqueueConsolidateJob({
+          memoryPartition: input.memoryPartition,
+          model: this.config.consolidateModel,
+        });
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Ledger write/auto-trigger skipped: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
     return id;
   }
 

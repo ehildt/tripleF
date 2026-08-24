@@ -3,4 +3,5 @@ allowBuilds:
   '@scarf/scarf': true
   esbuild: true
 minimumReleaseAgeExclude:
-  - '@triplef/helpers@1.5.1'
+  - '@triplef/helpers@1.5.1 || 1.5.2'
+  - npm-check-updates@23.1.0

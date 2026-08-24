@@ -59,7 +59,8 @@ export const ModelName = {
   HarnessPlaylist: 'HarnessPlaylist',
   MemoryCognitionProfile: 'MemoryCognitionProfile',
   StockMarketBar: 'StockMarketBar',
-  StockMarketHistoryRange: 'StockMarketHistoryRange'
+  StockMarketHistoryRange: 'StockMarketHistoryRange',
+  MemoryInsertLedger: 'MemoryInsertLedger'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -196,6 +197,20 @@ export const StockMarketHistoryRangeScalarFieldEnum = {
 } as const
 
 export type StockMarketHistoryRangeScalarFieldEnum = (typeof StockMarketHistoryRangeScalarFieldEnum)[keyof typeof StockMarketHistoryRangeScalarFieldEnum]
+
+
+export const MemoryInsertLedgerScalarFieldEnum = {
+  id: 'id',
+  memoryPartition: 'memoryPartition',
+  pointId: 'pointId',
+  role: 'role',
+  text: 'text',
+  requestId: 'requestId',
+  createdAt: 'createdAt',
+  sweptAt: 'sweptAt'
+} as const
+
+export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
 
 
 export const SortOrder = {

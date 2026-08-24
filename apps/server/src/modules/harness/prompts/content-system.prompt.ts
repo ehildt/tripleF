@@ -22,6 +22,7 @@ import { PRECEDENCE_RULES } from './shared/precedence-rules.prompt.js';
 import { SECURITY_RULES } from './shared/security-rules.prompt.js';
 import { buildSourcePolicyPrompt } from './shared/source-policy.prompt.js';
 import { SOURCE_TRUTH_RULES } from './shared/source-truth.prompt.js';
+import { SOURCE_VOICE_RULES } from './shared/source-voice.prompt.js';
 import { TOOL_RESULTS_RULES } from './shared/tool-results.prompt.js';
 import type { ContentSystemPromptParams } from './content-system.prompt.types.js';
 
@@ -96,6 +97,7 @@ Do not add other top-level keys — unknown keys are dropped.`;
       : 'Retrieved articles and media are authoritative. Prefer them over internal knowledge. Never fabricate facts, citations, or URLs.',
     buildTopicRule(params.template),
     SOURCE_TRUTH_RULES,
+    SOURCE_VOICE_RULES,
     TOOL_RESULTS_RULES,
   );
 

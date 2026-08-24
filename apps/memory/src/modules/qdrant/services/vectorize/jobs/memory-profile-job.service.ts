@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
-import { parseLlmJson } from '../../../../ai-sdk/helpers/parse-llm-json.helper.js';
 import { AiSdkService } from '../../../../ai-sdk/services/ai-sdk.service.js';
 import {
   buildMemoryProfilePrompt,

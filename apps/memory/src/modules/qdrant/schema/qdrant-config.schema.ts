@@ -22,4 +22,6 @@ export const QdrantConfigSchema = Joi.object<QdrantConfig>({
     .min(COGNITION_LIMIT_MIN)
     .max(COGNITION_LIMIT_MAX)
     .optional(),
+  consolidateThreshold: Joi.number().integer().min(1).optional(),
+  consolidateModel: Joi.string().optional(),
 }).required();

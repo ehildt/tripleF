@@ -2,3 +2,5 @@ allowBuilds:
   '@nestjs/core': true
   '@scarf/scarf': true
   esbuild: true
+minimumReleaseAgeExclude:
+  - npm-check-updates@23.1.0

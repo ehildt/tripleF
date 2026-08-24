@@ -2,12 +2,16 @@ import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable } from '@nestjs/common';
 
 import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
+import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
+import type { InterpretResult } from '../../actions/interpret.action.types.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
 import {
   HARNESS_ACTIVITY_KEYS,
   resolveHarnessActivityLanguage,
 } from '../../helpers/harness-activity.helper.js';
+import { buildMemoryProbeSection } from '../../helpers/interpret/build-memory-probe-section.helper.js';
+import type { IntentResult } from '../../templates/intent.schema.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { HarnessStepLogger } from '../harness-step-logger.service.js';
@@ -37,12 +41,13 @@ export class InterpretStepService implements StepHandler {
     private readonly io: SocketIOService,
     private readonly aiSdkService: AiSdkService,
     private readonly stepLogger: HarnessStepLogger,
+    private readonly memoryClient: MemoryClientService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
     await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.understanding);
 
-    const { intent, inputTokens, outputTokens } =
+    let { intent, inputTokens, outputTokens } =
       await this.interpretAction.execute({
         requestId: ctx.requestId,
         model: ctx.model,
@@ -56,6 +61,19 @@ export class InterpretStepService implements StepHandler {
           ctx.outputs.intent = intent;
         },
       });
+
+    // The classifier wants to ask the user. Before honoring that, probe the
+    // user's memory and give the classifier one more pass with the probe in
+    // hand — a reference that looks ambiguous in the transcript alone is often
+    // resolvable from what the user told us before.
+    if (intent.needsClarification) {
+      const resolved = await this.resolveClarificationWithMemory(ctx, intent);
+      if (resolved) {
+        intent = resolved.intent;
+        inputTokens += resolved.inputTokens ?? 0;
+        outputTokens += resolved.outputTokens ?? 0;
+      }
+    }
 
     this.enforceImageRequiredGuardrail(ctx, intent);
     this.enforceVisionSupport(ctx, intent);
@@ -91,6 +109,100 @@ export class InterpretStepService implements StepHandler {
         needsClarification: intent.needsClarification,
       });
     }
+  }
+
+  /**
+   * Second-chance interpretation: when the classifier wants to clarify, probe
+   * the user's fact partition and re-run the classifier with the probe block
+   * injected. Returns the resolved intent (and its token cost) when the probe
+   * let the classifier proceed; undefined when memory is out of scope, empty,
+   * or still ambiguous.
+   */
+  private async resolveClarificationWithMemory(
+    ctx: HarnessContext,
+    firstPass: IntentResult,
+  ): Promise<
+    | { intent: IntentResult; inputTokens?: number; outputTokens?: number }
+    | undefined
+  > {
+    const memoryPartition = ctx.memoryPartition ?? ctx.sessionId;
+    if (!memoryPartition) return undefined;
+
+    const query = this.buildProbeQuery(ctx, firstPass);
+    if (!query) return undefined;
+
+    const hits = await this.memoryClient.searchByText({
+      memoryPartition,
+      text: query,
+      limit: 5,
+    });
+    const probeSection = buildMemoryProbeSection(hits);
+    if (!probeSection) return undefined;
+
+    let result: InterpretResult;
+    try {
+      result = await this.interpretAction.execute({
+        requestId: ctx.requestId,
+        model: ctx.model,
+        messages: ctx.request.messages,
+        keepAlive: ctx.request.keep_alive,
+        think: ctx.request.think,
+        numCtx: ctx.request.options?.num_ctx,
+        abortSignal: ctx.abortSignal,
+        language: ctx.filters.language,
+        memoryProbe: probeSection,
+        onIntent: (intent) => {
+          ctx.outputs.intent = intent;
+        },
+      });
+    } catch (error) {
+      // A failed second pass must not turn a clarification into a hard error
+      // — fall back to the first-pass question.
+      this.stepLogger.warn(
+        ctx,
+        'interpret',
+        'memory-probe reinterpret failed; keeping clarification',
+        { error: error instanceof Error ? error.message : String(error) },
+      );
+      return undefined;
+    }
+
+    if (result.intent.needsClarification) {
+      this.stepLogger.log(
+        ctx,
+        'interpret',
+        'memory probe did not resolve ambiguity',
+        { probeHits: hits.length },
+      );
+      return undefined;
+    }
+
+    this.stepLogger.log(
+      ctx,
+      'interpret',
+      'ambiguity resolved from memory probe',
+      {
+        probeHits: hits.length,
+        template: result.intent.template,
+      },
+    );
+    return {
+      intent: result.intent,
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+    };
+  }
+
+  /**
+   * Probe query: the latest user text plus the first pass's contextSummary
+   * (when present) — the summary already resolves short follow-ups, so it
+   * sharpens the semantic search for the concrete subject.
+   */
+  private buildProbeQuery(ctx: HarnessContext, intent: IntentResult): string {
+    const latest =
+      this.findLatestUserText(ctx.request.messages) ?? ctx.lastUserPrompt ?? '';
+    const summary = intent.contextSummary?.trim();
+    return summary ? `${latest}\n${summary}` : latest;
   }
 
   private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {

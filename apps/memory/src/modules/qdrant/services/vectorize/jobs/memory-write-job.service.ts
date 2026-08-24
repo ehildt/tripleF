@@ -65,6 +65,7 @@ export class MemoryWriteJobService {
           content: buildMemoryWritePrompt({
             userRequest: data.userRequest,
             priorMemory,
+            probedMemory: data.probedMemory,
             gathered: data.gathered,
           }),
         },

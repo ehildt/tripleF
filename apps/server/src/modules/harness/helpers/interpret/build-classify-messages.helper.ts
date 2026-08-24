@@ -54,6 +54,7 @@ export function buildClassifyMessages(
   messages: InputMessage[],
   enabledToolNames: string[],
   language?: string,
+  memoryProbe?: string,
 ): InputMessage[] {
   const prompt = `${buildIntentSelectionPrompt(
     enabledToolNames,
@@ -89,7 +90,7 @@ export function buildClassifyMessages(
   return [
     {
       role: 'system' as const,
-      content: `${systemContent}${transcript ? `\n\n${transcript}` : ''}`,
+      content: `${systemContent}${transcript ? `\n\n${transcript}` : ''}${memoryProbe ? `\n\n${memoryProbe}` : ''}`,
     },
     ...(latestUserContent
       ? [{ role: 'user' as const, content: latestUserContent }]

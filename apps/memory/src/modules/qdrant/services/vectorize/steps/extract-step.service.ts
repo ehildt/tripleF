@@ -5,7 +5,9 @@ import {
   buildExtractionCorrectionPrompt,
   buildExtractionPrompt,
 } from '../../../constants/vectorize-prompt.constant.js';
+import { buildPriorMemorySection } from '../../../helpers/build-prior-memory-section.helper.js';
 import { parseExtraction } from '../../../helpers/parse-extraction.helper.js';
+import { MemorySearchService } from '../../memory-search.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
 import { VectorizeStepLogger } from '../vectorize-step-logger.service.js';
@@ -24,12 +26,18 @@ const MAX_EXTRACTION_ATTEMPTS = 2;
  * The raw turn text is still stored by later steps, so memory degrades to
  * text-only, never to a failed job. No model on the job (manual ingestion)
  * skips extraction by design.
+ *
+ * Prior-memory-aware: before extraction the step probes the fact partition
+ * with the raw turn text and appends the hits as an ALREADY STORED block, so
+ * the model only emits genuinely new or refined facts (a probe miss degrades
+ * to an unchanged prompt — searchByText never throws).
  */
 @Injectable()
 export class ExtractStepService implements VectorizeStepHandler {
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly stepLogger: VectorizeStepLogger,
+    private readonly memorySearch: MemorySearchService,
   ) {}
 
   async execute(ctx: VectorizeContext): Promise<void> {
@@ -38,9 +46,21 @@ export class ExtractStepService implements VectorizeStepHandler {
       return;
     }
 
+    const priorSection = buildPriorMemorySection(
+      await this.memorySearch.searchByText({
+        memoryPartition: ctx.memoryPartition,
+        text: ctx.text.slice(0, 8000),
+        limit: 6,
+      }),
+    );
+
     const messages = [
       { role: 'system' as const, content: buildExtractionPrompt() },
-      { role: 'user' as const, content: ctx.text.slice(0, 8000) },
+      {
+        role: 'user' as const,
+        content:
+          ctx.text.slice(0, 8000) + (priorSection ? `\n\n${priorSection}` : ''),
+      },
     ];
 
     ctx.outputs.extraction = await this.runExtraction(ctx, messages);

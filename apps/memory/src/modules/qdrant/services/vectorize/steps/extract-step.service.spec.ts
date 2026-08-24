@@ -26,6 +26,7 @@ function makeStep() {
   const step = new ExtractStepService(
     { generateChat } as never,
     logger as never,
+    { searchByText: vi.fn().mockResolvedValue([]) } as never,
   );
   return { step, generateChat, logger };
 }

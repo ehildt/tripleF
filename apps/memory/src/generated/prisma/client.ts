@@ -64,3 +64,13 @@ export type HarnessProviderOverride = Prisma.HarnessProviderOverrideModel
  *  * columns trace the last harness turn that updated the document.
  */
 export type MemoryCognitionProfile = Prisma.MemoryCognitionProfileModel
+/**
+ * Model MemoryInsertLedger
+ * *
+ *  * Write ledger of the user's fact space (memory_partition lane in Qdrant): one
+ *  * row per stored fact record, written by the vectorize store step and the
+ *  * memoryRemember sync path. Powers the incremental consolidation sweep
+ *  * (sweptAt null = pending) and doubles as the write-side audit trail — the
+ *  * text snapshot survives even when a sweep later merges or deletes the point.
+ */
+export type MemoryInsertLedger = Prisma.MemoryInsertLedgerModel

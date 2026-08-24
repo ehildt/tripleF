@@ -10,6 +10,7 @@ import {
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
 import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import {
+  MEMORY_CONSOLIDATE_JOB,
   MEMORY_PROFILE_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
@@ -17,11 +18,13 @@ import {
 } from '../constants/qdrant.constants.js';
 import { isPermanentVectorizeError } from '../helpers/vectorize-failure.helper.js';
 import type {
+  MemoryConsolidateJobData,
   MemoryProfileJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
+import { MemoryConsolidateJobService } from '../services/vectorize/jobs/memory-consolidate-job.service.js';
 import { MemoryProfileJobService } from '../services/vectorize/jobs/memory-profile-job.service.js';
 import { MemoryWriteJobService } from '../services/vectorize/jobs/memory-write-job.service.js';
 import { EmbedStepService } from '../services/vectorize/steps/embed-step.service.js';
@@ -55,6 +58,7 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     private readonly storeStep: StoreStepService,
     private readonly memoryWriteJob: MemoryWriteJobService,
     private readonly memoryProfileJob: MemoryProfileJobService,
+    private readonly memoryConsolidateJob: MemoryConsolidateJobService,
     private readonly dlqLifecycleService: LifecycleService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {
@@ -73,7 +77,12 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
   }
 
   async process(
-    job: Job<VectorizeJobData | MemoryWriteJobData | MemoryProfileJobData>,
+    job: Job<
+      | VectorizeJobData
+      | MemoryWriteJobData
+      | MemoryProfileJobData
+      | MemoryConsolidateJobData
+    >,
   ): Promise<void> {
     // Feature off → no-op (a job can outlive the moment it was enabled).
     if (!this.config.enabled) return;
@@ -81,19 +90,25 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     if (
       job.name !== VECTORIZE_JOB &&
       job.name !== MEMORY_WRITE_JOB &&
-      job.name !== MEMORY_PROFILE_JOB
+      job.name !== MEMORY_PROFILE_JOB &&
+      job.name !== MEMORY_CONSOLIDATE_JOB
     )
       return;
 
     try {
       // Fact records flow through the extract → embed → store step machine;
-      // cognition writes are single-call jobs handled by dedicated services.
+      // cognition writes and the consolidation sweep are single-call jobs
+      // handled by dedicated services.
       if (job.name === VECTORIZE_JOB) {
         await this.stepEngine.run(
           this.buildContext(job as Job<VectorizeJobData>),
         );
       } else if (job.name === MEMORY_WRITE_JOB) {
         await this.memoryWriteJob.execute(job.data as MemoryWriteJobData);
+      } else if (job.name === MEMORY_CONSOLIDATE_JOB) {
+        await this.memoryConsolidateJob.execute(
+          job.data as MemoryConsolidateJobData,
+        );
       } else {
         await this.memoryProfileJob.execute(job.data as MemoryProfileJobData);
       }

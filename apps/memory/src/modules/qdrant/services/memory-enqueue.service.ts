@@ -4,12 +4,14 @@ import { Queue } from 'bullmq';
 
 import { VECTORIZE_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import {
+  MEMORY_CONSOLIDATE_JOB,
   MEMORY_PROFILE_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
   VECTORIZE_JOB,
 } from '../constants/qdrant.constants.js';
 import type {
+  MemoryConsolidateJobData,
   MemoryProfileJobData,
   MemoryWriteJobData,
   VectorizeJobData,
@@ -106,6 +108,32 @@ export class MemoryEnqueueService {
     } catch (error) {
       this.logger.warn(
         `Memory-profile enqueue failed — update skipped for ${data.requestId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Consolidation sweep trigger: webhook or pending-threshold enqueue. The
+   * fixed jobId lets BullMQ dedupe concurrent triggers for one partition
+   * while a sweep is already queued or running.
+   */
+  async enqueueConsolidateJob(data: MemoryConsolidateJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Consolidate enqueue skipped: no model (set MEMORY_CONSOLIDATE_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(MEMORY_CONSOLIDATE_JOB, data, {
+        jobId: `consolidate-${data.memoryPartition}-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Consolidate enqueue failed for ${data.memoryPartition}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );
