@@ -38,6 +38,15 @@ describe('buildMemoryMust', () => {
     ]);
   });
 
+  it('filters the broad category with an exact keyword match', () => {
+    expect(buildMemoryMust({ sessionId: 'sess-1', category: 'games' })).toEqual(
+      [
+        { key: 'session_id', match: { value: 'sess-1' } },
+        { key: 'category', match: { value: 'games' } },
+      ],
+    );
+  });
+
   it('adds a full-text containment clause on text', () => {
     expect(
       buildMemoryMust({ sessionId: 'sess-1', contains: 'phone number' }),

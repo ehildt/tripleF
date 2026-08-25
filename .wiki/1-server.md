@@ -23,7 +23,7 @@ The 3F server is a **NestJS 11 application on Fastify 5** with URI versioning (`
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `harness`                | **The conversation engine** — REST intake, BullMQ producer/consumer, step engine (sanitize → interpret → execute → respond), prompts, structured-output schemas, streaming, cancellation. See **1.2**. |
 | `ai-sdk`                 | Vercel AI SDK integration: Ollama provider config (`OLLAMA_HOST`, keep-alive, timeouts, `OLLAMA_API_KEY`), model catalog (`OllamaModelsService`), tool selection (`ToolSelectionService`), Serper, Bright Data and YouTube tools.  |
-| `bullmq`                 | Queue connection/defaults (KeyDB), retry/backoff config, queue observability controller, job logger via `@ehildt/nestjs-bullmq-logger`.                                                                            |
+| `bullmq`                 | Queue connection/defaults (KeyDB), retry/backoff config, queue observability controller, job logger via `@triplef/bullmq-logger`.                                                                            |
 | `dead-letter`            | Persisted dead-letter queue (Prisma → PostgreSQL): failed envelopes with payloads, editable and re-instatable. Lifecycle service.                                                                                  |
 | `socket-io`              | Socket.IO gateway config, room emission service (`emitToRoom`, `emitToAll`), cancellation signal. See **1.4**.                                                                                                     |
 | `persistence`            | Prisma client module (generated client under `src/generated/`).                                                                                                                                                    |
@@ -74,4 +74,4 @@ Every subsystem reads through a typed `ConfigService` (Joi schemas at startup �
 
 ## Cross-cutting packages
 
-The server builds on several `@ehildt/*` packages maintained alongside this project: `@ehildt/nestjs-bullmq` (queue module), `@ehildt/nestjs-bullmq-logger`, `@triplef/config-factory`, `@ehildt/nestjs-ollama`, `@ehildt/nestjs-socket.io`, and `@triplef/helpers` (bootstrap utilities like `getBodyLimit`).
+The server builds on several packages maintained alongside this project: `@triplef/bullmq` (queue module), `@triplef/bullmq-logger`, `@triplef/config-factory`, `ollama-ai-provider-v2`, `@ehildt/nestjs-socket.io`, and `@triplef/helpers` (bootstrap utilities like `getBodyLimit`).

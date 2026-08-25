@@ -4,7 +4,7 @@ describe('SharpConfigAdapter', () => {
   it('returns defaults when env is empty', () => {
     const config = SharpConfigAdapter({});
 
-    expect(config.enabled).toBe(false);
+    expect(config.enabled).toBe(true);
     expect(config.resize).toEqual({
       maxWidth: 768,
       maxHeight: null,
@@ -12,10 +12,10 @@ describe('SharpConfigAdapter', () => {
     });
     expect(config.variants).toEqual({
       original: true,
-      grayscale: true,
-      denoised: true,
+      grayscale: false,
+      denoised: false,
       sharpened: false,
-      clahe: true,
+      clahe: false,
     });
     expect(config.parameters).toEqual({
       blurSigma: 0.5,

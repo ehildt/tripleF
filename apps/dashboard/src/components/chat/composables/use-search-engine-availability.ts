@@ -8,7 +8,6 @@ import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persis
 import { useToast } from '../../../composables/use-toast';
 import { configuredEngines } from './helpers/configured-engines.helper';
 import { engineIsEnabled } from './helpers/engine-is-enabled.helper';
-import { engineObject } from './helpers/engine-object.helper';
 import { listSearchSources } from './list-search-sources.helper';
 import type { SearchEngineState } from './use-search-engine-availability.types';
 
@@ -52,16 +51,14 @@ export function useSearchEngineAvailability() {
 
   /**
    * EODHD's own on/off state — a single engine, toggled by its Landmark.
-   * `available` is true whenever EODHD is a recognized engine in the
-   * snapshot (it always is), so the Landmark icon is always visible; the
-   * toggle is inert until a key is configured.
+   * `available` mirrors the engine's effective enabled flag (session
+   * override wins over the snapshot), so the Landmark icon only shows while
+   * EODHD is enabled; the toggle is inert until a key is configured.
    */
   const eodhdState = computed(() => {
     const snapshot = snapshotConfig.value;
-    const available = !!engineObject(snapshot, 'eodhd');
-    const enabled =
-      available && engineIsEnabled(snapshot, sessionOverrides.value, 'eodhd');
-    return { available, enabled };
+    const enabled = engineIsEnabled(snapshot, sessionOverrides.value, 'eodhd');
+    return { available: enabled, enabled };
   });
 
   async function refresh() {

@@ -20,7 +20,7 @@ describe('SharpConfigService', () => {
   it('returns valid defaults', () => {
     const defaults = service.defaults;
 
-    expect(defaults.enabled).toBe(false);
+    expect(defaults.enabled).toBe(true);
     expect(defaults.resize.maxWidth).toBe(768);
     expect(defaults.variants.original).toBe(true);
     expect(defaults.parameters.blurSigma).toBe(0.5);

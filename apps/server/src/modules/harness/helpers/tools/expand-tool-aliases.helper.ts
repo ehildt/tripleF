@@ -1,4 +1,4 @@
-import { categorizeTools } from './categorize-tools.helper.js';
+import { categorizeTools } from '@triplef/agent/schemas';
 
 /**
  * Expand category aliases (e.g. "imageSearch") returned by the intent

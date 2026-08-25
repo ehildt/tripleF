@@ -2,7 +2,7 @@ import { ThinkMode } from '../types/think-mode.type.js';
 
 /**
  * Normalise the various string / boolean forms that callers may supply
- * for the `keep` parameter into our internal `ThinkMode` type.
+ * for the `think` parameter into our internal `ThinkMode` type.
  *
  *  - `'off'` maps to `false` (disallow thinking)
  *  - `true` / `false` pass through unchanged

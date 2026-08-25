@@ -10,7 +10,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { hashPayload } from '@triplef/helpers/hash-payload';
 
-import { ImagesField } from '../../harness/decorators/harness.decorator.js';
+import { AttachmentsField } from '../../harness/decorators/harness.decorator.js';
 import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 import {
   type SharpOverridesPatch,
@@ -44,7 +44,7 @@ export class SharpOverridesController {
     summary:
       'Run an uploaded image through the current preprocessing config and return the variants',
   })
-  async preview(@ImagesField() images?: Array<MultipartFile>) {
+  async preview(@AttachmentsField() images?: Array<MultipartFile>) {
     const image = images?.[0];
     if (!image) throw new BadRequestException('Missing image file');
     const buffer = await image.toBuffer();

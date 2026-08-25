@@ -1,5 +1,5 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable, Logger } from '@nestjs/common';
+import { SocketIOService } from '@triplef/socketio';
 
 import { ExecuteActionService } from '../../actions/execute.action.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';

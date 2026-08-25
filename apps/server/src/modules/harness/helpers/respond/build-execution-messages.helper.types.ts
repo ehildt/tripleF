@@ -1,6 +1,7 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { IntentResult } from '@triplef/agent/schemas';
+import type { InputMessage } from '@triplef/ai-sdk';
+
 import type { SourcesConfig } from '../../../provider-overrides/configs/sources-config.adapter.js';
-import type { IntentResult } from '../../templates/intent.schema.js';
 
 export type BuildExecutionMessagesParams = {
   requestId: string;

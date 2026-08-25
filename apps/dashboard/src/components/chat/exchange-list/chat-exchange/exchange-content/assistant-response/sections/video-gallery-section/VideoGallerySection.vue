@@ -79,6 +79,8 @@ const presentation = useHarnessMediaPresentation('video');
 <style scoped>
 .video-gallery-section {
   width: 100%;
+  background-color: var(--color-bg-primary);
+  padding: var(--spacing-2) var(--spacing-3);
 }
 
 .video-gallery {

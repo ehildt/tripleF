@@ -1,5 +1,8 @@
 import type { UploadedImage } from '@/stores/conversation';
-import type { ConversationMetadata } from '@/types/form-query-params.model';
+import type {
+  ConversationMetadata,
+  ConversationMetadataDocument,
+} from '@/types/form-query-params.model';
 
 /**
  * Build the conversation metadata attached to a submit request: every
@@ -14,6 +17,7 @@ export function buildConversationMetadata(
   uploadedImages: UploadedImage[],
   conversationId: string,
   mergeFromRequestIds?: string[],
+  newOriginals?: ConversationMetadataDocument[],
 ): ConversationMetadata {
   const selectedToolbarHashes = new Set(
     referencedImages.map((img) => img.hash),
@@ -32,6 +36,7 @@ export function buildConversationMetadata(
           !('variant' in img) || !img.variant || img.variant === 'original',
       )
       .map(({ name, hash }) => ({ name, hash })),
+    ...(newOriginals?.length ? { originals: newOriginals } : {}),
   };
 
   if (mergeFromRequestIds?.length) {

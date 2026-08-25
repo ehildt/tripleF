@@ -9,7 +9,10 @@ import { computed } from 'vue';
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 import type { GalleryItem } from '@/types/harness-response-data.model';
 
+import { useAddImageToFiles } from '../../../composables/use-add-image-to-files.composable';
 import { useGalleryImageTile } from '../../composables/use-gallery-image-tile.composable';
+import AddToFilesButton from '../add-to-files-button/AddToFilesButton.vue';
+import MediaCardHeader from '../media-card-header/MediaCardHeader.vue';
 import { formatDimensions } from './helpers/format-dimensions.helper';
 
 const props = defineProps<{
@@ -19,6 +22,10 @@ const props = defineProps<{
 const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
   props.item,
   'Image',
+);
+
+const { canAddToFiles, isInFiles, toggleAddToFiles } = useAddImageToFiles(
+  () => props.item,
 );
 
 const dimensions = computed(() =>
@@ -44,9 +51,20 @@ const dimensions = computed(() =>
       <span v-if="dimensions" class="image-item__badge">{{ dimensions }}</span>
 
       <span class="image-item__overlay">
-        <strong v-if="item.title" class="image-item__title">{{
-          item.title
-        }}</strong>
+        <MediaCardHeader
+          :title="
+            item.title && item.title !== item.caption ? item.title : undefined
+          "
+          flush
+        >
+          <template v-if="canAddToFiles" #actions>
+            <AddToFilesButton
+              size="sm"
+              :active="isInFiles"
+              @toggle="toggleAddToFiles"
+            />
+          </template>
+        </MediaCardHeader>
         <span v-if="item.caption" class="image-item__caption">{{
           item.caption
         }}</span>
@@ -123,13 +141,16 @@ const dimensions = computed(() =>
   opacity: 1;
 }
 
-.image-item__title {
+/* The title row is the shared MediaCardHeader; its title keeps the tile's
+   white-on-gradient overlay text. */
+.image-item__overlay :deep(.media-card-header__title) {
   font-size: 0.8rem;
   line-height: 1.3;
   color: white;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.image-item__overlay :deep(.media-card-header) {
+  padding: 0;
 }
 
 .image-item__caption {

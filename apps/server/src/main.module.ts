@@ -1,11 +1,11 @@
-import { BullMQModule } from '@ehildt/nestjs-bullmq';
-import { BullMQLoggerModule } from '@ehildt/nestjs-bullmq-logger';
-import { SocketIOModule as SocketIOCoreModule } from '@ehildt/nestjs-socket.io';
 import { HttpModule } from '@nestjs/axios';
 import { Logger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { BullMQModule } from '@triplef/bullmq';
+import { BullMQLoggerModule } from '@triplef/bullmq-logger';
 import { ConfigFactoryModule } from '@triplef/config-factory';
 import { CoreLoggerModule } from '@triplef/core-logger';
+import { SocketIOModule as SocketIOCoreModule } from '@triplef/socketio';
 
 import { AppConfigService } from './configs/app-config.service.js';
 import { AiSdkModule } from './modules/ai-sdk/ai-sdk.module.js';

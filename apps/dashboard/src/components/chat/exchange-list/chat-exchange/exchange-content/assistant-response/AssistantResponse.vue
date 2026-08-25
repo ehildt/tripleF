@@ -106,10 +106,10 @@ const imageList = computed<LightboxImage[]>(() => {
   // hero in the gallery or lists an image twice — the lightbox would show
   // the same image on two consecutive stops.
   const seenUrls = new Set<string>();
-  const pushImage = (url: string, title: string) => {
+  const pushImage = (url: string, title: string, source?: string) => {
     if (seenUrls.has(url)) return;
     seenUrls.add(url);
-    items.push({ url, title });
+    items.push(source ? { url, title, source } : { url, title });
   };
 
   if (
@@ -146,6 +146,7 @@ const imageList = computed<LightboxImage[]>(() => {
       pushImage(
         encodeURI(item.imageUrl),
         buildImageTitle(item.imageAlt, item.title, visibleData.value?.title),
+        item.source,
       );
     }
   });

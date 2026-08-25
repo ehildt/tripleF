@@ -60,7 +60,9 @@ export const ModelName = {
   MemoryCognitionProfile: 'MemoryCognitionProfile',
   StockMarketBar: 'StockMarketBar',
   StockMarketHistoryRange: 'StockMarketHistoryRange',
-  MemoryInsertLedger: 'MemoryInsertLedger'
+  MemoryInsertLedger: 'MemoryInsertLedger',
+  MemoryLexiconInsertLedger: 'MemoryLexiconInsertLedger',
+  MemoryLink: 'MemoryLink'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -211,6 +213,36 @@ export const MemoryInsertLedgerScalarFieldEnum = {
 } as const
 
 export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
+
+
+export const MemoryLexiconInsertLedgerScalarFieldEnum = {
+  id: 'id',
+  url: 'url',
+  contentHash: 'contentHash',
+  chunkCount: 'chunkCount',
+  partitionScope: 'partitionScope',
+  title: 'title',
+  requestId: 'requestId',
+  createdAt: 'createdAt',
+  sweptAt: 'sweptAt'
+} as const
+
+export type MemoryLexiconInsertLedgerScalarFieldEnum = (typeof MemoryLexiconInsertLedgerScalarFieldEnum)[keyof typeof MemoryLexiconInsertLedgerScalarFieldEnum]
+
+
+export const MemoryLinkScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  source: 'source',
+  target: 'target',
+  score: 'score',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type MemoryLinkScalarFieldEnum = (typeof MemoryLinkScalarFieldEnum)[keyof typeof MemoryLinkScalarFieldEnum]
 
 
 export const SortOrder = {

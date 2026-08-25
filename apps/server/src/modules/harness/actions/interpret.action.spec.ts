@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AiSdkService } from '@triplef/ai-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
@@ -19,6 +19,26 @@ const eodhdDiscoveryProvider = {
   useValue: { getCached: vi.fn(() => undefined), refresh: vi.fn() },
 };
 
+/**
+ * Build a mock `streamChat` result: a full-stream that emits the classifier's
+ * text as a single text-delta (plus an optional finish usage event), matching
+ * what `consumeResponseStream` consumes. `fullStream` is a getter so each
+ * retry attempt reads a fresh (unconsumed) stream.
+ */
+function mockStream(
+  text: string,
+  usage?: { inputTokens: number; outputTokens: number },
+) {
+  return {
+    get fullStream() {
+      return (async function* () {
+        yield { type: 'text-delta', text };
+        if (usage) yield { type: 'finish', totalUsage: usage };
+      })();
+    },
+  };
+}
+
 describe('InterpretActionService', () => {
   let service: InterpretActionService;
   let aiSdkService: AiSdkService;
@@ -34,13 +54,9 @@ describe('InterpretActionService', () => {
           useValue: { enabled: false },
         },
         {
-          provide: MEMORY_CLIENT_CONFIG,
-          useValue: { enabled: false },
-        },
-        {
           provide: AiSdkService,
           useValue: {
-            generateChat: vi.fn(),
+            streamChat: vi.fn(),
           },
         },
         {
@@ -89,17 +105,19 @@ describe('InterpretActionService', () => {
   });
 
   it('accepts null clarificationQuestion when clarification is not needed', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: JSON.stringify({
-        template: 'text',
-        tools: [],
-        reasoning: 'chat',
-        language: 'en',
-        needsClarification: false,
-        clarificationQuestion: null,
-        plan: {},
-      }),
-    });
+    (aiSdkService.streamChat as any).mockResolvedValue(
+      mockStream(
+        JSON.stringify({
+          template: 'text',
+          tools: [],
+          reasoning: 'chat',
+          language: 'en',
+          needsClarification: false,
+          clarificationQuestion: null,
+          plan: {},
+        }),
+      ),
+    );
 
     const result = await service.execute({
       model: 'model',
@@ -114,17 +132,19 @@ describe('InterpretActionService', () => {
   });
 
   it('returns clarification without invoking tools', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: JSON.stringify({
-        template: 'text',
-        tools: [],
-        reasoning: 'ambiguous',
-        language: 'en',
-        needsClarification: true,
-        clarificationQuestion: 'Which one?',
-        plan: {},
-      }),
-    });
+    (aiSdkService.streamChat as any).mockResolvedValue(
+      mockStream(
+        JSON.stringify({
+          template: 'text',
+          tools: [],
+          reasoning: 'ambiguous',
+          language: 'en',
+          needsClarification: true,
+          clarificationQuestion: 'Which one?',
+          plan: {},
+        }),
+      ),
+    );
 
     const result = await service.execute({
       model: 'model',
@@ -138,22 +158,24 @@ describe('InterpretActionService', () => {
   });
 
   it('classifies intent and plan for image tasks', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: JSON.stringify({
-        template: 'describe',
-        tools: [],
-        reasoning: 'image description',
-        language: 'en',
-        needsClarification: false,
-        plan: {
-          images: {
-            resize: true,
-            variants: ['grayscale'],
+    (aiSdkService.streamChat as any).mockResolvedValue(
+      mockStream(
+        JSON.stringify({
+          template: 'describe',
+          tools: [],
+          reasoning: 'image description',
+          language: 'en',
+          needsClarification: false,
+          plan: {
+            images: {
+              resize: true,
+              variants: ['grayscale'],
+            },
           },
-        },
-      }),
-      totalUsage: { inputTokens: 10, outputTokens: 5 },
-    });
+        }),
+        { inputTokens: 10, outputTokens: 5 },
+      ),
+    );
 
     const result = await service.execute({
       model: 'model',
@@ -175,16 +197,18 @@ describe('InterpretActionService', () => {
   });
 
   it('strips images from classification prompt but preserves attachment marker', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: JSON.stringify({
-        template: 'describe',
-        tools: [],
-        reasoning: 'image description',
-        language: 'en',
-        needsClarification: false,
-        plan: {},
-      }),
-    });
+    (aiSdkService.streamChat as any).mockResolvedValue(
+      mockStream(
+        JSON.stringify({
+          template: 'describe',
+          tools: [],
+          reasoning: 'image description',
+          language: 'en',
+          needsClarification: false,
+          plan: {},
+        }),
+      ),
+    );
 
     await service.execute({
       model: 'model',
@@ -198,7 +222,7 @@ describe('InterpretActionService', () => {
       ],
     });
 
-    const classifyCall = (aiSdkService.generateChat as any).mock.calls[0][0]
+    const classifyCall = (aiSdkService.streamChat as any).mock.calls[0][0]
       .messages as any[];
     expect(classifyCall.some((m) => m.images)).toBe(false);
     const userMessage = classifyCall.find((m) => m.role === 'user');
@@ -206,16 +230,18 @@ describe('InterpretActionService', () => {
   });
 
   it('keeps the actual user text prompt for image classification', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: JSON.stringify({
-        template: 'describe',
-        tools: [],
-        reasoning: 'image description',
-        language: 'en',
-        needsClarification: false,
-        plan: {},
-      }),
-    });
+    (aiSdkService.streamChat as any).mockResolvedValue(
+      mockStream(
+        JSON.stringify({
+          template: 'describe',
+          tools: [],
+          reasoning: 'image description',
+          language: 'en',
+          needsClarification: false,
+          plan: {},
+        }),
+      ),
+    );
 
     await service.execute({
       model: 'model',
@@ -229,7 +255,7 @@ describe('InterpretActionService', () => {
       ],
     });
 
-    const classifyCall = (aiSdkService.generateChat as any).mock.calls[0][0]
+    const classifyCall = (aiSdkService.streamChat as any).mock.calls[0][0]
       .messages as any[];
     const userMessage = classifyCall.find((m) => m.role === 'user');
     expect(userMessage?.content).toContain(
@@ -252,16 +278,18 @@ describe('InterpretActionService', () => {
         {
           provide: AiSdkService,
           useValue: {
-            generateChat: vi.fn().mockResolvedValue({
-              text: JSON.stringify({
-                template: 'article',
-                tools: ['serperWebSearch'],
-                reasoning: 'research',
-                language: 'en',
-                needsClarification: false,
-                plan: {},
-              }),
-            }),
+            streamChat: vi.fn().mockResolvedValue(
+              mockStream(
+                JSON.stringify({
+                  template: 'article',
+                  tools: ['serperWebSearch'],
+                  reasoning: 'research',
+                  language: 'en',
+                  needsClarification: false,
+                  plan: {},
+                }),
+              ),
+            ),
           },
         },
         {
@@ -332,16 +360,18 @@ describe('InterpretActionService', () => {
         {
           provide: AiSdkService,
           useValue: {
-            generateChat: vi.fn().mockResolvedValue({
-              text: JSON.stringify({
-                template: 'news',
-                tools: ['serperWebSearch', 'serperNewsSearch'],
-                reasoning: 'current events',
-                language: 'en',
-                needsClarification: false,
-                plan: {},
-              }),
-            }),
+            streamChat: vi.fn().mockResolvedValue(
+              mockStream(
+                JSON.stringify({
+                  template: 'news',
+                  tools: ['serperWebSearch', 'serperNewsSearch'],
+                  reasoning: 'current events',
+                  language: 'en',
+                  needsClarification: false,
+                  plan: {},
+                }),
+              ),
+            ),
           },
         },
         {
@@ -400,16 +430,18 @@ describe('InterpretActionService', () => {
   });
 
   it('does not add media search tools for non-media templates', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: JSON.stringify({
-        template: 'text',
-        tools: [],
-        reasoning: 'chat',
-        language: 'en',
-        needsClarification: false,
-        plan: {},
-      }),
-    });
+    (aiSdkService.streamChat as any).mockResolvedValue(
+      mockStream(
+        JSON.stringify({
+          template: 'text',
+          tools: [],
+          reasoning: 'chat',
+          language: 'en',
+          needsClarification: false,
+          plan: {},
+        }),
+      ),
+    );
 
     const result = await service.execute({
       model: 'model',
@@ -434,16 +466,18 @@ describe('InterpretActionService', () => {
         {
           provide: AiSdkService,
           useValue: {
-            generateChat: vi.fn().mockResolvedValue({
-              text: JSON.stringify({
-                template: 'evaluation',
-                tools: ['serperWebSearch'],
-                reasoning: 'review',
-                language: 'en',
-                needsClarification: false,
-                plan: {},
-              }),
-            }),
+            streamChat: vi.fn().mockResolvedValue(
+              mockStream(
+                JSON.stringify({
+                  template: 'evaluation',
+                  tools: ['serperWebSearch'],
+                  reasoning: 'review',
+                  language: 'en',
+                  needsClarification: false,
+                  plan: {},
+                }),
+              ),
+            ),
           },
         },
         {
@@ -511,16 +545,22 @@ describe('InterpretActionService', () => {
         {
           provide: AiSdkService,
           useValue: {
-            generateChat: vi.fn().mockResolvedValue({
-              text: JSON.stringify({
-                template: 'article',
-                tools: ['webSearch', 'serperImageSearch', 'serperVideoSearch'],
-                reasoning: 'research',
-                language: 'en',
-                needsClarification: false,
-                plan: {},
-              }),
-            }),
+            streamChat: vi.fn().mockResolvedValue(
+              mockStream(
+                JSON.stringify({
+                  template: 'article',
+                  tools: [
+                    'webSearch',
+                    'serperImageSearch',
+                    'serperVideoSearch',
+                  ],
+                  reasoning: 'research',
+                  language: 'en',
+                  needsClarification: false,
+                  plan: {},
+                }),
+              ),
+            ),
           },
         },
         {
@@ -588,18 +628,24 @@ describe('InterpretActionService', () => {
         {
           provide: AiSdkService,
           useValue: {
-            generateChat: vi.fn().mockResolvedValue({
-              text: JSON.stringify({
-                template: 'article',
-                tools: ['webSearch', 'serperImageSearch', 'serperVideoSearch'],
-                imageCount: 7,
-                videoCount: 2,
-                reasoning: 'research',
-                language: 'en',
-                needsClarification: false,
-                plan: {},
-              }),
-            }),
+            streamChat: vi.fn().mockResolvedValue(
+              mockStream(
+                JSON.stringify({
+                  template: 'article',
+                  tools: [
+                    'webSearch',
+                    'serperImageSearch',
+                    'serperVideoSearch',
+                  ],
+                  imageCount: 7,
+                  videoCount: 2,
+                  reasoning: 'research',
+                  language: 'en',
+                  needsClarification: false,
+                  plan: {},
+                }),
+              ),
+            ),
           },
         },
         {
@@ -655,7 +701,7 @@ describe('InterpretActionService', () => {
   });
 
   it('throws when classification output is empty', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({ text: '' });
+    (aiSdkService.streamChat as any).mockResolvedValue(mockStream(''));
 
     await expect(
       service.execute({
@@ -667,9 +713,7 @@ describe('InterpretActionService', () => {
   });
 
   it('throws when classification output is not valid JSON', async () => {
-    (aiSdkService.generateChat as any).mockResolvedValue({
-      text: 'not json',
-    });
+    (aiSdkService.streamChat as any).mockResolvedValue(mockStream('not json'));
 
     await expect(
       service.execute({
@@ -682,24 +726,24 @@ describe('InterpretActionService', () => {
 
   it('retries when language is missing and succeeds on subsequent attempt', async () => {
     let attempts = 0;
-    (aiSdkService.generateChat as any).mockImplementation(async () => {
+    (aiSdkService.streamChat as any).mockImplementation(async () => {
       attempts++;
       if (attempts === 1) {
         // First attempt: missing language
-        return {
-          text: JSON.stringify({
+        return mockStream(
+          JSON.stringify({
             template: 'article',
             tools: ['webSearch'],
             reasoning: 'research',
             needsClarification: false,
             plan: {},
           }),
-          totalUsage: { inputTokens: 10, outputTokens: 5 },
-        };
+          { inputTokens: 10, outputTokens: 5 },
+        );
       }
       // Second attempt: language provided
-      return {
-        text: JSON.stringify({
+      return mockStream(
+        JSON.stringify({
           template: 'article',
           tools: ['webSearch'],
           reasoning: 'research',
@@ -707,8 +751,8 @@ describe('InterpretActionService', () => {
           needsClarification: false,
           plan: {},
         }),
-        totalUsage: { inputTokens: 12, outputTokens: 6 },
-      };
+        { inputTokens: 12, outputTokens: 6 },
+      );
     });
 
     const result = await service.execute({
@@ -727,12 +771,12 @@ describe('InterpretActionService', () => {
 
   it('retries when the JSON is structurally invalid and succeeds on subsequent attempt', async () => {
     let attempts = 0;
-    (aiSdkService.generateChat as any).mockImplementation(async () => {
+    (aiSdkService.streamChat as any).mockImplementation(async () => {
       attempts++;
       if (attempts === 1) {
         // First attempt: plan is null → fails the intent schema
-        return {
-          text: JSON.stringify({
+        return mockStream(
+          JSON.stringify({
             template: 'article',
             tools: ['webSearch'],
             reasoning: 'research',
@@ -740,11 +784,11 @@ describe('InterpretActionService', () => {
             needsClarification: false,
             plan: null,
           }),
-          totalUsage: { inputTokens: 10, outputTokens: 5 },
-        };
+          { inputTokens: 10, outputTokens: 5 },
+        );
       }
-      return {
-        text: JSON.stringify({
+      return mockStream(
+        JSON.stringify({
           template: 'article',
           tools: ['webSearch'],
           reasoning: 'research',
@@ -752,8 +796,8 @@ describe('InterpretActionService', () => {
           needsClarification: false,
           plan: {},
         }),
-        totalUsage: { inputTokens: 12, outputTokens: 6 },
-      };
+        { inputTokens: 12, outputTokens: 6 },
+      );
     });
 
     const result = await service.execute({

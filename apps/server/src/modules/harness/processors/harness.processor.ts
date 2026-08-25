@@ -1,6 +1,6 @@
-import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BullMQLoggerService } from '@triplef/bullmq-logger';
 import { CoreLoggerService } from '@triplef/core-logger';
 import { Job } from 'bullmq';
 
@@ -71,7 +71,7 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
       // Memory write runs after the response with the turn's tool results in
       // hand — the execute wave is blind, so a remember call there would
       // store intent-text instead of the data the turn actually gathered.
-      // Only fires when the classifier picked memoryRemember and the memory
+      // Only fires when the classifier picked a remember tool and the memory
       // feature is enabled; never fails the turn.
       .addStep(
         'memoryWrite',

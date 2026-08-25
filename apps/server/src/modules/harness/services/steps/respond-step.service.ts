@@ -1,5 +1,5 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable, Logger } from '@nestjs/common';
+import { SocketIOService } from '@triplef/socketio';
 
 import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
@@ -14,10 +14,7 @@ import {
   limitLocalGalleryItems,
 } from '../../helpers/media/build-gallery-items.helper.js';
 import { dedupeGalleryItems } from '../../helpers/media/dedupe-gallery-items.helper.js';
-import {
-  extractImageSearchItems,
-  extractVideoSearchItems,
-} from '../../helpers/media/extract-media-from-tools.helper.js';
+import { extractImageSearchItems } from '../../helpers/media/extract-media-from-tools.helper.js';
 import { extractShopOffers } from '../../helpers/media/extract-shop-offers.helper.js';
 import { filterExistingGalleryItems } from '../../helpers/media/filter-existing-gallery-items.helper.js';
 import {
@@ -263,8 +260,11 @@ export class RespondStepService implements StepHandler {
       );
     }
 
-    // Media membership enforcement: the model may only use URLs from verified
-    // tool results (or uploaded images) — everything else is blanked. For
+    // Media membership enforcement: the model may only use URLs passed the
+    // sanitize verification (or uploaded images) — everything else is blanked.
+    // The video allow-list is the oEmbed-verified pool, never a raw re-extract
+    // of tool results: a link the sanitize step rejected (or a provider-
+    // corrupted one) must not sneak back in via a verbatim model echo. For
     // image tasks the local uploads are excluded from the allow-list, so any
     // user-image URL the model copied into the gallery is stripped.
     // Merge responses are exempt: their media URLs come from the conversation
@@ -276,7 +276,10 @@ export class RespondStepService implements StepHandler {
         : enforceAvailableMediaUrls(
             withOffers,
             extractImageSearchItems(ctx.outputs.toolResults),
-            extractVideoSearchItems(ctx.outputs.toolResults),
+            (ctx.outputs.availableVideos ?? []).map((video) => ({
+              videoUrl: video.url,
+              title: video.title,
+            })),
             responseGalleryItems.map((item) => item.imageUrl),
           );
     if (mediaCheckedData !== withOffers) {

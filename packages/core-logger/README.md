@@ -2,7 +2,7 @@
 
 # @triplef/core-logger
 
-A NestJS `LoggerService` backed by pino — structured logging with inline context rendering, error-stack preservation, and per-call `onLog` hooks.
+A lightweight NestJS `LoggerService` backed by pino — structured logging with inline context rendering and error-stack preservation.
 
 `This library is **ESM-only** and does not support CommonJS.`  
 `Your project must use ES modules.`
@@ -18,10 +18,23 @@ A NestJS `LoggerService` backed by pino — structured logging with inline conte
 
 ## Features
 
-- **NestJS-native** — implements `LoggerService` (`log`, `error`, `warn`, `debug`, `verbose`, `fatal`, `setLogLevels`).
-- **Inline context** — the NestJS context renders as `[Context] message` in pretty mode, while staying a structured `context` field in JSON mode.
-- **Error-stack preservation** — `error(message, stack, context)` attaches the stack as `err` instead of dropping it.
-- **Per-call `onLog` hooks** — pass `onLog` in the meta object to run a fire-and-forget callback after the write (e.g. forward to an endpoint or database).
+- **NestJS-native** — implements `LoggerService` (`log`, `error`, `warn`, `debug`, `verbose`, `fatal`, `setLogLevels`); the service owns the pino client and delegates to it.
+- **Inline context** — the trailing context string NestJS's static `Logger` appends renders as `[Context] message` in pretty mode and stays a structured `context` field in JSON mode.
+- **Error preservation** — Error instances flow through pino's `err` serializer (type, message, stack); a bare `error(message, stack, context)` stack string is kept verbatim under `stack`.
+- **pino object-first form** — `log({ requestId }, 'request received')` merges bindings with the NestJS context.
+
+## Call shapes
+
+| Call                               | Pino call                                     |
+| ---------------------------------- | --------------------------------------------- |
+| `log('hello')`                     | `info('hello')`                               |
+| `log('hello', 'Ctx')`              | `info({ context: 'Ctx' }, 'hello')`           |
+| `log({ requestId }, 'msg', 'Ctx')` | `info({ requestId, context: 'Ctx' }, 'msg')`  |
+| `log('msg', { requestId }, 'Ctx')` | `info({ requestId, context: 'Ctx' }, 'msg')`  |
+| `error(err, 'Ctx')`                | `error({ err, context: 'Ctx' }, err.message)` |
+| `error('msg', err, 'Ctx')`         | `error({ err, context: 'Ctx' }, 'msg')`       |
+| `error('msg', stack, 'Ctx')`       | `error({ stack, context: 'Ctx' }, 'msg')`     |
+| `verbose(msg)`                     | `trace(msg)`                                  |
 
 ## Installation
 
@@ -60,20 +73,6 @@ import { CoreLoggerService } from '@triplef/core-logger';
 const app = await NestFactory.create(AppModule, { bufferLogs: true });
 app.useLogger(app.get(CoreLoggerService));
 ```
-
-### onLog hook
-
-The `onLog` key is reserved in the meta object. It is stripped before the log
-is written and invoked afterwards, fire-and-forget.
-
-```ts
-logger.info('user signed up', {
-  userId: '123',
-  onLog: (entry) => sendToDb(entry),
-});
-```
-
-`entry` is `{ level, message, context?, meta? }`.
 
 <br>
 

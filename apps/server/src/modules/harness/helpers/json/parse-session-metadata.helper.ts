@@ -1,13 +1,15 @@
 /**
  * Parse the raw session-metadata JSON string into a structured shape.
  *
- * Accepts `{ images?: [{ name: string, hash: string }], merge?: {
- * fromRequestIds: string[] } }` and filters out entries missing required
- * fields. Returns undefined on parse failure or when no data is provided.
+ * Accepts `{ images?: [{ name, hash, source? }], originals?: [{ name, hash,
+ * type? }], merge?: { fromRequestIds: string[] } }` and filters out entries
+ * missing required fields. Returns undefined on parse failure or when no
+ * data is provided.
  */
 export function parseSessionMetadata(raw?: string):
   | {
       images?: Array<{ name: string; hash: string; source?: string }>;
+      originals?: Array<{ name: string; hash: string; type?: string }>;
       merge?: { fromRequestIds: string[] };
     }
   | undefined {
@@ -18,6 +20,7 @@ export function parseSessionMetadata(raw?: string):
 
     const result: {
       images?: Array<{ name: string; hash: string; source?: string }>;
+      originals?: Array<{ name: string; hash: string; type?: string }>;
       merge?: { fromRequestIds: string[] };
     } = {};
 
@@ -25,6 +28,16 @@ export function parseSessionMetadata(raw?: string):
       result.images = parsed.images.filter(
         (img: any): img is { name: string; hash: string; source?: string } =>
           typeof img.name === 'string' && typeof img.hash === 'string',
+      );
+    }
+
+    if (Array.isArray(parsed.originals)) {
+      result.originals = parsed.originals.filter(
+        (
+          original: any,
+        ): original is { name: string; hash: string; type?: string } =>
+          typeof original.name === 'string' &&
+          typeof original.hash === 'string',
       );
     }
 

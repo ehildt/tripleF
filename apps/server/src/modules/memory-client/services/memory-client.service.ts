@@ -1,9 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type {
+  LexiconSelectInput,
+  LexiconSelectResult,
+  LexiconSourceDocument,
+} from '@triplef/agent/schemas';
+import type { MemoryPoint } from '@triplef/agent/tools';
 
 import type { MemoryClientConfig } from '../configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../constants/memory-client.constants.js';
-import type { MemoryPoint } from '../models/memory-point.model.js';
 
 interface MemoryCognitionSnapshot {
   /** The structured profile document (JSON text) — null when nothing learned yet. */
@@ -22,6 +26,7 @@ interface MemoryOverridesConfig {
   episodeRecencyScaleSeconds: number;
   episodeRecencyMidpoint: number;
   episodeProbeLimit: number;
+  episodeScoreThreshold: number;
 }
 
 interface SearchByTextInput {
@@ -42,6 +47,17 @@ interface StoreRecordInput {
   requestId?: string;
   text: string;
   tags?: string[];
+  /** Broad category (e.g. `games`, `pets`) — the constellation community tier key. */
+  category?: string;
+}
+
+interface StoreInsightInput {
+  memoryCognition: string;
+  sessionId?: string;
+  conversationId?: string;
+  requestId?: string;
+  text: string;
+  path?: string;
 }
 
 interface DeleteRecordsInput {
@@ -82,40 +98,7 @@ export class MemoryClientService {
     return this.request(`${this.baseUrl}/qdrant/status`);
   }
 
-  /**
-   * Relay an incoming dashboard request to the memory app verbatim (method,
-   * path, query, JSON body, content-type/accept headers) and stream the
-   * response back — the dashboard pass-through for the moved controllers.
-   */
-  async forward(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const headers: Record<string, string> = {};
-    const contentType = request.headers['content-type'];
-    const accept = request.headers['accept'];
-    if (contentType) headers['content-type'] = String(contentType);
-    if (accept) headers['accept'] = String(accept);
-    const hasBody =
-      request.body !== undefined &&
-      request.method !== 'GET' &&
-      request.method !== 'HEAD';
-    // `request.url` already carries the versioned path (e.g. `/api/v1/qdrant/
-    // memory?…`), so the raw service URL is the prefix — not `baseUrl`, which
-    // adds the `/api/v1` itself.
-    const res = await fetch(`${this.config.url}${request.url}`, {
-      method: request.method,
-      headers,
-      body: hasBody ? JSON.stringify(request.body) : undefined,
-    });
-    const text = await res.text();
-    reply
-      .code(res.status)
-      .header(
-        'content-type',
-        res.headers.get('content-type') ?? 'application/json',
-      )
-      .send(text);
-  }
-
-  /** Semantic text search — read path of the memoryRecall tool + sanitize probe. */
+  /** Semantic text search — read path of the memory-partition-recall tool + sanitize probe. */
   async searchByText(input: SearchByTextInput): Promise<MemoryPoint[]> {
     if (!this.config.enabled) return [];
     try {
@@ -130,6 +113,52 @@ export class MemoryClientService {
     } catch {
       // Memory is a background concern — a store outage must not break the turn.
       return [];
+    }
+  }
+
+  /**
+   * Ephemeral retrieval selection: rank fetched source passages against the
+   * query and return the budget-filled verbatim chunks. Null on any failure
+   * (disabled, outage, 503) — the harness falls back to full references.
+   */
+  async selectContext(
+    input: LexiconSelectInput,
+  ): Promise<LexiconSelectResult | null> {
+    if (!this.config.enabled) return null;
+    try {
+      return await this.request<LexiconSelectResult>(
+        `${this.baseUrl}/lexicon/select`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(input),
+        },
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Index uploaded documents into the shared lexicon (persist-only, no
+   * selection). Fire-and-forget: a lexicon outage must never break the turn.
+   */
+  async indexLexiconDocuments(input: {
+    documents: LexiconSourceDocument[];
+    partitionScope?: string;
+  }): Promise<{ storedDocs: number; reusedDocs: number } | null> {
+    if (!this.config.enabled) return null;
+    try {
+      return await this.request<{ storedDocs: number; reusedDocs: number }>(
+        `${this.baseUrl}/lexicon/index`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(input),
+        },
+      );
+    } catch {
+      return null;
     }
   }
 
@@ -149,7 +178,7 @@ export class MemoryClientService {
     );
   }
 
-  /** Sync store of one fact record (the memoryRemember tool) — returns the point id. */
+  /** Sync store of one fact record (the memory-partition-remember tool) — returns the point id. */
   async storeRecord(input: StoreRecordInput): Promise<string> {
     if (!this.config.enabled) throw new Error('Memory feature is disabled');
     const res = await this.request<{ accepted: boolean; id?: string }>(
@@ -166,7 +195,27 @@ export class MemoryClientService {
     return res.id;
   }
 
-  /** Filtered record delete (the memoryDelete tool) — no fuzzy wipes. */
+  /**
+   * Sync store of one derived insight (the memory-cognition-remember tool)
+   * into the AI's cognition space — returns the point id.
+   */
+  async storeInsight(input: StoreInsightInput): Promise<string> {
+    if (!this.config.enabled) throw new Error('Memory feature is disabled');
+    const res = await this.request<{ accepted: boolean; id?: string }>(
+      `${this.baseUrl}/qdrant/memory/cognition/insights`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(input),
+      },
+    );
+    if (!res.accepted || !res.id) {
+      throw new Error('Cognition store was not accepted');
+    }
+    return res.id;
+  }
+
+  /** Filtered record delete (the memory-partition-delete tool) — no fuzzy wipes. */
   async deleteRecords(
     input: DeleteRecordsInput,
   ): Promise<DeleteRecordsOutcome> {

@@ -1,7 +1,7 @@
-import { SocketIOConfigSchema } from '@ehildt/nestjs-socket.io';
-import { SocketIOServerConfig } from '@ehildt/nestjs-socket.io';
 import { Injectable } from '@nestjs/common';
 import { CacheReturnValue } from '@triplef/config-factory/cache-return-value';
+import { SocketIOConfigSchema } from '@triplef/socketio';
+import { SocketIOServerConfig } from '@triplef/socketio';
 
 import { SocketIOConfigAdapter } from './socket-io-config.adapter.js';
 

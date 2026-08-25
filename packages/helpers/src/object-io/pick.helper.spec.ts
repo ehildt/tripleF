@@ -50,7 +50,7 @@ describe('pick', () => {
 
   test('ignores keys not in the object', () => {
     const user = { name: 'Alice' };
-    const result = pick(user, ['name', 'nonexistent']);
+    const result = pick(user, ['name', 'nonexistent' as any]);
     expect(result).toEqual({ name: 'Alice' });
   });
 

@@ -1,10 +1,11 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
+import { BLOCKED_URL_HOSTS } from '@triplef/agent/schemas';
+import { isPrivateOrLocalhost } from '@triplef/agent/schemas';
+import { BLOCKED_IMAGE_HOSTS } from '@triplef/agent/schemas';
 import { firstValueFrom } from 'rxjs';
 import sharp from 'sharp';
 
-import { BLOCKED_IMAGE_HOSTS } from '../constants/blocked-image-hosts.js';
-import { BLOCKED_URL_HOSTS } from '../constants/url-trust.constants.js';
 import {
   BROWSER_USER_AGENT,
   HARNESS_USER_AGENT,
@@ -16,7 +17,6 @@ import { hasEmptyContent } from '../helpers/media-classification/has-empty-conte
 import { isImageContentType } from '../helpers/media-classification/is-image-content-type.helper.js';
 import { toBuffer } from '../helpers/media-classification/to-buffer.helper.js';
 import { isEmbeddableVideoUrl } from '../helpers/url-trust/is-embeddable-video-url.helper.js';
-import { isPrivateOrLocalhost } from '../helpers/url-trust/is-private-or-localhost.helper.js';
 import {
   hasOembedProvider,
   OEMBED_ENDPOINTS,

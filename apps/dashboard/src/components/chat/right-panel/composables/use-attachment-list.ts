@@ -10,7 +10,7 @@ import type {
  * single list for the merged Files panel.
  */
 export function useAttachmentList(options: UseAttachmentListOptions) {
-  const { attachedFiles, uploadedImages } = options;
+  const { attachedFiles, uploadedImages, uploadedDocuments } = options;
 
   const attachments = computed<AttachmentItem[]>(() => {
     const pending: AttachmentItem[] = attachedFiles.value.map(
@@ -23,6 +23,7 @@ export function useAttachmentList(options: UseAttachmentListOptions) {
         isSelected: entry.isSelected,
         pendingIndex: index,
         source: 'local',
+        kind: entry.kind,
       }),
     );
 
@@ -35,9 +36,24 @@ export function useAttachmentList(options: UseAttachmentListOptions) {
       isSelected: image.selected !== false,
       pendingIndex: null,
       source: image.source ?? 'local',
+      kind: 'image',
     }));
 
-    return [...pending, ...uploaded];
+    const uploadedDocs: AttachmentItem[] = uploadedDocuments.value.map(
+      (doc) => ({
+        id: `uploaded-document-${doc.hash}`,
+        name: doc.name,
+        hash: doc.hash,
+        previewUrl: '',
+        isUploaded: true,
+        isSelected: doc.selected !== false,
+        pendingIndex: null,
+        source: 'local',
+        kind: 'document',
+      }),
+    );
+
+    return [...pending, ...uploaded, ...uploadedDocs];
   });
 
   const hasAttachments = computed(() => attachments.value.length > 0);

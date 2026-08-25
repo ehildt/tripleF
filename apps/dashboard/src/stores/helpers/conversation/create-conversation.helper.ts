@@ -18,6 +18,7 @@ export function createConversation(
     files: [],
     savedFileInfos: [],
     uploadedImages: partial?.uploadedImages ?? [],
+    uploadedDocuments: partial?.uploadedDocuments ?? [],
     imageSelectionSnapshot: partial?.imageSelectionSnapshot ?? {},
     conversationId: partial?.conversationId ?? createId(),
     model: partial?.model ?? '',

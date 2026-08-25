@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 import type { MemoryRole } from '../models/memory.model.js';
 
@@ -49,6 +50,16 @@ export class MemoryItemDto {
     example: ['work', 'rust'],
   })
   tags!: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Broad category written by the remember tool (e.g. games, pets) — groups narrow tag topics into one family for the constellation community tier.',
+    example: 'games',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  category?: string;
 
   @ApiPropertyOptional({
     description: 'Conversation the record originates from, when known.',

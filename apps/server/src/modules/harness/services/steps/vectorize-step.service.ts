@@ -31,6 +31,8 @@ export class VectorizeStepService implements StepHandler {
         conversationId: ctx.filters.conversationId,
         requestId: ctx.requestId,
         model: ctx.model,
+        numCtx: ctx.request.options?.num_ctx,
+        files: ctx.files,
         userText: ctx.lastUserPrompt,
         // Feed the extractor the response's prose, not its raw JSON —
         // structured templates (article/news/product) once surfaced JSON keys

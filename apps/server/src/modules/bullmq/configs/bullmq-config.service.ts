@@ -1,5 +1,5 @@
-import { BullMQConfigSchema } from '@ehildt/nestjs-bullmq';
 import { Injectable } from '@nestjs/common';
+import { BullMQConfigSchema } from '@triplef/bullmq';
 import { CacheReturnValue } from '@triplef/config-factory/cache-return-value';
 import Joi from 'joi';
 

@@ -33,121 +33,71 @@ describe('CoreLoggerService', () => {
     expect(mockLogger.info).toHaveBeenCalledWith('hello');
   });
 
-  it('logs a message with a context string', () => {
+  it('renders the trailing string as the NestJS context binding', () => {
     createService().log('hello', 'MyContext');
     expect(mockLogger.info).toHaveBeenCalledWith({ context: 'MyContext' }, 'hello');
   });
 
-  it('logs a message with a meta object as the second argument', () => {
-    createService().log('hello', { requestId: '1' });
-    expect(mockLogger.info).toHaveBeenCalledWith({ requestId: '1' }, 'hello');
+  it('supports pino object-first form with message and context', () => {
+    createService().log({ requestId: 'r-1' }, 'request received', 'Harness');
+    expect(mockLogger.info).toHaveBeenCalledWith({ requestId: 'r-1', context: 'Harness' }, 'request received');
   });
 
-  it('logs a meta object as the first argument', () => {
-    createService().log({ requestId: '1' }, 'hello');
-    expect(mockLogger.info).toHaveBeenCalledWith({ requestId: '1' }, 'hello');
+  it('supports pino object-first form without a context', () => {
+    createService().log({ requestId: 'r-1' }, 'request received');
+    expect(mockLogger.info).toHaveBeenCalledWith({ requestId: 'r-1' }, 'request received');
   });
 
-  it('routes error to the error level', () => {
-    createService().error('boom');
-    expect(mockLogger.error).toHaveBeenCalledWith('boom');
+  it('merges a trailing meta object into the bindings', () => {
+    createService().log('hello', { requestId: 'r-1' }, 'MyContext');
+    expect(mockLogger.info).toHaveBeenCalledWith({ context: 'MyContext', requestId: 'r-1' }, 'hello');
   });
 
-  it('attaches the stack trace and context on error(message, stack, context)', () => {
-    const stack = 'Error: boom\n    at fn (file.ts:1:1)';
-    createService().error('boom', stack, 'MyContext');
-    expect(mockLogger.error).toHaveBeenCalledWith({ err: stack, context: 'MyContext' }, 'boom');
-  });
-
-  it('attaches a bare stack trace on error(message, stack)', () => {
-    const stack = 'Error: boom\n    at fn (file.ts:1:1)';
-    createService().error('boom', stack);
-    expect(mockLogger.error).toHaveBeenCalledWith({ err: stack }, 'boom');
-  });
-
-  it('attaches an Error instance on error(message, error)', () => {
-    const error = new Error('boom');
-    createService().error('failed', error);
-    expect(mockLogger.error).toHaveBeenCalledWith({ err: error }, 'failed');
-  });
-
-  it('attaches an Error instance and context on error(message, error, context)', () => {
-    const error = new Error('boom');
-    createService().error('failed', error, 'MyContext');
-    expect(mockLogger.error).toHaveBeenCalledWith({ err: error, context: 'MyContext' }, 'failed');
-  });
-
-  it('treats a bare Error argument as the message and err binding', () => {
-    const error = new Error('boom');
-    createService().error(error);
-    expect(mockLogger.error).toHaveBeenCalledWith({ err: error }, 'boom');
-  });
-
-  it('extracts context from a bare Error argument', () => {
+  it('binds an Error passed as the message under err', () => {
     const error = new Error('boom');
     createService().error(error, 'MyContext');
-    expect(mockLogger.error).toHaveBeenCalledWith({ err: error, context: 'MyContext' }, 'boom');
+    expect(mockLogger.error).toHaveBeenCalledWith({ context: 'MyContext', err: error }, 'boom');
   });
 
-  it('preserves an Error instance at non-error levels', () => {
+  it('binds an Error parameter under err at any level', () => {
     const error = new Error('boom');
-    createService().warn('careful', error);
-    expect(mockLogger.warn).toHaveBeenCalledWith({ err: error }, 'careful');
+    createService().warn('join failed:', error, 'SocketIo');
+    expect(mockLogger.warn).toHaveBeenCalledWith({ context: 'SocketIo', err: error }, 'join failed:');
   });
 
-  it('routes warn to the warn level', () => {
-    createService().warn('careful');
-    expect(mockLogger.warn).toHaveBeenCalledWith('careful');
+  it('keeps a stack string verbatim under stack on error(message, stack, context)', () => {
+    const stack = 'Error: boom\n    at fn (file.ts:1:1)';
+    createService().error('boom', stack, 'ExceptionsHandler');
+    expect(mockLogger.error).toHaveBeenCalledWith({ context: 'ExceptionsHandler', stack }, 'boom');
   });
 
-  it('routes verbose to the trace level', () => {
-    createService().verbose('detail');
-    expect(mockLogger.trace).toHaveBeenCalledWith('detail');
+  it('does not treat an optional-param string at info level as a stack', () => {
+    createService().log('hello', 'world', 'MyContext');
+    expect(mockLogger.info).toHaveBeenCalledWith({ context: 'MyContext' }, 'hello', 'world');
   });
 
-  it('routes fatal to the fatal level', () => {
-    createService().fatal('crash');
+  it('routes verbose to trace and fatal to fatal', () => {
+    const service = createService();
+    service.verbose('deep');
+    service.fatal('crash');
+    expect(mockLogger.trace).toHaveBeenCalledWith('deep');
     expect(mockLogger.fatal).toHaveBeenCalledWith('crash');
   });
 
-  it('invokes onLog after writing, with the structured entry', () => {
-    const onLog = vi.fn();
-    createService().log('hello', { requestId: '1', onLog });
-    expect(mockLogger.info).toHaveBeenCalledWith({ requestId: '1' }, 'hello');
-    expect(onLog).toHaveBeenCalledWith({
-      level: 'info',
-      message: 'hello',
-      context: undefined,
-      meta: { requestId: '1' },
-    });
+  it('defaults a nullish message to an empty string', () => {
+    createService().log(undefined, 'MyContext');
+    expect(mockLogger.info).toHaveBeenCalledWith({ context: 'MyContext' }, '');
   });
 
-  it('invokes onLog from a meta-first call and strips it from the output', () => {
-    const onLog = vi.fn();
-    createService().log({ requestId: '1', onLog }, 'hello');
-    expect(mockLogger.info).toHaveBeenCalledWith({ requestId: '1' }, 'hello');
-    expect(onLog).toHaveBeenCalledWith({
-      level: 'info',
-      message: 'hello',
-      context: undefined,
-      meta: { requestId: '1' },
-    });
-  });
-
-  it('does not invoke onLog when it is not a function', () => {
-    createService().log('hello', { onLog: 'not-a-function' });
-    expect(mockLogger.info).toHaveBeenCalledWith('hello');
-  });
-
-  it('maps NestJS log levels to the pino threshold', () => {
+  it.each([
+    [['error', 'fatal'], 'error'],
+    [['warn', 'error', 'fatal'], 'warn'],
+    [['log', 'warn', 'error', 'fatal'], 'info'],
+    [['verbose'], 'trace'],
+    [[], 'silent'],
+  ] as const)('setLogLevels(%j) sets pino level %s', (levels, expected) => {
     const service = createService();
-    service.setLogLevels(['warn', 'error']);
-    expect(mockLogger.level).toBe('warn');
-  });
-
-  it('falls back to silent when no known level is enabled', () => {
-    const service = createService();
-    service.setLogLevels([]);
-    expect(mockLogger.level).toBe('silent');
+    service.setLogLevels([...levels]);
+    expect(mockLogger.level).toBe(expected);
   });
 });

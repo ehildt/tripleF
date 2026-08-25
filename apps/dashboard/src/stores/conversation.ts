@@ -21,6 +21,7 @@ import { getLatestRequestId } from './helpers/conversation/get-latest-request-id
 import { inferConversationTitle } from './helpers/conversation/infer-conversation-title.helper';
 import { isTemporaryConversationExpired } from './helpers/conversation/is-temporary-conversation-expired.helper';
 import { loadTurndown } from './helpers/conversation/load-turndown.helper';
+import { mergeUploadedDocuments } from './helpers/conversation/merge-uploaded-documents.helper';
 import { mergeUploadedImages } from './helpers/conversation/merge-uploaded-images.helper';
 import { prunePairedExchange } from './helpers/conversation/prune-paired-exchange.helper';
 import { toPersistedConversation } from './helpers/conversation/to-persisted-conversation.helper';
@@ -34,6 +35,7 @@ import type {
   ConversationSubscription,
   ConversationType,
   PersistedConversation,
+  UploadedDocument,
   UploadedImage,
 } from './conversation.model';
 import { type Exchange } from './conversation.model';
@@ -41,6 +43,7 @@ import { type Exchange } from './conversation.model';
 export type {
   Conversation,
   Exchange,
+  UploadedDocument,
   UploadedImage,
 } from './conversation.model';
 
@@ -889,6 +892,64 @@ export const useConversationStore = defineStore('conversation', () => {
     });
   }
 
+  function setUploadedDocuments(
+    conversationId: string,
+    documents: UploadedDocument[],
+  ) {
+    mutateConversation(conversationId, (conversation) => {
+      const cid = getConversationId(conversationId);
+      conversation.uploadedDocuments = mergeUploadedDocuments(
+        conversation.uploadedDocuments,
+        documents,
+        cid,
+      );
+      void persistConversation(conversation);
+    });
+  }
+
+  function getUploadedDocumentsForConversation(
+    conversationId: string,
+    targetConversationId?: string,
+  ): UploadedDocument[] {
+    const conversation = getConversation(conversationId);
+    if (!conversation) return [];
+    const cid = targetConversationId ?? getConversationId(conversationId);
+    return conversation.uploadedDocuments.filter(
+      (doc) => (doc.conversationId ?? cid) === cid,
+    );
+  }
+
+  function toggleUploadedDocumentSelected(
+    conversationId: string,
+    hash: string,
+    targetConversationId?: string,
+  ) {
+    mutateConversation(conversationId, (conversation) => {
+      const cid = targetConversationId ?? getConversationId(conversationId);
+      const document = conversation.uploadedDocuments.find(
+        (doc) => doc.hash === hash && (doc.conversationId ?? cid) === cid,
+      );
+      if (document) {
+        document.selected = document.selected !== false ? false : true;
+        void persistConversation(conversation);
+      }
+    });
+  }
+
+  function removeUploadedDocument(
+    conversationId: string,
+    hash: string,
+    targetConversationId?: string,
+  ) {
+    mutateConversation(conversationId, (conversation) => {
+      const cid = targetConversationId ?? getConversationId(conversationId);
+      conversation.uploadedDocuments = conversation.uploadedDocuments.filter(
+        (doc) => !(doc.hash === hash && (doc.conversationId ?? cid) === cid),
+      );
+      void persistConversation(conversation);
+    });
+  }
+
   function setSubscriptions(
     conversationId: string,
     subscriptions: ConversationSubscription[],
@@ -981,6 +1042,10 @@ export const useConversationStore = defineStore('conversation', () => {
     deselectAllImages,
     removeUploadedImage,
     toggleUploadedImageSelected,
+    setUploadedDocuments,
+    getUploadedDocumentsForConversation,
+    toggleUploadedDocumentSelected,
+    removeUploadedDocument,
     setSubscriptions,
     buildPrompt,
     saveActiveConversation,

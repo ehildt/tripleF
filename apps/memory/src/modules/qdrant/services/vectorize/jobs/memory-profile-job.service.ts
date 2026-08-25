@@ -1,24 +1,27 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
-
-import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
-import { AiSdkService } from '../../../../ai-sdk/services/ai-sdk.service.js';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   buildMemoryProfilePrompt,
   MEMORY_PROFILE_INSTRUCTIONS,
-} from '../../../constants/memory-profile-prompt.constant.js';
-import type { MemoryProfileJobData } from '../../../models/memory.model.js';
+} from '@triplef/agent/prompts';
 import {
   isAllFieldsNullWipe,
   type MemoryCognitionProfile,
   type MemoryProfileResponse,
   memoryProfileResponseSchema,
   mergeCognitionProfiles,
-} from '../../../models/memory-cognition.model.js';
+} from '@triplef/agent/schemas';
+import { AiSdkService } from '@triplef/ai-sdk';
+import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
+
+import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
+import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
+import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
+import { derivePayloadChars } from '../../../helpers/derive-payload-chars.helper.js';
+import type { MemoryProfileJobData } from '../../../models/memory.model.js';
+import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
 import { MemoryCognitionService } from '../../memory-cognition.service.js';
 import { MemoryOverridesService } from '../../memory-overrides.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
-
 /**
  * Cognition-profile job handler (vectorize queue): maintains the AI's own
  * memory of THIS user — one structured profile document plus derived insight
@@ -52,6 +55,7 @@ export class MemoryProfileJobService {
     private readonly memoryCognition: MemoryCognitionService,
     private readonly memoryOverrides: MemoryOverridesService,
     private readonly memorySearch: MemorySearchService,
+    @Inject(QDRANT_CONFIG) private readonly qdrantConfig: QdrantConfig,
   ) {}
 
   async execute(data: MemoryProfileJobData): Promise<void> {
@@ -62,6 +66,11 @@ export class MemoryProfileJobService {
       requestId: data.requestId,
     };
     const limit = this.memoryOverrides.getCognitionLimit();
+    const maxPayloadChars = derivePayloadChars(
+      data.numCtx,
+      this.qdrantConfig.profilePayloadRatio,
+      this.qdrantConfig.profilePayloadChars,
+    );
     const current = await this.memoryCognition.getProfile(data.memoryCognition);
     // The job's third input: the space's derived insights. The profile is a
     // routing map and the insights are its depth — the model sees both so it
@@ -102,13 +111,16 @@ export class MemoryProfileJobService {
             })),
             priorFacts: priorFacts.map((point) => ({ text: point.text })),
             limit,
+            maxPayloadChars,
           }),
         },
       ],
-      think: false,
+      providerOptions: buildProviderOptions({
+        think: false,
+        keepAlive: this.ollamaConfigService.config.keepAlive,
+        numCtx: data.numCtx,
+      }),
       tools: {},
-      keepAlive: this.ollamaConfigService.config.keepAlive,
-      numCtx: data.numCtx,
     });
 
     const verdict = this.parseVerdict(text);
@@ -165,7 +177,7 @@ export class MemoryProfileJobService {
    * Resolve a profile verdict patch over the freshest stored document and
    * store the result. Two guards keep a bad verdict from damaging the
    * document: an all-null wipe is rejected (explicit forget requests empty
-   * the document through the memoryDelete tool first, so a full wipe
+   * the document through the memory-cognition-forget tool first, so a full wipe
    * reaching the merge means the model mis-read "omit unchanged fields" as
    * "reset the document") and an over-cap merge keeps the old document (the
    * limit is the valve — never truncate JSON mid-structure, never retry a

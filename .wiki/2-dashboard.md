@@ -43,6 +43,8 @@ UI copy is translated via **vue-i18n** (`src/i18n/`): typed message catalogs per
 | `VITE_API_URL`      | REST base (default dev proxy `/api`)                              |
 | `VITE_SOCKET_URL`   | Socket.IO endpoint (`http://localhost:3000`)                      |
 | `VITE_PROXY_TARGET` | Vite dev-server proxy target (`http://server:3000` in containers) |
+| `VITE_MEMORY_API_URL` | Memory app REST base (default same-origin `/memory-api` proxy)  |
+| `VITE_MEMORY_PROXY_TARGET` | Vite dev-server proxy target for the memory app (`http://memory:3400` in containers) |
 
 ## Related pages
 

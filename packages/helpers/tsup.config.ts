@@ -12,7 +12,7 @@ export default defineConfig({
     'src/hash-payload/index.ts',
     'src/is-buffer-or-serialized/index.ts',
     'src/key-fingerprint/index.ts',
-    'src/logger-options/index.ts',
+    'src/limit-text/index.ts',
     'src/mask-api-key/index.ts',
     'src/object-io/index.ts',
     'src/parse-llm-json/index.ts',

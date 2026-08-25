@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
+import { SourceBudgetConfigService } from '../configs/source-budget-config.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ShownMediaService } from '../services/shown-media.service.js';
@@ -62,6 +63,20 @@ describe('SanitizeActionService', () => {
               .fn()
               .mockResolvedValue({ profile: null, insights: [] }),
             searchByText: vi.fn().mockResolvedValue([]),
+            selectContext: vi.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: SourceBudgetConfigService,
+          useValue: {
+            config: {
+              sourceBudgetRatio: 0.125,
+              sourceBudgetChars: 48000,
+              referenceDocRatio: 0.5,
+              referenceDocChars: 100000,
+              gatheredTotalRatio: 0.03,
+              gatheredTotalChars: 16000,
+            },
           },
         },
       ],

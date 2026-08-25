@@ -7,7 +7,6 @@ import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwr
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 
-import { AiSdkService } from './ai-sdk.service.js';
 import { ToolSelectionService } from './tool-selection.service.js';
 
 describe('ToolSelectionService', () => {
@@ -52,12 +51,6 @@ describe('ToolSelectionService', () => {
                 scrape: { enabled: false },
               },
             }),
-          },
-        },
-        {
-          provide: AiSdkService,
-          useValue: {
-            compactContent: vi.fn(),
           },
         },
         {

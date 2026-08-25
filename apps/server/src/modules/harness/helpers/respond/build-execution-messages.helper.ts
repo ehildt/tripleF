@@ -1,8 +1,9 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
-import { buildContentSystemPrompt } from '../../prompts/content-system.prompt.js';
-import { resolveVariantInstructions } from '../../prompts/variant-instructions.registry.js';
-import { buildSnippetInstruction } from '../../snippets/helpers/build-snippet-instruction.helper.js';
-import { SNIPPET_TEMPLATE_PRESETS } from '../../snippets/snippet-presets.constant.js';
+import { buildContentSystemPrompt } from '@triplef/agent/prompts';
+import { resolveVariantInstructions } from '@triplef/agent/prompts';
+import { buildSnippetInstruction } from '@triplef/agent/prompts';
+import { SNIPPET_TEMPLATE_PRESETS } from '@triplef/agent/prompts';
+import type { InputMessage } from '@triplef/ai-sdk';
+
 import { selectStepHistory } from '../select-step-history.helper.js';
 import {
   getOptionalKeys,

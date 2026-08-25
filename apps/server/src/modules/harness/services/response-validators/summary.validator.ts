@@ -1,5 +1,5 @@
-import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
-import { summarySchema } from '../../schemas/summary-json.schema.js';
+import { formatZodIssues } from '@triplef/agent/schemas';
+import { summarySchema } from '@triplef/agent/schemas';
 
 import type { ValidationResult } from './validation-result.type.js';
 

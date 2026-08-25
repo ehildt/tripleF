@@ -1,12 +1,25 @@
+import type { ToolDependencies } from '@triplef/agent/tools';
+import { createBrightDataImageSearch } from '@triplef/agent/tools';
+import { createBrightDataNewsSearch } from '@triplef/agent/tools';
+import { createBrightDataPlacesSearch } from '@triplef/agent/tools';
+import { createBrightDataShoppingSearch } from '@triplef/agent/tools';
+import { createBrightDataVideoSearch } from '@triplef/agent/tools';
+import { createBrightDataWebSearch } from '@triplef/agent/tools';
+import { createBrightDataWebpageScrape } from '@triplef/agent/tools';
+import { createSerperBusinessReviewsSearch } from '@triplef/agent/tools';
+import { createSerperImageSearch } from '@triplef/agent/tools';
+import { createSerperNewsSearch } from '@triplef/agent/tools';
+import { createSerperPlacesSearch } from '@triplef/agent/tools';
+import { createSerperShoppingSearch } from '@triplef/agent/tools';
+import { createSerperVideoSearch } from '@triplef/agent/tools';
+import { createSerperWebSearch } from '@triplef/agent/tools';
+import { createSerperWebpageScrape } from '@triplef/agent/tools';
+import { createVariantRequestTool } from '@triplef/agent/tools';
+import { withSummary } from '@triplef/agent/tools';
+import { createWebFetchTool } from '@triplef/agent/tools';
+import { createYoutubeVideoSearch } from '@triplef/agent/tools';
 import type { ToolSet } from 'ai';
 
-import { createBrightDataImageSearch } from './bright-data/image-search.tool.js';
-import { createBrightDataNewsSearch } from './bright-data/news-search.tool.js';
-import { createBrightDataPlacesSearch } from './bright-data/places-search.tool.js';
-import { createBrightDataShoppingSearch } from './bright-data/shopping-search.tool.js';
-import { createBrightDataVideoSearch } from './bright-data/video-search.tool.js';
-import { createBrightDataWebSearch } from './bright-data/web-search.tool.js';
-import { createBrightDataWebpageScrape } from './bright-data/webpage-scrape.tool.js';
 import { createEodhdFundamentals } from './eodhd/fundamentals.tool.js';
 import { createEodhdHistory } from './eodhd/history.tool.js';
 import { createEodhdIntraday } from './eodhd/intraday.tool.js';
@@ -14,19 +27,6 @@ import { createEodhdNews } from './eodhd/news.tool.js';
 import { createEodhdQuote } from './eodhd/quote.tool.js';
 import { createEodhdSearch } from './eodhd/search.tool.js';
 import { createEodhdTechnical } from './eodhd/technical.tool.js';
-import { createSerperBusinessReviewsSearch } from './serper/business-reviews-search.tool.js';
-import { createSerperImageSearch } from './serper/image-search.tool.js';
-import { createSerperNewsSearch } from './serper/news-search.tool.js';
-import { createSerperPlacesSearch } from './serper/places-search.tool.js';
-import { createSerperShoppingSearch } from './serper/shopping-search.tool.js';
-import { createSerperVideoSearch } from './serper/video-search.tool.js';
-import { createSerperWebSearch } from './serper/web-search.tool.js';
-import { createSerperWebpageScrape } from './serper/webpage-scrape.tool.js';
-import { createVariantRequestTool } from './image-variants.tool.js';
-import { withSummary } from './tool-factory.js';
-import type { ToolDependencies } from './types.js';
-import { createWebFetchTool } from './web-fetch.tool.js';
-import { createYoutubeVideoSearch } from './youtube.js';
 
 function addBrightDataTools(
   tools: ToolSet,

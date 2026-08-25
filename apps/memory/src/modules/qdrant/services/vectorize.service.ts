@@ -26,7 +26,8 @@ interface DeleteRecordsOutcome {
  * Direct (non-queued) memory record writes and deletes. The turn pipeline
  * lives in the vectorize step machine (steps under services/vectorize/); this
  * service holds the synchronous record paths used by the agentic
- * `memoryRemember`/`memoryDelete` tools and the manual text endpoints.
+ * `memory-partition-remember`/`memory-partition-delete` tools and the manual
+ * text endpoints.
  * The AI's cognition document lives in MemoryCognitionService.
  */
 @Injectable()
@@ -42,10 +43,11 @@ export class VectorizeService {
   ) {}
 
   /**
-   * Synchronous single-record store (agentic `memoryRemember` / manual
-   * ingest): one embed call, one deterministic-id point — re-stating the same
-   * text overwrites in place, refreshing tags/timestamp. Returns the point id;
-   * throws when the feature is off or the embed fails so the calling tool can
+   * Synchronous single-record store (agentic `memory-partition-remember` /
+   * manual ingest): one embed call, one deterministic-id point — re-stating
+   * the same text overwrites in place, refreshing tags/timestamp. Returns the
+   * point id; throws when the feature is off or the embed fails so the
+   * calling tool can
    * surface an honest error to the model.
    */
   async storeRecord(input: {
@@ -55,6 +57,7 @@ export class VectorizeService {
     requestId?: string;
     text: string;
     tags?: string[];
+    category?: string;
   }): Promise<string> {
     if (!this.config.enabled) {
       throw new Error('Memory feature is disabled');
@@ -72,7 +75,9 @@ export class VectorizeService {
       sessionId: input.sessionId,
       conversationId: input.conversationId,
       requestId: input.requestId,
-      points: [{ id, vector, text, tags: input.tags ?? [] }],
+      points: [
+        { id, vector, text, tags: input.tags ?? [], category: input.category },
+      ],
     });
     this.logger.log(
       {
@@ -81,6 +86,7 @@ export class VectorizeService {
         pointId: id,
         text,
         tags: input.tags ?? [],
+        category: input.category,
       },
       'memory record stored',
     );
@@ -121,7 +127,8 @@ export class VectorizeService {
   }
 
   /**
-   * Scoped record delete (agentic `memoryDelete` / REST text-delete): resolve
+   * Scoped record delete (agentic `memory-partition-delete` / REST
+   * text-delete): resolve
    * the matching records inside the caller's partition, then remove them by
    * point id. Exact `text` equality is the record's identity (deterministic
    * ids make a verbatim restatement the same point); the other fields only

@@ -2,7 +2,7 @@
   "name": "@triplef/config-factory",
   "description": "A dynamic NestJS module factory designed to register, manage, and expose custom configuration providers throughout the application.",
   "version": "1.1.4",
-  "packageManager": "pnpm@11.24.0",
+  "packageManager": "pnpm@11.25.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -49,7 +49,7 @@
     "format": "prettier --write .",
     "lint": "eslint ./src",
     "lint-staged": "npx lint-staged --allow-empty",
-    "ncu:update": "npx npm-check-updates -u --format group",
+    "ncu:update": "npx npm-check-updates -u --format group --dep prod,dev,optional,packageManager,peer",
     "ncu:interactive": "npx npm-check-updates -u --interactive --format group",
     "ncu:validate": "npx npm-check-updates -e 2 --packageFile=./package.json",
     "prebuild": "rimraf dist",
@@ -62,7 +62,7 @@
     "@changesets/cli": "^3.0.1",
     "@eslint/js": "^10.0.1",
     "@types/eslint": "^9.6.1",
-    "@types/node": "^26.3.0",
+    "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "4.1.11",
     "depcheck": "^1.4.7",
     "dependency-cruiser": "^18.2.0",
@@ -74,7 +74,7 @@
     "globals": "^17.11.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
-    "lint-staged": "^17.3.0",
+    "lint-staged": "^17.4.1",
     "npm-check-updates": "^23.1.0",
     "prettier": "^3.9.6",
     "rimraf": "^6.1.3",
@@ -85,8 +85,8 @@
     "vitest": "^4.1.11"
   },
   "peerDependencies": {
-    "@triplef/helpers": "^1.5.2",
-    "@nestjs/common": "^11.1.17",
-    "joi": "^18.0.2"
+    "@triplef/helpers": "^1.5.4",
+    "@nestjs/common": "^11.2.3",
+    "joi": "^18.2.5"
   }
 }

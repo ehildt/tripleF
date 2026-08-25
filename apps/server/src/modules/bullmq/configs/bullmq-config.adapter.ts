@@ -1,4 +1,4 @@
-import { BullMQConfig } from '@ehildt/nestjs-bullmq';
+import { BullMQConfig } from '@triplef/bullmq';
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
 import type { RedisOptions } from 'ioredis';

@@ -5,4 +5,6 @@ export const STREAM = 'stream';
 export const ROOM_ID = 'roomId';
 export const NUM_CTX = 'numCtx';
 export const PROMPT = 'prompt';
-export const IMAGES = 'images';
+export const ATTACHMENTS = 'attachments';
+export const ORIGINALS = 'originals';
+export const DOCUMENT_TEXT_LIMIT = 'documentTextLimit';

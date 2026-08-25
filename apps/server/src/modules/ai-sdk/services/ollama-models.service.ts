@@ -38,7 +38,12 @@ export class OllamaModelsService {
   ): Promise<boolean> {
     const show = await this.getModelShow(modelName);
     const capabilities = show?.capabilities ?? [];
-    return capabilities.includes(capability);
+    if (capabilities.includes(capability)) return true;
+    // Fallback: older Ollama (pre-0.5.x) and some models/quantizations don't
+    // populate `capabilities` — detect vision from the model_info keys that
+    // Ollama itself uses to derive the capability (PR #10066).
+    if (capability === 'vision') return detectVision(show?.model_info);
+    return false;
   }
 
   /**
@@ -187,4 +192,22 @@ export class OllamaModelsService {
     const val = model_info[key];
     return typeof val === 'number' ? val : Number(val) || undefined;
   }
+}
+
+/**
+ * Vision fallback for models whose `/api/show` response omits `capabilities`
+ * (older Ollama, or models that don't populate it). Ollama derives the
+ * `vision` capability from a `vision.block_count` KV (PR #10066); projector
+ * and CLIP keys are the same signal under different naming.
+ */
+function detectVision(modelInfo?: Record<string, unknown>): boolean {
+  if (!modelInfo) return false;
+  return Object.keys(modelInfo).some(
+    (key) =>
+      key === 'vision.block_count' ||
+      key.endsWith('.vision.block_count') ||
+      key.includes('.vision.') ||
+      key.includes('projector') ||
+      key.startsWith('clip.'),
+  );
 }

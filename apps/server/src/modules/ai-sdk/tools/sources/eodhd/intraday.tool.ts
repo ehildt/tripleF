@@ -1,7 +1,7 @@
+import type { ToolDependencies } from '@triplef/agent/tools';
 import { tool } from 'ai';
 
 import type { EodhdIntradayPoint } from '../../../../stock-data/providers/eodhd/eodhd-client.js';
-import type { ToolDependencies } from '../types.js';
 
 import { createEodhdClient, eodhdErrorResult } from './eodhd-tool.helper.js';
 import { eodhdIntradaySchema } from './intraday.schema.js';

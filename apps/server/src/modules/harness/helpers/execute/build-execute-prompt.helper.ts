@@ -1,5 +1,5 @@
-import type { IntentResult } from '../../templates/intent.schema.js';
-import { type VariantName } from '../tools/tool-registry.constants.js';
+import type { IntentResult } from '@triplef/agent/schemas';
+import { type VariantName } from '@triplef/agent/schemas';
 
 import { buildLanguageInstruction } from './build-language-instruction.helper.js';
 import { buildStockmarketNote } from './build-stockmarket-note.helper.js';

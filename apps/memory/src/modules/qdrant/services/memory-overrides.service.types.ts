@@ -12,4 +12,8 @@ export interface MemoryOverridesPatch {
   episodeRecencyMidpoint?: number | null;
   /** Max episode records injected per turn (1–10). */
   episodeProbeLimit?: number | null;
+  /** Minimum cosine score for the episode probe's recency prefetch (0–1). */
+  episodeScoreThreshold?: number | null;
+  /** Max fact records the constellation loads per space (100–10000). */
+  constellationNodeLimit?: number | null;
 }

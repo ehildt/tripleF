@@ -18,8 +18,12 @@ import {
   ApeDeleteQdrantText,
   ApeGetQdrantMemory,
   ApeGetQdrantMemoryCognition,
+  ApeGetQdrantMemoryLinks,
   ApeGetQdrantStatus,
+  ApePostQdrantCognitionInsight,
   ApePostQdrantConsolidate,
+  ApePostQdrantMemoryLinksRecompute,
+  ApePostQdrantMemoryRelink,
   ApePostQdrantSearchText,
   ApePostQdrantSearchVector,
   ApePostQdrantText,
@@ -30,12 +34,18 @@ import { MemoryConsolidateBodyDto } from '../dtos/memory-consolidate-body.dto.js
 import { MemoryConsolidateResponseDto } from '../dtos/memory-consolidate-response.dto.js';
 import { MemoryDeleteQueryDto } from '../dtos/memory-delete-query.dto.js';
 import { MemoryDeleteResponseDto } from '../dtos/memory-delete-response.dto.js';
+import { MemoryLinkDto } from '../dtos/memory-link.dto.js';
+import { MemoryLinksQueryDto } from '../dtos/memory-links-query.dto.js';
+import { MemoryLinksRecomputeResponseDto } from '../dtos/memory-links-recompute-response.dto.js';
 import { MemoryListQueryDto } from '../dtos/memory-list-query.dto.js';
 import { MemoryPruneQueryDto } from '../dtos/memory-prune-query.dto.js';
 import { MemoryPruneResponseDto } from '../dtos/memory-prune-response.dto.js';
+import { MemoryRelinkQueryDto } from '../dtos/memory-relink-query.dto.js';
+import { MemoryRelinkResponseDto } from '../dtos/memory-relink-response.dto.js';
 import { MemorySearchTextDto } from '../dtos/memory-search-text.dto.js';
 import { MemorySearchVectorDto } from '../dtos/memory-search-vector.dto.js';
 import { MemorySendTextDto } from '../dtos/memory-send-text.dto.js';
+import { MemoryStoreInsightDto } from '../dtos/memory-store-insight.dto.js';
 import { QdrantStatusResponseDto } from '../dtos/qdrant-status.dto.js';
 import type { MemoryPoint } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
@@ -86,6 +96,27 @@ export class QdrantController {
     };
   }
 
+  @Post('memory/cognition/insights')
+  @HttpCode(HttpStatus.OK)
+  @ApePostQdrantCognitionInsight()
+  async storeInsight(@Body() body: MemoryStoreInsightDto) {
+    try {
+      const id = await this.memoryCognitionService.storeInsight(
+        {
+          memoryCognition: body.memoryCognition,
+          sessionId: body.sessionId,
+          conversationId: body.conversationId,
+          requestId: body.requestId,
+        },
+        { text: body.text, path: body.path },
+      );
+      return { accepted: true, id };
+    } catch {
+      // Feature off or embed/store outage — memory is a background concern.
+      return { accepted: false };
+    }
+  }
+
   @Get('memory')
   @ApeGetQdrantMemory()
   async listMemory(@Query() query: MemoryListQueryDto): Promise<MemoryPoint[]> {
@@ -102,6 +133,47 @@ export class QdrantController {
     });
   }
 
+  @Get('memory/vocabulary')
+  async listVocabulary(
+    @Query('memoryPartition') memoryPartition?: string,
+  ): Promise<{ categories: string[]; tags: string[] }> {
+    const partition = memoryPartition?.trim();
+    if (!partition) return { categories: [], tags: [] };
+    const [categories, tags] = await Promise.all([
+      this.memoryRepository.facetCategories(partition),
+      this.memoryRepository.facetTags(partition),
+    ]);
+    return {
+      categories: categories.map((entry) => entry.value),
+      tags: tags.map((entry) => entry.value),
+    };
+  }
+
+  @Get('memory/links')
+  @ApeGetQdrantMemoryLinks()
+  async listMemoryLinks(
+    @Query() query: MemoryLinksQueryDto,
+  ): Promise<MemoryLinkDto[]> {
+    const lane = query.memoryPartition ? 'partition' : 'cognition';
+    const scopeKey = query.memoryPartition ?? query.memoryCognition;
+    if (!scopeKey) return [];
+    return this.memoryRepository.listLinks(lane, scopeKey);
+  }
+
+  @Post('memory/links/recompute')
+  @HttpCode(HttpStatus.OK)
+  @ApePostQdrantMemoryLinksRecompute()
+  async recomputeMemoryLinks(
+    @Query() query: MemoryLinksQueryDto,
+  ): Promise<MemoryLinksRecomputeResponseDto> {
+    const lane = query.memoryPartition ? 'partition' : 'cognition';
+    const scopeKey = query.memoryPartition ?? query.memoryCognition;
+    if (!scopeKey)
+      throw new BadRequestException('Pass memoryPartition or memoryCognition');
+    const edges = await this.memoryRepository.recomputeLinks(lane, scopeKey);
+    return { edges: edges.length };
+  }
+
   @Post('text')
   @HttpCode(HttpStatus.OK)
   @ApePostQdrantText()
@@ -114,6 +186,7 @@ export class QdrantController {
         requestId: body.requestId,
         text: body.text,
         tags: body.tags,
+        category: body.category,
       });
       return { accepted: true, id };
     } catch {
@@ -244,6 +317,33 @@ export class QdrantController {
       sweeps.push({ memoryPartition, pending });
     }
     return { accepted: true, sweeps };
+  }
+
+  @Post('memory/relink')
+  @HttpCode(HttpStatus.OK)
+  @ApePostQdrantMemoryRelink()
+  async relinkMemory(
+    @Query() query: MemoryRelinkQueryDto,
+  ): Promise<MemoryRelinkResponseDto> {
+    const memoryPartition = query.memoryPartition?.trim();
+    if (!memoryPartition) {
+      throw new BadRequestException('memoryPartition is required');
+    }
+    const model = query.model?.trim() || this.config.consolidateModel;
+    if (!model) {
+      throw new BadRequestException(
+        'An adjudication model is required — pass "model" or set MEMORY_CONSOLIDATE_MODEL',
+      );
+    }
+    await this.memoryEnqueue.enqueueRelinkJob({
+      memoryPartition,
+      model,
+      limit: query.limit,
+      maxPasses: query.maxPasses,
+      enrich: query.enrich === true,
+      dryRun: query.dryRun === true,
+    });
+    return { accepted: true };
   }
 
   @Delete('memory')

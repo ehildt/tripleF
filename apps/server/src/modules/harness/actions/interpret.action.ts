@@ -1,27 +1,28 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  buildIntentCorrectionPrompt,
+  languageCorrectionPrompt,
+} from '@triplef/agent/prompts';
+import { type IntentResult } from '@triplef/agent/schemas';
+import type { InputMessage } from '@triplef/ai-sdk';
+import { AiSdkService } from '@triplef/ai-sdk';
 
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
 import type { MemoryClientConfig } from '../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import {
-  buildIntentCorrectionPrompt,
-  languageCorrectionPrompt,
-} from '../constants/structured-json-prompt.constant.js';
 import { buildClassifyMessages } from '../helpers/interpret/build-classify-messages.helper.js';
 import { parseIntent } from '../helpers/interpret/parse-intent.helper.js';
+import { consumeResponseStream } from '../helpers/stream/consume-response-stream.helper.js';
 import { filterEodhdToolsByCapabilities } from '../helpers/tools/filter-eodhd-tools-by-capabilities.helper.js';
 import { getEnabledToolNames } from '../helpers/tools/get-enabled-tool-names.helper.js';
-import { type IntentResult } from '../templates/intent.schema.js';
 
 import type {
   InterpretParams,
   InterpretResult,
 } from './interpret.action.types.js';
-
 const MAX_INTERPRET_RETRIES = 3;
 
 @Injectable()
@@ -74,28 +75,38 @@ export class InterpretActionService {
     let lastIntent: IntentResult | undefined;
 
     for (let attempt = 1; attempt <= MAX_INTERPRET_RETRIES; attempt++) {
-      const result = await this.aiSdkService.generateChat({
+      // Stream the classifier so its reasoning (thinking) reaches the client
+      // during the "understanding" phase — the same thinking experience the
+      // respond step provides. Text is accumulated for intent parsing.
+      const stream = await this.aiSdkService.streamChat({
         model: params.model,
         messages: classifyMessages,
-        keepAlive: params.keepAlive,
-        numCtx: params.numCtx,
-        think: false,
+        providerOptions: buildProviderOptions({
+          keepAlive: params.keepAlive,
+          numCtx: params.numCtx,
+          think: params.think,
+        }),
         tools: {},
         abortSignal: params.abortSignal,
       });
 
-      totalInputTokens += result.totalUsage?.inputTokens ?? 0;
-      totalOutputTokens += result.totalUsage?.outputTokens ?? 0;
+      const { content, inputTokens, outputTokens } =
+        await consumeResponseStream(stream.fullStream, {
+          onReasoningDelta: params.onReasoningDelta,
+        });
+
+      totalInputTokens += inputTokens;
+      totalOutputTokens += outputTokens;
 
       let intent: IntentResult;
       try {
-        intent = parseIntent(params.requestId, result.text, enabledToolNames);
+        intent = parseIntent(params.requestId, content, enabledToolNames);
       } catch (error) {
         this.logger.warn(
           {
             requestId: params.requestId,
             step: 'interpret',
-            rawOutput: result.text,
+            rawOutput: content,
             err: error instanceof Error ? error : new Error(String(error)),
           },
           'intent parse failed',
@@ -123,8 +134,8 @@ export class InterpretActionService {
           reasoning: intent.reasoning,
           contextSummary: intent.contextSummary,
           clarification: intent.needsClarification,
-          inputTokens: result.totalUsage?.inputTokens,
-          outputTokens: result.totalUsage?.outputTokens,
+          inputTokens,
+          outputTokens,
         },
         'intent classified',
       );

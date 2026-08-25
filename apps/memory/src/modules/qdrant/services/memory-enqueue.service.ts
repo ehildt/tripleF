@@ -4,15 +4,19 @@ import { Queue } from 'bullmq';
 
 import { VECTORIZE_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import {
+  LEXICON_CONSOLIDATE_JOB,
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_PROFILE_JOB,
+  MEMORY_RELINK_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
   VECTORIZE_JOB,
 } from '../constants/qdrant.constants.js';
 import type {
+  LexiconSweepJobData,
   MemoryConsolidateJobData,
   MemoryProfileJobData,
+  MemoryRelinkJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
@@ -26,6 +30,8 @@ interface EnqueueTurnInput {
   /** Harness turn id — traces every stored point back to the user request. */
   requestId?: string;
   model: string;
+  /** Context size of the originating turn — derives the extract-step valve. */
+  numCtx?: number;
   userText?: string;
   assistantText?: string;
 }
@@ -59,6 +65,7 @@ export class MemoryEnqueueService {
         conversationId: input.conversationId,
         requestId: input.requestId,
         model: input.model,
+        numCtx: input.numCtx,
       };
       const jobs: VectorizeJobData[] = [];
       if (input.userText?.trim()) {
@@ -134,6 +141,51 @@ export class MemoryEnqueueService {
     } catch (error) {
       this.logger.warn(
         `Consolidate enqueue failed for ${data.memoryPartition}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Relink sweep trigger: endpoint-only (manual ops job — LLM cost is
+   * O(points × passes), so it is never auto-triggered). The fixed jobId lets
+   * BullMQ dedupe concurrent triggers for one partition.
+   */
+  async enqueueRelinkJob(data: MemoryRelinkJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Relink enqueue skipped: no model (set MEMORY_CONSOLIDATE_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(MEMORY_RELINK_JOB, data, {
+        jobId: `relink-${data.memoryPartition}-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Relink enqueue failed for ${data.memoryPartition}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Lexicon supersede sweep trigger: threshold auto-trigger or webhook. The
+   * lexicon is global, so the jobId is a singleton (no partition suffix).
+   */
+  async enqueueLexiconSweep(data: LexiconSweepJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    try {
+      await this.queue.add(LEXICON_CONSOLIDATE_JOB, data, {
+        jobId: `lexicon-consolidate-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Lexicon sweep enqueue failed: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

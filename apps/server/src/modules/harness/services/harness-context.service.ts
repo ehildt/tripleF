@@ -8,10 +8,13 @@ import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
 import { buildVisionExclusionNotice } from '../helpers/build-vision-exclusion-notice.helper.js';
+import type { DocumentSection } from '../helpers/documents/document-section.types.js';
 import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.helper.js';
 import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.helper.js';
+import { isImageContentType } from '../helpers/media-classification/is-image-content-type.helper.js';
 import { stripImagesFromMessages } from '../helpers/sanitize/strip-images-from-messages.helper.js';
 
+import { DocumentConversionService } from './document-conversion.service.js';
 import { HarnessContext } from './harness-context.type.js';
 import { StepRegistryService } from './step-registry.service.js';
 
@@ -20,6 +23,7 @@ export class HarnessContextService {
   private readonly logger = new Logger(HarnessContextService.name);
 
   constructor(
+    private readonly documentConversionService: DocumentConversionService,
     private readonly minioService: MinioService,
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly ollamaModelsService: OllamaModelsService,
@@ -37,6 +41,7 @@ export class HarnessContextService {
 
     const sessionMetadata = parseSessionMetadata(filters.sessionMetadata);
     const referencedMeta = sessionMetadata?.images ?? [];
+    const referencedOriginals = sessionMetadata?.originals ?? [];
     const hasNewImages = (filters.hasNewImages ?? false) && meta.length > 0;
 
     this.validateInput(meta);
@@ -54,12 +59,67 @@ export class HarnessContextService {
       'resolve images',
     );
 
-    let allMeta = this.mergeMeta(referencedMeta, meta);
-    const hasImages = allMeta.length > 0;
+    const allMeta = this.mergeMeta(referencedMeta, meta);
+    // Uploaded images and document originals both travel as meta entries;
+    // originals are converted here (pdf → page images, docx/pptx/text →
+    // extracted text in MinIO manifests) so their derived content can reach
+    // the model: page images ride the image pipeline, text sections are
+    // injected into the prompt (text needs no vision capability; pdf pages
+    // are vision-gated together with the images below).
+    const imageUploadMeta = allMeta.filter((entry) =>
+      isImageContentType(entry.type),
+    );
+    const documentUploadMeta = allMeta.filter(
+      (entry) => !isImageContentType(entry.type),
+    );
+    const documentMeta = this.mergeDocuments(
+      referencedOriginals,
+      documentUploadMeta,
+    );
+
+    const resolvedDocuments =
+      await this.documentConversionService.resolveOriginals(
+        sessionId,
+        filters.conversationId,
+        requestId,
+        documentMeta,
+      );
+    // Page images already ride in as referenced images (client registers
+    // them at select time) — never attach the same page twice.
+    const attachedPageHashes = new Set(
+      imageUploadMeta.map((entry) => entry.hash),
+    );
+    const newPageImageMeta = resolvedDocuments.pageImageMeta.filter(
+      (entry) => !attachedPageHashes.has(entry.hash),
+    );
+    const imageMeta = [...imageUploadMeta, ...newPageImageMeta];
+    const hasImages = imageMeta.length > 0;
+
+    // Every file of this turn (attachments, referenced images, page images,
+    // document originals) rides the embedding payload by storage url so
+    // recalled memory points can reference their files.
+    const files = [
+      ...imageMeta.map((entry) => ({
+        name: entry.name,
+        url: this.minioService.buildFileUrl(
+          sessionId,
+          filters.conversationId,
+          entry.hash,
+        ),
+      })),
+      ...documentMeta.map((entry) => ({
+        name: entry.name,
+        url: this.minioService.buildFileUrl(
+          sessionId,
+          filters.conversationId,
+          entry.hash,
+        ),
+      })),
+    ];
 
     let buffers: Buffer[] = [];
     let visionExcluded = false;
-    let effectiveMeta = allMeta;
+    let effectiveMeta = imageMeta;
 
     if (hasImages) {
       const supportsVision = await this.ollamaModelsService.supportsCapability(
@@ -71,12 +131,11 @@ export class HarnessContextService {
         const download = await this.minioService.downloadBuffers(
           sessionId,
           filters.conversationId,
-          allMeta,
+          imageMeta,
         );
         buffers = download.buffers;
-        allMeta = download.keptMeta;
 
-        effectiveMeta = await this.fingerprintMeta(buffers, allMeta);
+        effectiveMeta = await this.fingerprintMeta(buffers, download.keptMeta);
       } else {
         visionExcluded = true;
         effectiveMeta = [];
@@ -86,8 +145,8 @@ export class HarnessContextService {
             step: 'context',
             sessionId,
             model: filters.model,
-            excludedImageCount: allMeta.length,
-            excludedHashes: allMeta.map((entry) => entry.hash),
+            excludedImageCount: imageMeta.length,
+            excludedHashes: imageMeta.map((entry) => entry.hash),
           },
           'model does not support vision; excluding images',
         );
@@ -95,7 +154,7 @@ export class HarnessContextService {
     }
 
     const notice = visionExcluded
-      ? buildVisionExclusionNotice(filters.model!, allMeta)
+      ? buildVisionExclusionNotice(filters.model!, imageMeta)
       : undefined;
 
     this.logger.log(
@@ -119,6 +178,10 @@ export class HarnessContextService {
       this.ollamaConfigService.config.keepAlive,
       undefined,
       notice,
+      this.truncateDocumentSections(
+        resolvedDocuments.textSections,
+        filters.documentTextLimit,
+      ),
     );
 
     if (visionExcluded) {
@@ -154,6 +217,8 @@ export class HarnessContextService {
       request,
       processedMeta: effectiveMeta,
       buffers,
+      files,
+      documentSections: resolvedDocuments.textSections,
       roomId: filters.roomId,
       event: filters.event,
       stream: filters.stream ?? false,
@@ -171,6 +236,41 @@ export class HarnessContextService {
 
   private validateInput(meta: unknown): void {
     if (!Array.isArray(meta)) throw new Error('Invalid meta');
+  }
+
+  /**
+   * Merge originals referenced from earlier turns with the freshly uploaded
+   * ones (incoming entries win — they carry the true content type).
+   */
+  private mergeDocuments(
+    referencedDocuments: Array<{ name: string; hash: string; type?: string }>,
+    incoming: HarnessJobPayload['meta'],
+  ): HarnessJobPayload['meta'] {
+    const seen = new Set(incoming.map((entry) => entry.hash));
+    const merged = referencedDocuments
+      .filter((entry) => !seen.has(entry.hash))
+      .map((entry) => ({
+        name: entry.name,
+        type: entry.type ?? '',
+        hash: entry.hash,
+        size: 0,
+      }));
+    return [...merged, ...incoming];
+  }
+
+  /** Cap each document section's text at the client-configured limit. */
+  private truncateDocumentSections(
+    sections: DocumentSection[],
+    limit: number | undefined,
+  ): DocumentSection[] {
+    if (limit === undefined || limit <= 0) return sections;
+    return sections.map((section) => ({
+      ...section,
+      text:
+        section.text.length > limit
+          ? section.text.slice(0, limit)
+          : section.text,
+    }));
   }
 
   private async fingerprintMeta(

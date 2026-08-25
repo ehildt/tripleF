@@ -8,16 +8,21 @@ import { buildModelVisionWarning } from '@/components/chat/helpers/build-model-v
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
 import { classifySelectedFiles } from '@/components/chat/helpers/classify-selected-files.helper';
 import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
-import { clearPendingFilesForConversation } from '@/composables/attached-files.state';
+import {
+  clearPendingFilesForConversation,
+  makeKey,
+  pendingFilesByConversation,
+} from '@/composables/attached-files.state';
 import { markMergePending } from '@/composables/merge-selection.state';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange, UploadedDocument } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 import { useModelsStore } from '@/stores/models';
 import type {
   ConversationMetadata,
+  ConversationMetadataDocument,
   ConversationMetadataImage,
 } from '@/types/form-query-params.model';
 import { buildFormData } from '@/utils/build-form-data.helper';
@@ -126,6 +131,7 @@ export function useSubmit(options: UseSubmitOptions) {
     requestId: string,
     userContent: string,
     images: ConversationMetadataImage[],
+    documents: ConversationMetadataDocument[],
     mergeOrigin?: string[],
   ) {
     for (const seeded of buildSeededExchanges({
@@ -136,6 +142,7 @@ export function useSubmit(options: UseSubmitOptions) {
       conversationId,
       userContent,
       images,
+      documents,
       mergeOrigin,
     })) {
       conversationStore.addExchange(sid, seeded);
@@ -167,6 +174,7 @@ export function useSubmit(options: UseSubmitOptions) {
     model: string,
     userContent: string,
     images: ConversationMetadataImage[],
+    documents: ConversationMetadataDocument[],
   ) {
     for (const s of conversationStore.conversations) {
       if (s.id === sid) continue;
@@ -180,6 +188,7 @@ export function useSubmit(options: UseSubmitOptions) {
         conversationId: s.conversationId,
         userContent,
         images,
+        documents,
       })) {
         conversationStore.addExchange(s.id, seeded);
       }
@@ -286,7 +295,23 @@ export function useSubmit(options: UseSubmitOptions) {
     ensureSocketSubscription(event, room);
     const socket = socketProvider.getSocket();
 
-    const currentFiles = conversationStore.getFiles(sid ?? '');
+    const pendingEntries =
+      pendingFilesByConversation.value.get(
+        makeKey(sid ?? '', conversationId),
+      ) ?? [];
+    const selectedEntries = pendingEntries.filter(
+      (entry) => entry.isSelected && entry.conversationId === conversationId,
+    );
+    const imageFiles = selectedEntries
+      .filter((entry) => entry.kind === 'image')
+      .map((entry) => entry.file);
+    const documentEntries = selectedEntries.filter(
+      (entry) => entry.kind === 'document',
+    );
+    const currentFiles = [
+      ...imageFiles,
+      ...documentEntries.map((entry) => entry.file),
+    ];
     conversationStore.setFiles(sid!, currentFiles);
 
     const visionWarning = buildModelVisionWarning(
@@ -299,10 +324,35 @@ export function useSubmit(options: UseSubmitOptions) {
     const conversation = sid ? conversationStore.getConversation(sid) : null;
     const preUploadImages = conversation?.uploadedImages ?? [];
     const { newFiles, referencedImages } = await classifySelectedFiles(
-      currentFiles,
+      imageFiles,
       preUploadImages,
       conversationId,
     );
+
+    const preUploadDocuments = conversation?.uploadedDocuments ?? [];
+    const persistedSelectedDocuments = preUploadDocuments.filter(
+      (doc) => doc.selected !== false,
+    );
+    const newDocuments: UploadedDocument[] = documentEntries.map((entry) => ({
+      name: entry.file.name,
+      hash: entry.hash,
+      type: entry.file.type || 'application/octet-stream',
+      uploadedAt: Date.now(),
+      size: entry.file.size,
+      selected: true,
+      conversationId,
+    }));
+    const newDocumentFiles = documentEntries.map((entry) => entry.file);
+    const newOriginals = newDocuments.map((doc) => ({
+      name: doc.name,
+      hash: doc.hash,
+      type: doc.type,
+    }));
+    // Bubble tiles: pdf originals render as their page images (registered as
+    // conversation images), never as a document icon.
+    const promptDocuments = [...persistedSelectedDocuments, ...newDocuments]
+      .filter((doc) => !doc.name.toLowerCase().endsWith('.pdf'))
+      .map((doc) => ({ name: doc.name, hash: doc.hash }));
 
     const hasNewImages = newFiles.length > 0;
 
@@ -311,6 +361,7 @@ export function useSubmit(options: UseSubmitOptions) {
       preUploadImages,
       conversationId,
       mergeFromRequestIds,
+      newOriginals,
     );
 
     const promptImages = conversationMetadata.images ?? [];
@@ -337,6 +388,7 @@ export function useSubmit(options: UseSubmitOptions) {
         requestId,
         userContent,
         promptImages,
+        promptDocuments,
         mergeFromRequestIds,
       );
     }
@@ -345,6 +397,8 @@ export function useSubmit(options: UseSubmitOptions) {
 
     const formData = buildFormData(newFiles, {
       prompt: conv,
+      originals: newDocumentFiles,
+      documentTextLimit: appStore.documentTextLimit,
     });
 
     arguments_.value = '';
@@ -367,6 +421,7 @@ export function useSubmit(options: UseSubmitOptions) {
       model,
       userContent,
       promptImages,
+      promptDocuments,
     );
 
     const params = buildSubmitParams(
@@ -396,6 +451,7 @@ export function useSubmit(options: UseSubmitOptions) {
       formData,
       socket,
       referencedImages,
+      newDocuments,
       conversationId,
     });
   }
@@ -411,6 +467,7 @@ export function useSubmit(options: UseSubmitOptions) {
       formData,
       socket,
       referencedImages,
+      newDocuments,
       conversationId,
     } = options;
 
@@ -460,6 +517,7 @@ export function useSubmit(options: UseSubmitOptions) {
       // attachment state for this conversation.
       if (sid) {
         conversationStore.setUploadedImages(sid, referencedImages);
+        conversationStore.setUploadedDocuments(sid, newDocuments);
         clearPendingFilesForConversation(sid, conversationId);
         conversationStore.setFiles(sid, []);
       }

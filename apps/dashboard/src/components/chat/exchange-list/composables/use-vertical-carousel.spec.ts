@@ -83,13 +83,24 @@ function mockObservers() {
 }
 
 function createFakeContainer(initialScrollHeight: number) {
-  return {
+  const container = {
     scrollTop: 0,
     clientHeight: 100,
     scrollHeight: initialScrollHeight,
     scrollTo: vi.fn(),
     querySelector: vi.fn(),
   } as unknown as HTMLElement;
+  // Mirror the browser: a scrollTo with a target also moves the position.
+  container.scrollTo = vi.fn((options?: number | ScrollToOptions) => {
+    if (
+      typeof options === 'object' &&
+      options !== null &&
+      typeof options.top === 'number'
+    ) {
+      container.scrollTop = options.top;
+    }
+  });
+  return container;
 }
 
 describe('useVerticalCarousel', () => {
@@ -494,5 +505,25 @@ describe('useVerticalCarousel', () => {
       top: 100,
       behavior: 'smooth',
     });
+  });
+
+  it('keeps the blend scroll refs in sync after a programmatic snap', async () => {
+    const container = createFakeContainer(500);
+    container.clientHeight = 100;
+    const { scrollContainerRef, scrollToSection, activeSectionIndex } =
+      useVerticalCarousel(ref(false), ref(null), ref(false));
+    scrollContainerRef.value = container;
+
+    await nextTick();
+    runRaf();
+
+    // The user is reading a mid-list section and the DOM re-snaps (e.g. a
+    // removed section). No scroll event has fired yet — the active section
+    // the blend reads must already track the new position, or the visible
+    // slide paints at a stale (possibly zero) opacity until the event lands.
+    container.scrollTop = 400;
+    scrollToSection(2);
+
+    expect(activeSectionIndex.value).toBe(2);
   });
 });

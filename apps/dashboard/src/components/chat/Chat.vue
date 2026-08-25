@@ -151,9 +151,18 @@ const uploadedImagesForConversation = computed(() => {
   );
 });
 
+const uploadedDocumentsForConversation = computed(() => {
+  if (!conversation.value?.id || !activeConversationId.value) return [];
+  return conversationStore.getUploadedDocumentsForConversation(
+    conversation.value.id,
+    activeConversationId.value,
+  );
+});
+
 const { attachments, hasAttachments } = useAttachmentList({
   attachedFiles,
   uploadedImages: uploadedImagesForConversation,
+  uploadedDocuments: uploadedDocumentsForConversation,
 });
 
 const {
@@ -243,12 +252,24 @@ async function onRemoveAttachment(id: string) {
 
   const sid = conversation.value.id;
   const cid = activeConversationId.value;
+
+  // Documents live in the conversation store only (no MinIO object in this
+  // pass), so removal never touches storage.
+  if (item.kind === 'document') {
+    conversationStore.removeUploadedDocument(sid, item.hash, cid);
+    return;
+  }
+
+  // Gallery-added (cloud) images are ingested web content the gallery still
+  // displays through the storage URL — removing them from files only drops
+  // the reference, never the MinIO object. Only user uploads (local) are
+  // deleted from storage.
   const stillReferenced = conversationStore.hasUploadedImageReference(
     sid,
     item.hash,
     cid,
   );
-  if (!stillReferenced) {
+  if (item.source !== 'cloud' && !stillReferenced) {
     try {
       await deleteUploadedObject(sid, cid, item.hash);
     } catch (e) {
@@ -273,6 +294,14 @@ function onToggleAttachment(id: string) {
   }
 
   if (!conversation.value) return;
+  if (item.kind === 'document') {
+    conversationStore.toggleUploadedDocumentSelected(
+      conversation.value.id,
+      item.hash,
+      activeConversationId.value,
+    );
+    return;
+  }
   conversationStore.toggleUploadedImageSelected(
     conversation.value.id,
     item.hash,

@@ -24,8 +24,12 @@ interface EnqueueTurnInput {
   /** Harness turn id — traces every stored point back to the user request. */
   requestId?: string;
   model: string;
+  /** Context size of the originating turn — derives the extract-step valve. */
+  numCtx?: number;
   userText?: string;
   assistantText?: string;
+  /** Storage urls of the turn's files, remembered on every stored point. */
+  files?: Array<{ name: string; url: string }>;
 }
 
 /**
@@ -58,6 +62,8 @@ export class MemoryEnqueueService {
         conversationId: input.conversationId,
         requestId: input.requestId,
         model: input.model,
+        numCtx: input.numCtx,
+        files: input.files,
       };
       const jobs: VectorizeJobData[] = [];
       if (input.userText?.trim()) {

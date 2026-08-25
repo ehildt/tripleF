@@ -3,6 +3,15 @@ export interface ConversationMetadataImage {
   hash: string;
 }
 
+/** A document attached to a prompt (docx/pptx/txt/…): the bubble tile shows
+ * the name, the extracted text travels in the prompt itself. */
+export interface ConversationMetadataDocument {
+  name: string;
+  hash: string;
+  /** MIME type of the original file (lets the server pick the converter). */
+  type?: string;
+}
+
 /**
  * Merge-request payload carried through sessionMetadata: the request ids of
  * the exchanges the user selected to consolidate into one unified response.
@@ -13,6 +22,9 @@ export interface ConversationMetadataMerge {
 
 export interface ConversationMetadata {
   images?: ConversationMetadataImage[];
+  /** Original files (pdf/docx/pptx/txt) uploaded for preview; the server
+   * stores them in MinIO but never sends them to the model. */
+  originals?: ConversationMetadataDocument[];
   merge?: ConversationMetadataMerge;
 }
 

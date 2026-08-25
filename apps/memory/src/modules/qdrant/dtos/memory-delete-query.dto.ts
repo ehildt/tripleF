@@ -49,7 +49,7 @@ export class MemoryDeleteQueryDto {
 
   @ApiPropertyOptional({
     description:
-      'Exact record text (full-string equality) — the record identity. Quote it verbatim, e.g. from a memoryRecall result.',
+      'Exact record text (full-string equality) — the record identity. Quote it verbatim, e.g. from a memory-partition-recall result.',
     example: 'I prefer single-line if statements.',
   })
   @IsString()

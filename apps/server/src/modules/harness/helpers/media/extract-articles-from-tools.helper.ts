@@ -1,5 +1,4 @@
-import { truncateToolResult } from '../sanitize/truncate-tool-result.helper.js';
-import { isTrustedImageUrl } from '../url-trust/is-trusted-image-url.helper.js';
+import { isTrustedImageUrl } from '@triplef/agent/schemas';
 
 import type { ExtractedArticle } from './extract-articles-from-tools.types.js';
 import type { ToolEntry } from './tool-entry.types.js';
@@ -106,9 +105,10 @@ function isSearchLikeTool(toolName: string): boolean {
 
 /**
  * Extract non-search tool results as references for the response model.
+ * Full content — the sanitize step's reference selection applies the budget.
  */
 export function extractReferences(toolResults: ToolEntry[]): unknown[] {
   return toolResults
     .filter((tr) => !isSearchLikeTool(tr.toolName))
-    .map((tr) => truncateToolResult(tr.result));
+    .map((tr) => tr.result);
 }

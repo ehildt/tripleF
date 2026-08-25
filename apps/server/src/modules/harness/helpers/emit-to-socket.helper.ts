@@ -1,4 +1,4 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
+import { SocketIOService } from '@triplef/socketio';
 
 export async function emitToSocket(
   io: SocketIOService,

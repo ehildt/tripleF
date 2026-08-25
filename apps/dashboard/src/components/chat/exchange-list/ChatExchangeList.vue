@@ -91,8 +91,15 @@ defineExpose({ scrollToExchange, activeUserExchangeId });
          never flashes "no conversation" before content arrives. -->
     <ExchangeSkeleton v-if="isExchangesLoading" />
 
+    <!-- Key by conversation id: a chat switch remounts the list so no scroll
+         state (scroll offsets, saved positions, blend opacity inputs) can
+         leak from one conversation into the next. Without the key, a switch
+         to a cached conversation patches props in place and the carousel
+         keeps the old chat's scroll offset — leaving the visible slide at a
+         stale blend opacity or landing on an arbitrary section. -->
     <ScrollableExchangeList
       v-else-if="isSessionActive"
+      :key="activeConversationId"
       ref="scrollableListRef"
       :sections="sections"
       :mode="scrollMode"

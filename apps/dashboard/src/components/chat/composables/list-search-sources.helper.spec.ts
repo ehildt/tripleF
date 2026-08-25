@@ -78,6 +78,37 @@ describe('listSearchSources', () => {
     ).toEqual(['web']);
   });
 
+  it('skips sources of engines that are disabled', () => {
+    const mixed = {
+      serper: {
+        enabled: true,
+        apiKey: 'x',
+        web: { enabled: true },
+      },
+      brightData: {
+        enabled: false,
+        apiKey: 'y',
+        news: { enabled: true },
+      },
+    };
+    expect(listSearchSources(mixed, null)).toEqual([
+      { key: 'web', enabled: true },
+    ]);
+  });
+
+  it('lets a session override re-enable a disabled engine', () => {
+    const mixed = {
+      serper: {
+        enabled: false,
+        apiKey: 'x',
+        web: { enabled: true },
+      },
+    };
+    expect(listSearchSources(mixed, { serper: { enabled: true } })).toEqual([
+      { key: 'web', enabled: true },
+    ]);
+  });
+
   it('returns an empty list without data', () => {
     expect(listSearchSources(null, null)).toEqual([]);
     expect(listSearchSources(undefined, undefined)).toEqual([]);

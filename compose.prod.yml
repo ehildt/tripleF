@@ -1,9 +1,10 @@
 # Production stack for tripleF (3F).
 #
-# Builds and runs the prod-optimized server + dashboard from the
+# Builds and runs the prod-optimized server + memory + dashboard from the
 # workspace-aware root Dockerfile (targets: server-production,
-# dashboard-production). The dashboard-production image ships the compiled
-# static assets behind nginx, which proxies /api and /socket.io to the server.
+# memory-production, dashboard-production). The dashboard-production image
+# ships the compiled static assets behind nginx, which proxies /api and
+# /socket.io to the server and /memory-api to the memory app.
 #
 # Infra services (postgres, minio, keydb) are expected to be running on the
 # shared `triplef` network — e.g. `docker compose -f infra.compose.yml up -d`.
@@ -27,15 +28,35 @@ services:
       target: server-production
     restart: on-failure
     env_file:
-      - ./server/.env
+      - ./apps/server/.env
     environment:
       NODE_ENV: production
       # Retarget localhost → container service names.
       POSTGRES_URL: postgresql://${POSTGRES_USER:-triplef}:${POSTGRES_PASSWORD:-triplef}@postgres:5432/${POSTGRES_DB:-triplef}
       BULLMQ_HOST: keydb
       MINIO_ENDPOINT: minio
+      MEMORY_URL: http://memory:3400
     ports:
       - "3000:3000"
+    networks:
+      - triplef
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  memory:
+    container_name: memory
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: memory-production
+    restart: on-failure
+    env_file:
+      - ./apps/memory/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3400
+    ports:
+      - "3400:3400"
     networks:
       - triplef
     extra_hosts:
@@ -50,6 +71,7 @@ services:
     restart: on-failure
     depends_on:
       - server
+      - memory
     ports:
       - "80:80"
     networks:

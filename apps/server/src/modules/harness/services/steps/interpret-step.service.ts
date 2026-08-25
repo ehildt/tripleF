@@ -1,7 +1,9 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable, Logger } from '@nestjs/common';
+import type { IntentResult } from '@triplef/agent/schemas';
+import { AiSdkService } from '@triplef/ai-sdk';
+import { SocketIOService } from '@triplef/socketio';
 
-import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
+import { buildProviderOptions } from '../../../ai-sdk/helpers/provider-options.helper.js';
 import {
   EPISODE_PROBE_LIMIT,
   EPISODE_TAGS,
@@ -16,7 +18,6 @@ import {
   resolveHarnessActivityLanguage,
 } from '../../helpers/harness-activity.helper.js';
 import { buildMemoryProbeSection } from '../../helpers/interpret/build-memory-probe-section.helper.js';
-import type { IntentResult } from '../../templates/intent.schema.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
@@ -68,6 +69,7 @@ export class InterpretStepService implements StepHandler {
         onIntent: (intent) => {
           ctx.outputs.intent = intent;
         },
+        onReasoningDelta: (delta) => this.emitReasoningDelta(ctx, delta),
       });
 
     // The classifier wants to ask the user. Before honoring that, probe the
@@ -167,14 +169,15 @@ export class InterpretStepService implements StepHandler {
     const cognitionKey =
       ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
     const episodeProbeLimit = await this.resolveEpisodeProbeLimit();
-    const episodeHits = cognitionKey
-      ? await this.memoryClient.searchByText({
-          text: query,
-          tags: [...EPISODE_TAGS],
-          recency: true,
-          limit: episodeProbeLimit,
-        })
-      : [];
+    const episodeHits =
+      cognitionKey && episodeProbeLimit > 0
+        ? await this.memoryClient.searchByText({
+            text: query,
+            tags: [...EPISODE_TAGS],
+            recency: true,
+            limit: episodeProbeLimit,
+          })
+        : [];
     const episodeSection = episodeHits.length
       ? `RECENT CONVERSATIONS — what you and the user were working on in recent turns (topic-matched):\n${episodeHits.map((hit) => `- ${hit.text}`).join('\n')}`
       : undefined;
@@ -200,6 +203,7 @@ export class InterpretStepService implements StepHandler {
         onIntent: (intent) => {
           ctx.outputs.intent = intent;
         },
+        onReasoningDelta: (delta) => this.emitReasoningDelta(ctx, delta),
       });
     } catch (error) {
       // A failed second pass must not turn a clarification into a hard error
@@ -305,6 +309,20 @@ export class InterpretStepService implements StepHandler {
     });
   }
 
+  private async emitReasoningDelta(
+    ctx: HarnessContext,
+    reasoningDelta: string,
+  ): Promise<void> {
+    await emitToSocket(this.io, ctx.roomId, ctx.event, {
+      requestId: ctx.requestId,
+      model: ctx.model,
+      template: ctx.outputs.intent?.template,
+      reasoningDelta,
+      language: resolveHarnessActivityLanguage(ctx),
+      done: false,
+    });
+  }
+
   private normalizeMediaCounts(
     ctx: HarnessContext,
     intent: NonNullable<HarnessContext['outputs']['intent']>,
@@ -400,8 +418,10 @@ export class InterpretStepService implements StepHandler {
               : `Question to translate: ${englishQuestion}`,
           },
         ],
-        keepAlive: ctx.request.keep_alive,
-        numCtx: ctx.request.options?.num_ctx,
+        providerOptions: buildProviderOptions({
+          keepAlive: ctx.request.keep_alive,
+          numCtx: ctx.request.options?.num_ctx,
+        }),
         abortSignal: ctx.abortSignal,
       });
       const trimmed = text.trim();

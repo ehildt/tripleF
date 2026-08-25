@@ -102,16 +102,17 @@ export class MemoryListQueryDto {
 
   @ApiPropertyOptional({
     type: Number,
-    default: 100,
-    maximum: 100,
-    description: 'Maximum number of records (scroll page size, capped at 100).',
+    default: 5000,
+    maximum: 10000,
+    description:
+      'Maximum number of records (scroll page size, capped at 10000).',
   })
   @Transform(({ value }: { value: unknown }) =>
     value === undefined ? undefined : Number(value),
   )
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(10000)
   @IsOptional()
   limit?: number;
 }

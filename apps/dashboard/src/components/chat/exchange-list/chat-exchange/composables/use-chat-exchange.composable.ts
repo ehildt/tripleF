@@ -4,7 +4,9 @@ import { computed } from 'vue';
 import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
 import { useAppStore } from '@/stores/app';
 
+import { useDocumentPreview } from '../../../document-preview/composables/use-document-preview';
 import type { ChatExchangeProps } from '../ChatExchange.types';
+import { useAddImageToFiles } from '../exchange-content/assistant-response/composables/use-add-image-to-files.composable';
 import { buildExchangeCopyText } from '../helpers/build-exchange-copy-text.helper';
 
 export interface ChatExchangeEmits {
@@ -27,6 +29,7 @@ export function useChatExchange(props: ChatExchangeProps) {
 
   const { copy } = useClipboard({ legacy: true });
   const lightbox = useLightbox();
+  const documentPreview = useDocumentPreview();
 
   async function handleCopy() {
     await copy(buildExchangeCopyText(props.exchange));
@@ -39,9 +42,24 @@ export function useChatExchange(props: ChatExchangeProps) {
     lightbox.openImages(items, clickedUrl);
   }
 
+  function handleDocumentClicked(document: { name: string; url: string }) {
+    documentPreview.open(document);
+  }
+
   function handleSelectIndex(i: number) {
     lightbox.index.value = i;
   }
+
+  // The lightbox's add-to-files button follows the image currently shown:
+  // stored web images offer the add action, everything else (user uploads,
+  // external links) hides it.
+  const addToFiles = useAddImageToFiles(
+    computed(() => {
+      const image = lightbox.images.value[lightbox.index.value] ?? null;
+      if (!image) return null;
+      return { imageUrl: image.url, title: image.title, source: image.source };
+    }),
+  );
 
   function handleCancel(requestId: string) {
     appStore.abortJob(requestId);
@@ -54,8 +72,11 @@ export function useChatExchange(props: ChatExchangeProps) {
     isError,
     isDone,
     lightbox,
+    documentPreview,
+    addToFiles,
     handleCopy,
     handleImageClicked,
+    handleDocumentClicked,
     handleSelectIndex,
     handleCancel,
   };

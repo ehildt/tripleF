@@ -1,4 +1,4 @@
-import { localizedQuerySuffix } from '../language/localized-query-suffix.helper.js';
+import { localizedQuerySuffix } from '@triplef/agent/tools';
 
 /**
  * Build the language instruction line for the tool execute prompt. Empty when

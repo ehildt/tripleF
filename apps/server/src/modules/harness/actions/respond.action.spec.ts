@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { type IntentResult } from '@triplef/agent/schemas';
+import { AiSdkService } from '@triplef/ai-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
-import { type IntentResult } from '../templates/intent.schema.js';
 
 import { RespondActionService } from './respond.action.js';
 
@@ -76,7 +76,7 @@ describe('RespondActionService', () => {
                     sources: [],
                     conclusion: '',
                   }),
-                  totalUsage: { inputTokens: 10, outputTokens: 5 },
+                  usage: { inputTokens: 10, outputTokens: 5 },
                 });
               }
               if (model === 'describe-model') {
@@ -89,7 +89,7 @@ describe('RespondActionService', () => {
                     keyFindings: [],
                     sources: [],
                   }),
-                  totalUsage: { inputTokens: 10, outputTokens: 5 },
+                  usage: { inputTokens: 10, outputTokens: 5 },
                 });
               }
               if (model === 'compare-model') {
@@ -102,7 +102,7 @@ describe('RespondActionService', () => {
                     keyFindings: [],
                     sources: [],
                   }),
-                  totalUsage: { inputTokens: 10, outputTokens: 5 },
+                  usage: { inputTokens: 10, outputTokens: 5 },
                 });
               }
               if (model === 'ocr-model') {
@@ -114,7 +114,7 @@ describe('RespondActionService', () => {
                     sectionContent: '',
                     keyFindings: [],
                   }),
-                  totalUsage: { inputTokens: 10, outputTokens: 5 },
+                  usage: { inputTokens: 10, outputTokens: 5 },
                 });
               }
               if (model === 'news-model') {
@@ -141,12 +141,12 @@ describe('RespondActionService', () => {
                     publishDate: '',
                     readTime: '',
                   }),
-                  totalUsage: { inputTokens: 10, outputTokens: 5 },
+                  usage: { inputTokens: 10, outputTokens: 5 },
                 });
               }
               return Promise.resolve({
                 text: JSON.stringify({ text: 'Hello world' }),
-                totalUsage: { inputTokens: 10, outputTokens: 5 },
+                usage: { inputTokens: 10, outputTokens: 5 },
               });
             }),
             streamChat: vi.fn().mockResolvedValue({
@@ -157,7 +157,7 @@ describe('RespondActionService', () => {
                 };
                 yield {
                   type: 'finish',
-                  totalUsage: { inputTokens: 10, outputTokens: 5 },
+                  usage: { inputTokens: 10, outputTokens: 5 },
                 };
               })(),
             }),
@@ -260,7 +260,7 @@ describe('RespondActionService', () => {
         keyFindings: ['first finding', 'second finding'],
         sources: ['https://example.com'],
       }),
-      totalUsage: { inputTokens: 10, outputTokens: 5 },
+      usage: { inputTokens: 10, outputTokens: 5 },
     });
 
     const result = await service.execute({
@@ -282,7 +282,7 @@ describe('RespondActionService', () => {
   it('does not retry when the model uses single-quoted JSON', async () => {
     (aiSdkService.generateChat as any).mockResolvedValue({
       text: "{ 'category': 'Description', 'title': 'Title', 'subtitle': '', 'sectionContent': '', 'keyFindings': [], 'sources': [] }",
-      totalUsage: { inputTokens: 10, outputTokens: 5 },
+      usage: { inputTokens: 10, outputTokens: 5 },
     });
 
     const result = await service.execute({
@@ -303,7 +303,7 @@ describe('RespondActionService', () => {
       if (calls === 1) {
         return Promise.resolve({
           text: '{ invalid json',
-          totalUsage: { inputTokens: 10, outputTokens: 5 },
+          usage: { inputTokens: 10, outputTokens: 5 },
         });
       }
       return Promise.resolve({
@@ -334,7 +334,7 @@ describe('RespondActionService', () => {
           sources: [],
           conclusion: '',
         }),
-        totalUsage: { inputTokens: 10, outputTokens: 5 },
+        usage: { inputTokens: 10, outputTokens: 5 },
       });
     });
 
@@ -352,7 +352,7 @@ describe('RespondActionService', () => {
   it('throws when structured JSON cannot be validated after retries', async () => {
     (aiSdkService.generateChat as any).mockResolvedValue({
       text: '{ invalid json',
-      totalUsage: { inputTokens: 10, outputTokens: 5 },
+      usage: { inputTokens: 10, outputTokens: 5 },
     });
 
     await expect(

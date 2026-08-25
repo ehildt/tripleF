@@ -1,4 +1,5 @@
-import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
+import type { ToolResult } from '@triplef/ai-sdk';
+
 import type { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
 
 export type ExecuteResult = {

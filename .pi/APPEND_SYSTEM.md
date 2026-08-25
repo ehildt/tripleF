@@ -34,6 +34,14 @@ This project uses Docker Compose for local development with bind-mounted source 
   - Infra services in `compose.infra.yml` change, or
   - The running container is actually stale for a confirmed reason.
 
+# Package Publishing Workflow
+
+The `packages/*` libraries are published to npm and consumed by the apps via published semver ranges — **not** `workspace:*`.
+
+- When a package's public API changes, publish the new version **first**, then update the apps' `package.json` dependency range and imports.
+- Do **not** use `workspace:*` in the apps' `package.json`; the apps resolve published versions from the registry.
+- To verify app changes against an unpublished package locally, temporarily link the workspace package, verify, then revert to the published range before the user publishes.
+
 # Planning Protocol
 
 Before proposing or implementing any non-trivial change, the agent must:

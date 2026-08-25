@@ -9,12 +9,28 @@ describe('parseExtraction', () => {
         JSON.stringify({
           facts: [' User prefers concise. ', 'User prefers concise.', ' '],
           tags: ['Work', 'Rust', 'work'],
+          category: 'Work',
         }),
       ),
     ).toEqual({
       facts: ['User prefers concise.'],
       tags: ['work', 'rust'],
+      category: 'work',
     });
+  });
+
+  it('normalizes the category to its canonical family label', () => {
+    expect(
+      parseExtraction(
+        JSON.stringify({ facts: ['F1'], tags: ['work'], category: 'PDF' }),
+      ),
+    ).toEqual({ facts: ['F1'], tags: ['work'], category: 'pdf' });
+  });
+
+  it('omits the category when absent', () => {
+    expect(
+      parseExtraction(JSON.stringify({ facts: ['F1'], tags: ['work'] })),
+    ).toEqual({ facts: ['F1'], tags: ['work'], category: undefined });
   });
 
   it('tolerates markdown fences around the JSON', () => {

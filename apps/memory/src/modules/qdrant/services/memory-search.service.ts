@@ -58,6 +58,7 @@ export class MemorySearchService {
           conversationId: input.conversationId,
           requestId: input.requestId,
           tags: input.tags,
+          category: input.category,
           contains: input.contains,
           recency: input.recency,
         });
@@ -89,6 +90,7 @@ export class MemorySearchService {
       conversationId: input.conversationId,
       requestId: input.requestId,
       tags: input.tags,
+      category: input.category,
       contains: input.contains,
     });
   }

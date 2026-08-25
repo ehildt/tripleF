@@ -1,5 +1,5 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
+import { SocketIOService } from '@triplef/socketio';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ExecuteActionService } from '../../actions/execute.action.js';

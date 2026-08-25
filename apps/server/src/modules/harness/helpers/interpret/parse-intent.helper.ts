@@ -1,9 +1,6 @@
+import { type IntentResult, IntentSchema } from '@triplef/agent/schemas';
 import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
-import {
-  type IntentResult,
-  IntentSchema,
-} from '../../templates/intent.schema.js';
 import { enforceRequiredTools } from '../tools/enforce-media-tools.helper.js';
 import { expandToolAliases } from '../tools/expand-tool-aliases.helper.js';
 

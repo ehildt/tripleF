@@ -6,6 +6,13 @@ export interface QdrantConfig {
   /** Name of the collection that holds harness memory points. */
   collection: string;
   /**
+   * Name of the collection that holds the shared knowledge lexicon
+   * (LEXICON_COLLECTION, default `memory-lexicon`) — model-namespaced like
+   * the episodic collection. Global scope: public web content, shared across
+   * partitions.
+   */
+  lexiconCollection: string;
+  /**
    * Dimensionality of the embedding vectors stored in the collection.
    * Defaults to nomic-embed-text-v2-moe's 768 dims; the embedding service
    * (Ticket 5.3) derives this from the configured model at bootstrap — the
@@ -16,7 +23,9 @@ export interface QdrantConfig {
   embedModel: string;
   /**
    * Minimum cosine score for memory search hits (QDRANT_SCORE_THRESHOLD,
-   * default 0.5). Below it a result is more noise than recall.
+   * default 0.3). Below it a result is more noise than recall. Calibrated
+   * for nomic-embed-text-v2-moe, whose sentence-pair cosines cluster lower
+   * than the 0.5 the collection originally assumed.
    */
   scoreThreshold: number;
   /**
@@ -26,7 +35,7 @@ export interface QdrantConfig {
    * clean transient failure that retries normally.
    */
   embedTimeoutMs: number;
-  /** Master switch for the whole memory feature (MEMORY_ENABLED, default off). */
+  /** Master switch for the whole memory feature (MEMORY_ENABLED, default on). */
   enabled: boolean;
   /**
    * Character cap for the serialized cognition profile document
@@ -35,6 +44,13 @@ export interface QdrantConfig {
    * memory-overrides value wins at runtime.
    */
   cognitionLimit: number;
+  /**
+   * Max fact records the constellation loads per space
+   * (MEMORY_CONSTELLATION_NODE_LIMIT, default 5000, clamped 100–10000) —
+   * the env baseline for the `constellationNodeLimit` system variable; the
+   * SysCtl memory-overrides value wins at runtime.
+   */
+  constellationNodeLimit: number;
   /**
    * Pending-inserts per partition that auto-trigger a consolidation sweep
    * (MEMORY_CONSOLIDATE_THRESHOLD, default 50).
@@ -70,4 +86,66 @@ export interface QdrantConfig {
    * system variable; surfaced to the harness via the cognition snapshot.
    */
   episodeProbeLimit: number;
+  /**
+   * Minimum cosine score for the episode probe's recency prefetch
+   * (MEMORY_EPISODE_SCORE_THRESHOLD, default 0.1, clamped 0–1) — the noise
+   * floor applied BEFORE the recency formula runs. Env baseline for the
+   * `episodeScoreThreshold` system variable; far lower than the fact-lane
+   * `scoreThreshold` because the episode lane answers meta-questions whose
+   * topical similarity is inherently weak.
+   */
+  episodeScoreThreshold: number;
+  /**
+   * Share of the model's context window (numCtx × 4 chars/token) reserved for
+   * the profile-job payload (MEMORY_PROFILE_PAYLOAD_RATIO, default 0.5;
+   * 0 = uncapped). The job already receives numCtx from the harness.
+   */
+  profilePayloadRatio: number;
+  /**
+   * Absolute fallback for the profile-job payload cap when numCtx is absent
+   * (MEMORY_PROFILE_PAYLOAD_CHARS, default 0 = uncapped).
+   */
+  profilePayloadChars: number;
+  /**
+   * Share of the model's context window reserved for the extract-step source
+   * text (MEMORY_VECTORIZE_TEXT_RATIO, default 0.5; 0 = uncapped).
+   */
+  vectorizeTextRatio: number;
+  /**
+   * Absolute fallback for the extract-step source text cap when numCtx is
+   * absent (MEMORY_VECTORIZE_TEXT_CHARS, default 0 = uncapped).
+   */
+  vectorizeTextChars: number;
+  /**
+   * Max semantic neighbors per dot in the constellation link graph
+   * (MEMORY_LINK_NEIGHBORS, default 3, clamped 1–10).
+   */
+  linkNeighbors: number;
+  /**
+   * Minimum cosine score for a constellation link edge
+   * (MEMORY_LINK_SCORE_THRESHOLD, default 0.5, clamped 0–1) — tighter than
+   * the retrieval thresholds because links should only connect closely
+   * related dots.
+   */
+  linkScoreThreshold: number;
+  /**
+   * Minimum cosine score for a TOPICAL (suggested) constellation link edge
+   * (MEMORY_LINK_TOPICAL_THRESHOLD, default 0.6, clamped 0–1) — below the
+   * semantic threshold, above the nomic anisotropy noise floor (0.51–0.55).
+   * Topical edges are suggestions written by the relink job, never enforced:
+   * recall ignores them and the dashboard may render them faintly.
+   */
+  linkTopicalThreshold: number;
+  /**
+   * Max points a lazy link-graph backfill will process in one pass
+   * (MEMORY_LINK_BACKFILL_MAX_POINTS, default 5000, clamped 100–50000) —
+   * bounds the one-time cold-start cost when a scope has points but no
+   * precomputed edges yet.
+   */
+  linkBackfillMaxPoints: number;
+  /**
+   * Max edges returned per link-graph read (MEMORY_LINK_READ_MAX, default
+   * 50000) — an infra bound on the dashboard payload, ordered by score desc.
+   */
+  linkReadMax: number;
 }

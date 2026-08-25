@@ -1,9 +1,10 @@
-import type { EodhdConfig } from '../../../../provider-overrides/configs/eodhd-config.adapter.js';
+import type { EodhdConfig } from '@triplef/agent/tools';
+import type { ToolDependencies } from '@triplef/agent/tools';
+
 import {
   EodhdClient,
   EodhdRateLimitError,
 } from '../../../../stock-data/providers/eodhd/eodhd-client.js';
-import type { ToolDependencies } from '../types.js';
 
 /**
  * Build an EODHD client when the engine and the requested endpoint are both

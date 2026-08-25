@@ -353,7 +353,7 @@ defineExpose({
       type="file"
       name="chat-attachments"
       multiple
-      accept="image/*"
+      accept="image/*,.pdf,.docx,.pptx,.txt,.md,.csv,.json,.log"
       class="hidden"
       @change="onFileInputChange"
     />

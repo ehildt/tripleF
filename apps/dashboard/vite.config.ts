@@ -8,6 +8,8 @@ import { readAppVersion } from './app-version.js';
 
 const env = loadEnv('all', process.cwd(), 'VITE_');
 const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:3000';
+const memoryProxyTarget =
+  env.VITE_MEMORY_PROXY_TARGET || 'http://localhost:3400';
 
 export default defineConfig({
   define: {
@@ -15,6 +17,11 @@ export default defineConfig({
   },
   base: '/dashboard/',
   plugins: [vue()],
+  optimizeDeps: {
+    // pdfjs-dist is loaded on demand and its worker is imported as a `?url`
+    // asset; pre-bundling it confuses the worker URL resolution in dev.
+    exclude: ['pdfjs-dist'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
@@ -29,6 +36,15 @@ export default defineConfig({
         target: proxyTarget,
         changeOrigin: true,
         secure: false,
+      },
+      // The memory app is reached directly (no server pass-through): the
+      // dashboard rewrites /api → /memory-api for memory calls, and this
+      // proxy maps /memory-api back onto the memory app's /api prefix.
+      '/memory-api': {
+        target: memoryProxyTarget,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/memory-api/, '/api'),
       },
     },
   },

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
-import type { UploadedImage } from '@/stores/conversation';
+import type { UploadedDocument, UploadedImage } from '@/stores/conversation';
 
 import type { AttachedFileEntry } from '../../../../composables/attached-files.state';
 import { useAttachmentList } from './use-attachment-list';
@@ -13,6 +13,7 @@ describe('useAttachmentList', () => {
     const { attachments, hasAttachments } = useAttachmentList({
       attachedFiles: ref([]),
       uploadedImages: ref([]),
+      uploadedDocuments: ref([]),
     });
 
     expect(attachments.value).toEqual([]);
@@ -27,6 +28,7 @@ describe('useAttachmentList', () => {
         objectUrl: 'blob://cat',
         hash: 'h1',
         conversationId: 'c1',
+        kind: 'image',
       },
     ]);
     const uploadedImages = ref<UploadedImage[]>([
@@ -42,6 +44,7 @@ describe('useAttachmentList', () => {
     const { attachments, hasAttachments } = useAttachmentList({
       attachedFiles,
       uploadedImages,
+      uploadedDocuments: ref([]),
     });
 
     expect(hasAttachments.value).toBe(true);
@@ -54,6 +57,7 @@ describe('useAttachmentList', () => {
       isUploaded: false,
       isSelected: true,
       pendingIndex: 0,
+      kind: 'image',
     });
     expect(attachments.value[1]).toMatchObject({
       id: 'uploaded-h2',
@@ -62,6 +66,37 @@ describe('useAttachmentList', () => {
       isUploaded: true,
       isSelected: false,
       pendingIndex: null,
+      kind: 'image',
+    });
+  });
+
+  it('includes uploaded documents as document entries', () => {
+    const uploadedDocuments = ref<UploadedDocument[]>([
+      {
+        name: 'notes.txt',
+        hash: 'h3',
+        extractedText: 'hello',
+        uploadedAt: 0,
+        selected: true,
+        conversationId: 'c1',
+      },
+    ]);
+
+    const { attachments } = useAttachmentList({
+      attachedFiles: ref([]),
+      uploadedImages: ref([]),
+      uploadedDocuments,
+    });
+
+    expect(attachments.value).toHaveLength(1);
+    expect(attachments.value[0]).toMatchObject({
+      id: 'uploaded-document-h3',
+      name: 'notes.txt',
+      hash: 'h3',
+      isUploaded: true,
+      isSelected: true,
+      pendingIndex: null,
+      kind: 'document',
     });
   });
 });

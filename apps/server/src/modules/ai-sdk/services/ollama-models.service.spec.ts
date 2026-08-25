@@ -161,5 +161,49 @@ describe('OllamaModelsService', () => {
         service.supportsCapability('unknown:latest', 'vision'),
       ).resolves.toBe(false);
     });
+
+    it('falls back to model_info when capabilities is absent', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+        const endpoint = String(url);
+        if (endpoint.endsWith('/api/tags')) {
+          return {
+            ok: true,
+            json: async () => ({ models: [] }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            model_info: { 'vision.block_count': 16 },
+          }),
+        } as Response;
+      });
+
+      await expect(
+        service.supportsCapability('legacy-vision:latest', 'vision'),
+      ).resolves.toBe(true);
+    });
+
+    it('does not fall back for non-vision capabilities', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+        const endpoint = String(url);
+        if (endpoint.endsWith('/api/tags')) {
+          return {
+            ok: true,
+            json: async () => ({ models: [] }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            model_info: { 'vision.block_count': 16 },
+          }),
+        } as Response;
+      });
+
+      await expect(
+        service.supportsCapability('legacy-vision:latest', 'tools'),
+      ).resolves.toBe(false);
+    });
   });
 });

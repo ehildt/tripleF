@@ -1,6 +1,5 @@
+import type { IntentResult } from '@triplef/agent/schemas';
 import { describe, expect, it } from 'vitest';
-
-import type { IntentResult } from '../../templates/intent.schema.js';
 
 import {
   buildImageExecutePrompt,

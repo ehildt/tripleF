@@ -112,7 +112,11 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
           'Content-Type': this.getObjectContentType(entryMeta),
           'X-Amz-Meta-Requestid': requestId,
           'X-Amz-Meta-Hash': hash,
-          'X-Amz-Meta-Filename': entryMeta?.name ?? `image-${index + 1}`,
+          // Header values must stay printable ASCII: unicode filenames (and
+          // spaces, in some S3 implementations) break the request signature.
+          'X-Amz-Meta-Filename':
+            entryMeta?.name?.replace(/\s|[^\x20-\x7e]/g, '-') ??
+            `image-${index + 1}`,
         };
         try {
           await this.client.statObject(this._config.bucket, objectName);
@@ -175,6 +179,48 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
       buffers: kept.map((r) => r.buffer),
       keptMeta: kept.map((r) => r.entry),
     };
+  }
+
+  /**
+   * Download a single object by its storage hash; null when missing
+   * (NoSuchKey/NotFound) so callers can skip gracefully.
+   */
+  async downloadBuffer(
+    sessionId: string | undefined,
+    conversationId: string | undefined,
+    hash: string,
+  ): Promise<Buffer | null> {
+    const objectName = this.getObjectKey(sessionId, conversationId, hash);
+    try {
+      const dataStream = await this.client.getObject(
+        this._config.bucket,
+        objectName,
+      );
+      const chunks: Buffer[] = [];
+      for await (const chunk of dataStream) chunks.push(chunk);
+      return Buffer.concat(chunks);
+    } catch (error) {
+      const code = (error as any)?.code;
+      if (code === 'NoSuchKey' || code === 'NotFound') return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Storage API path for a stored object, without an existence check.
+   * (getObjectUrl validates existence first; this is for known-present
+   * objects, e.g. derived page images and referenced uploads.)
+   */
+  buildFileUrl(
+    sessionId: string | undefined,
+    conversationId: string | undefined,
+    hash: string,
+  ): string {
+    return this.buildStorageUrl(
+      sessionId ?? 'unknown-session',
+      conversationId ?? 'unknown-conversation',
+      hash,
+    );
   }
 
   async getObjectUrl(

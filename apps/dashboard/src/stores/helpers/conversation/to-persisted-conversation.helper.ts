@@ -19,6 +19,7 @@ export function toPersistedConversation(
     exchanges: conversation.exchanges,
     savedFileInfos: conversation.savedFileInfos,
     uploadedImages: conversation.uploadedImages,
+    uploadedDocuments: conversation.uploadedDocuments,
     imageSelectionSnapshot: conversation.imageSelectionSnapshot,
     conversationId: conversation.conversationId,
     model: conversation.model,

@@ -1,8 +1,5 @@
-import type { ProviderConfig } from './tool-registry.constants.js';
-import {
-  BROWSER_TOOL_NAMES,
-  MEMORY_TOOL_NAMES,
-} from './tool-registry.constants.js';
+import type { ProviderConfig } from '@triplef/agent/schemas';
+import { BROWSER_TOOL_NAMES, MEMORY_TOOL_NAMES } from '@triplef/agent/schemas';
 
 /**
  * Return only the tool names whose search engines are currently enabled.

@@ -44,10 +44,10 @@ dependencies:
       link: https://github.com/vercel/ai
     - name: '@triplef/helpers'
       link: https://github.com/ehildt/tripleF
-    - name: '@ehildt/nestjs-bullmq'
-      link: https://github.com/ehildt/nestjs-bullmq
-    - name: '@ehildt/nestjs-bullmq-logger'
-      link: https://github.com/ehildt/nestjs-bullmq-logger
+    - name: '@triplef/bullmq'
+      link: https://github.com/ehildt/tripleF
+    - name: '@triplef/bullmq-logger'
+      link: https://github.com/ehildt/tripleF
     - name: '@triplef/config-factory'
       link: https://github.com/ehildt/tripleF
     - name: '@ehildt/nestjs-socket.io'

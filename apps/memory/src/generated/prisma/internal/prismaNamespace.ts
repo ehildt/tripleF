@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.9.1
- * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
+ * Prisma Client JS version: 7.10.0
+ * Query Engine version: 0edf323efd1d98336f3f0a68684b56f689b900d3
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.9.1",
-  engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
+  client: "7.10.0",
+  engine: "0edf323efd1d98336f3f0a68684b56f689b900d3"
 }
 
 /**
@@ -400,7 +400,9 @@ export const ModelName = {
   DeadLetterJob: 'DeadLetterJob',
   HarnessProviderOverride: 'HarnessProviderOverride',
   MemoryCognitionProfile: 'MemoryCognitionProfile',
-  MemoryInsertLedger: 'MemoryInsertLedger'
+  MemoryInsertLedger: 'MemoryInsertLedger',
+  MemoryLexiconInsertLedger: 'MemoryLexiconInsertLedger',
+  MemoryLink: 'MemoryLink'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -416,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "deadLetterJob" | "harnessProviderOverride" | "memoryCognitionProfile" | "memoryInsertLedger"
+    modelProps: "deadLetterJob" | "harnessProviderOverride" | "memoryCognitionProfile" | "memoryInsertLedger" | "memoryLexiconInsertLedger" | "memoryLink"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -716,6 +718,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MemoryLexiconInsertLedger: {
+      payload: Prisma.$MemoryLexiconInsertLedgerPayload<ExtArgs>
+      fields: Prisma.MemoryLexiconInsertLedgerFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemoryLexiconInsertLedgerFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemoryLexiconInsertLedgerFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>
+        }
+        findFirst: {
+          args: Prisma.MemoryLexiconInsertLedgerFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemoryLexiconInsertLedgerFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>
+        }
+        findMany: {
+          args: Prisma.MemoryLexiconInsertLedgerFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>[]
+        }
+        create: {
+          args: Prisma.MemoryLexiconInsertLedgerCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>
+        }
+        createMany: {
+          args: Prisma.MemoryLexiconInsertLedgerCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemoryLexiconInsertLedgerCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>[]
+        }
+        delete: {
+          args: Prisma.MemoryLexiconInsertLedgerDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>
+        }
+        update: {
+          args: Prisma.MemoryLexiconInsertLedgerUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>
+        }
+        deleteMany: {
+          args: Prisma.MemoryLexiconInsertLedgerDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemoryLexiconInsertLedgerUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemoryLexiconInsertLedgerUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>[]
+        }
+        upsert: {
+          args: Prisma.MemoryLexiconInsertLedgerUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLexiconInsertLedgerPayload>
+        }
+        aggregate: {
+          args: Prisma.MemoryLexiconInsertLedgerAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemoryLexiconInsertLedger>
+        }
+        groupBy: {
+          args: Prisma.MemoryLexiconInsertLedgerGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryLexiconInsertLedgerGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemoryLexiconInsertLedgerCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryLexiconInsertLedgerCountAggregateOutputType> | number
+        }
+      }
+    }
+    MemoryLink: {
+      payload: Prisma.$MemoryLinkPayload<ExtArgs>
+      fields: Prisma.MemoryLinkFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemoryLinkFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemoryLinkFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>
+        }
+        findFirst: {
+          args: Prisma.MemoryLinkFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemoryLinkFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>
+        }
+        findMany: {
+          args: Prisma.MemoryLinkFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>[]
+        }
+        create: {
+          args: Prisma.MemoryLinkCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>
+        }
+        createMany: {
+          args: Prisma.MemoryLinkCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemoryLinkCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>[]
+        }
+        delete: {
+          args: Prisma.MemoryLinkDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>
+        }
+        update: {
+          args: Prisma.MemoryLinkUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>
+        }
+        deleteMany: {
+          args: Prisma.MemoryLinkDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemoryLinkUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemoryLinkUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>[]
+        }
+        upsert: {
+          args: Prisma.MemoryLinkUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemoryLinkPayload>
+        }
+        aggregate: {
+          args: Prisma.MemoryLinkAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemoryLink>
+        }
+        groupBy: {
+          args: Prisma.MemoryLinkGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryLinkGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemoryLinkCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemoryLinkCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -811,6 +961,36 @@ export const MemoryInsertLedgerScalarFieldEnum = {
 } as const
 
 export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
+
+
+export const MemoryLexiconInsertLedgerScalarFieldEnum = {
+  id: 'id',
+  url: 'url',
+  contentHash: 'contentHash',
+  chunkCount: 'chunkCount',
+  partitionScope: 'partitionScope',
+  title: 'title',
+  requestId: 'requestId',
+  createdAt: 'createdAt',
+  sweptAt: 'sweptAt'
+} as const
+
+export type MemoryLexiconInsertLedgerScalarFieldEnum = (typeof MemoryLexiconInsertLedgerScalarFieldEnum)[keyof typeof MemoryLexiconInsertLedgerScalarFieldEnum]
+
+
+export const MemoryLinkScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  source: 'source',
+  target: 'target',
+  score: 'score',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type MemoryLinkScalarFieldEnum = (typeof MemoryLinkScalarFieldEnum)[keyof typeof MemoryLinkScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1105,6 +1285,8 @@ export type GlobalOmitConfig = {
   harnessProviderOverride?: Prisma.HarnessProviderOverrideOmit
   memoryCognitionProfile?: Prisma.MemoryCognitionProfileOmit
   memoryInsertLedger?: Prisma.MemoryInsertLedgerOmit
+  memoryLexiconInsertLedger?: Prisma.MemoryLexiconInsertLedgerOmit
+  memoryLink?: Prisma.MemoryLinkOmit
 }
 
 /* Types for Logging */

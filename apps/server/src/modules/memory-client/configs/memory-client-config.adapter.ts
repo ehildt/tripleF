@@ -12,6 +12,6 @@ export function MemoryClientConfigAdapter(
 ): MemoryClientConfig {
   return {
     url: env.MEMORY_URL ?? 'http://localhost:3400',
-    enabled: getBooleanEnv(env.MEMORY_ENABLED, false)!,
+    enabled: getBooleanEnv(env.MEMORY_ENABLED, true)!,
   };
 }

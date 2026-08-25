@@ -12,7 +12,9 @@ import { InterpretActionService } from './actions/interpret.action.js';
 import { RespondActionService } from './actions/respond.action.js';
 import { SanitizeActionService } from './actions/sanitize.action.js';
 import { NumCtxConfigService } from './configs/numctx-config.service.js';
+import { SourceBudgetConfigService } from './configs/source-budget-config.service.js';
 import { CloudImageIngestionService } from './services/cloud-image-ingestion.service.js';
+import { DocumentConversionService } from './services/document-conversion.service.js';
 import { HarnessCancellationService } from './services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from './services/harness-chat-streaming.service.js';
 import { HarnessContextService } from './services/harness-context.service.js';
@@ -35,6 +37,8 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
   imports: [AiSdkModule, SharpModule, HttpModule, StockDataModule],
   providers: [
     NumCtxConfigService,
+    SourceBudgetConfigService,
+    DocumentConversionService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessContextService,
@@ -61,6 +65,8 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
   ],
   exports: [
     NumCtxConfigService,
+    SourceBudgetConfigService,
+    DocumentConversionService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessContextService,

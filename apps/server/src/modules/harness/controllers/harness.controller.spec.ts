@@ -5,6 +5,7 @@ import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.j
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
+import { DocumentConversionService } from '../services/document-conversion.service.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
 
 import { HarnessController } from './harness.controller.js';
@@ -24,6 +25,10 @@ describe('HarnessController', () => {
             emit: vi.fn(),
             cancel: vi.fn().mockResolvedValue(true),
           },
+        },
+        {
+          provide: DocumentConversionService,
+          useValue: { convertAndPersist: vi.fn().mockResolvedValue(null) },
         },
         {
           provide: OllamaModelsService,

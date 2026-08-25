@@ -1,3 +1,4 @@
+import type { ToolDependencies } from '@triplef/agent/tools';
 import { tool } from 'ai';
 
 import {
@@ -9,7 +10,6 @@ import {
   type TechnicalFunction,
 } from '../../../../stock-data/indicators/compute-indicator.helper.js';
 import { MarketHistoryFetchError } from '../../../../stock-data/market-data.types.js';
-import type { ToolDependencies } from '../types.js';
 
 import { eodhdTechnicalSchema } from './technical.schema.js';
 

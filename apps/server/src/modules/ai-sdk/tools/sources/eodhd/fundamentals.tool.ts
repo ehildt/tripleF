@@ -1,6 +1,5 @@
+import type { ToolDependencies } from '@triplef/agent/tools';
 import { tool } from 'ai';
-
-import type { ToolDependencies } from '../types.js';
 
 import { createEodhdClient, eodhdErrorResult } from './eodhd-tool.helper.js';
 import { eodhdFundamentalsSchema } from './fundamentals.schema.js';

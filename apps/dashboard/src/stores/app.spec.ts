@@ -345,13 +345,13 @@ describe('useAppStore', () => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
     });
 
-    it('starts empty and records every non-empty setMemoryCognition', () => {
+    it('starts with the default space and records every non-empty setMemoryCognition', () => {
       const store = useAppStore();
-      expect(store.memoryCognitionSpaces).toEqual([]);
+      expect(store.memoryCognitionSpaces).toEqual(['default']);
 
       store.setMemoryCognition('alice');
       store.setMemoryCognition('work');
-      expect(store.memoryCognitionSpaces).toEqual(['work', 'alice']);
+      expect(store.memoryCognitionSpaces).toEqual(['work', 'alice', 'default']);
     });
 
     it('trims, ignores empty values, and dedupes most-recent-first', () => {
@@ -360,7 +360,7 @@ describe('useAppStore', () => {
       store.setMemoryCognition('');
       store.setMemoryCognition('work');
       store.setMemoryCognition('alice');
-      expect(store.memoryCognitionSpaces).toEqual(['alice', 'work']);
+      expect(store.memoryCognitionSpaces).toEqual(['alice', 'work', 'default']);
     });
 
     it('caps the history at 20 entries', () => {
@@ -375,13 +375,13 @@ describe('useAppStore', () => {
       store.setMemoryCognition('alice');
       await new Promise((r) => setTimeout(r, 10));
       expect(localStorage.getItem('harness-memory-cognition-spaces')).toBe(
-        JSON.stringify(['alice']),
+        JSON.stringify(['alice', 'default']),
       );
 
       // A fresh pinia re-runs the setup store and loads the persisted list.
       setActivePinia(createPinia());
       const reloaded = useAppStore();
-      expect(reloaded.memoryCognitionSpaces).toEqual(['alice']);
+      expect(reloaded.memoryCognitionSpaces).toEqual(['alice', 'default']);
     });
 
     it('drops malformed persisted history entries', () => {
@@ -399,15 +399,15 @@ describe('useAppStore', () => {
       store.setMemoryCognition('work');
 
       store.removeMemoryCognitionSpace('work');
-      expect(store.memoryCognitionSpaces).toEqual(['alice']);
+      expect(store.memoryCognitionSpaces).toEqual(['alice', 'default']);
       expect(store.memoryCognition).toBe('');
 
       store.removeMemoryCognitionSpace('alice');
-      expect(store.memoryCognitionSpaces).toEqual([]);
+      expect(store.memoryCognitionSpaces).toEqual(['default']);
       await new Promise((r) => setTimeout(r, 10));
-      expect(
-        localStorage.getItem('harness-memory-cognition-spaces'),
-      ).toBeNull();
+      expect(localStorage.getItem('harness-memory-cognition-spaces')).toBe(
+        JSON.stringify(['default']),
+      );
     });
 
     it('removeMemoryCognitionSpace keeps a different active space', () => {
@@ -416,7 +416,7 @@ describe('useAppStore', () => {
       store.setMemoryCognition('work');
 
       store.removeMemoryCognitionSpace('alice');
-      expect(store.memoryCognitionSpaces).toEqual(['work']);
+      expect(store.memoryCognitionSpaces).toEqual(['work', 'default']);
       expect(store.memoryCognition).toBe('work');
     });
   });

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-
-import { fetchWithTimeout } from '../../ai-sdk/tools/sources/fetch-with-timeout.js';
-import { SEARCH_TIMEOUT_MS } from '../../ai-sdk/tools/sources/search-timeout.js';
+import { fetchWithTimeout } from '@triplef/agent/tools';
+import { SEARCH_TIMEOUT_MS } from '@triplef/agent/tools';
 
 const BRIGHTDATA_API_URL = 'https://api.brightdata.com';
 

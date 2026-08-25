@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 
+import DocumentPreview from '../../document-preview/DocumentPreview.vue';
 import {
   type ChatExchangeEmits,
   useChatExchange,
 } from './composables/use-chat-exchange.composable';
 import ExchangeCollapsed from './exchange-collapsed/ExchangeCollapsed.vue';
+import AddToFilesButton from './exchange-content/assistant-response/shared/ui/add-to-files-button/AddToFilesButton.vue';
 import ExchangeContent from './exchange-content/ExchangeContent.vue';
 import ExchangeHeader from './exchange-header/ExchangeHeader.vue';
 import type { ChatExchangeProps } from './ChatExchange.types';
@@ -21,8 +23,11 @@ const {
   isError,
   isDone,
   lightbox,
+  documentPreview,
+  addToFiles,
   handleCopy,
   handleImageClicked,
+  handleDocumentClicked,
   handleSelectIndex,
   handleCancel,
 } = useChatExchange(props);
@@ -66,6 +71,7 @@ const {
         :is-streaming="isStreaming"
         :is-highlighted="highlighted"
         @image-clicked="handleImageClicked"
+        @document-clicked="handleDocumentClicked"
       />
     </div>
   </div>
@@ -79,6 +85,23 @@ const {
     @prev="lightbox.goPrev"
     @next="lightbox.goNext"
     @select-index="handleSelectIndex"
+  >
+    <template v-if="addToFiles.canAddToFiles.value" #actions>
+      <AddToFilesButton
+        :active="addToFiles.isInFiles.value"
+        @toggle="addToFiles.toggleAddToFiles"
+      />
+    </template>
+  </Lightbox>
+
+  <DocumentPreview
+    :item="documentPreview.item.value"
+    :is-open="documentPreview.isOpen.value"
+    :is-loading="documentPreview.isLoading.value"
+    :error="documentPreview.error.value"
+    :html="documentPreview.html.value"
+    :text="documentPreview.text.value"
+    @close="documentPreview.close"
   />
 </template>
 

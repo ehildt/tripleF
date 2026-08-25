@@ -10,4 +10,9 @@ export interface SubMenuItem {
    * it only when the tooltip should say something more than the label.
    */
   tooltip?: string;
+  /**
+   * Renders the tab grayed out (e.g. a feature whose backing engine is
+   * disabled). The tab stays clickable — muted is a hint, not a lock.
+   */
+  muted?: boolean;
 }

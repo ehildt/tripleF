@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Component } from 'vue';
 
+import { useAppStore } from '@/stores/app';
 import { useConversationStore } from '@/stores/conversation';
 
 import ChatExchangeList from './ChatExchangeList.vue';
@@ -118,5 +119,61 @@ describe('ChatExchangeList', () => {
     ).scrollToExchange(targetId!);
 
     expect(scrollTo).toHaveBeenCalled();
+  });
+
+  it('remounts the scroll list when the active conversation changes', async () => {
+    const conversationStore = useConversationStore();
+    const first = conversationStore.ensureConversation();
+    const second = conversationStore.createNewConversation();
+    conversationStore.setActiveConversation(first.id);
+
+    const wrapper = mountComponent();
+    const listBefore = wrapper.find('[data-playback-scroll-root]').element;
+
+    // A cached conversation hydrates without a skeleton pass, so without a
+    // remount the scroll container keeps the previous chat's scroll state
+    // (offset, saved positions, blend opacity inputs).
+    conversationStore.setActiveConversation(second.id);
+    await wrapper.vm.$nextTick();
+
+    const listAfter = wrapper.find('[data-playback-scroll-root]').element;
+    expect(listAfter).not.toBe(listBefore);
+  });
+
+  it('does not carry the old chat reading position into a chat with a different scroll mode', async () => {
+    const conversationStore = useConversationStore();
+    const appStore = useAppStore();
+    const nativeChat = conversationStore.ensureConversation();
+    conversationStore.addExchange(nativeChat.id, {
+      role: 'user',
+      content: 'Native chat',
+      status: 'done',
+    });
+    const carouselChat = conversationStore.createNewConversation();
+    conversationStore.addExchange(carouselChat.id, {
+      role: 'user',
+      content: 'Carousel chat',
+      status: 'done',
+    });
+    appStore.setConversationScrollMode(nativeChat.id, 'native');
+    conversationStore.setActiveConversation(nativeChat.id);
+
+    const wrapper = mountComponent();
+    await wrapper.vm.$nextTick();
+
+    const scrollTo = vi.fn();
+    const originalScrollTo = HTMLElement.prototype.scrollTo;
+    HTMLElement.prototype.scrollTo = scrollTo;
+
+    // Switching to the carousel-mode chat must not run the mode-switch
+    // restore: the reading position belongs to the old chat, and applying it
+    // smooth-scrolls the new chat to an arbitrary section, crossfading every
+    // slide along the way. Only the new chat's own mount-time auto-scroll
+    // (a no-op in jsdom's zero-height DOM) may run.
+    conversationStore.setActiveConversation(carouselChat.id);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    HTMLElement.prototype.scrollTo = originalScrollTo;
+
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });

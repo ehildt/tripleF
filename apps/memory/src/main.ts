@@ -16,7 +16,6 @@ import {
   SWAGGER_DOCUMENT,
   VALIDATION_PIPE,
 } from '@triplef/helpers/bootstrap';
-import { createCoreLoggerOptions } from '@triplef/helpers/logger-options';
 
 import { AppConfigService } from './configs/app-config.service.js';
 import { MemoryModule } from './main.module.js';
@@ -32,12 +31,11 @@ process.on('uncaughtException', (error) => {
 });
 
 void (async () => {
+  // Fastify's own request logger stays off (adapter default): the one
+  // request worth logging logs itself with full domain context at the
+  // application layer.
   const adapter = new FastifyAdapter({
     bodyLimit: getBodyLimit(process.env.BODY_LIMIT),
-    // Fastify's built-in pino request logger — same options (level, redact,
-    // pretty/JSON) as the app-wide core logger, so every request emits a
-    // structured completion line (method, url, statusCode, responseTime).
-    logger: createCoreLoggerOptions(process.env),
   });
 
   const APP = await NestFactory.create<NestFastifyApplication>(
@@ -47,14 +45,6 @@ void (async () => {
   );
 
   APP.useLogger(APP.get(CoreLoggerService));
-
-  // Health probes poll constantly — silence their request logs.
-  APP.getHttpAdapter()
-    .getInstance()
-    .addHook('onRequest', (request, _reply, done) => {
-      if (request.url.includes('/health')) request.log.level = 'silent';
-      done();
-    });
 
   const appConfigService = APP.get(AppConfigService);
   await APP.register(compress as any, {

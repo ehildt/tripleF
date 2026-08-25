@@ -1,7 +1,7 @@
-import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
+import { BullMQLoggerService } from '@triplef/bullmq-logger';
 import { CoreLoggerService } from '@triplef/core-logger';
+import { SocketIOService } from '@triplef/socketio';
 import { Job } from 'bullmq';
 import { vi } from 'vitest';
 

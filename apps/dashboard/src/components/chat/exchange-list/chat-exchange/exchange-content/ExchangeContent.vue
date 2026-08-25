@@ -4,6 +4,7 @@ import type { LightboxImage } from '@/types/lightbox.model';
 
 import AssistantResponse from './assistant-response/AssistantResponse.vue';
 import { useExchangeRenderMode } from './composables/use-exchange-render-mode';
+import { usePromptDocumentTiles } from './composables/use-prompt-document-tiles';
 import { usePromptImageTiles } from './composables/use-prompt-image-tiles';
 import ExchangeActivity from './exchange-activity/ExchangeActivity.vue';
 import ExchangeDivider from './exchange-divider/ExchangeDivider.vue';
@@ -20,6 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'imageClicked', images: LightboxImage[], clickedUrl: string): void;
+  (e: 'documentClicked', document: { name: string; url: string }): void;
 }>();
 
 const { dividerVariant, renderMode, containerClasses } = useExchangeRenderMode(
@@ -34,6 +36,7 @@ const { dividerVariant, renderMode, containerClasses } = useExchangeRenderMode(
 );
 
 const { imageTiles } = usePromptImageTiles(() => props.exchange);
+const { documentTiles } = usePromptDocumentTiles(() => props.exchange);
 </script>
 
 <template>
@@ -66,7 +69,9 @@ const { imageTiles } = usePromptImageTiles(() => props.exchange);
       <UserRequest
         :content="exchange.content"
         :images="imageTiles"
+        :documents="documentTiles"
         @image-clicked="(...args) => emit('imageClicked', ...args)"
+        @document-clicked="(...args) => emit('documentClicked', ...args)"
       />
     </div>
     <template v-else-if="renderMode === 'error' || renderMode === 'plain'">{{

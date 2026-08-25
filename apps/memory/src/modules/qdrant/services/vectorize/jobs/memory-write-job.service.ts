@@ -1,22 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
-
-import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
-import { AiSdkService } from '../../../../ai-sdk/services/ai-sdk.service.js';
-import { createMemoryRememberTool } from '../../../../ai-sdk/tools/sources/memory/memory-remember.tool.js';
 import {
   buildMemoryWritePrompt,
   MEMORY_WRITE_INSTRUCTIONS,
-} from '../../../constants/memory-write-prompt.constant.js';
+} from '@triplef/agent/prompts';
+import { createMemoryCognitionRememberTool } from '@triplef/agent/tools';
+import { createMemoryPartitionRememberTool } from '@triplef/agent/tools';
+import { AiSdkService } from '@triplef/ai-sdk';
+
+import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
+import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
 import type { MemoryWriteJobData } from '../../../models/memory.model.js';
+import { MemoryRepository } from '../../memory.repository.js';
+import { MemoryCognitionService } from '../../memory-cognition.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 import { VectorizeService } from '../../vectorize.service.js';
 
-const PRIOR_MEMORY_LIMIT = 2000;
-
 /**
- * Cognition-write job handler (vectorize queue): re-asks the model with the
+ * Memory-write job handler (vectorize queue): re-asks the model with the
  * turn's summarized tool results — from searches to facts, from facts to
- * memoryRemember decisions. Moved out of the harness so the write judgment
+ * remember decisions. The model routes each durable item into the correct
+ * lane: stated facts via memory-partition-remember, derived understanding via
+ * memory-cognition-remember. Moved out of the harness so the write judgment
  * never extends a turn's duration: the harness step only enqueues.
  *
  * toolChoice is 'auto': a turn that surfaced nothing durable is a correct
@@ -32,6 +36,8 @@ export class MemoryWriteJobService {
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly memorySearch: MemorySearchService,
     private readonly vectorizeService: VectorizeService,
+    private readonly memoryCognition: MemoryCognitionService,
+    private readonly memoryRepository: MemoryRepository,
   ) {}
 
   async execute(data: MemoryWriteJobData): Promise<void> {
@@ -41,19 +47,39 @@ export class MemoryWriteJobService {
       text: data.userRequest,
       limit: 5,
     });
-    const priorMemory = prior
-      .map((p) => `- ${p.text}`)
-      .join('\n')
-      .slice(0, PRIOR_MEMORY_LIMIT);
+    const priorMemory = prior.map((p) => `- ${p.text}`).join('\n');
 
-    const rememberTool = createMemoryRememberTool({
-      scope: {
-        memoryPartition: data.memoryPartition,
-        sessionId: data.sessionId ?? data.memoryPartition,
-        conversationId: data.conversationId,
-        requestId: data.requestId,
-      },
+    // The partition's existing category/tag vocabulary — a reuse-first hint
+    // so the model extends the taxonomy instead of minting near-duplicates.
+    const [categories, tags] = await Promise.all([
+      this.memoryRepository.facetCategories(data.memoryPartition),
+      this.memoryRepository.facetTags(data.memoryPartition),
+    ]);
+
+    const scope = {
+      memoryPartition: data.memoryPartition,
+      memoryCognition: data.memoryCognition ?? data.memoryPartition,
+      sessionId: data.sessionId ?? data.memoryPartition,
+      conversationId: data.conversationId,
+      requestId: data.requestId,
+    };
+
+    const partitionRememberTool = createMemoryPartitionRememberTool({
+      scope,
       storeRecord: (input) => this.vectorizeService.storeRecord(input),
+    });
+    const cognitionRememberTool = createMemoryCognitionRememberTool({
+      scope,
+      storeInsight: (input) =>
+        this.memoryCognition.storeInsight(
+          {
+            memoryCognition: input.memoryCognition,
+            sessionId: input.sessionId,
+            conversationId: input.conversationId,
+            requestId: input.requestId,
+          },
+          { text: input.text, path: input.path },
+        ),
     });
 
     const result = await this.aiSdkService.generateWithTools({
@@ -67,18 +93,27 @@ export class MemoryWriteJobService {
             priorMemory,
             probedMemory: data.probedMemory,
             gathered: data.gathered,
+            knownCategories: categories.map((entry) => entry.value),
+            knownTags: tags.map((entry) => entry.value),
           }),
         },
       ],
-      tools: { memoryRemember: rememberTool } as any,
+      tools: {
+        'memory-partition-remember': partitionRememberTool,
+        'memory-cognition-remember': cognitionRememberTool,
+      } as any,
       toolChoice: 'auto',
-      keepAlive: this.ollamaConfigService.config.keepAlive,
-      numCtx: data.numCtx,
-      think: data.think,
+      providerOptions: buildProviderOptions({
+        keepAlive: this.ollamaConfigService.config.keepAlive,
+        numCtx: data.numCtx,
+        think: data.think,
+      }),
     });
 
     const stored = result.toolResults.filter(
-      (r) => r.toolName === 'memoryRemember',
+      (r) =>
+        r.toolName === 'memory-partition-remember' ||
+        r.toolName === 'memory-cognition-remember',
     );
     if (stored.length > 0) {
       this.logger.log(

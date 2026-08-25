@@ -1,6 +1,6 @@
-import type { IntentResult } from '../../templates/intent.schema.js';
+import type { IntentResult } from '@triplef/agent/schemas';
+import { categorizeTools } from '@triplef/agent/schemas';
 
-import { categorizeTools } from './categorize-tools.helper.js';
 import type { ToolArray } from './enforce-media-tools.helper.types.js';
 
 const mediaTemplates = new Set(['article', 'news', 'product']);

@@ -2,7 +2,6 @@ import {
   Controller,
   Delete,
   Get,
-  Header,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -62,7 +61,6 @@ export class StorageController {
 
   @Get(':sessionId/:conversationId/:hash')
   @ApiGetObject()
-  @Header('Cache-Control', 'public, max-age=3600')
   async getObject(
     @Param('sessionId') sessionId: string,
     @Param('conversationId') conversationId: string,
@@ -77,6 +75,10 @@ export class StorageController {
       );
       const contentType = meta['content-type'] ?? 'application/octet-stream';
       void res.type(contentType);
+      // Cache only successful responses: a 404 must never be cached, or a
+      // transient miss (e.g. a preview requested before the upload landed)
+      // would stick as a broken image for the whole max-age window.
+      res.header('Cache-Control', 'public, max-age=3600');
       return res.send(stream);
     } catch {
       throw new NotFoundException();

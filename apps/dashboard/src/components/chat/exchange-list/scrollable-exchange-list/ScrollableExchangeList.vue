@@ -47,6 +47,10 @@ const activeSectionIndexForMode = computed(() =>
 // would otherwise queue an auto-scroll-to-bottom) must already see the skip
 // flag. The tracked exchange is then navigated to exactly like a history
 // click does.
+//
+// ChatExchangeList keys the list by conversation id, so a chat switch can
+// no longer reach this watch: it only fires on within-chat mode toggles,
+// where the source and target sections belong to the same conversation.
 let stopRestore: (() => void) | null = null;
 
 watch(
@@ -117,7 +121,8 @@ const activeUserExchangeId = computed(
 // back into a section. Re-snap to the section that slid into the gap (the
 // next section, same index) or, when none exists (deleted at the end), to
 // the previous section. Native mode is a continuous list and has no such
-// snap/orphan problem.
+// snap/orphan problem. Chat switches remount the list (conversation key on
+// the parent), so a shrinking length here is always a same-chat deletion.
 watch(
   () => props.sections.length,
   (newLength, previousLength) => {

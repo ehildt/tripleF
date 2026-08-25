@@ -83,6 +83,7 @@ services:
         condition: service_started
     environment:
       NODE_OPTIONS: --max-old-space-size=1024
+      VITE_MEMORY_PROXY_TARGET: http://memory:3400
     volumes:
       - ./:/repo
     env_file:

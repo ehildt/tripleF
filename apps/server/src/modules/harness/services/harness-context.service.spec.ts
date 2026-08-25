@@ -8,6 +8,7 @@ import { MinioService } from '../../minio/services/minio.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 
+import { DocumentConversionService } from './document-conversion.service.js';
 import { HarnessContextService } from './harness-context.service.js';
 import { StepRegistryService } from './step-registry.service.js';
 
@@ -28,9 +29,18 @@ describe('HarnessContextService', () => {
       providers: [
         HarnessContextService,
         {
+          provide: DocumentConversionService,
+          useValue: {
+            resolveOriginals: vi
+              .fn()
+              .mockResolvedValue({ pageImageMeta: [], textSections: [] }),
+          },
+        },
+        {
           provide: MinioService,
           useValue: {
             downloadBuffers: vi.fn(),
+            buildFileUrl: vi.fn(() => '/api/v1/storage/s/c/h'),
           },
         },
         {

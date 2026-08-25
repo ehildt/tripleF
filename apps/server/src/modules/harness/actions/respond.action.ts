@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { InputMessage } from '@triplef/ai-sdk';
+import { AiSdkService } from '@triplef/ai-sdk';
 
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
+import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { buildCorrectionPrompt } from '../helpers/respond/build-correction-prompt.helper.js';
 import { buildExecutionMessages } from '../helpers/respond/build-execution-messages.helper.js';
-import { consumeResponseStream } from '../helpers/respond/consume-response-stream.helper.js';
+import { consumeResponseStream } from '../helpers/stream/consume-response-stream.helper.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
 
 import type { RespondParams, RespondResult } from './respond.action.types.js';
-
 const MAX_JSON_RETRIES = 3;
 
 @Injectable()
@@ -86,15 +86,17 @@ export class RespondActionService {
       const result = await this.aiSdkService.generateChat({
         model: params.model,
         messages,
-        keepAlive: params.keepAlive,
-        numCtx: params.numCtx,
-        think: params.think,
+        providerOptions: buildProviderOptions({
+          keepAlive: params.keepAlive,
+          numCtx: params.numCtx,
+          think: params.think,
+        }),
         tools: {},
         abortSignal: params.abortSignal,
       });
 
-      totalInputTokens += result.totalUsage?.inputTokens ?? 0;
-      totalOutputTokens += result.totalUsage?.outputTokens ?? 0;
+      totalInputTokens += result.usage?.inputTokens ?? 0;
+      totalOutputTokens += result.usage?.outputTokens ?? 0;
 
       const validation = this.responseValidator.validateValidatedResponse(
         result.text,
@@ -164,9 +166,11 @@ export class RespondActionService {
     const result = await this.aiSdkService.streamChat({
       model: params.model,
       messages,
-      keepAlive: params.keepAlive,
-      numCtx: params.numCtx,
-      think: params.think,
+      providerOptions: buildProviderOptions({
+        keepAlive: params.keepAlive,
+        numCtx: params.numCtx,
+        think: params.think,
+      }),
       tools: {},
       abortSignal: params.abortSignal,
     });
@@ -250,17 +254,19 @@ export class RespondActionService {
     const result = await this.aiSdkService.generateChat({
       model: params.model,
       messages,
-      keepAlive: params.keepAlive,
-      numCtx: params.numCtx,
-      think: params.think,
+      providerOptions: buildProviderOptions({
+        keepAlive: params.keepAlive,
+        numCtx: params.numCtx,
+        think: params.think,
+      }),
       tools: {},
       abortSignal: params.abortSignal,
     });
 
     return {
       content: result.text,
-      inputTokens: result.totalUsage?.inputTokens || undefined,
-      outputTokens: result.totalUsage?.outputTokens || undefined,
+      inputTokens: result.usage?.inputTokens || undefined,
+      outputTokens: result.usage?.outputTokens || undefined,
     };
   }
 }

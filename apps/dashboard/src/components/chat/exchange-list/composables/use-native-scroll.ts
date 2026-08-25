@@ -37,6 +37,15 @@ export function useNativeScroll() {
     return scrollContainerRef.value;
   }
 
+  /** Mirror the container's live scroll metrics into the reactive refs. The
+   * scroll event fires asynchronously, so without this sync a programmatic
+   * scroll leaves consumers (like the mode-switch restore) reading a stale
+   * position until the event lands. */
+  function syncScrollState(container: HTMLElement) {
+    scrollTop.value = container.scrollTop;
+    updateActiveSection(container);
+  }
+
   function isAtBottom(container: HTMLElement): boolean {
     return (
       container.scrollTop +
@@ -53,6 +62,7 @@ export function useNativeScroll() {
     isProgrammaticScroll.value = true;
     requestAnimationFrame(() => {
       container.scrollTop = container.scrollHeight;
+      syncScrollState(container);
       isProgrammaticScroll.value = false;
     });
   }
@@ -72,6 +82,7 @@ export function useNativeScroll() {
       top: (section as HTMLElement).offsetTop,
       behavior: smooth ? 'smooth' : 'auto',
     });
+    syncScrollState(container);
     if (smooth) {
       window.setTimeout(() => {
         isProgrammaticScroll.value = false;

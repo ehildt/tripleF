@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AiSdkService } from '@triplef/ai-sdk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 
@@ -236,7 +236,7 @@ describe('ExecuteActionService', () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: '',
       toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
-      totalUsage: { inputTokens: 20, outputTokens: 10 },
+      usage: { inputTokens: 20, outputTokens: 10 },
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       webSearch: { description: 'search' },
@@ -273,7 +273,7 @@ describe('ExecuteActionService', () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: '',
       toolResults: [{ toolName: 'webSearch', result: { results: [] } }],
-      totalUsage: {},
+      usage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       webSearch: { description: 'search' },
@@ -310,7 +310,7 @@ describe('ExecuteActionService', () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: '',
       toolResults: [],
-      totalUsage: {},
+      usage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       webSearch: { description: 'search' },
@@ -348,7 +348,7 @@ describe('ExecuteActionService', () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: '',
       toolResults: [],
-      totalUsage: {},
+      usage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       serperImageSearch: { description: 'images' },
@@ -390,12 +390,12 @@ describe('ExecuteActionService', () => {
       .mockResolvedValueOnce({
         text: 'I will not call any tools',
         toolResults: [],
-        totalUsage: { inputTokens: 10, outputTokens: 5 },
+        usage: { inputTokens: 10, outputTokens: 5 },
       })
       .mockResolvedValueOnce({
         text: '',
         toolResults: [{ toolName: 'serperImageSearch', result: { x: 2 } }],
-        totalUsage: { inputTokens: 7, outputTokens: 3 },
+        usage: { inputTokens: 7, outputTokens: 3 },
       });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       serperImageSearch: { execute: vi.fn() },
@@ -448,7 +448,7 @@ describe('ExecuteActionService', () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: 'I will not call any tools',
       toolResults: [],
-      totalUsage: {},
+      usage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       serperWebSearch: { execute: executeSpy },
@@ -489,7 +489,7 @@ describe('ExecuteActionService', () => {
     (aiSdkService.generateWithTools as any).mockResolvedValue({
       text: '',
       toolResults: [{ toolName: 'webSearch', result: { results: [] } }],
-      totalUsage: {},
+      usage: {},
     });
     (toolSelectionService.selectToolsByName as any).mockReturnValue({
       webSearch: { description: 'search' },

@@ -1,4 +1,3 @@
-import { SocketIOModule } from '@ehildt/nestjs-socket.io';
 import compress from '@fastify/compress';
 import fastifyMultipart from '@fastify/multipart';
 import { Logger, VersioningType } from '@nestjs/common';
@@ -18,7 +17,7 @@ import {
   SWAGGER_DOCUMENT,
   VALIDATION_PIPE,
 } from '@triplef/helpers/bootstrap';
-import { createCoreLoggerOptions } from '@triplef/helpers/logger-options';
+import { SocketIOModule } from '@triplef/socketio';
 
 import { AppConfigService } from './configs/app-config.service.js';
 import { MainModule } from './main.module.js';
@@ -27,6 +26,7 @@ process.on('unhandledRejection', (reason) => {
   const log = new Logger('UnhandledRejection');
   log.error(reason instanceof Error ? reason : new Error(String(reason)));
 });
+
 process.on('uncaughtException', (error) => {
   const log = new Logger('UncaughtException');
   log.error(error);
@@ -34,12 +34,11 @@ process.on('uncaughtException', (error) => {
 });
 
 void (async () => {
+  // Fastify's own request logger stays off (adapter default): the one
+  // request worth logging — the harness — logs itself with full domain
+  // context (requestId, session, conversation) in the controller.
   const adapter = new FastifyAdapter({
     bodyLimit: getBodyLimit(process.env.BODY_LIMIT),
-    // Fastify's built-in pino request logger — same options (level, redact,
-    // pretty/JSON) as the app-wide core logger, so every request emits a
-    // structured completion line (method, url, statusCode, responseTime).
-    logger: createCoreLoggerOptions(process.env),
   });
 
   const APP = await NestFactory.create<NestFastifyApplication>(
@@ -49,14 +48,6 @@ void (async () => {
   );
 
   APP.useLogger(APP.get(CoreLoggerService));
-
-  // Health probes poll constantly — silence their request logs.
-  APP.getHttpAdapter()
-    .getInstance()
-    .addHook('onRequest', (request, _reply, done) => {
-      if (request.url.includes('/health')) request.log.level = 'silent';
-      done();
-    });
 
   await SocketIOModule.attach(APP);
   const appConfigService = APP.get(AppConfigService);

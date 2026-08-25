@@ -1,8 +1,8 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AiSdkService } from '@triplef/ai-sdk';
+import { SocketIOService } from '@triplef/socketio';
 import { vi } from 'vitest';
 
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 
 import { HarnessChatStreamingService } from './harness-chat-streaming.service.js';

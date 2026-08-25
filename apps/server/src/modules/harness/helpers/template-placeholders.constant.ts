@@ -1,148 +1,42 @@
 import {
   getSnippetTemplateKeys,
   isSnippetTemplate,
-} from '../snippets/snippet-presets.constant.js';
+} from '@triplef/agent/prompts';
+import { compareSchema } from '@triplef/agent/schemas';
+import { describeSchema } from '@triplef/agent/schemas';
+import { imagelistSchema } from '@triplef/agent/schemas';
+import { ocrSchema } from '@triplef/agent/schemas';
+import { productSchema } from '@triplef/agent/schemas';
+import { shoplistSchema } from '@triplef/agent/schemas';
+import { stockmarketItemSchema } from '@triplef/agent/schemas';
+import { stockmarketListSchema } from '@triplef/agent/schemas';
+import { summarySchema } from '@triplef/agent/schemas';
+import { videolistSchema } from '@triplef/agent/schemas';
+import { deriveSchemaKeys } from '@triplef/agent/schemas';
 
 /**
  * Placeholder lists per template: which JSON keys the client renders.
  *
- * news/article/evaluation are snippet-composed — their key lists derive from
- * their snippet presets (single source of truth) and are not in this table.
+ * news/article/evaluation/merge are snippet-composed — their key lists derive
+ * from their snippet presets (single source of truth) and are not in this
+ * table. Every other template derives its keys from its zod schema, so the
+ * validator's whitelist and the schema cannot drift.
  */
 const TEMPLATE_PLACEHOLDERS: Record<
   string,
   { required: string[]; optional: string[] }
 > = {
-  describe: {
-    required: ['category', 'title', 'subtitle', 'sectionContent'],
-    optional: [
-      'keyFindings',
-      'sources',
-      'galleryTitle',
-      'galleryItems',
-      'videoGalleryTitle',
-      'videoGalleryItems',
-      'discardedReferences',
-      'note',
-      'internationalCoverage',
-    ],
-  },
-  compare: {
-    required: ['category', 'title', 'subtitle', 'sectionContent'],
-    optional: [
-      'keyFindings',
-      'sources',
-      'galleryTitle',
-      'galleryItems',
-      'videoGalleryTitle',
-      'videoGalleryItems',
-      'discardedReferences',
-      'note',
-      'internationalCoverage',
-    ],
-  },
-  ocr: {
-    required: ['category', 'title', 'subtitle', 'sectionContent'],
-    optional: [
-      'keyFindings',
-      'sources',
-      'galleryTitle',
-      'galleryItems',
-      'videoGalleryTitle',
-      'videoGalleryItems',
-      'discardedReferences',
-      'internationalCoverage',
-    ],
-  },
-  summary: {
-    required: ['category', 'title', 'subtitle', 'summary'],
-    optional: [
-      'keyFindings',
-      'sources',
-      'heroImageUrl',
-      'heroImageAlt',
-      'heroCaption',
-      'heroVideoUrl',
-      'heroVideoCaption',
-      'heroVideoTitle',
-      'galleryTitle',
-      'galleryItems',
-      'videoGalleryTitle',
-      'videoGalleryItems',
-      'internationalCoverage',
-    ],
-  },
-  product: {
-    required: ['category', 'title', 'subtitle', 'shortDescription'],
-    optional: [
-      'aggregateRating',
-      'aggregateRatingCount',
-      'aggregateRatingLabel',
-      'statHighlights',
-      'keyPoints',
-      'pros',
-      'cons',
-      'shopOffers',
-      'heroImageUrl',
-      'heroImageAlt',
-      'heroCaption',
-      'galleryTitle',
-      'galleryItems',
-      'videoGalleryTitle',
-      'videoGalleryItems',
-      'sources',
-      'internationalCoverage',
-    ],
-  },
-  shoplist: {
-    required: ['category', 'title', 'subtitle'],
-    optional: [
-      'shortDescription',
-      'shopOffers',
-      'sources',
-      'internationalCoverage',
-    ],
-  },
-  imagelist: {
-    required: ['category', 'title', 'subtitle', 'galleryItems'],
-    optional: ['sources', 'internationalCoverage'],
-  },
-  videolist: {
-    required: ['category', 'title', 'subtitle', 'videoGalleryItems'],
-    optional: ['internationalCoverage'],
-  },
-  stockmarketitem: {
-    required: ['category', 'title', 'subtitle', 'shortDescription'],
-    optional: [
-      'currentPrice',
-      'change',
-      'changeP',
-      'recommendation',
-      'recommendationReasoning',
-      'keyPoints',
-      'fundamentals',
-      'news',
-      'sources',
-      'internationalCoverage',
-      'referenceLines',
-      'markers',
-    ],
-  },
-  stockmarketlist: {
-    required: ['category', 'title', 'subtitle'],
-    optional: [
-      'summary',
-      'items',
-      'sources',
-      'internationalCoverage',
-      'referenceLines',
-      'markers',
-    ],
-  },
-  text: {
-    required: [],
-    optional: [],
-  },
+  describe: deriveSchemaKeys(describeSchema),
+  compare: deriveSchemaKeys(compareSchema),
+  ocr: deriveSchemaKeys(ocrSchema),
+  summary: deriveSchemaKeys(summarySchema),
+  product: deriveSchemaKeys(productSchema),
+  shoplist: deriveSchemaKeys(shoplistSchema),
+  imagelist: deriveSchemaKeys(imagelistSchema),
+  videolist: deriveSchemaKeys(videolistSchema),
+  stockmarketitem: deriveSchemaKeys(stockmarketItemSchema),
+  stockmarketlist: deriveSchemaKeys(stockmarketListSchema),
+  text: { required: [], optional: [] },
 };
 
 /** Returns the keys that are actually required for the given template. */

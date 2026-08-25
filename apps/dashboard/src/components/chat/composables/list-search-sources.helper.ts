@@ -1,3 +1,4 @@
+import { engineIsEnabled } from './helpers/engine-is-enabled.helper';
 import type { Overrides } from './list-search-sources.helper.types';
 
 /**
@@ -83,6 +84,9 @@ export function listSearchSources(
   for (const [provider, engine] of Object.entries(snapshot)) {
     if (NON_SEARCH_PROVIDERS.has(provider)) continue;
     if (SINGLE_TOGGLE_PROVIDERS.has(provider)) continue;
+    // Only engines that are currently enabled surface their source tags — a
+    // disabled engine's sources must not leak into the menu.
+    if (!engineIsEnabled(snapshot, sessionOverrides, provider)) continue;
     collectProviderSources(provider, engine, sessionOverrides, sources);
   }
   return sources;
