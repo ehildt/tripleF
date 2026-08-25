@@ -56,6 +56,14 @@
 - [6.3. Validate Return Value](6.3-validate-return-value.md)
 - [6.4. Quick Start](6.4-quick-start.md)
 
+### Core-Logger
+
+- [7. The @triplef/core-logger Library](7-core-logger.md)
+- [7.1. Core-Logger Service](7.1-core-logger-service.md)
+- [7.2. Core-Logger Module](7.2-core-logger-module.md)
+- [7.3. Core-Logger Schema](7.3-core-logger-schema.md)
+- [7.4. Quick Start](7.4-quick-start.md)
+
 ## Navigation
 
 | Document                                                  | Concern                                        | Key Sections                                                           |
@@ -86,3 +94,13 @@
 | [5.6-object-io](5.6-object-io.md)                         | Object utilities                               | Clone, merge, pick, omit, is-empty                                     |
 | [5.7-text-to-lines](5.7-text-to-lines.md)                 | Sentence splitting                              | Western + CJK punctuation, chainable API                                |
 | [5.8-quick-start](5.8-quick-start.md)                     | Using the helpers package                       | Install, env parsing, object-io, hashing                                 |
+| [6-config-factory](6-config-factory.md)                   | `@triplef/config-factory` library overview      | Modules, installation, peer dependencies                                 |
+| [6.1-config-factory](6.1-config-factory.md)               | NestJS module for registering config providers | `forRoot` options, global providers, usage                               |
+| [6.2-cache-return-value](6.2-cache-return-value.md)       | Decorator caching return values                 | TTL, stale-while-revalidate, Joi validation                              |
+| [6.3-validate-return-value](6.3-validate-return-value.md) | Decorator validating return values              | Joi schema validation, `ValidateReturnValueError`                        |
+| [6.4-quick-start](6.4-quick-start.md)                     | Using the config-factory package                | Install, config service, module registration                            |
+| [7-core-logger](7-core-logger.md)                         | `@triplef/core-logger` library overview         | Modules, installation, peer dependencies                                 |
+| [7.1-core-logger-service](7.1-core-logger-service.md)     | NestJS `LoggerService` backed by pino           | Call shapes, onLog hook, setLogLevels                                    |
+| [7.2-core-logger-module](7.2-core-logger-module.md)       | Dynamic module wiring the service to pino       | `registerAsync` options, bootstrap                                       |
+| [7.3-core-logger-schema](7.3-core-logger-schema.md)       | Joi schema for pino options                     | Fields, validation usage                                                |
+| [7.4-quick-start](7.4-quick-start.md)                     | Using the core-logger package                   | Install, config service, register, bootstrap                             |

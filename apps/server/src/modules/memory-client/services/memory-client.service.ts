@@ -10,6 +10,18 @@ interface MemoryCognitionSnapshot {
   profile: string | null;
   /** Derived insight records (newest first). */
   insights: Array<{ text: string; path?: string }>;
+  /** Effective episode probe limit (system variable) — max episode records injected per turn. */
+  episodeProbeLimit: number;
+}
+
+interface MemoryOverridesConfig {
+  cognitionLimit: number;
+  baseline: number;
+  overridden: boolean;
+  episodeRecencyWeight: number;
+  episodeRecencyScaleSeconds: number;
+  episodeRecencyMidpoint: number;
+  episodeProbeLimit: number;
 }
 
 interface SearchByTextInput {
@@ -19,6 +31,8 @@ interface SearchByTextInput {
   tags?: string[];
   contains?: string;
   limit?: number;
+  /** Blend recency into the ranking (episode probe). */
+  recency?: boolean;
 }
 
 interface StoreRecordInput {
@@ -125,6 +139,13 @@ export class MemoryClientService {
   ): Promise<MemoryCognitionSnapshot> {
     return this.request<MemoryCognitionSnapshot>(
       `${this.baseUrl}/qdrant/memory/cognition?memoryCognition=${encodeURIComponent(memoryCognition)}`,
+    );
+  }
+
+  /** The memory app's system variables (sysctl → system) — effective values over env defaults. */
+  async getOverrides(): Promise<MemoryOverridesConfig> {
+    return this.request<MemoryOverridesConfig>(
+      `${this.baseUrl}/memory-overrides`,
     );
   }
 

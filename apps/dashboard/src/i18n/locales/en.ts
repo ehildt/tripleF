@@ -482,6 +482,17 @@ const en: LocaleMessages = {
     memoryCognitionCap: 'Cognition limit',
     memoryCognitionCapDesc:
       'Character cap for the AI cognition profile document — a system variable (env baseline MEMORY_COGNITION_LIMIT, default 5000, clamped 500–32000)',
+    episodeRecencyWeight: 'Episode recency weight',
+    episodeRecencyWeightDesc:
+      'How much recency may break topical ties in the short-term conversation-memory ranking (0–1, default 0.3)',
+    episodeRecencyScale: 'Episode recency horizon',
+    episodeRecencyScaleDesc:
+      'Decay horizon in seconds — an episode this old loses half its recency bonus (default 604800 = 1 week)',
+    episodeRecencyMidpoint: 'Episode recency midpoint',
+    episodeRecencyMidpointDesc: 'Decay midpoint (0.01–0.99, default 0.5)',
+    episodeProbeLimit: 'Episode probe limit',
+    episodeProbeLimitDesc:
+      'Max short-term conversation-memory records injected per turn (1–10, default 3)',
     memoryCognitionEmpty: 'Nothing learned yet — this builds up as you chat',
     memoryCognitionUnavailable: 'Memory is off or unreachable',
     memoryCognitionRefresh: 'Reload cognition',

@@ -42,6 +42,7 @@ import type { QdrantConfig } from '../models/qdrant-config.model.js';
 import { MemoryRepository } from '../services/memory.repository.js';
 import { MemoryCognitionService } from '../services/memory-cognition.service.js';
 import { MemoryEnqueueService } from '../services/memory-enqueue.service.js';
+import { MemoryOverridesService } from '../services/memory-overrides.service.js';
 import { MemorySearchService } from '../services/memory-search.service.js';
 import { QdrantClientService } from '../services/qdrant-client.service.js';
 import { VectorizeService } from '../services/vectorize.service.js';
@@ -54,6 +55,7 @@ export class QdrantController {
     private readonly memoryRepository: MemoryRepository,
     private readonly memorySearchService: MemorySearchService,
     private readonly memoryCognitionService: MemoryCognitionService,
+    private readonly memoryOverrides: MemoryOverridesService,
     private readonly vectorizeService: VectorizeService,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
@@ -80,6 +82,7 @@ export class QdrantController {
     return {
       profile: profile ? JSON.stringify(profile) : null,
       insights,
+      episodeProbeLimit: this.memoryOverrides.getEpisodeProbeLimit(),
     };
   }
 
@@ -186,6 +189,7 @@ export class QdrantController {
       requestId: body.requestId,
       tags: body.tags,
       contains: body.contains,
+      recency: body.recency,
     });
   }
 
@@ -221,11 +225,10 @@ export class QdrantController {
         );
 
     const model = body.model?.trim() || this.config.consolidateModel;
-    if (!model) {
+    if (!model)
       throw new BadRequestException(
         'An adjudication model is required — pass "model" or set MEMORY_CONSOLIDATE_MODEL',
       );
-    }
 
     const limit = Math.min(body.limit ?? 100, 500);
     const sweeps: Array<{ memoryPartition: string; pending: number }> = [];

@@ -66,6 +66,7 @@ export class InterpretActionService {
       enabledToolNames,
       params.language,
       params.memoryProbe,
+      params.personaName,
     );
 
     let totalInputTokens = 0;

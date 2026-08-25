@@ -55,6 +55,7 @@ export function buildClassifyMessages(
   enabledToolNames: string[],
   language?: string,
   memoryProbe?: string,
+  personaName?: string,
 ): InputMessage[] {
   const prompt = `${buildIntentSelectionPrompt(
     enabledToolNames,
@@ -87,10 +88,14 @@ export function buildClassifyMessages(
     ? buildImageUserContent(nonSystem)
     : (latestUser?.content ?? '');
 
+  const identityLine = personaName
+    ? `\n\nYOUR IDENTITY: the user named you "${personaName}". A bare address like "${personaName}?" is the user calling YOU — classify it as a plain conversational turn (template "text", prompt "default", no tools), never as a familiarity question about a public figure. A question ABOUT "${personaName}" as a topic (e.g. "tell me about ${personaName}") is still a topic question.`
+    : '';
+
   return [
     {
       role: 'system' as const,
-      content: `${systemContent}${transcript ? `\n\n${transcript}` : ''}${memoryProbe ? `\n\n${memoryProbe}` : ''}`,
+      content: `${systemContent}${identityLine}${transcript ? `\n\n${transcript}` : ''}${memoryProbe ? `\n\n${memoryProbe}` : ''}`,
     },
     ...(latestUserContent
       ? [{ role: 'user' as const, content: latestUserContent }]

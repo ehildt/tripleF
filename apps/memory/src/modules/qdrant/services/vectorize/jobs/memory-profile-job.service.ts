@@ -140,8 +140,11 @@ export class MemoryProfileJobService {
     const storedInsights = verdict.insights.length
       ? await this.memoryCognition.upsertInsights(scope, verdict.insights)
       : 0;
+    const storedEpisode = verdict.episode
+      ? await this.memoryCognition.upsertEpisode(scope, verdict.episode)
+      : 0;
 
-    if (!storedProfile && storedInsights === 0) {
+    if (!storedProfile && storedInsights === 0 && storedEpisode === 0) {
       this.logger.debug(
         `memory-profile ${data.requestId}: nothing durable learned`,
       );
@@ -154,7 +157,7 @@ export class MemoryProfileJobService {
             ? `merged (removed: ${removals.join(', ')})`
             : 'merged'
           : 'unchanged'
-      }, ${storedInsights} insight(s) stored`,
+      }, ${storedInsights} insight(s), ${storedEpisode} episode(s) stored`,
     );
   }
 

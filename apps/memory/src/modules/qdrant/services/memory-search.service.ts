@@ -11,6 +11,8 @@ import { MemoryRepository } from './memory.repository.js';
 
 interface SearchInput extends MemoryScopeFilters {
   limit?: number;
+  /** Blend recency into the ranking (episode probe). */
+  recency?: boolean;
 }
 
 /**
@@ -57,6 +59,7 @@ export class MemorySearchService {
           requestId: input.requestId,
           tags: input.tags,
           contains: input.contains,
+          recency: input.recency,
         });
         for (const hit of results) {
           const existing = merged.get(hit.id);

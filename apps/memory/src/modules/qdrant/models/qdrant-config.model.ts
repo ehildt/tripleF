@@ -45,4 +45,29 @@ export interface QdrantConfig {
    * default; the consolidate endpoint body may pass a model instead.
    */
   consolidateModel?: string;
+  /**
+   * Recency weight for the episode probe (MEMORY_EPISODE_RECENCY_WEIGHT,
+   * default 0.3, clamped 0–1) — how much recency may break topical ties.
+   * Env baseline for the `episodeRecencyWeight` system variable.
+   */
+  episodeRecencyWeight: number;
+  /**
+   * Recency decay horizon in seconds (MEMORY_EPISODE_RECENCY_SCALE_SECONDS,
+   * default 604800 = 1 week, clamped 60–31536000) — an episode this old
+   * loses half its recency bonus. Env baseline for the
+   * `episodeRecencyScaleSeconds` system variable.
+   */
+  episodeRecencyScaleSeconds: number;
+  /**
+   * Recency decay midpoint (MEMORY_EPISODE_RECENCY_MIDPOINT, default 0.5,
+   * clamped 0.01–0.99). Env baseline for the `episodeRecencyMidpoint`
+   * system variable.
+   */
+  episodeRecencyMidpoint: number;
+  /**
+   * Max episode records injected per turn (MEMORY_EPISODE_PROBE_LIMIT,
+   * default 3, clamped 1–10). Env baseline for the `episodeProbeLimit`
+   * system variable; surfaced to the harness via the cognition snapshot.
+   */
+  episodeProbeLimit: number;
 }

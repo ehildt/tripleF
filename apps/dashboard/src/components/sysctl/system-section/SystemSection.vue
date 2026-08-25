@@ -8,10 +8,14 @@
 import {
   Activity,
   Brain,
+  Clock,
   Fingerprint,
   Gauge,
   KeyRound,
+  Layers,
+  Scale,
   Server,
+  SlidersHorizontal,
 } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 
@@ -68,7 +72,18 @@ const {
   refreshCognition,
   handleWipeClick,
 } = useMemoryCognition();
-const { cognitionLimit, saveCognitionLimit } = useMemoryOverrides();
+const {
+  cognitionLimit,
+  episodeRecencyWeight,
+  episodeRecencyScaleSeconds,
+  episodeRecencyMidpoint,
+  episodeProbeLimit,
+  saveCognitionLimit,
+  saveEpisodeRecencyWeight,
+  saveEpisodeRecencyScaleSeconds,
+  saveEpisodeRecencyMidpoint,
+  saveEpisodeProbeLimit,
+} = useMemoryOverrides();
 const {
   factsDisplay,
   isLoading: isFactsLoading,
@@ -198,6 +213,53 @@ const {
           :number-max="32000"
           :show-checkbox="false"
           @update:number-value="saveCognitionLimit"
+        />
+
+        <!-- Episode-probe recency blend: system variables shaping the
+             short-term conversation-memory ranking (relevance + recency). -->
+        <FieldCard
+          :icon="Scale"
+          :label="$t('common.episodeRecencyWeight')"
+          :description="$t('common.episodeRecencyWeightDesc')"
+          :number-value="episodeRecencyWeight"
+          :number-step="0.05"
+          :number-min="0"
+          :number-max="1"
+          :show-checkbox="false"
+          @update:number-value="saveEpisodeRecencyWeight"
+        />
+        <FieldCard
+          :icon="Clock"
+          :label="$t('common.episodeRecencyScale')"
+          :description="$t('common.episodeRecencyScaleDesc')"
+          :number-value="episodeRecencyScaleSeconds"
+          :number-step="86400"
+          :number-min="60"
+          :number-max="31536000"
+          :show-checkbox="false"
+          @update:number-value="saveEpisodeRecencyScaleSeconds"
+        />
+        <FieldCard
+          :icon="SlidersHorizontal"
+          :label="$t('common.episodeRecencyMidpoint')"
+          :description="$t('common.episodeRecencyMidpointDesc')"
+          :number-value="episodeRecencyMidpoint"
+          :number-step="0.01"
+          :number-min="0.01"
+          :number-max="0.99"
+          :show-checkbox="false"
+          @update:number-value="saveEpisodeRecencyMidpoint"
+        />
+        <FieldCard
+          :icon="Layers"
+          :label="$t('common.episodeProbeLimit')"
+          :description="$t('common.episodeProbeLimitDesc')"
+          :number-value="episodeProbeLimit"
+          :number-step="1"
+          :number-min="1"
+          :number-max="10"
+          :show-checkbox="false"
+          @update:number-value="saveEpisodeProbeLimit"
         />
       </FieldGrid>
 

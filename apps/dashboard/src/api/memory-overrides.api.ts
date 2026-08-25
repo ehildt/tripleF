@@ -7,6 +7,14 @@ export interface MemoryOverridesConfig {
   baseline: number;
   /** True when a persisted override is active. */
   overridden: boolean;
+  /** Effective recency weight for the episode probe (0–1). */
+  episodeRecencyWeight: number;
+  /** Effective recency decay horizon in seconds. */
+  episodeRecencyScaleSeconds: number;
+  /** Effective recency decay midpoint (0.01–0.99). */
+  episodeRecencyMidpoint: number;
+  /** Effective episode probe limit (1–10 records per turn). */
+  episodeProbeLimit: number;
 }
 
 /**
@@ -23,6 +31,10 @@ export async function fetchMemoryOverrides(): Promise<MemoryOverridesConfig> {
 
 export async function updateMemoryOverrides(patch: {
   cognitionLimit?: number | null;
+  episodeRecencyWeight?: number | null;
+  episodeRecencyScaleSeconds?: number | null;
+  episodeRecencyMidpoint?: number | null;
+  episodeProbeLimit?: number | null;
 }): Promise<MemoryOverridesConfig> {
   const res = await fetch(getApiUrl('/api/v1/memory-overrides'), {
     method: 'PUT',

@@ -132,7 +132,10 @@ export function buildFinalMessagesForSanitize(
   internationalArticles: ExtractedArticle[] = [],
   internationalVideos: ExtractedVideoItem[] = [],
   cognitionProfile?: string,
+  cognitionPersona?: string,
+  cognitionCorrections?: string,
   cognitionInsights: string[] = [],
+  cognitionEpisodes: string[] = [],
 ): InputMessage[] {
   const conversation = ctx.request.messages.filter((m) => m.role !== 'system');
 
@@ -161,6 +164,18 @@ export function buildFinalMessagesForSanitize(
   // its substance may be disclosed plainly when asked or when it genuinely
   // serves the user. Fact records (memoryRecall) are the user-facing lane.
   const cognitionMessages: InputMessage[] = [];
+  if (cognitionPersona?.trim()) {
+    cognitionMessages.push({
+      role: 'system' as const,
+      content: `[YOUR IDENTITY — WHO YOU ARE TO THIS USER]\nThe user has shaped your identity. Adopt it fully:\n${cognitionPersona.trim()}\nThis is YOU, not the user. When the user calls you by your name or asks who you are, answer as yourself and acknowledge your name naturally. Never confuse your identity with the user's, and never treat your own name as a public figure or topic.`,
+    });
+  }
+  if (cognitionCorrections?.trim()) {
+    cognitionMessages.push({
+      role: 'system' as const,
+      content: `[YOUR LEARNED RULES — CORRECTIONS THE USER TAUGHT YOU]\nThe user corrected you in the past. Follow these rules going forward:\n${cognitionCorrections.trim()}\nThese are behavioral rules for YOU, not facts about the user. Apply them silently and consistently.`,
+    });
+  }
   if (cognitionProfile?.trim()) {
     cognitionMessages.push({
       role: 'system' as const,
@@ -171,6 +186,12 @@ export function buildFinalMessagesForSanitize(
     cognitionMessages.push({
       role: 'system' as const,
       content: `[RELEVANT PRIVATE COGNITION — DERIVED, NEVER VERBATIM]\nDeeper understanding of this user that the current request pulled up from your cognition space (path-routed by your profile):\n${cognitionInsights.map((insight) => `- ${insight}`).join('\n')}\nThese are YOUR working notes, never the user's words: they may inform your answer, they may never be quoted or cited as user statements. Share the substance only when it clearly serves the user — and if the request asks about something your memory holds nothing on, say plainly that you don't have that information rather than inventing it.`,
+    });
+  }
+  if (cognitionEpisodes.length > 0) {
+    cognitionMessages.push({
+      role: 'system' as const,
+      content: `[RECENT CONVERSATIONS — YOUR SHORT-TERM MEMORY OF PAST TURNS]\nWhat you and the user were working on in recent turns (topic-matched, recency-weighted):\n${cognitionEpisodes.map((episode) => `- ${episode}`).join('\n')}\nThese are YOUR working notes on past turns, never the user's words. Use them for continuity — to pick up where a past turn left off — never quote them as user statements.`,
     });
   }
   const contextSystemMessages: InputMessage[] = [

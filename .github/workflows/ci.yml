@@ -2,18 +2,21 @@ name: CI
 
 # Shared lint / build / test pipeline used by both the non-release and release
 # workflows. Parameterized so each caller only supplies what differs:
-#   - `production`: use production builds (server `build:prod`) vs dev builds
+#   - `production`: use production builds (server/memory `build:prod`) vs dev builds
 #   - `upload-coverage`: upload v8 coverage to Codecov (push only)
-#   - `upload-artifacts`: publish helpers/config-factory dist for the release jobs
+#   - `upload-artifacts`: publish helpers/config-factory/core-logger dist for the release jobs
 #
 # Single pnpm workspace (pnpm-workspace.yaml: `packages/*` + `apps/*` + root):
 # one root `pnpm install --frozen-lockfile` installs everything, then each
 # package is verified with `pnpm --filter <pkg> run <script>`.
+#
+# The package list lives in the matrix below — add a new package/app by adding
+# one entry (no new steps required).
 on:
   workflow_call:
     inputs:
       production:
-        description: Use production builds (server `build:prod`).
+        description: Use production builds (server/memory `build:prod`).
         type: boolean
         required: false
         default: false
@@ -33,8 +36,54 @@ env:
 
 jobs:
   build-test:
-    name: Build & Test
+    name: Build & Test (${{ matrix.package.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - name: server
+            filter: '@triplef/server'
+            build: build
+            prod-build: build:prod
+            coverage-flag: server
+            artifact: ''
+            artifact-path: ''
+          - name: dashboard
+            filter: '@triplef/dashboard'
+            build: build
+            prod-build: ''
+            coverage-flag: dashboard
+            artifact: ''
+            artifact-path: ''
+          - name: memory
+            filter: '@triplef/memory'
+            build: build
+            prod-build: build:prod
+            coverage-flag: memory
+            artifact: ''
+            artifact-path: ''
+          - name: helpers
+            filter: '@triplef/helpers'
+            build: build
+            prod-build: ''
+            coverage-flag: helpers
+            artifact: helpers-dist
+            artifact-path: packages/helpers/dist/
+          - name: config-factory
+            filter: '@triplef/config-factory'
+            build: build
+            prod-build: ''
+            coverage-flag: config-factory
+            artifact: config-factory-dist
+            artifact-path: packages/config-factory/dist/
+          - name: core-logger
+            filter: '@triplef/core-logger'
+            build: build
+            prod-build: ''
+            coverage-flag: core-logger
+            artifact: core-logger-dist
+            artifact-path: packages/core-logger/dist/
 
     steps:
       - uses: actions/checkout@v7
@@ -51,105 +100,35 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Lint — Server
+      - name: Lint
         run: |
-          pnpm --filter @triplef/server run lint
-          pnpm --filter @triplef/server run depcruise
-          pnpm --filter @triplef/server run lint:unused
+          pnpm --filter ${{ matrix.package.filter }} run lint
+          pnpm --filter ${{ matrix.package.filter }} run depcruise
+          pnpm --filter ${{ matrix.package.filter }} run lint:unused
 
-      - name: Lint — Dashboard
-        run: |
-          pnpm --filter @triplef/dashboard run lint
-          pnpm --filter @triplef/dashboard run depcruise
-          pnpm --filter @triplef/dashboard run lint:unused
+      - name: Build
+        if: ${{ !inputs.production || matrix.package.prod-build == '' }}
+        run: pnpm --filter ${{ matrix.package.filter }} run ${{ matrix.package.build }}
 
-      - name: Lint — Helpers
-        run: |
-          pnpm --filter @triplef/helpers run lint
-          pnpm --filter @triplef/helpers run depcruise
-          pnpm --filter @triplef/helpers run lint:unused
+      - name: Build (production)
+        if: ${{ inputs.production && matrix.package.prod-build != '' }}
+        run: pnpm --filter ${{ matrix.package.filter }} run ${{ matrix.package.prod-build }}
 
-      - name: Lint — Config-Factory
-        run: |
-          pnpm --filter @triplef/config-factory run lint
-          pnpm --filter @triplef/config-factory run depcruise
-          pnpm --filter @triplef/config-factory run lint:unused
+      - name: Test
+        run: pnpm --filter ${{ matrix.package.filter }} run test:cov
 
-      - name: Build — Server
-        if: ${{ !inputs.production }}
-        run: pnpm --filter @triplef/server run build
-
-      - name: Build — Server (production)
-        if: inputs.production
-        run: pnpm --filter @triplef/server run build:prod
-
-      - name: Build — Dashboard
-        run: pnpm --filter @triplef/dashboard run build
-
-      - name: Build — Helpers
-        run: pnpm --filter @triplef/helpers run build
-
-      - name: Build — Config-Factory
-        run: pnpm --filter @triplef/config-factory run build
-
-      - name: Test — Server
-        run: pnpm --filter @triplef/server run test:cov
-
-      - name: Test — Dashboard
-        run: pnpm --filter @triplef/dashboard run test:cov
-
-      - name: Test — Helpers
-        run: pnpm --filter @triplef/helpers run test:cov
-
-      - name: Test — Config-Factory
-        run: pnpm --filter @triplef/config-factory run test:cov
-
-      - name: Upload Coverage — Server
+      - name: Upload Coverage
         if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
         uses: codecov/codecov-action@v7
         with:
           fail_ci_if_error: true
-          flags: server
+          flags: ${{ matrix.package.coverage-flag }}
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload Coverage — Dashboard
-        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
-        uses: codecov/codecov-action@v7
-        with:
-          fail_ci_if_error: true
-          flags: dashboard
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload Coverage — Helpers
-        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
-        uses: codecov/codecov-action@v7
-        with:
-          fail_ci_if_error: true
-          flags: helpers
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload Coverage — Config-Factory
-        if: ${{ inputs.upload-coverage && github.event_name == 'push' }}
-        uses: codecov/codecov-action@v7
-        with:
-          fail_ci_if_error: true
-          flags: config-factory
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build Artifact — Helpers
-        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
+      - name: Upload Artifact
+        if: ${{ inputs.upload-artifacts && github.event_name == 'push' && matrix.package.artifact != '' }}
         uses: actions/upload-artifact@v7
         with:
-          name: helpers-dist
-          path: packages/helpers/dist/
-
-      - name: Build Artifact — Config-Factory
-        if: ${{ inputs.upload-artifacts && github.event_name == 'push' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: config-factory-dist
-          path: packages/config-factory/dist/
+          name: ${{ matrix.package.artifact }}
+          path: ${{ matrix.package.artifact-path }}
