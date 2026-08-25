@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -74,5 +75,45 @@ describe('StorageController', () => {
       'test-bucket',
       'images/sess-1/conv-1/h.bin',
     );
+  });
+
+  it('streams the object and caches only the successful response', async () => {
+    service.client.statObject = vi.fn().mockResolvedValue({
+      metaData: { 'content-type': 'image/webp' },
+    });
+    service.client.getObject = vi.fn().mockResolvedValue('stream');
+
+    const res = {
+      type: vi.fn(),
+      header: vi.fn(),
+      send: vi.fn(),
+    } as any;
+
+    await controller.getObject('sess-1', 'conv-1', 'h', res);
+
+    expect(res.type).toHaveBeenCalledWith('image/webp');
+    expect(res.header).toHaveBeenCalledWith(
+      'Cache-Control',
+      'public, max-age=3600',
+    );
+    expect(res.send).toHaveBeenCalledWith('stream');
+  });
+
+  it('does not cache a missing object (404)', async () => {
+    service.client.statObject = vi
+      .fn()
+      .mockRejectedValue(new Error('not found'));
+
+    const res = {
+      type: vi.fn(),
+      header: vi.fn(),
+      send: vi.fn(),
+    } as any;
+
+    await expect(
+      controller.getObject('sess-1', 'conv-1', 'h', res),
+    ).rejects.toThrow(NotFoundException);
+
+    expect(res.header).not.toHaveBeenCalled();
   });
 });

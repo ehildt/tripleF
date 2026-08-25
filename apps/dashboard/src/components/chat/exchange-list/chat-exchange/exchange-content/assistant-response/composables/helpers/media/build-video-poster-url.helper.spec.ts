@@ -8,17 +8,17 @@ import {
 describe('buildVideoPosterCandidates', () => {
   it('returns the YouTube fallback chain best-quality first', () => {
     expect(
-      buildVideoPosterCandidates('https://www.youtube.com/watch?v=abc123'),
+      buildVideoPosterCandidates('https://www.youtube.com/watch?v=abc123def45'),
     ).toEqual([
-      'https://i.ytimg.com/vi/abc123/maxresdefault.jpg',
-      'https://i.ytimg.com/vi/abc123/hqdefault.jpg',
-      'https://i.ytimg.com/vi/abc123/mqdefault.jpg',
+      'https://i.ytimg.com/vi/abc123def45/maxresdefault.jpg',
+      'https://i.ytimg.com/vi/abc123def45/hqdefault.jpg',
+      'https://i.ytimg.com/vi/abc123def45/mqdefault.jpg',
     ]);
   });
 
   it('handles youtu.be short links', () => {
-    expect(buildVideoPosterCandidates('https://youtu.be/xyz789')[0]).toBe(
-      'https://i.ytimg.com/vi/xyz789/maxresdefault.jpg',
+    expect(buildVideoPosterCandidates('https://youtu.be/xyz789ghi01')[0]).toBe(
+      'https://i.ytimg.com/vi/xyz789ghi01/maxresdefault.jpg',
     );
   });
 
@@ -39,9 +39,9 @@ describe('buildVideoPosterCandidates', () => {
 
 describe('buildVideoPosterUrl', () => {
   it('returns the highest-resolution candidate', () => {
-    expect(buildVideoPosterUrl('https://www.youtube.com/watch?v=abc123')).toBe(
-      'https://i.ytimg.com/vi/abc123/maxresdefault.jpg',
-    );
+    expect(
+      buildVideoPosterUrl('https://www.youtube.com/watch?v=abc123def45'),
+    ).toBe('https://i.ytimg.com/vi/abc123def45/maxresdefault.jpg');
   });
 
   it('returns null when no candidate exists', () => {

@@ -1,0 +1,23 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    ".storybook",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "src/**/*.stories.?sx",
+    "**/read-depbadgerc-with-defaults.ts",
+    "**/depbadgerc.type.ts",
+    "**/vitest.config.ts",
+    "src/index.ts",
+    "src/bullmq-logger/index.ts",
+    "src/bullmq-logger/bullmq-logger.constants.ts",
+    "src/bullmq-logger/bullmq-logger.module.ts",
+    "src/bullmq-logger/bullmq-logger.schema.ts",
+    "src/bullmq-logger/bullmq-logger.service.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

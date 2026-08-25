@@ -12,6 +12,15 @@ export const DEFAULT_TOAST_ANCHOR: ToastAnchor = 'bottom-right';
 export const DEFAULT_TOAST_AUTO_HIDE = true;
 export const DEFAULT_TOAST_DURATION_SECONDS = 3;
 export const DEFAULT_TOAST_PIN_ENABLED = true;
+/** Only warning and error toasts are on by default — the rest are opt-in. */
+export const DEFAULT_TOAST_TYPE_FILTERS: ToastTypeFilters = {
+  info: false,
+  success: false,
+  warning: true,
+  error: true,
+  debug: false,
+  default: false,
+};
 
 const TOAST_ENABLED_STORAGE_KEY = 'vision-toast-enabled';
 const TOAST_ANCHOR_STORAGE_KEY = 'vision-toast-anchor';
@@ -83,18 +92,18 @@ function loadToastDurationSeconds(): number {
 }
 
 function loadToastTypeFilters(): ToastTypeFilters {
-  const defaults = Object.fromEntries(
-    TOAST_TYPES.map((type) => [type, true]),
-  ) as ToastTypeFilters;
   try {
     const raw = localStorage.getItem(TOAST_TYPE_FILTERS_STORAGE_KEY);
-    if (!raw) return defaults;
+    if (!raw) return { ...DEFAULT_TOAST_TYPE_FILTERS };
     const saved = JSON.parse(raw) as Partial<ToastTypeFilters>;
     return Object.fromEntries(
-      TOAST_TYPES.map((type) => [type, saved[type] !== false]),
+      TOAST_TYPES.map((type) => [
+        type,
+        saved[type] ?? DEFAULT_TOAST_TYPE_FILTERS[type],
+      ]),
     ) as ToastTypeFilters;
   } catch {
-    return defaults;
+    return { ...DEFAULT_TOAST_TYPE_FILTERS };
   }
 }
 
@@ -170,5 +179,7 @@ export function resetToastSettings() {
   setToastAutoHide(DEFAULT_TOAST_AUTO_HIDE);
   setToastDurationSeconds(DEFAULT_TOAST_DURATION_SECONDS);
   setToastPinEnabled(DEFAULT_TOAST_PIN_ENABLED);
-  for (const type of TOAST_TYPES) setToastTypeFilter(type, true);
+  for (const type of TOAST_TYPES) {
+    setToastTypeFilter(type, DEFAULT_TOAST_TYPE_FILTERS[type]);
+  }
 }

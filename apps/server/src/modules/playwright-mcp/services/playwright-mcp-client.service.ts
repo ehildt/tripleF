@@ -5,9 +5,9 @@ import {
   OnApplicationBootstrap,
   OnApplicationShutdown,
 } from '@nestjs/common';
+import { BROWSER_TOOL_NAMES } from '@triplef/agent/schemas';
 import type { ToolSet } from 'ai';
 
-import { BROWSER_TOOL_NAMES } from '../../harness/helpers/tools/tool-registry.constants.js';
 import { PlaywrightMcpConfigService } from '../configs/playwright-mcp-config.service.js';
 
 /**

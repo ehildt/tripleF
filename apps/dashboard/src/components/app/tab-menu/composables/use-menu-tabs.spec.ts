@@ -38,13 +38,13 @@ describe('useMenuTabs', () => {
     );
   }
 
-  it('hides dlq and debug by default', () => {
+  it('hides debug by default and shows dlq', () => {
     const vm = mountComposable({
       activeTab: 'chat',
       debugCount: 0,
     });
 
-    expect(vm.tabs.map((t) => t.tab)).toEqual(['chat', 'sysctl']);
+    expect(vm.tabs.map((t) => t.tab)).toEqual(['chat', 'dlq', 'sysctl']);
   });
 
   it('returns all tabs when dlq/debug are enabled', () => {

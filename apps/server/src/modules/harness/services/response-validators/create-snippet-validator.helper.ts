@@ -1,6 +1,6 @@
-import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
-import type { SnippetTemplatePreset } from '../../snippets/snippet.types.js';
-import { getSnippetTemplateSchema } from '../../snippets/snippet-presets.constant.js';
+import type { SnippetTemplatePreset } from '@triplef/agent/prompts';
+import { getSnippetTemplateSchema } from '@triplef/agent/prompts';
+import { formatZodIssues } from '@triplef/agent/schemas';
 
 import { coerceLayout } from './helpers/coerce-layout.helper.js';
 import { computeReadTime } from './read-time.helper.js';

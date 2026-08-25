@@ -3,6 +3,13 @@ packages:
   - 'packages/*'
   - 'apps/*'
 
+# pnpm 11 defaults verifyDepsBeforeRun to `install`, which runs a workspace-wide
+# `pnpm install` before every script. That breaks the publish flow: the apps
+# reference a not-yet-published @triplef/agent version, so the auto-install
+# fails before the build can run. The Docker targets already set
+# pnpm_config_verify_deps_before_run=false; mirror that here.
+verifyDepsBeforeRun: false
+
 allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': true
@@ -14,26 +21,26 @@ allowBuilds:
   vue-demi: true
 
 minimumReleaseAgeExclude:
-  - '@intlify/core-base@11.4.9'
-  - '@intlify/devtools-types@11.4.9'
-  - '@intlify/message-compiler@11.4.9'
-  - '@intlify/shared@11.4.9'
-  - '@tanstack/query-core@5.102.1 || 5.102.2 || 5.102.3'
-  - '@tanstack/vue-query@5.102.1 || 5.102.2 || 5.102.3'
+  - '@intlify/core-base@11.4.9 || 11.4.10'
+  - '@intlify/devtools-types@11.4.9 || 11.4.10'
+  - '@intlify/message-compiler@11.4.9 || 11.4.10'
+  - '@intlify/shared@11.4.9 || 11.4.10'
+  - '@tanstack/query-core@5.102.1 || 5.102.2 || 5.102.3 || 5.102.4 || 5.102.5 || 5.102.7 || 5.102.8'
+  - '@tanstack/vue-query@5.102.1 || 5.102.2 || 5.102.3 || 5.102.4 || 5.102.5 || 5.102.7 || 5.102.8'
   - '@triplef/*'
-  - vue-i18n@11.4.9
+  - vue-i18n@11.4.9 || 11.4.10
   - npm-check-updates@23.1.0
-  - '@lucide/vue@1.34.0'
-  - '@ai-sdk/gateway@4.0.64'
-  - '@ai-sdk/mcp@2.0.37'
-  - '@ai-sdk/provider-utils@5.0.30'
+  - '@lucide/vue@1.34.0 || 1.35.0 || 1.37.0 || 1.38.0'
+  - '@ai-sdk/gateway@4.0.64 || 4.0.67 || 4.0.68'
+  - '@ai-sdk/mcp@2.0.37 || 2.0.39 || 2.0.40'
+  - '@ai-sdk/provider-utils@5.0.30 || 5.0.32 || 5.0.33'
   - '@ai-sdk/provider@4.0.8'
   - '@nestjs/common@11.2.2 || 11.2.3'
   - '@nestjs/core@11.2.2 || 11.2.3'
   - '@nestjs/microservices@11.2.2 || 11.2.3'
   - '@nestjs/platform-fastify@11.2.2 || 11.2.3'
   - '@nestjs/testing@11.2.2 || 11.2.3'
-  - '@types/node@26.3.0'
+  - '@types/node@26.3.0 || 26.4.0'
   - '@typescript-eslint/eslint-plugin@8.68.0'
   - '@typescript-eslint/parser@8.68.0'
   - '@typescript-eslint/project-service@8.68.0'
@@ -44,8 +51,8 @@ minimumReleaseAgeExclude:
   - '@typescript-eslint/typescript-estree@8.68.0'
   - '@typescript-eslint/utils@8.68.0'
   - '@typescript-eslint/visitor-keys@8.68.0'
-  - ai@7.0.79
-  - bullmq@6.2.1
+  - ai@7.0.79 || 7.0.83 || 7.0.84
+  - bullmq@5.81.4 || 6.2.1 || 6.2.2 || 6.3.1 || 6.3.2
   - eslint@10.9.1
   - typescript-eslint@8.68.0
   - '@prisma/config@7.10.0'
@@ -54,3 +61,46 @@ minimumReleaseAgeExclude:
   - '@prisma/fetch-engine@7.10.0'
   - '@prisma/get-platform@7.10.0'
   - prisma@7.10.0
+  - '@img/sharp-darwin-arm64@0.35.4'
+  - '@img/sharp-darwin-x64@0.35.4'
+  - '@img/sharp-freebsd-wasm32@0.35.4'
+  - '@img/sharp-libvips-darwin-arm64@1.3.3'
+  - '@img/sharp-libvips-darwin-x64@1.3.3'
+  - '@img/sharp-libvips-linux-arm64@1.3.3'
+  - '@img/sharp-libvips-linux-arm@1.3.3'
+  - '@img/sharp-libvips-linux-ppc64@1.3.3'
+  - '@img/sharp-libvips-linux-riscv64@1.3.3'
+  - '@img/sharp-libvips-linux-s390x@1.3.3'
+  - '@img/sharp-libvips-linux-x64@1.3.3'
+  - '@img/sharp-libvips-linuxmusl-arm64@1.3.3'
+  - '@img/sharp-libvips-linuxmusl-x64@1.3.3'
+  - '@img/sharp-linux-arm64@0.35.4'
+  - '@img/sharp-linux-arm@0.35.4'
+  - '@img/sharp-linux-ppc64@0.35.4'
+  - '@img/sharp-linux-riscv64@0.35.4'
+  - '@img/sharp-linux-s390x@0.35.4'
+  - '@img/sharp-linux-x64@0.35.4'
+  - '@img/sharp-linuxmusl-arm64@0.35.4'
+  - '@img/sharp-linuxmusl-x64@0.35.4'
+  - '@img/sharp-wasm32@0.35.4'
+  - '@img/sharp-webcontainers-wasm32@0.35.4'
+  - '@img/sharp-win32-arm64@0.35.4'
+  - '@img/sharp-win32-ia32@0.35.4'
+  - '@img/sharp-win32-x64@0.35.4'
+  - sharp@0.35.4
+  - '@vue/compiler-core@3.5.42'
+  - '@vue/compiler-dom@3.5.42'
+  - '@vue/compiler-sfc@3.5.42'
+  - '@vue/compiler-ssr@3.5.42'
+  - '@vue/reactivity@3.5.42'
+  - '@vue/runtime-core@3.5.42'
+  - '@vue/runtime-dom@3.5.42'
+  - '@vue/server-renderer@3.5.42'
+  - '@vue/shared@3.5.42'
+  - lint-staged@17.4.1
+  - vue@3.5.42
+  - '@vue/test-utils@2.5.0'
+  - markdown-it@15.0.1
+  - vue-router@5.3.0
+  - zod@4.5.2 || 4.5.4
+  - pdfjs-dist@6.3.289

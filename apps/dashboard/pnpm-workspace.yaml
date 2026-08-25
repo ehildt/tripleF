@@ -2,7 +2,7 @@ allowBuilds:
   esbuild: true
   vue-demi: true
 minimumReleaseAgeExclude:
-  - '@lucide/vue@1.28.0 || 1.30.0 || 1.33.0 || 1.34.0'
+  - '@lucide/vue@1.28.0 || 1.30.0 || 1.33.0 || 1.34.0 || 1.37.0 || 1.38.0'
   - postcss@8.5.25
   - playwright-core@1.62.1
   - playwright@1.62.1
@@ -31,10 +31,12 @@ minimumReleaseAgeExclude:
   - '@types/node@26.2.0'
   - eslint@10.8.1
   - vite@8.2.2
-  - '@intlify/core-base@11.4.9'
-  - '@intlify/devtools-types@11.4.9'
-  - '@intlify/message-compiler@11.4.9'
-  - '@intlify/shared@11.4.9'
+  - '@intlify/core-base@11.4.9 || 11.4.10'
+  - '@intlify/devtools-types@11.4.9 || 11.4.10'
+  - '@intlify/message-compiler@11.4.9 || 11.4.10'
+  - '@intlify/shared@11.4.9 || 11.4.10'
   - '@tanstack/query-core@5.102.1'
   - '@tanstack/vue-query@5.102.1'
-  - vue-i18n@11.4.9
+  - vue-i18n@11.4.9 || 11.4.10
+  - zod@4.5.2 || 4.5.4
+  - pdfjs-dist@6.3.289

@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { type VariantName } from '@triplef/agent/schemas';
+import type { InputMessage } from '@triplef/ai-sdk';
+import type { ToolResult } from '@triplef/ai-sdk';
+import { AiSdkService } from '@triplef/ai-sdk';
 
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
+import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { buildEodhdFallbackInput } from '../helpers/execute/build-eodhd-fallback-input.helper.js';
 import { buildExecuteMessages } from '../helpers/execute/build-execute-messages.helper.js';
 import { buildMissingToolsPrompt } from '../helpers/execute/build-missing-tools-prompt.helper.js';
+import { collectAutoFetchUrls } from '../helpers/execute/collect-auto-fetch-urls.helper.js';
 import { extractEodhdTickerFromResults } from '../helpers/execute/extract-eodhd-ticker.helper.js';
 import { isEodhdDataTool } from '../helpers/execute/is-eodhd-data-tool.helper.js';
 import {
@@ -21,11 +24,9 @@ import {
   wrapToolsWithExecutionEvents,
 } from '../helpers/execute/wrap-tools-with-execution-events.helper.js';
 import { wrapToolsWithSearchRecency } from '../helpers/execute/wrap-tools-with-search-recency.helper.js';
-import { type VariantName } from '../helpers/tools/tool-registry.constants.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 
 import type { ExecuteResult } from './execute.action.types.js';
-
 /**
  * Browsing needs a step budget: navigate → snapshot → interact, unlike the
  * single round-trip the search tools use.
@@ -33,11 +34,20 @@ import type { ExecuteResult } from './execute.action.types.js';
 const BROWSER_MAX_STEPS = 8;
 
 /**
- * memoryDelete needs recall → delete chaining: the model recalls the verbatim
- * statement, then deletes it. One blind round can never express that, so
- * delete intents get a small step budget like the browser tools.
+ * memory-partition-delete needs recall → delete chaining: the model recalls
+ * the verbatim statement, then deletes it. One blind round can never express
+ * that, so delete intents get a small step budget like the browser tools.
  */
 const MEMORY_DELETE_MAX_STEPS = 3;
+
+/**
+ * Max search-result pages the auto-fetch fallback fetches when the model
+ * searched but selected no fetch tool (deterministic, not model-authored).
+ */
+const AUTO_FETCH_MAX_URLS = 3;
+
+/** Concurrent webFetch calls per auto-fetch batch — bounds the fallback's latency. */
+const AUTO_FETCH_CONCURRENCY = 4;
 
 @Injectable()
 export class ExecuteActionService {
@@ -97,10 +107,11 @@ export class ExecuteActionService {
     // 3. Build the tool set: external tools + variant request tools
     const allToolNames = this.resolveAllToolNames(intent, requestedVariants);
     // Browser intents chain several browser_* calls within one execute step;
-    // a delete intent chains memoryRecall → memoryDelete for the verbatim text.
+    // a delete intent chains memory-partition-recall → memory-partition-delete
+    // for the verbatim text.
     const maxSteps = allToolNames.some((name) => name.startsWith('browser_'))
       ? BROWSER_MAX_STEPS
-      : allToolNames.includes('memoryDelete')
+      : allToolNames.includes('memory-partition-delete')
         ? MEMORY_DELETE_MAX_STEPS
         : undefined;
     const selectedTools =
@@ -154,17 +165,19 @@ export class ExecuteActionService {
       const result = await this.aiSdkService.generateWithTools({
         model: ctx.model,
         messages: executeMessages,
-        keepAlive: this.ollamaConfigService.config.keepAlive,
-        numCtx: ctx.request.options?.num_ctx,
-        think: ctx.request.think,
+        providerOptions: buildProviderOptions({
+          keepAlive: this.ollamaConfigService.config.keepAlive,
+          numCtx: ctx.request.options?.num_ctx,
+          think: ctx.request.think,
+        }),
         tools: chosenTools as any,
         abortSignal,
         maxSteps,
       });
 
       toolResults = result.toolResults;
-      inputTokens = result.totalUsage?.inputTokens ?? 0;
-      outputTokens = result.totalUsage?.outputTokens ?? 0;
+      inputTokens = result.usage?.inputTokens ?? 0;
+      outputTokens = result.usage?.outputTokens ?? 0;
 
       if (toolResults.length === 0) {
         this.logger.warn(
@@ -199,6 +212,16 @@ export class ExecuteActionService {
         );
       }
 
+      // Auto-fetch fallback: when the model searched but selected no fetch
+      // tool, deterministically fetch the top result pages so the answer is
+      // grounded in full content and the lexicon cache is populated.
+      const autoFetched = await this.autoFetchSearchResults(
+        ctx,
+        intent,
+        toolResults,
+      );
+      toolResults.push(...autoFetched);
+
       // Identify variant requests from tool results and merge into requestedVariants
       const requestedFromTools = toolResults
         .filter((tr) => tr.toolName.startsWith('request'))
@@ -232,16 +255,87 @@ export class ExecuteActionService {
     };
   }
 
+  /**
+   * Deterministically fetch the given URLs with the webFetch tool (the model
+   * already opted out of fetching, so the harness fills the gap with the
+   * search results' own URLs — no fabricated queries). Failures are
+   * warn-and-continue: a failed fetch degrades to the snippets already held.
+   */
+  private async autoFetchSearchResults(
+    ctx: HarnessContext,
+    intent: HarnessContext['outputs']['intent'],
+    toolResults: ToolResult[],
+  ): Promise<ToolResult[]> {
+    const urls = collectAutoFetchUrls(
+      intent?.tools ?? [],
+      toolResults,
+      AUTO_FETCH_MAX_URLS,
+    );
+    if (urls.length === 0) return [];
+    const fetched = await this.autoFetchPages(urls);
+    this.logger.log(
+      { requestId: ctx.requestId, step: 'execute', urls },
+      'auto-fetched search result pages',
+    );
+    return fetched;
+  }
+
+  /**
+   * Fetch each URL with the webFetch tool, warn-and-continue on failure — a
+   * failed fetch degrades to the snippets already held, never a failed turn.
+   * Batches run concurrently (bounded) so N pages land in ~N/concurrency
+   * round-trips instead of N serial ones.
+   */
+  private async autoFetchPages(urls: string[]): Promise<ToolResult[]> {
+    const webFetch = this.toolSelectionService.selectToolsByName([
+      'webFetch',
+    ]).webFetch;
+    if (!webFetch?.execute) return [];
+    const results: ToolResult[] = [];
+    for (let i = 0; i < urls.length; i += AUTO_FETCH_CONCURRENCY) {
+      const batch = urls.slice(i, i + AUTO_FETCH_CONCURRENCY);
+      const outcomes = await Promise.all(
+        batch.map(async (url) => {
+          try {
+            const result = await (
+              webFetch.execute as (args: { url: string }) => Promise<unknown>
+            )({ url });
+            return { url, result };
+          } catch (err) {
+            return {
+              url,
+              error: err instanceof Error ? err : new Error(String(err)),
+            };
+          }
+        }),
+      );
+      for (const outcome of outcomes) {
+        if (outcome.error) {
+          this.logger.warn(
+            { step: 'execute', url: outcome.url, err: outcome.error },
+            'auto-fetch failed',
+          );
+        } else {
+          results.push({ toolName: 'webFetch', result: outcome.result });
+        }
+      }
+    }
+    return results;
+  }
+
   private resolveAllToolNames(
     intent: HarnessContext['outputs']['intent'],
     requestedVariants: FilterVariant[],
   ): string[] {
     const allToolNames = [];
     const externalTools = (intent?.tools ?? []).filter(
-      // memoryRemember is deferred to the dedicated memory-write step: the
-      // execute wave is a single blind round, so a remember call here could
-      // never include the data this wave is about to gather.
-      (t) => !t.startsWith('request') && t !== 'memoryRemember',
+      // Both remember tools are deferred to the dedicated memory-write step:
+      // the execute wave is a single blind round, so a remember call here
+      // could never include the data this wave is about to gather.
+      (t) =>
+        !t.startsWith('request') &&
+        t !== 'memory-partition-remember' &&
+        t !== 'memory-cognition-remember',
     ) as string[];
     allToolNames.push(...externalTools);
 
@@ -295,7 +389,10 @@ export class ExecuteActionService {
     const invoked = new Set<string>(existingResults.map((tr) => tr.toolName));
     const missing = (intent.tools ?? []).filter(
       (t) =>
-        !t.startsWith('request') && t !== 'memoryRemember' && !invoked.has(t),
+        !t.startsWith('request') &&
+        t !== 'memory-partition-remember' &&
+        t !== 'memory-cognition-remember' &&
+        !invoked.has(t),
     );
     if (missing.length === 0)
       return { results: [], inputTokens: 0, outputTokens: 0 };
@@ -371,16 +468,18 @@ export class ExecuteActionService {
           ...executeMessages,
           { role: 'system', content: buildMissingToolsPrompt(missing) },
         ],
-        keepAlive: this.ollamaConfigService.config.keepAlive,
-        numCtx: ctx.request.options?.num_ctx,
-        think: ctx.request.think,
+        providerOptions: buildProviderOptions({
+          keepAlive: this.ollamaConfigService.config.keepAlive,
+          numCtx: ctx.request.options?.num_ctx,
+          think: ctx.request.think,
+        }),
         tools: missingTools as any,
         abortSignal,
       });
       return {
         results: completion.toolResults,
-        inputTokens: completion.totalUsage?.inputTokens ?? 0,
-        outputTokens: completion.totalUsage?.outputTokens ?? 0,
+        inputTokens: completion.usage?.inputTokens ?? 0,
+        outputTokens: completion.usage?.outputTokens ?? 0,
       };
     } catch (err) {
       this.logger.warn(

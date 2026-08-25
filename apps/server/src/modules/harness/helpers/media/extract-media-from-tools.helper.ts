@@ -1,7 +1,8 @@
+import { isTrustedImageUrl } from '@triplef/agent/schemas';
+
 import { canonicalVideoId } from '../url-trust/canonical-video-id.helper.js';
 import { categorizeUrl } from '../url-trust/categorize-url.helper.js';
 import { isEmbeddableVideoUrl } from '../url-trust/is-embeddable-video-url.helper.js';
-import { isTrustedImageUrl } from '../url-trust/is-trusted-image-url.helper.js';
 
 import type {
   ExtractedImageItem,

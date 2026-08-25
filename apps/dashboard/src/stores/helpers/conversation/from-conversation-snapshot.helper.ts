@@ -19,6 +19,7 @@ export function fromConversationSnapshot(
     files: [],
     savedFileInfos: [],
     uploadedImages: [],
+    uploadedDocuments: [],
     imageSelectionSnapshot: {},
     conversationId: snapshot.conversationId,
     model: '',

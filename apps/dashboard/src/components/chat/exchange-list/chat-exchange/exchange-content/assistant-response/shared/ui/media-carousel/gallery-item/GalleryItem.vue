@@ -4,8 +4,11 @@ import { useI18n } from 'vue-i18n';
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 import type { GalleryItem } from '@/types/harness-response-data.model';
 
+import { useAddImageToFiles } from '../../../../composables/use-add-image-to-files.composable';
 import { useGalleryImageTile } from '../../../composables/use-gallery-image-tile.composable';
+import AddToFilesButton from '../../add-to-files-button/AddToFilesButton.vue';
 import MediaCaptionScrim from '../../media-caption-scrim/MediaCaptionScrim.vue';
+import MediaCardHeader from '../../media-card-header/MediaCardHeader.vue';
 
 const props = defineProps<{
   item: GalleryItem;
@@ -15,6 +18,10 @@ const { t } = useI18n();
 const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
   props.item,
   t('common.imageFallback'),
+);
+
+const { canAddToFiles, isInFiles, toggleAddToFiles } = useAddImageToFiles(
+  () => props.item,
 );
 </script>
 
@@ -36,14 +43,34 @@ const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
         />
       </button>
       <MediaCaptionScrim
-        v-if="item.title || item.caption"
+        v-if="item.title || item.caption || canAddToFiles"
         as="figcaption"
         class="harness-gallery__caption"
+        :class="{ 'harness-gallery__caption--no-caption': !item.caption }"
       >
-        <strong v-if="item.title && item.title !== item.caption">{{
-          item.title
-        }}</strong>
-        <p v-if="item.caption">{{ item.caption }}</p>
+        <!-- Header row: the title. Without a caption line the add-to-files
+             button joins the actions column here, mirroring the video
+             carousel's add-to-playlist placement. -->
+        <MediaCardHeader
+          :title="
+            item.title && item.title !== item.caption ? item.title : undefined
+          "
+          flush
+        >
+          <template v-if="canAddToFiles && !item.caption" #actions>
+            <AddToFilesButton :active="isInFiles" @toggle="toggleAddToFiles" />
+          </template>
+        </MediaCardHeader>
+        <!-- Caption line with the add-to-files button on its right; the row
+             only renders when the tile carries a caption. -->
+        <div v-if="item.caption" class="harness-gallery__caption-row">
+          <p class="harness-gallery__caption-text">{{ item.caption }}</p>
+          <AddToFilesButton
+            v-if="canAddToFiles"
+            :active="isInFiles"
+            @toggle="toggleAddToFiles"
+          />
+        </div>
       </MediaCaptionScrim>
     </figure>
   </li>
@@ -84,34 +111,36 @@ const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
 }
 
 /* Overlay positioning and the scrim live in MediaCaptionScrim; the rules
-   below style its slotted title/caption text. */
-.harness-gallery__caption strong {
-  display: block;
-  color: var(--color-fg-primary);
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+   below mirror the video carousel's caption bar so the add-to-files button
+   sits in the same row as the video gallery's add-to-playlist button. */
+.harness-gallery__caption {
+  /* Reserve the header row plus one caption line: the bar keeps its height
+     whether or not the tile carries a caption, so the add-to-files button
+     stays anchored and tiles never shift. */
+  min-height: 4.5rem;
 }
 
-.harness-gallery__caption p {
+/* No caption line: the header row (title + add-to-files) pins to the bar's
+   bottom edge, so the button sits flush at the image's bottom-right. */
+.harness-gallery__caption--no-caption {
+  justify-content: flex-end;
+}
+
+.harness-gallery__caption-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.harness-gallery__caption-text {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   font-size: 0.8rem;
   color: var(--color-fg-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.harness-gallery__caption a {
-  color: var(--color-accent-primary);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.harness-gallery__caption a:hover {
-  text-decoration: underline;
 }
 </style>

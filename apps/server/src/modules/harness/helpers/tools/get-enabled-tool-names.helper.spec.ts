@@ -12,17 +12,23 @@ const baseCfg = {
 
 describe('getEnabledToolNames', () => {
   it('includes memory tools only when the memory feature is enabled', () => {
-    expect(getEnabledToolNames(baseCfg, false)).not.toContain('memoryRemember');
+    expect(getEnabledToolNames(baseCfg, false)).not.toContain(
+      'memory-partition-remember',
+    );
     expect(getEnabledToolNames(baseCfg, true)).toEqual(
       expect.arrayContaining([
-        'memoryRemember',
-        'memoryRecall',
-        'memoryDelete',
+        'memory-partition-remember',
+        'memory-partition-recall',
+        'memory-partition-delete',
+        'memory-cognition-remember',
+        'memory-cognition-forget',
       ]),
     );
   });
 
   it('defaults to no memory tools when the flag is omitted', () => {
-    expect(getEnabledToolNames(baseCfg)).not.toContain('memoryRecall');
+    expect(getEnabledToolNames(baseCfg)).not.toContain(
+      'memory-partition-recall',
+    );
   });
 });

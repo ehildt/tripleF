@@ -1,27 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
+import type { ConsolidationVerdict } from '@triplef/agent/schemas';
 
-import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
-import { AiSdkService } from '../../../../ai-sdk/services/ai-sdk.service.js';
 import type { PendingLedgerEntry } from '../../../../persistence/services/memory-insert-ledger.repository.js';
 import { MemoryInsertLedgerRepository } from '../../../../persistence/services/memory-insert-ledger.repository.js';
-import {
-  buildConsolidatePrompt,
-  MEMORY_CONSOLIDATE_INSTRUCTIONS,
-} from '../../../constants/memory-consolidate-prompt.constant.js';
 import { deterministicPointId } from '../../../helpers/deterministic-point-id.helper.js';
 import type {
   MemoryConsolidateJobData,
   MemoryPoint,
 } from '../../../models/memory.model.js';
-import {
-  type ConsolidationVerdict,
-  ConsolidationVerdictSchema,
-} from '../../../templates/consolidation-verdict.schema.js';
+import { ConsolidationAdjudicatorService } from '../../consolidation-adjudicator.service.js';
 import { EmbeddingService } from '../../embedding.service.js';
 import { MemoryRepository } from '../../memory.repository.js';
 import { MemorySearchService } from '../../memory-search.service.js';
-
 /** Hard cap on pending inserts adjudicated per run (the DTO caps at 500 too). */
 const MAX_PENDING_PER_RUN = 500;
 
@@ -55,8 +45,7 @@ export class MemoryConsolidateJobService {
   private readonly logger = new Logger(MemoryConsolidateJobService.name);
 
   constructor(
-    private readonly aiSdkService: AiSdkService,
-    private readonly ollamaConfigService: OllamaConfigService,
+    private readonly adjudicator: ConsolidationAdjudicatorService,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memorySearch: MemorySearchService,
     private readonly memoryRepository: MemoryRepository,
@@ -84,8 +73,23 @@ export class MemoryConsolidateJobService {
       const candidates = await this.screenCandidates(data, row);
       if (!candidates) continue;
 
-      const verdict = await this.adjudicate(data, row, candidates);
+      const verdict = await this.adjudicator.adjudicate(
+        data.model,
+        {
+          text: row.text,
+          role: row.role,
+          createdAt: row.createdAt.toISOString(),
+        },
+        candidates.map((c) => ({
+          text: c.text,
+          role: c.role,
+          createdAt: c.createdAt,
+        })),
+      );
       if (!verdict) {
+        this.logger.warn(
+          `memory-consolidate ${data.memoryPartition}: verdict unparseable — row left pending`,
+        );
         counts.deferred++;
         continue;
       }
@@ -202,59 +206,5 @@ export class MemoryConsolidateJobService {
       'memory-consolidate merged records',
     );
     return 'merged';
-  }
-
-  /** One LLM adjudication call; undefined when the answer is unusable. */
-  private async adjudicate(
-    data: MemoryConsolidateJobData,
-    row: PendingLedgerEntry,
-    candidates: MemoryPoint[],
-  ): Promise<ConsolidationVerdict | undefined> {
-    const { text } = await this.aiSdkService.generateChat({
-      model: data.model,
-      messages: [
-        { role: 'system', content: MEMORY_CONSOLIDATE_INSTRUCTIONS },
-        {
-          role: 'user',
-          content: buildConsolidatePrompt({
-            newFact: {
-              text: row.text,
-              role: row.role,
-              createdAt: row.createdAt.toISOString(),
-            },
-            candidates: candidates.map((c) => ({
-              text: c.text,
-              role: c.role,
-              createdAt: c.createdAt,
-            })),
-          }),
-        },
-      ],
-      think: false,
-      tools: {},
-      keepAlive: this.ollamaConfigService.config.keepAlive,
-    });
-
-    const verdict = this.parseVerdict(text);
-    if (!verdict) {
-      this.logger.warn(
-        `memory-consolidate ${data.memoryPartition}: verdict unparseable — row left pending. Raw preview: ${(text ?? '').slice(0, 200)}`,
-      );
-      return undefined;
-    }
-    return verdict;
-  }
-
-  /** Tolerant parse + schema validation; undefined when the answer is unusable. */
-  private parseVerdict(
-    text: string | undefined,
-  ): ConsolidationVerdict | undefined {
-    if (!text?.trim()) return undefined;
-    try {
-      const parsed = ConsolidationVerdictSchema.safeParse(parseLlmJson(text));
-      return parsed.success ? parsed.data : undefined;
-    } catch {
-      return undefined;
-    }
   }
 }

@@ -1,7 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { type ToolName } from '@triplef/agent/schemas';
+import { createMemoryCognitionForgetTool } from '@triplef/agent/tools';
+import { createMemoryCognitionRememberTool } from '@triplef/agent/tools';
+import { createMemoryPartitionDeleteTool } from '@triplef/agent/tools';
+import { createMemoryPartitionRecallTool } from '@triplef/agent/tools';
+import {
+  createMemoryPartitionRememberTool,
+  type MemoryToolScope,
+} from '@triplef/agent/tools';
+import { type ToolWithSummary } from '@triplef/agent/tools';
 import type { ToolSet } from 'ai';
 
-import { type ToolName } from '../../harness/helpers/tools/tool-registry.constants.js';
 import type { MemoryClientConfig } from '../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
@@ -9,15 +18,7 @@ import { PlaywrightMcpClientService } from '../../playwright-mcp/services/playwr
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 import { createEnabledTools } from '../tools/sources/create-enabled-tools.js';
-import { createMemoryDeleteTool } from '../tools/sources/memory/memory-delete.tool.js';
-import { createMemoryRecallTool } from '../tools/sources/memory/memory-recall.tool.js';
-import {
-  createMemoryRememberTool,
-  type MemoryToolScope,
-} from '../tools/sources/memory/memory-remember.tool.js';
-import { type ToolWithSummary } from '../tools/sources/tool-factory.js';
 
-import { AiSdkService } from './ai-sdk.service.js';
 import type { ToolEventHandler } from './tool-selection.service.types.js';
 
 @Injectable()
@@ -26,7 +27,6 @@ export class ToolSelectionService {
 
   constructor(
     private readonly providerOverrides: ProviderOverridesService,
-    private readonly aiSdkService: AiSdkService,
     private readonly playwrightMcpClient: PlaywrightMcpClientService,
     private readonly stockHistory: StockHistoryService,
     private readonly memoryClient: MemoryClientService,
@@ -49,11 +49,6 @@ export class ToolSelectionService {
       {
         getLiveConfig: () => this.liveConfig,
         logger: this.logger,
-        compactContent: (content, opts) =>
-          this.aiSdkService.compactContent(content, {
-            model: opts?.model ?? model ?? 'mistral',
-            notify: opts?.notify ?? notify,
-          }),
         model,
         notify,
         defaultLang,
@@ -64,23 +59,30 @@ export class ToolSelectionService {
     );
     // Browser tools come from the Playwright MCP sidecar (empty when disabled
     // or unreachable) and are merged under their canonical browser_* names.
-    // Memory tools are agentic: remember/recall/delete are offered only when
-    // the memory feature is enabled AND a partition scope is threaded from
-    // the turn.
+    // Memory tools are agentic: the partition remember/recall/delete trio and
+    // the cognition remember/forget pair are offered only when the memory
+    // feature is enabled AND a partition scope is threaded from the turn.
     const memoryTools =
       memoryScope && this.memoryConfig.enabled
         ? {
-            memoryRemember: createMemoryRememberTool({
+            'memory-partition-remember': createMemoryPartitionRememberTool({
               scope: memoryScope,
               storeRecord: (input) => this.memoryClient.storeRecord(input),
             }),
-            memoryRecall: createMemoryRecallTool({
+            'memory-partition-recall': createMemoryPartitionRecallTool({
               scope: memoryScope,
               searchByText: (input) => this.memoryClient.searchByText(input),
             }),
-            memoryDelete: createMemoryDeleteTool({
+            'memory-partition-delete': createMemoryPartitionDeleteTool({
               scope: memoryScope,
               deleteRecords: (input) => this.memoryClient.deleteRecords(input),
+            }),
+            'memory-cognition-remember': createMemoryCognitionRememberTool({
+              scope: memoryScope,
+              storeInsight: (input) => this.memoryClient.storeInsight(input),
+            }),
+            'memory-cognition-forget': createMemoryCognitionForgetTool({
+              scope: memoryScope,
               deleteCognition: (partition) =>
                 this.memoryClient.deleteCognition(partition),
             }),

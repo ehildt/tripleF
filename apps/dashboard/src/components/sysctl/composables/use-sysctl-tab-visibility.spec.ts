@@ -18,7 +18,8 @@ describe('useSysctlTabVisibility', () => {
     appStore.toggleTabVisibility('debug');
 
     const { isTabVisible } = useSysctlTabVisibility();
-    expect(isTabVisible('debug')).toBe(false);
+    // debug starts hidden; the toggle flips it to visible.
+    expect(isTabVisible('debug')).toBe(true);
   });
 
   it('toggles a tab via the app store', () => {
@@ -32,12 +33,12 @@ describe('useSysctlTabVisibility', () => {
     const debugStore = useDebugStore();
     const { toggleTab } = useSysctlTabVisibility();
 
-    // Logging is off by default (paused).
-    expect(debugStore.debugPaused).toBe(true);
-    toggleTab('debug');
+    // Logging is off by default (paused) — debug starts hidden.
     expect(debugStore.debugPaused).toBe(true);
     toggleTab('debug');
     expect(debugStore.debugPaused).toBe(false);
+    toggleTab('debug');
+    expect(debugStore.debugPaused).toBe(true);
   });
 
   it('toggles counters visibility', () => {

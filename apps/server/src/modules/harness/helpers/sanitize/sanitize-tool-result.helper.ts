@@ -1,6 +1,7 @@
+import { isTrustedUrl } from '@triplef/agent/schemas';
+import { isTrustedImageUrl } from '@triplef/agent/schemas';
+
 import { isEmbeddableVideoUrl } from '../url-trust/is-embeddable-video-url.helper.js';
-import { isTrustedImageUrl } from '../url-trust/is-trusted-image-url.helper.js';
-import { isTrustedUrl } from '../url-trust/is-trusted-url.helper.js';
 
 import type {
   IngestedReplacement,

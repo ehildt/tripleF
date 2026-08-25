@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FileText } from '@lucide/vue';
 import { computed } from 'vue';
 
 import type { LightboxImage } from '@/types/lightbox.model';
@@ -9,10 +10,12 @@ import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
 const props = defineProps<{
   content: string;
   images?: LightboxImage[];
+  documents?: { name: string; url: string }[];
 }>();
 
 const emit = defineEmits<{
   (e: 'imageClicked', images: LightboxImage[], clickedUrl: string): void;
+  (e: 'documentClicked', document: { name: string; url: string }): void;
 }>();
 
 const renderedHtml = computed(() => renderMarkdown(props.content));
@@ -34,6 +37,22 @@ const renderedHtml = computed(() => renderMarkdown(props.content));
           decoding="async"
           @click="emit('imageClicked', images, image.url)"
         />
+      </Tooltip>
+    </div>
+    <div v-if="documents?.length" class="user-request__images">
+      <Tooltip
+        v-for="document in documents"
+        :key="document.url"
+        :text="document.name"
+      >
+        <button
+          type="button"
+          class="user-request__document"
+          :aria-label="$t('common.documentFile')"
+          @click="emit('documentClicked', document)"
+        >
+          <FileText class="user-request__document-icon" />
+        </button>
       </Tooltip>
     </div>
     <!-- eslint-disable vue/no-v-html -- HTML is rendered by markdown-it and sanitized by DOMPurify -->
@@ -66,6 +85,34 @@ const renderedHtml = computed(() => renderMarkdown(props.content));
   display: block;
   border: 1px solid var(--color-divider);
   cursor: pointer;
+}
+
+.user-request__document {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-divider);
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 8%,
+    transparent
+  );
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.user-request__document:hover {
+  border-color: var(--color-accent-primary);
+}
+
+.user-request__document-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-fg-muted);
 }
 
 .user-request__body {

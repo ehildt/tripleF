@@ -77,7 +77,7 @@ function mockObservers() {
 }
 
 function createFakeContainer(initialScrollHeight: number) {
-  return {
+  const container = {
     scrollTop: 0,
     clientHeight: 100,
     scrollHeight: initialScrollHeight,
@@ -85,6 +85,17 @@ function createFakeContainer(initialScrollHeight: number) {
     querySelector: vi.fn(),
     querySelectorAll: vi.fn().mockReturnValue([]),
   } as unknown as HTMLElement;
+  // Mirror the browser: a scrollTo with a target also moves the position.
+  container.scrollTo = vi.fn((options?: number | ScrollToOptions) => {
+    if (
+      typeof options === 'object' &&
+      options !== null &&
+      typeof options.top === 'number'
+    ) {
+      container.scrollTop = options.top;
+    }
+  });
+  return container;
 }
 
 describe('useNativeScroll', () => {
@@ -211,6 +222,27 @@ describe('useNativeScroll', () => {
     container.scrollTop = 210;
     onScroll();
 
+    expect(activeSectionIndex.value).toBe(1);
+  });
+
+  it('keeps the active section in sync after a programmatic scroll-to-section', () => {
+    const container = createFakeContainer(500);
+    const sections = [
+      { offsetTop: 0 },
+      { offsetTop: 200 },
+      { offsetTop: 400 },
+    ] as HTMLElement[];
+    container.querySelectorAll = vi.fn().mockReturnValue(sections);
+    container.querySelector = vi.fn().mockReturnValue(sections[1]);
+    const { scrollContainerRef, scrollToSection, activeSectionIndex } =
+      useNativeScroll();
+    scrollContainerRef.value = container;
+
+    scrollToSection(1);
+
+    // The mirrored scrollTo moved the position but no scroll event fired —
+    // the active section (which the mode-switch restore reads) must already
+    // track the new position instead of holding the stale one.
     expect(activeSectionIndex.value).toBe(1);
   });
 });

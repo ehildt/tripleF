@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { LexiconSourceDocument } from '@triplef/agent/schemas';
+import type { InputMessage } from '@triplef/ai-sdk';
+import type { ToolResult } from '@triplef/ai-sdk';
+import { limitText } from '@triplef/helpers/limit-text';
 
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import {
   EPISODE_PROBE_LIMIT,
   EPISODE_TAGS,
@@ -10,6 +12,11 @@ import {
 import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
+import {
+  deriveBudgetChars,
+  deriveReferenceDocChars,
+} from '../configs/source-budget-config.adapter.js';
+import { SourceBudgetConfigService } from '../configs/source-budget-config.service.js';
 import { flattenProfilePaths } from '../helpers/cognition/flatten-profile-paths.helper.js';
 import { matchProfilePaths } from '../helpers/cognition/match-profile-paths.helper.js';
 import { splitCognitionProfile } from '../helpers/cognition/split-cognition-profile.helper.js';
@@ -112,6 +119,7 @@ export class SanitizeActionService {
     private readonly shownMedia: ShownMediaService,
     private readonly sharpService: SharpService,
     private readonly memoryClient: MemoryClientService,
+    private readonly sourceBudget: SourceBudgetConfigService,
   ) {}
 
   async execute(
@@ -269,9 +277,27 @@ export class SanitizeActionService {
       extractArticles(finalToolResults),
       sources,
     );
-    const references = applySourcePolicy(
-      extractReferences(finalToolResults) as Array<Record<string, unknown>>,
-      sources,
+    // Tier-1 index: every search result (post source-policy) becomes a cheap
+    // snippet point in the lexicon — the lexicon remembers every source
+    // touched, not just the pages that were fetched.
+    const searchResults = articles
+      .map((article) => ({
+        url: typeof article.url === 'string' ? article.url : '',
+        title: typeof article.title === 'string' ? article.title : undefined,
+        snippet: typeof article.snippet === 'string' ? article.snippet : '',
+      }))
+      .filter((result) => result.url && result.snippet.trim().length > 0);
+    const {
+      references,
+      selection: referencesSelection,
+      lexiconPassages,
+    } = await this.selectReferences(
+      ctx,
+      applySourcePolicy(
+        extractReferences(finalToolResults) as Array<Record<string, unknown>>,
+        sources,
+      ),
+      searchResults,
     );
     verifiedImages = applySourcePolicy(verifiedImages, sources);
     verifiedVideos = applySourcePolicy(verifiedVideos, sources);
@@ -349,6 +375,8 @@ export class SanitizeActionService {
         verifiedVideos,
         mainArticles,
         references,
+        referencesSelection,
+        lexiconPassages,
         shopOffers,
         reviews,
         places,
@@ -380,6 +408,103 @@ export class SanitizeActionService {
       availableVideos: verifiedVideos.map((item) => ({
         url: item.videoUrl,
         title: item.title,
+      })),
+    };
+  }
+
+  /**
+   * Ephemeral reference selection: normalize the non-search tool results to
+   * `{ url?, title?, content }`, ceiling-cap each (marked), and ask the memory
+   * app's lexicon/select endpoint for the most relevant verbatim passages
+   * under the model-relative budget. Falls back to the ceiling-normalized
+   * references when selection is unavailable — memory is a background concern.
+   */
+  private async selectReferences(
+    ctx: HarnessContext,
+    references: Array<Record<string, unknown>>,
+    searchResults: Array<{ url: string; title?: string; snippet: string }>,
+  ): Promise<{
+    references: Array<Record<string, unknown>>;
+    selection?: { considered: number; selected: number };
+    lexiconPassages?: Array<{
+      url?: string;
+      title?: string;
+      content: string;
+      sourceType?: 'content' | 'result';
+    }>;
+  }> {
+    const numCtx = ctx.request.options?.num_ctx;
+    const cfg = this.sourceBudget.config;
+    const docChars = deriveReferenceDocChars(numCtx, cfg);
+
+    const documents: LexiconSourceDocument[] = [];
+    const normalized: Array<Record<string, unknown>> = [];
+    for (const ref of references) {
+      const content = ref.content ?? ref.text ?? ref.snippet;
+      if (typeof content !== 'string' || !content.trim()) {
+        normalized.push(ref);
+        continue;
+      }
+      const capped = limitText(content, docChars);
+      documents.push({
+        url: typeof ref.url === 'string' ? ref.url : undefined,
+        title: typeof ref.title === 'string' ? ref.title : undefined,
+        content: capped,
+      });
+      normalized.push({ ...ref, content: capped });
+    }
+
+    const query =
+      ctx.outputs.intent?.contextSummary?.trim() ||
+      ctx.lastUserPrompt?.trim() ||
+      '';
+    if (!query) return { references: normalized };
+
+    // Index search results even when no fetched documents exist — the lexicon
+    // remembers every source touched, not just the pages that were fetched.
+    if (documents.length === 0 && searchResults.length === 0) {
+      return { references: normalized };
+    }
+
+    const sel = await this.memoryClient.selectContext({
+      query,
+      documents,
+      searchResults,
+      budgetChars: deriveBudgetChars(numCtx, cfg),
+      partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',
+    });
+    if (!sel) {
+      this.logger.warn(
+        { requestId: ctx.requestId, step: 'sanitize' },
+        'reference selection unavailable — falling back to full references',
+      );
+      return { references: normalized };
+    }
+
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'sanitize',
+        consideredChunks: sel.consideredChunks,
+        selectedChunks: sel.selectedChunks,
+      },
+      'reference selection applied',
+    );
+    return {
+      references: sel.chunks.map((chunk) => ({
+        url: chunk.url,
+        title: chunk.title,
+        content: chunk.content,
+      })),
+      selection: {
+        considered: sel.consideredChunks,
+        selected: sel.selectedChunks,
+      },
+      lexiconPassages: sel.pastChunks?.map((chunk) => ({
+        url: chunk.url,
+        title: chunk.title,
+        content: chunk.content,
+        sourceType: chunk.sourceType,
       })),
     };
   }
@@ -458,13 +583,18 @@ export class SanitizeActionService {
       // was about even when the topic is only loosely named. Degrades to []
       // on cold spaces (searchByText never throws). The limit is the memory
       // app's system variable (episodeProbeLimit), falling back to the
-      // built-in default when the snapshot predates it.
-      const episodeHits = await this.memoryClient.searchByText({
-        text: prompt,
-        tags: [...EPISODE_TAGS],
-        recency: true,
-        limit: snapshot.episodeProbeLimit ?? EPISODE_PROBE_LIMIT,
-      });
+      // built-in default when the snapshot predates it; 0 disables the probe.
+      const episodeProbeLimit =
+        snapshot.episodeProbeLimit ?? EPISODE_PROBE_LIMIT;
+      const episodeHits =
+        episodeProbeLimit > 0
+          ? await this.memoryClient.searchByText({
+              text: prompt,
+              tags: [...EPISODE_TAGS],
+              recency: true,
+              limit: episodeProbeLimit,
+            })
+          : [];
 
       return {
         profile: userProfileText,

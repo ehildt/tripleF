@@ -1,7 +1,4 @@
-import {
-  RESPONSE_LAYOUTS,
-  type ResponseLayout,
-} from '../../../snippets/response-layout.constant.js';
+import { RESPONSE_LAYOUTS, type ResponseLayout } from '@triplef/agent/prompts';
 
 /** Deterministic fallback: classic when allowed, else the first allowed. */
 function defaultLayoutOf(allowed: ResponseLayout[]): ResponseLayout {

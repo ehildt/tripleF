@@ -1,7 +1,8 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
+import { SocketIOService } from '@triplef/socketio';
 import { describe, expect, it, vi } from 'vitest';
 
+import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import { SanitizeActionService } from '../../actions/sanitize.action.js';
 import { HarnessContext } from '../harness-context.type.js';
 
@@ -38,6 +39,7 @@ function createContext(overrides?: Partial<HarnessContext>): HarnessContext {
 describe('SanitizeStepService', () => {
   let service: SanitizeStepService;
   let action: SanitizeActionService;
+  let memoryClient: MemoryClientService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,11 +56,16 @@ describe('SanitizeStepService', () => {
             emitTo: vi.fn(),
           },
         },
+        {
+          provide: MemoryClientService,
+          useValue: { indexLexiconDocuments: vi.fn() },
+        },
       ],
     }).compile();
 
     service = module.get<SanitizeStepService>(SanitizeStepService);
     action = module.get<SanitizeActionService>(SanitizeActionService);
+    memoryClient = module.get<MemoryClientService>(MemoryClientService);
   });
 
   it('should be defined', () => {
@@ -98,5 +105,34 @@ describe('SanitizeStepService', () => {
     );
     expect(ctx.request.messages).toBe(messages);
     expect(ctx.outputs.toolResults).toBe(toolResults);
+  });
+
+  it('indexes uploaded documents into the lexicon', async () => {
+    const ctx = createContext({
+      documentSections: [
+        { name: 'cv.docx', text: 'Eugen Hildt', url: 'http://minio/cv.docx' },
+      ],
+    });
+    (action.execute as any).mockResolvedValue({
+      messages: [],
+      toolResults: [],
+      verifiedImages: [],
+      verifiedVideos: [],
+      inputTokens: 0,
+      outputTokens: 0,
+    });
+
+    await service.execute(ctx);
+
+    expect(memoryClient.indexLexiconDocuments).toHaveBeenCalledWith({
+      documents: [
+        {
+          url: 'http://minio/cv.docx',
+          title: 'cv.docx',
+          content: 'Eugen Hildt',
+        },
+      ],
+      partitionScope: 'global',
+    });
   });
 });

@@ -1,3 +1,3 @@
-import type { IntentResult } from '../../templates/intent.schema.js';
+import type { IntentResult } from '@triplef/agent/schemas';
 
 export type ToolArray = IntentResult['tools'];

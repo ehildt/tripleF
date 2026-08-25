@@ -1,5 +1,5 @@
-import { formatZodIssues } from '../../schemas/format-zod-issues.helper.js';
-import { ocrSchema } from '../../schemas/ocr-json.schema.js';
+import { formatZodIssues } from '@triplef/agent/schemas';
+import { ocrSchema } from '@triplef/agent/schemas';
 
 import type { ValidationResult } from './validation-result.type.js';
 

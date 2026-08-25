@@ -44,6 +44,9 @@ export function buildMemoryMust(
   if (input.tags?.length) {
     must.push({ key: 'tags', match: { any: input.tags } });
   }
+  if (input.category) {
+    must.push({ key: 'category', match: { value: input.category } });
+  }
   if (input.contains) {
     must.push({ key: 'text', match: { text: input.contains } });
   }

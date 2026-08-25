@@ -1,3 +1,4 @@
+import type { ToolDependencies } from '@triplef/agent/tools';
 import { tool } from 'ai';
 
 import { aggregateDailyBars } from '../../../../stock-data/helpers/aggregate-daily-bars.helper.js';
@@ -10,7 +11,6 @@ import {
   type MarketDailyBar,
   MarketHistoryFetchError,
 } from '../../../../stock-data/market-data.types.js';
-import type { ToolDependencies } from '../types.js';
 
 import { eodhdHistorySchema } from './history.schema.js';
 

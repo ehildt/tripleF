@@ -1,4 +1,4 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { InputMessage } from '@triplef/ai-sdk';
 
 /** Blank broken image URLs out of string message contents. */
 export function scrubBrokenUrlsFromMessages(

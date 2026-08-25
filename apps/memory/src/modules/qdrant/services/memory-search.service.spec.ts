@@ -62,6 +62,22 @@ describe('MemorySearchService.searchByText', () => {
     expect(searchMemory).toHaveBeenCalledTimes(3);
   });
 
+  it('threads the category filter into every variant search', async () => {
+    const { service, embed, searchMemory } = makeService();
+    embed.mockResolvedValue([[1, 0, 0]]);
+    searchMemory.mockResolvedValue([]);
+
+    await service.searchByText({
+      memoryPartition: 'sess-1',
+      text: 'One sentence.',
+      category: 'games',
+    });
+
+    expect(
+      searchMemory.mock.calls.every(([input]) => input.category === 'games'),
+    ).toBe(true);
+  });
+
   it('degrades to empty when the embed fails', async () => {
     const { service, embed, searchMemory } = makeService();
     embed.mockRejectedValue(new Error('embed down'));

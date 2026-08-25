@@ -65,6 +65,37 @@
 - [7.3. Core-Logger Schema](7.3-core-logger-schema.md)
 - [7.4. Quick Start](7.4-quick-start.md)
 
+### BullMQ
+
+- [8. The @triplef/bullmq Library](8-bullmq.md)
+- [8.1. BullMQ Module](8.1-bullmq-module.md)
+- [8.2. BullMQ Config Schema](8.2-bullmq-config-schema.md)
+- [8.3. Quick Start](8.3-quick-start.md)
+
+### BullMQ-Logger
+
+- [9. The @triplef/bullmq-logger Library](9-bullmq-logger.md)
+- [9.1. BullMQ-Logger Service](9.1-bullmq-logger-service.md)
+- [9.2. BullMQ-Logger Module](9.2-bullmq-logger-module.md)
+- [9.3. BullMQ-Logger Schema](9.3-bullmq-logger-schema.md)
+- [9.4. Quick Start](9.4-quick-start.md)
+
+### Socket.IO
+
+- [10. The @triplef/socketio Library](10-socketio.md)
+- [10.1. Socket.IO Module](10.1-socket-io-module.md)
+- [10.2. Socket.IO Service](10.2-socket-io-service.md)
+- [10.3. Socket.IO Schema](10.3-socket-io-schema.md)
+- [10.4. Quick Start](10.4-quick-start.md)
+
+### AI SDK
+
+- [11. The @triplef/ai-sdk Library](11-ai-sdk.md)
+- [11.1. AI SDK Module](11.1-ai-sdk-module.md)
+- [11.2. AI SDK Service](11.2-ai-sdk-service.md)
+- [11.3. AI SDK Schema](11.3-ai-sdk-schema.md)
+- [11.4. Quick Start](11.4-quick-start.md)
+
 ## Navigation
 
 | Document                                                  | Concern                                        | Key Sections                                                           |
@@ -102,7 +133,26 @@
 | [6.3-validate-return-value](6.3-validate-return-value.md) | Decorator validating return values              | Joi schema validation, `ValidateReturnValueError`                        |
 | [6.4-quick-start](6.4-quick-start.md)                     | Using the config-factory package                | Install, config service, module registration                            |
 | [7-core-logger](7-core-logger.md)                         | `@triplef/core-logger` library overview         | Modules, installation, peer dependencies                                 |
-| [7.1-core-logger-service](7.1-core-logger-service.md)     | NestJS `LoggerService` backed by pino           | Call shapes, onLog hook, setLogLevels                                    |
+| [7.1-core-logger-service](7.1-core-logger-service.md)     | NestJS `LoggerService` backed by pino           | Call shapes, error bindings, setLogLevels                                |
 | [7.2-core-logger-module](7.2-core-logger-module.md)       | Dynamic module wiring the service to pino       | `registerAsync` options, bootstrap                                       |
 | [7.3-core-logger-schema](7.3-core-logger-schema.md)       | Joi schema for pino options                     | Fields, validation usage                                                |
 | [7.4-quick-start](7.4-quick-start.md)                     | Using the core-logger package                   | Install, config service, register, bootstrap                             |
+| [8-bullmq](8-bullmq.md)                                   | `@triplef/bullmq` library overview              | Modules, installation, peer dependencies                                 |
+| [8.1-bullmq-module](8.1-bullmq-module.md)                 | Dynamic module registering BullMQ queues        | `registerAsync` options, queue registration, per-queue connection        |
+| [8.2-bullmq-config-schema](8.2-bullmq-config-schema.md)   | Joi schema for queue config                     | Connection fields, default job options, validation usage                 |
+| [8.3-quick-start](8.3-quick-start.md)                     | Using the bullmq package                        | Install, config service, register, inject queue                         |
+| [9-bullmq-logger](9-bullmq-logger.md)                     | `@triplef/bullmq-logger` library overview       | Modules, installation, peer dependencies                                 |
+| [9.1-bullmq-logger-service](9.1-bullmq-logger-service.md) | NestJS `LoggerService` for BullMQ jobs          | Methods, state icons, safe state inference                               |
+| [9.2-bullmq-logger-module](9.2-bullmq-logger-module.md)   | Dynamic module wiring the service to pino       | `registerAsync` options, usage                                           |
+| [9.3-bullmq-logger-schema](9.3-bullmq-logger-schema.md)   | Joi schema for pino options (incl. `redact`)    | Fields, validation usage                                                |
+| [9.4-quick-start](9.4-quick-start.md)                     | Using the bullmq-logger package                 | Install, config service, register, log a job                            |
+| [10-socketio](10-socketio.md)                             | `@triplef/socketio` library overview            | Modules, installation, peer dependencies                                |
+| [10.1-socket-io-module](10.1-socket-io-module.md)         | Dynamic module + adapter auto-detection         | `registerAsync` options, `attach()`, usage                               |
+| [10.2-socket-io-service](10.2-socket-io-service.md)       | Fluent service for rooms and events             | Methods, chaining, usage                                                 |
+| [10.3-socket-io-schema](10.3-socket-io-schema.md)         | Joi schema for server config                    | Fields, validation usage                                                |
+| [10.4-quick-start](10.4-quick-start.md)                   | Using the socketio package                      | Install, config service, register, attach, emit                          |
+| [11-ai-sdk](11-ai-sdk.md)                                 | `@triplef/ai-sdk` library overview              | Modules, installation, peer dependencies                                |
+| [11.1-ai-sdk-module](11.1-ai-sdk-module.md)               | Dynamic module wiring the AI SDK services       | `registerAsync` options, usage                                           |
+| [11.2-ai-sdk-service](11.2-ai-sdk-service.md)             | Streaming/generation, catalog, warm-up         | Methods, usage                                                           |
+| [11.3-ai-sdk-schema](11.3-ai-sdk-schema.md)               | Joi schema for the AI SDK config                | Fields, validation usage                                                |
+| [11.4-quick-start](11.4-quick-start.md)                   | Using the ai-sdk package                        | Install, config service, register, stream                                |

@@ -1,0 +1,27 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    ".storybook",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "src/**/*.stories.?sx",
+    "**/read-depbadgerc-with-defaults.ts",
+    "**/depbadgerc.type.ts",
+    "**/vitest.config.ts",
+    "src/index.ts",
+    "src/ai-sdk/index.ts",
+    "src/ai-sdk/ai-sdk.constants.ts",
+    "src/ai-sdk/ai-sdk.model.ts",
+    "src/ai-sdk/ai-sdk.module.ts",
+    "src/ai-sdk/ai-sdk.schema.ts",
+    "src/ai-sdk/ai-sdk.service.ts",
+    "src/ai-sdk/constants/*.ts",
+    "src/ai-sdk/helpers/*.ts",
+    "src/ai-sdk/types/*.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

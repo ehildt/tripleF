@@ -1,0 +1,24 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    ".storybook",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "src/**/*.stories.?sx",
+    "**/read-depbadgerc-with-defaults.ts",
+    "**/depbadgerc.type.ts",
+    "**/vitest.config.ts",
+    "src/index.ts",
+    "src/socketio/index.ts",
+    "src/socketio/socketio.constants.ts",
+    "src/socketio/socketio.model.ts",
+    "src/socketio/socketio.module.ts",
+    "src/socketio/socketio.schema.ts",
+    "src/socketio/socketio.service.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

@@ -36,6 +36,10 @@ export class StoreStepService implements VectorizeStepHandler {
       vector: vectors[index],
       text: fact,
       tags: extraction.tags,
+      // One broad family label per turn-side — groups the narrow tags into
+      // one topic family for the constellation community tier and the relink
+      // job's per-category passes.
+      category: extraction.category,
     }));
     if (points.length === 0) return;
 
@@ -45,6 +49,7 @@ export class StoreStepService implements VectorizeStepHandler {
       sessionId: ctx.sessionId,
       conversationId: ctx.conversationId,
       requestId: ctx.requestId,
+      files: ctx.files,
       points,
     });
     this.logger.log(

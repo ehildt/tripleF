@@ -21,7 +21,7 @@ export function resolveSize(
 
 export function SharpConfigAdapter(env = process.env): SharpDefaults {
   return {
-    enabled: getBooleanEnv(env.PPROC_ENABLED, false)!,
+    enabled: getBooleanEnv(env.PPROC_ENABLED, true)!,
     resize: {
       maxWidth: resolveSize(
         getNumberEnv(env.PPROC_RESIZE_MAX_WIDTH, 768) as number,
@@ -37,10 +37,10 @@ export function SharpConfigAdapter(env = process.env): SharpDefaults {
     },
     variants: {
       original: getBooleanEnv(env.PPROC_VARIANT_ORIGINAL, true)!,
-      grayscale: getBooleanEnv(env.PPROC_VARIANT_GRAYSCALE, true)!,
-      denoised: getBooleanEnv(env.PPROC_VARIANT_DENOISED, true)!,
+      grayscale: getBooleanEnv(env.PPROC_VARIANT_GRAYSCALE, false)!,
+      denoised: getBooleanEnv(env.PPROC_VARIANT_DENOISED, false)!,
       sharpened: getBooleanEnv(env.PPROC_VARIANT_SHARPENED, false)!,
-      clahe: getBooleanEnv(env.PPROC_VARIANT_CLAHE, true)!,
+      clahe: getBooleanEnv(env.PPROC_VARIANT_CLAHE, false)!,
     },
     parameters: {
       blurSigma: getNumberEnv(env.PPROC_BLUR_SIGMA, 0.5) as number,

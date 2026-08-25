@@ -40,6 +40,13 @@ export interface MemoryPoint {
   /** Topic labels written by the extraction pass or the remember tool — keyword bag for payload-filtered recall. */
   tags: string[];
   /**
+   * Broad category written by the remember tool (e.g. `games`, `pets`) —
+   * groups narrow tag topics into one family for the constellation's
+   * second-level community hubs. Optional: records without a category stay
+   * flat (their tags still cluster them).
+   */
+  category?: string;
+  /**
    * Cognition insight routing path (e.g. `likes.cars`) — the profile facet
    * this insight deepens. Set on insight records only; the respond-time
    * probe token-matches profile values against the prompt to shape the
@@ -65,6 +72,8 @@ export interface MemoryScopeFilters {
   requestId?: string;
   /** Points whose `tags` include ANY of these labels. */
   tags?: string[];
+  /** Points whose broad `category` equals this family label. */
+  category?: string;
   /** Full-text containment on the text payload (Qdrant `match: text`). */
   contains?: string;
   /** Exact full-string equality on the record text — the record's identity for deletion. */
@@ -80,12 +89,23 @@ export interface UpsertBatchInput {
   sessionId?: string;
   conversationId?: string;
   /** Harness turn id — lands on every point's payload as `request_id`. */
+  /** Context size of the originating turn — derives the extract-step valve. */
   requestId?: string;
+  /** Storage urls of the turn's attached files, landed on every point. */
+  files?: Array<{ name: string; url: string }>;
+  /**
+   * Skip the constellation link-graph sync for this batch. Set for points
+   * that are not constellation nodes (episodes) — they must not accrue
+   * semantic edges.
+   */
+  skipLinks?: boolean;
   points: Array<{
     id: string;
     vector: number[];
     text: string;
     tags?: string[];
+    /** Broad category (e.g. `games`, `pets`) — the community tier key. */
+    category?: string;
     /** Cognition insight routing path (`likes.cars`) — insight records only. */
     path?: string;
   }>;
@@ -103,7 +123,7 @@ export interface SearchMemoryInput extends MemoryScopeFilters {
 }
 
 export interface ListMemoryInput extends MemoryScopeFilters {
-  /** Scroll page size, capped at 100. */
+  /** Scroll page size, capped at 10000 (defaults to the node-limit override). */
   limit?: number;
 }
 
@@ -121,16 +141,23 @@ export interface VectorizeJobData {
    * Omitted for manual ingestion: the text is stored verbatim.
    */
   model?: string;
+  /** Context size of the originating turn — derives the extract-step valve. */
+  numCtx?: number;
+  /** Storage urls of the turn's attached files, remembered on every point. */
+  files?: Array<{ name: string; url: string }>;
 }
 
 /**
  * Cognition-write job: the harness memoryWrite step enqueues it after an
- * answered turn whose intent included memoryRemember. The LLM tool loop runs
- * in the vectorize worker — off the harness hot path, with BullMQ retries.
+ * answered turn whose intent included a remember tool. The LLM tool loop
+ * runs in the vectorize worker — off the harness hot path, with BullMQ
+ * retries.
  */
 export interface MemoryWriteJobData {
   /** The user's fact partition. */
   memoryPartition: string;
+  /** The AI's cognition space key — the cognition-remember lane target. */
+  memoryCognition?: string;
   sessionId?: string;
   conversationId?: string;
   requestId?: string;
@@ -139,9 +166,9 @@ export interface MemoryWriteJobData {
   /** Summarized tool results of the turn (pre-capped by the harness step). */
   gathered?: string;
   /**
-   * The turn's memoryRecall hits (provenance-labeled, pre-capped) — what the
-   * probe already surfaced this turn. Treated as ALREADY KNOWN: extend or
-   * update, never re-store.
+   * The turn's memory-partition-recall hits (provenance-labeled, pre-capped)
+   * — what the probe already surfaced this turn. Treated as ALREADY KNOWN:
+   * extend or update, never re-store.
    */
   probedMemory?: string;
   /** Harness model that produced the turn — reused for the write judgment. */
@@ -189,5 +216,39 @@ export interface MemoryConsolidateJobData {
   /** Max pending inserts processed per run (default 100, capped 500). */
   limit?: number;
   /** Compute and log verdicts without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Relink job payload: the category-aware consolidation + soft-link sweep of
+ * one partition. Collapses identical category variants, dedupes each
+ * category's points (LLM verdicts keep/redundant/merge, converging passes),
+ * then writes topical (suggested, never enforced) link edges. The optional
+ * `enrich` flag additionally refines each point's tags via LLM — off by
+ * default because tags are the recall filter vocabulary.
+ */
+export interface MemoryRelinkJobData {
+  /** The user's fact partition to relink. */
+  memoryPartition: string;
+  /** Chat model for dedupe verdicts + enrichment (resolved at enqueue: body model or MEMORY_CONSOLIDATE_MODEL). */
+  model: string;
+  /** Max points processed per category per pass (default 100, capped 500). */
+  limit?: number;
+  /** Max full passes over the categories before stopping (default 3, capped 10). */
+  maxPasses?: number;
+  /** Also refine tags per point via LLM (off by default — tags are recall vocabulary). */
+  enrich?: boolean;
+  /** Compute and log verdicts/edges without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Lexicon supersede sweep job payload: heal orphaned old-hash chunks left by
+ * a crashed supersede. Deterministic — no model, no adjudication.
+ */
+export interface LexiconSweepJobData {
+  /** Max pending documents processed per run (default 100, capped 500). */
+  limit?: number;
+  /** Log what would be healed without applying or marking anything. */
   dryRun?: boolean;
 }

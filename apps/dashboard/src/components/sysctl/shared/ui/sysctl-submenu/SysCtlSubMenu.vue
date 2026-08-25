@@ -32,7 +32,10 @@ const emit = defineEmits<{
         :aria-label="item.label"
         :aria-selected="active === item.id"
         class="sysctl-submenu__tab"
-        :class="{ 'sysctl-submenu__tab--active': active === item.id }"
+        :class="{
+          'sysctl-submenu__tab--active': active === item.id,
+          'sysctl-submenu__tab--muted': item.muted,
+        }"
         @click="emit('select', item.id)"
       >
         <component
@@ -94,6 +97,16 @@ const emit = defineEmits<{
     var(--color-accent-primary) 10%,
     transparent
   );
+}
+
+.sysctl-submenu__tab--muted {
+  color: var(--color-fg-muted);
+  opacity: 0.55;
+}
+
+.sysctl-submenu__tab--muted:hover {
+  color: var(--color-fg-secondary);
+  opacity: 0.8;
 }
 
 .sysctl-submenu__tab:focus {

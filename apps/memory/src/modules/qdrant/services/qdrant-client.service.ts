@@ -60,6 +60,8 @@ export class QdrantClientService implements OnModuleInit {
       await this.ensureCollection(modelDims);
       await this.ensurePayloadIndexes();
       await this.verifyCollectionDims(modelDims);
+      await this.ensureLexiconCollection(modelDims);
+      await this.ensureLexiconPayloadIndexes();
     } catch (error) {
       this.logger.warn(
         `Qdrant bootstrap failed — memory reads/writes will be unavailable: ${
@@ -72,6 +74,14 @@ export class QdrantClientService implements OnModuleInit {
   /** Resolved collection name (model-namespaced); every layer uses this. */
   get collection(): string {
     return buildCollectionName(this.config.collection, this.config.embedModel);
+  }
+
+  /** Resolved lexicon collection name (model-namespaced, global scope). */
+  get lexiconCollection(): string {
+    return buildCollectionName(
+      this.config.lexiconCollection,
+      this.config.embedModel,
+    );
   }
 
   /** Lazily-created singleton client; the config is cached, so is the client. */
@@ -145,6 +155,9 @@ export class QdrantClientService implements OnModuleInit {
       // tags is an open LLM-written keyword bag — keyword schema indexes each
       // array element so `match: { any: [...] }` filters are fast.
       { field_name: 'tags', field_schema: 'keyword' },
+      // category is the broad family label — keyword index powers the facet
+      // inventory (relink job) and category-scoped filters.
+      { field_name: 'category', field_schema: 'keyword' },
       // Full-text schema on text enables RAG-style containment filters
       // (`match: { text: ... }`) over the record content.
       { field_name: 'text', field_schema: 'text' },
@@ -174,6 +187,60 @@ export class QdrantClientService implements OnModuleInit {
   async hasCollection(): Promise<boolean> {
     const { exists } = await this.getClient().collectionExists(this.collection);
     return exists;
+  }
+
+  /** True when the lexicon collection exists in Qdrant. */
+  async hasLexiconCollection(): Promise<boolean> {
+    const { exists } = await this.getClient().collectionExists(
+      this.lexiconCollection,
+    );
+    return exists;
+  }
+
+  /**
+   * Create the lexicon collection if missing (Cosine, same model dims as the
+   * episodic collection). Chunk-granularity points: one point per passage.
+   */
+  async ensureLexiconCollection(modelDims?: number): Promise<void> {
+    const client = this.getClient();
+    const { exists } = await client.collectionExists(this.lexiconCollection);
+    if (exists) return;
+    const size = modelDims ?? this.config.vectorSize;
+    await client.createCollection(this.lexiconCollection, {
+      vectors: { size, distance: 'Cosine' },
+    });
+    this.logger.log(
+      `Created Qdrant collection "${this.lexiconCollection}" (${size} dims, Cosine)`,
+    );
+  }
+
+  /**
+   * Keyword/datetime/integer indexes on the lexicon payload: `url` (lookup +
+   * supersede), `fetched_at` (datetime, future eviction/debug), `partition_scope`
+   * (future tenant filter), `chunk_index` (integer, neighbor-expansion range
+   * scrolls).
+   */
+  async ensureLexiconPayloadIndexes(): Promise<void> {
+    const client = this.getClient();
+    const info = await client.getCollection(this.lexiconCollection);
+    const existing = new Set(Object.keys(info.payload_schema ?? {}));
+    const indexes = [
+      { field_name: 'url', field_schema: 'keyword' },
+      { field_name: 'fetched_at', field_schema: 'datetime' },
+      { field_name: 'partition_scope', field_schema: 'keyword' },
+      { field_name: 'chunk_index', field_schema: 'integer' },
+    ] as const;
+    for (const index of indexes) {
+      if (existing.has(index.field_name)) continue;
+      await client.createPayloadIndex(this.lexiconCollection, {
+        field_name: index.field_name,
+        field_schema: index.field_schema,
+        wait: true,
+      });
+      this.logger.log(
+        `Created payload index "${index.field_name}" on "${this.lexiconCollection}"`,
+      );
+    }
   }
 
   /** Actual vector size stored by the collection, when it exists. */

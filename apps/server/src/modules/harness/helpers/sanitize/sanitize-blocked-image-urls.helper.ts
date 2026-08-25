@@ -1,4 +1,4 @@
-import { hasBlockedImageHost } from '../url-trust/has-blocked-image-host.helper.js';
+import { hasBlockedImageHost } from '@triplef/agent/schemas';
 
 /**
  * Recursively traverse a parsed JSON object and replace any string value that

@@ -1,9 +1,9 @@
+import { categorizeTools } from '@triplef/agent/schemas';
+import { type ProviderConfig, TOOL_NAMES } from '@triplef/agent/schemas';
 import { describe, expect, it } from 'vitest';
 
-import { categorizeTools } from './categorize-tools.helper.js';
 import { expandToolAliases } from './expand-tool-aliases.helper.js';
 import { getEnabledToolNames } from './get-enabled-tool-names.helper.js';
-import { type ProviderConfig, TOOL_NAMES } from './tool-registry.constants.js';
 
 const fullConfig: ProviderConfig = {
   serper: {

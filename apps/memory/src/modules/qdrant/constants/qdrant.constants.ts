@@ -8,3 +8,7 @@ export const MEMORY_WRITE_JOB = 'memory-write';
 export const MEMORY_PROFILE_JOB = 'memory-profile';
 /** Consolidation sweep job on the vectorize queue — webhook- or threshold-triggered. */
 export const MEMORY_CONSOLIDATE_JOB = 'memory-consolidate';
+/** Relink sweep job on the vectorize queue — category-aware consolidation + soft links, endpoint-triggered. */
+export const MEMORY_RELINK_JOB = 'memory-relink';
+/** Lexicon supersede sweep job on the vectorize queue — deterministic, no model. */
+export const LEXICON_CONSOLIDATE_JOB = 'lexicon-consolidate';

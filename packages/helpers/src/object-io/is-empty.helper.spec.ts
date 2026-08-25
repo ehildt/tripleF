@@ -29,8 +29,8 @@ describe('isEmpty', () => {
 
   // ✅ Reject primitives
   test('throws TypeError for null, undefined, string, number, boolean', () => {
-    expect(() => isEmpty(null)).toThrow(TypeError);
-    expect(() => isEmpty(undefined)).toThrow(TypeError);
+    expect(() => isEmpty(null as any)).toThrow(TypeError);
+    expect(() => isEmpty(undefined as any)).toThrow(TypeError);
     expect(() => isEmpty('' as any)).toThrow(TypeError);
     expect(() => isEmpty(123 as any)).toThrow(TypeError);
     expect(() => isEmpty(true as any)).toThrow(TypeError);

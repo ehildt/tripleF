@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitThis": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node", "vitest/globals"],
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["src/", "eslint.config.ts", "prettier.config.mjs", "tsup.config.ts", "vitest.config.ts"]
+}

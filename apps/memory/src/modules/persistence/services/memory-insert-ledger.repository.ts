@@ -28,7 +28,7 @@ export interface PendingLedgerEntry extends MemoryInsertLedgerRow {
 /**
  * Postgres storage for the memory insert ledger — one row per stored fact
  * record (the memory_partition lane in Qdrant), written by the vectorize
- * store step and the memoryRemember sync path. `sweptAt` null marks a row
+ * store step and the memory-partition-remember sync path. `sweptAt` null marks a row
  * pending consolidation; the sweep marks rows swept only after processing
  * them, so a crash mid-run resumes from the oldest unswept row.
  *

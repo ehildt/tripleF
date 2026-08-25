@@ -1,7 +1,8 @@
 name: RELEASE_CI
 
 # Trusted publishing (OIDC) note for @triplef/helpers, @triplef/config-factory,
-# and @triplef/core-logger:
+# @triplef/core-logger, @triplef/bullmq, @triplef/bullmq-logger, @triplef/socketio,
+# @triplef/ai-sdk, and @triplef/agent:
 #   npmjs.com → package settings → Trusted Publisher → GitHub Actions
 #     Organization or user: ehildt
 #     Repository:           tripleF
@@ -70,7 +71,7 @@ jobs:
 
       - name: Depbadge
         run: |
-          for dir in apps/server apps/dashboard apps/memory packages/helpers packages/config-factory packages/core-logger; do
+          for dir in apps/server apps/dashboard apps/memory packages/helpers packages/config-factory packages/core-logger packages/bullmq packages/bullmq-logger packages/socketio packages/ai-sdk packages/agent; do
             (cd "$dir" && npx @ehildt/depbadge)
           done
 
@@ -128,6 +129,21 @@ jobs:
           - name: core-logger
             artifact: core-logger-dist
             path: packages/core-logger
+          - name: bullmq
+            artifact: bullmq-dist
+            path: packages/bullmq
+          - name: bullmq-logger
+            artifact: bullmq-logger-dist
+            path: packages/bullmq-logger
+          - name: socketio
+            artifact: socketio-dist
+            path: packages/socketio
+          - name: ai-sdk
+            artifact: ai-sdk-dist
+            path: packages/ai-sdk
+          - name: agent
+            artifact: agent-dist
+            path: packages/agent
 
     steps:
       - uses: actions/checkout@v7

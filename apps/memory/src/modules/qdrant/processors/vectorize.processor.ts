@@ -1,6 +1,6 @@
-import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { BullMQLoggerService } from '@triplef/bullmq-logger';
 import { CoreLoggerService } from '@triplef/core-logger';
 import { Job, UnrecoverableError } from 'bullmq';
 
@@ -10,22 +10,28 @@ import {
 } from '../../bullmq/constants/bullmq.constants.js';
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
 import {
+  LEXICON_CONSOLIDATE_JOB,
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_PROFILE_JOB,
+  MEMORY_RELINK_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
   VECTORIZE_JOB,
 } from '../constants/qdrant.constants.js';
 import { isPermanentVectorizeError } from '../helpers/vectorize-failure.helper.js';
 import type {
+  LexiconSweepJobData,
   MemoryConsolidateJobData,
   MemoryProfileJobData,
+  MemoryRelinkJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
+import { LexiconSweepService } from '../services/vectorize/jobs/lexicon-sweep.service.js';
 import { MemoryConsolidateJobService } from '../services/vectorize/jobs/memory-consolidate-job.service.js';
 import { MemoryProfileJobService } from '../services/vectorize/jobs/memory-profile-job.service.js';
+import { MemoryRelinkJobService } from '../services/vectorize/jobs/memory-relink-job.service.js';
 import { MemoryWriteJobService } from '../services/vectorize/jobs/memory-write-job.service.js';
 import { EmbedStepService } from '../services/vectorize/steps/embed-step.service.js';
 import { ExtractStepService } from '../services/vectorize/steps/extract-step.service.js';
@@ -59,6 +65,8 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     private readonly memoryWriteJob: MemoryWriteJobService,
     private readonly memoryProfileJob: MemoryProfileJobService,
     private readonly memoryConsolidateJob: MemoryConsolidateJobService,
+    private readonly memoryRelinkJob: MemoryRelinkJobService,
+    private readonly lexiconSweepJob: LexiconSweepService,
     private readonly dlqLifecycleService: LifecycleService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {
@@ -82,6 +90,8 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       | MemoryWriteJobData
       | MemoryProfileJobData
       | MemoryConsolidateJobData
+      | MemoryRelinkJobData
+      | LexiconSweepJobData
     >,
   ): Promise<void> {
     // Feature off → no-op (a job can outlive the moment it was enabled).
@@ -91,7 +101,9 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       job.name !== VECTORIZE_JOB &&
       job.name !== MEMORY_WRITE_JOB &&
       job.name !== MEMORY_PROFILE_JOB &&
-      job.name !== MEMORY_CONSOLIDATE_JOB
+      job.name !== MEMORY_CONSOLIDATE_JOB &&
+      job.name !== MEMORY_RELINK_JOB &&
+      job.name !== LEXICON_CONSOLIDATE_JOB
     )
       return;
 
@@ -109,6 +121,10 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
         await this.memoryConsolidateJob.execute(
           job.data as MemoryConsolidateJobData,
         );
+      } else if (job.name === MEMORY_RELINK_JOB) {
+        await this.memoryRelinkJob.execute(job.data as MemoryRelinkJobData);
+      } else if (job.name === LEXICON_CONSOLIDATE_JOB) {
+        await this.lexiconSweepJob.execute(job.data as LexiconSweepJobData);
       } else {
         await this.memoryProfileJob.execute(job.data as MemoryProfileJobData);
       }
@@ -141,6 +157,8 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       requestId: job.data.requestId,
       text: job.data.text,
       model: job.data.model,
+      numCtx: job.data.numCtx,
+      files: job.data.files,
       steps,
       outputs: {},
       done: false,

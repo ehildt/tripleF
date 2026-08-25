@@ -4,17 +4,19 @@ import {
   Logger,
   OnApplicationBootstrap,
 } from '@nestjs/common';
-import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
-
-import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
-import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
-import { clampCognitionLimit } from '../models/memory-cognition.model.js';
+import { clampCognitionLimit } from '@triplef/agent/schemas';
 import {
   clampEpisodeProbeLimit,
   clampEpisodeRecencyMidpoint,
   clampEpisodeRecencyScaleSeconds,
   clampEpisodeRecencyWeight,
-} from '../models/memory-cognition.model.js';
+  clampEpisodeScoreThreshold,
+} from '@triplef/agent/schemas';
+import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
+
+import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
+import { clampConstellationNodeLimit } from '../constants/constellation-node-limit.constant.js';
+import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 import type { MemoryOverridesPatch } from './memory-overrides.service.types.js';
@@ -50,10 +52,12 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     (value: number) => number
   > = {
     cognitionLimit: clampCognitionLimit,
+    constellationNodeLimit: clampConstellationNodeLimit,
     episodeRecencyWeight: clampEpisodeRecencyWeight,
     episodeRecencyScaleSeconds: clampEpisodeRecencyScaleSeconds,
     episodeRecencyMidpoint: clampEpisodeRecencyMidpoint,
     episodeProbeLimit: clampEpisodeProbeLimit,
+    episodeScoreThreshold: clampEpisodeScoreThreshold,
   };
 
   constructor(
@@ -89,6 +93,11 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     if (typeof record.cognitionLimit === 'number') {
       patch.cognitionLimit = clampCognitionLimit(record.cognitionLimit);
     }
+    if (typeof record.constellationNodeLimit === 'number') {
+      patch.constellationNodeLimit = clampConstellationNodeLimit(
+        record.constellationNodeLimit,
+      );
+    }
     if (typeof record.episodeRecencyWeight === 'number') {
       patch.episodeRecencyWeight = clampEpisodeRecencyWeight(
         record.episodeRecencyWeight,
@@ -107,6 +116,11 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     if (typeof record.episodeProbeLimit === 'number') {
       patch.episodeProbeLimit = clampEpisodeProbeLimit(
         record.episodeProbeLimit,
+      );
+    }
+    if (typeof record.episodeScoreThreshold === 'number') {
+      patch.episodeScoreThreshold = clampEpisodeScoreThreshold(
+        record.episodeScoreThreshold,
       );
     }
     this.overrides = patch;
@@ -182,6 +196,28 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     );
   }
 
+  /** Effective episode probe score threshold (0–1) — the recency prefetch noise floor. */
+  getEpisodeScoreThreshold(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.episodeScoreThreshold;
+    return clampEpisodeScoreThreshold(
+      typeof override === 'number'
+        ? override
+        : this.config.episodeScoreThreshold,
+    );
+  }
+
+  /** Effective constellation node-load limit (100–10000 records per space). */
+  getConstellationNodeLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.constellationNodeLimit;
+    return clampConstellationNodeLimit(
+      typeof override === 'number'
+        ? override
+        : this.config.constellationNodeLimit,
+    );
+  }
+
   /** The SysCtl read view: effective values plus the env baseline + bounds. */
   getConfig() {
     return {
@@ -192,6 +228,8 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
       episodeRecencyScaleSeconds: this.getEpisodeRecencyScaleSeconds(),
       episodeRecencyMidpoint: this.getEpisodeRecencyMidpoint(),
       episodeProbeLimit: this.getEpisodeProbeLimit(),
+      episodeScoreThreshold: this.getEpisodeScoreThreshold(),
+      constellationNodeLimit: this.getConstellationNodeLimit(),
     };
   }
 
@@ -240,6 +278,12 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     }
     if (this.overrides.episodeProbeLimit !== undefined) {
       values.episodeProbeLimit = this.overrides.episodeProbeLimit;
+    }
+    if (this.overrides.episodeScoreThreshold !== undefined) {
+      values.episodeScoreThreshold = this.overrides.episodeScoreThreshold;
+    }
+    if (this.overrides.constellationNodeLimit !== undefined) {
+      values.constellationNodeLimit = this.overrides.constellationNodeLimit;
     }
     if (Object.keys(values).length === 0) {
       void this.repository.deleteByProvider(MEMORY_PROVIDER_KEY);

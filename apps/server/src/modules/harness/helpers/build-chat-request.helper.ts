@@ -1,9 +1,12 @@
-import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
-import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
-import type { HarnessJobPayload } from '../dtos/harness-job.dto.js';
-import { buildBaseSystemPrompt } from '../prompts/base-system.prompt.js';
+import { buildBaseSystemPrompt } from '@triplef/agent/prompts';
+import type { InputMessage } from '@triplef/ai-sdk';
 
+import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
+import type { HarnessJobPayload } from '../dtos/harness-job.dto.js';
+
+import type { DocumentSection } from './documents/document-section.types.js';
 import { parseSessionMetadata } from './json/parse-session-metadata.helper.js';
+import { injectDocumentsMessage } from './inject-documents-message.helper.js';
 
 export function buildChatRequest(
   buffers: Buffer[],
@@ -12,6 +15,7 @@ export function buildChatRequest(
   keepAlive: string,
   variantDescriptions?: string[],
   visionExclusionNotice?: string,
+  documentSections: DocumentSection[] = [],
 ) {
   const hasImages = buffers.length > 0;
 
@@ -66,11 +70,14 @@ export function buildChatRequest(
     }
   }
 
-  const messages: InputMessage[] = [
-    ...(systemPrompt ? [systemPrompt] : []),
-    ...(imageAttachmentMessage ? [imageAttachmentMessage] : []),
-    ...prompts,
-  ].filter((m): m is NonNullable<typeof m> => m != null);
+  const messages = injectDocumentsMessage(
+    [
+      ...(systemPrompt ? [systemPrompt] : []),
+      ...(imageAttachmentMessage ? [imageAttachmentMessage] : []),
+      ...prompts,
+    ].filter((m): m is NonNullable<typeof m> => m != null),
+    documentSections,
+  );
 
   // Merge request: the client consolidated selected exchanges into one user
   // message and carried their request ids through sessionMetadata. Append the

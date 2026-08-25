@@ -1,22 +1,23 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { limitText } from '@triplef/helpers/limit-text';
 
 import type { MemoryClientConfig } from '../../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryEnqueueService } from '../../../memory-client/services/memory-enqueue.service.js';
+import { deriveGatheredChars } from '../../configs/source-budget-config.adapter.js';
+import { SourceBudgetConfigService } from '../../configs/source-budget-config.service.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
-const GATHERED_DATA_LIMIT = 3000;
-const GATHERED_RESULT_LIMIT = 500;
-
 /**
- * The memory write step — enqueue-only: when the classifier included
- * `memoryRemember` for the turn (the intent is authoritative) and the memory
- * feature is enabled with a partition in scope, the turn's summarized tool
- * results are enqueued as a memory-write job. The actual write (prior-memory
- * search, LLM tool loop, storage) runs in the vectorize worker — off the
- * harness hot path, with BullMQ retries instead of in-turn catch-and-log.
- * Enqueue errors are logged, never thrown.
+ * The memory write step — enqueue-only: when the classifier included either
+ * remember tool (`memory-partition-remember` or `memory-cognition-remember`)
+ * for the turn (the intent is authoritative) and the memory feature is
+ * enabled with a partition in scope, the turn's summarized tool results are
+ * enqueued as a memory-write job. The actual write (prior-memory search, LLM
+ * tool loop, storage) runs in the vectorize worker — off the harness hot
+ * path, with BullMQ retries instead of in-turn catch-and-log. Enqueue errors
+ * are logged, never thrown.
  */
 @Injectable()
 export class MemoryWriteStepService implements StepHandler {
@@ -26,12 +27,14 @@ export class MemoryWriteStepService implements StepHandler {
     private readonly memoryEnqueue: MemoryEnqueueService,
     @Inject(MEMORY_CLIENT_CONFIG)
     private readonly memoryConfig: MemoryClientConfig,
+    private readonly sourceBudget: SourceBudgetConfigService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
-    const wantsWrite = (ctx.outputs.intent?.tools ?? []).includes(
-      'memoryRemember',
-    );
+    const intentTools = ctx.outputs.intent?.tools ?? [];
+    const wantsWrite =
+      intentTools.includes('memory-partition-remember') ||
+      intentTools.includes('memory-cognition-remember');
     const memoryPartition = ctx.memoryPartition ?? ctx.sessionId;
     if (!wantsWrite || !this.memoryConfig.enabled || !memoryPartition) {
       this.logger.log(
@@ -41,34 +44,43 @@ export class MemoryWriteStepService implements StepHandler {
       return;
     }
 
-    const gathered = ctx.outputs.toolResults
-      .filter(
-        (r) => r.toolName !== 'memoryRecall' && r.toolName !== 'memoryRemember',
-      )
-      .map(
-        (r) =>
-          `[${r.toolName}] ${summarizeResult(r.result, GATHERED_RESULT_LIMIT)}`,
-      )
-      .join('\n')
-      .slice(0, GATHERED_DATA_LIMIT)
-      .trim();
+    const gatheredChars = deriveGatheredChars(
+      ctx.request.options?.num_ctx,
+      this.sourceBudget.config,
+    );
+    const resultChars = Math.trunc(gatheredChars / 8);
+
+    const gathered = limitText(
+      ctx.outputs.toolResults
+        .filter(
+          (r) =>
+            r.toolName !== 'memory-partition-recall' &&
+            r.toolName !== 'memory-partition-remember' &&
+            r.toolName !== 'memory-cognition-remember',
+        )
+        .map(
+          (r) =>
+            `[${r.toolName}] ${limitText(stringifyResult(r.result), resultChars)}`,
+        )
+        .join('\n'),
+      gatheredChars,
+    ).trim();
 
     // What the probe already surfaced this turn — passed separately from
     // `gathered` so the write job can treat it as ALREADY KNOWN (extend or
     // update, never re-store) rather than as newly gathered data.
-    const probedMemory = ctx.outputs.toolResults
-      .filter((r) => r.toolName === 'memoryRecall')
-      .map((r) =>
-        typeof r.result === 'string'
-          ? r.result
-          : JSON.stringify(r.result ?? ''),
-      )
-      .join('\n')
-      .slice(0, GATHERED_DATA_LIMIT)
-      .trim();
+    const probedMemory = limitText(
+      ctx.outputs.toolResults
+        .filter((r) => r.toolName === 'memory-partition-recall')
+        .map((r) => stringifyResult(r.result))
+        .join('\n'),
+      gatheredChars,
+    ).trim();
 
     await this.memoryEnqueue.enqueueWriteJob({
       memoryPartition,
+      memoryCognition:
+        ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId,
       sessionId: ctx.sessionId,
       conversationId: ctx.filters?.conversationId,
       requestId: ctx.requestId,
@@ -87,8 +99,6 @@ export class MemoryWriteStepService implements StepHandler {
 }
 
 /** Render a tool result as a single readable line for the write-job prompt. */
-function summarizeResult(result: unknown, limit: number): string {
-  const text =
-    typeof result === 'string' ? result : JSON.stringify(result ?? '');
-  return text.length > limit ? `${text.slice(0, limit)}…` : text;
+function stringifyResult(result: unknown): string {
+  return typeof result === 'string' ? result : JSON.stringify(result ?? '');
 }

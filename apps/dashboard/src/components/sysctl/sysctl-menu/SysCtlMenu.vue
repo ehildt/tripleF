@@ -9,6 +9,7 @@ import {
   Cog,
   Layers,
   LayoutTemplate,
+  MemoryStick,
   MessagesSquare,
   Radar,
   ScanEye,
@@ -61,6 +62,11 @@ const TAB_LABELS = computed<
     tab: 'interface',
     label: i18n.global.t('common.sysctlInterface'),
     icon: LayoutTemplate,
+  },
+  {
+    tab: 'memory',
+    label: i18n.global.t('common.sysctlMemory'),
+    icon: MemoryStick,
   },
   { tab: 'system', label: i18n.global.t('common.sysctlSystem'), icon: Cog },
 ]);

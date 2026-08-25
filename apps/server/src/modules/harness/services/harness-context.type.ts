@@ -1,10 +1,11 @@
+import { type IntentResult } from '@triplef/agent/schemas';
+import type { ToolResult } from '@triplef/ai-sdk';
 import { Job } from 'bullmq';
 
-import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
+import type { DocumentSection } from '../helpers/documents/document-section.types.js';
 import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
-import { type IntentResult } from '../templates/intent.schema.js';
 
 export type StepId =
   | 'interpret'
@@ -40,6 +41,13 @@ export type HarnessContext = {
   hasNewImages: boolean;
   visionExcluded?: boolean;
   lastUserPrompt?: string;
+  /** Storage urls of every file attached to this turn (uploads, referenced
+   *  images, converted page images, document originals) — remembered by the
+   *  embedding pipeline so recalled facts can point back at their files. */
+  files?: Array<{ name: string; url: string }>;
+  /** Extracted text of uploaded documents (docx/pptx/text) with their MinIO
+   *  storage url — indexed into the lexicon (pure knowledge), untruncated. */
+  documentSections?: DocumentSection[];
   abortSignal: AbortSignal;
 
   steps: Map<StepId, StepState>;

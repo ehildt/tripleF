@@ -1,4 +1,4 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { InputMessage } from '@triplef/ai-sdk';
 
 const SECTION_MARKER = 'Previously shown images';
 const URL_PATTERN = /\((\/api\/v1\/storage\/[^)\s]+)\)/g;

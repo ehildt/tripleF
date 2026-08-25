@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { MediaItem } from '@/types/harness-response-data.model';
@@ -12,16 +13,24 @@ import {
 import VideoCarouselItem from './video-carousel-item/VideoCarouselItem.vue';
 import AssistantCarousel from './AssistantCarousel.vue';
 
+let activePinia: ReturnType<typeof createPinia>;
+
 function mountCarousel(items: MediaItem[]) {
   return mount(AssistantCarousel, {
     props: { items },
     global: {
+      plugins: [activePinia],
       provide: {
         [harnessImageClickedKey as symbol]: vi.fn(),
       },
     },
   });
 }
+
+beforeEach(() => {
+  activePinia = createPinia();
+  setActivePinia(activePinia);
+});
 
 afterEach(() => {
   clearActivePlayback();

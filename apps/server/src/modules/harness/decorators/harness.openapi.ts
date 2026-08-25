@@ -117,7 +117,7 @@ const ApiBodySchema = () =>
 Provides textual guidance to the model for performing the harness task.
 Can refine or constrain the output, for example by specifying level of detail or focus areas.`,
         },
-        images: {
+        attachments: {
           type: 'array',
           description: `**Image inputs**
 
@@ -127,6 +127,25 @@ Images must be provided as multipart form-data.`,
             type: 'string',
             format: 'binary',
           },
+        },
+        originals: {
+          type: 'array',
+          description: `**Original files**
+
+Original PDF/document files. Persisted in MinIO; their content reaches the
+model through server-side conversion (pdf → page images, other documents →
+extracted text).`,
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+        documentTextLimit: {
+          type: 'string',
+          description: `**Document text limit**
+
+Optional character cap (decimal string) applied to server-extracted
+document text before it is injected into the prompt.`,
         },
       },
     },
@@ -194,6 +213,47 @@ catalog has not changed.`,
     ApiResponse({
       status: HttpStatus.NOT_MODIFIED,
       description: 'Catalog unchanged',
+    }),
+  );
+
+/** Select-time document conversion — returns page images for the client. */
+export const ApiConvertDocuments = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Convert attached documents (select time)',
+      description: `Stores originals in MinIO and converts them (pdf → page JPEGs,
+other documents → extraction manifest). Returns per-file references the
+client renders as image tiles / document cards.`,
+    }),
+    ApiConsumes('multipart/form-data'),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Conversion results per document.',
+      schema: {
+        type: 'object',
+        properties: {
+          documents: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                hash: { type: 'string' },
+                type: { type: 'string' },
+                kind: { type: 'string' },
+                pageImages: {
+                  type: 'array',
+                  items: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Invalid input',
     }),
   );
 

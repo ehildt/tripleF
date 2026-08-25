@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed } from 'vue';
 
 import {
@@ -9,6 +10,8 @@ import {
 
 import GallerySection from './GallerySection.vue';
 
+let activePinia: ReturnType<typeof createPinia>;
+
 function mountSection(
   items: { imageUrl: string }[],
   title?: string,
@@ -17,6 +20,7 @@ function mountSection(
   return mount(GallerySection, {
     props: { title, items },
     global: {
+      plugins: [activePinia],
       provide: {
         [harnessImageClickedKey as symbol]: vi.fn(),
         [mediaPresentationsKey as symbol]: computed(() => ({
@@ -29,6 +33,10 @@ function mountSection(
 }
 
 describe('GallerySection', () => {
+  beforeEach(() => {
+    activePinia = createPinia();
+    setActivePinia(activePinia);
+  });
   it('renders nothing when there are no items', () => {
     const wrapper = mountSection([]);
     expect(wrapper.find('.harness-gallery-section').exists()).toBe(false);

@@ -83,13 +83,16 @@ export const useAppStore = defineStore('app', () => {
 
   const VIS_KEY = 'harness-tab-visibility';
   /**
-   * Tabs hidden unless explicitly enabled: dlq and debug start disabled by
-   * default, so the user opts in via SysCtl. `http`/`sysctl` are core.
+   * Tabs hidden unless explicitly enabled: debug starts disabled, so the
+   * user opts in via SysCtl. `dlq` (dead letter) is on by default; `sockets`
+   * (the chat toolbar sockets menu) is off by default. `http`/`sysctl` are
+   * core.
    */
   const DEFAULT_TAB_VISIBILITY: Record<string, boolean> = {
     chat: true,
-    dlq: false,
+    dlq: true,
     debug: false,
+    sockets: false,
     sysctl: true,
   };
   function loadTabVisibility(): Record<string, boolean> {
@@ -115,8 +118,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function toggleTabVisibility(tab: string) {
-    tabVisibility.value[tab] =
-      tabVisibility.value[tab] === false ? true : false;
+    tabVisibility.value[tab] = !isTabVisible(tab);
   }
 
   const SCROLL_MODE_KEY = 'harness-scroll-mode';
@@ -316,6 +318,36 @@ export const useAppStore = defineStore('app', () => {
 
   function setChartConfig(patch: Partial<ChartConfig>) {
     chartConfig.value = { ...chartConfig.value, ...patch };
+  }
+
+  const DOCUMENT_TEXT_LIMIT_KEY = 'harness-document-text-limit';
+  const DEFAULT_DOCUMENT_TEXT_LIMIT = 200_000;
+  function loadDocumentTextLimit(): number {
+    try {
+      const raw = localStorage.getItem(DOCUMENT_TEXT_LIMIT_KEY);
+      if (raw === null) return DEFAULT_DOCUMENT_TEXT_LIMIT;
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) && parsed > 0
+        ? parsed
+        : DEFAULT_DOCUMENT_TEXT_LIMIT;
+    } catch {
+      return DEFAULT_DOCUMENT_TEXT_LIMIT;
+    }
+  }
+  function saveDocumentTextLimit(value: number) {
+    try {
+      localStorage.setItem(DOCUMENT_TEXT_LIMIT_KEY, String(value));
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Max characters of extracted document text kept per file; the rest is
+   * truncated with a toast. Configurable so it can grow as models do. */
+  const documentTextLimit = ref<number>(loadDocumentTextLimit());
+  watch(documentTextLimit, saveDocumentTextLimit);
+
+  function setDocumentTextLimit(value: number) {
+    documentTextLimit.value = value;
   }
 
   const SOURCE_TAGS_MENU_KEY = 'harness-source-tags-menu';
@@ -647,10 +679,11 @@ export const useAppStore = defineStore('app', () => {
       if (legacy) {
         localStorage.setItem(MEMORY_PARTITION_KEY, legacy);
         localStorage.removeItem(LEGACY_MEMORY_TENANT_KEY);
+        return legacy;
       }
-      return legacy;
+      return 'default';
     } catch {
-      return '';
+      return 'default';
     }
   }
   function saveMemoryPartition(v: string) {
@@ -662,11 +695,11 @@ export const useAppStore = defineStore('app', () => {
     }
   }
   /**
-   * Memory partition id — the user's memory space. Overrides the default
-   * (the session id) so memory survives browser-session rotation. Empty
-   * string = session is the partition. Persisted to localStorage (fast
-   * cache) AND the server config (Postgres), which is the source of truth
-   * across browsers/sessions.
+   * Memory partition id — the user's memory space. Defaults to 'default' so
+   * memory survives browser-session rotation. Empty string = session is the
+   * partition (an explicit opt-in). Persisted to localStorage (fast cache)
+   * AND the server config (Postgres), which is the source of truth across
+   * browsers/sessions.
    */
   const memoryPartition = ref(loadMemoryPartition());
 
@@ -682,6 +715,12 @@ export const useAppStore = defineStore('app', () => {
       const config = await fetchConfig(getPersistentSocketSessionId());
       if (config?.memoryPartition) {
         memoryPartition.value = config.memoryPartition;
+      } else {
+        // No server value yet — push the local default so Postgres becomes
+        // the source of truth across browsers.
+        await saveConfig(getPersistentSocketSessionId(), {
+          memoryPartition: memoryPartition.value,
+        });
       }
     } catch {
       // Offline — keep the local value; the next set persists.
@@ -701,9 +740,9 @@ export const useAppStore = defineStore('app', () => {
   const MEMORY_COGNITION_KEY = 'harness-memory-cognition';
   function loadMemoryCognition(): string {
     try {
-      return localStorage.getItem(MEMORY_COGNITION_KEY)?.trim() ?? '';
+      return localStorage.getItem(MEMORY_COGNITION_KEY)?.trim() || 'default';
     } catch {
-      return '';
+      return 'default';
     }
   }
   function saveMemoryCognition(v: string) {
@@ -716,8 +755,9 @@ export const useAppStore = defineStore('app', () => {
   }
   /**
    * Memory cognition id — the AI's own understanding-of-the-user space.
-   * Empty string = cognition lives in the memory partition (same rules as
-   * memoryPartition: localStorage fast cache + Postgres source of truth).
+   * Defaults to 'default'. Empty string = cognition lives in the memory
+   * partition (same rules as memoryPartition: localStorage fast cache +
+   * Postgres source of truth).
    */
   const memoryCognition = ref(loadMemoryCognition());
 
@@ -730,6 +770,12 @@ export const useAppStore = defineStore('app', () => {
       if (config?.memoryCognition) {
         memoryCognition.value = config.memoryCognition;
         rememberMemoryCognitionSpace(config.memoryCognition);
+      } else {
+        // No server value yet — push the local default so Postgres becomes
+        // the source of truth across browsers.
+        await saveConfig(getPersistentSocketSessionId(), {
+          memoryCognition: memoryCognition.value,
+        });
       }
     } catch {
       // Offline — keep the local value; the next set persists.
@@ -751,16 +797,17 @@ export const useAppStore = defineStore('app', () => {
   function loadMemoryCognitionSpaces(): string[] {
     try {
       const raw = localStorage.getItem(MEMORY_COGNITION_SPACES_KEY);
-      if (!raw) return [];
+      if (!raw) return ['default'];
       const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      return parsed
+      if (!Array.isArray(parsed)) return ['default'];
+      const list = parsed
         .filter((entry): entry is string => typeof entry === 'string')
         .map((entry) => entry.trim())
         .filter(Boolean)
         .slice(0, MEMORY_COGNITION_SPACES_MAX);
+      return list.length ? list : ['default'];
     } catch {
-      return [];
+      return ['default'];
     }
   }
   function saveMemoryCognitionSpaces(spaces: string[]) {
@@ -897,6 +944,8 @@ export const useAppStore = defineStore('app', () => {
     temporaryRetentionMinutes,
     chatIconVisibility,
     chartConfig,
+    documentTextLimit,
+    setDocumentTextLimit,
     sourceTagsMenuCollapsed,
     sourceTagsMenuAlwaysShow,
     collapsedSections,

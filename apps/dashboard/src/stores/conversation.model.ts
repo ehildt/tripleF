@@ -1,7 +1,10 @@
 import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
-import type { ConversationMetadataImage } from '../types/form-query-params.model';
+import type {
+  ConversationMetadataDocument,
+  ConversationMetadataImage,
+} from '../types/form-query-params.model';
 
 export interface SavedFileInfo {
   name: string;
@@ -17,6 +20,20 @@ export interface UploadedImage {
   selected?: boolean;
   conversationId: string;
   source?: 'local' | 'cloud';
+}
+
+/** A document attached to a conversation. The server converts it (pdf →
+ * page images, other documents → extracted text); the client only keeps the
+ * reference for preview and cross-turn re-injection by hash. */
+export interface UploadedDocument {
+  name: string;
+  hash: string;
+  /** MIME type of the original file (server picks the converter from it). */
+  type: string;
+  uploadedAt: number;
+  size?: number;
+  selected?: boolean;
+  conversationId: string;
 }
 
 export interface Exchange {
@@ -65,6 +82,9 @@ export interface Exchange {
   // Images that were associated with this prompt, either uploaded as new
   // files in the form data or referenced through conversation metadata.
   images?: ConversationMetadataImage[];
+  // Documents attached to this prompt (docx/pptx/txt/…): the bubble renders
+  // a tile per entry; the extracted text rides in the prompt content.
+  documents?: ConversationMetadataDocument[];
   harnessTemplate?: string;
   harnessData?: HarnessResponseData;
   text?: string;
@@ -91,6 +111,7 @@ export interface Conversation {
   files: File[];
   savedFileInfos: SavedFileInfo[];
   uploadedImages: UploadedImage[];
+  uploadedDocuments: UploadedDocument[];
   imageSelectionSnapshot: Record<string, boolean>;
   conversationId: string;
   model: string;
@@ -117,6 +138,7 @@ export interface PersistedConversation {
   exchanges: Exchange[];
   savedFileInfos: SavedFileInfo[];
   uploadedImages: UploadedImage[];
+  uploadedDocuments: UploadedDocument[];
   imageSelectionSnapshot?: Record<string, boolean>;
   conversationId: string;
   model: string;

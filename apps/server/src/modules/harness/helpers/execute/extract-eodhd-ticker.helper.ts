@@ -1,4 +1,4 @@
-import type { ToolResult } from '../../../ai-sdk/types/ai-sdk-params.types.js';
+import type { ToolResult } from '@triplef/ai-sdk';
 
 /** Extract the first ticker code from an eodhdSearch result, if present. */
 export function extractEodhdTickerFromResults(

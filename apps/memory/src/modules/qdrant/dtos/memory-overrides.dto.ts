@@ -1,10 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
-
 import {
   COGNITION_LIMIT_MAX,
   COGNITION_LIMIT_MIN,
-  EPISODE_PROBE_LIMIT_MAX,
   EPISODE_PROBE_LIMIT_MIN,
   EPISODE_RECENCY_MIDPOINT_MAX,
   EPISODE_RECENCY_MIDPOINT_MIN,
@@ -12,7 +9,15 @@ import {
   EPISODE_RECENCY_SCALE_SECONDS_MIN,
   EPISODE_RECENCY_WEIGHT_MAX,
   EPISODE_RECENCY_WEIGHT_MIN,
-} from '../models/memory-cognition.model.js';
+  EPISODE_SCORE_THRESHOLD_MAX,
+  EPISODE_SCORE_THRESHOLD_MIN,
+} from '@triplef/agent/schemas';
+import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
+
+import {
+  CONSTELLATION_NODE_LIMIT_MAX,
+  CONSTELLATION_NODE_LIMIT_MIN,
+} from '../constants/constellation-node-limit.constant.js';
 
 export class MemoryOverridesDto {
   @ApiPropertyOptional({
@@ -68,14 +73,38 @@ export class MemoryOverridesDto {
 
   @ApiPropertyOptional({
     description:
-      'Max episode records injected into the respond context per turn (1–10).',
+      'Max episode records injected into the respond context per turn (0–N; 0 disables the probe).',
     example: 3,
     minimum: EPISODE_PROBE_LIMIT_MIN,
-    maximum: EPISODE_PROBE_LIMIT_MAX,
   })
   @IsOptional()
   @IsInt()
   @Min(EPISODE_PROBE_LIMIT_MIN)
-  @Max(EPISODE_PROBE_LIMIT_MAX)
   episodeProbeLimit?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Minimum cosine score for the episode probe recency prefetch (0–1) — the noise floor applied before the recency formula runs.',
+    example: 0.1,
+    minimum: EPISODE_SCORE_THRESHOLD_MIN,
+    maximum: EPISODE_SCORE_THRESHOLD_MAX,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(EPISODE_SCORE_THRESHOLD_MIN)
+  @Max(EPISODE_SCORE_THRESHOLD_MAX)
+  episodeScoreThreshold?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Max fact records the constellation loads per space (100–10000) — how many dots the memory diagram fetches by default.',
+    example: 5000,
+    minimum: CONSTELLATION_NODE_LIMIT_MIN,
+    maximum: CONSTELLATION_NODE_LIMIT_MAX,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(CONSTELLATION_NODE_LIMIT_MIN)
+  @Max(CONSTELLATION_NODE_LIMIT_MAX)
+  constellationNodeLimit?: number;
 }

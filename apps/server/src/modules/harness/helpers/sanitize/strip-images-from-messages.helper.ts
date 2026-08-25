@@ -1,4 +1,4 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { InputMessage } from '@triplef/ai-sdk';
 
 export function stripImagesFromMessages(
   messages: InputMessage[],

@@ -1,11 +1,12 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import { buildContextSummarySection } from '@triplef/agent/prompts';
+import type { VariantName } from '@triplef/agent/schemas';
+import type { InputMessage } from '@triplef/ai-sdk';
+
 import type { FastifyMultipartMeta } from '../../dtos/harness-job.dto.js';
 import type { HarnessContext } from '../../services/harness-context.type.js';
-import { buildContextSummarySection } from '../build-context-summary-section.helper.js';
 import { buildFilenames } from '../build-filenames.helper.js';
 import type { HistorySelection } from '../respond/build-execution-messages.helper.js';
 import { selectStepHistory } from '../select-step-history.helper.js';
-import type { VariantName } from '../tools/tool-registry.constants.js';
 
 import {
   buildImageExecutePrompt,

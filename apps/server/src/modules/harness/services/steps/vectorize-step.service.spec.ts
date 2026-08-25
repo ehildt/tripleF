@@ -12,6 +12,7 @@ function makeContext(overrides: Partial<HarnessContext> = {}): HarnessContext {
     filters: { conversationId: 'conv-1' } as HarnessContext['filters'],
     lastUserPrompt: 'Hello',
     outputs: { finalContent: 'Hi there' },
+    request: { messages: [], options: {}, model: 'model', keep_alive: '5m' },
     ...overrides,
   } as HarnessContext;
 }

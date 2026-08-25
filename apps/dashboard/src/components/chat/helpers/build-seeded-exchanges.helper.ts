@@ -19,6 +19,7 @@ export function buildSeededExchanges(
     conversationId,
     userContent,
     images,
+    documents,
     mergeOrigin,
   } = options;
   const exchanges: Array<Omit<Exchange, 'timestamp' | 'id'>> = [];
@@ -37,6 +38,7 @@ export function buildSeededExchanges(
       roomId,
       conversationId,
       images,
+      documents,
       mergeOrigin,
     });
   }

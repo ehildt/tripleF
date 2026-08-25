@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SNIPPET_TEMPLATE_PRESETS } from '@triplef/agent/prompts';
 import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { normalizeJsonResponse } from '../helpers/json/normalize-json-response.helper.js';
@@ -8,7 +9,6 @@ import {
   getOptionalKeys,
   getRequiredKeys,
 } from '../helpers/template-placeholders.constant.js';
-import { SNIPPET_TEMPLATE_PRESETS } from '../snippets/snippet-presets.constant.js';
 
 import { validateCompareOutput } from './response-validators/compare.validator.js';
 import { createSnippetValidator } from './response-validators/create-snippet-validator.helper.js';

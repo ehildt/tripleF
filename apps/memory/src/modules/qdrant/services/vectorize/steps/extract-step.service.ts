@@ -1,16 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-
-import { AiSdkService } from '../../../../ai-sdk/services/ai-sdk.service.js';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   buildExtractionCorrectionPrompt,
   buildExtractionPrompt,
-} from '../../../constants/vectorize-prompt.constant.js';
+} from '@triplef/agent/prompts';
+import { AiSdkService } from '@triplef/ai-sdk';
+import { limitText } from '@triplef/helpers/limit-text';
+
+import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
+import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
 import { buildPriorMemorySection } from '../../../helpers/build-prior-memory-section.helper.js';
+import { derivePayloadChars } from '../../../helpers/derive-payload-chars.helper.js';
 import { parseExtraction } from '../../../helpers/parse-extraction.helper.js';
+import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
+import { MemoryRepository } from '../../memory.repository.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
-
 /** One initial attempt + one correction pass — mirror of the interpret retry. */
 const MAX_EXTRACTION_ATTEMPTS = 2;
 
@@ -38,6 +43,8 @@ export class ExtractStepService implements VectorizeStepHandler {
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly memorySearch: MemorySearchService,
+    private readonly memoryRepository: MemoryRepository,
+    @Inject(QDRANT_CONFIG) private readonly qdrantConfig: QdrantConfig,
   ) {}
 
   async execute(ctx: VectorizeContext): Promise<void> {
@@ -46,20 +53,41 @@ export class ExtractStepService implements VectorizeStepHandler {
       return;
     }
 
+    const sourceText = limitText(
+      ctx.text,
+      derivePayloadChars(
+        ctx.numCtx,
+        this.qdrantConfig.vectorizeTextRatio,
+        this.qdrantConfig.vectorizeTextChars,
+      ),
+    );
+
     const priorSection = buildPriorMemorySection(
       await this.memorySearch.searchByText({
         memoryPartition: ctx.memoryPartition,
-        text: ctx.text.slice(0, 8000),
+        text: sourceText,
         limit: 6,
       }),
     );
 
+    // The partition's existing category/tag vocabulary — a reuse-first hint
+    // so the model extends the taxonomy instead of minting near-duplicates.
+    const [categories, knownTags] = await Promise.all([
+      this.memoryRepository.facetCategories(ctx.memoryPartition),
+      this.memoryRepository.facetTags(ctx.memoryPartition),
+    ]);
+
     const messages = [
-      { role: 'system' as const, content: buildExtractionPrompt() },
+      {
+        role: 'system' as const,
+        content: buildExtractionPrompt(
+          categories.map((entry) => entry.value),
+          knownTags.map((entry) => entry.value),
+        ),
+      },
       {
         role: 'user' as const,
-        content:
-          ctx.text.slice(0, 8000) + (priorSection ? `\n\n${priorSection}` : ''),
+        content: sourceText + (priorSection ? `\n\n${priorSection}` : ''),
       },
     ];
 
@@ -98,7 +126,9 @@ export class ExtractStepService implements VectorizeStepHandler {
         ({ text } = await this.aiSdkService.generateChat({
           model: ctx.model!,
           messages: messages as never,
-          think: false,
+          providerOptions: buildProviderOptions({
+            think: false,
+          }),
           tools: {},
         }));
       } catch (error) {

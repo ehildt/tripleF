@@ -23,7 +23,7 @@ describe('playlist-settings.state', () => {
     vi.resetModules();
     const mod = await import('./playlist-settings.state');
     expect(mod.playlistMode.value).toBe('panel');
-    expect(mod.playlistAnchor.value).toBe('middle-right');
+    expect(mod.playlistAnchor.value).toBe('top-right');
     expect(mod.playlistAutoClose.value).toBe(false);
     expect(mod.floatingPlaylistOpen.value).toBe(false);
   });

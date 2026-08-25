@@ -1,10 +1,10 @@
+import type { MemoryExtraction } from '@triplef/agent/schemas';
 import { Job } from 'bullmq';
 
 import type {
   MemoryRole,
   VectorizeJobData,
 } from '../../models/memory.model.js';
-import type { MemoryExtraction } from '../../templates/extraction.schema.js';
 
 /**
  * Pipeline ids of the vectorize step machine — mirrors the harness's StepId
@@ -34,6 +34,10 @@ export type VectorizeContext = {
   text: string;
   /** Harness model reused for fact extraction; undefined → no extraction and the text stores nothing (only extracted facts become records). */
   model?: string;
+  /** Context size of the originating turn — derives the extract-step valve. */
+  numCtx?: number;
+  /** Storage urls of the turn's attached files, landed on every point. */
+  files?: Array<{ name: string; url: string }>;
 
   steps: Map<VectorizeStepId, VectorizeStepState>;
   outputs: {

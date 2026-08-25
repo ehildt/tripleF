@@ -3,8 +3,10 @@ import { Global, Module } from '@nestjs/common';
 import { PostgresConfigService } from '../postgres/configs/postgres-config.service.js';
 import { POSTGRES_CONFIG } from '../postgres/constants/postgres.constants.js';
 
+import { LexiconLedgerRepository } from './services/lexicon-ledger.repository.js';
 import { MemoryCognitionProfileRepository } from './services/memory-cognition-profile.repository.js';
 import { MemoryInsertLedgerRepository } from './services/memory-insert-ledger.repository.js';
+import { MemoryLinkRepository } from './services/memory-link.repository.js';
 import { ProviderOverridesRepository } from './services/provider-overrides.repository.js';
 
 /**
@@ -25,6 +27,8 @@ import { ProviderOverridesRepository } from './services/provider-overrides.repos
     },
     MemoryCognitionProfileRepository,
     MemoryInsertLedgerRepository,
+    LexiconLedgerRepository,
+    MemoryLinkRepository,
     ProviderOverridesRepository,
   ],
   exports: [
@@ -32,6 +36,8 @@ import { ProviderOverridesRepository } from './services/provider-overrides.repos
     POSTGRES_CONFIG,
     MemoryCognitionProfileRepository,
     MemoryInsertLedgerRepository,
+    LexiconLedgerRepository,
+    MemoryLinkRepository,
     ProviderOverridesRepository,
   ],
 })

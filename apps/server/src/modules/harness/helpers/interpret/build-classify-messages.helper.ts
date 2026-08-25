@@ -1,6 +1,6 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
-import { buildStructuredJsonPrompt } from '../../constants/structured-json-prompt.constant.js';
-import { buildIntentSelectionPrompt } from '../../prompts/intent-selection.prompt.js';
+import { buildStructuredJsonPrompt } from '@triplef/agent/prompts';
+import { buildIntentSelectionPrompt } from '@triplef/agent/prompts';
+import type { InputMessage } from '@triplef/ai-sdk';
 
 import { buildClassifyTranscript } from './build-classify-transcript.helper.js';
 

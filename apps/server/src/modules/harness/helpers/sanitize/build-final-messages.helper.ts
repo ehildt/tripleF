@@ -1,4 +1,5 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { InputMessage } from '@triplef/ai-sdk';
+
 import type { HarnessContext } from '../../services/harness-context.type.js';
 import type { ExtractedArticle } from '../media/extract-articles-from-tools.types.js';
 import type {
@@ -19,6 +20,55 @@ function dedupeImages<T extends { imageUrl: string }>(images: T[]): T[] {
     seen.add(item.imageUrl);
     return true;
   });
+}
+
+/**
+ * The past-research lane: verbatim passages from previously fetched sources,
+ * injected as a separate context block (never shares the current-turn
+ * selection budget). Empty when the probe found nothing.
+ */
+function buildLexiconMessages(
+  lexiconPassages: Array<{
+    url?: string;
+    title?: string;
+    content: string;
+    sourceType?: 'content' | 'result';
+  }>,
+): InputMessage[] {
+  if (lexiconPassages.length === 0) return [];
+  const content = lexiconPassages.filter((p) => p.sourceType !== 'result');
+  const snippets = lexiconPassages.filter((p) => p.sourceType === 'result');
+  const messages: InputMessage[] = [];
+
+  if (content.length > 0) {
+    messages.push({
+      role: 'system' as const,
+      content: `[RELEVANT KNOWLEDGE — PREVIOUSLY FETCHED SOURCES]\nVerbatim passages from sources you fetched in earlier research, selected for this request:\n${content
+        .map(
+          (passage) =>
+            `- ${passage.title ? `${passage.title} — ` : ''}${passage.url ?? 'no url'}\n${passage.content}`,
+        )
+        .join(
+          '\n',
+        )}\nThese are verbatim source excerpts, not your own notes. Cite their url/title when you use them; never imply you read whole pages.`,
+    });
+  }
+
+  if (snippets.length > 0) {
+    messages.push({
+      role: 'system' as const,
+      content: `[RELEVANT KNOWLEDGE — PREVIOUSLY SEEN SOURCES]\nSearch-result snippets from sources you found in earlier research (NOT full text — fetch the page if you need more):\n${snippets
+        .map(
+          (passage) =>
+            `- ${passage.title ? `${passage.title} — ` : ''}${passage.url ?? 'no url'}\n${passage.content}`,
+        )
+        .join(
+          '\n',
+        )}\nThese are snippets, not full pages. Cite their url/title when you use them; never imply you read whole pages.`,
+    });
+  }
+
+  return messages;
 }
 
 /**
@@ -126,6 +176,13 @@ export function buildFinalMessagesForSanitize(
   verifiedVideos: ExtractedVideoItem[],
   extractedArticles: ExtractedArticle[],
   extractedReferences: unknown[],
+  referencesSelection?: { considered: number; selected: number },
+  lexiconPassages: Array<{
+    url?: string;
+    title?: string;
+    content: string;
+    sourceType?: 'content' | 'result';
+  }> = [],
   extractedShopOffers: ExtractedShopOffer[] = [],
   extractedReviews: ExtractedReview[] = [],
   extractedPlaces: ExtractedPlace[] = [],
@@ -162,7 +219,7 @@ export function buildFinalMessagesForSanitize(
   // depth the current prompt pulled up). Cognition is working context — it
   // informs every answer but is never quoted verbatim as user statements;
   // its substance may be disclosed plainly when asked or when it genuinely
-  // serves the user. Fact records (memoryRecall) are the user-facing lane.
+  // serves the user. Fact records (memory-partition-recall) are the user-facing lane.
   const cognitionMessages: InputMessage[] = [];
   if (cognitionPersona?.trim()) {
     cognitionMessages.push({
@@ -179,7 +236,7 @@ export function buildFinalMessagesForSanitize(
   if (cognitionProfile?.trim()) {
     cognitionMessages.push({
       role: 'system' as const,
-      content: `[YOUR PROFILE OF THIS USER — YOUR DERIVED UNDERSTANDING; INFORMS, NEVER QUOTES]\nYour self-learned model of this user (structured document, also your routing map into deeper cognition): ${cognitionProfile.trim()}\nUse it silently to personalize tone, depth, and choices. Never present it as something the user stated and never quote it verbatim — disclose its substance plainly when the user asks what you know about them or when it clearly serves them. It is their data, never public knowledge. If it holds nothing about what they are asking, say plainly that you do not have that information instead of improvising.`,
+      content: `[YOUR PROFILE OF THIS USER — YOUR DERIVED UNDERSTANDING; INFORMS, NEVER QUOTES]\nYour self-learned model of this user (structured document, also your routing map into deeper cognition): ${cognitionProfile.trim()}\nUse it silently to personalize tone, depth, and choices. Its interests, likes, and goals are STANDING traits, not recent activity — never answer "where did we leave off", "what were we doing", or any recent-activity question from this document; those are answered from your RECENT CONVERSATIONS memory or not at all. Never present it as something the user stated and never quote it verbatim — disclose its substance plainly when the user asks what you know about them or when it clearly serves them. It is their data, never public knowledge. If it holds nothing about what they are asking, say plainly that you do not have that information instead of improvising.`,
     });
   }
   if (cognitionInsights.length > 0) {
@@ -191,12 +248,13 @@ export function buildFinalMessagesForSanitize(
   if (cognitionEpisodes.length > 0) {
     cognitionMessages.push({
       role: 'system' as const,
-      content: `[RECENT CONVERSATIONS — YOUR SHORT-TERM MEMORY OF PAST TURNS]\nWhat you and the user were working on in recent turns (topic-matched, recency-weighted):\n${cognitionEpisodes.map((episode) => `- ${episode}`).join('\n')}\nThese are YOUR working notes on past turns, never the user's words. Use them for continuity — to pick up where a past turn left off — never quote them as user statements.`,
+      content: `[RECENT CONVERSATIONS — YOUR SHORT-TERM MEMORY OF PAST TURNS]\nWhat you and the user were working on in recent turns (topic-matched, recency-weighted):\n${cognitionEpisodes.map((episode) => `- ${episode}`).join('\n')}\nThese are YOUR working notes on past turns, never the user's words. Use them for continuity — to pick up where a past turn left off — never quote them as user statements. When the user asks where you left off or what you were doing recently, answer from these notes — they are the authoritative source for recent activity; if none of them fits, say plainly that you don't have that activity in memory rather than guessing from the profile or general knowledge.`,
     });
   }
   const contextSystemMessages: InputMessage[] = [
     ...systemMessages,
     ...cognitionMessages,
+    ...buildLexiconMessages(lexiconPassages),
   ];
 
   if (toolResults.length === 0) {
@@ -219,9 +277,12 @@ export function buildFinalMessagesForSanitize(
   );
 
   if (extractedReferences.length > 0) {
+    const referencesLine = referencesSelection
+      ? `references holds the most relevant verbatim passages selected from ${referencesSelection.considered} fetched passages (${referencesSelection.considered - referencesSelection.selected} omitted as less relevant). Each passage carries its source url/title — cite those; never imply you read whole pages. `
+      : 'The references array holds raw non-search tool results (e.g. fetched page contents). Use them for facts and sources; they never contain usable media URLs. ';
     mediaInstructions.push(
-      'The references array holds raw non-search tool results (e.g. fetched page contents). Use them for facts and sources; they never contain usable media URLs. ' +
-        'A memoryRecall result inside references is YOUR memory of the user — trusted statements they said or asked you to remember; answer from it directly and attribute it to the user.',
+      referencesLine +
+        'A memory-partition-recall result inside references is YOUR memory of the user — trusted statements they said or asked you to remember; answer from it directly and attribute it to the user.',
     );
   }
 

@@ -14,6 +14,7 @@ import { useSysctlTab } from './composables/use-sysctl-tab';
 import type { SysctlTab } from './composables/use-sysctl-tab.types';
 import InterfaceSection from './interface-section/InterfaceSection.vue';
 import LayoutsSection from './layouts-section/LayoutsSection.vue';
+import MemorySection from './memory-section/MemorySection.vue';
 import PreprocessingSection from './preprocessing-section/PreprocessingSection.vue';
 import SearchEnginesSection from './search-engines-section/SearchEnginesSection.vue';
 import SysCtlMenu from './sysctl-menu/SysCtlMenu.vue';
@@ -37,6 +38,7 @@ const TAB_TITLE_KEYS: Record<SysctlTab, string> = {
   widgets: 'common.sysctlWidgets',
   chat: 'common.sysctlChatNavigation',
   interface: 'common.sysctlInterface',
+  memory: 'common.sysctlMemory',
   system: 'common.sysctlSystem',
 };
 
@@ -63,6 +65,8 @@ const activeTabTitle = computed(() =>
     <ChatNavigationSection v-else-if="activeSysctlTab === 'chat'" />
 
     <InterfaceSection v-else-if="activeSysctlTab === 'interface'" />
+
+    <MemorySection v-else-if="activeSysctlTab === 'memory'" />
 
     <SystemSection v-else :tiles="tiles" />
   </PanelLayout>

@@ -75,6 +75,15 @@ export function useVerticalCarousel(
     return scrollContainerRef.value;
   }
 
+  /** Mirror the container's live scroll metrics into the reactive refs the
+   * slides' blend opacity reads. The scroll event fires asynchronously, so
+   * without this sync a programmatic scroll leaves the blend reading a stale
+   * offset — the visible slide can paint at opacity 0 until the event lands. */
+  function syncScrollRefs(container: HTMLElement) {
+    scrollTop.value = container.scrollTop;
+    viewportHeight.value = container.clientHeight;
+  }
+
   function isAtBottom(container: HTMLElement): boolean {
     return (
       container.scrollTop +
@@ -92,6 +101,7 @@ export function useVerticalCarousel(
     isProgrammaticScroll.value = true;
     requestAnimationFrame(() => {
       container.scrollTop = container.scrollHeight;
+      syncScrollRefs(container);
       isProgrammaticScroll.value = false;
     });
   }
@@ -106,6 +116,7 @@ export function useVerticalCarousel(
     const top = index * container.clientHeight;
     isProgrammaticScroll.value = true;
     container.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+    syncScrollRefs(container);
     // Smooth scrolls fire many scroll events; keep the flag set until the
     // snap settles so those intermediate events are not treated as user
     // scrolls. Auto scrolls settle synchronously.
@@ -136,6 +147,7 @@ export function useVerticalCarousel(
       if (!isAtBottom(container)) {
         container.scrollTop = position;
       }
+      syncScrollRefs(container);
       savedScrollTop.value = null;
     });
   }

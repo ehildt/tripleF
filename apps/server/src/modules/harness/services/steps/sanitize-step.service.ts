@@ -1,6 +1,7 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable, Logger } from '@nestjs/common';
+import { SocketIOService } from '@triplef/socketio';
 
+import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import {
   SanitizeActionService,
   type SanitizeResult,
@@ -24,11 +25,25 @@ export class SanitizeStepService implements StepHandler {
   constructor(
     private readonly sanitizeAction: SanitizeActionService,
     private readonly io: SocketIOService,
+    private readonly memoryClient: MemoryClientService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
     if (!ctx.outputs.intent) {
       throw new Error('Missing interpret output — sanitize cannot run');
+    }
+
+    // Index uploaded documents into the lexicon (pure knowledge) —
+    // fire-and-forget, independent of whether a web search ran this turn.
+    if (ctx.documentSections?.length) {
+      void this.memoryClient.indexLexiconDocuments({
+        documents: ctx.documentSections.map((section) => ({
+          url: section.url,
+          title: section.name,
+          content: section.text,
+        })),
+        partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',
+      });
     }
 
     // Only announce link verification when there are results to verify.

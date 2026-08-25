@@ -38,6 +38,7 @@ import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import { i18n } from '@/i18n/i18n';
 
+import { useSysctlConfig } from '../composables/use-sysctl-config';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
 import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 
@@ -98,12 +99,23 @@ const SUBTABS: LayoutSubtab[] = TEMPLATE_NAMES.flatMap((name) => {
   return [singleTemplateSubtab(name)];
 });
 
+const { config } = useSysctlConfig();
+const eodhdEnabled = computed(() => config.value?.eodhd?.enabled === true);
+
 const SUBTAB_ITEMS = computed(() =>
-  SUBTABS.map((subtab) => ({
-    id: subtab.id,
-    label: i18n.global.t(subtab.labelKey),
-    icon: subtab.icon,
-  })),
+  SUBTABS.map((subtab) => {
+    const isStockmarket = subtab.id === 'stockmarket';
+    const muted = isStockmarket && !eodhdEnabled.value;
+    return {
+      id: subtab.id,
+      label: i18n.global.t(subtab.labelKey),
+      icon: subtab.icon,
+      muted,
+      tooltip: muted
+        ? i18n.global.t('common.stockmarketRequiresEodhd')
+        : undefined,
+    };
+  }),
 );
 
 const activeSubtabId = ref(SUBTABS[0].id);

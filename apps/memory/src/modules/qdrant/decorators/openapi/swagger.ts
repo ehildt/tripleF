@@ -5,7 +5,10 @@ import { MemoryCognitionSnapshotDto } from '../../dtos/memory-cognition-snapshot
 import { MemoryConsolidateResponseDto } from '../../dtos/memory-consolidate-response.dto.js';
 import { MemoryDeleteResponseDto } from '../../dtos/memory-delete-response.dto.js';
 import { MemoryItemDto } from '../../dtos/memory-item.dto.js';
+import { MemoryLinkDto } from '../../dtos/memory-link.dto.js';
+import { MemoryLinksRecomputeResponseDto } from '../../dtos/memory-links-recompute-response.dto.js';
 import { MemoryPruneResponseDto } from '../../dtos/memory-prune-response.dto.js';
+import { MemoryRelinkResponseDto } from '../../dtos/memory-relink-response.dto.js';
 import { QdrantStatusResponseDto } from '../../dtos/qdrant-status.dto.js';
 
 export const ApeTagsQdrant = () => ApiTags('Qdrant');
@@ -35,6 +38,24 @@ export const ApeGetQdrantMemory = () =>
     }),
   );
 
+export const ApeGetQdrantMemoryLinks = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: [MemoryLinkDto] }),
+    ApiOperation({
+      summary:
+        'Semantic kNN link graph of one memory lane (cosine neighbors above the link threshold)',
+    }),
+  );
+
+export const ApePostQdrantMemoryLinksRecompute = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryLinksRecomputeResponseDto }),
+    ApiOperation({
+      summary:
+        "Recompute one memory lane's link graph with the current link threshold (purge + bounded backfill — the migration path after raising MEMORY_LINK_SCORE_THRESHOLD)",
+    }),
+  );
+
 export const ApePostQdrantText = () =>
   applyDecorators(
     ApiResponse({
@@ -44,6 +65,18 @@ export const ApePostQdrantText = () =>
     }),
     ApiOperation({
       summary: 'Store a text verbatim as one memory record (sync)',
+    }),
+  );
+
+export const ApePostQdrantCognitionInsight = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'accepted:true with the stored point id; accepted:false when the feature is disabled or the store failed.',
+    }),
+    ApiOperation({
+      summary: "Store one derived insight into the AI's cognition space (sync)",
     }),
   );
 
@@ -85,6 +118,15 @@ export const ApePostQdrantConsolidate = () =>
     ApiOperation({
       summary:
         'Enqueue a memory consolidation sweep (LLM-judged keep/redundant/merge over pending inserts) — per partition or all pending partitions',
+    }),
+  );
+
+export const ApePostQdrantMemoryRelink = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryRelinkResponseDto }),
+    ApiOperation({
+      summary:
+        'Enqueue the relink sweep of one partition: collapse identical category variants, dedupe each category (converging LLM passes), write topical (suggested) link edges, optionally enrich tags',
     }),
   );
 

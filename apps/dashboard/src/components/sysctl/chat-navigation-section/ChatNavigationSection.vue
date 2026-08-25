@@ -17,12 +17,10 @@ import {
   ChartLine,
   Clock,
   Copy,
+  FileText,
   Form,
   GalleryVerticalEnd,
   GitBranch,
-  Image,
-  LayersArrowDown,
-  LayersArrowUp,
   Leaf,
   type LucideIcon,
   MessagesSquare,
@@ -52,7 +50,6 @@ import type {
   ChatIconKey,
   ScrollMode,
 } from '@/types/app.model';
-import type { MediaPriority } from '@/types/harness-response-data.model';
 
 import SectionHeader from '../../shared/ui/section-header/SectionHeader.vue';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
@@ -71,21 +68,6 @@ const SCROLL_MODE_OPTIONS = computed<
     value: 'native',
     icon: Form,
     tooltip: i18n.global.t('common.scrollModeNative'),
-  },
-]);
-
-const MEDIA_PRIORITY_OPTIONS = computed<
-  readonly { value: MediaPriority; icon: LucideIcon; tooltip: string }[]
->(() => [
-  {
-    value: 'images',
-    icon: LayersArrowUp,
-    tooltip: i18n.global.t('common.mediaPriorityImages'),
-  },
-  {
-    value: 'videos',
-    icon: LayersArrowDown,
-    tooltip: i18n.global.t('common.mediaPriorityVideos'),
   },
 ]);
 
@@ -195,10 +177,6 @@ function setDefaultScrollMode(mode: string) {
   appStore.setDefaultScrollMode(mode as ScrollMode);
 }
 
-function setDefaultMediaPriority(priority: string) {
-  appStore.setDefaultMediaPriority(priority as MediaPriority);
-}
-
 function toggleIcon(key: ChatIconKey) {
   appStore.setChatIconVisibility(key, !appStore.chatIconVisibility[key]);
 }
@@ -257,25 +235,14 @@ function toggleChartAnnotation(
           :number-value="appStore.temporaryRetentionMinutes"
           @update:number-value="appStore.setTemporaryRetentionMinutes"
         />
-      </FieldGrid>
 
-      <!-- Media: how response media is ordered -->
-      <SectionHeader :icon="Image" :title="$t('common.mediaSection')" />
-      <FieldGrid :items-per-row="3">
         <FieldCard
-          :icon="LayersArrowUp"
-          :label="$t('common.defaultMediaPriority')"
-          :description="$t('common.defaultMediaPriorityDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="MEDIA_PRIORITY_OPTIONS"
-              :model-value="appStore.defaultMediaPriority"
-              :aria-label="$t('common.defaultMediaPriority')"
-              @update:model-value="setDefaultMediaPriority"
-            />
-          </template>
-        </FieldCard>
+          :icon="FileText"
+          :label="$t('common.documentTextLimit')"
+          :description="$t('common.documentTextLimitDesc')"
+          :number-value="appStore.documentTextLimit"
+          @update:number-value="appStore.setDocumentTextLimit"
+        />
       </FieldGrid>
 
       <!-- Header actions: which action icons appear on the exchange header -->

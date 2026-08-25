@@ -28,18 +28,20 @@ export class HarnessQueueService {
   async toFilePayloads(
     images: Array<MultipartFile>,
     providedHashes?: string[],
+    fingerprint = true,
   ) {
     return await Promise.all(
       images.map(async (file, index) => {
         const buffer = await file.toBuffer();
         const hash =
           providedHashes?.[index] ?? `${hashPayload(buffer, 'sha256')}`;
-        const fingerprint = await buildImageFingerprint(buffer);
         const meta: FastifyMultipartMeta = {
           name: file.filename,
           type: file.mimetype,
           hash,
-          fingerprint,
+          fingerprint: fingerprint
+            ? await buildImageFingerprint(buffer)
+            : undefined,
           size: buffer.length,
         };
         return { buffer, meta };

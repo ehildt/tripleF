@@ -1,4 +1,4 @@
-import type { UploadedImage } from '@/stores/conversation';
+import type { UploadedDocument, UploadedImage } from '@/stores/conversation';
 import type { SocketProvider } from '@/types/socket-provider.model';
 
 export interface UseSubmitOptions {
@@ -17,5 +17,6 @@ export type SendRequestOptions = {
   formData: FormData;
   socket: ReturnType<SocketProvider['getSocket']>;
   referencedImages: UploadedImage[];
+  newDocuments: UploadedDocument[];
   conversationId: string;
 };

@@ -7,7 +7,13 @@ import {
 } from '../pipes/multipart-files.pipe.js';
 import { ParsePromptPipe } from '../pipes/parse-prompt.pipe.js';
 
-import { IMAGES, PROMPT, X_HARNESS_LLM } from './constants.js';
+import {
+  ATTACHMENTS,
+  DOCUMENT_TEXT_LIMIT,
+  ORIGINALS,
+  PROMPT,
+  X_HARNESS_LLM,
+} from './constants.js';
 
 const MultiPartFiles = (
   options: MultipartFilesPipeOptions,
@@ -35,9 +41,33 @@ export const HarnessStreamQuery = () => Query() as ParameterDecorator;
 export const PromptField = () =>
   MultiPartValue(PROMPT, false, new ParsePromptPipe());
 
-export const ImagesField = () =>
+export const AttachmentsField = () =>
   MultiPartFiles({
-    fieldName: IMAGES,
+    fieldName: ATTACHMENTS,
     required: false,
     allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp'],
   });
+
+export const OriginalsField = () =>
+  MultiPartFiles({
+    fieldName: ORIGINALS,
+    required: false,
+    allowedMimeTypes: [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'application/json',
+      'text/xml',
+      'application/xml',
+      'application/x-yaml',
+      'text/yaml',
+    ],
+  });
+
+export const DocumentTextLimitField = () =>
+  MultiPartValue(DOCUMENT_TEXT_LIMIT, false);
+
+export const DocumentHashesField = () => MultiPartValue('hashes', false);

@@ -1,0 +1,141 @@
+integrity: ca154606d67d45deb91886ae69b0229cb4768b39b5050505c69f93ec882c9105
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ehildt/depbadge/refs/heads/main/depbadgerc.schema.json
+
+target: README.md
+
+manifest: package.json
+
+output:
+  - markdown
+
+dependenciesLayout: &DEPENDENCIES_LAYOUT
+  position: center
+  showHeader: false
+
+dependenciesStyle: &DEPENDENCIES_STYLE
+  labelColor: '333'
+  isError: false
+  namedLogo: npm
+  logoWidth: 40
+  style: for-the-badge
+  cacheSeconds: 3600
+
+statusBadgesStyle: &STATUS_BADGES_STYLE
+  labelColor: '333'
+  isError: false
+  namedLogo: npm
+  logoWidth: 40
+  style: for-the-badge
+  cacheSeconds: 3600
+
+peerDependencies:
+  layout:
+    <<: *DEPENDENCIES_LAYOUT
+    header: PeerDependencies
+    showHeader: true
+    position: center
+  badgeStyle:
+    <<: *DEPENDENCIES_STYLE
+    style: flat
+  items:
+    - name: '@nestjs/common'
+      namedLogo: npm
+      link: https://github.com/nestjs/nest
+    - name: 'bullmq'
+      namedLogo: npm
+      link: https://github.com/taskforcesh/bullmq
+    - name: joi
+      namedLogo: npm
+      link: https://github.com/sideway/joi
+    - name: pino
+      namedLogo: npm
+      link: https://github.com/pinojs/pino
+    - name: pino-pretty
+      namedLogo: npm
+      link: https://github.com/pinojs/pino-pretty
+
+dependencies:
+  items: []
+
+devDependencies:
+  layout:
+    <<: *DEPENDENCIES_LAYOUT
+    header: DevDependencies
+    showHeader: true
+    position: center
+  badgeStyle:
+    <<: *DEPENDENCIES_STYLE
+    style: flat-square
+  items:
+    - name: '@changesets/cli'
+      namedLogo: npm
+    - name: '@eslint/js'
+      namedLogo: eslint
+    - name: '@nestjs/testing'
+      namedLogo: npm
+    - name: '@types/eslint'
+      namedLogo: eslint
+    - name: '@types/node'
+      namedLogo: node
+    - name: '@vitest/coverage-v8'
+      namedLogo: vitest
+    - name: depcheck
+      namedLogo: npm
+    - name: dependency-cruiser
+      namedLogo: npm
+    - name: eslint
+      namedLogo: eslint
+    - name: eslint-config-prettier
+      namedLogo: prettier
+    - name: eslint-plugin-prettier
+      namedLogo: prettier
+    - name: eslint-plugin-simple-import-sort
+      namedLogo: npm
+    - name: eslint-plugin-sonarjs
+      namedLogo: sonar
+    - name: globals
+      namedLogo: npm
+    - name: husky
+      namedLogo: husky
+    - name: jiti
+      namedLogo: npm
+    - name: lint-staged
+      namedLogo: npm
+    - name: npm-check-updates
+      namedLogo: npm
+    - name: rimraf
+      namedLogo: npm
+    - name: ts-unused-exports
+      namedLogo: npm
+    - name: tsup
+      namedLogo: npm
+    - name: typescript-eslint
+      namedLogo: eslint
+    - name: vitest
+      namedLogo: vitest
+
+statusBadges:
+  layout:
+    position: center
+    showHeader: true
+    header: StatusBadges
+  badgeStyle: *STATUS_BADGES_STYLE
+  items:
+    - name: github
+      metric: release
+      user: ehildt
+      repo: tripleF
+      branch: main
+      namedLogo: github
+    - name: github
+      metric: stars
+      user: ehildt
+      repo: tripleF
+      branch: main
+      namedLogo: github
+    - name: github
+      metric: license
+      user: ehildt
+      repo: tripleF
+      branch: main
+      namedLogo: github

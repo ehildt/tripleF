@@ -7,7 +7,7 @@ import type {
 } from './playlist-settings.state.types';
 
 export const DEFAULT_PLAYLIST_MODE: PlaylistMode = 'panel';
-export const DEFAULT_PLAYLIST_ANCHOR: PlaylistAnchor = 'middle-right';
+export const DEFAULT_PLAYLIST_ANCHOR: PlaylistAnchor = 'top-right';
 export const DEFAULT_PLAYLIST_AUTO_CLOSE = false;
 
 const PLAYLIST_MODE_STORAGE_KEY = 'vision-playlist-mode';

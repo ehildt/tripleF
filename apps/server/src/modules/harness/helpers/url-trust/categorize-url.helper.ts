@@ -1,7 +1,8 @@
+import { isTrustedUrl } from '@triplef/agent/schemas';
+import { isTrustedImageUrl } from '@triplef/agent/schemas';
+
 import type { UrlKind } from './categorize-url.helper.types.js';
 import { isEmbeddableVideoUrl } from './is-embeddable-video-url.helper.js';
-import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
-import { isTrustedUrl } from './is-trusted-url.helper.js';
 
 /** Categorizes a URL for the sanitization step. */
 export function categorizeUrl(url: string): {

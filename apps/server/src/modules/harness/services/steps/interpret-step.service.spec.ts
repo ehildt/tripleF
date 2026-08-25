@@ -1,8 +1,8 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AiSdkService } from '@triplef/ai-sdk';
+import { SocketIOService } from '@triplef/socketio';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
 import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import { HarnessContext } from '../harness-context.type.js';

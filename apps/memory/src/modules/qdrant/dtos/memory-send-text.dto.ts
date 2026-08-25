@@ -62,4 +62,14 @@ export class MemorySendTextDto {
   @MaxLength(40, { each: true })
   @IsOptional()
   tags?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Broad category the record belongs to (e.g. games, pets, work, health) — groups narrow tag topics into one family for the constellation community tier.',
+    example: 'games',
+  })
+  @IsString()
+  @MaxLength(40)
+  @IsOptional()
+  category?: string;
 }

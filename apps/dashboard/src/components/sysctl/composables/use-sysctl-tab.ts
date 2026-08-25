@@ -11,6 +11,7 @@ const SYSCTL_TABS: readonly SysctlTab[] = [
   'widgets',
   'chat',
   'interface',
+  'memory',
   'system',
 ];
 

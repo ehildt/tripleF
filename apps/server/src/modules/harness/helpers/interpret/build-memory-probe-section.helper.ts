@@ -1,13 +1,14 @@
-import type { MemoryPoint } from '../../../memory-client/models/memory-point.model.js';
+import type { MemoryPoint } from '@triplef/agent/tools';
 
 /** Cap on the rendered probe block, mirroring the write-job's PRIOR_MEMORY_LIMIT. */
 const MEMORY_PROBE_CHAR_LIMIT = 2000;
 
 /**
  * Render memory-probe hits as a provenance-labeled block for the intent
- * classifier. Mirrors the memoryRecall tool's line format ("… — stated by
- * the user on YYYY-MM-DD") so the classifier sees the same attribution the
- * response model later quotes. Empty input → undefined (no block).
+ * classifier. Mirrors the memory-partition-recall tool's line format ("… —
+ * stated by the user on YYYY-MM-DD") so the classifier sees the same
+ * attribution the response model later quotes. Empty input → undefined (no
+ * block).
  */
 export function buildMemoryProbeSection(
   points: MemoryPoint[],

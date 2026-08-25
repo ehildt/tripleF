@@ -18,6 +18,10 @@ export function fromPersistedConversation(
       ...img,
       selected: img.selected ?? true,
     })),
+    uploadedDocuments: (persisted.uploadedDocuments ?? []).map((doc) => ({
+      ...doc,
+      selected: doc.selected ?? true,
+    })),
     imageSelectionSnapshot: persisted.imageSelectionSnapshot ?? {},
     subscriptions: persisted.subscriptions ?? [],
     type: persisted.type ?? 'temporary',

@@ -1,0 +1,21 @@
+import type { AiSdkContentPart, AiSdkMessage, AiSdkMessageRole, InputMessage } from '../types/ai-sdk-messages.types.ts';
+
+import { toFilePart } from './to-file-part.helper.ts';
+
+export function toAiSdkMessage(message: InputMessage): AiSdkMessage {
+  if (!message.images || message.images.length === 0) {
+    return { role: message.role as AiSdkMessageRole, content: message.content };
+  }
+
+  const content: AiSdkContentPart[] = [];
+  if (message.content) {
+    content.push({ type: 'text', text: message.content });
+  }
+
+  for (const image of message.images) {
+    const part = toFilePart(image);
+    content.push(part);
+  }
+
+  return { role: message.role as AiSdkMessageRole, content };
+}

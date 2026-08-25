@@ -1,7 +1,7 @@
-import { BullMQModule } from '@ehildt/nestjs-bullmq';
-import { BullMQLoggerModule } from '@ehildt/nestjs-bullmq-logger';
 import { Logger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { BullMQModule } from '@triplef/bullmq';
+import { BullMQLoggerModule } from '@triplef/bullmq-logger';
 import { ConfigFactoryModule } from '@triplef/config-factory';
 import { CoreLoggerModule } from '@triplef/core-logger';
 
@@ -15,6 +15,8 @@ import { CoreLoggerConfigService } from './modules/core-logger/configs/core-logg
 import { DeadLetterModule } from './modules/dead-letter/dead-letter.module.js';
 import { HealthController } from './modules/health/controllers/health.controller.js';
 import { HealthService } from './modules/health/services/health.service.js';
+import { LexiconConfigService } from './modules/lexicon/configs/lexicon-config.service.js';
+import { LexiconModule } from './modules/lexicon/lexicon.module.js';
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
 import { QdrantConfigService } from './modules/qdrant/configs/qdrant-config.service.js';
 import { VectorizeProcessor } from './modules/qdrant/processors/vectorize.processor.js';
@@ -45,6 +47,7 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
       providers: [
         AppConfigService,
         QdrantConfigService,
+        LexiconConfigService,
         OllamaConfigService,
         BullMQConfigService,
         BullMQLoggerConfigService,
@@ -73,6 +76,7 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
       inject: [QdrantConfigService],
       useFactory: async ({ config }: QdrantConfigService) => config,
     }),
+    LexiconModule,
   ],
 })
 export class MemoryModule {}

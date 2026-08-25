@@ -1,9 +1,10 @@
-import { BLOCKED_IMAGE_HOSTS } from '../../constants/blocked-image-hosts.js';
+import { isPrivateOrLocalhost } from '@triplef/agent/schemas';
+import { BLOCKED_IMAGE_HOSTS } from '@triplef/agent/schemas';
+
 import {
   BROWSER_USER_AGENT,
   HARNESS_USER_AGENT,
 } from '../../constants/user-agents.constant.js';
-import { isPrivateOrLocalhost } from '../url-trust/is-private-or-localhost.helper.js';
 
 import type { FetchImageBufferOptions } from './fetch-image-buffer.types.js';
 

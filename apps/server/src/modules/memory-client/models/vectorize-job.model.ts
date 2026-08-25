@@ -1,6 +1,6 @@
-import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import type { MemoryRole } from '@triplef/agent/tools';
 
-import type { MemoryRole } from './memory-point.model.js';
+import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
 
 /** BullMQ job payload for the vectorize queue (one job per turn-side). */
 export interface VectorizeJobData {
@@ -16,16 +16,23 @@ export interface VectorizeJobData {
    * Omitted for manual ingestion: the text is stored verbatim.
    */
   model?: string;
+  /** Context size of the originating turn — derives the extract-step valve. */
+  numCtx?: number;
+  /** Storage urls of the turn's attached files, remembered on every point. */
+  files?: Array<{ name: string; url: string }>;
 }
 
 /**
  * Cognition-write job: the harness memoryWrite step enqueues it after an
- * answered turn whose intent included memoryRemember. The LLM tool loop runs
- * in the vectorize worker — off the harness hot path, with BullMQ retries.
+ * answered turn whose intent included a remember tool. The LLM tool loop
+ * runs in the vectorize worker — off the harness hot path, with BullMQ
+ * retries.
  */
 export interface MemoryWriteJobData {
   /** The user's fact partition. */
   memoryPartition: string;
+  /** The AI's cognition space key — the cognition-remember lane target. */
+  memoryCognition?: string;
   sessionId?: string;
   conversationId?: string;
   requestId?: string;
@@ -34,9 +41,9 @@ export interface MemoryWriteJobData {
   /** Summarized tool results of the turn (pre-capped by the harness step). */
   gathered?: string;
   /**
-   * The turn's memoryRecall hits (provenance-labeled, pre-capped) — what the
-   * probe already surfaced this turn. The write job treats these as ALREADY
-   * KNOWN, so it extends/updates instead of re-storing them.
+   * The turn's memory-partition-recall hits (provenance-labeled, pre-capped)
+   * — what the probe already surfaced this turn. The write job treats these
+   * as ALREADY KNOWN, so it extends/updates instead of re-storing them.
    */
   probedMemory?: string;
   /** Harness model that produced the turn — reused for the write judgment. */

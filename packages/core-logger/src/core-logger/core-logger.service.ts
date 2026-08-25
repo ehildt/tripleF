@@ -1,8 +1,5 @@
 import { Inject, Injectable, type LoggerService, type LogLevel } from '@nestjs/common';
-import type { LoggerOptions } from 'pino';
-import pino from 'pino';
-
-import type { LogCallback, LogMeta, PinoLogMethod } from './core-logger.service.types.ts';
+import pino, { type Level, type Logger, type LoggerOptions } from 'pino';
 
 export const CORE_LOGGER_OPTIONS = Symbol('CORE_LOGGER_OPTIONS');
 
@@ -10,7 +7,7 @@ export const CORE_LOGGER_OPTIONS = Symbol('CORE_LOGGER_OPTIONS');
 const NEST_LOG_LEVELS: LogLevel[] = ['verbose', 'debug', 'log', 'warn', 'error', 'fatal'];
 
 /** Maps a NestJS log level to the pino threshold that enables it. */
-const NEST_TO_PINO_LEVEL: Record<LogLevel, PinoLogMethod> = {
+const NEST_TO_PINO_LEVEL: Record<LogLevel, Level> = {
   verbose: 'trace',
   debug: 'debug',
   log: 'info',
@@ -19,166 +16,114 @@ const NEST_TO_PINO_LEVEL: Record<LogLevel, PinoLogMethod> = {
   fatal: 'fatal',
 };
 
-/** Matches a stack trace string (NestJS's own `isStackFormat` heuristic). */
-const STACK_TRACE_PATTERN = /^(.)+\n\s+at .+:\d+:\d+/;
-
-interface NormalizedArgs {
-  meta?: Record<string, unknown>;
-  msg?: string;
-  rest: unknown[];
-  onLog?: LogCallback;
-}
-
 /**
- * NestJS `LoggerService` backed by pino. Normalizes the call shapes NestJS
- * forwards (`log(message, context)`, `error(message, stack, context)`, and
- * the meta-object-first/second forms) into pino calls, then invokes an
- * optional per-call `onLog` hook.
+ * NestJS `LoggerService` backed by pino. The service owns the pino client
+ * and delegates the documented NestJS call shapes to it:
+ *
+ * - `log(message, context?)` — the trailing string that NestJS's static
+ *   `Logger` appends is rendered as the `context` binding
+ * - `log(bindings, message, context?)` — pino's object-first form
+ * - `error(message, stack, context?)` — the stack is rendered verbatim under
+ *   the `stack` binding (pino's `err` serializer expects an Error)
+ * - `error(error, context?)` / `error(message, error, context?)` — Error
+ *   instances go through pino's `err` serializer (type, message, stack)
  */
 @Injectable()
 export class CoreLoggerService implements LoggerService {
-  private readonly logger: pino.Logger;
+  private readonly logger: Logger;
 
   constructor(@Inject(CORE_LOGGER_OPTIONS) options: LoggerOptions) {
     this.logger = pino(options);
   }
 
   log(message: unknown, ...optionalParams: unknown[]): void {
-    this.call('info', message, ...optionalParams);
+    this.write('info', message, optionalParams);
   }
 
   error(message: unknown, ...optionalParams: unknown[]): void {
-    this.call('error', message, ...optionalParams);
+    this.write('error', message, optionalParams);
   }
 
   warn(message: unknown, ...optionalParams: unknown[]): void {
-    this.call('warn', message, ...optionalParams);
+    this.write('warn', message, optionalParams);
   }
 
   debug(message: unknown, ...optionalParams: unknown[]): void {
-    this.call('debug', message, ...optionalParams);
+    this.write('debug', message, optionalParams);
   }
 
   verbose(message: unknown, ...optionalParams: unknown[]): void {
-    this.call('trace', message, ...optionalParams);
+    this.write('trace', message, optionalParams);
   }
 
   fatal(message: unknown, ...optionalParams: unknown[]): void {
-    this.call('fatal', message, ...optionalParams);
+    this.write('fatal', message, optionalParams);
   }
 
   setLogLevels(levels: LogLevel[]): void {
-    this.logger.level = this.resolveLevel(levels);
+    const level = NEST_LOG_LEVELS.find((candidate) => levels.includes(candidate));
+    this.logger.level = level ? NEST_TO_PINO_LEVEL[level] : 'silent';
   }
 
-  private call(level: PinoLogMethod, message: unknown, ...optionalParams: unknown[]): void {
-    const { meta, msg, rest, onLog } = this.normalizeArgs(level, message, optionalParams);
-
-    if (meta) (this.logger[level] as (...args: unknown[]) => void)(meta, msg ?? '', ...rest);
-    else (this.logger[level] as (...args: unknown[]) => void)(msg ?? '', ...rest);
-
-    const { context, ...fields } = meta ?? {};
-    void onLog?.({
-      level,
-      message: msg ?? '',
-      context: typeof context === 'string' ? context : undefined,
-      meta: Object.keys(fields).length > 0 ? fields : undefined,
-    });
-  }
-
-  private normalizeArgs(level: PinoLogMethod, first: unknown, rest: unknown[]): NormalizedArgs {
-    if (first === undefined || first === null) return { rest };
-    if (typeof first === 'string') return this.normalizeStringArgs(level, first, rest);
-    if (first instanceof Error) {
-      // error(new Error('boom'), ...) — the Error is the `err` binding and its
-      // message is the log message; a trailing string is still the context.
-      const { meta, rest: remaining } = this.extractContext(rest, { err: first });
-      return { meta, msg: first.message, rest: remaining };
-    }
+  private write(method: Level, first: unknown, rest: unknown[]): void {
+    // Bind the pino instance: pino's log methods (especially the
+    // `logMethod`-hook-wrapped variants) rely on `this` being the logger.
+    // Calling the extracted method unbound leaves `this` undefined and
+    // crashes inside pino's `LOG` (msgPrefix lookup).
+    const logMethod = this.logger[method].bind(this.logger) as (...args: unknown[]) => void;
+    const params = [...rest];
 
     if (this.isPlainObject(first)) {
-      // log({ meta, onLog }, 'message', ...)
-      const msg = typeof rest[0] === 'string' ? rest[0] : undefined;
-      const remaining = msg === undefined ? rest : rest.slice(1);
-      return this.splitMeta(first as LogMeta, msg, remaining);
+      // pino object-first form: `log(bindings, message, context)`. The
+      // context string sits after the message, so it is only popped when
+      // both are present.
+      const context = params.length > 1 ? this.popContext(params) : undefined;
+      const message = typeof params[0] === 'string' ? (params.shift() as string) : '';
+      logMethod({ ...first, ...this.contextBinding(context) }, message, ...params);
+      return;
     }
 
-    return { msg: String(first), rest };
-  }
+    const context = this.popContext(params);
+    const bindings = this.contextBinding(context);
 
-  private normalizeStringArgs(level: PinoLogMethod, first: string, rest: unknown[]): NormalizedArgs {
-    if (rest.length > 0 && this.isPlainObject(rest[0]) && !(rest[0] instanceof Error))
-      // log('message', { meta, onLog })
-      return this.splitMeta(rest[0] as LogMeta, first, rest.slice(1));
+    const metaIndex = params.findIndex((param) => this.isPlainObject(param));
+    if (metaIndex >= 0) Object.assign(bindings, params.splice(metaIndex, 1)[0]);
 
-    let remaining = rest;
-    let meta: Record<string, unknown> | undefined;
-
-    // Error instance: attach as `err` so pino's serializer emits type,
-    // message, and stack — an Error has no enumerable own props, so the
-    // meta-object branch above would otherwise flatten it to nothing.
-    const errorIndex = remaining.findIndex((arg) => arg instanceof Error);
-    if (errorIndex >= 0) {
-      meta = { err: remaining[errorIndex] as Error };
-      remaining = remaining.filter((_, index) => index !== errorIndex);
+    if (first instanceof Error) {
+      bindings.err = first;
+      logMethod(bindings, first.message, ...params);
+      return;
     }
 
-    // Error stack string: NestJS error(message, stack?, context?) — detect
-    // the stack string before context so a bare stack isn't mistaken for it.
-    if (level === 'error' && !meta) {
-      const stackIndex = remaining.findIndex((arg) => this.isStackTrace(arg));
-      if (stackIndex >= 0) {
-        meta = { err: remaining[stackIndex] as string };
-        remaining = remaining.filter((_, index) => index !== stackIndex);
-      }
+    // error(message, failure, context): an Error at any level, a bare stack
+    // string only at error level (where NestJS passes it positionally).
+    const failureIndex = params.findIndex(
+      (param) => param instanceof Error || (method === 'error' && typeof param === 'string'),
+    );
+    if (failureIndex >= 0) {
+      const failure = params.splice(failureIndex, 1)[0];
+      if (failure instanceof Error) bindings.err = failure;
+      else bindings.stack = failure;
     }
 
-    // NestJS pattern: log('message', ..., 'Context')
-    const { meta: withContext, rest: remainingArgs } = this.extractContext(remaining, meta);
-
-    return { meta: withContext, msg: first, rest: remainingArgs };
+    const message = first == null ? '' : String(first);
+    if (Object.keys(bindings).length) {
+      logMethod(bindings, message, ...params);
+      return;
+    }
+    logMethod(message, ...params);
   }
 
-  /** Pulls the trailing context string out of the args, merging it into meta. */
-  private extractContext(
-    args: unknown[],
-    meta: Record<string, unknown> | undefined,
-  ): { meta: Record<string, unknown> | undefined; rest: unknown[] } {
-    const contextIndex = this.findLastStringIndex(args);
-    if (contextIndex < 0) return { meta, rest: args };
-    const context = args[contextIndex] as string;
-    return {
-      meta: { ...(meta ?? {}), context },
-      rest: args.filter((_, index) => index !== contextIndex),
-    };
+  /** Pops the trailing context string appended by NestJS's static `Logger`. */
+  private popContext(params: unknown[]): string | undefined {
+    return typeof params.at(-1) === 'string' ? (params.pop() as string) : undefined;
   }
 
-  /** Splits the reserved `onLog` key out of a user meta object. */
-  private splitMeta(meta: LogMeta, msg: string | undefined, rest: unknown[]): NormalizedArgs {
-    const { onLog, ...fields } = meta;
-    return {
-      meta: Object.keys(fields).length > 0 ? fields : undefined,
-      msg,
-      rest,
-      onLog: typeof onLog === 'function' ? onLog : undefined,
-    };
-  }
-
-  private resolveLevel(levels: LogLevel[]): PinoLogMethod | 'silent' {
-    for (const level of NEST_LOG_LEVELS) if (levels.includes(level)) return NEST_TO_PINO_LEVEL[level];
-    return 'silent';
+  private contextBinding(context: string | undefined): Record<string, unknown> {
+    return context ? { context } : {};
   }
 
   private isPlainObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-  }
-
-  private isStackTrace(value: unknown): value is string {
-    return typeof value === 'string' && STACK_TRACE_PATTERN.test(value);
-  }
-
-  private findLastStringIndex(args: unknown[]): number {
-    for (let i = args.length - 1; i >= 0; i--) if (typeof args[i] === 'string') return i;
-    return -1;
+    return typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Error);
   }
 }

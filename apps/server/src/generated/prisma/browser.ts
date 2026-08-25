@@ -98,3 +98,31 @@ export type StockMarketHistoryRange = Prisma.StockMarketHistoryRangeModel
  *  * text snapshot survives even when a sweep later merges or deletes the point.
  */
 export type MemoryInsertLedger = Prisma.MemoryInsertLedgerModel
+/**
+ * Model MemoryLexiconInsertLedger
+ * *
+ *  * Write ledger of the shared knowledge lexicon (memory-lexicon collection in
+ *  * Qdrant): one row per stored DOCUMENT (url + content hash), written by the
+ *  * lexicon select-persist path. Powers the deterministic supersede sweep
+ *  * (sweptAt null = pending) — the sweep heals orphaned old-hash chunks left by
+ *  * a crashed supersede, never adjudicates content. The lexicon is global
+ *  * (public web content), so rows are not partition-scoped; partitionScope is
+ *  * provenance only.
+ */
+export type MemoryLexiconInsertLedger = Prisma.MemoryLexiconInsertLedgerModel
+/**
+ * Model MemoryLink
+ * *
+ *  * Precomputed semantic link graph for the memory constellation: one row per
+ *  * undirected edge between two Qdrant points whose cosine similarity cleared
+ *  * the link threshold at store time. Written incrementally by the store paths
+ *  * (each new point links to its top-k nearest neighbors) and cascaded on
+ *  * delete, so the dashboard reads a ready graph with zero Qdrant round-trips.
+ *  *
+ *  * `lane` + `collection` + `scopeKey` scope the graph: partition facts and
+ *  * cognition insights live in the memory collection (scope = the space key),
+ *  * lexicon chunks in the lexicon collection (scope = 'global'). `collection`
+ *  * is the model-namespaced name, so switching the embed model strands the old
+ *  * graph harmlessly and the new collection backfills on first read.
+ */
+export type MemoryLink = Prisma.MemoryLinkModel

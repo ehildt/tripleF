@@ -1,4 +1,5 @@
-import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
+import type { InputMessage } from '@triplef/ai-sdk';
+
 import { videoUrlKeys } from '../url-trust/video-url-keys.helper.js';
 
 const SECTION_MARKER = 'Previously shown videos';

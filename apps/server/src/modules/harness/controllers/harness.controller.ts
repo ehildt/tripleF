@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { MultipartFile } from '@fastify/multipart';
 import {
   BadRequestException,
@@ -9,6 +11,7 @@ import {
   HttpStatus,
   Logger,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -18,13 +21,17 @@ import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.j
 import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
+  AttachmentsField,
+  DocumentHashesField,
+  DocumentTextLimitField,
   HarnessLLMHeader,
   HarnessStreamQuery,
-  ImagesField,
+  OriginalsField,
   PromptField,
 } from '../decorators/harness.decorator.js';
 import {
   ApiCancelJob,
+  ApiConvertDocuments,
   ApiGetModels,
   ApiHarness,
   ApiWarmModel,
@@ -39,6 +46,7 @@ import { Prompt } from '../dtos/prompt.dto.js';
 import { WarmModelDto, WarmModelResponseDto } from '../dtos/warm-model.dto.js';
 import { buildCatalogEtag } from '../helpers/catalog-etag.helper.js';
 import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.helper.js';
+import { DocumentConversionService } from '../services/document-conversion.service.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
 
 @ApiTags('Harness')
@@ -48,10 +56,57 @@ export class HarnessController {
 
   constructor(
     private readonly harnessQueueService: HarnessQueueService,
+    private readonly documentConversionService: DocumentConversionService,
     private readonly ollamaModelsService: OllamaModelsService,
     private readonly numCtxConfigService: NumCtxConfigService,
     private readonly modelWarmupService: ModelWarmupService,
   ) {}
+
+  @Post('documents')
+  @ApiConvertDocuments()
+  async convertDocuments(
+    @Query()
+    query: { sessionId?: string; conversationId?: string },
+    @OriginalsField() originals?: Array<MultipartFile>,
+    @DocumentHashesField() hashes?: string,
+  ): Promise<{ documents: ConvertedDocumentResult[] }> {
+    const providedHashes = parseHashesField(hashes);
+    const payloads = originals?.length
+      ? await this.harnessQueueService.toFilePayloads(
+          originals,
+          providedHashes,
+          false,
+        )
+      : [];
+
+    const documents: ConvertedDocumentResult[] = [];
+    const requestId = randomUUID();
+    for (const { buffer, meta } of payloads) {
+      const manifest = await this.documentConversionService.convertAndPersist(
+        query.sessionId,
+        query.conversationId,
+        requestId,
+        meta,
+        buffer,
+      );
+      if (!manifest) continue;
+      documents.push({
+        name: meta.name,
+        hash: meta.hash,
+        type: meta.type,
+        kind: manifest.kind,
+        pageImages:
+          manifest.kind === 'pdf'
+            ? manifest.pageHashes.map((hash, index) => ({
+                name: `${meta.name} · page ${index + 1}`,
+                hash,
+              }))
+            : undefined,
+      });
+    }
+
+    return { documents };
+  }
 
   @Post()
   @ApiHarness()
@@ -60,17 +115,28 @@ export class HarnessController {
     @HarnessLLMHeader() model: string,
     @HarnessStreamQuery() query: HarnessStreamQueryDto,
     @PromptField() prompt?: Array<Prompt>,
-    @ImagesField() images?: Array<MultipartFile>,
+    @AttachmentsField() attachments?: Array<MultipartFile>,
+    @OriginalsField() originals?: Array<MultipartFile>,
+    @DocumentTextLimitField() documentTextLimit?: string,
   ): Promise<HarnessControllerResponse> {
     if (!model) throw new BadRequestException('Missing x-harness-llm header');
 
     const { requestId, roomId, stream, numCtx, event, think, language } = query;
     const sessionMetadata = parseSessionMetadata(query.sessionMetadata);
     const frontendHashes = sessionMetadata?.images?.map((img) => img.hash);
-    const results = await this.harnessQueueService.toFilePayloads(
-      images ?? [],
+    const frontendOriginalHashes = sessionMetadata?.originals?.map(
+      (original) => original.hash,
+    );
+    const attachmentResults = await this.harnessQueueService.toFilePayloads(
+      attachments ?? [],
       frontendHashes,
     );
+    const originalResults = await this.harnessQueueService.toFilePayloads(
+      originals ?? [],
+      frontendOriginalHashes,
+      false,
+    );
+    const results = [...attachmentResults, ...originalResults];
 
     this.logger.log(
       {
@@ -106,7 +172,12 @@ export class HarnessController {
       'request received',
     );
 
-    void this.harnessQueueService.emit({
+    // Await the MinIO upload before answering: the client promotes pending
+    // previews to storage URLs as soon as the 202 lands, so the bytes must be
+    // durably stored first — otherwise the first preview request races the
+    // putObject and 404s. Enqueueing stays inside emit (fast, fire-and-forget
+    // from the client's perspective once the upload is done).
+    await this.harnessQueueService.emit({
       buffers: results.map((r) => r.buffer).filter(Boolean),
       meta: results.map((r) => r.meta).filter(Boolean),
       filters: {
@@ -125,6 +196,9 @@ export class HarnessController {
         hasNewImages: query.hasNewImages,
         sessionMetadata: query.sessionMetadata,
         language,
+        documentTextLimit: documentTextLimit
+          ? Number(documentTextLimit) || undefined
+          : undefined,
       },
     });
 
@@ -173,9 +247,29 @@ export class HarnessController {
     };
     const etag = buildCatalogEtag(payload);
     res.header('ETag', etag);
-    if (ifNoneMatch === etag) {
-      return res.status(HttpStatus.NOT_MODIFIED).send();
-    }
+    if (ifNoneMatch === etag) return res.status(HttpStatus.NOT_MODIFIED).send();
     return res.send(payload);
+  }
+}
+
+/** One converted original returned by the select-time documents endpoint. */
+interface ConvertedDocumentResult {
+  name: string;
+  hash: string;
+  type: string;
+  kind: 'pdf' | 'docx' | 'pptx' | 'text';
+  /** Rendered page images (pdf only) — the client shows these as tiles. */
+  pageImages?: Array<{ name: string; hash: string }>;
+}
+
+function parseHashesField(raw: string | undefined): string[] | undefined {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((hash): hash is string => typeof hash === 'string')
+      : undefined;
+  } catch {
+    return undefined;
   }
 }

@@ -4,7 +4,7 @@ name: CI
 # workflows. Parameterized so each caller only supplies what differs:
 #   - `production`: use production builds (server/memory `build:prod`) vs dev builds
 #   - `upload-coverage`: upload v8 coverage to Codecov (push only)
-#   - `upload-artifacts`: publish helpers/config-factory/core-logger dist for the release jobs
+#   - `upload-artifacts`: publish helpers/config-factory/core-logger/bullmq/bullmq-logger dist for the release jobs
 #
 # Single pnpm workspace (pnpm-workspace.yaml: `packages/*` + `apps/*` + root):
 # one root `pnpm install --frozen-lockfile` installs everything, then each
@@ -84,6 +84,41 @@ jobs:
             coverage-flag: core-logger
             artifact: core-logger-dist
             artifact-path: packages/core-logger/dist/
+          - name: bullmq
+            filter: '@triplef/bullmq'
+            build: build
+            prod-build: ''
+            coverage-flag: bullmq
+            artifact: bullmq-dist
+            artifact-path: packages/bullmq/dist/
+          - name: bullmq-logger
+            filter: '@triplef/bullmq-logger'
+            build: build
+            prod-build: ''
+            coverage-flag: bullmq-logger
+            artifact: bullmq-logger-dist
+            artifact-path: packages/bullmq-logger/dist/
+          - name: socketio
+            filter: '@triplef/socketio'
+            build: build
+            prod-build: ''
+            coverage-flag: socketio
+            artifact: socketio-dist
+            artifact-path: packages/socketio/dist/
+          - name: ai-sdk
+            filter: '@triplef/ai-sdk'
+            build: build
+            prod-build: ''
+            coverage-flag: ai-sdk
+            artifact: ai-sdk-dist
+            artifact-path: packages/ai-sdk/dist/
+          - name: agent
+            filter: '@triplef/agent'
+            build: build
+            prod-build: ''
+            coverage-flag: agent
+            artifact: agent-dist
+            artifact-path: packages/agent/dist/
 
     steps:
       - uses: actions/checkout@v7

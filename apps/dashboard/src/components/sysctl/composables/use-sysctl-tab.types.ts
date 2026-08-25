@@ -5,4 +5,5 @@ export type SysctlTab =
   | 'widgets'
   | 'chat'
   | 'interface'
+  | 'memory'
   | 'system';

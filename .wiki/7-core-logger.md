@@ -1,6 +1,6 @@
 # 7. Core-Logger: The @triplef/core-logger Library
 
-A NestJS `LoggerService` backed by pino — structured logging with inline context rendering, error-stack preservation, and per-call `onLog` hooks. `@triplef/core-logger` is published to npm as an **ESM-only** package.
+A lightweight NestJS `LoggerService` backed by pino — structured logging with inline context rendering and error-stack preservation. `@triplef/core-logger` is published to npm as an **ESM-only** package.
 
 > This library is **ESM-only** and does not support CommonJS. Your project must use ES modules.
 

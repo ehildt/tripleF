@@ -1,5 +1,5 @@
-import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { SocketIOService } from '@triplef/socketio';
 
 import { HarnessQueueService } from '../../harness/services/harness-queue.service.js';
 

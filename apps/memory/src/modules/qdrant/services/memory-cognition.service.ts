@@ -1,9 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-
-import { MemoryCognitionProfileRepository } from '../../persistence/services/memory-cognition-profile.repository.js';
-import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
-import { deterministicPointId } from '../helpers/deterministic-point-id.helper.js';
-import type { MemoryPoint } from '../models/memory.model.js';
 import {
   COGNITION_PURGE_BATCH,
   EPISODE_TAGS,
@@ -15,7 +10,12 @@ import {
   type MemoryProfileInsight,
   normalizeInsightPath,
   parseStoredProfile,
-} from '../models/memory-cognition.model.js';
+} from '@triplef/agent/schemas';
+
+import { MemoryCognitionProfileRepository } from '../../persistence/services/memory-cognition-profile.repository.js';
+import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
+import { deterministicPointId } from '../helpers/deterministic-point-id.helper.js';
+import type { MemoryPoint } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 import { EmbeddingService } from './embedding.service.js';
@@ -182,6 +182,47 @@ export class MemoryCognitionService {
   }
 
   /**
+   * Store one derived insight (the memory-cognition-remember tool) — a single
+   * Qdrant point in the cognition space, id seeded on the text so repeats
+   * overwrite silently. Returns the point id. Throws when the feature is off
+   * or the embed fails — callers catch.
+   */
+  async storeInsight(
+    scope: CognitionScope,
+    insight: MemoryProfileInsight,
+  ): Promise<string> {
+    if (!this.config.enabled) {
+      throw new Error('Memory feature is disabled');
+    }
+    const text = insight.text.trim().slice(0, INSIGHT_TEXT_LIMIT);
+    if (!text) throw new Error('Nothing to remember — insight text is empty');
+
+    const [vector] = await this.embeddingService.embed([text], 'document');
+    if (!vector) throw new Error('Embedding returned no vector');
+
+    const id = deterministicPointId(
+      `${scope.memoryCognition}|cognition|insight|${text}`,
+    );
+    await this.memoryRepository.upsertBatch({
+      memoryCognition: scope.memoryCognition,
+      role: 'assistant',
+      sessionId: scope.sessionId,
+      conversationId: scope.conversationId,
+      requestId: scope.requestId,
+      points: [
+        {
+          id,
+          vector,
+          text,
+          tags: [...INSIGHT_TAGS],
+          path: normalizeInsightPath(insight.path),
+        },
+      ],
+    });
+    return id;
+  }
+
+  /**
    * Store one episode — a single sentence on what a turn was about, the
    * short-term conversation memory. One Qdrant point per turn (id seeded on
    * the turn's request id, so a retried job overwrites in place rather than
@@ -210,6 +251,9 @@ export class MemoryCognitionService {
       sessionId: scope.sessionId,
       conversationId: scope.conversationId,
       requestId: scope.requestId,
+      // Episodes are short-term conversation memory, not constellation
+      // nodes — they must not accrue semantic edges.
+      skipLinks: true,
       points: [
         {
           id: deterministicPointId(seed),

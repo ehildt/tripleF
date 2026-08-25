@@ -1,4 +1,4 @@
-import { getApiUrl } from './api-url';
+import { getMemoryApiUrl } from './api-url';
 
 export interface MemoryOverridesConfig {
   /** Effective cognition profile character cap (override → env baseline). */
@@ -13,8 +13,12 @@ export interface MemoryOverridesConfig {
   episodeRecencyScaleSeconds: number;
   /** Effective recency decay midpoint (0.01–0.99). */
   episodeRecencyMidpoint: number;
-  /** Effective episode probe limit (1–10 records per turn). */
+  /** Effective episode probe limit (0–N records per turn; 0 disables the probe). */
   episodeProbeLimit: number;
+  /** Effective episode probe score threshold (0–1) — recency prefetch noise floor. */
+  episodeScoreThreshold: number;
+  /** Effective constellation node-load limit (100–10000 records per space). */
+  constellationNodeLimit: number;
 }
 
 /**
@@ -23,7 +27,7 @@ export interface MemoryOverridesConfig {
  * very next request without a restart.
  */
 export async function fetchMemoryOverrides(): Promise<MemoryOverridesConfig> {
-  const res = await fetch(getApiUrl('/api/v1/memory-overrides'));
+  const res = await fetch(getMemoryApiUrl('/api/v1/memory-overrides'));
   if (!res.ok)
     throw new Error(`Failed to load memory overrides: ${res.status}`);
   return (await res.json()) as MemoryOverridesConfig;
@@ -35,8 +39,10 @@ export async function updateMemoryOverrides(patch: {
   episodeRecencyScaleSeconds?: number | null;
   episodeRecencyMidpoint?: number | null;
   episodeProbeLimit?: number | null;
+  episodeScoreThreshold?: number | null;
+  constellationNodeLimit?: number | null;
 }): Promise<MemoryOverridesConfig> {
-  const res = await fetch(getApiUrl('/api/v1/memory-overrides'), {
+  const res = await fetch(getMemoryApiUrl('/api/v1/memory-overrides'), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),

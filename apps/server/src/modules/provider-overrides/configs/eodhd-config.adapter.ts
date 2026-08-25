@@ -4,6 +4,11 @@ import Joi from 'joi';
 
 import type { ProviderEndpointConfig } from './endpoint-config.types.js';
 
+export interface EodhdNewsConfig extends ProviderEndpointConfig {
+  /** Optional news-body cap (chars); 0 = uncapped. */
+  snippetChars?: number;
+}
+
 export interface EodhdConfig {
   enabled: boolean;
   apiKey?: string;
@@ -12,13 +17,19 @@ export interface EodhdConfig {
   history: ProviderEndpointConfig;
   technical: ProviderEndpointConfig;
   intraday: ProviderEndpointConfig;
-  news: ProviderEndpointConfig;
+  news: EodhdNewsConfig;
   fundamentals: ProviderEndpointConfig;
 }
 
 const endpointSchema = Joi.object<ProviderEndpointConfig>({
   enabled: Joi.boolean().required(),
   results: Joi.number().integer().min(1).max(1000).required(),
+});
+
+const newsEndpointSchema = Joi.object<EodhdNewsConfig>({
+  enabled: Joi.boolean().required(),
+  results: Joi.number().integer().min(1).max(1000).required(),
+  snippetChars: Joi.number().integer().min(0).optional(),
 });
 
 export const EodhdConfigSchema = Joi.object<EodhdConfig>({
@@ -29,7 +40,7 @@ export const EodhdConfigSchema = Joi.object<EodhdConfig>({
   history: endpointSchema.required(),
   technical: endpointSchema.required(),
   intraday: endpointSchema.required(),
-  news: endpointSchema.required(),
+  news: newsEndpointSchema.required(),
   fundamentals: endpointSchema.required(),
 }).required();
 
@@ -60,6 +71,7 @@ export function EodhdConfigAdapter(env = process.env): EodhdConfig {
     news: {
       enabled: getBooleanEnv(env.EODHD_NEWS_ENABLED, true)!,
       results: getNumberEnv(env.EODHD_NEWS_RESULTS, 10) as number,
+      snippetChars: getNumberEnv(env.EODHD_NEWS_SNIPPET_CHARS, 0) as number,
     },
     fundamentals: {
       enabled: getBooleanEnv(env.EODHD_FUNDAMENTALS_ENABLED, true)!,
