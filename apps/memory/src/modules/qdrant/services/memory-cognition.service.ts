@@ -6,6 +6,8 @@ import { deterministicPointId } from '../helpers/deterministic-point-id.helper.j
 import type { MemoryPoint } from '../models/memory.model.js';
 import {
   COGNITION_PURGE_BATCH,
+  EPISODE_TAGS,
+  EPISODE_TEXT_LIMIT,
   INSIGHT_TAGS,
   INSIGHT_TEXT_LIMIT,
   INSIGHTS_MAX_PER_TURN,
@@ -177,6 +179,47 @@ export class MemoryCognitionService {
       points,
     });
     return points.length;
+  }
+
+  /**
+   * Store one episode — a single sentence on what a turn was about, the
+   * short-term conversation memory. One Qdrant point per turn (id seeded on
+   * the turn's request id, so a retried job overwrites in place rather than
+   * duplicating); `created_at` is stamped at upsert so the respond-time
+   * probe can recency-blend the ranking. Returns 1 when written, 0 when the
+   * episode was empty. Throws when the feature is off or the embed fails.
+   */
+  async upsertEpisode(scope: CognitionScope, episode: string): Promise<number> {
+    if (!this.config.enabled) {
+      throw new Error('Memory feature is disabled');
+    }
+    const text = episode.trim().slice(0, EPISODE_TEXT_LIMIT);
+    if (!text) return 0;
+
+    const vectors = await this.embeddingService.embed([text], 'document');
+    if (vectors.length !== 1) {
+      throw new Error('Embedding returned no vector for the episode');
+    }
+
+    const seed = scope.requestId
+      ? `${scope.memoryCognition}|cognition|episode|${scope.requestId}`
+      : `${scope.memoryCognition}|cognition|episode|${text}`;
+    await this.memoryRepository.upsertBatch({
+      memoryCognition: scope.memoryCognition,
+      role: 'assistant',
+      sessionId: scope.sessionId,
+      conversationId: scope.conversationId,
+      requestId: scope.requestId,
+      points: [
+        {
+          id: deterministicPointId(seed),
+          vector: vectors[0],
+          text,
+          tags: [...EPISODE_TAGS],
+        },
+      ],
+    });
+    return 1;
   }
 
   /**

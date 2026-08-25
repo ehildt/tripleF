@@ -1,10 +1,13 @@
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, watch } from 'vue';
 
+import type { MemoryFactRecord } from '@/api/memory.api';
 import { fetchMemoryFacts, wipeMemoryFacts } from '@/api/memory.api';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
 import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
+
+import { buildSortedMemoryFacts } from '../helpers/build-sorted-memory-facts.helper';
 
 /** Disarm window for the two-click wipe confirm (armed state auto-clears). */
 const WIPE_ARM_WINDOW_MS = 4000;
@@ -25,7 +28,7 @@ export function useMemoryPartition() {
     () => memoryPartition.value.trim() || getPersistentSocketSessionId(),
   );
 
-  const facts = ref<Array<{ text: string; createdAt?: string }>>([]);
+  const facts = ref<MemoryFactRecord[]>([]);
   const isLoading = ref(false);
   const isUnavailable = ref(false);
   const wipeArmed = ref(false);
@@ -54,7 +57,9 @@ export function useMemoryPartition() {
     isLoading.value = true;
     isUnavailable.value = false;
     try {
-      facts.value = await fetchMemoryFacts(partitionKey.value);
+      facts.value = buildSortedMemoryFacts(
+        await fetchMemoryFacts(partitionKey.value),
+      );
     } catch {
       facts.value = [];
       isUnavailable.value = true;

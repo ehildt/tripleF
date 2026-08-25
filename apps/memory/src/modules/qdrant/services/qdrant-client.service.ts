@@ -148,6 +148,9 @@ export class QdrantClientService implements OnModuleInit {
       // Full-text schema on text enables RAG-style containment filters
       // (`match: { text: ... }`) over the record content.
       { field_name: 'text', field_schema: 'text' },
+      // Datetime schema on created_at powers the episode probe's recency
+      // blend (formula query with exp_decay on the payload timestamp).
+      { field_name: 'created_at', field_schema: 'datetime' },
     ] as const;
     for (const index of indexes) {
       if (existing.has(index.field_name)) continue;

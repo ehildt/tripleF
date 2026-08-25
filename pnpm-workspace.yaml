@@ -23,3 +23,4 @@ minimumReleaseAgeExclude:
   - '@triplef/*'
   - vue-i18n@11.4.9
   - npm-check-updates@23.1.0
+  - '@lucide/vue@1.34.0'

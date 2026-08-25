@@ -17,4 +17,12 @@ export class MemoryCognitionSnapshotDto {
       'Derived insight records (topic-probed at respond time, path-routed into the profile).',
   })
   insights!: MemoryItemDto[];
+
+  @ApiProperty({
+    type: Number,
+    description:
+      'Effective episode probe limit (system variable) — max short-term conversation-memory records the harness injects per turn.',
+    example: 3,
+  })
+  episodeProbeLimit!: number;
 }

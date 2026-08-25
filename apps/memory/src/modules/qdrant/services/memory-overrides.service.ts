@@ -9,6 +9,12 @@ import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
 import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { clampCognitionLimit } from '../models/memory-cognition.model.js';
+import {
+  clampEpisodeProbeLimit,
+  clampEpisodeRecencyMidpoint,
+  clampEpisodeRecencyScaleSeconds,
+  clampEpisodeRecencyWeight,
+} from '../models/memory-cognition.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 import type { MemoryOverridesPatch } from './memory-overrides.service.types.js';
@@ -37,6 +43,18 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
   private restored = false;
   private lastRestoreAttemptAt = 0;
   private restoreInFlight?: Promise<void>;
+
+  /** Field name → clamp function for every numeric override. */
+  private static readonly OVERRIDE_CLAMPS: Record<
+    string,
+    (value: number) => number
+  > = {
+    cognitionLimit: clampCognitionLimit,
+    episodeRecencyWeight: clampEpisodeRecencyWeight,
+    episodeRecencyScaleSeconds: clampEpisodeRecencyScaleSeconds,
+    episodeRecencyMidpoint: clampEpisodeRecencyMidpoint,
+    episodeProbeLimit: clampEpisodeProbeLimit,
+  };
 
   constructor(
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
@@ -71,6 +89,26 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     if (typeof record.cognitionLimit === 'number') {
       patch.cognitionLimit = clampCognitionLimit(record.cognitionLimit);
     }
+    if (typeof record.episodeRecencyWeight === 'number') {
+      patch.episodeRecencyWeight = clampEpisodeRecencyWeight(
+        record.episodeRecencyWeight,
+      );
+    }
+    if (typeof record.episodeRecencyScaleSeconds === 'number') {
+      patch.episodeRecencyScaleSeconds = clampEpisodeRecencyScaleSeconds(
+        record.episodeRecencyScaleSeconds,
+      );
+    }
+    if (typeof record.episodeRecencyMidpoint === 'number') {
+      patch.episodeRecencyMidpoint = clampEpisodeRecencyMidpoint(
+        record.episodeRecencyMidpoint,
+      );
+    }
+    if (typeof record.episodeProbeLimit === 'number') {
+      patch.episodeProbeLimit = clampEpisodeProbeLimit(
+        record.episodeProbeLimit,
+      );
+    }
     this.overrides = patch;
   }
 
@@ -102,24 +140,72 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     );
   }
 
+  /** Effective recency weight for the episode probe (0–1). */
+  getEpisodeRecencyWeight(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.episodeRecencyWeight;
+    return clampEpisodeRecencyWeight(
+      typeof override === 'number'
+        ? override
+        : this.config.episodeRecencyWeight,
+    );
+  }
+
+  /** Effective recency decay horizon in seconds (60–31536000). */
+  getEpisodeRecencyScaleSeconds(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.episodeRecencyScaleSeconds;
+    return clampEpisodeRecencyScaleSeconds(
+      typeof override === 'number'
+        ? override
+        : this.config.episodeRecencyScaleSeconds,
+    );
+  }
+
+  /** Effective recency decay midpoint (0.01–0.99). */
+  getEpisodeRecencyMidpoint(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.episodeRecencyMidpoint;
+    return clampEpisodeRecencyMidpoint(
+      typeof override === 'number'
+        ? override
+        : this.config.episodeRecencyMidpoint,
+    );
+  }
+
+  /** Effective episode probe limit (1–10 records per turn). */
+  getEpisodeProbeLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.episodeProbeLimit;
+    return clampEpisodeProbeLimit(
+      typeof override === 'number' ? override : this.config.episodeProbeLimit,
+    );
+  }
+
   /** The SysCtl read view: effective values plus the env baseline + bounds. */
   getConfig() {
     return {
       cognitionLimit: this.getCognitionLimit(),
       baseline: this.config.cognitionLimit,
       overridden: this.overrides.cognitionLimit !== undefined,
+      episodeRecencyWeight: this.getEpisodeRecencyWeight(),
+      episodeRecencyScaleSeconds: this.getEpisodeRecencyScaleSeconds(),
+      episodeRecencyMidpoint: this.getEpisodeRecencyMidpoint(),
+      episodeProbeLimit: this.getEpisodeProbeLimit(),
     };
   }
 
   updateConfig(patch: MemoryOverridesPatch): void {
     this.restored = true;
     const next: MemoryOverridesPatch = { ...this.overrides };
-    if (patch.cognitionLimit !== undefined) {
-      if (typeof patch.cognitionLimit === 'number') {
-        next.cognitionLimit = clampCognitionLimit(patch.cognitionLimit);
-      } else if (patch.cognitionLimit === null) {
-        delete next.cognitionLimit;
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined) continue;
+      if (value === null) {
+        delete next[key as keyof MemoryOverridesPatch];
+        continue;
       }
+      const clamp = MemoryOverridesService.OVERRIDE_CLAMPS[key];
+      (next as Record<string, unknown>)[key] = clamp ? clamp(value) : value;
     }
     this.overrides = next;
     this.persistOverrides();
@@ -141,6 +227,19 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     const values: Record<string, unknown> = {};
     if (this.overrides.cognitionLimit !== undefined) {
       values.cognitionLimit = this.overrides.cognitionLimit;
+    }
+    if (this.overrides.episodeRecencyWeight !== undefined) {
+      values.episodeRecencyWeight = this.overrides.episodeRecencyWeight;
+    }
+    if (this.overrides.episodeRecencyScaleSeconds !== undefined) {
+      values.episodeRecencyScaleSeconds =
+        this.overrides.episodeRecencyScaleSeconds;
+    }
+    if (this.overrides.episodeRecencyMidpoint !== undefined) {
+      values.episodeRecencyMidpoint = this.overrides.episodeRecencyMidpoint;
+    }
+    if (this.overrides.episodeProbeLimit !== undefined) {
+      values.episodeProbeLimit = this.overrides.episodeProbeLimit;
     }
     if (Object.keys(values).length === 0) {
       void this.repository.deleteByProvider(MEMORY_PROVIDER_KEY);

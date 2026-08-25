@@ -1,6 +1,7 @@
 name: RELEASE_CI
 
-# Trusted publishing (OIDC) note for @triplef/helpers and @triplef/config-factory:
+# Trusted publishing (OIDC) note for @triplef/helpers, @triplef/config-factory,
+# and @triplef/core-logger:
 #   npmjs.com → package settings → Trusted Publisher → GitHub Actions
 #     Organization or user: ehildt
 #     Repository:           tripleF
@@ -23,7 +24,7 @@ env:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # OIDC trusted publishing for @triplef/helpers
+  id-token: write # OIDC trusted publishing for the @triplef/* packages
 
 concurrency:
   group: release
@@ -67,17 +68,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Depbadge — Server
-        run: cd apps/server && npx @ehildt/depbadge
-
-      - name: Depbadge — Dashboard
-        run: cd apps/dashboard && npx @ehildt/depbadge
-
-      - name: Depbadge — Helpers
-        run: cd packages/helpers && npx @ehildt/depbadge
-
-      - name: Depbadge — Config-Factory
-        run: cd packages/config-factory && npx @ehildt/depbadge
+      - name: Depbadge
+        run: |
+          for dir in apps/server apps/dashboard apps/memory packages/helpers packages/config-factory packages/core-logger; do
+            (cd "$dir" && npx @ehildt/depbadge)
+          done
 
       - name: Commit badge bump
         uses: stefanzweifel/git-auto-commit-action@v7
@@ -86,8 +81,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Version bump for @triplef/helpers + @triplef/config-factory is handled by
-  # the root (repo-update) changeset flow — their changesets live at the root.
+  # Version bumps for the published packages are handled by the root
+  # (repo-update) changeset flow — their changesets live at the root.
   wiki:
     if: github.event_name == 'push'
     needs: ci
@@ -115,10 +110,24 @@ jobs:
           git diff --cached --quiet || git commit -m "WIKI UPDATE"
           git push
 
-  publish-helpers:
+  publish:
+    name: Publish (${{ matrix.package.name }})
     if: github.event_name == 'push'
     needs: [repo-update, wiki]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - name: helpers
+            artifact: helpers-dist
+            path: packages/helpers
+          - name: config-factory
+            artifact: config-factory-dist
+            path: packages/config-factory
+          - name: core-logger
+            artifact: core-logger-dist
+            path: packages/core-logger
 
     steps:
       - uses: actions/checkout@v7
@@ -137,52 +146,14 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: helpers-dist
-          path: packages/helpers/dist/
+          name: ${{ matrix.package.artifact }}
+          path: ${{ matrix.package.path }}/dist/
 
       - name: Publish
-        working-directory: packages/helpers
+        working-directory: ${{ matrix.package.path }}
         run: |
           current="$(node -p "require('./package.json').version")"
-          published="$(npm view @triplef/helpers version 2>/dev/null || true)"
-          if [ -n "$published" ] && [ "$current" = "$published" ]; then
-            echo "Version $current is already published — skipping publish."
-          else:
-            # Trusted publishing: pnpm exchanges the GitHub OIDC token
-            # (id-token: write) for a short-lived npm token automatically.
-            pnpm publish --no-git-checks --provenance
-          fi
-
-  publish-config-factory:
-    if: github.event_name == 'push'
-    needs: [repo-update, wiki]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0 # ensure we can see the latest commits
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: config-factory-dist
-          path: packages/config-factory/dist/
-
-      - name: Publish
-        working-directory: packages/config-factory
-        run: |
-          current="$(node -p "require('./package.json').version")"
-          published="$(npm view @triplef/config-factory version 2>/dev/null || true)"
+          published="$(npm view @triplef/${{ matrix.package.name }} version 2>/dev/null || true)"
           if [ -n "$published" ] && [ "$current" = "$published" ]; then
             echo "Version $current is already published — skipping publish."
           else

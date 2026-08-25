@@ -1,0 +1,85 @@
+{
+  "name": "@triplef/core-logger",
+  "description": "A NestJS LoggerService backed by pino — structured logging with inline context rendering, error-stack preservation, and per-call onLog hooks.",
+  "version": "0.0.0",
+  "packageManager": "pnpm@11.23.0",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./core-logger": {
+      "types": "./dist/core-logger/index.d.ts",
+      "import": "./dist/core-logger/index.mjs"
+    }
+  },
+  "main": "dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ehildt/tripleF.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "email": "eugen.hildt@gmail.com",
+    "name": "Eugen Hildt"
+  },
+  "bugs": {
+    "email": "eugen.hildt@gmail.com"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "build": "pnpm tsup",
+    "depcheck": "npx depcheck .",
+    "depcruise": "npx dependency-cruiser -c .depcruise.mjs --ts-config tsconfig.json src",
+    "format": "prettier --write .",
+    "lint": "eslint ./src",
+    "lint-staged": "npx lint-staged --allow-empty",
+    "ncu:update": "npx npm-check-updates -u --format group",
+    "ncu:interactive": "npx npm-check-updates -u --interactive --format group",
+    "ncu:validate": "npx npm-check-updates -e 2 --packageFile=./package.json",
+    "prebuild": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "lint:unused": "npx ts-unused-exports ./tsconfig.exclude.json --maxIssues=6"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.1",
+    "@eslint/js": "^10.0.1",
+    "@types/eslint": "^9.6.1",
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "depcheck": "^1.4.7",
+    "dependency-cruiser": "^18.2.0",
+    "eslint": "^10.9.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-sonarjs": "^4.2.0",
+    "globals": "^17.11.0",
+    "husky": "^9.1.7",
+    "jiti": "^2.7.0",
+    "lint-staged": "^17.3.0",
+    "npm-check-updates": "^23.1.0",
+    "prettier": "^3.9.6",
+    "rimraf": "^6.1.3",
+    "ts-unused-exports": "^11.0.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.17",
+    "joi": "^18.0.2",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3"
+  }
+}

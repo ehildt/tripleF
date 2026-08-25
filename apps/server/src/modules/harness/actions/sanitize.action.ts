@@ -2,12 +2,17 @@ import { Injectable } from '@nestjs/common';
 
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
-import { INSIGHT_TAGS } from '../../memory-client/constants/memory-client.constants.js';
+import {
+  EPISODE_PROBE_LIMIT,
+  EPISODE_TAGS,
+  INSIGHT_TAGS,
+} from '../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { flattenProfilePaths } from '../helpers/cognition/flatten-profile-paths.helper.js';
 import { matchProfilePaths } from '../helpers/cognition/match-profile-paths.helper.js';
+import { splitCognitionProfile } from '../helpers/cognition/split-cognition-profile.helper.js';
 import { partitionByLanguage } from '../helpers/language/partition-by-language.helper.js';
 import { tagLanguage } from '../helpers/language/tag-language.helper.js';
 import { dedupeImagesByFingerprint } from '../helpers/media/dedupe-images-by-fingerprint.helper.js';
@@ -317,8 +322,13 @@ export class SanitizeActionService {
     // prompt matches a profile path (likes.cars, interests.ai, …) or embeds
     // near one. Read failures degrade to no injection, never to a failed
     // turn — personalization is a bonus layer.
-    const { profile: cognitionProfile, insights: cognitionInsights } =
-      await this.getCognitionContext(ctx);
+    const {
+      profile: cognitionProfile,
+      persona: cognitionPersona,
+      corrections: cognitionCorrections,
+      insights: cognitionInsights,
+      episodes: cognitionEpisodes,
+    } = await this.getCognitionContext(ctx);
 
     const messages = scrubBrokenUrlsFromMessages(
       buildFinalMessagesForSanitize(
@@ -335,7 +345,10 @@ export class SanitizeActionService {
         internationalArticles,
         internationalVideos,
         cognitionProfile,
+        cognitionPersona,
+        cognitionCorrections,
         cognitionInsights,
+        cognitionEpisodes,
       ),
       new Set([...brokenMediaUrls, ...brokenPageUrls]),
     );
@@ -371,41 +384,87 @@ export class SanitizeActionService {
    */
   private async getCognitionContext(ctx: HarnessContext): Promise<{
     profile?: string;
+    persona?: string;
+    corrections?: string;
     insights: string[];
+    episodes: string[];
   }> {
     const cognitionKey =
       ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
-    if (!cognitionKey) return { insights: [] };
+    if (!cognitionKey) return { insights: [], episodes: [] };
     try {
       const snapshot = await this.memoryClient.getCognition(cognitionKey);
       const profile = snapshot.profile
         ? (JSON.parse(snapshot.profile) as Record<string, unknown> | undefined)
         : undefined;
       const prompt = ctx.lastUserPrompt?.trim();
-      const profileText = snapshot.profile ?? undefined;
-      if (!prompt || snapshot.insights.length === 0) {
-        return { profile: profileText, insights: [] };
+
+      // Split the document: persona/corrections are the AI's own identity and
+      // learned rules (injected with a "YOUR IDENTITY" framing), the rest is
+      // the user-side model (injected as "your profile of this user").
+      const { persona, corrections, userProfile } =
+        splitCognitionProfile(profile);
+      const personaText = persona ? JSON.stringify(persona) : undefined;
+      const correctionsText = corrections
+        ? JSON.stringify(corrections)
+        : undefined;
+      const userProfileText = userProfile
+        ? JSON.stringify(userProfile)
+        : undefined;
+
+      if (!prompt) {
+        return {
+          profile: userProfileText,
+          persona: personaText,
+          corrections: correctionsText,
+          insights: [],
+          episodes: [],
+        };
       }
 
       // The stored document is a Postgres JSONB row — already parsed, so
       // probe shaping uses the object directly (no text round-trip).
-      const matched = matchProfilePaths(prompt, flattenProfilePaths(profile));
-      const query =
-        matched.length > 0
-          ? `${prompt}\nUser profile signals: ${matched.map((m) => `${m.path}: ${m.value}`).join('; ')}`
-          : prompt;
+      let insights: string[] = [];
+      if (snapshot.insights.length > 0) {
+        const matched = matchProfilePaths(prompt, flattenProfilePaths(profile));
+        const query =
+          matched.length > 0
+            ? `${prompt}\nUser profile signals: ${matched.map((m) => `${m.path}: ${m.value}`).join('; ')}`
+            : prompt;
 
-      // The cognition-lane probe never carries a partition — insight records
-      // are tag-addressed ([cognition, insight]), matching the pre-split
-      // in-process behavior.
-      const hits = await this.memoryClient.searchByText({
-        text: query,
-        tags: [...INSIGHT_TAGS],
-        limit: COGNITION_PROBE_LIMIT,
+        // The cognition-lane probe never carries a partition — insight records
+        // are tag-addressed ([cognition, insight]), matching the pre-split
+        // in-process behavior.
+        const hits = await this.memoryClient.searchByText({
+          text: query,
+          tags: [...INSIGHT_TAGS],
+          limit: COGNITION_PROBE_LIMIT,
+        });
+        insights = hits.map((hit) => hit.text);
+      }
+
+      // Episode probe: short-term conversation memory, recency-blended — the
+      // raw prompt (no path shaping) so a new turn recalls what a past turn
+      // was about even when the topic is only loosely named. Degrades to []
+      // on cold spaces (searchByText never throws). The limit is the memory
+      // app's system variable (episodeProbeLimit), falling back to the
+      // built-in default when the snapshot predates it.
+      const episodeHits = await this.memoryClient.searchByText({
+        text: prompt,
+        tags: [...EPISODE_TAGS],
+        recency: true,
+        limit: snapshot.episodeProbeLimit ?? EPISODE_PROBE_LIMIT,
       });
-      return { profile: profileText, insights: hits.map((hit) => hit.text) };
+
+      return {
+        profile: userProfileText,
+        persona: personaText,
+        corrections: correctionsText,
+        insights,
+        episodes: episodeHits.map((hit) => hit.text),
+      };
     } catch {
-      return { insights: [] };
+      return { insights: [], episodes: [] };
     }
   }
 

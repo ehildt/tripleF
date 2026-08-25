@@ -2,9 +2,14 @@ import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Injectable } from '@nestjs/common';
 
 import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
+import {
+  EPISODE_PROBE_LIMIT,
+  EPISODE_TAGS,
+} from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import type { InterpretResult } from '../../actions/interpret.action.types.js';
+import { splitCognitionProfile } from '../../helpers/cognition/split-cognition-profile.helper.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
 import {
   HARNESS_ACTIVITY_KEYS,
@@ -47,6 +52,8 @@ export class InterpretStepService implements StepHandler {
   async execute(ctx: HarnessContext): Promise<void> {
     await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.understanding);
 
+    const personaName = await this.resolvePersonaName(ctx);
+
     let { intent, inputTokens, outputTokens } =
       await this.interpretAction.execute({
         requestId: ctx.requestId,
@@ -57,6 +64,7 @@ export class InterpretStepService implements StepHandler {
         numCtx: ctx.request.options?.num_ctx,
         abortSignal: ctx.abortSignal,
         language: ctx.filters.language,
+        personaName,
         onIntent: (intent) => {
           ctx.outputs.intent = intent;
         },
@@ -67,7 +75,11 @@ export class InterpretStepService implements StepHandler {
     // hand — a reference that looks ambiguous in the transcript alone is often
     // resolvable from what the user told us before.
     if (intent.needsClarification) {
-      const resolved = await this.resolveClarificationWithMemory(ctx, intent);
+      const resolved = await this.resolveClarificationWithMemory(
+        ctx,
+        intent,
+        personaName,
+      );
       if (resolved) {
         intent = resolved.intent;
         inputTokens += resolved.inputTokens ?? 0;
@@ -121,6 +133,7 @@ export class InterpretStepService implements StepHandler {
   private async resolveClarificationWithMemory(
     ctx: HarnessContext,
     firstPass: IntentResult,
+    personaName?: string,
   ): Promise<
     | { intent: IntentResult; inputTokens?: number; outputTokens?: number }
     | undefined
@@ -137,7 +150,29 @@ export class InterpretStepService implements StepHandler {
       limit: 5,
     });
     const probeSection = buildMemoryProbeSection(hits);
-    if (!probeSection) return undefined;
+
+    // Episode probe: the AI's short-term memory of past turns (cognition
+    // lane) — resolves references to "the thing we were working on" that the
+    // fact partition never captured. Recency-blended, topic-matched.
+    const cognitionKey =
+      ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
+    const episodeProbeLimit = await this.resolveEpisodeProbeLimit();
+    const episodeHits = cognitionKey
+      ? await this.memoryClient.searchByText({
+          text: query,
+          tags: [...EPISODE_TAGS],
+          recency: true,
+          limit: episodeProbeLimit,
+        })
+      : [];
+    const episodeSection = episodeHits.length
+      ? `RECENT CONVERSATIONS — what you and the user were working on in recent turns (topic-matched):\n${episodeHits.map((hit) => `- ${hit.text}`).join('\n')}`
+      : undefined;
+
+    const combinedProbe = [probeSection, episodeSection]
+      .filter(Boolean)
+      .join('\n\n');
+    if (!combinedProbe) return undefined;
 
     let result: InterpretResult;
     try {
@@ -150,7 +185,8 @@ export class InterpretStepService implements StepHandler {
         numCtx: ctx.request.options?.num_ctx,
         abortSignal: ctx.abortSignal,
         language: ctx.filters.language,
-        memoryProbe: probeSection,
+        memoryProbe: combinedProbe,
+        personaName,
         onIntent: (intent) => {
           ctx.outputs.intent = intent;
         },
@@ -203,6 +239,45 @@ export class InterpretStepService implements StepHandler {
       this.findLatestUserText(ctx.request.messages) ?? ctx.lastUserPrompt ?? '';
     const summary = intent.contextSummary?.trim();
     return summary ? `${latest}\n${summary}` : latest;
+  }
+
+  /**
+   * The AI's own name from the cognition persona, when the user has set one.
+   * Injected into the classifier so a bare address ("Shinku?") is recognized
+   * as a direct call to the AI, not a familiarity question about a public
+   * figure. Best-effort — a read failure degrades to no name, never a failed
+   * turn.
+   */
+  private async resolvePersonaName(
+    ctx: HarnessContext,
+  ): Promise<string | undefined> {
+    const cognitionKey =
+      ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
+    if (!cognitionKey) return undefined;
+    try {
+      const snapshot = await this.memoryClient.getCognition(cognitionKey);
+      const profile = snapshot.profile
+        ? (JSON.parse(snapshot.profile) as Record<string, unknown> | undefined)
+        : undefined;
+      const { persona } = splitCognitionProfile(profile);
+      const name = persona?.name;
+      return typeof name === 'string' && name.trim() ? name.trim() : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * The effective episode probe limit (system variable) for the clarification
+   * probe. Best-effort — a read failure falls back to the built-in default.
+   */
+  private async resolveEpisodeProbeLimit(): Promise<number> {
+    try {
+      const overrides = await this.memoryClient.getOverrides();
+      return overrides.episodeProbeLimit ?? EPISODE_PROBE_LIMIT;
+    } catch {
+      return EPISODE_PROBE_LIMIT;
+    }
   }
 
   private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {

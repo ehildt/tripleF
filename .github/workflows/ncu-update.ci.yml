@@ -35,8 +35,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Update dependencies — Helpers
-        run: pnpm --filter @triplef/helpers run ncu:update
+      - name: Update dependencies
+        run: |
+          for pkg in @triplef/server @triplef/dashboard @triplef/memory @triplef/helpers @triplef/config-factory @triplef/core-logger; do
+            pnpm --filter "$pkg" run ncu:update
+          done
 
       # ncu:update only rewrites package.json — regenerate the lockfile so the
       # PR stays installable with `--frozen-lockfile` in CI.
@@ -44,17 +47,11 @@ jobs:
         run: pnpm install
 
       # Keep the README badges in sync with the updated manifests.
-      - name: Regenerate badges — Helpers
-        working-directory: packages/helpers
-        run: npx @ehildt/depbadge
-
-      - name: Update dependencies — Config-Factory
-        run: pnpm --filter @triplef/config-factory run ncu:update
-
-      # Keep the README badges in sync with the updated manifests.
-      - name: Regenerate badges — Config-Factory
-        working-directory: packages/config-factory
-        run: npx @ehildt/depbadge
+      - name: Regenerate badges
+        run: |
+          for dir in apps/server apps/dashboard apps/memory packages/helpers packages/config-factory packages/core-logger; do
+            (cd "$dir" && npx @ehildt/depbadge)
+          done
 
       - name: Create PR
         if: github.event_name == 'schedule'

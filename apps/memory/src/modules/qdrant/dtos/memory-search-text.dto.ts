@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -100,4 +101,14 @@ export class MemorySearchTextDto {
   @IsString()
   @IsOptional()
   contains?: string;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+    description:
+      'Blend recency into the ranking (formula query with exp_decay on created_at): recent points rank higher, older points still surface on a strong topical match.',
+  })
+  @IsBoolean()
+  @IsOptional()
+  recency?: boolean;
 }

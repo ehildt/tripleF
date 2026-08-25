@@ -25,4 +25,10 @@ export type InterpretParams = {
    * the first pass.
    */
   memoryProbe?: string;
+  /**
+   * The AI's own name (from the cognition persona), injected so the
+   * classifier recognizes a bare address ("Shinku?") as a direct call to the
+   * AI rather than a familiarity question about a public figure.
+   */
+  personaName?: string;
 };

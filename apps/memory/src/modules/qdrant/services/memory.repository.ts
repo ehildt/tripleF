@@ -10,7 +10,11 @@ import type {
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
+import { MemoryOverridesService } from './memory-overrides.service.js';
 import { QdrantClientService } from './qdrant-client.service.js';
+
+/** Candidate pool for the rescore — wider than the final limit so the formula has room to re-rank. */
+const RECENCY_PREFETCH_MULTIPLIER = 4;
 
 /**
  * The only layer that talks Qdrant payloads. Every point belongs to exactly
@@ -30,6 +34,7 @@ import { QdrantClientService } from './qdrant-client.service.js';
 export class MemoryRepository {
   constructor(
     private readonly clientService: QdrantClientService,
+    private readonly overrides: MemoryOverridesService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -79,13 +84,47 @@ export class MemoryRepository {
   async searchMemory(input: SearchMemoryInput): Promise<MemoryPoint[]> {
     if (!(await this.clientService.hasCollection())) return [];
     const client = this.clientService.getClient();
-    const result = await client.query(this.collection, {
-      query: input.vector,
-      limit: Math.min(input.limit ?? 5, 5),
-      score_threshold: this.config.scoreThreshold,
-      with_payload: true,
-      filter: { must: buildMemoryMust(input) },
-    });
+    const limit = Math.min(input.limit ?? 5, 5);
+    const filter = { must: buildMemoryMust(input) };
+
+    const result = input.recency
+      ? await client.query(this.collection, {
+          prefetch: {
+            query: input.vector,
+            limit: Math.max(limit * RECENCY_PREFETCH_MULTIPLIER, 20),
+            score_threshold: this.config.scoreThreshold,
+            filter,
+          },
+          query: {
+            formula: {
+              sum: [
+                '$score',
+                {
+                  mult: [
+                    this.overrides.getEpisodeRecencyWeight(),
+                    {
+                      exp_decay: {
+                        x: { datetime_key: 'created_at' },
+                        target: { datetime: new Date().toISOString() },
+                        scale: this.overrides.getEpisodeRecencyScaleSeconds(),
+                        midpoint: this.overrides.getEpisodeRecencyMidpoint(),
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          limit,
+          with_payload: true,
+        })
+      : await client.query(this.collection, {
+          query: input.vector,
+          limit,
+          score_threshold: this.config.scoreThreshold,
+          with_payload: true,
+          filter,
+        });
     return result.points.map((point) => this.toMemoryPoint(point));
   }
 

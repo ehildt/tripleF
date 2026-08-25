@@ -94,6 +94,12 @@ export interface UpsertBatchInput {
 export interface SearchMemoryInput extends MemoryScopeFilters {
   vector: number[];
   limit?: number;
+  /**
+   * Blend recency into the ranking (formula query with exp_decay on
+   * `created_at`): recent points rank higher, older points still surface on
+   * a strong topical match. Used by the episode probe.
+   */
+  recency?: boolean;
 }
 
 export interface ListMemoryInput extends MemoryScopeFilters {
