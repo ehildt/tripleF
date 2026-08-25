@@ -19,6 +19,7 @@
 - [1.3. BullMQ Async Processing](1.3-bullmq.md)
 - [1.4. Socket.IO Real-time Layer](1.4-socketio.md)
 - [1.5. Data & Storage](1.5-data.md)
+- [1.6. Memory Cognition](1.6-memory-cognition.md)
 
 ### Dashboard
 
@@ -78,6 +79,7 @@
 | [1.3-bullmq](1.3-bullmq.md)                               | Job queues, workers, retries                   | Queue topology, processor pipeline, failure modes                      |
 | [1.4-socketio](1.4-socketio.md)                           | Real-time streaming                            | Rooms, event contract, cancellation signal                             |
 | [1.5-data](1.5-data.md)                                   | PostgreSQL/Prisma, MinIO, KeyDB                | Models, object layout, image preprocessing                             |
+| [1.6-memory-cognition](1.6-memory-cognition.md)           | Memory cognition JSON schema                   | Profile fields, insights, episodes, merge semantics, system variables   |
 | [2-dashboard](2-dashboard.md)                             | Areas and technology                           | Chat, SysCtl, DLQ, PProc, router — panel map                                   |
 | [2.1-architecture](2.1-architecture.md)                   | Vue 3 component and state architecture         | Stores, composables, API layer, conventions                            |
 | [2.2-chat](2.2-chat.md)                                   | The chat experience                            | Exchanges, reasoning areas, streaming UX, conversation controls                   |

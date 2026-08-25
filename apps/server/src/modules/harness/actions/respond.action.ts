@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
@@ -6,7 +6,6 @@ import { ProviderOverridesService } from '../../provider-overrides/services/prov
 import { buildCorrectionPrompt } from '../helpers/respond/build-correction-prompt.helper.js';
 import { buildExecutionMessages } from '../helpers/respond/build-execution-messages.helper.js';
 import { consumeResponseStream } from '../helpers/respond/consume-response-stream.helper.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
 
 import type { RespondParams, RespondResult } from './respond.action.types.js';
@@ -15,10 +14,11 @@ const MAX_JSON_RETRIES = 3;
 
 @Injectable()
 export class RespondActionService {
+  private readonly logger = new Logger(RespondActionService.name);
+
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly responseValidator: ResponseValidatorService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly providerOverrides: ProviderOverridesService,
   ) {}
 
@@ -26,32 +26,39 @@ export class RespondActionService {
    * Main entry point for the respond step.
    */
   execute(params: RespondParams): Promise<RespondResult> {
-    const executionMessages = buildExecutionMessages({
-      requestId: params.requestId,
-      intent: params.intent,
-      messages: params.messages,
-      availableImages: params.availableImages,
-      cloudReferenceImages: params.cloudReferenceImages,
-      sources: this.providerOverrides.getConfig().sources,
-      stepLogger: this.stepLogger,
-      language: params.language,
-    });
+    const { messages: executionMessages, historySelection } =
+      buildExecutionMessages({
+        requestId: params.requestId,
+        intent: params.intent,
+        messages: params.messages,
+        availableImages: params.availableImages,
+        cloudReferenceImages: params.cloudReferenceImages,
+        sources: this.providerOverrides.getConfig().sources,
+        language: params.language,
+      });
+
+    if (historySelection) {
+      this.logger.log(
+        { requestId: params.requestId, step: 'respond', ...historySelection },
+        'history selected',
+      );
+    }
 
     const totalImageCount = executionMessages.reduce(
       (sum, m) => sum + (m.images?.length ?? 0),
       0,
     );
 
-    this.stepLogger.log(
-      { requestId: params.requestId },
-      'respond',
-      'messages prepared',
+    this.logger.log(
       {
+        requestId: params.requestId,
+        step: 'respond',
         model: params.model,
         template: params.intent.template,
         messageCount: executionMessages.length,
         totalImageCount,
       },
+      'messages prepared',
     );
 
     if (params.stream) return this.streamResponse(params, executionMessages);
@@ -98,14 +105,14 @@ export class RespondActionService {
         const content = await this.responseValidator.verifyOutputImageUrls(
           validation.content,
         );
-        this.stepLogger.log(
-          { requestId: params.requestId },
-          'respond',
-          'JSON response validated',
+        this.logger.log(
           {
+            requestId: params.requestId,
+            step: 'respond',
             attempt,
             template: params.intent.template,
           },
+          'JSON response validated',
         );
         return {
           content,
@@ -115,17 +122,17 @@ export class RespondActionService {
         };
       }
 
-      this.stepLogger.warn(
-        { requestId: params.requestId },
-        'respond',
-        'json validation failed',
+      this.logger.warn(
         {
+          requestId: params.requestId,
+          step: 'respond',
           attempt,
           template: params.intent.template,
           error: validation.error,
           preview: result.text.slice(0, 500),
           rawOutput: result.text,
         },
+        'json validation failed',
       );
 
       if (attempt < MAX_JSON_RETRIES) {
@@ -173,9 +180,8 @@ export class RespondActionService {
     );
 
     if (!content) {
-      this.stepLogger.warn(
-        { requestId: params.requestId },
-        'respond',
+      this.logger.warn(
+        { requestId: params.requestId, step: 'respond' },
         'stream returned empty content; retrying non-stream',
       );
       return params.intent.template === 'text'
@@ -190,16 +196,16 @@ export class RespondActionService {
       );
 
       if (!validation.valid) {
-        this.stepLogger.warn(
-          { requestId: params.requestId },
-          'respond',
-          'stream json validation failed',
+        this.logger.warn(
           {
+            requestId: params.requestId,
+            step: 'respond',
             template: params.intent.template,
             error: validation.error,
             preview: content.slice(0, 500),
             rawOutput: content,
           },
+          'stream json validation failed',
         );
         params.onJsonRetry?.(1);
         return this.validateWithRetries(params, messages);

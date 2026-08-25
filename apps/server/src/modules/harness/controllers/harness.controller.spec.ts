@@ -6,7 +6,6 @@ import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { HarnessController } from './harness.controller.js';
 
@@ -46,13 +45,6 @@ describe('HarnessController', () => {
           provide: SharpService,
           useValue: {
             buildOptions: vi.fn().mockReturnValue(undefined),
-          },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: {
-            log: vi.fn(),
-            warn: vi.fn(),
           },
         },
       ],

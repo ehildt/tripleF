@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import type { MemoryClientConfig } from '../../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../../memory-client/constants/memory-client.constants.js';
@@ -6,7 +6,6 @@ import { MemoryEnqueueService } from '../../../memory-client/services/memory-enq
 import { buildResponseExtractionText } from '../../helpers/extraction/build-response-extraction-text.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 /**
  * The cognition-profile step — enqueue-only: after every answered turn
@@ -23,9 +22,10 @@ import { HarnessStepLogger } from '../harness-step-logger.service.js';
  */
 @Injectable()
 export class MemoryProfileStepService implements StepHandler {
+  private readonly logger = new Logger(MemoryProfileStepService.name);
+
   constructor(
     private readonly memoryEnqueue: MemoryEnqueueService,
-    private readonly stepLogger: HarnessStepLogger,
     @Inject(MEMORY_CLIENT_CONFIG)
     private readonly memoryConfig: MemoryClientConfig,
   ) {}
@@ -34,7 +34,10 @@ export class MemoryProfileStepService implements StepHandler {
     const memoryCognition =
       ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
     if (!this.memoryConfig.enabled || !memoryCognition) {
-      this.stepLogger.log(ctx, 'memory-profile', 'skipped: memory disabled');
+      this.logger.log(
+        { requestId: ctx.requestId, step: 'memory-profile' },
+        'skipped: memory disabled',
+      );
       return;
     }
 
@@ -57,6 +60,9 @@ export class MemoryProfileStepService implements StepHandler {
       think: false,
       numCtx: ctx.request.options?.num_ctx,
     });
-    this.stepLogger.log(ctx, 'memory-profile', 'enqueued');
+    this.logger.log(
+      { requestId: ctx.requestId, step: 'memory-profile' },
+      'enqueued',
+    );
   }
 }

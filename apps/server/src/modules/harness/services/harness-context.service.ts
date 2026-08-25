@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
@@ -13,17 +13,17 @@ import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.
 import { stripImagesFromMessages } from '../helpers/sanitize/strip-images-from-messages.helper.js';
 
 import { HarnessContext } from './harness-context.type.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 import { StepRegistryService } from './step-registry.service.js';
 
 @Injectable()
 export class HarnessContextService {
+  private readonly logger = new Logger(HarnessContextService.name);
+
   constructor(
     private readonly minioService: MinioService,
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly ollamaModelsService: OllamaModelsService,
     private readonly sharpService: SharpService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly stepRegistryService: StepRegistryService,
   ) {}
 
@@ -41,13 +41,18 @@ export class HarnessContextService {
 
     this.validateInput(meta);
 
-    this.stepLogger.log({ requestId }, 'context', 'resolve images', {
-      sessionId,
-      hasNewImages,
-      newImageCount: meta.length,
-      referencedImageCount: referencedMeta.length,
-      referencedHashes: referencedMeta.map((entry) => entry.hash),
-    });
+    this.logger.log(
+      {
+        requestId,
+        step: 'context',
+        sessionId,
+        hasNewImages,
+        newImageCount: meta.length,
+        referencedImageCount: referencedMeta.length,
+        referencedHashes: referencedMeta.map((entry) => entry.hash),
+      },
+      'resolve images',
+    );
 
     let allMeta = this.mergeMeta(referencedMeta, meta);
     const hasImages = allMeta.length > 0;
@@ -75,16 +80,16 @@ export class HarnessContextService {
       } else {
         visionExcluded = true;
         effectiveMeta = [];
-        this.stepLogger.log(
-          { requestId },
-          'context',
-          'model does not support vision; excluding images',
+        this.logger.log(
           {
+            requestId,
+            step: 'context',
             sessionId,
             model: filters.model,
             excludedImageCount: allMeta.length,
             excludedHashes: allMeta.map((entry) => entry.hash),
           },
+          'model does not support vision; excluding images',
         );
       }
     }
@@ -93,14 +98,19 @@ export class HarnessContextService {
       ? buildVisionExclusionNotice(filters.model!, allMeta)
       : undefined;
 
-    this.stepLogger.log({ requestId }, 'context', 'provide to llm', {
-      sessionId,
-      totalImageCount: allMeta.length,
-      providedImageCount: effectiveMeta.length,
-      providedHashes: effectiveMeta.map((entry) => entry.hash),
-      bufferCount: buffers.length,
-      visionExcluded,
-    });
+    this.logger.log(
+      {
+        requestId,
+        step: 'context',
+        sessionId,
+        totalImageCount: allMeta.length,
+        providedImageCount: effectiveMeta.length,
+        providedHashes: effectiveMeta.map((entry) => entry.hash),
+        bufferCount: buffers.length,
+        visionExcluded,
+      },
+      'provide to llm',
+    );
 
     const request = buildChatRequest(
       buffers,

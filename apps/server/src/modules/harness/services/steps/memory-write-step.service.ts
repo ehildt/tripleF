@@ -1,11 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import type { MemoryClientConfig } from '../../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryEnqueueService } from '../../../memory-client/services/memory-enqueue.service.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 const GATHERED_DATA_LIMIT = 3000;
 const GATHERED_RESULT_LIMIT = 500;
@@ -21,9 +20,10 @@ const GATHERED_RESULT_LIMIT = 500;
  */
 @Injectable()
 export class MemoryWriteStepService implements StepHandler {
+  private readonly logger = new Logger(MemoryWriteStepService.name);
+
   constructor(
     private readonly memoryEnqueue: MemoryEnqueueService,
-    private readonly stepLogger: HarnessStepLogger,
     @Inject(MEMORY_CLIENT_CONFIG)
     private readonly memoryConfig: MemoryClientConfig,
   ) {}
@@ -34,9 +34,8 @@ export class MemoryWriteStepService implements StepHandler {
     );
     const memoryPartition = ctx.memoryPartition ?? ctx.sessionId;
     if (!wantsWrite || !this.memoryConfig.enabled || !memoryPartition) {
-      this.stepLogger.log(
-        ctx,
-        'memory-write',
+      this.logger.log(
+        { requestId: ctx.requestId, step: 'memory-write' },
         'skipped: no memory-write intent',
       );
       return;
@@ -80,7 +79,10 @@ export class MemoryWriteStepService implements StepHandler {
       think: ctx.request.think,
       numCtx: ctx.request.options?.num_ctx,
     });
-    this.stepLogger.log(ctx, 'memory-write', 'enqueued');
+    this.logger.log(
+      { requestId: ctx.requestId, step: 'memory-write' },
+      'enqueued',
+    );
   }
 }
 

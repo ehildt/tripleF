@@ -26,10 +26,7 @@ describe('EmbedStepService', () => {
       .mockImplementation((inputs: string[]) =>
         Promise.resolve(inputs.map((_, i) => [i, 0, 1])),
       );
-    const step = new EmbedStepService(
-      { embed } as never,
-      { log: vi.fn() } as never,
-    );
+    const step = new EmbedStepService({ embed } as never);
 
     const ctx = makeCtx({
       outputs: {
@@ -51,10 +48,7 @@ describe('EmbedStepService', () => {
 
   it('no-ops when the turn produced no facts', async () => {
     const embed = vi.fn();
-    const step = new EmbedStepService(
-      { embed } as never,
-      { log: vi.fn() } as never,
-    );
+    const step = new EmbedStepService({ embed } as never);
 
     const ctx = makeCtx();
     await step.execute(ctx);
@@ -65,10 +59,7 @@ describe('EmbedStepService', () => {
 
   it('throws when Ollama returns fewer vectors than inputs', async () => {
     const embed = vi.fn().mockResolvedValue([[0, 0, 1]]);
-    const step = new EmbedStepService(
-      { embed } as never,
-      { log: vi.fn() } as never,
-    );
+    const step = new EmbedStepService({ embed } as never);
 
     const ctx = makeCtx({
       outputs: { extraction: { facts: ['F1', 'F2'], tags: [] } },

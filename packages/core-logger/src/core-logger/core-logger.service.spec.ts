@@ -65,6 +65,36 @@ describe('CoreLoggerService', () => {
     expect(mockLogger.error).toHaveBeenCalledWith({ err: stack }, 'boom');
   });
 
+  it('attaches an Error instance on error(message, error)', () => {
+    const error = new Error('boom');
+    createService().error('failed', error);
+    expect(mockLogger.error).toHaveBeenCalledWith({ err: error }, 'failed');
+  });
+
+  it('attaches an Error instance and context on error(message, error, context)', () => {
+    const error = new Error('boom');
+    createService().error('failed', error, 'MyContext');
+    expect(mockLogger.error).toHaveBeenCalledWith({ err: error, context: 'MyContext' }, 'failed');
+  });
+
+  it('treats a bare Error argument as the message and err binding', () => {
+    const error = new Error('boom');
+    createService().error(error);
+    expect(mockLogger.error).toHaveBeenCalledWith({ err: error }, 'boom');
+  });
+
+  it('extracts context from a bare Error argument', () => {
+    const error = new Error('boom');
+    createService().error(error, 'MyContext');
+    expect(mockLogger.error).toHaveBeenCalledWith({ err: error, context: 'MyContext' }, 'boom');
+  });
+
+  it('preserves an Error instance at non-error levels', () => {
+    const error = new Error('boom');
+    createService().warn('careful', error);
+    expect(mockLogger.warn).toHaveBeenCalledWith({ err: error }, 'careful');
+  });
+
   it('routes warn to the warn level', () => {
     createService().warn('careful');
     expect(mockLogger.warn).toHaveBeenCalledWith('careful');

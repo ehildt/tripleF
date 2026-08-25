@@ -1,21 +1,25 @@
 import type { HarnessContext } from '../../services/harness-context.type.js';
-import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
 import type { ShownMediaService } from '../../services/shown-media.service.js';
 import type { GalleryItem } from '../media/build-gallery-items.helper.js';
+
+interface RecordShownMediaResult {
+  recordedCount: number;
+  error?: Error;
+}
 
 /**
  * Persist the media this response rendered so the next media-list follow-up
  * in this conversation can skip it. Recording is best-effort: a failure
- * degrades to a possible repeat, never to a failed job.
+ * degrades to a possible repeat, never to a failed job — the caller logs the
+ * outcome.
  */
 export async function recordShownMedia(
   ctx: HarnessContext,
   data: Record<string, unknown> | undefined,
   galleryItems: GalleryItem[],
   shownMedia: ShownMediaService,
-  stepLogger: HarnessStepLogger,
-): Promise<void> {
-  if (!data) return;
+): Promise<RecordShownMediaResult> {
+  if (!data) return { recordedCount: 0 };
 
   const localImageUrls = new Set(
     galleryItems
@@ -37,15 +41,11 @@ export async function recordShownMedia(
       data,
       sources: { localImageUrls, fingerprintByStorageUrl },
     });
-
-    if (recordedCount > 0) {
-      stepLogger.log(ctx, 'respond', 'shown media recorded', {
-        recordedCount,
-      });
-    }
+    return { recordedCount };
   } catch (error) {
-    stepLogger.warn(ctx, 'respond', 'shown media recording failed', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    return {
+      recordedCount: 0,
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
   }
 }

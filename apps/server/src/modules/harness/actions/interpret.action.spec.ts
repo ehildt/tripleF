@@ -6,7 +6,6 @@ import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-clien
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { InterpretActionService } from './interpret.action.js';
 
@@ -77,10 +76,6 @@ describe('InterpretActionService', () => {
               },
             }),
           },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
       ],
     }).compile();
@@ -255,10 +250,6 @@ describe('InterpretActionService', () => {
           useValue: { enabled: false },
         },
         {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
-        },
-        {
           provide: AiSdkService,
           useValue: {
             generateChat: vi.fn().mockResolvedValue({
@@ -337,10 +328,6 @@ describe('InterpretActionService', () => {
         {
           provide: MEMORY_CLIENT_CONFIG,
           useValue: { enabled: false },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: AiSdkService,
@@ -445,10 +432,6 @@ describe('InterpretActionService', () => {
           useValue: { enabled: false },
         },
         {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
-        },
-        {
           provide: AiSdkService,
           useValue: {
             generateChat: vi.fn().mockResolvedValue({
@@ -526,10 +509,6 @@ describe('InterpretActionService', () => {
           useValue: { enabled: false },
         },
         {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
-        },
-        {
           provide: AiSdkService,
           useValue: {
             generateChat: vi.fn().mockResolvedValue({
@@ -605,10 +584,6 @@ describe('InterpretActionService', () => {
         {
           provide: MEMORY_CLIENT_CONFIG,
           useValue: { enabled: false },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: AiSdkService,

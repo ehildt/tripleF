@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
 import { type IntentResult } from '../templates/intent.schema.js';
@@ -163,10 +162,6 @@ describe('RespondActionService', () => {
               })(),
             }),
           },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: MediaUrlValidatorService,

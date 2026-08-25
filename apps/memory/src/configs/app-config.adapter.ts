@@ -1,4 +1,3 @@
-import { LogLevel } from '@nestjs/common';
 import { AppConfig } from '@triplef/helpers/bootstrap';
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
 import { getByteSizeEnv } from '@triplef/helpers/get-byte-size-env';
@@ -12,8 +11,6 @@ export function AppConfigAdapter(env = process.env): AppConfig {
     bodyLimit: getNumberEnv(env.BODY_LIMIT, 0) as number,
     printConfig: getBooleanEnv(env.PRINT_CONFIG, false)!,
     enableSwagger: getBooleanEnv(env.ENABLE_SWAGGER, false)!,
-    logLevel: (env.LOG_LEVEL?.split(',')?.filter(Boolean) ??
-      []) as Array<LogLevel>,
     health: {
       memoryHeap: getByteSizeEnv(env.HEALTH_MEMORY_HEAP, 2048 * 1024 * 1024)!,
       memoryRSS: getByteSizeEnv(env.HEALTH_MEMORY_RSS, 2048 * 1024 * 1024)!,

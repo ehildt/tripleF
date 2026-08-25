@@ -5,6 +5,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Logger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import { ConfigFactoryModule } from '@triplef/config-factory';
+import { CoreLoggerModule } from '@triplef/core-logger';
 
 import { AppConfigService } from './configs/app-config.service.js';
 import { AiSdkModule } from './modules/ai-sdk/ai-sdk.module.js';
@@ -16,6 +17,7 @@ import {
   VECTORIZE_QUEUE,
 } from './modules/bullmq/constants/bullmq.constants.js';
 import { BullMQController } from './modules/bullmq/controllers/bullmq.controller.js';
+import { CoreLoggerConfigService } from './modules/core-logger/configs/core-logger-config.service.js';
 import { PostgresConfigService } from './modules/dead-letter/configs/postgres-config.service.js';
 import { DeadLetterController } from './modules/dead-letter/controllers/dead-letter.controller.js';
 import { DeadLetterModule } from './modules/dead-letter/dead-letter.module.js';
@@ -36,8 +38,6 @@ import { MinioModule } from './modules/minio/minio.module.js';
 import { JobReinstatementService } from './modules/minio/services/job-reinstatement.service.js';
 import { MinioHealthIndicator } from './modules/minio/services/minio-health-indicator.service.js';
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
-import { PinoLoggerConfigService } from './modules/pino-logger/configs/pino-logger-config.service.js';
-import { PinoLoggerModule } from './modules/pino-logger/pino-logger.module.js';
 import { PlaywrightMcpConfigService } from './modules/playwright-mcp/configs/playwright-mcp-config.service.js';
 import { PlaywrightMcpModule } from './modules/playwright-mcp/playwright-mcp.module.js';
 import { BrightDataConfigService } from './modules/provider-overrides/configs/bright-data-config.service.js';
@@ -72,7 +72,6 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
   ],
   imports: [
     HttpModule,
-    PinoLoggerModule,
     BullMQModule,
     AiSdkModule,
     HarnessModule,
@@ -97,7 +96,7 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
         PostgresConfigService,
         MinioConfigService,
         NumCtxConfigService,
-        PinoLoggerConfigService,
+        CoreLoggerConfigService,
         PlaywrightMcpConfigService,
         BrightDataConfigService,
         SerperConfigService,
@@ -105,6 +104,11 @@ import { SocketIOModule } from './modules/socket-io/socket-io.module.js';
         SocketIOConfigService,
         MemoryClientConfigService,
       ],
+    }),
+    CoreLoggerModule.registerAsync({
+      global: true,
+      inject: [CoreLoggerConfigService],
+      useFactory: ({ config }: CoreLoggerConfigService) => config,
     }),
     SocketIOCoreModule.registerAsync({
       global: true,

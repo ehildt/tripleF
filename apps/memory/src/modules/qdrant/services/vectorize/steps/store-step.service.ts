@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { MemoryInsertLedgerRepository } from '../../../../persistence/services/memory-insert-ledger.repository.js';
 import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
@@ -8,7 +8,6 @@ import { MemoryRepository } from '../../memory.repository.js';
 import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
-import { VectorizeStepLogger } from '../vectorize-step-logger.service.js';
 
 /**
  * 'store' — assemble one point per extracted fact and upsert. The id is
@@ -19,9 +18,10 @@ import { VectorizeStepLogger } from '../vectorize-step-logger.service.js';
  */
 @Injectable()
 export class StoreStepService implements VectorizeStepHandler {
+  private readonly logger = new Logger(StoreStepService.name);
+
   constructor(
     private readonly memoryRepository: MemoryRepository,
-    private readonly stepLogger: VectorizeStepLogger,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
@@ -47,7 +47,19 @@ export class StoreStepService implements VectorizeStepHandler {
       requestId: ctx.requestId,
       points,
     });
-    this.stepLogger.log(ctx, 'store', `stored ${points.length} memory points`);
+    this.logger.log(
+      {
+        jobId: ctx.jobId,
+        requestId: ctx.requestId,
+        step: 'store',
+        points: points.map((point) => ({
+          id: point.id,
+          text: point.text,
+          tags: point.tags,
+        })),
+      },
+      `stored ${points.length} memory points`,
+    );
 
     // Ledger: one row per stored point — the sweep's incremental input.
     // Warn-and-continue: missing ledger rows degrade to no-sweep-coverage,
@@ -69,9 +81,8 @@ export class StoreStepService implements VectorizeStepHandler {
         this.config.consolidateThreshold
       ) {
         if (!this.config.consolidateModel) {
-          this.stepLogger.warn(
-            ctx,
-            'store',
+          this.logger.warn(
+            { jobId: ctx.jobId, requestId: ctx.requestId, step: 'store' },
             'consolidation auto-trigger skipped: MEMORY_CONSOLIDATE_MODEL unset',
           );
         } else {
@@ -82,12 +93,14 @@ export class StoreStepService implements VectorizeStepHandler {
         }
       }
     } catch (error) {
-      this.stepLogger.warn(
-        ctx,
-        'store',
-        `ledger write/auto-trigger skipped: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+      this.logger.warn(
+        {
+          jobId: ctx.jobId,
+          requestId: ctx.requestId,
+          step: 'store',
+          err: error instanceof Error ? error : new Error(String(error)),
+        },
+        'ledger write/auto-trigger skipped',
       );
     }
   }

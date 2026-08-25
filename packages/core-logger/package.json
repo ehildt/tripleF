@@ -1,8 +1,8 @@
 {
   "name": "@triplef/core-logger",
   "description": "A NestJS LoggerService backed by pino — structured logging with inline context rendering, error-stack preservation, and per-call onLog hooks.",
-  "version": "0.0.0",
-  "packageManager": "pnpm@11.23.0",
+  "version": "0.0.2",
+  "packageManager": "pnpm@11.24.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -54,11 +54,11 @@
     "@changesets/cli": "^3.0.1",
     "@eslint/js": "^10.0.1",
     "@types/eslint": "^9.6.1",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.3.0",
     "@vitest/coverage-v8": "4.1.11",
     "depcheck": "^1.4.7",
     "dependency-cruiser": "^18.2.0",
-    "eslint": "^10.9.0",
+    "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-simple-import-sort": "^14.0.0",
@@ -73,7 +73,7 @@
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.68.0",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {

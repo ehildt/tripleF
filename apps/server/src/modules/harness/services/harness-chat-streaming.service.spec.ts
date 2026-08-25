@@ -6,7 +6,6 @@ import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 
 import { HarnessChatStreamingService } from './harness-chat-streaming.service.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 describe('HarnessChatStreamingService', () => {
   let service: HarnessChatStreamingService;
@@ -31,10 +30,6 @@ describe('HarnessChatStreamingService', () => {
             streamChat: vi.fn(),
             generateChat: vi.fn(),
           },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: MinioService,

@@ -1,6 +1,5 @@
 import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
-import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
 import {
   type IntentResult,
   IntentSchema,
@@ -13,7 +12,6 @@ export function parseIntent(
   requestId: string,
   text: string,
   enabledToolNames: string[],
-  stepLogger: HarnessStepLogger,
 ): IntentResult {
   const cleaned = text
     .trim()
@@ -46,10 +44,6 @@ export function parseIntent(
     validated.tools = enforceRequiredTools(validated, enabledToolNames);
     return validated;
   } catch (error) {
-    stepLogger.warn({ requestId }, 'interpret', 'intent parse failed', {
-      rawOutput: text,
-      error: error instanceof Error ? error.message : String(error),
-    });
     throw new Error('Intent classification produced invalid JSON', {
       cause: error,
     });

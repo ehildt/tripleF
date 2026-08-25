@@ -192,6 +192,15 @@ export class MemoryConsolidateJobService {
       ...candidates.map((c) => c.id),
     ]);
     await this.ledger.markSwept([row.id]);
+    this.logger.log(
+      {
+        memoryPartition: data.memoryPartition,
+        pointId: id,
+        mergedText,
+        removedPointIds: [row.pointId, ...candidates.map((c) => c.id)],
+      },
+      'memory-consolidate merged records',
+    );
     return 'merged';
   }
 

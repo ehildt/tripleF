@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
 import { HarnessContext } from '../harness-context.type.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 import { ShownMediaService } from '../shown-media.service.js';
 
 import { RespondStepService } from './respond-step.service.js';
@@ -41,10 +40,6 @@ describe('RespondStepService', () => {
         {
           provide: SocketIOService,
           useValue: { emit: vi.fn(), emitTo: vi.fn() },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: MinioService,

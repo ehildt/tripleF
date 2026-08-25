@@ -19,10 +19,7 @@ function makeContext(overrides: Partial<HarnessContext> = {}): HarnessContext {
 describe('VectorizeStepService', () => {
   it('enqueues both turn sides with the turn model and session scope', async () => {
     const enqueueTurn = vi.fn().mockResolvedValue(undefined);
-    const step = new VectorizeStepService(
-      { enqueueTurn } as never,
-      { log: vi.fn() } as never,
-    );
+    const step = new VectorizeStepService({ enqueueTurn } as never);
 
     await step.execute(makeContext());
 
@@ -38,10 +35,7 @@ describe('VectorizeStepService', () => {
 
   it('passes a missing session id through (the enqueue service no-ops on it)', async () => {
     const enqueueTurn = vi.fn().mockResolvedValue(undefined);
-    const step = new VectorizeStepService(
-      { enqueueTurn } as never,
-      { log: vi.fn() } as never,
-    );
+    const step = new VectorizeStepService({ enqueueTurn } as never);
 
     await step.execute(makeContext({ sessionId: undefined }));
 
@@ -52,13 +46,8 @@ describe('VectorizeStepService', () => {
 
   it('never fails the turn when the enqueue service throws', async () => {
     const enqueueTurn = vi.fn().mockRejectedValue(new Error('queue down'));
-    const error = vi.fn();
-    const step = new VectorizeStepService(
-      { enqueueTurn } as never,
-      { log: vi.fn(), error } as never,
-    );
+    const step = new VectorizeStepService({ enqueueTurn } as never);
 
     await expect(step.execute(makeContext())).resolves.toBeUndefined();
-    expect(error).toHaveBeenCalledTimes(1);
   });
 });

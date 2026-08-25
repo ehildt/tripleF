@@ -6,7 +6,6 @@ import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
 import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import { HarnessContext } from '../harness-context.type.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 import { InterpretStepService } from './interpret-step.service.js';
 
@@ -49,10 +48,6 @@ describe('InterpretStepService', () => {
         {
           provide: AiSdkService,
           useValue: { generateChat: vi.fn() },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: MemoryClientService,

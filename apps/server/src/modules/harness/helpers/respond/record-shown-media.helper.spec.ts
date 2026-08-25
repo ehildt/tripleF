@@ -13,45 +13,39 @@ const shownMedia = {
   recordShownMedia: vi.fn(),
 };
 
-const stepLogger = {
-  log: vi.fn(),
-  warn: vi.fn(),
-};
-
 describe('recordShownMedia', () => {
   it('returns early when there is no data', async () => {
-    await recordShownMedia(
+    const result = await recordShownMedia(
       ctx,
       undefined,
       [],
       shownMedia as never,
-      stepLogger as never,
     );
     expect(shownMedia.recordShownMedia).not.toHaveBeenCalled();
+    expect(result).toEqual({ recordedCount: 0 });
   });
 
-  it('records shown media and logs on success', async () => {
+  it('records shown media and returns the count on success', async () => {
     shownMedia.recordShownMedia.mockResolvedValue(2);
-    await recordShownMedia(
+    const result = await recordShownMedia(
       ctx,
       { title: 'x' },
       [],
       shownMedia as never,
-      stepLogger as never,
     );
     expect(shownMedia.recordShownMedia).toHaveBeenCalled();
-    expect(stepLogger.log).toHaveBeenCalled();
+    expect(result).toEqual({ recordedCount: 2 });
   });
 
-  it('warns when recording fails', async () => {
+  it('returns the error when recording fails', async () => {
     shownMedia.recordShownMedia.mockRejectedValue(new Error('boom'));
-    await recordShownMedia(
+    const result = await recordShownMedia(
       ctx,
       { title: 'x' },
       [],
       shownMedia as never,
-      stepLogger as never,
     );
-    expect(stepLogger.warn).toHaveBeenCalled();
+    expect(result.recordedCount).toBe(0);
+    expect(result.error).toBeInstanceOf(Error);
   });
 });

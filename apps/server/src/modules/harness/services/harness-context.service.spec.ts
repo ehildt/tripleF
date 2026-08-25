@@ -9,7 +9,6 @@ import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 
 import { HarnessContextService } from './harness-context.service.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 import { StepRegistryService } from './step-registry.service.js';
 
 function createJob(payload: HarnessJobPayload): Job<HarnessJobPayload> {
@@ -48,14 +47,6 @@ describe('HarnessContextService', () => {
           provide: SharpService,
           useValue: {
             buildOptions: vi.fn().mockReturnValue(undefined),
-          },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: {
-            log: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
           },
         },
         {

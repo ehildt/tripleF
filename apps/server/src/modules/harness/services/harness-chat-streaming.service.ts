@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { MinioService } from '../../minio/services/minio.service.js';
 import { emitToSocket } from '../helpers/emit-to-socket.helper.js';
@@ -14,13 +14,13 @@ import { filterExistingGalleryItems } from '../helpers/media/filter-existing-gal
 import { IMAGE_TEMPLATES } from '../helpers/respond/build-execution-messages.helper.js';
 
 import { HarnessContext } from './harness-context.type.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 @Injectable()
 export class HarnessChatStreamingService {
+  private readonly logger = new Logger(HarnessChatStreamingService.name);
+
   constructor(
     private readonly io: SocketIOService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly minioService: MinioService,
   ) {}
 
@@ -40,9 +40,14 @@ export class HarnessChatStreamingService {
     );
 
     if (existing.length !== items.length) {
-      this.stepLogger.log(ctx, 'stream', 'dropped missing storage objects', {
-        removedCount: items.length - existing.length,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'stream',
+          removedCount: items.length - existing.length,
+        },
+        'dropped missing storage objects',
+      );
     }
 
     return existing;
@@ -119,20 +124,25 @@ export class HarnessChatStreamingService {
       variant: 'original' as const,
     }));
 
-    this.stepLogger.log(ctx, 'stream', 'result', {
-      sessionId: ctx.sessionId,
-      hasNewImages: ctx.hasNewImages,
-      template,
-      imageCount: ctx.processedMeta.length,
-      originalImageCount: originalMeta.length,
-      galleryItemCount: images.length,
-      availableImageCount: extractImageCountFromToolResults(
-        ctx.outputs.toolResults,
-      ),
-      availableVideoCount: extractVideoCountFromToolResults(
-        ctx.outputs.toolResults,
-      ),
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'stream',
+        sessionId: ctx.sessionId,
+        hasNewImages: ctx.hasNewImages,
+        template,
+        imageCount: ctx.processedMeta.length,
+        originalImageCount: originalMeta.length,
+        galleryItemCount: images.length,
+        availableImageCount: extractImageCountFromToolResults(
+          ctx.outputs.toolResults,
+        ),
+        availableVideoCount: extractVideoCountFromToolResults(
+          ctx.outputs.toolResults,
+        ),
+      },
+      'result',
+    );
 
     // The guarded response data (media membership enforced, shop offers
     // merged, local images injected) is authoritative for every mode —
@@ -155,13 +165,18 @@ export class HarnessChatStreamingService {
       done: true,
     };
 
-    this.stepLogger.log(ctx, 'stream', 'emitting final payload', {
-      hasDoneFlag: streamPayload.done === true,
-      hasPromptEvalCount: streamPayload.promptEvalCount != null,
-      hasEvalCount: streamPayload.evalCount != null,
-      hasData: streamPayload.data != null,
-      deltaLength: streamPayload.delta?.length ?? 0,
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'stream',
+        hasDoneFlag: streamPayload.done === true,
+        hasPromptEvalCount: streamPayload.promptEvalCount != null,
+        hasEvalCount: streamPayload.evalCount != null,
+        hasData: streamPayload.data != null,
+        deltaLength: streamPayload.delta?.length ?? 0,
+      },
+      'emitting final payload',
+    );
 
     await emitToSocket(this.io, ctx.roomId, ctx.event, streamPayload);
   }

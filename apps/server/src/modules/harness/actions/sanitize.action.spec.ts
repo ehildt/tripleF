@@ -5,7 +5,6 @@ import { MemoryClientService } from '../../memory-client/services/memory-client.
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ShownMediaService } from '../services/shown-media.service.js';
 
@@ -30,10 +29,6 @@ describe('SanitizeActionService', () => {
               sources: { preferred: [], blocked: [] },
             }),
           },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn() },
         },
         {
           provide: MediaUrlValidatorService,

@@ -11,7 +11,7 @@ import type { PostgresConfig } from '../../postgres/configs/postgres-config.adap
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
 
 /** One ledger row to write — the sweep's incremental input and the write-side audit trail. */
-export interface MemoryInsertLedgerRow {
+interface MemoryInsertLedgerRow {
   memoryPartition: string;
   pointId: string;
   role: 'user' | 'assistant';

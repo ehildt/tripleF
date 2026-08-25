@@ -5,7 +5,6 @@ import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import { ExecuteActionService } from './execute.action.js';
 
@@ -14,7 +13,6 @@ describe('ExecuteActionService', () => {
   let sharpService: SharpService;
   let aiSdkService: AiSdkService;
   let toolSelectionService: ToolSelectionService;
-  let stepLogger: HarnessStepLogger;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,14 +41,6 @@ describe('ExecuteActionService', () => {
           provide: OllamaConfigService,
           useValue: { config: { keepAlive: '5m' } },
         },
-        {
-          provide: HarnessStepLogger,
-          useValue: {
-            log: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
-          },
-        },
       ],
     }).compile();
 
@@ -59,7 +49,6 @@ describe('ExecuteActionService', () => {
     aiSdkService = module.get<AiSdkService>(AiSdkService);
     toolSelectionService =
       module.get<ToolSelectionService>(ToolSelectionService);
-    stepLogger = module.get<HarnessStepLogger>(HarnessStepLogger);
   });
 
   function createContext(
@@ -488,12 +477,6 @@ describe('ExecuteActionService', () => {
     await service.execute(ctx);
 
     expect(executeSpy).not.toHaveBeenCalled();
-    expect(stepLogger.warn).toHaveBeenCalledWith(
-      expect.anything(),
-      'execute',
-      'skipped missing tools',
-      { tools: ['serperWebSearch'] },
-    );
   });
 
   it('attaches images to the latest user message for image tasks', async () => {

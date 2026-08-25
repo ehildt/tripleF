@@ -1,6 +1,6 @@
 import { MultipartFile } from '@fastify/multipart';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { hashPayload } from '@triplef/helpers/hash-payload';
 import { Job, Queue } from 'bullmq';
 
@@ -13,16 +13,16 @@ import {
 import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.helper.js';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 @Injectable()
 export class HarnessQueueService {
+  private readonly logger = new Logger(HarnessQueueService.name);
+
   constructor(
     @InjectQueue(HARNESS_QUEUE)
     private readonly queue: Queue,
     private readonly minioService: MinioService,
     private readonly cancellationService: HarnessCancellationService,
-    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   async toFilePayloads(
@@ -61,11 +61,13 @@ export class HarnessQueueService {
         req.meta.filter(Boolean),
       );
     } catch (err) {
-      this.stepLogger.error(
-        { requestId },
-        'queue',
+      this.logger.error(
+        {
+          requestId,
+          step: 'queue',
+          err: err instanceof Error ? err : new Error(String(err)),
+        },
         `Failed to upload buffers to MinIO for job ${requestId}`,
-        err,
       );
       return undefined;
     }
@@ -80,20 +82,27 @@ export class HarnessQueueService {
     try {
       job = await this.queue.add(requestId, payload);
     } catch (err) {
-      this.stepLogger.error(
-        { requestId },
-        'queue',
+      this.logger.error(
+        {
+          requestId,
+          step: 'queue',
+          err: err instanceof Error ? err : new Error(String(err)),
+        },
         `Failed to add job ${requestId} to queue`,
-        err,
       );
       try {
         await this.minioService.deleteBuffers(requestId);
       } catch (cleanupErr) {
-        this.stepLogger.error(
-          { requestId },
-          'queue',
+        this.logger.error(
+          {
+            requestId,
+            step: 'queue',
+            err:
+              cleanupErr instanceof Error
+                ? cleanupErr
+                : new Error(String(cleanupErr)),
+          },
           `Failed to clean up MinIO buffers for ${requestId}`,
-          cleanupErr,
         );
       }
       return undefined;
@@ -114,11 +123,13 @@ export class HarnessQueueService {
         return true;
       }
     } catch (err) {
-      this.stepLogger.error(
-        { requestId },
-        'queue',
+      this.logger.error(
+        {
+          requestId,
+          step: 'queue',
+          err: err instanceof Error ? err : new Error(String(err)),
+        },
         `Failed to cancel job ${requestId}`,
-        err,
       );
     }
 

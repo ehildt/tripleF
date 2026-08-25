@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { ToolResult } from '../../ai-sdk/types/ai-sdk-params.types.js';
@@ -57,7 +57,6 @@ import { scrubBrokenUrlsFromMessages } from '../helpers/sanitize/scrub-broken-ur
 import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import {
   isShownImage,
@@ -104,10 +103,11 @@ const COGNITION_PROBE_LIMIT = 3;
 
 @Injectable()
 export class SanitizeActionService {
+  private readonly logger = new Logger(SanitizeActionService.name);
+
   constructor(
     private readonly mediaUrlValidator: MediaUrlValidatorService,
     private readonly cloudImageIngestion: CloudImageIngestionService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly providerOverrides: ProviderOverridesService,
     private readonly shownMedia: ShownMediaService,
     private readonly sharpService: SharpService,
@@ -164,14 +164,14 @@ export class SanitizeActionService {
       await dedupeImagesByFingerprint(verifiedImages);
 
     if (removedDuplicateImages > 0) {
-      this.stepLogger.log(
-        ctx,
-        'sanitize',
-        'deduplicated images by content hash',
+      this.logger.log(
         {
+          requestId: ctx.requestId,
+          step: 'sanitize',
           removedDuplicateImages,
           remainingImages: dedupedImages.length,
         },
+        'deduplicated images by content hash',
       );
     }
 
@@ -238,14 +238,14 @@ export class SanitizeActionService {
       (ingestion.ingestedForRewrite ?? []).map((img) => img.sourceUrl),
     );
     if (droppedImageUrls.size > 0) {
-      this.stepLogger.warn(
-        ctx,
-        'sanitize',
-        'dropped un-ingestable external images',
+      this.logger.warn(
         {
+          requestId: ctx.requestId,
+          step: 'sanitize',
           droppedCount: droppedImageUrls.size,
           sampledUrls: Array.from(droppedImageUrls).slice(0, 5),
         },
+        'dropped un-ingestable external images',
       );
     }
 
@@ -279,11 +279,16 @@ export class SanitizeActionService {
     const reviews = extractReviews(finalToolResults);
     const places = extractPlaces(finalToolResults);
 
-    this.stepLogger.log(ctx, 'sanitize', 'shop data extracted', {
-      shopOfferCount: shopOffers.length,
-      reviewCount: reviews.length,
-      placeCount: places.length,
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'sanitize',
+        shopOfferCount: shopOffers.length,
+        reviewCount: reviews.length,
+        placeCount: places.length,
+      },
+      'shop data extracted',
+    );
 
     // 7. Language partition: reliably detected foreign-language articles and
     //    videos leave the primary pools for the international aside. Nothing
@@ -310,11 +315,16 @@ export class SanitizeActionService {
     );
 
     if (internationalArticles.length || internationalVideos.length) {
-      this.stepLogger.log(ctx, 'sanitize', 'language partition applied', {
-        userLang,
-        internationalArticleCount: internationalArticles.length,
-        internationalVideoCount: internationalVideos.length,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'sanitize',
+          userLang,
+          internationalArticleCount: internationalArticles.length,
+          internationalVideoCount: internationalVideos.length,
+        },
+        'language partition applied',
+      );
     }
 
     // The AI's cognition of this user is always-on context for the respond
@@ -506,10 +516,15 @@ export class SanitizeActionService {
 
     const removedCount = dedupedImages.length - fresh.length;
     if (removedCount > 0) {
-      this.stepLogger.log(ctx, 'sanitize', 'skipped previously shown images', {
-        removedCount,
-        remainingCount: fresh.length,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'sanitize',
+          removedCount,
+          remainingCount: fresh.length,
+        },
+        'skipped previously shown images',
+      );
     }
 
     return fresh.map(({ item }) => item);
@@ -541,10 +556,15 @@ export class SanitizeActionService {
 
     const removedCount = videos.length - fresh.length;
     if (removedCount > 0) {
-      this.stepLogger.log(ctx, 'sanitize', 'skipped previously shown videos', {
-        removedCount,
-        remainingCount: fresh.length,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'sanitize',
+          removedCount,
+          remainingCount: fresh.length,
+        },
+        'skipped previously shown videos',
+      );
     }
 
     return fresh;
@@ -592,10 +612,15 @@ export class SanitizeActionService {
 
     const removedCount = verifiedImages.length - fresh.length;
     if (removedCount > 0) {
-      this.stepLogger.log(ctx, 'sanitize', 'skipped previously shown images', {
-        removedCount,
-        remainingCount: fresh.length,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'sanitize',
+          removedCount,
+          remainingCount: fresh.length,
+        },
+        'skipped previously shown images',
+      );
     }
 
     return fresh;
@@ -669,14 +694,14 @@ export class SanitizeActionService {
     ].map((r) => r.url);
 
     if (broken.length > 0) {
-      this.stepLogger.log(
-        ctx,
-        'sanitize',
-        'removed broken or undersized image urls',
+      this.logger.log(
         {
+          requestId: ctx.requestId,
+          step: 'sanitize',
           brokenCount: broken.length,
           sampledUrls: broken.slice(0, 5),
         },
+        'removed broken or undersized image urls',
       );
     }
 
@@ -703,10 +728,15 @@ export class SanitizeActionService {
     const broken = results.filter((r) => r.kind !== 'image').map((r) => r.url);
 
     if (broken.length > 0) {
-      this.stepLogger.log(ctx, 'sanitize', 'removed broken video thumbnails', {
-        brokenCount: broken.length,
-        sampledUrls: broken.slice(0, 5),
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'sanitize',
+          brokenCount: broken.length,
+          sampledUrls: broken.slice(0, 5),
+        },
+        'removed broken video thumbnails',
+      );
     }
 
     return new Set(broken);
@@ -733,10 +763,15 @@ export class SanitizeActionService {
     const broken = results.filter((r) => r.kind === 'broken').map((r) => r.url);
 
     if (broken.length > 0) {
-      this.stepLogger.log(ctx, 'sanitize', 'removed dead article page urls', {
-        brokenCount: broken.length,
-        sampledUrls: broken.slice(0, 5),
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'sanitize',
+          brokenCount: broken.length,
+          sampledUrls: broken.slice(0, 5),
+        },
+        'removed dead article page urls',
+      );
     }
 
     return new Set(broken);

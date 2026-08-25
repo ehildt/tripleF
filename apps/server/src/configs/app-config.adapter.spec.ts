@@ -9,7 +9,6 @@ describe('AppConfigAdapter', () => {
       NODE_ENV: 'development',
       PORT: '3000',
       BODY_LIMIT: '1024',
-      LOG_LEVEL: 'warn',
       PRINT_CONFIG: 'true',
       ENABLE_SWAGGER: 'false',
       CORS_ORIGIN: 'https://example.com',
@@ -25,7 +24,6 @@ describe('AppConfigAdapter', () => {
       nodeEnv: 'development',
       port: 3000,
       bodyLimit: 1024,
-      logLevel: ['warn'],
       printConfig: true,
       enableSwagger: false,
       health: {
@@ -87,7 +85,6 @@ describe('AppConfigAdapter', () => {
     expect(config.bodyLimit).toBe(0);
     expect(config.printConfig).toBe(false);
     expect(config.enableSwagger).toBe(false);
-    expect(config.logLevel).toEqual([]);
     expect(config.cors).toBeUndefined();
   });
 

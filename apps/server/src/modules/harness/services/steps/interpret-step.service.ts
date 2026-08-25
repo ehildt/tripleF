@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { AiSdkService } from '../../../ai-sdk/services/ai-sdk.service.js';
 import {
@@ -19,7 +19,6 @@ import { buildMemoryProbeSection } from '../../helpers/interpret/build-memory-pr
 import type { IntentResult } from '../../templates/intent.schema.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 const IMAGE_REQUIRED_TEMPLATES = new Set(['describe', 'compare', 'ocr']);
 
@@ -41,11 +40,12 @@ const IMAGE_REQUIRED_TEMPLATE_FALLBACKS: Record<
 
 @Injectable()
 export class InterpretStepService implements StepHandler {
+  private readonly logger = new Logger(InterpretStepService.name);
+
   constructor(
     private readonly interpretAction: InterpretActionService,
     private readonly io: SocketIOService,
     private readonly aiSdkService: AiSdkService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly memoryClient: MemoryClientService,
   ) {}
 
@@ -104,22 +104,32 @@ export class InterpretStepService implements StepHandler {
     ctx.outputs.outputTokens = outputTokens;
 
     if (intent.needsClarification && intent.clarificationQuestion) {
-      this.stepLogger.log(ctx, 'interpret', 'model asked clarifying question', {
-        clarificationQuestion: intent.clarificationQuestion,
-        language: intent.language,
-        template: intent.template,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'interpret',
+          clarificationQuestion: intent.clarificationQuestion,
+          language: intent.language,
+          template: intent.template,
+        },
+        'model asked clarifying question',
+      );
       ctx.done = true;
       ctx.doneReason = 'clarification';
     } else {
-      this.stepLogger.log(ctx, 'interpret', 'intent final', {
-        language: intent.language,
-        template: intent.template,
-        prompt: intent.prompt,
-        tools: intent.tools,
-        contextSummary: intent.contextSummary,
-        needsClarification: intent.needsClarification,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'interpret',
+          language: intent.language,
+          template: intent.template,
+          prompt: intent.prompt,
+          tools: intent.tools,
+          contextSummary: intent.contextSummary,
+          needsClarification: intent.needsClarification,
+        },
+        'intent final',
+      );
     }
   }
 
@@ -194,33 +204,37 @@ export class InterpretStepService implements StepHandler {
     } catch (error) {
       // A failed second pass must not turn a clarification into a hard error
       // — fall back to the first-pass question.
-      this.stepLogger.warn(
-        ctx,
-        'interpret',
+      this.logger.warn(
+        {
+          requestId: ctx.requestId,
+          step: 'interpret',
+          err: error instanceof Error ? error : new Error(String(error)),
+        },
         'memory-probe reinterpret failed; keeping clarification',
-        { error: error instanceof Error ? error.message : String(error) },
       );
       return undefined;
     }
 
     if (result.intent.needsClarification) {
-      this.stepLogger.log(
-        ctx,
-        'interpret',
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'interpret',
+          probeHits: hits.length,
+        },
         'memory probe did not resolve ambiguity',
-        { probeHits: hits.length },
       );
       return undefined;
     }
 
-    this.stepLogger.log(
-      ctx,
-      'interpret',
-      'ambiguity resolved from memory probe',
+    this.logger.log(
       {
+        requestId: ctx.requestId,
+        step: 'interpret',
         probeHits: hits.length,
         template: result.intent.template,
       },
+      'ambiguity resolved from memory probe',
     );
     return {
       intent: result.intent,
@@ -340,10 +354,15 @@ export class InterpretStepService implements StepHandler {
     // the prompt's guardrail: downgrade to a text template instead of asking
     // the user to attach an image they never intended to send.
     const fallbackTemplate = IMAGE_REQUIRED_TEMPLATE_FALLBACKS[intent.template];
-    this.stepLogger.warn(ctx, 'interpret', 'image-only template downgraded', {
-      template: intent.template,
-      fallbackTemplate,
-    });
+    this.logger.warn(
+      {
+        requestId: ctx.requestId,
+        step: 'interpret',
+        template: intent.template,
+        fallbackTemplate,
+      },
+      'image-only template downgraded',
+    );
     intent.template = fallbackTemplate;
     intent.prompt = 'default';
     intent.plan = {};
@@ -388,15 +407,15 @@ export class InterpretStepService implements StepHandler {
       const trimmed = text.trim();
       return trimmed || englishQuestion;
     } catch (error) {
-      this.stepLogger.warn(
-        ctx,
-        'interpret',
-        'clarification localization failed; using original text',
+      this.logger.warn(
         {
+          requestId: ctx.requestId,
+          step: 'interpret',
           language,
           original: englishQuestion,
-          error: error instanceof Error ? error.message : String(error),
+          err: error instanceof Error ? error : new Error(String(error)),
         },
+        'clarification localization failed; using original text',
       );
       return englishQuestion;
     }

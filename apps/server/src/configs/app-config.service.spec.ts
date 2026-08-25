@@ -4,7 +4,6 @@ process.env.NODE_ENV = 'local';
 process.env.PRINT_CONFIG = 'true';
 process.env.ENABLE_SWAGGER = 'true';
 process.env.BODY_LIMIT = '104857600';
-process.env.LOG_LEVEL = 'warn';
 process.env.CORS_ORIGIN = '*';
 process.env.CORS_METHODS = 'GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE';
 process.env.CORS_PREFLIGHT_CONTINUE = 'false';

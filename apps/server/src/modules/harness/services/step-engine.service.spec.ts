@@ -4,7 +4,6 @@ import { vi } from 'vitest';
 import { HarnessContext, StepId, StepState } from './harness-context.type.js';
 import { StepHandler } from './harness-step.interface.js';
 import { HarnessStepEngineService } from './harness-step-engine.service.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 import { StepRegistryService } from './step-registry.service.js';
 
 function createContext(partial: Partial<HarnessContext> = {}): HarnessContext {
@@ -30,14 +29,7 @@ describe('HarnessStepEngineService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        HarnessStepEngineService,
-        StepRegistryService,
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
-        },
-      ],
+      providers: [HarnessStepEngineService, StepRegistryService],
     }).compile();
 
     service = module.get<HarnessStepEngineService>(HarnessStepEngineService);
