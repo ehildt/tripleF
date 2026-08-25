@@ -13,7 +13,11 @@
     "**/depbadgerc.type.ts",
     "**/vitest.config.ts",
     "src/index.ts",
-    "src/core-logger/index.ts"
+    "src/core-logger/index.ts",
+    "src/core-logger/core-logger.module.ts",
+    "src/core-logger/core-logger.schema.ts",
+    "src/core-logger/core-logger.service.ts",
+    "src/core-logger/core-logger.service.types.ts"
   ],
   "extends": "./tsconfig.json"
 }

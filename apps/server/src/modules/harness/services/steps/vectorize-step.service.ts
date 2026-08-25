@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { MemoryEnqueueService } from '../../../memory-client/services/memory-enqueue.service.js';
 import { buildResponseExtractionText } from '../../helpers/extraction/build-response-extraction-text.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 /**
  * The memory write step: fire-and-forget enqueue of both turn sides into the
@@ -20,10 +19,9 @@ import { HarnessStepLogger } from '../harness-step-logger.service.js';
  */
 @Injectable()
 export class VectorizeStepService implements StepHandler {
-  constructor(
-    private readonly memoryEnqueueService: MemoryEnqueueService,
-    private readonly stepLogger: HarnessStepLogger,
-  ) {}
+  private readonly logger = new Logger(VectorizeStepService.name);
+
+  constructor(private readonly memoryEnqueueService: MemoryEnqueueService) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
     try {
@@ -42,13 +40,18 @@ export class VectorizeStepService implements StepHandler {
           data: ctx.outputs.finalData,
         }),
       });
-      this.stepLogger.log(ctx, 'vectorize', 'memory write enqueued');
+      this.logger.log(
+        { requestId: ctx.requestId, step: 'vectorize' },
+        'memory write enqueued',
+      );
     } catch (error) {
-      this.stepLogger.error(
-        ctx,
-        'vectorize',
+      this.logger.error(
+        {
+          requestId: ctx.requestId,
+          step: 'vectorize',
+          err: error instanceof Error ? error : new Error(String(error)),
+        },
         `memory write enqueue failed for ${ctx.requestId}`,
-        error,
       );
     }
   }

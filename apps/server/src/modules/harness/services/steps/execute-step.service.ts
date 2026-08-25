@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { ExecuteActionService } from '../../actions/execute.action.js';
 import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
@@ -10,14 +10,14 @@ import {
 } from '../../helpers/harness-activity.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 @Injectable()
 export class ExecuteStepService implements StepHandler {
+  private readonly logger = new Logger(ExecuteStepService.name);
+
   constructor(
     private readonly executeAction: ExecuteActionService,
     private readonly io: SocketIOService,
-    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
@@ -45,14 +45,19 @@ export class ExecuteStepService implements StepHandler {
       ctx.outputs.outputTokens = result.outputTokens;
     }
 
-    this.stepLogger.log(ctx, 'execute', 'tools executed', {
-      model: ctx.model,
-      imageCount: ctx.buffers.length,
-      imageHashes: ctx.processedMeta.map((m) => m.hash),
-      toolCount: result.toolResults.length,
-      inputTokens: result.inputTokens,
-      outputTokens: result.outputTokens,
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'execute',
+        model: ctx.model,
+        imageCount: ctx.buffers.length,
+        imageHashes: ctx.processedMeta.map((m) => m.hash),
+        toolCount: result.toolResults.length,
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens,
+      },
+      'tools executed',
+    );
   }
 
   /**

@@ -6,6 +6,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { SwaggerModule } from '@nestjs/swagger';
+import { CoreLoggerService } from '@triplef/core-logger';
 import {
   API_DOCS,
   getBodyLimit,
@@ -15,23 +16,28 @@ import {
   SWAGGER_DOCUMENT,
   VALIDATION_PIPE,
 } from '@triplef/helpers/bootstrap';
+import { createCoreLoggerOptions } from '@triplef/helpers/logger-options';
 
 import { AppConfigService } from './configs/app-config.service.js';
-import { PinoLoggerService } from './modules/pino-logger/services/pino-logger.service.js';
 import { MemoryModule } from './main.module.js';
 
 process.on('unhandledRejection', (reason) => {
   const log = new Logger('UnhandledRejection');
-  log.warn(reason instanceof Error ? reason.message : String(reason));
+  log.error(reason instanceof Error ? reason : new Error(String(reason)));
 });
 process.on('uncaughtException', (error) => {
   const log = new Logger('UncaughtException');
-  log.warn(error.message);
+  log.error(error);
+  process.exit(1);
 });
 
 void (async () => {
   const adapter = new FastifyAdapter({
     bodyLimit: getBodyLimit(process.env.BODY_LIMIT),
+    // Fastify's built-in pino request logger — same options (level, redact,
+    // pretty/JSON) as the app-wide core logger, so every request emits a
+    // structured completion line (method, url, statusCode, responseTime).
+    logger: createCoreLoggerOptions(process.env),
   });
 
   const APP = await NestFactory.create<NestFastifyApplication>(
@@ -40,7 +46,15 @@ void (async () => {
     { bufferLogs: true },
   );
 
-  APP.useLogger(APP.get(PinoLoggerService));
+  APP.useLogger(APP.get(CoreLoggerService));
+
+  // Health probes poll constantly — silence their request logs.
+  APP.getHttpAdapter()
+    .getInstance()
+    .addHook('onRequest', (request, _reply, done) => {
+      if (request.url.includes('/health')) request.log.level = 'silent';
+      done();
+    });
 
   const appConfigService = APP.get(AppConfigService);
   await APP.register(compress as any, {

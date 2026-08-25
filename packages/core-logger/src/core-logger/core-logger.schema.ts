@@ -16,7 +16,7 @@ export const CoreLoggerSchema = Joi.object({
       ignore: Joi.string().default('pid,hostname,context'),
       singleLine: Joi.boolean().default(false),
       colorizeObjects: Joi.boolean().default(true),
-      messageFormat: Joi.func().optional(),
+      messageFormat: Joi.alternatives(Joi.string(), Joi.func()).optional(),
     }).required(),
   }).optional(),
 }).unknown(true);

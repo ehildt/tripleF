@@ -8,7 +8,6 @@ import { MinioService } from '../../minio/services/minio.service.js';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessQueueService } from './harness-queue.service.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 vi.mock('../helpers/media/build-image-fingerprint.helper.js', () => ({
   buildImageFingerprint: vi.fn().mockResolvedValue('fingerprint'),
@@ -41,14 +40,6 @@ describe('HarnessQueueService', () => {
           provide: HarnessCancellationService,
           useValue: {
             cancel: vi.fn().mockReturnValue(false),
-          },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: {
-            log: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
           },
         },
       ],

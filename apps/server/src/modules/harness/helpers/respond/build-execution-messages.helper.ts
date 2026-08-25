@@ -23,19 +23,24 @@ export type CloudReferenceImage = {
   title?: string;
   buffer: Buffer;
 };
+
+/** History-selection summary the caller logs after building the messages. */
+export interface HistorySelection {
+  mode: string;
+  keptCount: number;
+  droppedCount: number;
+}
+
+interface BuildExecutionMessagesResult {
+  messages: InputMessage[];
+  historySelection?: HistorySelection;
+}
+
 /** Assemble the system + context messages the response model sees. */
 export function buildExecutionMessages(
   params: BuildExecutionMessagesParams,
-): InputMessage[] {
-  const {
-    requestId,
-    intent,
-    messages,
-    availableImages,
-    sources,
-    stepLogger,
-    language,
-  } = params;
+): BuildExecutionMessagesResult {
+  const { intent, messages, availableImages, sources, language } = params;
 
   const isImageTask = IMAGE_TEMPLATES.includes(intent.template);
   const requiredKeys = getRequiredKeys(intent.template);
@@ -68,17 +73,18 @@ export function buildExecutionMessages(
       template: intent.template,
     });
 
-    stepLogger.log({ requestId }, 'respond', 'history selected', {
-      mode: selection.mode,
-      keptCount: selection.messages.length,
-      droppedCount: nonSystemMessages.length - selection.messages.length,
-    });
-
-    return [
-      { role: 'system', content: executionSystem },
-      ...systemMessages,
-      ...selection.messages,
-    ];
+    return {
+      messages: [
+        { role: 'system', content: executionSystem },
+        ...systemMessages,
+        ...selection.messages,
+      ],
+      historySelection: {
+        mode: selection.mode,
+        keptCount: selection.messages.length,
+        droppedCount: nonSystemMessages.length - selection.messages.length,
+      },
+    };
   }
 
   const contextMessages = buildImageContextMessages(
@@ -87,11 +93,13 @@ export function buildExecutionMessages(
     cloudReferenceImages,
   );
 
-  return [
-    { role: 'system', content: executionSystem },
-    ...systemMessages,
-    ...contextMessages,
-  ];
+  return {
+    messages: [
+      { role: 'system', content: executionSystem },
+      ...systemMessages,
+      ...contextMessages,
+    ],
+  };
 }
 
 /**

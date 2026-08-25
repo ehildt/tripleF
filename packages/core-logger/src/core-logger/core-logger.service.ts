@@ -89,6 +89,12 @@ export class CoreLoggerService implements LoggerService {
   private normalizeArgs(level: PinoLogMethod, first: unknown, rest: unknown[]): NormalizedArgs {
     if (first === undefined || first === null) return { rest };
     if (typeof first === 'string') return this.normalizeStringArgs(level, first, rest);
+    if (first instanceof Error) {
+      // error(new Error('boom'), ...) — the Error is the `err` binding and its
+      // message is the log message; a trailing string is still the context.
+      const { meta, rest: remaining } = this.extractContext(rest, { err: first });
+      return { meta, msg: first.message, rest: remaining };
+    }
 
     if (this.isPlainObject(first)) {
       // log({ meta, onLog }, 'message', ...)
@@ -101,15 +107,25 @@ export class CoreLoggerService implements LoggerService {
   }
 
   private normalizeStringArgs(level: PinoLogMethod, first: string, rest: unknown[]): NormalizedArgs {
-    if (rest.length > 0 && this.isPlainObject(rest[0]))
+    if (rest.length > 0 && this.isPlainObject(rest[0]) && !(rest[0] instanceof Error))
       // log('message', { meta, onLog })
       return this.splitMeta(rest[0] as LogMeta, first, rest.slice(1));
 
-    // Error stack: NestJS error(message, stack?, context?) — detect the
-    // stack string before context so a bare stack isn't mistaken for it.
     let remaining = rest;
     let meta: Record<string, unknown> | undefined;
-    if (level === 'error') {
+
+    // Error instance: attach as `err` so pino's serializer emits type,
+    // message, and stack — an Error has no enumerable own props, so the
+    // meta-object branch above would otherwise flatten it to nothing.
+    const errorIndex = remaining.findIndex((arg) => arg instanceof Error);
+    if (errorIndex >= 0) {
+      meta = { err: remaining[errorIndex] as Error };
+      remaining = remaining.filter((_, index) => index !== errorIndex);
+    }
+
+    // Error stack string: NestJS error(message, stack?, context?) — detect
+    // the stack string before context so a bare stack isn't mistaken for it.
+    if (level === 'error' && !meta) {
       const stackIndex = remaining.findIndex((arg) => this.isStackTrace(arg));
       if (stackIndex >= 0) {
         meta = { err: remaining[stackIndex] as string };
@@ -118,14 +134,23 @@ export class CoreLoggerService implements LoggerService {
     }
 
     // NestJS pattern: log('message', ..., 'Context')
-    const contextIndex = this.findLastStringIndex(remaining);
-    if (contextIndex >= 0) {
-      const context = remaining[contextIndex] as string;
-      remaining = remaining.filter((_, index) => index !== contextIndex);
-      meta = { ...(meta ?? {}), context };
-    }
+    const { meta: withContext, rest: remainingArgs } = this.extractContext(remaining, meta);
 
-    return { meta, msg: first, rest: remaining };
+    return { meta: withContext, msg: first, rest: remainingArgs };
+  }
+
+  /** Pulls the trailing context string out of the args, merging it into meta. */
+  private extractContext(
+    args: unknown[],
+    meta: Record<string, unknown> | undefined,
+  ): { meta: Record<string, unknown> | undefined; rest: unknown[] } {
+    const contextIndex = this.findLastStringIndex(args);
+    if (contextIndex < 0) return { meta, rest: args };
+    const context = args[contextIndex] as string;
+    return {
+      meta: { ...(meta ?? {}), context },
+      rest: args.filter((_, index) => index !== contextIndex),
+    };
   }
 
   /** Splits the reserved `onLog` key out of a user meta object. */

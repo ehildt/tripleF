@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ExecuteActionService } from '../../actions/execute.action.js';
 import { HarnessContext } from '../harness-context.type.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 import { ExecuteStepService } from './execute-step.service.js';
 
@@ -43,10 +42,6 @@ describe('ExecuteStepService', () => {
             emit: vi.fn(),
             emitTo: vi.fn(),
           },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
         },
       ],
     }).compile();

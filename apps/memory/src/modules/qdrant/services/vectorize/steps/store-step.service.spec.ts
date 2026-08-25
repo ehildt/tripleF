@@ -33,7 +33,6 @@ function makeStep() {
   };
   const step = new StoreStepService(
     { upsertBatch } as never,
-    { log: vi.fn(), warn: vi.fn() } as never,
     ledger as never,
     memoryEnqueue as never,
     { consolidateThreshold: 50 } as never,

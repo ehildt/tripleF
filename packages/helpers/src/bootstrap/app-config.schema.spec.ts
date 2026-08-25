@@ -9,7 +9,6 @@ describe('AppConfigSchema', () => {
       address: '127.0.0.1',
       port: 3000,
       nodeEnv: 'development',
-      logLevel: ['debug'],
       cors: {
         origin: 'https://example.com',
         methods: 'GET,POST',
@@ -42,7 +41,6 @@ describe('AppConfigSchema', () => {
       address: 'invalid-ip',
       port: 3000,
       nodeEnv: 'development',
-      logLevel: ['debug'],
     });
     expect(error).toBeDefined();
     expect(error?.details.some((d) => d.message.includes('address'))).toBe(true);
@@ -56,7 +54,6 @@ describe('AppConfigSchema', () => {
       address: '127.0.0.1',
       port: 70000, // invalid port
       nodeEnv: 'development',
-      logLevel: ['debug'],
     });
     expect(error).toBeDefined();
     expect(error?.details.some((d) => d.message.includes('port'))).toBe(true);

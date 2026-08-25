@@ -1,6 +1,7 @@
 import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { CoreLoggerService } from '@triplef/core-logger';
 import { Job, UnrecoverableError } from 'bullmq';
 
 import {
@@ -8,7 +9,6 @@ import {
   VECTORIZE_WORKER_CONCURRENCY,
 } from '../../bullmq/constants/bullmq.constants.js';
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
-import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import {
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_PROFILE_JOB,
@@ -50,7 +50,7 @@ import { VectorizeStepRegistryService } from '../services/vectorize/vectorize-st
 export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
   constructor(
     private readonly bullMQLogger: BullMQLoggerService,
-    private readonly logger: PinoLoggerService,
+    private readonly logger: CoreLoggerService,
     private readonly stepEngine: VectorizeStepEngineService,
     private readonly stepRegistryService: VectorizeStepRegistryService,
     private readonly extractStep: ExtractStepService,

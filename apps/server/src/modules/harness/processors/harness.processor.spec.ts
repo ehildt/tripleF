@@ -1,17 +1,16 @@
 import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CoreLoggerService } from '@triplef/core-logger';
 import { Job } from 'bullmq';
 import { vi } from 'vitest';
 
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
-import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { HarnessCancellationService } from '../services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
 import { HarnessContextService } from '../services/harness-context.service.js';
 import { HarnessStepEngineService } from '../services/harness-step-engine.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { StepRegistryService } from '../services/step-registry.service.js';
 import { ExecuteStepService } from '../services/steps/execute-step.service.js';
 import { InterpretStepService } from '../services/steps/interpret-step.service.js';
@@ -64,7 +63,7 @@ describe('HarnessProcessor', () => {
           },
         },
         {
-          provide: PinoLoggerService,
+          provide: CoreLoggerService,
           useValue: {
             log: vi.fn(),
             warn: vi.fn(),
@@ -143,14 +142,6 @@ describe('HarnessProcessor', () => {
           provide: VectorizeStepService,
           useValue: {
             execute: vi.fn(),
-          },
-        },
-        {
-          provide: HarnessStepLogger,
-          useValue: {
-            log: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
           },
         },
         {

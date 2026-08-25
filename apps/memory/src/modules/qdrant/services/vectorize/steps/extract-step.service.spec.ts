@@ -22,13 +22,11 @@ function makeCtx(overrides: Partial<VectorizeContext> = {}): VectorizeContext {
 
 function makeStep() {
   const generateChat = vi.fn();
-  const logger = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
   const step = new ExtractStepService(
     { generateChat } as never,
-    logger as never,
     { searchByText: vi.fn().mockResolvedValue([]) } as never,
   );
-  return { step, generateChat, logger };
+  return { step, generateChat };
 }
 
 describe('ExtractStepService', () => {
@@ -91,7 +89,7 @@ describe('ExtractStepService', () => {
   });
 
   it('degrades to empty when correction still fails', async () => {
-    const { step, generateChat, logger } = makeStep();
+    const { step, generateChat } = makeStep();
     generateChat.mockResolvedValue({ text: 'not json at all' });
 
     const ctx = makeCtx();
@@ -99,7 +97,6 @@ describe('ExtractStepService', () => {
 
     expect(generateChat).toHaveBeenCalledTimes(2);
     expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
-    expect(logger.warn).toHaveBeenCalledTimes(1);
   });
 
   it('degrades immediately when the LLM call itself fails', async () => {

@@ -18,7 +18,6 @@ import { HarnessChatStreamingService } from './services/harness-chat-streaming.s
 import { HarnessContextService } from './services/harness-context.service.js';
 import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
-import { HarnessStepLogger } from './services/harness-step-logger.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
 import { ShownMediaService } from './services/shown-media.service.js';
@@ -41,7 +40,6 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
     HarnessContextService,
     HarnessQueueService,
     HarnessStepEngineService,
-    HarnessStepLogger,
     StepRegistryService,
     InterpretStepService,
     InterpretActionService,
@@ -68,7 +66,6 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
     HarnessContextService,
     HarnessQueueService,
     HarnessStepEngineService,
-    HarnessStepLogger,
     StepRegistryService,
     InterpretStepService,
     InterpretActionService,

@@ -1,14 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
-import { HarnessStepLogger } from './harness-step-logger.service.js';
 
 function createService() {
-  const stepLogger = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
-  const service = new HarnessCancellationService(
-    stepLogger as unknown as HarnessStepLogger,
-  );
-  return { service, stepLogger };
+  const service = new HarnessCancellationService();
+  return { service };
 }
 
 describe('HarnessCancellationService', () => {

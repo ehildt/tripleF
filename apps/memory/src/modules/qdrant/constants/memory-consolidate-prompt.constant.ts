@@ -23,7 +23,7 @@ OUTPUT FORMAT — output ONLY valid JSON: {"verdict": "keep" | "redundant" | "me
 No markdown fences, no explanations. mergedText is required with verdict "merge" and omitted otherwise.`;
 
 /** One provenance-labeled record line — the adjudication input. */
-export interface ConsolidateProvenanceLine {
+interface ConsolidateProvenanceLine {
   text: string;
   role: string;
   createdAt?: string;

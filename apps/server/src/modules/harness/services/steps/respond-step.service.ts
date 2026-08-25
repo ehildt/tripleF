@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
@@ -33,15 +33,15 @@ import { ensureShopOffers } from '../../helpers/sanitize/ensure-shop-offers.help
 import { enforceAvailableMediaUrls } from '../../helpers/tools/enforce-available-media-urls.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 import { ShownMediaService } from '../shown-media.service.js';
 
 @Injectable()
 export class RespondStepService implements StepHandler {
+  private readonly logger = new Logger(RespondStepService.name);
+
   constructor(
     private readonly respondAction: RespondActionService,
     private readonly io: SocketIOService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly minioService: MinioService,
     private readonly shownMedia: ShownMediaService,
   ) {}
@@ -79,18 +79,23 @@ export class RespondStepService implements StepHandler {
       ? limitedGalleryItems.filter((item) => item.source === 'cloud')
       : limitedGalleryItems;
 
-    this.stepLogger.log(ctx, 'respond', 'preparing final response', {
-      hasNewImages: ctx.hasNewImages,
-      galleryItemCount: galleryItems.length,
-      localItemCount: responseGalleryItems.filter(
-        (item) => item.source === 'local',
-      ).length,
-      cloudItemCount: responseGalleryItems.filter(
-        (item) => item.source === 'cloud',
-      ).length,
-      imageCount: ctx.processedMeta.length,
-      originalImageCount: originalMeta.length,
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'respond',
+        hasNewImages: ctx.hasNewImages,
+        galleryItemCount: galleryItems.length,
+        localItemCount: responseGalleryItems.filter(
+          (item) => item.source === 'local',
+        ).length,
+        cloudItemCount: responseGalleryItems.filter(
+          (item) => item.source === 'cloud',
+        ).length,
+        imageCount: ctx.processedMeta.length,
+        originalImageCount: originalMeta.length,
+      },
+      'preparing final response',
+    );
 
     const { content, data, inputTokens, outputTokens } =
       await this.respondAction.execute({
@@ -131,28 +136,52 @@ export class RespondStepService implements StepHandler {
     ctx.outputs.inputTokens = inputTokens;
     ctx.outputs.outputTokens = outputTokens;
 
-    await recordShownMedia(
+    const shownMediaResult = await recordShownMedia(
       ctx,
       mediaCheckedData,
       responseGalleryItems,
       this.shownMedia,
-      this.stepLogger,
     );
+    if (shownMediaResult.recordedCount > 0) {
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'respond',
+          recordedCount: shownMediaResult.recordedCount,
+        },
+        'shown media recorded',
+      );
+    }
+    if (shownMediaResult.error) {
+      this.logger.warn(
+        {
+          requestId: ctx.requestId,
+          step: 'respond',
+          err: shownMediaResult.error,
+        },
+        'shown media recording failed',
+      );
+    }
 
     const stats = parseResponseStats(content);
 
-    this.stepLogger.log(ctx, 'respond', 'response generated', {
-      model: ctx.model,
-      template: ctx.outputs.intent.template,
-      inputTokens,
-      outputTokens,
-      length: content.length,
-      contentPreview: content.slice(0, 500),
-      parsedHeroImageUrl: stats.heroImageUrl,
-      parsedHeroVideoUrl: stats.heroVideoUrl,
-      parsedGalleryItemCount: stats.galleryItemCount,
-      parsedVideoGalleryItemCount: stats.videoGalleryItemCount,
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'respond',
+        model: ctx.model,
+        template: ctx.outputs.intent.template,
+        inputTokens,
+        outputTokens,
+        length: content.length,
+        contentPreview: content.slice(0, 500),
+        parsedHeroImageUrl: stats.heroImageUrl,
+        parsedHeroVideoUrl: stats.heroVideoUrl,
+        parsedGalleryItemCount: stats.galleryItemCount,
+        parsedVideoGalleryItemCount: stats.videoGalleryItemCount,
+      },
+      'response generated',
+    );
   }
 
   /**
@@ -201,12 +230,17 @@ export class RespondStepService implements StepHandler {
       droppedDiscardCount > 0 ||
       complementedCount > 0
     ) {
-      this.stepLogger.warn(ctx, 'respond', 'discarded references applied', {
-        removedGalleryCount,
-        removedSourceCount,
-        droppedDiscardCount,
-        complementedCount,
-      });
+      this.logger.warn(
+        {
+          requestId: ctx.requestId,
+          step: 'respond',
+          removedGalleryCount,
+          removedSourceCount,
+          droppedDiscardCount,
+          complementedCount,
+        },
+        'discarded references applied',
+      );
     }
 
     // Shop-offers guard: shopping results existed but the model dropped the
@@ -217,15 +251,15 @@ export class RespondStepService implements StepHandler {
       extractShopOffers(ctx.outputs.toolResults),
     );
     if (withOffers !== dataWithDiscardVerdicts && withOffers) {
-      this.stepLogger.warn(
-        ctx,
-        'respond',
-        'shop offers injected from context',
+      this.logger.warn(
         {
+          requestId: ctx.requestId,
+          step: 'respond',
           offerCount: Array.isArray(withOffers.shopOffers)
             ? withOffers.shopOffers.length
             : 0,
         },
+        'shop offers injected from context',
       );
     }
 
@@ -246,18 +280,23 @@ export class RespondStepService implements StepHandler {
             responseGalleryItems.map((item) => item.imageUrl),
           );
     if (mediaCheckedData !== withOffers) {
-      this.stepLogger.warn(ctx, 'respond', 'unverified media urls blanked', {
-        heroImageUrl: mediaCheckedData?.heroImageUrl === '',
-        galleryItemCount: Array.isArray(mediaCheckedData?.galleryItems)
-          ? mediaCheckedData.galleryItems.length
-          : 0,
-        heroVideoUrl: mediaCheckedData?.heroVideoUrl === '',
-        videoGalleryItemCount: Array.isArray(
-          mediaCheckedData?.videoGalleryItems,
-        )
-          ? mediaCheckedData.videoGalleryItems.length
-          : 0,
-      });
+      this.logger.warn(
+        {
+          requestId: ctx.requestId,
+          step: 'respond',
+          heroImageUrl: mediaCheckedData?.heroImageUrl === '',
+          galleryItemCount: Array.isArray(mediaCheckedData?.galleryItems)
+            ? mediaCheckedData.galleryItems.length
+            : 0,
+          heroVideoUrl: mediaCheckedData?.heroVideoUrl === '',
+          videoGalleryItemCount: Array.isArray(
+            mediaCheckedData?.videoGalleryItems,
+          )
+            ? mediaCheckedData.videoGalleryItems.length
+            : 0,
+        },
+        'unverified media urls blanked',
+      );
     }
 
     return mediaCheckedData;
@@ -314,9 +353,14 @@ export class RespondStepService implements StepHandler {
     );
 
     if (existing.length !== items.length) {
-      this.stepLogger.log(ctx, 'respond', 'dropped missing storage objects', {
-        removedCount: items.length - existing.length,
-      });
+      this.logger.log(
+        {
+          requestId: ctx.requestId,
+          step: 'respond',
+          removedCount: items.length - existing.length,
+        },
+        'dropped missing storage objects',
+      );
     }
 
     return existing;

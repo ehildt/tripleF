@@ -11,9 +11,6 @@ export const AppConfigSchema = Joi.object<AppConfig>({
     .required(),
   port: Joi.number().integer().min(1).max(65535).required(),
   nodeEnv: Joi.string().valid('development', 'production', 'test', 'local').required(),
-  logLevel: Joi.array()
-    .items(Joi.string().valid('warn', 'error', 'debug', 'log', 'verbose', 'fatal'))
-    .default(['warn', 'error', 'debug', 'log', 'verbose', 'fatal']),
   cors: Joi.object({
     origin: Joi.string().optional(),
     methods: Joi.string().optional(),

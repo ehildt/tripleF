@@ -1,9 +1,9 @@
 import type { InputMessage } from '../../../ai-sdk/types/ai-sdk-messages.types.js';
 import type { FastifyMultipartMeta } from '../../dtos/harness-job.dto.js';
 import type { HarnessContext } from '../../services/harness-context.type.js';
-import type { HarnessStepLogger } from '../../services/harness-step-logger.service.js';
 import { buildContextSummarySection } from '../build-context-summary-section.helper.js';
 import { buildFilenames } from '../build-filenames.helper.js';
+import type { HistorySelection } from '../respond/build-execution-messages.helper.js';
 import { selectStepHistory } from '../select-step-history.helper.js';
 import type { VariantName } from '../tools/tool-registry.constants.js';
 
@@ -32,8 +32,7 @@ function buildImageInventory(
 function buildConversationMessages(
   ctx: HarnessContext,
   buffers: Buffer[],
-  stepLogger: HarnessStepLogger,
-): InputMessage[] {
+): { messages: InputMessage[]; historySelection: HistorySelection } {
   const fullConversation = ctx.request.messages.filter(
     (m) => m.role !== 'system',
   );
@@ -42,15 +41,17 @@ function buildConversationMessages(
     template: ctx.outputs.intent?.template,
   });
 
-  stepLogger.log(ctx, 'execute', 'history selected', {
-    mode: selection.mode,
-    keptCount: selection.messages.length,
-    droppedCount: fullConversation.length - selection.messages.length,
-  });
-
   const conversation = selection.messages;
 
-  if (buffers.length === 0) return conversation;
+  if (buffers.length === 0)
+    return {
+      messages: conversation,
+      historySelection: {
+        mode: selection.mode,
+        keptCount: selection.messages.length,
+        droppedCount: fullConversation.length - selection.messages.length,
+      },
+    };
 
   const lastUserIndex = conversation.findLastIndex((m) => m.role === 'user');
 
@@ -68,7 +69,14 @@ function buildConversationMessages(
     });
   }
 
-  return conversation;
+  return {
+    messages: conversation,
+    historySelection: {
+      mode: selection.mode,
+      keptCount: selection.messages.length,
+      droppedCount: fullConversation.length - selection.messages.length,
+    },
+  };
 }
 
 /** Assemble the full execute-mode message list for the tool model call. */
@@ -77,8 +85,7 @@ export function buildExecuteMessages(
   buffers: Buffer[],
   meta: FastifyMultipartMeta[],
   availableVariants: VariantName[],
-  stepLogger: HarnessStepLogger,
-): InputMessage[] {
+): { messages: InputMessage[]; historySelection: HistorySelection } {
   const baseSystem = ctx.request.messages
     .filter((m) => m.role === 'system')
     .map((m) => m.content)
@@ -106,8 +113,14 @@ export function buildExecuteMessages(
     imageInventory ? `\n\n${imageInventory}` : ''
   }${contextSection ? `\n\n${contextSection}` : ''}`;
 
-  return [
-    { role: 'system' as const, content: systemContent },
-    ...buildConversationMessages(ctx, buffers, stepLogger),
-  ];
+  const { messages: conversationMessages, historySelection } =
+    buildConversationMessages(ctx, buffers);
+
+  return {
+    messages: [
+      { role: 'system' as const, content: systemContent },
+      ...conversationMessages,
+    ],
+    historySelection,
+  };
 }

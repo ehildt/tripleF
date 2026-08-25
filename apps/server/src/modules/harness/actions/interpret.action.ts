@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
 import type { InputMessage } from '../../ai-sdk/types/ai-sdk-messages.types.js';
@@ -15,7 +15,6 @@ import { buildClassifyMessages } from '../helpers/interpret/build-classify-messa
 import { parseIntent } from '../helpers/interpret/parse-intent.helper.js';
 import { filterEodhdToolsByCapabilities } from '../helpers/tools/filter-eodhd-tools-by-capabilities.helper.js';
 import { getEnabledToolNames } from '../helpers/tools/get-enabled-tool-names.helper.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 import { type IntentResult } from '../templates/intent.schema.js';
 
 import type {
@@ -27,11 +26,12 @@ const MAX_INTERPRET_RETRIES = 3;
 
 @Injectable()
 export class InterpretActionService {
+  private readonly logger = new Logger(InterpretActionService.name);
+
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly providerOverrides: ProviderOverridesService,
     private readonly playwrightMcpConfig: PlaywrightMcpConfigService,
-    private readonly stepLogger: HarnessStepLogger,
     private readonly eodhdDiscovery: EodhdDiscoveryService,
     @Inject(MEMORY_CLIENT_CONFIG)
     private readonly memoryConfig: MemoryClientConfig,
@@ -89,13 +89,17 @@ export class InterpretActionService {
 
       let intent: IntentResult;
       try {
-        intent = parseIntent(
-          params.requestId,
-          result.text,
-          enabledToolNames,
-          this.stepLogger,
-        );
+        intent = parseIntent(params.requestId, result.text, enabledToolNames);
       } catch (error) {
+        this.logger.warn(
+          {
+            requestId: params.requestId,
+            step: 'interpret',
+            rawOutput: result.text,
+            err: error instanceof Error ? error : new Error(String(error)),
+          },
+          'intent parse failed',
+        );
         // Structurally invalid JSON (incl. empty output) — retry with a
         // correction prompt, mirroring the response step's validateWithRetries.
         if (attempt === MAX_INTERPRET_RETRIES) throw error;
@@ -105,11 +109,10 @@ export class InterpretActionService {
       lastIntent = intent;
       params.onIntent?.(intent);
 
-      this.stepLogger.log(
-        { requestId: params.requestId },
-        'interpret',
-        'intent classified',
+      this.logger.log(
         {
+          requestId: params.requestId,
+          step: 'interpret',
           model: params.model,
           attempt,
           language: intent.language,
@@ -123,6 +126,7 @@ export class InterpretActionService {
           inputTokens: result.totalUsage?.inputTokens,
           outputTokens: result.totalUsage?.outputTokens,
         },
+        'intent classified',
       );
 
       if (this.isLanguageValid(intent.language)) {
@@ -133,14 +137,14 @@ export class InterpretActionService {
         };
       }
 
-      this.stepLogger.warn(
-        { requestId: params.requestId },
-        'interpret',
-        'language missing',
+      this.logger.warn(
         {
+          requestId: params.requestId,
+          step: 'interpret',
           attempt,
           template: intent.template,
         },
+        'language missing',
       );
 
       if (attempt < MAX_INTERPRET_RETRIES) {
@@ -153,15 +157,15 @@ export class InterpretActionService {
     if (lastIntent) {
       params.onIntent?.(lastIntent);
 
-      this.stepLogger.warn(
-        { requestId: params.requestId },
-        'interpret',
-        'retries exhausted, language left unset',
+      this.logger.warn(
         {
+          requestId: params.requestId,
+          step: 'interpret',
           model: params.model,
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
         },
+        'retries exhausted, language left unset',
       );
     }
 

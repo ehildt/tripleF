@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import type {
   VectorizeContext,
   VectorizeStepId,
   VectorizeStepState,
 } from './vectorize-context.type.js';
-import { VectorizeStepLogger } from './vectorize-step-logger.service.js';
 import {
   type VectorizeStepRegistry,
   VectorizeStepRegistryService,
@@ -24,18 +23,18 @@ import {
  */
 @Injectable()
 export class VectorizeStepEngineService {
+  private readonly logger = new Logger(VectorizeStepEngineService.name);
+
   constructor(
     private readonly stepRegistryService: VectorizeStepRegistryService,
-    private readonly stepLogger: VectorizeStepLogger,
   ) {}
 
   async run(ctx: VectorizeContext): Promise<void> {
     while (!this.isGoalFinished(ctx)) {
       const step = this.selectNextStep(ctx, this.stepRegistryService.registry);
       if (!step) {
-        this.stepLogger.warn(
-          ctx,
-          'engine',
+        this.logger.warn(
+          { jobId: ctx.jobId, requestId: ctx.requestId, step: 'engine' },
           `No runnable step found for job ${ctx.jobId}`,
         );
         break;
@@ -87,11 +86,14 @@ export class VectorizeStepEngineService {
       ctx.done = true;
       ctx.error = message;
 
-      this.stepLogger.error(
-        ctx,
-        stepId,
+      this.logger.error(
+        {
+          jobId: ctx.jobId,
+          requestId: ctx.requestId,
+          step: stepId,
+          err: error instanceof Error ? error : new Error(String(error)),
+        },
         `Step ${stepId} failed for job ${ctx.jobId}`,
-        error,
       );
       // Rethrow: BullMQ's retry/classification must see transient failures.
       throw error;

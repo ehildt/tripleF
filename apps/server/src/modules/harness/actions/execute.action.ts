@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
 import { AiSdkService } from '../../ai-sdk/services/ai-sdk.service.js';
@@ -23,7 +23,6 @@ import {
 import { wrapToolsWithSearchRecency } from '../helpers/execute/wrap-tools-with-search-recency.helper.js';
 import { type VariantName } from '../helpers/tools/tool-registry.constants.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 import type { ExecuteResult } from './execute.action.types.js';
 
@@ -42,12 +41,13 @@ const MEMORY_DELETE_MAX_STEPS = 3;
 
 @Injectable()
 export class ExecuteActionService {
+  private readonly logger = new Logger(ExecuteActionService.name);
+
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly toolSelectionService: ToolSelectionService,
     private readonly sharpService: SharpService,
     private readonly ollamaConfigService: OllamaConfigService,
-    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   /**
@@ -143,12 +143,12 @@ export class ExecuteActionService {
     let outputTokens = 0;
 
     if (Object.keys(chosenTools).length > 0) {
-      const executeMessages = buildExecuteMessages(
-        ctx,
-        buffers,
-        processedMeta,
-        availableVariants,
-        this.stepLogger,
+      const { messages: executeMessages, historySelection } =
+        buildExecuteMessages(ctx, buffers, processedMeta, availableVariants);
+
+      this.logger.log(
+        { requestId: ctx.requestId, step: 'execute', ...historySelection },
+        'history selected',
       );
 
       const result = await this.aiSdkService.generateWithTools({
@@ -167,10 +167,15 @@ export class ExecuteActionService {
       outputTokens = result.totalUsage?.outputTokens ?? 0;
 
       if (toolResults.length === 0) {
-        this.stepLogger.warn(ctx, 'execute', 'no tool calls', {
-          model: ctx.model,
-          textPreview: result.text?.slice(0, 300),
-        });
+        this.logger.warn(
+          {
+            requestId: ctx.requestId,
+            step: 'execute',
+            model: ctx.model,
+            textPreview: result.text?.slice(0, 300),
+          },
+          'no tool calls',
+        );
       }
 
       const missing = await this.invokeMissingMandatoryTools(
@@ -184,9 +189,14 @@ export class ExecuteActionService {
       outputTokens += missing.outputTokens;
       if (missing.results.length > 0) {
         toolResults.push(...missing.results);
-        this.stepLogger.log(ctx, 'execute', 'missing tools invoked', {
-          tools: missing.results.map((r) => r.toolName),
-        });
+        this.logger.log(
+          {
+            requestId: ctx.requestId,
+            step: 'execute',
+            tools: missing.results.map((r) => r.toolName),
+          },
+          'missing tools invoked',
+        );
       }
 
       // Identify variant requests from tool results and merge into requestedVariants
@@ -318,9 +328,10 @@ export class ExecuteActionService {
       (t) => !results.some((r) => r.toolName === t),
     );
     if (dropped.length > 0) {
-      this.stepLogger.warn(ctx, 'execute', 'skipped missing tools', {
-        tools: dropped,
-      });
+      this.logger.warn(
+        { requestId: ctx.requestId, step: 'execute', tools: dropped },
+        'skipped missing tools',
+      );
     }
 
     return {
@@ -372,9 +383,14 @@ export class ExecuteActionService {
         outputTokens: completion.totalUsage?.outputTokens ?? 0,
       };
     } catch (err) {
-      this.stepLogger.warn(ctx, 'execute', 'missing tools completion failed', {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      this.logger.warn(
+        {
+          requestId: ctx.requestId,
+          step: 'execute',
+          err: err instanceof Error ? err : new Error(String(err)),
+        },
+        'missing tools completion failed',
+      );
       return { results: [], inputTokens: 0, outputTokens: 0 };
     }
   }
@@ -406,10 +422,15 @@ export class ExecuteActionService {
         );
         invocations.push({ toolName, result });
       } catch (err) {
-        this.stepLogger.warn(ctx, 'execute', 'missing tool error', {
-          toolName,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        this.logger.warn(
+          {
+            requestId: ctx.requestId,
+            step: 'execute',
+            toolName,
+            err: err instanceof Error ? err : new Error(String(err)),
+          },
+          'missing tool error',
+        );
       }
     }
     return invocations;

@@ -19,7 +19,6 @@ import { EmbedStepService } from './services/vectorize/steps/embed-step.service.
 import { ExtractStepService } from './services/vectorize/steps/extract-step.service.js';
 import { StoreStepService } from './services/vectorize/steps/store-step.service.js';
 import { VectorizeStepEngineService } from './services/vectorize/vectorize-step-engine.service.js';
-import { VectorizeStepLogger } from './services/vectorize/vectorize-step-logger.service.js';
 import { VectorizeStepRegistryService } from './services/vectorize/vectorize-step-registry.service.js';
 
 @Module({})
@@ -46,7 +45,6 @@ export class QdrantModule {
         // Vectorize pipeline step machine (mirrors the harness step registry).
         VectorizeStepEngineService,
         VectorizeStepRegistryService,
-        VectorizeStepLogger,
         ExtractStepService,
         EmbedStepService,
         StoreStepService,

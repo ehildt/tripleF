@@ -7,6 +7,7 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
   Res,
 } from '@nestjs/common';
@@ -39,17 +40,17 @@ import { WarmModelDto, WarmModelResponseDto } from '../dtos/warm-model.dto.js';
 import { buildCatalogEtag } from '../helpers/catalog-etag.helper.js';
 import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.helper.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
-import { HarnessStepLogger } from '../services/harness-step-logger.service.js';
 
 @ApiTags('Harness')
 @Controller('harness')
 export class HarnessController {
+  private readonly logger = new Logger(HarnessController.name);
+
   constructor(
     private readonly harnessQueueService: HarnessQueueService,
     private readonly ollamaModelsService: OllamaModelsService,
     private readonly numCtxConfigService: NumCtxConfigService,
     private readonly modelWarmupService: ModelWarmupService,
-    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   @Post()
@@ -71,32 +72,39 @@ export class HarnessController {
       frontendHashes,
     );
 
-    this.stepLogger.log({ requestId }, 'receive', 'request received', {
-      sessionId: query.sessionId,
-      memoryPartition: query.memoryPartition ?? query.sessionId,
-      memoryCognition: query.memoryCognition,
-      conversationId: query.conversationId,
-      roomId,
-      hasNewImages: query.hasNewImages,
-      newImageCount: results.length,
-      promptMessages: Array.isArray(prompt)
-        ? prompt.map((p) => ({
-            role: p.role,
-            content: p.content?.slice(0, 200),
-          }))
-        : prompt
-          ? [
-              {
-                role: (prompt as Prompt).role,
-                content: (prompt as Prompt).content?.slice(0, 200),
-              },
-            ]
-          : undefined,
-      sessionMetadataImages: sessionMetadata?.images?.map(({ name, hash }) => ({
-        name,
-        hash,
-      })),
-    });
+    this.logger.log(
+      {
+        requestId,
+        step: 'receive',
+        sessionId: query.sessionId,
+        memoryPartition: query.memoryPartition ?? query.sessionId,
+        memoryCognition: query.memoryCognition,
+        conversationId: query.conversationId,
+        roomId,
+        hasNewImages: query.hasNewImages,
+        newImageCount: results.length,
+        promptMessages: Array.isArray(prompt)
+          ? prompt.map((p) => ({
+              role: p.role,
+              content: p.content?.slice(0, 200),
+            }))
+          : prompt
+            ? [
+                {
+                  role: (prompt as Prompt).role,
+                  content: (prompt as Prompt).content?.slice(0, 200),
+                },
+              ]
+            : undefined,
+        sessionMetadataImages: sessionMetadata?.images?.map(
+          ({ name, hash }) => ({
+            name,
+            hash,
+          }),
+        ),
+      },
+      'request received',
+    );
 
     void this.harnessQueueService.emit({
       buffers: results.map((r) => r.buffer).filter(Boolean),

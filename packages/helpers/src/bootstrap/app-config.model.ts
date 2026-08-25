@@ -1,5 +1,3 @@
-import { LogLevel } from '@nestjs/common';
-
 export type AppConfig = {
   port: number;
   nodeEnv: string;
@@ -7,7 +5,6 @@ export type AppConfig = {
   printConfig: boolean;
   bodyLimit: number;
   enableSwagger: boolean;
-  logLevel?: Array<LogLevel>;
   cors?: {
     origin?: string;
     methods?: string;

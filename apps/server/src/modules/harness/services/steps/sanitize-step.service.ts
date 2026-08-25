@@ -1,5 +1,5 @@
 import { SocketIOService } from '@ehildt/nestjs-socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import {
   SanitizeActionService,
@@ -16,14 +16,14 @@ import {
 } from '../../helpers/media/extract-media-from-tools.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-import { HarnessStepLogger } from '../harness-step-logger.service.js';
 
 @Injectable()
 export class SanitizeStepService implements StepHandler {
+  private readonly logger = new Logger(SanitizeStepService.name);
+
   constructor(
     private readonly sanitizeAction: SanitizeActionService,
     private readonly io: SocketIOService,
-    private readonly stepLogger: HarnessStepLogger,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
@@ -49,21 +49,26 @@ export class SanitizeStepService implements StepHandler {
     ctx.request.messages = result.messages;
     this.appendIngestedMeta(ctx, result.ingestedImages);
 
-    this.stepLogger.log(ctx, 'sanitize', 'results sanitized', {
-      model: ctx.model,
-      toolCount: result.toolResults.length,
-      availableImageCount: result.availableImageCount,
-      ingestedImageCount: result.ingestedImages?.length ?? 0,
-      availableVideoCount: result.availableVideoCount,
-      sampleImageUrls: result.toolResults
-        .flatMap((tr) => extractImageSearchItems([tr]))
-        .slice(0, 3)
-        .map((i) => i.imageUrl),
-      sampleVideoUrls: result.toolResults
-        .flatMap((tr) => extractVideoSearchItems([tr]))
-        .slice(0, 3)
-        .map((v) => v.videoUrl),
-    });
+    this.logger.log(
+      {
+        requestId: ctx.requestId,
+        step: 'sanitize',
+        model: ctx.model,
+        toolCount: result.toolResults.length,
+        availableImageCount: result.availableImageCount,
+        ingestedImageCount: result.ingestedImages?.length ?? 0,
+        availableVideoCount: result.availableVideoCount,
+        sampleImageUrls: result.toolResults
+          .flatMap((tr) => extractImageSearchItems([tr]))
+          .slice(0, 3)
+          .map((i) => i.imageUrl),
+        sampleVideoUrls: result.toolResults
+          .flatMap((tr) => extractVideoSearchItems([tr]))
+          .slice(0, 3)
+          .map((v) => v.videoUrl),
+      },
+      'results sanitized',
+    );
   }
 
   private appendIngestedMeta(

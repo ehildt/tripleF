@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { EmbeddingService } from '../../embedding.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
-import { VectorizeStepLogger } from '../vectorize-step-logger.service.js';
 
 /**
  * 'embed' — one batch embed of the extracted facts. An out-of-spec vector
@@ -12,16 +11,18 @@ import { VectorizeStepLogger } from '../vectorize-step-logger.service.js';
  */
 @Injectable()
 export class EmbedStepService implements VectorizeStepHandler {
-  constructor(
-    private readonly embeddingService: EmbeddingService,
-    private readonly stepLogger: VectorizeStepLogger,
-  ) {}
+  private readonly logger = new Logger(EmbedStepService.name);
+
+  constructor(private readonly embeddingService: EmbeddingService) {}
 
   async execute(ctx: VectorizeContext): Promise<void> {
     const facts = ctx.outputs.extraction?.facts ?? [];
     if (facts.length === 0) {
       ctx.outputs.vectors = [];
-      this.stepLogger.log(ctx, 'embed', 'no facts to embed');
+      this.logger.log(
+        { jobId: ctx.jobId, requestId: ctx.requestId, step: 'embed' },
+        'no facts to embed',
+      );
       return;
     }
 
@@ -34,6 +35,15 @@ export class EmbedStepService implements VectorizeStepHandler {
       );
     }
     ctx.outputs.vectors = vectors;
-    this.stepLogger.log(ctx, 'embed', `embedded ${vectors.length} facts`);
+    this.logger.log(
+      {
+        jobId: ctx.jobId,
+        requestId: ctx.requestId,
+        step: 'embed',
+        facts,
+        count: facts.length,
+      },
+      `embedded ${vectors.length} facts`,
+    );
   }
 }

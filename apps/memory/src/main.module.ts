@@ -3,6 +3,7 @@ import { BullMQLoggerModule } from '@ehildt/nestjs-bullmq-logger';
 import { Logger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import { ConfigFactoryModule } from '@triplef/config-factory';
+import { CoreLoggerModule } from '@triplef/core-logger';
 
 import { AppConfigService } from './configs/app-config.service.js';
 import { AiSdkModule } from './modules/ai-sdk/ai-sdk.module.js';
@@ -10,12 +11,11 @@ import { OllamaConfigService } from './modules/ai-sdk/configs/ollama-config.serv
 import { BullMQConfigService } from './modules/bullmq/configs/bullmq-config.service.js';
 import { BullMQLoggerConfigService } from './modules/bullmq/configs/bullmq-logger-config.service.js';
 import { VECTORIZE_QUEUE } from './modules/bullmq/constants/bullmq.constants.js';
+import { CoreLoggerConfigService } from './modules/core-logger/configs/core-logger-config.service.js';
 import { DeadLetterModule } from './modules/dead-letter/dead-letter.module.js';
 import { HealthController } from './modules/health/controllers/health.controller.js';
 import { HealthService } from './modules/health/services/health.service.js';
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
-import { PinoLoggerConfigService } from './modules/pino-logger/configs/pino-logger-config.service.js';
-import { PinoLoggerModule } from './modules/pino-logger/pino-logger.module.js';
 import { QdrantConfigService } from './modules/qdrant/configs/qdrant-config.service.js';
 import { VectorizeProcessor } from './modules/qdrant/processors/vectorize.processor.js';
 import { QdrantModule } from './modules/qdrant/qdrant.module.js';
@@ -32,7 +32,6 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
   controllers: [HealthController],
   providers: [Logger, HealthService, QdrantHealthIndicator],
   imports: [
-    PinoLoggerModule,
     BullMQModule,
     AiSdkModule,
     PersistenceModule,
@@ -49,8 +48,13 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
         OllamaConfigService,
         BullMQConfigService,
         BullMQLoggerConfigService,
-        PinoLoggerConfigService,
+        CoreLoggerConfigService,
       ],
+    }),
+    CoreLoggerModule.registerAsync({
+      global: true,
+      inject: [CoreLoggerConfigService],
+      useFactory: ({ config }: CoreLoggerConfigService) => config,
     }),
     BullMQLoggerModule.registerAsync({
       global: true,

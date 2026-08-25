@@ -1,6 +1,7 @@
 import { BullMQLoggerService } from '@ehildt/nestjs-bullmq-logger';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { CoreLoggerService } from '@triplef/core-logger';
 import { Job } from 'bullmq';
 
 import {
@@ -8,7 +9,6 @@ import {
   HARNESS_WORKER_CONCURRENCY,
 } from '../../bullmq/constants/bullmq.constants.js';
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
-import { PinoLoggerService } from '../../pino-logger/services/pino-logger.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { HarnessCancellationService } from '../services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from '../services/harness-chat-streaming.service.js';
@@ -30,7 +30,7 @@ import { VectorizeStepService } from '../services/steps/vectorize-step.service.j
 export class HarnessProcessor extends WorkerHost implements OnModuleInit {
   constructor(
     private readonly bullMQLogger: BullMQLoggerService,
-    private readonly logger: PinoLoggerService,
+    private readonly logger: CoreLoggerService,
     private readonly contextService: HarnessContextService,
     private readonly cancellationService: HarnessCancellationService,
     private readonly stepEngine: HarnessStepEngineService,

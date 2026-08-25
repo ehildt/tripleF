@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type { VectorizeContext } from './vectorize-context.type.js';
 import { VectorizeStepEngineService } from './vectorize-step-engine.service.js';
@@ -20,9 +20,8 @@ function makeCtx(): VectorizeContext {
 
 function makeEngine() {
   const registry = new VectorizeStepRegistryService();
-  const logger = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
-  const engine = new VectorizeStepEngineService(registry, logger as never);
-  return { engine, registry, logger };
+  const engine = new VectorizeStepEngineService(registry);
+  return { engine, registry };
 }
 
 describe('VectorizeStepEngineService', () => {
@@ -74,7 +73,7 @@ describe('VectorizeStepEngineService', () => {
   });
 
   it('marks the failed step, stops the run, and rethrows for the queue', async () => {
-    const { engine, registry, logger } = makeEngine();
+    const { engine, registry } = makeEngine();
     registry.addStep('embed', {
       execute: async () => {
         throw new Error('boom');
@@ -91,6 +90,5 @@ describe('VectorizeStepEngineService', () => {
     expect(ctx.steps.get('embed')).toEqual({ status: 'error', error: 'boom' });
     expect(ctx.done).toBe(true);
     expect(ctx.error).toBe('boom');
-    expect(logger.error).toHaveBeenCalledTimes(1);
   });
 });

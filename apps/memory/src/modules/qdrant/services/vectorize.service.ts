@@ -74,6 +74,16 @@ export class VectorizeService {
       requestId: input.requestId,
       points: [{ id, vector, text, tags: input.tags ?? [] }],
     });
+    this.logger.log(
+      {
+        memoryPartition: input.memoryPartition,
+        requestId: input.requestId,
+        pointId: id,
+        text,
+        tags: input.tags ?? [],
+      },
+      'memory record stored',
+    );
 
     // Ledger + auto-trigger (warn-and-continue — a missed ledger row degrades
     // to no-sweep-coverage, never a failed store).
@@ -99,9 +109,12 @@ export class VectorizeService {
       }
     } catch (error) {
       this.logger.warn(
-        `Ledger write/auto-trigger skipped: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        {
+          memoryPartition: input.memoryPartition,
+          requestId: input.requestId,
+          err: error instanceof Error ? error : new Error(String(error)),
+        },
+        'ledger write/auto-trigger skipped',
       );
     }
     return id;

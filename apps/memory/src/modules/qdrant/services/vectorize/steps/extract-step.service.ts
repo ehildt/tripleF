@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { AiSdkService } from '../../../../ai-sdk/services/ai-sdk.service.js';
 import {
@@ -10,7 +10,6 @@ import { parseExtraction } from '../../../helpers/parse-extraction.helper.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
-import { VectorizeStepLogger } from '../vectorize-step-logger.service.js';
 
 /** One initial attempt + one correction pass — mirror of the interpret retry. */
 const MAX_EXTRACTION_ATTEMPTS = 2;
@@ -34,9 +33,10 @@ const MAX_EXTRACTION_ATTEMPTS = 2;
  */
 @Injectable()
 export class ExtractStepService implements VectorizeStepHandler {
+  private readonly logger = new Logger(ExtractStepService.name);
+
   constructor(
     private readonly aiSdkService: AiSdkService,
-    private readonly stepLogger: VectorizeStepLogger,
     private readonly memorySearch: MemorySearchService,
   ) {}
 
@@ -64,6 +64,28 @@ export class ExtractStepService implements VectorizeStepHandler {
     ];
 
     ctx.outputs.extraction = await this.runExtraction(ctx, messages);
+
+    const { facts, tags } = ctx.outputs.extraction;
+    this.logger.log(
+      {
+        jobId: ctx.jobId,
+        requestId: ctx.requestId,
+        step: 'extract',
+        factCount: facts.length,
+        tags,
+        sourceChars: ctx.text.length,
+      },
+      `extracted ${facts.length} facts`,
+    );
+    this.logger.debug(
+      {
+        jobId: ctx.jobId,
+        requestId: ctx.requestId,
+        step: 'extract',
+        text: ctx.text.slice(0, 8000),
+      },
+      'extraction source',
+    );
   }
 
   private async runExtraction(
@@ -83,12 +105,14 @@ export class ExtractStepService implements VectorizeStepHandler {
         // LLM call failed (model down / network) — degrade, no correction pass:
         // infrastructure failures are the queue's retry domain, and the turn
         // is still stored text-only.
-        this.stepLogger.warn(
-          ctx,
-          'extract',
-          `extraction call failed for job ${ctx.jobId}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+        this.logger.warn(
+          {
+            jobId: ctx.jobId,
+            requestId: ctx.requestId,
+            step: 'extract',
+            err: error instanceof Error ? error : new Error(String(error)),
+          },
+          `extraction call failed for job ${ctx.jobId}`,
         );
         return { facts: [], tags: [] };
       }
@@ -98,10 +122,14 @@ export class ExtractStepService implements VectorizeStepHandler {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (attempt >= MAX_EXTRACTION_ATTEMPTS) {
-          this.stepLogger.warn(
-            ctx,
-            'extract',
-            `extraction still invalid after correction — degrading to empty for job ${ctx.jobId}: ${message}`,
+          this.logger.warn(
+            {
+              jobId: ctx.jobId,
+              requestId: ctx.requestId,
+              step: 'extract',
+              err: error instanceof Error ? error : new Error(message),
+            },
+            `extraction still invalid after correction — degrading to empty for job ${ctx.jobId}`,
           );
           return { facts: [], tags: [] };
         }

@@ -82,10 +82,18 @@ export class MemoryWriteJobService {
     );
     if (stored.length > 0) {
       this.logger.log(
-        `memory-write ${data.requestId}: stored ${stored.length} record(s)`,
+        {
+          requestId: data.requestId,
+          memoryPartition: data.memoryPartition,
+          storedCount: stored.length,
+        },
+        `memory-write stored ${stored.length} record(s)`,
       );
       return;
     }
-    this.logger.debug(`memory-write ${data.requestId}: nothing durable stored`);
+    this.logger.debug(
+      { requestId: data.requestId, memoryPartition: data.memoryPartition },
+      'memory-write: nothing durable stored',
+    );
   }
 }
