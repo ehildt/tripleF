@@ -106,7 +106,7 @@
     "ts-unused-exports": "^11.0.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.68.0",
     "unplugin-swc": "^1.5.11",
     "vitest": "^4.1.11"
   }
