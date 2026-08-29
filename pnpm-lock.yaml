@@ -260,10 +260,10 @@ importers:
     dependencies:
       '@ehildt/nestjs-bullmq':
         specifier: ^1.1.3
-        version: 1.1.3(@nestjs/bullmq@11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)))(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(ioredis@6.0.0(supports-color@8.1.1))(joi@18.2.5)
+        version: 1.1.3(@nestjs/bullmq@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)))(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(ioredis@6.0.0(supports-color@8.1.1))(joi@18.2.5)
       '@ehildt/nestjs-bullmq-logger':
         specifier: ^1.2.4
-        version: 1.2.4(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(joi@18.2.5)(pino-pretty@13.1.3)(pino@10.3.1)
+        version: 1.2.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(joi@18.2.5)(pino-pretty@13.1.3)(pino@10.3.1)
       '@fastify/compress':
         specifier: ^9.2.0
         version: 9.2.0
@@ -272,28 +272,28 @@ importers:
         version: 10.1.3
       '@nestjs/axios':
         specifier: ^4.0.1
-        version: 4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)
+        version: 4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)
       '@nestjs/bullmq':
         specifier: ^11.0.5
-        version: 11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))
+        version: 11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))
       '@nestjs/common':
-        specifier: ^11.2.1
-        version: 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+        specifier: ^11.2.3
+        version: 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@nestjs/core':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/microservices':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-fastify':
         specifier: ^11.2.1
-        version: 11.2.1(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)
+        version: 11.2.1(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)
       '@nestjs/swagger':
         specifier: ^11.4.7
-        version: 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
+        version: 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: ^11.1.1
-        version: 11.1.1(@nestjs/axios@4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2))(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@nestjs/axios@4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2))(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@prisma/adapter-pg':
         specifier: '7'
         version: 7.9.1
@@ -305,10 +305,10 @@ importers:
         version: 1.19.0(typescript@5.9.3)
       '@triplef/config-factory':
         specifier: ^1.1.3
-        version: 1.1.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@triplef/helpers@1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5))(joi@18.2.5)
+        version: 1.1.3(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@triplef/helpers@1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5))(joi@18.2.5)
       '@triplef/helpers':
         specifier: ^1.5.1
-        version: 1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
+        version: 1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
       ai:
         specifier: ^7.0.77
         version: 7.0.77(zod@4.4.3)
@@ -435,13 +435,13 @@ importers:
         version: 2.0.36(zod@4.4.3)
       '@ehildt/nestjs-bullmq':
         specifier: ^1.1.3
-        version: 1.1.3(@nestjs/bullmq@11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)))(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(ioredis@6.0.0(supports-color@8.1.1))(joi@18.2.5)
+        version: 1.1.3(@nestjs/bullmq@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)))(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(ioredis@6.0.0(supports-color@8.1.1))(joi@18.2.5)
       '@ehildt/nestjs-bullmq-logger':
         specifier: ^1.2.4
-        version: 1.2.4(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(joi@18.2.5)(pino-pretty@13.1.3)(pino@10.3.1)
+        version: 1.2.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(joi@18.2.5)(pino-pretty@13.1.3)(pino@10.3.1)
       '@ehildt/nestjs-socket.io':
         specifier: ^1.3.3
-        version: 1.3.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(fastify-socket.io@5.1.0(fastify@5.12.1)(socket.io@4.8.3(supports-color@8.1.1)))(joi@18.2.5)(socket.io@4.8.3(supports-color@8.1.1))
+        version: 1.3.3(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(fastify-socket.io@5.1.0(fastify@5.12.1)(socket.io@4.8.3(supports-color@8.1.1)))(joi@18.2.5)(socket.io@4.8.3(supports-color@8.1.1))
       '@fastify/compress':
         specifier: ^9.2.0
         version: 9.2.0
@@ -453,28 +453,28 @@ importers:
         version: 10.1.3
       '@nestjs/axios':
         specifier: ^4.0.1
-        version: 4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)
+        version: 4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)
       '@nestjs/bullmq':
         specifier: ^11.0.5
-        version: 11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))
+        version: 11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))
       '@nestjs/common':
-        specifier: ^11.2.1
-        version: 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+        specifier: ^11.2.3
+        version: 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@nestjs/core':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/microservices':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-fastify':
         specifier: ^11.2.1
-        version: 11.2.1(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)
+        version: 11.2.1(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)
       '@nestjs/swagger':
         specifier: ^11.4.7
-        version: 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
+        version: 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: ^11.1.1
-        version: 11.1.1(@nestjs/axios@4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2))(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@nestjs/axios@4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2))(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@prisma/adapter-pg':
         specifier: '7'
         version: 7.9.1
@@ -483,10 +483,10 @@ importers:
         version: 7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)
       '@triplef/config-factory':
         specifier: ^1.1.3
-        version: 1.1.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@triplef/helpers@1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5))(joi@18.2.5)
+        version: 1.1.3(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@triplef/helpers@1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5))(joi@18.2.5)
       '@triplef/helpers':
         specifier: ^1.5.1
-        version: 1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
+        version: 1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
       ai:
         specifier: ^7.0.77
         version: 7.0.77(zod@4.4.3)
@@ -550,7 +550,7 @@ importers:
         version: 11.1.0(chokidar@4.0.3)(prettier@3.9.6)(typescript@5.9.3)
       '@nestjs/testing':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)
       '@swc/core':
         specifier: ^1.16.1
         version: 1.16.1
@@ -648,8 +648,8 @@ importers:
         specifier: ^11.1.17
         version: 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@triplef/helpers':
-        specifier: ^1.5.1
-        version: 1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
+        specifier: ^1.5.2
+        version: 1.5.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)(pino@10.3.1)
       joi:
         specifier: ^18.0.2
         version: 18.2.5
@@ -2086,6 +2086,19 @@ packages:
       class-validator:
         optional: true
 
+  '@nestjs/common@11.2.3':
+    resolution: {integrity: sha512-obdauJXHfthhepbV+LpGe88OeBlR/Kw9lwjLo0Utzc//agoLXYb9DUGhPQWtm81IpBWMv+19eiwcve9MsBZwXA==}
+    peerDependencies:
+      class-transformer: '>=0.4.1'
+      class-validator: '>=0.13.2'
+      reflect-metadata: ^0.1.12 || ^0.2.0
+      rxjs: ^7.1.0
+    peerDependenciesMeta:
+      class-transformer:
+        optional: true
+      class-validator:
+        optional: true
+
   '@nestjs/core@11.2.1':
     resolution: {integrity: sha512-M5PWFU8NdRTgX9Po49d7TQKg7f5t8GAVUa/Esy4tmaMWcKugTzg3ZzpJfD3LEPMuRHjfs6+8pQYgtuP2uz3rDw==}
     engines: {node: '>= 20'}
@@ -3299,6 +3312,14 @@ packages:
       '@nestjs/common': ^11.1.17
       '@nestjs/swagger': ^11.3.0
       joi: ^18.0.2
+
+  '@triplef/helpers@1.5.3':
+    resolution: {integrity: sha512-8ScW4nKnB+QpbE+2SmmSNLW0fYNIR7kSTJsfGbN5xQ+X4/+84w3BhqEbe408HH9r9MbPKh4WrOdCxOqeTlaT9Q==}
+    peerDependencies:
+      '@nestjs/common': ^11.1.17
+      '@nestjs/swagger': ^11.3.0
+      joi: ^18.0.2
+      pino: ^10.3.1
 
   '@tsconfig/node10@1.0.13':
     resolution: {integrity: sha512-gcLdvR9HO1ZJBypsOGqaP6TFEzb6vIta0KSTLt9NAQ6pXQO3cRgSVyCN6pzYqI9DlJgY71XKO0dpDhCf08b3pg==}
@@ -8179,25 +8200,25 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@ehildt/nestjs-bullmq-logger@1.2.4(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(joi@18.2.5)(pino-pretty@13.1.3)(pino@10.3.1)':
+  '@ehildt/nestjs-bullmq-logger@1.2.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(joi@18.2.5)(pino-pretty@13.1.3)(pino@10.3.1)':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       bullmq: 6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)
       joi: 18.2.5
       pino: 10.3.1
       pino-pretty: 13.1.3
 
-  '@ehildt/nestjs-bullmq@1.1.3(@nestjs/bullmq@11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)))(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(ioredis@6.0.0(supports-color@8.1.1))(joi@18.2.5)':
+  '@ehildt/nestjs-bullmq@1.1.3(@nestjs/bullmq@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)))(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))(ioredis@6.0.0(supports-color@8.1.1))(joi@18.2.5)':
     dependencies:
-      '@nestjs/bullmq': 11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/bullmq': 11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       bullmq: 6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)
       ioredis: 6.0.0(supports-color@8.1.1)
       joi: 18.2.5
 
-  '@ehildt/nestjs-socket.io@1.3.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(fastify-socket.io@5.1.0(fastify@5.12.1)(socket.io@4.8.3(supports-color@8.1.1)))(joi@18.2.5)(socket.io@4.8.3(supports-color@8.1.1))':
+  '@ehildt/nestjs-socket.io@1.3.3(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(fastify-socket.io@5.1.0(fastify@5.12.1)(socket.io@4.8.3(supports-color@8.1.1)))(joi@18.2.5)(socket.io@4.8.3(supports-color@8.1.1))':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       fastify-socket.io: 5.1.0(fastify@5.12.1)(socket.io@4.8.3(supports-color@8.1.1))
       joi: 18.2.5
       socket.io: 4.8.3(supports-color@8.1.1)
@@ -8963,23 +8984,23 @@ snapshots:
 
   '@neoconfetti/react@1.0.0': {}
 
-  '@nestjs/axios@4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)':
+  '@nestjs/axios@4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       axios: 1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       rxjs: 7.8.2
 
-  '@nestjs/bull-shared@11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)':
+  '@nestjs/bull-shared@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       tslib: 2.8.1
 
-  '@nestjs/bullmq@11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))':
+  '@nestjs/bullmq@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(bullmq@6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0))':
     dependencies:
-      '@nestjs/bull-shared': 11.0.5(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/bull-shared': 11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       bullmq: 6.2.0(ioredis@6.0.0(supports-color@8.1.1))(pg@8.23.0)
       tslib: 2.8.1
 
@@ -9036,6 +9057,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)':
+    dependencies:
+      file-type: 21.3.4(supports-color@8.1.1)
+      iterare: 1.2.1
+      load-esm: 1.0.3
+      reflect-metadata: 0.2.2
+      rxjs: 7.8.2
+      tslib: 2.8.1
+      uid: 2.0.2
+    optionalDependencies:
+      class-transformer: 0.5.1
+      class-validator: 0.15.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@nestjs/core@11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
@@ -9049,9 +9085,30 @@ snapshots:
     optionalDependencies:
       '@nestjs/microservices': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
 
+  '@nestjs/core@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+    dependencies:
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      fast-safe-stringify: 2.1.1
+      iterare: 1.2.1
+      path-to-regexp: 8.4.2
+      reflect-metadata: 0.2.2
+      rxjs: 7.8.2
+      tslib: 2.8.1
+      uid: 2.0.2
+    optionalDependencies:
+      '@nestjs/microservices': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+
   '@nestjs/mapped-types@2.1.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)':
     dependencies:
       '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      reflect-metadata: 0.2.2
+    optionalDependencies:
+      class-transformer: 0.5.1
+      class-validator: 0.15.1
+
+  '@nestjs/mapped-types@2.1.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)':
+    dependencies:
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       reflect-metadata: 0.2.2
     optionalDependencies:
       class-transformer: 0.5.1
@@ -9067,13 +9124,25 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       ioredis: 6.0.0(supports-color@8.1.1)
+    optional: true
 
-  '@nestjs/platform-fastify@11.2.1(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)':
+  '@nestjs/microservices@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+    dependencies:
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      iterare: 1.2.1
+      reflect-metadata: 0.2.2
+      rxjs: 7.8.2
+      tslib: 2.8.1
+    optionalDependencies:
+      ioredis: 6.0.0(supports-color@8.1.1)
+
+  '@nestjs/platform-fastify@11.2.1(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)':
     dependencies:
       '@fastify/cors': 11.3.0
       '@fastify/formbody': 8.0.2
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       fast-querystring: 1.1.2
       fastify: 5.11.3
       fastify-plugin: 6.0.0
@@ -9114,26 +9183,42 @@ snapshots:
       class-transformer: 0.5.1
       class-validator: 0.15.1
 
-  '@nestjs/terminus@11.1.1(@nestjs/axios@4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2))(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@microsoft/tsdoc': 0.16.0
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/mapped-types': 2.1.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
+      js-yaml: 5.3.0
+      lodash: 4.18.1
+      path-to-regexp: 8.4.2
+      reflect-metadata: 0.2.2
+      swagger-ui-dist: 5.32.13
+    optionalDependencies:
+      '@fastify/static': 10.1.3
+      class-transformer: 0.5.1
+      class-validator: 0.15.1
+
+  '@nestjs/terminus@11.1.1(@nestjs/axios@4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2))(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+    dependencies:
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       boxen: 5.1.2
       check-disk-space: 3.4.0
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
     optionalDependencies:
-      '@nestjs/axios': 4.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)
-      '@nestjs/microservices': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/axios': 4.0.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(axios@1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(rxjs@7.8.2)
+      '@nestjs/microservices': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@prisma/client': 7.9.1(prisma@7.9.1(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)
 
-  '@nestjs/testing@11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)':
+  '@nestjs/testing@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/microservices@11.2.1)':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/microservices@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       tslib: 2.8.1
     optionalDependencies:
-      '@nestjs/microservices': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(ioredis@6.0.0(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
 
   '@noble/hashes@1.8.0': {}
 
@@ -9924,17 +10009,25 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@triplef/config-factory@1.1.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@triplef/helpers@1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5))(joi@18.2.5)':
+  '@triplef/config-factory@1.1.3(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@triplef/helpers@1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5))(joi@18.2.5)':
     dependencies:
-      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@triplef/helpers': 1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@triplef/helpers': 1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
       joi: 18.2.5
 
-  '@triplef/helpers@1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)':
+  '@triplef/helpers@1.5.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)':
+    dependencies:
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/swagger': 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
+      joi: 18.2.5
+
+  '@triplef/helpers@1.5.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)(pino@10.3.1)':
     dependencies:
       '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@nestjs/swagger': 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       joi: 18.2.5
+      json5: 2.2.3
+      pino: 10.3.1
 
   '@tsconfig/node10@1.0.13': {}
 
