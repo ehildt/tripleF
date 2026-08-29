@@ -36,8 +36,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       '@tanstack/vue-query':
-        specifier: ^5.102.1
-        version: 5.102.1(vue@3.5.41(typescript@5.9.3))
+        specifier: ^5.102.5
+        version: 5.102.5(vue@3.5.41(typescript@5.9.3))
       '@types/turndown':
         specifier: ^5.0.6
         version: 5.0.6
@@ -648,8 +648,8 @@ importers:
         specifier: ^11.1.17
         version: 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@triplef/helpers':
-        specifier: ^1.5.1
-        version: 1.5.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)
+        specifier: ^1.5.2
+        version: 1.5.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)(pino@10.3.1)
       joi:
         specifier: ^18.0.2
         version: 18.2.5
@@ -3221,14 +3221,14 @@ packages:
     resolution: {integrity: sha512-Wo1iKt2b9OT7d+YGhvEPD3DXvPv2etTusIMhMUoG7fbhmxcXCtIjJDEygy91Y2JFlwGyjqiBPRozme7UD8hoqg==}
     engines: {node: '>=12'}
 
-  '@tanstack/query-core@5.102.1':
-    resolution: {integrity: sha512-bJTsrO2ODWSgg+x1leTsK036GBtmNNjnrF1Vk06J5fg/phYZLQIdXrBe0uf5xTItXYvIW1MtbLhyPw7cPMqUUQ==}
+  '@tanstack/query-core@5.102.5':
+    resolution: {integrity: sha512-RjCmHf9cPRYcH/dpO0Jagw3rxCM1bLzMKKSGzaDkQJADDKGpv5RFjN54IyHSOIPa822AUA7ASOXDjjy1jfyzIA==}
 
   '@tanstack/virtual-core@3.17.8':
     resolution: {integrity: sha512-BfEvehNpOT75r5Ksc5xW6NZuXujTfb7nlSEyVu4XHG3gdxNg1KqXruWbDewXOUaUYIo4oRbSfkjIajz4MAT8tA==}
 
-  '@tanstack/vue-query@5.102.1':
-    resolution: {integrity: sha512-873Pt1wYlQYPD2jgKEizxJ0/SqzGfKfaCxB2y2Aaco62vn+zHWW/whq+mFA+fjjYii20AFjtmTiZ6URGRPK4Jw==}
+  '@tanstack/vue-query@5.102.5':
+    resolution: {integrity: sha512-4ksPRgMBVcOpEKXZUsvN7TetCahAUur6eMu1i/tQfaYH3OhJHIkVX5pyu0OF5SU1foQp6p8WCWFtOG5f2UzdaA==}
     peerDependencies:
       '@vue/composition-api': ^1.1.2
       vue: ^2.6.0 || ^3.3.0
@@ -3299,6 +3299,14 @@ packages:
       '@nestjs/common': ^11.1.17
       '@nestjs/swagger': ^11.3.0
       joi: ^18.0.2
+
+  '@triplef/helpers@1.5.3':
+    resolution: {integrity: sha512-8ScW4nKnB+QpbE+2SmmSNLW0fYNIR7kSTJsfGbN5xQ+X4/+84w3BhqEbe408HH9r9MbPKh4WrOdCxOqeTlaT9Q==}
+    peerDependencies:
+      '@nestjs/common': ^11.1.17
+      '@nestjs/swagger': ^11.3.0
+      joi: ^18.0.2
+      pino: ^10.3.1
 
   '@tsconfig/node10@1.0.13':
     resolution: {integrity: sha512-gcLdvR9HO1ZJBypsOGqaP6TFEzb6vIta0KSTLt9NAQ6pXQO3cRgSVyCN6pzYqI9DlJgY71XKO0dpDhCf08b3pg==}
@@ -9839,14 +9847,14 @@ snapshots:
     dependencies:
       remove-accents: 0.5.0
 
-  '@tanstack/query-core@5.102.1': {}
+  '@tanstack/query-core@5.102.5': {}
 
   '@tanstack/virtual-core@3.17.8': {}
 
-  '@tanstack/vue-query@5.102.1(vue@3.5.41(typescript@5.9.3))':
+  '@tanstack/vue-query@5.102.5(vue@3.5.41(typescript@5.9.3))':
     dependencies:
       '@tanstack/match-sorter-utils': 8.19.4
-      '@tanstack/query-core': 5.102.1
+      '@tanstack/query-core': 5.102.5
       '@vue/devtools-api': 6.6.4
       vue: 3.5.41(typescript@5.9.3)
       vue-demi: 0.14.10(vue@3.5.41(typescript@5.9.3))
@@ -9935,6 +9943,14 @@ snapshots:
       '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@nestjs/swagger': 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       joi: 18.2.5
+
+  '@triplef/helpers@1.5.3(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2))(joi@18.2.5)(pino@10.3.1)':
+    dependencies:
+      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/swagger': 11.4.7(@fastify/static@10.1.3)(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
+      joi: 18.2.5
+      json5: 2.2.3
+      pino: 10.3.1
 
   '@tsconfig/node10@1.0.13': {}
 
