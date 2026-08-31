@@ -5,6 +5,7 @@ import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperPlaceResult } from './helpers/map-serper-place-result.helper.js';
 import { type SerperPlacesSearchInput, serperPlacesSearchSchema } from './places-search.schema.js';
 import type { SerperPlacesSearchResponse } from './places-search.types.js';
 import { HEADERS } from './serper.constants.js';
@@ -41,18 +42,7 @@ export function createSerperPlacesSearch(deps: ToolDependencies): Tool {
         deps.logger.warn(`Serper.dev Places returned 0 results for "${query}"`);
         return { results: [] };
       }
-      const results = data.places.map((r) => ({
-        title: r.title,
-        address: r.address || '',
-        phoneNumber: r.phoneNumber || '',
-        latitude: r.latitude,
-        longitude: r.longitude,
-        rating: r.rating,
-        ratingCount: r.ratingCount,
-        type: r.type || '',
-        website: r.website || '',
-        cid: r.cid || '',
-      }));
+      const results = data.places.map(mapSerperPlaceResult);
       return { results };
     },
   });

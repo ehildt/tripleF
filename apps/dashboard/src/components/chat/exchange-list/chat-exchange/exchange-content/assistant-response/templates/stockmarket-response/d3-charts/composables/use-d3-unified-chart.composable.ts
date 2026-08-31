@@ -54,16 +54,16 @@ import {
 } from '../helpers/heatmap-shaders.helper';
 import { isExtremeAnnotation } from '../helpers/is-extreme-annotation.helper';
 import { isMovingAverageReferenceLine } from '../helpers/is-moving-average-reference-line.helper';
-import { markerTextShift } from '../helpers/marker-text-shift.helper';
+import { mapLayoutToStackedMarker } from '../helpers/map-layout-to-stacked-marker.helper';
+import { mapMarkerLayoutToPrice } from '../helpers/map-marker-layout-to-price.helper';
+import { mapMarkerToLayout } from '../helpers/map-marker-to-layout.helper';
+import { mapPointToHlcPixel } from '../helpers/map-point-to-hlc-pixel.helper';
 import { mergeDuplicateReferenceLines } from '../helpers/merge-duplicate-reference-lines.helper';
 import { mergeMarkerLayouts } from '../helpers/merge-marker-layouts.helper';
 import { resolveColor } from '../helpers/resolve-color.helper';
 import { resolveMarkerSymbolPath } from '../helpers/resolve-marker-symbol-path.helper';
 import { resolveTokenColor } from '../helpers/resolve-token-color.helper';
-import {
-  type SplitMarkerText,
-  splitMarkerText,
-} from '../helpers/split-marker-text.helper';
+import type { SplitMarkerText } from '../helpers/split-marker-text.helper';
 import {
   type StackedMarkerLayout,
   stackMarkerLayouts,
@@ -233,11 +233,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     onRangeRequest: options.onRangeRequest,
     volumeSplit: () => false,
     markerHeadroomPx: () => (showMarkers.value ? MARKER_TEXT_MARGIN : 0),
-    getMarkerPrices: () =>
-      markerLayouts.value.map((layout) => ({
-        index: layout.index,
-        price: layout.price,
-      })),
+    getMarkerPrices: () => markerLayouts.value.map(mapMarkerLayoutToPrice),
     rightGutterWidth: () => referenceBadgeWidth() + 8,
     crosshair: true,
     visibleWindowRef: visibleWindow,
@@ -328,13 +324,9 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     const merged = explicit.length
       ? mergeMarkerLayouts(
           buildMarkerLayouts(
-            explicit.map((marker) => ({
-              time: marker.time,
-              position: marker.position,
-              color: resolveTokenColor(marker.color, 1),
-              shape: marker.shape,
-              text: marker.text,
-            })),
+            explicit.map((marker) =>
+              mapMarkerToLayout(marker, resolveTokenColor),
+            ),
             points,
           ),
           pivots,
@@ -604,12 +596,9 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
 
   function drawHlcArea(ctx: D3ChartRenderContext): void {
     const visible = options.history.value.slice(ctx.visibleFrom, ctx.visibleTo);
-    const pixelPoints: HlcPoint[] = visible.map((point, i) => ({
-      x: ctx.x(ctx.visibleFrom + i),
-      high: ctx.y(point.high),
-      low: ctx.y(point.low),
-      close: ctx.y(point.close),
-    }));
+    const pixelPoints: HlcPoint[] = visible.map((point, i) =>
+      mapPointToHlcPixel(point, i, ctx),
+    );
     const paths = buildHlcAreaPaths(pixelPoints);
     const group = layerGroup(ctx, 'd3-chart__hlc');
     updatePath(group, 'd3-chart__hlc-area--top', {
@@ -988,19 +977,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
         (layout) =>
           layout.index >= ctx.visibleFrom && layout.index < ctx.visibleTo,
       ),
-    ).map((layout) => {
-      const arrowY = ctx.y(layout.price) + layout.stackOffset;
-      const hasText = Boolean(layout.text);
-      return {
-        layout,
-        split: splitMarkerText(layout.text),
-        // When a reference line cuts through the marker's text rows, step
-        // the text further out; the arrows stay anchored to the bar price.
-        textShift: hasText
-          ? markerTextShift(arrowY, layout.textAbove, lineYs)
-          : 0,
-      };
-    });
+    ).map((layout) => mapLayoutToStackedMarker(layout, ctx, lineYs));
     const joined = group
       .selectAll<
         SVGGElement,

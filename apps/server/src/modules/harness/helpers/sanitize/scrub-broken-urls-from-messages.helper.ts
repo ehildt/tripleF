@@ -1,5 +1,8 @@
 import type { InputMessage } from '@triplef/ai-sdk';
 
+import { mapUrlToReplacement } from './helpers/map-url-to-replacement.helper.js';
+import { scrubMessage } from './helpers/scrub-message.helper.js';
+
 /** Blank broken image URLs out of string message contents. */
 export function scrubBrokenUrlsFromMessages(
   messages: InputMessage[],
@@ -7,17 +10,7 @@ export function scrubBrokenUrlsFromMessages(
 ): InputMessage[] {
   if (brokenImageUrls.size === 0) return messages;
 
-  const replacements = Array.from(brokenImageUrls).map((url) => ({
-    url,
-    escaped: url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-  }));
+  const replacements = Array.from(brokenImageUrls).map(mapUrlToReplacement);
 
-  return messages.map((message) => {
-    if (typeof message.content !== 'string') return message;
-    let content = message.content;
-    for (const { escaped } of replacements) {
-      content = content.replace(new RegExp(escaped, 'g'), ' ');
-    }
-    return { ...message, content };
-  });
+  return messages.map((message) => scrubMessage(message, replacements));
 }

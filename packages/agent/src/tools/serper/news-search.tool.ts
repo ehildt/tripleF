@@ -7,6 +7,7 @@ import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperNewsResult } from './helpers/map-serper-news-result.helper.js';
 import { type SerperNewsSearchInput, serperNewsSearchSchema } from './news-search.schema.js';
 import type { SerperNewsSearchResponse } from './news-search.types.js';
 import { HEADERS } from './serper.constants.js';
@@ -43,14 +44,7 @@ export function createSerperNewsSearch(deps: ToolDependencies): Tool {
       if (!res.ok) return { results: [] };
       const data = (await res.json()) as SerperNewsSearchResponse;
       if (!data.news?.length) return { results: [] };
-      const results = data.news.map((r) => ({
-        title: r.title,
-        snippet: r.snippet || '',
-        url: r.link,
-        source: r.source || '',
-        date: r.date || '',
-        imageUrl: r.imageUrl || '',
-      }));
+      const results = data.news.map(mapSerperNewsResult);
       return { results };
     },
   });

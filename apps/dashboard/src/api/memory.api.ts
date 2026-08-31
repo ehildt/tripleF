@@ -1,3 +1,6 @@
+import { mapFact } from './helpers/map-fact.helper';
+import { mapInsight } from './helpers/map-insight.helper';
+import { mapLexiconChunk } from './helpers/map-lexicon-chunk.helper';
 import { getMemoryApiUrl } from './api-url';
 
 export interface MemoryCognitionSnapshot {
@@ -32,11 +35,7 @@ export async function fetchMemoryCognition(
     profile: body.profile ?? null,
     insights: (body.insights ?? [])
       .filter((insight) => insight.text)
-      .map((insight, index) => ({
-        id: insight.id ?? `insight-${index}`,
-        text: insight.text as string,
-        path: insight.path,
-      })),
+      .map(mapInsight),
   };
 }
 
@@ -82,16 +81,7 @@ export async function fetchMemoryFacts(
     role?: string;
     category?: string;
   }>;
-  return items
-    .filter((item) => item.text)
-    .map((item, index) => ({
-      id: item.id ?? `fact-${index}`,
-      text: item.text as string,
-      createdAt: item.createdAt,
-      tags: Array.isArray(item.tags) ? item.tags : [],
-      role: item.role,
-      category: item.category,
-    }));
+  return items.filter((item) => item.text).map(mapFact);
 }
 
 /**
@@ -169,20 +159,7 @@ export async function fetchLexiconChunks(
     chunkCount?: number;
     partitionScope?: string;
   }>;
-  return items
-    .filter((item) => item.content && item.url)
-    .map((item) => ({
-      id: item.id ?? '',
-      content: item.content as string,
-      url: item.url as string,
-      domain: item.domain ?? '',
-      title: item.title,
-      fetchedAt: item.fetchedAt ?? '',
-      contentHash: item.contentHash ?? '',
-      chunkIndex: item.chunkIndex ?? 0,
-      chunkCount: item.chunkCount ?? 0,
-      partitionScope: item.partitionScope ?? '',
-    }));
+  return items.filter((item) => item.content && item.url).map(mapLexiconChunk);
 }
 
 /** One semantic link edge between two memory points (cosine kNN). */

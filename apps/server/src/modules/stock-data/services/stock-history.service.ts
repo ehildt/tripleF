@@ -13,6 +13,7 @@ import {
   type MarketHistoryProvider,
 } from '../market-data.types.js';
 
+import { mapRangeRowToDateRange } from './helpers/map-range-row-to-date-range.helper.js';
 import { StockHistoryRepository } from './stock-history.repository.js';
 
 /**
@@ -88,10 +89,7 @@ export class StockHistoryService {
     target: DateRange,
   ): Promise<void> {
     const covered: DateRange[] = (await this.repository.findRanges(ticker)).map(
-      (r) => ({
-        from: r.fromDate.toISOString().slice(0, 10),
-        to: r.toDate.toISOString().slice(0, 10),
-      }),
+      mapRangeRowToDateRange,
     );
 
     const missing = computeMissingRanges(target, covered);

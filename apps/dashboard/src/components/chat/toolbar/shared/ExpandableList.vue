@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
 import ExpandableDivider from './ui/expandable-divider/ExpandableDivider.vue';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     isExpanded: boolean;
     hasItems: boolean;
-    /** When false, the collapsible divider row is omitted entirely — used to
-     *  hide the conversations divider when the sockets section below is not
-     *  shown, so the list no longer implies a divider above an empty area. */
+    /** When false, the collapsible divider row is omitted and the list stays
+     *  expanded — used when the sockets section below is not shown, so the
+     *  list no longer implies a divider above an empty area and remains
+     *  visible without a toggle. */
     showDivider?: boolean;
   }>(),
   { showDivider: true },
@@ -16,6 +19,11 @@ withDefaults(
 const emit = defineEmits<{
   toggleExpanded: [];
 }>();
+
+// Without a divider there is no toggle, so the list must stay expanded.
+const contentVisible = computed(() =>
+  props.showDivider ? props.isExpanded : true,
+);
 </script>
 
 <template>
@@ -30,7 +38,7 @@ const emit = defineEmits<{
     <!-- Inline expansion: the content pushes sibling toolbar groups down in
          flow, so the conversations and sockets lists stack without covering
          each other. -->
-    <div v-if="isExpanded" class="expandable-list__content">
+    <div v-if="contentVisible" class="expandable-list__content">
       <slot />
     </div>
   </div>

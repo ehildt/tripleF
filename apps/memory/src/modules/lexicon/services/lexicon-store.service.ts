@@ -3,13 +3,15 @@ import type { LexiconSourceDocument } from '@triplef/agent/schemas';
 import { hashPayload } from '@triplef/helpers/hash-payload';
 
 import { LexiconLedgerRepository } from '../../persistence/services/lexicon-ledger.repository.js';
-import { deterministicPointId } from '../../qdrant/helpers/deterministic-point-id.helper.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { LexiconRepository } from '../../qdrant/services/lexicon.repository.js';
 import { MemoryEnqueueService } from '../../qdrant/services/memory-enqueue.service.js';
 import { LEXICON_CONFIG } from '../constants/lexicon.constants.js';
 import { chunkTextBySentences } from '../helpers/chunk-text.helper.js';
 import type { LexiconConfig } from '../models/lexicon-config.model.js';
+
+import { mapContentToChunk } from './helpers/map-content-to-chunk.helper.js';
+import { mapEntryToChunk } from './helpers/map-entry-to-chunk.helper.js';
 
 /** Outcome of the persist pass — what the select flow needs to know. */
 export interface PersistOutcome {
@@ -91,20 +93,19 @@ export class LexiconStoreService {
       const fetchedAt = new Date().toISOString();
       const domain = deriveDomain(doc.url);
       await this.repository.upsertChunks(
-        chunks.map((content, index) => ({
-          id: deterministicPointId(`${doc.url}|${contentHash}|${index}`),
-          vector: vectors[index],
-          content,
-          url: doc.url,
-          domain,
-          title: doc.title,
-          fetchedAt,
-          contentHash,
-          chunkIndex: index,
-          chunkCount: chunks.length,
-          partitionScope,
-          sourceType: 'content',
-        })),
+        chunks.map((content, index) =>
+          mapContentToChunk(
+            content,
+            index,
+            vectors,
+            doc,
+            domain,
+            fetchedAt,
+            contentHash,
+            chunks.length,
+            partitionScope,
+          ),
+        ),
       );
       await this.repository.deleteByUrlExcludingHash(doc.url, contentHash);
       ledgerRows.push({
@@ -175,20 +176,9 @@ export class LexiconStoreService {
     );
     const fetchedAt = new Date().toISOString();
     await this.repository.upsertChunks(
-      toEmbed.map((entry, index) => ({
-        id: deterministicPointId(`${entry.url}|${entry.contentHash}`),
-        vector: vectors[index],
-        content: entry.snippet,
-        url: entry.url,
-        domain: entry.domain,
-        title: entry.title,
-        fetchedAt,
-        contentHash: entry.contentHash,
-        chunkIndex: 0,
-        chunkCount: 1,
-        partitionScope,
-        sourceType: 'result',
-      })),
+      toEmbed.map((entry, index) =>
+        mapEntryToChunk(entry, index, vectors, fetchedAt, partitionScope),
+      ),
       { skipLinks: true },
     );
     return toEmbed.map((entry) => entry.url);

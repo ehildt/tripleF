@@ -10,7 +10,6 @@ import {
 import { CONSTELLATION_NODE_LIMIT_MAX } from '../constants/constellation-node-limit.constant.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { buildMemoryMust } from '../helpers/build-memory-filters.helper.js';
-import { normalizeCategory } from '../helpers/normalize-category.helper.js';
 import type {
   ListMemoryInput,
   MemoryPoint,
@@ -19,6 +18,9 @@ import type {
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
+import { mapFacetHit } from './helpers/map-facet-hit.helper.js';
+import { mapMemoryPointToUpsert } from './helpers/map-memory-point-to-upsert.helper.js';
+import { mapQueryPointToMemoryPoint } from './helpers/map-query-point-to-memory-point.helper.js';
 import { MemoryOverridesService } from './memory-overrides.service.js';
 import { QdrantClientService } from './qdrant-client.service.js';
 
@@ -82,26 +84,9 @@ export class MemoryRepository {
     const createdAt = new Date().toISOString();
     await client.upsert(this.collection, {
       wait: true,
-      points: input.points.map((point) => ({
-        id: point.id,
-        vector: point.vector,
-        payload: {
-          memory_partition: input.memoryPartition,
-          memory_cognition: input.memoryCognition,
-          session_id: input.sessionId,
-          role: input.role,
-          conversation_id: input.conversationId,
-          request_id: input.requestId,
-          text: point.text,
-          tags: point.tags ?? [],
-          // Every write boundary funnels through here — the category is
-          // normalized once, so case/format drift cannot re-enter the system.
-          category: normalizeCategory(point.category),
-          path: point.path,
-          files: input.files ?? [],
-          created_at: createdAt,
-        },
-      })),
+      points: input.points.map((point) =>
+        mapMemoryPointToUpsert(point, input, createdAt),
+      ),
     });
 
     const lane = input.memoryPartition
@@ -223,10 +208,7 @@ export class MemoryRepository {
         must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
       },
     });
-    return result.hits.map((hit) => ({
-      value: String(hit.value),
-      count: hit.count,
-    }));
+    return result.hits.map(mapFacetHit);
   }
 
   /** Distinct memory partitions of the collection (facet on the tenant key). */
@@ -255,10 +237,7 @@ export class MemoryRepository {
         must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
       },
     });
-    return result.hits.map((hit) => ({
-      value: String(hit.value),
-      count: hit.count,
-    }));
+    return result.hits.map(mapFacetHit);
   }
 
   /**
@@ -379,12 +358,7 @@ export class MemoryRepository {
       with_payload: ['category', 'tags'],
       filter,
     });
-    return result.points.map((point) => ({
-      id: String(point.id),
-      score: point.score ?? 0,
-      category: point.payload?.category as string | undefined,
-      tags: (point.payload?.tags as string[]) ?? [],
-    }));
+    return result.points.map(mapQueryPointToMemoryPoint);
   }
 
   /** Set payload keys on specific points (the relink job's enrichment writes). */

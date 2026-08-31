@@ -41,6 +41,7 @@ import { i18n } from '@/i18n/i18n';
 import { useSysctlConfig } from '../composables/use-sysctl-config';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
 import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
+import { mapSubtabToItem } from './helpers/map-subtab-to-item.helper';
 
 const TEMPLATE_META: Record<
   Exclude<TemplateName, 'text'>,
@@ -103,19 +104,9 @@ const { config } = useSysctlConfig();
 const eodhdEnabled = computed(() => config.value?.eodhd?.enabled === true);
 
 const SUBTAB_ITEMS = computed(() =>
-  SUBTABS.map((subtab) => {
-    const isStockmarket = subtab.id === 'stockmarket';
-    const muted = isStockmarket && !eodhdEnabled.value;
-    return {
-      id: subtab.id,
-      label: i18n.global.t(subtab.labelKey),
-      icon: subtab.icon,
-      muted,
-      tooltip: muted
-        ? i18n.global.t('common.stockmarketRequiresEodhd')
-        : undefined,
-    };
-  }),
+  SUBTABS.map((subtab) =>
+    mapSubtabToItem(subtab, eodhdEnabled.value, i18n.global.t),
+  ),
 );
 
 const activeSubtabId = ref(SUBTABS[0].id);

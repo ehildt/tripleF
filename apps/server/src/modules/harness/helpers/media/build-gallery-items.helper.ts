@@ -1,4 +1,7 @@
 import type { HarnessJobPayload } from '../../dtos/harness-job.dto.js';
+import { mapEntryWithIndex } from '../sanitize/helpers/map-entry-with-index.helper.js';
+
+import { mapGalleryEntry } from './helpers/map-gallery-entry.helper.js';
 
 export interface GalleryItem extends Record<string, string> {
   imageUrl: string;
@@ -16,24 +19,9 @@ export function buildGalleryItems(
   const seenHashes = new Set<string>();
 
   return meta
-    .map((entry, index) => ({ entry, index }))
+    .map(mapEntryWithIndex)
     .filter(({ entry }) => !entry?.variant || entry.variant === 'original')
-    .map(({ entry }) => {
-      const name = entry?.name ?? 'image';
-      const hash = entry?.hash ?? '';
-      const imageUrl =
-        sessionId && conversationId
-          ? `/api/v1/storage/${sessionId}/${conversationId}/${hash}`
-          : '';
-
-      return {
-        imageUrl,
-        imageAlt: name,
-        title: name,
-        caption: name,
-        source: entry?.source ?? 'local',
-      };
-    })
+    .map(({ entry }) => mapGalleryEntry(entry, sessionId, conversationId))
     .filter((item) => {
       const hash = item.imageUrl.split('/').pop() ?? '';
       if (seenHashes.has(hash)) return false;

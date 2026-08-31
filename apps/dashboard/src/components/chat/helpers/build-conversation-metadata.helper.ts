@@ -4,6 +4,8 @@ import type {
   ConversationMetadataDocument,
 } from '@/types/form-query-params.model';
 
+import { mapImageToMetadata } from './map-image-to-metadata.helper';
+
 /**
  * Build the conversation metadata attached to a submit request: every
  * toolbar-selected file reference plus the still-selected persisted uploads
@@ -35,7 +37,7 @@ export function buildConversationMetadata(
         (img) =>
           !('variant' in img) || !img.variant || img.variant === 'original',
       )
-      .map(({ name, hash }) => ({ name, hash })),
+      .map(mapImageToMetadata),
     ...(newOriginals?.length ? { originals: newOriginals } : {}),
   };
 

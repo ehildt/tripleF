@@ -60,7 +60,7 @@
     "turndown": "^7.2.4"
   },
   "peerDependencies": {
-    "ai": "^7.0.85",
+    "ai": "^7.0.87",
     "zod": "^4.5.4"
   },
   "peerDependenciesMeta": {
@@ -92,7 +92,7 @@
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.68.0",
+    "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.11"
   }
 }

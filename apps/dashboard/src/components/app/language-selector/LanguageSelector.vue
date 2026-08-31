@@ -7,6 +7,7 @@ import { locales } from '../../../i18n/locale-registry';
 import { useMenuPosition } from '../../chat/toolbar/model-selector/composables/use-menu-position';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
+import { mapLocaleToOption } from './helpers/map-locale-to-option.helper';
 import LocaleFlag from './LocaleFlag.vue';
 
 const { locale, setLocale } = useLocale();
@@ -25,13 +26,7 @@ const { positionStyle } = useMenuPosition(triggerRef, isOpen, {
 
 /** Locale options with their native (endonym) name and flag, from the
  *  auto-discovered locale registry. */
-const allOptions = computed(() =>
-  locales.map((l) => ({
-    code: l.code,
-    name: l.name,
-    flag: l.countryCode,
-  })),
-);
+const allOptions = computed(() => locales.map(mapLocaleToOption));
 
 /** Options filtered by the search query (name or code, case-insensitive). */
 const options = computed(() => {

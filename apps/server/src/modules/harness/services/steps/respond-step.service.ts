@@ -32,6 +32,9 @@ import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 import { ShownMediaService } from '../shown-media.service.js';
 
+import { mapGalleryItemToRef } from './helpers/map-gallery-item-to-ref.helper.js';
+import { mapVideoToAllowed } from './helpers/map-video-to-allowed.helper.js';
+
 @Injectable()
 export class RespondStepService implements StepHandler {
   private readonly logger = new Logger(RespondStepService.name);
@@ -218,7 +221,7 @@ export class RespondStepService implements StepHandler {
       mergedData,
       limitedGalleryItems
         .filter((item) => item.source === 'cloud')
-        .map((item) => ({ imageUrl: item.imageUrl, title: item.title })),
+        .map(mapGalleryItemToRef),
       isImageTask,
     );
     if (
@@ -276,10 +279,7 @@ export class RespondStepService implements StepHandler {
         : enforceAvailableMediaUrls(
             withOffers,
             extractImageSearchItems(ctx.outputs.toolResults),
-            (ctx.outputs.availableVideos ?? []).map((video) => ({
-              videoUrl: video.url,
-              title: video.title,
-            })),
+            (ctx.outputs.availableVideos ?? []).map(mapVideoToAllowed),
             responseGalleryItems.map((item) => item.imageUrl),
           );
     if (mediaCheckedData !== withOffers) {

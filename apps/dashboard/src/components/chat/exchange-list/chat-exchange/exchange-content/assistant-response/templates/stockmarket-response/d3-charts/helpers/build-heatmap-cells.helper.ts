@@ -1,3 +1,6 @@
+import { mapDayToHeatmapRow } from './map-day-to-heatmap-row.helper';
+import { mapRowToHeatmapCells } from './map-row-to-heatmap-cells.helper';
+
 /** One price-band cell of a heatmap day. */
 export interface HeatmapCell {
   low: number;
@@ -101,29 +104,16 @@ export function buildHeatmapCells(
   );
   const grid = buildGrid(history, bandCount);
 
-  const rows = history.map((day) => {
-    const profile = profileByDay.get(day.time);
-    return {
-      time: day.time,
-      volumes: profile
-        ? rebinnedProfileVolumes(profile.bands, grid)
-        : dailyVolumes(day, grid),
-    };
-  });
+  const rows = history.map((day) =>
+    mapDayToHeatmapRow(
+      day,
+      profileByDay,
+      grid,
+      rebinnedProfileVolumes,
+      dailyVolumes,
+    ),
+  );
 
   const maxVolume = Math.max(...rows.flatMap((r) => r.volumes), 1);
-  return rows.map((row) => ({
-    time: row.time,
-    cells: row.volumes
-      .map((volume, i): HeatmapCell | null =>
-        volume > 0
-          ? {
-              low: grid.minPrice + i * grid.step,
-              high: grid.minPrice + (i + 1) * grid.step,
-              amount: Math.min(100, (volume / maxVolume) * 100),
-            }
-          : null,
-      )
-      .filter((cell): cell is HeatmapCell => cell !== null),
-  }));
+  return rows.map((row) => mapRowToHeatmapCells(row, grid, maxVolume));
 }

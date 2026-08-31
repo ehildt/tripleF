@@ -3,8 +3,8 @@ import sharp, { Sharp } from 'sharp';
 
 import { SharpOptions } from '../dtos/sharp-options.dto.js';
 import { getEnabledVariants } from '../helpers/get-enabled-variants.helper.js';
-import { getVariantPipeline } from '../helpers/get-variant-pipeline.helper.js';
 
+import { mapVariantPipeline } from './helpers/map-variant-pipeline.helper.js';
 import type { ImageVariantPipeline } from './image-pipeline-factory.service.types.js';
 
 @Injectable()
@@ -32,9 +32,8 @@ export class ImagePipelineFactory {
   ): ImageVariantPipeline[] {
     const variants = getEnabledVariants(options.variants);
 
-    return variants.map((variant) => ({
-      variant,
-      pipeline: getVariantPipeline(variant, options.parameters),
-    }));
+    return variants.map((variant) =>
+      mapVariantPipeline(variant, options.parameters),
+    );
   }
 }

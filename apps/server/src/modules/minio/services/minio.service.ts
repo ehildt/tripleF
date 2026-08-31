@@ -15,6 +15,8 @@ import type {
 import type { MinioConfig } from '../configs/minio-config.adapter.js';
 import { MINIO_CONFIG } from '../constants/minio.constants.js';
 
+import { downloadEntryBuffer } from './helpers/download-entry-buffer.helper.js';
+
 @Injectable()
 export class MinioService implements OnModuleInit, OnModuleDestroy {
   private _client: Client | null = null;
@@ -152,24 +154,12 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
           conversationId,
           entry.hash,
         );
-        try {
-          const dataStream = await this.client.getObject(
-            this._config.bucket,
-            objectName,
-          );
-          const chunks: Buffer[] = [];
-          for await (const chunk of dataStream) chunks.push(chunk);
-          return { buffer: Buffer.concat(chunks), entry };
-        } catch (error) {
-          const code = (error as any)?.code;
-          if (code === 'NoSuchKey' || code === 'NotFound') {
-            this.logger.warn(
-              `Missing referenced image ${objectName}; skipping.`,
-            );
-            return null;
-          }
-          throw error;
-        }
+        return downloadEntryBuffer(entry, {
+          objectName,
+          client: this.client,
+          bucket: this._config.bucket,
+          logger: this.logger,
+        });
       }),
     );
 

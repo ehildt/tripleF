@@ -5,6 +5,7 @@ import {
   addDays,
   utcToday,
 } from '../../../../stock-data/helpers/date-range.helper.js';
+import { mapDailyBarToOhlc } from '../../../../stock-data/helpers/map-daily-bar-to-ohlc.helper.js';
 import {
   computeIndicator,
   type TechnicalFunction,
@@ -45,13 +46,7 @@ export function createEodhdTechnical(deps: ToolDependencies) {
           return { summary: { ticker, function: fn, points: 0 }, results: [] };
         }
         const computed = computeIndicator(
-          bars.map((b) => ({
-            time: b.date,
-            open: b.open,
-            high: b.high,
-            low: b.low,
-            close: b.close,
-          })),
+          bars.map(mapDailyBarToOhlc),
           fn as TechnicalFunction,
           period,
         );

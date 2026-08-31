@@ -2,6 +2,7 @@ import { onMounted, ref } from 'vue';
 
 import { fetchLexiconChunks, fetchLexiconLinks } from '@/api/memory.api';
 
+import { mapLinkToLexiconEdge } from '../../composables/helpers/map-link-to-lexicon-edge.helper';
 import type {
   ConstellationLink,
   ConstellationNode,
@@ -37,12 +38,7 @@ export function useLexiconSpace() {
     }
     links.value =
       linksResult.status === 'fulfilled'
-        ? linksResult.value.map((link) => ({
-            source: link.source,
-            target: link.target,
-            type: 'semantic' as const,
-            score: link.score,
-          }))
+        ? linksResult.value.map(mapLinkToLexiconEdge)
         : [];
     isLoading.value = false;
   }

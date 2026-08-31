@@ -8,6 +8,7 @@ import {
 } from '@/api/memory.api';
 import { useAppStore } from '@/stores/app';
 
+import { mapLinkToEdge } from '../../composables/helpers/map-link-to-edge.helper';
 import { useMemoryOverrides } from '../../composables/use-memory-overrides';
 import type {
   ConstellationLink,
@@ -61,13 +62,7 @@ export function usePartitionSpace() {
     }
     links.value =
       linksResult.status === 'fulfilled'
-        ? linksResult.value.map((link) => ({
-            source: link.source,
-            target: link.target,
-            type: 'semantic' as const,
-            score: link.score,
-            suggested: link.kind === 'topical' ? true : undefined,
-          }))
+        ? linksResult.value.map(mapLinkToEdge)
         : [];
     isLoading.value = false;
   }

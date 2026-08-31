@@ -1,5 +1,8 @@
 import { computed } from 'vue';
 
+import { mapPendingAttachment } from './helpers/map-pending-attachment.helper';
+import { mapUploadedDocumentAttachment } from './helpers/map-uploaded-document-attachment.helper';
+import { mapUploadedImageAttachment } from './helpers/map-uploaded-image-attachment.helper';
 import type {
   AttachmentItem,
   UseAttachmentListOptions,
@@ -13,44 +16,15 @@ export function useAttachmentList(options: UseAttachmentListOptions) {
   const { attachedFiles, uploadedImages, uploadedDocuments } = options;
 
   const attachments = computed<AttachmentItem[]>(() => {
-    const pending: AttachmentItem[] = attachedFiles.value.map(
-      (entry, index) => ({
-        id: `pending-${entry.hash}-${index}`,
-        name: entry.file.name,
-        hash: entry.hash,
-        previewUrl: entry.objectUrl,
-        isUploaded: false,
-        isSelected: entry.isSelected,
-        pendingIndex: index,
-        source: 'local',
-        kind: entry.kind,
-      }),
+    const pending: AttachmentItem[] =
+      attachedFiles.value.map(mapPendingAttachment);
+
+    const uploaded: AttachmentItem[] = uploadedImages.value.map(
+      mapUploadedImageAttachment,
     );
 
-    const uploaded: AttachmentItem[] = uploadedImages.value.map((image) => ({
-      id: `uploaded-${image.hash}`,
-      name: image.name,
-      hash: image.hash,
-      previewUrl: '',
-      isUploaded: true,
-      isSelected: image.selected !== false,
-      pendingIndex: null,
-      source: image.source ?? 'local',
-      kind: 'image',
-    }));
-
     const uploadedDocs: AttachmentItem[] = uploadedDocuments.value.map(
-      (doc) => ({
-        id: `uploaded-document-${doc.hash}`,
-        name: doc.name,
-        hash: doc.hash,
-        previewUrl: '',
-        isUploaded: true,
-        isSelected: doc.selected !== false,
-        pendingIndex: null,
-        source: 'local',
-        kind: 'document',
-      }),
+      mapUploadedDocumentAttachment,
     );
 
     return [...pending, ...uploaded, ...uploadedDocs];

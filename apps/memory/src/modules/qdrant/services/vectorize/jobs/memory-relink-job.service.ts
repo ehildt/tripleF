@@ -26,6 +26,9 @@ import { EmbeddingService } from '../../embedding.service.js';
 import { MemoryRepository } from '../../memory.repository.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 
+import { mapCandidateToAdjudication } from './helpers/map-candidate-to-adjudication.helper.js';
+import { mapFacetToCategory } from './helpers/map-facet-to-category.helper.js';
+
 /** Hard cap on points processed per category per pass (the DTO caps at 500 too). */
 const MAX_POINTS_PER_CATEGORY = 500;
 /** Hard cap on full passes over the categories (the DTO caps at 10 too). */
@@ -219,11 +222,7 @@ export class MemoryRelinkJobService {
           role: point.role,
           createdAt: point.createdAt,
         },
-        candidates.map((candidate) => ({
-          text: candidate.text,
-          role: candidate.role,
-          createdAt: candidate.createdAt,
-        })),
+        candidates.map(mapCandidateToAdjudication),
       );
       if (!verdict) {
         this.logger.warn(
@@ -462,10 +461,7 @@ export class MemoryRelinkJobService {
   private async orderedCategories(memoryPartition: string): Promise<string[]> {
     const facets = await this.memoryRepository.facetCategories(memoryPartition);
     return facets
-      .map((facet) => ({
-        value: normalizeCategory(facet.value),
-        count: facet.count,
-      }))
+      .map(mapFacetToCategory)
       .filter((facet): facet is { value: string; count: number } =>
         Boolean(facet.value),
       )

@@ -4,12 +4,12 @@ import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
 import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import { buildYoutubeThumbnailUrl } from '../helpers/build-youtube-thumbnail-url.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import { localizedQuerySuffix } from '../helpers/localized-query-suffix.helper.js';
 import { repairVideoLink } from '../helpers/repair-video-link.helper.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperVideoResult } from './helpers/map-serper-video-result.helper.js';
 import { HEADERS } from './serper.constants.js';
 import { type SerperVideoSearchInput, serperVideoSearchSchema } from './video-search.schema.js';
 import type { SerperVideoSearchResponse } from './video-search.types.js';
@@ -60,24 +60,7 @@ export function createSerperVideoSearch(deps: ToolDependencies): Tool {
           return link ? [{ r, link }] : [];
         })
         .slice(0, num)
-        .map(({ r, link }) => ({
-          title: r.title,
-          link,
-          // Keep the provider's original link when it had to be repaired —
-          // auditability for provider-side payload corruption.
-          ...(link !== r.link ? { originalLink: r.link } : {}),
-          snippet: r.snippet || '',
-          channel: r.channel || '',
-          duration: r.duration || '',
-          date: r.date || '',
-          // Serper thumbnails are Google proxy images (blocked by our image
-          // trust rules) — derive a direct thumbnail for YouTube instead.
-          // maxresdefault is not guaranteed to exist; consumers degrade to
-          // hqdefault/mqdefault on failure.
-          thumbnailUrl: buildYoutubeThumbnailUrl(link) ?? '',
-          source: r.source || '',
-          views: r.views ?? 0,
-        }));
+        .map(mapSerperVideoResult);
       deps.logger.log(`Serper.dev Video search returned ${results.length} results for "${searchQuery}"`);
       return { results };
     },

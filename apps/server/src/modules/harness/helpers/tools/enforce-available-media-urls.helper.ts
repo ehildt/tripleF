@@ -4,6 +4,7 @@ import type {
 } from '../media/extract-media-from-tools.types.js';
 import { videoUrlKeys } from '../url-trust/video-url-keys.helper.js';
 
+import { blankReusedStoryThumbnail } from './helpers/blank-reused-story-thumbnail.helper.js';
 import type { MediaData } from './enforce-available-media-urls.types.js';
 
 /** Gallery entries that are allowed and not yet spent (hero or earlier entry). */
@@ -50,15 +51,9 @@ function blankReusedStoryThumbnails(
 ): { stories: unknown[]; changed: boolean } {
   let changed = false;
   const stories = items.map((item) => {
-    if (!item || typeof item !== 'object') return item;
-    const story = item as MediaData;
-    if (typeof story.imageUrl !== 'string' || !story.imageUrl) return item;
-    if (imageUrls.has(story.imageUrl) && !usedImageUrls.has(story.imageUrl)) {
-      usedImageUrls.add(story.imageUrl);
-      return item;
-    }
-    changed = true;
-    return { ...story, imageUrl: '' };
+    const result = blankReusedStoryThumbnail(item, imageUrls, usedImageUrls);
+    if (result.changed) changed = true;
+    return result.item;
   });
   return { stories, changed };
 }

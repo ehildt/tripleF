@@ -3,9 +3,8 @@ import type {
   ConstellationCommunity,
   ConstellationEdge,
 } from '../MemoryConstellation.types';
-import { communityNodeId } from './build-community-node.helper';
-import { hubIdFor } from './hub-id-for.helper';
-import { ROOT_NODE_ID } from './root-node-id.constant';
+import { mapClusterToRootEdge } from './map-cluster-to-root-edge.helper';
+import { mapCommunityToRootEdge } from './map-community-to-root-edge.helper';
 
 /**
  * Root edges: the top tier of the hierarchy connects to the ZERO root dot
@@ -20,15 +19,9 @@ export function buildRootEdges(
   collapsedKeys: ReadonlySet<string>,
 ): ConstellationEdge[] {
   if (communities.length > 0) {
-    return communities.map((community) => ({
-      source: communityNodeId(community.key),
-      target: ROOT_NODE_ID,
-      kind: 'root' as const,
-    }));
+    return communities.map(mapCommunityToRootEdge);
   }
-  return clusters.map((cluster) => ({
-    source: hubIdFor(cluster, collapsedKeys),
-    target: ROOT_NODE_ID,
-    kind: 'root' as const,
-  }));
+  return clusters.map((cluster) =>
+    mapClusterToRootEdge(cluster, collapsedKeys),
+  );
 }

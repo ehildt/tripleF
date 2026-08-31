@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
 
+import { mapPreviewImage } from './helpers/map-preview-image.helper.js';
 import { SharpService } from './sharp.service.js';
 import { SharpOverridesService } from './sharp-overrides.service.js';
 import type { SharpPreviewVariant } from './sharp-preview.service.types.js';
@@ -37,11 +38,6 @@ export class SharpPreviewService {
       },
     );
 
-    return processed.map((image) => ({
-      variant: image.variant,
-      name: image.meta.name,
-      description: image.description,
-      dataUrl: `data:${image.meta.type};base64,${image.buffer.toString('base64')}`,
-    }));
+    return processed.map(mapPreviewImage);
   }
 }

@@ -9,6 +9,7 @@ import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
 import { tbsSizeLabelForPixels } from '../helpers/image-size-buckets.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapBrightDataImageResult } from './helpers/map-bright-data-image-result.helper.js';
 import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataImageSearchInput, brightDataImageSearchSchema } from './image-search.schema.js';
@@ -63,28 +64,16 @@ export function createBrightDataImageSearch(deps: ToolDependencies): Tool {
           deps.logger.warn(`Bright Data image search returned 0 results for "${query}"`);
           return { results: [] };
         }
-        const results = images
-          .map((r) => ({
-            title: r.title || '',
-            // Prefer the real image URL; `image` is a base64 thumbnail data
-            // URI that our trust rules reject.
-            imageUrl: r.original_image || r.image_url || r.imageUrl || r.link || '',
-            sourcePageUrl: r.source_link || r.link || '',
-            width: r.width,
-            height: r.height,
-            source: r.source || '',
-            domain: '',
-          }))
-          .filter((r) => {
-            if (!isTrustedImageUrl(r.imageUrl)) return false;
-            // Bright Data does not return pixel dimensions, so trust the
-            // Google-side `tbs=isz:lt,islt:<bucket>` filter. Only enforce the
-            // minimum when dimensions happen to be present.
-            const w = r.width ?? 0;
-            const h = r.height ?? 0;
-            if (!w || !h) return true;
-            return meetsMinimumImageDimensions(w, h, minWidth, minHeight);
-          });
+        const results = images.map(mapBrightDataImageResult).filter((r) => {
+          if (!isTrustedImageUrl(r.imageUrl)) return false;
+          // Bright Data does not return pixel dimensions, so trust the
+          // Google-side `tbs=isz:lt,islt:<bucket>` filter. Only enforce the
+          // minimum when dimensions happen to be present.
+          const w = r.width ?? 0;
+          const h = r.height ?? 0;
+          if (!w || !h) return true;
+          return meetsMinimumImageDimensions(w, h, minWidth, minHeight);
+        });
         deps.logger.log(`Bright Data image search returned ${results.length} results for "${query}"`);
         return { results };
       } catch (err) {

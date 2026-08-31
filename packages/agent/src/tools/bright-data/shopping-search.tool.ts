@@ -4,6 +4,7 @@ import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapBrightDataShoppingResult } from './helpers/map-bright-data-shopping-result.helper.js';
 import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataShoppingSearchInput, brightDataShoppingSearchSchema } from './shopping-search.schema.js';
@@ -41,16 +42,7 @@ export function createBrightDataShoppingSearch(deps: ToolDependencies): Tool {
           deps.logger.warn(`Bright Data shopping returned 0 results for "${query}"`);
           return { results: [] };
         }
-        const results = shopping.map((r) => ({
-          title: r.title || '',
-          price: r.price || '',
-          link: r.link || '',
-          source: r.source || '',
-          imageUrl: r.image_url || r.image || '',
-          delivery: r.delivery || '',
-          rating: r.rating,
-          ratingCount: r.rating_count,
-        }));
+        const results = shopping.map(mapBrightDataShoppingResult);
         return { results };
       } catch (err) {
         deps.logger.warn(`Bright Data shopping search failed for "${query}": ${String(err)}`);

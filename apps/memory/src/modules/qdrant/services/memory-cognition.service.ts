@@ -18,6 +18,8 @@ import { deterministicPointId } from '../helpers/deterministic-point-id.helper.j
 import type { MemoryPoint } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
+import { mapInsightToItem } from './helpers/map-insight-to-item.helper.js';
+import { mapItemToPoint } from './helpers/map-item-to-point.helper.js';
 import { EmbeddingService } from './embedding.service.js';
 import { MemoryRepository } from './memory.repository.js';
 
@@ -145,10 +147,7 @@ export class MemoryCognitionService {
       throw new Error('Memory feature is disabled');
     }
     const items = insights
-      .map((insight) => ({
-        text: insight.text.trim().slice(0, INSIGHT_TEXT_LIMIT),
-        path: normalizeInsightPath(insight.path),
-      }))
+      .map(mapInsightToItem)
       .filter((insight) => insight.text.length > 0)
       .slice(0, INSIGHTS_MAX_PER_TURN);
     if (items.length === 0) return 0;
@@ -161,15 +160,9 @@ export class MemoryCognitionService {
       throw new Error('Embedding returned fewer vectors than insights');
     }
 
-    const points = items.map((item, index) => ({
-      id: deterministicPointId(
-        `${scope.memoryCognition}|cognition|insight|${item.text}`,
-      ),
-      vector: vectors[index],
-      text: item.text,
-      tags: [...INSIGHT_TAGS],
-      path: item.path,
-    }));
+    const points = items.map((item, index) =>
+      mapItemToPoint(item, index, vectors, scope.memoryCognition),
+    );
     await this.memoryRepository.upsertBatch({
       memoryCognition: scope.memoryCognition,
       role: 'assistant',

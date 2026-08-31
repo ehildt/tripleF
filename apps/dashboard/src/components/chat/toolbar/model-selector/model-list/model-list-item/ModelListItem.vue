@@ -6,12 +6,9 @@ import { formatCtx } from '@/utils/format-ctx.helper';
 
 import type { OllamaModel } from '../../../../../../types/ollama-model.model';
 import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
-import { CAPABILITY_META } from '../../../shared/ui/capability-badge/capability-meta';
 import { formatParameterSize } from './helpers/format-parameter-size.helper';
-import {
-  modelCapabilities,
-  type ModelCapability,
-} from './helpers/model-capabilities.helper';
+import { mapCapabilityToBadge } from './helpers/map-capability-to-badge.helper';
+import { modelCapabilities } from './helpers/model-capabilities.helper';
 
 const props = defineProps<{
   /** The model entry to render. */
@@ -39,10 +36,7 @@ const metaText = computed(() =>
 
 /** Badges for the capabilities this model actually supports, in stable order. */
 const capabilityBadges = computed(() =>
-  modelCapabilities(props.model).map((key: ModelCapability) => ({
-    key,
-    ...CAPABILITY_META[key],
-  })),
+  modelCapabilities(props.model).map(mapCapabilityToBadge),
 );
 </script>
 

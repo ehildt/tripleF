@@ -4,13 +4,13 @@ import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js
 import { SharpConfigService } from '../configs/sharp-config.service.js';
 import { mergeSharpOptions } from '../constants/sharp.constants.js';
 import { PreprocessedImage, SharpOptions } from '../dtos/sharp-options.dto.js';
-import { getVariantPipeline } from '../helpers/get-variant-pipeline.helper.js';
 import { toBuffer } from '../helpers/image-buffer.helper.js';
 import {
   type FilterVariant,
   type Variant,
 } from '../types/image-variant.types.js';
 
+import { mapVariantPipeline } from './helpers/map-variant-pipeline.helper.js';
 import { ImagePipelineFactory } from './image-pipeline-factory.service.js';
 import { ImageVariantProcessor } from './image-variant-processor.service.js';
 import { SharpOverridesService } from './sharp-overrides.service.js';
@@ -101,10 +101,9 @@ export class SharpService {
           mergedOptions.resize,
         );
 
-        const variantPipelines = variants.map((variant) => ({
-          variant,
-          pipeline: getVariantPipeline(variant, mergedOptions.parameters),
-        }));
+        const variantPipelines = variants.map((variant) =>
+          mapVariantPipeline(variant, mergedOptions.parameters),
+        );
 
         const imageVariants = await Promise.all(
           variantPipelines.map(({ variant, pipeline }) =>

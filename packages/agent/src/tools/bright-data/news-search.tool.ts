@@ -6,7 +6,8 @@ import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
 import type { ToolDependencies } from '../types/types.js';
 
-import { buildGoogleUrl, engineEnabled, SOURCE } from './bright-data.constants.js';
+import { mapBrightDataNewsResult } from './helpers/map-bright-data-news-result.helper.js';
+import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataNewsSearchInput, brightDataNewsSearchSchema } from './news-search.schema.js';
 import type { BrightDataNewsSearchResponse } from './news-search.types.js';
@@ -39,14 +40,7 @@ export function createBrightDataNewsSearch(deps: ToolDependencies): Tool {
         })) as BrightDataNewsSearchResponse;
         const news = data.news ?? [];
         if (!news.length) return { results: [] };
-        const results = news.map((r) => ({
-          title: r.title,
-          snippet: r.description || '',
-          url: r.link,
-          source: r.source || SOURCE,
-          date: r.date || '',
-          imageUrl: r.image_url || '',
-        }));
+        const results = news.map(mapBrightDataNewsResult);
         deps.logger.log(`Bright Data news returned ${results.length} results for "${query}"`);
         return { results };
       } catch (err) {

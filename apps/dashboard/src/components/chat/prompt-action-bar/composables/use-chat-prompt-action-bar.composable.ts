@@ -11,7 +11,6 @@ import {
   type LucideIcon,
   MapPin,
   Newspaper,
-  Search,
   ShoppingCart,
   Star,
 } from '@lucide/vue';
@@ -23,6 +22,9 @@ import type { ScrollMode } from '@/types/app.model';
 import type { CollapsibleSectionKey } from '@/types/harness-response-data.model';
 
 import type { ChatPromptActionBarProps } from '../ChatPromptActionBar.types';
+import { mapPresentationToggle } from './helpers/map-presentation-toggle.helper';
+import { mapSectionToggle } from './helpers/map-section-toggle.helper';
+import { mapSourceTag } from './helpers/map-source-tag.helper';
 
 export interface ChatPromptActionBarEmits {
   input: [event: Event];
@@ -174,18 +176,9 @@ export function useChatPromptActionBar(
    * hidden state and a localized hide/show label — the sections are hidden,
    * not collapsed, so the wording says so. */
   const sectionToggles = computed(() =>
-    SECTION_TOGGLES.map(({ key, icon, labelKey }) => {
-      const hidden = appStore.collapsedSections[key];
-      const name = t(labelKey);
-      return {
-        key,
-        icon,
-        hidden,
-        title: hidden
-          ? t('common.showSectionWithName', { section: name })
-          : t('common.hideSectionWithName', { section: name }),
-      };
-    }),
+    SECTION_TOGGLES.map((toggle) =>
+      mapSectionToggle(toggle, appStore.collapsedSections, t),
+    ),
   );
 
   function toggleSection(section: CollapsibleSectionKey) {
@@ -196,20 +189,14 @@ export function useChatPromptActionBar(
    * presentation and a localized switch label. The media sections are never
    * hidden — the toggle flips gallery ↔ list. */
   const presentationToggles = computed(() =>
-    PRESENTATION_TOGGLES.map(({ key, media, icon }) => {
-      const presentation = appStore.mediaPresentations[media];
-      const switchKey =
-        presentation === 'gallery'
-          ? PRESENTATION_SWITCH_KEYS[media].toList
-          : PRESENTATION_SWITCH_KEYS[media].toGallery;
-      return {
-        key,
-        media,
-        icon,
-        presentation,
-        title: t(switchKey),
-      };
-    }),
+    PRESENTATION_TOGGLES.map((toggle) =>
+      mapPresentationToggle(
+        toggle,
+        appStore.mediaPresentations,
+        PRESENTATION_SWITCH_KEYS,
+        t,
+      ),
+    ),
   );
 
   function togglePresentation(media: 'image' | 'video') {
@@ -236,21 +223,9 @@ export function useChatPromptActionBar(
    */
   const sourceTags = computed(() => {
     if (props.searchEngineState !== 'enabled') return [];
-    return (props.searchSources ?? []).map(({ key, enabled }) => ({
-      key,
-      enabled,
-      // Unknown sources fall back to a distinct Search icon — never one of
-      // the mapped icons, so the tags never repeat.
-      icon: SOURCE_META[key]?.icon ?? Search,
-      label: SOURCE_META[key]?.label ?? key,
-      title: enabled
-        ? t('common.sourceEnabled', {
-            label: SOURCE_META[key]?.label ?? key,
-          })
-        : t('common.sourceDisabled', {
-            label: SOURCE_META[key]?.label ?? key,
-          }),
-    }));
+    return (props.searchSources ?? []).map((source) =>
+      mapSourceTag(source, SOURCE_META, t),
+    );
   });
 
   const searchEngineToggleTitle = computed(() =>

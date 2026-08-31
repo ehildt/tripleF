@@ -11,6 +11,7 @@ import { i18n } from '@/i18n/i18n';
 import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
+import { mapPlaylistSnapshot } from './helpers/map-playlist-snapshot.helper';
 import type { Playlist } from './playlist.state.types';
 
 const SESSION_ID = getPersistentSocketSessionId();
@@ -103,11 +104,7 @@ export async function loadPlaylists(): Promise<void> {
     // Discard the snapshot if the playlist state changed while we were
     // fetching — the caller holds fresher data.
     if (playlistMutationCount !== mutationAtStart) return;
-    const playlists = fetched.map((snapshot) => ({
-      name: snapshot.name,
-      conversationId: snapshot.conversationId,
-      videos: snapshot.videos as unknown as VideoGalleryItem[],
-    }));
+    const playlists = fetched.map(mapPlaylistSnapshot);
     setPlaylists(playlists);
     if (!activePlaylistName.value && playlists.length > 0) {
       setActivePlaylist(playlists[0].name);

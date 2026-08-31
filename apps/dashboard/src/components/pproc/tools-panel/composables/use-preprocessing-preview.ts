@@ -6,6 +6,7 @@ import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
+import { mapPreviewVariant } from './helpers/map-preview-variant.helper';
 import type { SharpPreviewVariant } from './use-preprocessing-preview.types';
 
 /** One preprocessing variant returned by the preview endpoint. */
@@ -45,10 +46,7 @@ export function usePreprocessingPreview() {
       if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
       const variants = (await res.json()) as SharpPreviewVariant[];
       if (variants.length === 0) throw new Error('no variants returned');
-      const images = variants.map((v) => ({
-        url: v.dataUrl,
-        title: `${v.variant} — ${v.description}`,
-      }));
+      const images = variants.map(mapPreviewVariant);
       lightbox.openImages(images, images[0].url);
     } catch (e) {
       toast.error(

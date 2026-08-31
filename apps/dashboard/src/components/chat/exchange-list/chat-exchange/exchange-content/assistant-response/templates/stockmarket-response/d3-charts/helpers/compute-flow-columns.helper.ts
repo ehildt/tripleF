@@ -1,4 +1,5 @@
 import type { HeatmapCell } from './build-heatmap-cells.helper';
+import { mapCarriedToColumn } from './map-carried-to-column.helper';
 
 /** One day of flow-ribbon geometry (price space). */
 export interface FlowColumn {
@@ -65,21 +66,16 @@ export function computeFlowColumns(
   // starts flat rather than collapsing onto the zero line.
   const firstStat = stats.find((s): s is DayStats => s !== null) ?? null;
 
-  return carried.map((_, i) => {
-    const window = carried
-      .slice(Math.max(0, i - smoothingWindow + 1), i + 1)
-      .map((s) => s ?? firstStat)
-      .filter((s): s is DayStats => s !== null);
-    const centroid =
-      window.reduce((sum, s) => sum + s.centroid, 0) / (window.length || 1);
-    const halfWidth = Math.max(
-      window.reduce((sum, s) => sum + s.spread, 0) / (window.length || 1),
+  return carried.map((_, i) =>
+    mapCarriedToColumn(
+      _,
+      i,
+      carried,
+      firstStat,
+      smoothingWindow,
       minHalfWidth,
-    );
-    return {
-      centroid,
-      halfWidth,
-      intensity: (stats[i]?.total ?? 0) / maxTotal,
-    };
-  });
+      stats,
+      maxTotal,
+    ),
+  );
 }

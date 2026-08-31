@@ -3,6 +3,7 @@ import {
   computeRangeExtremes,
   type DatedPricePoint,
 } from './compute-range-extremes.helper';
+import { decorateExtremeMarker } from './decorate-extreme-marker.helper';
 
 /**
  * Render markers anchored at the visible range's high/low bars as bullets
@@ -53,29 +54,9 @@ export function forceExtremeMarkers(
   }
   if (result.length === 0) return result;
 
-  const decorated = result.map((layout) => {
-    if (layout.index === high.index) {
-      return {
-        ...layout,
-        symbol: 'circle' as const,
-        color: colors.high,
-        price: high.price,
-        text: `${label} HIGH @ ${formatPrice(high.price)}`,
-        textAbove: true,
-      };
-    }
-    if (layout.index === low.index) {
-      return {
-        ...layout,
-        symbol: 'circle' as const,
-        color: colors.low,
-        price: low.price,
-        text: `${label} LOW @ ${formatPrice(low.price)}`,
-        textAbove: false,
-      };
-    }
-    return layout;
-  });
+  const decorated = result.map((layout) =>
+    decorateExtremeMarker(layout, extremes, label, colors, formatPrice),
+  );
 
   // A forced bullet wins over any duplicate marker on the same extreme bar.
   const seen = new Set<number>();

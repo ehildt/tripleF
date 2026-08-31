@@ -3,6 +3,12 @@ import { isTrustedImageUrl } from '@triplef/agent/schemas';
 
 import { isEmbeddableVideoUrl } from '../url-trust/is-embeddable-video-url.helper.js';
 
+import { applyIngestedReplacement } from './helpers/apply-ingested-replacement.helper.js';
+import { copyResult } from './helpers/copy-result.helper.js';
+import { extractUrlField } from './helpers/extract-url-field.helper.js';
+import { sanitizeToolResultWithIngested } from './helpers/sanitize-tool-result-with-ingested.helper.js';
+import { sanitizeWebSearchItem } from './helpers/sanitize-web-search-item.helper.js';
+import { scrubThumbnailUrl } from './helpers/scrub-thumbnail-url.helper.js';
 import type {
   IngestedReplacement,
   SanitizeToolResultOptions,
@@ -42,18 +48,6 @@ const ASSET_TAG_PATTERNS = [
   /<object\b[^>]*>[\s\S]*?<\/object>/gi,
 ];
 
-function extractUrlField(
-  item: Record<string, unknown>,
-  primaryKey: string,
-): string | undefined {
-  const candidates = [item[primaryKey], item.url, item.link];
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim())
-      return candidate.trim();
-  }
-  return undefined;
-}
-
 function isResultWithResults(
   result: unknown,
 ): result is { results: Array<Record<string, unknown>> } {
@@ -75,32 +69,6 @@ function isFetchResult(
   );
 }
 
-function scrubThumbnailUrl(
-  item: Record<string, unknown>,
-  brokenImageUrls?: Set<string>,
-): Record<string, unknown> {
-  const thumbnailUrl = item.thumbnailUrl;
-  if (typeof thumbnailUrl !== 'string' || !thumbnailUrl) return item;
-  return brokenImageUrls?.has(thumbnailUrl)
-    ? { ...item, thumbnailUrl: '' }
-    : item;
-}
-
-function applyIngestedReplacement(
-  item: Record<string, unknown>,
-  replacement: IngestedReplacement | undefined,
-): Record<string, unknown> {
-  if (!replacement) return item;
-  return {
-    ...item,
-    imageUrl: replacement.imageUrl,
-    title: replacement.title ?? item.title,
-    // Dimensions describe the stored (resized) image, not the origin.
-    ...(replacement.width ? { width: replacement.width } : {}),
-    ...(replacement.height ? { height: replacement.height } : {}),
-  };
-}
-
 function sanitizeImageSearchResult(
   result: unknown,
   options?: SanitizeToolResultOptions,
@@ -109,7 +77,7 @@ function sanitizeImageSearchResult(
   return {
     ...result,
     results: result.results
-      .map((r) => ({ ...r }))
+      .map(copyResult)
       .filter(
         (r) =>
           extractUrlField(r, 'imageUrl') &&
@@ -133,7 +101,7 @@ function sanitizeVideoSearchResult(
   return {
     ...result,
     results: result.results
-      .map((r) => ({ ...r }))
+      .map(copyResult)
       .filter(
         (r) =>
           extractUrlField(r, 'videoUrl') &&
@@ -151,7 +119,7 @@ function sanitizeWebSearchResult(
   return {
     ...result,
     results: result.results
-      .map((r) => ({ ...r }))
+      .map(copyResult)
       .filter((r) => {
         const url = extractUrlField(r, 'url');
         return (
@@ -160,20 +128,7 @@ function sanitizeWebSearchResult(
           !options?.brokenPageUrls?.has(url)
         );
       })
-      .map((r) => {
-        const withThumbnail = scrubThumbnailUrl(r, options?.brokenImageUrls);
-        const imageUrl = extractUrlField(withThumbnail, 'imageUrl');
-        if (!imageUrl) return withThumbnail;
-        if (
-          !isTrustedImageUrl(imageUrl) ||
-          options?.brokenImageUrls?.has(imageUrl)
-        )
-          return { ...withThumbnail, imageUrl: '' };
-        return applyIngestedReplacement(
-          withThumbnail,
-          options?.ingestedByUrl?.get(imageUrl),
-        );
-      }),
+      .map((r) => sanitizeWebSearchItem(r, options)),
   };
 }
 
@@ -206,25 +161,15 @@ export function sanitizeToolResultsWithIngestedUrls(
   brokenImageUrls?: Set<string>,
   brokenPageUrls?: Set<string>,
 ): Array<{ toolName: string; result: unknown }> {
-  return toolResults.map((tr) => {
-    const options = { ingestedByUrl, brokenImageUrls, brokenPageUrls };
-    if (tr.toolName.endsWith('ImageSearch')) {
-      return {
-        toolName: tr.toolName,
-        result: sanitizeImageSearchResult(tr.result, options),
-      };
-    }
-    if (
-      tr.toolName.endsWith('WebSearch') ||
-      tr.toolName.endsWith('NewsSearch')
-    ) {
-      return {
-        toolName: tr.toolName,
-        result: sanitizeWebSearchResult(tr.result, options),
-      };
-    }
-    return tr;
-  });
+  const options = { ingestedByUrl, brokenImageUrls, brokenPageUrls };
+  return toolResults.map((tr) =>
+    sanitizeToolResultWithIngested(
+      tr,
+      options,
+      sanitizeImageSearchResult,
+      sanitizeWebSearchResult,
+    ),
+  );
 }
 
 /**

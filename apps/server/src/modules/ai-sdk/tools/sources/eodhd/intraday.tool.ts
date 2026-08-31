@@ -3,11 +3,13 @@ import { tool } from 'ai';
 
 import type { EodhdIntradayPoint } from '../../../../stock-data/providers/eodhd/eodhd-client.js';
 
+import {
+  BAND_COUNT,
+  mapDayVolumeProfile,
+} from './helpers/map-day-volume-profile.helper.js';
+import { mapIntradayBar } from './helpers/map-intraday-bar.helper.js';
 import { createEodhdClient, eodhdErrorResult } from './eodhd-tool.helper.js';
 import { eodhdIntradaySchema } from './intraday.schema.js';
-
-/** Number of fixed price bands spanning the full intraday price range. */
-const BAND_COUNT = 10;
 
 export function createEodhdIntraday(deps: ToolDependencies) {
   return tool({
@@ -50,31 +52,13 @@ export function createEodhdIntraday(deps: ToolDependencies) {
         const span = maxPrice - minPrice || 1;
         const step = span / BAND_COUNT;
 
-        const volumeProfile = [...byDay.entries()].map(([day, dayBars]) => {
-          const bands: Array<{ low: number; high: number; volume: number }> =
-            [];
-          for (let i = 0; i < BAND_COUNT; i++) {
-            const low = minPrice + i * step;
-            const high = minPrice + (i + 1) * step;
-            let volume = 0;
-            for (const bar of dayBars) {
-              if (bar.high > low && bar.low < high) volume += bar.volume ?? 0;
-            }
-            bands.push({ low, high, volume });
-          }
-          return { time: day, bands };
-        });
+        const volumeProfile = [...byDay.entries()].map((entry) =>
+          mapDayVolumeProfile(entry, minPrice, step),
+        );
 
         // The most recent trading day's raw bars, for the client's 1D view.
         const lastDayBars = [...byDay.entries()].at(-1)?.[1] ?? [];
-        const intradayBars = lastDayBars.map((b) => ({
-          time: b.time,
-          open: b.open,
-          high: b.high,
-          low: b.low,
-          close: b.close,
-          volume: b.volume,
-        }));
+        const intradayBars = lastDayBars.map(mapIntradayBar);
 
         return {
           summary: {

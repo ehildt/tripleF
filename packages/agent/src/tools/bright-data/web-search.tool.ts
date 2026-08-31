@@ -6,7 +6,8 @@ import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
 import type { ToolDependencies } from '../types/types.js';
 
-import { buildGoogleUrl, engineEnabled, SOURCE } from './bright-data.constants.js';
+import { mapBrightDataWebResult } from './helpers/map-bright-data-web-result.helper.js';
+import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataWebSearchInput, brightDataWebSearchSchema } from './web-search.schema.js';
 import type { BrightDataWebSearchResponse } from './web-search.types.js';
@@ -41,12 +42,7 @@ export function createBrightDataWebSearch(deps: ToolDependencies): Tool {
           deps.logger.warn(`Bright Data returned 0 results for "${query}"`);
           return { results: [] };
         }
-        const results = organic.map((r) => ({
-          title: r.title,
-          snippet: r.description || '',
-          url: r.link,
-          source: SOURCE,
-        }));
+        const results = organic.map(mapBrightDataWebResult);
         deps.logger.log(`Bright Data returned ${results.length} results for "${query}"`);
         return { results };
       } catch (err) {

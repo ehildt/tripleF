@@ -1,3 +1,7 @@
+import { mapPointToNormalizedValue } from './map-point-to-normalized-value.helper';
+import { mapPointToRawValue } from './map-point-to-raw-value.helper';
+import { mapTimeToStackedDay } from './map-time-to-stacked-day.helper';
+
 /** One day of the stacked-area chart with one value per series. */
 export interface StackedAreaDay {
   time: string;
@@ -30,29 +34,16 @@ export function buildStackedAreaData(
   // at its first point so different price scales can be compared.
   const prepared = series.map((s) => {
     if (mode === 'raw') {
-      return s.points.map((p) => ({ time: p.time, value: p.value }));
+      return s.points.map(mapPointToRawValue);
     }
     const base = s.points[0]?.value ?? 0;
-    return s.points.map((p) => ({
-      time: p.time,
-      value: base !== 0 ? (p.value / base) * 100 : 0,
-    }));
+    return s.points.map((p) => mapPointToNormalizedValue(p, base));
   });
 
   const lastBySeries: number[] = prepared.map(() => 0);
   const hasValue: boolean[] = prepared.map(() => false);
 
-  return times.map((time) => {
-    const values = prepared.map((points, i) => {
-      const point = points.find((p) => p.time === time);
-      if (point) {
-        lastBySeries[i] = point.value;
-        hasValue[i] = true;
-        return point.value;
-      }
-      // Carry forward the last known value (0 until the series starts).
-      return hasValue[i] ? lastBySeries[i] : 0;
-    });
-    return { time, values };
-  });
+  return times.map((time) =>
+    mapTimeToStackedDay(time, prepared, lastBySeries, hasValue),
+  );
 }

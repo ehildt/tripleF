@@ -10,6 +10,8 @@ import { PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../../postgres/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
 
+import { mapLexiconLedgerRowToPending } from './helpers/map-lexicon-ledger-row-to-pending.helper.js';
+
 /** One ledger row to write — the sweep's incremental input and the write-side audit trail. */
 interface LexiconInsertLedgerRow {
   url: string;
@@ -74,16 +76,7 @@ export class LexiconLedgerRepository implements OnModuleInit, OnModuleDestroy {
       orderBy: { createdAt: 'asc' },
       take: limit,
     });
-    return rows.map((row) => ({
-      id: row.id,
-      url: row.url,
-      contentHash: row.contentHash,
-      chunkCount: row.chunkCount,
-      partitionScope: row.partitionScope,
-      title: row.title ?? undefined,
-      requestId: row.requestId ?? undefined,
-      createdAt: row.createdAt,
-    }));
+    return rows.map(mapLexiconLedgerRowToPending);
   }
 
   /** Mark rows swept (processed by the supersede sweep). No-op on empty. */

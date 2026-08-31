@@ -3,7 +3,7 @@ import {
   computeRangeExtremes,
   type DatedPricePoint,
 } from './compute-range-extremes.helper';
-import { normalizeExtremeLineLabel } from './normalize-extreme-line-label.helper';
+import { mapLineWithNormalizedLabel } from './map-line-with-normalized-label.helper';
 
 /**
  * Guarantee exactly one level line per extreme of the visible range: the
@@ -34,7 +34,7 @@ export function ensureExtremeReferenceLines(
         Math.abs(line.value - low.price) > tolerance,
     )
     // Model labels like "52w high" follow the canonical "52W HIGH" format.
-    .map((line) => ({ ...line, label: normalizeExtremeLineLabel(line.label) }));
+    .map(mapLineWithNormalizedLabel);
   const generated: D3ReferenceLine[] = [
     { value: high.price, label: `${label} HIGH`, color: 'harmony-2' },
   ];

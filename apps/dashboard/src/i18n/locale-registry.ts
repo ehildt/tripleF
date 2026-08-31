@@ -1,5 +1,5 @@
-import { type LocaleMessages, localeSchema } from './locale-schema';
-import { resolveNativeLanguageName } from './resolve-native-language-name';
+import { mapLocaleModule } from './helpers/map-locale-module.helper';
+import { type LocaleMessages } from './locale-schema';
 
 /**
  * Auto-discovered locale registry. Every file in `./locales` is picked up via
@@ -28,19 +28,7 @@ export interface LocaleInfo {
 }
 
 export const locales: LocaleInfo[] = Object.entries(localeModules)
-  .map(([path, mod]) => {
-    const parsed = localeSchema.safeParse(mod.default);
-    if (!parsed.success) {
-      throw new Error(`Invalid locale file "${path}": ${parsed.error.message}`);
-    }
-    const messages = parsed.data;
-    return {
-      code: messages.languageCode,
-      countryCode: messages.countryCode,
-      name: resolveNativeLanguageName(messages.languageCode),
-      messages,
-    };
-  })
+  .map(mapLocaleModule)
   .sort((a, b) => a.code.localeCompare(b.code));
 
 /** All supported locale codes, derived from the locale files. */

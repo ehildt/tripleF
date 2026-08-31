@@ -26,6 +26,7 @@ import {
 import { wrapToolsWithSearchRecency } from '../helpers/execute/wrap-tools-with-search-recency.helper.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 
+import { fetchUrlOutcome } from './helpers/fetch-url-outcome.helper.js';
 import type { ExecuteResult } from './execute.action.types.js';
 /**
  * Browsing needs a step budget: navigate → snapshot → interact, unlike the
@@ -295,19 +296,12 @@ export class ExecuteActionService {
     for (let i = 0; i < urls.length; i += AUTO_FETCH_CONCURRENCY) {
       const batch = urls.slice(i, i + AUTO_FETCH_CONCURRENCY);
       const outcomes = await Promise.all(
-        batch.map(async (url) => {
-          try {
-            const result = await (
-              webFetch.execute as (args: { url: string }) => Promise<unknown>
-            )({ url });
-            return { url, result };
-          } catch (err) {
-            return {
-              url,
-              error: err instanceof Error ? err : new Error(String(err)),
-            };
-          }
-        }),
+        batch.map((url) =>
+          fetchUrlOutcome(
+            url,
+            webFetch.execute as (args: { url: string }) => Promise<unknown>,
+          ),
+        ),
       );
       for (const outcome of outcomes) {
         if (outcome.error) {

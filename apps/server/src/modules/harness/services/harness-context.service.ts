@@ -14,6 +14,9 @@ import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.
 import { isImageContentType } from '../helpers/media-classification/is-image-content-type.helper.js';
 import { stripImagesFromMessages } from '../helpers/sanitize/strip-images-from-messages.helper.js';
 
+import { mapFileEntry } from './helpers/map-file-entry.helper.js';
+import { mapReferencedDocument } from './helpers/map-referenced-document.helper.js';
+import { truncateDocumentSection } from './helpers/truncate-document-section.helper.js';
 import { DocumentConversionService } from './document-conversion.service.js';
 import { HarnessContext } from './harness-context.type.js';
 import { StepRegistryService } from './step-registry.service.js';
@@ -99,22 +102,26 @@ export class HarnessContextService {
     // document originals) rides the embedding payload by storage url so
     // recalled memory points can reference their files.
     const files = [
-      ...imageMeta.map((entry) => ({
-        name: entry.name,
-        url: this.minioService.buildFileUrl(
-          sessionId,
-          filters.conversationId,
-          entry.hash,
+      ...imageMeta.map((entry) =>
+        mapFileEntry(
+          entry,
+          this.minioService.buildFileUrl(
+            sessionId,
+            filters.conversationId,
+            entry.hash,
+          ),
         ),
-      })),
-      ...documentMeta.map((entry) => ({
-        name: entry.name,
-        url: this.minioService.buildFileUrl(
-          sessionId,
-          filters.conversationId,
-          entry.hash,
+      ),
+      ...documentMeta.map((entry) =>
+        mapFileEntry(
+          entry,
+          this.minioService.buildFileUrl(
+            sessionId,
+            filters.conversationId,
+            entry.hash,
+          ),
         ),
-      })),
+      ),
     ];
 
     let buffers: Buffer[] = [];
@@ -249,12 +256,7 @@ export class HarnessContextService {
     const seen = new Set(incoming.map((entry) => entry.hash));
     const merged = referencedDocuments
       .filter((entry) => !seen.has(entry.hash))
-      .map((entry) => ({
-        name: entry.name,
-        type: entry.type ?? '',
-        hash: entry.hash,
-        size: 0,
-      }));
+      .map(mapReferencedDocument);
     return [...merged, ...incoming];
   }
 
@@ -264,13 +266,7 @@ export class HarnessContextService {
     limit: number | undefined,
   ): DocumentSection[] {
     if (limit === undefined || limit <= 0) return sections;
-    return sections.map((section) => ({
-      ...section,
-      text:
-        section.text.length > limit
-          ? section.text.slice(0, limit)
-          : section.text,
-    }));
+    return sections.map((section) => truncateDocumentSection(section, limit));
   }
 
   private async fingerprintMeta(

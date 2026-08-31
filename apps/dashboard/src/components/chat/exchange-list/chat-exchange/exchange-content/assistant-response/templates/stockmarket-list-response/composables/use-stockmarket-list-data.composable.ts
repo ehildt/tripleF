@@ -13,6 +13,7 @@ import { filterReferenceLinesAtPrice } from '../../stockmarket-response/helpers/
 import { resolveHistoryRange } from '../../stockmarket-response/helpers/resolve-history-range.helper';
 import { resolveLookbackFrom } from '../../stockmarket-response/helpers/resolve-lookback-from.helper';
 import type { StockmarketListResponseProps } from '../StockmarketListResponse.types';
+import { mapHistoryPoint } from './helpers/map-history-point.helper';
 
 /**
  * Derives the stockmarket-list template's display values from the raw
@@ -32,7 +33,7 @@ export function useStockmarketListData(props: StockmarketListResponseProps) {
       if (!entry?.history?.length) continue;
       series.push({
         name: entry.ticker ?? key.slice('eodhdHistory:'.length),
-        points: entry.history.map((p) => ({ time: p.time, value: p.close })),
+        points: entry.history.map(mapHistoryPoint),
       });
     }
     return series;

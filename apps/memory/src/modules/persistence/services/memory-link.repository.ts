@@ -10,6 +10,8 @@ import { PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../../postgres/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
 
+import { mapLinkRowToEdge } from './helpers/map-link-row-to-edge.helper.js';
+
 /** The three constellation lanes — one per memory layer. */
 export type MemoryLinkLane = 'partition' | 'cognition' | 'lexicon';
 
@@ -96,12 +98,7 @@ export class MemoryLinkRepository implements OnModuleInit, OnModuleDestroy {
       orderBy: { score: 'desc' },
       take: limit,
     });
-    return rows.map((row) => ({
-      source: row.source,
-      target: row.target,
-      score: row.score,
-      kind: row.kind as MemoryLinkKind,
-    }));
+    return rows.map(mapLinkRowToEdge);
   }
 
   /** Edge count of one scope — the lazy-backfill trigger check. */

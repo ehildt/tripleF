@@ -1,6 +1,12 @@
 import { fetchWithTimeout } from '@triplef/agent/tools';
 import { SEARCH_TIMEOUT_MS } from '@triplef/agent/tools';
 
+import { mapEodhdHistoryPoint } from './helpers/map-eodhd-history-point.helper.js';
+import { mapEodhdIntradayPoint } from './helpers/map-eodhd-intraday-point.helper.js';
+import { mapEodhdNewsArticle } from './helpers/map-eodhd-news-article.helper.js';
+import { mapEodhdQuote } from './helpers/map-eodhd-quote.helper.js';
+import { mapEodhdSearchResult } from './helpers/map-eodhd-search-result.helper.js';
+import { mapEodhdTechnicalPoint } from './helpers/map-eodhd-technical-point.helper.js';
 import {
   eodhdFundamentalsApiSchema,
   eodhdHistoryApiPointSchema,
@@ -133,18 +139,9 @@ export class EodhdClient {
         limit: String(limit),
       },
     );
-    return parseApiArray(eodhdSearchApiResultSchema, data).map((r) => ({
-      code: r.Code,
-      name: r.Name,
-      exchange: r.Exchange,
-      type: r.Type,
-      country: r.Country,
-      currency: r.Currency,
-      isin: r.ISIN,
-      previousClose: r.previousClose,
-      previousCloseDate: r.previousCloseDate,
-      isPrimary: r.isPrimary,
-    }));
+    return parseApiArray(eodhdSearchApiResultSchema, data).map(
+      mapEodhdSearchResult,
+    );
   }
 
   /** Live (delayed) quote for one or more tickers. */
@@ -152,9 +149,7 @@ export class EodhdClient {
     const symbols = tickers.map((t) => encodeURIComponent(t)).join(',');
     const data = await this.get<unknown>(`/real-time/${symbols}`);
     const rows = Array.isArray(data) ? data : data ? [data] : [];
-    return parseApiArray(eodhdQuoteApiResultSchema, rows).map(
-      ({ change_p, ...rest }) => ({ ...rest, changeP: change_p }),
-    );
+    return parseApiArray(eodhdQuoteApiResultSchema, rows).map(mapEodhdQuote);
   }
 
   /** End-of-day OHLCV history for a ticker. */
@@ -170,10 +165,7 @@ export class EodhdClient {
       params,
     );
     return parseApiArray(eodhdHistoryApiPointSchema, data).map(
-      ({ adjusted_close, ...rest }) => ({
-        ...rest,
-        adjustedClose: adjusted_close,
-      }),
+      mapEodhdHistoryPoint,
     );
   }
 
@@ -198,11 +190,7 @@ export class EodhdClient {
     // EODHD returns the value under the function-name key (e.g. `rsi`, `sma`),
     // not a generic `value` field — read that key and normalize to {date, value}.
     return data
-      .map((p) => {
-        const row = p as Record<string, unknown>;
-        const value = Number(row[fn] ?? row[fn.toLowerCase()] ?? NaN);
-        return { date: String(row.date), value };
-      })
+      .map((p) => mapEodhdTechnicalPoint(p, fn))
       .filter((p) => !Number.isNaN(p.value));
   }
 
@@ -220,14 +208,9 @@ export class EodhdClient {
       `/intraday/${encodeURIComponent(ticker)}`,
       params,
     );
-    return parseApiArray(eodhdIntradayApiPointSchema, data).map((p) => ({
-      time: p.datetime,
-      open: p.open,
-      high: p.high,
-      low: p.low,
-      close: p.close,
-      volume: p.volume,
-    }));
+    return parseApiArray(eodhdIntradayApiPointSchema, data).map(
+      mapEodhdIntradayPoint,
+    );
   }
 
   /** Financial news for a ticker. */
@@ -236,14 +219,9 @@ export class EodhdClient {
       s: ticker,
       limit: String(limit),
     });
-    return parseApiArray(eodhdNewsApiArticleSchema, data).map((a) => ({
-      title: a.title,
-      link: a.link,
-      date: a.date,
-      content: a.content,
-      symbols: a.symbols,
-      tags: a.tags,
-    }));
+    return parseApiArray(eodhdNewsApiArticleSchema, data).map(
+      mapEodhdNewsArticle,
+    );
   }
 
   /** Company fundamentals (general, highlights, valuation). */
