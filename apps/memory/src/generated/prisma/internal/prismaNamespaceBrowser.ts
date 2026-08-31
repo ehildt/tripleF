@@ -55,8 +55,10 @@ export const ModelName = {
   HarnessProviderOverride: 'HarnessProviderOverride',
   MemoryCognitionProfile: 'MemoryCognitionProfile',
   MemoryInsertLedger: 'MemoryInsertLedger',
-  MemoryLexiconInsertLedger: 'MemoryLexiconInsertLedger',
-  MemoryLink: 'MemoryLink'
+  MemoryEncyclopediaInsertLedger: 'MemoryEncyclopediaInsertLedger',
+  MemoryLink: 'MemoryLink',
+  MemoryFriction: 'MemoryFriction',
+  MemoryCluster: 'MemoryCluster'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -133,7 +135,7 @@ export const MemoryInsertLedgerScalarFieldEnum = {
 export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
 
 
-export const MemoryLexiconInsertLedgerScalarFieldEnum = {
+export const MemoryEncyclopediaInsertLedgerScalarFieldEnum = {
   id: 'id',
   url: 'url',
   contentHash: 'contentHash',
@@ -142,10 +144,11 @@ export const MemoryLexiconInsertLedgerScalarFieldEnum = {
   title: 'title',
   requestId: 'requestId',
   createdAt: 'createdAt',
-  sweptAt: 'sweptAt'
+  sweptAt: 'sweptAt',
+  classifiedAt: 'classifiedAt'
 } as const
 
-export type MemoryLexiconInsertLedgerScalarFieldEnum = (typeof MemoryLexiconInsertLedgerScalarFieldEnum)[keyof typeof MemoryLexiconInsertLedgerScalarFieldEnum]
+export type MemoryEncyclopediaInsertLedgerScalarFieldEnum = (typeof MemoryEncyclopediaInsertLedgerScalarFieldEnum)[keyof typeof MemoryEncyclopediaInsertLedgerScalarFieldEnum]
 
 
 export const MemoryLinkScalarFieldEnum = {
@@ -161,6 +164,41 @@ export const MemoryLinkScalarFieldEnum = {
 } as const
 
 export type MemoryLinkScalarFieldEnum = (typeof MemoryLinkScalarFieldEnum)[keyof typeof MemoryLinkScalarFieldEnum]
+
+
+export const MemoryFrictionScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  source: 'source',
+  target: 'target',
+  kind: 'kind',
+  status: 'status',
+  reason: 'reason',
+  resolution: 'resolution',
+  createdAt: 'createdAt',
+  resolvedAt: 'resolvedAt'
+} as const
+
+export type MemoryFrictionScalarFieldEnum = (typeof MemoryFrictionScalarFieldEnum)[keyof typeof MemoryFrictionScalarFieldEnum]
+
+
+export const MemoryClusterScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  fingerprint: 'fingerprint',
+  title: 'title',
+  summary: 'summary',
+  memberCount: 'memberCount',
+  memberIds: 'memberIds',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryClusterScalarFieldEnum = (typeof MemoryClusterScalarFieldEnum)[keyof typeof MemoryClusterScalarFieldEnum]
 
 
 export const SortOrder = {

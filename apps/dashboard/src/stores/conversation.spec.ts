@@ -804,4 +804,73 @@ describe('useConversationStore', () => {
       expect(map[conversation.conversationId]).toBeDefined();
     });
   });
+
+  describe('pdf page group actions', () => {
+    function seedPdfPages(store: ReturnType<typeof useConversationStore>) {
+      const conversation = store.createNewConversation('temporary', 'evt');
+      const cid = store.getConversationId(conversation.id);
+      store.setUploadedImages(conversation.id, [
+        {
+          name: 'doc.pdf · page 1',
+          hash: 'p1',
+          page: 1,
+          parentHash: 'doc-hash',
+          parentName: 'doc.pdf',
+          uploadedAt: 0,
+          selected: true,
+          conversationId: cid,
+        },
+        {
+          name: 'doc.pdf · page 2',
+          hash: 'p2',
+          page: 2,
+          parentHash: 'doc-hash',
+          parentName: 'doc.pdf',
+          uploadedAt: 0,
+          selected: true,
+          conversationId: cid,
+        },
+        {
+          name: 'cat.png',
+          hash: 'img1',
+          uploadedAt: 0,
+          conversationId: cid,
+        },
+      ]);
+      return { conversation, cid };
+    }
+
+    it('sets the selection of every page of a pdf in one write', () => {
+      const store = useConversationStore();
+      const { conversation, cid } = seedPdfPages(store);
+
+      store.setUploadedImagesSelectedForParent(
+        conversation.id,
+        'doc-hash',
+        false,
+        cid,
+      );
+
+      const images = store.getUploadedImagesForConversation(
+        conversation.id,
+        cid,
+      );
+      expect(images.find((i) => i.hash === 'p1')?.selected).toBe(false);
+      expect(images.find((i) => i.hash === 'p2')?.selected).toBe(false);
+      expect(images.find((i) => i.hash === 'img1')?.selected).not.toBe(false);
+    });
+
+    it('removes every page of a pdf in one write', () => {
+      const store = useConversationStore();
+      const { conversation, cid } = seedPdfPages(store);
+
+      store.removeUploadedImagesForParent(conversation.id, 'doc-hash', cid);
+
+      const images = store.getUploadedImagesForConversation(
+        conversation.id,
+        cid,
+      );
+      expect(images.map((i) => i.hash)).toEqual(['img1']);
+    });
+  });
 });

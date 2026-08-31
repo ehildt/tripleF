@@ -30,7 +30,7 @@ export class MemorySearchTextDto {
   @ApiPropertyOptional({
     description:
       "Restrict to one memory partition (the user-set partition id or a session id) — the user's fact space.",
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   @IsOptional()

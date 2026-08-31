@@ -99,4 +99,123 @@ describe('useAttachmentList', () => {
       kind: 'document',
     });
   });
+
+  it('groups pdf page images into a gallery and hides the pdf original', () => {
+    const uploadedImages = ref<UploadedImage[]>([
+      {
+        name: 'doc.pdf · page 1',
+        hash: 'p1',
+        page: 1,
+        parentHash: 'doc-hash',
+        parentName: 'doc.pdf',
+        uploadedAt: 0,
+        selected: true,
+        conversationId: 'c1',
+      },
+      {
+        name: 'doc.pdf · page 2',
+        hash: 'p2',
+        page: 2,
+        parentHash: 'doc-hash',
+        parentName: 'doc.pdf',
+        uploadedAt: 0,
+        selected: true,
+        conversationId: 'c1',
+      },
+    ]);
+    const uploadedDocuments = ref<UploadedDocument[]>([
+      {
+        name: 'doc.pdf',
+        hash: 'doc-hash',
+        type: 'application/pdf',
+        uploadedAt: 0,
+        selected: true,
+        conversationId: 'c1',
+      },
+    ]);
+
+    const { attachments } = useAttachmentList({
+      attachedFiles: ref([]),
+      uploadedImages,
+      uploadedDocuments,
+    });
+
+    expect(attachments.value).toHaveLength(1);
+    expect(attachments.value[0]).toMatchObject({
+      id: 'gallery-doc-hash',
+      name: 'doc.pdf',
+      hash: 'doc-hash',
+      isUploaded: true,
+      isSelected: true,
+      pendingIndex: null,
+      kind: 'gallery',
+    });
+    expect(attachments.value[0].pages).toEqual([
+      { name: 'doc.pdf · page 1', hash: 'p1' },
+      { name: 'doc.pdf · page 2', hash: 'p2' },
+    ]);
+  });
+
+  it('hides a pending pdf original when its pages are grouped', () => {
+    const attachedFiles = ref<AttachedFileEntry[]>([
+      {
+        file: new File(['%PDF'], 'doc.pdf', { type: 'application/pdf' }),
+        isSelected: true,
+        objectUrl: '',
+        hash: 'doc-hash',
+        conversationId: 'c1',
+        kind: 'document',
+      },
+    ]);
+    const uploadedImages = ref<UploadedImage[]>([
+      {
+        name: 'doc.pdf · page 1',
+        hash: 'p1',
+        page: 1,
+        parentHash: 'doc-hash',
+        parentName: 'doc.pdf',
+        uploadedAt: 0,
+        selected: true,
+        conversationId: 'c1',
+      },
+    ]);
+
+    const { attachments } = useAttachmentList({
+      attachedFiles,
+      uploadedImages,
+      uploadedDocuments: ref([]),
+    });
+
+    expect(attachments.value).toHaveLength(1);
+    expect(attachments.value[0].kind).toBe('gallery');
+  });
+
+  it('interleaves standalone images and galleries in insertion order', () => {
+    const uploadedImages = ref<UploadedImage[]>([
+      { name: 'cat.png', hash: 'img1', uploadedAt: 0, conversationId: 'c1' },
+      {
+        name: 'doc.pdf · page 1',
+        hash: 'p1',
+        page: 1,
+        parentHash: 'doc-hash',
+        parentName: 'doc.pdf',
+        uploadedAt: 0,
+        selected: true,
+        conversationId: 'c1',
+      },
+      { name: 'dog.png', hash: 'img2', uploadedAt: 0, conversationId: 'c1' },
+    ]);
+
+    const { attachments } = useAttachmentList({
+      attachedFiles: ref([]),
+      uploadedImages,
+      uploadedDocuments: ref([]),
+    });
+
+    expect(attachments.value.map((a) => a.kind)).toEqual([
+      'image',
+      'gallery',
+      'image',
+    ]);
+  });
 });

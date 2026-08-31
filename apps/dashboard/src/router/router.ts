@@ -10,6 +10,11 @@ const router = createRouter({
       component: () => import('@/components/chat/Chat.vue'),
     },
     {
+      path: '/memory',
+      name: 'memory',
+      component: () => import('@/components/memory/Memory.vue'),
+    },
+    {
       path: '/dlq',
       name: 'dlq',
       component: () => import('@/components/dlq/Dlq.vue'),

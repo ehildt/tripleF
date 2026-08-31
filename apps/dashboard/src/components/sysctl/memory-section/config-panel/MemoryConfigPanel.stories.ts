@@ -10,10 +10,26 @@ const meta = {
     docs: {
       description: {
         component: `
-The Memory tab's configuration sub-section: the memory identity keys
-(partition + cognition space) and the memory system variables (cognition
-cap + episode-probe recency blend).`,
+The Memory tab's configuration panel: renders one configuration group at a
+time (spaces, short-term memory probe, cognition profile, constellation
+diagram, maintenance models, auto-triggers, sweep limits), selected by the
+icon submenu in MemorySection.`,
       },
+    },
+  },
+  args: { activeGroup: 'spaces' },
+  argTypes: {
+    activeGroup: {
+      control: 'select',
+      options: [
+        'spaces',
+        'episodeProbe',
+        'cognitionProfile',
+        'constellationDiagram',
+        'maintenanceModels',
+        'autoTriggers',
+        'sweepLimits',
+      ],
     },
   },
 } satisfies Meta<typeof MemoryConfigPanel>;
@@ -21,5 +37,5 @@ cap + episode-probe recency blend).`,
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The memory configuration fields. */
+/** The memory configuration group currently selected in the submenu. */
 export const Default: Story = {};

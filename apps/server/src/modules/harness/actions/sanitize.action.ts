@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { LexiconSourceDocument } from '@triplef/agent/schemas';
+import type { EncyclopediaSourceDocument } from '@triplef/agent/schemas';
+import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 import type { ToolResult } from '@triplef/ai-sdk';
 import { limitText } from '@triplef/helpers/limit-text';
 
 import {
+  CLUSTER_PROBE_LIMIT,
+  CONVICTION_PROBE_LIMIT,
   EPISODE_PROBE_LIMIT,
-  EPISODE_TAGS,
-  INSIGHT_TAGS,
+  EPISODE_TAG,
+  INSIGHT_TAG,
 } from '../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
@@ -40,7 +43,6 @@ import type {
 import { extractPlaces } from '../helpers/media/extract-places.helper.js';
 import { extractReviews } from '../helpers/media/extract-reviews.helper.js';
 import { extractShopOffers } from '../helpers/media/extract-shop-offers.helper.js';
-import { IMAGE_TEMPLATES } from '../helpers/respond/build-execution-messages.helper.js';
 import { applySourcePolicy } from '../helpers/sanitize/apply-source-policy.helper.js';
 import { buildFinalMessagesForSanitize } from '../helpers/sanitize/build-final-messages.helper.js';
 import { buildIngestedByUrlMap } from '../helpers/sanitize/build-ingested-by-url-map.helper.js';
@@ -70,7 +72,7 @@ import {
 } from '../services/shown-media.service.js';
 
 import { mapArticleToSearchResult } from './helpers/map-article-to-search-result.helper.js';
-import { mapChunkToLexiconPassage } from './helpers/map-chunk-to-lexicon-passage.helper.js';
+import { mapChunkToEncyclopediaPassage } from './helpers/map-chunk-to-encyclopedia-passage.helper.js';
 import { mapChunkToReference } from './helpers/map-chunk-to-reference.helper.js';
 import { mapImageToAvailable } from './helpers/map-image-to-available.helper.js';
 import { mapSanitizedToolResult } from './helpers/map-sanitized-tool-result.helper.js';
@@ -94,12 +96,13 @@ export type SanitizeResult = {
 };
 
 /**
- * Cloud reference candidates for vision tasks (compare/describe) are fed to
- * the response model as pixels and stored/shown at the resolution the
- * effective preprocessing (pproc) config resolves — there is no cloud-only
- * hardcoded size; ingest honors the same live SysCtl resize as uploads and
- * rejects sources smaller than that target instead of storing them visibly
- * small.
+ * Cloud reference candidates for image tasks (compare/describe/ocr) are
+ * stored/shown at the resolution the effective preprocessing (pproc) config
+ * resolves — there is no cloud-only hardcoded size; ingest honors the same
+ * live SysCtl resize as uploads and rejects sources smaller than that target
+ * instead of storing them visibly small. The response model selects them by
+ * search-result evidence (titles/snippets/sources), never by pixels — the
+ * candidate buffers stay server-side (Files panel), nothing is attached.
  *
  * Image-ingestion rounds per request: round N only retries for the images
  * still missing below the target, so 3 rounds cover heavy hotlink-blocking
@@ -207,9 +210,10 @@ export class SanitizeActionService {
     );
 
     // 4. Respect explicit counts from intent (default: configured target for
-    //    the image-analysis templates' reference pool, 6 elsewhere).
+    //    the image-analysis templates' reference pool, DEFAULT_MEDIA_COUNT
+    //    elsewhere).
     const explicitImageCount = ctx.outputs.intent?.imageCount ?? 0;
-    const isImageTemplate = IMAGE_TEMPLATES.includes(
+    const isImageTemplate = isImageTaskTemplate(
       ctx.outputs.intent?.template ?? '',
     );
     const imageTargetCount =
@@ -283,7 +287,7 @@ export class SanitizeActionService {
       sources,
     );
     // Tier-1 index: every search result (post source-policy) becomes a cheap
-    // snippet point in the lexicon — the lexicon remembers every source
+    // snippet point in the encyclopedia — the encyclopedia remembers every source
     // touched, not just the pages that were fetched.
     const searchResults = articles
       .map(mapArticleToSearchResult)
@@ -291,7 +295,7 @@ export class SanitizeActionService {
     const {
       references,
       selection: referencesSelection,
-      lexiconPassages,
+      encyclopediaPassages,
     } = await this.selectReferences(
       ctx,
       applySourcePolicy(
@@ -364,7 +368,9 @@ export class SanitizeActionService {
       persona: cognitionPersona,
       corrections: cognitionCorrections,
       insights: cognitionInsights,
+      convictions: cognitionConvictions,
       episodes: cognitionEpisodes,
+      clusters: cognitionClusters,
     } = await this.getCognitionContext(ctx);
 
     const messages = scrubBrokenUrlsFromMessages(
@@ -377,7 +383,7 @@ export class SanitizeActionService {
         mainArticles,
         references,
         referencesSelection,
-        lexiconPassages,
+        encyclopediaPassages,
         shopOffers,
         reviews,
         places,
@@ -387,7 +393,9 @@ export class SanitizeActionService {
         cognitionPersona,
         cognitionCorrections,
         cognitionInsights,
+        cognitionConvictions,
         cognitionEpisodes,
+        cognitionClusters,
       ),
       new Set([...brokenMediaUrls, ...brokenPageUrls]),
     );
@@ -410,7 +418,7 @@ export class SanitizeActionService {
   /**
    * Ephemeral reference selection: normalize the non-search tool results to
    * `{ url?, title?, content }`, ceiling-cap each (marked), and ask the memory
-   * app's lexicon/select endpoint for the most relevant verbatim passages
+   * app's encyclopedia/select endpoint for the most relevant verbatim passages
    * under the model-relative budget. Falls back to the ceiling-normalized
    * references when selection is unavailable — memory is a background concern.
    */
@@ -421,7 +429,7 @@ export class SanitizeActionService {
   ): Promise<{
     references: Array<Record<string, unknown>>;
     selection?: { considered: number; selected: number };
-    lexiconPassages?: Array<{
+    encyclopediaPassages?: Array<{
       url?: string;
       title?: string;
       content: string;
@@ -432,7 +440,7 @@ export class SanitizeActionService {
     const cfg = this.sourceBudget.config;
     const docChars = deriveReferenceDocChars(numCtx, cfg);
 
-    const documents: LexiconSourceDocument[] = [];
+    const documents: EncyclopediaSourceDocument[] = [];
     const normalized: Array<Record<string, unknown>> = [];
     for (const ref of references) {
       const content = ref.content ?? ref.text ?? ref.snippet;
@@ -455,7 +463,7 @@ export class SanitizeActionService {
       '';
     if (!query) return { references: normalized };
 
-    // Index search results even when no fetched documents exist — the lexicon
+    // Index search results even when no fetched documents exist — the encyclopedia
     // remembers every source touched, not just the pages that were fetched.
     if (documents.length === 0 && searchResults.length === 0) {
       return { references: normalized };
@@ -467,6 +475,7 @@ export class SanitizeActionService {
       searchResults,
       budgetChars: deriveBudgetChars(numCtx, cfg),
       partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',
+      model: ctx.model,
     });
     if (!sel) {
       this.logger.warn(
@@ -491,7 +500,7 @@ export class SanitizeActionService {
         considered: sel.consideredChunks,
         selected: sel.selectedChunks,
       },
-      lexiconPassages: sel.pastChunks?.map(mapChunkToLexiconPassage),
+      encyclopediaPassages: sel.pastChunks?.map(mapChunkToEncyclopediaPassage),
     };
   }
 
@@ -508,11 +517,15 @@ export class SanitizeActionService {
     persona?: string;
     corrections?: string;
     insights: string[];
+    convictions: string[];
     episodes: string[];
+    clusters: string[];
   }> {
     const cognitionKey =
       ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
-    if (!cognitionKey) return { insights: [], episodes: [] };
+    if (!cognitionKey) {
+      return { insights: [], convictions: [], episodes: [], clusters: [] };
+    }
     try {
       const snapshot = await this.memoryClient.getCognition(cognitionKey);
       const profile = snapshot.profile
@@ -539,30 +552,59 @@ export class SanitizeActionService {
           persona: personaText,
           corrections: correctionsText,
           insights: [],
+          convictions: [],
           episodes: [],
+          clusters: [],
         };
       }
 
       // The stored document is a Postgres JSONB row — already parsed, so
-      // probe shaping uses the object directly (no text round-trip).
+      // probe shaping uses the object directly (no text round-trip). Profile
+      // values that token-match the prompt ("cars" hits `likes.cars`)
+      // sharpen the insight/conviction probes for that facet.
+      const matched = matchProfilePaths(prompt, flattenProfilePaths(profile));
+      const cognitionQuery =
+        matched.length > 0
+          ? `${prompt}\nUser profile signals: ${matched.map((m) => `${m.path}: ${m.value}`).join('; ')}`
+          : prompt;
+
       let insights: string[] = [];
       if (snapshot.insights.length > 0) {
-        const matched = matchProfilePaths(prompt, flattenProfilePaths(profile));
-        const query =
-          matched.length > 0
-            ? `${prompt}\nUser profile signals: ${matched.map((m) => `${m.path}: ${m.value}`).join('; ')}`
-            : prompt;
-
         // The cognition-lane probe never carries a partition — insight records
         // are tag-addressed ([cognition, insight]), matching the pre-split
         // in-process behavior.
         const hits = await this.memoryClient.searchByText({
-          text: query,
-          tags: [...INSIGHT_TAGS],
+          text: cognitionQuery,
+          tags: [INSIGHT_TAG],
           limit: COGNITION_PROBE_LIMIT,
         });
-        insights = hits.map((hit) => hit.text);
+        insights = hits.map((hit) =>
+          hit.isFriction
+            ? `${hit.text} — ⚠ CONTESTED (an open conflict exists; treat with caution)`
+            : hit.text,
+        );
       }
+
+      // Conviction probe: the AI's own synthesized conclusions about this
+      // user (conviction synthesis, cognition lane) — scoped per space via the
+      // conviction endpoint, path-shaped like the insight probe. Gated on
+      // the space holding convictions at all (the cold-space check; a probe
+      // embeds a query vector). Contested convictions carry an open friction
+      // — surfaced with the same caution marker as contested insights.
+      const convictions =
+        (snapshot.convictions?.length ?? 0) > 0
+          ? (
+              await this.memoryClient.searchConvictions({
+                memoryCognition: cognitionKey,
+                text: cognitionQuery,
+                limit: CONVICTION_PROBE_LIMIT,
+              })
+            ).map((hit) =>
+              hit.isFriction
+                ? `${hit.text} — ⚠ CONTESTED (an open conflict exists; treat with caution)`
+                : hit.text,
+            )
+          : [];
 
       // Episode probe: short-term conversation memory, recency-blended — the
       // raw prompt (no path shaping) so a new turn recalls what a past turn
@@ -576,22 +618,54 @@ export class SanitizeActionService {
         episodeProbeLimit > 0
           ? await this.memoryClient.searchByText({
               text: prompt,
-              tags: [...EPISODE_TAGS],
+              tags: [EPISODE_TAG],
               recency: true,
               limit: episodeProbeLimit,
             })
           : [];
+
+      // Cluster probe (graphRag): the detected cluster summaries of the
+      // recalled facts — the graph's cluster reports, injected as a TOPIC
+      // CONTEXT block so the model can answer cross-cutting questions
+      // without reading every member. Gated on the graphRag flag; degrades
+      // to [] on cold spaces (no clusters yet).
+      const clusters = ctx.filters.graphRag
+        ? await this.probeClusters(ctx, prompt)
+        : [];
 
       return {
         profile: userProfileText,
         persona: personaText,
         corrections: correctionsText,
         insights,
+        convictions,
         episodes: episodeHits.map((hit) => hit.text),
+        clusters,
       };
     } catch {
-      return { insights: [], episodes: [] };
+      return { insights: [], convictions: [], episodes: [], clusters: [] };
     }
+  }
+
+  /**
+   * Graph-augmented recall probe: search the partition's facts and attach the
+   * detected cluster summaries of the hits — the local-search context for
+   * cross-cutting questions. Bounded to CLUSTER_PROBE_LIMIT summaries.
+   */
+  private async probeClusters(
+    ctx: HarnessContext,
+    prompt: string,
+  ): Promise<string[]> {
+    const partition = ctx.memoryPartition ?? ctx.sessionId;
+    if (!partition) return [];
+    const { clusters } = await this.memoryClient.searchByTextWithClusters({
+      memoryPartition: partition,
+      text: prompt,
+      limit: CLUSTER_PROBE_LIMIT,
+    });
+    return clusters
+      .slice(0, CLUSTER_PROBE_LIMIT)
+      .map((cluster) => `${cluster.title}: ${cluster.summary}`);
   }
 
   /**
@@ -923,14 +997,15 @@ export class SanitizeActionService {
     if (isImageReferenceTask) {
       const sliced = verifiedImages.slice(0, imageTargetCount);
       const existingFingerprints = buildUserFingerprints(ctx.processedMeta);
-      // keepBuffers: the reference candidates feed the response model
-      // visually, so the resized bytes travel with the ingested entry.
+      // keepBuffers: false — the respond model selects candidates by textual
+      // evidence; the resized bytes are stored for the user (Files panel),
+      // never attached to the respond messages.
       const ingested =
         (await this.ingestExternalImages(
           ctx,
           sliced,
           existingFingerprints,
-          true,
+          false,
         )) ?? [];
       const ingestedForRewrite = ingested;
       const ingestedByUrl = new Map(

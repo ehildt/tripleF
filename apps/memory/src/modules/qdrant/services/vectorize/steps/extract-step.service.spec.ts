@@ -34,6 +34,13 @@ function makeStep() {
   return { step, generateChat };
 }
 
+const conciseFact = {
+  text: 'User prefers concise.',
+  subject: 'user',
+  kind: 'preference' as const,
+  stability: 'durable' as const,
+};
+
 describe('ExtractStepService', () => {
   beforeEach(() => vi.resetAllMocks());
 
@@ -41,7 +48,7 @@ describe('ExtractStepService', () => {
     const { step, generateChat } = makeStep();
     generateChat.mockResolvedValue({
       text: JSON.stringify({
-        facts: ['User prefers concise.'],
+        facts: [conciseFact],
         tags: ['style'],
       }),
     });
@@ -50,7 +57,7 @@ describe('ExtractStepService', () => {
     await step.execute(ctx);
 
     expect(ctx.outputs.extraction).toEqual({
-      facts: ['User prefers concise.'],
+      facts: [conciseFact],
       tags: ['style'],
     });
     expect(generateChat).toHaveBeenCalledTimes(1);
@@ -59,13 +66,16 @@ describe('ExtractStepService', () => {
   it('tolerates fenced JSON from smarter chat models', async () => {
     const { step, generateChat } = makeStep();
     generateChat.mockResolvedValue({
-      text: '```json\n{"facts":["F1"],"tags":["work"]}\n```',
+      text: `\`\`\`json\n${JSON.stringify({ facts: [conciseFact], tags: ['work'] })}\n\`\`\``,
     });
 
     const ctx = makeCtx();
     await step.execute(ctx);
 
-    expect(ctx.outputs.extraction).toEqual({ facts: ['F1'], tags: ['work'] });
+    expect(ctx.outputs.extraction).toEqual({
+      facts: [conciseFact],
+      tags: ['work'],
+    });
   });
 
   it('runs one correction pass when the first output fails the schema', async () => {
@@ -73,7 +83,7 @@ describe('ExtractStepService', () => {
     generateChat
       .mockResolvedValueOnce({ text: '{"facts": "not-an-array"}' })
       .mockResolvedValueOnce({
-        text: JSON.stringify({ facts: ['F1'], tags: ['work'] }),
+        text: JSON.stringify({ facts: [conciseFact], tags: ['work'] }),
       });
 
     const ctx = makeCtx();
@@ -90,7 +100,10 @@ describe('ExtractStepService', () => {
       content: '{"facts": "not-an-array"}',
     });
     expect(secondCallMessages[3].content).toContain('not valid');
-    expect(ctx.outputs.extraction).toEqual({ facts: ['F1'], tags: ['work'] });
+    expect(ctx.outputs.extraction).toEqual({
+      facts: [{ ...conciseFact }],
+      tags: ['work'],
+    });
   });
 
   it('degrades to empty when correction still fails', async () => {

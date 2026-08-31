@@ -38,12 +38,16 @@ export function useRightPanel(props: {
         conversationHasVideos(props.conversation)),
   );
 
-  function previewUrl(item: AttachmentItem): string {
-    if (!item.isUploaded) return item.previewUrl;
+  function previewUrlForHash(hash: string): string {
     if (!props.conversation?.id) return '';
     return getApiUrl(
-      `/api/v1/storage/${props.conversation.id}/${props.conversation.conversationId}/${item.hash}`,
+      `/api/v1/storage/${props.conversation.id}/${props.conversation.conversationId}/${hash}`,
     );
+  }
+
+  function previewUrl(item: AttachmentItem): string {
+    if (!item.isUploaded) return item.previewUrl;
+    return previewUrlForHash(item.hash);
   }
 
   return {
@@ -51,5 +55,6 @@ export function useRightPanel(props: {
     hasHistory,
     hasPlaylist,
     previewUrl,
+    previewUrlForHash,
   };
 }

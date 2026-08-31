@@ -90,6 +90,7 @@ export const useAppStore = defineStore('app', () => {
    */
   const DEFAULT_TAB_VISIBILITY: Record<string, boolean> = {
     chat: true,
+    memory: true,
     dlq: true,
     debug: false,
     sockets: false,

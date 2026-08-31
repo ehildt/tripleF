@@ -14,16 +14,32 @@ import {
 import Joi from 'joi';
 
 import {
+  CLUSTER_MIN_MEMBERS_MAX,
+  CLUSTER_MIN_MEMBERS_MIN,
+} from '../constants/cluster.constant.js';
+import {
   CONSTELLATION_NODE_LIMIT_MAX,
   CONSTELLATION_NODE_LIMIT_MIN,
 } from '../constants/constellation-node-limit.constant.js';
+import {
+  CONVICTION_BATCH_LIMIT_MAX,
+  CONVICTION_BATCH_LIMIT_MIN,
+  CONVICTION_MAX_PER_CLUSTER_MAX,
+  CONVICTION_MAX_PER_CLUSTER_MIN,
+} from '../constants/conviction.constant.js';
+import {
+  REFLECT_BATCH_LIMIT_MAX,
+  REFLECT_BATCH_LIMIT_MIN,
+  REFLECT_MAX_CANDIDATES_MAX,
+  REFLECT_MAX_CANDIDATES_MIN,
+} from '../constants/reflect.constant.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 export const QdrantConfigSchema = Joi.object<QdrantConfig>({
   url: Joi.string().uri().optional(),
   apiKey: Joi.string().optional(),
   collection: Joi.string().optional(),
-  lexiconCollection: Joi.string().optional(),
+  encyclopediaCollection: Joi.string().optional(),
   vectorSize: Joi.number().integer().positive().optional(),
   embedModel: Joi.string().optional(),
   scoreThreshold: Joi.number().min(0).max(1).optional(),
@@ -45,6 +61,45 @@ export const QdrantConfigSchema = Joi.object<QdrantConfig>({
     .optional(),
   consolidateThreshold: Joi.number().integer().min(1).optional(),
   consolidateModel: Joi.string().optional(),
+  // Reflection pass — env baselines for the matching system variables
+  // (runtime overrides win).
+  reflectModel: Joi.string().optional(),
+  reflectBatchLimit: Joi.number()
+    .integer()
+    .min(REFLECT_BATCH_LIMIT_MIN)
+    .max(REFLECT_BATCH_LIMIT_MAX)
+    .optional(),
+  reflectMaxCandidates: Joi.number()
+    .integer()
+    .min(REFLECT_MAX_CANDIDATES_MIN)
+    .max(REFLECT_MAX_CANDIDATES_MAX)
+    .optional(),
+  partitionReflectAutoEnabled: Joi.boolean().optional(),
+  cognitionReflectAutoEnabled: Joi.boolean().optional(),
+  encyclopediaReflectAutoEnabled: Joi.boolean().optional(),
+  // Conviction-synthesis pass — env baselines for the matching system
+  // variables (runtime overrides win).
+  convictionModel: Joi.string().optional(),
+  convictionBatchLimit: Joi.number()
+    .integer()
+    .min(CONVICTION_BATCH_LIMIT_MIN)
+    .max(CONVICTION_BATCH_LIMIT_MAX)
+    .optional(),
+  convictionMaxPerCluster: Joi.number()
+    .integer()
+    .min(CONVICTION_MAX_PER_CLUSTER_MIN)
+    .max(CONVICTION_MAX_PER_CLUSTER_MAX)
+    .optional(),
+  convictionAutoEnabled: Joi.boolean().optional(),
+  // Cluster-detection pass — env baselines for the matching system
+  // variables (runtime overrides win).
+  clusterModel: Joi.string().optional(),
+  clusterMinMembers: Joi.number()
+    .integer()
+    .min(CLUSTER_MIN_MEMBERS_MIN)
+    .max(CLUSTER_MIN_MEMBERS_MAX)
+    .optional(),
+  clusterAutoEnabled: Joi.boolean().optional(),
   // Episode-probe recency blend — env baselines for the matching system
   // variables (runtime overrides win).
   episodeRecencyWeight: Joi.number()

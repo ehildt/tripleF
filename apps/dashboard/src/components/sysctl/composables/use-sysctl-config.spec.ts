@@ -54,7 +54,8 @@ function mockFetchByUrl(configOverrides?: Record<string, unknown>) {
       return {
         ok: true,
         status: 200,
-        json: async () => ({ providerOverrides: configOverrides ?? {} }),
+        text: async () =>
+          JSON.stringify({ providerOverrides: configOverrides ?? {} }),
       };
     }
     if (url.includes('/api/v1/ollama-overrides')) {

@@ -13,7 +13,7 @@ describe('resolveEmbeddingPromptFormat', () => {
     );
   });
 
-  it('resolves the nomic family from plain, MoE and community tags', () => {
+  it('resolves the nomic family from plain, MoE and cluster tags', () => {
     expect(resolveEmbeddingPromptFormat('nomic-embed-text')?.family).toBe(
       'nomic',
     );

@@ -4,7 +4,7 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 export class MemoryStoreInsightDto {
   @ApiProperty({
     description: "The AI's cognition space key the insight belongs to.",
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   memoryCognition!: string;

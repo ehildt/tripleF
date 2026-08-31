@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   NotFoundException,
@@ -8,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { StockCoverageQueryDto } from '../dtos/stock-coverage-query.dto.js';
+import { StockHistoryQueryDto } from '../dtos/stock-history-query.dto.js';
 import { addDays, utcToday } from '../helpers/date-range.helper.js';
 import { mapDailyBarToPoint } from '../helpers/map-daily-bar-to-point.helper.js';
 import {
@@ -20,8 +21,6 @@ import { StockHistoryService } from '../services/stock-history.service.js';
 /** Default lookback when the client omits `from`: three calendar months. */
 const DEFAULT_LOOKBACK_DAYS = 92;
 
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
 @ApiTags('Stock Data')
 @Controller('stock-data')
 export class StockDataController {
@@ -32,14 +31,11 @@ export class StockDataController {
     summary: 'Available date range for a ticker (backfilled to retention)',
   })
   async getCoverage(
-    @Query('ticker') ticker: string,
+    @Query() query: StockCoverageQueryDto,
   ): Promise<{ ticker: string; from: string; to: string }> {
-    if (!ticker?.trim()) {
-      throw new BadRequestException('ticker is required');
-    }
-    const coverage = await this.stockHistory.getCoverage(ticker.trim());
+    const coverage = await this.stockHistory.getCoverage(query.ticker);
     if (!coverage) throw new NotFoundException();
-    return { ticker: ticker.trim(), ...coverage };
+    return { ticker: query.ticker, ...coverage };
   }
 
   @Get('history')
@@ -47,24 +43,20 @@ export class StockDataController {
     summary: 'Cached end-of-day OHLCV history for a ticker (gap backfilled)',
   })
   async getHistory(
-    @Query('ticker') ticker: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
+    @Query() query: StockHistoryQueryDto,
   ): Promise<{ ticker: string; points: StockHistoryPoint[] }> {
-    if (!ticker?.trim()) {
-      throw new BadRequestException('ticker is required');
-    }
-    if ((from && !DATE_PATTERN.test(from)) || (to && !DATE_PATTERN.test(to))) {
-      throw new BadRequestException('from/to must be YYYY-MM-DD');
-    }
-    const toDate = to ?? utcToday();
-    const fromDate = from ?? addDays(toDate, -DEFAULT_LOOKBACK_DAYS);
+    const toDate = query.to ?? utcToday();
+    const fromDate = query.from ?? addDays(toDate, -DEFAULT_LOOKBACK_DAYS);
 
     try {
-      const bars = await this.stockHistory.getHistory(ticker, fromDate, toDate);
+      const bars = await this.stockHistory.getHistory(
+        query.ticker,
+        fromDate,
+        toDate,
+      );
       if (bars.length === 0) throw new NotFoundException();
       return {
-        ticker,
+        ticker: query.ticker,
         points: bars.map(mapDailyBarToPoint),
       };
     } catch (err) {

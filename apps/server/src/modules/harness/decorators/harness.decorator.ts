@@ -5,6 +5,8 @@ import {
   MultipartFilesPipe,
   MultipartFilesPipeOptions,
 } from '../pipes/multipart-files.pipe.js';
+import { ParseDocumentTextLimitPipe } from '../pipes/parse-document-text-limit.pipe.js';
+import { ParseHashesPipe } from '../pipes/parse-hashes.pipe.js';
 import { ParsePromptPipe } from '../pipes/parse-prompt.pipe.js';
 
 import {
@@ -68,6 +70,7 @@ export const OriginalsField = () =>
   });
 
 export const DocumentTextLimitField = () =>
-  MultiPartValue(DOCUMENT_TEXT_LIMIT, false);
+  MultiPartValue(DOCUMENT_TEXT_LIMIT, false, new ParseDocumentTextLimitPipe());
 
-export const DocumentHashesField = () => MultiPartValue('hashes', false);
+export const DocumentHashesField = () =>
+  MultiPartValue('hashes', false, new ParseHashesPipe());

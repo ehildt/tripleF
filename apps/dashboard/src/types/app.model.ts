@@ -1,4 +1,4 @@
-export type ActiveTab = 'chat' | 'dlq' | 'debug' | 'sysctl';
+export type ActiveTab = 'chat' | 'memory' | 'dlq' | 'debug' | 'sysctl';
 
 /** How a conversation's exchange list is scrolled: the full-page vertical
  * carousel (crossfading sections) or the native continuous scroll list. */

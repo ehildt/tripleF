@@ -2,6 +2,8 @@
  * Tool vocabulary, descriptions, and types for harness intent classification.
  */
 
+import { EMBEDDABLE_VIDEO_PROVIDER_CLAUSE } from '../../constants/embeddable-video-providers.constant.js';
+
 export const VARIANT_NAMES = ['grayscale', 'denoised', 'sharpened', 'clahe'] as const;
 
 export type VariantName = (typeof VARIANT_NAMES)[number];
@@ -17,8 +19,7 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Search places and businesses using Bright Data SERP API (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Query with a business name or business type plus location.',
   brightDataShoppingSearch:
     'Search for products using Bright Data SERP API (Google Shopping). Returns prices, sellers, images, and ratings. Query with the bare product name and model number.',
-  brightDataVideoSearch:
-    'Search for videos using Bright Data SERP API. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year). Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
+  brightDataVideoSearch: `Search for videos using Bright Data SERP API. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year) for fresh results. ${EMBEDDABLE_VIDEO_PROVIDER_CLAUSE}`,
   brightDataWebpageScrape:
     'Fetch and render a full webpage using Bright Data Web Unlocker API. Returns clean Markdown text. Use for pages behind anti-bot protection that plain fetch cannot reach.',
   serperWebSearch:
@@ -33,8 +34,7 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Search for products using Serper.dev (Google Shopping). Returns prices, sellers, delivery info, images, and per-offer ratings. Query with the bare product name and model number.',
   serperBusinessReviewsSearch:
     'Fetch Google Maps reviews for a specific business or place using Serper.dev. Returns reviewer snippets with author names, star ratings, and dates. Use for seller/business reputation, not editorial product reviews.',
-  serperVideoSearch:
-    'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year). Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms.',
+  serperVideoSearch: `Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Supports an optional recency window (day/week/month/year) for fresh results. ${EMBEDDABLE_VIDEO_PROVIDER_CLAUSE}`,
   serperWebpageScrape:
     'Fetch and render a full webpage using Serper.dev scrape API. Returns clean rendered text with its title.',
   youtubeVideoSearch:

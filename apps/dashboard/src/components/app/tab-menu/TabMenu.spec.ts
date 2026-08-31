@@ -16,6 +16,7 @@ import TabMenu from './TabMenu.vue';
 // the instance so the assertions stay locale-agnostic.
 const navLabels = {
   chat: i18n.global.t('nav.chat'),
+  memory: i18n.global.t('nav.memory'),
   dlq: i18n.global.t('nav.dlq'),
   debug: i18n.global.t('nav.debug'),
   sysctl: i18n.global.t('nav.sysctl'),
@@ -77,11 +78,12 @@ describe('TabMenu', () => {
     resetTabMenuSettings();
   });
 
-  it('renders all four tabs in the drawer', () => {
+  it('renders all five tabs in the drawer', () => {
     const { wrapper } = mountMenu();
     const items = wrapper.findAll('.nav-menu__item');
     expect(items.map((item) => item.attributes('aria-label'))).toEqual([
       navLabels.chat,
+      navLabels.memory,
       navLabels.dlq,
       navLabels.debug,
       navLabels.sysctl,

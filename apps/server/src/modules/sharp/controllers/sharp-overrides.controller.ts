@@ -12,10 +12,8 @@ import { hashPayload } from '@triplef/helpers/hash-payload';
 
 import { AttachmentsField } from '../../harness/decorators/harness.decorator.js';
 import type { FastifyMultipartMeta } from '../../harness/dtos/harness-job.dto.js';
-import {
-  type SharpOverridesPatch,
-  SharpOverridesService,
-} from '../services/sharp-overrides.service.js';
+import { SharpOverridesPatchDto } from '../dtos/sharp-overrides-patch.dto.js';
+import { SharpOverridesService } from '../services/sharp-overrides.service.js';
 import { SharpPreviewService } from '../services/sharp-preview.service.js';
 
 @ApiTags('Sharp Overrides')
@@ -34,7 +32,7 @@ export class SharpOverridesController {
 
   @Put()
   @ApiOperation({ summary: 'Update preprocessing configuration overrides' })
-  updateConfig(@Body() body: SharpOverridesPatch) {
+  updateConfig(@Body() body: SharpOverridesPatchDto) {
     this.sharpOverrides.updateConfig(body);
     return { success: true };
   }

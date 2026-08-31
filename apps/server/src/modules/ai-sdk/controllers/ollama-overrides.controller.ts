@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Put } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { OllamaOverridesPatchDto } from '../dtos/ollama-overrides-patch.dto.js';
 import { OllamaOverridesService } from '../services/ollama-overrides.service.js';
-import type { OllamaOverridesPatch } from '../services/ollama-overrides.service.types.js';
 
 @ApiTags('Ollama Overrides')
 @Controller('ollama-overrides')
@@ -17,7 +17,7 @@ export class OllamaOverridesController {
 
   @Put()
   @ApiOperation({ summary: 'Update Ollama connection overrides' })
-  updateConfig(@Body() body: OllamaOverridesPatch) {
+  updateConfig(@Body() body: OllamaOverridesPatchDto) {
     this.ollamaOverrides.updateConfig(body ?? {});
     return { success: true };
   }

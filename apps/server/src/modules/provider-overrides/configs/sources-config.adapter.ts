@@ -1,6 +1,8 @@
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
 import Joi from 'joi';
 
+import { isSourceEntry } from '../helpers/is-source-entry.helper.js';
+
 /**
  * Dynamic source config: content domains the pipeline prefers (rank boost +
  * prompt guidance) or blocks (dropped from tool context entirely). Managed
@@ -68,24 +70,13 @@ const DEFAULT_PREFERRED_SOURCES = [
 // semantics in sync.
 const sourceEntrySchema = Joi.string().custom((value: string, helpers) => {
   const entry = String(value).trim();
-  if (!entry) return helpers.error('any.invalid');
-  if (entry.startsWith('/') && entry.endsWith('/') && entry.length > 2) {
-    try {
-      new RegExp(entry.slice(1, -1));
-      return entry;
-    } catch {
-      return helpers.error('any.invalid');
-    }
-  }
+  if (!isSourceEntry(entry)) return helpers.error('any.invalid');
+  if (entry.startsWith('/') && entry.endsWith('/')) return entry;
   const isGlob = entry.startsWith('*.');
   const normalized = (isGlob ? entry.slice(2) : entry)
     .toLowerCase()
     .replace(/^www\./, '');
-  return Joi.string().hostname().validate(normalized).error
-    ? helpers.error('any.invalid')
-    : isGlob
-      ? `*.${normalized}`
-      : normalized;
+  return isGlob ? `*.${normalized}` : normalized;
 });
 
 const hostnameListSchema = Joi.array().items(sourceEntrySchema).required();

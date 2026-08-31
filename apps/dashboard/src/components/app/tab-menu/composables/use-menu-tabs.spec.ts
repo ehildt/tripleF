@@ -44,7 +44,12 @@ describe('useMenuTabs', () => {
       debugCount: 0,
     });
 
-    expect(vm.tabs.map((t) => t.tab)).toEqual(['chat', 'dlq', 'sysctl']);
+    expect(vm.tabs.map((t) => t.tab)).toEqual([
+      'chat',
+      'memory',
+      'dlq',
+      'sysctl',
+    ]);
   });
 
   it('returns all tabs when dlq/debug are enabled', () => {
@@ -56,6 +61,7 @@ describe('useMenuTabs', () => {
 
     expect(vm.tabs.map((t) => t.tab)).toEqual([
       'chat',
+      'memory',
       'dlq',
       'debug',
       'sysctl',
@@ -70,6 +76,7 @@ describe('useMenuTabs', () => {
     });
 
     expect(vm.tabs.find((t) => t.tab === 'dlq')?.tint).toBeCloseTo(0.55, 2);
+    expect(vm.tabs.find((t) => t.tab === 'memory')?.tint).toBeCloseTo(0.35, 2);
   });
 
   it('includes counts when counters are enabled', () => {

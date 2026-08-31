@@ -24,9 +24,23 @@ export function mapMemoryPointToUpsert(
       // Every write boundary funnels through here — the category is
       // normalized once, so case/format drift cannot re-enter the system.
       category: normalizeCategory(point.category),
+      // The extraction-classified maintenance knobs — arrive normalized
+      // from the extraction parse; absent on records written by paths that
+      // don't classify (the remember tool).
+      subject: point.subject,
+      kind: point.kind,
+      stability: point.stability,
       path: point.path,
       files: input.files ?? [],
       created_at: createdAt,
+      is_consolidated: point.isConsolidated,
+      is_linked: point.isLinked,
+      is_reflected: point.isReflected,
+      is_synthesized: point.isSynthesized,
+      is_friction: point.isFriction,
+      superseded: point.superseded,
+      superseded_by: point.supersededBy,
+      evidence_ids: point.evidenceIds,
     },
   };
 }

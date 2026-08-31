@@ -27,6 +27,8 @@ function makeService() {
   };
   const embeddingService = { embed: vi.fn() };
   const links = { deleteByKind: vi.fn(), upsertEdges: vi.fn() };
+  const memoryEnqueue = { enqueueClusterJob: vi.fn() };
+  const overrides = { getClusterAutoEnabled: vi.fn().mockReturnValue(false) };
   const service = new MemoryRelinkJobService(
     adjudicator as never,
     aiSdkService as never,
@@ -35,6 +37,8 @@ function makeService() {
     memoryRepository as never,
     embeddingService as never,
     links as never,
+    memoryEnqueue as never,
+    overrides as never,
     config,
   );
   return {

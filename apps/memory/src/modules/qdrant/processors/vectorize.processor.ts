@@ -10,9 +10,13 @@ import {
 } from '../../bullmq/constants/bullmq.constants.js';
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
 import {
-  LEXICON_CONSOLIDATE_JOB,
+  ENCYCLOPEDIA_CLASSIFY_JOB,
+  ENCYCLOPEDIA_CONSOLIDATE_JOB,
+  MEMORY_CLUSTER_JOB,
   MEMORY_CONSOLIDATE_JOB,
+  MEMORY_CONVICTION_JOB,
   MEMORY_PROFILE_JOB,
+  MEMORY_REFLECT_JOB,
   MEMORY_RELINK_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
@@ -20,17 +24,25 @@ import {
 } from '../constants/qdrant.constants.js';
 import { isPermanentVectorizeError } from '../helpers/vectorize-failure.helper.js';
 import type {
-  LexiconSweepJobData,
+  EncyclopediaClassifyJobData,
+  EncyclopediaSweepJobData,
+  MemoryClusterJobData,
   MemoryConsolidateJobData,
+  MemoryConvictionJobData,
   MemoryProfileJobData,
+  MemoryReflectJobData,
   MemoryRelinkJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
-import { LexiconSweepService } from '../services/vectorize/jobs/lexicon-sweep.service.js';
+import { EncyclopediaClassifyService } from '../services/vectorize/jobs/encyclopedia-classify.service.js';
+import { EncyclopediaSweepService } from '../services/vectorize/jobs/encyclopedia-sweep.service.js';
+import { MemoryClusterJobService } from '../services/vectorize/jobs/memory-cluster-job.service.js';
 import { MemoryConsolidateJobService } from '../services/vectorize/jobs/memory-consolidate-job.service.js';
+import { MemoryConvictionService } from '../services/vectorize/jobs/memory-conviction.service.js';
 import { MemoryProfileJobService } from '../services/vectorize/jobs/memory-profile-job.service.js';
+import { MemoryReflectService } from '../services/vectorize/jobs/memory-reflect.service.js';
 import { MemoryRelinkJobService } from '../services/vectorize/jobs/memory-relink-job.service.js';
 import { MemoryWriteJobService } from '../services/vectorize/jobs/memory-write-job.service.js';
 import { EmbedStepService } from '../services/vectorize/steps/embed-step.service.js';
@@ -39,6 +51,34 @@ import { StoreStepService } from '../services/vectorize/steps/store-step.service
 import type { VectorizeContext } from '../services/vectorize/vectorize-context.type.js';
 import { VectorizeStepEngineService } from '../services/vectorize/vectorize-step-engine.service.js';
 import { VectorizeStepRegistryService } from '../services/vectorize/vectorize-step-registry.service.js';
+
+/** Job names this worker owns on the shared vectorize queue. */
+const KNOWN_JOB_NAMES = new Set<string>([
+  VECTORIZE_JOB,
+  MEMORY_WRITE_JOB,
+  MEMORY_PROFILE_JOB,
+  MEMORY_CONSOLIDATE_JOB,
+  MEMORY_RELINK_JOB,
+  MEMORY_REFLECT_JOB,
+  MEMORY_CONVICTION_JOB,
+  MEMORY_CLUSTER_JOB,
+  ENCYCLOPEDIA_CONSOLIDATE_JOB,
+  ENCYCLOPEDIA_CLASSIFY_JOB,
+]);
+
+/** The union of every job payload this worker dispatches. */
+type VectorizeJob = Job<
+  | VectorizeJobData
+  | MemoryWriteJobData
+  | MemoryProfileJobData
+  | MemoryConsolidateJobData
+  | MemoryRelinkJobData
+  | MemoryReflectJobData
+  | MemoryConvictionJobData
+  | MemoryClusterJobData
+  | EncyclopediaSweepJobData
+  | EncyclopediaClassifyJobData
+>;
 
 /**
  * BullMQ worker for the vectorize queue — a step machine mirroring
@@ -66,7 +106,11 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     private readonly memoryProfileJob: MemoryProfileJobService,
     private readonly memoryConsolidateJob: MemoryConsolidateJobService,
     private readonly memoryRelinkJob: MemoryRelinkJobService,
-    private readonly lexiconSweepJob: LexiconSweepService,
+    private readonly memoryReflectJob: MemoryReflectService,
+    private readonly memoryConvictionJob: MemoryConvictionService,
+    private readonly memoryClusterJob: MemoryClusterJobService,
+    private readonly encyclopediaSweepJob: EncyclopediaSweepService,
+    private readonly encyclopediaClassifyJob: EncyclopediaClassifyService,
     private readonly dlqLifecycleService: LifecycleService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {
@@ -84,50 +128,14 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       ]);
   }
 
-  async process(
-    job: Job<
-      | VectorizeJobData
-      | MemoryWriteJobData
-      | MemoryProfileJobData
-      | MemoryConsolidateJobData
-      | MemoryRelinkJobData
-      | LexiconSweepJobData
-    >,
-  ): Promise<void> {
+  async process(job: VectorizeJob): Promise<void> {
     // Feature off → no-op (a job can outlive the moment it was enabled).
     if (!this.config.enabled) return;
     // Unknown job names on the shared queue are not ours — never consume them.
-    if (
-      job.name !== VECTORIZE_JOB &&
-      job.name !== MEMORY_WRITE_JOB &&
-      job.name !== MEMORY_PROFILE_JOB &&
-      job.name !== MEMORY_CONSOLIDATE_JOB &&
-      job.name !== MEMORY_RELINK_JOB &&
-      job.name !== LEXICON_CONSOLIDATE_JOB
-    )
-      return;
+    if (!KNOWN_JOB_NAMES.has(job.name)) return;
 
     try {
-      // Fact records flow through the extract → embed → store step machine;
-      // cognition writes and the consolidation sweep are single-call jobs
-      // handled by dedicated services.
-      if (job.name === VECTORIZE_JOB) {
-        await this.stepEngine.run(
-          this.buildContext(job as Job<VectorizeJobData>),
-        );
-      } else if (job.name === MEMORY_WRITE_JOB) {
-        await this.memoryWriteJob.execute(job.data as MemoryWriteJobData);
-      } else if (job.name === MEMORY_CONSOLIDATE_JOB) {
-        await this.memoryConsolidateJob.execute(
-          job.data as MemoryConsolidateJobData,
-        );
-      } else if (job.name === MEMORY_RELINK_JOB) {
-        await this.memoryRelinkJob.execute(job.data as MemoryRelinkJobData);
-      } else if (job.name === LEXICON_CONSOLIDATE_JOB) {
-        await this.lexiconSweepJob.execute(job.data as LexiconSweepJobData);
-      } else {
-        await this.memoryProfileJob.execute(job.data as MemoryProfileJobData);
-      }
+      await this.dispatch(job);
     } catch (error) {
       // Config errors (missing embed model, dimension mismatch) can never
       // succeed on retry — record them as final failures in the DLQ (they're
@@ -139,6 +147,44 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
         throw new UnrecoverableError(message);
       }
       throw error;
+    }
+  }
+
+  /** Route one known job to its handler service (the dispatch table). */
+  private async dispatch(job: VectorizeJob): Promise<void> {
+    // Fact records flow through the extract → embed → store step machine;
+    // cognition writes and the maintenance sweeps are single-call jobs
+    // handled by dedicated services.
+    if (job.name === VECTORIZE_JOB) {
+      await this.stepEngine.run(
+        this.buildContext(job as Job<VectorizeJobData>),
+      );
+    } else if (job.name === MEMORY_WRITE_JOB) {
+      await this.memoryWriteJob.execute(job.data as MemoryWriteJobData);
+    } else if (job.name === MEMORY_CONSOLIDATE_JOB) {
+      await this.memoryConsolidateJob.execute(
+        job.data as MemoryConsolidateJobData,
+      );
+    } else if (job.name === MEMORY_RELINK_JOB) {
+      await this.memoryRelinkJob.execute(job.data as MemoryRelinkJobData);
+    } else if (job.name === MEMORY_REFLECT_JOB) {
+      await this.memoryReflectJob.execute(job.data as MemoryReflectJobData);
+    } else if (job.name === MEMORY_CONVICTION_JOB) {
+      await this.memoryConvictionJob.execute(
+        job.data as MemoryConvictionJobData,
+      );
+    } else if (job.name === MEMORY_CLUSTER_JOB) {
+      await this.memoryClusterJob.execute(job.data as MemoryClusterJobData);
+    } else if (job.name === ENCYCLOPEDIA_CONSOLIDATE_JOB) {
+      await this.encyclopediaSweepJob.execute(
+        job.data as EncyclopediaSweepJobData,
+      );
+    } else if (job.name === ENCYCLOPEDIA_CLASSIFY_JOB) {
+      await this.encyclopediaClassifyJob.execute(
+        job.data as EncyclopediaClassifyJobData,
+      );
+    } else {
+      await this.memoryProfileJob.execute(job.data as MemoryProfileJobData);
     }
   }
 

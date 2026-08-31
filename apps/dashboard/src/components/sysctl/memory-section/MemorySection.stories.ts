@@ -10,9 +10,9 @@ const meta = {
     docs: {
       description: {
         component: `
-The SysCtl "Memory" tab: a submenu of four sub-sections — configuration
-fields, then one constellation canvas per memory layer (partition facts,
-cognition insights, shared lexicon chunks).`,
+The SysCtl "Memory" tab: the memory configuration fields (identity keys,
+maintenance models, auto-triggers, sweep limits). The constellation canvases
+live on the top-level Memory page.`,
       },
     },
   },
@@ -21,5 +21,5 @@ cognition insights, shared lexicon chunks).`,
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Opens on the configuration sub-section. */
+/** Renders the memory configuration panel. */
 export const Default: Story = {};

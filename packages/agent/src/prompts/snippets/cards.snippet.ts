@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { cardSchema } from '../../schemas/index.js';
+import { cardSchema } from '../../schemas/response/card-json.schema.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 

@@ -15,11 +15,15 @@ function makeService() {
   const memoryEnqueue = {
     enqueueConsolidateJob: vi.fn().mockResolvedValue(undefined),
   };
+  const overrides = {
+    getConsolidateModel: vi.fn().mockReturnValue(undefined),
+  };
   const service = new VectorizeService(
     { embed } as never,
     { upsertBatch } as never,
     ledger as never,
     memoryEnqueue as never,
+    overrides as never,
     { enabled: true, consolidateThreshold: 50 } as QdrantConfig,
   );
   embed.mockImplementation((input: string[]) =>
@@ -88,6 +92,7 @@ describe('VectorizeService.storeRecord', () => {
       { upsertBatch } as never,
       { insertMany: vi.fn(), countPending: vi.fn() } as never,
       { enqueueConsolidateJob: vi.fn() } as never,
+      { getConsolidateModel: vi.fn() } as never,
       { enabled: false, consolidateThreshold: 50 } as QdrantConfig,
     );
 

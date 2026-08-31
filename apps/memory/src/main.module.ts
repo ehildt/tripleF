@@ -13,10 +13,10 @@ import { BullMQLoggerConfigService } from './modules/bullmq/configs/bullmq-logge
 import { VECTORIZE_QUEUE } from './modules/bullmq/constants/bullmq.constants.js';
 import { CoreLoggerConfigService } from './modules/core-logger/configs/core-logger-config.service.js';
 import { DeadLetterModule } from './modules/dead-letter/dead-letter.module.js';
+import { EncyclopediaConfigService } from './modules/encyclopedia/configs/encyclopedia-config.service.js';
+import { EncyclopediaModule } from './modules/encyclopedia/encyclopedia.module.js';
 import { HealthController } from './modules/health/controllers/health.controller.js';
 import { HealthService } from './modules/health/services/health.service.js';
-import { LexiconConfigService } from './modules/lexicon/configs/lexicon-config.service.js';
-import { LexiconModule } from './modules/lexicon/lexicon.module.js';
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
 import { QdrantConfigService } from './modules/qdrant/configs/qdrant-config.service.js';
 import { VectorizeProcessor } from './modules/qdrant/processors/vectorize.processor.js';
@@ -47,7 +47,7 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
       providers: [
         AppConfigService,
         QdrantConfigService,
-        LexiconConfigService,
+        EncyclopediaConfigService,
         OllamaConfigService,
         BullMQConfigService,
         BullMQLoggerConfigService,
@@ -76,7 +76,7 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
       inject: [QdrantConfigService],
       useFactory: async ({ config }: QdrantConfigService) => config,
     }),
-    LexiconModule,
+    EncyclopediaModule,
   ],
 })
 export class MemoryModule {}

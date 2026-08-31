@@ -15,16 +15,6 @@ export type RespondParams = {
   intent: IntentResult;
   messages: InputMessage[];
   availableImages?: Array<Record<string, unknown>>;
-  /**
-   * Cloud reference images ingested during sanitize, aligned with their
-   * availableImages entries — attached visually for verification on
-   * describe/compare/ocr.
-   */
-  cloudReferenceImages?: Array<{
-    imageUrl: string;
-    title?: string;
-    buffer: Buffer;
-  }>;
   model: string;
   keepAlive?: string;
   numCtx?: number;

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { buildMissingToolsPrompt } from '@triplef/agent/prompts';
 import { type VariantName } from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 import type { ToolResult } from '@triplef/ai-sdk';
@@ -11,7 +12,6 @@ import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { buildEodhdFallbackInput } from '../helpers/execute/build-eodhd-fallback-input.helper.js';
 import { buildExecuteMessages } from '../helpers/execute/build-execute-messages.helper.js';
-import { buildMissingToolsPrompt } from '../helpers/execute/build-missing-tools-prompt.helper.js';
 import { collectAutoFetchUrls } from '../helpers/execute/collect-auto-fetch-urls.helper.js';
 import { extractEodhdTickerFromResults } from '../helpers/execute/extract-eodhd-ticker.helper.js';
 import { isEodhdDataTool } from '../helpers/execute/is-eodhd-data-tool.helper.js';
@@ -215,7 +215,7 @@ export class ExecuteActionService {
 
       // Auto-fetch fallback: when the model searched but selected no fetch
       // tool, deterministically fetch the top result pages so the answer is
-      // grounded in full content and the lexicon cache is populated.
+      // grounded in full content and the encyclopedia cache is populated.
       const autoFetched = await this.autoFetchSearchResults(
         ctx,
         intent,

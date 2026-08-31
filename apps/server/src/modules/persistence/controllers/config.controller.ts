@@ -1,15 +1,8 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Put,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { UpsertConfigDto } from '../dtos/config.dto.js';
+import { ConfigParamsDto } from '../dtos/config-params.dto.js';
 import { ConfigService } from '../services/config.service.js';
 
 @ApiTags('Configs')
@@ -18,20 +11,21 @@ export class ConfigController {
   constructor(private readonly configService: ConfigService) {}
 
   @Get(':sessionId')
-  @ApiOperation({ summary: 'Get persisted config for a session' })
-  async get(@Param('sessionId') sessionId: string) {
-    const config = await this.configService.getConfig(sessionId);
-    if (!config) throw new NotFoundException();
-    return config;
+  @ApiOperation({
+    summary:
+      'Get persisted config for a session (empty body when none persisted yet)',
+  })
+  get(@Param() params: ConfigParamsDto) {
+    return this.configService.getConfig(params.sessionId);
   }
 
   @Put(':sessionId')
   @ApiOperation({ summary: 'Upsert persisted config for a session' })
   async upsert(
-    @Param('sessionId') sessionId: string,
+    @Param() params: ConfigParamsDto,
     @Body() body: UpsertConfigDto,
   ) {
-    return this.configService.updateConfig(sessionId, {
+    return this.configService.updateConfig(params.sessionId, {
       selectedModel: body.selectedModel,
       preprocessing: body.preprocessing,
       providerOverrides: body.providerOverrides,
@@ -42,7 +36,7 @@ export class ConfigController {
 
   @Delete(':sessionId')
   @ApiOperation({ summary: 'Delete persisted config for a session' })
-  async delete(@Param('sessionId') sessionId: string) {
-    return this.configService.deleteConfig(sessionId);
+  async delete(@Param() params: ConfigParamsDto) {
+    return this.configService.deleteConfig(params.sessionId);
   }
 }

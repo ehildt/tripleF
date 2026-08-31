@@ -1,5 +1,7 @@
-import { ExtractionSchema } from '../../schemas/index.js';
+import { ExtractionSchema } from '../../schemas/memory/extraction.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
+
+import { buildVocabularySection } from './vocabulary-section.helper.js';
 
 /** Static prompt strings for the vectorize extraction LLM step. */
 
@@ -24,6 +26,21 @@ YOUR TASK — decide what is worth remembering:
 - Facts must be self-contained — no "this"/"that" references; write them as third-person statements.
 - Storage mechanics: each fact is embedded as a whole and matched sentence-by-sentence at recall time (multi-variant retrieval). One dense sentence is fine — put the subject up front ("User prefers single-line if statements", not "They prefer that style").
 - Skip transient content: greetings, small talk, one-off instructions, filler — anything with no future recall value. When in doubt about whether a detail is durable, keep it: a durable detail is cheaper to store than to lose.
+
+FACT METADATA — every fact object carries the fields the maintenance passes (consolidate/reflect/conviction) interpret:
+- text: the statement itself.
+- subject (optional): the lowercase entity the fact is about — "user" by default, or a person, product, or project name ("sam", "stellar blade", "payments service"). Maintenance only ever compares facts about the SAME subject, so name it whenever the fact is about a specific entity.
+- category (optional): ONE broad lowercase PLURAL family label for this fact, reusing the known vocabulary — inherits the turn-side category when omitted.
+- kind (required): what kind of durable thing it is:
+  - preference — likes, dislikes, wants, style choices
+  - decision — a choice that was made (adoptions, migrations, purchases committed to)
+  - state — the CURRENT, changeable situation (lives in X, uses version Y, runs Z) — newer statements supersede these
+  - contact — contact details of a person (phone, email, address)
+  - project — facts about ongoing work or projects
+  - possession — things owned
+  - relationship — how people relate ("sam is the user's brother")
+  - fact — any other durable fact
+- stability (required): "durable" — a long-term truth that should survive until contradicted (decisions, traits, history) — or "volatile" — a current state a newer statement is EXPECTED to replace (location, tooling, versions). When in doubt, choose durable.
 - Tags: 2 to 6 stable, reusable, lowercase topic labels describing what the text is about (e.g. "work", "rust", "contacts", "amd", "stellar blade"). Tags are NARROW and specific — entity names, product names, game titles. They are the vocabulary for topic-filtered recall later.
 - Category: ONE broad lowercase PLURAL family noun for the whole text (e.g. "stocks", "pets", "games", "health") that groups the narrow tags into one topic family. A category is NEVER a specific entity, product, company, or game title: "amd" belongs under "stocks"; "stellar blade" and "stellar blade blood rain" belong under "games". Always include it when facts are emitted; omit it when nothing durable is found.
 - If nothing durable is found, return an empty facts array; tags may still label the topic when useful.
@@ -44,20 +61,6 @@ FINAL REMINDER:
   });
 }
 
-/** Reuse-first hint: the partition's existing category/tag vocabulary. */
-function buildVocabularySection(knownCategories: readonly string[], knownTags: readonly string[]): string {
-  if (knownCategories.length === 0 && knownTags.length === 0) return '';
-
-  const lines: string[] = [];
-  if (knownCategories.length > 0)
-    lines.push(
-      `KNOWN CATEGORIES (reuse one when it fits; only mint a new plural family noun when none applies): ${knownCategories.join(', ')}`,
-    );
-
-  if (knownTags.length > 0) lines.push(`KNOWN TOPICS (reuse these tag labels when they fit): ${knownTags.join(', ')}`);
-  return lines.join('\n');
-}
-
 /**
  * JSON correction prompt for when the model's memory extraction could not be
  * parsed at all (empty output or output that fails the extraction schema).
@@ -68,8 +71,8 @@ export function buildExtractionCorrectionPrompt(error: string): string {
 Error: ${error}
 
 Return ONLY a single valid JSON object matching the extraction schema exactly:
-{"facts": [string, ...], "tags": [string, ...], "category": "string"}
-All object keys must be quoted with double quotes.
+{"facts": [{"text": "string", "subject": "string", "category": "string", "kind": "preference|decision|state|contact|project|possession|relationship|fact", "stability": "durable|volatile"}, ...], "tags": [string, ...], "category": "string"}
+All object keys must be quoted with double quotes. "subject" and the per-fact "category" are optional; "kind" and "stability" are required on every fact.
 Do not add markdown code fences, explanations, or extra text.
 
 FINAL REMINDER:

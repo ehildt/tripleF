@@ -22,4 +22,14 @@ export interface MemoryPoint {
   createdAt: string;
   /** Cosine similarity to the query vector — search results only. */
   score?: number;
+  /** True once the consolidation sweep has adjudicated this record. */
+  isConsolidated?: boolean;
+  /** True once the reflection pass has screened this record for friction. */
+  isReflected?: boolean;
+  /** True while this record is party to an open friction (contested). */
+  isFriction?: boolean;
+  /** True when a later record superseded this one (stale — excluded from recall). */
+  superseded?: boolean;
+  /** Record id that superseded this one (audit trail, never deleted). */
+  supersededBy?: string;
 }

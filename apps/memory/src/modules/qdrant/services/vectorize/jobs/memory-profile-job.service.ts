@@ -20,6 +20,7 @@ import { derivePayloadChars } from '../../../helpers/derive-payload-chars.helper
 import type { MemoryProfileJobData } from '../../../models/memory.model.js';
 import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
 import { MemoryCognitionService } from '../../memory-cognition.service.js';
+import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../memory-overrides.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 
@@ -58,6 +59,7 @@ export class MemoryProfileJobService {
     private readonly memoryCognition: MemoryCognitionService,
     private readonly memoryOverrides: MemoryOverridesService,
     private readonly memorySearch: MemorySearchService,
+    private readonly memoryEnqueue: MemoryEnqueueService,
     @Inject(QDRANT_CONFIG) private readonly qdrantConfig: QdrantConfig,
   ) {}
 
@@ -81,6 +83,12 @@ export class MemoryProfileJobService {
     // re-deriving them from a single turn (a sparse profile stays sparse
     // otherwise: the job only ever saw CURRENT PROFILE + one turn).
     const insights = await this.memoryCognition.listInsights(
+      data.memoryCognition,
+      MemoryProfileJobService.PROFILE_INSIGHT_CONTEXT_LIMIT,
+    );
+    // The space's stored convictions — the synthesis lane's conclusions the
+    // profile job may promote into the profile's convictions facet.
+    const convictions = await this.memoryCognition.listConvictions(
       data.memoryCognition,
       MemoryProfileJobService.PROFILE_INSIGHT_CONTEXT_LIMIT,
     );
@@ -109,6 +117,9 @@ export class MemoryProfileJobService {
                 ? JSON.stringify(current)
                 : undefined,
             insights: insights.map(mapPointToInsight),
+            convictions: convictions.map((conviction) => ({
+              text: conviction.text,
+            })),
             priorFacts: priorFacts.map(mapPointToPriorFact),
             limit,
             maxPayloadChars,
@@ -171,6 +182,29 @@ export class MemoryProfileJobService {
           : 'unchanged'
       }, ${storedInsights} insight(s), ${storedEpisode} episode(s) stored`,
     );
+
+    await this.autoTriggerReflect(data.memoryCognition, data.model);
+  }
+
+  /**
+   * Auto-trigger the reflection sweep over the cognition space after a real
+   * profile job — newly stored insights are unreflected, so the friction
+   * screen picks them up. Gated by cognitionReflectAutoEnabled; the model
+   * falls back to the profile job's (turn) model when no dedicated reflection
+   * model is configured.
+   */
+  private async autoTriggerReflect(
+    memoryCognition: string,
+    fallbackModel: string,
+  ): Promise<void> {
+    if (!this.memoryOverrides.getCognitionReflectAutoEnabled()) return;
+    await this.memoryEnqueue.enqueueReflectJob({
+      lane: 'cognition',
+      scopeKey: memoryCognition,
+      model: this.memoryOverrides.getReflectModel() ?? fallbackModel,
+      limit: this.memoryOverrides.getReflectBatchLimit(),
+      maxCandidates: this.memoryOverrides.getReflectMaxCandidates(),
+    });
   }
 
   /**

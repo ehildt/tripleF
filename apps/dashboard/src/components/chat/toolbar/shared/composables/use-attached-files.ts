@@ -191,7 +191,12 @@ export function useAttachedFiles() {
       if (pageImages.length > 0) {
         conversationStore.setUploadedImages(
           sid,
-          pageImages.map((page) => mapPageToUploadedImage(page, cid)),
+          pageImages.map((page) =>
+            mapPageToUploadedImage(page, cid, {
+              parentHash: hash,
+              parentName: file.name,
+            }),
+          ),
         );
       }
 

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { X } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import type { GalleryItem } from '@/types/harness-response-data.model';
 
 import { useAddImageToFiles } from '../../../../composables/use-add-image-to-files.composable';
@@ -12,7 +14,13 @@ import MediaCardHeader from '../../media-card-header/MediaCardHeader.vue';
 
 const props = defineProps<{
   item: GalleryItem;
+  /** Parent-managed slides (e.g. the attachments gallery) replace the
+   * add-to-files action with a remove affordance: such slides are already
+   * conversation files, owned by their parent surface. */
+  removable?: boolean;
 }>();
+
+const emit = defineEmits<{ remove: [] }>();
 
 const { t } = useI18n();
 const { src, label, isBroken, open, handleImageError } = useGalleryImageTile(
@@ -43,7 +51,7 @@ const { canAddToFiles, isInFiles, toggleAddToFiles } = useAddImageToFiles(
         />
       </button>
       <MediaCaptionScrim
-        v-if="item.title || item.caption || canAddToFiles"
+        v-if="item.title || item.caption || canAddToFiles || removable"
         as="figcaption"
         class="harness-gallery__caption"
         :class="{ 'harness-gallery__caption--no-caption': !item.caption }"
@@ -57,16 +65,37 @@ const { canAddToFiles, isInFiles, toggleAddToFiles } = useAddImageToFiles(
           "
           flush
         >
-          <template v-if="canAddToFiles && !item.caption" #actions>
+          <template v-if="removable && !item.caption" #actions>
+            <IconButton
+              size="sm"
+              danger
+              :title="$t('common.remove')"
+              :aria-label="$t('common.remove')"
+              @click.stop="emit('remove')"
+            >
+              <X />
+            </IconButton>
+          </template>
+          <template v-else-if="canAddToFiles && !item.caption" #actions>
             <AddToFilesButton :active="isInFiles" @toggle="toggleAddToFiles" />
           </template>
         </MediaCardHeader>
-        <!-- Caption line with the add-to-files button on its right; the row
+        <!-- Caption line with the row action on its right; the row
              only renders when the tile carries a caption. -->
         <div v-if="item.caption" class="harness-gallery__caption-row">
           <p class="harness-gallery__caption-text">{{ item.caption }}</p>
+          <IconButton
+            v-if="removable"
+            size="sm"
+            danger
+            :title="$t('common.remove')"
+            :aria-label="$t('common.remove')"
+            @click.stop="emit('remove')"
+          >
+            <X />
+          </IconButton>
           <AddToFilesButton
-            v-if="canAddToFiles"
+            v-else-if="canAddToFiles"
             :active="isInFiles"
             @toggle="toggleAddToFiles"
           />

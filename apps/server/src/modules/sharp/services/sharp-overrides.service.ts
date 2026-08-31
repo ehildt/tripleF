@@ -3,12 +3,14 @@ import { Injectable } from '@nestjs/common';
 import type { SharpDefaults } from '../configs/sharp-config.adapter.js';
 import { SharpConfigService } from '../configs/sharp-config.service.js';
 import type { SharpOptions } from '../dtos/sharp-options.dto.js';
+import type { SharpOverridesPatchDto } from '../dtos/sharp-overrides-patch.dto.js';
+import { mergeDefined } from '../helpers/merge-defined.helper.js';
 
 /**
  * Partial patch for the preprocessing config. Each section merges into the
  * stored overrides independently, so a patch may touch a single parameter.
  */
-export type SharpOverridesPatch = {
+type SharpOverridesPatch = {
   enabled?: boolean;
   resize?: Partial<SharpDefaults['resize']>;
   variants?: Partial<SharpDefaults['variants']>;
@@ -39,12 +41,12 @@ export class SharpOverridesService {
     };
   }
 
-  updateConfig(patch: SharpOverridesPatch): void {
+  updateConfig(patch: SharpOverridesPatchDto): void {
     this.overrides = {
       enabled: patch.enabled ?? this.overrides.enabled,
-      resize: { ...this.overrides.resize, ...patch.resize },
-      variants: { ...this.overrides.variants, ...patch.variants },
-      parameters: { ...this.overrides.parameters, ...patch.parameters },
+      resize: mergeDefined(this.overrides.resize, patch.resize),
+      variants: mergeDefined(this.overrides.variants, patch.variants),
+      parameters: mergeDefined(this.overrides.parameters, patch.parameters),
     };
   }
 

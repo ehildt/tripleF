@@ -19,6 +19,36 @@ export interface MemoryOverridesConfig {
   episodeScoreThreshold: number;
   /** Effective constellation node-load limit (100–10000 records per space). */
   constellationNodeLimit: number;
+  /** Effective partition consolidation model (override → env baseline). */
+  consolidateModel?: string;
+  /** Effective encyclopedia classification model (override → env baseline). */
+  classifyModel?: string;
+  /** Effective reflection model (override → env baseline). */
+  reflectModel?: string;
+  /** Effective conviction-synthesis model (override → env baseline). */
+  convictionModel?: string;
+  /** Effective cluster-detection model (override → env baseline). */
+  clusterModel?: string;
+  /** Auto-trigger reflection after a partition consolidation sweep. */
+  partitionReflectAutoEnabled: boolean;
+  /** Auto-trigger reflection after a cognition profile job. */
+  cognitionReflectAutoEnabled: boolean;
+  /** Auto-trigger reflection after the encyclopedia classification job. */
+  encyclopediaReflectAutoEnabled: boolean;
+  /** Auto-trigger conviction synthesis after a partition reflection sweep. */
+  convictionAutoEnabled: boolean;
+  /** Auto-trigger cluster detection after a lane's graph-mutating job. */
+  clusterAutoEnabled: boolean;
+  /** Effective reflection batch limit (1–500 points per run). */
+  reflectBatchLimit: number;
+  /** Effective reflection candidate pool (1–20 neighbors per point). */
+  reflectMaxCandidates: number;
+  /** Effective conviction-synthesis batch limit (1–500 evidence points per run). */
+  convictionBatchLimit: number;
+  /** Effective conviction-synthesis output cap (1–1000 convictions per run). */
+  convictionMaxPerCluster: number;
+  /** Effective minimum members for a structural cluster (1–100). */
+  clusterMinMembers: number;
 }
 
 /**
@@ -41,6 +71,21 @@ export async function updateMemoryOverrides(patch: {
   episodeProbeLimit?: number | null;
   episodeScoreThreshold?: number | null;
   constellationNodeLimit?: number | null;
+  consolidateModel?: string | null;
+  classifyModel?: string | null;
+  reflectModel?: string | null;
+  convictionModel?: string | null;
+  clusterModel?: string | null;
+  partitionReflectAutoEnabled?: boolean | null;
+  cognitionReflectAutoEnabled?: boolean | null;
+  encyclopediaReflectAutoEnabled?: boolean | null;
+  convictionAutoEnabled?: boolean | null;
+  clusterAutoEnabled?: boolean | null;
+  reflectBatchLimit?: number | null;
+  reflectMaxCandidates?: number | null;
+  convictionBatchLimit?: number | null;
+  convictionMaxPerCluster?: number | null;
+  clusterMinMembers?: number | null;
 }): Promise<MemoryOverridesConfig> {
   const res = await fetch(getMemoryApiUrl('/api/v1/memory-overrides'), {
     method: 'PUT',

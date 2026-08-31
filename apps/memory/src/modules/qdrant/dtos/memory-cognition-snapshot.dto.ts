@@ -19,6 +19,13 @@ export class MemoryCognitionSnapshotDto {
   insights!: MemoryItemDto[];
 
   @ApiProperty({
+    type: [MemoryItemDto],
+    description:
+      "Conviction records (the AI's synthesized conclusions about the user/self model, probed at respond time; evidence_ids cite the partition facts they rest on).",
+  })
+  convictions!: MemoryItemDto[];
+
+  @ApiProperty({
     type: Number,
     description:
       'Effective episode probe limit (system variable) — max short-term conversation-memory records the harness injects per turn.',

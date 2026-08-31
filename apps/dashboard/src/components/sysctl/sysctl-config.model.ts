@@ -98,8 +98,8 @@ export interface SourcesConfig {
   blocked: string[];
   /**
    * How many web image candidates the pipeline pools for the image-analysis
-   * templates (describe/compare/ocr) for the model to verify visually. An
-   * explicit count in the user's prompt still wins.
+   * templates (describe/compare/ocr) for the model to pick from by
+   * search-result evidence. An explicit count in the user's prompt still wins.
    */
   imageTaskReferenceCount: number;
 }

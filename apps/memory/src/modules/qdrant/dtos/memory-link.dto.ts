@@ -22,8 +22,8 @@ export class MemoryLinkDto {
 
   @ApiProperty({
     description:
-      'Edge kind: `semantic` = enforced kNN link; `topical` = suggested link written by the relink job (recall ignores it).',
+      "Edge kind: `semantic` = enforced kNN link; `topical` = suggested link written by the relink job (recall ignores it); `evidence` = a bridge record's citation edge to a fact it synthesizes.",
     example: 'semantic',
   })
-  kind!: 'semantic' | 'topical';
+  kind!: 'semantic' | 'topical' | 'evidence';
 }

@@ -24,6 +24,8 @@ import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
 import { ConsolidationAdjudicatorService } from '../../consolidation-adjudicator.service.js';
 import { EmbeddingService } from '../../embedding.service.js';
 import { MemoryRepository } from '../../memory.repository.js';
+import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
+import { MemoryOverridesService } from '../../memory-overrides.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 
 import { mapCandidateToAdjudication } from './helpers/map-candidate-to-adjudication.helper.js';
@@ -99,6 +101,8 @@ export class MemoryRelinkJobService {
     private readonly memoryRepository: MemoryRepository,
     private readonly embeddingService: EmbeddingService,
     private readonly links: MemoryLinkRepository,
+    private readonly memoryEnqueue: MemoryEnqueueService,
+    private readonly overrides: MemoryOverridesService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -124,6 +128,10 @@ export class MemoryRelinkJobService {
     counts.topicalEdges = await this.linkTopical(data, limit);
     if (data.enrich) {
       counts.enriched = await this.enrich(data, limit);
+    }
+
+    if (!data.dryRun) {
+      await this.autoTriggerCluster(data.memoryPartition, data.model);
     }
 
     this.logger.log(
@@ -221,6 +229,9 @@ export class MemoryRelinkJobService {
           text: point.text,
           role: point.role,
           createdAt: point.createdAt,
+          subject: point.subject,
+          kind: point.kind,
+          stability: point.stability,
         },
         candidates.map(mapCandidateToAdjudication),
       );
@@ -293,7 +304,9 @@ export class MemoryRelinkJobService {
       memoryPartition: data.memoryPartition,
       role,
       requestId: point.requestId,
-      points: [{ id, vector, text: mergedText, tags, category }],
+      points: [
+        { id, vector, text: mergedText, tags, category, isConsolidated: true },
+      ],
     });
     await this.memoryRepository.deleteByIds([
       point.id,
@@ -467,6 +480,25 @@ export class MemoryRelinkJobService {
       )
       .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
       .map((facet) => facet.value);
+  }
+
+  /**
+   * Auto-trigger the cluster-detection sweep over the partition after a
+   * real relink run — the topical-edge pass changed the link graph, so the
+   * clusters re-cluster. Gated by clusterAutoEnabled; the model falls
+   * back to the relink model when no dedicated cluster model is configured.
+   */
+  private async autoTriggerCluster(
+    memoryPartition: string,
+    fallbackModel: string,
+  ): Promise<void> {
+    if (!this.overrides.getClusterAutoEnabled()) return;
+    await this.memoryEnqueue.enqueueClusterJob({
+      lane: 'partition',
+      scopeKey: memoryPartition,
+      model: this.overrides.getClusterModel() ?? fallbackModel,
+      minMembers: this.overrides.getClusterMinMembers(),
+    });
   }
 
   /** Canonical undirected edge push with pair dedupe. */

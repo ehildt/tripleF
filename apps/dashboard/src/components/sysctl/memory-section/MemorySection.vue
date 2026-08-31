@@ -1,64 +1,88 @@
 <script setup lang="ts">
 /**
- * The SysCtl "Memory" tab: a submenu of four sub-sections — configuration
- * fields, then one constellation canvas per memory layer (partition facts,
- * cognition insights, shared lexicon chunks).
+ * The SysCtl "Memory" tab: an icon submenu (same pattern as Search engines
+ * and the /memory canvases page) switches between the memory configuration
+ * groups — spaces, short-term memory probe, cognition profile, constellation
+ * diagram, maintenance models, auto-triggers, sweep limits. The constellation
+ * canvases live on the top-level Memory page (/memory).
  */
-import { Brain, Fingerprint, Network, SlidersHorizontal } from '@lucide/vue';
-import { computed } from 'vue';
+import {
+  Cpu,
+  Database,
+  Gauge,
+  History,
+  ListChecks,
+  Network,
+  Zap,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 
+import type { SubMenuItem } from '@/components/shared/ui/sysctl-submenu/SysCtlSubMenu.types';
+import SysCtlSubMenu from '@/components/shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 
-import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
-import CognitionSpace from './cognition-space/CognitionSpace.vue';
-import { useMemorySubtab } from './composables/use-memory-subtab';
-import type { MemorySubtab } from './composables/use-memory-subtab.types';
+import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
+import type { MemoryGroupId } from './config-panel/MemoryConfigPanel.types';
 import MemoryConfigPanel from './config-panel/MemoryConfigPanel.vue';
-import LexiconSpace from './lexicon-space/LexiconSpace.vue';
-import PartitionSpace from './partition-space/PartitionSpace.vue';
 
-const { activeSubtab, selectSubtab } = useMemorySubtab();
-
-const SUBTAB_ITEMS = computed(() => [
+/**
+ * One icon tab per configuration group; the icon mirrors the group's section
+ * header so the selected tab and the visible header read as the same thing.
+ */
+const GROUP_ITEMS = computed<SubMenuItem[]>(() => [
   {
-    id: 'config',
-    label: i18n.global.t('common.sysctlMemoryConfig'),
-    icon: SlidersHorizontal,
+    id: 'spaces',
+    label: i18n.global.t('common.memorySpacesSection'),
+    icon: Database,
   },
   {
-    id: 'partition',
-    label: i18n.global.t('common.sysctlMemoryPartition'),
-    icon: Brain,
+    id: 'episodeProbe',
+    label: i18n.global.t('common.memoryEpisodeProbeSection'),
+    icon: History,
   },
   {
-    id: 'cognition',
-    label: i18n.global.t('common.sysctlMemoryCognition'),
-    icon: Fingerprint,
+    id: 'cognitionProfile',
+    label: i18n.global.t('common.memoryCognitionProfileSection'),
+    icon: Gauge,
   },
   {
-    id: 'lexicon',
-    label: i18n.global.t('common.sysctlMemoryLexicon'),
+    id: 'constellationDiagram',
+    label: i18n.global.t('common.memoryDiagramSection'),
     icon: Network,
   },
+  {
+    id: 'maintenanceModels',
+    label: i18n.global.t('common.memoryMaintenanceModels'),
+    icon: Cpu,
+  },
+  {
+    id: 'autoTriggers',
+    label: i18n.global.t('common.memoryAutoTriggers'),
+    icon: Zap,
+  },
+  {
+    id: 'sweepLimits',
+    label: i18n.global.t('common.memorySweepLimits'),
+    icon: ListChecks,
+  },
 ]);
+
+/** Which configuration group the submenu currently shows. */
+const activeGroup = ref<MemoryGroupId>('spaces');
 </script>
 
 <template>
-  <div class="memory-section">
-    <SysCtlSubMenu
-      :items="SUBTAB_ITEMS"
-      :active="activeSubtab"
-      @select="selectSubtab($event as MemorySubtab)"
-    />
+  <SysCtlSection>
+    <div class="memory-section">
+      <SysCtlSubMenu
+        :items="GROUP_ITEMS"
+        :active="activeGroup"
+        @select="activeGroup = $event as MemoryGroupId"
+      />
 
-    <MemoryConfigPanel v-if="activeSubtab === 'config'" />
-
-    <PartitionSpace v-else-if="activeSubtab === 'partition'" />
-
-    <CognitionSpace v-else-if="activeSubtab === 'cognition'" />
-
-    <LexiconSpace v-else />
-  </div>
+      <MemoryConfigPanel :active-group="activeGroup" />
+    </div>
+  </SysCtlSection>
 </template>
 
 <style scoped>

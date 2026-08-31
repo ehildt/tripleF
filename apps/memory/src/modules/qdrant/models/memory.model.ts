@@ -1,4 +1,6 @@
 import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import type { MemoryLane } from '../../persistence/constants/memory-lane.constant.js';
+import type { MemoryClusterLane } from '../constants/cluster.constant.js';
 
 export type MemoryRole = 'user' | 'assistant';
 
@@ -42,10 +44,29 @@ export interface MemoryPoint {
   /**
    * Broad category written by the remember tool (e.g. `games`, `pets`) —
    * groups narrow tag topics into one family for the constellation's
-   * second-level community hubs. Optional: records without a category stay
+   * second-level cluster hubs. Optional: records without a category stay
    * flat (their tags still cluster them).
    */
   category?: string;
+  /**
+   * The lowercase entity the fact is about — extraction-classified. The
+   * consolidate/reflect passes only ever compare records of the SAME
+   * subject.
+   */
+  subject?: string;
+  /**
+   * What kind of durable thing this is — extraction-classified
+   * (preference | decision | state | contact | project | possession |
+   * relationship | fact). The maintenance prompts interpret it (polarity
+   * flips are the norm for preferences, newer states supersede older, …).
+   */
+  kind?: string;
+  /**
+   * Whether a newer statement is expected to replace this one —
+   * extraction-classified: `durable` claims hold until contradicted,
+   * `volatile` states get superseded by newer ones.
+   */
+  stability?: string;
   /**
    * Cognition insight routing path (e.g. `likes.cars`) — the profile facet
    * this insight deepens. Set on insight records only; the respond-time
@@ -58,6 +79,24 @@ export interface MemoryPoint {
   createdAt: string;
   /** Cosine similarity to the query vector — search results only. */
   score?: number;
+  /** True once the consolidation sweep adjudicated this point (kept/merged). */
+  isConsolidated?: boolean;
+  /** True once the point has at least one constellation link edge. */
+  isLinked?: boolean;
+  /** True once the reflection pass reviewed this point (Phase 2). */
+  isReflected?: boolean;
+  /** True once the conviction-synthesis pass offered this point as evidence. */
+  isSynthesized?: boolean;
+  /** True while the point is involved in an open friction (Phase 1c). */
+  isFriction?: boolean;
+  /** True when a friction resolution or supersede marked this point stale. */
+  superseded?: boolean;
+  /** Point id that superseded this one (audit trail, never deleted). */
+  supersededBy?: string;
+  /** Point ids this statement cites as its supporting evidence (conviction/bridge records only). */
+  evidenceIds?: string[];
+  /** Detected cluster id this point belongs to (written by the cluster job). */
+  clusterId?: string;
 }
 
 /** Optional tightening filters on a memory read (search + list share them). */
@@ -104,10 +143,26 @@ export interface UpsertBatchInput {
     vector: number[];
     text: string;
     tags?: string[];
-    /** Broad category (e.g. `games`, `pets`) — the community tier key. */
+    /** Broad category (e.g. `games`, `pets`) — the category tier key (cluster fallback). */
     category?: string;
+    /** The entity the fact is about — extraction-classified (maintenance same-subject rule). */
+    subject?: string;
+    /** What kind of durable thing this is — extraction-classified (see MemoryPoint.kind). */
+    kind?: string;
+    /** `durable` claims vs `volatile` states — extraction-classified (see MemoryPoint.stability). */
+    stability?: string;
     /** Cognition insight routing path (`likes.cars`) — insight records only. */
     path?: string;
+    /** Lifecycle flags — written by the maintenance jobs, read by recall/display. */
+    isConsolidated?: boolean;
+    isLinked?: boolean;
+    isReflected?: boolean;
+    isSynthesized?: boolean;
+    isFriction?: boolean;
+    superseded?: boolean;
+    supersededBy?: string;
+    /** Point ids this statement cites as its supporting evidence (conviction/bridge records only). */
+    evidenceIds?: string[];
   }>;
 }
 
@@ -243,12 +298,95 @@ export interface MemoryRelinkJobData {
 }
 
 /**
- * Lexicon supersede sweep job payload: heal orphaned old-hash chunks left by
+ * Encyclopedia supersede sweep job payload: heal orphaned old-hash chunks left by
  * a crashed supersede. Deterministic — no model, no adjudication.
  */
-export interface LexiconSweepJobData {
+export interface EncyclopediaSweepJobData {
   /** Max pending documents processed per run (default 100, capped 500). */
   limit?: number;
   /** Log what would be healed without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Encyclopedia classification job payload: label stored documents with their
+ * source-agnostic category + topic (the constellation's category + topic
+ * tiers). One LLM call per document; chunks are labeled by url fan-out.
+ */
+export interface EncyclopediaClassifyJobData {
+  /** Chat model for the classification calls (resolved at enqueue). */
+  model: string;
+  /** Max pending documents processed per run (default 100, capped 500). */
+  limit?: number;
+  /** Compute and log labels without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Reflection job payload: the per-scope friction screen over unreflected
+ * points. Screens each point's near-neighbor candidates for contradictions,
+ * writes friction records, and marks the loser superseded when the model
+ * names a clear winner. Covers all three lanes.
+ */
+export interface MemoryReflectJobData {
+  /** Which lane to reflect (partition / cognition / encyclopedia). */
+  lane: MemoryLane;
+  /** Space key: partition key / cognition key / 'global' (encyclopedia). */
+  scopeKey: string;
+  /** Chat model for the friction verdicts (resolved at enqueue). */
+  model: string;
+  /** Max unreflected points screened per run (default 100, capped 500). */
+  limit?: number;
+  /** Max near-neighbor candidates per point (default 5, capped 20). */
+  maxCandidates?: number;
+  /** Minimum cosine score for a candidate (default 0.3 — the recall floor). */
+  scoreThreshold?: number;
+  /** Compute and log verdicts without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Conviction-synthesis job payload: synthesize higher-level statements from
+ * the user's curated facts (is_reflected, not yet synthesized), each
+ * carrying evidence_ids back-references to its supporting facts. Every
+ * statement picks its lane: convictions store into the cognition space (the
+ * user/self model), bridges into the fact partition (gap-closing connective
+ * tissue).
+ */
+export interface MemoryConvictionJobData {
+  /** The user's fact partition to synthesize over (also the evidence scope). */
+  memoryPartition: string;
+  /**
+   * The cognition scope convictions store into — defaults to the partition
+   * key (the harness's own cognition-key default).
+   */
+  memoryCognition?: string;
+  /** Chat model for the synthesis call (resolved at enqueue). */
+  model: string;
+  /** Max evidence points offered per run (default 100, capped 500). */
+  limit?: number;
+  /** Max statements emitted per run (default 5, capped 20). */
+  maxConvictionsPerCluster?: number;
+  /** Compute and log statements without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Cluster-detection + summarization job payload: cluster one scope's link
+ * graph (semantic + topical + evidence edges) into clusters, absorb
+ * singletons so no fact is left unclustered, and summarize each cluster
+ * whose membership changed (unchanged fingerprints keep their stored
+ * title/summary).
+ */
+export interface MemoryClusterJobData {
+  /** Which lane to cluster (partition / encyclopedia). */
+  lane: MemoryClusterLane;
+  /** Space key: partition key / 'global' (encyclopedia). */
+  scopeKey: string;
+  /** Chat model for the summary calls (resolved at enqueue). */
+  model: string;
+  /** Minimum members for a structural cluster (default 2, clamped 1–100). */
+  minMembers?: number;
+  /** Compute and log clusters without applying or marking anything. */
   dryRun?: boolean;
 }

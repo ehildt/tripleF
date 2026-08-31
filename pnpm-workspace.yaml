@@ -30,17 +30,17 @@ minimumReleaseAgeExclude:
   - '@triplef/*'
   - vue-i18n@11.4.9 || 11.4.10
   - npm-check-updates@23.1.0
-  - '@lucide/vue@1.34.0 || 1.35.0 || 1.37.0 || 1.38.0'
-  - '@ai-sdk/gateway@4.0.64 || 4.0.67 || 4.0.68 || 4.0.70'
-  - '@ai-sdk/mcp@2.0.37 || 2.0.39 || 2.0.40'
-  - '@ai-sdk/provider-utils@5.0.30 || 5.0.32 || 5.0.33'
-  - '@ai-sdk/provider@4.0.8'
+  - '@lucide/vue@1.34.0 || 1.35.0 || 1.37.0 || 1.38.0 || 1.39.0'
+  - '@ai-sdk/gateway@4.0.64 || 4.0.67 || 4.0.68 || 4.0.70 || 4.0.71 || 4.0.72 || 4.0.73'
+  - '@ai-sdk/mcp@2.0.37 || 2.0.39 || 2.0.40 || 2.0.42 || 2.0.43'
+  - '@ai-sdk/provider-utils@5.0.30 || 5.0.32 || 5.0.33 || 5.0.35 || 5.0.36'
+  - '@ai-sdk/provider@4.0.8 || 4.0.10'
   - '@nestjs/common@11.2.2 || 11.2.3'
   - '@nestjs/core@11.2.2 || 11.2.3'
   - '@nestjs/microservices@11.2.2 || 11.2.3'
   - '@nestjs/platform-fastify@11.2.2 || 11.2.3'
   - '@nestjs/testing@11.2.2 || 11.2.3'
-  - '@types/node@26.3.0 || 26.4.0'
+  - '@types/node@26.3.0 || 26.4.0 || 26.4.1'
   - '@typescript-eslint/eslint-plugin@8.68.0 || 8.69.0'
   - '@typescript-eslint/parser@8.68.0 || 8.69.0'
   - '@typescript-eslint/project-service@8.68.0 || 8.69.0'
@@ -51,8 +51,8 @@ minimumReleaseAgeExclude:
   - '@typescript-eslint/typescript-estree@8.68.0 || 8.69.0'
   - '@typescript-eslint/utils@8.68.0 || 8.69.0'
   - '@typescript-eslint/visitor-keys@8.68.0 || 8.69.0'
-  - ai@7.0.79 || 7.0.83 || 7.0.84 || 7.0.86 || 7.0.87
-  - bullmq@5.81.4 || 6.2.1 || 6.2.2 || 6.3.1 || 6.3.2 || 6.3.3
+  - ai@7.0.79 || 7.0.83 || 7.0.84 || 7.0.86 || 7.0.87 || 7.0.88 || 7.0.89 || 7.0.90 || 7.0.91
+  - bullmq@5.81.4 || 6.2.1 || 6.2.2 || 6.3.1 || 6.3.2 || 6.3.3 || 6.3.4
   - eslint@10.9.1
   - typescript-eslint@8.68.0 || 8.69.0
   - '@prisma/config@7.10.0'
@@ -101,6 +101,19 @@ minimumReleaseAgeExclude:
   - vue@3.5.42
   - '@vue/test-utils@2.5.0'
   - markdown-it@15.0.1
-  - vue-router@5.3.0
+  - vue-router@5.3.0 || 5.3.1
   - zod@4.5.2 || 4.5.4
   - pdfjs-dist@6.3.289
+  - '@eslint/json@2.1.0'
+  - globals@17.12.0
+  - joi@18.2.6 || 18.2.7 || 18.2.8
+  - '@chromatic-com/storybook@5.3.1'
+  - '@storybook/addon-a11y@10.6.0'
+  - '@storybook/addon-docs@10.6.0'
+  - '@storybook/addon-vitest@10.6.0'
+  - '@storybook/builder-vite@10.6.0'
+  - '@storybook/react-dom-shim@10.6.0'
+  - '@storybook/vue3-vite@10.6.0'
+  - '@storybook/vue3@10.6.0'
+  - eslint-plugin-storybook@10.6.0
+  - storybook@10.6.0

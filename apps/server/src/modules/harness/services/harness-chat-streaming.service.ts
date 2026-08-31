@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { SocketIOService } from '@triplef/socketio';
 
 import { MinioService } from '../../minio/services/minio.service.js';
@@ -11,7 +12,6 @@ import {
 import { extractImageCountFromToolResults } from '../helpers/media/extract-image-count-from-tool-results.helper.js';
 import { extractVideoCountFromToolResults } from '../helpers/media/extract-video-count-from-tool-results.helper.js';
 import { filterExistingGalleryItems } from '../helpers/media/filter-existing-gallery-items.helper.js';
-import { IMAGE_TEMPLATES } from '../helpers/respond/build-execution-messages.helper.js';
 
 import { mapStreamMeta } from './helpers/map-stream-meta.helper.js';
 import { HarnessContext } from './harness-context.type.js';
@@ -114,7 +114,7 @@ export class HarnessChatStreamingService {
     // images only — the user's own uploaded images are already visible as
     // message attachments and must never reach the client gallery/lightbox.
     const template = ctx.outputs.intent?.template ?? 'text';
-    const responseImages = IMAGE_TEMPLATES.includes(template)
+    const responseImages = isImageTaskTemplate(template)
       ? images.filter((item) => item.source === 'cloud')
       : images;
 

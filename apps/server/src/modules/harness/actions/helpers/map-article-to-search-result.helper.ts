@@ -1,4 +1,4 @@
-/** Normalize an extracted article into the lexicon search-result shape. */
+/** Normalize an extracted article into the encyclopedia search-result shape. */
 export function mapArticleToSearchResult(article: {
   url?: unknown;
   title?: unknown;

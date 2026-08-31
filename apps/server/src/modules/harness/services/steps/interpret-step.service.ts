@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
+import {
+  buildClarificationTranslationSystemPrompt,
+  buildClarificationTranslationUserPrompt,
+  buildMemoryProbeSection,
+} from '@triplef/agent/prompts';
 import type { IntentResult } from '@triplef/agent/schemas';
+import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { AiSdkService } from '@triplef/ai-sdk';
 import { SocketIOService } from '@triplef/socketio';
 
 import { buildProviderOptions } from '../../../ai-sdk/helpers/provider-options.helper.js';
 import {
   EPISODE_PROBE_LIMIT,
-  EPISODE_TAGS,
+  EPISODE_TAG,
 } from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
@@ -17,11 +23,8 @@ import {
   HARNESS_ACTIVITY_KEYS,
   resolveHarnessActivityLanguage,
 } from '../../helpers/harness-activity.helper.js';
-import { buildMemoryProbeSection } from '../../helpers/interpret/build-memory-probe-section.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-
-const IMAGE_REQUIRED_TEMPLATES = new Set(['describe', 'compare', 'ocr']);
 
 /**
  * Fallback for a classifier that emitted an image-only template although
@@ -173,7 +176,7 @@ export class InterpretStepService implements StepHandler {
       cognitionKey && episodeProbeLimit > 0
         ? await this.memoryClient.searchByText({
             text: query,
-            tags: [...EPISODE_TAGS],
+            tags: [EPISODE_TAG],
             recency: true,
             limit: episodeProbeLimit,
           })
@@ -351,7 +354,7 @@ export class InterpretStepService implements StepHandler {
     ctx: HarnessContext,
     intent: NonNullable<HarnessContext['outputs']['intent']>,
   ): void {
-    if (!IMAGE_REQUIRED_TEMPLATES.has(intent.template)) return;
+    if (!isImageTaskTemplate(intent.template)) return;
 
     const hasImages = ctx.buffers.length > 0 || ctx.processedMeta.length > 0;
     if (hasImages) {
@@ -394,13 +397,6 @@ export class InterpretStepService implements StepHandler {
     const code = language?.trim().toLowerCase() ?? '';
     if (code === 'en') return englishQuestion;
 
-    // The model picks the language: either the detected ISO code or, when
-    // detection failed, whatever language the latest user message is in.
-    const targetRule =
-      code.length === 2
-        ? `Write ONLY in "${code}".`
-        : 'Write in the SAME language as the quoted user message. Never use English unless the user message is English.';
-
     const latestUserMessage = this.findLatestUserText(ctx.request.messages);
 
     try {
@@ -409,13 +405,14 @@ export class InterpretStepService implements StepHandler {
         messages: [
           {
             role: 'system',
-            content: `You translate short clarifying questions for a chat assistant. ${targetRule} Keep the question concise, natural, and faithful to the original meaning. Output ONLY the question.`,
+            content: buildClarificationTranslationSystemPrompt(language),
           },
           {
             role: 'user',
-            content: latestUserMessage
-              ? `User message: ${latestUserMessage}\n\nQuestion to translate: ${englishQuestion}`
-              : `Question to translate: ${englishQuestion}`,
+            content: buildClarificationTranslationUserPrompt(
+              englishQuestion,
+              latestUserMessage,
+            ),
           },
         ],
         providerOptions: buildProviderOptions({

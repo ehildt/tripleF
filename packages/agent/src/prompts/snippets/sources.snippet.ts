@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { sourceSchema } from '../../schemas/index.js';
+import { sourceSchema } from '../../schemas/response/source-json.schema.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 

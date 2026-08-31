@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   COGNITION_PURGE_BATCH,
+  CONVICTION_TAGS,
+  CONVICTION_TEXT_LIMIT,
   EPISODE_TAGS,
   EPISODE_TEXT_LIMIT,
   INSIGHT_TAGS,
@@ -74,7 +76,9 @@ export class MemoryCognitionService {
   async hasInsights(memoryCognition: string): Promise<boolean> {
     const [first] = await this.memoryRepository.listMemory({
       memoryCognition,
-      tags: [...INSIGHT_TAGS],
+      // The distinguishing tag: episodes share the 'cognition' tag, so an
+      // any-match over INSIGHT_TAGS would also match episodes.
+      tags: ['insight'],
       limit: 1,
     });
     return first !== undefined;
@@ -87,7 +91,23 @@ export class MemoryCognitionService {
   ): Promise<MemoryPoint[]> {
     return this.memoryRepository.listMemory({
       memoryCognition,
-      tags: [...INSIGHT_TAGS],
+      // The distinguishing tag: episodes share the 'cognition' tag, so an
+      // any-match over INSIGHT_TAGS would also match episodes.
+      tags: ['insight'],
+      limit,
+    });
+  }
+
+  /** The conviction records of a cognition space (the synthesized user/self-model conclusions — the management/listing read). */
+  async listConvictions(
+    memoryCognition: string,
+    limit = 100,
+  ): Promise<MemoryPoint[]> {
+    return this.memoryRepository.listMemory({
+      memoryCognition,
+      // The distinguishing tag: insights/episodes share the 'cognition' tag,
+      // so convictions filter on 'conviction' alone.
+      tags: ['conviction'],
       limit,
     });
   }
@@ -213,6 +233,58 @@ export class MemoryCognitionService {
       ],
     });
     return id;
+  }
+
+  /**
+   * Store synthesized conviction records (one Qdrant point per conviction,
+   * id seeded on the text so repeats overwrite silently). A conviction is a
+   * durable conclusion the conviction-synthesis pass derived about the
+   * user/self model; `evidenceIds` cite the partition facts it rests on and
+   * drive the drift sweep (a conviction whose evidence goes stale is
+   * superseded). Convictions ARE constellation nodes of the cognition lane —
+   * they accrue semantic edges like insights. Throws when the feature is
+   * off or the embed fails — callers catch.
+   */
+  async upsertConvictions(
+    scope: CognitionScope,
+    convictions: Array<{ text: string; evidenceIds: string[] }>,
+  ): Promise<number> {
+    if (!this.config.enabled) {
+      throw new Error('Memory feature is disabled');
+    }
+    const items = convictions
+      .map((conviction) => ({
+        text: conviction.text.trim().slice(0, CONVICTION_TEXT_LIMIT),
+        evidenceIds: conviction.evidenceIds,
+      }))
+      .filter((conviction) => conviction.text.length > 0);
+    if (items.length === 0) return 0;
+
+    const vectors = await this.embeddingService.embed(
+      items.map((item) => item.text),
+      'document',
+    );
+    if (vectors.length !== items.length) {
+      throw new Error('Embedding returned fewer vectors than convictions');
+    }
+
+    await this.memoryRepository.upsertBatch({
+      memoryCognition: scope.memoryCognition,
+      role: 'assistant',
+      sessionId: scope.sessionId,
+      conversationId: scope.conversationId,
+      requestId: scope.requestId,
+      points: items.map((item, index) => ({
+        id: deterministicPointId(
+          `${scope.memoryCognition}|cognition|conviction|${item.text}`,
+        ),
+        vector: vectors[index],
+        text: item.text,
+        tags: [...CONVICTION_TAGS],
+        evidenceIds: item.evidenceIds,
+      })),
+    });
+    return items.length;
   }
 
   /**

@@ -1,3 +1,5 @@
+import { EMBEDDABLE_VIDEO_PROVIDER_LABELS } from '../../schemas/constants/embeddable-video-providers.constant.js';
+
 export const PRODUCT_INSTRUCTIONS = `MODE: PRODUCT
 
 Goal: produce a structured, purchase-decision-oriented product overview that the dashboard renders as a rich e-commerce product card — not an article. Every section must help the user answer three questions: What is it? Is it good? Where do I buy it at the best price?
@@ -61,7 +63,7 @@ Optional media fields (include only when the data is available; otherwise use ""
 - galleryTitle: heading for the product image gallery (e.g. 'Product Gallery'); empty string if no gallery images.
 - galleryItems: an array of image objects for the inline gallery. Each item needs imageUrl, imageAlt, title, caption. imageAlt and title MUST be non-empty. When imageSearch returns 3 or more images, include the additional images here (excluding any banner image).
 - videoGalleryTitle: heading for the video gallery (e.g. 'Hands-On Reviews'); empty string if none.
-- videoGalleryItems: an array of up to 3 product-review video objects. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (YouTube, Vimeo, Dailymotion, Loom, Wistia) or a direct video file. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description. The dashboard renders at most 3 videos, so pick the 3 most relevant product reviews.
+- videoGalleryItems: an array of up to 3 product-review video objects. Each item needs videoUrl, title, caption. title and caption MUST be non-empty. videoUrl must be from a supported provider (${EMBEDDABLE_VIDEO_PROVIDER_LABELS}) or a direct video file. Carry over the metadata from its availableVideos entry verbatim when the tool result provides it: duration, channel, date, views, thumbnailUrl, description. The dashboard renders at most 3 videos, so pick the 3 most relevant product reviews.
 
 Optional attribution fields:
 - sources: an array of source objects with url, title, sourceName, date, and snippet. Use only real retrieved URLs from *WebSearch, shopping, and pageFetch results. Use the FULL source title verbatim — never truncate it. Search results often return titles already cut off with a trailing ellipsis ("…" or "..."); strip that trailing ellipsis and any trailing whitespace so the displayed title is complete.

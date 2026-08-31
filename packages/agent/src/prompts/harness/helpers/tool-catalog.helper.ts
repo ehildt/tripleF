@@ -1,26 +1,4 @@
-import { categorizeTools } from '../../../schemas/index.js';
-import { TOOL_DESCRIPTIONS, TOOL_NAMES } from '../../../schemas/index.js';
-
-/**
- * Formats the enabled tools grouped by category for inclusion in the intent
- * selection prompt.
- */
-export function formatToolCatalog(toolNames: readonly string[]): string[] {
-  const groups = categorizeTools(toolNames);
-  const lines: string[] = [];
-
-  for (const [category, names] of Object.entries(groups)) {
-    if (names.length === 0) continue;
-
-    lines.push(`  ${category}:`);
-    for (const name of names) {
-      const description = TOOL_DESCRIPTIONS[name] ?? 'No description';
-      lines.push(`    - ${name}: ${description}`);
-    }
-  }
-
-  return lines;
-}
+import { TOOL_DESCRIPTIONS, TOOL_NAMES } from '../../../schemas/helpers/tools/tool-registry.constants.js';
 
 /**
  * Formats a complete tool availability catalog for the intent classifier.

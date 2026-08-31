@@ -6,4 +6,7 @@ export interface AssistantCarouselProps {
   title?: string;
   /** Anchor id for the rendered title (aria-labelledby wiring). */
   titleId?: string;
+  /** Parent-managed slides (e.g. the attachments gallery) show a per-slide
+   * remove action instead of add-to-files. */
+  removable?: boolean;
 }

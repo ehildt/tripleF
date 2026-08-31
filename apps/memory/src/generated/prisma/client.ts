@@ -75,17 +75,17 @@ export type MemoryCognitionProfile = Prisma.MemoryCognitionProfileModel
  */
 export type MemoryInsertLedger = Prisma.MemoryInsertLedgerModel
 /**
- * Model MemoryLexiconInsertLedger
+ * Model MemoryEncyclopediaInsertLedger
  * *
- *  * Write ledger of the shared knowledge lexicon (memory-lexicon collection in
+ *  * Write ledger of the shared knowledge encyclopedia (memory-encyclopedia collection in
  *  * Qdrant): one row per stored DOCUMENT (url + content hash), written by the
- *  * lexicon select-persist path. Powers the deterministic supersede sweep
+ *  * encyclopedia select-persist path. Powers the deterministic supersede sweep
  *  * (sweptAt null = pending) — the sweep heals orphaned old-hash chunks left by
- *  * a crashed supersede, never adjudicates content. The lexicon is global
+ *  * a crashed supersede, never adjudicates content. The encyclopedia is global
  *  * (public web content), so rows are not partition-scoped; partitionScope is
  *  * provenance only.
  */
-export type MemoryLexiconInsertLedger = Prisma.MemoryLexiconInsertLedgerModel
+export type MemoryEncyclopediaInsertLedger = Prisma.MemoryEncyclopediaInsertLedgerModel
 /**
  * Model MemoryLink
  * *
@@ -97,8 +97,37 @@ export type MemoryLexiconInsertLedger = Prisma.MemoryLexiconInsertLedgerModel
  *  *
  *  * `lane` + `collection` + `scopeKey` scope the graph: partition facts and
  *  * cognition insights live in the memory collection (scope = the space key),
- *  * lexicon chunks in the lexicon collection (scope = 'global'). `collection`
+ *  * encyclopedia chunks in the encyclopedia collection (scope = 'global'). `collection`
  *  * is the model-namespaced name, so switching the embed model strands the old
  *  * graph harmlessly and the new collection backfills on first read.
  */
 export type MemoryLink = Prisma.MemoryLinkModel
+/**
+ * Model MemoryFriction
+ * *
+ *  * Friction records of the memory constellation: one row per contradiction or
+ *  * conflict between two Qdrant points, written by the reflection pass (Phase
+ *  * 2). A friction is a state-machined pair — open until resolved or dismissed
+ *  * — and the losing point is marked superseded on resolution (never deleted).
+ *  * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ *  * space; `source`/`target` are the two conflicting point ids in canonical
+ *  * undirected order.
+ */
+export type MemoryFriction = Prisma.MemoryFrictionModel
+/**
+ * Model MemoryCluster
+ * *
+ *  * Detected clusters of the memory constellation: one row per cluster of
+ *  * related Qdrant points, discovered by the memory-cluster job over the
+ *  * link graph (semantic + topical + evidence edges) and summarized by an LLM
+ *  * into a title + summary. The summary is the cluster's "report" — the
+ *  * connective tissue that lets retrieval answer cross-cutting questions
+ *  * without reading every member.
+ *  *
+ *  * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ *  * space. `fingerprint` is the hash of the sorted member ids — the drift
+ *  * signal: a cluster whose membership changed gets a new fingerprint (and
+ *  * id) and is re-summarized; unchanged clusters keep their row. The job
+ *  * replaces a scope's rows atomically, so stale fingerprints never linger.
+ */
+export type MemoryCluster = Prisma.MemoryClusterModel

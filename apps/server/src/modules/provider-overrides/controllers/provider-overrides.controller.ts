@@ -1,6 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { ProviderOverridesPatchDto } from '../dtos/provider-overrides-patch.dto.js';
+import { ProviderParamsDto } from '../dtos/provider-params.dto.js';
 import { ProviderOverridesService } from '../services/provider-overrides.service.js';
 
 @ApiTags('Provider Overrides')
@@ -16,7 +18,7 @@ export class ProviderOverridesController {
 
   @Put()
   @ApiOperation({ summary: 'Update provider configuration overrides' })
-  updateConfig(@Body() body: Record<string, Record<string, any>>) {
+  updateConfig(@Body() body: ProviderOverridesPatchDto) {
     this.providerOverrides.updateConfig(body);
     return { success: true };
   }
@@ -25,8 +27,8 @@ export class ProviderOverridesController {
   @ApiOperation({
     summary: 'Reset one provider to its env defaults (API keys masked)',
   })
-  resetConfig(@Param('provider') provider: string) {
-    this.providerOverrides.resetConfig(provider);
+  resetConfig(@Param() params: ProviderParamsDto) {
+    this.providerOverrides.resetConfig(params.provider);
     return this.providerOverrides.getMaskedConfig();
   }
 }

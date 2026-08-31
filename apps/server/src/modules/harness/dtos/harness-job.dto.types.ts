@@ -28,4 +28,6 @@ export type FastifyMultipartFilter = {
   language?: string;
   /** Character cap for server-extracted document text (client sysctl, live at submit time). */
   documentTextLimit?: number;
+  /** Graph-augmented recall: attach detected cluster summaries to the respond context. */
+  graphRag?: boolean;
 };

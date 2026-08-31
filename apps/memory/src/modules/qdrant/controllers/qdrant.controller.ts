@@ -6,52 +6,55 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Post,
   Query,
 } from '@nestjs/common';
 
-import { MemoryInsertLedgerRepository } from '../../persistence/services/memory-insert-ledger.repository.js';
-import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
+import { MemoryClusterRepository } from '../../persistence/services/memory-cluster.repository.js';
 import {
   ApeDeleteQdrantMemory,
   ApeDeleteQdrantText,
   ApeGetQdrantMemory,
+  ApeGetQdrantMemoryClusters,
   ApeGetQdrantMemoryCognition,
+  ApeGetQdrantMemoryFrictions,
   ApeGetQdrantMemoryLinks,
   ApeGetQdrantStatus,
   ApePostQdrantCognitionInsight,
-  ApePostQdrantConsolidate,
   ApePostQdrantMemoryLinksRecompute,
-  ApePostQdrantMemoryRelink,
+  ApePostQdrantSearchBridges,
+  ApePostQdrantSearchConvictions,
   ApePostQdrantSearchText,
+  ApePostQdrantSearchTextClusters,
   ApePostQdrantSearchVector,
   ApePostQdrantText,
   ApeTagsQdrant,
 } from '../decorators/openapi/swagger.js';
+import { MemoryClusterDto } from '../dtos/memory-cluster.dto.js';
+import { MemoryClustersQueryDto } from '../dtos/memory-clusters-query.dto.js';
+import { MemoryCognitionQueryDto } from '../dtos/memory-cognition-query.dto.js';
 import { MemoryCognitionSnapshotDto } from '../dtos/memory-cognition-snapshot.dto.js';
-import { MemoryConsolidateBodyDto } from '../dtos/memory-consolidate-body.dto.js';
-import { MemoryConsolidateResponseDto } from '../dtos/memory-consolidate-response.dto.js';
 import { MemoryDeleteQueryDto } from '../dtos/memory-delete-query.dto.js';
 import { MemoryDeleteResponseDto } from '../dtos/memory-delete-response.dto.js';
+import { MemoryFrictionDto } from '../dtos/memory-friction.dto.js';
 import { MemoryLinkDto } from '../dtos/memory-link.dto.js';
 import { MemoryLinksQueryDto } from '../dtos/memory-links-query.dto.js';
 import { MemoryLinksRecomputeResponseDto } from '../dtos/memory-links-recompute-response.dto.js';
 import { MemoryListQueryDto } from '../dtos/memory-list-query.dto.js';
 import { MemoryPruneQueryDto } from '../dtos/memory-prune-query.dto.js';
 import { MemoryPruneResponseDto } from '../dtos/memory-prune-response.dto.js';
-import { MemoryRelinkQueryDto } from '../dtos/memory-relink-query.dto.js';
-import { MemoryRelinkResponseDto } from '../dtos/memory-relink-response.dto.js';
+import { MemorySearchBridgesDto } from '../dtos/memory-search-bridges.dto.js';
+import { MemorySearchClustersResponseDto } from '../dtos/memory-search-clusters-response.dto.js';
+import { MemorySearchConvictionsDto } from '../dtos/memory-search-convictions.dto.js';
 import { MemorySearchTextDto } from '../dtos/memory-search-text.dto.js';
 import { MemorySearchVectorDto } from '../dtos/memory-search-vector.dto.js';
 import { MemorySendTextDto } from '../dtos/memory-send-text.dto.js';
 import { MemoryStoreInsightDto } from '../dtos/memory-store-insight.dto.js';
+import { MemoryVocabularyQueryDto } from '../dtos/memory-vocabulary-query.dto.js';
 import { QdrantStatusResponseDto } from '../dtos/qdrant-status.dto.js';
 import type { MemoryPoint } from '../models/memory.model.js';
-import type { QdrantConfig } from '../models/qdrant-config.model.js';
 import { MemoryRepository } from '../services/memory.repository.js';
 import { MemoryCognitionService } from '../services/memory-cognition.service.js';
-import { MemoryEnqueueService } from '../services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../services/memory-overrides.service.js';
 import { MemorySearchService } from '../services/memory-search.service.js';
 import { QdrantClientService } from '../services/qdrant-client.service.js';
@@ -67,9 +70,7 @@ export class QdrantController {
     private readonly memoryCognitionService: MemoryCognitionService,
     private readonly memoryOverrides: MemoryOverridesService,
     private readonly vectorizeService: VectorizeService,
-    private readonly ledger: MemoryInsertLedgerRepository,
-    private readonly memoryEnqueue: MemoryEnqueueService,
-    @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
+    private readonly clusters: MemoryClusterRepository,
   ) {}
 
   @Get('status')
@@ -81,17 +82,23 @@ export class QdrantController {
   @Get('memory/cognition')
   @ApeGetQdrantMemoryCognition()
   async getCognition(
-    @Query('memoryCognition') memoryCognition?: string,
+    @Query() query: MemoryCognitionQueryDto,
   ): Promise<MemoryCognitionSnapshotDto> {
-    const space = memoryCognition?.trim();
-    if (!space) {
-      throw new BadRequestException('memoryCognition is required');
-    }
-    const profile = await this.memoryCognitionService.getProfile(space);
-    const insights = await this.memoryCognitionService.listInsights(space, 100);
+    const profile = await this.memoryCognitionService.getProfile(
+      query.memoryCognition,
+    );
+    const insights = await this.memoryCognitionService.listInsights(
+      query.memoryCognition,
+      100,
+    );
+    const convictions = await this.memoryCognitionService.listConvictions(
+      query.memoryCognition,
+      100,
+    );
     return {
       profile: profile ? JSON.stringify(profile) : null,
       insights,
+      convictions,
       episodeProbeLimit: this.memoryOverrides.getEpisodeProbeLimit(),
     };
   }
@@ -135,9 +142,9 @@ export class QdrantController {
 
   @Get('memory/vocabulary')
   async listVocabulary(
-    @Query('memoryPartition') memoryPartition?: string,
+    @Query() query: MemoryVocabularyQueryDto,
   ): Promise<{ categories: string[]; tags: string[] }> {
-    const partition = memoryPartition?.trim();
+    const partition = query.memoryPartition;
     if (!partition) return { categories: [], tags: [] };
     const [categories, tags] = await Promise.all([
       this.memoryRepository.facetCategories(partition),
@@ -158,6 +165,31 @@ export class QdrantController {
     const scopeKey = query.memoryPartition ?? query.memoryCognition;
     if (!scopeKey) return [];
     return this.memoryRepository.listLinks(lane, scopeKey);
+  }
+
+  @Get('memory/frictions')
+  @ApeGetQdrantMemoryFrictions()
+  async listMemoryFrictions(
+    @Query() query: MemoryLinksQueryDto,
+  ): Promise<MemoryFrictionDto[]> {
+    const lane = query.memoryPartition ? 'partition' : 'cognition';
+    const scopeKey = query.memoryPartition ?? query.memoryCognition;
+    if (!scopeKey) return [];
+    return this.memoryRepository.listFrictions(lane, scopeKey);
+  }
+
+  @Get('memory/clusters')
+  @ApeGetQdrantMemoryClusters()
+  async listMemoryClusters(
+    @Query() query: MemoryClustersQueryDto,
+  ): Promise<MemoryClusterDto[]> {
+    const partition = query.memoryPartition?.trim();
+    if (!partition) return [];
+    return this.clusters.listByScope(
+      'partition',
+      this.memoryRepository.collection,
+      partition,
+    );
   }
 
   @Post('memory/links/recompute')
@@ -266,6 +298,26 @@ export class QdrantController {
     });
   }
 
+  @Post('search/text/clusters')
+  @HttpCode(HttpStatus.OK)
+  @ApePostQdrantSearchTextClusters()
+  async searchByTextWithClusters(
+    @Body() body: MemorySearchTextDto,
+  ): Promise<MemorySearchClustersResponseDto> {
+    return this.memorySearchService.searchByTextWithClusters({
+      memoryPartition: body.memoryPartition,
+      sessionId: body.sessionId,
+      text: body.text,
+      limit: body.limit,
+      role: body.role,
+      conversationId: body.conversationId,
+      requestId: body.requestId,
+      tags: body.tags,
+      contains: body.contains,
+      recency: body.recency,
+    });
+  }
+
   @Post('search/vector')
   @HttpCode(HttpStatus.OK)
   @ApePostQdrantSearchVector()
@@ -285,65 +337,30 @@ export class QdrantController {
     });
   }
 
-  @Post('memory/consolidate')
+  @Post('search/bridges')
   @HttpCode(HttpStatus.OK)
-  @ApePostQdrantConsolidate()
-  async consolidate(
-    @Body() body: MemoryConsolidateBodyDto,
-  ): Promise<MemoryConsolidateResponseDto> {
-    const partitions = body.memoryPartition?.trim()
-      ? [body.memoryPartition.trim()]
-      : (await this.ledger.listPendingPartitions()).map(
-          (p) => p.memoryPartition,
-        );
-
-    const model = body.model?.trim() || this.config.consolidateModel;
-    if (!model)
-      throw new BadRequestException(
-        'An adjudication model is required — pass "model" or set MEMORY_CONSOLIDATE_MODEL',
-      );
-
-    const limit = Math.min(body.limit ?? 100, 500);
-    const sweeps: Array<{ memoryPartition: string; pending: number }> = [];
-    for (const memoryPartition of partitions) {
-      const pending = await this.ledger.countPending(memoryPartition);
-      if (pending === 0) continue;
-      await this.memoryEnqueue.enqueueConsolidateJob({
-        memoryPartition,
-        model,
-        limit,
-        dryRun: body.dryRun === true,
-      });
-      sweeps.push({ memoryPartition, pending });
-    }
-    return { accepted: true, sweeps };
+  @ApePostQdrantSearchBridges()
+  async searchBridges(
+    @Body() body: MemorySearchBridgesDto,
+  ): Promise<MemoryPoint[]> {
+    return this.memorySearchService.searchBridges({
+      memoryPartition: body.memoryPartition,
+      text: body.text,
+      limit: body.limit,
+    });
   }
 
-  @Post('memory/relink')
+  @Post('search/convictions')
   @HttpCode(HttpStatus.OK)
-  @ApePostQdrantMemoryRelink()
-  async relinkMemory(
-    @Query() query: MemoryRelinkQueryDto,
-  ): Promise<MemoryRelinkResponseDto> {
-    const memoryPartition = query.memoryPartition?.trim();
-    if (!memoryPartition) {
-      throw new BadRequestException('memoryPartition is required');
-    }
-    const model = query.model?.trim() || this.config.consolidateModel;
-    if (!model) {
-      throw new BadRequestException(
-        'An adjudication model is required — pass "model" or set MEMORY_CONSOLIDATE_MODEL',
-      );
-    }
-    await this.memoryEnqueue.enqueueRelinkJob({
-      memoryPartition,
-      model,
-      limit: query.limit,
-      maxPasses: query.maxPasses,
-      enrich: query.enrich === true,
-      dryRun: query.dryRun === true,
+  @ApePostQdrantSearchConvictions()
+  async searchConvictions(
+    @Body() body: MemorySearchConvictionsDto,
+  ): Promise<MemoryPoint[]> {
+    return this.memorySearchService.searchConvictions({
+      memoryCognition: body.memoryCognition,
+      text: body.text,
+      limit: body.limit,
     });
-    return { accepted: true };
   }
 
   @Delete('memory')

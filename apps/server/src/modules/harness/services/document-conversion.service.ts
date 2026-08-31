@@ -18,6 +18,7 @@ import type { DocumentSection } from '../helpers/documents/document-section.type
 import { extractTextFromPptxBuffer } from '../helpers/documents/extract-text-from-pptx-buffer.helper.js';
 
 import { mapPageMeta } from './helpers/map-page-meta.helper.js';
+import { shouldSynthesizePages } from './helpers/should-synthesize-pages.helper.js';
 
 const MANIFEST_CONTENT_TYPE = 'application/json';
 
@@ -41,12 +42,19 @@ export class DocumentConversionService {
    * are reused; missing ones are converted from the stored original bytes.
    * Returns one page-image meta entry per rendered PDF page (they ride the
    * regular image pipeline) and one text section per text-bearing document.
+   *
+   * Page synthesis follows the client's selection: when the client already
+   * references at least one page of a pdf original, its page selection is
+   * authoritative and no additional pages are synthesized (dropped pages
+   * stay dropped). Only originals with no referenced pages at all fall back
+   * to emitting every page.
    */
   async resolveOriginals(
     sessionId: string | undefined,
     conversationId: string | undefined,
     requestId: string,
     originals: FastifyMultipartMeta[],
+    referencedImageHashes: ReadonlySet<string>,
   ): Promise<{
     pageImageMeta: FastifyMultipartMeta[];
     textSections: DocumentSection[];
@@ -69,14 +77,18 @@ export class DocumentConversionService {
         if (!manifest) continue;
 
         if (manifest.kind === 'pdf') {
-          manifest.pageHashes.forEach((pageHash, index) => {
-            pageImageMeta.push({
-              name: `${entry.name} · page ${index + 1}`,
-              type: 'image/jpeg',
-              hash: pageHash,
-              size: 0,
+          if (
+            shouldSynthesizePages(manifest.pageHashes, referencedImageHashes)
+          ) {
+            manifest.pageHashes.forEach((pageHash, index) => {
+              pageImageMeta.push({
+                name: `${entry.name} · page ${index + 1}`,
+                type: 'image/jpeg',
+                hash: pageHash,
+                size: 0,
+              });
             });
-          });
+          }
         } else if (manifest.text.trim()) {
           textSections.push({
             name: entry.name,
@@ -86,6 +98,9 @@ export class DocumentConversionService {
               conversationId,
               entry.hash,
             ),
+            mimeType: entry.type,
+            sizeBytes: entry.size,
+            originalHash: entry.hash,
           });
         }
       } catch (error) {

@@ -11,6 +11,8 @@ import type {
 import { ConsolidationAdjudicatorService } from '../../consolidation-adjudicator.service.js';
 import { EmbeddingService } from '../../embedding.service.js';
 import { MemoryRepository } from '../../memory.repository.js';
+import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
+import { MemoryOverridesService } from '../../memory-overrides.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
 
 import { mapCandidateToAdjudication } from './helpers/map-candidate-to-adjudication.helper.js';
@@ -52,6 +54,8 @@ export class MemoryConsolidateJobService {
     private readonly memorySearch: MemorySearchService,
     private readonly memoryRepository: MemoryRepository,
     private readonly embeddingService: EmbeddingService,
+    private readonly memoryEnqueue: MemoryEnqueueService,
+    private readonly overrides: MemoryOverridesService,
   ) {}
 
   async execute(data: MemoryConsolidateJobData): Promise<void> {
@@ -72,8 +76,9 @@ export class MemoryConsolidateJobService {
     };
 
     for (const row of pending) {
-      const candidates = await this.screenCandidates(data, row);
-      if (!candidates) continue;
+      const screened = await this.screenCandidates(data, row);
+      if (!screened) continue;
+      const { source, candidates } = screened;
 
       const verdict = await this.adjudicator.adjudicate(
         data.model,
@@ -81,6 +86,10 @@ export class MemoryConsolidateJobService {
           text: row.text,
           role: row.role,
           createdAt: row.createdAt.toISOString(),
+          subject: source.subject,
+          category: source.category,
+          kind: source.kind,
+          stability: source.stability,
         },
         candidates.map(mapCandidateToAdjudication),
       );
@@ -99,29 +108,78 @@ export class MemoryConsolidateJobService {
         continue;
       }
 
-      counts[await this.applyVerdict(data, row, candidates, verdict)]++;
+      counts[await this.applyVerdict(data, row, source, candidates, verdict)]++;
     }
 
     this.logger.log(
       `memory-consolidate ${data.memoryPartition}: processed ${pending.length} — kept ${counts.kept}, redundant ${counts.redundant}, merged ${counts.merged}, deferred ${counts.deferred}${data.dryRun ? ' (dryRun)' : ''}`,
     );
+
+    if (!data.dryRun) {
+      await this.autoTriggerReflect(data.memoryPartition, data.model);
+      await this.autoTriggerCluster(data.memoryPartition, data.model);
+    }
+  }
+
+  /**
+   * Auto-trigger the reflection sweep over the partition after a real
+   * consolidation run — the newly kept/merged points are unreflected, so the
+   * friction screen picks them up. Gated by the partitionReflectAutoEnabled
+   * system variable; the model falls back to the consolidation model when no
+   * dedicated reflection model is configured.
+   */
+  private async autoTriggerReflect(
+    memoryPartition: string,
+    fallbackModel: string,
+  ): Promise<void> {
+    if (!this.overrides.getPartitionReflectAutoEnabled()) return;
+    await this.memoryEnqueue.enqueueReflectJob({
+      lane: 'partition',
+      scopeKey: memoryPartition,
+      model: this.overrides.getReflectModel() ?? fallbackModel,
+      limit: this.overrides.getReflectBatchLimit(),
+      maxCandidates: this.overrides.getReflectMaxCandidates(),
+    });
+  }
+
+  /**
+   * Auto-trigger the cluster-detection sweep over the partition after a
+   * real consolidation run — merges/deletes changed the link graph, so the
+   * clusters re-cluster. Gated by clusterAutoEnabled; the model falls
+   * back to the consolidation model when no dedicated cluster model is
+   * configured.
+   */
+  private async autoTriggerCluster(
+    memoryPartition: string,
+    fallbackModel: string,
+  ): Promise<void> {
+    if (!this.overrides.getClusterAutoEnabled()) return;
+    await this.memoryEnqueue.enqueueClusterJob({
+      lane: 'partition',
+      scopeKey: memoryPartition,
+      model: this.overrides.getClusterModel() ?? fallbackModel,
+      minMembers: this.overrides.getClusterMinMembers(),
+    });
   }
 
   /**
    * Existence check + near-duplicate screen. Marks the row swept and returns
    * undefined when there is nothing to adjudicate (the point is already gone,
-   * or no near-duplicates exist — the fast path skips the LLM call).
+   * or no near-duplicates exist — the fast path skips the LLM call). The
+   * returned source point carries the new fact's stored metadata (subject,
+   * kind, stability, category) for the adjudication prompt.
    */
   private async screenCandidates(
     data: MemoryConsolidateJobData,
     row: PendingLedgerEntry,
-  ): Promise<MemoryPoint[] | undefined> {
+  ): Promise<{ source: MemoryPoint; candidates: MemoryPoint[] } | undefined> {
     const alive = await this.memoryRepository.listMemory({
       memoryPartition: data.memoryPartition,
       text: row.text,
       limit: 1,
     });
-    if (alive.length === 0) {
+    const source = alive[0];
+    if (!source) {
       await this.ledger.markSwept([row.id]);
       return undefined;
     }
@@ -136,20 +194,27 @@ export class MemoryConsolidateJobService {
 
     if (candidates.length === 0) {
       await this.ledger.markSwept([row.id]);
+      await this.memoryRepository.setPayloadForPoints([row.pointId], {
+        is_consolidated: true,
+      });
       return undefined;
     }
-    return candidates;
+    return { source, candidates };
   }
 
   /** Apply one verdict; returns the outcome key for the run tally. */
   private async applyVerdict(
     data: MemoryConsolidateJobData,
     row: PendingLedgerEntry,
+    source: MemoryPoint,
     candidates: MemoryPoint[],
     verdict: ConsolidationVerdict,
   ): Promise<VerdictOutcome> {
     if (verdict.verdict === 'keep') {
       await this.ledger.markSwept([row.id]);
+      await this.memoryRepository.setPayloadForPoints([row.pointId], {
+        is_consolidated: true,
+      });
       return 'kept';
     }
     if (verdict.verdict === 'redundant') {
@@ -182,12 +247,36 @@ export class MemoryConsolidateJobService {
     const id = deterministicPointId(
       `${data.memoryPartition}|${role}|${mergedText}`,
     );
-    const tags = [...new Set(candidates.flatMap((c) => c.tags))];
+    // Tag/metadata carry: the merged restatement describes the same claim —
+    // the new fact's freshly classified metadata wins, the user-side
+    // candidate backs it up (its wording survives the merge too), and the
+    // tag union includes the new fact's own tags.
+    const metaFallback =
+      candidates.find((candidate) => candidate.role === 'user') ??
+      candidates[0];
+    const tags = [
+      ...new Set([
+        ...(source.tags ?? []),
+        ...candidates.flatMap((candidate) => candidate.tags),
+      ]),
+    ];
     await this.memoryRepository.upsertBatch({
       memoryPartition: data.memoryPartition,
       role,
       requestId: row.requestId,
-      points: [{ id, vector, text: mergedText, tags }],
+      points: [
+        {
+          id,
+          vector,
+          text: mergedText,
+          tags,
+          isConsolidated: true,
+          category: source.category ?? metaFallback?.category,
+          subject: source.subject ?? metaFallback?.subject,
+          kind: source.kind ?? metaFallback?.kind,
+          stability: source.stability ?? metaFallback?.stability,
+        },
+      ],
     });
     await this.memoryRepository.deleteByIds([
       row.pointId,

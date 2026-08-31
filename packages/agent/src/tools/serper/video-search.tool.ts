@@ -1,5 +1,6 @@
 import { type Tool, tool } from 'ai';
 
+import { EMBEDDABLE_VIDEO_PROVIDER_CLAUSE } from '../../schemas/constants/embeddable-video-providers.constant.js';
 import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
 import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
@@ -17,7 +18,7 @@ import type { SerperVideoSearchResponse } from './video-search.types.js';
 export function createSerperVideoSearch(deps: ToolDependencies): Tool {
   return tool({
     description:
-      'Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. Only return URLs from supported embeddable providers: YouTube, Vimeo, Dailymotion, Loom, Wistia, or direct video files. Reject Instagram, Facebook, TikTok, Twitch, X/Twitter, and other unreliable platforms. Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos. ' +
+      `Search for videos using Serper.dev. Returns titles, links, channel names, duration, and publish dates. ${EMBEDDABLE_VIDEO_PROVIDER_CLAUSE} Pass recency ("day"|"week"|"month"|"year") to restrict to recently uploaded videos. ` +
       STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: serperVideoSearchSchema,
     execute: async ({ query, count: reqCount, recency, lang }: SerperVideoSearchInput) => {

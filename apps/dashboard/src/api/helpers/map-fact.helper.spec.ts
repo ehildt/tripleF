@@ -29,4 +29,13 @@ describe('mapFact', () => {
   it('falls back to an empty tags array', () => {
     expect(mapFact({ text: 'hello' }, 0).tags).toEqual([]);
   });
+
+  it('passes through bridge evidence ids', () => {
+    expect(
+      mapFact(
+        { id: 'b1', text: 'bridge', tags: ['bridge'], evidenceIds: ['a', 'b'] },
+        0,
+      ).evidenceIds,
+    ).toEqual(['a', 'b']);
+  });
 });

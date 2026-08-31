@@ -16,7 +16,11 @@ vi.mock('../../composables/use-toast', () => ({
 // The spec's global fetch stub returns the search-engines config shape, so
 // the memory reads are mocked here to return their documented empty states.
 vi.mock('@/api/memory.api', () => ({
-  fetchMemoryCognition: vi.fn(async () => ({ profile: null, insights: [] })),
+  fetchMemoryCognition: vi.fn(async () => ({
+    profile: null,
+    insights: [],
+    convictions: [],
+  })),
   fetchMemoryFacts: vi.fn(async () => []),
   wipeMemoryCognition: vi.fn(async () => 0),
   wipeMemoryFacts: vi.fn(async () => 0),
@@ -148,7 +152,8 @@ describe('SysCtl', () => {
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('Interface');
       expect(wrapper.text()).toContain('Sockets');
-      expect(wrapper.text()).toContain('Counters');
+      expect(wrapper.text()).toContain('Always show the source menu');
+      expect(wrapper.text()).toContain('Always show the view menu');
     });
   });
 
@@ -162,8 +167,10 @@ describe('SysCtl', () => {
 
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('Widgets');
+      expect(wrapper.text()).toContain('Memory');
       expect(wrapper.text()).toContain('Dead letter');
       expect(wrapper.text()).toContain('Debug');
+      expect(wrapper.text()).toContain('Counters');
       expect(wrapper.text()).toContain('Side');
       expect(wrapper.text()).toContain('Auto-close');
     });

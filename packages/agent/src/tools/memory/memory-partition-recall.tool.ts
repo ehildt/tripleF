@@ -46,7 +46,8 @@ export function createMemoryPartitionRecallTool(deps: MemoryPartitionRecallDeps)
       const lines = hits.map((hit) => {
         const who = hit.role === 'user' ? 'the user' : 'you (assistant)';
         const when = hit.createdAt ? ` on ${new Date(hit.createdAt).toISOString().slice(0, 10)}` : '';
-        return `- "${hit.text}" — stated by ${who}${when}`;
+        const contested = hit.isFriction ? ' — ⚠ CONTESTED (an open conflict exists; treat with caution)' : '';
+        return `- "${hit.text}" — stated by ${who}${when}${contested}`;
       });
       return `YOUR MEMORY OF THIS USER (trusted statements they said or asked you to remember — answer from them and attribute them to the user; never present them as public web knowledge):\n${lines.join('\n')}`;
     },

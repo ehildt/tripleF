@@ -31,7 +31,18 @@ describe('EmbedStepService', () => {
     const ctx = makeCtx({
       outputs: {
         extraction: {
-          facts: ['User prefers concise.', 'User uses vim.'],
+          facts: [
+            {
+              text: 'User prefers concise.',
+              kind: 'preference' as const,
+              stability: 'durable' as const,
+            },
+            {
+              text: 'User uses vim.',
+              kind: 'state' as const,
+              stability: 'volatile' as const,
+            },
+          ],
           tags: ['style'],
         },
       },
@@ -62,7 +73,23 @@ describe('EmbedStepService', () => {
     const step = new EmbedStepService({ embed } as never);
 
     const ctx = makeCtx({
-      outputs: { extraction: { facts: ['F1', 'F2'], tags: [] } },
+      outputs: {
+        extraction: {
+          facts: [
+            {
+              text: 'F1',
+              kind: 'fact' as const,
+              stability: 'durable' as const,
+            },
+            {
+              text: 'F2',
+              kind: 'fact' as const,
+              stability: 'durable' as const,
+            },
+          ],
+          tags: [],
+        },
+      },
     });
 
     await expect(step.execute(ctx)).rejects.toThrow(

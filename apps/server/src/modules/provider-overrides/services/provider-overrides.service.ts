@@ -12,6 +12,7 @@ import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
 import { SourcesConfigService } from '../configs/sources-config.service.js';
 import { YoutubeConfigService } from '../configs/youtube-config.service.js';
+import { ProviderOverridesPatchDto } from '../dtos/provider-overrides-patch.dto.js';
 import { applyOverrides } from '../helpers/apply-overrides.helper.js';
 import { decryptOverridesSecrets } from '../helpers/decrypt-overrides-secrets.helper.js';
 import { encryptOverridesSecrets } from '../helpers/encrypt-overrides-secrets.helper.js';
@@ -221,7 +222,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
     void this.repository.deleteByProvider(provider);
   }
 
-  updateConfig(patch: Partial<Record<string, Record<string, any>>>): void {
+  updateConfig(patch: ProviderOverridesPatchDto): void {
     this.restored = true;
     for (const [provider, values] of Object.entries(patch)) {
       if (!values) continue;
@@ -229,6 +230,9 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
         this.overrides[provider] = {};
       }
       for (const [key, val] of Object.entries(values)) {
+        // Class-transformed DTO instances carry every declared field as an
+        // own prop (undefined when unset) — only merge fields actually sent.
+        if (val === undefined) continue;
         if (key === 'apiKey') {
           updateApiKeyOverride(this.overrides, provider, val);
           continue;

@@ -26,7 +26,10 @@ export class EmbedStepService implements VectorizeStepHandler {
       return;
     }
 
-    const vectors = await this.embeddingService.embed(facts, 'document');
+    const vectors = await this.embeddingService.embed(
+      facts.map((fact) => fact.text),
+      'document',
+    );
     if (vectors.length !== facts.length) {
       // An out-of-spec Ollama response — throw so the queue retries instead
       // of silently storing nothing for this turn.

@@ -1,6 +1,6 @@
 import { limitText } from '@triplef/helpers/limit-text';
 
-import { memoryProfileResponseSchema } from '../../schemas/index.js';
+import { memoryProfileResponseSchema } from '../../schemas/memory/memory-cognition.model.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
 
 /**
@@ -21,7 +21,7 @@ export const MEMORY_PROFILE_INSTRUCTIONS = buildStructuredPrompt(memoryProfileRe
   before: `COGNITION JOB — maintain YOUR evolving understanding of THIS user.
 
 You hold three kinds of cognition, all derived (never the fact store):
-1. PROFILE — a single structured JSON document: who the user is (stable identity and durable LEAN topics) PLUS your own persona (the name, role, and voice the user has given YOU) and your learned corrections (behavioral rules the user taught you after you got something wrong). You output a PATCH, never the whole document — your fields are MERGED into the stored profile in code: fields you OMIT are kept as stored, fields you set REPLACE the stored value, and a field set to null REMOVES it from the profile ("likes": null deletes the whole list). Never repeat unchanged fields, and never null a field you merely do not know — null deletes. The user-side profile is a ROUTING MAP: its values are short topic strings ("cars", "Linux", "TypeScript") that double as probe triggers into your deeper insight memory — keep each value to a phrase, never a sentence; depth does not belong here. The persona and corrections are about YOU, not the user — never confuse the two.
+1. PROFILE — a single structured JSON document: who the user is (stable identity and durable LEAN topics) PLUS your own persona (the name, role, and voice the user has given YOU) and your learned corrections (behavioral rules the user taught you after you got something wrong) and your CONVICTIONS (short topics of durable conclusions you synthesized about the user's world — the routing-map side of your conviction records, whose depth lives at paths "convictions.<slug>"). You output a PATCH, never the whole document — your fields are MERGED into the stored profile in code: fields you OMIT are kept as stored, fields you set REPLACE the stored value, and a field set to null REMOVES it from the profile ("likes": null deletes the whole list). Never repeat unchanged fields, and never null a field you merely do not know — null deletes. The user-side profile is a ROUTING MAP: its values are short topic strings ("cars", "Linux", "TypeScript") that double as probe triggers into your deeper insight memory — keep each value to a phrase, never a sentence; depth does not belong here. The persona and corrections are about YOU, not the user — never confuse the two. Convictions sit between: they are YOUR synthesized conclusions about the user's world, recorded as short topics.
 2. INSIGHTS — the DEPTH behind those topics: specific models they like, past statements, working nuances — recalled later by vector probe when that topic comes up. One self-contained sentence each, third person, lead with the topic. When an insight deepens a stored profile value, attach its "path" as "field.keyword" where the keyword names THAT value exactly — short, never a phrase (profile likes "anime" → "likes.anime"); genuinely general insights stay pathless.
 3. EPISODE — a single sentence recording what THIS turn was about (the interaction arc: what the user asked, what you did, what was decided or left open). Short-term conversation memory, recalled later by a recency-blended probe when a new turn touches the same topic or the user asks about recent activity. One sentence, past tense, lead with the action ("Helped the user debug the memory app's probe"). Omit when the turn was trivial (greetings, one-word answers, no substance) or when the turn is about memory itself: a recap request ("where did we leave off?", "do you remember what we did?", "what have we been working on?") and its answer only REPEAT earlier turns — they add no activity of their own, and echoing them as an episode would crowd out the real recent activity the next time the user asks. Exception: when the user CORRECTS your recap ("no, we were listening to music"), record the correction's substance — what the recent activity actually was — never the mistaken recap.
 
@@ -30,6 +30,7 @@ You receive:
 - ASSISTANT RESPONSE: what you answered (prose only).
 - CURRENT PROFILE: your document so far (may be empty).
 - DERIVED INSIGHTS: your deeper memory of this user, already stored (may be absent).
+- DERIVED CONVICTIONS: your synthesized conclusions, already stored (may be absent).
 - PRIOR FACTS: this user's OWN stored statements from past conversations, probed by this turn's topic (may be absent).
 
 Rules:
@@ -41,6 +42,7 @@ Rules:
 - Third person ("The user …"), compact values, no markdown.
 - Never store secrets, credentials, or sensitive data the user did not explicitly ask to be remembered.
 - DERIVED INSIGHTS are your already-stored depth. When one holds a durable trait that belongs in the routing map (a language, a standing interest, a skill, a preference), promote it into the profile as a SHORT topic string — never copy insight sentences into the profile; depth stays in the insights.
+- DERIVED CONVICTIONS are your already-stored synthesized conclusions. When one names a durable conclusion the routing map should carry, promote it into the "convictions" list as a SHORT topic phrase — the conviction record keeps the full sentence and its evidence; never record a conviction as something the user stated.
 - Connect, never collapse: PRIOR FACTS may echo or complete what this turn reveals. When a new detail plausibly connects to a prior fact (the user disliked the dog food they bought AND you know they own a dog), you MAY record the CONNECTION as a derived insight — hedged, third person, plainly tentative ("… — possibly because the dog refuses it"). Never merge two facts into one claim the user never made, never store the connection as a stated fact, and never let a connection invent or replace a profile value.
 - The MERGED profile (the stored document with your patch applied) must stay under the stated character cap — when headroom shrinks, reclaim space by removing the least-durable fields (set them to null) instead of piling on.
 - Null means the user explicitly no longer holds that trait ("likes": null after they said they stopped liking X) — never null a field you merely do not know, and never answer with an all-nulls profile: deleting EVERYTHING you know is always a mistake on a normal turn.
@@ -48,7 +50,7 @@ Rules:
 
 Respond with EXACTLY one JSON object, nothing else:`,
   after: `- profile: ONLY the fields you are adding, refining, or removing (removal = a null value), or null when nothing durable changed.
-- Arrays (expertise, goals, likes, dislikes, interests): when you change one, re-emit its COMPLETE new contents — a partial array REPLACES the stored list and drops whatever you omitted.
+- Arrays (expertise, goals, likes, dislikes, interests, convictions): when you change one, re-emit its COMPLETE new contents — a partial array REPLACES the stored list and drops whatever you omitted.
 - persona (and its nested voice) and corrections are deep-merged like communication/preferences: emit only the sub-fields/keys you are changing; omitted ones survive. To remove a correction, set its key to null.
 - insights: only NEW durable depth (omit when none); "path" is optional and only when the insight deepens a profile value.
 - episode: one sentence on what this turn was about (omit when trivial or when the turn only recaps past activity).`,
@@ -65,6 +67,11 @@ export function buildMemoryProfilePrompt(params: {
   currentProfile?: string;
   /** The space's derived insights — the depth behind the profile's topics. */
   insights?: Array<{ text: string; path?: string }>;
+  /**
+   * The space's stored convictions — synthesized conclusions from the
+   * conviction-synthesis pass (evidence-cited, cross-fact). Promotable topics.
+   */
+  convictions?: Array<{ text: string }>;
   /**
    * The user's own stored fact statements probed by this turn — the
    * connective tissue for cross-conversation (derived, hedged) insights.
@@ -85,6 +92,12 @@ export function buildMemoryProfilePrompt(params: {
   if (insights) {
     parts.push(
       `DERIVED INSIGHTS (your deeper memory — promote durable topics from here into the profile):\n${limitText(insights, params.maxPayloadChars)}`,
+    );
+  }
+  const convictions = params.convictions?.map((conviction) => `- ${conviction.text}`).join('\n');
+  if (convictions) {
+    parts.push(
+      `DERIVED CONVICTIONS (your synthesized conclusions — promote durable topics from here into the profile convictions facet):\n${limitText(convictions, params.maxPayloadChars)}`,
     );
   }
   const priorFacts = params.priorFacts?.map((fact) => `- ${fact.text}`).join('\n');

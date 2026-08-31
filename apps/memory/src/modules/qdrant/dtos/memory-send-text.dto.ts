@@ -19,7 +19,7 @@ export class MemorySendTextDto {
   @ApiPropertyOptional({
     description:
       "Memory partition the record belongs to — the user's fact space. Defaults to sessionId; set a stable custom partition id (see sysctl → system) so memory survives browser-session rotation.",
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   @IsOptional()
@@ -65,7 +65,7 @@ export class MemorySendTextDto {
 
   @ApiPropertyOptional({
     description:
-      'Broad category the record belongs to (e.g. games, pets, work, health) — groups narrow tag topics into one family for the constellation community tier.',
+      'Broad category the record belongs to (e.g. games, pets, work, health) — groups narrow tag topics into one family for the constellation category tier (cluster fallback).',
     example: 'games',
   })
   @IsString()

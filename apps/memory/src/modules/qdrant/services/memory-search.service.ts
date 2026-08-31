@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TextToLines } from '@triplef/helpers/text-to-lines';
 
+import {
+  type MemoryClusterRecord,
+  MemoryClusterRepository,
+} from '../../persistence/services/memory-cluster.repository.js';
 import type {
   MemoryPoint,
   MemoryScopeFilters,
@@ -13,6 +17,12 @@ interface SearchInput extends MemoryScopeFilters {
   limit?: number;
   /** Blend recency into the ranking (episode probe). */
   recency?: boolean;
+}
+
+/** Search result with the hits' cluster summaries attached (graph-augmented recall). */
+interface MemorySearchWithClusters {
+  points: MemoryPoint[];
+  clusters: MemoryClusterRecord[];
 }
 
 /**
@@ -32,6 +42,7 @@ export class MemorySearchService {
   constructor(
     private readonly embeddingService: EmbeddingService,
     private readonly memoryRepository: MemoryRepository,
+    private readonly clusters: MemoryClusterRepository,
   ) {}
 
   async searchByText(
@@ -95,6 +106,44 @@ export class MemorySearchService {
     });
   }
 
+  /**
+   * Graph-augmented text search: the plain kNN hits plus the cluster
+   * summaries of the clusters those hits belong to — the local-search
+   * context that lets the model answer cross-cutting questions without
+   * reading every member. Clusters are attached by the hits'
+   * `cluster_id` payload (written by the cluster job); a cold scope with
+   * no clusters yet degrades to plain hits.
+   */
+  async searchByTextWithClusters(
+    input: SearchInput & { text: string },
+  ): Promise<MemorySearchWithClusters> {
+    const points = await this.searchByText(input);
+    return this.attachClusters(points);
+  }
+
+  /** Graph-augmented vector search (see searchByTextWithClusters). */
+  async searchByVectorWithClusters(
+    input: SearchInput & { vector: number[] },
+  ): Promise<MemorySearchWithClusters> {
+    const points = await this.searchByVector(input);
+    return this.attachClusters(points);
+  }
+
+  /** Look up the clusters of the hits' `cluster_id` payloads. */
+  private async attachClusters(
+    points: MemoryPoint[],
+  ): Promise<MemorySearchWithClusters> {
+    const ids = [
+      ...new Set(
+        points
+          .map((point) => point.clusterId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const clusters = await this.clusters.findByIds(ids);
+    return { points, clusters };
+  }
+
   /** Query variants: the full text plus its deduped, non-empty sentences. */
   private buildQueryVariants(text: string): string[] {
     const full = text.trim();
@@ -104,6 +153,54 @@ export class MemorySearchService {
       .map((line) => line.trim())
       .filter((line) => line.length > 0 && line !== full);
     return [full, ...sentences];
+  }
+
+  /**
+   * Semantic search over one partition's bridge records — the synthesized
+   * gap-closer read path. Bridges are excluded from the fact recall path
+   * (searchByText) so a synthesized inference is never attributed as a user
+   * statement; this surface returns them with their evidence back-references.
+   */
+  async searchBridges(input: {
+    memoryPartition: string;
+    text: string;
+    limit?: number;
+  }): Promise<MemoryPoint[]> {
+    try {
+      const vectors = await this.embeddingService.embed([input.text], 'query');
+      if (vectors.length !== 1) return [];
+      return this.memoryRepository.searchBridges({
+        memoryPartition: input.memoryPartition,
+        vector: vectors[0],
+        limit: input.limit ?? 5,
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Semantic search over one cognition scope's conviction records — the
+   * respond-time conviction probe's read path. Convictions are the AI's own
+   * synthesized conclusions (never user statements) and surface with their
+   * evidence back-references.
+   */
+  async searchConvictions(input: {
+    memoryCognition: string;
+    text: string;
+    limit?: number;
+  }): Promise<MemoryPoint[]> {
+    try {
+      const vectors = await this.embeddingService.embed([input.text], 'query');
+      if (vectors.length !== 1) return [];
+      return this.memoryRepository.searchConvictions({
+        memoryCognition: input.memoryCognition,
+        vector: vectors[0],
+        limit: input.limit ?? 5,
+      });
+    } catch {
+      return [];
+    }
   }
 
   private searchRepository(

@@ -80,18 +80,23 @@ export class HarnessContextService {
       documentUploadMeta,
     );
 
+    // Page images already ride in as referenced images (the client registers
+    // them at select time). The conversion service treats a referenced page as
+    // an authoritative selection: it only synthesizes pages for originals with
+    // no referenced pages at all (bootstrap fallback for legacy clients).
+    const attachedPageHashes = new Set(
+      imageUploadMeta.map((entry) => entry.hash),
+    );
     const resolvedDocuments =
       await this.documentConversionService.resolveOriginals(
         sessionId,
         filters.conversationId,
         requestId,
         documentMeta,
+        attachedPageHashes,
       );
-    // Page images already ride in as referenced images (client registers
-    // them at select time) — never attach the same page twice.
-    const attachedPageHashes = new Set(
-      imageUploadMeta.map((entry) => entry.hash),
-    );
+    // Belt-and-braces dedup for the fallback path — never attach the same
+    // page twice.
     const newPageImageMeta = resolvedDocuments.pageImageMeta.filter(
       (entry) => !attachedPageHashes.has(entry.hash),
     );

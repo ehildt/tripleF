@@ -5,7 +5,7 @@ import { IsOptional, IsString } from 'class-validator';
 export class MemoryLinksQueryDto {
   @ApiPropertyOptional({
     description: "Restrict to one memory partition (the user's fact space).",
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   @IsOptional()
@@ -14,7 +14,7 @@ export class MemoryLinksQueryDto {
   @ApiPropertyOptional({
     description:
       "Restrict to one cognition key (the AI's understanding space).",
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   @IsOptional()

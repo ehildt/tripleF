@@ -5,7 +5,7 @@ import type {
 
 /**
  * Task-prefix formats for instruction-tuned embedding model families, taken
- * from each model's card. Ollama model names are free-form (tags, community
+ * from each model's card. Ollama model names are free-form (tags, cluster
  * uploads like `toshk0/nomic-embed-text-v2-moe:Q6_K`), so families are matched
  * by a case-insensitive substring of the name.
  *

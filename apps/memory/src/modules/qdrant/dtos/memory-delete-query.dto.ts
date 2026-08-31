@@ -32,7 +32,7 @@ export class MemoryDeleteQueryDto {
   @ApiPropertyOptional({
     description:
       'Memory partition to delete from (the user-set partition id). Defaults to sessionId — one of the two is required.',
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   @IsOptional()

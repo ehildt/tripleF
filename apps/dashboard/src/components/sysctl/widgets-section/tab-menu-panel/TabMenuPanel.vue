@@ -2,8 +2,8 @@
 /**
  * Tab menu settings: which screen edge the slide-out menu is docked to,
  * whether it closes itself after a tab pick or an outside click, and which
- * optional tabs (dlq, debug) show up in the drawer — plus a reset back to
- * the defaults.
+ * optional tabs (memory, dlq, debug) show up in the drawer — plus the unread
+ * count badges and a reset back to the defaults.
  *
  * Mirrors the other widget panels: an icon-only segmented toggle for the
  * side (same pattern as the other initial positions), checkbox FieldCards
@@ -12,7 +12,9 @@
  * power toggle.
  */
 import {
+  Brain,
   Bug,
+  Hash,
   MailX,
   PanelLeft,
   PanelRight,
@@ -43,7 +45,8 @@ const SIDE_OPTIONS = computed(() => [
   { value: 'right', icon: PanelRight, tooltip: i18n.global.t('common.right') },
 ]);
 
-const { isTabVisible, toggleTab } = useSysctlTabVisibility();
+const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
+  useSysctlTabVisibility();
 
 function setSide(value: string) {
   setTabMenuSide(value as TabMenuSide);
@@ -94,6 +97,14 @@ function setSide(value: string) {
       />
       <div class="tab-menu-panel__tabs">
         <FieldCard
+          :icon="Brain"
+          :label="$t('common.memoryTab')"
+          :description="$t('common.memoryTabDesc')"
+          :checked="isTabVisible('memory')"
+          @toggle="toggleTab('memory')"
+        />
+
+        <FieldCard
           :icon="MailX"
           :label="$t('common.dlqTab')"
           :description="$t('common.dlqTabDesc')"
@@ -107,6 +118,14 @@ function setSide(value: string) {
           :description="$t('common.debugTabDesc')"
           :checked="isTabVisible('debug')"
           @toggle="toggleTab('debug')"
+        />
+
+        <FieldCard
+          :icon="Hash"
+          :label="$t('common.counters')"
+          :description="$t('common.countersDesc')"
+          :checked="showCounters"
+          @toggle="toggleShowCounters"
         />
       </div>
     </div>

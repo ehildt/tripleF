@@ -1,4 +1,10 @@
-import { Bug, MailX, MessageSquare, SlidersHorizontal } from '@lucide/vue';
+import {
+  Brain,
+  Bug,
+  MailX,
+  MessageSquare,
+  SlidersHorizontal,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -8,6 +14,7 @@ import type { MenuTab } from './use-menu-tabs.types';
 
 const TAB_TINTS: Record<ActiveTab, number> = {
   chat: 0.15,
+  memory: 0.35,
   dlq: 0.55,
   debug: 0.75,
   sysctl: 1,
@@ -15,6 +22,7 @@ const TAB_TINTS: Record<ActiveTab, number> = {
 
 const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
   chat: MessageSquare,
+  memory: Brain,
   dlq: MailX,
   debug: Bug,
   sysctl: SlidersHorizontal,
@@ -39,6 +47,12 @@ export function useMenuTabs(props: {
         icon: TAB_ICONS.chat,
         tint: TAB_TINTS.chat,
         showStar: props.showChatStar,
+      },
+      {
+        label: t('nav.memory'),
+        tab: 'memory',
+        icon: TAB_ICONS.memory,
+        tint: TAB_TINTS.memory,
       },
       {
         label: t('nav.dlq'),

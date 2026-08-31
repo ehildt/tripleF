@@ -60,8 +60,8 @@ export class QdrantClientService implements OnModuleInit {
       await this.ensureCollection(modelDims);
       await this.ensurePayloadIndexes();
       await this.verifyCollectionDims(modelDims);
-      await this.ensureLexiconCollection(modelDims);
-      await this.ensureLexiconPayloadIndexes();
+      await this.ensureEncyclopediaCollection(modelDims);
+      await this.ensureEncyclopediaPayloadIndexes();
     } catch (error) {
       this.logger.warn(
         `Qdrant bootstrap failed — memory reads/writes will be unavailable: ${
@@ -76,10 +76,10 @@ export class QdrantClientService implements OnModuleInit {
     return buildCollectionName(this.config.collection, this.config.embedModel);
   }
 
-  /** Resolved lexicon collection name (model-namespaced, global scope). */
-  get lexiconCollection(): string {
+  /** Resolved encyclopedia collection name (model-namespaced, global scope). */
+  get encyclopediaCollection(): string {
     return buildCollectionName(
-      this.config.lexiconCollection,
+      this.config.encyclopediaCollection,
       this.config.embedModel,
     );
   }
@@ -164,6 +164,13 @@ export class QdrantClientService implements OnModuleInit {
       // Datetime schema on created_at powers the episode probe's recency
       // blend (formula query with exp_decay on the payload timestamp).
       { field_name: 'created_at', field_schema: 'datetime' },
+      // Lifecycle flags — bool indexes power the strict/recommended view
+      // filters and the Phase 2 recall formula boosts over these payloads.
+      { field_name: 'is_consolidated', field_schema: 'bool' },
+      { field_name: 'is_reflected', field_schema: 'bool' },
+      { field_name: 'is_friction', field_schema: 'bool' },
+      { field_name: 'superseded', field_schema: 'bool' },
+      { field_name: 'superseded_by', field_schema: 'keyword' },
     ] as const;
     for (const index of indexes) {
       if (existing.has(index.field_name)) continue;
@@ -189,56 +196,69 @@ export class QdrantClientService implements OnModuleInit {
     return exists;
   }
 
-  /** True when the lexicon collection exists in Qdrant. */
-  async hasLexiconCollection(): Promise<boolean> {
+  /** True when the encyclopedia collection exists in Qdrant. */
+  async hasEncyclopediaCollection(): Promise<boolean> {
     const { exists } = await this.getClient().collectionExists(
-      this.lexiconCollection,
+      this.encyclopediaCollection,
     );
     return exists;
   }
 
   /**
-   * Create the lexicon collection if missing (Cosine, same model dims as the
+   * Create the encyclopedia collection if missing (Cosine, same model dims as the
    * episodic collection). Chunk-granularity points: one point per passage.
    */
-  async ensureLexiconCollection(modelDims?: number): Promise<void> {
+  async ensureEncyclopediaCollection(modelDims?: number): Promise<void> {
     const client = this.getClient();
-    const { exists } = await client.collectionExists(this.lexiconCollection);
+    const { exists } = await client.collectionExists(
+      this.encyclopediaCollection,
+    );
     if (exists) return;
     const size = modelDims ?? this.config.vectorSize;
-    await client.createCollection(this.lexiconCollection, {
+    await client.createCollection(this.encyclopediaCollection, {
       vectors: { size, distance: 'Cosine' },
     });
     this.logger.log(
-      `Created Qdrant collection "${this.lexiconCollection}" (${size} dims, Cosine)`,
+      `Created Qdrant collection "${this.encyclopediaCollection}" (${size} dims, Cosine)`,
     );
   }
 
   /**
-   * Keyword/datetime/integer indexes on the lexicon payload: `url` (lookup +
+   * Keyword/datetime/integer indexes on the encyclopedia payload: `url` (lookup +
    * supersede), `fetched_at` (datetime, future eviction/debug), `partition_scope`
    * (future tenant filter), `chunk_index` (integer, neighbor-expansion range
    * scrolls).
    */
-  async ensureLexiconPayloadIndexes(): Promise<void> {
+  async ensureEncyclopediaPayloadIndexes(): Promise<void> {
     const client = this.getClient();
-    const info = await client.getCollection(this.lexiconCollection);
+    const info = await client.getCollection(this.encyclopediaCollection);
     const existing = new Set(Object.keys(info.payload_schema ?? {}));
     const indexes = [
       { field_name: 'url', field_schema: 'keyword' },
       { field_name: 'fetched_at', field_schema: 'datetime' },
       { field_name: 'partition_scope', field_schema: 'keyword' },
       { field_name: 'chunk_index', field_schema: 'integer' },
+      // category/topic are the classification labels — keyword indexes power
+      // the classify job's reuse-first facet vocabulary and topic filters.
+      { field_name: 'category', field_schema: 'keyword' },
+      { field_name: 'topic', field_schema: 'keyword' },
+      // Lifecycle flags — bool indexes power the strict/recommended view
+      // filters and the Phase 2 recall formula boosts over these payloads.
+      { field_name: 'is_consolidated', field_schema: 'bool' },
+      { field_name: 'is_reflected', field_schema: 'bool' },
+      { field_name: 'is_friction', field_schema: 'bool' },
+      { field_name: 'superseded', field_schema: 'bool' },
+      { field_name: 'superseded_by', field_schema: 'keyword' },
     ] as const;
     for (const index of indexes) {
       if (existing.has(index.field_name)) continue;
-      await client.createPayloadIndex(this.lexiconCollection, {
+      await client.createPayloadIndex(this.encyclopediaCollection, {
         field_name: index.field_name,
         field_schema: index.field_schema,
         wait: true,
       });
       this.logger.log(
-        `Created payload index "${index.field_name}" on "${this.lexiconCollection}"`,
+        `Created payload index "${index.field_name}" on "${this.encyclopediaCollection}"`,
       );
     }
   }

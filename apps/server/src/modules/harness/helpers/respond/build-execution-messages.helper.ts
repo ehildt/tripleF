@@ -2,6 +2,7 @@ import { buildContentSystemPrompt } from '@triplef/agent/prompts';
 import { resolveVariantInstructions } from '@triplef/agent/prompts';
 import { buildSnippetInstruction } from '@triplef/agent/prompts';
 import { SNIPPET_TEMPLATE_PRESETS } from '@triplef/agent/prompts';
+import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 
 import { selectStepHistory } from '../select-step-history.helper.js';
@@ -11,19 +12,6 @@ import {
 } from '../template-placeholders.constant.js';
 
 import type { BuildExecutionMessagesParams } from './build-execution-messages.helper.types.js';
-
-export const IMAGE_TEMPLATES = ['describe', 'compare', 'ocr'];
-
-/**
- * A cloud reference image candidate the response model must verify visually:
- * `imageUrl`/`title` map to the same availableImages entry, `buffer` is the
- * resized bytes attached to the message.
- */
-export type CloudReferenceImage = {
-  imageUrl: string;
-  title?: string;
-  buffer: Buffer;
-};
 
 /** History-selection summary the caller logs after building the messages. */
 export interface HistorySelection {
@@ -43,11 +31,10 @@ export function buildExecutionMessages(
 ): BuildExecutionMessagesResult {
   const { intent, messages, availableImages, sources, language } = params;
 
-  const isImageTask = IMAGE_TEMPLATES.includes(intent.template);
+  const isImageTask = isImageTaskTemplate(intent.template);
   const requiredKeys = getRequiredKeys(intent.template);
   const optionalKeys = getOptionalKeys(intent.template);
   const instructions = resolveInstructions(params);
-  const { cloudReferenceImages } = params;
 
   const executionSystem = buildContentSystemPrompt({
     template: intent.template,
@@ -88,11 +75,7 @@ export function buildExecutionMessages(
     };
   }
 
-  const contextMessages = buildImageContextMessages(
-    messages,
-    availableImages,
-    cloudReferenceImages,
-  );
+  const contextMessages = buildImageContextMessages(messages, availableImages);
 
   return {
     messages: [
@@ -122,7 +105,6 @@ function resolveInstructions(params: BuildExecutionMessagesParams): string {
 function buildImageContextMessages(
   allMessages: InputMessage[],
   availableImages?: Array<Record<string, unknown>>,
-  cloudReferenceImages?: CloudReferenceImage[],
 ): InputMessage[] {
   const isToolContextMessage = (m: InputMessage) =>
     m.role === 'system' &&
@@ -160,28 +142,5 @@ function buildImageContextMessages(
     });
   }
 
-  if (cloudReferenceImages && cloudReferenceImages.length > 0) {
-    contextMessages.push(buildCloudReferenceMessage(cloudReferenceImages));
-  }
-
   return contextMessages;
-}
-
-/**
- * Attach the cloud reference candidates with explicit imageUrl/title labels
- * so the model can map each attached image to its availableImages entry
- * without index heuristics.
- */
-function buildCloudReferenceMessage(refs: CloudReferenceImage[]): InputMessage {
-  const lines = refs.map(
-    (ref, index) =>
-      `#${index + 1} — imageUrl: ${ref.imageUrl}${ref.title ? `, title: ${JSON.stringify(ref.title)}` : ''}`,
-  );
-  return {
-    role: 'user',
-    content: `CLOUD REFERENCE IMAGE CANDIDATES attached to this message, in order (each maps to the availableImages entry with the same imageUrl — the uploaded user image(s) are in the earlier user message):\n${lines.join(
-      '\n',
-    )}\nVisually verify each candidate against the uploaded image(s) before using it. Only a strong visual match — same subject, scene, character, artwork, or document — may appear in galleryItems. List every candidate that fails in discardedReferences with a one-line reason.`,
-    images: refs.map((ref) => ref.buffer),
-  };
 }

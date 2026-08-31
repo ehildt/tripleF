@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { SocketIOService } from '@triplef/socketio';
 
 import { MinioService } from '../../../minio/services/minio.service.js';
@@ -17,10 +18,6 @@ import { dedupeGalleryItems } from '../../helpers/media/dedupe-gallery-items.hel
 import { extractImageSearchItems } from '../../helpers/media/extract-media-from-tools.helper.js';
 import { extractShopOffers } from '../../helpers/media/extract-shop-offers.helper.js';
 import { filterExistingGalleryItems } from '../../helpers/media/filter-existing-gallery-items.helper.js';
-import {
-  type CloudReferenceImage,
-  IMAGE_TEMPLATES,
-} from '../../helpers/respond/build-execution-messages.helper.js';
 import { mergeLocalImagesIntoResponseData } from '../../helpers/respond/merge-local-images-into-response-data.helper.js';
 import { parseResponseStats } from '../../helpers/respond/parse-response-stats.helper.js';
 import { reconcileDiscardedReferences } from '../../helpers/respond/reconcile-discarded-references.helper.js';
@@ -74,7 +71,7 @@ export class RespondStepService implements StepHandler {
     // images only — the downloaded/ingested cloud candidates. The user's own
     // uploaded images are already rendered as message attachments and must
     // never be offered or merged into the response gallery.
-    const isImageTask = IMAGE_TEMPLATES.includes(ctx.outputs.intent.template);
+    const isImageTask = isImageTaskTemplate(ctx.outputs.intent.template);
     const responseGalleryItems = isImageTask
       ? limitedGalleryItems.filter((item) => item.source === 'cloud')
       : limitedGalleryItems;
@@ -103,10 +100,6 @@ export class RespondStepService implements StepHandler {
         intent: ctx.outputs.intent,
         messages: ctx.request.messages,
         availableImages: responseGalleryItems,
-        cloudReferenceImages: this.buildCloudReferenceImages(
-          ctx,
-          limitedGalleryItems,
-        ),
         model: ctx.model,
         keepAlive: ctx.request.keep_alive,
         numCtx: ctx.request.options?.num_ctx,
@@ -195,9 +188,7 @@ export class RespondStepService implements StepHandler {
     limitedGalleryItems: GalleryItem[],
     responseGalleryItems: GalleryItem[],
   ): Record<string, unknown> | undefined {
-    const isImageTask = IMAGE_TEMPLATES.includes(
-      ctx.outputs.intent?.template ?? '',
-    );
+    const isImageTask = isImageTaskTemplate(ctx.outputs.intent?.template ?? '');
 
     // Image tasks: the uploaded local images must never enter the response
     // gallery — they are visible as attachments and are not evidence. All
@@ -303,41 +294,6 @@ export class RespondStepService implements StepHandler {
     }
 
     return mediaCheckedData;
-  }
-
-  /**
-   * The response model verifies cloud reference candidates visually on
-   * image-self-analysis tasks, so the ingested bytes travel with the message
-   * — aligned with their availableImages entry by storage hash. Vision-less
-   * models and non-image templates get none.
-   */
-  private buildCloudReferenceImages(
-    ctx: HarnessContext,
-    galleryItems: GalleryItem[],
-  ): CloudReferenceImage[] {
-    if (ctx.visionExcluded) return [];
-    if (!IMAGE_TEMPLATES.includes(ctx.outputs.intent?.template ?? '')) {
-      return [];
-    }
-
-    const ingestedByHash = new Map(
-      (ctx.outputs.ingestedForRewrite ?? []).map((img) => [img.hash, img]),
-    );
-
-    return galleryItems
-      .filter((item) => item.source === 'cloud')
-      .flatMap((item) => {
-        const hash = item.imageUrl.split('/').pop() ?? '';
-        const ingested = ingestedByHash.get(hash);
-        if (!ingested?.buffer) return [];
-        return [
-          {
-            imageUrl: item.imageUrl,
-            title: item.title,
-            buffer: ingested.buffer,
-          },
-        ];
-      });
   }
 
   /**

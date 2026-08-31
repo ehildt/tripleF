@@ -36,11 +36,11 @@ import {
 } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/template-parts-settings.state';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import SysCtlSubMenu from '@/components/shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 
 import { useSysctlConfig } from '../composables/use-sysctl-config';
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 import { mapSubtabToItem } from './helpers/map-subtab-to-item.helper';
 
 const TEMPLATE_META: Record<

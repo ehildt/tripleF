@@ -20,6 +20,8 @@
 - [1.4. Socket.IO Real-time Layer](1.4-socketio.md)
 - [1.5. Data & Storage](1.5-data.md)
 - [1.6. Memory Cognition](1.6-memory-cognition.md)
+- [1.7. The Memory App](1.7-memory-app.md)
+- [1.8. Runtime Configuration & System Variables](1.8-runtime-configuration.md)
 
 ### Dashboard
 
@@ -48,6 +50,12 @@
 - [5.6. Object I/O](5.6-object-io.md)
 - [5.7. Text To Lines](5.7-text-to-lines.md)
 - [5.8. Quick Start](5.8-quick-start.md)
+- [5.9. Retry With Backoff](5.9-retry-with-backoff.md)
+- [5.10. Parse LLM JSON](5.10-parse-llm-json.md)
+- [5.11. Limit Text](5.11-limit-text.md)
+- [5.12. Mask API Key](5.12-mask-api-key.md)
+- [5.13. Encrypt Secret](5.13-encrypt-secret.md)
+- [5.14. Key Fingerprint](5.14-key-fingerprint.md)
 
 ### Config-Factory
 
@@ -96,6 +104,14 @@
 - [11.3. AI SDK Schema](11.3-ai-sdk-schema.md)
 - [11.4. Quick Start](11.4-quick-start.md)
 
+### Agent
+
+- [12. The @triplef/agent Library](12-agent.md)
+- [12.1. Agent Schemas](12.1-schemas.md)
+- [12.2. Agent Prompts](12.2-prompts.md)
+- [12.3. Agent Tools](12.3-tools.md)
+- [12.4. Quick Start](12.4-quick-start.md)
+
 ## Navigation
 
 | Document                                                  | Concern                                        | Key Sections                                                           |
@@ -109,8 +125,10 @@
 | [1.2-harness](1.2-harness.md)                             | Conversation engine internals                  | Step engine, intents, structured outputs, cancellation     |
 | [1.3-bullmq](1.3-bullmq.md)                               | Job queues, workers, retries                   | Queue topology, processor pipeline, failure modes                      |
 | [1.4-socketio](1.4-socketio.md)                           | Real-time streaming                            | Rooms, event contract, cancellation signal                             |
-| [1.5-data](1.5-data.md)                                   | PostgreSQL/Prisma, MinIO, KeyDB                | Models, object layout, image preprocessing                             |
+| [1.5-data](1.5-data.md)                                   | PostgreSQL/Prisma, MinIO, KeyDB, Qdrant            | Models, object layout, image preprocessing                             |
 | [1.6-memory-cognition](1.6-memory-cognition.md)           | Memory cognition JSON schema                   | Profile fields, insights, episodes, merge semantics, system variables   |
+| [1.7-memory-app](1.7-memory-app.md)                       | The memory service (Qdrant + vectorize worker + encyclopedia) | Topology, workflow, maintenance pipelines, REST registry |
+| [1.8-runtime-configuration](1.8-runtime-configuration.md) | How system variables/configs alter behavior    | The four layers, per-knob behavior tables, effect timing                |
 | [2-dashboard](2-dashboard.md)                             | Areas and technology                           | Chat, SysCtl, DLQ, PProc, router — panel map                                   |
 | [2.1-architecture](2.1-architecture.md)                   | Vue 3 component and state architecture         | Stores, composables, API layer, conventions                            |
 | [2.2-chat](2.2-chat.md)                                   | The chat experience                            | Exchanges, reasoning areas, streaming UX, conversation controls                   |
@@ -127,6 +145,12 @@
 | [5.6-object-io](5.6-object-io.md)                         | Object utilities                               | Clone, merge, pick, omit, is-empty                                     |
 | [5.7-text-to-lines](5.7-text-to-lines.md)                 | Sentence splitting                              | Western + CJK punctuation, chainable API                                |
 | [5.8-quick-start](5.8-quick-start.md)                     | Using the helpers package                       | Install, env parsing, object-io, hashing                                 |
+| [5.9-retry-with-backoff](5.9-retry-with-backoff.md)       | Retries with exponential backoff                | Options, jitter, abort, predicates                                       |
+| [5.10-parse-llm-json](5.10-parse-llm-json.md)             | Tolerant JSON parsing for model output          | Deviations tolerated, extraction                                          |
+| [5.11-limit-text](5.11-limit-text.md)                     | Text capping for LLM payloads                   | Truncation marker behavior                                               |
+| [5.12-mask-api-key](5.12-mask-api-key.md)                 | API-key masking                                 | Fixed mask, masked-value detection                                        |
+| [5.13-encrypt-secret](5.13-encrypt-secret.md)             | AES-256-GCM secret payloads                     | Payload format, rotation, failure semantics                               |
+| [5.14-key-fingerprint](5.14-key-fingerprint.md)           | Key identification                              | Fingerprint + key ring                                                    |
 | [6-config-factory](6-config-factory.md)                   | `@triplef/config-factory` library overview      | Modules, installation, peer dependencies                                 |
 | [6.1-config-factory](6.1-config-factory.md)               | NestJS module for registering config providers | `forRoot` options, global providers, usage                               |
 | [6.2-cache-return-value](6.2-cache-return-value.md)       | Decorator caching return values                 | TTL, stale-while-revalidate, Joi validation                              |
@@ -153,6 +177,11 @@
 | [10.4-quick-start](10.4-quick-start.md)                   | Using the socketio package                      | Install, config service, register, attach, emit                          |
 | [11-ai-sdk](11-ai-sdk.md)                                 | `@triplef/ai-sdk` library overview              | Modules, installation, peer dependencies                                |
 | [11.1-ai-sdk-module](11.1-ai-sdk-module.md)               | Dynamic module wiring the AI SDK services       | `registerAsync` options, usage                                           |
-| [11.2-ai-sdk-service](11.2-ai-sdk-service.md)             | Streaming/generation, catalog, warm-up         | Methods, usage                                                           |
+| [11.2-ai-sdk-service](11.2-ai-sdk-service.md)             | Streaming/generation clients                    | Methods, usage                                                           |
 | [11.3-ai-sdk-schema](11.3-ai-sdk-schema.md)               | Joi schema for the AI SDK config                | Fields, validation usage                                                |
 | [11.4-quick-start](11.4-quick-start.md)                   | Using the ai-sdk package                        | Install, config service, register, stream                                |
+| [12-agent](12-agent.md)                                   | `@triplef/agent` library overview               | Exports map, installation, design notes                                   |
+| [12.1-schemas](12.1-schemas.md)                           | Intent/response/memory Zod schemas              | Tool registry, URL trust, clamps                                          |
+| [12.2-prompts](12.2-prompts.md)                           | System prompts, instructions, snippets          | Harness + memory prompts, shared fragments                                |
+| [12.3-tools](12.3-tools.md)                               | Tool factories                                  | Provider families, memory tools, summaries                                |
+| [12.4-quick-start](12.4-quick-start.md)                   | Using the agent package                         | Install, tool DI, schema validation, memory scopes                        |

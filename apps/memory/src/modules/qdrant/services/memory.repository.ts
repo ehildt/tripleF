@@ -1,6 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { QdrantClient } from '@qdrant/js-client-rest';
 import { INSIGHT_TAGS } from '@triplef/agent/schemas';
 
+import {
+  type MemoryFrictionEdge,
+  MemoryFrictionRepository,
+} from '../../persistence/services/memory-friction.repository.js';
 import {
   type MemoryLinkEdge,
   type MemoryLinkLane,
@@ -8,6 +13,10 @@ import {
   type MemoryLinkRow,
 } from '../../persistence/services/memory-link.repository.js';
 import { CONSTELLATION_NODE_LIMIT_MAX } from '../constants/constellation-node-limit.constant.js';
+import {
+  BRIDGE_TAG,
+  CONVICTION_TAG,
+} from '../constants/conviction.constant.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { buildMemoryMust } from '../helpers/build-memory-filters.helper.js';
 import type {
@@ -26,6 +35,13 @@ import { QdrantClientService } from './qdrant-client.service.js';
 
 /** Candidate pool for the rescore — wider than the final limit so the formula has room to re-rank. */
 const RECENCY_PREFETCH_MULTIPLIER = 4;
+
+/**
+ * Curated-tier recall boost weight — consolidated/reflected points get a small
+ * additive nudge so the "graduated" records surface above near-ties without
+ * crowding out raw relevance (cosine scores live in ~[0.3, 1.0]).
+ */
+const CURATED_BOOST_WEIGHT = 0.1;
 
 /** Scroll page size for id/vector sweeps (backfill + delete resolution). */
 const SCROLL_PAGE = 500;
@@ -60,6 +76,7 @@ export class MemoryRepository {
     private readonly clientService: QdrantClientService,
     private readonly overrides: MemoryOverridesService,
     private readonly links: MemoryLinkRepository,
+    private readonly frictions: MemoryFrictionRepository,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -119,7 +136,16 @@ export class MemoryRepository {
     if (!(await this.clientService.hasCollection())) return [];
     const client = this.clientService.getClient();
     const limit = Math.min(input.limit ?? 5, 5);
-    const filter = { must: buildMemoryMust(input) };
+    const filter = {
+      must: buildMemoryMust(input),
+      must_not: [
+        // Superseded points were adjudicated stale — excluded from recall.
+        { key: 'superseded', match: { value: true } },
+        // Bridges are synthesized gap-closers, not user facts — the fact
+        // recall path never returns them (they surface via searchBridges).
+        { key: 'tags', match: { any: [BRIDGE_TAG] } },
+      ],
+    };
 
     const result = input.recency
       ? await client.query(this.collection, {
@@ -158,13 +184,100 @@ export class MemoryRepository {
           with_payload: true,
         })
       : await client.query(this.collection, {
-          query: input.vector,
+          prefetch: {
+            query: input.vector,
+            limit: Math.max(limit * RECENCY_PREFETCH_MULTIPLIER, 20),
+            score_threshold: this.config.scoreThreshold,
+            filter,
+          },
+          query: {
+            formula: {
+              sum: ['$score', ...this.curatedBoostTerms()],
+            },
+          },
           limit,
-          score_threshold: this.config.scoreThreshold,
           with_payload: true,
-          filter,
         });
     return result.points.map((point) => this.toMemoryPoint(point));
+  }
+
+  /**
+   * Semantic search over one partition's bridge records — the synthesized
+   * gap-closer read path (bridges are excluded from the fact recall path).
+   */
+  async searchBridges(input: {
+    memoryPartition: string;
+    vector: number[];
+    limit: number;
+  }): Promise<MemoryPoint[]> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.query(this.collection, {
+      query: input.vector,
+      limit: Math.min(input.limit ?? 5, 5),
+      score_threshold: this.config.scoreThreshold,
+      with_payload: true,
+      filter: {
+        must: [
+          { key: 'memory_partition', match: { value: input.memoryPartition } },
+          { key: 'tags', match: { any: [BRIDGE_TAG] } },
+        ],
+        must_not: [{ key: 'superseded', match: { value: true } }],
+      },
+    });
+    return result.points.map((point) => this.toMemoryPoint(point));
+  }
+
+  /**
+   * Semantic search over one cognition scope's conviction records — the
+   * synthesized user/self-model read path (the respond-time conviction
+   * probe).
+   */
+  async searchConvictions(input: {
+    memoryCognition: string;
+    vector: number[];
+    limit: number;
+  }): Promise<MemoryPoint[]> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.query(this.collection, {
+      query: input.vector,
+      limit: Math.min(input.limit ?? 5, 5),
+      score_threshold: this.config.scoreThreshold,
+      with_payload: true,
+      filter: {
+        must: [
+          { key: 'memory_cognition', match: { value: input.memoryCognition } },
+          { key: 'tags', match: { any: [CONVICTION_TAG] } },
+        ],
+        must_not: [{ key: 'superseded', match: { value: true } }],
+      },
+    });
+    return result.points.map((point) => this.toMemoryPoint(point));
+  }
+
+  /**
+   * Curated-tier recall boost terms: consolidated and reflected points each
+   * get `+CURATED_BOOST_WEIGHT` (absent flags evaluate to 0.0 — no boost).
+   * The formula rescore only re-ranks the prefetch's above-threshold
+   * candidates, so the boost never lets an irrelevant point through the
+   * relevance gate.
+   */
+  private curatedBoostTerms(): Array<Record<string, unknown>> {
+    return [
+      {
+        mult: [
+          CURATED_BOOST_WEIGHT,
+          { key: 'is_consolidated', match: { value: true } },
+        ],
+      },
+      {
+        mult: [
+          CURATED_BOOST_WEIGHT,
+          { key: 'is_reflected', match: { value: true } },
+        ],
+      },
+    ];
   }
 
   /**
@@ -279,6 +392,9 @@ export class MemoryRepository {
       tags: string[];
       createdAt: string;
       requestId?: string;
+      subject?: string;
+      kind?: string;
+      stability?: string;
     }>
   > {
     if (!(await this.clientService.hasCollection())) return [];
@@ -297,6 +413,9 @@ export class MemoryRepository {
       tags: string[];
       createdAt: string;
       requestId?: string;
+      subject?: string;
+      kind?: string;
+      stability?: string;
     }> = [];
     let offset: string | number | null = null;
     for (;;) {
@@ -319,6 +438,9 @@ export class MemoryRepository {
           tags: (payload.tags as string[]) ?? [],
           createdAt: (payload.created_at as string) ?? '',
           requestId: payload.request_id as string | undefined,
+          subject: payload.subject as string | undefined,
+          kind: payload.kind as string | undefined,
+          stability: payload.stability as string | undefined,
         });
         if (points.length >= limit) return points;
       }
@@ -361,6 +483,259 @@ export class MemoryRepository {
     return result.points.map(mapQueryPointToMemoryPoint);
   }
 
+  /**
+   * Scroll the unreflected points of one scope (payload + vector) — the
+   * reflection job's work queue. `must_not is_reflected=true` is the
+   * eligibility gate: a point is pending until the reflect pass marks it.
+   */
+  async scrollUnreflected(input: {
+    memoryPartition?: string;
+    memoryCognition?: string;
+    tags?: string[];
+    limit: number;
+  }): Promise<
+    Array<{
+      id: string;
+      vector: number[];
+      text: string;
+      role: MemoryPoint['role'];
+      createdAt: string;
+      subject?: string;
+      category?: string;
+      kind?: string;
+      stability?: string;
+    }>
+  > {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.scroll(this.collection, {
+      filter: {
+        must: buildMemoryMust(input),
+        must_not: [
+          { key: 'is_reflected', match: { value: true } },
+          // Superseded points were adjudicated stale — never re-screened.
+          { key: 'superseded', match: { value: true } },
+        ],
+      },
+      limit: input.limit,
+      with_payload: true,
+      with_vector: true,
+    });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        vector: (point.vector as number[]) ?? [],
+        text: (payload.text as string) ?? '',
+        role: (payload.role as MemoryPoint['role']) ?? 'user',
+        createdAt: (payload.created_at as string) ?? '',
+        subject: payload.subject as string | undefined,
+        category: payload.category as string | undefined,
+        kind: payload.kind as string | undefined,
+        stability: payload.stability as string | undefined,
+      };
+    });
+  }
+
+  /**
+   * Near-neighbor candidate pool for one point's friction screen — the same
+   * scope, full text payload (the adjudicator needs the candidate text, not
+   * just ids).
+   */
+  async queryNeighborFacts(input: {
+    memoryPartition?: string;
+    memoryCognition?: string;
+    vector: number[];
+    limit: number;
+    scoreThreshold: number;
+  }): Promise<
+    Array<{
+      id: string;
+      text: string;
+      role: MemoryPoint['role'];
+      createdAt: string;
+      subject?: string;
+      category?: string;
+      kind?: string;
+      stability?: string;
+    }>
+  > {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.query(this.collection, {
+      query: input.vector,
+      limit: input.limit,
+      score_threshold: input.scoreThreshold,
+      with_payload: true,
+      filter: {
+        must: buildMemoryMust(input),
+        // Stale points are never evidence for superseding something else.
+        must_not: [{ key: 'superseded', match: { value: true } }],
+      },
+    });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        text: (payload.text as string) ?? '',
+        role: (payload.role as MemoryPoint['role']) ?? 'user',
+        createdAt: (payload.created_at as string) ?? '',
+        subject: payload.subject as string | undefined,
+        category: payload.category as string | undefined,
+        kind: payload.kind as string | undefined,
+        stability: payload.stability as string | undefined,
+      };
+    });
+  }
+
+  /**
+   * Scroll the synthesizable points of one partition (payload + vector) —
+   * the conviction-synthesis job's work queue. `must is_reflected=true` is
+   * the eligibility gate (a point is synthesizable only after the friction
+   * screen passed it); `must_not is_synthesized=true` advances the queue,
+   * and synthesized statements themselves are never evidence for more
+   * synthesis.
+   */
+  async scrollSynthesizable(input: {
+    memoryPartition: string;
+    limit: number;
+  }): Promise<
+    Array<{
+      id: string;
+      vector: number[];
+      text: string;
+      role: MemoryPoint['role'];
+      createdAt: string;
+      category?: string;
+      subject?: string;
+      kind?: string;
+      stability?: string;
+    }>
+  > {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.scroll(this.collection, {
+      filter: {
+        must: [
+          { key: 'memory_partition', match: { value: input.memoryPartition } },
+          { key: 'is_reflected', match: { value: true } },
+        ],
+        must_not: [
+          { key: 'superseded', match: { value: true } },
+          { key: 'is_synthesized', match: { value: true } },
+          { key: 'tags', match: { any: [BRIDGE_TAG] } },
+        ],
+      },
+      limit: input.limit,
+      with_payload: true,
+      with_vector: true,
+    });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        vector: (point.vector as number[]) ?? [],
+        text: (payload.text as string) ?? '',
+        role: (payload.role as MemoryPoint['role']) ?? 'user',
+        createdAt: (payload.created_at as string) ?? '',
+        category: payload.category as string | undefined,
+        subject: payload.subject as string | undefined,
+        kind: payload.kind as string | undefined,
+        stability: payload.stability as string | undefined,
+      };
+    });
+  }
+
+  /**
+   * Scroll one partition's bridge points (id + evidence back-references) —
+   * the drift-check input for the partition side of conviction synthesis.
+   * Superseded bridges are already stale and skipped.
+   */
+  async scrollBridges(
+    memoryPartition: string,
+  ): Promise<Array<{ id: string; evidenceIds: string[] }>> {
+    return this.scrollSynthesisRecords(
+      { key: 'memory_partition', value: memoryPartition },
+      BRIDGE_TAG,
+    );
+  }
+
+  /**
+   * Scroll one cognition scope's conviction points (id + evidence
+   * back-references) — the drift-check input for the cognition side of
+   * conviction synthesis. Superseded convictions are already stale and
+   * skipped.
+   */
+  async scrollConvictions(
+    memoryCognition: string,
+  ): Promise<Array<{ id: string; evidenceIds: string[] }>> {
+    return this.scrollSynthesisRecords(
+      { key: 'memory_cognition', value: memoryCognition },
+      CONVICTION_TAG,
+    );
+  }
+
+  /**
+   * Paginated through ALL synthesized records of the scope (Qdrant's default
+   * scroll limit is 10 — the sweep must see every record to check
+   * convergence).
+   */
+  private async scrollSynthesisRecords(
+    scope: { key: 'memory_partition' | 'memory_cognition'; value: string },
+    tag: string,
+  ): Promise<Array<{ id: string; evidenceIds: string[] }>> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const filter = {
+      must: [
+        { key: scope.key, match: { value: scope.value } },
+        { key: 'tags', match: { any: [tag] } },
+      ],
+      must_not: [{ key: 'superseded', match: { value: true } }],
+    };
+    const records: Array<{ id: string; evidenceIds: string[] }> = [];
+    let offset: string | number | null = null;
+    for (;;) {
+      const scroll = await client.scroll(this.collection, {
+        filter,
+        limit: SCROLL_PAGE,
+        offset: offset ?? undefined,
+        with_payload: true,
+      });
+      for (const point of scroll.points) {
+        const payload = point.payload ?? {};
+        records.push({
+          id: String(point.id),
+          evidenceIds: (payload.evidence_ids as string[]) ?? [],
+        });
+      }
+      offset = (scroll.next_page_offset as string | number | null) ?? null;
+      if (!offset) break;
+    }
+    return records;
+  }
+
+  /**
+   * Retrieve points by id and report their superseded state — the drift-check
+   * lookup. Missing ids are simply absent from the result, so a statement
+   * citing a missing id is stale.
+   */
+  async retrieveSupersededState(
+    ids: string[],
+  ): Promise<Array<{ id: string; superseded: boolean }>> {
+    if (ids.length === 0) return [];
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.retrieve(this.collection, {
+      ids,
+      with_payload: true,
+    });
+    return result.map((point) => ({
+      id: String(point.id),
+      superseded: (point.payload?.superseded as boolean) === true,
+    }));
+  }
+
   /** Set payload keys on specific points (the relink job's enrichment writes). */
   async setPayloadForPoints(
     ids: string[],
@@ -373,6 +748,103 @@ export class MemoryRepository {
       points: ids,
       wait: true,
     });
+  }
+
+  /**
+   * Scroll every non-superseded point of one partition with vectors — the
+   * cluster-detection input (id + vector + text + category + tags).
+   * Paginated; `limit` is a hard cap (the scope's constellation node limit).
+   */
+  async scrollScopePoints(
+    memoryPartition: string,
+    limit: number,
+  ): Promise<
+    Array<{
+      id: string;
+      vector: number[];
+      text: string;
+      category?: string;
+      tags: string[];
+    }>
+  > {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const filter = {
+      must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
+      must_not: [{ key: 'superseded', match: { value: true } }],
+    };
+    const points: Array<{
+      id: string;
+      vector: number[];
+      text: string;
+      category?: string;
+      tags: string[];
+    }> = [];
+    let offset: string | number | null = null;
+    for (;;) {
+      const scroll = await client.scroll(this.collection, {
+        filter,
+        limit: Math.min(SCROLL_PAGE, limit - points.length),
+        offset: offset ?? undefined,
+        with_payload: true,
+        with_vector: true,
+      });
+      for (const point of scroll.points) {
+        const vector = point.vector;
+        if (!Array.isArray(vector) || typeof vector[0] !== 'number') continue;
+        const payload = point.payload ?? {};
+        points.push({
+          id: String(point.id),
+          vector: vector as number[],
+          text: (payload.text as string) ?? '',
+          category: payload.category as string | undefined,
+          tags: (payload.tags as string[]) ?? [],
+        });
+        if (points.length >= limit) return points;
+      }
+      offset = (scroll.next_page_offset as string | number | null) ?? null;
+      if (!offset) break;
+    }
+    return points;
+  }
+
+  /**
+   * Write the cluster assignment onto every point: one setPayload call per
+   * cluster (points sharing a cluster id are batched together).
+   */
+  async setClusterIds(assignments: Map<string, string>): Promise<void> {
+    if (assignments.size === 0) return;
+    if (!(await this.clientService.hasCollection())) return;
+    const byCluster = new Map<string, string[]>();
+    for (const [pointId, clusterId] of assignments) {
+      const members = byCluster.get(clusterId) ?? [];
+      members.push(pointId);
+      byCluster.set(clusterId, members);
+    }
+    const client = this.clientService.getClient();
+    for (const [clusterId, memberIds] of byCluster) {
+      await client.setPayload(this.collection, {
+        payload: { cluster_id: clusterId },
+        points: memberIds,
+        wait: true,
+      });
+    }
+  }
+
+  /**
+   * Read the friction records of one scope (the reflection pass writes them;
+   * the dashboard renders them as warning edges).
+   */
+  async listFrictions(
+    lane: MemoryLinkLane,
+    scopeKey: string,
+  ): Promise<MemoryFrictionEdge[]> {
+    return this.frictions.listFrictions(
+      lane,
+      this.collection,
+      scopeKey,
+      this.config.linkReadMax,
+    );
   }
 
   /**
@@ -454,6 +926,7 @@ export class MemoryRepository {
     // Scope-delete the edges too, so a wipe stays clean even if Qdrant was
     // emptied externally and the id-resolution above found nothing.
     await this.links.deleteByScope('partition', this.collection, partition);
+    await this.frictions.deleteByScope('partition', this.collection, partition);
     return deleted;
   }
 
@@ -467,6 +940,7 @@ export class MemoryRepository {
       });
     }
     await this.links.deleteByPointIds(ids);
+    await this.frictions.deleteByPointIds(ids);
   }
 
   private async deleteByFilter(filter: {
@@ -507,19 +981,46 @@ export class MemoryRepository {
 
   /**
    * Recompute the semantic edges of a batch of points: query each point's
-   * top-k neighbors, replace the batch's existing edges, persist. Idempotent
-   * (deterministic ids + unique constraint + delete-first).
+   * top-k neighbors, replace the batch's existing edges, persist. Points
+   * citing evidence (bridges) additionally write `evidence` edges to the
+   * facts they synthesize — the gap-closing links that make a bridge a
+   * bridge. Idempotent (deterministic ids + unique constraint +
+   * delete-first).
    */
   private async syncLinks(
     lane: MemoryLinkLane,
     scopeKey: string,
-    points: Array<{ id: string; vector: number[] }>,
+    points: Array<{ id: string; vector: number[]; evidenceIds?: string[] }>,
   ): Promise<void> {
     if (points.length === 0) return;
     const client = this.clientService.getClient();
     const filter = this.buildLinkFilter(lane, scopeKey);
     const edges: MemoryLinkRow[] = [];
     const seen = new Set<string>();
+    await this.collectSemanticEdges(
+      lane,
+      scopeKey,
+      points,
+      filter,
+      client,
+      seen,
+      edges,
+    );
+    this.collectEvidenceEdges(lane, scopeKey, points, seen, edges);
+    await this.links.deleteByPointIds(points.map((point) => point.id));
+    await this.links.upsertEdges(edges);
+  }
+
+  /** kNN semantic edges: each point links to its top-k neighbors above the threshold. */
+  private async collectSemanticEdges(
+    lane: MemoryLinkLane,
+    scopeKey: string,
+    points: Array<{ id: string; vector: number[] }>,
+    filter: { must: Array<Record<string, unknown>> } | undefined,
+    client: QdrantClient,
+    seen: Set<string>,
+    edges: MemoryLinkRow[],
+  ): Promise<void> {
     for (const point of points) {
       const vector = point.vector;
       if (!Array.isArray(vector) || typeof vector[0] !== 'number') continue;
@@ -533,23 +1034,76 @@ export class MemoryRepository {
       for (const hit of result.points) {
         const targetId = String(hit.id);
         if (targetId === point.id) continue;
-        const [source, target] = [point.id, targetId].sort();
-        const pairKey = `${source}|${target}`;
-        if (seen.has(pairKey)) continue;
-        seen.add(pairKey);
-        edges.push({
+        this.pushEdge(
           lane,
-          collection: this.collection,
           scopeKey,
-          source,
-          target,
-          score: hit.score ?? 0,
-          kind: 'semantic',
-        });
+          point.id,
+          targetId,
+          hit.score ?? 0,
+          'semantic',
+          seen,
+          edges,
+        );
       }
     }
-    await this.links.deleteByPointIds(points.map((point) => point.id));
-    await this.links.upsertEdges(edges);
+  }
+
+  /**
+   * Evidence edges: a bridge's explicit back-references to the facts it
+   * synthesizes (score 1.0 — the citation is exact, not a similarity).
+   * Partition lane only: conviction evidence crosses INTO the partition
+   * scope, so cognition upserts never write cross-space graph rows. The
+   * shared `seen` set enforces one edge per pair — a semantic kNN edge for
+   * the same pair wins over an evidence duplicate.
+   */
+  private collectEvidenceEdges(
+    lane: MemoryLinkLane,
+    scopeKey: string,
+    points: Array<{ id: string; evidenceIds?: string[] }>,
+    seen: Set<string>,
+    edges: MemoryLinkRow[],
+  ): void {
+    if (lane !== 'partition') return;
+    for (const point of points) {
+      for (const evidenceId of point.evidenceIds ?? []) {
+        this.pushEdge(
+          lane,
+          scopeKey,
+          point.id,
+          evidenceId,
+          1,
+          'evidence',
+          seen,
+          edges,
+        );
+      }
+    }
+  }
+
+  /** Canonicalize a pair, dedupe, and append one edge row. */
+  private pushEdge(
+    lane: MemoryLinkLane,
+    scopeKey: string,
+    a: string,
+    b: string,
+    score: number,
+    kind: 'semantic' | 'evidence',
+    seen: Set<string>,
+    edges: MemoryLinkRow[],
+  ): void {
+    const [source, target] = [a, b].sort();
+    const pairKey = `${source}|${target}`;
+    if (seen.has(pairKey)) return;
+    seen.add(pairKey);
+    edges.push({
+      lane,
+      collection: this.collection,
+      scopeKey,
+      source,
+      target,
+      score,
+      kind,
+    });
   }
 
   /**
@@ -624,9 +1178,21 @@ export class MemoryRepository {
       text: (payload.text as string) ?? '',
       tags: (payload.tags as string[]) ?? [],
       category: payload.category as string | undefined,
+      subject: payload.subject as string | undefined,
+      kind: payload.kind as string | undefined,
+      stability: payload.stability as string | undefined,
       path: payload.path as string | undefined,
       createdAt: (payload.created_at as string) ?? '',
       score: point.score,
+      isConsolidated: payload.is_consolidated as boolean | undefined,
+      isLinked: payload.is_linked as boolean | undefined,
+      isReflected: payload.is_reflected as boolean | undefined,
+      isSynthesized: payload.is_synthesized as boolean | undefined,
+      isFriction: payload.is_friction as boolean | undefined,
+      superseded: payload.superseded as boolean | undefined,
+      supersededBy: payload.superseded_by as string | undefined,
+      evidenceIds: payload.evidence_ids as string[] | undefined,
+      clusterId: payload.cluster_id as string | undefined,
     };
   }
 }

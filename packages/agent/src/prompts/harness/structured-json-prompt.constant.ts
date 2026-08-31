@@ -1,5 +1,8 @@
-import { IntentSchema } from '../../schemas/index.js';
+import { DEFAULT_MEDIA_COUNT, MORE_MEDIA_COUNT } from '../../schemas/constants/media-counts.constant.js';
+import { IntentSchema } from '../../schemas/intent.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
+
+import { INTENT_LANGUAGE_FIELD_RULE } from './intent-selection/language-rules.prompt.js';
 
 /** Static prompt strings for intent classification. */
 
@@ -25,11 +28,11 @@ RULES:
 - clarificationQuestion: MUST be in the language identified by the "language" field.
 - reasoning: MUST be in the language identified by the "language" field.
 - If the request is ambiguous set needsClarification=true and provide a concise question in the language identified by the "language" field. The question must offer the most likely interpretations as options.
-- imageCount: set only when the user explicitly requests a number of images, or asks for more images without a number (then 12); otherwise omit — the system uses the configured reference-pool default (SysCtl Sources) for describe/compare/ocr and 6 for other templates.
-- videoCount: set only when the user explicitly requests a number of videos, or asks for more videos without a number (then 12); otherwise omit — the system defaults to 6.
+- imageCount: set only when the user explicitly requests a number of images, or asks for more images without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system uses the configured reference-pool default (SysCtl Sources) for describe/compare/ocr and ${DEFAULT_MEDIA_COUNT} for other templates.
+- videoCount: set only when the user explicitly requests a number of videos, or asks for more videos without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system defaults to ${DEFAULT_MEDIA_COUNT}.
 - plan.images.resize should be true when images are present, unless the user explicitly asks for full resolution.
 - plan.images.variants should only include variants that would materially improve the analysis. Leave empty if the original is sufficient.
-- language: detect from the latest user message. Judge by the DOMINANT language of the full sentence or paragraph — individual foreign words, loanwords, scientific or medical terms, brand or proper names, and quoted fragments must NOT change the detected language. Never default to English. If genuinely undetectable, omit the field. ALL human-readable text must be in that language.
+- language: detect from the latest user message. ${INTENT_LANGUAGE_FIELD_RULE} Never default to English. If genuinely undetectable, omit the field. ALL human-readable text must be in that language.
 
 FINAL REMINDER:
 - Output ONLY valid JSON matching the exact schema above. No markdown code fences, no explanations, preamble, or postscript.`,
@@ -69,7 +72,7 @@ All object keys must be quoted with double quotes.
 Do not add markdown code fences, explanations, or extra text.
 Ensure the "language" field is present and has the correct value.
 
-- language: detect from the latest user message. Judge by the DOMINANT language of the full sentence or paragraph — individual foreign words, loanwords, scientific or medical terms, brand or proper names, and quoted fragments must NOT change the detected language. Pick the most likely ISO-639 alpha-2 code; never default to English.
+- language: detect from the latest user message. ${INTENT_LANGUAGE_FIELD_RULE} Pick the most likely ISO-639 alpha-2 code; never default to English.
 - All human-readable text (reasoning, contextSummary, clarificationQuestion) MUST be in the language identified by the "language" field.
 - Never use English unless the user wrote in English.
 

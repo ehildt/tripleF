@@ -5,7 +5,7 @@ export class MemoryPruneQueryDto {
   @ApiProperty({
     description:
       'Memory partition to prune (the user-set partition id or a session id) — its fact records only; deletes are never anonymous. The AI cognition lane has its own wipe (DELETE /qdrant/text?cognition=true).',
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   memoryPartition!: string;

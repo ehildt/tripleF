@@ -19,6 +19,7 @@ import {
   ApiListObjects,
   ApiObjectExists,
 } from '../decorators/minio.openapi.js';
+import { StorageParamsDto } from '../dtos/storage-params.dto.js';
 import { MinioService } from '../services/minio.service.js';
 
 @ApiTags('Storage')
@@ -39,11 +40,8 @@ export class StorageController {
 
   @Get(':sessionId/:conversationId')
   @ApiListObjects()
-  async list(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-  ) {
-    const prefix = `images/${sessionId}/${conversationId}/`;
+  async list(@Param() params: StorageParamsDto) {
+    const prefix = `images/${params.sessionId}/${params.conversationId}/`;
     const stream = this.minioService.client.listObjectsV2(
       this.minioService.config.bucket,
       prefix,
@@ -61,17 +59,12 @@ export class StorageController {
 
   @Get(':sessionId/:conversationId/:hash')
   @ApiGetObject()
-  async getObject(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('hash') hash: string,
-    @Res() res: FastifyReply,
-  ) {
+  async getObject(@Param() params: StorageParamsDto, @Res() res: FastifyReply) {
     try {
       const { stream, meta } = await this.minioService.getObjectStreamAndMeta(
-        sessionId,
-        conversationId,
-        hash,
+        params.sessionId,
+        params.conversationId,
+        params.hash!,
       );
       const contentType = meta['content-type'] ?? 'application/octet-stream';
       void res.type(contentType);
@@ -87,15 +80,11 @@ export class StorageController {
 
   @Get(':sessionId/:conversationId/:hash/exists')
   @ApiObjectExists()
-  async exists(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('hash') hash: string,
-  ) {
+  async exists(@Param() params: StorageParamsDto) {
     const exists = await this.minioService.objectExists(
-      sessionId,
-      conversationId,
-      hash,
+      params.sessionId,
+      params.conversationId,
+      params.hash!,
     );
     return { exists };
   }
@@ -103,24 +92,21 @@ export class StorageController {
   @Delete(':sessionId/:conversationId/:hash')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiDeleteObject()
-  async removeObject(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('hash') hash: string,
-  ) {
-    await this.minioService.deleteObject(sessionId, conversationId, hash);
+  async removeObject(@Param() params: StorageParamsDto) {
+    await this.minioService.deleteObject(
+      params.sessionId,
+      params.conversationId,
+      params.hash!,
+    );
   }
 
   @Delete(':sessionId/:conversationId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiDeleteObjects()
-  async remove(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-  ) {
+  async remove(@Param() params: StorageParamsDto) {
     await this.minioService.client.removeObjects(
       this.minioService.config.bucket,
-      await this.listObjectNames(sessionId, conversationId),
+      await this.listObjectNames(params.sessionId, params.conversationId),
     );
   }
 

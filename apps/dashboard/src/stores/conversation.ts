@@ -888,6 +888,50 @@ export const useConversationStore = defineStore('conversation', () => {
     });
   }
 
+  /** Set the selection of every page image of one pdf in a single write. */
+  function setUploadedImagesSelectedForParent(
+    conversationId: string,
+    parentHash: string,
+    selected: boolean,
+    targetConversationId?: string,
+  ) {
+    mutateConversation(conversationId, (conversation) => {
+      const cid = targetConversationId ?? getConversationId(conversationId);
+      let changed = false;
+      for (const img of conversation.uploadedImages) {
+        if (
+          img.parentHash === parentHash &&
+          (img.conversationId ?? cid) === cid
+        ) {
+          img.selected = selected;
+          changed = true;
+        }
+      }
+      if (changed) void persistConversation(conversation);
+    });
+  }
+
+  /** Remove every page image of one pdf in a single write. */
+  function removeUploadedImagesForParent(
+    conversationId: string,
+    parentHash: string,
+    targetConversationId?: string,
+  ) {
+    mutateConversation(conversationId, (conversation) => {
+      const cid = targetConversationId ?? getConversationId(conversationId);
+      const next = conversation.uploadedImages.filter(
+        (img) =>
+          !(
+            img.parentHash === parentHash && (img.conversationId ?? cid) === cid
+          ),
+      );
+      if (next.length !== conversation.uploadedImages.length) {
+        conversation.uploadedImages = next;
+        void persistConversation(conversation);
+      }
+    });
+  }
+
   function setUploadedDocuments(
     conversationId: string,
     documents: UploadedDocument[],
@@ -1027,6 +1071,8 @@ export const useConversationStore = defineStore('conversation', () => {
     deselectAllImages,
     removeUploadedImage,
     toggleUploadedImageSelected,
+    setUploadedImagesSelectedForParent,
+    removeUploadedImagesForParent,
     setUploadedDocuments,
     getUploadedDocumentsForConversation,
     toggleUploadedDocumentSelected,

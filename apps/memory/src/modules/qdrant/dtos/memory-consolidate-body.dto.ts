@@ -17,7 +17,7 @@ export class MemoryConsolidateBodyDto {
   @ApiPropertyOptional({
     description:
       'Sweep one partition; omit to sweep every partition with pending inserts.',
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   @IsOptional()

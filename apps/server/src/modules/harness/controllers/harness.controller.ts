@@ -40,6 +40,7 @@ import {
   CancelHarnessJobDto,
   CancelHarnessJobResponseDto,
 } from '../dtos/cancel-harness-job.dto.js';
+import { ConvertDocumentsQueryDto } from '../dtos/convert-documents-query.dto.js';
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
@@ -69,18 +70,12 @@ export class HarnessController {
   @Post('documents')
   @ApiConvertDocuments()
   async convertDocuments(
-    @Query()
-    query: { sessionId?: string; conversationId?: string },
+    @Query() query: ConvertDocumentsQueryDto,
     @OriginalsField() originals?: Array<MultipartFile>,
-    @DocumentHashesField() hashes?: string,
+    @DocumentHashesField() hashes?: string[],
   ): Promise<{ documents: ConvertedDocumentResult[] }> {
-    const providedHashes = parseHashesField(hashes);
     const payloads = originals?.length
-      ? await this.harnessQueueService.toFilePayloads(
-          originals,
-          providedHashes,
-          false,
-        )
+      ? await this.harnessQueueService.toFilePayloads(originals, hashes, false)
       : [];
 
     const documents: ConvertedDocumentResult[] = [];
@@ -120,7 +115,7 @@ export class HarnessController {
     @PromptField() prompt?: Array<Prompt>,
     @AttachmentsField() attachments?: Array<MultipartFile>,
     @OriginalsField() originals?: Array<MultipartFile>,
-    @DocumentTextLimitField() documentTextLimit?: string,
+    @DocumentTextLimitField() documentTextLimit?: number,
   ): Promise<HarnessControllerResponse> {
     if (!model) throw new BadRequestException('Missing x-harness-llm header');
 
@@ -191,9 +186,8 @@ export class HarnessController {
         hasNewImages: query.hasNewImages,
         sessionMetadata: query.sessionMetadata,
         language,
-        documentTextLimit: documentTextLimit
-          ? Number(documentTextLimit) || undefined
-          : undefined,
+        documentTextLimit,
+        graphRag: query.graphRag,
       },
     });
 
@@ -255,16 +249,4 @@ interface ConvertedDocumentResult {
   kind: 'pdf' | 'docx' | 'pptx' | 'text';
   /** Rendered page images (pdf only) — the client shows these as tiles. */
   pageImages?: Array<{ name: string; hash: string }>;
-}
-
-function parseHashesField(raw: string | undefined): string[] | undefined {
-  if (!raw) return undefined;
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((hash): hash is string => typeof hash === 'string')
-      : undefined;
-  } catch {
-    return undefined;
-  }
 }

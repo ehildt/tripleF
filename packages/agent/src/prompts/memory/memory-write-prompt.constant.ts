@@ -1,3 +1,5 @@
+import { buildVocabularySection } from './vocabulary-section.helper.js';
+
 /**
  * Prompt for the memory-write queue job — runs after the turn was answered,
  * off the harness hot path, with the executed tool results summarized in the
@@ -74,21 +76,6 @@ export function buildMemoryWritePrompt(params: {
   ]
     .filter(Boolean)
     .join('\n\n');
-}
-
-/** Reuse-first hint: the partition's existing category/tag vocabulary. */
-function buildVocabularySection(knownCategories: readonly string[] = [], knownTags: readonly string[] = []): string {
-  if (knownCategories.length === 0 && knownTags.length === 0) return '';
-
-  const lines: string[] = [];
-  if (knownCategories.length > 0) {
-    lines.push(
-      `KNOWN CATEGORIES (reuse one when it fits; only mint a new plural family noun when none applies): ${knownCategories.join(', ')}`,
-    );
-  }
-
-  if (knownTags.length > 0) lines.push(`KNOWN TOPICS (reuse these tag labels when they fit): ${knownTags.join(', ')}`);
-  return lines.join('\n');
 }
 
 const MEMORY_WRITE_VERDICT =

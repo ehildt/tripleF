@@ -7,6 +7,7 @@ describe('mapPageImage', () => {
     expect(mapPageImage('h1', 2, 'doc.pdf')).toEqual({
       name: 'doc.pdf · page 3',
       hash: 'h1',
+      page: 3,
     });
   });
 });

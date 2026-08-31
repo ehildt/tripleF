@@ -20,11 +20,13 @@ function makeHit(id: string, score: number, text = id): MemoryPoint {
 function makeService() {
   const embed = vi.fn();
   const searchMemory = vi.fn().mockResolvedValue([] as MemoryPoint[]);
+  const findByIds = vi.fn().mockResolvedValue([]);
   const service = new MemorySearchService(
     { embed } as never,
     { searchMemory } as never,
+    { findByIds } as never,
   );
-  return { service, embed, searchMemory };
+  return { service, embed, searchMemory, findByIds };
 }
 
 describe('MemorySearchService.searchByText', () => {

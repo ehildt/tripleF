@@ -9,14 +9,16 @@ const meta = {
   tags: ['autodocs'],
   args: {
     imageSrc: '',
+    urlForHash: (hash: string) => `https://picsum.photos/seed/${hash}/400`,
     onRemove: fn(),
     onToggle: fn(),
+    onRemovePage: fn(),
   },
   parameters: {
     docs: {
       description: {
         component:
-          'One file card in the Files panel: name header with include/exclude toggle and remove button, above a thumbnail (image) or an icon tile (document).',
+          'One attachment tile in the Files panel, dispatched by kind: an image card, a pdf page gallery, or a document row (playlist style).',
       },
     },
   },
@@ -44,19 +46,42 @@ export const Image: Story = {
   },
 };
 
-/** A document attachment rendered as an icon tile. */
+/** A pdf attachment rendered as a page gallery. */
+export const PdfGallery: Story = {
+  args: {
+    item: {
+      id: 'gallery-doc',
+      name: 'report.pdf',
+      hash: 'doc-hash',
+      previewUrl: '',
+      isUploaded: true,
+      isSelected: true,
+      pendingIndex: null,
+      source: 'local',
+      kind: 'gallery',
+      pages: [
+        { name: 'report.pdf · page 1', hash: 'p1' },
+        { name: 'report.pdf · page 2', hash: 'p2' },
+        { name: 'report.pdf · page 3', hash: 'p3' },
+      ],
+    },
+  },
+};
+
+/** A non-pdf document rendered as a playlist-style row. */
 export const Document: Story = {
   args: {
     item: {
-      id: 'pending-2',
-      name: 'report.docx',
+      id: 'uploaded-document-h2',
+      name: 'notes.txt',
       hash: 'h2',
       previewUrl: '',
-      isUploaded: false,
+      isUploaded: true,
       isSelected: true,
-      pendingIndex: 1,
+      pendingIndex: null,
       source: 'local',
       kind: 'document',
+      size: 1536,
     },
   },
 };
@@ -65,15 +90,16 @@ export const Document: Story = {
 export const Unselected: Story = {
   args: {
     item: {
-      id: 'pending-3',
-      name: 'notes.txt',
+      id: 'uploaded-h3',
+      name: 'diagram.png',
       hash: 'h3',
       previewUrl: '',
-      isUploaded: false,
+      isUploaded: true,
       isSelected: false,
-      pendingIndex: 2,
+      pendingIndex: null,
       source: 'local',
-      kind: 'document',
+      kind: 'image',
     },
+    imageSrc: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=400',
   },
 };

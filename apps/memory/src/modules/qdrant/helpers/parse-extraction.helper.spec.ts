@@ -2,48 +2,61 @@ import { describe, expect, it } from 'vitest';
 
 import { parseExtraction } from './parse-extraction.helper.js';
 
+const fact = {
+  text: 'User prefers concise.',
+  kind: 'preference',
+  stability: 'durable',
+};
+
 describe('parseExtraction', () => {
   it('parses a well-formed response and normalizes it', () => {
     expect(
       parseExtraction(
         JSON.stringify({
-          facts: [' User prefers concise. ', 'User prefers concise.', ' '],
+          facts: [
+            { ...fact, text: ' User prefers concise. ', subject: ' User ' },
+            fact,
+            { ...fact, text: ' ' },
+          ],
           tags: ['Work', 'Rust', 'work'],
           category: 'Work',
         }),
       ),
     ).toEqual({
-      facts: ['User prefers concise.'],
+      facts: [{ ...fact, subject: 'user' }],
       tags: ['work', 'rust'],
       category: 'work',
     });
   });
 
-  it('normalizes the category to its canonical family label', () => {
+  it('normalizes the per-fact category to its canonical family label', () => {
     expect(
       parseExtraction(
-        JSON.stringify({ facts: ['F1'], tags: ['work'], category: 'PDF' }),
+        JSON.stringify({
+          facts: [{ ...fact, text: 'F1', category: 'PDF' }],
+          tags: ['work'],
+          category: 'PDF',
+        }),
       ),
-    ).toEqual({ facts: ['F1'], tags: ['work'], category: 'pdf' });
+    ).toEqual({
+      facts: [{ ...fact, text: 'F1', category: 'pdf' }],
+      tags: ['work'],
+      category: 'pdf',
+    });
   });
 
-  it('omits the category when absent', () => {
+  it('omits optional per-fact metadata when absent', () => {
     expect(
-      parseExtraction(JSON.stringify({ facts: ['F1'], tags: ['work'] })),
-    ).toEqual({ facts: ['F1'], tags: ['work'], category: undefined });
+      parseExtraction(JSON.stringify({ facts: [fact], tags: ['work'] })),
+    ).toEqual({ facts: [fact], tags: ['work'], category: undefined });
   });
 
   it('tolerates markdown fences around the JSON', () => {
     expect(
-      parseExtraction('```json\n{"facts":["F1"],"tags":["work"]}\n```'),
-    ).toEqual({ facts: ['F1'], tags: ['work'] });
-  });
-
-  it('tolerates single-quoted JSON5 output', () => {
-    expect(parseExtraction("{'facts': ['F1'], 'tags': ['work']}")).toEqual({
-      facts: ['F1'],
-      tags: ['work'],
-    });
+      parseExtraction(
+        `\`\`\`json\n${JSON.stringify({ facts: [fact], tags: ['work'] })}\n\`\`\``,
+      ),
+    ).toEqual({ facts: [fact], tags: ['work'] });
   });
 
   it('throws on empty output', () => {
@@ -54,6 +67,20 @@ describe('parseExtraction', () => {
     expect(() => parseExtraction('{"facts": "not-an-array"}')).toThrow(
       'failed the schema',
     );
+  });
+
+  it('rejects the legacy bare-string fact shape', () => {
+    expect(() =>
+      parseExtraction('{"facts": ["F1"], "tags": ["work"]}'),
+    ).toThrow('failed the schema');
+  });
+
+  it('requires kind and stability on every fact', () => {
+    expect(() =>
+      parseExtraction(
+        JSON.stringify({ facts: [{ text: 'F1' }], tags: ['work'] }),
+      ),
+    ).toThrow('failed the schema');
   });
 
   it('drops overlong tags and caps at 8 tags', () => {

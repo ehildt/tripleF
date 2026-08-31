@@ -8,10 +8,10 @@ import type { LucideIcon } from '@lucide/vue';
 import { Bell, ListVideo, PanelRight, PictureInPicture2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
+import SysCtlSubMenu from '@/components/shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 
 import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
-import SysCtlSubMenu from '../shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
 import PlaylistPanel from './playlist-panel/PlaylistPanel.vue';
 import TabMenuPanel from './tab-menu-panel/TabMenuPanel.vue';
 import ToastPanel from './toast-panel/ToastPanel.vue';

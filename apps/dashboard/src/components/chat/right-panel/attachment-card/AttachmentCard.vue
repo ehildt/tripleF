@@ -1,38 +1,38 @@
 <script setup lang="ts">
 /**
- * One file card in the Files panel: name header with the include/exclude
- * toggle (mirroring the history items' control) and a trash remove button,
- * above a thumbnail whose overlay shows the upload-source indicator.
+ * One attachment tile in the Files panel, dispatched by the item's kind:
+ * a pdf renders as a page gallery (AttachmentGallery), a non-pdf document as
+ * a playlist-style row (AttachmentDocumentRow), and an image as the classic
+ * card below — name header with the include/exclude toggle (mirroring the
+ * history items' control) and a trash remove button, above a thumbnail whose
+ * overlay shows the upload-source indicator.
  */
-import {
-  Cloud,
-  CloudDownload,
-  FileText,
-  SquaresExclude,
-  Trash2,
-} from '@lucide/vue';
+import { Cloud, CloudDownload, SquaresExclude, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
 import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
+import AttachmentDocumentRow from '../attachment-document-row/AttachmentDocumentRow.vue';
+import AttachmentGallery from '../attachment-gallery/AttachmentGallery.vue';
 import type { AttachmentItem } from '../composables/use-attachment-list.types';
 
 const props = defineProps<{
   item: AttachmentItem;
   imageSrc: string;
+  /** Builds the storage preview URL for an uploaded page hash (pdf galleries). */
+  urlForHash: (hash: string) => string;
 }>();
 
 const emit = defineEmits<{
   remove: [];
   toggle: [];
+  removePage: [hash: string];
 }>();
 
 const sourceIcon = computed(() =>
   props.item.source === 'cloud' ? CloudDownload : Cloud,
 );
-
-const isDocument = computed(() => props.item.kind === 'document');
 
 const sourceTitle = computed(() =>
   props.item.source === 'cloud'
@@ -42,7 +42,22 @@ const sourceTitle = computed(() =>
 </script>
 
 <template>
+  <AttachmentGallery
+    v-if="item.kind === 'gallery'"
+    :item="item"
+    :url-for-hash="urlForHash"
+    @toggle="emit('toggle')"
+    @remove="emit('remove')"
+    @remove-page="(hash) => emit('removePage', hash)"
+  />
+  <AttachmentDocumentRow
+    v-else-if="item.kind === 'document'"
+    :item="item"
+    @toggle="emit('toggle')"
+    @remove="emit('remove')"
+  />
   <div
+    v-else
     class="attachment-card"
     :class="{ 'attachment-card--unselected': !item.isSelected }"
   >
@@ -88,7 +103,6 @@ const sourceTitle = computed(() =>
       :class="{ 'attachment-card__thumb--unselected': !item.isSelected }"
     >
       <img
-        v-if="!isDocument"
         :src="imageSrc"
         class="attachment-card__image"
         :class="{ 'attachment-card__image--unselected': !item.isSelected }"
@@ -96,12 +110,6 @@ const sourceTitle = computed(() =>
         loading="lazy"
         decoding="async"
       />
-      <div v-else class="attachment-card__document">
-        <FileText
-          class="attachment-card__document-icon"
-          :aria-label="$t('common.documentFile')"
-        />
-      </div>
       <Tooltip :text="sourceTitle">
         <span class="attachment-card__source">
           <component :is="sourceIcon" class="attachment-card__source-icon" />
@@ -193,25 +201,6 @@ const sourceTitle = computed(() =>
   object-fit: cover;
   display: block;
   transition: filter 250ms ease;
-}
-
-.attachment-card__document {
-  width: 100%;
-  height: 20dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 6%,
-    transparent
-  );
-}
-
-.attachment-card__document-icon {
-  width: 2rem;
-  height: 2rem;
-  color: var(--color-fg-muted);
 }
 
 .attachment-card__image--unselected {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { galleryItemSchema } from '../../schemas/index.js';
+import { galleryItemSchema } from '../../schemas/response/gallery-item-json.schema.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 

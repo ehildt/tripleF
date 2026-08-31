@@ -51,7 +51,11 @@ describe('StorageController', () => {
   it('returns true when object exists', async () => {
     service.client.statObject = vi.fn().mockResolvedValue({});
 
-    const result = await controller.exists('sess-1', 'conv-1', 'h');
+    const result = await controller.exists({
+      sessionId: 'sess-1',
+      conversationId: 'conv-1',
+      hash: 'h',
+    });
 
     expect(result).toEqual({ exists: true });
   });
@@ -61,7 +65,11 @@ describe('StorageController', () => {
       .fn()
       .mockRejectedValue(new Error('not found'));
 
-    const result = await controller.exists('sess-1', 'conv-1', 'h');
+    const result = await controller.exists({
+      sessionId: 'sess-1',
+      conversationId: 'conv-1',
+      hash: 'h',
+    });
 
     expect(result).toEqual({ exists: false });
   });
@@ -69,7 +77,11 @@ describe('StorageController', () => {
   it('delegates single object deletion to service', async () => {
     service.client.removeObject = vi.fn().mockResolvedValue(undefined);
 
-    await controller.removeObject('sess-1', 'conv-1', 'h');
+    await controller.removeObject({
+      sessionId: 'sess-1',
+      conversationId: 'conv-1',
+      hash: 'h',
+    });
 
     expect(service.client.removeObject).toHaveBeenCalledWith(
       'test-bucket',
@@ -89,7 +101,10 @@ describe('StorageController', () => {
       send: vi.fn(),
     } as any;
 
-    await controller.getObject('sess-1', 'conv-1', 'h', res);
+    await controller.getObject(
+      { sessionId: 'sess-1', conversationId: 'conv-1', hash: 'h' },
+      res,
+    );
 
     expect(res.type).toHaveBeenCalledWith('image/webp');
     expect(res.header).toHaveBeenCalledWith(
@@ -111,7 +126,10 @@ describe('StorageController', () => {
     } as any;
 
     await expect(
-      controller.getObject('sess-1', 'conv-1', 'h', res),
+      controller.getObject(
+        { sessionId: 'sess-1', conversationId: 'conv-1', hash: 'h' },
+        res,
+      ),
     ).rejects.toThrow(NotFoundException);
 
     expect(res.header).not.toHaveBeenCalled();

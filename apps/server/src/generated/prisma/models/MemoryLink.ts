@@ -23,7 +23,7 @@ import type * as Prisma from "../internal/prismaNamespace.js"
  *  *
  *  * `lane` + `collection` + `scopeKey` scope the graph: partition facts and
  *  * cognition insights live in the memory collection (scope = the space key),
- *  * lexicon chunks in the lexicon collection (scope = 'global'). `collection`
+ *  * encyclopedia chunks in the encyclopedia collection (scope = 'global'). `collection`
  *  * is the model-namespaced name, so switching the embed model strands the old
  *  * graph harmlessly and the new collection backfills on first read.
  */
@@ -515,7 +515,7 @@ export type $MemoryLinkPayload<ExtArgs extends runtime.Types.Extensions.Internal
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     /**
-     * * 'partition' | 'cognition' | 'lexicon'
+     * * 'partition' | 'cognition' | 'encyclopedia'
      */
     lane: string
     /**
@@ -523,7 +523,7 @@ export type $MemoryLinkPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     collection: string
     /**
-     * * Space key: partition key / cognition key / 'global' (lexicon).
+     * * Space key: partition key / cognition key / 'global' (encyclopedia).
      */
     scopeKey: string
     /**

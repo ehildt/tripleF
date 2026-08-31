@@ -5,6 +5,7 @@ import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
 import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
 import { MemoryRepository } from '../../memory.repository.js';
 import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
+import { MemoryOverridesService } from '../../memory-overrides.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
 
@@ -27,6 +28,7 @@ export class StoreStepService implements VectorizeStepHandler {
     private readonly memoryRepository: MemoryRepository,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
+    private readonly overrides: MemoryOverridesService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -85,15 +87,16 @@ export class StoreStepService implements VectorizeStepHandler {
         (await this.ledger.countPending(ctx.memoryPartition)) >=
         this.config.consolidateThreshold
       ) {
-        if (!this.config.consolidateModel) {
+        const consolidateModel = this.overrides.getConsolidateModel();
+        if (!consolidateModel) {
           this.logger.warn(
             { jobId: ctx.jobId, requestId: ctx.requestId, step: 'store' },
-            'consolidation auto-trigger skipped: MEMORY_CONSOLIDATE_MODEL unset',
+            'consolidation auto-trigger skipped: no model (set MEMORY_CONSOLIDATE_MODEL or a client override)',
           );
         } else {
           await this.memoryEnqueue.enqueueConsolidateJob({
             memoryPartition: ctx.memoryPartition,
-            model: this.config.consolidateModel,
+            model: consolidateModel,
           });
         }
       }

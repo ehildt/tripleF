@@ -20,6 +20,12 @@ export interface UploadedImage {
   selected?: boolean;
   conversationId: string;
   source?: 'local' | 'cloud';
+  /** Hash of the source pdf this page image was rendered from (pdf pages only). */
+  parentHash?: string;
+  /** Display name of the source pdf (pdf pages only). */
+  parentName?: string;
+  /** 1-based page number within the source pdf (pdf pages only). */
+  page?: number;
 }
 
 /** A document attached to a conversation. The server converts it (pdf →

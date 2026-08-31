@@ -9,6 +9,7 @@ import type { QdrantConfig } from '../models/qdrant-config.model.js';
 import { EmbeddingService } from './embedding.service.js';
 import { MemoryRepository } from './memory.repository.js';
 import { MemoryEnqueueService } from './memory-enqueue.service.js';
+import { MemoryOverridesService } from './memory-overrides.service.js';
 
 /** A filtered delete removes at most this many records per call. */
 const DELETE_RECORDS_CAP = 50;
@@ -39,6 +40,7 @@ export class VectorizeService {
     private readonly memoryRepository: MemoryRepository,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
+    private readonly overrides: MemoryOverridesService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -105,13 +107,15 @@ export class VectorizeService {
       ]);
       if (
         (await this.ledger.countPending(input.memoryPartition)) >=
-          this.config.consolidateThreshold &&
-        this.config.consolidateModel
+        this.config.consolidateThreshold
       ) {
-        await this.memoryEnqueue.enqueueConsolidateJob({
-          memoryPartition: input.memoryPartition,
-          model: this.config.consolidateModel,
-        });
+        const consolidateModel = this.overrides.getConsolidateModel();
+        if (consolidateModel) {
+          await this.memoryEnqueue.enqueueConsolidateJob({
+            memoryPartition: input.memoryPartition,
+            model: consolidateModel,
+          });
+        }
       }
     } catch (error) {
       this.logger.warn(

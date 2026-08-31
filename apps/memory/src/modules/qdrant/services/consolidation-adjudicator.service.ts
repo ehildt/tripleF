@@ -19,6 +19,14 @@ export interface AdjudicationFact {
   text: string;
   role: MemoryRole;
   createdAt: string;
+  /** The entity the record is about — merging requires the same subject. */
+  subject?: string;
+  /** Broad family label — conflicts almost always live inside one family. */
+  category?: string;
+  /** What kind of durable thing this is (preference, state, contact, …). */
+  kind?: string;
+  /** Whether a newer statement is expected to replace this one. */
+  stability?: string;
 }
 
 /**

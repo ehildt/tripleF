@@ -1,4 +1,8 @@
 import { buildContextSummarySection } from '@triplef/agent/prompts';
+import {
+  buildImageExecutePrompt,
+  buildToolExecutePrompt,
+} from '@triplef/agent/prompts';
 import type { VariantName } from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 
@@ -7,11 +11,6 @@ import type { HarnessContext } from '../../services/harness-context.type.js';
 import { buildFilenames } from '../build-filenames.helper.js';
 import type { HistorySelection } from '../respond/build-execution-messages.helper.js';
 import { selectStepHistory } from '../select-step-history.helper.js';
-
-import {
-  buildImageExecutePrompt,
-  buildToolExecutePrompt,
-} from './build-execute-prompt.helper.js';
 
 /** Describe the resized image attachments in the execute system prompt. */
 function buildImageInventory(

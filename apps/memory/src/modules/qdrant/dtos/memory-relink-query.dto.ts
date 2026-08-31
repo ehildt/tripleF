@@ -29,7 +29,7 @@ const parseBoolean = ({ value }: { value: unknown }): unknown => {
 export class MemoryRelinkQueryDto {
   @ApiProperty({
     description: "The user's fact partition to relink.",
-    example: 'christopher',
+    example: 'default',
   })
   @IsString()
   memoryPartition!: string;

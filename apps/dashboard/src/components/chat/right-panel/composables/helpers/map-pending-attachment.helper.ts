@@ -16,6 +16,7 @@ export function mapPendingAttachment(
     isSelected: entry.isSelected,
     pendingIndex: index,
     source: 'local',
+    size: entry.file.size,
     kind: entry.kind,
   };
 }
