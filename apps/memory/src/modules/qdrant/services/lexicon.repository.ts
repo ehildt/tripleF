@@ -12,6 +12,8 @@ import type {
 } from '../models/lexicon-chunk.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
+import { mapLexiconPointToIdVector } from './helpers/map-lexicon-point-to-id-vector.helper.js';
+import { mapLexiconPointToUpsert } from './helpers/map-lexicon-point-to-upsert.helper.js';
 import { QdrantClientService } from './qdrant-client.service.js';
 
 /** Qdrant filter shape for the lexicon vector query (url in/not-in). */
@@ -61,22 +63,7 @@ export class LexiconRepository {
     if (!(await this.clientService.hasLexiconCollection())) return;
     await this.clientService.getClient().upsert(this.collection, {
       wait: true,
-      points: points.map((point) => ({
-        id: point.id,
-        vector: point.vector,
-        payload: {
-          content: point.content,
-          url: point.url,
-          domain: point.domain,
-          title: point.title,
-          fetched_at: point.fetchedAt,
-          content_hash: point.contentHash,
-          chunk_index: point.chunkIndex,
-          chunk_count: point.chunkCount,
-          partition_scope: point.partitionScope,
-          source_type: point.sourceType,
-        },
-      })),
+      points: points.map(mapLexiconPointToUpsert),
     });
 
     // Graph bookkeeping is warn-and-continue: a missing edge degrades to a
@@ -84,12 +71,7 @@ export class LexiconRepository {
     // short search results, not content worth linking.
     if (options?.skipLinks) return;
     try {
-      await this.syncLinks(
-        points.map((point) => ({
-          id: point.id,
-          vector: point.vector,
-        })),
-      );
+      await this.syncLinks(points.map(mapLexiconPointToIdVector));
     } catch (error) {
       this.logger.warn(
         `Lexicon link-graph sync skipped: ${

@@ -12,6 +12,8 @@ import { ConsolidationAdjudicatorService } from '../../consolidation-adjudicator
 import { EmbeddingService } from '../../embedding.service.js';
 import { MemoryRepository } from '../../memory.repository.js';
 import { MemorySearchService } from '../../memory-search.service.js';
+
+import { mapCandidateToAdjudication } from './helpers/map-candidate-to-adjudication.helper.js';
 /** Hard cap on pending inserts adjudicated per run (the DTO caps at 500 too). */
 const MAX_PENDING_PER_RUN = 500;
 
@@ -80,11 +82,7 @@ export class MemoryConsolidateJobService {
           role: row.role,
           createdAt: row.createdAt.toISOString(),
         },
-        candidates.map((c) => ({
-          text: c.text,
-          role: c.role,
-          createdAt: c.createdAt,
-        })),
+        candidates.map(mapCandidateToAdjudication),
       );
       if (!verdict) {
         this.logger.warn(

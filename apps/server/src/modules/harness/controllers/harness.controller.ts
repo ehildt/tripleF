@@ -49,6 +49,10 @@ import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.hel
 import { DocumentConversionService } from '../services/document-conversion.service.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
 
+import { mapPageImage } from './helpers/map-page-image.helper.js';
+import { mapPromptPreview } from './helpers/map-prompt-preview.helper.js';
+import { mapSessionImage } from './helpers/map-session-image.helper.js';
+
 @ApiTags('Harness')
 @Controller('harness')
 export class HarnessController {
@@ -97,10 +101,9 @@ export class HarnessController {
         kind: manifest.kind,
         pageImages:
           manifest.kind === 'pdf'
-            ? manifest.pageHashes.map((hash, index) => ({
-                name: `${meta.name} · page ${index + 1}`,
-                hash,
-              }))
+            ? manifest.pageHashes.map((hash, index) =>
+                mapPageImage(hash, index, meta.name),
+              )
             : undefined,
       });
     }
@@ -150,10 +153,7 @@ export class HarnessController {
         hasNewImages: query.hasNewImages,
         newImageCount: results.length,
         promptMessages: Array.isArray(prompt)
-          ? prompt.map((p) => ({
-              role: p.role,
-              content: p.content?.slice(0, 200),
-            }))
+          ? prompt.map(mapPromptPreview)
           : prompt
             ? [
                 {
@@ -162,12 +162,7 @@ export class HarnessController {
                 },
               ]
             : undefined,
-        sessionMetadataImages: sessionMetadata?.images?.map(
-          ({ name, hash }) => ({
-            name,
-            hash,
-          }),
-        ),
+        sessionMetadataImages: sessionMetadata?.images?.map(mapSessionImage),
       },
       'request received',
     );

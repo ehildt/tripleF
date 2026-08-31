@@ -4,6 +4,7 @@ import { canonicalVideoId } from '../url-trust/canonical-video-id.helper.js';
 import { categorizeUrl } from '../url-trust/categorize-url.helper.js';
 import { isEmbeddableVideoUrl } from '../url-trust/is-embeddable-video-url.helper.js';
 
+import { mapItemWithBucket } from './helpers/map-item-with-bucket.helper.js';
 import type {
   ExtractedImageItem,
   ExtractedVideoItem,
@@ -127,10 +128,7 @@ function extractCandidates(
     });
   }
 
-  return items.map((item) => ({
-    ...item,
-    bucket,
-  }));
+  return items.map((item) => mapItemWithBucket(item, bucket));
 }
 
 /**

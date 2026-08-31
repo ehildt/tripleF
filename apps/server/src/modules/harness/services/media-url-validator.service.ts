@@ -23,6 +23,7 @@ import {
   OEMBED_HOST_PROVIDERS,
 } from '../helpers/url-trust/oembed-provider.helper.js';
 
+import { mapUrlToUnknown } from './helpers/map-url-to-unknown.helper.js';
 import type {
   HttpResponse,
   MediaUrlValidatorOptions,
@@ -54,7 +55,7 @@ export class MediaUrlValidatorService {
     const { enabled = true, concurrency = 5 } = options;
 
     if (!enabled || urls.length === 0) {
-      return urls.map((url) => ({ url, kind: 'unknown' }));
+      return urls.map(mapUrlToUnknown);
     }
 
     const results: MediaValidationResult[] = new Array(urls.length);

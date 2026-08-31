@@ -9,6 +9,8 @@ import {
   HARNESS_WORKER_CONCURRENCY,
 } from '../constants/bullmq.constants.js';
 
+import { mapJobToLive } from './helpers/map-job-to-live.helper.js';
+
 @ApiTags('BullMQ')
 @Controller('bullmq')
 export class BullMQController {
@@ -29,12 +31,7 @@ export class BullMQController {
     ]);
 
     return {
-      jobs: jobs.map((j) => ({
-        id: j.id,
-        name: j.name,
-        state: j.getState(),
-        attemptsMade: j.attemptsMade,
-      })),
+      jobs: jobs.map(mapJobToLive),
     };
   }
 

@@ -9,6 +9,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { addDays, utcToday } from '../helpers/date-range.helper.js';
+import { mapDailyBarToPoint } from '../helpers/map-daily-bar-to-point.helper.js';
 import {
   MarketHistoryFetchError,
   MarketHistoryUnavailableError,
@@ -64,14 +65,7 @@ export class StockDataController {
       if (bars.length === 0) throw new NotFoundException();
       return {
         ticker,
-        points: bars.map((b) => ({
-          time: b.date,
-          open: b.open,
-          high: b.high,
-          low: b.low,
-          close: b.close,
-          volume: b.volume,
-        })),
+        points: bars.map(mapDailyBarToPoint),
       };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;

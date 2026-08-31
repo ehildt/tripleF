@@ -9,6 +9,8 @@ import type {
 import { useHarnessMediaPriority } from '../../../shared/composables/use-harness-media-priority.composable';
 import type { EvaluationResponseProps } from '../EvaluationResponse.types';
 import { formatEvaluationScore } from '../helpers/format-evaluation-score.helper';
+import { mapColumnToCell } from '../helpers/map-column-to-cell.helper';
+import { mapNameToColumn } from '../helpers/map-name-to-column.helper';
 import type {
   EvaluationComparisonColumn,
   EvaluationComparisonRow,
@@ -147,7 +149,7 @@ function buildComparisonColumns(
   criteria?.forEach((criterion) =>
     criterion.scores?.forEach((score) => push(score.subject)),
   );
-  return names.map((name) => ({ name, winner: name === winnerName }));
+  return names.map((name) => mapNameToColumn(name, winnerName));
 }
 
 /** Matrix rows: one criterion per row, one formatted cell per column. */
@@ -170,14 +172,9 @@ function buildComparisonRows(
     if (scores.size === 0) continue;
     rows.push({
       name,
-      cells: columnNames.map((column) => {
-        const score = scores.get(column);
-        return {
-          column,
-          text: score !== undefined ? String(score) : '—',
-          winner: column === winnerName,
-        };
-      }),
+      cells: columnNames.map((column) =>
+        mapColumnToCell(column, scores, winnerName),
+      ),
     });
   }
   return rows;

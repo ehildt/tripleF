@@ -1,6 +1,7 @@
 import { type ComputedRef, onMounted, ref } from 'vue';
 
 import { calcActiveIndexFromScroll } from '../helpers/calc-active-index-from-scroll.helper';
+import { mapChildToOffset } from './helpers/map-child-to-offset.helper';
 
 /**
  * Owns the carousel's active-index state and its track-scroll actions:
@@ -40,10 +41,7 @@ export function useCarouselNavigation(
     const track = trackRef.value;
     if (!track || track.clientWidth === 0) return;
 
-    const items = Array.from(track.children).map((child) => {
-      const el = child as HTMLElement;
-      return { offsetLeft: el.offsetLeft, offsetWidth: el.offsetWidth };
-    });
+    const items = Array.from(track.children).map(mapChildToOffset);
     activeIndex.value = calcActiveIndexFromScroll(
       track.scrollLeft,
       track.clientWidth,

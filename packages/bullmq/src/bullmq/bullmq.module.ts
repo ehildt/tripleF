@@ -1,6 +1,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
 
+import { mapQueueRegistration } from './helpers/map-queue-registration.helper.js';
 import { BullMQModuleProps } from './bullmq.model.ts';
 
 @Module({})
@@ -13,24 +14,7 @@ export class BullMQModule {
       providers: options.processors,
       imports: [
         ...(options.imports ?? []),
-        BullModule.registerQueueAsync(
-          ...options.queues.map((queue) => {
-            const queueName = typeof queue === 'string' ? queue : queue.name;
-            const queueConnection = typeof queue === 'object' ? queue.connection : undefined;
-
-            return {
-              name: queueName,
-              global: options.global,
-              inject: options.inject,
-              useFactory: async (...deps: any[]) => {
-                return {
-                  ...((await options.useFactory(...deps)) ?? {}),
-                  ...(queueConnection && { connection: queueConnection }),
-                };
-              },
-            };
-          }),
-        ),
+        BullModule.registerQueueAsync(...options.queues.map((queue) => mapQueueRegistration(queue, options))),
       ]?.filter(Boolean),
     };
   }

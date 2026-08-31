@@ -22,6 +22,9 @@ import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
 import { MemoryCognitionService } from '../../memory-cognition.service.js';
 import { MemoryOverridesService } from '../../memory-overrides.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
+
+import { mapPointToInsight } from './helpers/map-point-to-insight.helper.js';
+import { mapPointToPriorFact } from './helpers/map-point-to-prior-fact.helper.js';
 /**
  * Cognition-profile job handler (vectorize queue): maintains the AI's own
  * memory of THIS user — one structured profile document plus derived insight
@@ -105,11 +108,8 @@ export class MemoryProfileJobService {
               current && Object.keys(current).length > 0
                 ? JSON.stringify(current)
                 : undefined,
-            insights: insights.map((point) => ({
-              text: point.text,
-              path: point.path,
-            })),
-            priorFacts: priorFacts.map((point) => ({ text: point.text })),
+            insights: insights.map(mapPointToInsight),
+            priorFacts: priorFacts.map(mapPointToPriorFact),
             limit,
             maxPayloadChars,
           }),

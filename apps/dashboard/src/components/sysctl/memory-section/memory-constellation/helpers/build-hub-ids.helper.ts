@@ -16,7 +16,7 @@ export function buildHubIds(
 ): Set<string> {
   const hubIds = new Set<string>();
   for (const cluster of clusters) {
-    if (collapsedKeys.has(cluster.key)) {
+    if (collapsedKeys.has(cluster.key) && cluster.memberIds.length > 1) {
       hubIds.add(`cluster:${cluster.key}`);
     } else if (cluster.memberIds.length > 0) {
       hubIds.add(cluster.memberIds[0]);

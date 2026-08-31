@@ -4,6 +4,7 @@ import type {
   VideoGalleryItem,
 } from '@/types/harness-response-data.model';
 
+import { mapMediaToResult } from './helpers/map-media-to-result.helper';
 import type { ToolResult } from './extract-media-from-tool-results.helper.types';
 import { isTrustedImageUrl } from './is-trusted-image-url.helper';
 import { isVideoUrl } from './is-video-url.helper';
@@ -198,14 +199,8 @@ export function extractMediaFromToolResults(
 
   const { images, videos } = serverProvided
     ? {
-        images: (availableImages ?? []).map((i) => ({
-          url: i.url,
-          title: i.title ?? '',
-        })),
-        videos: (availableVideos ?? []).map((v) => ({
-          url: v.url,
-          title: v.title ?? '',
-        })),
+        images: (availableImages ?? []).map(mapMediaToResult),
+        videos: (availableVideos ?? []).map(mapMediaToResult),
       }
     : collectMediaUrls(results);
 

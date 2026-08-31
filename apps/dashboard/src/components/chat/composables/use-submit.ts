@@ -31,6 +31,9 @@ import { buildQueryParams } from '@/utils/build-query-params.helper';
 import { handleResponse } from '@/utils/handle-response.helper';
 import { requireModel } from '@/utils/require-model.helper';
 
+import { mapDocumentEntry } from './helpers/map-document-entry.helper';
+import { mapDocumentToOriginal } from './helpers/map-document-to-original.helper';
+import { mapDocumentToPrompt } from './helpers/map-document-to-prompt.helper';
 import type { SendRequestOptions, UseSubmitOptions } from './use-submit.types';
 
 export function useSubmit(options: UseSubmitOptions) {
@@ -333,26 +336,16 @@ export function useSubmit(options: UseSubmitOptions) {
     const persistedSelectedDocuments = preUploadDocuments.filter(
       (doc) => doc.selected !== false,
     );
-    const newDocuments: UploadedDocument[] = documentEntries.map((entry) => ({
-      name: entry.file.name,
-      hash: entry.hash,
-      type: entry.file.type || 'application/octet-stream',
-      uploadedAt: Date.now(),
-      size: entry.file.size,
-      selected: true,
-      conversationId,
-    }));
+    const newDocuments: UploadedDocument[] = documentEntries.map((entry) =>
+      mapDocumentEntry(entry, conversationId),
+    );
     const newDocumentFiles = documentEntries.map((entry) => entry.file);
-    const newOriginals = newDocuments.map((doc) => ({
-      name: doc.name,
-      hash: doc.hash,
-      type: doc.type,
-    }));
+    const newOriginals = newDocuments.map(mapDocumentToOriginal);
     // Bubble tiles: pdf originals render as their page images (registered as
     // conversation images), never as a document icon.
     const promptDocuments = [...persistedSelectedDocuments, ...newDocuments]
       .filter((doc) => !doc.name.toLowerCase().endsWith('.pdf'))
-      .map((doc) => ({ name: doc.name, hash: doc.hash }));
+      .map(mapDocumentToPrompt);
 
     const hasNewImages = newFiles.length > 0;
 

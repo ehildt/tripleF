@@ -14,6 +14,7 @@ import { useConversationStore } from '../../../../../stores/conversation';
 import { hashFile } from '../../../../../utils/hash-file.helper';
 import { createId } from '../../../../../utils/id.helper';
 import { classifyAttachedFile } from '../helpers/classify-attached-file.helper';
+import { mapPageToUploadedImage } from './helpers/map-page-to-uploaded-image.helper';
 
 /**
  * Manages the file attachment lifecycle — selecting, toggling,
@@ -190,14 +191,7 @@ export function useAttachedFiles() {
       if (pageImages.length > 0) {
         conversationStore.setUploadedImages(
           sid,
-          pageImages.map((page) => ({
-            name: page.name,
-            hash: page.hash,
-            uploadedAt: Date.now(),
-            size: 0,
-            selected: true,
-            conversationId: cid,
-          })),
+          pageImages.map((page) => mapPageToUploadedImage(page, cid)),
         );
       }
 

@@ -6,6 +6,7 @@ import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import { resolveSerperShopOfferLinks } from '../helpers/serper-shop-links.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperShoppingResult } from './helpers/map-serper-shopping-result.helper.js';
 import { HEADERS } from './serper.constants.js';
 import { type SerperShoppingSearchInput, serperShoppingSearchSchema } from './shopping-search.schema.js';
 import type { SerperShoppingSearchResponse } from './shopping-search.types.js';
@@ -49,16 +50,7 @@ export function createSerperShoppingSearch(deps: ToolDependencies): Tool {
       // a short timeout drops every offer. Google-hosted links are resolved
       // to merchant URLs below (resolveSerperShopOfferLinks); link validity
       // is enforced later by the product schema's safeUrl validation.
-      const results = data.shopping.map((r) => ({
-        title: r.title,
-        price: r.price || '',
-        link: r.link || '',
-        source: r.source || '',
-        imageUrl: r.imageUrl || '',
-        delivery: r.delivery || '',
-        rating: r.rating,
-        ratingCount: r.ratingCount,
-      }));
+      const results = data.shopping.map(mapSerperShoppingResult);
       return {
         results: await resolveSerperShopOfferLinks(results, {
           apiKey: cfg.apiKey,

@@ -7,6 +7,7 @@ import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperWebResult } from './helpers/map-serper-web-result.helper.js';
 import { HEADERS } from './serper.constants.js';
 import { type SerperWebSearchInput, serperWebSearchSchema } from './web-search.schema.js';
 import type { SerperWebSearchResponse } from './web-search.types.js';
@@ -48,12 +49,7 @@ export function createSerperWebSearch(deps: ToolDependencies): Tool {
         deps.logger.warn(`Serper.dev returned 0 results for "${query}"`);
         return { results: [] };
       }
-      const results = data.organic.map((r) => ({
-        title: r.title,
-        snippet: r.snippet || '',
-        url: r.link,
-        source: 'serper',
-      }));
+      const results = data.organic.map(mapSerperWebResult);
       deps.logger.log(`Serper.dev returned ${results.length} results for "${query}"`);
       return { results };
     },

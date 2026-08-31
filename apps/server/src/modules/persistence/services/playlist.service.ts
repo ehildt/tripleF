@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../../generated/prisma/client.js';
 
+import { mapPlaylistSnapshot } from './helpers/map-playlist-snapshot.helper.js';
 import { PlaylistRepository } from './playlist.repository.js';
 import type { PlaylistSnapshot } from './playlist.service.types.js';
 
@@ -18,23 +19,13 @@ export class PlaylistService {
       conversationId,
     );
 
-    return playlists.map((playlist) => ({
-      name: playlist.name,
-      conversationId: playlist.conversationId,
-      videos: playlist.videos as unknown[],
-      updatedAt: playlist.updatedAt,
-    }));
+    return playlists.map(mapPlaylistSnapshot);
   }
 
   async listAllPlaylists(sessionId: string): Promise<PlaylistSnapshot[]> {
     const playlists = await this.repository.findManyBySession(sessionId);
 
-    return playlists.map((playlist) => ({
-      name: playlist.name,
-      conversationId: playlist.conversationId,
-      videos: playlist.videos as unknown[],
-      updatedAt: playlist.updatedAt,
-    }));
+    return playlists.map(mapPlaylistSnapshot);
   }
 
   async getPlaylist(

@@ -26,6 +26,12 @@ import type { HarnessStreamEvent } from '@/types/harness-stream-event.model';
 import { dedupeResponseMedia } from '../media/dedupe-response-media.helper';
 import { extractMediaFromToolResults } from '../media/extract-media-from-tool-results.helper';
 import { isTrustedImageUrl } from '../media/is-trusted-image-url.helper';
+import { mapBodySection } from './helpers/map-body-section.helper';
+import { mapCriterionScore } from './helpers/map-criterion-score.helper';
+import { mapEvaluationCriterion } from './helpers/map-evaluation-criterion.helper';
+import { mapEvaluationSubject } from './helpers/map-evaluation-subject.helper';
+import { mapKeyFinding } from './helpers/map-key-finding.helper';
+import { mapStatHighlight } from './helpers/map-stat-highlight.helper';
 import { cleanHarnessResponseArrays } from './clean-harness-response-arrays.helper';
 import { isMeaningfulString } from './is-meaningful-string.helper';
 
@@ -207,25 +213,7 @@ function normalizeBodySections(value: unknown): BodySection[] | undefined {
 
   const sections = value
     .filter(isRecord)
-    .map((item) => {
-      const heroImageUrl = toOptionalString(item.heroImageUrl);
-      return {
-        topic: toOptionalString(item.topic),
-        content: toOptionalString(item.content),
-        strengths: normalizeKeyFindings(item.strengths),
-        weaknesses: normalizeKeyFindings(item.weaknesses),
-        recommendations: normalizeKeyFindings(item.recommendations),
-        heroImageUrl:
-          heroImageUrl && isTrustedImageUrl(heroImageUrl)
-            ? heroImageUrl
-            : undefined,
-        heroImageAlt: toOptionalString(item.heroImageAlt),
-        heroCaption: toOptionalString(item.heroCaption),
-        heroVideoUrl: toOptionalString(item.heroVideoUrl),
-        heroVideoTitle: toOptionalString(item.heroVideoTitle),
-        heroVideoCaption: toOptionalString(item.heroVideoCaption),
-      };
-    })
+    .map((item) => mapBodySection(item, toOptionalString, normalizeKeyFindings))
     .filter(
       (section) =>
         section.topic ||
@@ -249,13 +237,7 @@ function normalizeSectionContent(value: unknown): string | undefined {
 function normalizeKeyFindings(value: unknown): KeyFinding[] | undefined {
   if (!Array.isArray(value) || value.length === 0) return undefined;
 
-  const findings = value.map((item) => {
-    if (typeof item === 'string') return { text: item };
-    if (isRecord(item) && typeof item.text === 'string') {
-      return { text: item.text };
-    }
-    return { text: String(item) };
-  });
+  const findings = value.map(mapKeyFinding);
 
   return findings;
 }
@@ -272,10 +254,7 @@ function normalizeStatHighlights(value: unknown): StatHighlight[] | undefined {
         typeof item.value === 'string' &&
         item.value.trim().length > 0,
     )
-    .map((item) => ({
-      label: (item.label as string).trim(),
-      value: (item.value as string).trim(),
-    }));
+    .map(mapStatHighlight);
 
   return stats.length > 0 ? stats : undefined;
 }
@@ -293,14 +272,9 @@ function normalizeEvaluationSubjects(
   const subjects = value
     .map((item) => (typeof item === 'string' ? { name: item } : item))
     .filter(isRecord)
-    .map((item) => ({
-      name: toOptionalString(item.name),
-      description: toOptionalString(item.description),
-      strengths: normalizeKeyFindings(item.strengths),
-      weaknesses: normalizeKeyFindings(item.weaknesses),
-      score: typeof item.score === 'number' ? item.score : undefined,
-      scoreLabel: toOptionalString(item.scoreLabel),
-    }))
+    .map((item) =>
+      mapEvaluationSubject(item, toOptionalString, normalizeKeyFindings),
+    )
     .filter((subject) => subject.name || subject.description);
 
   return subjects.length > 0 ? subjects : undefined;
@@ -337,10 +311,9 @@ function normalizeEvaluationCriteria(
 
   const criteria = value
     .filter(isRecord)
-    .map((item) => ({
-      name: toOptionalString(item.name),
-      scores: normalizeCriterionScores(item.scores),
-    }))
+    .map((item) =>
+      mapEvaluationCriterion(item, toOptionalString, normalizeCriterionScores),
+    )
     .filter((criterion) => criterion.name && criterion.scores?.length);
 
   return criteria.length > 0 ? criteria : undefined;
@@ -353,10 +326,7 @@ function normalizeCriterionScores(
 
   const scores = value
     .filter(isRecord)
-    .map((item) => ({
-      subject: toOptionalString(item.subject),
-      score: typeof item.score === 'number' ? item.score : undefined,
-    }))
+    .map((item) => mapCriterionScore(item, toOptionalString))
     .filter(
       (scoreEntry) => scoreEntry.subject && scoreEntry.score !== undefined,
     );

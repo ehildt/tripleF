@@ -5,6 +5,8 @@ import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 import type { LightboxImage } from '@/types/lightbox.model';
 
+import { mapImageToTile } from './helpers/map-image-to-tile.helper';
+
 export function usePromptImageTiles(exchange: MaybeRefOrGetter<Exchange>) {
   const conversationStore = useConversationStore();
 
@@ -18,12 +20,14 @@ export function usePromptImageTiles(exchange: MaybeRefOrGetter<Exchange>) {
 
     if (!conversation) return [];
 
-    return current.images.map((image) => ({
-      url: getApiUrl(
-        `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${image.hash}`,
+    return current.images.map((image) =>
+      mapImageToTile(
+        image,
+        getApiUrl(
+          `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${image.hash}`,
+        ),
       ),
-      title: image.name,
-    }));
+    );
   });
 
   return { imageTiles };

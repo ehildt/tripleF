@@ -1,6 +1,9 @@
 import type { HealthResponse } from '@/api/queries/use-health-ready.query.type';
 
 import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
+import { mapErrorTile } from './map-error-tile.helper';
+import { mapHealthTile } from './map-health-tile.helper';
+import { mapLoadingTile } from './map-loading-tile.helper';
 
 /**
  * Map the terminus health response to the tile view models. When any
@@ -17,20 +20,10 @@ export function buildHealthTiles(
   trackedKeys: readonly string[],
 ): HealthTileViewModel[] {
   if (loading) {
-    return trackedKeys.map((key) => ({
-      key,
-      status: 'loading',
-      loading: true,
-      error: false,
-    }));
+    return trackedKeys.map(mapLoadingTile);
   }
   if (queryError) {
-    return trackedKeys.map((key) => ({
-      key,
-      status: 'unknown',
-      loading: false,
-      error: true,
-    }));
+    return trackedKeys.map(mapErrorTile);
   }
   if (!data) return [];
 
@@ -43,17 +36,5 @@ export function buildHealthTiles(
     ...Object.keys(errors),
   ]);
 
-  return [...keys].map((key) => {
-    const status =
-      details[key]?.status ??
-      info[key]?.status ??
-      errors[key]?.status ??
-      'unknown';
-    return {
-      key,
-      status,
-      loading: false,
-      error: key in errors,
-    };
-  });
+  return [...keys].map((key) => mapHealthTile(key, details, info, errors));
 }

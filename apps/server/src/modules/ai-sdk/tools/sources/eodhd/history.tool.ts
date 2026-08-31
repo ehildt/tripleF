@@ -7,6 +7,7 @@ import {
   addDays,
   utcToday,
 } from '../../../../stock-data/helpers/date-range.helper.js';
+import { mapDailyBarToPoint } from '../../../../stock-data/helpers/map-daily-bar-to-point.helper.js';
 import {
   type MarketDailyBar,
   MarketHistoryFetchError,
@@ -77,14 +78,7 @@ export function createEodhdHistory(deps: ToolDependencies) {
         );
         const chartData = {
           ticker,
-          history: bars.map((p) => ({
-            time: p.date,
-            open: p.open,
-            high: p.high,
-            low: p.low,
-            close: p.close,
-            volume: p.volume,
-          })),
+          history: bars.map(mapDailyBarToPoint),
         };
         return {
           summary: {

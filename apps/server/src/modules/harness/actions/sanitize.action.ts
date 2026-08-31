@@ -56,10 +56,7 @@ import { collectPageUrls } from '../helpers/sanitize/collect-page-urls.helper.js
 import { collectVideoThumbnailUrls } from '../helpers/sanitize/collect-video-thumbnail-urls.helper.js';
 import { filterVerifiedMedia } from '../helpers/sanitize/filter-verified-media.helper.js';
 import { rewriteCandidatesWithIngested } from '../helpers/sanitize/rewrite-candidates-with-ingested.helper.js';
-import {
-  sanitizeToolResult,
-  sanitizeToolResultsWithIngestedUrls,
-} from '../helpers/sanitize/sanitize-tool-result.helper.js';
+import { sanitizeToolResultsWithIngestedUrls } from '../helpers/sanitize/sanitize-tool-result.helper.js';
 import { scrubBrokenUrlsFromMessages } from '../helpers/sanitize/scrub-broken-urls-from-messages.helper.js';
 import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
@@ -71,6 +68,14 @@ import {
   type ShownMediaKeys,
   ShownMediaService,
 } from '../services/shown-media.service.js';
+
+import { mapArticleToSearchResult } from './helpers/map-article-to-search-result.helper.js';
+import { mapChunkToLexiconPassage } from './helpers/map-chunk-to-lexicon-passage.helper.js';
+import { mapChunkToReference } from './helpers/map-chunk-to-reference.helper.js';
+import { mapImageToAvailable } from './helpers/map-image-to-available.helper.js';
+import { mapSanitizedToolResult } from './helpers/map-sanitized-tool-result.helper.js';
+import { mapSanitizedToolResultWithBrokenUrls } from './helpers/map-sanitized-tool-result-with-broken-urls.helper.js';
+import { mapVideoToAvailable } from './helpers/map-video-to-available.helper.js';
 
 export type SanitizeResult = {
   toolResults: ToolResult[];
@@ -281,11 +286,7 @@ export class SanitizeActionService {
     // snippet point in the lexicon — the lexicon remembers every source
     // touched, not just the pages that were fetched.
     const searchResults = articles
-      .map((article) => ({
-        url: typeof article.url === 'string' ? article.url : '',
-        title: typeof article.title === 'string' ? article.title : undefined,
-        snippet: typeof article.snippet === 'string' ? article.snippet : '',
-      }))
+      .map(mapArticleToSearchResult)
       .filter((result) => result.url && result.snippet.trim().length > 0);
     const {
       references,
@@ -401,14 +402,8 @@ export class SanitizeActionService {
       // The client's media fallback must use the same deduped set the model
       // was given — not the raw tool results — so previously-shown media is
       // never re-displayed and the model's "no new media" is honoured.
-      availableImages: verifiedImages.map((item) => ({
-        url: item.imageUrl,
-        title: item.title,
-      })),
-      availableVideos: verifiedVideos.map((item) => ({
-        url: item.videoUrl,
-        title: item.title,
-      })),
+      availableImages: verifiedImages.map(mapImageToAvailable),
+      availableVideos: verifiedVideos.map(mapVideoToAvailable),
     };
   }
 
@@ -491,21 +486,12 @@ export class SanitizeActionService {
       'reference selection applied',
     );
     return {
-      references: sel.chunks.map((chunk) => ({
-        url: chunk.url,
-        title: chunk.title,
-        content: chunk.content,
-      })),
+      references: sel.chunks.map(mapChunkToReference),
       selection: {
         considered: sel.consideredChunks,
         selected: sel.selectedChunks,
       },
-      lexiconPassages: sel.pastChunks?.map((chunk) => ({
-        url: chunk.url,
-        title: chunk.title,
-        content: chunk.content,
-        sourceType: chunk.sourceType,
-      })),
+      lexiconPassages: sel.pastChunks?.map(mapChunkToLexiconPassage),
     };
   }
 
@@ -757,10 +743,7 @@ export class SanitizeActionService {
   }
 
   private sanitizeToolResults(toolResults: ToolResult[]): ToolResult[] {
-    return toolResults.map((tr) => ({
-      toolName: tr.toolName,
-      result: sanitizeToolResult(tr.toolName, tr.result),
-    }));
+    return toolResults.map(mapSanitizedToolResult);
   }
 
   private sanitizeToolResultsWithBrokenUrls(
@@ -768,13 +751,9 @@ export class SanitizeActionService {
     brokenImageUrls: Set<string>,
     brokenPageUrls: Set<string>,
   ): ToolResult[] {
-    return toolResults.map((tr) => ({
-      toolName: tr.toolName,
-      result: sanitizeToolResult(tr.toolName, tr.result, {
-        brokenImageUrls,
-        brokenPageUrls,
-      }),
-    }));
+    return toolResults.map((tr) =>
+      mapSanitizedToolResultWithBrokenUrls(tr, brokenImageUrls, brokenPageUrls),
+    );
   }
 
   private async findBrokenImageUrls(

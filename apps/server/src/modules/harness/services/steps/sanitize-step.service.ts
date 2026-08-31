@@ -18,6 +18,9 @@ import {
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
+import { mapDocumentSection } from './helpers/map-document-section.helper.js';
+import { mapIngestedMeta } from './helpers/map-ingested-meta.helper.js';
+
 @Injectable()
 export class SanitizeStepService implements StepHandler {
   private readonly logger = new Logger(SanitizeStepService.name);
@@ -37,11 +40,7 @@ export class SanitizeStepService implements StepHandler {
     // fire-and-forget, independent of whether a web search ran this turn.
     if (ctx.documentSections?.length) {
       void this.memoryClient.indexLexiconDocuments({
-        documents: ctx.documentSections.map((section) => ({
-          url: section.url,
-          title: section.name,
-          content: section.text,
-        })),
+        documents: ctx.documentSections.map(mapDocumentSection),
         partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',
       });
     }
@@ -94,13 +93,7 @@ export class SanitizeStepService implements StepHandler {
 
     ctx.processedMeta = [
       ...ctx.processedMeta,
-      ...ingestedImages.map((img) => ({
-        name: img.name,
-        hash: img.hash,
-        type: 'image/png',
-        variant: 'original' as const,
-        source: img.source,
-      })),
+      ...ingestedImages.map(mapIngestedMeta),
     ];
   }
 

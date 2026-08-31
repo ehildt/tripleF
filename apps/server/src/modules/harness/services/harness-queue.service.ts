@@ -1,17 +1,13 @@
 import { MultipartFile } from '@fastify/multipart';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { hashPayload } from '@triplef/helpers/hash-payload';
 import { Job, Queue } from 'bullmq';
 
 import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import { MinioService } from '../../minio/services/minio.service.js';
-import {
-  FastifyMultipartDataWithFiltersReq,
-  FastifyMultipartMeta,
-} from '../dtos/harness-job.dto.js';
-import { buildImageFingerprint } from '../helpers/media/build-image-fingerprint.helper.js';
+import { FastifyMultipartDataWithFiltersReq } from '../dtos/harness-job.dto.js';
 
+import { mapFilePayload } from './helpers/map-file-payload.helper.js';
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 
 @Injectable()
@@ -31,21 +27,9 @@ export class HarnessQueueService {
     fingerprint = true,
   ) {
     return await Promise.all(
-      images.map(async (file, index) => {
-        const buffer = await file.toBuffer();
-        const hash =
-          providedHashes?.[index] ?? `${hashPayload(buffer, 'sha256')}`;
-        const meta: FastifyMultipartMeta = {
-          name: file.filename,
-          type: file.mimetype,
-          hash,
-          fingerprint: fingerprint
-            ? await buildImageFingerprint(buffer)
-            : undefined,
-          size: buffer.length,
-        };
-        return { buffer, meta };
-      }),
+      images.map((file, index) =>
+        mapFilePayload(file, index, providedHashes, fingerprint),
+      ),
     );
   }
 

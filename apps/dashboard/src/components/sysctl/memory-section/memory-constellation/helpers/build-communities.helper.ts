@@ -3,18 +3,7 @@ import type {
   ConstellationCommunity,
   ConstellationNode,
 } from '../MemoryConstellation.types';
-
-/** Categorical palette for community hubs (stable by community order). */
-const COMMUNITY_PALETTE = [
-  '#f97316',
-  '#8b5cf6',
-  '#0ea5e9',
-  '#10b981',
-  '#ec4899',
-  '#eab308',
-  '#14b8a6',
-  '#6366f1',
-];
+import { mapCommunityEntry } from './map-community-entry.helper';
 
 /**
  * Group clusters into second-level communities by their members'
@@ -43,11 +32,7 @@ export function buildCommunities(
   }
   return [...clusterKeysByCommunity.entries()]
     .filter(([, clusterKeys]) => clusterKeys.length >= 1)
-    .map(([key, clusterKeys], index) => ({
-      key,
-      label: key,
-      color: COMMUNITY_PALETTE[index % COMMUNITY_PALETTE.length],
-      memberClusterKeys: clusterKeys,
-      memberIds: memberIdsByCommunity.get(key) ?? [],
-    }));
+    .map((entry, index) =>
+      mapCommunityEntry(entry, index, memberIdsByCommunity),
+    );
 }

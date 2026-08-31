@@ -21,13 +21,13 @@ import { getLatestRequestId } from './helpers/conversation/get-latest-request-id
 import { inferConversationTitle } from './helpers/conversation/infer-conversation-title.helper';
 import { isTemporaryConversationExpired } from './helpers/conversation/is-temporary-conversation-expired.helper';
 import { loadTurndown } from './helpers/conversation/load-turndown.helper';
+import { mapExchangeToMessage } from './helpers/conversation/map-exchange-to-message.helper';
+import { mapFileToSavedInfo } from './helpers/conversation/map-file-to-saved-info.helper';
 import { mergeUploadedDocuments } from './helpers/conversation/merge-uploaded-documents.helper';
 import { mergeUploadedImages } from './helpers/conversation/merge-uploaded-images.helper';
 import { prunePairedExchange } from './helpers/conversation/prune-paired-exchange.helper';
 import { toPersistedConversation } from './helpers/conversation/to-persisted-conversation.helper';
-import { toPromptMessage } from './helpers/conversation/to-prompt-message.helper';
 import { togglePairedExchangeIncluded } from './helpers/conversation/toggle-paired-exchange-included.helper';
-import { withTemplateMarker } from './helpers/conversation/with-template-marker.helper';
 import { getPersistentSocketSessionId } from './helpers/socket/get-persistent-socket-session-id.helper';
 import { useAppStore } from './app';
 import type {
@@ -708,11 +708,7 @@ export const useConversationStore = defineStore('conversation', () => {
         [conversationId]: newFiles,
       };
       conversation.files = newFiles;
-      conversation.savedFileInfos = newFiles.map((f) => ({
-        name: f.name,
-        size: f.size,
-        type: f.type,
-      }));
+      conversation.savedFileInfos = newFiles.map(mapFileToSavedInfo);
       void persistConversation(conversation);
     });
   }
@@ -985,18 +981,7 @@ export const useConversationStore = defineStore('conversation', () => {
     const turndown = await loadTurndown();
     const messages = conversation.exchanges
       .filter((e) => e.included !== false)
-      .map((e) => {
-        const message = toPromptMessage(e, { includeTemplateMarker: false });
-        return {
-          role: message.role,
-          // The classifier marker survives only outside turndown: brackets
-          // would be escaped and the newline collapsed to a space.
-          content: withTemplateMarker(
-            turndown.turndown(message.content),
-            e.harnessTemplate,
-          ),
-        };
-      })
+      .map((e) => mapExchangeToMessage(e, turndown))
       .filter(
         (m) =>
           m.role !== 'assistant' || (m.content && m.content.trim().length > 0),

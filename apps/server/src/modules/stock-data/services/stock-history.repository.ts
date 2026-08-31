@@ -11,6 +11,9 @@ import type { PostgresConfig } from '../../dead-letter/configs/postgres-config.a
 import { POSTGRES_CONFIG } from '../../dead-letter/constants/postgres.constants.js';
 import type { MarketDailyBar } from '../market-data.types.js';
 
+import { mapBarRowToDailyBar } from './helpers/map-bar-row-to-daily-bar.helper.js';
+import { mapRangeToRow } from './helpers/map-range-to-row.helper.js';
+
 /**
  * Persists the cached end-of-day bars and the coverage ledger for them.
  * Rows past the freshness window are immutable; the service decides when a
@@ -57,11 +60,7 @@ export class StockHistoryRepository implements OnModuleInit, OnModuleDestroy {
     await this.prisma.$transaction([
       this.prisma.stockMarketHistoryRange.deleteMany({ where: { ticker } }),
       this.prisma.stockMarketHistoryRange.createMany({
-        data: ranges.map((r) => ({
-          ticker,
-          fromDate: new Date(`${r.from}T00:00:00Z`),
-          toDate: new Date(`${r.to}T00:00:00Z`),
-        })),
+        data: ranges.map((r) => mapRangeToRow(r, ticker)),
       }),
     ]);
   }
@@ -82,15 +81,7 @@ export class StockHistoryRepository implements OnModuleInit, OnModuleDestroy {
       },
       orderBy: { date: 'asc' },
     });
-    return rows.map((row) => ({
-      date: row.date.toISOString().slice(0, 10),
-      open: row.open,
-      high: row.high,
-      low: row.low,
-      close: row.close,
-      adjustedClose: row.adjustedClose ?? undefined,
-      volume: Number(row.volume),
-    }));
+    return rows.map(mapBarRowToDailyBar);
   }
 
   /**

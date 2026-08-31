@@ -12,6 +12,8 @@ import type {
   ConstellationNode,
 } from '../MemoryConstellation.types';
 import type { ConstellationPosition } from '../MemoryConstellation.types';
+import { mapEdgeToSimLink } from './map-edge-to-sim-link.helper';
+import { mapNodeToSimNode } from './map-node-to-sim-node.helper';
 
 /** Static simulation ticks (no animation — run to a settled layout). */
 const RELAX_TICKS = 200;
@@ -62,28 +64,11 @@ export function relaxConstellation(
   edges: readonly ConstellationEdge[],
   seed: ReadonlyMap<string, ConstellationPosition>,
 ): Map<string, ConstellationPosition> {
-  const simNodes: SimNode[] = nodes.map((node) => {
-    const pos = seed.get(node.id) ?? { x: 0, y: 0, z: 0 };
-    const pinned = node.anchorToOrigin === true || node.isCategory === true;
-    return {
-      id: node.id,
-      x: pos.x,
-      y: pos.y,
-      z: pos.z,
-      fx: pinned ? pos.x : null,
-      fy: pinned ? pos.y : null,
-      fz: pinned ? pos.z : null,
-    };
-  });
+  const simNodes: SimNode[] = nodes.map((node) => mapNodeToSimNode(node, seed));
 
   const simLinks: SimLink[] = edges
     .filter((edge) => seed.has(edge.source) && seed.has(edge.target))
-    .map((edge) => ({
-      source: edge.source,
-      target: edge.target,
-      kind: edge.kind,
-      score: edge.score,
-    }));
+    .map(mapEdgeToSimLink);
 
   const simulation = forceSimulation<SimNode, SimLink>(simNodes, 3)
     .force(

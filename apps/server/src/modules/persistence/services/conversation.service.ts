@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '../../../generated/prisma/client.js';
 
+import { mapConversationSnapshot } from './helpers/map-conversation-snapshot.helper.js';
 import { ConversationRepository } from './conversation.repository.js';
 import type {
   ConversationSnapshot,
@@ -22,26 +23,7 @@ export class ConversationService {
   async listConversations(sessionId: string): Promise<ConversationSnapshot[]> {
     const latestTurns = await this.repository.findLatestBySession(sessionId);
 
-    return latestTurns.map((turn) => {
-      const content = (turn.content ?? {}) as Record<string, unknown>;
-      return {
-        id: typeof content.id === 'string' ? content.id : turn.conversationId,
-        conversationId: turn.conversationId,
-        title: turn.title,
-        updatedAt: turn.updatedAt,
-        type: (content.type as ConversationSnapshot['type']) ?? 'temporary',
-        event: content.event as string | undefined,
-        roomId: content.roomId as string | undefined,
-        numCtx: content.numCtx as string | undefined,
-        stream: content.stream as boolean | undefined,
-        subscriptions: content.subscriptions as
-          ConversationSnapshot['subscriptions'] | undefined,
-        contextUsagePercent:
-          typeof content.contextUsagePercent === 'string'
-            ? content.contextUsagePercent
-            : null,
-      } as ConversationSnapshot;
-    });
+    return latestTurns.map(mapConversationSnapshot);
   }
 
   async getConversation(

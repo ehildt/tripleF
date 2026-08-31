@@ -10,6 +10,9 @@ import { PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../../postgres/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
 
+import { mapGroupToPendingPartition } from './helpers/map-group-to-pending-partition.helper.js';
+import { mapLedgerRowToPending } from './helpers/map-ledger-row-to-pending.helper.js';
+
 /** One ledger row to write — the sweep's incremental input and the write-side audit trail. */
 interface MemoryInsertLedgerRow {
   memoryPartition: string;
@@ -78,15 +81,7 @@ export class MemoryInsertLedgerRepository
       orderBy: { createdAt: 'asc' },
       take: limit,
     });
-    return rows.map((row) => ({
-      id: row.id,
-      memoryPartition: row.memoryPartition,
-      pointId: row.pointId,
-      role: row.role as MemoryInsertLedgerRow['role'],
-      text: row.text,
-      requestId: row.requestId ?? undefined,
-      createdAt: row.createdAt,
-    }));
+    return rows.map(mapLedgerRowToPending);
   }
 
   /** Distinct partitions with pending rows, plus their pending counts. */
@@ -98,10 +93,7 @@ export class MemoryInsertLedgerRepository
       where: { sweptAt: null },
       _count: { _all: true },
     });
-    return groups.map((group) => ({
-      memoryPartition: group.memoryPartition,
-      pending: group._count._all,
-    }));
+    return groups.map(mapGroupToPendingPartition);
   }
 
   /** Mark rows swept (processed by the consolidation sweep). No-op on empty. */

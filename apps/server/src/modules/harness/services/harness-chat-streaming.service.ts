@@ -13,6 +13,7 @@ import { extractVideoCountFromToolResults } from '../helpers/media/extract-video
 import { filterExistingGalleryItems } from '../helpers/media/filter-existing-gallery-items.helper.js';
 import { IMAGE_TEMPLATES } from '../helpers/respond/build-execution-messages.helper.js';
 
+import { mapStreamMeta } from './helpers/map-stream-meta.helper.js';
 import { HarnessContext } from './harness-context.type.js';
 
 @Injectable()
@@ -117,12 +118,7 @@ export class HarnessChatStreamingService {
       ? images.filter((item) => item.source === 'cloud')
       : images;
 
-    const metaForStream = images.map(({ imageUrl, title, source }) => ({
-      name: title,
-      hash: imageUrl.split('/').pop() ?? '',
-      source,
-      variant: 'original' as const,
-    }));
+    const metaForStream = images.map(mapStreamMeta);
 
     this.logger.log(
       {

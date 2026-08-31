@@ -4,7 +4,7 @@ import { buildHubIds } from './build-hub-ids.helper';
 import { ROOT_NODE_ID } from './root-node-id.constant';
 
 describe('buildHubIds', () => {
-  it('uses the first member for expanded clusters and the category dot for collapsed ones', () => {
+  it('uses the first member for expanded clusters and the category dot for collapsed multi-member ones', () => {
     const hubIds = buildHubIds(
       [
         { key: 'x', label: 'x', color: '#000', memberIds: ['a', 'b'] },
@@ -13,7 +13,8 @@ describe('buildHubIds', () => {
       new Set(['y']),
     );
 
-    expect(hubIds).toEqual(new Set(['a', 'cluster:y', ROOT_NODE_ID]));
+    // Single-member clusters never collapse, so `y` resolves to its member.
+    expect(hubIds).toEqual(new Set(['a', 'c', ROOT_NODE_ID]));
   });
 
   it('still includes the ZERO root for empty clusters', () => {

@@ -4,6 +4,7 @@ import { useSocketStore } from '@/stores/socket';
 import { createId } from '@/utils/id.helper';
 
 import { buildBranchExchanges } from '../exchange-list/helpers/build-branch-exchanges.helper';
+import { mapExchangeToNewSession } from './helpers/map-exchange-to-new-session.helper';
 
 /**
  * Branch the active conversation at a user exchange: the exchange and its
@@ -39,10 +40,9 @@ export function useBranchExchange() {
     // The copies still carry the parent conversation's backlink — re-tag
     // them to the new conversation or deletion (which filters exchanges by
     // conversationId) can never empty and remove the branched conversation.
-    newSession.exchanges = newExchanges.map((exchange) => ({
-      ...exchange,
-      conversationId: newSession.conversationId,
-    }));
+    newSession.exchanges = newExchanges.map((exchange) =>
+      mapExchangeToNewSession(exchange, newSession.conversationId),
+    );
     newSession.title = userEx.content.slice(0, 50) || 'New Conversation';
 
     const socketStore = useSocketStore();

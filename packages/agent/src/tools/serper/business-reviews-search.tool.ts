@@ -5,6 +5,7 @@ import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperReviewResult } from './helpers/map-serper-review-result.helper.js';
 import {
   type SerperBusinessReviewsSearchInput,
   serperBusinessReviewsSearchSchema,
@@ -59,14 +60,7 @@ export function createSerperBusinessReviewsSearch(deps: ToolDependencies): Tool 
         return { results: [] };
       }
       const placeName = data.placeInfo?.title || '';
-      const results = data.reviews.map((r) => ({
-        author: r.user?.name || '',
-        snippet: r.snippet || '',
-        rating: r.rating,
-        date: r.isoDate || r.date || '',
-        likes: r.likes ?? 0,
-        place: placeName,
-      }));
+      const results = data.reviews.map((r) => mapSerperReviewResult(r, placeName));
       return {
         results,
         place: data.placeInfo

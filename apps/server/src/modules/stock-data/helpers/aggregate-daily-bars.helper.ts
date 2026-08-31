@@ -1,5 +1,7 @@
 import type { MarketDailyBar } from '../market-data.types.js';
 
+import { mapAggregatedGroup } from './map-aggregated-group.helper.js';
+
 /**
  * Aggregate daily bars into weekly or monthly bars (open = first bar, close
  * = last bar, high/low = extremes, volume = sum). Used when a weekly or
@@ -17,14 +19,9 @@ export function aggregateDailyBars(
     groups.set(key, group);
   }
 
-  return [...groups.entries()].map(([key, group]) => ({
-    date: period === 'm' ? `${key}-01` : group[0].date,
-    open: group[0].open,
-    high: Math.max(...group.map((b) => b.high)),
-    low: Math.min(...group.map((b) => b.low)),
-    close: group[group.length - 1].close,
-    volume: group.reduce((sum, b) => sum + b.volume, 0),
-  }));
+  return [...groups.entries()].map((entry) =>
+    mapAggregatedGroup(entry, period),
+  );
 }
 
 /** ISO week key (YYYY-Www) for a YYYY-MM-DD date. */

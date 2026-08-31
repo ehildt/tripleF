@@ -4,6 +4,7 @@ import { useConversationStore } from '@/stores/conversation';
 
 import { useModelsStore } from '../../../stores/models';
 import { useMergeSelection } from '../exchange-list/composables/use-merge-selection';
+import { mapExchangeToListItem } from './helpers/map-exchange-to-list-item.helper';
 import { useBranchExchange } from './use-branch-exchange';
 
 /**
@@ -51,38 +52,14 @@ export function useChatConversation() {
   });
 
   const messageListItems = computed(() =>
-    userExchanges.value.map((ex) => {
-      const assistant = conversation.value?.exchanges.find(
-        (e) => e.role === 'assistant' && e.requestId === ex.requestId,
-      );
-      const ctx = Number(effectiveNumCtx.value);
-      const hasTokenData =
-        assistant != null &&
-        (assistant.inputTokenDelta != null || assistant.evalCount != null);
-      const percent =
-        assistant && ctx && hasTokenData
-          ? Math.min(
-              100,
-              (((assistant.inputTokenDelta ?? 0) + (assistant.evalCount ?? 0)) /
-                ctx) *
-                100,
-            ).toFixed(2)
-          : null;
-      return {
-        id: ex.id,
-        role: ex.role,
-        content: ex.content,
-        included: ex.included !== false,
-        mergeSelected: conversation.value
-          ? mergeSelection.isMergeSelected(conversation.value.id, ex.id)
-          : false,
-        merged: ex.mergedInto != null,
-        mergedRequestId: ex.mergedInto ?? undefined,
-        // Leave undefined until the turn's token data is available so the
-        // history item shows no percentage rather than a misleading "--%".
-        contextPercent: percent ?? undefined,
-      };
-    }),
+    userExchanges.value.map((ex) =>
+      mapExchangeToListItem(
+        ex,
+        conversation.value,
+        effectiveNumCtx.value,
+        mergeSelection,
+      ),
+    ),
   );
 
   /** Include/exclude the user prompt at the given history index (pairs its

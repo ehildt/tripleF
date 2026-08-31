@@ -2,12 +2,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { MemoryInsertLedgerRepository } from '../../../../persistence/services/memory-insert-ledger.repository.js';
 import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
-import { deterministicPointId } from '../../../helpers/deterministic-point-id.helper.js';
 import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
 import { MemoryRepository } from '../../memory.repository.js';
 import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
+
+import { mapFactToPoint } from './helpers/map-fact-to-point.helper.js';
+import { mapPointToLedgerRow } from './helpers/map-point-to-ledger-row.helper.js';
+import { mapPointToLog } from './helpers/map-point-to-log.helper.js';
 
 /**
  * 'store' — assemble one point per extracted fact and upsert. The id is
@@ -31,16 +34,16 @@ export class StoreStepService implements VectorizeStepHandler {
     const extraction = ctx.outputs.extraction ?? { facts: [], tags: [] };
     const vectors = ctx.outputs.vectors ?? [];
 
-    const points = extraction.facts.map((fact, index) => ({
-      id: deterministicPointId(`${ctx.memoryPartition}|${ctx.role}|${fact}`),
-      vector: vectors[index],
-      text: fact,
-      tags: extraction.tags,
-      // One broad family label per turn-side — groups the narrow tags into
-      // one topic family for the constellation community tier and the relink
-      // job's per-category passes.
-      category: extraction.category,
-    }));
+    const points = extraction.facts.map((fact, index) =>
+      mapFactToPoint(
+        fact,
+        index,
+        vectors,
+        extraction,
+        ctx.memoryPartition,
+        ctx.role,
+      ),
+    );
     if (points.length === 0) return;
 
     await this.memoryRepository.upsertBatch({
@@ -57,11 +60,7 @@ export class StoreStepService implements VectorizeStepHandler {
         jobId: ctx.jobId,
         requestId: ctx.requestId,
         step: 'store',
-        points: points.map((point) => ({
-          id: point.id,
-          text: point.text,
-          tags: point.tags,
-        })),
+        points: points.map(mapPointToLog),
       },
       `stored ${points.length} memory points`,
     );
@@ -71,13 +70,14 @@ export class StoreStepService implements VectorizeStepHandler {
     // never a failed write.
     try {
       await this.ledger.insertMany(
-        points.map((point) => ({
-          memoryPartition: ctx.memoryPartition,
-          pointId: point.id,
-          role: ctx.role,
-          text: point.text,
-          requestId: ctx.requestId,
-        })),
+        points.map((point) =>
+          mapPointToLedgerRow(
+            point,
+            ctx.memoryPartition,
+            ctx.role,
+            ctx.requestId,
+          ),
+        ),
       );
       // Auto-trigger: cross the pending threshold → enqueue a consolidation
       // sweep. Fixed jobId per partition dedupes concurrent enqueues in BullMQ.

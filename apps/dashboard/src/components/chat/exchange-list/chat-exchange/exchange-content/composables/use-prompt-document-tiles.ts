@@ -4,6 +4,8 @@ import { getApiUrl } from '@/api/api-url';
 import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 
+import { mapDocumentToTile } from './helpers/map-document-to-tile.helper';
+
 /**
  * Map an exchange's attached documents to preview tiles: the storage url of
  * the original file (uploaded via the originals field) plus the display
@@ -26,12 +28,14 @@ export function usePromptDocumentTiles(exchange: MaybeRefOrGetter<Exchange>) {
     // text preview accidentally.
     return current.documents
       .filter((doc) => !doc.name.toLowerCase().endsWith('.pdf'))
-      .map((doc) => ({
-        name: doc.name,
-        url: getApiUrl(
-          `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${doc.hash}`,
+      .map((doc) =>
+        mapDocumentToTile(
+          doc,
+          getApiUrl(
+            `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${doc.hash}`,
+          ),
         ),
-      }));
+      );
   });
 
   return { documentTiles };

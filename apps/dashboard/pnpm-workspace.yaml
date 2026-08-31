@@ -14,20 +14,20 @@ minimumReleaseAgeExclude:
   - '@storybook/react-dom-shim@10.5.6 || 10.5.8 || 10.5.10'
   - '@storybook/vue3-vite@10.5.6 || 10.5.8 || 10.5.10'
   - '@storybook/vue3@10.5.6 || 10.5.8 || 10.5.10'
-  - '@typescript-eslint/eslint-plugin@8.66.0'
-  - '@typescript-eslint/parser@8.66.0'
-  - '@typescript-eslint/project-service@8.66.0'
-  - '@typescript-eslint/scope-manager@8.66.0'
-  - '@typescript-eslint/tsconfig-utils@8.66.0'
-  - '@typescript-eslint/type-utils@8.66.0'
-  - '@typescript-eslint/types@8.66.0'
-  - '@typescript-eslint/typescript-estree@8.66.0'
-  - '@typescript-eslint/utils@8.66.0'
-  - '@typescript-eslint/visitor-keys@8.66.0'
+  - '@typescript-eslint/eslint-plugin@8.66.0 || 8.69.0'
+  - '@typescript-eslint/parser@8.66.0 || 8.69.0'
+  - '@typescript-eslint/project-service@8.66.0 || 8.69.0'
+  - '@typescript-eslint/scope-manager@8.66.0 || 8.69.0'
+  - '@typescript-eslint/tsconfig-utils@8.66.0 || 8.69.0'
+  - '@typescript-eslint/type-utils@8.66.0 || 8.69.0'
+  - '@typescript-eslint/types@8.66.0 || 8.69.0'
+  - '@typescript-eslint/typescript-estree@8.66.0 || 8.69.0'
+  - '@typescript-eslint/utils@8.66.0 || 8.69.0'
+  - '@typescript-eslint/visitor-keys@8.66.0 || 8.69.0'
   - dompurify@3.4.13 || 3.4.14
   - eslint-plugin-storybook@10.5.6 || 10.5.8 || 10.5.10
   - storybook@10.5.6 || 10.5.8 || 10.5.10
-  - typescript-eslint@8.66.0
+  - typescript-eslint@8.66.0 || 8.69.0
   - '@types/node@26.2.0'
   - eslint@10.8.1
   - vite@8.2.2

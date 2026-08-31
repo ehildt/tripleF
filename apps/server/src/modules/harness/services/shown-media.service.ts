@@ -10,6 +10,7 @@ import {
 import { extractStorageHash } from '../helpers/media/extract-storage-hash.helper.js';
 import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
 
+import { mapShownMediaKey } from './helpers/map-shown-media-key.helper.js';
 import type { RecordShownMediaParams } from './shown-media.service.types.js';
 
 /** Registry keys for one conversation, split for candidate matching. */
@@ -56,14 +57,12 @@ export class ShownMediaService {
 
     const extracted = extractShownMediaKeys(data, sources);
     const entries = [
-      ...extracted.imageKeys.map((mediaKey) => ({
-        kind: ShownMediaKind.Image,
-        mediaKey,
-      })),
-      ...extracted.videoKeys.map((mediaKey) => ({
-        kind: ShownMediaKind.Video,
-        mediaKey,
-      })),
+      ...extracted.imageKeys.map((mediaKey) =>
+        mapShownMediaKey(mediaKey, ShownMediaKind.Image),
+      ),
+      ...extracted.videoKeys.map((mediaKey) =>
+        mapShownMediaKey(mediaKey, ShownMediaKind.Video),
+      ),
     ];
     if (entries.length === 0) return 0;
 

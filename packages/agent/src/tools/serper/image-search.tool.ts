@@ -10,6 +10,7 @@ import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import { tbsSizeLabelForPixels } from '../helpers/image-size-buckets.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapSerperImageResult } from './helpers/map-serper-image-result.helper.js';
 import { type SerperImageSearchInput, serperImageSearchSchema } from './image-search.schema.js';
 import type { SerperImageSearchResponse } from './image-search.types.js';
 import { HEADERS } from './serper.constants.js';
@@ -67,23 +68,13 @@ export function createSerperImageSearch(deps: ToolDependencies): Tool {
         deps.logger.warn(`Serper.dev Image Search returned 0 results for "${query}"`);
         return { results: [] };
       }
-      const results = data.images
-        .map((r) => ({
-          title: r.title || '',
-          imageUrl: r.imageUrl || r.image || '',
-          sourcePageUrl: r.link || '',
-          width: r.imageWidth ?? r.width,
-          height: r.imageHeight ?? r.height,
-          source: r.source || '',
-          domain: r.domain || '',
-        }))
-        .filter((r) => {
-          if (!isTrustedImageUrl(r.imageUrl)) return false;
-          const w = r.width ?? 0;
-          const h = r.height ?? 0;
-          if (!w || !h) return true;
-          return meetsMinimumImageDimensions(w, h, minWidth, minHeight);
-        });
+      const results = data.images.map(mapSerperImageResult).filter((r) => {
+        if (!isTrustedImageUrl(r.imageUrl)) return false;
+        const w = r.width ?? 0;
+        const h = r.height ?? 0;
+        if (!w || !h) return true;
+        return meetsMinimumImageDimensions(w, h, minWidth, minHeight);
+      });
       deps.logger.log(`Serper.dev Image Search returned ${results.length} results for "${query}"`);
       return { results };
     },

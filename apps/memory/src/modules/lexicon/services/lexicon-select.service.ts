@@ -24,6 +24,9 @@ import {
 import { cosineScores } from '../helpers/score-chunks.helper.js';
 import type { LexiconConfig } from '../models/lexicon-config.model.js';
 
+import { mapChunkWithScore } from './helpers/map-chunk-with-score.helper.js';
+import { mapHitToChunk } from './helpers/map-hit-to-chunk.helper.js';
+import { mapPassageToChunk } from './helpers/map-passage-to-chunk.helper.js';
 import {
   LexiconStoreService,
   type PersistOutcome,
@@ -153,15 +156,7 @@ export class LexiconSelectService {
         this.config.maxChunks,
         this.config.scoreThreshold,
       );
-      chunks.push(
-        ...hits.map((hit) => ({
-          url: hit.url,
-          title: hit.title,
-          content: hit.content,
-          score: hit.score ?? 0,
-          sourceType: 'content' as const,
-        })),
-      );
+      chunks.push(...hits.map(mapHitToChunk));
     }
 
     let inputChunksDropped = 0;
@@ -175,10 +170,9 @@ export class LexiconSelectService {
         );
         const scores = cosineScores(queryVector, vectors);
         chunks.push(
-          ...ephemeral.chunks.map((chunk, index) => ({
-            ...chunk,
-            score: scores[index] ?? 0,
-          })),
+          ...ephemeral.chunks.map((chunk, index) =>
+            mapChunkWithScore(chunk, index, scores),
+          ),
         );
       }
     }
@@ -284,13 +278,7 @@ export class LexiconSelectService {
     const passages = mergeAdjacentChunks(
       expanded,
       this.config.chunkOverlapSentences,
-    ).map((passage) => ({
-      url: passage.url,
-      title: passage.title,
-      content: passage.content,
-      score: passage.score,
-      sourceType: 'content' as const,
-    }));
+    ).map(mapPassageToChunk);
 
     return [...passages, ...snippets];
   }

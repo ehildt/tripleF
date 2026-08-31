@@ -8,13 +8,14 @@ import {
   MEMORY_CLIENT_CONFIG,
   MEMORY_PROFILE_JOB,
   MEMORY_WRITE_JOB,
-  VECTORIZE_JOB,
 } from '../constants/memory-client.constants.js';
 import type {
   MemoryProfileJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/vectorize-job.model.js';
+
+import { mapVectorizeJob } from './helpers/map-vectorize-job.helper.js';
 
 interface EnqueueTurnInput {
   /** Fact partition the records belong to; defaults to the session id. */
@@ -73,9 +74,7 @@ export class MemoryEnqueueService {
         jobs.push({ ...base, role: 'assistant', text: input.assistantText });
       }
       if (jobs.length === 0) return;
-      await this.queue.addBulk(
-        jobs.map((data) => ({ name: VECTORIZE_JOB, data })),
-      );
+      await this.queue.addBulk(jobs.map(mapVectorizeJob));
     } catch (error) {
       this.logger.warn(
         `Memory enqueue failed — memory will be skipped: ${

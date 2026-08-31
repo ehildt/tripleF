@@ -6,6 +6,7 @@ import type { SearchRecency } from '../helpers/apply-recency-param.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
 import type { ToolDependencies } from '../types/types.js';
 
+import { mapYoutubeVideoResult } from './helpers/map-youtube-video-result.helper.js';
 import { type YoutubeVideoSearchInput, youtubeVideoSearchSchema } from './youtube.schema.js';
 import type { VideoStats, YoutubeSearchResponse, YoutubeVideosResponse } from './youtube.types.js';
 
@@ -39,17 +40,6 @@ async function readErrorReason(res: Response): Promise<string | undefined> {
   } catch {
     return undefined;
   }
-}
-
-/** Convert an ISO 8601 duration (PT#H#M#S) to an H:MM:SS / M:SS label. */
-function formatIsoDuration(iso?: string): string {
-  const match = iso?.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
-  if (!match) return '';
-  const hours = Number(match[1] ?? 0);
-  const minutes = Number(match[2] ?? 0);
-  const seconds = Number(match[3] ?? 0);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return hours ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }
 
 /**
@@ -149,24 +139,7 @@ export function createYoutubeVideoSearch(deps: ToolDependencies): Tool {
         deps.logger,
       );
 
-      const results = items.map((item) => {
-        const snippet = item.snippet ?? {};
-        const id = item.id!.videoId!;
-        const detail = stats.get(id);
-        const thumbs = snippet.thumbnails ?? {};
-        return {
-          title: snippet.title ?? '',
-          link: `https://www.youtube.com/watch?v=${id}`,
-          snippet: snippet.description ?? '',
-          channel: snippet.channelTitle ?? '',
-          duration: formatIsoDuration(detail?.duration),
-          date: snippet.publishedAt ?? '',
-          thumbnailUrl: thumbs.maxres?.url ?? thumbs.high?.url ?? thumbs.medium?.url ?? '',
-          source: 'youtube',
-          views: detail?.viewCount ?? 0,
-          lang: detail?.lang,
-        };
-      });
+      const results = items.map((item) => mapYoutubeVideoResult(item, stats));
 
       deps.logger.log(`YouTube video search returned ${results.length} results for "${query}"`);
       return { results };

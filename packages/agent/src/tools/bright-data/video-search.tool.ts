@@ -4,11 +4,11 @@ import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.js';
 import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import { buildYoutubeThumbnailUrl } from '../helpers/build-youtube-thumbnail-url.helper.js';
 import { localizedQuerySuffix } from '../helpers/localized-query-suffix.helper.js';
 import type { ToolDependencies } from '../types/types.js';
 
-import { buildGoogleUrl, engineEnabled, SOURCE } from './bright-data.constants.js';
+import { mapBrightDataVideoResult } from './helpers/map-bright-data-video-result.helper.js';
+import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataVideoSearchInput, brightDataVideoSearchSchema } from './video-search.schema.js';
 import type { BrightDataVideoSearchResponse } from './video-search.types.js';
@@ -51,19 +51,7 @@ export function createBrightDataVideoSearch(deps: ToolDependencies): Tool {
         // a duration field), not a dedicated `videos` array.
         const videos = data.organic ?? [];
         if (!videos.length) return { results: [] };
-        const results = videos.map((r) => ({
-          title: r.title || '',
-          link: r.link || '',
-          snippet: r.description || '',
-          channel: '',
-          duration: r.duration || '',
-          date: '',
-          // `image` is an embedded base64 thumbnail — derive a direct YouTube
-          // thumbnail from the link instead.
-          thumbnailUrl: buildYoutubeThumbnailUrl(r.link || '') ?? '',
-          source: SOURCE,
-          views: 0,
-        }));
+        const results = videos.map(mapBrightDataVideoResult);
         deps.logger.log(`Bright Data video search returned ${results.length} results for "${searchQuery}"`);
         return { results };
       } catch (err) {

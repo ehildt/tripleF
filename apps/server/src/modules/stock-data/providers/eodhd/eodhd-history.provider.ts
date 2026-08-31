@@ -8,6 +8,7 @@ import {
   MarketHistoryUnavailableError,
 } from '../../market-data.types.js';
 
+import { mapEodhdPointToDailyBar } from './helpers/map-eodhd-point-to-daily-bar.helper.js';
 import {
   EodhdApiError,
   EodhdClient,
@@ -44,15 +45,7 @@ export class EodhdHistoryProvider implements MarketHistoryProvider {
     const client = new EodhdClient(cfg.apiKey);
     try {
       const points = await client.history(ticker, { period: 'd', from, to });
-      return points.map((p) => ({
-        date: p.date,
-        open: p.open,
-        high: p.high,
-        low: p.low,
-        close: p.close,
-        adjustedClose: p.adjustedClose,
-        volume: p.volume,
-      }));
+      return points.map(mapEodhdPointToDailyBar);
     } catch (err) {
       throw new MarketHistoryFetchError(
         err instanceof Error ? err.message : String(err),

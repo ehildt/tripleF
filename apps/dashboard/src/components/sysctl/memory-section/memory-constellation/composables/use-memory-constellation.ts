@@ -16,8 +16,8 @@ import { hitTestNode } from '../helpers/hit-test-node.helper';
 import { idleYawIncrement } from '../helpers/idle-yaw-increment.helper';
 import { interpolateTransitionPosition } from '../helpers/interpolate-transition-position.helper';
 import { isPointOnScreen } from '../helpers/is-point-on-screen.helper';
-import { orbitPosition } from '../helpers/orbit-position.helper';
-import { orbitScaleFor } from '../helpers/orbit-scale.helper';
+import { mapNodeToClusterOpacity } from '../helpers/map-node-to-cluster-opacity.helper';
+import { mapNodeToProjected } from '../helpers/map-node-to-projected.helper';
 import { prepareConstellation } from '../helpers/prepare-constellation.helper';
 import { projectPoint } from '../helpers/project-point.helper';
 import type {
@@ -32,8 +32,6 @@ import type {
 const EXPAND_TRANSITION_DURATION = 500;
 /** Collapse animation duration (ms) — a quick pull back into the category dot. */
 const COLLAPSE_TRANSITION_DURATION = 1000;
-/** Leaf orbit speed (rad/s — ~0.15 ≈ one revolution per ~42s). */
-const ORBIT_SPEED = 0.15;
 /** Zoom (relative to the fit level) below which clusters auto-collapse. */
 const ZOOM_COLLAPSE_FACTOR = 1.2;
 /** Zoom (relative to the fit level) above which in-view clusters re-expand. */
@@ -228,34 +226,27 @@ export function useMemoryConstellation(
     );
 
     const nowMs = performance.now();
-    const projected = nodeList.map((node) => {
-      const pos = positions.get(node.id);
-      if (!pos) return { x: viewCx, y: viewCy, scale: 1 };
-      const transition = transitions.get(node.id);
-      const animated = interpolateTransitionPosition(transition, pos, nowMs);
-      // Leaves slowly orbit their main dot (hubs and synthetic dots stay
-      // put). The orbit offset shrinks to zero during a collapse so leaves
-      // settle exactly on the category dot.
-      const orbit = orbitCenters.value.get(node.id);
-      const world = orbit
-        ? orbitPosition(
-            animated,
-            orbit.center,
-            time * ORBIT_SPEED + orbit.phase,
-            orbitScaleFor(transition, nowMs),
-          )
-        : animated;
-      return projectPoint(world, s.yaw, s.pitch, fov, viewCx, viewCy, s.zoom);
-    });
+    const projected = nodeList.map((node) =>
+      mapNodeToProjected(
+        node,
+        positions,
+        transitions,
+        orbitCenters.value,
+        nowMs,
+        time,
+        viewCx,
+        viewCy,
+        s.yaw,
+        s.pitch,
+        fov,
+        s.zoom,
+      ),
+    );
 
     // Zoom-focus: past the threshold, the cluster nearest the cursor stays
     // full and the other dimensions fade toward 0.25 opacity.
     const clusterOpacity = computeClusterOpacity(
-      nodeList.map((node, i) => ({
-        clusterKey: node.clusterKey,
-        x: projected[i].x,
-        y: projected[i].y,
-      })),
+      nodeList.map((node, i) => mapNodeToClusterOpacity(node, i, projected)),
       focusX,
       focusY,
       s.zoom,

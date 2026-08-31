@@ -15,6 +15,9 @@ import {
 import { buildOllamaHeaders } from '../helpers/build-ollama-headers.helper.js';
 import { isOllamaCloudHost } from '../helpers/is-ollama-cloud-host.helper.js';
 
+import { mapModelCatalogEntry } from './helpers/map-model-catalog-entry.helper.js';
+import { mapRawTag } from './helpers/map-raw-tag.helper.js';
+import { mapTaggedModelOrigin } from './helpers/map-tagged-model-origin.helper.js';
 import type {
   ModelOrigin,
   ShowResult,
@@ -80,10 +83,7 @@ export class OllamaModelsService implements OnModuleInit, OnModuleDestroy {
     const hostIsCloud = isOllamaCloudHost(host);
 
     const tagged: TaggedModel[] = (await this.fetchTags(host, apiKey)).map(
-      (model) => ({
-        ...model,
-        origin: hostIsCloud ? 'cloud' : 'local',
-      }),
+      (model) => mapTaggedModelOrigin(model, hostIsCloud),
     );
 
     if (!hostIsCloud && apiKey) {
@@ -104,21 +104,11 @@ export class OllamaModelsService implements OnModuleInit, OnModuleDestroy {
     const models = await Promise.all(
       tagged.map(async (entry) => {
         const show = await this.getModelShow(entry.name, entry.origin);
-        return {
-          model: entry.name,
-          origin: entry.origin,
-          // The Ollama Cloud catalog returns empty detail strings, so fall
-          // back to the /show payload (already fetched for capabilities)
-          // which carries the raw parameter count and quantization.
-          parameter_size:
-            entry.details?.parameter_size || show?.details?.parameter_size,
-          quantization_level:
-            entry.details?.quantization_level ||
-            show?.details?.quantization_level,
-          family: entry.details?.family,
-          capabilities: show?.capabilities ?? [],
-          context_length: this.extractContextLength(show?.model_info),
-        };
+        return mapModelCatalogEntry(
+          entry,
+          show,
+          this.extractContextLength(show?.model_info),
+        );
       }),
     );
 
@@ -165,10 +155,7 @@ export class OllamaModelsService implements OnModuleInit, OnModuleDestroy {
     if (!tagsRes.ok) throw new Error(`Ollama API error: ${tagsRes.status}`);
     const tags = await tagsRes.json();
 
-    return (tags.models ?? []).map((m: Record<string, unknown>) => ({
-      name: m.model as string,
-      details: m.details as Record<string, unknown> | undefined,
-    }));
+    return (tags.models ?? []).map(mapRawTag);
   }
 
   private async getModelShow(

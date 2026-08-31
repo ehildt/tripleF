@@ -2,18 +2,7 @@ import type {
   ConstellationCluster,
   ConstellationNode,
 } from '../MemoryConstellation.types';
-
-/** Categorical palette for cluster blobs (stable by cluster order). */
-const CLUSTER_PALETTE = [
-  '#8b5cf6',
-  '#ec4899',
-  '#6366f1',
-  '#0ea5e9',
-  '#f59e0b',
-  '#10b981',
-  '#ef4444',
-  '#14b8a6',
-];
+import { mapClusterEntry } from './map-cluster-entry.helper';
 
 /**
  * Group nodes by their `clusterKey` into cluster blobs, assigning each a
@@ -29,10 +18,5 @@ export function clusterNodes(
     members.push(node.id);
     byKey.set(node.clusterKey, members);
   }
-  return [...byKey.entries()].map(([key, memberIds], index) => ({
-    key,
-    label: key,
-    color: CLUSTER_PALETTE[index % CLUSTER_PALETTE.length],
-    memberIds,
-  }));
+  return [...byKey.entries()].map(mapClusterEntry);
 }

@@ -75,12 +75,12 @@
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.68.0",
+    "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.2.3",
-    "ai": "^7.0.85",
+    "ai": "^7.0.87",
     "joi": "^18.2.5"
   }
 }

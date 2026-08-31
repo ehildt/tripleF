@@ -17,7 +17,8 @@ import {
 import type { DocumentSection } from '../helpers/documents/document-section.types.js';
 import { extractTextFromPptxBuffer } from '../helpers/documents/extract-text-from-pptx-buffer.helper.js';
 
-const PAGE_IMAGE_CONTENT_TYPE = 'image/jpeg';
+import { mapPageMeta } from './helpers/map-page-meta.helper.js';
+
 const MANIFEST_CONTENT_TYPE = 'application/json';
 
 /**
@@ -163,12 +164,7 @@ export class DocumentConversionService {
         conversationId,
         requestId,
         manifest.pageBuffers.map((page) => page.buffer),
-        manifest.pageBuffers.map((page) => ({
-          name: `${entry.name} · page ${page.page}`,
-          type: PAGE_IMAGE_CONTENT_TYPE,
-          hash: page.hash,
-          size: page.buffer.length,
-        })),
+        manifest.pageBuffers.map((page) => mapPageMeta(page, entry.name)),
       );
     }
 

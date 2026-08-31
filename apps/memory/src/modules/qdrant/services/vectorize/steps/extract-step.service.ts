@@ -121,31 +121,8 @@ export class ExtractStepService implements VectorizeStepHandler {
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   ) {
     for (let attempt = 1; attempt <= MAX_EXTRACTION_ATTEMPTS; attempt++) {
-      let text: string;
-      try {
-        ({ text } = await this.aiSdkService.generateChat({
-          model: ctx.model!,
-          messages: messages as never,
-          providerOptions: buildProviderOptions({
-            think: false,
-          }),
-          tools: {},
-        }));
-      } catch (error) {
-        // LLM call failed (model down / network) — degrade, no correction pass:
-        // infrastructure failures are the queue's retry domain, and the turn
-        // is still stored text-only.
-        this.logger.warn(
-          {
-            jobId: ctx.jobId,
-            requestId: ctx.requestId,
-            step: 'extract',
-            err: error instanceof Error ? error : new Error(String(error)),
-          },
-          `extraction call failed for job ${ctx.jobId}`,
-        );
-        return { facts: [], tags: [] };
-      }
+      const text = await this.fetchExtractionText(ctx, messages);
+      if (text === null) return { facts: [], tags: [] };
 
       try {
         return parseExtraction(text);
@@ -171,5 +148,38 @@ export class ExtractStepService implements VectorizeStepHandler {
       }
     }
     return { facts: [], tags: [] };
+  }
+
+  /**
+   * One chat call for the extraction. A failed LLM call (model down / network)
+   * degrades to null — infrastructure failures are the queue's retry domain,
+   * and the turn is still stored text-only by later steps.
+   */
+  private async fetchExtractionText(
+    ctx: VectorizeContext,
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  ): Promise<string | null> {
+    try {
+      const { text } = await this.aiSdkService.generateChat({
+        model: ctx.model!,
+        messages: messages as never,
+        providerOptions: buildProviderOptions({
+          think: false,
+        }),
+        tools: {},
+      });
+      return text;
+    } catch (error) {
+      this.logger.warn(
+        {
+          jobId: ctx.jobId,
+          requestId: ctx.requestId,
+          step: 'extract',
+          err: error instanceof Error ? error : new Error(String(error)),
+        },
+        `extraction call failed for job ${ctx.jobId}`,
+      );
+      return null;
+    }
   }
 }

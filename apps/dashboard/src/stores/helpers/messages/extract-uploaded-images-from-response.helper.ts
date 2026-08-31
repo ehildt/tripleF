@@ -1,4 +1,5 @@
 import type { UploadedImage } from '../../conversation';
+import { mapEntryToUploadedImage } from './map-entry-to-uploaded-image.helper';
 
 /**
  * Extract the uploaded-image entries a response carries in `meta`. Only
@@ -35,14 +36,5 @@ export function extractUploadedImagesFromResponse(
         typeof entry.hash === 'string' &&
         (!entry.variant || entry.variant === 'original'),
     )
-    .map((entry) => ({
-      name: entry.name,
-      hash: entry.hash,
-      size: entry.size,
-      uploadedAt: Date.now(),
-      selected: true,
-      conversationId,
-      source:
-        entry.source === 'cloud' ? ('cloud' as const) : ('local' as const),
-    }));
+    .map((entry) => mapEntryToUploadedImage(entry, conversationId));
 }

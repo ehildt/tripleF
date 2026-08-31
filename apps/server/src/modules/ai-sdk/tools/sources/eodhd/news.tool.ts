@@ -1,18 +1,9 @@
 import type { ToolDependencies } from '@triplef/agent/tools';
-import { limitText } from '@triplef/helpers/limit-text';
 import { tool } from 'ai';
 
+import { mapEodhdNewsToResult } from './helpers/map-eodhd-news-to-result.helper.js';
 import { createEodhdClient, eodhdErrorResult } from './eodhd-tool.helper.js';
 import { eodhdNewsSchema } from './news.schema.js';
-
-/** Publisher label from a link when the API does not provide one. */
-function deriveSourceFromLink(link: string): string | undefined {
-  try {
-    return new URL(link).hostname.replace(/^www\./, '');
-  } catch {
-    return undefined;
-  }
-}
 
 export function createEodhdNews(deps: ToolDependencies) {
   return tool({
@@ -31,15 +22,9 @@ export function createEodhdNews(deps: ToolDependencies) {
       try {
         const articles = await client.news(ticker, limit ?? 10);
         return {
-          results: articles.map((a) => ({
-            title: a.title,
-            url: a.link,
-            source: deriveSourceFromLink(a.link),
-            date: a.date,
-            snippet: a.content
-              ? limitText(a.content, cfg.news.snippetChars)
-              : undefined,
-          })),
+          results: articles.map((a) =>
+            mapEodhdNewsToResult(a, cfg.news.snippetChars),
+          ),
         };
       } catch (err) {
         return eodhdErrorResult(err);

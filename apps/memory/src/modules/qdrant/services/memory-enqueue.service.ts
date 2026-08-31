@@ -10,7 +10,6 @@ import {
   MEMORY_RELINK_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
-  VECTORIZE_JOB,
 } from '../constants/qdrant.constants.js';
 import type {
   LexiconSweepJobData,
@@ -21,6 +20,8 @@ import type {
   VectorizeJobData,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
+
+import { mapVectorizeJob } from './helpers/map-vectorize-job.helper.js';
 
 interface EnqueueTurnInput {
   /** Fact partition the records belong to; defaults to the session id. */
@@ -75,9 +76,7 @@ export class MemoryEnqueueService {
         jobs.push({ ...base, role: 'assistant', text: input.assistantText });
       }
       if (jobs.length === 0) return;
-      await this.queue.addBulk(
-        jobs.map((data) => ({ name: VECTORIZE_JOB, data })),
-      );
+      await this.queue.addBulk(jobs.map(mapVectorizeJob));
     } catch (error) {
       this.logger.warn(
         `Memory enqueue failed — memory will be skipped: ${
