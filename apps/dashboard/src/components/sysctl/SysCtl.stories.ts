@@ -10,9 +10,10 @@ const meta = {
     docs: {
       description: {
         component: `
-Search Engines configuration panel. Fetches live provider overrides, lets users
-select a search engine via icon buttons, toggle providers/endpoints, control tab
-visibility, and monitor system health in a separate panel below.
+Settings panel. The Integrations tab shows one tile per provider — clicking
+a tile opens a slide-over drawer with its configuration (API key, endpoints,
+result limits); the remaining tabs host preprocessing, layouts, widgets, chat
+navigation, interface, memory, and system health.
 `,
       },
     },

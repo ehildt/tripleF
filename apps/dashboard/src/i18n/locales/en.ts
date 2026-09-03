@@ -228,7 +228,7 @@ const en: LocaleMessages = {
     previousImage: 'Previous image',
     noSearchEngineConnected: 'No search engine connected',
     noSearchEngineConnectedDesc:
-      "No search engine connected — answers come from the model's training data. Enable one in Settings → Search engines.",
+      "No search engine connected — answers come from the model's training data. Enable one in Settings → Integrations.",
     notifications: 'Notifications',
     playVideo: 'Play video',
     playlistName: 'Playlist name',
@@ -384,7 +384,18 @@ const en: LocaleMessages = {
     noVideosFound: 'No videos came back for this one.',
     noProductFound: 'No product info came back for this one.',
     noPurchaseOptions: 'No places to buy came back for this one.',
-    sysctlSearchEngines: 'Search engines',
+    sysctlIntegrations: 'Integrations',
+    integrationSerperDesc:
+      'Google web, images, news, places and more via the Serper API',
+    integrationBrightDataDesc:
+      'Google search results and page unblocking via Bright Data zones',
+    integrationYoutubeDesc:
+      'YouTube video search with views and metadata via the Data API',
+    integrationEodhdDesc:
+      'Stock market search, quotes, history and fundamentals via EODHD',
+    integrationSourcesDesc:
+      'Boost or block domains and tune the image reference count',
+    integrationOpenConfig: 'Open {name} configuration',
     sysctlPreprocessing: 'Preprocessing',
     sysctlLayouts: 'Layouts',
     templateArticle: 'Article',

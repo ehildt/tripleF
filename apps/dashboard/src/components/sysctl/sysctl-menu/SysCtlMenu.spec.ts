@@ -6,7 +6,7 @@ import SysCtlMenu from './SysCtlMenu.vue';
 describe('SysCtlMenu', () => {
   it('emits selectTab with the chosen tab when a tab button is clicked', async () => {
     const wrapper = mount(SysCtlMenu, {
-      props: { activeTab: 'search-engines' },
+      props: { activeTab: 'integrations' },
     });
 
     const systemButton = wrapper
@@ -22,10 +22,10 @@ describe('SysCtlMenu', () => {
 
   it('emits selectTab for each tab', async () => {
     const wrapper = mount(SysCtlMenu, {
-      props: { activeTab: 'search-engines' },
+      props: { activeTab: 'integrations' },
     });
 
-    const tabs = ['Search engines', 'Preprocessing', 'Widgets', 'System'];
+    const tabs = ['Integrations', 'Preprocessing', 'Widgets', 'System'];
 
     for (const label of tabs) {
       const button = wrapper

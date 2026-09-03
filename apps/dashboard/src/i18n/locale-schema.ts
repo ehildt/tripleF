@@ -400,7 +400,14 @@ const commonSchema = z.object({
   noProductFound: z.string(),
   noPurchaseOptions: z.string(),
   /** SysCtl tab chrome (labels, descriptions, menu, empty states). */
-  sysctlSearchEngines: z.string().optional(),
+  sysctlIntegrations: z.string().optional(),
+  /** Integrations grid: tile copy, drawer labels. */
+  integrationSerperDesc: z.string().optional(),
+  integrationBrightDataDesc: z.string().optional(),
+  integrationYoutubeDesc: z.string().optional(),
+  integrationEodhdDesc: z.string().optional(),
+  integrationSourcesDesc: z.string().optional(),
+  integrationOpenConfig: z.string().optional(),
   sysctlPreprocessing: z.string().optional(),
   sysctlLayouts: z.string().optional(),
   templateArticle: z.string().optional(),

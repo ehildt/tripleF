@@ -13,8 +13,9 @@ vi.mock('../../composables/use-toast', () => ({
 
 // The system tab mounts the memory panels, which read the cognition
 // snapshot and the fact partition through the real @/api/memory.api module.
-// The spec's global fetch stub returns the search-engines config shape, so
-// the memory reads are mocked here to return their documented empty states.
+// The spec's global fetch stub returns the provider-overrides config shape,
+// so the memory reads are mocked here to return their documented empty
+// states.
 vi.mock('@/api/memory.api', () => ({
   fetchMemoryCognition: vi.fn(async () => ({
     profile: null,
@@ -127,21 +128,47 @@ describe('SysCtl', () => {
     await tab?.trigger('click');
   }
 
-  it('opens on the search engines tab by default', async () => {
+  it('opens on the integrations tab by default', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('Search engines');
+      expect(wrapper.text()).toContain('Integrations');
     });
   });
 
-  it('renders the serper provider section with its endpoints', async () => {
+  it('shows a tile per integration with its state-colored toggle', async () => {
     const wrapper = mountPanel();
     await vi.waitFor(() => {
+      const tiles = wrapper.findAll('.integration-tile__surface');
+      expect(tiles.length).toBeGreaterThanOrEqual(5);
+      expect(wrapper.text()).toContain('Serper');
+      // The mock config has an enabled serper with an API key → green toggle.
+      expect(wrapper.find('.integration-tile--ok').exists()).toBe(true);
       expect(wrapper.find('button[aria-label="Enable Serper"]').exists()).toBe(
         true,
       );
-      expect(wrapper.text()).toContain('Web');
-      expect(wrapper.text()).toContain('Images');
+    });
+  });
+
+  it('opens the serper drawer with its endpoints when the tile is clicked', async () => {
+    const wrapper = mountPanel();
+    await vi.waitFor(() => {
+      expect(wrapper.find('.integration-tile__surface').exists()).toBe(true);
+    });
+
+    const serperTile = wrapper
+      .findAll('.integration-tile__surface')
+      .find(
+        (tile) => tile.attributes('aria-label') === 'Open Serper configuration',
+      );
+    await serperTile?.trigger('click');
+
+    // The drawer is teleported to <body>, outside the wrapper subtree.
+    await vi.waitFor(() => {
+      expect(
+        document.body.querySelector('input[name="serper-api-key"]'),
+      ).not.toBeNull();
+      expect(document.body.textContent).toContain('Web');
+      expect(document.body.textContent).toContain('Images');
     });
   });
 

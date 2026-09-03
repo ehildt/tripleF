@@ -12,11 +12,11 @@ import ChatNavigationSection from './chat-navigation-section/ChatNavigationSecti
 import { useSysctlHealthTiles } from './composables/use-sysctl-health-tiles';
 import { useSysctlTab } from './composables/use-sysctl-tab';
 import type { SysctlTab } from './composables/use-sysctl-tab.types';
+import IntegrationsSection from './integrations-section/IntegrationsSection.vue';
 import InterfaceSection from './interface-section/InterfaceSection.vue';
 import LayoutsSection from './layouts-section/LayoutsSection.vue';
 import MemorySection from './memory-section/MemorySection.vue';
 import PreprocessingSection from './preprocessing-section/PreprocessingSection.vue';
-import SearchEnginesSection from './search-engines-section/SearchEnginesSection.vue';
 import SysCtlMenu from './sysctl-menu/SysCtlMenu.vue';
 import SystemSection from './system-section/SystemSection.vue';
 import WidgetsSection from './widgets-section/WidgetsSection.vue';
@@ -25,14 +25,14 @@ const { activeSysctlTab, selectSysctlTab } = useSysctlTab();
 const { tiles } = useSysctlHealthTiles();
 
 // The SysCtl previews are transient: switching the panel's own section
-// (Search engines → Preprocessing → … → System) dismisses them too.
+// (Integrations → Preprocessing → … → System) dismisses them too.
 watch(activeSysctlTab, () => {
   hidePopoutPreview();
   hidePlaylistPreview();
 });
 
 const TAB_TITLE_KEYS: Record<SysctlTab, string> = {
-  'search-engines': 'common.sysctlSearchEngines',
+  integrations: 'common.sysctlIntegrations',
   preprocessing: 'common.sysctlPreprocessing',
   layouts: 'common.sysctlLayouts',
   widgets: 'common.sysctlWidgets',
@@ -54,7 +54,7 @@ const activeTabTitle = computed(() =>
       <SysCtlMenu :active-tab="activeSysctlTab" @select-tab="selectSysctlTab" />
     </PanelHeader>
 
-    <SearchEnginesSection v-if="activeSysctlTab === 'search-engines'" />
+    <IntegrationsSection v-if="activeSysctlTab === 'integrations'" />
 
     <PreprocessingSection v-else-if="activeSysctlTab === 'preprocessing'" />
 

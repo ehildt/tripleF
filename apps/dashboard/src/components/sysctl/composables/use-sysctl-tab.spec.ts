@@ -9,9 +9,9 @@ describe('useSysctlTab', () => {
     localStorage.clear();
   });
 
-  it('opens on the search engines tab by default', () => {
+  it('opens on the integrations tab by default', () => {
     const { activeSysctlTab } = useSysctlTab();
-    expect(activeSysctlTab.value).toBe('search-engines');
+    expect(activeSysctlTab.value).toBe('integrations');
   });
 
   it('persists the selected tab', () => {
@@ -24,7 +24,8 @@ describe('useSysctlTab', () => {
   it.each([
     ['interface', 'interface'],
     ['popout', 'widgets'],
-    ['nope', 'search-engines'],
+    ['search-engines', 'integrations'],
+    ['nope', 'integrations'],
   ] as const)(
     'restores saved "%s" as "%s" (migrating legacy/unknown values)',
     (saved, expected) => {

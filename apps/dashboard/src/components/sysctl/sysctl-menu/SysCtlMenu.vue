@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * The section tab bar of the SysCtl panel: one icon per settings group
- * (search engines, preprocessing, layouts, widgets, chat navigation,
- * interface, system).
+ * (integrations, preprocessing, layouts, widgets, chat navigation,
+ * interface, memory, system).
  */
 import {
   Blocks,
@@ -11,7 +11,7 @@ import {
   LayoutTemplate,
   MemoryStick,
   MessagesSquare,
-  Radar,
+  Puzzle,
   ScanEye,
 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -34,9 +34,9 @@ const TAB_LABELS = computed<
   { tab: SysctlTab; label: string; icon: typeof Cog }[]
 >(() => [
   {
-    tab: 'search-engines',
-    label: i18n.global.t('common.sysctlSearchEngines'),
-    icon: Radar,
+    tab: 'integrations',
+    label: i18n.global.t('common.sysctlIntegrations'),
+    icon: Puzzle,
   },
   {
     tab: 'preprocessing',

@@ -13,7 +13,7 @@ import SysCtlSection from '../shared/ui/sysctl-section/SysCtlSection.vue';
 const store = usePreprocessingStore();
 
 // Brief "pop" on the panel whenever the master toggle or a variant flips —
-// same feedback the search engines panel gives on configuration changes.
+// same feedback the integrations panel gives on configuration changes.
 const panelChanged = ref(false);
 watch(
   () => [store.enabled, JSON.stringify(store.variants)],

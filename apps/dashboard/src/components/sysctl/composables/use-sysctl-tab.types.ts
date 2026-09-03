@@ -1,5 +1,5 @@
 export type SysctlTab =
-  | 'search-engines'
+  | 'integrations'
   | 'preprocessing'
   | 'layouts'
   | 'widgets'

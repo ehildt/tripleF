@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The SysCtl "Memory" tab: an icon submenu (same pattern as Search engines
+ * The SysCtl "Memory" tab: an icon submenu (same pattern as Layouts
  * and the /memory canvases page) switches between the memory configuration
  * groups — spaces, short-term memory probe, cognition profile, constellation
  * diagram, maintenance models, auto-triggers, sweep limits. The constellation

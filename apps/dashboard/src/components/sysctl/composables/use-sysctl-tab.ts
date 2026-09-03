@@ -5,7 +5,7 @@ import type { SysctlTab } from './use-sysctl-tab.types';
 const SYSCTL_TAB_STORAGE_KEY = 'vision-sysctl-tab';
 
 const SYSCTL_TABS: readonly SysctlTab[] = [
-  'search-engines',
+  'integrations',
   'preprocessing',
   'layouts',
   'widgets',
@@ -19,13 +19,15 @@ function loadSysctlTab(): SysctlTab {
   try {
     const saved = localStorage.getItem(SYSCTL_TAB_STORAGE_KEY);
     // Legacy: the widgets tab was called "popout" before it gained the toast
-    // and tab-menu panels.
+    // and tab-menu panels, and the integrations tab was "search-engines"
+    // before it became a provider grid.
     if (saved === 'popout') return 'widgets';
+    if (saved === 'search-engines') return 'integrations';
     return SYSCTL_TABS.includes(saved as SysctlTab)
       ? (saved as SysctlTab)
-      : 'search-engines';
+      : 'integrations';
   } catch {
-    return 'search-engines';
+    return 'integrations';
   }
 }
 

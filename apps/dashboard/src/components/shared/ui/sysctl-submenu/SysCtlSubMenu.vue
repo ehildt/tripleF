@@ -2,7 +2,7 @@
 /**
  * Generic right-aligned submenu bar: one button per sub-section, so users
  * can jump straight to the panel they want instead of scrolling through
- * every collapsible panel. Mirrors the search-engines submenu styling.
+ * every collapsible panel. Shared styling for all SysCtl submenus.
  * Used by the SysCtl sections and the top-level Memory canvases page.
  */
 import Tooltip from '../tooltip/Tooltip.vue';
