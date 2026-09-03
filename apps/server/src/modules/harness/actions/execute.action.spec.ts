@@ -35,6 +35,8 @@ describe('ExecuteActionService', () => {
           provide: ToolSelectionService,
           useValue: {
             selectToolsByName: vi.fn().mockReturnValue({}),
+            // Memory feature off in these tests: no always-on wave tools.
+            getAlwaysOnToolNames: vi.fn().mockReturnValue([]),
           },
         },
         {

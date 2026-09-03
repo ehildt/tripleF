@@ -1,5 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type {
+  EncyclopediaDocumentInput,
+  EncyclopediaDocumentResult,
+  EncyclopediaSearchHit,
+  EncyclopediaSearchInput,
   EncyclopediaSelectInput,
   EncyclopediaSelectResult,
   EncyclopediaSourceDocument,
@@ -195,6 +199,52 @@ export class MemoryClientService {
       );
     } catch {
       return [];
+    }
+  }
+
+  /**
+   * Agentic knowledge-base search (the encyclopedia-search tool's read path)
+   * — semantic search over every persisted source, optionally scoped to one
+   * document url or domain. Degrades to an empty result on any failure.
+   */
+  async searchEncyclopedia(
+    input: EncyclopediaSearchInput,
+  ): Promise<EncyclopediaSearchHit[]> {
+    if (!this.config.enabled) return [];
+    try {
+      return await this.request<EncyclopediaSearchHit[]>(
+        `${this.baseUrl}/encyclopedia/search`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(input),
+        },
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Agentic document deep-dive (the encyclopedia-read tool's read path) — a
+   * windowed verbatim read of one stored document, continuation via offset.
+   * Degrades to null on any failure.
+   */
+  async readEncyclopediaDocument(
+    input: EncyclopediaDocumentInput,
+  ): Promise<EncyclopediaDocumentResult | null> {
+    if (!this.config.enabled) return null;
+    try {
+      return await this.request<EncyclopediaDocumentResult | null>(
+        `${this.baseUrl}/encyclopedia/document`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(input),
+        },
+      );
+    } catch {
+      return null;
     }
   }
 

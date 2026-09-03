@@ -3,6 +3,8 @@ export * from './constants/embeddable-video-providers.constant.js';
 export * from './constants/media-counts.constant.js';
 export * from './constants/url-trust.constants.js';
 export * from './encyclopedia-classify.schema.js';
+export * from './encyclopedia-document.model.js';
+export * from './encyclopedia-search.model.js';
 export * from './encyclopedia-select.model.js';
 export * from './helpers/tools/categorize-tools.helper.js';
 export * from './helpers/tools/tool-registry.constants.js';

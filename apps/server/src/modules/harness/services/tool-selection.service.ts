@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { type ToolName } from '@triplef/agent/schemas';
+import { ENCYCLOPEDIA_TOOL_NAMES, type ToolName } from '@triplef/agent/schemas';
+import { createEncyclopediaReadTool } from '@triplef/agent/tools';
+import { createEncyclopediaSearchTool } from '@triplef/agent/tools';
 import { createMemoryCognitionForgetTool } from '@triplef/agent/tools';
 import { createMemoryCognitionRememberTool } from '@triplef/agent/tools';
 import { createMemoryPartitionDeleteTool } from '@triplef/agent/tools';
@@ -88,7 +90,42 @@ export class ToolSelectionService {
             }),
           }
         : {};
-    return { ...tools, ...this.playwrightMcpClient.tools, ...memoryTools };
+    // The encyclopedia pair is ALWAYS offered when memory is enabled — never
+    // classifier-picked: the model itself decides when to consult the
+    // knowledge base (chained after the memory probe) and when a document
+    // deep-dive beats a live fetch. Global knowledge — no partition scope.
+    const encyclopediaTools = this.memoryConfig.enabled
+      ? {
+          'encyclopedia-search': createEncyclopediaSearchTool({
+            search: ({ text, url, domain, limit }) =>
+              this.memoryClient.searchEncyclopedia({
+                query: text,
+                url,
+                domain,
+                limit,
+              }),
+          }),
+          'encyclopedia-read': createEncyclopediaReadTool({
+            readDocument: (input) =>
+              this.memoryClient.readEncyclopediaDocument(input),
+          }),
+        }
+      : {};
+    return {
+      ...tools,
+      ...this.playwrightMcpClient.tools,
+      ...memoryTools,
+      ...encyclopediaTools,
+    };
+  }
+
+  /**
+   * Tool names force-included in every execute wave when memory is enabled —
+   * the model's own knowledge-base probe, offered regardless of the picked
+   * intent so it can consult the encyclopedia on any turn.
+   */
+  getAlwaysOnToolNames(): string[] {
+    return this.memoryConfig.enabled ? [...ENCYCLOPEDIA_TOOL_NAMES] : [];
   }
 
   selectToolsByName(

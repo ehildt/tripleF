@@ -19,15 +19,20 @@ import {
   ApeGetEncyclopediaClusters,
   ApeGetEncyclopediaFrictions,
   ApeGetEncyclopediaLinks,
+  ApePostEncyclopediaDocument,
   ApePostEncyclopediaIndex,
   ApePostEncyclopediaLinksRecompute,
+  ApePostEncyclopediaSearch,
   ApePostEncyclopediaSelect,
   ApeTagsEncyclopedia,
 } from '../decorators/openapi/swagger.js';
 import { EncyclopediaChunkDto } from '../dtos/encyclopedia-chunk.dto.js';
+import { EncyclopediaDocumentDto } from '../dtos/encyclopedia-document.dto.js';
 import { EncyclopediaIndexDto } from '../dtos/encyclopedia-index.dto.js';
 import { EncyclopediaListQueryDto } from '../dtos/encyclopedia-list-query.dto.js';
+import { EncyclopediaSearchDto } from '../dtos/encyclopedia-search.dto.js';
 import { EncyclopediaSelectDto } from '../dtos/encyclopedia-select.dto.js';
+import { EncyclopediaQueryService } from '../services/encyclopedia-query.service.js';
 import { EncyclopediaSelectService } from '../services/encyclopedia-select.service.js';
 import { EncyclopediaStoreService } from '../services/encyclopedia-store.service.js';
 
@@ -37,6 +42,7 @@ export class EncyclopediaController {
   constructor(
     private readonly encyclopediaSelect: EncyclopediaSelectService,
     private readonly encyclopediaStore: EncyclopediaStoreService,
+    private readonly encyclopediaQuery: EncyclopediaQueryService,
     private readonly encyclopediaRepository: EncyclopediaRepository,
     private readonly clusters: MemoryClusterRepository,
   ) {}
@@ -88,6 +94,20 @@ export class EncyclopediaController {
   @ApePostEncyclopediaSelect()
   async select(@Body() body: EncyclopediaSelectDto) {
     return this.encyclopediaSelect.select(body);
+  }
+
+  @Post('search')
+  @HttpCode(HttpStatus.OK)
+  @ApePostEncyclopediaSearch()
+  async search(@Body() body: EncyclopediaSearchDto) {
+    return this.encyclopediaQuery.search(body);
+  }
+
+  @Post('document')
+  @HttpCode(HttpStatus.OK)
+  @ApePostEncyclopediaDocument()
+  async readDocument(@Body() body: EncyclopediaDocumentDto) {
+    return this.encyclopediaQuery.readDocument(body);
   }
 
   @Post('index')

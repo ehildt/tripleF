@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   buildClarificationTranslationSystemPrompt,
   buildClarificationTranslationUserPrompt,
+  buildCognitionProfileSection,
   buildMemoryProbeSection,
 } from '@triplef/agent/prompts';
 import type { IntentResult } from '@triplef/agent/schemas';
@@ -185,7 +186,12 @@ export class InterpretStepService implements StepHandler {
       ? `RECENT CONVERSATIONS — what you and the user were working on in recent turns (topic-matched):\n${episodeHits.map((hit) => `- ${hit.text}`).join('\n')}`
       : undefined;
 
-    const combinedProbe = [probeSection, episodeSection]
+    // Cognition profile: the AI's derived model of the user — the third
+    // probe layer, so the classifier resolves references against what the AI
+    // LEARNED (interests, traits, standing context), not just what was said.
+    const profileSection = await this.probeCognitionProfile(cognitionKey);
+
+    const combinedProbe = [probeSection, episodeSection, profileSection]
       .filter(Boolean)
       .join('\n\n');
     if (!combinedProbe) return undefined;
@@ -248,6 +254,30 @@ export class InterpretStepService implements StepHandler {
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
     };
+  }
+
+  /**
+   * The cognition-profile probe layer: the AI's derived understanding of the
+   * user (user-side profile only — persona/corrections are the AI's own
+   * identity/rules, never routing data). Silent undefined on any failure —
+   * personalization is a bonus layer, never a failed clarification.
+   */
+  private async probeCognitionProfile(
+    cognitionKey: string | undefined,
+  ): Promise<string | undefined> {
+    if (!cognitionKey) return undefined;
+    try {
+      const snapshot = await this.memoryClient.getCognition(cognitionKey);
+      if (!snapshot.profile) return undefined;
+      const { userProfile } = splitCognitionProfile(
+        JSON.parse(snapshot.profile) as Record<string, unknown>,
+      );
+      return userProfile
+        ? buildCognitionProfileSection(JSON.stringify(userProfile))
+        : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**

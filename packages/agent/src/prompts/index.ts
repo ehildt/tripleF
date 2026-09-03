@@ -14,6 +14,7 @@ export * from './harness/helpers/variant-catalog.helper.js';
 export * from './harness/intent-selection.prompt.js';
 export * from './harness/interpret/clarification-translation.prompt.js';
 export * from './harness/interpret/classify-transcript.prompt.js';
+export * from './harness/interpret/cognition-profile-section.prompt.js';
 export * from './harness/interpret/memory-probe-section.prompt.js';
 export * from './harness/respond/correction-prompt.prompt.js';
 export * from './harness/structured-json-prompt.constant.js';

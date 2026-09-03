@@ -124,6 +124,14 @@ export const MEMORY_TOOL_NAMES = [
   'memory-cognition-forget',
 ] as const;
 
+/**
+ * The agentic knowledge-base tools — always offered in the execute wave when
+ * the memory feature is enabled (never classifier-picked, unlike the memory
+ * tools): the model itself decides when to consult or deep-dive the
+ * encyclopedia, chained after the memory probe.
+ */
+export const ENCYCLOPEDIA_TOOL_NAMES = ['encyclopedia-search', 'encyclopedia-read'] as const;
+
 export const TOOL_NAMES = [
   'webFetch',
   'brightDataWebSearch',

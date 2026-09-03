@@ -89,7 +89,6 @@ export const ApePostEncyclopediaIndex = () =>
         'Index uploaded documents into the shared memory-encyclopedia collection (persist-only, no selection)',
     }),
   );
-
 export const ApePostEncyclopediaConsolidate = () =>
   applyDecorators(
     ApiResponse({
@@ -131,5 +130,31 @@ export const ApePostEncyclopediaCluster = () =>
     ApiOperation({
       summary:
         '④ Cluster detection — final step of the encyclopedia maintenance pipeline: cluster the link graph into clusters, absorb singletons (no lone facts), and summarize each changed cluster. Runs after the graph-mutating steps settle',
+    }),
+  );
+
+export const ApePostEncyclopediaSearch = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Knowledge-base hits: verbatim chunks of persisted sources (fetched pages, uploaded documents) with url, chunk coordinates, fetch date, and score. Empty when nothing matched.',
+    }),
+    ApiOperation({
+      summary:
+        'Agentic semantic search over the whole encyclopedia, optionally scoped to one document url or domain — backs the encyclopedia-search tool',
+    }),
+  );
+
+export const ApePostEncyclopediaDocument = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'One verbatim window of the document (overlap-stripped, original order), with chunk coordinates and hasMore for continuation. Null when the url is unknown.',
+    }),
+    ApiOperation({
+      summary:
+        'Read one stored document windowed (offset + char budget) — the deep-dive read behind the encyclopedia-read tool',
     }),
   );

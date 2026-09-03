@@ -35,11 +35,17 @@ import type { ExecuteResult } from './execute.action.types.js';
 const BROWSER_MAX_STEPS = 8;
 
 /**
- * memory-partition-delete needs recall → delete chaining: the model recalls
- * the verbatim statement, then deletes it. One blind round can never express
- * that, so delete intents get a small step budget like the browser tools.
+ * Tools whose follow-up decisions need a multi-round loop: delete chains
+ * memory-partition-recall → memory-partition-delete for the verbatim text;
+ * the always-on encyclopedia pair chains probe → document deep-dive, or
+ * probe → a live web search when the stored knowledge is dated or partial.
  */
-const MEMORY_DELETE_MAX_STEPS = 3;
+const CHAINED_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'memory-partition-delete',
+  'encyclopedia-search',
+  'encyclopedia-read',
+]);
+const TOOL_CHAIN_MAX_STEPS = 3;
 
 /**
  * Max search-result pages the auto-fetch fallback fetches when the model
@@ -105,15 +111,20 @@ export class ExecuteActionService {
       availableVariants.includes(v as VariantName),
     ) as FilterVariant[];
 
-    // 3. Build the tool set: external tools + variant request tools
-    const allToolNames = this.resolveAllToolNames(intent, requestedVariants);
+    // 3. Build the tool set: external tools + variant request tools + the
+    // always-on knowledge-base probe pair (model-decided, never
+    // classifier-picked — offered on every memory-enabled wave).
+    const allToolNames = [
+      ...this.resolveAllToolNames(intent, requestedVariants),
+      ...this.toolSelectionService.getAlwaysOnToolNames(),
+    ];
     // Browser intents chain several browser_* calls within one execute step;
-    // a delete intent chains memory-partition-recall → memory-partition-delete
-    // for the verbatim text.
+    // chained tools (delete, encyclopedia) probe first and follow up on what
+    // they found — one blind round can never express that.
     const maxSteps = allToolNames.some((name) => name.startsWith('browser_'))
       ? BROWSER_MAX_STEPS
-      : allToolNames.includes('memory-partition-delete')
-        ? MEMORY_DELETE_MAX_STEPS
+      : allToolNames.some((name) => CHAINED_TOOL_NAMES.has(name))
+        ? TOOL_CHAIN_MAX_STEPS
         : undefined;
     const selectedTools =
       allToolNames.length > 0
