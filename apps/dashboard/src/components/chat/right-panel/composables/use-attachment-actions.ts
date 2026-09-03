@@ -59,11 +59,8 @@ export function useAttachmentActions(options: UseAttachmentActionsOptions) {
       await deleteUploadedObject(sessionId.value, conversationId.value, hash);
       return true;
     } catch (e) {
-      toast.error(
-        i18n.global.t('toast.failedRemoveFile', {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      );
+      toast.debug(e instanceof Error ? e.message : String(e));
+      toast.error(i18n.global.t('toast.failedRemoveFile'));
       return false;
     }
   }

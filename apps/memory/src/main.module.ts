@@ -1,13 +1,13 @@
 import { Logger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { type AiSdkConfig, AiSdkModule } from '@triplef/ai-sdk';
 import { BullMQModule } from '@triplef/bullmq';
 import { BullMQLoggerModule } from '@triplef/bullmq-logger';
 import { ConfigFactoryModule } from '@triplef/config-factory';
 import { CoreLoggerModule } from '@triplef/core-logger';
+import { OllamaApiModule, OllamaApiService } from '@triplef/ollama-api';
 
 import { AppConfigService } from './configs/app-config.service.js';
-import { AiSdkModule } from './modules/ai-sdk/ai-sdk.module.js';
-import { OllamaConfigService } from './modules/ai-sdk/configs/ollama-config.service.js';
 import { BullMQConfigService } from './modules/bullmq/configs/bullmq-config.service.js';
 import { BullMQLoggerConfigService } from './modules/bullmq/configs/bullmq-logger-config.service.js';
 import { VECTORIZE_QUEUE } from './modules/bullmq/constants/bullmq.constants.js';
@@ -17,6 +17,9 @@ import { EncyclopediaConfigService } from './modules/encyclopedia/configs/encycl
 import { EncyclopediaModule } from './modules/encyclopedia/encyclopedia.module.js';
 import { HealthController } from './modules/health/controllers/health.controller.js';
 import { HealthService } from './modules/health/services/health.service.js';
+import { OllamaConfigService } from './modules/ollama/configs/ollama-config.service.js';
+import { OllamaModule } from './modules/ollama/ollama.module.js';
+import { OllamaOverridesService } from './modules/ollama/services/ollama-overrides.service.js';
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
 import { QdrantConfigService } from './modules/qdrant/configs/qdrant-config.service.js';
 import { VectorizeProcessor } from './modules/qdrant/processors/vectorize.processor.js';
@@ -35,7 +38,34 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
   providers: [Logger, HealthService, QdrantHealthIndicator],
   imports: [
     BullMQModule,
-    AiSdkModule,
+    OllamaModule,
+    OllamaApiModule.registerAsync({
+      global: true,
+      inject: [OllamaOverridesService],
+      useFactory: (overrides: OllamaOverridesService) => ({
+        resolveConnection: () => overrides.getConfig(),
+        // The catalog changes rarely in production; elsewhere keep it
+        // effectively uncached so newly pulled models appear immediately.
+        modelsCacheTtlMs: process.env.NODE_ENV === 'production' ? 300_000 : 1,
+        // The memory app has no models endpoint that warms the catalog
+        // lazily — refresh it periodically instead.
+        refreshIntervalMs: 60_000,
+      }),
+    }),
+    AiSdkModule.registerAsync({
+      global: true,
+      inject: [OllamaConfigService, OllamaApiService],
+      useFactory: (
+        cfg: OllamaConfigService,
+        ollama: OllamaApiService,
+      ): AiSdkConfig => ({
+        streamChunkTimeoutMs: cfg.config.streamChunkTimeoutMs,
+        streamTotalTimeoutMs: cfg.config.streamTotalTimeoutMs,
+        generateTotalTimeoutMs: cfg.config.generateTotalTimeoutMs,
+        enableSmoothStream: cfg.config.enableSmoothStream,
+        createModel: (name) => ollama.createModel(name),
+      }),
+    }),
     PersistenceModule,
     SecretsModule,
     DeadLetterModule,

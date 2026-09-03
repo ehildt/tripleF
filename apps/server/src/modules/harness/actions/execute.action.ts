@@ -5,9 +5,8 @@ import type { InputMessage } from '@triplef/ai-sdk';
 import type { ToolResult } from '@triplef/ai-sdk';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
-import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
+import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { type FilterVariant } from '../../sharp/types/image-variant.types.js';
 import { buildEodhdFallbackInput } from '../helpers/execute/build-eodhd-fallback-input.helper.js';
@@ -25,6 +24,7 @@ import {
 } from '../helpers/execute/wrap-tools-with-execution-events.helper.js';
 import { wrapToolsWithSearchRecency } from '../helpers/execute/wrap-tools-with-search-recency.helper.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
+import { ToolSelectionService } from '../services/tool-selection.service.js';
 
 import { fetchUrlOutcome } from './helpers/fetch-url-outcome.helper.js';
 import type { ExecuteResult } from './execute.action.types.js';

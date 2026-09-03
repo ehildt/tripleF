@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { buildOllamaHeaders } from '@triplef/ollama-api';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { buildOllamaHeaders } from '../../ai-sdk/helpers/build-ollama-headers.helper.js';
-import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
+import { OllamaOverridesService } from '../../ollama/services/ollama-overrides.service.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { applyEmbeddingRole } from '../helpers/embedding-prompt.helper.js';
 import { EmbeddingFailureError } from '../helpers/vectorize-failure.helper.js';

@@ -3,7 +3,7 @@ import { buildCorrectionPrompt } from '@triplef/agent/prompts';
 import type { InputMessage } from '@triplef/ai-sdk';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
+import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { buildExecutionMessages } from '../helpers/respond/build-execution-messages.helper.js';
 import { consumeResponseStream } from '../helpers/stream/consume-response-stream.helper.js';

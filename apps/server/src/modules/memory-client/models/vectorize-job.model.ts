@@ -1,6 +1,6 @@
 import type { MemoryRole } from '@triplef/agent/tools';
 
-import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import type { ThinkMode } from '../../ollama/types/think-mode.type.js';
 
 /** BullMQ job payload for the vectorize queue (one job per turn-side). */
 export interface VectorizeJobData {

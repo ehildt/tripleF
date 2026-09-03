@@ -14,6 +14,10 @@ import {
   pendingFilesByConversation,
 } from '@/composables/attached-files.state';
 import { markMergePending } from '@/composables/merge-selection.state';
+import {
+  TOAST_KEY_CONTEXT_FULL,
+  TOAST_KEY_MODEL_NO_IMAGES,
+} from '@/composables/toast-keys';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
@@ -322,7 +326,8 @@ export function useSubmit(options: UseSubmitOptions) {
       modelsStore.getModel(model)?.capabilities,
       currentFiles,
     );
-    if (visionWarning) toast.warning(visionWarning);
+    if (visionWarning)
+      toast.warning(visionWarning, { key: TOAST_KEY_MODEL_NO_IMAGES });
 
     const conversation = sid ? conversationStore.getConversation(sid) : null;
     const preUploadImages = conversation?.uploadedImages ?? [];
@@ -498,7 +503,10 @@ export function useSubmit(options: UseSubmitOptions) {
       if (!res.ok) {
         const text = await res.text();
         const msg = `${res.status}: ${text}`;
-        toast.error(msg);
+        toast.debug(msg);
+        toast.error(
+          i18n.global.t('toast.requestError', { status: res.status }),
+        );
         const id = conversationStore.activeConversationId;
         if (id) conversationStore.markExchangeError(id, requestId, msg);
         return;
@@ -516,7 +524,8 @@ export function useSubmit(options: UseSubmitOptions) {
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
+      toast.debug(msg);
+      toast.error(i18n.global.t('toast.serverUnreachable'));
       const id = conversationStore.activeConversationId;
       if (id) conversationStore.markExchangeError(id, requestId, msg);
     } finally {
@@ -530,7 +539,9 @@ export function useSubmit(options: UseSubmitOptions) {
     }
 
     if (isTokenContextFull()) {
-      toast.warning(i18n.global.t('toast.contextFull'));
+      toast.warning(i18n.global.t('toast.contextFull'), {
+        key: TOAST_KEY_CONTEXT_FULL,
+      });
       return;
     }
 

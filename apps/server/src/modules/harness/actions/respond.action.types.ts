@@ -1,7 +1,7 @@
 import type { IntentResult } from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 
-import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import type { ThinkMode } from '../../ollama/types/think-mode.type.js';
 
 export type RespondResult = {
   content: string;

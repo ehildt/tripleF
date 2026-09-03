@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type {
   ConstellationFriction,
   ConstellationNode,
-} from '../../memory-constellation/MemoryConstellation.types';
+} from '../../../memory-constellation/MemoryConstellation.types';
 import { mapNodeToFrictions } from './map-node-to-frictions.helper';
 
 const node = {

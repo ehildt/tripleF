@@ -14,7 +14,7 @@ describe('createMemoryCognitionForgetTool', () => {
     const deleteCognition = vi.fn().mockResolvedValue(['profile', 'insight-1']);
     const tool = createMemoryCognitionForgetTool({ scope, deleteCognition });
 
-    const result = await tool.execute({}, {} as never);
+    const result = await tool.execute!({}, {} as never);
 
     expect(deleteCognition).toHaveBeenCalledWith('christopher-cognition');
     expect(result).toEqual({
@@ -31,7 +31,7 @@ describe('createMemoryCognitionForgetTool', () => {
       deleteCognition,
     });
 
-    await tool.execute({}, {} as never);
+    await tool.execute!({}, {} as never);
 
     expect(deleteCognition).toHaveBeenCalledWith('christopher');
   });
@@ -40,7 +40,7 @@ describe('createMemoryCognitionForgetTool', () => {
     const deleteCognition = vi.fn().mockResolvedValue([]);
     const tool = createMemoryCognitionForgetTool({ scope, deleteCognition });
 
-    const result = await tool.execute({}, {} as never);
+    const result = await tool.execute!({}, {} as never);
 
     expect(result).toEqual({
       deleted: 0,
@@ -52,7 +52,7 @@ describe('createMemoryCognitionForgetTool', () => {
     const deleteCognition = vi.fn().mockRejectedValue(new Error('store down'));
     const tool = createMemoryCognitionForgetTool({ scope, deleteCognition });
 
-    const result = await tool.execute({}, {} as never);
+    const result = await tool.execute!({}, {} as never);
 
     expect(result).toEqual({ deleted: 0, error: 'store down' });
   });

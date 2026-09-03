@@ -1,4 +1,4 @@
-import type { ThinkMode } from '../../ai-sdk/types/think-mode.type.js';
+import type { ThinkMode } from '../../ollama/types/think-mode.type.js';
 import type { MemoryLane } from '../../persistence/constants/memory-lane.constant.js';
 import type { MemoryClusterLane } from '../constants/cluster.constant.js';
 

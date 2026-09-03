@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { OllamaApiService } from '@triplef/ollama-api';
 import { vi } from 'vitest';
 
-import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.js';
-import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
+import { ModelWarmupService } from '../../ollama/services/model-warmup.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import { DocumentConversionService } from '../services/document-conversion.service.js';
@@ -31,7 +31,7 @@ describe('HarnessController', () => {
           useValue: { convertAndPersist: vi.fn().mockResolvedValue(null) },
         },
         {
-          provide: OllamaModelsService,
+          provide: OllamaApiService,
           useValue: {
             getModels: vi.fn().mockResolvedValue({ models: [] }),
           },

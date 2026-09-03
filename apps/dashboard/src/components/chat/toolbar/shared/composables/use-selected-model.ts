@@ -1,6 +1,10 @@
 import { computed, ref, watch } from 'vue';
 
 import { warmModel } from '@/api/warm-model.api';
+import {
+  TOAST_KEY_CONTEXT_CLAMPED,
+  TOAST_KEY_MODEL_NO_IMAGES,
+} from '@/composables/toast-keys';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
 import { useConversationStore } from '@/stores/conversation';
@@ -85,7 +89,9 @@ export function useSelectedModel() {
 
     conversationStore.snapshotImageSelections(conversationIdValue);
     conversationStore.deselectAllImages(conversationIdValue);
-    toast.warning(i18n.global.t('toast.modelNoImages', { model: s.model }));
+    toast.warning(i18n.global.t('toast.modelNoImages', { model: s.model }), {
+      key: TOAST_KEY_MODEL_NO_IMAGES,
+    });
   }
 
   function syncNumCtxForModel(
@@ -135,11 +141,12 @@ export function useSelectedModel() {
         if (current > m.context_length) {
           conversationStore.setNumCtx(conversationId.value, maxOpt);
           toast.warning(
-            i18n.global.t('toast.modelCtxSet', {
+            i18n.global.t('toast.contextClamped', {
               model: modelName,
               max: modelsStore.formatCtx(m.context_length),
               value: modelsStore.formatCtx(Number(maxOpt)),
             }),
+            { key: TOAST_KEY_CONTEXT_CLAMPED },
           );
         } else if (maxOpt) {
           conversationStore.setNumCtx(conversationId.value, maxOpt);

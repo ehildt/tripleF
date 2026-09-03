@@ -9,12 +9,12 @@ import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { AiSdkService } from '@triplef/ai-sdk';
 import { SocketIOService } from '@triplef/socketio';
 
-import { buildProviderOptions } from '../../../ai-sdk/helpers/provider-options.helper.js';
 import {
   EPISODE_PROBE_LIMIT,
   EPISODE_TAG,
 } from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
+import { buildProviderOptions } from '../../../ollama/helpers/provider-options.helper.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import type { InterpretResult } from '../../actions/interpret.action.types.js';
 import { splitCognitionProfile } from '../../helpers/cognition/split-cognition-profile.helper.js';

@@ -1,13 +1,16 @@
 import { reactive, watch } from 'vue';
 
 import {
+  isToastMessageMuted,
+  muteToastMessage,
   toastAutoHide,
   toastDurationSeconds,
   toastEnabled,
   toastTypeFilters,
 } from '../components/widgets/toast/composables/toast-settings.state';
+import { i18n } from '../i18n/i18n';
 import type { ToastType } from '../types/toast-type.model';
-import type { Toast, ToastTimer } from './toast-state.types';
+import type { Toast, ToastOptions, ToastTimer } from './toast-state.types';
 
 export type { ToastType };
 
@@ -52,20 +55,21 @@ function resume(id: string) {
   startTimer(id);
 }
 
-function push(message: string, type: ToastType, durationMs?: number): void {
+function push(message: string, type: ToastType, options?: ToastOptions): void {
   const id = uid();
-  toasts.push({ id, message, type, pinned: false });
+  toasts.push({ id, message, type, pinned: false, key: options?.key });
   timers.set(id, {
     timeoutId: null,
-    remainingMs: durationMs ?? toastDurationSeconds.value * 1000,
+    remainingMs: options?.duration ?? toastDurationSeconds.value * 1000,
     startedAt: 0,
   });
   if (toastAutoHide.value) startTimer(id);
 }
 
-function add(message: string, type: ToastType, durationMs?: number): void {
+function add(message: string, type: ToastType, options?: ToastOptions): void {
   if (!toastEnabled.value || !toastTypeFilters.value[type]) return;
-  push(message, type, durationMs);
+  if (options?.key && isToastMessageMuted(options.key)) return;
+  push(message, type, options);
 }
 
 /**
@@ -93,6 +97,22 @@ watch(toastAutoHide, (autoHide) => {
   }
 });
 
+/**
+ * "Don't show again": mute the toast's message kind for good, sweep any
+ * visible copies, and confirm with a filter-bypassing info toast so the
+ * user knows where to undo it (Settings → Widgets → Toast notifications).
+ */
+function muteToast(id: string) {
+  const toast = toasts.find((t) => t.id === id);
+  const key = toast?.key;
+  if (!toast || !key) return;
+  muteToastMessage(key, toast.message);
+  for (const visible of toasts.filter((t) => t.key === key)) {
+    remove(visible.id);
+  }
+  push(i18n.global.t('common.toastMutedConfirm'), 'info');
+}
+
 export function useToastState() {
-  return { toasts, add, remove, pause, resume, togglePin, preview };
+  return { toasts, add, remove, pause, resume, togglePin, preview, muteToast };
 }

@@ -7,8 +7,8 @@ import { createMemoryCognitionRememberTool } from '@triplef/agent/tools';
 import { createMemoryPartitionRememberTool } from '@triplef/agent/tools';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
-import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
+import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
+import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import type { MemoryWriteJobData } from '../../../models/memory.model.js';
 import { MemoryRepository } from '../../memory.repository.js';
 import { MemoryCognitionService } from '../../memory-cognition.service.js';

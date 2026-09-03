@@ -1,3 +1,1 @@
-export interface ToastOptions {
-  duration?: number;
-}
+export type { ToastOptions } from './toast-state.types';

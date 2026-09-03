@@ -4,6 +4,7 @@ import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 
 import type { OllamaModel } from '../types/ollama-model.model';
+import { TOAST_KEY_MODEL_NO_THINK } from './toast-keys';
 import type { useToast } from './use-toast';
 
 const THINK_KEY = 'harness-selected-think';
@@ -32,7 +33,9 @@ export function useChatThink(
     if (!m || !prevM) return;
     if (selectedThink.value !== 'off' && !supportsThink.value) {
       selectThink('off');
-      toast.warning(i18n.global.t('toast.modelNoThink', { model: m.model }));
+      toast.warning(i18n.global.t('toast.modelNoThink', { model: m.model }), {
+        key: TOAST_KEY_MODEL_NO_THINK,
+      });
     }
   });
 

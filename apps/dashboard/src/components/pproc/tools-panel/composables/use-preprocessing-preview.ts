@@ -49,11 +49,8 @@ export function usePreprocessingPreview() {
       const images = variants.map(mapPreviewVariant);
       lightbox.openImages(images, images[0].url);
     } catch (e) {
-      toast.error(
-        i18n.global.t('toast.previewFailed', {
-          error: e instanceof Error ? e.message : String(e),
-        }),
-      );
+      toast.debug(e instanceof Error ? e.message : String(e));
+      toast.error(i18n.global.t('toast.previewFailed'));
     } finally {
       isPreviewLoading.value = false;
     }

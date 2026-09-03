@@ -6,8 +6,8 @@ import {
 } from '@triplef/agent/prompts';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
+import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
 import type { FrictionVerdict } from '../helpers/friction-verdict.schema.js';
 import { parseFrictionVerdict } from '../helpers/parse-friction-verdict.helper.js';
 

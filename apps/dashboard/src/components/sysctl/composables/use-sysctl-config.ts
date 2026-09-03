@@ -4,6 +4,7 @@ import { i18n } from '@/i18n/i18n';
 
 import { getApiUrl } from '../../../api/api-url';
 import { fetchConfig, saveConfig } from '../../../api/config.api';
+import { TOAST_KEY_SEARCH_ENGINES_REDUNDANT } from '../../../composables/toast-keys';
 import { useToast } from '../../../composables/use-toast';
 import { getPersistentSocketSessionId } from '../../../stores/helpers/socket/get-persistent-socket-session-id.helper';
 import { clampSysctlResults } from '../helpers/clamp-sysctl-results.helper';
@@ -213,7 +214,9 @@ export function useSysctlConfig() {
     const otherEngine = config.value?.[other] as
       { enabled?: boolean } | undefined;
     if (otherEngine?.enabled) {
-      toast.warning(i18n.global.t('toast.serperBrightDataRedundant'));
+      toast.warning(i18n.global.t('toast.serperBrightDataRedundant'), {
+        key: TOAST_KEY_SEARCH_ENGINES_REDUNDANT,
+      });
     }
   }
 

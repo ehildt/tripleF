@@ -43,6 +43,31 @@ A file belongs **next to its consumer** (in the component group directory) unles
 
 See the [Reference: Naming Decision Table](vue-guide.md#8-reference-naming-decision-table) in the guide.
 
+## Toast copy style guide
+
+Toast messages live in `i18n/locales/en.ts` under `toast:` (schema in
+`locale-schema.ts`). Keep them user-friendly:
+
+- **Outcome first, plain words.** Say what happened and what the user can do:
+  "Couldn't save the API key". No jargon ("socket", "payload" internals) in
+  user-facing severities; match the verb of the button that triggered it
+  (Archive → "Job archived").
+- **Success/confirmations:** short `{Noun} {past-participle}` — "Payload saved",
+  "Queue saved". Never "successfully".
+- **Errors:** `Couldn't …` + a recovery hint when one exists ("Try again in a
+  moment"). One sentence → no trailing period; two sentences → periods.
+- **Technical details are `debug` only.** HTTP bodies, `error.message`, and
+  stack text go to `toast.debug(...)` (or `console.error`); the user-facing
+  toast gets the friendly i18n string. Never interpolate raw error text into
+  `error`/`warning` toasts.
+- **Reuse keys for recurring situations** (e.g. `toast.requestError`,
+  `toast.contextClamped`) instead of adding a near-duplicate variant.
+- **Mutable warnings carry a `key`.** Recurring capability/limit warnings
+  ("model can't see images", "context clamped") pass a key from
+  `composables/toast-keys.ts` so the toast shows the "Don't show this message
+  again" action; muted kinds are skipped in `toast-state.add()`. Errors stay
+  un-muted — failures must remain visible.
+
 ## Checklist
 
 The Quick Rules and Folder Rules above are the source of truth. Use this checklist to verify a finished task at a glance:
@@ -64,3 +89,4 @@ The Quick Rules and Folder Rules above are the source of truth. Use this checkli
 - [ ] Props are typed via a co-located `Xxx.types.ts` — no inline `defineProps<{ ... }>()` types
 - [ ] The orchestrator's script is thin: props type + store wiring + one data composable call
 - [ ] Distinct template blocks are presentational sub-components with their own folder + story; the orchestrator owns the visibility `v-if`s
+- [ ] Toast copy follows the style guide above: friendly i18n text for users, technical details only via `toast.debug`

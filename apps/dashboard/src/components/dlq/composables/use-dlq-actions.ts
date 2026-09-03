@@ -73,7 +73,7 @@ export function useDlqActions(options: DlqActionsOptions) {
         id,
         data: { status: 'Cleared' },
       });
-      toast.success(i18n.global.t('toast.cleared'));
+      toast.success(i18n.global.t('toast.jobArchived'));
       dlqStore.updateEntry(updated);
     } catch {
       toast.error(i18n.global.t('toast.archiveFailed'));

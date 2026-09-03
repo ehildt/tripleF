@@ -13,7 +13,7 @@ describe('createMemoryPartitionRememberTool', () => {
     const storeRecord = vi.fn().mockResolvedValue('point-1');
     const tool = createMemoryPartitionRememberTool({ scope, storeRecord });
 
-    const result = await tool.execute(
+    const result = await tool.execute!(
       {
         text: 'Sams phone number is 555-1234',
         tags: ['contacts', 'sam'],
@@ -38,7 +38,7 @@ describe('createMemoryPartitionRememberTool', () => {
     const storeRecord = vi.fn().mockResolvedValue('point-1');
     const tool = createMemoryPartitionRememberTool({ scope, storeRecord });
 
-    await tool.execute({ text: 'Uncategorized fact', tags: ['misc'] }, {} as never);
+    await tool.execute!({ text: 'Uncategorized fact', tags: ['misc'] }, {} as never);
 
     expect(storeRecord).toHaveBeenCalledWith(expect.objectContaining({ category: undefined }));
   });
@@ -47,7 +47,7 @@ describe('createMemoryPartitionRememberTool', () => {
     const storeRecord = vi.fn().mockRejectedValue(new Error('embed down'));
     const tool = createMemoryPartitionRememberTool({ scope, storeRecord });
 
-    const result = await tool.execute({ text: 'Doomed fact' }, {} as never);
+    const result = await tool.execute!({ text: 'Doomed fact' }, {} as never);
 
     expect(result).toEqual({ stored: false, error: 'embed down' });
   });

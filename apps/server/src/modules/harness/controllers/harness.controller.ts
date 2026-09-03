@@ -15,10 +15,10 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { OllamaApiService } from '@triplef/ollama-api';
 import type { FastifyReply } from 'fastify';
 
-import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.js';
-import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
+import { ModelWarmupService } from '../../ollama/services/model-warmup.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
   AttachmentsField,
@@ -62,7 +62,7 @@ export class HarnessController {
   constructor(
     private readonly harnessQueueService: HarnessQueueService,
     private readonly documentConversionService: DocumentConversionService,
-    private readonly ollamaModelsService: OllamaModelsService,
+    private readonly ollamaApiService: OllamaApiService,
     private readonly numCtxConfigService: NumCtxConfigService,
     private readonly modelWarmupService: ModelWarmupService,
   ) {}
@@ -229,7 +229,7 @@ export class HarnessController {
     @Headers('if-none-match') ifNoneMatch: string | undefined,
     @Res() res: FastifyReply,
   ) {
-    const models = await this.ollamaModelsService.getModels();
+    const models = await this.ollamaApiService.getModels();
     const payload = {
       ...models,
       numCtxOptions: this.numCtxConfigService.config,

@@ -6,7 +6,7 @@ import {
 import { AiSdkService } from '@triplef/ai-sdk';
 import { limitText } from '@triplef/helpers/limit-text';
 
-import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
+import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
 import { buildPriorMemorySection } from '../../../helpers/build-prior-memory-section.helper.js';
 import { derivePayloadChars } from '../../../helpers/derive-payload-chars.helper.js';

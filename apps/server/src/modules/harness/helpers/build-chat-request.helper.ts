@@ -4,7 +4,7 @@ import {
 } from '@triplef/agent/prompts';
 import type { InputMessage } from '@triplef/ai-sdk';
 
-import { normalizeThink } from '../../ai-sdk/helpers/normalize-think.helper.js';
+import { normalizeThink } from '../../ollama/helpers/normalize-think.helper.js';
 import type { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 
 import type { DocumentSection } from './documents/document-section.types.js';

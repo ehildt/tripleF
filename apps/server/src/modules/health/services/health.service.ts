@@ -8,9 +8,9 @@ import {
 } from '@nestjs/terminus';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
 import { MemoryHealthIndicator as MemoryAppHealthIndicator } from '../../memory-client/services/memory-health-indicator.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
+import { OllamaOverridesService } from '../../ollama/services/ollama-overrides.service.js';
 
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
 

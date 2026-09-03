@@ -13,8 +13,8 @@ import {
 import { AiSdkService } from '@triplef/ai-sdk';
 import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
-import { OllamaConfigService } from '../../../../ai-sdk/configs/ollama-config.service.js';
-import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
+import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
+import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
 import { derivePayloadChars } from '../../../helpers/derive-payload-chars.helper.js';
 import type { MemoryProfileJobData } from '../../../models/memory.model.js';

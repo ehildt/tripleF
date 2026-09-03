@@ -22,16 +22,18 @@ function mockToast(): ToastApi {
     error: vi.fn(),
     success: vi.fn(),
     warning: vi.fn(),
+    debug: vi.fn(),
   };
 }
 
 describe('handleResponse', () => {
-  it('shows error when response is not ok', async () => {
+  it('shows a friendly error and keeps the raw detail on debug when not ok', async () => {
     const toast = mockToast();
     handleResponse(mockResponse(false, 500, 'fail'), mockSocket(true), toast);
     await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(toast.debug).toHaveBeenCalledWith('HTTP 500: fail');
     expect(toast.error).toHaveBeenCalledWith(
-      i18n.global.t('toast.requestError', { status: 500, detail: 'fail' }),
+      i18n.global.t('toast.requestError', { status: 500 }),
     );
   });
 

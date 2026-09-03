@@ -37,7 +37,7 @@ jobs:
 
       - name: Update dependencies
         run: |
-          for pkg in @triplef/server @triplef/dashboard @triplef/memory @triplef/helpers @triplef/config-factory @triplef/core-logger @triplef/bullmq @triplef/bullmq-logger @triplef/socketio @triplef/ai-sdk @triplef/agent; do
+          for pkg in @triplef/server @triplef/dashboard @triplef/memory @triplef/helpers @triplef/config-factory @triplef/core-logger @triplef/bullmq @triplef/bullmq-logger @triplef/socketio @triplef/ai-sdk @triplef/ollama-api @triplef/agent; do
             pnpm --filter "$pkg" run ncu:update
           done
 
@@ -49,7 +49,7 @@ jobs:
       # Keep the README badges in sync with the updated manifests.
       - name: Regenerate badges
         run: |
-          for dir in apps/server apps/dashboard apps/memory packages/helpers packages/config-factory packages/core-logger packages/bullmq packages/bullmq-logger packages/socketio packages/ai-sdk packages/agent; do
+          for dir in apps/server apps/dashboard apps/memory packages/helpers packages/config-factory packages/core-logger packages/bullmq packages/bullmq-logger packages/socketio packages/ai-sdk packages/ollama-api packages/agent; do
             (cd "$dir" && npx @ehildt/depbadge)
           done
 

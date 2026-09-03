@@ -13,7 +13,7 @@ export function useToast() {
     type: ToastType = 'default',
     options?: ToastOptions,
   ) => {
-    add(message, type, options?.duration);
+    add(message, type, options);
   };
 
   return {

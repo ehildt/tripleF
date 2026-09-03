@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { LucideIcon } from '@lucide/vue';
 import {
+  BellOff,
   Bug,
   Check,
   CircleX,
@@ -22,7 +23,7 @@ import {
   toastPinEnabled,
 } from '../composables/toast-settings.state';
 
-const { toasts, remove, pause, resume, togglePin } = useToastState();
+const { toasts, remove, pause, resume, togglePin, muteToast } = useToastState();
 
 const iconMap: Record<ToastType, LucideIcon> = {
   success: Check,
@@ -72,6 +73,14 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
         >
           <PinOff v-if="t.pinned" />
           <Pin v-else />
+        </IconButton>
+        <IconButton
+          v-if="t.key"
+          size="sm"
+          :title="$t('common.dontShowAgain')"
+          @click="muteToast(t.id)"
+        >
+          <BellOff />
         </IconButton>
         <IconButton
           size="sm"

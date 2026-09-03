@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { buildEncyclopediaClassifyPrompt } from '@triplef/agent/prompts';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { buildProviderOptions } from '../../../../ai-sdk/helpers/provider-options.helper.js';
+import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import { EncyclopediaLedgerRepository } from '../../../../persistence/services/encyclopedia-ledger.repository.js';
 import { parseEncyclopediaClassification } from '../../../helpers/parse-encyclopedia-classification.helper.js';
 import type { EncyclopediaClassifyJobData } from '../../../models/memory.model.js';

@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { OllamaApiService } from '@triplef/ollama-api';
 import { Job } from 'bullmq';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
@@ -29,7 +29,7 @@ export class HarnessContextService {
     private readonly documentConversionService: DocumentConversionService,
     private readonly minioService: MinioService,
     private readonly ollamaConfigService: OllamaConfigService,
-    private readonly ollamaModelsService: OllamaModelsService,
+    private readonly ollamaApiService: OllamaApiService,
     private readonly sharpService: SharpService,
     private readonly stepRegistryService: StepRegistryService,
   ) {}
@@ -134,7 +134,7 @@ export class HarnessContextService {
     let effectiveMeta = imageMeta;
 
     if (hasImages) {
-      const supportsVision = await this.ollamaModelsService.supportsCapability(
+      const supportsVision = await this.ollamaApiService.supportsCapability(
         filters.model!,
         'vision',
       );

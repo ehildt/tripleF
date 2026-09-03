@@ -15,6 +15,8 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  BellOff,
+  BellRing,
   Bug,
   Check,
   CircleX,
@@ -28,6 +30,7 @@ import {
 import { computed } from 'vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
@@ -45,8 +48,10 @@ import {
   toastAutoHide,
   toastDurationSeconds,
   toastEnabled,
+  toastMutedMessages,
   toastPinEnabled,
   toastTypeFilters,
+  unmuteToastMessage,
 } from '@/components/widgets/toast/composables/toast-settings.state';
 import type { ToastAnchor } from '@/components/widgets/toast/composables/toast-settings.state.types';
 import type { ToastType } from '@/composables/toast-state';
@@ -249,6 +254,31 @@ function setHorizontal(value: string) {
         />
       </div>
     </div>
+    <div class="toast-panel__group">
+      <SectionHeader
+        :icon="BellOff"
+        :title="$t('common.mutedMessagesSection')"
+      />
+      <div v-if="toastMutedMessages.length" class="toast-panel__muted-list">
+        <div
+          v-for="muted in toastMutedMessages"
+          :key="muted.key"
+          class="toast-panel__muted-row"
+        >
+          <span class="toast-panel__muted-sample">{{ muted.sample }}</span>
+          <IconButton
+            size="sm"
+            :title="$t('common.showToastAgain')"
+            @click="unmuteToastMessage(muted.key)"
+          >
+            <BellRing />
+          </IconButton>
+        </div>
+      </div>
+      <p v-else class="toast-panel__muted-empty">
+        {{ $t('common.noMutedMessages') }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -343,6 +373,38 @@ function setHorizontal(value: string) {
   padding: 0 var(--spacing-1);
   border: 1px solid var(--color-divider);
   background-color: var(--color-bg-primary);
+}
+
+.toast-panel__muted-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.toast-panel__muted-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  border: 1px solid var(--color-divider);
+  background-color: var(--color-bg-elevated);
+}
+
+.toast-panel__muted-sample {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-fg-secondary);
+}
+
+.toast-panel__muted-empty {
+  margin: 0;
+  padding: var(--spacing-2);
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
 }
 
 @media (max-width: 40rem) {
