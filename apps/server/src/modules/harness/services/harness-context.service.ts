@@ -87,6 +87,22 @@ export class HarnessContextService {
     const attachedPageHashes = new Set(
       imageUploadMeta.map((entry) => entry.hash),
     );
+
+    // One capability probe per job, shared by the document pipeline (pdf page
+    // descriptions need a vision model) and the image gate below. Lazy, so a
+    // text-only turn never pays for it.
+    let visionSupport: boolean | undefined;
+    const resolveVisionSupport = async (): Promise<boolean> => {
+      if (visionSupport !== undefined) return visionSupport;
+      visionSupport = filters.model
+        ? await this.ollamaApiService.supportsCapability(
+            filters.model,
+            'vision',
+          )
+        : false;
+      return visionSupport;
+    };
+
     const resolvedDocuments =
       await this.documentConversionService.resolveOriginals(
         sessionId,
@@ -94,6 +110,10 @@ export class HarnessContextService {
         requestId,
         documentMeta,
         attachedPageHashes,
+        {
+          model: filters.model,
+          ready: documentMeta.length > 0 ? await resolveVisionSupport() : false,
+        },
       );
     // Belt-and-braces dedup for the fallback path — never attach the same
     // page twice.
@@ -134,10 +154,7 @@ export class HarnessContextService {
     let effectiveMeta = imageMeta;
 
     if (hasImages) {
-      const supportsVision = await this.ollamaApiService.supportsCapability(
-        filters.model!,
-        'vision',
-      );
+      const supportsVision = await resolveVisionSupport();
 
       if (supportsVision) {
         const download = await this.minioService.downloadBuffers(

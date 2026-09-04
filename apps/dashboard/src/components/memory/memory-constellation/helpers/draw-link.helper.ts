@@ -2,8 +2,8 @@ import type {
   PreparedLink,
   ProjectedPoint,
 } from '../MemoryConstellation.types';
+import { computeDropletSamples } from './compute-droplet-samples.helper';
 import { drawDroplet } from './draw-droplet.helper';
-import { dropletCount } from './droplet-count.helper';
 
 /** Gray for hierarchy edges (category → ZERO, sub-category → category,
  *  sibling sub-categories) and long-distance (inter-topic) edges. */
@@ -13,13 +13,6 @@ const GRAY_LINK_COLOR = '#6b7280';
  *  open conflict pairs, drawn distinct from the semantic link graph. */
 const FRICTION_LINK_COLOR = '#ff9933';
 
-/** Light-droplet base travel speed (cycles per second along a gray edge). */
-const DROPLET_SPEED = 0.4;
-/** Per-edge phase offset so droplets don't sync across edges. */
-const DROPLET_PHASE_STEP = 0.2;
-/** Speed spread: each droplet runs at 0.6×–1.4× the base speed. */
-const DROPLET_SPEED_SPREAD = 0.8;
-
 /** Edge kinds drawn as gray lines (hierarchy + long-distance). */
 const GRAY_KINDS = new Set(['inter', 'sibling', 'cluster', 'root']);
 /** Edge kinds drawn dashed (long-distance + root). */
@@ -27,13 +20,19 @@ const DASHED_KINDS = new Set(['inter', 'root']);
 /** Edge kinds that carry traveling light droplets. */
 const DROPLET_KINDS = new Set(['inter', 'sibling', 'cluster', 'root']);
 
-/** Draw one link edge (projected quadratic curve, opacity by score). */
+/**
+ * Draw one link edge (projected quadratic curve, opacity by score). Light
+ * droplets flow in BOTH directions: A→B in the A-end dot's color, B→A in the
+ * B-end dot's color — relations read as two-way traffic with a color per
+ * origin.
+ */
 export function drawLink(
   ctx: CanvasRenderingContext2D,
   link: PreparedLink,
   projected: readonly ProjectedPoint[],
   opacity: number,
-  color: string,
+  aColor: string,
+  bColor: string,
   time: number,
   index: number,
 ): void {
@@ -44,7 +43,7 @@ export function drawLink(
 
   // Weak links: no line at all — just the traveling droplets, so the relation
   // reads as a faint gray pulse between the nodes rather than a solid
-  // connection.
+  // connection. Undirected by nature: neutral gray in both directions.
   if (link.weak) {
     drawDroplets(
       ctx,
@@ -54,6 +53,7 @@ export function drawLink(
       midY,
       link,
       opacity,
+      GRAY_LINK_COLOR,
       GRAY_LINK_COLOR,
       time,
       index,
@@ -73,7 +73,7 @@ export function drawLink(
   } else if (isFriction) {
     dashPattern = [6, 4];
   }
-  let strokeColor = color;
+  let strokeColor = aColor;
   if (isFriction) strokeColor = FRICTION_LINK_COLOR;
   else if (isGray) strokeColor = GRAY_LINK_COLOR;
   ctx.strokeStyle = strokeColor;
@@ -87,18 +87,23 @@ export function drawLink(
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
 
-  // Light droplets: pulses traveling along the gray edges, colored by the
-  // source main dot (the topic/category hub color) and fading in at the
-  // source and out at the target.
+  // Light droplets on the gray edges: two-way traffic colored by each
+  // endpoint's dot, fading in at the origin and out at the destination.
   if (DROPLET_KINDS.has(link.kind)) {
-    drawDroplets(ctx, a, b, midX, midY, link, opacity, color, time, index);
+    drawDroplets(
+      ctx,
+      a,
+      b,
+      midX,
+      midY,
+      link,
+      opacity,
+      aColor,
+      bColor,
+      time,
+      index,
+    );
   }
-}
-
-/** Deterministic pseudo-random in [0, 1) from a numeric seed. */
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed * 12.9898) * 43758.5453;
-  return x - Math.floor(x);
 }
 
 /** Traveling light droplets along a (possibly invisible) edge curve. */
@@ -110,30 +115,23 @@ function drawDroplets(
   midY: number,
   link: PreparedLink,
   opacity: number,
-  color: string,
+  aColor: string,
+  bColor: string,
   time: number,
   index: number,
 ): void {
-  const count = dropletCount(link.score);
-  for (let j = 0; j < count; j++) {
-    // Per-droplet constants (deterministic from edge + slot): a unique speed,
-    // a random starting position, and a slight brightness variation so the
-    // pulses drift naturally instead of marching in lockstep.
-    const seed = index * 1009.7 + j * 31.7;
-    const speed =
-      DROPLET_SPEED *
-      (1 -
-        DROPLET_SPEED_SPREAD / 2 +
-        DROPLET_SPEED_SPREAD * seededRandom(seed));
-    const phase = seededRandom(seed + 5.3);
-    const brightness = 0.7 + 0.6 * seededRandom(seed + 9.1);
-    const t = (time * speed + index * DROPLET_PHASE_STEP + phase) % 1;
-    const mt = 1 - t;
-    const x = mt * mt * a.x + 2 * mt * t * midX + t * t * b.x;
-    const y = mt * mt * a.y + 2 * mt * t * midY + t * t * b.y;
-    const pulse = Math.sin(Math.PI * t);
-    const alpha =
-      pulse * opacity * (0.5 + 0.5 * (link.score ?? 0.5)) * brightness;
-    drawDroplet(ctx, x, y, alpha, color);
+  for (const sample of computeDropletSamples(
+    link,
+    time,
+    index,
+    opacity,
+    aColor,
+    bColor,
+  )) {
+    const u = sample.u;
+    const mu = 1 - u;
+    const x = mu * mu * a.x + 2 * mu * u * midX + u * u * b.x;
+    const y = mu * mu * a.y + 2 * mu * u * midY + u * u * b.y;
+    drawDroplet(ctx, x, y, sample.alpha, sample.color);
   }
 }

@@ -1,6 +1,7 @@
 export * from './harness/base-system.prompt.js';
 export * from './harness/content-system.prompt.js';
 export * from './harness/content-system.prompt.types.js';
+export * from './harness/describe-pdf-page.prompt.js';
 export * from './harness/execute/execute-language.helper.js';
 export * from './harness/execute/image-execute.prompt.js';
 export * from './harness/execute/missing-tools.prompt.js';

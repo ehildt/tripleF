@@ -2,7 +2,10 @@
 /**
  * The metadata column: the selected dot's label, full text, and meta rows
  * (urls, timestamps, paths, …). Shows an empty hint until a dot is clicked.
+ * Uploaded documents additionally offer a download of the stored original.
  */
+import { Download } from '@lucide/vue';
+
 import type { NodeMetadataColumnProps } from './NodeMetadataColumn.types';
 
 defineProps<NodeMetadataColumnProps>();
@@ -13,6 +16,15 @@ defineProps<NodeMetadataColumnProps>();
     <template v-if="node">
       <h3 class="node-metadata-column__label">{{ node.label }}</h3>
       <p class="node-metadata-column__text">{{ node.text }}</p>
+      <a
+        v-if="node.downloadUrl"
+        class="node-metadata-column__download"
+        :href="node.downloadUrl"
+        download
+      >
+        <Download />
+        {{ $t('common.memoryDownloadDocument') }}
+      </a>
       <div v-if="frictions?.length" class="node-metadata-column__frictions">
         <span class="node-metadata-column__frictions-tag">{{
           $t('common.memoryFrictionTag')
@@ -86,6 +98,34 @@ defineProps<NodeMetadataColumnProps>();
   color: var(--color-fg-primary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  /* Long documents stay readable: the text scrolls inside its own bounded
+     box instead of pushing the actions/meta rows out of view. */
+  max-height: 20rem;
+  overflow-y: auto;
+  padding-right: var(--spacing-1);
+}
+
+.node-metadata-column__download {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  align-self: flex-start;
+  padding: var(--spacing-1) var(--spacing-2);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent-primary);
+  text-decoration: none;
+  border: 1px solid var(--color-divider);
+  background-color: var(--color-bg-secondary);
+}
+
+.node-metadata-column__download:hover {
+  border-color: var(--color-accent-primary);
+}
+
+.node-metadata-column__download svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .node-metadata-column__meta {

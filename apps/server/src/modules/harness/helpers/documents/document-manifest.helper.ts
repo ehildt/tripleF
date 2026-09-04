@@ -16,8 +16,23 @@ export interface DocumentManifest {
   name: string;
   /** Content hashes of the rendered PDF page images, in page order. */
   pageHashes: string[];
-  /** Extracted text (docx/pptx/plain, pdf text layer). Empty when none (scanned pdf). */
+  /**
+   * Extracted text (docx/pptx/plain blob, pdf full-document text layer).
+   * Empty when none (scanned pdf).
+   */
   text: string;
+  /**
+   * Pdf only: the text layer per page, aligned 1:1 with pageHashes; '' for
+   * pages without one. Undefined on legacy manifests until healed.
+   */
+  pageTexts?: string[];
+  /**
+   * Pdf only: per-page vision description, aligned 1:1 with pageHashes.
+   * null = not described yet, '' = described with no readable content.
+   * Only pages the client selected are ever described (gallery selection is
+   * authoritative); filled incrementally as pages get referenced.
+   */
+  pageDescriptions?: (string | null)[];
   /** Preview HTML (docx). Undefined otherwise. */
   html?: string;
   /** PPTX per-slide text for a readable preview. Undefined otherwise. */

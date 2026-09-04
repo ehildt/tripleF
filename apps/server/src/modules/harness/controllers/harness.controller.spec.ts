@@ -28,7 +28,10 @@ describe('HarnessController', () => {
         },
         {
           provide: DocumentConversionService,
-          useValue: { convertAndPersist: vi.fn().mockResolvedValue(null) },
+          useValue: {
+            convertAndPersist: vi.fn().mockResolvedValue(null),
+            indexManifest: vi.fn(),
+          },
         },
         {
           provide: OllamaApiService,

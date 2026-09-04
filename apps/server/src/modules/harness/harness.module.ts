@@ -1,5 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Global, Module } from '@nestjs/common';
+import { PdfModule } from '@triplef/pdf';
 
 import { LifecycleService } from '../dead-letter/services/lifecycle.service.js';
 import { StockDataModule } from '../stock-data/stock-data.module.js';
@@ -18,6 +19,7 @@ import { HarnessContextService } from './services/harness-context.service.js';
 import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
+import { PdfPageDescribeService } from './services/pdf-page-describe.service.js';
 import { PlaywrightMcpClientService } from './services/playwright-mcp-client.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
 import { ShownMediaService } from './services/shown-media.service.js';
@@ -33,11 +35,16 @@ import { ToolSelectionService } from './services/tool-selection.service.js';
 
 @Global()
 @Module({
-  imports: [HttpModule, StockDataModule],
+  imports: [
+    HttpModule,
+    PdfModule.registerAsync({ global: true }),
+    StockDataModule,
+  ],
   providers: [
     NumCtxConfigService,
     SourceBudgetConfigService,
     DocumentConversionService,
+    PdfPageDescribeService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessContextService,
@@ -67,6 +74,7 @@ import { ToolSelectionService } from './services/tool-selection.service.js';
     NumCtxConfigService,
     SourceBudgetConfigService,
     DocumentConversionService,
+    PdfPageDescribeService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessContextService,

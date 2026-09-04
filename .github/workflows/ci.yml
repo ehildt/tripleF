@@ -126,6 +126,13 @@ jobs:
             coverage-flag: agent
             artifact: agent-dist
             artifact-path: packages/agent/dist/
+          - name: pdf
+            filter: '@triplef/pdf'
+            build: build
+            prod-build: ''
+            coverage-flag: pdf
+            artifact: pdf-dist
+            artifact-path: packages/pdf/dist/
 
     steps:
       - uses: actions/checkout@v7

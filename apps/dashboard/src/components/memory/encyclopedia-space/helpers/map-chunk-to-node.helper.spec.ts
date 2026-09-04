@@ -47,6 +47,55 @@ describe('mapChunkToNode', () => {
     expect(node.meta).toContainEqual({ label: 'size', value: '240 KB' });
   });
 
+  it('labels an unclassified uploaded document by its file name', () => {
+    const node = mapChunkToNode({
+      id: 'c1',
+      content: 'Body',
+      url: '/api/v1/storage/s/c/h',
+      domain: '',
+      title: 'quarterly-report.pdf',
+      fetchedAt: '2025-01-01',
+      contentHash: 'h1',
+      chunkIndex: 0,
+      chunkCount: 1,
+      partitionScope: 'p1',
+      originalHash: 'abc123',
+    });
+
+    expect(node.label).toBe('quarterly-report.pdf');
+    expect(node.topicKey).toBe('quarterly-report.pdf');
+  });
+
+  it('exposes a download link only for uploaded documents', () => {
+    const uploaded = mapChunkToNode({
+      id: 'c1',
+      content: 'Body',
+      url: '/api/v1/storage/s/c/h',
+      domain: '',
+      title: 'doc.pdf',
+      fetchedAt: '2025-01-01',
+      contentHash: 'h1',
+      chunkIndex: 0,
+      chunkCount: 1,
+      partitionScope: 'p1',
+      originalHash: 'abc123',
+    });
+    const webChunk = mapChunkToNode({
+      id: 'c2',
+      content: 'Body',
+      url: 'https://example.com',
+      domain: 'example.com',
+      fetchedAt: '2025-01-01',
+      contentHash: 'h2',
+      chunkIndex: 0,
+      chunkCount: 1,
+      partitionScope: 'p1',
+    });
+
+    expect(uploaded.downloadUrl).toBe('/api/v1/storage/s/c/h');
+    expect(webChunk.downloadUrl).toBeUndefined();
+  });
+
   it('falls back to the domain when no topic is classified', () => {
     expect(
       mapChunkToNode({

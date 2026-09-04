@@ -407,6 +407,9 @@ export const useConversationStore = defineStore('conversation', () => {
     });
     conversations.value.unshift(conversation);
     activeConversationId.value = conversation.id;
+    // Persist right away so a lazily created chat (attach flow, first send)
+    // still appears in the chat list after a reload.
+    persistConversation(conversation);
     return conversation;
   }
 
@@ -443,6 +446,8 @@ export const useConversationStore = defineStore('conversation', () => {
     });
     conversations.value.unshift(conversation);
     activeConversationId.value = conversation.id;
+    // Persist at creation: an untouched chat must survive a reload too.
+    persistConversation(conversation);
     return conversation;
   }
 

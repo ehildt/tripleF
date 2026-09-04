@@ -300,13 +300,15 @@ export function useMemoryConstellation(
       }
       const aOpacity = topicOpacity.get(nodeList[link.a].topicKey) ?? 1;
       const bOpacity = topicOpacity.get(nodeList[link.b].topicKey) ?? 1;
-      const color = nodeColor.get(nodeList[link.a].id) ?? '#94a3b8';
+      const aColor = nodeColor.get(nodeList[link.a].id) ?? '#94a3b8';
+      const bColor = nodeColor.get(nodeList[link.b].id) ?? '#94a3b8';
       drawLink(
         ctx,
         link,
         projected,
         Math.min(aOpacity, bOpacity),
-        color,
+        aColor,
+        bColor,
         time,
         i,
       );

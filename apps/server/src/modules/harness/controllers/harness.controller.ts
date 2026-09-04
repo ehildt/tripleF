@@ -89,6 +89,14 @@ export class HarnessController {
         buffer,
       );
       if (!manifest) continue;
+      // The extracted text becomes an encyclopedia node right at upload —
+      // before the first question is ever asked about the document.
+      this.documentConversionService.indexManifest(
+        query.sessionId,
+        query.conversationId,
+        meta,
+        manifest,
+      );
       documents.push({
         name: meta.name,
         hash: meta.hash,

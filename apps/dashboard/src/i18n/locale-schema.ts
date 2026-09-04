@@ -564,6 +564,7 @@ const commonSchema = z.object({
   memoryMetadataEmpty: z.string().optional(),
   memoryFrictionTag: z.string().optional(),
   memoryEvidenceTag: z.string().optional(),
+  memoryDownloadDocument: z.string().optional(),
   memoryToggleSuggested: z.string().optional(),
   memoryConstellationNodeLimit: z.string().optional(),
   memoryConstellationNodeLimitDesc: z.string().optional(),

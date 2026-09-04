@@ -694,6 +694,45 @@ describe('useConversationStore', () => {
   });
 
   describe('persistence split', () => {
+    it('persists a newly created chat immediately, before any activity', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary', 'evt');
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeDefined();
+    });
+
+    it('persists the lazily ensured chat at creation', async () => {
+      const store = useConversationStore();
+      const conversation = store.ensureConversation();
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeDefined();
+    });
+
+    it('persists a newly created pinned chat to the server', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('persistent', 'evt');
+      await new Promise((r) => setTimeout(r, 0));
+
+      const saveCalls = vi.mocked(saveConversation).mock.calls;
+      expect(saveCalls.length).toBeGreaterThan(0);
+      expect(saveCalls[0][1]).toBe(conversation.conversationId);
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeUndefined();
+    });
+
     it('persists unpinned (temporary) conversations to IndexedDB', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');

@@ -34,6 +34,32 @@ export const Empty: Story = {
 };
 
 /**
+ * An uploaded document: the download action offers the stored original and
+ * the (long) extracted text scrolls inside its own box.
+ */
+export const UploadedDocument: Story = {
+  args: {
+    node: {
+      id: 'd',
+      label: 'quarterly-report.pdf',
+      topicKey: 'quarterly-report.pdf',
+      text: Array.from(
+        { length: 40 },
+        (_, index) =>
+          `Section ${index + 1} — revenue and outlook details for the quarter.`,
+      ).join('\n'),
+      keys: ['quarterly-report.pdf'],
+      downloadUrl: '/api/v1/storage/s/c/document-hash',
+      meta: [
+        { label: 'type', value: 'application/pdf' },
+        { label: 'size', value: '240 KB' },
+        { label: 'chunk', value: '1/3' },
+      ],
+    },
+  },
+};
+
+/**
  * A contested dot: the selected node is party to an open friction, so a
  * warning section lists each conflict's reason between the text and the meta.
  */

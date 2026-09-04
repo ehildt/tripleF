@@ -572,6 +572,7 @@ const en: LocaleMessages = {
     memoryMetadataEmpty: 'Select a dot to see its details',
     memoryFrictionTag: '⚠ Contested — open conflict',
     memoryEvidenceTag: 'Supporting evidence',
+    memoryDownloadDocument: 'Download document',
     memoryToggleSuggested:
       'Toggle weak links — faint inter-topic arcs below the strong-relation threshold',
     memoryConstellationNodeLimit: 'Constellation node limit',

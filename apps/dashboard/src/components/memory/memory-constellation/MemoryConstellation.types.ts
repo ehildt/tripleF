@@ -27,6 +27,12 @@ export interface ConstellationNode {
   domain?: string;
   /** Source provenance (e.g. encyclopedia: full source url) — hub rollup. */
   url?: string;
+  /**
+   * Download href for uploaded documents (encyclopedia chunks of a stored
+   * file) — drives the metadata column's download action. Absent for web
+   * sources and memory points.
+   */
+  downloadUrl?: string;
   /** Position this node at the 3D origin (the scene center) — e.g. the cognition profile hub. */
   anchorToOrigin?: boolean;
   /** Synthetic collapsed-topic dot (click to expand) — not a real point. */

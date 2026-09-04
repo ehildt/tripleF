@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { reactive } from 'vue';
 
 import { createConversation } from './create-conversation.helper';
 import { toPersistedConversation } from './to-persisted-conversation.helper';
@@ -38,5 +39,25 @@ describe('toPersistedConversation', () => {
     expect(toPersistedConversation(conversation).contextUsagePercent).toBe(
       '30.00',
     );
+  });
+
+  it('returns a structured-clone-safe snapshot of a REACTIVE conversation', () => {
+    // Regression: the store's conversations are Vue-reactive — reading nested
+    // fields yields reactive proxies, and Dexie's structured clone rejects
+    // them ("[object Array] could not be cloned"), silently dropping every
+    // temporary conversation persist since the IndexedDB migration.
+    const conversation = reactive(createConversation({ type: 'temporary' }));
+    conversation.exchanges.push({
+      id: 'e1',
+      role: 'user',
+      content: 'hello',
+      status: 'done',
+      conversationId: conversation.conversationId,
+    } as never);
+
+    const persisted = toPersistedConversation(conversation);
+
+    expect(() => structuredClone(persisted)).not.toThrow();
+    expect(persisted.exchanges[0].content).toBe('hello');
   });
 });

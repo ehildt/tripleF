@@ -204,6 +204,7 @@ describe('HarnessContextService', () => {
       'req-1',
       expect.any(Array),
       new Set(['ref-hash', 'new-hash']),
+      { model: 'model', ready: true },
     );
   });
 
