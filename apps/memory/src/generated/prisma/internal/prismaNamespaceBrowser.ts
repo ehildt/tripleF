@@ -194,6 +194,8 @@ export const MemoryClusterScalarFieldEnum = {
   summary: 'summary',
   memberCount: 'memberCount',
   memberIds: 'memberIds',
+  level: 'level',
+  parentId: 'parentId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

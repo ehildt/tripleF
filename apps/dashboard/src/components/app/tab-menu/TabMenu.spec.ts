@@ -19,7 +19,7 @@ const navLabels = {
   memory: i18n.global.t('nav.memory'),
   dlq: i18n.global.t('nav.dlq'),
   debug: i18n.global.t('nav.debug'),
-  sysctl: i18n.global.t('nav.sysctl'),
+  settings: i18n.global.t('nav.settings'),
 } as const;
 
 // TabMenu uses useRoute() (to close on navigation) and NavMenu renders real
@@ -86,7 +86,7 @@ describe('TabMenu', () => {
       navLabels.memory,
       navLabels.dlq,
       navLabels.debug,
-      navLabels.sysctl,
+      navLabels.settings,
     ]);
   });
 
@@ -129,7 +129,7 @@ describe('TabMenu', () => {
   it('shows per-tab count badges and the star when provided', () => {
     localStorage.setItem('harness-show-counters', 'true');
     const { wrapper } = mountMenu({
-      activeTab: 'sysctl',
+      activeTab: 'settings',
       debugCount: 5,
       showChatStar: true,
       dlqCount: 2,

@@ -17,7 +17,7 @@ const TAB_TINTS: Record<ActiveTab, number> = {
   memory: 0.35,
   dlq: 0.55,
   debug: 0.75,
-  sysctl: 1,
+  settings: 1,
 };
 
 const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
@@ -25,7 +25,7 @@ const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
   memory: Brain,
   dlq: MailX,
   debug: Bug,
-  sysctl: SlidersHorizontal,
+  settings: SlidersHorizontal,
 };
 
 export function useMenuTabs(props: {
@@ -69,10 +69,10 @@ export function useMenuTabs(props: {
         count: showCounters ? (props.debugCount ?? 0) : undefined,
       },
       {
-        label: t('nav.sysctl'),
-        tab: 'sysctl',
-        icon: TAB_ICONS.sysctl,
-        tint: TAB_TINTS.sysctl,
+        label: t('nav.settings'),
+        tab: 'settings',
+        icon: TAB_ICONS.settings,
+        tint: TAB_TINTS.settings,
       },
     ];
 

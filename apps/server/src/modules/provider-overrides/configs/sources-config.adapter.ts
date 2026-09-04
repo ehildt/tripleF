@@ -6,7 +6,7 @@ import { isSourceEntry } from '../helpers/is-source-entry.helper.js';
 /**
  * Dynamic source config: content domains the pipeline prefers (rank boost +
  * prompt guidance) or blocks (dropped from tool context entirely). Managed
- * at runtime through the provider-overrides API (SysCtl), with env vars as
+ * at runtime through the provider-overrides API (Settings), with env vars as
  * the pristine defaults — same contract as the Serper provider overrides.
  * Entries are hostnames, *.glob patterns, or /regex/ patterns — all match
  * the apex domain and its subdomains (regexes define their own scope).

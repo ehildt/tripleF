@@ -37,7 +37,7 @@ export class HarnessStreamQueryDto {
     type: String,
     example: 'default',
     description:
-      "Memory partition override (sysctl → system) — the user's memory space. Defaults to the session id; a custom value keeps memory stable across browser-session rotation.",
+      "Memory partition override (settings → system) — the user's memory space. Defaults to the session id; a custom value keeps memory stable across browser-session rotation.",
   })
   @IsString()
   @IsOptional()
@@ -48,7 +48,7 @@ export class HarnessStreamQueryDto {
     type: String,
     example: 'default',
     description:
-      "Memory cognition override (sysctl → system) — the AI's understanding-of-the-user space. Defaults to the memory partition; a custom value lets the AI's cognition live in its own space.",
+      "Memory cognition override (settings → system) — the AI's understanding-of-the-user space. Defaults to the memory partition; a custom value lets the AI's cognition live in its own space.",
   })
   @IsString()
   @IsOptional()

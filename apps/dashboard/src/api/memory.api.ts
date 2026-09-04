@@ -350,6 +350,10 @@ export interface MemoryClusterRecord {
   summary: string;
   memberCount: number;
   memberIds: string[];
+  /** Hierarchy level (Raptor): 0 = leaf cluster; 1+ = cluster of synopses. */
+  level?: number;
+  /** Parent cluster id at level+1 (absent on the top level). */
+  parentId?: string;
 }
 
 /**

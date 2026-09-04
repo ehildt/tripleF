@@ -108,7 +108,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
   private async attemptRestore(): Promise<void> {
     this.lastRestoreAttemptAt = Date.now();
     const rows = await this.repository.findAll();
-    // A live SysCtl write landed mid-flight — it is fresher than any row.
+    // A live Settings write landed mid-flight — it is fresher than any row.
     if (this.restored) return;
     this.restored = true;
     for (const row of rows) {
@@ -143,7 +143,7 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
    * Fire-and-forget re-restore after a failed boot restore. Throttled and
    * single-flighted so per-request getConfig() calls never hammer the
    * database; a successful attempt restores the overrides for all later
-   * calls. Skipped once overrides exist — live SysCtl edits are fresher
+   * calls. Skipped once overrides exist — live Settings edits are fresher
    * than any persisted row.
    */
   private scheduleLazyRestore(): void {

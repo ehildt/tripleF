@@ -148,7 +148,7 @@ export class EncyclopediaRepository {
   }
 
   /**
-   * Scroll-based listing for the sysctl encyclopedia surface (payload only, no
+   * Scroll-based listing for the settings encyclopedia surface (payload only, no
    * vectors). Optional domain / partitionScope tightenings; capped page.
    */
   async listChunks(input: {
@@ -353,6 +353,142 @@ export class EncyclopediaRepository {
       if (!offset) break;
     }
     return urls;
+  }
+
+  /**
+   * Unfetched snippet urls of the global encyclopedia — the research job's
+   * gap queue. A url is a gap while it has `source_type: 'result'` points
+   * (search results the user's own searches surfaced) but no `source_type:
+   * 'content'` points (the page was never fetched). Over-fetches candidates
+   * to survive the content check, then returns up to `limit` gaps with their
+   * title/snippet/partition provenance.
+   */
+  async scrollUnfetchedSnippetUrls(limit: number): Promise<
+    Array<{
+      url: string;
+      title?: string;
+      snippet: string;
+      partitionScope?: string;
+    }>
+  > {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return [];
+    const candidates = await this.collectSnippetCandidates(limit);
+    return this.filterUnfetched(candidates, limit);
+  }
+
+  /** Distinct snippet urls (with provenance), over-fetched 2× for the content check. */
+  private async collectSnippetCandidates(limit: number): Promise<
+    Array<{
+      url: string;
+      title?: string;
+      snippet: string;
+      partitionScope?: string;
+    }>
+  > {
+    const client = this.clientService.getClient();
+    const candidates = new Map<
+      string,
+      { url: string; title?: string; snippet: string; partitionScope?: string }
+    >();
+    let offset: string | number | null = null;
+    for (;;) {
+      const scroll = await client.scroll(this.collection, {
+        filter: {
+          must: [{ key: 'source_type', match: { value: 'result' } }],
+        },
+        limit: SCROLL_PAGE,
+        offset: offset ?? undefined,
+        with_payload: true,
+        with_vector: false,
+      });
+      this.absorbSnippetPoints(scroll.points, candidates, limit * 2);
+      if (candidates.size >= limit * 2) break;
+      offset = (scroll.next_page_offset as string | number | null) ?? null;
+      if (!offset) break;
+    }
+    return [...candidates.values()];
+  }
+
+  /** Fold one scroll page's snippet points into the candidate map (first-seen wins). */
+  private absorbSnippetPoints(
+    points: Array<{ payload?: Record<string, unknown> | null }>,
+    candidates: Map<
+      string,
+      { url: string; title?: string; snippet: string; partitionScope?: string }
+    >,
+    cap: number,
+  ): void {
+    for (const point of points) {
+      const payload = point.payload ?? {};
+      const url = payload.url;
+      if (typeof url !== 'string' || !url || candidates.has(url)) continue;
+      candidates.set(url, {
+        url,
+        title: typeof payload.title === 'string' ? payload.title : undefined,
+        snippet: typeof payload.content === 'string' ? payload.content : '',
+        partitionScope:
+          typeof payload.partition_scope === 'string'
+            ? payload.partition_scope
+            : undefined,
+      });
+      if (candidates.size >= cap) return;
+    }
+  }
+
+  /** Keep only candidates with no content chunks (never fetched), capped at `limit`. */
+  private async filterUnfetched(
+    candidates: Array<{
+      url: string;
+      title?: string;
+      snippet: string;
+      partitionScope?: string;
+    }>,
+    limit: number,
+  ): Promise<
+    Array<{
+      url: string;
+      title?: string;
+      snippet: string;
+      partitionScope?: string;
+    }>
+  > {
+    const gaps: Array<{
+      url: string;
+      title?: string;
+      snippet: string;
+      partitionScope?: string;
+    }> = [];
+    for (const candidate of candidates) {
+      const content = await this.scrollByUrl(candidate.url);
+      if (content.length === 0) gaps.push(candidate);
+      if (gaps.length >= limit) break;
+    }
+    return gaps;
+  }
+
+  /**
+   * Load the contents of specific chunks by id (no vector search) — the
+   * research job's contested-memory path resolves encyclopedia frictions'
+   * pairs this way. Missing ids are simply absent from the map.
+   */
+  async getContentsByIds(ids: string[]): Promise<Map<string, string>> {
+    const contents = new Map<string, string>();
+    if (ids.length === 0) return contents;
+    if (!(await this.clientService.hasEncyclopediaCollection()))
+      return contents;
+    const scroll = await this.clientService
+      .getClient()
+      .scroll(this.collection, {
+        filter: { must: [{ has_id: ids }] },
+        limit: ids.length,
+        with_payload: true,
+        with_vector: false,
+      });
+    for (const point of scroll.points) {
+      const content = (point.payload?.content as string | undefined)?.trim();
+      if (content) contents.set(String(point.id), content);
+    }
+    return contents;
   }
 
   /**

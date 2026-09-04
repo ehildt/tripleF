@@ -25,6 +25,8 @@ function makeService() {
     { embed } as never,
     { searchMemory } as never,
     { findByIds } as never,
+    { searchSynopses: vi.fn().mockResolvedValue([]) } as never,
+    { getRaptorEnabled: vi.fn().mockReturnValue(false) } as never,
   );
   return { service, embed, searchMemory, findByIds };
 }

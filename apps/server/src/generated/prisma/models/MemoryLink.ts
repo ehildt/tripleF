@@ -542,7 +542,9 @@ export type $MemoryLinkPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * *
      *    * Edge kind: 'semantic' = enforced kNN link (store paths); 'topical' =
      *    * suggested link (relink job — recall ignores it, the dashboard may render
-     *    * it faintly). One edge per pair: semantic wins when both would apply.
+     *    * it faintly); 'evidence' = a bridge record's citation edge to a fact it
+     *    * synthesizes (conviction store path — exact, not similarity-derived). One
+     *    * edge per pair: semantic wins when both would apply.
      */
     kind: string
     createdAt: Date

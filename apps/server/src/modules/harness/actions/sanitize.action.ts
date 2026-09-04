@@ -99,7 +99,7 @@ export type SanitizeResult = {
  * Cloud reference candidates for image tasks (compare/describe/ocr) are
  * stored/shown at the resolution the effective preprocessing (pproc) config
  * resolves — there is no cloud-only hardcoded size; ingest honors the same
- * live SysCtl resize as uploads and rejects sources smaller than that target
+ * live Settings resize as uploads and rejects sources smaller than that target
  * instead of storing them visibly small. The response model selects them by
  * search-result evidence (titles/snippets/sources), never by pixels — the
  * candidate buffers stay server-side (Files panel), nothing is attached.
@@ -279,7 +279,7 @@ export class SanitizeActionService {
         : sanitizedToolResults;
 
     // 6. Build the final message payload with tool context for the response model.
-    // Dynamic source policy (SysCtl): preferred domains rank first, blocked
+    // Dynamic source policy (Settings): preferred domains rank first, blocked
     // domains are dropped entirely — before the response model ever sees them.
     const sources = this.providerOverrides.getConfig().sources;
     const articles = applySourcePolicy(

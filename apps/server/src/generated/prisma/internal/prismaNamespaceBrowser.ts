@@ -63,7 +63,8 @@ export const ModelName = {
   MemoryInsertLedger: 'MemoryInsertLedger',
   MemoryEncyclopediaInsertLedger: 'MemoryEncyclopediaInsertLedger',
   MemoryLink: 'MemoryLink',
-  MemoryFriction: 'MemoryFriction'
+  MemoryFriction: 'MemoryFriction',
+  MemoryCluster: 'MemoryCluster'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -263,6 +264,25 @@ export const MemoryFrictionScalarFieldEnum = {
 } as const
 
 export type MemoryFrictionScalarFieldEnum = (typeof MemoryFrictionScalarFieldEnum)[keyof typeof MemoryFrictionScalarFieldEnum]
+
+
+export const MemoryClusterScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  fingerprint: 'fingerprint',
+  title: 'title',
+  summary: 'summary',
+  memberCount: 'memberCount',
+  memberIds: 'memberIds',
+  level: 'level',
+  parentId: 'parentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryClusterScalarFieldEnum = (typeof MemoryClusterScalarFieldEnum)[keyof typeof MemoryClusterScalarFieldEnum]
 
 
 export const SortOrder = {

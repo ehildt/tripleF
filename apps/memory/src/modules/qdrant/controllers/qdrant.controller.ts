@@ -24,6 +24,7 @@ import {
   ApePostQdrantMemoryLinksRecompute,
   ApePostQdrantSearchBridges,
   ApePostQdrantSearchConvictions,
+  ApePostQdrantSearchSynopses,
   ApePostQdrantSearchText,
   ApePostQdrantSearchTextClusters,
   ApePostQdrantSearchVector,
@@ -50,6 +51,7 @@ import { MemorySearchTextDto } from '../dtos/memory-search-text.dto.js';
 import { MemorySearchVectorDto } from '../dtos/memory-search-vector.dto.js';
 import { MemorySendTextDto } from '../dtos/memory-send-text.dto.js';
 import { MemoryStoreInsightDto } from '../dtos/memory-store-insight.dto.js';
+import { MemorySynopsisDto } from '../dtos/memory-synopsis.dto.js';
 import { MemoryVocabularyQueryDto } from '../dtos/memory-vocabulary-query.dto.js';
 import { QdrantStatusResponseDto } from '../dtos/qdrant-status.dto.js';
 import type { MemoryPoint } from '../models/memory.model.js';
@@ -315,6 +317,24 @@ export class QdrantController {
       tags: body.tags,
       contains: body.contains,
       recency: body.recency,
+    });
+  }
+
+  /**
+   * The Raptor probe read path: semantic search over one scope's cluster
+   * synopses (community summaries at every hierarchy level, collapsed into
+   * one kNN) — the interpret-time cross-cutting context layer.
+   */
+  @Post('search/synopses')
+  @HttpCode(HttpStatus.OK)
+  @ApePostQdrantSearchSynopses()
+  async searchSynopses(
+    @Body() body: MemorySearchTextDto,
+  ): Promise<MemorySynopsisDto[]> {
+    return this.memorySearchService.searchSynopses({
+      memoryPartition: body.memoryPartition,
+      text: body.text,
+      limit: body.limit,
     });
   }
 

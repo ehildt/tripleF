@@ -16,7 +16,7 @@ const NODE: ConstellationNode = {
 };
 
 const meta = {
-  title: 'Sysctl/MemorySection/NodeMetadataColumn',
+  title: 'Settings/MemorySection/NodeMetadataColumn',
   component: NodeMetadataColumn,
   tags: ['autodocs'],
   args: { node: NODE },

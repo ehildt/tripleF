@@ -8,6 +8,7 @@ const MEMORY_SPACE_SUBTABS: readonly MemorySpaceSubtab[] = [
   'partition',
   'cognition',
   'encyclopedia',
+  'synopsis',
 ];
 
 function loadMemorySpaceSubtab(): MemorySpaceSubtab {

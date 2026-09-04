@@ -9,9 +9,11 @@ import {
   VECTORIZE_WORKER_CONCURRENCY,
 } from '../../bullmq/constants/bullmq.constants.js';
 import { LifecycleService } from '../../dead-letter/services/lifecycle.service.js';
+import { ResearchJobService } from '../../research/services/research-job.service.js';
 import {
   ENCYCLOPEDIA_CLASSIFY_JOB,
   ENCYCLOPEDIA_CONSOLIDATE_JOB,
+  ENCYCLOPEDIA_RESEARCH_JOB,
   MEMORY_CLUSTER_JOB,
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_CONVICTION_JOB,
@@ -25,6 +27,7 @@ import {
 import { isPermanentVectorizeError } from '../helpers/vectorize-failure.helper.js';
 import type {
   EncyclopediaClassifyJobData,
+  EncyclopediaResearchJobData,
   EncyclopediaSweepJobData,
   MemoryClusterJobData,
   MemoryConsolidateJobData,
@@ -64,6 +67,7 @@ const KNOWN_JOB_NAMES = new Set<string>([
   MEMORY_CLUSTER_JOB,
   ENCYCLOPEDIA_CONSOLIDATE_JOB,
   ENCYCLOPEDIA_CLASSIFY_JOB,
+  ENCYCLOPEDIA_RESEARCH_JOB,
 ]);
 
 /** The union of every job payload this worker dispatches. */
@@ -78,6 +82,7 @@ type VectorizeJob = Job<
   | MemoryClusterJobData
   | EncyclopediaSweepJobData
   | EncyclopediaClassifyJobData
+  | EncyclopediaResearchJobData
 >;
 
 /**
@@ -111,6 +116,7 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     private readonly memoryClusterJob: MemoryClusterJobService,
     private readonly encyclopediaSweepJob: EncyclopediaSweepService,
     private readonly encyclopediaClassifyJob: EncyclopediaClassifyService,
+    private readonly researchJob: ResearchJobService,
     private readonly dlqLifecycleService: LifecycleService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {
@@ -183,6 +189,8 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       await this.encyclopediaClassifyJob.execute(
         job.data as EncyclopediaClassifyJobData,
       );
+    } else if (job.name === ENCYCLOPEDIA_RESEARCH_JOB) {
+      await this.researchJob.execute(job.data as EncyclopediaResearchJobData);
     } else {
       await this.memoryProfileJob.execute(job.data as MemoryProfileJobData);
     }

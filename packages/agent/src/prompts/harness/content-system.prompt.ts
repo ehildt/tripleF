@@ -88,7 +88,7 @@ Do not add other top-level keys — unknown keys are dropped.`;
     TOOL_RESULTS_RULES,
   );
 
-  // Runtime source policy (SysCtl): preferred domains = soft rank guidance,
+  // Runtime source policy (Settings): preferred domains = soft rank guidance,
   // blocked domains = absolute exclusions.
   const sourcePolicy = buildSourcePolicyPrompt(params.sources);
   if (sourcePolicy) sections.push(sourcePolicy);

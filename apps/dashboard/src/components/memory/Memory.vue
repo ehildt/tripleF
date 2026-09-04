@@ -3,12 +3,12 @@
  * The top-level Memory tab: one constellation canvas per memory layer —
  * partition facts, cognition insights, and the shared encyclopedia — with a
  * submenu to switch spaces (default: encyclopedia). Configuration stays in
- * SysCtl; this page is the live view of what memory holds.
+ * Settings; this page is the live view of what memory holds.
  */
-import { Brain, Fingerprint, Network } from '@lucide/vue';
+import { Brain, Fingerprint, Layers, Network } from '@lucide/vue';
 import { computed } from 'vue';
 
-import SysCtlSubMenu from '@/components/shared/ui/sysctl-submenu/SysCtlSubMenu.vue';
+import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 
 import CognitionSpace from './cognition-space/CognitionSpace.vue';
@@ -16,31 +16,37 @@ import { useMemorySpaceSubtab } from './composables/use-memory-space-subtab';
 import type { MemorySpaceSubtab } from './composables/use-memory-space-subtab.types';
 import EncyclopediaSpace from './encyclopedia-space/EncyclopediaSpace.vue';
 import PartitionSpace from './partition-space/PartitionSpace.vue';
+import SynopsisSpace from './synopsis-space/SynopsisSpace.vue';
 
 const { activeSubtab, selectSubtab } = useMemorySpaceSubtab();
 
 const SUBTAB_ITEMS = computed(() => [
   {
     id: 'partition',
-    label: i18n.global.t('common.sysctlMemoryPartition'),
+    label: i18n.global.t('common.settingsMemoryPartition'),
     icon: Brain,
   },
   {
     id: 'cognition',
-    label: i18n.global.t('common.sysctlMemoryCognition'),
+    label: i18n.global.t('common.settingsMemoryCognition'),
     icon: Fingerprint,
   },
   {
     id: 'encyclopedia',
-    label: i18n.global.t('common.sysctlMemoryEncyclopedia'),
+    label: i18n.global.t('common.settingsMemoryEncyclopedia'),
     icon: Network,
+  },
+  {
+    id: 'synopsis',
+    label: i18n.global.t('common.settingsMemorySynopsis'),
+    icon: Layers,
   },
 ]);
 </script>
 
 <template>
   <main class="memory-page lg:col-span-12">
-    <SysCtlSubMenu
+    <SettingsSubMenu
       :items="SUBTAB_ITEMS"
       :active="activeSubtab"
       @select="selectSubtab($event as MemorySpaceSubtab)"
@@ -49,6 +55,8 @@ const SUBTAB_ITEMS = computed(() => [
     <PartitionSpace v-if="activeSubtab === 'partition'" />
 
     <CognitionSpace v-else-if="activeSubtab === 'cognition'" />
+
+    <SynopsisSpace v-else-if="activeSubtab === 'synopsis'" />
 
     <EncyclopediaSpace v-else />
   </main>

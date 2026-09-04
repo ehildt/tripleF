@@ -23,7 +23,7 @@ const WIPE_ARM_WINDOW_MS = 4000;
 
 /**
  * The cognition constellation: the AI's accumulated understanding of the user
- * for the active cognition space (the sysctl cognition id, else the memory
+ * for the active cognition space (the settings cognition id, else the memory
  * partition, else the session id) — the profile hub plus path-grouped
  * insights. Reads on mount and on every space change; a fetch failure
  * degrades to an unavailable note.

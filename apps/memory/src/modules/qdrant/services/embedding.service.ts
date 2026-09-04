@@ -20,7 +20,7 @@ import type { QdrantConfig } from '../models/qdrant-config.model.js';
  * embedders are trained on prefixed input and retrieve worse without it.
  *
  * Connection settings resolve through the same overrides plumbing as the
- * harness LLM calls, so a SysCtl host/API-key override applies here too.
+ * harness LLM calls, so a Settings host/API-key override applies here too.
  */
 @Injectable()
 export class EmbeddingService {

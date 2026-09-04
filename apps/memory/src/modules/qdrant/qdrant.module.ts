@@ -16,6 +16,7 @@ import { MemoryEnqueueService } from './services/memory-enqueue.service.js';
 import { MemoryOverridesService } from './services/memory-overrides.service.js';
 import { MemorySearchService } from './services/memory-search.service.js';
 import { QdrantClientService } from './services/qdrant-client.service.js';
+import { SynopsisRepository } from './services/synopsis.repository.js';
 import { VectorizeService } from './services/vectorize.service.js';
 import { EncyclopediaClassifyService } from './services/vectorize/jobs/encyclopedia-classify.service.js';
 import { EncyclopediaSweepService } from './services/vectorize/jobs/encyclopedia-sweep.service.js';
@@ -53,6 +54,7 @@ export class QdrantModule {
         QdrantClientService,
         MemoryRepository,
         EncyclopediaRepository,
+        SynopsisRepository,
         MemorySearchService,
         EmbeddingService,
         VectorizeService,
@@ -92,6 +94,7 @@ export class QdrantModule {
         QdrantClientService,
         MemoryRepository,
         EncyclopediaRepository,
+        SynopsisRepository,
         MemorySearchService,
         VectorizeService,
         MemoryCognitionService,

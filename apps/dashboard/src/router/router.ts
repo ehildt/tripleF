@@ -26,10 +26,10 @@ const router = createRouter({
         import('@/components/app/app-main-content/debug-section/DebugSection.vue'),
     },
     {
-      path: '/sysctl',
-      name: 'sysctl',
+      path: '/settings',
+      name: 'settings',
       component: () =>
-        import('@/components/app/app-main-content/sysctl-view/SysCtlView.vue'),
+        import('@/components/app/app-main-content/settings-view/SettingsView.vue'),
     },
   ],
 });

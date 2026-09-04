@@ -10,6 +10,7 @@ import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import {
+  type MemoryClusterRecord,
   MemoryClusterRepository,
   type MemoryClusterRow,
 } from '../../../../persistence/services/memory-cluster.repository.js';
@@ -24,12 +25,21 @@ import {
 import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
 import {
   type ClusterPoint,
+  cosineSimilarity,
   detectClusters,
 } from '../../../helpers/detect-clusters.helper.js';
+import { deterministicPointId } from '../../../helpers/deterministic-point-id.helper.js';
 import type { MemoryClusterJobData } from '../../../models/memory.model.js';
 import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
+import { EmbeddingService } from '../../embedding.service.js';
 import { EncyclopediaRepository } from '../../encyclopedia.repository.js';
 import { MemoryRepository } from '../../memory.repository.js';
+import { MemoryOverridesService } from '../../memory-overrides.service.js';
+import {
+  type SynopsisPoint,
+  SynopsisRepository,
+  synopsisText,
+} from '../../synopsis.repository.js';
 
 /**
  * Cluster-detection + summarization job handler (vectorize queue): the
@@ -65,6 +75,9 @@ export class MemoryClusterJobService {
     private readonly encyclopediaRepository: EncyclopediaRepository,
     private readonly links: MemoryLinkRepository,
     private readonly clusters: MemoryClusterRepository,
+    private readonly synopses: SynopsisRepository,
+    private readonly embeddingService: EmbeddingService,
+    private readonly overrides: MemoryOverridesService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -106,16 +119,23 @@ export class MemoryClusterJobService {
       collection,
       data.scopeKey,
     );
+    // Fingerprint reuse is keyed by level too — a level-0 cluster (members =
+    // point ids) and an upper synopsis cluster (members = cluster ids) must
+    // never trade fingerprints.
     const existingByFingerprint = new Map(
-      existing.map((cluster) => [cluster.fingerprint, cluster]),
+      existing.map((cluster) => [
+        `${cluster.level}|${cluster.fingerprint}`,
+        cluster,
+      ]),
     );
 
-    const rows: MemoryClusterRow[] = [];
+    // Level 0: clusters over the scope's points (members = point ids).
+    const leafRows: MemoryClusterRow[] = [];
     let summarized = 0;
     for (const cluster of detection.clusters) {
-      const prior = existingByFingerprint.get(cluster.fingerprint);
+      const prior = existingByFingerprint.get(`0|${cluster.fingerprint}`);
       if (prior) {
-        rows.push({
+        leafRows.push({
           id: cluster.id,
           lane: data.lane,
           collection,
@@ -125,6 +145,7 @@ export class MemoryClusterJobService {
           summary: prior.summary,
           memberCount: cluster.memberCount,
           memberIds: cluster.memberIds,
+          level: 0,
         });
         continue;
       }
@@ -132,7 +153,7 @@ export class MemoryClusterJobService {
         .map((id) => pointById.get(id))
         .filter((point): point is ClusterPoint => point !== undefined);
       const summary = await this.summarize(data.model, members);
-      rows.push({
+      leafRows.push({
         id: cluster.id,
         lane: data.lane,
         collection,
@@ -142,9 +163,28 @@ export class MemoryClusterJobService {
         summary: summary?.summary ?? '',
         memberCount: cluster.memberCount,
         memberIds: cluster.memberIds,
+        level: 0,
       });
       summarized++;
     }
+
+    // Raptor: synopsis hierarchy above the leaf clusters (members = child
+    // cluster ids). Off → leaf rows only, and every synopsis point of the
+    // scope is purged below.
+    const raptorEnabled = this.overrides.getRaptorEnabled();
+    const upperRows = raptorEnabled
+      ? await this.buildSynopsisLevels({
+          lane: data.lane,
+          collection,
+          scopeKey: data.scopeKey,
+          scopeSeed,
+          model: data.model,
+          minMembers,
+          baseRows: leafRows,
+          existingByFingerprint,
+        })
+      : [];
+    const rows = [...leafRows, ...upperRows];
 
     await this.clusters.replaceScope(
       data.lane,
@@ -153,10 +193,243 @@ export class MemoryClusterJobService {
       rows,
     );
     await this.setClusterIds(data.lane, detection.assignments);
+    await this.syncSynopsisLifecycle(data.lane, data.scopeKey, rows);
 
     this.logger.log(
       `memory-cluster ${data.lane}/${data.scopeKey}: ${rows.length} clusters (${summarized} summarized) from ${points.length} points`,
     );
+  }
+
+  /**
+   * The Raptor recursion: embed each level's cluster synopses as points
+   * (`title + summary`), link the pairs that clear the semantic threshold,
+   * cluster them one level up, summarize, repeat — until fewer than two
+   * clusters remain, no edges form, or the depth cap hits (default 3).
+   *
+   * Deterministic like the leaf pass: upper cluster ids hash scopeSeed+level
+   * plus the sorted CHILD cluster ids, and unchanged fingerprints keep their
+   * stored title/summary — an unchanged scope stays a zero-LLM re-run.
+   */
+  private async buildSynopsisLevels(params: {
+    lane: MemoryClusterLane;
+    collection: string;
+    scopeKey: string;
+    scopeSeed: string;
+    model: string;
+    minMembers: number;
+    baseRows: MemoryClusterRow[];
+    existingByFingerprint: Map<string, MemoryClusterRecord>;
+  }): Promise<MemoryClusterRow[]> {
+    const maxDepth = this.overrides.getRaptorMaxDepth();
+    const rows: MemoryClusterRow[] = [];
+    let lower = params.baseRows;
+    for (let depth = 1; depth <= maxDepth; depth++) {
+      if (lower.length < 2) break;
+      const vectors = await this.syncLevelSynopses(
+        params.lane,
+        params.scopeKey,
+        lower,
+      );
+      const synopsisPoints: ClusterPoint[] = lower.flatMap((row) => {
+        const vector = vectors.get(row.id);
+        return vector
+          ? [
+              {
+                id: row.id,
+                vector,
+                text: synopsisText(row.title, row.summary),
+                tags: [],
+              },
+            ]
+          : [];
+      });
+      if (synopsisPoints.length < 2) break;
+      const edges = this.pairwiseEdges(
+        synopsisPoints,
+        this.config.linkScoreThreshold,
+      );
+      const detection = detectClusters({
+        edges,
+        points: synopsisPoints,
+        minMembers: params.minMembers,
+        scopeSeed: `${params.scopeSeed}|L${depth}`,
+        allowCategoryFallback: false,
+      });
+      if (detection.clusters.length === 0) break;
+
+      const rowById = new Map(lower.map((row) => [row.id, row]));
+      const levelRows: MemoryClusterRow[] = [];
+      for (const cluster of detection.clusters) {
+        levelRows.push(
+          await this.buildUpperClusterRow({
+            lane: params.lane,
+            collection: params.collection,
+            scopeKey: params.scopeKey,
+            model: params.model,
+            depth,
+            cluster,
+            members: cluster.memberIds
+              .map((id) => rowById.get(id))
+              .filter((row): row is MemoryClusterRow => row !== undefined),
+            existingByFingerprint: params.existingByFingerprint,
+          }),
+        );
+      }
+      // Parent links point UP: each lower-level cluster gains this level's
+      // cluster id as its parentId (children are already in `rows`/leafRows).
+      for (const [childId, parentId] of detection.assignments) {
+        const child = rowById.get(childId);
+        if (child) child.parentId = parentId;
+      }
+      rows.push(...levelRows);
+      lower = levelRows;
+    }
+    return rows;
+  }
+
+  /**
+   * One upper-level cluster row: fingerprint-stable clusters keep their
+   * stored title/summary; otherwise the LLM summarizes the member synopses
+   * (cluster-of-summaries text) with the largest child's title as fallback.
+   */
+  private async buildUpperClusterRow(params: {
+    lane: MemoryClusterLane;
+    collection: string;
+    scopeKey: string;
+    model: string;
+    depth: number;
+    cluster: {
+      id: string;
+      fingerprint: string;
+      memberIds: string[];
+      memberCount: number;
+    };
+    members: MemoryClusterRow[];
+    existingByFingerprint: Map<string, MemoryClusterRecord>;
+  }): Promise<MemoryClusterRow> {
+    const prior = existingFingerprintOf(
+      params.existingByFingerprint,
+      params.depth,
+      params.cluster.fingerprint,
+    );
+    let title = prior?.title;
+    let summary = prior?.summary;
+    if (!prior) {
+      const verdict = await this.summarize(
+        params.model,
+        params.members.map((member) => ({
+          id: member.id,
+          vector: [],
+          text: synopsisText(member.title, member.summary),
+          tags: [],
+        })),
+      );
+      title = verdict?.title ?? fallbackTitleOfClusters(params.members);
+      summary = verdict?.summary ?? '';
+    }
+    return {
+      id: params.cluster.id,
+      lane: params.lane,
+      collection: params.collection,
+      scopeKey: params.scopeKey,
+      fingerprint: params.cluster.fingerprint,
+      title,
+      summary,
+      memberCount: params.cluster.memberCount,
+      memberIds: params.cluster.memberIds,
+      level: params.depth,
+    };
+  }
+
+  /**
+   * Embed + upsert one level's synopses, reusing stored vectors for
+   * fingerprint-stable clusters (identical cluster id ⇒ identical text ⇒
+   * identical vector — the drift-aware contract). Returns row id → vector.
+   */
+  private async syncLevelSynopses(
+    lane: MemoryClusterLane,
+    scopeKey: string,
+    rows: MemoryClusterRow[],
+  ): Promise<Map<string, number[]>> {
+    const level = rows[0]?.level ?? 0;
+    const existing = await this.synopses.scrollSynopses(lane, scopeKey, level);
+    const existingByClusterId = new Map(
+      existing.map((point) => [point.clusterId, point]),
+    );
+    const missing = rows.filter((row) => !existingByClusterId.has(row.id));
+    const vectors = missing.length
+      ? await this.embeddingService.embed(
+          missing.map((row) => synopsisText(row.title, row.summary)),
+          'document',
+        )
+      : [];
+    const vectorByRowId = new Map<string, number[]>();
+    const points: SynopsisPoint[] = [];
+    missing.forEach((row, index) => {
+      const vector = vectors[index];
+      if (!vector) return;
+      vectorByRowId.set(row.id, vector);
+      points.push({
+        id: synopsisPointId(row.id),
+        clusterId: row.id,
+        scopeKey,
+        level: row.level,
+        title: row.title,
+        summary: row.summary,
+        memberCount: row.memberCount,
+        vector,
+      });
+    });
+    for (const row of rows) {
+      const reused = existingByClusterId.get(row.id);
+      if (reused) vectorByRowId.set(row.id, reused.vector);
+    }
+    await this.synopses.upsertSynopses(lane, points);
+    return vectorByRowId;
+  }
+
+  /**
+   * The synopsis lifecycle after replaceScope: leaf synopses exist even when
+   * the recursion stopped at one level (they are the probe-visible layer),
+   * and stale synopsis points whose cluster left the row set are deleted.
+   * With Raptor off, the scope's synopsis layer is purged entirely.
+   */
+  private async syncSynopsisLifecycle(
+    lane: MemoryClusterLane,
+    scopeKey: string,
+    rows: MemoryClusterRow[],
+  ): Promise<void> {
+    if (!this.overrides.getRaptorEnabled()) {
+      await this.synopses.deleteSynopsesNotIn(lane, scopeKey, new Set());
+      return;
+    }
+    const leafRows = rows.filter((row) => row.level === 0);
+    await this.syncLevelSynopses(lane, scopeKey, leafRows);
+    await this.synopses.deleteSynopsesNotIn(
+      lane,
+      scopeKey,
+      new Set(rows.map((row) => row.id)),
+    );
+  }
+
+  /**
+   * Every synopsis pair above the semantic threshold becomes an edge — the
+   * upper-level link graph. Cluster counts per level are small, so all-pairs
+   * cosine is cheap and needs no relink machinery.
+   */
+  private pairwiseEdges(
+    points: ClusterPoint[],
+    threshold: number,
+  ): Array<{ source: string; target: string }> {
+    const edges: Array<{ source: string; target: string }> = [];
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        if (cosineSimilarity(points[i].vector, points[j].vector) >= threshold) {
+          edges.push({ source: points[i].id, target: points[j].id });
+        }
+      }
+    }
+    return edges;
   }
 
   /** One LLM summary call; undefined when the answer is unusable. */
@@ -254,4 +527,31 @@ function fallbackTitle(members: ClusterPoint[]): string {
   if (category) return category;
   const first = members.find((member) => member.text.trim())?.text.trim();
   return first ? first.slice(0, CLUSTER_TITLE_LIMIT) : 'untitled';
+}
+
+/**
+ * Deterministic synopsis-point id for a cluster (`synopsis|<clusterId>`,
+ * hashed to a UUID — Qdrant accepts ints/UUIDs only) — identical cluster
+ * identity ⇒ identical point id ⇒ overwrite-in-place.
+ */
+function synopsisPointId(clusterId: string): string {
+  return deterministicPointId(`synopsis|${clusterId}`);
+}
+
+/** Fingerprint reuse lookup (`<level>|<fingerprint>` — levels never trade). */
+function existingFingerprintOf(
+  existingByFingerprint: Map<string, MemoryClusterRecord>,
+  level: number,
+  fingerprint: string,
+): MemoryClusterRecord | undefined {
+  return existingByFingerprint.get(`${level}|${fingerprint}`);
+}
+
+/**
+ * Fallback title for an upper-level (synopsis) cluster when the summary
+ * verdict is unparseable: the largest child cluster's title.
+ */
+function fallbackTitleOfClusters(members: MemoryClusterRow[]): string {
+  const largest = [...members].sort((a, b) => b.memberCount - a.memberCount)[0];
+  return (largest?.title.trim() ?? 'untitled').slice(0, CLUSTER_TITLE_LIMIT);
 }

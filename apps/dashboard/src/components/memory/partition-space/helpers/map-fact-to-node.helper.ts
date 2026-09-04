@@ -18,7 +18,12 @@ export function mapFactToNode(
   const tags = isBridge
     ? (fact.tags ?? []).filter((tag) => tag !== BRIDGE_TAG)
     : (fact.tags?.filter(Boolean) ?? []);
-  const topicKey = isBridge ? BRIDGE_CLUSTER : (tags[0] ?? UNTAGGED_CLUSTER);
+  // The topic tier is the title-level entity: prefer the extraction-
+  // classified `subject` (always “the entity the fact is about”) over the
+  // first tag — tag order is LLM luck, the subject is classified.
+  const topicKey = isBridge
+    ? BRIDGE_CLUSTER
+    : fact.subject?.trim() || tags[0] || UNTAGGED_CLUSTER;
   return {
     id: fact.id,
     label: isBridge ? BRIDGE_TAG : topicKey,

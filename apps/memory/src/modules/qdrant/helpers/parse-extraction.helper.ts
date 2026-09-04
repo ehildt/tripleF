@@ -22,6 +22,10 @@ export function parseExtraction(text: string): MemoryExtraction {
   if (!text.trim()) {
     throw new Error('Extraction returned empty output');
   }
+  // Bounded, single-line preview of the raw model output — parse/schema
+  // failures are otherwise undiagnosable from the step's warn log alone (the
+  // full text only survives as the correction attempt's assistant turn).
+  const outputPreview = `'${text.replace(/\s+/g, ' ').trim().slice(0, 300)}'`;
   let parsed: unknown;
   try {
     parsed = parseLlmJson(text);
@@ -29,7 +33,7 @@ export function parseExtraction(text: string): MemoryExtraction {
     throw new Error(
       `Extraction JSON parse failed: ${
         parseError instanceof Error ? parseError.message : String(parseError)
-      }`,
+      } — output: ${outputPreview}`,
       { cause: parseError },
     );
   }
@@ -38,7 +42,7 @@ export function parseExtraction(text: string): MemoryExtraction {
     throw new Error(
       `Extraction failed the schema: ${validated.error.issues
         .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-        .join('; ')}`,
+        .join('; ')} — output: ${outputPreview}`,
     );
   }
 

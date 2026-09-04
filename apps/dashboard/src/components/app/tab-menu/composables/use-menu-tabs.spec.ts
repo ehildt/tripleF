@@ -48,7 +48,7 @@ describe('useMenuTabs', () => {
       'chat',
       'memory',
       'dlq',
-      'sysctl',
+      'settings',
     ]);
   });
 
@@ -64,7 +64,7 @@ describe('useMenuTabs', () => {
       'memory',
       'dlq',
       'debug',
-      'sysctl',
+      'settings',
     ]);
   });
 
@@ -110,7 +110,7 @@ describe('useMenuTabs', () => {
     setActivePinia(pinia);
 
     const appStore = useAppStore();
-    appStore.toggleTabVisibility('sysctl');
+    appStore.toggleTabVisibility('settings');
 
     const TestComponent = defineComponent({
       setup() {
@@ -126,7 +126,7 @@ describe('useMenuTabs', () => {
     await nextTick();
 
     expect(wrapper.vm.tabs.map((t: { tab: string }) => t.tab)).not.toContain(
-      'sysctl',
+      'settings',
     );
   });
 });

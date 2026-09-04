@@ -33,6 +33,21 @@ export interface MemoryFrictionEdge {
   resolution?: string;
 }
 
+/**
+ * One open friction with its identity — the research job's contention input
+ * (id + pair point ids + lane so the worker can load the pair's texts from
+ * the right Qdrant collection).
+ */
+export interface MemoryFrictionRecord {
+  id: string;
+  lane: MemoryFrictionLane;
+  scopeKey: string;
+  source: string;
+  target: string;
+  kind: MemoryFrictionKind;
+  reason?: string;
+}
+
 /** One friction row to write (canonical source < target ordering). */
 interface MemoryFrictionRow {
   lane: MemoryFrictionLane;
@@ -104,6 +119,33 @@ export class MemoryFrictionRepository implements OnModuleInit, OnModuleDestroy {
       take: limit,
     });
     return rows.map(mapFrictionRowToEdge);
+  }
+
+  /**
+   * Open frictions across the given lanes, newest first, capped — the
+   * research job's contested-memory input. The fetched evidence that could
+   * settle them always lands in the global encyclopedia, so disputes are
+   * collected across all scopes of a lane, not per scope.
+   */
+  async listOpen(
+    lanes: MemoryFrictionLane[],
+    limit: number,
+  ): Promise<MemoryFrictionRecord[]> {
+    if (lanes.length === 0 || limit <= 0) return [];
+    const rows = await this.prisma.memoryFriction.findMany({
+      where: { lane: { in: lanes }, status: 'open' },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      lane: row.lane as MemoryFrictionLane,
+      scopeKey: row.scopeKey,
+      source: row.source,
+      target: row.target,
+      kind: row.kind as MemoryFrictionKind,
+      reason: row.reason ?? undefined,
+    }));
   }
 
   /** Resolve one friction: record the outcome and close it. */

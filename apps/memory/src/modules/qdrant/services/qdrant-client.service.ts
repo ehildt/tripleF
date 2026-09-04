@@ -62,6 +62,8 @@ export class QdrantClientService implements OnModuleInit {
       await this.verifyCollectionDims(modelDims);
       await this.ensureEncyclopediaCollection(modelDims);
       await this.ensureEncyclopediaPayloadIndexes();
+      await this.ensureSynopsisCollections(modelDims);
+      await this.ensureSynopsisPayloadIndexes();
     } catch (error) {
       this.logger.warn(
         `Qdrant bootstrap failed — memory reads/writes will be unavailable: ${
@@ -80,6 +82,27 @@ export class QdrantClientService implements OnModuleInit {
   get encyclopediaCollection(): string {
     return buildCollectionName(
       this.config.encyclopediaCollection,
+      this.config.embedModel,
+    );
+  }
+
+  /**
+   * Resolved partition synopsis collection name (model-namespaced) — the
+   * Raptor layer: one embedded point per cluster synopsis. Physically
+   * separate from the lane collections so synthesized summaries can never
+   * surface as user facts on the fact-recall path.
+   */
+  get partitionSynopsisCollection(): string {
+    return buildCollectionName(
+      `${this.config.collection}-synopsis`,
+      this.config.embedModel,
+    );
+  }
+
+  /** Resolved encyclopedia synopsis collection name (model-namespaced). */
+  get encyclopediaSynopsisCollection(): string {
+    return buildCollectionName(
+      `${this.config.encyclopediaCollection}-synopsis`,
       this.config.embedModel,
     );
   }
@@ -137,7 +160,7 @@ export class QdrantClientService implements OnModuleInit {
     const indexes = [
       // memory_partition / memory_cognition are the identity keys — one point
       // belongs to exactly one space: the user's fact partition (session-
-      // derived by default, or the user-set partition id from sysctl) or the
+      // derived by default, or the user-set partition id from settings) or the
       // AI's cognition space for that user. `is_tenant` co-locates a space's
       // vectors for sequential reads (Qdrant multitenancy-by-payload).
       {
@@ -202,6 +225,76 @@ export class QdrantClientService implements OnModuleInit {
       this.encyclopediaCollection,
     );
     return exists;
+  }
+
+  /** True when the given lane's synopsis collection exists in Qdrant. */
+  async hasSynopsisCollection(
+    lane: 'partition' | 'encyclopedia',
+  ): Promise<boolean> {
+    const name =
+      lane === 'partition'
+        ? this.partitionSynopsisCollection
+        : this.encyclopediaSynopsisCollection;
+    const { exists } = await this.getClient().collectionExists(name);
+    return exists;
+  }
+
+  /**
+   * Create both synopsis collections if missing (Cosine, same model dims as
+   * the lane collections) — one embedded point per cluster synopsis,
+   * one collection per lane.
+   */
+  async ensureSynopsisCollections(modelDims?: number): Promise<void> {
+    const client = this.getClient();
+    const size = modelDims ?? this.config.vectorSize;
+    for (const name of [
+      this.partitionSynopsisCollection,
+      this.encyclopediaSynopsisCollection,
+    ]) {
+      const { exists } = await client.collectionExists(name);
+      if (exists) continue;
+      await client.createCollection(name, {
+        vectors: { size, distance: 'Cosine' },
+      });
+      this.logger.log(
+        `Created Qdrant collection "${name}" (${size} dims, Cosine)`,
+      );
+    }
+  }
+
+  /**
+   * Keyword/integer indexes on the synopsis payload: `summarizes_cluster_id`
+   * (cleanup + drill lookup), `scope_key` (the lane scope filter, tenant
+   * marker co-locates one scope's synopses), `level` (hierarchy depth).
+   */
+  async ensureSynopsisPayloadIndexes(): Promise<void> {
+    const client = this.getClient();
+    const indexes = [
+      { field_name: 'summarizes_cluster_id', field_schema: 'keyword' },
+      {
+        field_name: 'scope_key',
+        field_schema: { type: 'keyword', is_tenant: true },
+      },
+      { field_name: 'level', field_schema: 'integer' },
+    ] as const;
+    for (const name of [
+      this.partitionSynopsisCollection,
+      this.encyclopediaSynopsisCollection,
+    ]) {
+      const info = await client.getCollection(name);
+      const existing = new Set(Object.keys(info.payload_schema ?? {}));
+      for (const index of indexes) {
+        if (existing.has(index.field_name)) continue;
+        await client.createPayloadIndex(name, {
+          field_name: index.field_name,
+          field_schema: index.field_schema,
+          wait: true,
+        });
+        this.logger.log(
+          `Created payload index "${index.field_name}" on "${name}"`,
+        );
+      }
+    }
   }
 
   /**
@@ -270,7 +363,7 @@ export class QdrantClientService implements OnModuleInit {
   }
 
   /**
-   * Collection status for the sysctl surface. When the feature is disabled
+   * Collection status for the settings surface. When the feature is disabled
    * the report is returned without touching Qdrant (exists=false).
    */
   async getStatus(): Promise<{

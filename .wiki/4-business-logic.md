@@ -77,7 +77,7 @@ Stock-market intents (`stockmarketitem` / `stockmarketlist`) are grounded in **r
 
 **How it works.** The server keeps a Postgres cache of daily OHLCV bars plus a coverage ledger of which date windows have been fetched per ticker. A request for a range only backfills intervals the ledger does not know about; the most recent days are always re-fetched so late restatements propagate. Technical indicators (SMA, EMA, RSI, MACD, ATR, ADX, Bollinger Bands, Stochastic) are computed locally from the cached bars. The dashboard's chart paginates against the same cache, so repeated questions about the same ticker cost no provider calls.
 
-**What it relies on:** the EODHD provider client and its API key override (SysCtl), the `StockMarketBar`/`StockMarketHistoryRange` tables, the indicator helpers, and the D3 chart components.
+**What it relies on:** the EODHD provider client and its API key override (Settings), the `StockMarketBar`/`StockMarketHistoryRange` tables, the indicator helpers, and the D3 chart components.
 
 ## 4.8 Long-term memory and the knowledge encyclopedia
 
@@ -85,7 +85,7 @@ The newest business capability: the AI **learns and remembers** — within the s
 
 **How it works.** The system keeps two spaces per user: a **fact partition** (statements the user made or asked to remember) and a **cognition space** (the AI's derived understanding — a compact profile document plus insight, episode, and conviction records). Every answered turn quietly updates them in the background; every new turn gets personalised by them (profile as always-on context, insights/episodes/convictions probed per turn). On top sits the **constellation** — a link graph that relates records semantically, surfaces contradictions as frictions, and clusters topics into summarized reports — and the **encyclopedia**, a shared knowledge base of verbatim source passages the harness can cite from later.
 
-**The business rules.** Memory is *derived, inspectable, and retractable*: users can read everything the AI knows (SysCtl memory section), edit or wipe it (partition, cognition, or a single verbatim record), and the AI states plainly when it personalized an answer. Maintenance is never a black box either — consolidations, reflections, convictions, and cluster summaries are explicit, logged jobs the user can trigger, schedule via flags, or disable.
+**The business rules.** Memory is *derived, inspectable, and retractable*: users can read everything the AI knows (Settings memory section), edit or wipe it (partition, cognition, or a single verbatim record), and the AI states plainly when it personalized an answer. Maintenance is never a black box either — consolidations, reflections, convictions, and cluster summaries are explicit, logged jobs the user can trigger, schedule via flags, or disable.
 
 **What it relies on:** the memory app service boundary with degrade-open semantics (a memory outage never breaks a turn), the vectorize queue, Qdrant plus the Postgres ledgers/graph tables, the memory system variables (see **1.6** §9 / **1.8**), and the trust rule that machine-derived memory is marked private context, never quoted as user-stated fact.
 

@@ -19,6 +19,7 @@ import {
   ApePostEncyclopediaCluster,
   ApePostEncyclopediaConsolidate,
   ApePostEncyclopediaReflect,
+  ApePostEncyclopediaResearch,
   ApeTagsEncyclopediaMaintenance,
 } from '../decorators/openapi/swagger.js';
 import { EncyclopediaClassifyBodyDto } from '../dtos/encyclopedia-classify-body.dto.js';
@@ -26,6 +27,7 @@ import { EncyclopediaClusterBodyDto } from '../dtos/encyclopedia-cluster-body.dt
 import { EncyclopediaConsolidateBodyDto } from '../dtos/encyclopedia-consolidate-body.dto.js';
 import { EncyclopediaConsolidateResponseDto } from '../dtos/encyclopedia-consolidate-response.dto.js';
 import { EncyclopediaReflectBodyDto } from '../dtos/encyclopedia-reflect-body.dto.js';
+import { EncyclopediaResearchBodyDto } from '../dtos/encyclopedia-research-body.dto.js';
 import type { EncyclopediaConfig } from '../models/encyclopedia-config.model.js';
 
 /**
@@ -143,6 +145,27 @@ export class EncyclopediaMaintenanceController {
       scopeKey: 'global',
       model,
       minMembers: body.minMembers,
+      dryRun: body.dryRun === true,
+    });
+    return { accepted: true };
+  }
+
+  @Post('research')
+  @HttpCode(HttpStatus.OK)
+  @ApePostEncyclopediaResearch()
+  async research(
+    @Body() body: EncyclopediaResearchBodyDto,
+  ): Promise<MemoryReflectResponseDto> {
+    const model = body.model?.trim() || this.memoryOverrides.getResearchModel();
+    if (!model) {
+      throw new BadRequestException(
+        'A research model is required — pass "model", set a client override, or set RESEARCH_MODEL',
+      );
+    }
+    await this.memoryEnqueue.enqueueResearchJob({
+      model,
+      limit: body.limit,
+      depth: body.depth,
       dryRun: body.dryRun === true,
     });
     return { accepted: true };

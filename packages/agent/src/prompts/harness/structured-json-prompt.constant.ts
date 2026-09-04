@@ -28,7 +28,7 @@ RULES:
 - clarificationQuestion: MUST be in the language identified by the "language" field.
 - reasoning: MUST be in the language identified by the "language" field.
 - If the request is ambiguous set needsClarification=true and provide a concise question in the language identified by the "language" field. The question must offer the most likely interpretations as options.
-- imageCount: set only when the user explicitly requests a number of images, or asks for more images without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system uses the configured reference-pool default (SysCtl Sources) for describe/compare/ocr and ${DEFAULT_MEDIA_COUNT} for other templates.
+- imageCount: set only when the user explicitly requests a number of images, or asks for more images without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system uses the configured reference-pool default (Settings Sources) for describe/compare/ocr and ${DEFAULT_MEDIA_COUNT} for other templates.
 - videoCount: set only when the user explicitly requests a number of videos, or asks for more videos without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system defaults to ${DEFAULT_MEDIA_COUNT}.
 - plan.images.resize should be true when images are present, unless the user explicitly asks for full resolution.
 - plan.images.variants should only include variants that would materially improve the analysis. Leave empty if the original is sufficient.
@@ -53,7 +53,7 @@ Return ONLY a single valid JSON object matching the intent schema exactly.
 All object keys must be quoted with double quotes.
 Do not add markdown code fences, explanations, or extra text.
 
-- plan: must be an object like {"images":{"resize":boolean,"variants":[...]}} — never null, never a string. Omit it when unused.
+- plan: must be an object — never null, never a string. Omit it when unused.
 - Omit any other optional field instead of setting it to null.
 
 FINAL REMINDER:

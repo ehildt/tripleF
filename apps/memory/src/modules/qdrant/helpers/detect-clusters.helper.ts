@@ -56,6 +56,12 @@ export function detectClusters(params: {
   points: ClusterPoint[];
   minMembers: number;
   scopeSeed: string;
+  /**
+   * Cold-scope category grouping (default true). Upper hierarchy levels
+   * (Raptor synopses) pass false: unrelated synopses must not be forced
+   * together by a category label — no structural clusters = stop recursing.
+   */
+  allowCategoryFallback?: boolean;
 }): ClusterDetection {
   // Sort points by id first — Qdrant scroll order is not stable, and the
   // absorb order below changes membership (→ fingerprints → re-summarization),
@@ -81,8 +87,12 @@ export function detectClusters(params: {
   }
 
   // Cold scope: no structural clusters → category fallback guarantees
-  // every point still lands in a cluster.
+  // every point still lands in a cluster (leaf level only — upper Raptor
+  // levels disable it and stop the recursion instead).
   if (structural.length === 0) {
+    if (params.allowCategoryFallback === false) {
+      return { clusters: [], assignments: new Map() };
+    }
     return buildCategoryClusters(points, params.scopeSeed);
   }
 
@@ -227,7 +237,7 @@ function nearestCluster(
       ) {
         continue;
       }
-      const similarity = cosine(singleton.vector, member.vector);
+      const similarity = cosineSimilarity(singleton.vector, member.vector);
       if (similarity > score) score = similarity;
     }
     if (score > bestScore) {
@@ -238,8 +248,11 @@ function nearestCluster(
   return bestIndex >= 0 ? { index: bestIndex } : undefined;
 }
 
-/** Cosine similarity between two equal-length vectors. */
-function cosine(a: number[], b: number[]): number {
+/**
+ * Cosine similarity between two equal-length vectors (the absorption pass and
+ * the Raptor pairwise synopsis-edge builder share it).
+ */
+export function cosineSimilarity(a: number[], b: number[]): number {
   let dot = 0;
   let normA = 0;
   let normB = 0;

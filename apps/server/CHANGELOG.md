@@ -42,20 +42,20 @@
   - Imagelist requires an explicit image-only request — informational requests (recipes, how-tos, guides) classify as article/text with image tools instead
   - Evaluation template always gathers image/video media for its subject (hero + galleries), matching article behavior
 - 5eb1f5c: - Server: Serper tool family consolidated and explicitly named — `serperBusinessReviewsSearch` (Google Maps reviews by `cid`/`placeId`), `serperWebpageScrape` (rendered page text), plus web/image/news/places/shopping/video search; legacy `webpageFetch` config rows migrate to `scrape` on boot
-  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or SysCtl
+  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or Settings
   - Server: per-provider/end-point enable+toggles and result counts runtime-managed; sources config supports preferred/blocked domain policy applied before the model sees results
   - Server: search queries are date-anchored and support an optional recency window (day/week/month/year) on web, image, and news search
-  - Dashboard: SysCtl Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
+  - Dashboard: Settings Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
   - Dashboard: prompt-bar source tags list available search engines; one `videos` tag toggles both Serper and YouTube providers
 - 95c4b7c: - Search tools split into per-provider modules: BrightData (web/image/news/places/shopping/video search, webpage scrape) and Serper (web/image/news/places/shopping/video, business reviews, webpage scrape), each with its own constants and recency/image-size buckets
   - Harness actions (execute/interpret/respond/sanitize) refactored into focused helpers (build messages, extract query, parse intent, wrap tools with execution events / search recency)
   - Compose split into `compose.yml` (app) and `infra.compose.yml` (postgres/minio/keydb/playwright-mcp); README refreshed
-- 5eb1f5c: - SysCtl evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
+- 5eb1f5c: - Settings evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
   - All runtime provider configs persisted in the database via provider overrides (encrypted API keys with `TRIPLEF_SECRETS_KEY`, masked in every API response, lazy restore with backoff on boot)
   - Legacy config rows migrate on boot (e.g. Serper `webpageFetch` → `scrape`); masked keys are never accepted back as real keys
   - Ollama connection (host + API key, local or Ollama Cloud) runtime-tunable via a sibling overrides controller
   - Debug tab overhauled: request list/tags, request details with endpoint/token/payload tabs, live queue console; fixed a sorting bug in the debug list
-  - SysCtl config loads through URL-keyed fetch helpers with clamped endpoint results
+  - Settings config loads through URL-keyed fetch helpers with clamped endpoint results
 - 95c4b7c: - Wiki gains a "Business Logic" section explaining how the features work and their dependencies
   - Media extraction refactored: `extractMediaFromToolResults`/`extractMediaFromTools` helpers, verified-media filtering, and image-URL collection tightened; search-engine availability composable reworked
   - Sanitize action and media surfaces (article hero, video gallery/list items, product spotlight media) updated to the refactored pipeline
@@ -112,17 +112,17 @@
   - Imagelist requires an explicit image-only request — informational requests (recipes, how-tos, guides) classify as article/text with image tools instead
   - Evaluation template always gathers image/video media for its subject (hero + galleries), matching article behavior
 - 845278c: - Server: Serper tool family consolidated and explicitly named — `serperBusinessReviewsSearch` (Google Maps reviews by `cid`/`placeId`), `serperWebpageScrape` (rendered page text), plus web/image/news/places/shopping/video search; legacy `webpageFetch` config rows migrate to `scrape` on boot
-  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or SysCtl
+  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or Settings
   - Server: per-provider/end-point enable+toggles and result counts runtime-managed; sources config supports preferred/blocked domain policy applied before the model sees results
   - Server: search queries are date-anchored and support an optional recency window (day/week/month/year) on web, image, and news search
-  - Dashboard: SysCtl Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
+  - Dashboard: Settings Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
   - Dashboard: prompt-bar source tags list available search engines; one `videos` tag toggles both Serper and YouTube providers
-- 845278c: - SysCtl evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
+- 845278c: - Settings evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
   - All runtime provider configs persisted in the database via provider overrides (encrypted API keys with `TRIPLEF_SECRETS_KEY`, masked in every API response, lazy restore with backoff on boot)
   - Legacy config rows migrate on boot (e.g. Serper `webpageFetch` → `scrape`); masked keys are never accepted back as real keys
   - Ollama connection (host + API key, local or Ollama Cloud) runtime-tunable via a sibling overrides controller
   - Debug tab overhauled: request list/tags, request details with endpoint/token/payload tabs, live queue console; fixed a sorting bug in the debug list
-  - SysCtl config loads through URL-keyed fetch helpers with clamped endpoint results
+  - Settings config loads through URL-keyed fetch helpers with clamped endpoint results
 
 ### Patch Changes
 

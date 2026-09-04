@@ -29,7 +29,7 @@ const conversationStore = useConversationStore();
 const modelsStore = useModelsStore();
 const appStore = useAppStore();
 
-/** Sysctl toggle: hide the sockets menu + subscribed list from the toolbar. */
+/** Settings toggle: hide the sockets menu + subscribed list from the toolbar. */
 const areSocketsVisible = computed(() => appStore.isTabVisible('sockets'));
 
 // ── Menu coordination ─────────────────────────────────────

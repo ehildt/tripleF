@@ -26,6 +26,7 @@ import { mapFileToSavedInfo } from './helpers/conversation/map-file-to-saved-inf
 import { mergeUploadedDocuments } from './helpers/conversation/merge-uploaded-documents.helper';
 import { mergeUploadedImages } from './helpers/conversation/merge-uploaded-images.helper';
 import { prunePairedExchange } from './helpers/conversation/prune-paired-exchange.helper';
+import { temporaryConversationsDb } from './helpers/conversation/temporary-conversations.db';
 import { toPersistedConversation } from './helpers/conversation/to-persisted-conversation.helper';
 import { togglePairedExchangeIncluded } from './helpers/conversation/toggle-paired-exchange-included.helper';
 import { getPersistentSocketSessionId } from './helpers/socket/get-persistent-socket-session-id.helper';
@@ -52,50 +53,39 @@ const SESSION_ID = getPersistentSocketSessionId();
 /** localStorage key remembering the last opened conversation across reloads. */
 const LAST_ACTIVE_CONVERSATION_KEY = 'last-active-conversation-id';
 
-/** localStorage key holding unpinned (temporary) conversations. */
-const TEMP_CONVERSATIONS_KEY = 'harness-temporary-conversations';
-
-function loadTemporaryConversations(): Record<string, PersistedConversation> {
+/** Read every unpinned (temporary) conversation from IndexedDB. */
+async function loadTemporaryConversations(): Promise<PersistedConversation[]> {
   try {
-    return JSON.parse(
-      localStorage.getItem(TEMP_CONVERSATIONS_KEY) || '{}',
-    ) as Record<string, PersistedConversation>;
-  } catch {
-    return {};
+    return await temporaryConversationsDb.temporaryConversations.toArray();
+  } catch (err) {
+    // IndexedDB unavailable (private browsing, blocked storage) — degrade to
+    // "no temporary conversations" instead of breaking the boot.
+    console.warn('Failed to load temporary conversations:', err);
+    return [];
   }
 }
 
-function saveTemporaryConversations(
-  map: Record<string, PersistedConversation>,
-) {
-  try {
-    localStorage.setItem(TEMP_CONVERSATIONS_KEY, JSON.stringify(map));
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Write an unpinned (temporary) conversation into localStorage. */
+/** Write an unpinned (temporary) conversation into IndexedDB, fire-and-forget. */
 function persistConversationLocally(conversation: Conversation) {
   const content = toPersistedConversation(conversation);
   conversation.contextUsagePercent = content.contextUsagePercent;
-  const map = loadTemporaryConversations();
-  map[conversation.conversationId] = content;
-  saveTemporaryConversations(map);
+  temporaryConversationsDb.temporaryConversations.put(content).catch((err) => {
+    console.warn('Failed to persist temporary conversation:', err);
+  });
 }
 
-/** Remove an unpinned conversation from localStorage (when pinned or deleted). */
+/** Remove an unpinned conversation from IndexedDB (when pinned or deleted). */
 function removeConversationLocally(conversationId: string) {
-  const map = loadTemporaryConversations();
-  if (conversationId in map) {
-    delete map[conversationId];
-    saveTemporaryConversations(map);
-  }
+  temporaryConversationsDb.temporaryConversations
+    .delete(conversationId)
+    .catch((err) => {
+      console.warn('Failed to remove temporary conversation:', err);
+    });
 }
 
 /**
  * Load persistent conversations from the server and unpinned (temporary) ones
- * from localStorage. Temporary conversations are dropped once they have sat
+ * from IndexedDB. Temporary conversations are dropped once they have sat
  * untouched past the configured retention window (0 minutes drops them all).
  */
 async function loadConversations(): Promise<Conversation[]> {
@@ -113,10 +103,9 @@ async function loadConversations(): Promise<Conversation[]> {
     // Offline — the persistent list stays empty.
   }
 
-  const localMap = loadTemporaryConversations();
   const temporary: Conversation[] = [];
-  let pruned = false;
-  for (const [conversationId, persisted] of Object.entries(localMap)) {
+  const expiredIds: string[] = [];
+  for (const persisted of await loadTemporaryConversations()) {
     if (
       isTemporaryConversationExpired(
         persisted.type,
@@ -125,13 +114,18 @@ async function loadConversations(): Promise<Conversation[]> {
         retentionMs,
       )
     ) {
-      delete localMap[conversationId];
-      pruned = true;
+      expiredIds.push(persisted.conversationId);
     } else {
       temporary.push(fromPersistedConversation(persisted));
     }
   }
-  if (pruned) saveTemporaryConversations(localMap);
+  if (expiredIds.length) {
+    temporaryConversationsDb.temporaryConversations
+      .bulkDelete(expiredIds)
+      .catch((err) => {
+        console.warn('Failed to prune expired temporary conversations:', err);
+      });
+  }
 
   return [...temporary, ...persistent];
 }
@@ -156,7 +150,7 @@ async function saveConversationToServer(conversation: Conversation) {
 
 /**
  * Persist a conversation to its correct store: the server for pinned
- * (persistent) conversations, localStorage for unpinned (temporary) ones.
+ * (persistent) conversations, IndexedDB for unpinned (temporary) ones.
  */
 function persistConversation(conversation: Conversation) {
   if (conversation.type === 'persistent') {
@@ -181,7 +175,7 @@ export const useConversationStore = defineStore('conversation', () => {
   const inFlightLoads = new Map<string, Promise<boolean>>();
 
   // Boot: fetch the stub list (sidebar) while the last active conversation's
-  // full content fetches in parallel — the saved id is known synchronously
+  // full content fetches in parallel — the saved id is read synchronously
   // from localStorage, so the chat restore never waits for the list.
   void bootstrapConversations();
 
@@ -194,9 +188,6 @@ export const useConversationStore = defineStore('conversation', () => {
    */
   async function bootstrapConversations() {
     const savedId = localStorage.getItem(LAST_ACTIVE_CONVERSATION_KEY);
-    const savedIsLocal = savedId
-      ? loadTemporaryConversations()[savedId] !== undefined
-      : false;
 
     // The list settle promise is shared with the restore apply so a fast
     // content fetch can never run ahead of the stub assignment below — the
@@ -206,9 +197,16 @@ export const useConversationStore = defineStore('conversation', () => {
       hydrated.value = true;
     });
 
-    // Kick the content fetch off immediately. Temporary conversations are
-    // already fully hydrated from localStorage, so a server fetch would be a
-    // guaranteed 404 with nothing to gain.
+    // In parallel with the list load, check IndexedDB whether the saved id is
+    // a temporary conversation. Temporaries are hydrated with the list, so a
+    // server fetch would be a guaranteed 404 with nothing to gain.
+    const savedIsLocal = savedId
+      ? (await temporaryConversationsDb.temporaryConversations
+          .get(savedId)
+          .catch(() => undefined)) !== undefined
+      : false;
+
+    // Kick the content fetch off immediately.
     const restoreApply =
       savedId && !savedIsLocal
         ? applyRestoredConversation(
@@ -571,7 +569,7 @@ export const useConversationStore = defineStore('conversation', () => {
       conversation.type = nextType;
 
       if (nextType === 'persistent') {
-        // Unpinned → pinned: leave localStorage and persist on the server.
+        // Unpinned → pinned: leave IndexedDB and persist on the server.
         removeConversationLocally(conversation.conversationId);
         void saveConversationToServer(conversation);
       } else {

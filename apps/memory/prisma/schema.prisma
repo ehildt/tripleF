@@ -245,10 +245,15 @@ model MemoryCluster {
   memberCount Int
   /** The member point ids (authoritative membership list). */
   memberIds   String[]
+  /** Hierarchy level: 0 = leaf cluster over points; 1+ = cluster of cluster synopses. */
+  level       Int      @default(0)
+  /** Parent cluster id at level+1 (null on the top level). */
+  parentId    String?  @db.VarChar(64)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 
   @@unique([lane, collection, scopeKey, fingerprint])
   @@index([lane, collection, scopeKey])
+  @@index([lane, collection, scopeKey, level])
   @@map("memory_cluster")
 }

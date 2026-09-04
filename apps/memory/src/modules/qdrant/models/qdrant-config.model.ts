@@ -40,7 +40,7 @@ export interface QdrantConfig {
   /**
    * Character cap for the serialized cognition profile document
    * (MEMORY_COGNITION_LIMIT, default 5000, clamped 500–32000) — the env
-   * baseline for the `memoryCognitionLimit` system variable; the SysCtl
+   * baseline for the `memoryCognitionLimit` system variable; the Settings
    * memory-overrides value wins at runtime.
    */
   cognitionLimit: number;
@@ -48,7 +48,7 @@ export interface QdrantConfig {
    * Max fact records the constellation loads per space
    * (MEMORY_CONSTELLATION_NODE_LIMIT, default 5000, clamped 100–10000) —
    * the env baseline for the `constellationNodeLimit` system variable; the
-   * SysCtl memory-overrides value wins at runtime.
+   * Settings memory-overrides value wins at runtime.
    */
   constellationNodeLimit: number;
   /**
@@ -128,6 +128,17 @@ export interface QdrantConfig {
    * (MEMORY_CLUSTER_AUTO, default false).
    */
   clusterAutoEnabled: boolean;
+  /**
+   * Master switch for the Raptor layer: embed cluster synopses as searchable
+   * points and recurse hierarchy levels above them (MEMORY_RAPTOR_ENABLED,
+   * default true).
+   */
+  raptorEnabled: boolean;
+  /**
+   * Raptor recursion depth cap — highest synopsis level per scope
+   * (MEMORY_RAPTOR_MAX_DEPTH, default 3, clamped 1–3).
+   */
+  raptorMaxDepth: number;
   /**
    * Recency weight for the episode probe (MEMORY_EPISODE_RECENCY_WEIGHT,
    * default 0.3, clamped 0–1) — how much recency may break topical ties.

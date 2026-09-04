@@ -25,6 +25,8 @@ import { QdrantConfigService } from './modules/qdrant/configs/qdrant-config.serv
 import { VectorizeProcessor } from './modules/qdrant/processors/vectorize.processor.js';
 import { QdrantModule } from './modules/qdrant/qdrant.module.js';
 import { QdrantHealthIndicator } from './modules/qdrant/services/qdrant-health-indicator.service.js';
+import { ResearchConfigService } from './modules/research/configs/research-config.service.js';
+import { ResearchModule } from './modules/research/research.module.js';
 import { SecretsModule } from './modules/secrets/secrets.module.js';
 
 /**
@@ -82,6 +84,7 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
         BullMQConfigService,
         BullMQLoggerConfigService,
         CoreLoggerConfigService,
+        ResearchConfigService,
       ],
     }),
     CoreLoggerModule.registerAsync({
@@ -107,6 +110,7 @@ import { SecretsModule } from './modules/secrets/secrets.module.js';
       useFactory: async ({ config }: QdrantConfigService) => config,
     }),
     EncyclopediaModule,
+    ResearchModule,
   ],
 })
 export class MemoryModule {}

@@ -23,8 +23,20 @@ import {
 } from 'class-validator';
 
 import {
+  RESEARCH_FETCH_BUDGET_MAX,
+  RESEARCH_FETCH_BUDGET_MIN,
+  RESEARCH_FRICTION_LIMIT_MAX,
+  RESEARCH_FRICTION_LIMIT_MIN,
+  RESEARCH_GAP_LIMIT_MAX,
+  RESEARCH_GAP_LIMIT_MIN,
+  RESEARCH_MAX_DEPTH_MAX,
+  RESEARCH_MAX_DEPTH_MIN,
+} from '../../research/constants/research.constants.js';
+import {
   CLUSTER_MIN_MEMBERS_MAX,
   CLUSTER_MIN_MEMBERS_MIN,
+  RAPTOR_MAX_DEPTH_MAX,
+  RAPTOR_MAX_DEPTH_MIN,
 } from '../constants/cluster.constant.js';
 import {
   CONSTELLATION_NODE_LIMIT_MAX,
@@ -277,10 +289,116 @@ export class MemoryOverridesDto {
 
   @ApiPropertyOptional({
     description:
+      'Master switch for the Raptor synopsis layer (embedded cluster synopses + hierarchy recursion).',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  raptorEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Raptor recursion depth cap — highest synopsis level per scope (1–3).',
+    example: 3,
+    minimum: RAPTOR_MAX_DEPTH_MIN,
+    maximum: RAPTOR_MAX_DEPTH_MAX,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(RAPTOR_MAX_DEPTH_MIN)
+  @Max(RAPTOR_MAX_DEPTH_MAX)
+  raptorMaxDepth?: number;
+
+  @ApiPropertyOptional({
+    description:
       'Auto-trigger cluster detection after a lane graph-mutating job.',
     example: false,
   })
   @IsOptional()
   @IsBoolean()
   clusterAutoEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Master switch for the gap-filling research job.',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  researchEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Search toggle for the research job follow-up deep-dives (off = fetch-only).',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  researchSearchEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Search provider the research job uses (serper | bright-data).',
+    example: 'serper',
+  })
+  @IsOptional()
+  @IsString()
+  researchProvider?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Chat model for the research job triage verdicts (overrides RESEARCH_MODEL).',
+    example: 'qwen3:8b',
+  })
+  @IsOptional()
+  @IsString()
+  researchModel?: string;
+
+  @ApiPropertyOptional({
+    description: 'Max gaps triaged per research run (1–50).',
+    example: 10,
+    minimum: RESEARCH_GAP_LIMIT_MIN,
+    maximum: RESEARCH_GAP_LIMIT_MAX,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(RESEARCH_GAP_LIMIT_MIN)
+  @Max(RESEARCH_GAP_LIMIT_MAX)
+  researchGapLimit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Max deep-dive depth per research chain (1–3).',
+    example: 3,
+    minimum: RESEARCH_MAX_DEPTH_MIN,
+    maximum: RESEARCH_MAX_DEPTH_MAX,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(RESEARCH_MAX_DEPTH_MIN)
+  @Max(RESEARCH_MAX_DEPTH_MAX)
+  researchMaxDepth?: number;
+
+  @ApiPropertyOptional({
+    description: 'Max pages fetched per research run (1–20).',
+    example: 5,
+    minimum: RESEARCH_FETCH_BUDGET_MIN,
+    maximum: RESEARCH_FETCH_BUDGET_MAX,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(RESEARCH_FETCH_BUDGET_MIN)
+  @Max(RESEARCH_FETCH_BUDGET_MAX)
+  researchFetchBudget?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Max contested-memory frictions screened per research run (1–20).',
+    example: 5,
+    minimum: RESEARCH_FRICTION_LIMIT_MIN,
+    maximum: RESEARCH_FRICTION_LIMIT_MAX,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(RESEARCH_FRICTION_LIMIT_MIN)
+  @Max(RESEARCH_FRICTION_LIMIT_MAX)
+  researchFrictionLimit?: number;
 }

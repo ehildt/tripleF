@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component: `
-Shared section header for the sysctl and preprocessing panels: a small
+Shared section header for the settings and preprocessing panels: a small
 lucide icon + uppercase mono title.
 `,
       },

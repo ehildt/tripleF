@@ -12,6 +12,8 @@ import type {
 
 import { EmbeddingService } from './embedding.service.js';
 import { MemoryRepository } from './memory.repository.js';
+import { MemoryOverridesService } from './memory-overrides.service.js';
+import { type SynopsisHit, SynopsisRepository } from './synopsis.repository.js';
 
 interface SearchInput extends MemoryScopeFilters {
   limit?: number;
@@ -43,6 +45,8 @@ export class MemorySearchService {
     private readonly embeddingService: EmbeddingService,
     private readonly memoryRepository: MemoryRepository,
     private readonly clusters: MemoryClusterRepository,
+    private readonly synopses: SynopsisRepository,
+    private readonly overrides: MemoryOverridesService,
   ) {}
 
   async searchByText(
@@ -142,6 +146,36 @@ export class MemorySearchService {
     ];
     const clusters = await this.clusters.findByIds(ids);
     return { points, clusters };
+  }
+
+  /**
+   * Semantic search over one scope's cluster-synopsis layer — the Raptor
+   * probe path: a cross-cutting query vector-matches the community summary
+   * directly, even when no single record ranks highly. Partition scope hits
+   * the partition synopsis collection; omitting it searches the global
+   * encyclopedia synopses. All hierarchy levels compete in one kNN
+   * (collapsed retrieval). Raptor off → always empty; any failure → empty.
+   */
+  async searchSynopses(input: {
+    memoryPartition?: string;
+    text: string;
+    limit?: number;
+  }): Promise<SynopsisHit[]> {
+    if (!this.overrides.getRaptorEnabled()) return [];
+    try {
+      const vectors = await this.embeddingService.embed([input.text], 'query');
+      if (vectors.length !== 1) return [];
+      const lane = input.memoryPartition ? 'partition' : 'encyclopedia';
+      const scopeKey = input.memoryPartition ?? 'global';
+      return this.synopses.searchSynopses(
+        lane,
+        scopeKey,
+        vectors[0],
+        input.limit ?? 2,
+      );
+    } catch {
+      return [];
+    }
   }
 
   /** Query variants: the full text plus its deduped, non-empty sentences. */

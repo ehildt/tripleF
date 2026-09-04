@@ -17,7 +17,18 @@ import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
 import { ENCYCLOPEDIA_CONFIG } from '../../encyclopedia/constants/encyclopedia.constants.js';
 import type { EncyclopediaConfig } from '../../encyclopedia/models/encyclopedia-config.model.js';
 import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
-import { clampClusterMinMembers } from '../constants/cluster.constant.js';
+import { RESEARCH_CONFIG } from '../../research/constants/research.constants.js';
+import {
+  clampResearchFetchBudget,
+  clampResearchFrictionLimit,
+  clampResearchGapLimit,
+  clampResearchMaxDepth,
+} from '../../research/constants/research.constants.js';
+import type { ResearchConfig } from '../../research/models/research-config.model.js';
+import {
+  clampClusterMinMembers,
+  clampRaptorMaxDepth,
+} from '../constants/cluster.constant.js';
 import { clampConstellationNodeLimit } from '../constants/constellation-node-limit.constant.js';
 import {
   clampConvictionBatchLimit,
@@ -40,9 +51,9 @@ const BOOT_RESTORE_ATTEMPTS = 5;
 const LAZY_RESTORE_THROTTLE_MS = 10_000;
 
 /**
- * Memory system variables (sysctl → system) layered over the env-backed
+ * Memory system variables (settings → system) layered over the env-backed
  * defaults (`MEMORY_COGNITION_LIMIT`, …). Consumers resolve the effective
- * value at execution time, so a SysCtl write takes effect on the very next
+ * value at execution time, so a Settings write takes effect on the very next
  * request without a restart. Overrides are persisted globally — system
  * settings, not user/session data — via the shared provider-overrides store
  * and restored on boot; env vars remain the baseline when nothing is
@@ -74,12 +85,19 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     convictionBatchLimit: clampConvictionBatchLimit,
     convictionMaxPerCluster: clampConvictionMaxPerCluster,
     clusterMinMembers: clampClusterMinMembers,
+    raptorMaxDepth: clampRaptorMaxDepth,
+    researchGapLimit: clampResearchGapLimit,
+    researchMaxDepth: clampResearchMaxDepth,
+    researchFetchBudget: clampResearchFetchBudget,
+    researchFrictionLimit: clampResearchFrictionLimit,
   };
 
   constructor(
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
     @Inject(ENCYCLOPEDIA_CONFIG)
     private readonly encyclopediaConfig: EncyclopediaConfig,
+    @Inject(RESEARCH_CONFIG)
+    private readonly researchConfig: ResearchConfig,
     private readonly repository: ProviderOverridesRepository,
   ) {}
 
@@ -99,7 +117,7 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
   private async attemptRestore(): Promise<void> {
     this.lastRestoreAttemptAt = Date.now();
     const rows = await this.repository.findAll();
-    // A live SysCtl write landed mid-flight — it is fresher than any row.
+    // A live Settings write landed mid-flight — it is fresher than any row.
     if (this.restored) return;
     this.restored = true;
     const values = rows.find(
@@ -308,6 +326,21 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     );
   }
 
+  /** Effective Raptor master switch — synopsis layer on/off (default true). */
+  getRaptorEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return this.overrides.raptorEnabled ?? this.config.raptorEnabled;
+  }
+
+  /** Effective Raptor recursion depth cap (1–3 — the highest synopsis level). */
+  getRaptorMaxDepth(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.raptorMaxDepth;
+    return clampRaptorMaxDepth(
+      typeof override === 'number' ? override : this.config.raptorMaxDepth,
+    );
+  }
+
   /** Effective auto-trigger flag for cluster detection. */
   getClusterAutoEnabled(): boolean {
     this.scheduleLazyRestore();
@@ -328,7 +361,77 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     );
   }
 
-  /** The SysCtl read view: effective values plus the env baseline + bounds. */
+  /** Effective master switch for the gap-filling research job. */
+  getResearchEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return this.overrides.researchEnabled ?? this.researchConfig.enabled;
+  }
+
+  /** Effective search toggle for the research job's follow-up deep-dives. */
+  getResearchSearchEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.researchSearchEnabled ?? this.researchConfig.searchEnabled
+    );
+  }
+
+  /** Effective search provider for the research job ('serper' | 'bright-data'). */
+  getResearchProvider(): 'serper' | 'bright-data' {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchProvider;
+    return override === 'bright-data' || override === 'serper'
+      ? override
+      : this.researchConfig.provider;
+  }
+
+  /** Effective research triage model (override → env baseline → undefined). */
+  getResearchModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return this.overrides.researchModel ?? this.researchConfig.model;
+  }
+
+  /** Effective research gap limit (1–50 gaps per run). */
+  getResearchGapLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchGapLimit;
+    return clampResearchGapLimit(
+      typeof override === 'number' ? override : this.researchConfig.gapLimit,
+    );
+  }
+
+  /** Effective research deep-dive depth cap (1–3). */
+  getResearchMaxDepth(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchMaxDepth;
+    return clampResearchMaxDepth(
+      typeof override === 'number' ? override : this.researchConfig.maxDepth,
+    );
+  }
+
+  /** Effective research fetch budget (1–20 pages per run). */
+  getResearchFetchBudget(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchFetchBudget;
+    return clampResearchFetchBudget(
+      typeof override === 'number' ? override : this.researchConfig.fetchBudget,
+    );
+  }
+
+  /**
+   * Effective contested-memory friction limit (1–20 per run) — how many open
+   * frictions the researcher screens for resolution-seeking searches.
+   */
+  getResearchFrictionLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchFrictionLimit;
+    return clampResearchFrictionLimit(
+      typeof override === 'number'
+        ? override
+        : this.researchConfig.frictionLimit,
+    );
+  }
+
+  /** The Settings read view: effective values plus the env baseline + bounds. */
   getConfig() {
     return {
       cognitionLimit: this.getCognitionLimit(),
@@ -354,7 +457,17 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
       convictionAutoEnabled: this.getConvictionAutoEnabled(),
       clusterModel: this.getClusterModel(),
       clusterMinMembers: this.getClusterMinMembers(),
+      raptorEnabled: this.getRaptorEnabled(),
+      raptorMaxDepth: this.getRaptorMaxDepth(),
       clusterAutoEnabled: this.getClusterAutoEnabled(),
+      researchEnabled: this.getResearchEnabled(),
+      researchSearchEnabled: this.getResearchSearchEnabled(),
+      researchProvider: this.getResearchProvider(),
+      researchModel: this.getResearchModel(),
+      researchGapLimit: this.getResearchGapLimit(),
+      researchMaxDepth: this.getResearchMaxDepth(),
+      researchFetchBudget: this.getResearchFetchBudget(),
+      researchFrictionLimit: this.getResearchFrictionLimit(),
     };
   }
 

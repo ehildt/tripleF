@@ -86,6 +86,13 @@ export function useMemoryConstellation(
   const expandedTopics = ref<Set<string>>(loadExpandedTopics());
   /** Cluster keys the camera expanded on zoom-in (ephemeral). */
   const autoExpandedTopics = ref<Set<string>>(new Set());
+  /**
+   * Cluster keys the user explicitly COLLAPSED while zoomed in. The camera's
+   * auto-expand help must never fight an explicit click: this set wins, and
+   * expires when the zoom leaves the expand band (auto-collapse pass), on
+   * bulk expand/collapse, or when the user re-expands the topic.
+   */
+  const userCollapsedTopics = ref<Set<string>>(new Set());
   /** Clusters animating a collapse — still visible until the animation ends. */
   const pendingCollapse = ref<Set<string>>(new Set());
   /** Per-dot expand/collapse animations (node id → transition). */
@@ -114,6 +121,11 @@ export function useMemoryConstellation(
     const collapsed = new Set<string>();
     for (const topic of relaxedLayout.value.topics) {
       const key = topic.key;
+      // An explicit user collapse beats every other expansion intent.
+      if (userCollapsedTopics.value.has(key)) {
+        collapsed.add(key);
+        continue;
+      }
       if (expandedTopics.value.has(key)) continue;
       if (autoExpandedTopics.value.has(key)) continue;
       if (pendingCollapse.value.has(key)) continue;
@@ -481,6 +493,10 @@ export function useMemoryConstellation(
       changed = true;
     }
     if (changed) autoExpandedTopics.value = nextAuto;
+    // The zoom left the expand band — user collapse-overrides expire here,
+    // so the camera's auto-expand help resumes on the next zoom-in.
+    if (userCollapsedTopics.value.size > 0)
+      userCollapsedTopics.value = new Set();
   }
 
   /** Re-expand collapsed topics whose main dot is in view (zoom-in). */
@@ -491,6 +507,7 @@ export function useMemoryConstellation(
       const key = topic.key;
       if (expandedTopics.value.has(key)) continue;
       if (nextAuto.has(key)) continue;
+      if (userCollapsedTopics.value.has(key)) continue;
       if (!isTopicInView(key, zoom)) continue;
       nextAuto.add(key);
       startExpand(key);
@@ -670,9 +687,12 @@ export function useMemoryConstellation(
     pendingCollapse.value = next;
   }
 
-  /** Whether a topic is expanded (user or auto). */
+  /** Whether a topic is expanded (user or auto), and not user-collapsed. */
   function isExpanded(key: string): boolean {
-    return expandedTopics.value.has(key) || autoExpandedTopics.value.has(key);
+    return (
+      (expandedTopics.value.has(key) || autoExpandedTopics.value.has(key)) &&
+      !userCollapsedTopics.value.has(key)
+    );
   }
 
   /** Expand one topic (user intent persists, auto intent is ephemeral). */
@@ -681,6 +701,10 @@ export function useMemoryConstellation(
       const nextUser = new Set(expandedTopics.value);
       nextUser.add(key);
       expandedTopics.value = nextUser;
+      // An explicit expand lifts the zoom-override for this topic.
+      const nextCollapsed = new Set(userCollapsedTopics.value);
+      nextCollapsed.delete(key);
+      userCollapsedTopics.value = nextCollapsed;
     }
     const nextAuto = new Set(autoExpandedTopics.value);
     nextAuto.delete(key);
@@ -694,6 +718,11 @@ export function useMemoryConstellation(
       const nextUser = new Set(expandedTopics.value);
       nextUser.delete(key);
       expandedTopics.value = nextUser;
+      // The click happened mid-expand-band: override the camera's auto-expand
+      // until the zoom leaves the band (collapseAllForZoom clears it).
+      const nextCollapsed = new Set(userCollapsedTopics.value);
+      nextCollapsed.add(key);
+      userCollapsedTopics.value = nextCollapsed;
     }
     const nextAuto = new Set(autoExpandedTopics.value);
     nextAuto.delete(key);
@@ -711,6 +740,7 @@ export function useMemoryConstellation(
     for (const key of autoExpandedTopics.value) wasExpanded.add(key);
     expandedTopics.value = new Set();
     autoExpandedTopics.value = new Set();
+    userCollapsedTopics.value = new Set();
     for (const key of wasExpanded) startCollapse(key);
     if (zoomIn) focusOnCollapsingTopics();
   }
@@ -724,6 +754,7 @@ export function useMemoryConstellation(
       relaxedLayout.value.topics.map((topic) => topic.key),
     );
     autoExpandedTopics.value = new Set();
+    userCollapsedTopics.value = new Set();
     for (const key of wasCollapsed) startExpand(key);
   }
 

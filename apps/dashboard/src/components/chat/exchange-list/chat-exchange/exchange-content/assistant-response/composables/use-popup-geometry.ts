@@ -56,7 +56,7 @@ export const ANCHOR_STYLES: Record<PopoutAnchor, Record<string, string>> = {
 
 /**
  * Shared geometry for the floating video popup: anchored at the configured
- * corner (SysCtl → Popout) until the user moves it. While position memory is
+ * corner (Settings → Popout) until the user moves it. While position memory is
  * on, the geometry persists across players, conversations, and app reloads;
  * otherwise every popout opens at the initial anchor. Dragging keeps the
  * position, resizing keeps the aspect ratio.

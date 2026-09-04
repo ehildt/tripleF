@@ -5,7 +5,7 @@ import { ModelWarmupService } from './services/model-warmup.service.js';
 import { OllamaOverridesService } from './services/ollama-overrides.service.js';
 
 /**
- * App-side Ollama wiring: SysCtl connection overrides and model warm-up.
+ * App-side Ollama wiring: Settings connection overrides and model warm-up.
  * The Ollama API client itself (model catalog, capability/origin
  * resolution, provider-client factory) lives in `@triplef/ollama-api` and
  * is registered via `OllamaApiModule.registerAsync` in MainModule.

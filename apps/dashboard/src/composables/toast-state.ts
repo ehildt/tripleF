@@ -73,7 +73,7 @@ function add(message: string, type: ToastType, options?: ToastOptions): void {
 }
 
 /**
- * Example toast from SysCtl → Widgets: bypasses the master toggle and type
+ * Example toast from Settings → Widgets: bypasses the master toggle and type
  * filters so the current anchor/duration/pin settings can be previewed.
  */
 function preview(message: string): void {

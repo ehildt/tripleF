@@ -6,6 +6,7 @@ import { VECTORIZE_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
 import {
   ENCYCLOPEDIA_CLASSIFY_JOB,
   ENCYCLOPEDIA_CONSOLIDATE_JOB,
+  ENCYCLOPEDIA_RESEARCH_JOB,
   MEMORY_CLUSTER_JOB,
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_CONVICTION_JOB,
@@ -17,6 +18,7 @@ import {
 } from '../constants/qdrant.constants.js';
 import type {
   EncyclopediaClassifyJobData,
+  EncyclopediaResearchJobData,
   EncyclopediaSweepJobData,
   MemoryClusterJobData,
   MemoryConsolidateJobData,
@@ -302,6 +304,33 @@ export class MemoryEnqueueService {
     } catch (error) {
       this.logger.warn(
         `Cluster enqueue failed for ${data.lane}/${data.scopeKey}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Gap-filling research trigger: manual endpoint (root sweep) or a chain's
+   * own follow-up enqueue (depth+1). The root jobId is a singleton; follow-up
+   * jobs dedupe per chain+depth so a re-triggered chain never double-runs.
+   */
+  async enqueueResearchJob(data: EncyclopediaResearchJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Research enqueue skipped: no model (set RESEARCH_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      const jobId = data.chainId
+        ? `research-${data.chainId}-${data.depth ?? 0}`
+        : `research-root-${data.dryRun ? 'dry' : 'apply'}`;
+      await this.queue.add(ENCYCLOPEDIA_RESEARCH_JOB, data, { jobId });
+    } catch (error) {
+      this.logger.warn(
+        `Research enqueue failed: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

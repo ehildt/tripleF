@@ -68,7 +68,7 @@ function loadPlaylistAnchor(): PlaylistAnchor {
  * the playlist renders in the chat right panel or as an app-level floating
  * window; the anchor fixes its position (it is not draggable — a same-side
  * top anchor stacks below the tab menu, see use-floating-playlist-geometry),
- * and autoclose mirrors the tab menu. Configured in SysCtl → Widgets →
+ * and autoclose mirrors the tab menu. Configured in Settings → Widgets →
  * Playlist.
  */
 export const playlistMode = ref<PlaylistMode>(loadPlaylistMode());
@@ -118,7 +118,7 @@ export function setPlaylistAutoClose(enabled: boolean) {
 }
 
 /**
- * Example floating player shown from SysCtl → Widgets to preview the
+ * Example floating player shown from Settings → Widgets to preview the
  * configured anchor. Persistent (not timed); hides on tab switch or close.
  */
 export const playlistPreviewVisible = ref(false);

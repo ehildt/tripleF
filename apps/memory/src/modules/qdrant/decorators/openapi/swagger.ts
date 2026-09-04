@@ -15,6 +15,7 @@ import { MemoryPruneResponseDto } from '../../dtos/memory-prune-response.dto.js'
 import { MemoryReflectResponseDto } from '../../dtos/memory-reflect-response.dto.js';
 import { MemoryRelinkResponseDto } from '../../dtos/memory-relink-response.dto.js';
 import { MemorySearchClustersResponseDto } from '../../dtos/memory-search-clusters-response.dto.js';
+import { MemorySynopsisDto } from '../../dtos/memory-synopsis.dto.js';
 import { QdrantStatusResponseDto } from '../../dtos/qdrant-status.dto.js';
 
 export const ApeTagsQdrant = () => ApiTags('Qdrant');
@@ -136,6 +137,15 @@ export const ApePostQdrantSearchTextClusters = () =>
     }),
   );
 
+export const ApePostQdrantSearchSynopses = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemorySynopsisDto, isArray: true }),
+    ApiOperation({
+      summary:
+        "Raptor synopsis probe: semantic search over one scope's cluster synopses (all hierarchy levels, collapsed). Pass memoryPartition for the partition lane; omit for the global encyclopedia synopses.",
+    }),
+  );
+
 export const ApePostQdrantSearchVector = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
@@ -228,7 +238,7 @@ export const ApeTagsMemoryOverrides = () => ApiTags('Memory Overrides');
 export const ApeGetMemoryOverrides = () =>
   ApiOperation({
     summary:
-      'Current memory system variables (sysctl → system): effective value, env baseline, override flag',
+      'Current memory system variables (settings → system): effective value, env baseline, override flag',
   });
 
 export const ApePutMemoryOverrides = () =>

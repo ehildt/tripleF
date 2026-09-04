@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { generateText, smoothStream, stepCountIs, streamText } from 'ai';
+import { generateText, pruneMessages, smoothStream, stepCountIs, streamText } from 'ai';
 
 import { toAiSdkMessages } from './helpers/ai-sdk-message.helper.ts';
 import {
@@ -78,6 +78,35 @@ export class AiSdkService {
       allowSystemInMessages: false,
       stopWhen: stepCountIs(params.maxSteps ?? 1),
       ...(hasTools ? { toolChoice: params.toolChoice ?? ('required' as const) } : {}),
+      // Chained waves (maxSteps > 1): the first step stays toolChoice-required
+      // (the mandatory classifier-picked wave must fire), but follow-up steps
+      // may finalize with text — a deep-dive chain that is satisfied after
+      // gathering must not be forced into another tool call (the AI SDK throws
+      // ToolChoiceViolationError otherwise). Steps already executed ⇒ steps
+      // list is non-empty, so 'required' only ever governs step one. An
+      // explicit caller toolChoice still wins (no toolChoice override then).
+      // Follow-up steps also prune reasoning parts from the accumulated
+      // transcript (see below).
+      ...(hasTools && (params.maxSteps ?? 1) > 1
+        ? {
+            prepareStep: ({ steps, messages: stepMessages }: { steps: Array<unknown>; messages: any[] }) =>
+              steps.length === 0
+                ? {}
+                : {
+                    ...(!params.toolChoice ? { toolChoice: 'auto' as const } : {}),
+                    // Thinking models emit reasoning parts on step one; the
+                    // SDK accumulates them into the transcript and re-sends
+                    // them to providers that reject assistant reasoning (the
+                    // Ollama responses API). Prune reasoning per follow-up
+                    // step with the SDK's own pruneMessages — reasoning stays
+                    // on the result/display side, never on the wire.
+                    messages: pruneMessages({
+                      messages: stepMessages,
+                      reasoning: 'all',
+                    }),
+                  },
+          }
+        : {}),
       abortSignal: params.abortSignal,
       timeout,
       providerOptions: params.providerOptions,

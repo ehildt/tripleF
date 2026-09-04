@@ -10,9 +10,9 @@ export type FastifyMultipartFilter = {
   prompt: Array<Prompt>;
   requestId: string;
   sessionId?: string;
-  /** Memory partition override (sysctl → system) — the user's memory space: defaults to the session id, a custom value survives browser rotation. */
+  /** Memory partition override (settings → system) — the user's memory space: defaults to the session id, a custom value survives browser rotation. */
   memoryPartition?: string;
-  /** Memory cognition override (sysctl → system) — the AI's understanding-of-the-user space: defaults to the memory partition. */
+  /** Memory cognition override (settings → system) — the AI's understanding-of-the-user space: defaults to the memory partition. */
   memoryCognition?: string;
   conversationId?: string;
   event: string;
@@ -26,7 +26,7 @@ export type FastifyMultipartFilter = {
   keepAlive?: string;
   /** ISO-639-1 code of the active UI locale (browser-detected or user-selected). */
   language?: string;
-  /** Character cap for server-extracted document text (client sysctl, live at submit time). */
+  /** Character cap for server-extracted document text (client settings, live at submit time). */
   documentTextLimit?: number;
   /** Graph-augmented recall: attach detected cluster summaries to the respond context. */
   graphRag?: boolean;

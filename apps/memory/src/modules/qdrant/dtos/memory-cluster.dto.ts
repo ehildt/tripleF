@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /** One detected cluster — a cluster of related memory points with its LLM summary. */
 export class MemoryClusterDto {
@@ -51,4 +51,17 @@ export class MemoryClusterDto {
     example: ['9f1c…', 'a3b2…'],
   })
   memberIds!: string[];
+
+  @ApiProperty({
+    description:
+      'Hierarchy level (Raptor): 0 = leaf cluster over points; 1+ = cluster of cluster synopses (members are child cluster ids).',
+    example: 0,
+  })
+  level!: number;
+
+  @ApiPropertyOptional({
+    description: 'Parent cluster id at level+1 (absent on the top level).',
+    example: '9f1c…',
+  })
+  parentId?: string;
 }

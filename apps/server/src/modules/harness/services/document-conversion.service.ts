@@ -15,6 +15,7 @@ import {
   parseManifestJson,
 } from '../helpers/documents/document-manifest.helper.js';
 import type { DocumentSection } from '../helpers/documents/document-section.types.js';
+import { extractTextFromPdfBuffer } from '../helpers/documents/extract-text-from-pdf-buffer.helper.js';
 import { extractTextFromPptxBuffer } from '../helpers/documents/extract-text-from-pptx-buffer.helper.js';
 
 import { mapPageMeta } from './helpers/map-page-meta.helper.js';
@@ -24,11 +25,12 @@ const MANIFEST_CONTENT_TYPE = 'application/json';
 
 /**
  * Owns document-original conversion: for every original referenced by a
- * harness job it ensures a conversion manifest (pdf → page JPEGs, docx →
- * html + text, pptx → slide text, everything else → text) exists in MinIO,
- * uploads the derived page images, and returns what the LLM request needs —
- * page-image metadata that rides the regular image pipeline plus the
- * model-facing text sections for prompt injection.
+ * harness job it ensures a conversion manifest (pdf → page JPEGs + text
+ * layer, docx → html + text, pptx → slide text, everything else → text)
+ * exists in MinIO, uploads the derived page images, and returns what the
+ * LLM request needs — page-image metadata that rides the regular image
+ * pipeline plus the model-facing text sections for prompt injection and
+ * encyclopedia indexing.
  */
 @Injectable()
 export class DocumentConversionService {
@@ -76,32 +78,15 @@ export class DocumentConversionService {
         );
         if (!manifest) continue;
 
-        if (manifest.kind === 'pdf') {
-          if (
-            shouldSynthesizePages(manifest.pageHashes, referencedImageHashes)
-          ) {
-            manifest.pageHashes.forEach((pageHash, index) => {
-              pageImageMeta.push({
-                name: `${entry.name} · page ${index + 1}`,
-                type: 'image/jpeg',
-                hash: pageHash,
-                size: 0,
-              });
-            });
-          }
-        } else if (manifest.text.trim()) {
-          textSections.push({
-            name: entry.name,
-            text: manifest.text,
-            url: this.minioService.buildFileUrl(
-              sessionId,
-              conversationId,
-              entry.hash,
-            ),
-            mimeType: entry.type,
-            sizeBytes: entry.size,
-            originalHash: entry.hash,
-          });
+        pageImageMeta.push(
+          ...this.toPageImageMeta(manifest, entry, referencedImageHashes),
+        );
+        // Any kind with a text layer — pdf included — yields a text section:
+        // the prompt injection AND the encyclopedia index both build on it.
+        if (manifest.text.trim()) {
+          textSections.push(
+            this.toTextSection(sessionId, conversationId, entry, manifest.text),
+          );
         }
       } catch (error) {
         this.logger.warn(
@@ -118,6 +103,45 @@ export class DocumentConversionService {
     }
 
     return { pageImageMeta, textSections };
+  }
+
+  /** Rendered pdf page images as image meta — empty when the client's page
+   *  selection is authoritative or the original isn't a pdf. */
+  private toPageImageMeta(
+    manifest: DocumentManifest,
+    entry: FastifyMultipartMeta,
+    referencedImageHashes: ReadonlySet<string>,
+  ): FastifyMultipartMeta[] {
+    if (manifest.kind !== 'pdf') return [];
+    if (!shouldSynthesizePages(manifest.pageHashes, referencedImageHashes))
+      return [];
+    return manifest.pageHashes.map((pageHash, index) => ({
+      name: `${entry.name} · page ${index + 1}`,
+      type: 'image/jpeg',
+      hash: pageHash,
+      size: 0,
+    }));
+  }
+
+  /** One original's model-facing text section (prompt + encyclopedia index). */
+  private toTextSection(
+    sessionId: string | undefined,
+    conversationId: string | undefined,
+    entry: FastifyMultipartMeta,
+    text: string,
+  ): DocumentSection {
+    return {
+      name: entry.name,
+      text,
+      url: this.minioService.buildFileUrl(
+        sessionId,
+        conversationId,
+        entry.hash,
+      ),
+      mimeType: entry.type,
+      sizeBytes: entry.size,
+      originalHash: entry.hash,
+    };
   }
 
   /**
@@ -167,11 +191,32 @@ export class DocumentConversionService {
     );
     if (existing) {
       const manifest = parseManifestJson(existing);
+      // Heal legacy pdf manifests: they predate text-layer extraction, so
+      // backfill the text, re-persist, and return the completed manifest.
+      if (manifest?.kind === 'pdf' && !manifest.text.trim()) {
+        const healed = await this.extractPdfText(requestId, entry.name, buffer);
+        if (healed) {
+          const healedManifest = { ...manifest, text: healed };
+          await this.persistManifest(
+            sessionId,
+            conversationId,
+            requestId,
+            entry,
+            healedManifest,
+          );
+          return healedManifest;
+        }
+      }
       if (manifest) return manifest;
     }
 
     const kind = classifyDocumentKind(entry.type, entry.name);
-    const manifest = await this.buildManifest(kind, entry.name, buffer);
+    const manifest = await this.buildManifest(
+      kind,
+      entry.name,
+      buffer,
+      requestId,
+    );
 
     if (manifest.pageBuffers.length > 0) {
       await this.minioService.uploadBuffers(
@@ -183,7 +228,26 @@ export class DocumentConversionService {
       );
     }
 
-    const manifestJson = buildManifestJson(manifest.json);
+    await this.persistManifest(
+      sessionId,
+      conversationId,
+      requestId,
+      entry,
+      manifest.json,
+    );
+
+    return manifest.json;
+  }
+
+  /** Persist one conversion manifest under the original's hash. */
+  private async persistManifest(
+    sessionId: string | undefined,
+    conversationId: string | undefined,
+    requestId: string,
+    entry: FastifyMultipartMeta,
+    manifest: DocumentManifest,
+  ): Promise<void> {
+    const manifestJson = buildManifestJson(manifest);
     await this.minioService.uploadBuffers(
       sessionId,
       conversationId,
@@ -198,8 +262,32 @@ export class DocumentConversionService {
         },
       ],
     );
+  }
 
-    return manifest.json;
+  /**
+   * Extract a pdf original's text layer, degrading to '' on failure — a
+   * text-extraction hiccup must never kill the page-image conversion that
+   * already works for it.
+   */
+  private async extractPdfText(
+    requestId: string,
+    name: string,
+    buffer: Buffer,
+  ): Promise<string> {
+    try {
+      return await extractTextFromPdfBuffer(buffer);
+    } catch (error) {
+      this.logger.warn(
+        {
+          requestId,
+          step: 'documents',
+          name,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'pdf text-layer extraction failed; pages only',
+      );
+      return '';
+    }
   }
 
   /** Convert one original buffer into its manifest and derived artifacts. */
@@ -207,6 +295,7 @@ export class DocumentConversionService {
     kind: DocumentKind,
     name: string,
     buffer: Buffer,
+    requestId: string,
   ): Promise<{
     json: DocumentManifest;
     pageBuffers: Array<{ buffer: Buffer; hash: string; page: number }>;
@@ -218,7 +307,7 @@ export class DocumentConversionService {
           kind,
           name,
           pageHashes: pages.map((page) => page.hash),
-          text: '',
+          text: await this.extractPdfText(requestId, name, buffer),
         },
         pageBuffers: pages,
       };

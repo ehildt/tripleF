@@ -68,6 +68,21 @@ interface MemoryClusterRecord {
   summary: string;
   memberCount: number;
   memberIds: string[];
+  /** Hierarchy level (0 = leaf cluster over points; 1+ = cluster of synopses). */
+  level?: number;
+  /** Parent cluster id at level+1 (absent on the top level). */
+  parentId?: string;
+}
+
+/** One cluster-synopsis hit — the Raptor probe record (community summary + level). */
+interface SynopsisHit {
+  clusterId: string;
+  scopeKey: string;
+  level: number;
+  title: string;
+  summary: string;
+  memberCount: number;
+  score?: number;
 }
 
 /** Graph-augmented search result: hits plus their cluster summaries. */
@@ -174,6 +189,31 @@ export class MemoryClientService {
       );
     } catch {
       return { points: [], clusters: [] };
+    }
+  }
+
+  /**
+   * Semantic search over one scope's cluster-synopsis layer (the Raptor
+   * probe read path): pass `memoryPartition` for the partition lane, omit it
+   * for the global encyclopedia synopses. Degrades to empty on any failure.
+   */
+  async searchSynopses(input: {
+    memoryPartition?: string;
+    text: string;
+    limit?: number;
+  }): Promise<SynopsisHit[]> {
+    if (!this.config.enabled) return [];
+    try {
+      return await this.request<SynopsisHit[]>(
+        `${this.baseUrl}/qdrant/search/synopses`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(input),
+        },
+      );
+    } catch {
+      return [];
     }
   }
 
@@ -318,7 +358,7 @@ export class MemoryClientService {
     );
   }
 
-  /** The memory app's system variables (sysctl → system) — effective values over env defaults. */
+  /** The memory app's system variables (settings → system) — effective values over env defaults. */
   async getOverrides(): Promise<MemoryOverridesConfig> {
     return this.request<MemoryOverridesConfig>(
       `${this.baseUrl}/memory-overrides`,

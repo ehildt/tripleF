@@ -70,7 +70,7 @@ const meta = {
       description: {
         component: `
 App-level floating playlist window, mounted in App.vue while the playlist
-mode is 'floating' (SysCtl → Widgets → Playlist). Drag by the bar, collapse
+mode is 'floating' (Settings → Widgets → Playlist). Drag by the bar, collapse
 to an edge tab, and capture the queue as a named playlist to load later.
 `,
       },

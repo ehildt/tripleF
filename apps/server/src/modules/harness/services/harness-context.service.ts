@@ -220,7 +220,7 @@ export class HarnessContextService {
       job,
       // Preprocessing resolves from the live server-side config at execution
       // time: the next query — fresh or requeued — always uses the latest
-      // SysCtl settings, never whatever the client sent.
+      // Settings values, never whatever the client sent.
       filters: {
         ...filters,
         preprocessing: this.sharpService.buildOptions(),

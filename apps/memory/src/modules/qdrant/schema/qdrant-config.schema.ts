@@ -16,6 +16,8 @@ import Joi from 'joi';
 import {
   CLUSTER_MIN_MEMBERS_MAX,
   CLUSTER_MIN_MEMBERS_MIN,
+  RAPTOR_MAX_DEPTH_MAX,
+  RAPTOR_MAX_DEPTH_MIN,
 } from '../constants/cluster.constant.js';
 import {
   CONSTELLATION_NODE_LIMIT_MAX,
@@ -100,6 +102,12 @@ export const QdrantConfigSchema = Joi.object<QdrantConfig>({
     .max(CLUSTER_MIN_MEMBERS_MAX)
     .optional(),
   clusterAutoEnabled: Joi.boolean().optional(),
+  raptorEnabled: Joi.boolean().optional(),
+  raptorMaxDepth: Joi.number()
+    .integer()
+    .min(RAPTOR_MAX_DEPTH_MIN)
+    .max(RAPTOR_MAX_DEPTH_MAX)
+    .optional(),
   // Episode-probe recency blend — env baselines for the matching system
   // variables (runtime overrides win).
   episodeRecencyWeight: Joi.number()

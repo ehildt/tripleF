@@ -66,7 +66,7 @@ const activeComponent = computed(
 );
 
 /**
- * The client-side part visibility (SysCtl → Layouts): drop the data keys of
+ * The client-side part visibility (Settings → Layouts): drop the data keys of
  * every disabled part before the template renders. Sections self-hide when
  * their data is absent, so a disabled part simply never renders — the model
  * output is untouched.

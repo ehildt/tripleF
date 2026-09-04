@@ -40,10 +40,30 @@ export interface MemoryOverridesPatch {
   clusterModel?: string | null;
   /** Minimum members for a structural cluster (1–100). */
   clusterMinMembers?: number | null;
+  /** Master switch for the Raptor synopsis layer. */
+  raptorEnabled?: boolean | null;
+  /** Raptor recursion depth cap (1–3). */
+  raptorMaxDepth?: number | null;
   /** Auto-trigger cluster detection after a lane's graph-mutating job. */
   clusterAutoEnabled?: boolean | null;
   /** Chat model for the partition consolidation sweep. */
   consolidateModel?: string | null;
   /** Chat model for the encyclopedia classification job. */
   classifyModel?: string | null;
+  /** Master switch for the gap-filling research job. */
+  researchEnabled?: boolean | null;
+  /** Search toggle for the research job's follow-up deep-dives. */
+  researchSearchEnabled?: boolean | null;
+  /** Search provider the research job uses ('serper' | 'bright-data'). */
+  researchProvider?: string | null;
+  /** Chat model for the research job's triage verdicts. */
+  researchModel?: string | null;
+  /** Max gaps triaged per research run (1–50). */
+  researchGapLimit?: number | null;
+  /** Max deep-dive depth per research chain (1–3). */
+  researchMaxDepth?: number | null;
+  /** Max pages fetched per research run (1–20). */
+  researchFetchBudget?: number | null;
+  /** Max contested-memory frictions screened per research run (1–20). */
+  researchFrictionLimit?: number | null;
 }

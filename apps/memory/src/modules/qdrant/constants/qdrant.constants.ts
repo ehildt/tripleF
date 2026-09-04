@@ -20,3 +20,5 @@ export const MEMORY_REFLECT_JOB = 'memory-reflect';
 export const MEMORY_CONVICTION_JOB = 'memory-conviction';
 /** Cluster-detection + summarization job on the vectorize queue — clusters the link graph and summarizes each cluster. */
 export const MEMORY_CLUSTER_JOB = 'memory-cluster';
+/** Gap-filling research job on the vectorize queue — closes never-fetched encyclopedia gaps, depth-capped. */
+export const ENCYCLOPEDIA_RESEARCH_JOB = 'encyclopedia-research';

@@ -20,7 +20,7 @@ const LAZY_RESTORE_THROTTLE_MS = 10_000;
 
 /**
  * Ollama connection overrides layered over the env-backed defaults. The
- * SysCtl system tab writes patches here; consumers resolve the effective
+ * Settings system tab writes patches here; consumers resolve the effective
  * connection at execution time, so the next request always uses the latest
  * settings. Overrides are persisted in the database with the API key
  * encrypted (see SecretsCipherService) and restored on boot; env vars
@@ -66,7 +66,7 @@ export class OllamaOverridesService implements OnApplicationBootstrap {
   private async attemptRestore(): Promise<void> {
     this.lastRestoreAttemptAt = Date.now();
     const rows = await this.repository.findAll();
-    // A live SysCtl write landed mid-flight — it is fresher than any row.
+    // A live Settings write landed mid-flight — it is fresher than any row.
     if (this.restored) return;
     this.restored = true;
     const row = rows.find((entry) => entry.provider === OLLAMA_PROVIDER_KEY);
@@ -91,7 +91,7 @@ export class OllamaOverridesService implements OnApplicationBootstrap {
    * Fire-and-forget re-restore after a failed boot restore. Throttled and
    * single-flighted so per-request getConfig() calls never hammer the
    * database; a successful attempt restores the overrides for all later
-   * calls. Skipped once overrides exist — live SysCtl edits are fresher
+   * calls. Skipped once overrides exist — live Settings edits are fresher
    * than any persisted row.
    */
   private scheduleLazyRestore(): void {

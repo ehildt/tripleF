@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import ConstellationToolbar from './ConstellationToolbar.vue';
 
 const meta = {
-  title: 'Sysctl/MemorySection/ConstellationToolbar',
+  title: 'Settings/MemorySection/ConstellationToolbar',
   component: ConstellationToolbar,
   tags: ['autodocs'],
   parameters: {

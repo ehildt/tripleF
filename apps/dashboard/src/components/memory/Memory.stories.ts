@@ -14,7 +14,7 @@ const meta = {
 The top-level Memory page: one constellation canvas per memory layer —
 partition facts, cognition insights, and the shared encyclopedia — with a
 submenu to switch spaces (default: encyclopedia). Configuration lives in
-SysCtl's Memory tab.`,
+Settings's Memory tab.`,
       },
     },
   },

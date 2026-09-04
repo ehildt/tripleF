@@ -71,7 +71,7 @@ function collectProviderSources(
  * Enabled sources render colored, disabled ones gray; the user flips the
  * state by clicking the tag, so disabled sources stay visible (kill switch
  * off or no API key still hides the strip entirely). Session overrides win
- * over the snapshot, mirroring SysCtl. Any engine added to the
+ * over the snapshot, mirroring Settings. Any engine added to the
  * provider-overrides response is picked up automatically; non-search
  * providers are skipped.
  */

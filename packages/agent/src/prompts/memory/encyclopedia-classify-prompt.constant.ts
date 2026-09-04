@@ -22,8 +22,8 @@ export function buildEncyclopediaClassifyPrompt(
     after: `
 YOUR TASK — label one stored source document with its broad category and the topic it is about:
 - The document may be a fetched web page, an uploaded file, or a search-result snippet. Classify by its CONTENT, never by its source shape — a file has no domain, and that must not matter.
-- category: ONE broad lowercase PLURAL family noun (e.g. "games", "work", "health", "finance") that groups the topic into a family. Never a specific entity, product, company, or title.
-- topic: the narrow subject the document is about (e.g. "wuthering waves", "q3 budget", "rust borrow checker"). A short, specific, reusable label — not a sentence, not a URL, not a filename, never a domain or a site name.
+- category: ONE broad lowercase PLURAL family noun (e.g. "games", "work", "health", "finance") that groups the topic into a family. It labels the TOPIC — never a side theme or an incidental mention on the page. Never a specific entity, product, company, or title.
+- topic: the document's MAIN subject entity — what the whole source is about (e.g. "wuthering waves", "q3 budget", "rust borrow checker"). A short, specific, reusable label — not a sentence, not a URL, not a filename, never a domain or a site name. Never a sub-part of the main subject (a chapter, a location, one feature) and never an adjacent proper noun (a publisher, an author, a related event) — when a title-level entity exists, it is the topic.
 - When the document is about a KNOWN TOPIC, output that label VERBATIM — prefer "neverness to everness" over minting a variant like "nte".
 ${buildVocabularySection(knownCategories, knownTopics)}
 RULES:

@@ -16,7 +16,7 @@ export interface DocumentManifest {
   name: string;
   /** Content hashes of the rendered PDF page images, in page order. */
   pageHashes: string[];
-  /** Extracted text (docx/pptx/plain). Empty for pdf. */
+  /** Extracted text (docx/pptx/plain, pdf text layer). Empty when none (scanned pdf). */
   text: string;
   /** Preview HTML (docx). Undefined otherwise. */
   html?: string;

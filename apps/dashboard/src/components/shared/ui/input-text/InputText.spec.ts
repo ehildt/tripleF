@@ -39,4 +39,41 @@ describe('InputText', () => {
     expect(input.classes()).toContain('input-text__field');
     expect(input.classes()).toContain('input-text__field--disabled');
   });
+
+  it('applies the borderless modifier for the borderless variant', () => {
+    const wrapper = mount(InputText, {
+      props: { modelValue: '', variant: 'borderless' },
+    });
+    expect(wrapper.find('input').classes()).toContain(
+      'input-text__field--borderless',
+    );
+  });
+
+  it('defaults to the boxed variant without the borderless modifier', () => {
+    const wrapper = mount(InputText, { props: { modelValue: '' } });
+    expect(wrapper.find('input').classes()).not.toContain(
+      'input-text__field--borderless',
+    );
+  });
+
+  it('emits change with the native event', async () => {
+    const wrapper = mount(InputText, { props: { modelValue: '' } });
+    await wrapper.find('input').trigger('change');
+    expect(wrapper.emitted('change')).toBeTruthy();
+  });
+
+  it('emits focus with the native event', async () => {
+    const wrapper = mount(InputText, { props: { modelValue: '' } });
+    await wrapper.find('input').trigger('focus');
+    expect(wrapper.emitted('focus')).toBeTruthy();
+  });
+
+  it('passes autocomplete and spellcheck through to the input', () => {
+    const wrapper = mount(InputText, {
+      props: { modelValue: '', autocomplete: 'off', spellcheck: false },
+    });
+    const input = wrapper.find('input');
+    expect(input.attributes('autocomplete')).toBe('off');
+    expect(input.attributes('spellcheck')).toBe('false');
+  });
 });

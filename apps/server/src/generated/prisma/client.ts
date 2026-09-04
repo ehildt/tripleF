@@ -162,3 +162,20 @@ export type MemoryLink = Prisma.MemoryLinkModel
  *  * undirected order.
  */
 export type MemoryFriction = Prisma.MemoryFrictionModel
+/**
+ * Model MemoryCluster
+ * *
+ *  * Detected clusters of the memory constellation: one row per cluster of
+ *  * related Qdrant points, discovered by the memory-cluster job over the
+ *  * link graph (semantic + topical + evidence edges) and summarized by an LLM
+ *  * into a title + summary. The summary is the cluster's "report" — the
+ *  * connective tissue that lets retrieval answer cross-cutting questions
+ *  * without reading every member.
+ *  *
+ *  * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ *  * space. `fingerprint` is the hash of the sorted member ids — the drift
+ *  * signal: a cluster whose membership changed gets a new fingerprint (and
+ *  * id) and is re-summarized; unchanged clusters keep their row. The job
+ *  * replaces a scope's rows atomically, so stale fingerprints never linger.
+ */
+export type MemoryCluster = Prisma.MemoryClusterModel

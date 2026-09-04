@@ -9,6 +9,7 @@ import {
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
+import { inMemoryTemporaryConversationsTable } from '../test-utils/in-memory-temporary-conversations';
 import { useAppStore } from './app';
 import { useConversationStore } from './conversation';
 
@@ -35,6 +36,7 @@ describe('useConversationStore', () => {
   beforeEach(async () => {
     setActivePinia(createPinia());
     localStorage.clear();
+    inMemoryTemporaryConversationsTable.clear();
     vi.clearAllMocks();
     // The conversation store hydrates persisted conversations asynchronously
     // on creation — settle before seeding, or the load result would wipe
@@ -513,8 +515,9 @@ describe('useConversationStore', () => {
     setActivePinia(createPinia());
     useConversationStore();
 
-    // Both requests are issued before either resolves — the restore no longer
-    // waits for the list.
+    // Let the is-it-local IndexedDB check settle. The restore is then issued
+    // while the list request is still pending — it never waits for the list.
+    await new Promise((r) => setTimeout(r, 0));
     expect(fetchConversations).toHaveBeenCalled();
     expect(fetchConversation).toHaveBeenCalledWith(
       expect.any(String),
@@ -691,7 +694,7 @@ describe('useConversationStore', () => {
   });
 
   describe('persistence split', () => {
-    it('persists unpinned (temporary) conversations to localStorage', async () => {
+    it('persists unpinned (temporary) conversations to IndexedDB', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');
       store.addExchange(conversation.id, {
@@ -702,14 +705,12 @@ describe('useConversationStore', () => {
       });
       await new Promise((r) => setTimeout(r, 0));
 
-      const map = JSON.parse(
-        localStorage.getItem('harness-temporary-conversations') || '{}',
-      );
+      const map = inMemoryTemporaryConversationsTable.snapshot();
       expect(map[conversation.conversationId]).toBeDefined();
       expect(map[conversation.conversationId].exchanges).toHaveLength(1);
     });
 
-    it('restores unpinned conversations from localStorage on reload', async () => {
+    it('restores unpinned conversations from IndexedDB on reload', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');
       store.addExchange(conversation.id, {
@@ -744,9 +745,9 @@ describe('useConversationStore', () => {
       });
       await new Promise((r) => setTimeout(r, 0));
       expect(
-        JSON.parse(
-          localStorage.getItem('harness-temporary-conversations') || '{}',
-        )[conversation.conversationId],
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
       ).toBeDefined();
 
       setActivePinia(createPinia());
@@ -755,14 +756,10 @@ describe('useConversationStore', () => {
 
       const fresh = useConversationStore();
       expect(fresh.getConversation(conversation.id)).toBeUndefined();
-      expect(
-        JSON.parse(
-          localStorage.getItem('harness-temporary-conversations') || '{}',
-        ),
-      ).toEqual({});
+      expect(inMemoryTemporaryConversationsTable.snapshot()).toEqual({});
     });
 
-    it('pinning a conversation saves it to the server and clears localStorage', async () => {
+    it('pinning a conversation saves it to the server and clears IndexedDB', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');
       store.addExchange(conversation.id, {
@@ -778,11 +775,7 @@ describe('useConversationStore', () => {
 
       expect(store.getConversation(conversation.id)!.type).toBe('persistent');
       expect(saveConversation).toHaveBeenCalled();
-      expect(
-        JSON.parse(
-          localStorage.getItem('harness-temporary-conversations') || '{}',
-        ),
-      ).toEqual({});
+      expect(inMemoryTemporaryConversationsTable.snapshot()).toEqual({});
     });
 
     it('unpinning a conversation deletes it from the server and keeps it locally', async () => {
@@ -798,10 +791,11 @@ describe('useConversationStore', () => {
 
       expect(store.getConversation(conversation.id)!.type).toBe('temporary');
       expect(deleteConversation).toHaveBeenCalled();
-      const map = JSON.parse(
-        localStorage.getItem('harness-temporary-conversations') || '{}',
-      );
-      expect(map[conversation.conversationId]).toBeDefined();
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeDefined();
     });
   });
 

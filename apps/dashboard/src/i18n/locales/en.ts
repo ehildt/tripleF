@@ -17,7 +17,7 @@ const en: LocaleMessages = {
     memory: 'Memory',
     dlq: 'Dead letter',
     debug: 'Debug',
-    sysctl: 'Settings',
+    settings: 'Settings',
   },
   common: {
     sources: 'Sources',
@@ -155,7 +155,7 @@ const en: LocaleMessages = {
     tabMenuTitle: 'Tab menu',
     toastNotifications: 'Toast notifications',
     health: 'Health',
-    sessions: 'Sessions',
+    newChatTooltip: 'Create new chat',
     ollama: 'Ollama',
     brightData: 'Bright Data',
     serperApi: 'Serper',
@@ -384,7 +384,7 @@ const en: LocaleMessages = {
     noVideosFound: 'No videos came back for this one.',
     noProductFound: 'No product info came back for this one.',
     noPurchaseOptions: 'No places to buy came back for this one.',
-    sysctlIntegrations: 'Integrations',
+    settingsIntegrations: 'Integrations',
     integrationSerperDesc:
       'Google web, images, news, places and more via the Serper API',
     integrationBrightDataDesc:
@@ -396,8 +396,8 @@ const en: LocaleMessages = {
     integrationSourcesDesc:
       'Boost or block domains and tune the image reference count',
     integrationOpenConfig: 'Open {name} configuration',
-    sysctlPreprocessing: 'Preprocessing',
-    sysctlLayouts: 'Layouts',
+    settingsPreprocessing: 'Preprocessing',
+    settingsLayouts: 'Layouts',
     templateArticle: 'Article',
     templateNews: 'News',
     templateDescribe: 'Describe',
@@ -448,14 +448,27 @@ const en: LocaleMessages = {
     templateSectionNews: 'News',
     templateSectionChart: 'Chart',
     templateSectionItems: 'Items',
-    sysctlWidgets: 'Widgets',
-    sysctlChatNavigation: 'Chat navigation',
-    sysctlSystem: 'System',
-    sysctlInterface: 'Interface',
-    sysctlMemory: 'Memory',
-    sysctlMemoryPartition: 'Partition',
-    sysctlMemoryCognition: 'Cognition',
-    sysctlMemoryEncyclopedia: 'Encyclopedia',
+    settingsWidgets: 'Widgets',
+    settingsChatNavigation: 'Chat navigation',
+    settingsSystem: 'System',
+    settingsInterface: 'Interface',
+    settingsMemory: 'Memory',
+    settingsMemoryPartition: 'Partition',
+    settingsMemoryCognition: 'Cognition',
+    settingsMemoryEncyclopedia: 'Encyclopedia',
+    settingsMemorySynopsis: 'Synopsis',
+    memorySynopsisTitle: 'Cluster synopses',
+    memorySynopsisDesc:
+      'The Raptor hierarchy — every cluster summarized level by level; hover a node for its community summary (drag to pan, scroll to zoom)',
+    memorySynopsisRefresh: 'Refresh the synopsis tree',
+    memorySynopsisEmpty:
+      'No cluster synopses yet — run the cluster job for this space first',
+    memorySynopsisUnavailable:
+      'Synopses unavailable — the memory service could not be reached',
+    memorySynopsisScopeEncyclopedia: 'Encyclopedia',
+    memorySynopsisScopePartition: 'Partition',
+    memorySynopsisLevelLabel: 'Level',
+    memorySynopsisMembersLabel: 'Members',
     defaultScrollMode: 'Default scroll mode',
     defaultScrollModeDesc: 'How chats scroll. Override per chat in the header.',
     chatIconCopy: 'Copy',
@@ -528,6 +541,7 @@ const en: LocaleMessages = {
     memoryCognitionWipe: 'Wipe cognition',
     memoryCognitionSpacesLabel: 'Cognition spaces',
     memoryCognitionSpaceDefault: 'Memory partition (default)',
+    memoryModelDefault: 'Default',
     memoryCognitionSpaceSearch: 'Search or create a space',
     memoryCognitionSpaceCreate: 'Create space "{text}"',
     memoryCognitionSpacesEmpty:
@@ -615,6 +629,34 @@ const en: LocaleMessages = {
     memoryClusterMinMembers: 'Cluster min members',
     memoryClusterMinMembersDesc:
       'Minimum members for a structural cluster (1–100)',
+    memoryRaptorEnabled: 'Raptor enabled',
+    memoryRaptorEnabledDesc:
+      'Raptor synopsis layer: embed each cluster\u2019s summary as a searchable point and recurse clusters of synopses one level up — cross-cutting questions can match the community summary directly',
+    memoryRaptorMaxDepth: 'Raptor max depth',
+    memoryRaptorMaxDepthDesc:
+      'Highest synopsis level per scope (1–3) — level 0 summarizes fact clusters, higher levels summarize clusters of synopses',
+    memoryResearchSection: 'Gap-filling research',
+    memoryResearchEnabled: 'Research enabled',
+    memoryResearchEnabledDesc:
+      'Master switch for the background researcher that closes knowledge-base gaps the user\u2019s own searches left behind (off by default)',
+    memoryResearchSearchEnabled: 'Search enabled',
+    memoryResearchSearchEnabledDesc:
+      'Let the researcher run web searches for follow-up topics; off = fetch-only',
+    memoryResearchProvider: 'Search provider',
+    memoryResearchProviderDesc:
+      'Which search API the researcher uses (Serper or Bright Data) — independent of the server\u2019s provider',
+    memoryResearchModel: 'Research model',
+    memoryResearchModelDesc:
+      'Chat model for the research triage verdicts (env baseline RESEARCH_MODEL)',
+    memoryResearchGapLimit: 'Gap limit',
+    memoryResearchGapLimitDesc: 'Max gaps triaged per research run (1–50)',
+    memoryResearchMaxDepth: 'Max depth',
+    memoryResearchMaxDepthDesc: 'Max deep-dive hops per research chain (1–3)',
+    memoryResearchFetchBudget: 'Fetch budget',
+    memoryResearchFetchBudgetDesc: 'Max pages fetched per research run (1–20)',
+    memoryResearchFrictionLimit: 'Friction limit',
+    memoryResearchFrictionLimitDesc:
+      'Max contested-memory frictions screened per research run (1–20) — open contradictions a web search could settle become resolution-seeking deep-dives',
     youtubeVideosWithViews: 'YouTube videos with views and duration',
     socketsDesc:
       'Show the sockets menu and subscribed-socket list in the chat toolbar at the top of the chat',

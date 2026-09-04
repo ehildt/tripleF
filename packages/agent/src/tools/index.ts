@@ -84,6 +84,7 @@ export * from './tool-factory.js';
 export * from './tool-factory.types.js';
 export * from './types/config.types.js';
 export * from './types/types.js';
+export * from './web-fetch/extract-article-text.helper.js';
 export * from './web-fetch/web-fetch.schema.js';
 export * from './web-fetch/web-fetch.tool.js';
 export * from './youtube/youtube.js';

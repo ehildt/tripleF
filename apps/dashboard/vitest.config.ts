@@ -6,7 +6,16 @@ import { playwright } from '@vitest/browser-playwright';
 import { configDefaults, defineConfig } from 'vitest/config';
 const dirname = import.meta.dirname;
 
-const storybookBrowserEnabled = process.env.VITEST_ENABLE_BROWSER === 'true';
+// Browser-backed projects (vitest browser mode, real Chromium via Playwright)
+// are opt-in: the default `pnpm test` run stays fast and jsdom-only.
+const browserProjectsEnabled = process.env.VITEST_ENABLE_BROWSER === 'true';
+
+const browserInstance = {
+  enabled: true,
+  headless: true,
+  provider: playwright({}),
+  instances: [{ browser: 'chromium' }],
+} as const;
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
@@ -35,6 +44,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'jsdom',
           globals: true,
           environment: 'jsdom',
           setupFiles: ['./vitest-globals.ts'],
@@ -42,11 +52,22 @@ export default defineConfig({
             ...configDefaults.exclude,
             '**/node_modules/**',
             '**/dist/**',
+            '**/*.browser.spec.ts',
           ],
         },
       },
-      ...(storybookBrowserEnabled
+      ...(browserProjectsEnabled
         ? [
+            // Real-browser project: spec files ending in .browser.spec.ts run in
+            // real Chromium (real IndexedDB, real localStorage) via Playwright.
+            {
+              extends: true,
+              test: {
+                name: 'browser',
+                include: ['src/**/*.browser.spec.ts'],
+                browser: browserInstance,
+              },
+            },
             {
               extends: true,
               plugins: [
@@ -58,16 +79,7 @@ export default defineConfig({
               ],
               test: {
                 name: 'storybook',
-                browser: {
-                  enabled: true,
-                  headless: true,
-                  provider: playwright({}),
-                  instances: [
-                    {
-                      browser: 'chromium',
-                    },
-                  ],
-                },
+                browser: browserInstance,
               },
             },
           ]

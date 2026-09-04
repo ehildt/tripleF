@@ -21,6 +21,6 @@ import { EncyclopediaStoreService } from './services/encyclopedia-store.service.
       useFactory: ({ config }: EncyclopediaConfigService) => config,
     },
   ],
-  exports: [ENCYCLOPEDIA_CONFIG],
+  exports: [ENCYCLOPEDIA_CONFIG, EncyclopediaStoreService],
 })
 export class EncyclopediaModule {}

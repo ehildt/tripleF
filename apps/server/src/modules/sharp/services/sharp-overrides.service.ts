@@ -19,7 +19,7 @@ type SharpOverridesPatch = {
 
 /**
  * In-memory preprocessing overrides layered over the env-backed sharp
- * defaults. The SysCtl preprocessing tab writes patches here; every harness
+ * defaults. The Settings preprocessing tab writes patches here; every harness
  * job resolves its preprocessing options from the effective config at
  * execution time, so the next query always uses the latest settings. No
  * database persistence by design — env vars remain the restart baseline.

@@ -21,7 +21,7 @@ export interface MemoryPoint {
   id: string;
   /**
    * Partition key the record belongs to. Defaults to the caller's session id;
-   * a user-set partition id (sysctl) survives browser-session rotation, so
+   * a user-set partition id (settings) survives browser-session rotation, so
    * memory follows the human, not the tab.
    */
   memoryPartition?: string;
@@ -319,6 +319,30 @@ export interface EncyclopediaClassifyJobData {
   /** Max pending documents processed per run (default 100, capped 500). */
   limit?: number;
   /** Compute and log labels without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Gap-filling research job payload: close encyclopedia gaps the user's own
+ * searches left behind (snippets never fetched), then follow the topics the
+ * closed pages reference — one deep-dive per depth, capped at maxDepth.
+ */
+export interface EncyclopediaResearchJobData {
+  /** Chat model for the triage verdicts (resolved at enqueue). */
+  model: string;
+  /** Max gaps triaged this run (default from overrides, capped 50). */
+  limit?: number;
+  /** Current deep-dive depth (0 = root sweep over unfetched snippets). */
+  depth?: number;
+  /** Chain id — groups the follow-up jobs of one research chain. */
+  chainId?: string;
+  /** Urls already visited in this chain (loop guard). */
+  visitedUrls?: string[];
+  /** Follow-up search queries from the parent depth (the Z candidates). */
+  searchQueries?: string[];
+  /** Partition provenance for persisted content (defaults to 'global'). */
+  partitionScope?: string;
+  /** Compute and log verdicts without fetching or persisting. */
   dryRun?: boolean;
 }
 

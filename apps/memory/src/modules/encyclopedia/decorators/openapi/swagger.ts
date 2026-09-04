@@ -158,3 +158,16 @@ export const ApePostEncyclopediaDocument = () =>
         'Read one stored document windowed (offset + char budget) — the deep-dive read behind the encyclopedia-read tool',
     }),
   );
+
+export const ApePostEncyclopediaResearch = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Enqueues the gap-filling research sweep: closes never-fetched encyclopedia gaps (snippets without content), then follows referenced topics one deep-dive per depth, capped at the configured max depth.',
+    }),
+    ApiOperation({
+      summary:
+        '⑤ Research — close knowledge-base gaps left by the user\u2019s own searches (fetch + optional search, depth-capped)',
+    }),
+  );

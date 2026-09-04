@@ -6,10 +6,10 @@ import {
 } from '@/api/memory-overrides.api';
 
 /**
- * The memory system variables (sysctl → system): server-side global settings
+ * The memory system variables (settings → system): server-side global settings
  * layered over env defaults. Reads on mount; a write takes effect on the
  * very next request without a restart. Fetch failures leave the fields empty
- * — SysCtl stays usable when memory is off.
+ * — Settings stays usable when memory is off.
  */
 export function useMemoryOverrides() {
   const cognitionLimit = ref<number | undefined>(undefined);
@@ -34,6 +34,16 @@ export function useMemoryOverrides() {
   const convictionBatchLimit = ref<number | undefined>(undefined);
   const convictionMaxPerCluster = ref<number | undefined>(undefined);
   const clusterMinMembers = ref<number | undefined>(undefined);
+  const raptorEnabled = ref<boolean | undefined>(undefined);
+  const raptorMaxDepth = ref<number | undefined>(undefined);
+  const researchEnabled = ref<boolean | undefined>(undefined);
+  const researchSearchEnabled = ref<boolean | undefined>(undefined);
+  const researchProvider = ref<'serper' | 'bright-data' | undefined>(undefined);
+  const researchModel = ref<string | undefined>(undefined);
+  const researchGapLimit = ref<number | undefined>(undefined);
+  const researchMaxDepth = ref<number | undefined>(undefined);
+  const researchFetchBudget = ref<number | undefined>(undefined);
+  const researchFrictionLimit = ref<number | undefined>(undefined);
   const isLoading = ref(false);
 
   async function loadOverrides() {
@@ -63,6 +73,16 @@ export function useMemoryOverrides() {
       convictionBatchLimit.value = config.convictionBatchLimit;
       convictionMaxPerCluster.value = config.convictionMaxPerCluster;
       clusterMinMembers.value = config.clusterMinMembers;
+      raptorEnabled.value = config.raptorEnabled;
+      raptorMaxDepth.value = config.raptorMaxDepth;
+      researchEnabled.value = config.researchEnabled;
+      researchSearchEnabled.value = config.researchSearchEnabled;
+      researchProvider.value = config.researchProvider;
+      researchModel.value = config.researchModel;
+      researchGapLimit.value = config.researchGapLimit;
+      researchMaxDepth.value = config.researchMaxDepth;
+      researchFetchBudget.value = config.researchFetchBudget;
+      researchFrictionLimit.value = config.researchFrictionLimit;
     } catch {
       cognitionLimit.value = undefined;
       episodeRecencyWeight.value = undefined;
@@ -86,6 +106,16 @@ export function useMemoryOverrides() {
       convictionBatchLimit.value = undefined;
       convictionMaxPerCluster.value = undefined;
       clusterMinMembers.value = undefined;
+      raptorEnabled.value = undefined;
+      raptorMaxDepth.value = undefined;
+      researchEnabled.value = undefined;
+      researchSearchEnabled.value = undefined;
+      researchProvider.value = undefined;
+      researchModel.value = undefined;
+      researchGapLimit.value = undefined;
+      researchMaxDepth.value = undefined;
+      researchFetchBudget.value = undefined;
+      researchFrictionLimit.value = undefined;
     } finally {
       isLoading.value = false;
     }
@@ -213,6 +243,57 @@ export function useMemoryOverrides() {
     await saveOverride({ clusterMinMembers: value });
   }
 
+  async function saveRaptorEnabled(value: boolean) {
+    raptorEnabled.value = value;
+    await saveOverride({ raptorEnabled: value });
+  }
+
+  async function saveRaptorMaxDepth(value: number) {
+    raptorMaxDepth.value = value;
+    await saveOverride({ raptorMaxDepth: value });
+  }
+
+  async function saveResearchEnabled(value: boolean) {
+    researchEnabled.value = value;
+    await saveOverride({ researchEnabled: value });
+  }
+
+  async function saveResearchSearchEnabled(value: boolean) {
+    researchSearchEnabled.value = value;
+    await saveOverride({ researchSearchEnabled: value });
+  }
+
+  async function saveResearchProvider(value: string) {
+    researchProvider.value = value as 'serper' | 'bright-data';
+    await saveOverride({ researchProvider: value });
+  }
+
+  /** Model field: empty string clears the override (back to env baseline). */
+  async function saveResearchModel(value: string) {
+    researchModel.value = value;
+    await saveOverride({ researchModel: value.trim() || null });
+  }
+
+  async function saveResearchGapLimit(value: number) {
+    researchGapLimit.value = value;
+    await saveOverride({ researchGapLimit: value });
+  }
+
+  async function saveResearchMaxDepth(value: number) {
+    researchMaxDepth.value = value;
+    await saveOverride({ researchMaxDepth: value });
+  }
+
+  async function saveResearchFetchBudget(value: number) {
+    researchFetchBudget.value = value;
+    await saveOverride({ researchFetchBudget: value });
+  }
+
+  async function saveResearchFrictionLimit(value: number) {
+    researchFrictionLimit.value = value;
+    await saveOverride({ researchFrictionLimit: value });
+  }
+
   onMounted(loadOverrides);
 
   return {
@@ -238,6 +319,16 @@ export function useMemoryOverrides() {
     convictionBatchLimit,
     convictionMaxPerCluster,
     clusterMinMembers,
+    raptorEnabled,
+    raptorMaxDepth,
+    researchEnabled,
+    researchSearchEnabled,
+    researchProvider,
+    researchModel,
+    researchGapLimit,
+    researchMaxDepth,
+    researchFetchBudget,
+    researchFrictionLimit,
     isLoading,
     saveCognitionLimit,
     saveEpisodeRecencyWeight,
@@ -261,5 +352,15 @@ export function useMemoryOverrides() {
     saveConvictionBatchLimit,
     saveConvictionMaxPerCluster,
     saveClusterMinMembers,
+    saveRaptorEnabled,
+    saveRaptorMaxDepth,
+    saveResearchEnabled,
+    saveResearchSearchEnabled,
+    saveResearchProvider,
+    saveResearchModel,
+    saveResearchGapLimit,
+    saveResearchMaxDepth,
+    saveResearchFetchBudget,
+    saveResearchFrictionLimit,
   };
 }

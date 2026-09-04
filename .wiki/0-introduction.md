@@ -10,16 +10,16 @@ tripleF is early in development and unapologetic about aiming for the top of the
 - **Local-first inference** — every request is served by Ollama. Point `OLLAMA_HOST` at your own machine for fully-offline operation, or set `OLLAMA_API_KEY` to use Ollama Cloud models. The workbench treats both as one continuum.
 - **Agentic harness** — requests flow through a deterministic, dependency-driven step engine: interpret → execute → sanitize → respond (→ memory write/profile/vectorize). The harness classifies intent, selects tools (web/image/news/shopping/places/business-reviews/video search via Serper or Bright Data, YouTube Data API video search, EODHD market-data tools, webpage scrape/fetch, and `browser_*` automation via a Playwright MCP sidecar), language-detects results and files foreign-language finds into an international-coverage aside, enforces structured output schemas, and validates responses before they reach the UI.
 - **Structured vision & media answers** — describe, compare, OCR, imagine, news, article, product, stock-market, image/video list schemas turn image understanding into machine-readable, UI-renderable results instead of plain text blobs.
-- **Semantic memory & knowledge** — a dedicated **memory app** (Qdrant + a BullMQ `vectorize` worker) gives the AI long-term memory: a user fact partition, an evolving cognition profile with insights/episodes/convictions, a constellation link graph (GraphRAG probes), consolidation/reflect/conviction/cluster maintenance sweeps, and a chunked **knowledge encyclopedia** — all inspectable and editable in the dashboard's SysCtl memory section.
+- **Semantic memory & knowledge** — a dedicated **memory app** (Qdrant + a BullMQ `vectorize` worker) gives the AI long-term memory: a user fact partition, an evolving cognition profile with insights/episodes/convictions, a constellation link graph (GraphRAG probes), consolidation/reflect/conviction/cluster maintenance sweeps, and a chunked **knowledge encyclopedia** — all inspectable and editable in the dashboard's Settings memory section.
 - **Real-time by construction** — answers stream token-by-token over Socket.IO rooms; a request can be **cancelled mid-flight** by the user, and the worker honours the cancellation token at step boundaries.
-- **Operability built in** — BullMQ queues with retry/backoff, a persisted dead-letter queue (replay, edit, re-instate), queue and system health consoles, provider-override management, and image preprocessing controls — all exposed in the dashboard's SysCtl area.
+- **Operability built in** — BullMQ queues with retry/backoff, a persisted dead-letter queue (replay, edit, re-instate), queue and system health consoles, provider-override management, and image preprocessing controls — all exposed in the dashboard's Settings area.
 
 ## System Overview
 
 ```
                       ┌──────────────────────────────────────────────┐
                       │                DASHBOARD (Vue 3)             │
-                      │  Chat · SysCtl · DLQ · PProc · Memory · ...  │
+                      │  Chat · Settings · DLQ · PProc · Memory · ...  │
                       └───────────────▲───────────────┬──────────────┘
                         Socket.IO     │               │ REST (Fastify,
                         (rooms)       │               │ /api/v1, Swagger)
@@ -87,7 +87,7 @@ triplef.io/
 │   │   │                    # dead-letter, ai-sdk, secrets, postgres
 │   │   └── prisma/          # client against the server's shared tables
 │   └── dashboard/           # 3F dashboard (Vue 3 + Vite)
-│       ├── src/components/  # chat, sysctl, dlq, pproc, app shell, widgets
+│       ├── src/components/  # chat, settings, dlq, pproc, app shell, widgets
 │       └── Dockerfile       # standalone image (kept for a potential repo split)
 ├── packages/                # published libraries: helpers, config-factory, core-logger,
 │                            # bullmq, bullmq-logger, socketio, ai-sdk, agent

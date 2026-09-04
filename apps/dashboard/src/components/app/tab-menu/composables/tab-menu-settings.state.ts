@@ -42,7 +42,7 @@ function loadTabMenuSide(): TabMenuSide {
  * Tab menu settings, shared module state: the screen edge the slide-out
  * menu is docked to, and whether it closes itself after the user picked a
  * tab or clicked elsewhere (autoclose) — off keeps it toggled by hand.
- * Configured in SysCtl → Widgets.
+ * Configured in Settings → Widgets.
  */
 export const tabMenuSide = ref<TabMenuSide>(loadTabMenuSide());
 export const tabMenuAutoClose = ref<boolean>(

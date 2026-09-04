@@ -198,7 +198,7 @@ watch(conversationId, () => void loadPlaylists(), {
   immediate: true,
 });
 
-// In floating mode the playlist lives in the app-level window (SysCtl →
+// In floating mode the playlist lives in the app-level window (Settings →
 // Widgets → Playlist): the right panel drops its playlist tab entirely.
 const panelPlaylistVideos = computed(() =>
   playlistMode.value === 'floating' ? [] : playlistVideos.value,

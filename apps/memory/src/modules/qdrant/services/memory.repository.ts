@@ -50,7 +50,7 @@ const SCROLL_PAGE = 500;
  * The only layer that talks Qdrant payloads. Every point belongs to exactly
  * one space, identified by its key: `memory_partition` (the user's fact
  * space — by default the caller's session id, or a user-set partition id from
- * sysctl that survives browser-session rotation) or `memory_cognition` (the
+ * settings that survives browser-session rotation) or `memory_cognition` (the
  * AI's living understanding-of-the-user document). The agentic tools always
  * scope reads to the turn's space key; the public endpoints may tighten
  * further (session/conversation/request/role/tags/contains/exact text).
@@ -281,7 +281,7 @@ export class MemoryRepository {
   }
 
   /**
-   * Scroll-based listing for the sysctl inspection surface (no vector
+   * Scroll-based listing for the settings inspection surface (no vector
    * needed). Ordered newest-first on `created_at` so the capped page always
    * surfaces the most recent records — the `created_at` datetime payload
    * index is created at boot.
@@ -809,6 +809,29 @@ export class MemoryRepository {
   }
 
   /**
+   * Load the texts of specific points by id (no vector search) — the
+   * research job's contested-memory path resolves open frictions' pairs this
+   * way. Points that are gone or textless are simply absent from the map.
+   */
+  async getTextsByIds(ids: string[]): Promise<Map<string, string>> {
+    const texts = new Map<string, string>();
+    if (ids.length === 0) return texts;
+    if (!(await this.clientService.hasCollection())) return texts;
+    const client = this.clientService.getClient();
+    const scroll = await client.scroll(this.collection, {
+      filter: { must: [{ has_id: ids }] },
+      limit: ids.length,
+      with_payload: true,
+      with_vector: false,
+    });
+    for (const point of scroll.points) {
+      const text = (point.payload?.text as string | undefined)?.trim();
+      if (text) texts.set(String(point.id), text);
+    }
+    return texts;
+  }
+
+  /**
    * Write the cluster assignment onto every point: one setPayload call per
    * cluster (points sharing a cluster id are batched together).
    */
@@ -914,7 +937,7 @@ export class MemoryRepository {
   }
 
   /**
-   * Sysctl prune: drop ALL fact records of a space key (the user's memory
+   * Settings prune: drop ALL fact records of a space key (the user's memory
    * partition). The cognition lane has its own wipe (deleteCognition) —
    * lanes stay cleanly separable, so a partition prune never touches the
    * AI's understanding of the user.

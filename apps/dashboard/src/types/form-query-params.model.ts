@@ -31,9 +31,9 @@ export interface ConversationMetadata {
 export interface FormQueryOptions {
   requestId: string;
   sessionId: string;
-  /** Memory partition override (sysctl → system); empty/undefined = the session id is the partition. */
+  /** Memory partition override (settings → system); empty/undefined = the session id is the partition. */
   memoryPartition?: string;
-  /** Memory cognition override (sysctl → system); empty/undefined = the memory partition is the cognition space. */
+  /** Memory cognition override (settings → system); empty/undefined = the memory partition is the cognition space. */
   memoryCognition?: string;
   conversationId?: string;
   roomId: string;

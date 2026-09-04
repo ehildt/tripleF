@@ -84,8 +84,8 @@ export const useAppStore = defineStore('app', () => {
   const VIS_KEY = 'harness-tab-visibility';
   /**
    * Tabs hidden unless explicitly enabled: debug starts disabled, so the
-   * user opts in via SysCtl. `dlq` (dead letter) is on by default; `sockets`
-   * (the chat toolbar sockets menu) is off by default. `http`/`sysctl` are
+   * user opts in via Settings. `dlq` (dead letter) is on by default; `sockets`
+   * (the chat toolbar sockets menu) is off by default. `http`/`settings` are
    * core.
    */
   const DEFAULT_TAB_VISIBILITY: Record<string, boolean> = {
@@ -94,7 +94,7 @@ export const useAppStore = defineStore('app', () => {
     dlq: true,
     debug: false,
     sockets: false,
-    sysctl: true,
+    settings: true,
   };
   function loadTabVisibility(): Record<string, boolean> {
     try {
@@ -828,7 +828,7 @@ export const useAppStore = defineStore('app', () => {
   /**
    * Cognition space history — the previously used memory-cognition space ids,
    * most-recent-first, deduped and capped. localStorage-local convenience
-   * list powering the sysctl space selector (select / remove / create);
+   * list powering the settings space selector (select / remove / create);
    * spaces are implicit Qdrant keys, so "create" is just selecting a new id.
    */
   const memoryCognitionSpaces = ref<string[]>(loadMemoryCognitionSpaces());

@@ -41,6 +41,22 @@ describe('mapFactToNode', () => {
     ]);
   });
 
+  it('groups by the classified subject before the first tag', () => {
+    // The topic tier is the title-level entity: the extraction-classified
+    // subject wins over tag order (LLM luck), so all records of one title
+    // land under one topic no matter which tag the extractor led with.
+    const node = mapFactToNode({
+      id: 'f1',
+      text: 'Stellar Blade sold over 6.1 million units.',
+      subject: 'stellar blade',
+      tags: ['rpg', 'stellar blade', 'gacha'],
+      category: 'games',
+    });
+    expect(node.topicKey).toBe('stellar blade');
+    expect(node.label).toBe('stellar blade');
+    expect(node.keys).toEqual(['rpg', 'stellar blade', 'gacha']);
+  });
+
   it('falls back to the untagged topic', () => {
     expect(mapFactToNode({ id: 'f1', text: 'hello' }).topicKey).toBe(
       'untagged',

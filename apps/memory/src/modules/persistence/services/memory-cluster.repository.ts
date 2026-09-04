@@ -22,6 +22,10 @@ export interface MemoryClusterRecord {
   summary: string;
   memberCount: number;
   memberIds: string[];
+  /** Hierarchy level: 0 = leaf cluster over points; 1+ = cluster of cluster synopses. */
+  level: number;
+  /** Parent cluster id at level+1 (null on the top level). */
+  parentId?: string;
 }
 
 /** One cluster row to write (the job's replace-scope input). */
@@ -35,6 +39,10 @@ export interface MemoryClusterRow {
   summary: string;
   memberCount: number;
   memberIds: string[];
+  /** Hierarchy level (default 0 = leaf). */
+  level: number;
+  /** Parent cluster id at level+1 (null on the top level). */
+  parentId?: string;
 }
 
 /**
@@ -139,6 +147,8 @@ function mapClusterRow(row: {
   summary: string;
   memberCount: number;
   memberIds: string[];
+  level: number;
+  parentId: string | null;
 }): MemoryClusterRecord {
   return {
     id: row.id,
@@ -150,5 +160,7 @@ function mapClusterRow(row: {
     summary: row.summary,
     memberCount: row.memberCount,
     memberIds: row.memberIds,
+    level: row.level,
+    parentId: row.parentId ?? undefined,
   };
 }

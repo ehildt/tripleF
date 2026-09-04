@@ -89,9 +89,15 @@ export function useSelectedModel() {
 
     conversationStore.snapshotImageSelections(conversationIdValue);
     conversationStore.deselectAllImages(conversationIdValue);
-    toast.warning(i18n.global.t('toast.modelNoImages', { model: s.model }), {
-      key: TOAST_KEY_MODEL_NO_IMAGES,
-    });
+    // Name the model whose capabilities decided `supportsVision` — not
+    // `conversation.model`, which is still '' when the model was picked
+    // before a conversation existed (or while a stub is hydrating).
+    toast.warning(
+      i18n.global.t('toast.modelNoImages', {
+        model: selectedModelDetails.value?.model ?? s.model,
+      }),
+      { key: TOAST_KEY_MODEL_NO_IMAGES },
+    );
   }
 
   function syncNumCtxForModel(

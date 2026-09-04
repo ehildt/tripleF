@@ -54,7 +54,7 @@ We believe velocity without ownership accelerates directly into technical insolv
    - `MEMORY_ENCYCLOPEDIA_REFLECT_AUTO=true` — auto-trigger reflection after the encyclopedia classification job
    - and downstream: `MEMORY_CONVICTION_AUTO=true`, `MEMORY_CLUSTER_AUTO=true`
 
-   Otherwise reflection never runs on its own — you would need to trigger it manually via a cron job or scheduler hitting `POST /qdrant/memory/reflect`, `POST /qdrant/memory/cognition/reflect`, or `POST /encyclopedia/reflect`. All of these can also be toggled live in SysCtl (settings → memory → configuration) without a restart.
+   Otherwise reflection never runs on its own — you would need to trigger it manually via a cron job or scheduler hitting `POST /qdrant/memory/reflect`, `POST /qdrant/memory/cognition/reflect`, or `POST /encyclopedia/reflect`. All of these can also be toggled live in Settings (settings → memory → configuration) without a restart.
 6. Run `pnpm install`
 7. CD into `./apps/server` and run `pnpm db:push`
 8. Run `docker compose -f infra.compose.yml up -d --remove-orphans`

@@ -142,7 +142,7 @@ function saveMutedToastMessages(messages: MutedToastMessage[]): void {
  * Toast settings, shared module state: whether toasts appear at all, where
  * the stack is anchored, whether toasts auto-hide and after how long,
  * whether they carry a pin, and which message types get toasted.
- * Configured in SysCtl → Widgets.
+ * Configured in Settings → Widgets.
  */
 export const toastEnabled = ref<boolean>(
   loadBoolean(TOAST_ENABLED_STORAGE_KEY, DEFAULT_TOAST_ENABLED),

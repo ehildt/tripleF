@@ -83,7 +83,7 @@ function updateMaxWidth(value: PreprocessingSize) {
 .pproc-resize-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: var(--spacing-3);
 }
 
 .pproc-resize-section__grid {

@@ -121,7 +121,7 @@
 | [0.2-docker](0.2-docker.md)                               | Image design, compose topology, install model  | Root Dockerfile targets, `deps` service, pnpm regimes, troubleshooting |
 | [0.3-documentation](0.3-documentation.md)                 | Wiki conventions, badge automation             | Writing docs, depbadge workflow, regenerating badges                   |
 | [1-server](1-server.md)                                   | Entry point, module graph, configuration stack | Request lifecycle, module table, error strategy                        |
-| [1.1-rest](1.1-rest.md)                                   | Endpoint registry and contracts                | Harness endpoints, queue/DLQ/storage/sysctl APIs, health               |
+| [1.1-rest](1.1-rest.md)                                   | Endpoint registry and contracts                | Harness endpoints, queue/DLQ/storage/settings APIs, health               |
 | [1.2-harness](1.2-harness.md)                             | Conversation engine internals                  | Step engine, intents, structured outputs, cancellation     |
 | [1.3-bullmq](1.3-bullmq.md)                               | Job queues, workers, retries                   | Queue topology, processor pipeline, failure modes                      |
 | [1.4-socketio](1.4-socketio.md)                           | Real-time streaming                            | Rooms, event contract, cancellation signal                             |
@@ -129,7 +129,7 @@
 | [1.6-memory-cognition](1.6-memory-cognition.md)           | Memory cognition JSON schema                   | Profile fields, insights, episodes, merge semantics, system variables   |
 | [1.7-memory-app](1.7-memory-app.md)                       | The memory service (Qdrant + vectorize worker + encyclopedia) | Topology, workflow, maintenance pipelines, REST registry |
 | [1.8-runtime-configuration](1.8-runtime-configuration.md) | How system variables/configs alter behavior    | The four layers, per-knob behavior tables, effect timing                |
-| [2-dashboard](2-dashboard.md)                             | Areas and technology                           | Chat, SysCtl, DLQ, PProc, router — panel map                                   |
+| [2-dashboard](2-dashboard.md)                             | Areas and technology                           | Chat, Settings, DLQ, PProc, router — panel map                                   |
 | [2.1-architecture](2.1-architecture.md)                   | Vue 3 component and state architecture         | Stores, composables, API layer, conventions                            |
 | [2.2-chat](2.2-chat.md)                                   | The chat experience                            | Exchanges, reasoning areas, streaming UX, conversation controls                   |
 | [2.3-theming](2.3-theming.md)                             | Theme system                                   | Theme catalogue, harmony model, tokens                                 |

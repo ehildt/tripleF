@@ -2,7 +2,7 @@
 /**
  * App-level floating playlist, mounted in App.vue (visible on every tab, so
  * it survives tab switches). Active while the playlist mode is 'floating'
- * (SysCtl → Widgets → Playlist); the chat right panel hides its playlist
+ * (Settings → Widgets → Playlist); the chat right panel hides its playlist
  * tab then.
  *
  * The window reuses the shared PlaylistPanel for its content (transport

@@ -9,7 +9,10 @@ import {
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
 
-import { CLUSTER_MIN_MEMBERS_DEFAULT } from '../constants/cluster.constant.js';
+import {
+  CLUSTER_MIN_MEMBERS_DEFAULT,
+  RAPTOR_MAX_DEPTH_DEFAULT,
+} from '../constants/cluster.constant.js';
 import { CONSTELLATION_NODE_LIMIT_DEFAULT } from '../constants/constellation-node-limit.constant.js';
 import {
   CONVICTION_BATCH_LIMIT_DEFAULT,
@@ -88,6 +91,11 @@ export function QdrantConfigAdapter(env = process.env): QdrantConfig {
       CLUSTER_MIN_MEMBERS_DEFAULT,
     ) as number,
     clusterAutoEnabled: getBooleanEnv(env.MEMORY_CLUSTER_AUTO, false)!,
+    raptorEnabled: getBooleanEnv(env.MEMORY_RAPTOR_ENABLED, true)!,
+    raptorMaxDepth: getNumberEnv(
+      env.MEMORY_RAPTOR_MAX_DEPTH,
+      RAPTOR_MAX_DEPTH_DEFAULT,
+    ) as number,
     episodeRecencyWeight: getNumberEnv(
       env.MEMORY_EPISODE_RECENCY_WEIGHT,
       EPISODE_RECENCY_WEIGHT_DEFAULT,

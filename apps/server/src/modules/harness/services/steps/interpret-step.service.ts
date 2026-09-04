@@ -4,6 +4,7 @@ import {
   buildClarificationTranslationUserPrompt,
   buildCognitionProfileSection,
   buildMemoryProbeSection,
+  buildSynopsisProbeSection,
 } from '@triplef/agent/prompts';
 import type { IntentResult } from '@triplef/agent/schemas';
 import { isImageTaskTemplate } from '@triplef/agent/schemas';
@@ -167,6 +168,23 @@ export class InterpretStepService implements StepHandler {
     });
     const probeSection = buildMemoryProbeSection(hits);
 
+    // Synopsis probe: the Raptor layer — community summaries over clusters.
+    // A cross-cutting question vector-matches the community summary even
+    // when no single record ranks highly (≤2 hits per lane: the user's
+    // partition scope plus the global encyclopedia synopses).
+    const [partitionSynopses, encyclopediaSynopses] = await Promise.all([
+      this.memoryClient.searchSynopses({
+        memoryPartition,
+        text: query,
+        limit: 2,
+      }),
+      this.memoryClient.searchSynopses({ text: query, limit: 2 }),
+    ]);
+    const synopsisSection = buildSynopsisProbeSection([
+      ...partitionSynopses,
+      ...encyclopediaSynopses,
+    ]);
+
     // Episode probe: the AI's short-term memory of past turns (cognition
     // lane) — resolves references to "the thing we were working on" that the
     // fact partition never captured. Recency-blended, topic-matched.
@@ -191,7 +209,12 @@ export class InterpretStepService implements StepHandler {
     // LEARNED (interests, traits, standing context), not just what was said.
     const profileSection = await this.probeCognitionProfile(cognitionKey);
 
-    const combinedProbe = [probeSection, episodeSection, profileSection]
+    const combinedProbe = [
+      probeSection,
+      synopsisSection,
+      episodeSection,
+      profileSection,
+    ]
       .filter(Boolean)
       .join('\n\n');
     if (!combinedProbe) return undefined;

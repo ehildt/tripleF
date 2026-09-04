@@ -18,7 +18,7 @@ export class MemorySendTextDto {
 
   @ApiPropertyOptional({
     description:
-      "Memory partition the record belongs to — the user's fact space. Defaults to sessionId; set a stable custom partition id (see sysctl → system) so memory survives browser-session rotation.",
+      "Memory partition the record belongs to — the user's fact space. Defaults to sessionId; set a stable custom partition id (see settings → system) so memory survives browser-session rotation.",
     example: 'default',
   })
   @IsString()

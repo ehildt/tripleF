@@ -26,7 +26,7 @@ const WIPE_ARM_WINDOW_MS = 4000;
 
 /**
  * The partition constellation: the user's stored fact records for the active
- * partition key (the sysctl partition id, else the persistent session id),
+ * partition key (the settings partition id, else the persistent session id),
  * grouped by topic tag. Reads on mount and on every key change; a fetch
  * failure degrades to an unavailable note — memory being off must never break
  * the settings tab.
@@ -110,7 +110,7 @@ export function usePartitionSpace() {
 
   onMounted(refresh);
   watch(partitionKey, refresh);
-  // A node-limit change (sysctl config) re-reads the space at the new cap.
+  // A node-limit change (settings config) re-reads the space at the new cap.
   watch(constellationNodeLimit, refresh);
 
   return {

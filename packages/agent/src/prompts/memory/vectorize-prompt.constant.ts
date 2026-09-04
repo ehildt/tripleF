@@ -1,3 +1,4 @@
+import { formatZodShape } from '../../schemas/helpers/zod/format-zod-shape.helper.js';
 import { ExtractionSchema } from '../../schemas/memory/extraction.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
 
@@ -64,16 +65,19 @@ FINAL REMINDER:
 /**
  * JSON correction prompt for when the model's memory extraction could not be
  * parsed at all (empty output or output that fails the extraction schema).
- * Mirrors the harness's `buildIntentCorrectionPrompt` shape.
+ * Mirrors the harness's `buildIntentCorrectionPrompt` shape. The schema block
+ * is rendered from the zod template (never a hand-written JSON example) — a
+ * literal template taught weak models to echo its placeholder ellipses,
+ * which JSON5 then rejects (`invalid character '.'`).
  */
 export function buildExtractionCorrectionPrompt(error: string): string {
   return `Your previous response was not valid.
 Error: ${error}
 
 Return ONLY a single valid JSON object matching the extraction schema exactly:
-{"facts": [{"text": "string", "subject": "string", "category": "string", "kind": "preference|decision|state|contact|project|possession|relationship|fact", "stability": "durable|volatile"}, ...], "tags": [string, ...], "category": "string"}
+${formatZodShape(ExtractionSchema)}
 All object keys must be quoted with double quotes. "subject" and the per-fact "category" are optional; "kind" and "stability" are required on every fact.
-Do not add markdown code fences, explanations, or extra text.
+Do not add markdown code fences, explanations, placeholders, or extra text.
 
 FINAL REMINDER:
 - Return ONLY a single valid JSON object. No markdown code fences, no explanations, no extra text.`;
