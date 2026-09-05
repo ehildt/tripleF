@@ -68,7 +68,7 @@
     "@eslint/markdown": "^8.0.3",
     "@storybook/addon-a11y": "^10.5.10",
     "@storybook/addon-docs": "^10.5.10",
-    "@storybook/addon-vitest": "^10.5.10",
+    "@storybook/addon-vitest": "^10.6.0",
     "@storybook/vue3-vite": "^10.5.10",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
