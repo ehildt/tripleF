@@ -36,7 +36,7 @@ describe('createSerperImageSearch', () => {
       minHeight: 1080,
     });
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string);
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
     // 1920*1080 = ~2.07 mp. The largest Google bucket threshold <= 2.07 mp is 2mp.
     expect(body.tbs).toBe('isz:lt,islt:2mp');
 
@@ -52,7 +52,7 @@ describe('createSerperImageSearch', () => {
     const tool = createSerperImageSearch(mockDeps());
     await (tool.execute as any)({ query: 'stellar blade' });
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string);
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
     // 1280*720 = 0.92 mp. The largest Google bucket threshold <= 0.92 mp is xga (>1024×768).
     expect(body.tbs).toBe('isz:lt,islt:xga');
 
@@ -72,7 +72,7 @@ describe('createSerperImageSearch', () => {
       minHeight: 2160,
     });
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string);
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
     expect(body.tbs).toBe('isz:lt,islt:8mp');
 
     fetchSpy.mockRestore();

@@ -6,6 +6,7 @@ import { MEMORY_CLIENT_CONFIG } from '../../../memory-client/constants/memory-cl
 import { MemoryEnqueueService } from '../../../memory-client/services/memory-enqueue.service.js';
 import { deriveGatheredChars } from '../../configs/source-budget-config.adapter.js';
 import { SourceBudgetConfigService } from '../../configs/source-budget-config.service.js';
+import { stripThinking } from '../../helpers/extraction/strip-thinking.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
@@ -50,21 +51,26 @@ export class MemoryWriteStepService implements StepHandler {
     );
     const resultChars = Math.trunc(gatheredChars / 8);
 
-    const gathered = limitText(
-      ctx.outputs.toolResults
-        .filter(
-          (r) =>
-            r.toolName !== 'memory-partition-recall' &&
-            r.toolName !== 'memory-partition-remember' &&
-            r.toolName !== 'memory-cognition-remember',
-        )
-        .map(
-          (r) =>
-            `[${r.toolName}] ${limitText(stringifyResult(r.result), resultChars)}`,
-        )
-        .join('\n'),
-      gatheredChars,
-    ).trim();
+    // Tool output can carry scraped content with thinking markup inside —
+    // the write job may store this text verbatim on its zero-facts fallback.
+    const gathered =
+      stripThinking(
+        limitText(
+          ctx.outputs.toolResults
+            .filter(
+              (r) =>
+                r.toolName !== 'memory-partition-recall' &&
+                r.toolName !== 'memory-partition-remember' &&
+                r.toolName !== 'memory-cognition-remember',
+            )
+            .map(
+              (r) =>
+                `[${r.toolName}] ${limitText(stringifyResult(r.result), resultChars)}`,
+            )
+            .join('\n'),
+          gatheredChars,
+        ).trim(),
+      ) ?? '';
 
     // What the probe already surfaced this turn — passed separately from
     // `gathered` so the write job can treat it as ALREADY KNOWN (extend or

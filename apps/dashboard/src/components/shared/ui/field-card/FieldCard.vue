@@ -9,7 +9,7 @@ import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
  * description, an optional inline number field (rendered when the field
  * takes a number), and a checkbox for on/off. A #field slot accepts any
  * other inline control (e.g. a text input) in place of the number field.
- * Used across sysctl and the preprocessing panels. The `tone` prop switches
+ * Used across settings and the preprocessing panels. The `tone` prop switches
  * the accent between the app accent and the preprocessing accent.
  */
 withDefaults(

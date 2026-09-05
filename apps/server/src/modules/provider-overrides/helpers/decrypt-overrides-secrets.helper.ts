@@ -2,7 +2,7 @@
  * Inverse of encryptOverridesSecrets: restore the plaintext `apiKey` fields
  * of a persisted overrides record. Fields that fail to decrypt (wrong or
  * removed master key, tampered data) are dropped — the env key applies
- * again and the user can re-enter the key in SysCtl.
+ * again and the user can re-enter the key in Settings.
  */
 export function decryptOverridesSecrets(
   values: Record<string, Record<string, unknown>>,

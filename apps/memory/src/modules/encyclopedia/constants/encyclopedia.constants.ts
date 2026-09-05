@@ -1,0 +1,1 @@
+export const ENCYCLOPEDIA_CONFIG = Symbol('ENCYCLOPEDIA_CONFIG');

@@ -1,0 +1,18 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "**/vitest.config.ts",
+    "src/index.ts",
+    "src/pdf/index.ts",
+    "src/pdf/pdf.module.ts",
+    "src/pdf/pdf.service.ts",
+    "src/pdf/pdf.model.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

@@ -205,15 +205,15 @@ model MemoryInsertLedger {
 }
 
 /**
- * Write ledger of the shared knowledge lexicon (memory-lexicon collection in
+ * Write ledger of the shared knowledge encyclopedia (memory-encyclopedia collection in
  * Qdrant): one row per stored DOCUMENT (url + content hash), written by the
- * lexicon select-persist path. Powers the deterministic supersede sweep
+ * encyclopedia select-persist path. Powers the deterministic supersede sweep
  * (sweptAt null = pending) — the sweep heals orphaned old-hash chunks left by
- * a crashed supersede, never adjudicates content. The lexicon is global
+ * a crashed supersede, never adjudicates content. The encyclopedia is global
  * (public web content), so rows are not partition-scoped; partitionScope is
  * provenance only.
  */
-model MemoryLexiconInsertLedger {
+model MemoryEncyclopediaInsertLedger {
   id             String    @id @default(uuid())
   url            String    @db.VarChar(2048)
   /** Hash of the full cleaned document content — the supersede identity. */
@@ -227,9 +227,12 @@ model MemoryLexiconInsertLedger {
   createdAt      DateTime  @default(now())
   /** null = pending consolidation; set once the sweep processed this insert. */
   sweptAt        DateTime?
+  /** null = pending classification; set once the classify job labeled the document. */
+  classifiedAt   DateTime?
 
   @@index([sweptAt])
-  @@map("memory_lexicon_insert_ledger")
+  @@index([classifiedAt])
+  @@map("memory_encyclopedia_insert_ledger")
 }
 
 /**
@@ -241,17 +244,17 @@ model MemoryLexiconInsertLedger {
  *
  * `lane` + `collection` + `scopeKey` scope the graph: partition facts and
  * cognition insights live in the memory collection (scope = the space key),
- * lexicon chunks in the lexicon collection (scope = 'global'). `collection`
+ * encyclopedia chunks in the encyclopedia collection (scope = 'global'). `collection`
  * is the model-namespaced name, so switching the embed model strands the old
  * graph harmlessly and the new collection backfills on first read.
  */
 model MemoryLink {
   id         String   @id @default(uuid())
-  /** 'partition' | 'cognition' | 'lexicon' */
+  /** 'partition' | 'cognition' | 'encyclopedia' */
   lane       String   @db.VarChar(16)
   /** Model-namespaced Qdrant collection name the points live in. */
   collection String   @db.VarChar(128)
-  /** Space key: partition key / cognition key / 'global' (lexicon). */
+  /** Space key: partition key / cognition key / 'global' (encyclopedia). */
   scopeKey   String   @db.VarChar(255)
   /** Lexicographically smaller point id (canonical undirected ordering). */
   source     String   @db.VarChar(64)
@@ -262,7 +265,9 @@ model MemoryLink {
   /**
    * Edge kind: 'semantic' = enforced kNN link (store paths); 'topical' =
    * suggested link (relink job — recall ignores it, the dashboard may render
-   * it faintly). One edge per pair: semantic wins when both would apply.
+   * it faintly); 'evidence' = a bridge record's citation edge to a fact it
+   * synthesizes (conviction store path — exact, not similarity-derived). One
+   * edge per pair: semantic wins when both would apply.
    */
   kind       String   @default("semantic") @db.VarChar(16)
   createdAt  DateTime @default(now())
@@ -270,4 +275,173 @@ model MemoryLink {
   @@unique([lane, collection, scopeKey, source, target])
   @@index([lane, collection, scopeKey])
   @@map("memory_link")
+}
+
+/**
+ * Friction records of the memory constellation: one row per contradiction or
+ * conflict between two Qdrant points, written by the reflection pass (Phase
+ * 2). A friction is a state-machined pair — open until resolved or dismissed
+ * — and the losing point is marked superseded on resolution (never deleted).
+ * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ * space; `source`/`target` are the two conflicting point ids in canonical
+ * undirected order.
+ */
+model MemoryFriction {
+  id         String   @id @default(uuid())
+  /** 'partition' | 'cognition' | 'encyclopedia' */
+  lane       String   @db.VarChar(16)
+  /** Model-namespaced Qdrant collection name the points live in. */
+  collection String   @db.VarChar(128)
+  /** Space key: partition key / cognition key / 'global' (encyclopedia). */
+  scopeKey   String   @db.VarChar(255)
+  /** Lexicographically smaller point id (canonical undirected ordering). */
+  source     String   @db.VarChar(64)
+  /** Lexicographically larger point id. */
+  target     String   @db.VarChar(64)
+  /**
+   * Friction kind: 'contradiction' | 'superseded' | 'outdated' |
+   * 'disagreement' — the reflection pass classifies the conflict.
+   */
+  kind       String   @db.VarChar(16)
+  /** 'open' | 'resolved' | 'dismissed' — the friction's lifecycle state. */
+  status     String   @default("open") @db.VarChar(16)
+  /** LLM-written description of the conflict. */
+  reason     String?  @db.VarChar(2000)
+  /** How the friction was resolved (which point won, why). */
+  resolution String?  @db.VarChar(2000)
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+
+  @@unique([lane, collection, scopeKey, source, target])
+  @@index([lane, collection, scopeKey])
+  @@map("memory_friction")
+}
+
+/**
+ * Detected clusters of the memory constellation: one row per cluster of
+ * related Qdrant points, discovered by the memory-cluster job over the
+ * link graph (semantic + topical + evidence edges) and summarized by an LLM
+ * into a title + summary. The summary is the cluster's "report" — the
+ * connective tissue that lets retrieval answer cross-cutting questions
+ * without reading every member.
+ *
+ * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ * space. `fingerprint` is the hash of the sorted member ids — the drift
+ * signal: a cluster whose membership changed gets a new fingerprint (and
+ * id) and is re-summarized; unchanged clusters keep their row. The job
+ * replaces a scope's rows atomically, so stale fingerprints never linger.
+ */
+model MemoryCluster {
+  id          String   @id @db.VarChar(64)
+  /** 'partition' | 'cognition' | 'encyclopedia' */
+  lane        String   @db.VarChar(16)
+  /** Model-namespaced Qdrant collection name the points live in. */
+  collection  String   @db.VarChar(128)
+  /** Space key: partition key / cognition key / 'global' (encyclopedia). */
+  scopeKey    String   @db.VarChar(255)
+  /** Hash of the sorted member ids — the membership-drift signal. */
+  fingerprint String   @db.VarChar(64)
+  /** LLM-written short noun-phrase label (2–6 words). */
+  title       String   @db.VarChar(200)
+  /** LLM-written one/two-sentence summary of the cluster. */
+  summary     String   @db.VarChar(2000)
+  /** Number of member points (denormalized for the dashboard). */
+  memberCount Int
+  /** The member point ids (authoritative membership list). */
+  memberIds   String[]
+  /** Hierarchy level: 0 = leaf cluster over points; 1+ = cluster of cluster synopses. */
+  level       Int      @default(0)
+  /** Parent cluster id at level+1 (null on the top level). */
+  parentId    String?  @db.VarChar(64)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([lane, collection, scopeKey, fingerprint])
+  @@index([lane, collection, scopeKey])
+  @@index([lane, collection, scopeKey, level])
+  @@map("memory_cluster")
+}
+
+/**
+ * Canonical macro-taxonomy of the memory constellation: one row per
+ * user-visible label tier — `cluster` (plural family, e.g. `games`),
+ * `community` (plural sub-family, e.g. `survival`), `hub` (singular entity,
+ * e.g. `project zomboid`), `tag` (flat recall vocabulary). Scope =
+ * (lane, scopeKey): partition facts per partition key, encyclopedia labels
+ * under 'global'; the cognition lane is path-routed and taxonomy-free.
+ *
+ * The registry is the AI's read-only pick-list and the user's rename/merge
+ * surface: persisted rows are never model-rewritten, only adopted (the probe
+ * tool picks an id, or mints a new row via CREATE_NEW). Deliberately NOT
+ * collection-namespaced — the taxonomy survives embed-model switches; label
+ * embeddings for semantic probing live in Qdrant (a small model-namespaced
+ * taxonomy collection, one point per node id) and are re-embedded lazily
+ * when the embedder changes. `parentId` holds the id of the node one tier
+ * up (community → cluster; hub → community, or cluster when no community
+ * applies; '' for cluster roots and flat tags) so one unique key serves
+ * every kind.
+ */
+model MemoryTaxonomyNode {
+  id             String   @id @default(uuid())
+  /** 'partition' | 'encyclopedia' (cognition is path-routed, taxonomy-free). */
+  lane           String   @db.VarChar(16)
+  /** Space key: partition key / 'global' (encyclopedia). */
+  scopeKey       String   @db.VarChar(255)
+  /** 'cluster' | 'community' | 'hub' | 'tag'. */
+  kind           String   @db.VarChar(16)
+  /** Id of the node one tier up; '' for cluster roots and flat tags. */
+  parentId       String   @default("") @db.VarChar(64)
+  /** Canonical display label as adopted at creation. */
+  name           String   @db.VarChar(120)
+  /** Normalized lookup form (trim/lowercase/folded) — uniqueness + snapping. */
+  normalizedName String   @db.VarChar(120)
+  /** Lucide allowlist icon name (macro-nodes; model-suggested on create, user-overridable). */
+  icon           String?  @db.VarChar(64)
+  /** Concise semantic summary of what belongs under this label. */
+  summary        String?  @db.VarChar(2000)
+  /** 'model' | 'user' — who minted the label. */
+  createdBy      String   @default("model") @db.VarChar(16)
+  /** Last reflection pass that touched points under this label. */
+  lastReflectedAt  DateTime?
+  /** Last consolidation pass that touched points under this label. */
+  lastConsolidatedAt DateTime?
+  /** Last relink pass that touched points under this label. */
+  lastRelinkedAt   DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  aliases MemoryTaxonomyAlias[]
+
+  @@unique([lane, scopeKey, kind, parentId, normalizedName])
+  @@index([lane, scopeKey, kind, parentId])
+  @@map("memory_taxonomy_node")
+}
+
+/**
+ * Alias registry for taxonomy labels: every snapped/renamed/merged variant
+ * stays recorded forever, so a killed label can never be re-minted by the
+ * model and every server-side rewrite stays auditable. Scope columns are
+ * denormalized from the node so one unique key covers the lookup shape.
+ * `source` records the snap provenance: 'normalize' (canonical form),
+ * 'fuzzy' (trigram snap), 'semantic' (label embedding), 'llm'
+ * (ambiguous-band adjudication), 'user' (rename/merge). `score` keeps the
+ * similarity that justified the rewrite.
+ */
+model MemoryTaxonomyAlias {
+  id       String             @id @default(uuid())
+  node     MemoryTaxonomyNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  nodeId   String
+  /** Denormalized node scope (same values — powers the unique lookup). */
+  lane     String   @db.VarChar(16)
+  scopeKey String   @db.VarChar(255)
+  kind     String   @db.VarChar(16)
+  /** The normalized variant label that resolves to the node. */
+  alias    String   @db.VarChar(120)
+  source   String   @db.VarChar(16)
+  score    Float?
+  createdAt DateTime @default(now())
+
+  @@unique([lane, scopeKey, kind, alias])
+  @@index([nodeId])
+  @@map("memory_taxonomy_alias")
 }

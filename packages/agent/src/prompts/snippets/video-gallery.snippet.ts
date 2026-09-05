@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { videoGalleryItemSchema } from '../../schemas/index.js';
+import { videoGalleryItemSchema } from '../../schemas/response/video-gallery-item-json.schema.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Example floating popup shown from SysCtl → Widgets: renders the real
+ * Example floating popup shown from Settings → Widgets: renders the real
  * standalone FloatingPopout at the configured initial anchor, so the
  * position setting can be previewed with the actual popup chrome (title,
  * opacity slider, playlist toggle, minimize, close). A lightweight preview

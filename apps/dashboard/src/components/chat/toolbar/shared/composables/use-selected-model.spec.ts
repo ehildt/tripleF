@@ -1,17 +1,21 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
 
+import { TOAST_KEY_MODEL_NO_IMAGES } from '@/composables/toast-keys';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useSelectedModel } from './use-selected-model';
 
+const mockToast = vi.hoisted(() => ({
+  warning: vi.fn(),
+  success: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+}));
+
 vi.mock('../../../../../composables/use-toast', () => ({
-  useToast: vi.fn(() => ({
-    warning: vi.fn(),
-    success: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  })),
+  useToast: () => mockToast,
 }));
 
 const mockModelsStore = vi.hoisted(() => ({
@@ -48,6 +52,7 @@ describe('useSelectedModel', () => {
     setActivePinia(createPinia());
     mockModelsStore.selectedModel = '';
     mockModelsStore.setSelectedModel.mockClear();
+    mockToast.warning.mockClear();
   });
 
   it('starts with empty selectedModel when the store has none', () => {
@@ -147,6 +152,39 @@ describe('useSelectedModel', () => {
       conversation.uploadedImages.find((img) => img.hash === 'h1')?.selected,
     ).toBe(false);
     expect(conversation.imageSelectionSnapshot).toEqual({ h1: true });
+  });
+
+  it('toasts the selected model name when the model is chosen before a conversation exists', async () => {
+    const { changeModel } = useSelectedModel();
+    changeModel('text-model'); // no active conversation yet
+
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+
+    await nextTick(); // flush the [conversationId, model] watcher
+
+    // The fresh conversation has model '' — the toast must still name the
+    // model whose capabilities triggered it.
+    expect(conversation.model).toBe('');
+    expect(mockToast.warning).toHaveBeenCalledWith(
+      expect.stringContaining('text-model'),
+      { key: TOAST_KEY_MODEL_NO_IMAGES },
+    );
+  });
+
+  it('does not toast a blank model when switching back from a vision model', () => {
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.ensureConversation();
+    conversationStore.setActiveConversation(conversation.id);
+    conversationStore.setModel(conversation.id, 'vision-model');
+
+    const { changeModel } = useSelectedModel();
+    changeModel('text-model');
+
+    expect(mockToast.warning).toHaveBeenCalledWith(
+      expect.stringContaining('text-model'),
+      { key: TOAST_KEY_MODEL_NO_IMAGES },
+    );
   });
 
   it('backfills numCtx when active conversation has a model but no context size', () => {

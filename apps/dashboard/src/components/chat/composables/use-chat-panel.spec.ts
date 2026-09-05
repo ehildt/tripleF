@@ -4,12 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
 import { useConversationStore } from '@/stores/conversation';
+import { inMemoryTemporaryConversationsTable } from '@/test-utils/in-memory-temporary-conversations';
 
 import { useChatPanel } from './use-chat-panel';
 
 describe('useChatPanel', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia());
+    // Conversations persist at creation — isolate the leftovers so each test
+    // starts from a clean, settled boot.
+    localStorage.clear();
+    inMemoryTemporaryConversationsTable.clear();
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   afterEach(() => {
@@ -246,7 +253,7 @@ describe('useChatPanel', () => {
     await flushPromises();
     rightPanelView.value = 'playlist';
 
-    const second = conversationStore.ensureConversation();
+    const second = conversationStore.createNewConversation('temporary');
     conversationStore.setActiveConversation(second.id);
     await flushPromises();
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createTextItemSchema } from '../../schemas/index.js';
+import { createTextItemSchema } from '../../schemas/response/text-item-json.schema.js';
 
 import { comparisonSchema } from './comparison.snippet.js';
 import type { TemplateSnippet } from './snippet.types.js';

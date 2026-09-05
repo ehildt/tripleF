@@ -3,25 +3,36 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
 import { VECTORIZE_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
+import { mapVectorizeJob } from '../../memory-partition/helpers/map-vectorize-job.helper.js';
 import {
-  LEXICON_CONSOLIDATE_JOB,
+  ENCYCLOPEDIA_CLASSIFY_JOB,
+  ENCYCLOPEDIA_CONSOLIDATE_JOB,
+  ENCYCLOPEDIA_RESEARCH_JOB,
+  MEMORY_CLUSTER_JOB,
   MEMORY_CONSOLIDATE_JOB,
+  MEMORY_CONVICTION_JOB,
   MEMORY_PROFILE_JOB,
+  MEMORY_REFLECT_JOB,
   MEMORY_RELINK_JOB,
+  MEMORY_TAXONOMY_RECONCILE_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
 } from '../constants/qdrant.constants.js';
 import type {
-  LexiconSweepJobData,
+  EncyclopediaClassifyJobData,
+  EncyclopediaResearchJobData,
+  EncyclopediaSweepJobData,
+  MemoryClusterJobData,
   MemoryConsolidateJobData,
+  MemoryConvictionJobData,
   MemoryProfileJobData,
+  MemoryReflectJobData,
   MemoryRelinkJobData,
+  MemoryTaxonomyReconcileJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
-
-import { mapVectorizeJob } from './helpers/map-vectorize-job.helper.js';
 
 interface EnqueueTurnInput {
   /** Fact partition the records belong to; defaults to the session id. */
@@ -173,18 +184,183 @@ export class MemoryEnqueueService {
   }
 
   /**
-   * Lexicon supersede sweep trigger: threshold auto-trigger or webhook. The
-   * lexicon is global, so the jobId is a singleton (no partition suffix).
+   * Taxonomy reconciliation trigger: endpoint-only (manual ops job — the
+   * ambiguous-band verdicts are O(pairs) LLM calls, so it is never
+   * auto-triggered). The fixed jobId lets BullMQ dedupe concurrent triggers
+   * for one lane+scope while a sweep is already queued or running.
    */
-  async enqueueLexiconSweep(data: LexiconSweepJobData): Promise<void> {
+  async enqueueTaxonomyReconcileJob(
+    data: MemoryTaxonomyReconcileJobData,
+  ): Promise<void> {
     if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Taxonomy-reconcile enqueue skipped: no model (set MEMORY_CONSOLIDATE_MODEL or pass one)',
+      );
+      return;
+    }
     try {
-      await this.queue.add(LEXICON_CONSOLIDATE_JOB, data, {
-        jobId: `lexicon-consolidate-${data.dryRun ? 'dry' : 'apply'}`,
+      await this.queue.add(MEMORY_TAXONOMY_RECONCILE_JOB, data, {
+        jobId: `taxonomy-reconcile-${data.lane}-${data.scopeKey}-${data.dryRun ? 'dry' : 'apply'}`,
       });
     } catch (error) {
       this.logger.warn(
-        `Lexicon sweep enqueue failed: ${
+        `Taxonomy-reconcile enqueue failed for ${data.lane}/${data.scopeKey}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Encyclopedia supersede sweep trigger: threshold auto-trigger or webhook. The
+   * encyclopedia is global, so the jobId is a singleton (no partition suffix).
+   */
+  async enqueueEncyclopediaSweep(
+    data: EncyclopediaSweepJobData,
+  ): Promise<void> {
+    if (!this.config.enabled) return;
+    try {
+      await this.queue.add(ENCYCLOPEDIA_CONSOLIDATE_JOB, data, {
+        jobId: `encyclopedia-consolidate-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Encyclopedia sweep enqueue failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Encyclopedia classification trigger: threshold auto-trigger or webhook. The
+   * encyclopedia is global, so the jobId is a singleton (no partition suffix).
+   */
+  async enqueueEncyclopediaClassify(
+    data: EncyclopediaClassifyJobData,
+  ): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Encyclopedia classify enqueue skipped: no model (set ENCYCLOPEDIA_CLASSIFY_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(ENCYCLOPEDIA_CLASSIFY_JOB, data, {
+        jobId: `encyclopedia-classify-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Encyclopedia classify enqueue failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Reflection trigger: auto-trigger after a lane's upstream job completes,
+   * or the manual endpoint. The fixed jobId dedupes concurrent triggers for
+   * one lane+scope while a sweep is already queued or running.
+   */
+  async enqueueReflectJob(data: MemoryReflectJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Reflect enqueue skipped: no model (set MEMORY_REFLECT_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(MEMORY_REFLECT_JOB, data, {
+        jobId: `reflect-${data.lane}-${data.scopeKey}-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Reflect enqueue failed for ${data.lane}/${data.scopeKey}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Conviction-synthesis trigger: auto-trigger after a partition's
+   * reflection sweep, or the manual endpoint. The fixed jobId dedupes
+   * concurrent triggers for one partition while a run is already queued or
+   * running.
+   */
+  async enqueueConvictionJob(data: MemoryConvictionJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Conviction enqueue skipped: no model (set MEMORY_CONVICTION_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(MEMORY_CONVICTION_JOB, data, {
+        jobId: `conviction-${data.memoryPartition}-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Conviction enqueue failed for ${data.memoryPartition}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Cluster-detection trigger: auto-trigger after a lane's graph-mutating
+   * job completes (consolidate/relink/conviction for partition, classify for
+   * encyclopedia), or the manual endpoint. The fixed jobId dedupes concurrent
+   * triggers for one lane+scope while a run is already queued or running.
+   */
+  async enqueueClusterJob(data: MemoryClusterJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Cluster enqueue skipped: no model (set MEMORY_CLUSTER_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(MEMORY_CLUSTER_JOB, data, {
+        jobId: `cluster-${data.lane}-${data.scopeKey}-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Cluster enqueue failed for ${data.lane}/${data.scopeKey}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Gap-filling research trigger: manual endpoint (root sweep) or a chain's
+   * own follow-up enqueue (depth+1). The root jobId is a singleton; follow-up
+   * jobs dedupe per chain+depth so a re-triggered chain never double-runs.
+   */
+  async enqueueResearchJob(data: EncyclopediaResearchJobData): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Research enqueue skipped: no model (set RESEARCH_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      const jobId = data.chainId
+        ? `research-${data.chainId}-${data.depth ?? 0}`
+        : `research-root-${data.dryRun ? 'dry' : 'apply'}`;
+      await this.queue.add(ENCYCLOPEDIA_RESEARCH_JOB, data, { jobId });
+    } catch (error) {
+      this.logger.warn(
+        `Research enqueue failed: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

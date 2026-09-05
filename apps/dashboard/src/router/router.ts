@@ -10,6 +10,11 @@ const router = createRouter({
       component: () => import('@/components/chat/Chat.vue'),
     },
     {
+      path: '/memory',
+      name: 'memory',
+      component: () => import('@/components/memory/Memory.vue'),
+    },
+    {
       path: '/dlq',
       name: 'dlq',
       component: () => import('@/components/dlq/Dlq.vue'),
@@ -21,10 +26,10 @@ const router = createRouter({
         import('@/components/app/app-main-content/debug-section/DebugSection.vue'),
     },
     {
-      path: '/sysctl',
-      name: 'sysctl',
+      path: '/settings',
+      name: 'settings',
       component: () =>
-        import('@/components/app/app-main-content/sysctl-view/SysCtlView.vue'),
+        import('@/components/app/app-main-content/settings-view/SettingsView.vue'),
     },
   ],
 });

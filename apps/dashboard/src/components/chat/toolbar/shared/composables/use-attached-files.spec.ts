@@ -183,8 +183,8 @@ describe('useAttachedFiles', () => {
         type: 'application/pdf',
         kind: 'pdf',
         pageImages: [
-          { name: 'report.pdf · page 1', hash: 'page-1-hash' },
-          { name: 'report.pdf · page 2', hash: 'page-2-hash' },
+          { name: 'report.pdf · page 1', hash: 'page-1-hash', page: 1 },
+          { name: 'report.pdf · page 2', hash: 'page-2-hash', page: 2 },
         ],
       },
     ]);
@@ -200,7 +200,8 @@ describe('useAttachedFiles', () => {
       conversation.conversationId ?? '',
       [{ file, hash: 'report.pdf' }],
     );
-    // Pages land as conversation images (bubble tiles + files + lightbox).
+    // Pages land as conversation images (bubble tiles + files + lightbox),
+    // carrying their parent pdf provenance for gallery grouping.
     expect(
       conversationStore.getUploadedImagesForConversation(conversation.id),
     ).toEqual(
@@ -208,9 +209,12 @@ describe('useAttachedFiles', () => {
         expect.objectContaining({
           name: 'report.pdf · page 1',
           hash: 'page-1-hash',
+          page: 1,
+          parentHash: 'report.pdf',
+          parentName: 'report.pdf',
           selected: true,
         }),
-        expect.objectContaining({ hash: 'page-2-hash' }),
+        expect.objectContaining({ hash: 'page-2-hash', page: 2 }),
       ]),
     );
     // The original stays attached so it rides the submit's originals.

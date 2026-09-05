@@ -60,8 +60,12 @@ export class QdrantClientService implements OnModuleInit {
       await this.ensureCollection(modelDims);
       await this.ensurePayloadIndexes();
       await this.verifyCollectionDims(modelDims);
-      await this.ensureLexiconCollection(modelDims);
-      await this.ensureLexiconPayloadIndexes();
+      await this.ensureEncyclopediaCollection(modelDims);
+      await this.ensureEncyclopediaPayloadIndexes();
+      await this.ensureSynopsisCollections(modelDims);
+      await this.ensureSynopsisPayloadIndexes();
+      await this.ensureTaxonomyCollection(modelDims);
+      await this.ensureTaxonomyPayloadIndexes();
     } catch (error) {
       this.logger.warn(
         `Qdrant bootstrap failed — memory reads/writes will be unavailable: ${
@@ -76,10 +80,45 @@ export class QdrantClientService implements OnModuleInit {
     return buildCollectionName(this.config.collection, this.config.embedModel);
   }
 
-  /** Resolved lexicon collection name (model-namespaced, global scope). */
-  get lexiconCollection(): string {
+  /** Resolved encyclopedia collection name (model-namespaced, global scope). */
+  get encyclopediaCollection(): string {
     return buildCollectionName(
-      this.config.lexiconCollection,
+      this.config.encyclopediaCollection,
+      this.config.embedModel,
+    );
+  }
+
+  /**
+   * Resolved partition synopsis collection name (model-namespaced) — the
+   * Raptor layer: one embedded point per cluster synopsis. Physically
+   * separate from the lane collections so synthesized summaries can never
+   * surface as user facts on the fact-recall path.
+   */
+  get partitionSynopsisCollection(): string {
+    return buildCollectionName(
+      `${this.config.collection}-synopsis`,
+      this.config.embedModel,
+    );
+  }
+
+  /** Resolved encyclopedia synopsis collection name (model-namespaced). */
+  get encyclopediaSynopsisCollection(): string {
+    return buildCollectionName(
+      `${this.config.encyclopediaCollection}-synopsis`,
+      this.config.embedModel,
+    );
+  }
+
+  /**
+   * Resolved taxonomy label collection name (model-namespaced) — one point
+   * per `memory_taxonomy_node` id holding its label embedding for semantic
+   * probing. The Postgres registry owns the labels/hierarchy and survives
+   * embed-model switches; these vectors are re-minted lazily against a fresh
+   * collection.
+   */
+  get taxonomyCollection(): string {
+    return buildCollectionName(
+      `${this.config.collection}-taxonomy`,
       this.config.embedModel,
     );
   }
@@ -137,7 +176,7 @@ export class QdrantClientService implements OnModuleInit {
     const indexes = [
       // memory_partition / memory_cognition are the identity keys — one point
       // belongs to exactly one space: the user's fact partition (session-
-      // derived by default, or the user-set partition id from sysctl) or the
+      // derived by default, or the user-set partition id from settings) or the
       // AI's cognition space for that user. `is_tenant` co-locates a space's
       // vectors for sequential reads (Qdrant multitenancy-by-payload).
       {
@@ -158,12 +197,22 @@ export class QdrantClientService implements OnModuleInit {
       // category is the broad family label — keyword index powers the facet
       // inventory (relink job) and category-scoped filters.
       { field_name: 'category', field_schema: 'keyword' },
+      // community is the plural sub-family tier one level below category —
+      // keyword index powers community-scoped filters (taxonomy routing).
+      { field_name: 'community', field_schema: 'keyword' },
       // Full-text schema on text enables RAG-style containment filters
       // (`match: { text: ... }`) over the record content.
       { field_name: 'text', field_schema: 'text' },
       // Datetime schema on created_at powers the episode probe's recency
       // blend (formula query with exp_decay on the payload timestamp).
       { field_name: 'created_at', field_schema: 'datetime' },
+      // Lifecycle flags — bool indexes power the strict/recommended view
+      // filters and the Phase 2 recall formula boosts over these payloads.
+      { field_name: 'is_consolidated', field_schema: 'bool' },
+      { field_name: 'is_reflected', field_schema: 'bool' },
+      { field_name: 'is_friction', field_schema: 'bool' },
+      { field_name: 'superseded', field_schema: 'bool' },
+      { field_name: 'superseded_by', field_schema: 'keyword' },
     ] as const;
     for (const index of indexes) {
       if (existing.has(index.field_name)) continue;
@@ -189,56 +238,192 @@ export class QdrantClientService implements OnModuleInit {
     return exists;
   }
 
-  /** True when the lexicon collection exists in Qdrant. */
-  async hasLexiconCollection(): Promise<boolean> {
+  /** True when the encyclopedia collection exists in Qdrant. */
+  async hasEncyclopediaCollection(): Promise<boolean> {
     const { exists } = await this.getClient().collectionExists(
-      this.lexiconCollection,
+      this.encyclopediaCollection,
     );
     return exists;
   }
 
+  /** True when the given lane's synopsis collection exists in Qdrant. */
+  async hasSynopsisCollection(
+    lane: 'partition' | 'encyclopedia',
+  ): Promise<boolean> {
+    const name =
+      lane === 'partition'
+        ? this.partitionSynopsisCollection
+        : this.encyclopediaSynopsisCollection;
+    const { exists } = await this.getClient().collectionExists(name);
+    return exists;
+  }
+
   /**
-   * Create the lexicon collection if missing (Cosine, same model dims as the
+   * Create both synopsis collections if missing (Cosine, same model dims as
+   * the lane collections) — one embedded point per cluster synopsis,
+   * one collection per lane.
+   */
+  async ensureSynopsisCollections(modelDims?: number): Promise<void> {
+    const client = this.getClient();
+    const size = modelDims ?? this.config.vectorSize;
+    for (const name of [
+      this.partitionSynopsisCollection,
+      this.encyclopediaSynopsisCollection,
+    ]) {
+      const { exists } = await client.collectionExists(name);
+      if (exists) continue;
+      await client.createCollection(name, {
+        vectors: { size, distance: 'Cosine' },
+      });
+      this.logger.log(
+        `Created Qdrant collection "${name}" (${size} dims, Cosine)`,
+      );
+    }
+  }
+
+  /**
+   * Keyword/integer indexes on the synopsis payload: `summarizes_cluster_id`
+   * (cleanup + drill lookup), `scope_key` (the lane scope filter, tenant
+   * marker co-locates one scope's synopses), `level` (hierarchy depth).
+   */
+  async ensureSynopsisPayloadIndexes(): Promise<void> {
+    const client = this.getClient();
+    const indexes = [
+      { field_name: 'summarizes_cluster_id', field_schema: 'keyword' },
+      {
+        field_name: 'scope_key',
+        field_schema: { type: 'keyword', is_tenant: true },
+      },
+      { field_name: 'level', field_schema: 'integer' },
+    ] as const;
+    for (const name of [
+      this.partitionSynopsisCollection,
+      this.encyclopediaSynopsisCollection,
+    ]) {
+      const info = await client.getCollection(name);
+      const existing = new Set(Object.keys(info.payload_schema ?? {}));
+      for (const index of indexes) {
+        if (existing.has(index.field_name)) continue;
+        await client.createPayloadIndex(name, {
+          field_name: index.field_name,
+          field_schema: index.field_schema,
+          wait: true,
+        });
+        this.logger.log(
+          `Created payload index "${index.field_name}" on "${name}"`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Create the encyclopedia collection if missing (Cosine, same model dims as the
    * episodic collection). Chunk-granularity points: one point per passage.
    */
-  async ensureLexiconCollection(modelDims?: number): Promise<void> {
+  async ensureEncyclopediaCollection(modelDims?: number): Promise<void> {
     const client = this.getClient();
-    const { exists } = await client.collectionExists(this.lexiconCollection);
+    const { exists } = await client.collectionExists(
+      this.encyclopediaCollection,
+    );
     if (exists) return;
     const size = modelDims ?? this.config.vectorSize;
-    await client.createCollection(this.lexiconCollection, {
+    await client.createCollection(this.encyclopediaCollection, {
       vectors: { size, distance: 'Cosine' },
     });
     this.logger.log(
-      `Created Qdrant collection "${this.lexiconCollection}" (${size} dims, Cosine)`,
+      `Created Qdrant collection "${this.encyclopediaCollection}" (${size} dims, Cosine)`,
     );
   }
 
   /**
-   * Keyword/datetime/integer indexes on the lexicon payload: `url` (lookup +
+   * Keyword/datetime/integer indexes on the encyclopedia payload: `url` (lookup +
    * supersede), `fetched_at` (datetime, future eviction/debug), `partition_scope`
    * (future tenant filter), `chunk_index` (integer, neighbor-expansion range
    * scrolls).
    */
-  async ensureLexiconPayloadIndexes(): Promise<void> {
+  async ensureEncyclopediaPayloadIndexes(): Promise<void> {
     const client = this.getClient();
-    const info = await client.getCollection(this.lexiconCollection);
+    const info = await client.getCollection(this.encyclopediaCollection);
     const existing = new Set(Object.keys(info.payload_schema ?? {}));
     const indexes = [
       { field_name: 'url', field_schema: 'keyword' },
       { field_name: 'fetched_at', field_schema: 'datetime' },
       { field_name: 'partition_scope', field_schema: 'keyword' },
       { field_name: 'chunk_index', field_schema: 'integer' },
+      // category/topic are the classification labels — keyword indexes power
+      // the classify job's reuse-first facet vocabulary and topic filters.
+      { field_name: 'category', field_schema: 'keyword' },
+      { field_name: 'topic', field_schema: 'keyword' },
+      // community is the plural sub-family tier between category and topic.
+      { field_name: 'community', field_schema: 'keyword' },
+      // Lifecycle flags — bool indexes power the strict/recommended view
+      // filters and the Phase 2 recall formula boosts over these payloads.
+      { field_name: 'is_consolidated', field_schema: 'bool' },
+      { field_name: 'is_reflected', field_schema: 'bool' },
+      { field_name: 'is_friction', field_schema: 'bool' },
+      { field_name: 'superseded', field_schema: 'bool' },
+      { field_name: 'superseded_by', field_schema: 'keyword' },
     ] as const;
     for (const index of indexes) {
       if (existing.has(index.field_name)) continue;
-      await client.createPayloadIndex(this.lexiconCollection, {
+      await client.createPayloadIndex(this.encyclopediaCollection, {
         field_name: index.field_name,
         field_schema: index.field_schema,
         wait: true,
       });
       this.logger.log(
-        `Created payload index "${index.field_name}" on "${this.lexiconCollection}"`,
+        `Created payload index "${index.field_name}" on "${this.encyclopediaCollection}"`,
+      );
+    }
+  }
+
+  /**
+   * Create the taxonomy label collection if missing (Cosine, same model dims
+   * as the lane collections): one embedded point per taxonomy node, id = the
+   * node's Postgres id.
+   */
+  async ensureTaxonomyCollection(modelDims?: number): Promise<void> {
+    const client = this.getClient();
+    const { exists } = await client.collectionExists(this.taxonomyCollection);
+    if (exists) return;
+    const size = modelDims ?? this.config.vectorSize;
+    await client.createCollection(this.taxonomyCollection, {
+      vectors: { size, distance: 'Cosine' },
+    });
+    this.logger.log(
+      `Created Qdrant collection "${this.taxonomyCollection}" (${size} dims, Cosine)`,
+    );
+  }
+
+  /**
+   * Keyword indexes on the taxonomy label payload: `lane` + `scope_key` (the
+   * registry scope; tenant marker co-locates one scope's labels), `kind` (the
+   * tier filter), `parent_id` (the probe's top-down lock-in constraint), and
+   * `normalized_name` (exact-lookup backstop).
+   */
+  async ensureTaxonomyPayloadIndexes(): Promise<void> {
+    const client = this.getClient();
+    const info = await client.getCollection(this.taxonomyCollection);
+    const existing = new Set(Object.keys(info.payload_schema ?? {}));
+    const indexes = [
+      { field_name: 'lane', field_schema: 'keyword' },
+      {
+        field_name: 'scope_key',
+        field_schema: { type: 'keyword', is_tenant: true },
+      },
+      { field_name: 'kind', field_schema: 'keyword' },
+      { field_name: 'parent_id', field_schema: 'keyword' },
+      { field_name: 'normalized_name', field_schema: 'keyword' },
+    ] as const;
+    for (const index of indexes) {
+      if (existing.has(index.field_name)) continue;
+      await client.createPayloadIndex(this.taxonomyCollection, {
+        field_name: index.field_name,
+        field_schema: index.field_schema,
+        wait: true,
+      });
+      this.logger.log(
+        `Created payload index "${index.field_name}" on "${this.taxonomyCollection}"`,
       );
     }
   }
@@ -250,7 +435,7 @@ export class QdrantClientService implements OnModuleInit {
   }
 
   /**
-   * Collection status for the sysctl surface. When the feature is disabled
+   * Collection status for the settings surface. When the feature is disabled
    * the report is returned without touching Qdrant (exists=false).
    */
   async getStatus(): Promise<{

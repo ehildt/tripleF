@@ -86,12 +86,8 @@ export function useAttachedFiles() {
     currentHashes: Set<string>,
   ) {
     const hash = await hashFile(file).catch((error: unknown) => {
-      toast.error(
-        i18n.global.t('toast.failedReadFile', {
-          name: file.name,
-          message: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      toast.debug(error instanceof Error ? error.message : String(error));
+      toast.error(i18n.global.t('toast.failedReadFile', { name: file.name }));
       return null;
     });
     if (!hash) return;
@@ -132,12 +128,8 @@ export function useAttachedFiles() {
     currentHashes: Set<string>,
   ) {
     const hash = await hashFile(file).catch((error) => {
-      toast.error(
-        i18n.global.t('toast.failedReadFile', {
-          name: file.name,
-          message: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      toast.debug(error instanceof Error ? error.message : String(error));
+      toast.error(i18n.global.t('toast.failedReadFile', { name: file.name }));
       return null;
     });
     if (!hash) return;
@@ -191,7 +183,12 @@ export function useAttachedFiles() {
       if (pageImages.length > 0) {
         conversationStore.setUploadedImages(
           sid,
-          pageImages.map((page) => mapPageToUploadedImage(page, cid)),
+          pageImages.map((page) =>
+            mapPageToUploadedImage(page, cid, {
+              parentHash: hash,
+              parentName: file.name,
+            }),
+          ),
         );
       }
 
@@ -210,12 +207,8 @@ export function useAttachedFiles() {
         },
       ]);
     } catch (error) {
-      toast.error(
-        i18n.global.t('toast.failedReadFile', {
-          name: file.name,
-          message: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      toast.debug(error instanceof Error ? error.message : String(error));
+      toast.error(i18n.global.t('toast.failedReadFile', { name: file.name }));
     }
   }
 

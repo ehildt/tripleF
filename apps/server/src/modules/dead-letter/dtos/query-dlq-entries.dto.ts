@@ -1,4 +1,5 @@
-import { IsEnum, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { DLQ_STATUSES } from '../constants/postgres.constants.js';
 
@@ -18,12 +19,21 @@ export class QueryDlqEntriesDto {
   jobName?: string;
 
   @IsOptional()
-  @IsNumberString()
-  limit?: string;
+  @Transform(({ value }: { value: unknown }) =>
+    value === undefined ? undefined : Number(value),
+  )
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  limit?: number;
 
   @IsOptional()
-  @IsNumberString()
-  offset?: string;
+  @Transform(({ value }: { value: unknown }) =>
+    value === undefined ? undefined : Number(value),
+  )
+  @IsInt()
+  @Min(0)
+  offset?: number;
 
   @IsOptional()
   @IsString()

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { MemoryEnqueueService } from '../../../memory-client/services/memory-enqueue.service.js';
 import { buildResponseExtractionText } from '../../helpers/extraction/build-response-extraction-text.helper.js';
+import { stripThinking } from '../../helpers/extraction/strip-thinking.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
@@ -36,11 +37,15 @@ export class VectorizeStepService implements StepHandler {
         userText: ctx.lastUserPrompt,
         // Feed the extractor the response's prose, not its raw JSON —
         // structured templates (article/news/product) once surfaced JSON keys
-        // and URL fragments as memory "facts".
-        assistantText: buildResponseExtractionText({
-          content: ctx.outputs.finalContent,
-          data: ctx.outputs.finalData,
-        }),
+        // and URL fragments as memory "facts". Reasoning markup (a model
+        // inlining <think>…</think> into content) is stripped — the
+        // zero-facts fallback stores this text verbatim.
+        assistantText: stripThinking(
+          buildResponseExtractionText({
+            content: ctx.outputs.finalContent,
+            data: ctx.outputs.finalData,
+          }),
+        ),
       });
       this.logger.log(
         { requestId: ctx.requestId, step: 'vectorize' },

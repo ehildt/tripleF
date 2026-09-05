@@ -35,7 +35,7 @@ export class SharpService {
   }
 
   /**
-   * The resize settings every ingestion path honors: live SysCtl settings
+   * The resize settings every ingestion path honors: live Settings
    * merged over the env defaults (the same merge `resizeImages` applies to
    * user uploads). Always resolves — downloads are resized even when the
    * preprocessing master toggle is off, exactly like uploaded attachments.

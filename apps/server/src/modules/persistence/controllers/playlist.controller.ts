@@ -10,6 +10,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { RenamePlaylistDto, UpsertPlaylistDto } from '../dtos/playlist.dto.js';
+import { PlaylistParamsDto } from '../dtos/playlist-params.dto.js';
 import { PlaylistService } from '../services/playlist.service.js';
 
 @ApiTags('Playlists')
@@ -19,30 +20,26 @@ export class PlaylistController {
 
   @Get(':sessionId')
   @ApiOperation({ summary: 'List all playlists for a session' })
-  async listAll(@Param('sessionId') sessionId: string) {
-    return this.playlistService.listAllPlaylists(sessionId);
+  async listAll(@Param() params: PlaylistParamsDto) {
+    return this.playlistService.listAllPlaylists(params.sessionId);
   }
 
   @Get(':sessionId/:conversationId')
   @ApiOperation({ summary: 'List playlists for a conversation' })
-  async list(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-  ) {
-    return this.playlistService.listPlaylists(sessionId, conversationId);
+  async list(@Param() params: PlaylistParamsDto) {
+    return this.playlistService.listPlaylists(
+      params.sessionId,
+      params.conversationId!,
+    );
   }
 
   @Get(':sessionId/:conversationId/:name')
   @ApiOperation({ summary: 'Get one playlist by name' })
-  async getOne(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('name') name: string,
-  ) {
+  async getOne(@Param() params: PlaylistParamsDto) {
     const playlist = await this.playlistService.getPlaylist(
-      sessionId,
-      conversationId,
-      name,
+      params.sessionId,
+      params.conversationId!,
+      params.name!,
     );
 
     if (!playlist) throw new NotFoundException();
@@ -53,15 +50,13 @@ export class PlaylistController {
   @Put(':sessionId/:conversationId/:name')
   @ApiOperation({ summary: 'Create or update a playlist' })
   async upsert(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('name') name: string,
+    @Param() params: PlaylistParamsDto,
     @Body() body: UpsertPlaylistDto,
   ) {
     return this.playlistService.savePlaylist(
-      sessionId,
-      conversationId,
-      name,
+      params.sessionId,
+      params.conversationId!,
+      params.name!,
       body.videos,
     );
   }
@@ -69,15 +64,13 @@ export class PlaylistController {
   @Put(':sessionId/:conversationId/:name/rename')
   @ApiOperation({ summary: 'Rename a playlist' })
   async rename(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('name') name: string,
+    @Param() params: PlaylistParamsDto,
     @Body() body: RenamePlaylistDto,
   ) {
     const renamed = await this.playlistService.renamePlaylist(
-      sessionId,
-      conversationId,
-      name,
+      params.sessionId,
+      params.conversationId!,
+      params.name!,
       body.newName,
     );
 
@@ -88,11 +81,11 @@ export class PlaylistController {
 
   @Delete(':sessionId/:conversationId/:name')
   @ApiOperation({ summary: 'Delete a playlist' })
-  async delete(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('name') name: string,
-  ) {
-    return this.playlistService.deletePlaylist(sessionId, conversationId, name);
+  async delete(@Param() params: PlaylistParamsDto) {
+    return this.playlistService.deletePlaylist(
+      params.sessionId,
+      params.conversationId!,
+      params.name!,
+    );
   }
 }

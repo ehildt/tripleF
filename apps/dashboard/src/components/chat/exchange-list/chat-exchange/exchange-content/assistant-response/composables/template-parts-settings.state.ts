@@ -12,7 +12,7 @@ import {
  * renders for each template. Pure display preference — the model still
  * produces every part; a disabled part simply drops its data keys before
  * the template component renders, and every section self-hides when its
- * data is absent. Configured in SysCtl → Layouts.
+ * data is absent. Configured in Settings → Layouts.
  */
 
 const STORAGE_KEY = 'vision-template-parts';

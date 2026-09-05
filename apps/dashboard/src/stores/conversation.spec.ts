@@ -9,6 +9,7 @@ import {
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
 import { clearPendingFilesForConversation } from '../composables/attached-files.state';
+import { inMemoryTemporaryConversationsTable } from '../test-utils/in-memory-temporary-conversations';
 import { useAppStore } from './app';
 import { useConversationStore } from './conversation';
 
@@ -35,6 +36,7 @@ describe('useConversationStore', () => {
   beforeEach(async () => {
     setActivePinia(createPinia());
     localStorage.clear();
+    inMemoryTemporaryConversationsTable.clear();
     vi.clearAllMocks();
     // The conversation store hydrates persisted conversations asynchronously
     // on creation — settle before seeding, or the load result would wipe
@@ -513,8 +515,9 @@ describe('useConversationStore', () => {
     setActivePinia(createPinia());
     useConversationStore();
 
-    // Both requests are issued before either resolves — the restore no longer
-    // waits for the list.
+    // Let the is-it-local IndexedDB check settle. The restore is then issued
+    // while the list request is still pending — it never waits for the list.
+    await new Promise((r) => setTimeout(r, 0));
     expect(fetchConversations).toHaveBeenCalled();
     expect(fetchConversation).toHaveBeenCalledWith(
       expect.any(String),
@@ -691,7 +694,46 @@ describe('useConversationStore', () => {
   });
 
   describe('persistence split', () => {
-    it('persists unpinned (temporary) conversations to localStorage', async () => {
+    it('persists a newly created chat immediately, before any activity', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary', 'evt');
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeDefined();
+    });
+
+    it('persists the lazily ensured chat at creation', async () => {
+      const store = useConversationStore();
+      const conversation = store.ensureConversation();
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeDefined();
+    });
+
+    it('persists a newly created pinned chat to the server', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('persistent', 'evt');
+      await new Promise((r) => setTimeout(r, 0));
+
+      const saveCalls = vi.mocked(saveConversation).mock.calls;
+      expect(saveCalls.length).toBeGreaterThan(0);
+      expect(saveCalls[0][1]).toBe(conversation.conversationId);
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeUndefined();
+    });
+
+    it('persists unpinned (temporary) conversations to IndexedDB', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');
       store.addExchange(conversation.id, {
@@ -702,14 +744,12 @@ describe('useConversationStore', () => {
       });
       await new Promise((r) => setTimeout(r, 0));
 
-      const map = JSON.parse(
-        localStorage.getItem('harness-temporary-conversations') || '{}',
-      );
+      const map = inMemoryTemporaryConversationsTable.snapshot();
       expect(map[conversation.conversationId]).toBeDefined();
       expect(map[conversation.conversationId].exchanges).toHaveLength(1);
     });
 
-    it('restores unpinned conversations from localStorage on reload', async () => {
+    it('restores unpinned conversations from IndexedDB on reload', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');
       store.addExchange(conversation.id, {
@@ -744,9 +784,9 @@ describe('useConversationStore', () => {
       });
       await new Promise((r) => setTimeout(r, 0));
       expect(
-        JSON.parse(
-          localStorage.getItem('harness-temporary-conversations') || '{}',
-        )[conversation.conversationId],
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
       ).toBeDefined();
 
       setActivePinia(createPinia());
@@ -755,14 +795,10 @@ describe('useConversationStore', () => {
 
       const fresh = useConversationStore();
       expect(fresh.getConversation(conversation.id)).toBeUndefined();
-      expect(
-        JSON.parse(
-          localStorage.getItem('harness-temporary-conversations') || '{}',
-        ),
-      ).toEqual({});
+      expect(inMemoryTemporaryConversationsTable.snapshot()).toEqual({});
     });
 
-    it('pinning a conversation saves it to the server and clears localStorage', async () => {
+    it('pinning a conversation saves it to the server and clears IndexedDB', async () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');
       store.addExchange(conversation.id, {
@@ -778,11 +814,7 @@ describe('useConversationStore', () => {
 
       expect(store.getConversation(conversation.id)!.type).toBe('persistent');
       expect(saveConversation).toHaveBeenCalled();
-      expect(
-        JSON.parse(
-          localStorage.getItem('harness-temporary-conversations') || '{}',
-        ),
-      ).toEqual({});
+      expect(inMemoryTemporaryConversationsTable.snapshot()).toEqual({});
     });
 
     it('unpinning a conversation deletes it from the server and keeps it locally', async () => {
@@ -798,10 +830,80 @@ describe('useConversationStore', () => {
 
       expect(store.getConversation(conversation.id)!.type).toBe('temporary');
       expect(deleteConversation).toHaveBeenCalled();
-      const map = JSON.parse(
-        localStorage.getItem('harness-temporary-conversations') || '{}',
+      expect(
+        inMemoryTemporaryConversationsTable.snapshot()[
+          conversation.conversationId
+        ],
+      ).toBeDefined();
+    });
+  });
+
+  describe('pdf page group actions', () => {
+    function seedPdfPages(store: ReturnType<typeof useConversationStore>) {
+      const conversation = store.createNewConversation('temporary', 'evt');
+      const cid = store.getConversationId(conversation.id);
+      store.setUploadedImages(conversation.id, [
+        {
+          name: 'doc.pdf · page 1',
+          hash: 'p1',
+          page: 1,
+          parentHash: 'doc-hash',
+          parentName: 'doc.pdf',
+          uploadedAt: 0,
+          selected: true,
+          conversationId: cid,
+        },
+        {
+          name: 'doc.pdf · page 2',
+          hash: 'p2',
+          page: 2,
+          parentHash: 'doc-hash',
+          parentName: 'doc.pdf',
+          uploadedAt: 0,
+          selected: true,
+          conversationId: cid,
+        },
+        {
+          name: 'cat.png',
+          hash: 'img1',
+          uploadedAt: 0,
+          conversationId: cid,
+        },
+      ]);
+      return { conversation, cid };
+    }
+
+    it('sets the selection of every page of a pdf in one write', () => {
+      const store = useConversationStore();
+      const { conversation, cid } = seedPdfPages(store);
+
+      store.setUploadedImagesSelectedForParent(
+        conversation.id,
+        'doc-hash',
+        false,
+        cid,
       );
-      expect(map[conversation.conversationId]).toBeDefined();
+
+      const images = store.getUploadedImagesForConversation(
+        conversation.id,
+        cid,
+      );
+      expect(images.find((i) => i.hash === 'p1')?.selected).toBe(false);
+      expect(images.find((i) => i.hash === 'p2')?.selected).toBe(false);
+      expect(images.find((i) => i.hash === 'img1')?.selected).not.toBe(false);
+    });
+
+    it('removes every page of a pdf in one write', () => {
+      const store = useConversationStore();
+      const { conversation, cid } = seedPdfPages(store);
+
+      store.removeUploadedImagesForParent(conversation.id, 'doc-hash', cid);
+
+      const images = store.getUploadedImagesForConversation(
+        conversation.id,
+        cid,
+      );
+      expect(images.map((i) => i.hash)).toEqual(['img1']);
     });
   });
 });

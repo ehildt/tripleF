@@ -2,36 +2,30 @@ import { DynamicModule, Module } from '@nestjs/common';
 
 import { QDRANT_CONFIG } from './constants/qdrant.constants.js';
 import { MemoryOverridesController } from './controllers/memory-overrides.controller.js';
-import { QdrantController } from './controllers/qdrant.controller.js';
+import { MemoryStatusController } from './controllers/status.controller.js';
 import type { QdrantModuleProps } from './models/qdrant-module.model.js';
-import { ConsolidationAdjudicatorService } from './services/consolidation-adjudicator.service.js';
 import { EmbeddingService } from './services/embedding.service.js';
-import { LexiconRepository } from './services/lexicon.repository.js';
+import { EncyclopediaRepository } from './services/encyclopedia.repository.js';
 import { MemoryRepository } from './services/memory.repository.js';
-import { MemoryCognitionService } from './services/memory-cognition.service.js';
 import { MemoryEnqueueService } from './services/memory-enqueue.service.js';
 import { MemoryOverridesService } from './services/memory-overrides.service.js';
-import { MemorySearchService } from './services/memory-search.service.js';
 import { QdrantClientService } from './services/qdrant-client.service.js';
-import { VectorizeService } from './services/vectorize.service.js';
-import { LexiconSweepService } from './services/vectorize/jobs/lexicon-sweep.service.js';
-import { MemoryConsolidateJobService } from './services/vectorize/jobs/memory-consolidate-job.service.js';
-import { MemoryProfileJobService } from './services/vectorize/jobs/memory-profile-job.service.js';
-import { MemoryRelinkJobService } from './services/vectorize/jobs/memory-relink-job.service.js';
-import { MemoryWriteJobService } from './services/vectorize/jobs/memory-write-job.service.js';
-import { EmbedStepService } from './services/vectorize/steps/embed-step.service.js';
-import { ExtractStepService } from './services/vectorize/steps/extract-step.service.js';
-import { StoreStepService } from './services/vectorize/steps/store-step.service.js';
-import { VectorizeStepEngineService } from './services/vectorize/vectorize-step-engine.service.js';
-import { VectorizeStepRegistryService } from './services/vectorize/vectorize-step-registry.service.js';
+import { SynopsisRepository } from './services/synopsis.repository.js';
+import { TaxonomyVectorRepository } from './services/taxonomy-vector.repository.js';
 
+/**
+ * Qdrant storage infra: the client connection, the embedding client, the
+ * collection repositories, and the cross-lane enqueue/overrides services.
+ * The memory lanes (partition, cognition, taxonomy, encyclopedia) own their
+ * domain services/controllers/jobs in their own feature modules.
+ */
 @Module({})
 export class QdrantModule {
   static registerAsync(options: QdrantModuleProps): DynamicModule {
     return {
       module: QdrantModule,
       global: options.global,
-      controllers: [QdrantController, MemoryOverridesController],
+      controllers: [MemoryStatusController, MemoryOverridesController],
       providers: [
         {
           provide: QDRANT_CONFIG,
@@ -40,54 +34,23 @@ export class QdrantModule {
         },
         QdrantClientService,
         MemoryRepository,
-        LexiconRepository,
-        MemorySearchService,
+        EncyclopediaRepository,
+        SynopsisRepository,
         EmbeddingService,
-        VectorizeService,
-        MemoryCognitionService,
+        TaxonomyVectorRepository,
         MemoryOverridesService,
         MemoryEnqueueService,
-        // Shared LLM adjudication (consolidate + relink verdicts).
-        ConsolidationAdjudicatorService,
-        // Vectorize pipeline step machine (mirrors the harness step registry).
-        VectorizeStepEngineService,
-        VectorizeStepRegistryService,
-        ExtractStepService,
-        EmbedStepService,
-        StoreStepService,
-        // Cognition write jobs (memory-write / memory-profile handlers).
-        MemoryWriteJobService,
-        MemoryProfileJobService,
-        // Consolidation sweep job (memory-consolidate handler).
-        MemoryConsolidateJobService,
-        // Relink sweep job (memory-relink handler).
-        MemoryRelinkJobService,
-        // Lexicon supersede sweep job (lexicon-consolidate handler).
-        LexiconSweepService,
       ],
       exports: [
         QDRANT_CONFIG,
         QdrantClientService,
         MemoryRepository,
-        LexiconRepository,
-        MemorySearchService,
-        VectorizeService,
-        MemoryCognitionService,
+        EncyclopediaRepository,
+        SynopsisRepository,
+        EmbeddingService,
+        TaxonomyVectorRepository,
         MemoryOverridesService,
         MemoryEnqueueService,
-        EmbeddingService,
-        // Vectorize processor deps (the processor is registered under
-        // BullMQModule, so its constructor deps must be globally exported).
-        VectorizeStepEngineService,
-        VectorizeStepRegistryService,
-        ExtractStepService,
-        EmbedStepService,
-        StoreStepService,
-        MemoryWriteJobService,
-        MemoryProfileJobService,
-        MemoryConsolidateJobService,
-        MemoryRelinkJobService,
-        LexiconSweepService,
       ],
       imports: options.imports,
     };

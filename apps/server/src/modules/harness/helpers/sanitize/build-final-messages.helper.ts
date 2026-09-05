@@ -1,3 +1,7 @@
+import {
+  DEFAULT_MEDIA_COUNT,
+  isImageTaskTemplate,
+} from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 
 import type { HarnessContext } from '../../services/harness-context.type.js';
@@ -27,17 +31,19 @@ function dedupeImages<T extends { imageUrl: string }>(images: T[]): T[] {
  * injected as a separate context block (never shares the current-turn
  * selection budget). Empty when the probe found nothing.
  */
-function buildLexiconMessages(
-  lexiconPassages: Array<{
+function buildEncyclopediaMessages(
+  encyclopediaPassages: Array<{
     url?: string;
     title?: string;
     content: string;
     sourceType?: 'content' | 'result';
   }>,
 ): InputMessage[] {
-  if (lexiconPassages.length === 0) return [];
-  const content = lexiconPassages.filter((p) => p.sourceType !== 'result');
-  const snippets = lexiconPassages.filter((p) => p.sourceType === 'result');
+  if (encyclopediaPassages.length === 0) return [];
+  const content = encyclopediaPassages.filter((p) => p.sourceType !== 'result');
+  const snippets = encyclopediaPassages.filter(
+    (p) => p.sourceType === 'result',
+  );
   const messages: InputMessage[] = [];
 
   if (content.length > 0) {
@@ -68,6 +74,71 @@ function buildLexiconMessages(
     });
   }
 
+  return messages;
+}
+
+/**
+ * The AI's cognition of this user is always-on context: the structured
+ * profile (who they are — durable traits, preferences, goals; also the
+ * routing map into deeper memory) plus any path-matched insights (topic
+ * depth the current prompt pulled up). Cognition is working context — it
+ * informs every answer but is never quoted verbatim as user statements;
+ * its substance may be disclosed plainly when asked or when it genuinely
+ * serves the user. Fact records (memory-partition-recall) are the
+ * user-facing lane.
+ */
+function buildCognitionMessages(
+  persona?: string,
+  corrections?: string,
+  profile?: string,
+  insights: string[] = [],
+  convictions: string[] = [],
+  episodes: string[] = [],
+  clusters: string[] = [],
+): InputMessage[] {
+  const messages: InputMessage[] = [];
+  if (persona?.trim()) {
+    messages.push({
+      role: 'system' as const,
+      content: `[YOUR IDENTITY — WHO YOU ARE TO THIS USER]\nThe user has shaped your identity. Adopt it fully:\n${persona.trim()}\nThis is YOU, not the user. When the user calls you by your name or asks who you are, answer as yourself and acknowledge your name naturally. Never confuse your identity with the user's, and never treat your own name as a public figure or topic.`,
+    });
+  }
+  if (corrections?.trim()) {
+    messages.push({
+      role: 'system' as const,
+      content: `[YOUR LEARNED RULES — CORRECTIONS THE USER TAUGHT YOU]\nThe user corrected you in the past. Follow these rules going forward:\n${corrections.trim()}\nThese are behavioral rules for YOU, not facts about the user. Apply them silently and consistently.`,
+    });
+  }
+  if (profile?.trim()) {
+    messages.push({
+      role: 'system' as const,
+      content: `[YOUR PROFILE OF THIS USER — YOUR DERIVED UNDERSTANDING; INFORMS, NEVER QUOTES]\nYour self-learned model of this user (structured document, also your routing map into deeper cognition): ${profile.trim()}\nUse it silently to personalize tone, depth, and choices. Its interests, likes, and goals are STANDING traits, not recent activity — never answer "where did we leave off", "what were we doing", or any recent-activity question from this document; those are answered from your RECENT CONVERSATIONS memory or not at all. Never present it as something the user stated and never quote it verbatim — disclose its substance plainly when the user asks what you know about them or when it clearly serves them. It is their data, never public knowledge. If it holds nothing about what they are asking, say plainly that you do not have that information instead of improvising.`,
+    });
+  }
+  if (insights.length > 0) {
+    messages.push({
+      role: 'system' as const,
+      content: `[RELEVANT PRIVATE COGNITION — DERIVED, NEVER VERBATIM]\nDeeper understanding of this user that the current request pulled up from your cognition space (path-routed by your profile):\n${insights.map((insight) => `- ${insight}`).join('\n')}\nThese are YOUR working notes, never the user's words: they may inform your answer, they may never be quoted or cited as user statements. Share the substance only when it clearly serves the user — and if the request asks about something your memory holds nothing on, say plainly that you don't have that information rather than inventing it.`,
+    });
+  }
+  if (convictions.length > 0) {
+    messages.push({
+      role: 'system' as const,
+      content: `[YOUR CONVICTIONS — SYNTHESIZED, HOLD LOOSELY]\nConclusions you yourself synthesized from this user's memory (each rests on cited evidence; the synthesis is yours, never the user's words):\n${convictions.map((conviction) => `- ${conviction}`).join('\n')}\nThese are YOUR derived conclusions about the user's world and your relationship: let them inform your judgment and what you proactively connect, but never present them as facts the user stated, and hold them loosely — a conviction the user contradicts is wrong, not them. When a conviction clearly serves the answer, share its substance plainly as your own read, open to correction.`,
+    });
+  }
+  if (episodes.length > 0) {
+    messages.push({
+      role: 'system' as const,
+      content: `[RECENT CONVERSATIONS — YOUR SHORT-TERM MEMORY OF PAST TURNS]\nWhat you and the user were working on in recent turns (topic-matched, recency-weighted):\n${episodes.map((episode) => `- ${episode}`).join('\n')}\nThese are YOUR working notes on past turns, never the user's words. Use them for continuity — to pick up where a past turn left off — never quote them as user statements. When the user asks where you left off or what you were doing recently, answer from these notes — they are the authoritative source for recent activity; if none of them fits, say plainly that you don't have that activity in memory rather than guessing from the profile or general knowledge.`,
+    });
+  }
+  if (clusters.length > 0) {
+    messages.push({
+      role: 'system' as const,
+      content: `[TOPIC CONTEXT — CLUSTERS OF THIS USER'S MEMORY]\nSummaries of the memory clusters the current request touched (each is a synthesized overview of a group of related facts, not a single statement):\n${clusters.map((cluster) => `- ${cluster}`).join('\n')}\nThese are YOUR synthesized cluster overviews, never the user's words. Use them to see the shape of what the user cares about and to connect related facts across a topic — never quote them as user statements, and never treat a cluster summary as a specific fact the user stated. When a summary clearly serves the answer, draw on its substance as your own read of the user's memory.`,
+    });
+  }
   return messages;
 }
 
@@ -121,12 +192,12 @@ function buildMediaInstructions(
     ];
   }
 
-  if (['describe', 'compare', 'ocr'].includes(template ?? '')) {
+  if (isImageTaskTemplate(template ?? '')) {
     return [
       `You have ${imageCount} image URL(s) in availableImages.`,
-      'availableImages mixes the uploaded user images and UNVERIFIED cloud reference candidates downloaded from imageSearch results. Each cloud candidate is also attached visually in the conversation with its imageUrl label — verify it against the uploaded image(s) before trusting it.',
-      'galleryItems MUST contain every uploaded user image and ONLY the cloud candidates backed by strong visual evidence of the same subject. A gallery without any cloud candidate is valid — never include one on weak or missing evidence.',
-      'List every excluded cloud candidate in discardedReferences with { "type": "image", imageUrl, title, reason } and a one-line reason; retrieved links that failed to corroborate may be listed with { "type": "link", url, title, reason }.',
+      'availableImages holds cloud reference candidates from imageSearch as DATA (title, source, dimensions) — their pixels are never attached to you. The uploaded user images travel as message attachments.',
+      'Pick a candidate into galleryItems ONLY when its search-result data corroborates the subject you identified in the uploaded image(s) — name the textual signal behind every pick. Never include the uploaded user images; they are already visible to the user as attachments. A gallery without any cloud candidate is valid — never include one on weak or missing evidence.',
+      'List every unpicked cloud candidate in discardedReferences with { "type": "image", imageUrl, title, reason } and a one-line reason; retrieved links that failed to corroborate may be listed with { "type": "link", url, title, reason }.',
       'Each galleryItems entry must be an object with imageUrl, imageAlt, title, and caption. imageAlt and title must be non-empty.',
       INTERNATIONAL_POOLS_LINE,
     ];
@@ -177,7 +248,7 @@ export function buildFinalMessagesForSanitize(
   extractedArticles: ExtractedArticle[],
   extractedReferences: unknown[],
   referencesSelection?: { considered: number; selected: number },
-  lexiconPassages: Array<{
+  encyclopediaPassages: Array<{
     url?: string;
     title?: string;
     content: string;
@@ -192,7 +263,9 @@ export function buildFinalMessagesForSanitize(
   cognitionPersona?: string,
   cognitionCorrections?: string,
   cognitionInsights: string[] = [],
+  cognitionConvictions: string[] = [],
   cognitionEpisodes: string[] = [],
+  cognitionClusters: string[] = [],
 ): InputMessage[] {
   const conversation = ctx.request.messages.filter((m) => m.role !== 'system');
 
@@ -213,48 +286,19 @@ export function buildFinalMessagesForSanitize(
     (m) => m.role === 'system',
   );
 
-  // The AI's cognition of this user is always-on context: the structured
-  // profile (who they are — durable traits, preferences, goals; also the
-  // routing map into deeper memory) plus any path-matched insights (topic
-  // depth the current prompt pulled up). Cognition is working context — it
-  // informs every answer but is never quoted verbatim as user statements;
-  // its substance may be disclosed plainly when asked or when it genuinely
-  // serves the user. Fact records (memory-partition-recall) are the user-facing lane.
-  const cognitionMessages: InputMessage[] = [];
-  if (cognitionPersona?.trim()) {
-    cognitionMessages.push({
-      role: 'system' as const,
-      content: `[YOUR IDENTITY — WHO YOU ARE TO THIS USER]\nThe user has shaped your identity. Adopt it fully:\n${cognitionPersona.trim()}\nThis is YOU, not the user. When the user calls you by your name or asks who you are, answer as yourself and acknowledge your name naturally. Never confuse your identity with the user's, and never treat your own name as a public figure or topic.`,
-    });
-  }
-  if (cognitionCorrections?.trim()) {
-    cognitionMessages.push({
-      role: 'system' as const,
-      content: `[YOUR LEARNED RULES — CORRECTIONS THE USER TAUGHT YOU]\nThe user corrected you in the past. Follow these rules going forward:\n${cognitionCorrections.trim()}\nThese are behavioral rules for YOU, not facts about the user. Apply them silently and consistently.`,
-    });
-  }
-  if (cognitionProfile?.trim()) {
-    cognitionMessages.push({
-      role: 'system' as const,
-      content: `[YOUR PROFILE OF THIS USER — YOUR DERIVED UNDERSTANDING; INFORMS, NEVER QUOTES]\nYour self-learned model of this user (structured document, also your routing map into deeper cognition): ${cognitionProfile.trim()}\nUse it silently to personalize tone, depth, and choices. Its interests, likes, and goals are STANDING traits, not recent activity — never answer "where did we leave off", "what were we doing", or any recent-activity question from this document; those are answered from your RECENT CONVERSATIONS memory or not at all. Never present it as something the user stated and never quote it verbatim — disclose its substance plainly when the user asks what you know about them or when it clearly serves them. It is their data, never public knowledge. If it holds nothing about what they are asking, say plainly that you do not have that information instead of improvising.`,
-    });
-  }
-  if (cognitionInsights.length > 0) {
-    cognitionMessages.push({
-      role: 'system' as const,
-      content: `[RELEVANT PRIVATE COGNITION — DERIVED, NEVER VERBATIM]\nDeeper understanding of this user that the current request pulled up from your cognition space (path-routed by your profile):\n${cognitionInsights.map((insight) => `- ${insight}`).join('\n')}\nThese are YOUR working notes, never the user's words: they may inform your answer, they may never be quoted or cited as user statements. Share the substance only when it clearly serves the user — and if the request asks about something your memory holds nothing on, say plainly that you don't have that information rather than inventing it.`,
-    });
-  }
-  if (cognitionEpisodes.length > 0) {
-    cognitionMessages.push({
-      role: 'system' as const,
-      content: `[RECENT CONVERSATIONS — YOUR SHORT-TERM MEMORY OF PAST TURNS]\nWhat you and the user were working on in recent turns (topic-matched, recency-weighted):\n${cognitionEpisodes.map((episode) => `- ${episode}`).join('\n')}\nThese are YOUR working notes on past turns, never the user's words. Use them for continuity — to pick up where a past turn left off — never quote them as user statements. When the user asks where you left off or what you were doing recently, answer from these notes — they are the authoritative source for recent activity; if none of them fits, say plainly that you don't have that activity in memory rather than guessing from the profile or general knowledge.`,
-    });
-  }
+  const cognitionMessages = buildCognitionMessages(
+    cognitionPersona,
+    cognitionCorrections,
+    cognitionProfile,
+    cognitionInsights,
+    cognitionConvictions,
+    cognitionEpisodes,
+    cognitionClusters,
+  );
   const contextSystemMessages: InputMessage[] = [
     ...systemMessages,
     ...cognitionMessages,
-    ...buildLexiconMessages(lexiconPassages),
+    ...buildEncyclopediaMessages(encyclopediaPassages),
   ];
 
   if (toolResults.length === 0) {
@@ -264,8 +308,10 @@ export function buildFinalMessagesForSanitize(
   const imageCount = verifiedImages.length;
   const videoCount = verifiedVideos.length;
   const intent = ctx.outputs.intent;
-  const imageTargetCount = intent?.imageCount > 0 ? intent.imageCount : 6;
-  const videoTargetCount = intent?.videoCount > 0 ? intent.videoCount : 6;
+  const imageTargetCount =
+    intent?.imageCount > 0 ? intent.imageCount : DEFAULT_MEDIA_COUNT;
+  const videoTargetCount =
+    intent?.videoCount > 0 ? intent.videoCount : DEFAULT_MEDIA_COUNT;
   const uniqueImages = dedupeImages(verifiedImages);
 
   const mediaInstructions = buildMediaInstructions(

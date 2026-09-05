@@ -36,13 +36,36 @@ export class SanitizeStepService implements StepHandler {
       throw new Error('Missing interpret output — sanitize cannot run');
     }
 
-    // Index uploaded documents into the lexicon (pure knowledge) —
+    // Index uploaded documents into the encyclopedia (pure knowledge) —
     // fire-and-forget, independent of whether a web search ran this turn.
     if (ctx.documentSections?.length) {
-      void this.memoryClient.indexLexiconDocuments({
-        documents: ctx.documentSections.map(mapDocumentSection),
-        partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',
-      });
+      void this.memoryClient
+        .indexEncyclopediaDocuments({
+          documents: ctx.documentSections.map(mapDocumentSection),
+          partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',
+        })
+        .then((outcome) => {
+          if (!outcome) return;
+          if (outcome.rejectedDocs?.length) {
+            this.logger.warn(
+              {
+                requestId: ctx.requestId,
+                step: 'sanitize',
+                rejectedDocs: outcome.rejectedDocs,
+              },
+              'encyclopedia index dropped oversized/empty uploads',
+            );
+          }
+          this.logger.log(
+            {
+              requestId: ctx.requestId,
+              step: 'sanitize',
+              storedDocs: outcome.storedDocs,
+              reusedDocs: outcome.reusedDocs,
+            },
+            'encyclopedia documents indexed',
+          );
+        });
     }
 
     // Only announce link verification when there are results to verify.

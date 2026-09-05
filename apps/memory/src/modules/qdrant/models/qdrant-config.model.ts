@@ -6,12 +6,12 @@ export interface QdrantConfig {
   /** Name of the collection that holds harness memory points. */
   collection: string;
   /**
-   * Name of the collection that holds the shared knowledge lexicon
-   * (LEXICON_COLLECTION, default `memory-lexicon`) — model-namespaced like
+   * Name of the collection that holds the shared knowledge encyclopedia
+   * (ENCYCLOPEDIA_COLLECTION, default `memory-encyclopedia`) — model-namespaced like
    * the episodic collection. Global scope: public web content, shared across
    * partitions.
    */
-  lexiconCollection: string;
+  encyclopediaCollection: string;
   /**
    * Dimensionality of the embedding vectors stored in the collection.
    * Defaults to nomic-embed-text-v2-moe's 768 dims; the embedding service
@@ -40,7 +40,7 @@ export interface QdrantConfig {
   /**
    * Character cap for the serialized cognition profile document
    * (MEMORY_COGNITION_LIMIT, default 5000, clamped 500–32000) — the env
-   * baseline for the `memoryCognitionLimit` system variable; the SysCtl
+   * baseline for the `memoryCognitionLimit` system variable; the Settings
    * memory-overrides value wins at runtime.
    */
   cognitionLimit: number;
@@ -48,7 +48,7 @@ export interface QdrantConfig {
    * Max fact records the constellation loads per space
    * (MEMORY_CONSTELLATION_NODE_LIMIT, default 5000, clamped 100–10000) —
    * the env baseline for the `constellationNodeLimit` system variable; the
-   * SysCtl memory-overrides value wins at runtime.
+   * Settings memory-overrides value wins at runtime.
    */
   constellationNodeLimit: number;
   /**
@@ -61,6 +61,84 @@ export interface QdrantConfig {
    * default; the consolidate endpoint body may pass a model instead.
    */
   consolidateModel?: string;
+  /**
+   * Chat model for the reflection pass's friction verdicts
+   * (MEMORY_REFLECT_MODEL) — no default; the reflect endpoint body may pass
+   * a model instead.
+   */
+  reflectModel?: string;
+  /**
+   * Max unreflected points screened per reflection run
+   * (MEMORY_REFLECT_BATCH_LIMIT, default 100, clamped 1–500).
+   */
+  reflectBatchLimit: number;
+  /**
+   * Max near-neighbor candidates per point in the friction screen
+   * (MEMORY_REFLECT_MAX_CANDIDATES, default 5, clamped 1–100).
+   */
+  reflectMaxCandidates: number;
+  /**
+   * Auto-trigger reflection after a partition's consolidation sweep
+   * (MEMORY_PARTITION_REFLECT_AUTO, default false).
+   */
+  partitionReflectAutoEnabled: boolean;
+  /**
+   * Auto-trigger reflection after a cognition profile job
+   * (MEMORY_COGNITION_REFLECT_AUTO, default false).
+   */
+  cognitionReflectAutoEnabled: boolean;
+  /**
+   * Auto-trigger reflection after the encyclopedia classification job
+   * (MEMORY_ENCYCLOPEDIA_REFLECT_AUTO, default false).
+   */
+  encyclopediaReflectAutoEnabled: boolean;
+  /**
+   * Chat model for the conviction-synthesis pass (MEMORY_CONVICTION_MODEL) —
+   * no default; the conviction endpoint body may pass a model instead.
+   */
+  convictionModel?: string;
+  /**
+   * Max evidence points offered per conviction-synthesis run
+   * (MEMORY_CONVICTION_BATCH_LIMIT, default 100, clamped 1–500).
+   */
+  convictionBatchLimit: number;
+  /**
+   * Max statements emitted per conviction-synthesis run
+   * (MEMORY_CONVICTION_MAX_PER_CLUSTER, default 5, clamped 1–1000).
+   */
+  convictionMaxPerCluster: number;
+  /**
+   * Auto-trigger conviction synthesis after a partition's reflection sweep
+   * (MEMORY_CONVICTION_AUTO, default false).
+   */
+  convictionAutoEnabled: boolean;
+  /**
+   * Chat model for the cluster-detection summarization pass
+   * (MEMORY_CLUSTER_MODEL) — no default; the cluster endpoint body may
+   * pass a model instead.
+   */
+  clusterModel?: string;
+  /**
+   * Minimum members for a structural cluster
+   * (MEMORY_CLUSTER_MIN_MEMBERS, default 2, clamped 1–100).
+   */
+  clusterMinMembers: number;
+  /**
+   * Auto-trigger cluster detection after a lane's graph-mutating job
+   * (MEMORY_CLUSTER_AUTO, default false).
+   */
+  clusterAutoEnabled: boolean;
+  /**
+   * Master switch for the Raptor layer: embed cluster synopses as searchable
+   * points and recurse hierarchy levels above them (MEMORY_RAPTOR_ENABLED,
+   * default true).
+   */
+  raptorEnabled: boolean;
+  /**
+   * Raptor recursion depth cap — highest synopsis level per scope
+   * (MEMORY_RAPTOR_MAX_DEPTH, default 3, clamped 1–3).
+   */
+  raptorMaxDepth: number;
   /**
    * Recency weight for the episode probe (MEMORY_EPISODE_RECENCY_WEIGHT,
    * default 0.3, clamped 0–1) — how much recency may break topical ties.

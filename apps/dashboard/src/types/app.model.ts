@@ -1,11 +1,11 @@
-export type ActiveTab = 'chat' | 'dlq' | 'debug' | 'sysctl';
+export type ActiveTab = 'chat' | 'memory' | 'dlq' | 'debug' | 'settings';
 
 /** How a conversation's exchange list is scrolled: the full-page vertical
  * carousel (crossfading sections) or the native continuous scroll list. */
 export type ScrollMode = 'carousel' | 'native';
 
 /** Which action icons are shown on the user-prompt header and the history
- * items. Each can be toggled from the SysCtl chat-navigation tab. */
+ * items. Each can be toggled from the Settings chat-navigation tab. */
 export interface ChatIconVisibility {
   copy: boolean;
   include: boolean;
@@ -31,7 +31,7 @@ export interface SourceTagsMenuAlwaysShow {
   view: boolean;
 }
 
-/** Default chart style preferences, set from the SysCtl chat-navigation tab. */
+/** Default chart style preferences, set from the Settings chat-navigation tab. */
 export type ChartPriceStyle = 'candles' | 'line' | 'area';
 export type ChartVolumeStyle = 'histogram' | 'heatmap';
 export type ChartHeatmapVariant = 'cells' | 'flow';

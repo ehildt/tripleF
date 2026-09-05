@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { safeMediaUrlOrEmpty, safeVideoUrlOrEmpty } from '../../schemas/index.js';
-import { createTextItemSchema } from '../../schemas/index.js';
-import { HERO_VIDEO_TITLE_ISSUE, heroVideoHasTitle } from '../../schemas/index.js';
+import { safeMediaUrlOrEmpty, safeVideoUrlOrEmpty } from '../../schemas/helpers/url-trust/url-schema.helper.js';
+import { createTextItemSchema } from '../../schemas/response/text-item-json.schema.js';
+import { HERO_VIDEO_TITLE_ISSUE, heroVideoHasTitle } from '../../schemas/response/video-gallery-item-json.schema.js';
 
 import { cardsSnippet } from './cards.snippet.js';
 import { gallerySnippet } from './gallery.snippet.js';

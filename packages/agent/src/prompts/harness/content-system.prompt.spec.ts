@@ -48,7 +48,24 @@ describe('buildContentSystemPrompt', () => {
     expect(prompt).toContain('valid JSON object');
     expect(prompt).toContain('required top-level keys: title');
     expect(prompt).toContain('galleryItems');
-    expect(prompt).toContain('MULTIMODAL RULES');
+    expect(prompt).toContain('IMAGE TASK');
+  });
+
+  it('leaves the step-agnostic security/noise/multimodal rules to the base system message', () => {
+    const prompt = buildContentSystemPrompt({
+      template: 'describe',
+      tools: [],
+      requiredKeys: ['title'],
+      optionalKeys: [],
+      isImageTask: true,
+    });
+
+    // Single carrier: buildBaseSystemPrompt owns these fragments; the harness
+    // preserves that message through sanitize into the respond step.
+    expect(prompt).not.toContain('SECURITY:');
+    expect(prompt).not.toContain('NOISE / BOILERPLATE FILTER');
+    expect(prompt).not.toContain('MULTIMODAL RULES');
+    expect(prompt).toContain('PRECEDENCE (ABSOLUTE)');
   });
 
   it('injects variant instructions when provided', () => {

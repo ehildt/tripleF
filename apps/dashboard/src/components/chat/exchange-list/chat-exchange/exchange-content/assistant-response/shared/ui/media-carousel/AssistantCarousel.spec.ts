@@ -166,4 +166,28 @@ describe('AssistantCarousel', () => {
     expect(slides[0].props('active')).toBe(true);
     expect(slides[1].props('active')).toBe(false);
   });
+
+  it('shows a remove action per slide and forwards removals when removable', async () => {
+    const item = { imageUrl: '/a', imageAlt: 'a', title: 'Alpha' };
+    const wrapper = mount(AssistantCarousel, {
+      props: {
+        items: [item, { imageUrl: '/b', imageAlt: 'b' }],
+        removable: true,
+      },
+      global: {
+        plugins: [activePinia],
+        provide: {
+          [harnessImageClickedKey as symbol]: vi.fn(),
+        },
+      },
+    });
+
+    const removeButtons = wrapper.findAll('button[aria-label="Remove"]');
+    expect(removeButtons.length).toBeGreaterThan(0);
+
+    await removeButtons[0].trigger('click');
+
+    expect(wrapper.emitted('remove')).toHaveLength(1);
+    expect(wrapper.emitted('remove')![0][0]).toEqual(item);
+  });
 });

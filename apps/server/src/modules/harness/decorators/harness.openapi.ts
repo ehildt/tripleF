@@ -243,7 +243,14 @@ client renders as image tiles / document cards.`,
                 kind: { type: 'string' },
                 pageImages: {
                   type: 'array',
-                  items: { type: 'object' },
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      hash: { type: 'string' },
+                      page: { type: 'number' },
+                    },
+                  },
                 },
               },
             },

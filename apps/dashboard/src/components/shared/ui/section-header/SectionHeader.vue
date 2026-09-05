@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * Shared section header for the sysctl and preprocessing panels: a small
+ * Shared section header for the settings and preprocessing panels: a small
  * mono uppercase title next to its lucide icon. Used by every settings
- * section in SysCtl and the tools panel.
+ * section in Settings and the tools panel.
  */
 import type { SectionHeaderProps } from './SectionHeader.types';
 

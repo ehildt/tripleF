@@ -1,10 +1,10 @@
 export const PRECEDENCE_RULES = `PRECEDENCE (ABSOLUTE):
-1. LANGUAGE RULE
-2. SECURITY RULES
-3. OUTPUT CONTRACT
-4. MODE RULES
-5. MULTIMODAL rules apply only when images exist
-6. SEARCH rules apply only when retrieval is allowed
+1. LANGUAGE and LOCALIZATION rules
+2. SECURITY rules
+3. OUTPUT CONTRACT and template format rules
+4. EXECUTION INSTRUCTIONS (the active MODE)
+5. MULTIMODAL / IMAGE TASK rules apply only when images exist
+6. DATA SOURCES, media, and source rules apply only when retrieval ran
 
 CONFLICT RULE:
 - Higher priority rule always wins.

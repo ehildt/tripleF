@@ -76,7 +76,7 @@ function toggleVariant(key: keyof typeof store.variants) {
 .pproc-variants-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: var(--spacing-3);
 }
 
 .pproc-variants-section__grid {

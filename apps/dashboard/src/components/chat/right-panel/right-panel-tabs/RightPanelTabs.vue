@@ -30,7 +30,7 @@ function tabClass(view: RightPanelView) {
       @click="emit('selectView', 'files')"
     >
       <FileImage class="right-panel-tabs__tab-icon" />
-      {{ $t('common.files') }}
+      {{ $t('common.attachments') }}
     </button>
     <button
       v-if="hasPlaylist"
@@ -62,6 +62,11 @@ function tabClass(view: RightPanelView) {
   padding: var(--spacing-2);
   font-size: 0.75rem;
   font-family: var(--font-mono);
+  /* Never let the label wrap onto a second line — a longer label
+     ("Attachments") would push the icon off the label's line. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   transition:
     color 0.2s ease,

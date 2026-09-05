@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useConversationStore } from '@/stores/conversation';
+import { inMemoryTemporaryConversationsTable } from '@/test-utils/in-memory-temporary-conversations';
 
 import { useSocketStore } from '../../../../../stores/socket';
 import { subscriptions } from './subscriptions.state';
@@ -38,11 +39,17 @@ vi.mock('../../../../../stores/socket', () => {
 });
 
 describe('useConversationList', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia());
     localStorage.clear();
+    inMemoryTemporaryConversationsTable.clear();
     subscriptions.value = [];
     vi.clearAllMocks();
+    // The conversation store hydrates persisted conversations asynchronously
+    // on creation — settle before seeding, or the load result would wipe
+    // conversations seeded mid-test.
+    useConversationStore();
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   it('starts with isConversationListExpanded from localStorage', () => {

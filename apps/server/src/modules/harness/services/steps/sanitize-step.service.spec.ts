@@ -58,7 +58,11 @@ describe('SanitizeStepService', () => {
         },
         {
           provide: MemoryClientService,
-          useValue: { indexLexiconDocuments: vi.fn() },
+          useValue: {
+            indexEncyclopediaDocuments: vi
+              .fn()
+              .mockResolvedValue({ storedDocs: 1, reusedDocs: 0 }),
+          },
         },
       ],
     }).compile();
@@ -107,7 +111,7 @@ describe('SanitizeStepService', () => {
     expect(ctx.outputs.toolResults).toBe(toolResults);
   });
 
-  it('indexes uploaded documents into the lexicon', async () => {
+  it('indexes uploaded documents into the encyclopedia', async () => {
     const ctx = createContext({
       documentSections: [
         { name: 'cv.docx', text: 'Eugen Hildt', url: 'http://minio/cv.docx' },
@@ -124,7 +128,7 @@ describe('SanitizeStepService', () => {
 
     await service.execute(ctx);
 
-    expect(memoryClient.indexLexiconDocuments).toHaveBeenCalledWith({
+    expect(memoryClient.indexEncyclopediaDocuments).toHaveBeenCalledWith({
       documents: [
         {
           url: 'http://minio/cv.docx',

@@ -1,10 +1,8 @@
 import { HttpModule } from '@nestjs/axios';
 import { Global, Module } from '@nestjs/common';
+import { PdfModule } from '@triplef/pdf';
 
-import { AiSdkModule } from '../ai-sdk/ai-sdk.module.js';
-import { ToolSelectionService } from '../ai-sdk/services/tool-selection.service.js';
 import { LifecycleService } from '../dead-letter/services/lifecycle.service.js';
-import { SharpModule } from '../sharp/sharp.module.js';
 import { StockDataModule } from '../stock-data/stock-data.module.js';
 
 import { ExecuteActionService } from './actions/execute.action.js';
@@ -21,6 +19,8 @@ import { HarnessContextService } from './services/harness-context.service.js';
 import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
+import { PdfPageDescribeService } from './services/pdf-page-describe.service.js';
+import { PlaywrightMcpClientService } from './services/playwright-mcp-client.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
 import { ShownMediaService } from './services/shown-media.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
@@ -31,14 +31,20 @@ import { MemoryWriteStepService } from './services/steps/memory-write-step.servi
 import { RespondStepService } from './services/steps/respond-step.service.js';
 import { SanitizeStepService } from './services/steps/sanitize-step.service.js';
 import { VectorizeStepService } from './services/steps/vectorize-step.service.js';
+import { ToolSelectionService } from './services/tool-selection.service.js';
 
 @Global()
 @Module({
-  imports: [AiSdkModule, SharpModule, HttpModule, StockDataModule],
+  imports: [
+    HttpModule,
+    PdfModule.registerAsync({ global: true }),
+    StockDataModule,
+  ],
   providers: [
     NumCtxConfigService,
     SourceBudgetConfigService,
     DocumentConversionService,
+    PdfPageDescribeService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessContextService,
@@ -58,6 +64,7 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
     VectorizeStepService,
     ResponseValidatorService,
     MediaUrlValidatorService,
+    PlaywrightMcpClientService,
     CloudImageIngestionService,
     ShownMediaService,
     ToolSelectionService,
@@ -67,6 +74,7 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
     NumCtxConfigService,
     SourceBudgetConfigService,
     DocumentConversionService,
+    PdfPageDescribeService,
     HarnessCancellationService,
     HarnessChatStreamingService,
     HarnessContextService,
@@ -86,6 +94,7 @@ import { VectorizeStepService } from './services/steps/vectorize-step.service.js
     VectorizeStepService,
     ResponseValidatorService,
     MediaUrlValidatorService,
+    PlaywrightMcpClientService,
     CloudImageIngestionService,
     ShownMediaService,
     ToolSelectionService,

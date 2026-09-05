@@ -16,7 +16,7 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 
 ## Subpath exports
 
-- `@triplef/agent/schemas` — Zod schemas and `z.infer` types for intent classification, response templates, and memory extraction/consolidation/profile, plus URL-trust and Zod-shape helpers (`formatZodShape`, `deriveSchemaKeys`) and the `LexiconSelectInput`/`LexiconSelectResult` retrieval-selection contract.
+- `@triplef/agent/schemas` — Zod schemas and `z.infer` types for intent classification, response templates, and memory extraction/consolidation/profile, plus URL-trust and Zod-shape helpers (`formatZodShape`, `deriveSchemaKeys`) and the `EncyclopediaSelectInput`/`EncyclopediaSelectResult` retrieval-selection contract.
 - `@triplef/agent/prompts` — harness and memory prompt builders, the snippet system, and `buildStructuredPrompt` (renders a schema's JSON shape into a prompt template).
 - `@triplef/agent/tools` — search/tool factories (Serper, Bright Data, YouTube, web-fetch, image-variants, memory) with a decoupled `ToolDependencies` contract.
 

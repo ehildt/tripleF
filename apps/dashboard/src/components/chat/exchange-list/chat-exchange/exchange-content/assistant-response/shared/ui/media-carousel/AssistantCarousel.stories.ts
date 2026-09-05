@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
+import { fn } from 'storybook/test';
 
 import AssistantCarousel from './AssistantCarousel.vue';
 
@@ -66,5 +67,14 @@ export const Videos: Story = {
         title: 'Me at the zoo',
       },
     ],
+  },
+};
+
+/** Parent-managed slides (attachments gallery): a per-slide remove action
+ * replaces add-to-files. */
+export const Removable: Story = {
+  args: {
+    removable: true,
+    onRemove: fn(),
   },
 };

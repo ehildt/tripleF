@@ -44,7 +44,12 @@ describe('useMenuTabs', () => {
       debugCount: 0,
     });
 
-    expect(vm.tabs.map((t) => t.tab)).toEqual(['chat', 'dlq', 'sysctl']);
+    expect(vm.tabs.map((t) => t.tab)).toEqual([
+      'chat',
+      'memory',
+      'dlq',
+      'settings',
+    ]);
   });
 
   it('returns all tabs when dlq/debug are enabled', () => {
@@ -56,9 +61,10 @@ describe('useMenuTabs', () => {
 
     expect(vm.tabs.map((t) => t.tab)).toEqual([
       'chat',
+      'memory',
       'dlq',
       'debug',
-      'sysctl',
+      'settings',
     ]);
   });
 
@@ -70,6 +76,7 @@ describe('useMenuTabs', () => {
     });
 
     expect(vm.tabs.find((t) => t.tab === 'dlq')?.tint).toBeCloseTo(0.55, 2);
+    expect(vm.tabs.find((t) => t.tab === 'memory')?.tint).toBeCloseTo(0.35, 2);
   });
 
   it('includes counts when counters are enabled', () => {
@@ -103,7 +110,7 @@ describe('useMenuTabs', () => {
     setActivePinia(pinia);
 
     const appStore = useAppStore();
-    appStore.toggleTabVisibility('sysctl');
+    appStore.toggleTabVisibility('settings');
 
     const TestComponent = defineComponent({
       setup() {
@@ -119,7 +126,7 @@ describe('useMenuTabs', () => {
     await nextTick();
 
     expect(wrapper.vm.tabs.map((t: { tab: string }) => t.tab)).not.toContain(
-      'sysctl',
+      'settings',
     );
   });
 });

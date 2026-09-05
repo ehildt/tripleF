@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
+import type { MediaItem } from '@/types/harness-response-data.model';
+
 import { activePlaybackVideoUrl } from '../../../composables/video-playback.state';
 import { isVideoMediaItem } from '../../helpers/is-video-media-item.helper';
 import CarouselContent from './carousel-content/CarouselContent.vue';
@@ -9,6 +11,8 @@ import { useCarouselNavigation } from './composables/use-carousel-navigation.com
 import type { AssistantCarouselProps } from './AssistantCarousel.types';
 
 const props = defineProps<AssistantCarouselProps>();
+
+const emit = defineEmits<{ remove: [item: MediaItem] }>();
 
 /** The track lives in CarouselContent; its ref is forwarded for scrolling. */
 const contentRef = ref<InstanceType<typeof CarouselContent> | null>(null);
@@ -53,9 +57,11 @@ const itemTitles = computed(() => props.items.map((item) => item.title));
       ref="contentRef"
       :items="items"
       :active-index="activeIndex"
+      :removable="removable"
       @scroll="onScroll"
       @prev="onPrev"
       @next="onNext"
+      @remove="emit('remove', $event)"
     />
   </div>
 </template>

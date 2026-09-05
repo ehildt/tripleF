@@ -78,7 +78,7 @@ function loadFloatingPopupRect(): FloatingPopupRect | null {
  * Popout settings, shared module state: the corner a floating video popout
  * initially appears in, and whether a moved popout position is remembered —
  * across players, conversations, and (persisted) app reloads. Configured in
- * SysCtl → Popout.
+ * Settings → Popout.
  */
 /** Whether scrolled-out videos may float as a popup at all. */
 export const popoutEnabled = ref<boolean>(loadPopoutEnabled());
@@ -118,7 +118,7 @@ export const popoutShowBarAlways = ref<boolean>(
   ),
 );
 
-/** Example popout shown from SysCtl → Widgets to preview the anchor. */
+/** Example popout shown from Settings → Widgets to preview the anchor. */
 export const popoutPreviewVisible = ref(false);
 
 /**

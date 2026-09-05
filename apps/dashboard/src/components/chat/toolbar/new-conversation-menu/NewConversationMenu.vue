@@ -67,7 +67,7 @@ function onIconMouseLeave() {
         :active="isOpen"
         :disabled="isDisabled"
         :blinking="blinking?.value"
-        :title="$t('common.sessions')"
+        :title="$t('common.newChatTooltip')"
         @mouseenter="onIconMouseEnter"
         @mouseleave="onIconMouseLeave"
         @click.stop="$emit('toggleMenu')"

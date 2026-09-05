@@ -70,9 +70,10 @@ watch(dlqData, (val) => {
 watch(isError, (val) => {
   if (val) {
     onError();
+    if (error.value?.message) toast.debug(error.value.message);
     dlqStore.error =
       error.value?.message ?? i18n.global.t('common.failedLoadDlqEntries');
-    toast.error(dlqStore.error!);
+    toast.error(i18n.global.t('common.failedLoadDlqEntries'));
   } else {
     dlqStore.error = null;
   }

@@ -16,7 +16,7 @@ const props = withDefaults(
   { count: undefined, defaultExpanded: true, id: undefined },
 );
 
-const STORAGE_PREFIX = 'sysctl.collapsible';
+const STORAGE_PREFIX = 'settings.collapsible';
 
 /**
  * Read the persisted expanded state for a panel id, falling back to the

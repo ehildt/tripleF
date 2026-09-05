@@ -7,5 +7,3 @@ import { TEMPLATE_VARIANTS } from '../variant-instructions.registry.js';
 export function formatVariantCatalog(): string[] {
   return Object.entries(TEMPLATE_VARIANTS).flatMap(([template, variants]) => [`  ${template}: ${variants.join(', ')}`]);
 }
-
-export { TEMPLATE_VARIANTS };

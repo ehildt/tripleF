@@ -19,7 +19,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const FilesActive: Story = {};
+export const AttachmentsActive: Story = {};
 
 export const PlaylistActive: Story = {
   args: { activeView: 'playlist' },
@@ -29,6 +29,6 @@ export const HistoryActive: Story = {
   args: { activeView: 'history' },
 };
 
-export const FilesOnly: Story = {
+export const AttachmentsOnly: Story = {
   args: { hasPlaylist: false, hasHistory: false },
 };

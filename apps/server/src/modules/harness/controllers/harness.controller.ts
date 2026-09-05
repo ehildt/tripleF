@@ -15,10 +15,10 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { OllamaApiService } from '@triplef/ollama-api';
 import type { FastifyReply } from 'fastify';
 
-import { ModelWarmupService } from '../../ai-sdk/services/model-warmup.service.js';
-import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
+import { ModelWarmupService } from '../../ollama/services/model-warmup.service.js';
 import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
   AttachmentsField,
@@ -40,6 +40,7 @@ import {
   CancelHarnessJobDto,
   CancelHarnessJobResponseDto,
 } from '../dtos/cancel-harness-job.dto.js';
+import { ConvertDocumentsQueryDto } from '../dtos/convert-documents-query.dto.js';
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
@@ -61,7 +62,7 @@ export class HarnessController {
   constructor(
     private readonly harnessQueueService: HarnessQueueService,
     private readonly documentConversionService: DocumentConversionService,
-    private readonly ollamaModelsService: OllamaModelsService,
+    private readonly ollamaApiService: OllamaApiService,
     private readonly numCtxConfigService: NumCtxConfigService,
     private readonly modelWarmupService: ModelWarmupService,
   ) {}
@@ -69,18 +70,12 @@ export class HarnessController {
   @Post('documents')
   @ApiConvertDocuments()
   async convertDocuments(
-    @Query()
-    query: { sessionId?: string; conversationId?: string },
+    @Query() query: ConvertDocumentsQueryDto,
     @OriginalsField() originals?: Array<MultipartFile>,
-    @DocumentHashesField() hashes?: string,
+    @DocumentHashesField() hashes?: string[],
   ): Promise<{ documents: ConvertedDocumentResult[] }> {
-    const providedHashes = parseHashesField(hashes);
     const payloads = originals?.length
-      ? await this.harnessQueueService.toFilePayloads(
-          originals,
-          providedHashes,
-          false,
-        )
+      ? await this.harnessQueueService.toFilePayloads(originals, hashes, false)
       : [];
 
     const documents: ConvertedDocumentResult[] = [];
@@ -94,6 +89,14 @@ export class HarnessController {
         buffer,
       );
       if (!manifest) continue;
+      // The extracted text becomes an encyclopedia node right at upload —
+      // before the first question is ever asked about the document.
+      this.documentConversionService.indexManifest(
+        query.sessionId,
+        query.conversationId,
+        meta,
+        manifest,
+      );
       documents.push({
         name: meta.name,
         hash: meta.hash,
@@ -120,7 +123,7 @@ export class HarnessController {
     @PromptField() prompt?: Array<Prompt>,
     @AttachmentsField() attachments?: Array<MultipartFile>,
     @OriginalsField() originals?: Array<MultipartFile>,
-    @DocumentTextLimitField() documentTextLimit?: string,
+    @DocumentTextLimitField() documentTextLimit?: number,
   ): Promise<HarnessControllerResponse> {
     if (!model) throw new BadRequestException('Missing x-harness-llm header');
 
@@ -191,9 +194,8 @@ export class HarnessController {
         hasNewImages: query.hasNewImages,
         sessionMetadata: query.sessionMetadata,
         language,
-        documentTextLimit: documentTextLimit
-          ? Number(documentTextLimit) || undefined
-          : undefined,
+        documentTextLimit,
+        graphRag: query.graphRag,
       },
     });
 
@@ -235,7 +237,7 @@ export class HarnessController {
     @Headers('if-none-match') ifNoneMatch: string | undefined,
     @Res() res: FastifyReply,
   ) {
-    const models = await this.ollamaModelsService.getModels();
+    const models = await this.ollamaApiService.getModels();
     const payload = {
       ...models,
       numCtxOptions: this.numCtxConfigService.config,
@@ -255,16 +257,4 @@ interface ConvertedDocumentResult {
   kind: 'pdf' | 'docx' | 'pptx' | 'text';
   /** Rendered page images (pdf only) — the client shows these as tiles. */
   pageImages?: Array<{ name: string; hash: string }>;
-}
-
-function parseHashesField(raw: string | undefined): string[] | undefined {
-  if (!raw) return undefined;
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((hash): hash is string => typeof hash === 'string')
-      : undefined;
-  } catch {
-    return undefined;
-  }
 }

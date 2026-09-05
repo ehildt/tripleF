@@ -14,9 +14,31 @@ import {
 } from '@triplef/agent/schemas';
 import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
 
+import { ENCYCLOPEDIA_CONFIG } from '../../encyclopedia/constants/encyclopedia.constants.js';
+import type { EncyclopediaConfig } from '../../encyclopedia/models/encyclopedia-config.model.js';
 import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
+import { RESEARCH_CONFIG } from '../../research/constants/research.constants.js';
+import {
+  clampResearchFetchBudget,
+  clampResearchFrictionLimit,
+  clampResearchGapLimit,
+  clampResearchMaxDepth,
+} from '../../research/constants/research.constants.js';
+import type { ResearchConfig } from '../../research/models/research-config.model.js';
+import {
+  clampClusterMinMembers,
+  clampRaptorMaxDepth,
+} from '../constants/cluster.constant.js';
 import { clampConstellationNodeLimit } from '../constants/constellation-node-limit.constant.js';
+import {
+  clampConvictionBatchLimit,
+  clampConvictionMaxPerCluster,
+} from '../constants/conviction.constant.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
+import {
+  clampReflectBatchLimit,
+  clampReflectMaxCandidates,
+} from '../constants/reflect.constant.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 import type { MemoryOverridesPatch } from './memory-overrides.service.types.js';
@@ -29,9 +51,9 @@ const BOOT_RESTORE_ATTEMPTS = 5;
 const LAZY_RESTORE_THROTTLE_MS = 10_000;
 
 /**
- * Memory system variables (sysctl → system) layered over the env-backed
+ * Memory system variables (settings → system) layered over the env-backed
  * defaults (`MEMORY_COGNITION_LIMIT`, …). Consumers resolve the effective
- * value at execution time, so a SysCtl write takes effect on the very next
+ * value at execution time, so a Settings write takes effect on the very next
  * request without a restart. Overrides are persisted globally — system
  * settings, not user/session data — via the shared provider-overrides store
  * and restored on boot; env vars remain the baseline when nothing is
@@ -58,10 +80,24 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     episodeRecencyMidpoint: clampEpisodeRecencyMidpoint,
     episodeProbeLimit: clampEpisodeProbeLimit,
     episodeScoreThreshold: clampEpisodeScoreThreshold,
+    reflectBatchLimit: clampReflectBatchLimit,
+    reflectMaxCandidates: clampReflectMaxCandidates,
+    convictionBatchLimit: clampConvictionBatchLimit,
+    convictionMaxPerCluster: clampConvictionMaxPerCluster,
+    clusterMinMembers: clampClusterMinMembers,
+    raptorMaxDepth: clampRaptorMaxDepth,
+    researchGapLimit: clampResearchGapLimit,
+    researchMaxDepth: clampResearchMaxDepth,
+    researchFetchBudget: clampResearchFetchBudget,
+    researchFrictionLimit: clampResearchFrictionLimit,
   };
 
   constructor(
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
+    @Inject(ENCYCLOPEDIA_CONFIG)
+    private readonly encyclopediaConfig: EncyclopediaConfig,
+    @Inject(RESEARCH_CONFIG)
+    private readonly researchConfig: ResearchConfig,
     private readonly repository: ProviderOverridesRepository,
   ) {}
 
@@ -81,49 +117,17 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
   private async attemptRestore(): Promise<void> {
     this.lastRestoreAttemptAt = Date.now();
     const rows = await this.repository.findAll();
-    // A live SysCtl write landed mid-flight — it is fresher than any row.
+    // A live Settings write landed mid-flight — it is fresher than any row.
     if (this.restored) return;
     this.restored = true;
     const values = rows.find(
       (entry) => entry.provider === MEMORY_PROVIDER_KEY,
     )?.values;
     if (!values || typeof values !== 'object') return;
-    const record = values as Record<string, unknown>;
-    const patch: MemoryOverridesPatch = {};
-    if (typeof record.cognitionLimit === 'number') {
-      patch.cognitionLimit = clampCognitionLimit(record.cognitionLimit);
-    }
-    if (typeof record.constellationNodeLimit === 'number') {
-      patch.constellationNodeLimit = clampConstellationNodeLimit(
-        record.constellationNodeLimit,
-      );
-    }
-    if (typeof record.episodeRecencyWeight === 'number') {
-      patch.episodeRecencyWeight = clampEpisodeRecencyWeight(
-        record.episodeRecencyWeight,
-      );
-    }
-    if (typeof record.episodeRecencyScaleSeconds === 'number') {
-      patch.episodeRecencyScaleSeconds = clampEpisodeRecencyScaleSeconds(
-        record.episodeRecencyScaleSeconds,
-      );
-    }
-    if (typeof record.episodeRecencyMidpoint === 'number') {
-      patch.episodeRecencyMidpoint = clampEpisodeRecencyMidpoint(
-        record.episodeRecencyMidpoint,
-      );
-    }
-    if (typeof record.episodeProbeLimit === 'number') {
-      patch.episodeProbeLimit = clampEpisodeProbeLimit(
-        record.episodeProbeLimit,
-      );
-    }
-    if (typeof record.episodeScoreThreshold === 'number') {
-      patch.episodeScoreThreshold = clampEpisodeScoreThreshold(
-        record.episodeScoreThreshold,
-      );
-    }
-    this.overrides = patch;
+    // The row was written by persistOverrides from the already-validated
+    // patch (the endpoint DTO + config Joi own the contract) — trust it.
+    // The getters still fall back to the env baseline on any unexpected shape.
+    this.overrides = values as MemoryOverridesPatch;
   }
 
   /**
@@ -218,7 +222,216 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
     );
   }
 
-  /** The SysCtl read view: effective values plus the env baseline + bounds. */
+  /** Effective auto-trigger flag for partition reflection. */
+  getPartitionReflectAutoEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.partitionReflectAutoEnabled ??
+      this.config.partitionReflectAutoEnabled
+    );
+  }
+
+  /** Effective auto-trigger flag for cognition reflection. */
+  getCognitionReflectAutoEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.cognitionReflectAutoEnabled ??
+      this.config.cognitionReflectAutoEnabled
+    );
+  }
+
+  /** Effective auto-trigger flag for encyclopedia reflection. */
+  getEncyclopediaReflectAutoEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.encyclopediaReflectAutoEnabled ??
+      this.config.encyclopediaReflectAutoEnabled
+    );
+  }
+
+  /** Effective reflection model (override → env baseline → undefined). */
+  getReflectModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return this.overrides.reflectModel ?? this.config.reflectModel;
+  }
+
+  /** Effective reflection batch limit (1–500 points per run). */
+  getReflectBatchLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.reflectBatchLimit;
+    return clampReflectBatchLimit(
+      typeof override === 'number' ? override : this.config.reflectBatchLimit,
+    );
+  }
+
+  /** Effective reflection candidate pool (1–100 neighbors per point). */
+  getReflectMaxCandidates(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.reflectMaxCandidates;
+    return clampReflectMaxCandidates(
+      typeof override === 'number'
+        ? override
+        : this.config.reflectMaxCandidates,
+    );
+  }
+
+  /** Effective conviction-synthesis model (override → env baseline → undefined). */
+  getConvictionModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return this.overrides.convictionModel ?? this.config.convictionModel;
+  }
+
+  /** Effective conviction-synthesis batch limit (1–500 evidence points per run). */
+  getConvictionBatchLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.convictionBatchLimit;
+    return clampConvictionBatchLimit(
+      typeof override === 'number'
+        ? override
+        : this.config.convictionBatchLimit,
+    );
+  }
+
+  /** Effective conviction-synthesis output cap (1–1000 convictions per run). */
+  getConvictionMaxPerCluster(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.convictionMaxPerCluster;
+    return clampConvictionMaxPerCluster(
+      typeof override === 'number'
+        ? override
+        : this.config.convictionMaxPerCluster,
+    );
+  }
+
+  /** Effective auto-trigger flag for conviction synthesis. */
+  getConvictionAutoEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.convictionAutoEnabled ?? this.config.convictionAutoEnabled
+    );
+  }
+
+  /** Effective cluster-detection model (override → env baseline → undefined). */
+  getClusterModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return this.overrides.clusterModel ?? this.config.clusterModel;
+  }
+
+  /** Effective minimum members for a structural cluster (1–100). */
+  getClusterMinMembers(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.clusterMinMembers;
+    return clampClusterMinMembers(
+      typeof override === 'number' ? override : this.config.clusterMinMembers,
+    );
+  }
+
+  /** Effective Raptor master switch — synopsis layer on/off (default true). */
+  getRaptorEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return this.overrides.raptorEnabled ?? this.config.raptorEnabled;
+  }
+
+  /** Effective Raptor recursion depth cap (1–3 — the highest synopsis level). */
+  getRaptorMaxDepth(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.raptorMaxDepth;
+    return clampRaptorMaxDepth(
+      typeof override === 'number' ? override : this.config.raptorMaxDepth,
+    );
+  }
+
+  /** Effective auto-trigger flag for cluster detection. */
+  getClusterAutoEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return this.overrides.clusterAutoEnabled ?? this.config.clusterAutoEnabled;
+  }
+
+  /** Effective consolidation model (override → env baseline → undefined). */
+  getConsolidateModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return this.overrides.consolidateModel ?? this.config.consolidateModel;
+  }
+
+  /** Effective encyclopedia classification model (override → env baseline → undefined). */
+  getClassifyModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.classifyModel ?? this.encyclopediaConfig.classifyModel
+    );
+  }
+
+  /** Effective master switch for the gap-filling research job. */
+  getResearchEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return this.overrides.researchEnabled ?? this.researchConfig.enabled;
+  }
+
+  /** Effective search toggle for the research job's follow-up deep-dives. */
+  getResearchSearchEnabled(): boolean {
+    this.scheduleLazyRestore();
+    return (
+      this.overrides.researchSearchEnabled ?? this.researchConfig.searchEnabled
+    );
+  }
+
+  /** Effective search provider for the research job ('serper' | 'bright-data'). */
+  getResearchProvider(): 'serper' | 'bright-data' {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchProvider;
+    return override === 'bright-data' || override === 'serper'
+      ? override
+      : this.researchConfig.provider;
+  }
+
+  /** Effective research triage model (override → env baseline → undefined). */
+  getResearchModel(): string | undefined {
+    this.scheduleLazyRestore();
+    return this.overrides.researchModel ?? this.researchConfig.model;
+  }
+
+  /** Effective research gap limit (1–50 gaps per run). */
+  getResearchGapLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchGapLimit;
+    return clampResearchGapLimit(
+      typeof override === 'number' ? override : this.researchConfig.gapLimit,
+    );
+  }
+
+  /** Effective research deep-dive depth cap (1–3). */
+  getResearchMaxDepth(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchMaxDepth;
+    return clampResearchMaxDepth(
+      typeof override === 'number' ? override : this.researchConfig.maxDepth,
+    );
+  }
+
+  /** Effective research fetch budget (1–20 pages per run). */
+  getResearchFetchBudget(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchFetchBudget;
+    return clampResearchFetchBudget(
+      typeof override === 'number' ? override : this.researchConfig.fetchBudget,
+    );
+  }
+
+  /**
+   * Effective contested-memory friction limit (1–20 per run) — how many open
+   * frictions the researcher screens for resolution-seeking searches.
+   */
+  getResearchFrictionLimit(): number {
+    this.scheduleLazyRestore();
+    const override = this.overrides.researchFrictionLimit;
+    return clampResearchFrictionLimit(
+      typeof override === 'number'
+        ? override
+        : this.researchConfig.frictionLimit,
+    );
+  }
+
+  /** The Settings read view: effective values plus the env baseline + bounds. */
   getConfig() {
     return {
       cognitionLimit: this.getCognitionLimit(),
@@ -230,6 +443,31 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
       episodeProbeLimit: this.getEpisodeProbeLimit(),
       episodeScoreThreshold: this.getEpisodeScoreThreshold(),
       constellationNodeLimit: this.getConstellationNodeLimit(),
+      consolidateModel: this.getConsolidateModel(),
+      classifyModel: this.getClassifyModel(),
+      partitionReflectAutoEnabled: this.getPartitionReflectAutoEnabled(),
+      cognitionReflectAutoEnabled: this.getCognitionReflectAutoEnabled(),
+      encyclopediaReflectAutoEnabled: this.getEncyclopediaReflectAutoEnabled(),
+      reflectModel: this.getReflectModel(),
+      reflectBatchLimit: this.getReflectBatchLimit(),
+      reflectMaxCandidates: this.getReflectMaxCandidates(),
+      convictionModel: this.getConvictionModel(),
+      convictionBatchLimit: this.getConvictionBatchLimit(),
+      convictionMaxPerCluster: this.getConvictionMaxPerCluster(),
+      convictionAutoEnabled: this.getConvictionAutoEnabled(),
+      clusterModel: this.getClusterModel(),
+      clusterMinMembers: this.getClusterMinMembers(),
+      raptorEnabled: this.getRaptorEnabled(),
+      raptorMaxDepth: this.getRaptorMaxDepth(),
+      clusterAutoEnabled: this.getClusterAutoEnabled(),
+      researchEnabled: this.getResearchEnabled(),
+      researchSearchEnabled: this.getResearchSearchEnabled(),
+      researchProvider: this.getResearchProvider(),
+      researchModel: this.getResearchModel(),
+      researchGapLimit: this.getResearchGapLimit(),
+      researchMaxDepth: this.getResearchMaxDepth(),
+      researchFetchBudget: this.getResearchFetchBudget(),
+      researchFrictionLimit: this.getResearchFrictionLimit(),
     };
   }
 
@@ -263,27 +501,8 @@ export class MemoryOverridesService implements OnApplicationBootstrap {
    */
   private persistOverrides(): void {
     const values: Record<string, unknown> = {};
-    if (this.overrides.cognitionLimit !== undefined) {
-      values.cognitionLimit = this.overrides.cognitionLimit;
-    }
-    if (this.overrides.episodeRecencyWeight !== undefined) {
-      values.episodeRecencyWeight = this.overrides.episodeRecencyWeight;
-    }
-    if (this.overrides.episodeRecencyScaleSeconds !== undefined) {
-      values.episodeRecencyScaleSeconds =
-        this.overrides.episodeRecencyScaleSeconds;
-    }
-    if (this.overrides.episodeRecencyMidpoint !== undefined) {
-      values.episodeRecencyMidpoint = this.overrides.episodeRecencyMidpoint;
-    }
-    if (this.overrides.episodeProbeLimit !== undefined) {
-      values.episodeProbeLimit = this.overrides.episodeProbeLimit;
-    }
-    if (this.overrides.episodeScoreThreshold !== undefined) {
-      values.episodeScoreThreshold = this.overrides.episodeScoreThreshold;
-    }
-    if (this.overrides.constellationNodeLimit !== undefined) {
-      values.constellationNodeLimit = this.overrides.constellationNodeLimit;
+    for (const [key, value] of Object.entries(this.overrides)) {
+      if (value !== undefined) values[key] = value;
     }
     if (Object.keys(values).length === 0) {
       void this.repository.deleteByProvider(MEMORY_PROVIDER_KEY);

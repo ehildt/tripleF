@@ -10,5 +10,17 @@ export const MEMORY_PROFILE_JOB = 'memory-profile';
 export const MEMORY_CONSOLIDATE_JOB = 'memory-consolidate';
 /** Relink sweep job on the vectorize queue — category-aware consolidation + soft links, endpoint-triggered. */
 export const MEMORY_RELINK_JOB = 'memory-relink';
-/** Lexicon supersede sweep job on the vectorize queue — deterministic, no model. */
-export const LEXICON_CONSOLIDATE_JOB = 'lexicon-consolidate';
+/** Encyclopedia supersede sweep job on the vectorize queue — deterministic, no model. */
+export const ENCYCLOPEDIA_CONSOLIDATE_JOB = 'encyclopedia-consolidate';
+/** Encyclopedia classification job on the vectorize queue — labels documents with category + topic. */
+export const ENCYCLOPEDIA_CLASSIFY_JOB = 'encyclopedia-classify';
+/** Reflection job on the vectorize queue — per-scope friction screen over unreflected points. */
+export const MEMORY_REFLECT_JOB = 'memory-reflect';
+/** Conviction-synthesis job on the vectorize queue — synthesizes higher-level convictions/bridges from curated facts. */
+export const MEMORY_CONVICTION_JOB = 'memory-conviction';
+/** Cluster-detection + summarization job on the vectorize queue — clusters the link graph and summarizes each cluster. */
+export const MEMORY_CLUSTER_JOB = 'memory-cluster';
+/** Gap-filling research job on the vectorize queue — closes never-fetched encyclopedia gaps, depth-capped. */
+export const ENCYCLOPEDIA_RESEARCH_JOB = 'encyclopedia-research';
+/** Taxonomy reconciliation job on the vectorize queue — label-merge sweep over one scope's registry, endpoint-triggered. */
+export const MEMORY_TAXONOMY_RECONCILE_JOB = 'memory-taxonomy-reconcile';

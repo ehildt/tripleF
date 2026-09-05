@@ -16,25 +16,32 @@ interface MemoryPartitionRememberDeps {
     text: string;
     tags?: string[];
     category?: string;
+    community?: string;
+    subject?: string;
+    icon?: string;
   }) => Promise<string>;
 }
 
 /**
- * Agentic `memory-partition-remember` tool: stores notable facts about
- * subjects the user cares about (favorites, interests, projects), preferences
- * they state, and anything they explicitly ask to remember — into the fact
- * partition lane. Storing gathered knowledge and noticed preferences is
- * expected — not gated on an explicit "remember" instruction. Stores one
- * record synchronously (embed + upsert, deterministic id so re-remembering
- * the same text updates it) — the text IS the record, and the model-written
- * tags are the filter vocabulary for later recall.
+ * Agentic `memory-partition-remember` tool: stores OBJECTIVE facts — notable
+ * external-world facts about subjects the user cares about (projects,
+ * followed stocks, games, people, past topics), objective details they state
+ * as fact (contact info, decisions, constraints, their setup), and objective
+ * facts they explicitly ask to remember — into the fact partition lane.
+ * Subjective user data (preferences, interests, traits, internal states) is
+ * barred here: it belongs to the cognition lane (memory-cognition-remember).
+ * Storing gathered knowledge is expected — not gated on an explicit
+ * "remember" instruction. Stores one record synchronously (embed + upsert,
+ * deterministic id so re-remembering the same text updates it) — the text IS
+ * the record, and the model-written tags are the filter vocabulary for later
+ * recall.
  */
 export function createMemoryPartitionRememberTool(deps: MemoryPartitionRememberDeps): Tool {
   return tool({
     description:
-      'Store into the user\'s fact partition (memory-partition): notable facts about subjects they care about (favorites, interests, projects, followed stocks, people, past topics), preferences and durable details they state, and anything they explicitly ask you to remember. Storing gathered knowledge and noticed preferences is expected — do not wait for an explicit "remember" instruction. This memory outlives the conversation and is recalled later with memory-partition-recall. STORAGE MECHANICS: each record is embedded as a whole and matched sentence-by-sentence at recall time — write ONE self-contained statement per call (a single dense sentence is fine, subject up front), restating a record verbatim updates it in place, tags are the recall filter vocabulary (lowercase, reusable), and `category` is one broad family label (games, pets, work, health …) that groups narrow tags into one topic family — always include both.',
+      'Store into the user\'s fact partition (memory-partition) — OBJECTIVE facts only: notable external-world facts about subjects they care about (projects, followed stocks, games, people, past topics), objective details they state as fact (contact info, decisions, constraints, their setup), and objective facts they explicitly ask you to remember. You MUST NOT store subjective user data here — preferences, interests, likes/dislikes, behavioral traits, or internal states ("the user likes…") belong to the cognition tier (memory-cognition-remember). Storing gathered knowledge is expected — do not wait for an explicit "remember" instruction. This memory outlives the conversation and is recalled later with memory-partition-recall. STORAGE MECHANICS: each record is embedded as a whole and matched sentence-by-sentence at recall time — write ONE self-contained statement per call (a single dense sentence is fine, subject up front), restating a record verbatim updates it in place, tags are the recall filter vocabulary (lowercase, reusable), and the macro-taxonomy routes each record exactly once: `category` one broad PLURAL family label (games, pets, work, health … — the cluster tier), `community` one PLURAL sub-family under it when one applies (survival games, action rpgs …), `subject` the SINGULAR entity the fact is about (project zomboid, amd, sam … — the hub tier). Always include category; include subject for entity facts; reuse existing labels whenever they fit.',
     inputSchema: memoryPartitionRememberSchema,
-    execute: async ({ text, tags, category }: MemoryPartitionRememberInput) => {
+    execute: async ({ text, tags, category, community, subject, icon }: MemoryPartitionRememberInput) => {
       try {
         const id = await deps.storeRecord({
           memoryPartition: deps.scope.memoryPartition,
@@ -44,6 +51,9 @@ export function createMemoryPartitionRememberTool(deps: MemoryPartitionRememberD
           text,
           tags,
           category,
+          community,
+          subject,
+          icon,
         });
         return { stored: true, id };
       } catch (error) {

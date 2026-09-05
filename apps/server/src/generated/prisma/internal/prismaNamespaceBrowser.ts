@@ -61,8 +61,12 @@ export const ModelName = {
   StockMarketBar: 'StockMarketBar',
   StockMarketHistoryRange: 'StockMarketHistoryRange',
   MemoryInsertLedger: 'MemoryInsertLedger',
-  MemoryLexiconInsertLedger: 'MemoryLexiconInsertLedger',
-  MemoryLink: 'MemoryLink'
+  MemoryEncyclopediaInsertLedger: 'MemoryEncyclopediaInsertLedger',
+  MemoryLink: 'MemoryLink',
+  MemoryFriction: 'MemoryFriction',
+  MemoryCluster: 'MemoryCluster',
+  MemoryTaxonomyNode: 'MemoryTaxonomyNode',
+  MemoryTaxonomyAlias: 'MemoryTaxonomyAlias'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -215,7 +219,7 @@ export const MemoryInsertLedgerScalarFieldEnum = {
 export type MemoryInsertLedgerScalarFieldEnum = (typeof MemoryInsertLedgerScalarFieldEnum)[keyof typeof MemoryInsertLedgerScalarFieldEnum]
 
 
-export const MemoryLexiconInsertLedgerScalarFieldEnum = {
+export const MemoryEncyclopediaInsertLedgerScalarFieldEnum = {
   id: 'id',
   url: 'url',
   contentHash: 'contentHash',
@@ -224,10 +228,11 @@ export const MemoryLexiconInsertLedgerScalarFieldEnum = {
   title: 'title',
   requestId: 'requestId',
   createdAt: 'createdAt',
-  sweptAt: 'sweptAt'
+  sweptAt: 'sweptAt',
+  classifiedAt: 'classifiedAt'
 } as const
 
-export type MemoryLexiconInsertLedgerScalarFieldEnum = (typeof MemoryLexiconInsertLedgerScalarFieldEnum)[keyof typeof MemoryLexiconInsertLedgerScalarFieldEnum]
+export type MemoryEncyclopediaInsertLedgerScalarFieldEnum = (typeof MemoryEncyclopediaInsertLedgerScalarFieldEnum)[keyof typeof MemoryEncyclopediaInsertLedgerScalarFieldEnum]
 
 
 export const MemoryLinkScalarFieldEnum = {
@@ -243,6 +248,79 @@ export const MemoryLinkScalarFieldEnum = {
 } as const
 
 export type MemoryLinkScalarFieldEnum = (typeof MemoryLinkScalarFieldEnum)[keyof typeof MemoryLinkScalarFieldEnum]
+
+
+export const MemoryFrictionScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  source: 'source',
+  target: 'target',
+  kind: 'kind',
+  status: 'status',
+  reason: 'reason',
+  resolution: 'resolution',
+  createdAt: 'createdAt',
+  resolvedAt: 'resolvedAt'
+} as const
+
+export type MemoryFrictionScalarFieldEnum = (typeof MemoryFrictionScalarFieldEnum)[keyof typeof MemoryFrictionScalarFieldEnum]
+
+
+export const MemoryClusterScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  collection: 'collection',
+  scopeKey: 'scopeKey',
+  fingerprint: 'fingerprint',
+  title: 'title',
+  summary: 'summary',
+  memberCount: 'memberCount',
+  memberIds: 'memberIds',
+  level: 'level',
+  parentId: 'parentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryClusterScalarFieldEnum = (typeof MemoryClusterScalarFieldEnum)[keyof typeof MemoryClusterScalarFieldEnum]
+
+
+export const MemoryTaxonomyNodeScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  scopeKey: 'scopeKey',
+  kind: 'kind',
+  parentId: 'parentId',
+  name: 'name',
+  normalizedName: 'normalizedName',
+  icon: 'icon',
+  summary: 'summary',
+  createdBy: 'createdBy',
+  lastReflectedAt: 'lastReflectedAt',
+  lastConsolidatedAt: 'lastConsolidatedAt',
+  lastRelinkedAt: 'lastRelinkedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryTaxonomyNodeScalarFieldEnum = (typeof MemoryTaxonomyNodeScalarFieldEnum)[keyof typeof MemoryTaxonomyNodeScalarFieldEnum]
+
+
+export const MemoryTaxonomyAliasScalarFieldEnum = {
+  id: 'id',
+  nodeId: 'nodeId',
+  lane: 'lane',
+  scopeKey: 'scopeKey',
+  kind: 'kind',
+  alias: 'alias',
+  source: 'source',
+  score: 'score',
+  createdAt: 'createdAt'
+} as const
+
+export type MemoryTaxonomyAliasScalarFieldEnum = (typeof MemoryTaxonomyAliasScalarFieldEnum)[keyof typeof MemoryTaxonomyAliasScalarFieldEnum]
 
 
 export const SortOrder = {

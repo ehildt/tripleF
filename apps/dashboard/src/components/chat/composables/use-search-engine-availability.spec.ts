@@ -31,9 +31,10 @@ function mockFetchByUrl(options: {
       return {
         ok: true,
         status: 200,
-        json: async () => ({
-          providerOverrides: options.sessionOverrides ?? {},
-        }),
+        text: async () =>
+          JSON.stringify({
+            providerOverrides: options.sessionOverrides ?? {},
+          }),
       };
     }
     if (init?.method === 'PUT') {
@@ -189,7 +190,7 @@ describe('useSearchEngineAvailability', () => {
           return {
             ok: true,
             status: 200,
-            json: async () => ({ providerOverrides: {} }),
+            text: async () => JSON.stringify({ providerOverrides: {} }),
           };
         }
         return {
@@ -309,7 +310,7 @@ describe('useSearchEngineAvailability', () => {
           return {
             ok: true,
             status: 200,
-            json: async () => ({ providerOverrides: {} }),
+            text: async () => JSON.stringify({ providerOverrides: {} }),
           };
         }
         if (init?.method === 'PUT') {

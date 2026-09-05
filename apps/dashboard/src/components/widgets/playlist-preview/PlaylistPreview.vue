@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Example floating player shown from SysCtl → Widgets: renders the actual
+ * Example floating player shown from Settings → Widgets: renders the actual
  * floating-player window chrome (same toolbar + empty-state body) at the
  * configured anchor, so the position and look can be previewed. It is a
  * fully separate, non-interactive instance — the toolbar's actions are

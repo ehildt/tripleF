@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { safeMediaUrlOrEmpty, safeVideoUrlOrEmpty } from '../../schemas/index.js';
+import { safeMediaUrlOrEmpty, safeVideoUrlOrEmpty } from '../../schemas/helpers/url-trust/url-schema.helper.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 

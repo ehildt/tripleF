@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Slide-out tab menu docked to a screen edge: the app tabs up top, the theme selector pinned to the bottom. The edge handle toggles the drawer; with autoclose on (SysCtl → Widgets) it also closes after a tab pick or an outside click.',
+          'Slide-out tab menu docked to a screen edge: the app tabs up top, the theme selector pinned to the bottom. The edge handle toggles the drawer; with autoclose on (Settings → Widgets) it also closes after a tab pick or an outside click.',
       },
     },
   },
@@ -39,7 +39,7 @@ export const ChatActive: Story = {};
 /** Menu showing notification stars and counters. */
 export const WithNotifications: Story = {
   args: {
-    activeTab: 'sysctl',
+    activeTab: 'settings',
     showChatStar: true,
     dlqCount: 12,
     debugCount: 5,

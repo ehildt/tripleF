@@ -123,17 +123,17 @@ export type StockMarketHistoryRange = Prisma.StockMarketHistoryRangeModel
  */
 export type MemoryInsertLedger = Prisma.MemoryInsertLedgerModel
 /**
- * Model MemoryLexiconInsertLedger
+ * Model MemoryEncyclopediaInsertLedger
  * *
- *  * Write ledger of the shared knowledge lexicon (memory-lexicon collection in
+ *  * Write ledger of the shared knowledge encyclopedia (memory-encyclopedia collection in
  *  * Qdrant): one row per stored DOCUMENT (url + content hash), written by the
- *  * lexicon select-persist path. Powers the deterministic supersede sweep
+ *  * encyclopedia select-persist path. Powers the deterministic supersede sweep
  *  * (sweptAt null = pending) — the sweep heals orphaned old-hash chunks left by
- *  * a crashed supersede, never adjudicates content. The lexicon is global
+ *  * a crashed supersede, never adjudicates content. The encyclopedia is global
  *  * (public web content), so rows are not partition-scoped; partitionScope is
  *  * provenance only.
  */
-export type MemoryLexiconInsertLedger = Prisma.MemoryLexiconInsertLedgerModel
+export type MemoryEncyclopediaInsertLedger = Prisma.MemoryEncyclopediaInsertLedgerModel
 /**
  * Model MemoryLink
  * *
@@ -145,8 +145,72 @@ export type MemoryLexiconInsertLedger = Prisma.MemoryLexiconInsertLedgerModel
  *  *
  *  * `lane` + `collection` + `scopeKey` scope the graph: partition facts and
  *  * cognition insights live in the memory collection (scope = the space key),
- *  * lexicon chunks in the lexicon collection (scope = 'global'). `collection`
+ *  * encyclopedia chunks in the encyclopedia collection (scope = 'global'). `collection`
  *  * is the model-namespaced name, so switching the embed model strands the old
  *  * graph harmlessly and the new collection backfills on first read.
  */
 export type MemoryLink = Prisma.MemoryLinkModel
+/**
+ * Model MemoryFriction
+ * *
+ *  * Friction records of the memory constellation: one row per contradiction or
+ *  * conflict between two Qdrant points, written by the reflection pass (Phase
+ *  * 2). A friction is a state-machined pair — open until resolved or dismissed
+ *  * — and the losing point is marked superseded on resolution (never deleted).
+ *  * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ *  * space; `source`/`target` are the two conflicting point ids in canonical
+ *  * undirected order.
+ */
+export type MemoryFriction = Prisma.MemoryFrictionModel
+/**
+ * Model MemoryCluster
+ * *
+ *  * Detected clusters of the memory constellation: one row per cluster of
+ *  * related Qdrant points, discovered by the memory-cluster job over the
+ *  * link graph (semantic + topical + evidence edges) and summarized by an LLM
+ *  * into a title + summary. The summary is the cluster's "report" — the
+ *  * connective tissue that lets retrieval answer cross-cutting questions
+ *  * without reading every member.
+ *  *
+ *  * Scoped like MemoryLink: `lane` + `collection` + `scopeKey` identify the
+ *  * space. `fingerprint` is the hash of the sorted member ids — the drift
+ *  * signal: a cluster whose membership changed gets a new fingerprint (and
+ *  * id) and is re-summarized; unchanged clusters keep their row. The job
+ *  * replaces a scope's rows atomically, so stale fingerprints never linger.
+ */
+export type MemoryCluster = Prisma.MemoryClusterModel
+/**
+ * Model MemoryTaxonomyNode
+ * *
+ *  * Canonical macro-taxonomy of the memory constellation: one row per
+ *  * user-visible label tier — `cluster` (plural family, e.g. `games`),
+ *  * `community` (plural sub-family, e.g. `survival`), `hub` (singular entity,
+ *  * e.g. `project zomboid`), `tag` (flat recall vocabulary). Scope =
+ *  * (lane, scopeKey): partition facts per partition key, encyclopedia labels
+ *  * under 'global'; the cognition lane is path-routed and taxonomy-free.
+ *  *
+ *  * The registry is the AI's read-only pick-list and the user's rename/merge
+ *  * surface: persisted rows are never model-rewritten, only adopted (the probe
+ *  * tool picks an id, or mints a new row via CREATE_NEW). Deliberately NOT
+ *  * collection-namespaced — the taxonomy survives embed-model switches; label
+ *  * embeddings for semantic probing live in Qdrant (a small model-namespaced
+ *  * taxonomy collection, one point per node id) and are re-embedded lazily
+ *  * when the embedder changes. `parentId` holds the id of the node one tier
+ *  * up (community → cluster; hub → community, or cluster when no community
+ *  * applies; '' for cluster roots and flat tags) so one unique key serves
+ *  * every kind.
+ */
+export type MemoryTaxonomyNode = Prisma.MemoryTaxonomyNodeModel
+/**
+ * Model MemoryTaxonomyAlias
+ * *
+ *  * Alias registry for taxonomy labels: every snapped/renamed/merged variant
+ *  * stays recorded forever, so a killed label can never be re-minted by the
+ *  * model and every server-side rewrite stays auditable. Scope columns are
+ *  * denormalized from the node so one unique key covers the lookup shape.
+ *  * `source` records the snap provenance: 'normalize' (canonical form),
+ *  * 'fuzzy' (trigram snap), 'semantic' (label embedding), 'llm'
+ *  * (ambiguous-band adjudication), 'user' (rename/merge). `score` keeps the
+ *  * similarity that justified the rewrite.
+ */
+export type MemoryTaxonomyAlias = Prisma.MemoryTaxonomyAliasModel

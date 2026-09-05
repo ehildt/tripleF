@@ -1,27 +1,42 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { MemoryCognitionSnapshotDto } from '../../dtos/memory-cognition-snapshot.dto.js';
-import { MemoryConsolidateResponseDto } from '../../dtos/memory-consolidate-response.dto.js';
-import { MemoryDeleteResponseDto } from '../../dtos/memory-delete-response.dto.js';
+import { MemoryCognitionSnapshotDto } from '../../../memory-cognition/dtos/memory-cognition-snapshot.dto.js';
+import { MemoryClusterDto } from '../../../memory-partition/dtos/memory-cluster.dto.js';
+import { MemoryClusterResponseDto } from '../../../memory-partition/dtos/memory-cluster-response.dto.js';
+import { MemoryConsolidateResponseDto } from '../../../memory-partition/dtos/memory-consolidate-response.dto.js';
+import { MemoryConvictionResponseDto } from '../../../memory-partition/dtos/memory-conviction-response.dto.js';
+import { MemoryDeleteResponseDto } from '../../../memory-partition/dtos/memory-delete-response.dto.js';
+import { MemoryFrictionDto } from '../../../memory-partition/dtos/memory-friction.dto.js';
+import { MemoryLinkDto } from '../../../memory-partition/dtos/memory-link.dto.js';
+import { MemoryLinksRecomputeResponseDto } from '../../../memory-partition/dtos/memory-links-recompute-response.dto.js';
+import { MemoryPruneResponseDto } from '../../../memory-partition/dtos/memory-prune-response.dto.js';
+import { MemoryReflectResponseDto } from '../../../memory-partition/dtos/memory-reflect-response.dto.js';
+import { MemoryRelinkResponseDto } from '../../../memory-partition/dtos/memory-relink-response.dto.js';
+import { MemorySearchClustersResponseDto } from '../../../memory-partition/dtos/memory-search-clusters-response.dto.js';
+import { MemorySynopsisDto } from '../../../memory-partition/dtos/memory-synopsis.dto.js';
 import { MemoryItemDto } from '../../dtos/memory-item.dto.js';
-import { MemoryLinkDto } from '../../dtos/memory-link.dto.js';
-import { MemoryLinksRecomputeResponseDto } from '../../dtos/memory-links-recompute-response.dto.js';
-import { MemoryPruneResponseDto } from '../../dtos/memory-prune-response.dto.js';
-import { MemoryRelinkResponseDto } from '../../dtos/memory-relink-response.dto.js';
-import { QdrantStatusResponseDto } from '../../dtos/qdrant-status.dto.js';
+import { MemoryStatusResponseDto } from '../../dtos/memory-status.dto.js';
 
-export const ApeTagsQdrant = () => ApiTags('Qdrant');
+export const ApeTagsMemory = () => ApiTags('Memory');
 
-export const ApeGetQdrantStatus = () =>
+export const ApeTagsMemoryCognition = () => ApiTags('Memory Cognition');
+
+export const ApeTagsPartitionMaintenance = () =>
+  ApiTags('Memory Partition Maintenance');
+
+export const ApeTagsCognitionMaintenance = () =>
+  ApiTags('Memory Cognition Maintenance');
+
+export const ApeGetMemoryStatus = () =>
   applyDecorators(
-    ApiResponse({ status: 200, type: QdrantStatusResponseDto }),
+    ApiResponse({ status: 200, type: MemoryStatusResponseDto }),
     ApiOperation({
-      summary: 'Qdrant collection status (feature flag, existence, indexes)',
+      summary: 'Memory storage status (feature flag, collections, indexes)',
     }),
   );
 
-export const ApeGetQdrantMemoryCognition = () =>
+export const ApeGetMemoryCognition = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryCognitionSnapshotDto }),
     ApiOperation({
@@ -30,7 +45,7 @@ export const ApeGetQdrantMemoryCognition = () =>
     }),
   );
 
-export const ApeGetQdrantMemory = () =>
+export const ApeGetMemoryList = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({
@@ -38,7 +53,7 @@ export const ApeGetQdrantMemory = () =>
     }),
   );
 
-export const ApeGetQdrantMemoryLinks = () =>
+export const ApeGetMemoryLinks = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryLinkDto] }),
     ApiOperation({
@@ -47,7 +62,25 @@ export const ApeGetQdrantMemoryLinks = () =>
     }),
   );
 
-export const ApePostQdrantMemoryLinksRecompute = () =>
+export const ApeGetMemoryFrictions = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: [MemoryFrictionDto] }),
+    ApiOperation({
+      summary:
+        'Friction records of one memory lane (contradictions/conflicts written by the reflection pass)',
+    }),
+  );
+
+export const ApeGetMemoryClusters = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: [MemoryClusterDto] }),
+    ApiOperation({
+      summary:
+        'Detected clusters of one partition (clusters of related facts with LLM-written title + summary)',
+    }),
+  );
+
+export const ApePostMemoryLinksRecompute = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryLinksRecomputeResponseDto }),
     ApiOperation({
@@ -56,7 +89,7 @@ export const ApePostQdrantMemoryLinksRecompute = () =>
     }),
   );
 
-export const ApePostQdrantText = () =>
+export const ApePostMemoryText = () =>
   applyDecorators(
     ApiResponse({
       status: 200,
@@ -68,7 +101,7 @@ export const ApePostQdrantText = () =>
     }),
   );
 
-export const ApePostQdrantCognitionInsight = () =>
+export const ApePostCognitionInsight = () =>
   applyDecorators(
     ApiResponse({
       status: 200,
@@ -80,16 +113,16 @@ export const ApePostQdrantCognitionInsight = () =>
     }),
   );
 
-export const ApeDeleteQdrantText = () =>
+export const ApeDeleteMemoryText = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryDeleteResponseDto }),
     ApiOperation({
       summary:
-        "Delete memory records by filters, or the AI's cognition document (cognition=true)",
+        "Delete memory records by filters — or, with cognition=true, delete from the AI's cognition space: with text/path the targeted per-item delete, without matchers the whole-space wipe",
     }),
   );
 
-export const ApePostQdrantSearchText = () =>
+export const ApePostMemorySearchText = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({
@@ -97,13 +130,49 @@ export const ApePostQdrantSearchText = () =>
     }),
   );
 
-export const ApePostQdrantSearchVector = () =>
+export const ApePostMemorySearchTextClusters = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemorySearchClustersResponseDto }),
+    ApiOperation({
+      summary:
+        'Graph-augmented text search: the kNN hits plus the detected cluster summaries of the clusters those hits belong to',
+    }),
+  );
+
+export const ApePostMemorySearchSynopses = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemorySynopsisDto, isArray: true }),
+    ApiOperation({
+      summary:
+        "Raptor synopsis probe: semantic search over one scope's cluster synopses (all hierarchy levels, collapsed). Pass memoryPartition for the partition lane; omit for the global encyclopedia synopses.",
+    }),
+  );
+
+export const ApePostMemorySearchVector = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({ summary: 'Search memory by a raw query vector' }),
   );
 
-export const ApeDeleteQdrantMemory = () =>
+export const ApePostMemorySearchBridges = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: [MemoryItemDto] }),
+    ApiOperation({
+      summary:
+        "Search one partition's bridge records (synthesized gap-closers with evidence back-references) — the bridge read path, separate from fact recall",
+    }),
+  );
+
+export const ApePostMemorySearchConvictions = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: [MemoryItemDto] }),
+    ApiOperation({
+      summary:
+        "Search one cognition scope's conviction records (the AI's synthesized conclusions about the user/self model, with evidence back-references) — the conviction probe's read path",
+    }),
+  );
+
+export const ApeDeleteMemory = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryPruneResponseDto }),
     ApiOperation({
@@ -112,30 +181,116 @@ export const ApeDeleteQdrantMemory = () =>
     }),
   );
 
-export const ApePostQdrantConsolidate = () =>
+export const ApePostPartitionConsolidate = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryConsolidateResponseDto }),
     ApiOperation({
       summary:
-        'Enqueue a memory consolidation sweep (LLM-judged keep/redundant/merge over pending inserts) — per partition or all pending partitions',
+        '① Consolidate — 1st step of the partition maintenance pipeline: enqueue the consolidation sweep (LLM-judged keep/redundant/merge over pending inserts), per partition or all pending partitions',
     }),
   );
 
-export const ApePostQdrantMemoryRelink = () =>
+export const ApePostPartitionRelink = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryRelinkResponseDto }),
     ApiOperation({
       summary:
-        'Enqueue the relink sweep of one partition: collapse identical category variants, dedupe each category (converging LLM passes), write topical (suggested) link edges, optionally enrich tags',
+        '② Relink — 2nd step of the partition maintenance pipeline: collapse identical category variants, dedupe each category (converging LLM passes), write topical (suggested) link edges, optionally enrich tags. Runs after consolidate merges settle',
+    }),
+  );
+
+export const ApePostPartitionReconcile = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryRelinkResponseDto }),
+    ApiOperation({
+      summary:
+        '②b Taxonomy reconcile — optional label sweep of the partition pipeline: merges duplicate cluster/community/hub/tag labels (auto above the snap band with token overlap, LLM-verdict in the ambiguous band) with alias provenance. Best after relink settles',
+    }),
+  );
+
+export const ApePostPartitionReflect = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryReflectResponseDto }),
+    ApiOperation({
+      summary:
+        '③ Reflect — 3rd step of the partition maintenance pipeline: screen unreflected facts for contradictions, write friction records, supersede the loser when a winner is clear. Runs after consolidate/relink settle',
+    }),
+  );
+
+export const ApePostPartitionConviction = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryConvictionResponseDto }),
+    ApiOperation({
+      summary:
+        '④ Conviction synthesis — 4th step of the partition maintenance pipeline: synthesize higher-level convictions/bridges from reflected (curated) facts — convictions (cognition lane: the user/self model) and bridges (partition lane: gap-closing links between facts) — each carrying evidence_ids back-references. Runs after reflect settles',
+    }),
+  );
+
+export const ApePostPartitionCluster = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryClusterResponseDto }),
+    ApiOperation({
+      summary:
+        '⑤ Cluster detection — final step of the partition maintenance pipeline: cluster the link graph into clusters, absorb singletons (no lone facts), and summarize each changed cluster. Runs after the graph-mutating steps settle',
+    }),
+  );
+
+export const ApePostCognitionReflect = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryReflectResponseDto }),
+    ApiOperation({
+      summary:
+        "① Reflect — the only manual cognition maintenance step: screen the AI's derived insights for contradictions, write friction records, supersede the loser when a winner is clear. The profile itself is write-driven (recomputed after every answered turn)",
     }),
   );
 
 export const ApeTagsMemoryOverrides = () => ApiTags('Memory Overrides');
 
+export const ApeTagsTaxonomy = () => ApiTags('Memory Taxonomy');
+
+export const ApeGetTaxonomyTree = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        "The scope's taxonomy tree: per-tier nodes with leaf/linked/child counts, maintenance stamps, icons, summaries, and the alias audit trail.",
+    }),
+    ApiOperation({
+      summary:
+        'List the macro-taxonomy of one scope (cluster → community → hub, plus the tag vocabulary) with operational metadata',
+    }),
+  );
+
+export const ApePatchTaxonomyNode = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Node updated — rename/icon propagated; the old name stays a permanent alias.',
+    }),
+    ApiOperation({
+      summary:
+        'Rename a taxonomy node and/or set its Lucide icon (AI read-only: user-managed mutations only)',
+    }),
+  );
+
+export const ApePostTaxonomyMerge = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Node merged into the target — payloads rewritten, aliases folded, children re-parented.',
+    }),
+    ApiOperation({
+      summary:
+        'Merge a taxonomy node into another node of the same scope and tier',
+    }),
+  );
+
 export const ApeGetMemoryOverrides = () =>
   ApiOperation({
     summary:
-      'Current memory system variables (sysctl → system): effective value, env baseline, override flag',
+      'Current memory system variables (settings → system): effective value, env baseline, override flag',
   });
 
 export const ApePutMemoryOverrides = () =>

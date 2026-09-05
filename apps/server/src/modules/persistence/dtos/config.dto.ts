@@ -19,8 +19,8 @@ export class UpsertConfigDto {
 
   @ApiPropertyOptional({
     description:
-      "Memory partition id (sysctl → system) — the user's memory space. Defaults to the session id; a custom value keeps memory stable across browser-session rotation.",
-    example: 'christopher',
+      "Memory partition id (settings → system) — the user's memory space. Defaults to the session id; a custom value keeps memory stable across browser-session rotation.",
+    example: 'default',
   })
   @IsOptional()
   @IsString()
@@ -28,8 +28,8 @@ export class UpsertConfigDto {
 
   @ApiPropertyOptional({
     description:
-      "Memory cognition id (sysctl → system) — the AI's understanding-of-the-user space. Defaults to the memory partition; a custom value lets the AI's cognition live in its own space.",
-    example: 'christopher',
+      "Memory cognition id (settings → system) — the AI's understanding-of-the-user space. Defaults to the memory partition; a custom value lets the AI's cognition live in its own space.",
+    example: 'default',
   })
   @IsOptional()
   @IsString()

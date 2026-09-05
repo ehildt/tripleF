@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import { formatZodShape, type FormatZodShapeOptions } from '../../schemas/index.js';
+import { formatZodShape, type FormatZodShapeOptions } from '../../schemas/helpers/zod/format-zod-shape.helper.js';
 
 /**
  * Assembles a final structured-output prompt from a Zod schema and a prompt

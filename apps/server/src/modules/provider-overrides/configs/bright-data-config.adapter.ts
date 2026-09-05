@@ -42,7 +42,7 @@ export const BrightDataConfigSchema = Joi.object<BrightDataConfig>({
 /**
  * Bright Data runs as an alternative search engine to Serper: it is disabled
  * by default (no API key ships with the repo) and only becomes active once a
- * SERP API key + zone are configured via SysCtl. Reviews are intentionally
+ * SERP API key + zone are configured via Settings. Reviews are intentionally
  * absent — Bright Data's reviews endpoint is currently broken upstream (502).
  */
 export function BrightDataConfigAdapter(env = process.env): BrightDataConfig {

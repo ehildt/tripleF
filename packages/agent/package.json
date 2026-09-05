@@ -1,7 +1,7 @@
 {
   "name": "@triplef/agent",
   "description": "tripleF (3F) agent domain — structured-output schemas, prompt builders, and model tools shared across the apps.",
-  "version": "0.1.11",
+  "version": "0.1.26",
   "packageManager": "pnpm@11.25.0",
   "license": "MIT",
   "type": "module",
@@ -60,7 +60,7 @@
     "turndown": "^7.2.4"
   },
   "peerDependencies": {
-    "ai": "^7.0.87",
+    "ai": "^7.0.93",
     "zod": "^4.5.4"
   },
   "peerDependenciesMeta": {
@@ -69,23 +69,23 @@
     }
   },
   "devDependencies": {
-    "@changesets/cli": "^3.0.1",
+    "@changesets/cli": "^3.0.2",
     "@eslint/js": "^10.0.1",
     "@types/eslint": "^9.6.1",
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.4.1",
     "@types/turndown": "^5.0.6",
     "@vitest/coverage-v8": "4.1.11",
     "depcheck": "^1.4.7",
     "dependency-cruiser": "^18.2.0",
-    "eslint": "^10.9.1",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-simple-import-sort": "^14.0.0",
     "eslint-plugin-sonarjs": "^4.2.0",
-    "globals": "^17.11.0",
+    "globals": "^17.12.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
-    "lint-staged": "^17.4.1",
+    "lint-staged": "^17.5.0",
     "npm-check-updates": "^23.1.0",
     "prettier": "^3.9.6",
     "rimraf": "^6.1.3",

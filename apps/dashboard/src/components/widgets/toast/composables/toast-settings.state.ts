@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import type { ToastType } from '@/types/toast-type.model';
 
 import type {
+  MutedToastMessage,
   ToastAnchor,
   ToastTypeFilters,
 } from './toast-settings.state.types';
@@ -28,6 +29,7 @@ const TOAST_AUTO_HIDE_STORAGE_KEY = 'vision-toast-auto-hide';
 const TOAST_DURATION_SECONDS_STORAGE_KEY = 'vision-toast-duration-seconds';
 const TOAST_PIN_ENABLED_STORAGE_KEY = 'vision-toast-pin-enabled';
 const TOAST_TYPE_FILTERS_STORAGE_KEY = 'vision-toast-type-filters';
+const TOAST_MUTED_MESSAGES_STORAGE_KEY = 'vision-toast-muted';
 
 const TOAST_ANCHORS: readonly ToastAnchor[] = [
   'top-left',
@@ -107,11 +109,40 @@ function loadToastTypeFilters(): ToastTypeFilters {
   }
 }
 
+function loadMutedToastMessages(): MutedToastMessage[] {
+  try {
+    const raw = localStorage.getItem(TOAST_MUTED_MESSAGES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (entry): entry is MutedToastMessage =>
+        typeof entry === 'object' &&
+        entry !== null &&
+        typeof (entry as MutedToastMessage).key === 'string' &&
+        typeof (entry as MutedToastMessage).sample === 'string',
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveMutedToastMessages(messages: MutedToastMessage[]): void {
+  try {
+    localStorage.setItem(
+      TOAST_MUTED_MESSAGES_STORAGE_KEY,
+      JSON.stringify(messages),
+    );
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+}
+
 /**
  * Toast settings, shared module state: whether toasts appear at all, where
  * the stack is anchored, whether toasts auto-hide and after how long,
  * whether they carry a pin, and which message types get toasted.
- * Configured in SysCtl → Widgets.
+ * Configured in Settings → Widgets.
  */
 export const toastEnabled = ref<boolean>(
   loadBoolean(TOAST_ENABLED_STORAGE_KEY, DEFAULT_TOAST_ENABLED),
@@ -125,6 +156,9 @@ export const toastPinEnabled = ref<boolean>(
   loadBoolean(TOAST_PIN_ENABLED_STORAGE_KEY, DEFAULT_TOAST_PIN_ENABLED),
 );
 export const toastTypeFilters = ref<ToastTypeFilters>(loadToastTypeFilters());
+export const toastMutedMessages = ref<MutedToastMessage[]>(
+  loadMutedToastMessages(),
+);
 
 export function setToastEnabled(enabled: boolean) {
   toastEnabled.value = enabled;
@@ -182,4 +216,24 @@ export function resetToastSettings() {
   for (const type of TOAST_TYPES) {
     setToastTypeFilter(type, DEFAULT_TOAST_TYPE_FILTERS[type]);
   }
+  toastMutedMessages.value = [];
+  saveMutedToastMessages([]);
+}
+
+/** "Don't show again" lookups: muted message kinds are skipped at push time. */
+export function isToastMessageMuted(key: string): boolean {
+  return toastMutedMessages.value.some((muted) => muted.key === key);
+}
+
+export function muteToastMessage(key: string, sample: string): void {
+  if (isToastMessageMuted(key)) return;
+  toastMutedMessages.value = [...toastMutedMessages.value, { key, sample }];
+  saveMutedToastMessages(toastMutedMessages.value);
+}
+
+export function unmuteToastMessage(key: string): void {
+  toastMutedMessages.value = toastMutedMessages.value.filter(
+    (muted) => muted.key !== key,
+  );
+  saveMutedToastMessages(toastMutedMessages.value);
 }

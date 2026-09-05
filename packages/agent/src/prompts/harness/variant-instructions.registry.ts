@@ -1,4 +1,4 @@
-import { DEFAULT_VARIANT_ID, TemplateName } from '../../schemas/index.js';
+import { DEFAULT_VARIANT_ID, TemplateName } from '../../schemas/intent.schema.js';
 import { COMPARE_INSTRUCTIONS, COMPARE_VISUAL_INSTRUCTIONS } from '../instructions/compare.instruction.js';
 import {
   DESCRIBE_CONCISE_INSTRUCTIONS,

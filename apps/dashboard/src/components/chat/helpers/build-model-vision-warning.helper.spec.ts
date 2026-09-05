@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { i18n } from '@/i18n/i18n';
+
 import { buildModelVisionWarning } from './build-model-vision-warning.helper';
 
 const png = () => new File(['x'], 'photo.png', { type: 'image/png' });
@@ -21,7 +23,7 @@ describe('buildModelVisionWarning', () => {
 
   it('warns when a model without vision gets files attached', () => {
     expect(buildModelVisionWarning('model-x', ['tools'], [png()])).toBe(
-      'Model "model-x" does not support images. They will be excluded from this request.',
+      i18n.global.t('toast.modelNoImages', { model: 'model-x' }),
     );
   });
 });

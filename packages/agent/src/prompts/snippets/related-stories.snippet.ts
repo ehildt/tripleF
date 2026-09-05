@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { relatedStorySchema } from '../../schemas/index.js';
+import { relatedStorySchema } from '../../schemas/response/related-story-json.schema.js';
 
 import type { TemplateSnippet } from './snippet.types.js';
 

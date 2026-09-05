@@ -10,14 +10,10 @@ export function handleResponse(
   toast: ToastApi,
 ): void {
   if (!res.ok)
-    res.text().then((text) =>
-      toast.error(
-        i18n.global.t('toast.requestError', {
-          status: res.status,
-          detail: text,
-        }),
-      ),
-    );
+    res.text().then((text) => {
+      toast.debug(`HTTP ${res.status}: ${text}`);
+      toast.error(i18n.global.t('toast.requestError', { status: res.status }));
+    });
   else if (socket?.connected) toast.success(i18n.global.t('toast.requestSent'));
   else toast.warning(i18n.global.t('toast.requestSentSocketDisconnected'));
 }

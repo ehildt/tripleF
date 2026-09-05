@@ -1,3 +1,5 @@
+import { i18n } from '@/i18n/i18n';
+
 /**
  * Build the warning shown when the user attaches files to a request whose
  * model has no vision capability. Models without reported capabilities are
@@ -12,5 +14,5 @@ export function buildModelVisionWarning(
   if (files.length === 0) return null;
   const supportsVision = capabilities?.includes('vision') ?? true;
   if (supportsVision) return null;
-  return `Model "${modelName}" does not support images. They will be excluded from this request.`;
+  return i18n.global.t('toast.modelNoImages', { model: modelName });
 }

@@ -1,4 +1,4 @@
-import { internationalCoverageSchema } from '../../schemas/index.js';
+import { internationalCoverageSchema } from '../../schemas/response/international-coverage-json.schema.js';
 import { INTERNATIONAL_COVERAGE_INSTRUCTIONS } from '../instructions/international-coverage.instruction.js';
 
 import type { TemplateSnippet } from './snippet.types.js';

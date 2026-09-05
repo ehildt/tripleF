@@ -1,5 +1,8 @@
-import { ConsolidationVerdictSchema } from '../../schemas/index.js';
+import { ConsolidationVerdictSchema } from '../../schemas/memory/consolidation-verdict.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
+
+import { formatFactMetadata } from './format-fact-metadata.helper.js';
+import { formatProvenanceLine } from './format-provenance-line.helper.js';
 
 /**
  * Prompt for the memory-consolidate queue job — adjudicates pending ledger
@@ -22,6 +25,11 @@ Decide exactly one verdict:
 POLARITY RULE (ABSOLUTE): a flip or addition of negation ("allergic" vs "not allergic", "likes" vs "dislikes") is NEW information — it is never "redundant"; if it corrects a stored statement, merge with the corrected statement.
 PROVENANCE RULE (ABSOLUTE): a statement the user made outweighs assistant-derived wording — mergedText preserves the user's claim; when candidate origins conflict on facts, the user's version wins.
 
+METADATA — each record may show "(subject: …; category: …; kind: …; stability: …)":
+- subject: merge requires the SAME subject; facts about different subjects are always "keep".
+- kind: two "contact" or "state" records about the same subject usually merge into the fuller one. Two "decision" or "preference" records with different content are different facts — keep both.
+- stability: a newer "volatile" state normally replaces the older record via merge.
+
 OUTPUT FORMAT — output ONLY valid JSON:`,
   after: 'No markdown fences, no explanations. mergedText is required with verdict "merge" and omitted otherwise.',
 });
@@ -31,12 +39,14 @@ interface ConsolidateProvenanceLine {
   text: string;
   role: string;
   createdAt?: string;
-}
-
-function renderLine(line: ConsolidateProvenanceLine): string {
-  const who = line.role === 'user' ? 'the user' : 'you (assistant)';
-  const when = line.createdAt ? ` on ${new Date(line.createdAt).toISOString().slice(0, 10)}` : '';
-  return `"${line.text}" — stated by ${who}${when}`;
+  /** The entity the record is about — merging requires the same subject. */
+  subject?: string;
+  /** Broad family label. */
+  category?: string;
+  /** What kind of durable thing this is (preference, state, contact, …). */
+  kind?: string;
+  /** Whether a newer statement is expected to replace this one. */
+  stability?: string;
 }
 
 /**
@@ -48,10 +58,10 @@ export function buildConsolidatePrompt(params: {
   candidates: ConsolidateProvenanceLine[];
 }): string {
   const candidates = params.candidates.length
-    ? params.candidates.map((c) => `- ${renderLine(c)}`).join('\n')
+    ? params.candidates.map((c) => `- ${formatProvenanceLine(c)}${formatFactMetadata(c)}`).join('\n')
     : '(none)';
   return [
-    `NEW FACT:\n- ${renderLine(params.newFact)}`,
+    `NEW FACT:\n- ${formatProvenanceLine(params.newFact)}${formatFactMetadata(params.newFact)}`,
     `EXISTING CANDIDATES:\n${candidates}`,
     'Decide exactly one verdict (keep / redundant / merge) and output ONLY the JSON object.',
   ].join('\n\n');

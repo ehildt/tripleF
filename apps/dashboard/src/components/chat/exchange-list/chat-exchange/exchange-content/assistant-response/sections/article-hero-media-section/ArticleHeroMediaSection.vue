@@ -123,7 +123,8 @@ function handleClick() {
   margin: 0.75em auto 0;
   width: 100%;
   /* Match the video list/gallery cards: the media sits on a card backdrop. */
-  background: var(--color-bg-tertiary);
+  background-color: var(--color-bg-tertiary);
+  align-self: center;
 }
 
 /* The hero video matches the height of a lone last-row gallery banner

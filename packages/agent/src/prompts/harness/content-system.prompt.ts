@@ -9,11 +9,8 @@ import { buildLocalizationRule } from '../shared/localization-rule.prompt.js';
 import { MEDIA_COUNTS } from '../shared/media-counts.prompt.js';
 import { MEDIA_RULES } from '../shared/media-rules.prompt.js';
 import { MERGE_MEDIA_RULES, MERGE_TOPIC_RULE } from '../shared/merge-rules.prompt.js';
-import { MULTIMODAL_POLICY } from '../shared/multimodal-policy.prompt.js';
-import { NOISE_RULES } from '../shared/noise-rules.prompt.js';
 import { buildOutputContract } from '../shared/output-contract.prompt.js';
 import { PRECEDENCE_RULES } from '../shared/precedence-rules.prompt.js';
-import { SECURITY_RULES } from '../shared/security-rules.prompt.js';
 import { buildSourcePolicyPrompt } from '../shared/source-policy.prompt.js';
 import { SOURCE_TRUTH_RULES } from '../shared/source-truth.prompt.js';
 import { SOURCE_VOICE_RULES } from '../shared/source-voice.prompt.js';
@@ -56,12 +53,16 @@ Do not add other top-level keys — unknown keys are dropped.`;
   const sections: string[] = [
     buildOutputContract(params.template),
     buildLanguageRule(params.language),
-    SECURITY_RULES,
     PRECEDENCE_RULES,
-    NOISE_RULES,
   ];
 
-  if (params.isImageTask) sections.push(MULTIMODAL_POLICY, IMAGE_TASK_RULE);
+  // SECURITY, NOISE, and MULTIMODAL rules are NOT repeated here: the base
+  // system message (buildBaseSystemPrompt) carries them, and the harness
+  // preserves that message through sanitize into the respond step's final
+  // message list. The image-task guardrail guarantees buffers for
+  // describe/compare/ocr, so the base message always holds MULTIMODAL when
+  // an image task runs.
+  if (params.isImageTask) sections.push(IMAGE_TASK_RULE);
 
   sections.push(`TEMPLATE: ${params.template}`, returnDirective);
 
@@ -87,7 +88,7 @@ Do not add other top-level keys — unknown keys are dropped.`;
     TOOL_RESULTS_RULES,
   );
 
-  // Runtime source policy (SysCtl): preferred domains = soft rank guidance,
+  // Runtime source policy (Settings): preferred domains = soft rank guidance,
   // blocked domains = absolute exclusions.
   const sourcePolicy = buildSourcePolicyPrompt(params.sources);
   if (sourcePolicy) sections.push(sourcePolicy);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatVariantCatalog, TEMPLATE_VARIANTS } from './variant-catalog.helper.js';
+import { TEMPLATE_VARIANTS } from '../variant-instructions.registry.js';
+
+import { formatVariantCatalog } from './variant-catalog.helper.js';
 
 describe('formatVariantCatalog', () => {
   it('lists every template with its variants', () => {

@@ -8,11 +8,11 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { MemoryHealthIndicator as MemoryAppHealthIndicator } from '../../memory-client/services/memory-health-indicator.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
+import { OllamaOverridesService } from '../../ollama/services/ollama-overrides.service.js';
 
 import { HealthService } from './health.service.js';
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';

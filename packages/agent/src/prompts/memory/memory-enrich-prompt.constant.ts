@@ -1,4 +1,4 @@
-import { MemoryEnrichmentSchema } from '../../schemas/index.js';
+import { MemoryEnrichmentSchema } from '../../schemas/memory/enrichment.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
 
 /**

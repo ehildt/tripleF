@@ -3,5 +3,6 @@ export function mapPageImage(hash: string, index: number, metaName: string) {
   return {
     name: `${metaName} · page ${index + 1}`,
     hash,
+    page: index + 1,
   };
 }

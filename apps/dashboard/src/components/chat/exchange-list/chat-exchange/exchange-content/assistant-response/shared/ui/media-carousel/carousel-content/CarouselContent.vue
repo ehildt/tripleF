@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
+import type { MediaItem } from '@/types/harness-response-data.model';
+
 import { isVideoMediaItem } from '../../../helpers/is-video-media-item.helper';
 import GalleryItemComponent from '../gallery-item/GalleryItem.vue';
 import VideoCarouselItem from '../video-carousel-item/VideoCarouselItem.vue';
 import type { CarouselContentProps } from './CarouselContent.types';
 
 const props = defineProps<CarouselContentProps>();
-const emit = defineEmits<{ scroll: []; prev: []; next: [] }>();
+const emit = defineEmits<{
+  scroll: [];
+  prev: [];
+  next: [];
+  remove: [item: MediaItem];
+}>();
 
 /** The scroll track, exposed so the orchestrator can drive it programmatically. */
 const trackRef = ref<HTMLElement>();
@@ -40,11 +47,13 @@ const countClass = computed(() =>
         <GalleryItemComponent
           v-if="!isVideoMediaItem(item)"
           :item="item"
+          :removable="removable"
           :class="{
             'harness-gallery__item--active': index === activeIndex,
             'harness-gallery__item--prev': index === activeIndex - 1,
             'harness-gallery__item--next': index === activeIndex + 1,
           }"
+          @remove="emit('remove', item)"
         />
         <VideoCarouselItem
           v-else

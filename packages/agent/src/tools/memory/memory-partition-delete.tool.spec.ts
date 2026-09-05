@@ -17,7 +17,7 @@ describe('createMemoryPartitionDeleteTool', () => {
     });
     const tool = createMemoryPartitionDeleteTool({ scope, deleteRecords });
 
-    const result = await tool.execute({ text: 'Sams phone number is 555-1234' }, {} as never);
+    const result = await tool.execute!({ text: 'Sams phone number is 555-1234' }, {} as never);
 
     expect(deleteRecords).toHaveBeenCalledWith({
       memoryPartition: 'christopher',
@@ -37,7 +37,7 @@ describe('createMemoryPartitionDeleteTool', () => {
     });
     const tool = createMemoryPartitionDeleteTool({ scope, deleteRecords });
 
-    const result = await tool.execute({ text: 'not stored' }, {} as never);
+    const result = await tool.execute!({ text: 'not stored' }, {} as never);
 
     expect(result).toEqual({
       deleted: 0,
@@ -50,7 +50,7 @@ describe('createMemoryPartitionDeleteTool', () => {
     const deleteRecords = vi.fn().mockRejectedValue(new Error('store down'));
     const tool = createMemoryPartitionDeleteTool({ scope, deleteRecords });
 
-    const result = await tool.execute({ text: 'Doomed fact' }, {} as never);
+    const result = await tool.execute!({ text: 'Doomed fact' }, {} as never);
 
     expect(result).toEqual({ deleted: 0, error: 'store down' });
   });

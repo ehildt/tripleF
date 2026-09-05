@@ -9,11 +9,19 @@ import type {
  * Project an in-memory conversation into the shape stored on the server:
  * everything except the transient `File` handles, which cannot be
  * serialized. The file metadata survives via `savedFileInfos`.
+ *
+ * The result must be a PLAIN snapshot: reading fields off the reactive store
+ * object returns nested reactive proxies, and IndexedDB (Dexie `put`,
+ * structured clone) rejects those with `DataCloneError: [object Array] could
+ * not be cloned` — the localStorage→IndexedDB migration regressed on exactly
+ * this because `JSON.stringify` tolerates proxies while structuredClone does
+ * not. A JSON round-trip unwraps every level; all persisted fields are
+ * JSON-safe (numbers/strings/booleans/plain objects).
  */
 export function toPersistedConversation(
   conversation: Conversation,
 ): PersistedConversation {
-  return {
+  const persisted = {
     id: conversation.id,
     title: conversation.title,
     exchanges: conversation.exchanges,
@@ -40,4 +48,5 @@ export function toPersistedConversation(
       conversation.numCtx,
     ),
   };
+  return JSON.parse(JSON.stringify(persisted)) as PersistedConversation;
 }

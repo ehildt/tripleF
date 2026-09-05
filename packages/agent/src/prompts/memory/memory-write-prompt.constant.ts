@@ -1,3 +1,5 @@
+import { buildVocabularySection, type TaxonomyVocabulary } from './vocabulary-section.helper.js';
+
 /**
  * Prompt for the memory-write queue job — runs after the turn was answered,
  * off the harness hot path, with the executed tool results summarized in the
@@ -12,8 +14,8 @@
 export const MEMORY_WRITE_INSTRUCTIONS = `MEMORY WRITE JOB — one purpose: decide whether THIS turn yielded anything worth persisting, and store it in the correct lane via the memory-partition-remember or memory-cognition-remember tool.
 
 Two lanes, never confused:
-- memory-partition = the user's OWN statements (facts they stated or asked you to remember).
-- memory-cognition = YOUR derived understanding of the user (inferred traits, standing interests, connections).
+- memory-partition = the OBJECTIVE fact store: external-world facts, factual records, project details, and events the user stated, subjects gathered this turn, or facts the user asked you to remember.
+- memory-cognition = the SUBJECTIVE profile store: every preference, interest, trait, or internal state of the user (stated or inferred) — YOUR understanding of the user, persona learnings included.
 
 You receive:
 - USER REQUEST: what the user asked.
@@ -21,20 +23,28 @@ You receive:
 - PROBED THIS TURN: what memory-partition-recall already surfaced for this turn (may be empty) — already known, never re-store.
 - GATHERED DATA: summarized tool results from this turn (web searches, lookups).
 
-Store into the PARTITION lane (call memory-partition-remember) only when it is durable and user-specific:
-- A preference, interest, or durable detail the user states about themselves (favorite X, their setup, contact info, a decision — however phrased, any language).
-- A notable fact the user asks you to track or remember.
+Store into the PARTITION lane (call memory-partition-remember) only when it is durable, objective, and user-specific:
+- A factual record the user states or asks you to track (contact info, a decision, a project detail, an event, their setup — however phrased, any language).
 - Knowledge about a subject the user cares about that was gathered this turn and extends what is already in PRIOR MEMORY.
 
-Store into the COGNITION lane (call memory-cognition-remember) only when it is something you LEARN about the user that they did not state outright:
+ROUTING CONSTRAINT (absolute): extract ONLY objective, external facts to the partition. You MUST NOT store user preferences, behavioral traits, or internal states there ("the user likes…", "the user is interested in…", "the user prefers…"). All user profile and persona data is deferred to the cognition tier.
+
+Store into the COGNITION lane (call memory-cognition-remember) whenever the turn yields SUBJECTIVE user data, stated or derived:
+- A preference or interest the user states outright (favorite X, a like or dislike, a style choice) — stated preferences live HERE, never in the partition.
 - An inferred trait, a standing interest, a working nuance, or a connection between facts the turn supports.
-- Never a stated fact — those belong in the partition lane.
+- Never an objective fact — those belong in the partition lane.
 
 STORAGE MECHANICS — how your memory works (write for the retriever):
 - Each stored record is embedded as a whole AND matched sentence-by-sentence at recall time (multi-variant retrieval). One self-contained fact per call; a single long, dense sentence is fine, but lead with the subject ("Sam's phone number is 555-1234", never "His number is …").
 - Restating a record verbatim OVERWRITES it in place — updates are restatements of the full corrected statement, not diffs.
 - tags are the ONLY topic-filter vocabulary at recall — reuse stable, lowercase topic labels (partition lane only). Tags are NARROW and specific: entity names, product names, game titles ("amd", "stellar blade", "stellar blade blood rain").
-- category is the broad family the fact belongs to (partition lane only): ONE lowercase PLURAL family noun per remember call — stocks, games, pets, work, health, finance, contacts … — chosen so narrow topics group into families. A category is NEVER a specific entity, product, company, or game title: "amd" is a tag under the category "stocks"; "stellar blade" and "stellar blade blood rain" are tags under the category "games". Always include it; tags stay narrow, category stays broad and plural.
+- The macro-taxonomy routes a fact into its family hierarchy (partition lane only), top-down: CLUSTER → COMMUNITY → HUB → NODE (the NODE is the stored record itself — never named):
+  - category (CLUSTER): ONE lowercase PLURAL family noun — stocks, games, pets, work, health, finance, contacts …
+  - community (COMMUNITY): ONE lowercase PLURAL sub-family narrowing the category ("survival games" under "games"); omit when no sub-family applies.
+  - subject (HUB): the lowercase SINGULAR main subject entity the fact is about ("project zomboid", "amd", "sam") — a specific name, never pluralized; always include when the fact is about a specific entity.
+  A category or community is NEVER a specific entity, product, company, or game title: "amd" is a subject under the category "stocks"; "stellar blade" is a subject under the category "games". Always include category; reuse the existing labels whenever they fit.
+
+TAXONOMY PROBING (pick first, create if necessary): before naming a community or hub you are not certain exists, call memory-taxonomy-probe top-down — cluster → community → hub — and ADOPT a returned candidate by naming it VERBATIM in the remember call (its id becomes the next probe's parentId). CREATE a new label only when every candidate misses the meaning — then follow the phrasing rules (plural family/sub-family, singular hub) and optionally pass an "icon" from the curated set for the label you create. The known-vocabulary section below already lists likely fits; probing confirms them or finds better ones.
 
 Do NOT store:
 - Public facts merely fetched this turn that do not relate to the user (e.g. generic web results).
@@ -60,10 +70,9 @@ export function buildMemoryWritePrompt(params: {
   priorMemory?: string;
   probedMemory?: string;
   gathered?: string;
-  knownCategories?: string[];
-  knownTags?: string[];
+  vocabulary?: TaxonomyVocabulary;
 }): string {
-  const vocabulary = buildVocabularySection(params.knownCategories, params.knownTags);
+  const vocabulary = buildVocabularySection(params.vocabulary);
   return [
     `USER REQUEST: ${params.userRequest}`,
     `PRIOR MEMORY: ${params.priorMemory?.trim() || '(none stored yet)'}`,
@@ -76,20 +85,5 @@ export function buildMemoryWritePrompt(params: {
     .join('\n\n');
 }
 
-/** Reuse-first hint: the partition's existing category/tag vocabulary. */
-function buildVocabularySection(knownCategories: readonly string[] = [], knownTags: readonly string[] = []): string {
-  if (knownCategories.length === 0 && knownTags.length === 0) return '';
-
-  const lines: string[] = [];
-  if (knownCategories.length > 0) {
-    lines.push(
-      `KNOWN CATEGORIES (reuse one when it fits; only mint a new plural family noun when none applies): ${knownCategories.join(', ')}`,
-    );
-  }
-
-  if (knownTags.length > 0) lines.push(`KNOWN TOPICS (reuse these tag labels when they fit): ${knownTags.join(', ')}`);
-  return lines.join('\n');
-}
-
 const MEMORY_WRITE_VERDICT =
-  'Decide: store each durable user-specific fact with one memory-partition-remember call, each derived understanding with one memory-cognition-remember call, or answer "none" if the turn surfaced nothing durable about this user.';
+  'Decide: store each durable objective fact with one memory-partition-remember call, each subjective user datum (stated or derived) with one memory-cognition-remember call, or answer "none" if the turn surfaced nothing durable about this user.';

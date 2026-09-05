@@ -7,9 +7,9 @@ import { type IntentResult } from '@triplef/agent/schemas';
 import type { InputMessage } from '@triplef/ai-sdk';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
 import type { MemoryClientConfig } from '../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
+import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
 import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';

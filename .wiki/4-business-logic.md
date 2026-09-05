@@ -4,7 +4,7 @@ This section explains, in plain language, what tripleF actually does and what ea
 
 ## 4.1 The product in one paragraph
 
-tripleF is a local-first, agentic AI workbench: a conversation harness (server) plus a dashboard (web UI). A user asks a question, optionally attaching images. The harness decides what kind of answer is needed, gathers real-world evidence from web and media searches, composes a structured answer, and streams it live to the UI, where it is rendered as rich, interactive content — articles, product overviews, news briefings, comparisons, and video or image collections. Because it runs on free models through Ollama (locally or in the cloud), every capability is built on one shared assumption: a single model call is not enough. Answers are built in stages and verified against real data before the user sees them.
+tripleF is a local-first, agentic AI workbench: a conversation harness (server), a long-term memory service (memory app), and a dashboard (web UI). A user asks a question, optionally attaching images or documents. The harness decides what kind of answer is needed, gathers real-world evidence from web and media searches, composes a structured answer, and streams it live to the UI, where it is rendered as rich, interactive content — articles, product overviews, news briefings, comparisons, and video or image collections. Because it runs on free models through Ollama (locally or in the cloud), every capability is built on one shared assumption: a single model call is not enough. Answers are built in stages and verified against real data before the user sees them.
 
 ## 4.2 The core loop: request → intent → evidence → answer
 
@@ -77,9 +77,19 @@ Stock-market intents (`stockmarketitem` / `stockmarketlist`) are grounded in **r
 
 **How it works.** The server keeps a Postgres cache of daily OHLCV bars plus a coverage ledger of which date windows have been fetched per ticker. A request for a range only backfills intervals the ledger does not know about; the most recent days are always re-fetched so late restatements propagate. Technical indicators (SMA, EMA, RSI, MACD, ATR, ADX, Bollinger Bands, Stochastic) are computed locally from the cached bars. The dashboard's chart paginates against the same cache, so repeated questions about the same ticker cost no provider calls.
 
-**What it relies on:** the EODHD provider client and its API key override (SysCtl), the `StockMarketBar`/`StockMarketHistoryRange` tables, the indicator helpers, and the D3 chart components.
+**What it relies on:** the EODHD provider client and its API key override (Settings), the `StockMarketBar`/`StockMarketHistoryRange` tables, the indicator helpers, and the D3 chart components.
 
-## 4.8 The whole, at a glance
+## 4.8 Long-term memory and the knowledge encyclopedia
+
+The newest business capability: the AI **learns and remembers** — within the same trust discipline as everything else.
+
+**How it works.** The system keeps two spaces per user: a **fact partition** (statements the user made or asked to remember) and a **cognition space** (the AI's derived understanding — a compact profile document plus insight, episode, and conviction records). Every answered turn quietly updates them in the background; every new turn gets personalised by them (profile as always-on context, insights/episodes/convictions probed per turn). On top sits the **constellation** — a link graph that relates records semantically, surfaces contradictions as frictions, and clusters topics into summarized reports — and the **encyclopedia**, a shared knowledge base of verbatim source passages the harness can cite from later.
+
+**The business rules.** Memory is *derived, inspectable, and retractable*: users can read everything the AI knows (Settings memory section), edit or wipe it (partition, cognition, or a single verbatim record), and the AI states plainly when it personalized an answer. Maintenance is never a black box either — consolidations, reflections, convictions, and cluster summaries are explicit, logged jobs the user can trigger, schedule via flags, or disable.
+
+**What it relies on:** the memory app service boundary with degrade-open semantics (a memory outage never breaks a turn), the vectorize queue, Qdrant plus the Postgres ledgers/graph tables, the memory system variables (see **1.6** §9 / **1.8**), and the trust rule that machine-derived memory is marked private context, never quoted as user-stated fact.
+
+## 4.9 The whole, at a glance
 
 | Feature | How it behaves for the user | What it depends on |
 | --- | --- | --- |
@@ -88,11 +98,13 @@ Stock-market intents (`stockmarketitem` / `stockmarketlist`) are grounded in **r
 | Video playlists | Curated, ordered, playable, persistent, deduped | Video search, embeddable-provider allow-list, title/caption contract, browser-persisted playlist, single floating player |
 | Image collections | Quality-filtered, deduped, locally stored | Image search, ingestion and preprocessing, object storage |
 | Long conversations | Context-size aware, organised via rename/delete/pin | Persistence, context-size readout, streaming |
+| Memory & personalization | AI remembers facts and preferences; cognition is inspectable and retractable | Memory app, vectorize queue, cognition schema, system variables |
+| Knowledge grounding | Verbatim, provenance-carrying passages feed answers instead of model memory | Encyclopedia select/index, chunking, selection budget |
 | Custom scroll experience | Two scroll modes (vertical carousel with crossfade, or native continuous scroll), per-conversation choice, auto-scroll that releases when reading | Scroll-mode state (localStorage), `useVerticalCarousel`/`useNativeScroll`, `ScrollableExchangeList` |
 | Stock-market answers | Real OHLCV history, indicators, and charts grounded in cached market data | EODHD provider, Postgres bar cache + coverage ledger, indicator helpers, D3 charts |
 | Persistence and reliability | Work survives failure, retries, and restarts | Queue, database, object storage, key store |
 
-## 4.9 The trust boundary
+## 4.10 The trust boundary
 
 Every feature ultimately leans on one principle: **the model proposes, the system disposes.** The model generates ideas and structure; the system gathers evidence, validates shape, enforces media contracts, and filters out whatever cannot be trusted or embedded. Architects should keep this boundary in mind when extending the product — new features should grow the "system" side (rules, validation, grounding) rather than trusting the "model" side to behave. That design philosophy is what keeps tripleF reliable even though the underlying models are free, local, and fallible.
 
@@ -100,5 +112,7 @@ Every feature ultimately leans on one principle: **the model proposes, the syste
 
 - For the mechanics behind the loop: **1.2 (The Harness)** and **2.2 (The Chat Experience)**.
 - For how conversations are stored: **1.5 (Data & Storage)** and **1.3 (BullMQ Async Processing)**.
+- For memory, cognition, and the encyclopedia: **1.7 (The Memory App)** and **1.6 (Memory Cognition)**.
+- For what each configuration changes: **1.8 (Runtime Configuration)**.
 - For the real-time transport that streams answers: **1.4 (Socket.IO Real-time Layer)**.
 - For how the UI is architected to render these features: **2.1 (Frontend Architecture)**.

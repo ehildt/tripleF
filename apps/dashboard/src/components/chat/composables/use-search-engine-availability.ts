@@ -17,11 +17,11 @@ import type { SearchEngineState } from './use-search-engine-availability.types';
  *
  * Reads the masked provider-overrides snapshot (a masked `apiKey` proves a
  * key is configured server-side) across every search engine and merges the
- * session-persisted `*.enabled` override, mirroring how SysCtl applies each
+ * session-persisted `*.enabled` override, mirroring how Settings applies each
  * toggle. Search counts as enabled when at least one configured engine is
  * on. The master toggle writes `enabled` for ALL configured engines (Serper,
  * Bright Data, YouTube) to both the server overrides and the session
- * overrides — the same pair SysCtl writes — so every view stays consistent.
+ * overrides — the same pair Settings writes — so every view stays consistent.
  * The state is `unknown` while loading or after a failed fetch so the UI
  * does not flash a wrong indicator.
  */
@@ -173,7 +173,7 @@ export function useSearchEngineAvailability() {
 
   /**
    * Toggle one search source (web, images, news, …) from the prompt-bar
-   * tags — same dual write as the kill switch and SysCtl source toggles
+   * tags — same dual write as the kill switch and Settings source toggles
    * (server overrides + session config), so the setting survives reloads
    * and server restarts. Only the engines that currently have the source
    * enabled are flipped (or, when none are, the primary engine is turned

@@ -1,14 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
+import {
+  buildClarificationTranslationSystemPrompt,
+  buildClarificationTranslationUserPrompt,
+  buildCognitionProfileSection,
+  buildMemoryProbeSection,
+  buildSynopsisProbeSection,
+} from '@triplef/agent/prompts';
 import type { IntentResult } from '@triplef/agent/schemas';
+import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { AiSdkService } from '@triplef/ai-sdk';
 import { SocketIOService } from '@triplef/socketio';
 
-import { buildProviderOptions } from '../../../ai-sdk/helpers/provider-options.helper.js';
 import {
   EPISODE_PROBE_LIMIT,
-  EPISODE_TAGS,
+  EPISODE_TAG,
 } from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
+import { buildProviderOptions } from '../../../ollama/helpers/provider-options.helper.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import type { InterpretResult } from '../../actions/interpret.action.types.js';
 import { splitCognitionProfile } from '../../helpers/cognition/split-cognition-profile.helper.js';
@@ -17,11 +25,8 @@ import {
   HARNESS_ACTIVITY_KEYS,
   resolveHarnessActivityLanguage,
 } from '../../helpers/harness-activity.helper.js';
-import { buildMemoryProbeSection } from '../../helpers/interpret/build-memory-probe-section.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
-
-const IMAGE_REQUIRED_TEMPLATES = new Set(['describe', 'compare', 'ocr']);
 
 /**
  * Fallback for a classifier that emitted an image-only template although
@@ -163,6 +168,23 @@ export class InterpretStepService implements StepHandler {
     });
     const probeSection = buildMemoryProbeSection(hits);
 
+    // Synopsis probe: the Raptor layer — community summaries over clusters.
+    // A cross-cutting question vector-matches the community summary even
+    // when no single record ranks highly (≤2 hits per lane: the user's
+    // partition scope plus the global encyclopedia synopses).
+    const [partitionSynopses, encyclopediaSynopses] = await Promise.all([
+      this.memoryClient.searchSynopses({
+        memoryPartition,
+        text: query,
+        limit: 2,
+      }),
+      this.memoryClient.searchSynopses({ text: query, limit: 2 }),
+    ]);
+    const synopsisSection = buildSynopsisProbeSection([
+      ...partitionSynopses,
+      ...encyclopediaSynopses,
+    ]);
+
     // Episode probe: the AI's short-term memory of past turns (cognition
     // lane) — resolves references to "the thing we were working on" that the
     // fact partition never captured. Recency-blended, topic-matched.
@@ -173,7 +195,7 @@ export class InterpretStepService implements StepHandler {
       cognitionKey && episodeProbeLimit > 0
         ? await this.memoryClient.searchByText({
             text: query,
-            tags: [...EPISODE_TAGS],
+            tags: [EPISODE_TAG],
             recency: true,
             limit: episodeProbeLimit,
           })
@@ -182,7 +204,17 @@ export class InterpretStepService implements StepHandler {
       ? `RECENT CONVERSATIONS — what you and the user were working on in recent turns (topic-matched):\n${episodeHits.map((hit) => `- ${hit.text}`).join('\n')}`
       : undefined;
 
-    const combinedProbe = [probeSection, episodeSection]
+    // Cognition profile: the AI's derived model of the user — the third
+    // probe layer, so the classifier resolves references against what the AI
+    // LEARNED (interests, traits, standing context), not just what was said.
+    const profileSection = await this.probeCognitionProfile(cognitionKey);
+
+    const combinedProbe = [
+      probeSection,
+      synopsisSection,
+      episodeSection,
+      profileSection,
+    ]
       .filter(Boolean)
       .join('\n\n');
     if (!combinedProbe) return undefined;
@@ -245,6 +277,30 @@ export class InterpretStepService implements StepHandler {
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
     };
+  }
+
+  /**
+   * The cognition-profile probe layer: the AI's derived understanding of the
+   * user (user-side profile only — persona/corrections are the AI's own
+   * identity/rules, never routing data). Silent undefined on any failure —
+   * personalization is a bonus layer, never a failed clarification.
+   */
+  private async probeCognitionProfile(
+    cognitionKey: string | undefined,
+  ): Promise<string | undefined> {
+    if (!cognitionKey) return undefined;
+    try {
+      const snapshot = await this.memoryClient.getCognition(cognitionKey);
+      if (!snapshot.profile) return undefined;
+      const { userProfile } = splitCognitionProfile(
+        JSON.parse(snapshot.profile) as Record<string, unknown>,
+      );
+      return userProfile
+        ? buildCognitionProfileSection(JSON.stringify(userProfile))
+        : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**
@@ -351,7 +407,7 @@ export class InterpretStepService implements StepHandler {
     ctx: HarnessContext,
     intent: NonNullable<HarnessContext['outputs']['intent']>,
   ): void {
-    if (!IMAGE_REQUIRED_TEMPLATES.has(intent.template)) return;
+    if (!isImageTaskTemplate(intent.template)) return;
 
     const hasImages = ctx.buffers.length > 0 || ctx.processedMeta.length > 0;
     if (hasImages) {
@@ -394,13 +450,6 @@ export class InterpretStepService implements StepHandler {
     const code = language?.trim().toLowerCase() ?? '';
     if (code === 'en') return englishQuestion;
 
-    // The model picks the language: either the detected ISO code or, when
-    // detection failed, whatever language the latest user message is in.
-    const targetRule =
-      code.length === 2
-        ? `Write ONLY in "${code}".`
-        : 'Write in the SAME language as the quoted user message. Never use English unless the user message is English.';
-
     const latestUserMessage = this.findLatestUserText(ctx.request.messages);
 
     try {
@@ -409,13 +458,14 @@ export class InterpretStepService implements StepHandler {
         messages: [
           {
             role: 'system',
-            content: `You translate short clarifying questions for a chat assistant. ${targetRule} Keep the question concise, natural, and faithful to the original meaning. Output ONLY the question.`,
+            content: buildClarificationTranslationSystemPrompt(language),
           },
           {
             role: 'user',
-            content: latestUserMessage
-              ? `User message: ${latestUserMessage}\n\nQuestion to translate: ${englishQuestion}`
-              : `Question to translate: ${englishQuestion}`,
+            content: buildClarificationTranslationUserPrompt(
+              englishQuestion,
+              latestUserMessage,
+            ),
           },
         ],
         providerOptions: buildProviderOptions({

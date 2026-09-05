@@ -53,7 +53,7 @@ scheduleIdle(() => appStore.syncMemoryPartitionFromServer());
 // Same contract for the cognition space id (the AI's memory space).
 scheduleIdle(() => appStore.syncMemoryCognitionFromServer());
 
-// The SysCtl popout preview is transient: switching tabs dismisses it.
+// The Settings popout preview is transient: switching tabs dismisses it.
 // Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
 // cannot be used directly as a watch source.
 watch(

@@ -33,6 +33,37 @@ We believe velocity without ownership accelerates directly into technical insolv
 
 <br>
 
+## Kickoff
+
+<div align="left">
+
+1. [Install Docker/Docker Compose](https://docs.docker.com/compose/install/)
+2. [Clone Repository](https://github.com/ehildt/tripleF)
+3. Create API keys (optional but recommended):
+   - **Ollama API key** — for cloud models. Create one at [ollama.com/settings/keys](https://ollama.com/settings/keys) · [auth docs](https://docs.ollama.com/api/authentication)
+   - **YouTube Data API key** (free) — enable the API in the Google Cloud Console, then create a key under Credentials. [Getting started](https://developers.google.com/youtube/v3/getting-started) · [obtaining credentials](https://developers.google.com/youtube/registering_an_application)
+   - **Serper API key** — [sign up](https://serper.dev/signup) and copy the key from the dashboard (2,500 free credits; afterwards super cheap — ~€5 yields 5k searches that will almost last you a lifetime)
+   - **Bright Data API key + SERP zone** — enterprise-grade alternative to Serper, slightly more expensive. [API key docs](https://docs.brightdata.com/api-reference/authentication) · [SERP API quickstart](https://docs.brightdata.com/scraping-automation/serp-api/quickstart)
+   - **EODHD API key** — financial data API, free tier + tiered subscriptions. [Register](https://eodhd.com/register) and grab the token from the dashboard · [quick start](https://eodhd.com/financial-apis/quick-start-with-our-financial-data-apis)
+4. Create the env files from the examples and set the keys:
+   - `./apps/server/.env.example` → `./apps/server/.env` (`OLLAMA_API_KEY`, `YOUTUBE_API_KEY`, `SERPER_API_KEY`, `BRIGHT_DATA_API_KEY` + zones, `EODHD_API_KEY`)
+   - `./apps/memory/.env.example` → `./apps/memory/.env` (`OLLAMA_API_KEY`, plus `QDRANT_EMBED_MODEL` — a model must be set; each memory layer can have a dedicated one, optional — otherwise it reuses the model from the request)
+5. Memory auto-maintenance (optional but recommended) — enable the `*_AUTO` flags in `./apps/memory/.env`:
+   - `MEMORY_PARTITION_REFLECT_AUTO=true` — auto-trigger reflection after a partition's consolidation sweep
+   - `MEMORY_COGNITION_REFLECT_AUTO=true` — auto-trigger reflection after a cognition profile job
+   - `MEMORY_ENCYCLOPEDIA_REFLECT_AUTO=true` — auto-trigger reflection after the encyclopedia classification job
+   - and downstream: `MEMORY_CONVICTION_AUTO=true`, `MEMORY_CLUSTER_AUTO=true`
+
+   Otherwise reflection never runs on its own — you would need to trigger it manually via a cron job or scheduler hitting `POST /memory/reflect`, `POST /memory/cognition/reflect`, or `POST /encyclopedia/reflect`. All of these can also be toggled live in Settings (settings → memory → configuration) without a restart.
+6. Run `pnpm install`
+7. CD into `./apps/server` and run `pnpm db:push`
+8. Run `docker compose -f infra.compose.yml up -d --remove-orphans`
+9. Run `docker compose up -d --remove-orphans`
+
+</div>
+
+<br>
+
 ## Contributing & Community
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request.    

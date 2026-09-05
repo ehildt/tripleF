@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { DEFAULT_MEDIA_COUNT } from './constants/media-counts.constant.js';
 import { TOOL_NAMES, VARIANT_NAMES } from './helpers/tools/tool-registry.constants.js';
 
 export const DEFAULT_VARIANT_ID = 'default';
@@ -23,6 +24,20 @@ const TEMPLATES = [
 ] as const;
 
 export type TemplateName = (typeof TEMPLATES)[number];
+
+/**
+ * The image-required templates: they analyze the user's OWN uploaded images
+ * and may only be selected when images are attached to the current request.
+ * One vocabulary shared by the intent prompt, the interpret-step guardrail,
+ * and the respond step's media handling.
+ */
+export const IMAGE_TASK_TEMPLATES = ['describe', 'compare', 'ocr'] as const;
+
+export type ImageTaskTemplate = (typeof IMAGE_TASK_TEMPLATES)[number];
+
+export function isImageTaskTemplate(template: string): template is ImageTaskTemplate {
+  return (IMAGE_TASK_TEMPLATES as readonly string[]).includes(template);
+}
 
 /* ── Zod schema for structured output from the intent classifier ───────── */
 
@@ -68,13 +83,13 @@ export const IntentSchema = z.object({
   imageCount: z
     .preprocess((val) => (val === null ? 0 : val), z.number().int().min(0).max(50).default(0))
     .describe(
-      'Number of images to retrieve when an imageSearch tool is selected. Only set when the user explicitly requests a specific number; otherwise omit or set to 0 and the system will default to 6.',
+      `Number of images to retrieve when an imageSearch tool is selected. Only set when the user explicitly requests a specific number; otherwise omit or set to 0 and the system will default to ${DEFAULT_MEDIA_COUNT}.`,
     ),
 
   videoCount: z
     .preprocess((val) => (val === null ? 0 : val), z.number().int().min(0).max(50).default(0))
     .describe(
-      'Number of videos to retrieve when a videoSearch tool is selected. Only set when the user explicitly requests a specific number; otherwise omit or set to 0 and the system will default to 6.',
+      `Number of videos to retrieve when a videoSearch tool is selected. Only set when the user explicitly requests a specific number; otherwise omit or set to 0 and the system will default to ${DEFAULT_MEDIA_COUNT}.`,
     ),
 
   reasoning: z.string().describe('Short explanation of why this template, prompt, and these tools were chosen.'),

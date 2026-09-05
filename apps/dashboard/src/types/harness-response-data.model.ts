@@ -283,7 +283,7 @@ export interface HarnessResponseData {
   galleryItems?: GalleryItem[];
   /*
    * Image tasks (describe/compare/ocr): online references the model examined
-   * but discarded because they did not match the uploaded image(s).
+   * but did not pick as corroborating evidence for the uploaded image(s).
    */
   discardedReferences?: DiscardedReference[];
 

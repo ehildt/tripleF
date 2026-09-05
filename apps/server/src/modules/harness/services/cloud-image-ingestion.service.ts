@@ -7,7 +7,7 @@ import { downloadAndIngestImages } from '../helpers/media/download-and-ingest-im
 import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
 
 /**
- * Download budget for one cloud image. An ops-level sys var, not a SysCtl
+ * Download budget for one cloud image. An ops-level sys var, not a Settings
  * config knob: tuning it belongs to the deployment, not the UI session.
  */
 const IMAGE_DOWNLOAD_TIMEOUT_MS = getNumberEnv(
@@ -20,7 +20,7 @@ const IMAGE_DOWNLOAD_TIMEOUT_MS = getNumberEnv(
  * cloud-sourced images for the current conversation.
  *
  * Resize and the source-acceptance floor both come from the effective
- * preprocessing (pproc) config — live SysCtl settings over env defaults,
+ * preprocessing (pproc) config — live Settings over env defaults,
  * resolved per call — so stored cloud images match whatever resolution the
  * admin configured for uploads, and a source smaller than that target is
  * rejected instead of stored visibly small.
@@ -63,7 +63,7 @@ export class CloudImageIngestionService {
         conversationId,
         requestId,
         timeoutMs: IMAGE_DOWNLOAD_TIMEOUT_MS,
-        // Resolved per ingest call: live SysCtl changes apply to the very
+        // Resolved per ingest call: live Settings changes apply to the very
         // next download, mirroring the upload path's resize exactly.
         resize: this.sharpService.effectiveResize(),
         existingFingerprints: options?.existingFingerprints ?? [],

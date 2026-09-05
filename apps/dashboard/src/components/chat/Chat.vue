@@ -3,10 +3,8 @@ import { useClipboard } from '@vueuse/core';
 import type { ComponentPublicInstance } from 'vue';
 import { computed, provide, ref, watch } from 'vue';
 
-import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation';
 
-import { deleteUploadedObject } from '../../api/storage.api';
 import { useActionBar } from '../../composables/use-action-bar';
 import { useAppViewContext } from '../../composables/use-app-view-context';
 import { useBlink } from '../../composables/use-blink';
@@ -34,6 +32,7 @@ import {
 } from './exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
 import ChatMainColumn from './main-column/ChatMainColumn.vue';
 import ChatRightPanel from './right-panel/ChatRightPanel.vue';
+import { useAttachmentActions } from './right-panel/composables/use-attachment-actions';
 import { useAttachmentList } from './right-panel/composables/use-attachment-list';
 import { useVideoPlaylist } from './right-panel/composables/use-video-playlist';
 import ChatToolbar from './toolbar/ChatToolbar.vue';
@@ -178,6 +177,17 @@ const {
   supportsVision,
 });
 
+const { removeAttachment, toggleAttachment, removePage } = useAttachmentActions(
+  {
+    attachments,
+    attachedFiles,
+    conversation,
+    activeConversationId,
+    removePendingFile: onRemoveAttachedFile,
+    togglePendingFile: onToggleAttachedFileSelected,
+  },
+);
+
 // The playlist is scoped to the active conversation: the active playlist's
 // videos are the queue, and switching playlists swaps them.
 const { playlistVideos } = useVideoPlaylist();
@@ -188,7 +198,7 @@ watch(conversationId, () => void loadPlaylists(), {
   immediate: true,
 });
 
-// In floating mode the playlist lives in the app-level window (SysCtl →
+// In floating mode the playlist lives in the app-level window (Settings →
 // Widgets → Playlist): the right panel drops its playlist tab entirely.
 const panelPlaylistVideos = computed(() =>
   playlistMode.value === 'floating' ? [] : playlistVideos.value,
@@ -238,75 +248,6 @@ const currentContextSizeValue = computed(
 
 function formatContextSize(value: string): string {
   return modelsStore.formatCtx(Number(value));
-}
-
-async function onRemoveAttachment(id: string) {
-  if (!conversation.value) return;
-  const item = attachments.value.find((a) => a.id === id);
-  if (!item) return;
-
-  if (item.pendingIndex !== null) {
-    onRemoveAttachedFile(item.pendingIndex);
-    return;
-  }
-
-  const sid = conversation.value.id;
-  const cid = activeConversationId.value;
-
-  // Documents live in the conversation store only (no MinIO object in this
-  // pass), so removal never touches storage.
-  if (item.kind === 'document') {
-    conversationStore.removeUploadedDocument(sid, item.hash, cid);
-    return;
-  }
-
-  // Gallery-added (cloud) images are ingested web content the gallery still
-  // displays through the storage URL — removing them from files only drops
-  // the reference, never the MinIO object. Only user uploads (local) are
-  // deleted from storage.
-  const stillReferenced = conversationStore.hasUploadedImageReference(
-    sid,
-    item.hash,
-    cid,
-  );
-  if (item.source !== 'cloud' && !stillReferenced) {
-    try {
-      await deleteUploadedObject(sid, cid, item.hash);
-    } catch (e) {
-      toast.error(
-        i18n.global.t('toast.failedRemoveFile', {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      );
-      return;
-    }
-  }
-  conversationStore.removeUploadedImage(sid, item.hash, cid);
-}
-
-function onToggleAttachment(id: string) {
-  const item = attachments.value.find((a) => a.id === id);
-  if (!item) return;
-
-  if (item.pendingIndex !== null) {
-    onToggleAttachedFileSelected(item.pendingIndex);
-    return;
-  }
-
-  if (!conversation.value) return;
-  if (item.kind === 'document') {
-    conversationStore.toggleUploadedDocumentSelected(
-      conversation.value.id,
-      item.hash,
-      activeConversationId.value,
-    );
-    return;
-  }
-  conversationStore.toggleUploadedImageSelected(
-    conversation.value.id,
-    item.hash,
-    activeConversationId.value,
-  );
 }
 
 function onRetry(text: string) {
@@ -385,8 +326,9 @@ defineExpose({ actionBarRef });
     :right-panel-view="rightPanelView"
     :active-user-exchange-id="activeUserExchangeId"
     @select-view="selectPanelView"
-    @remove-attachment="onRemoveAttachment"
-    @toggle-attachment="onToggleAttachment"
+    @remove-attachment="removeAttachment"
+    @toggle-attachment="toggleAttachment"
+    @remove-page="removePage"
     @prompt-click="onPromptClick"
     @copy="handleCopyHistoryItem"
     @toggle-include="toggleUserExchangeIncluded"

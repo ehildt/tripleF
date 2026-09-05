@@ -39,7 +39,7 @@ describe('createMemoryPartitionRecallTool', () => {
     ]);
     const tool = createMemoryPartitionRecallTool({ scope, searchByText });
 
-    const result = (await tool.execute(
+    const result = (await tool.execute!(
       { query: 'What is Sams number?', tags: ['contacts'], topK: 3 },
       {} as never,
     )) as string;
@@ -61,7 +61,7 @@ describe('createMemoryPartitionRecallTool', () => {
     const searchByText = vi.fn().mockResolvedValue([] as MemoryPoint[]);
     const tool = createMemoryPartitionRecallTool({ scope, searchByText });
 
-    await tool.execute({ query: 'deployment', contains: 'prod' }, {} as never);
+    await tool.execute!({ query: 'deployment', contains: 'prod' }, {} as never);
 
     expect(searchByText).toHaveBeenCalledWith(expect.objectContaining({ contains: 'prod' }));
   });
@@ -70,7 +70,7 @@ describe('createMemoryPartitionRecallTool', () => {
     const searchByText = vi.fn().mockResolvedValue([]);
     const tool = createMemoryPartitionRecallTool({ scope, searchByText });
 
-    const result = (await tool.execute({ query: 'nothing here' }, {} as never)) as string;
+    const result = (await tool.execute!({ query: 'nothing here' }, {} as never)) as string;
 
     expect(result).toContain('No memories found');
   });

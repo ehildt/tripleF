@@ -4,6 +4,7 @@ import type { MemoryClientConfig } from '../../../memory-client/configs/memory-c
 import { MEMORY_CLIENT_CONFIG } from '../../../memory-client/constants/memory-client.constants.js';
 import { MemoryEnqueueService } from '../../../memory-client/services/memory-enqueue.service.js';
 import { buildResponseExtractionText } from '../../helpers/extraction/build-response-extraction-text.helper.js';
+import { stripThinking } from '../../helpers/extraction/strip-thinking.helper.js';
 import type { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
@@ -43,10 +44,13 @@ export class MemoryProfileStepService implements StepHandler {
 
     // The prose extraction contract of the vectorize step: structured
     // templates stream JSON — the cognition model reads prose, never keys.
-    const assistantResponse = buildResponseExtractionText({
-      content: ctx.outputs.finalContent,
-      data: ctx.outputs.finalData,
-    });
+    // Reasoning markup is stripped before storage-adjacent persistence.
+    const assistantResponse = stripThinking(
+      buildResponseExtractionText({
+        content: ctx.outputs.finalContent,
+        data: ctx.outputs.finalData,
+      }),
+    );
 
     await this.memoryEnqueue.enqueueProfileJob({
       memoryCognition,

@@ -36,6 +36,34 @@ describe('buildIntentSelectionPrompt', () => {
     expect(prompt).toContain('UPDATE-LOOP');
   });
 
+  it('enforces the tier boundary: subjective user data to cognition, objective facts to the partition', () => {
+    const prompt = buildIntentSelectionPrompt([
+      'memory-partition-recall',
+      'memory-partition-remember',
+      'memory-cognition-remember',
+    ]);
+
+    // The lanes are defined by subjectivity, not by who said it.
+    expect(prompt).toContain('memory-partition = the OBJECTIVE fact store');
+    expect(prompt).toContain('memory-cognition = the SUBJECTIVE profile store');
+    expect(prompt).toContain('subjective user data NEVER goes to the partition');
+    // Stated preferences route to the cognition lane.
+    expect(prompt).toContain(
+      'include the enabled memory-cognition-remember tool so that preference is recorded in the cognition lane',
+    );
+    expect(prompt).toContain('Preferences never belong in the partition');
+    // Objective stated facts route to the partition lane.
+    expect(prompt).toContain('FACT CAPTURE');
+    // Explicit "remember" asks split by the same boundary.
+    expect(prompt).toContain(
+      'a preference or any other subjective profile datum ("remember that I like…") goes to the enabled memory-cognition-remember tool',
+    );
+    // Targeted deletion covers both lanes; the wipe stays for starting over.
+    expect(prompt).toContain('FORGET A PREFERENCE');
+    expect(prompt).toContain('memory-cognition-delete');
+    expect(prompt).toContain('memory-cognition-delete is the targeted path');
+  });
+
   it('disambiguates familiarity questions from memory questions', () => {
     const prompt = buildIntentSelectionPrompt([]);
 

@@ -21,10 +21,10 @@ export interface IngestedImage {
    */
   fingerprint: string;
   /**
-   * The pproc-resized image bytes — kept only when `keepBuffers` is set, so
-   * image-self-analysis tasks can feed cloud reference candidates to the
-   * response model for visual verification. MinIO stores the original
-   * download; these resized bytes never leave the model-input path.
+   * The pproc-resized image bytes — kept only when `keepBuffers` is set.
+   * No current consumer: image tasks pick cloud reference candidates by
+   * search-result evidence, so candidate bytes stay server-side. MinIO
+   * stores the original download; resized bytes are transient ingest data.
    */
   buffer?: Buffer;
 }

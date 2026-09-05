@@ -33,6 +33,7 @@ const emit = defineEmits<{
   selectView: [view: RightPanelView];
   removeAttachment: [id: string];
   toggleAttachment: [id: string];
+  removePage: [parentHash: string, pageHash: string];
   promptClick: [index: number];
   copy: [index: number];
   toggleInclude: [index: number];
@@ -41,8 +42,13 @@ const emit = defineEmits<{
   branchOut: [index: number];
 }>();
 
-const { hasAttachments, hasHistory, hasPlaylist, previewUrl } =
-  useRightPanel(props);
+const {
+  hasAttachments,
+  hasHistory,
+  hasPlaylist,
+  previewUrl,
+  previewUrlForHash,
+} = useRightPanel(props);
 const appStore = useAppStore();
 </script>
 
@@ -65,8 +71,10 @@ const appStore = useAppStore();
         :key="item.id"
         :item="item"
         :image-src="previewUrl(item)"
+        :url-for-hash="previewUrlForHash"
         @remove="emit('removeAttachment', item.id)"
         @toggle="emit('toggleAttachment', item.id)"
+        @remove-page="(hash) => emit('removePage', item.hash, hash)"
       />
     </div>
 
@@ -103,7 +111,7 @@ const appStore = useAppStore();
 .chat-right-panel {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 7rem);
+  max-height: calc(100vh - 6rem);
   gap: var(--spacing-0-5);
 }
 

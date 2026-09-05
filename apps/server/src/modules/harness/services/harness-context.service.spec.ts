@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { OllamaApiService } from '@triplef/ollama-api';
 import { Job } from 'bullmq';
 import { describe, expect, it, vi } from 'vitest';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 
@@ -22,7 +22,8 @@ function createJob(payload: HarnessJobPayload): Job<HarnessJobPayload> {
 describe('HarnessContextService', () => {
   let service: HarnessContextService;
   let minioService: MinioService;
-  let ollamaModelsService: OllamaModelsService;
+  let ollamaApiService: OllamaApiService;
+  let documentConversionService: DocumentConversionService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -48,7 +49,7 @@ describe('HarnessContextService', () => {
           useValue: { config: { keepAlive: '5m' } },
         },
         {
-          provide: OllamaModelsService,
+          provide: OllamaApiService,
           useValue: {
             supportsCapability: vi.fn().mockResolvedValue(true),
           },
@@ -76,7 +77,10 @@ describe('HarnessContextService', () => {
 
     service = module.get<HarnessContextService>(HarnessContextService);
     minioService = module.get<MinioService>(MinioService);
-    ollamaModelsService = module.get<OllamaModelsService>(OllamaModelsService);
+    ollamaApiService = module.get<OllamaApiService>(OllamaApiService);
+    documentConversionService = module.get<DocumentConversionService>(
+      DocumentConversionService,
+    );
   });
 
   it('should be defined', () => {
@@ -171,6 +175,39 @@ describe('HarnessContextService', () => {
     expect(ctx.processedMeta).toHaveLength(2);
   });
 
+  it('passes the referenced image hashes to resolveOriginals so page selection is authoritative', async () => {
+    (minioService.downloadBuffers as any).mockResolvedValue({
+      buffers: [Buffer.from('ref')],
+      keptMeta: [
+        { name: 'ref.png', type: 'image/*', hash: 'ref-hash', source: 'local' },
+      ],
+    });
+    const job = createJob({
+      meta: [{ name: 'new.png', type: 'image/png', hash: 'new-hash' }],
+      filters: {
+        model: 'model',
+        sessionId: 'sess-1',
+        sessionMetadata: JSON.stringify({
+          images: [{ name: 'ref.png', hash: 'ref-hash' }],
+          originals: [
+            { name: 'doc.pdf', hash: 'doc-hash', type: 'application/pdf' },
+          ],
+        }),
+      },
+    });
+
+    await service.buildContext(job);
+
+    expect(documentConversionService.resolveOriginals).toHaveBeenCalledWith(
+      'sess-1',
+      undefined,
+      'req-1',
+      expect.any(Array),
+      new Set(['ref-hash', 'new-hash']),
+      { model: 'model', ready: true },
+    );
+  });
+
   it('captures the last user prompt', async () => {
     const job = createJob({
       meta: [],
@@ -189,7 +226,7 @@ describe('HarnessContextService', () => {
   });
 
   it('excludes images and adds a system notice when the model does not support vision', async () => {
-    (ollamaModelsService.supportsCapability as any).mockResolvedValue(false);
+    (ollamaApiService.supportsCapability as any).mockResolvedValue(false);
 
     const job = createJob({
       meta: [{ name: 'test.png', type: 'image/png', hash: 'abc' }],
@@ -214,7 +251,7 @@ describe('HarnessContextService', () => {
   });
 
   it('excludes referenced images from sessionMetadata when the model does not support vision', async () => {
-    (ollamaModelsService.supportsCapability as any).mockResolvedValue(false);
+    (ollamaApiService.supportsCapability as any).mockResolvedValue(false);
 
     const job = createJob({
       meta: [],

@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { buildCorrectionPrompt } from '@triplef/agent/prompts';
 import type { InputMessage } from '@triplef/ai-sdk';
 import { AiSdkService } from '@triplef/ai-sdk';
 
-import { buildProviderOptions } from '../../ai-sdk/helpers/provider-options.helper.js';
+import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
-import { buildCorrectionPrompt } from '../helpers/respond/build-correction-prompt.helper.js';
 import { buildExecutionMessages } from '../helpers/respond/build-execution-messages.helper.js';
 import { consumeResponseStream } from '../helpers/stream/consume-response-stream.helper.js';
 import { ResponseValidatorService } from '../services/response-validator.service.js';
@@ -32,7 +32,6 @@ export class RespondActionService {
         intent: params.intent,
         messages: params.messages,
         availableImages: params.availableImages,
-        cloudReferenceImages: params.cloudReferenceImages,
         sources: this.providerOverrides.getConfig().sources,
         language: params.language,
       });

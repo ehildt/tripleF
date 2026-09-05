@@ -36,7 +36,7 @@ describe('createBrightDataVideoSearch', () => {
   it('requests Google Videos via udm=7 (not the deprecated tbm=vid)', async () => {
     mockedRequest.mockResolvedValue({ organic: [] });
     const tool = createBrightDataVideoSearch(stubDeps());
-    await tool.execute({ query: 'pizza' }, {} as any);
+    await tool.execute!({ query: 'pizza' }, {} as any);
     const [, , url] = mockedRequest.mock.calls[0];
     expect(String(url)).toContain('udm=7');
     expect(String(url)).not.toContain('tbm=');
@@ -54,7 +54,7 @@ describe('createBrightDataVideoSearch', () => {
       ],
     });
     const tool = createBrightDataVideoSearch(stubDeps());
-    const result = (await tool.execute({ query: 'pizza' }, {} as any)) as any;
+    const result = (await tool.execute!({ query: 'pizza' }, {} as any)) as any;
     expect(result.results).toEqual([
       {
         title: 'Pizza Video',
@@ -73,7 +73,7 @@ describe('createBrightDataVideoSearch', () => {
   it('returns an empty result set when there are no organic items', async () => {
     mockedRequest.mockResolvedValue({});
     const tool = createBrightDataVideoSearch(stubDeps());
-    const result = (await tool.execute({ query: 'pizza' }, {} as any)) as any;
+    const result = (await tool.execute!({ query: 'pizza' }, {} as any)) as any;
     expect(result.results).toEqual([]);
   });
 });
@@ -90,7 +90,7 @@ describe('createBrightDataImageSearch', () => {
       ],
     });
     const tool = createBrightDataImageSearch(stubDeps());
-    const result = (await tool.execute({ query: 'pizza' }, {} as any)) as any;
+    const result = (await tool.execute!({ query: 'pizza' }, {} as any)) as any;
     expect(result.results).toEqual([
       {
         title: 'A pizza',
@@ -115,7 +115,7 @@ describe('createBrightDataImageSearch', () => {
       ],
     });
     const tool = createBrightDataImageSearch(stubDeps());
-    const result = (await tool.execute({ query: 'pizza' }, {} as any)) as any;
+    const result = (await tool.execute!({ query: 'pizza' }, {} as any)) as any;
     expect(result.results).toHaveLength(1);
   });
 
@@ -130,14 +130,14 @@ describe('createBrightDataImageSearch', () => {
       ],
     });
     const tool = createBrightDataImageSearch(stubDeps());
-    const result = (await tool.execute({ query: 'pizza' }, {} as any)) as any;
+    const result = (await tool.execute!({ query: 'pizza' }, {} as any)) as any;
     expect(result.results).toEqual([]);
   });
 
   it('requests images via udm=2 and passes a tbs size filter', async () => {
     mockedRequest.mockResolvedValue({ images: [] });
     const tool = createBrightDataImageSearch(stubDeps());
-    await tool.execute({ query: 'pizza' }, {} as any);
+    await tool.execute!({ query: 'pizza' }, {} as any);
     const [, , url] = mockedRequest.mock.calls[0];
     expect(String(url)).toContain('udm=2');
     expect(String(url)).toContain('tbs=');

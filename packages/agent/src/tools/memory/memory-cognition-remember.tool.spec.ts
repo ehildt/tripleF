@@ -14,7 +14,7 @@ describe('createMemoryCognitionRememberTool', () => {
     const storeInsight = vi.fn().mockResolvedValue('insight-1');
     const tool = createMemoryCognitionRememberTool({ scope, storeInsight });
 
-    const result = await tool.execute(
+    const result = await tool.execute!(
       { text: 'The user prefers single-line if statements', path: 'preferences.code' },
       {} as never,
     );
@@ -37,7 +37,7 @@ describe('createMemoryCognitionRememberTool', () => {
       storeInsight,
     });
 
-    await tool.execute({ text: 'The user works in Rust' }, {} as never);
+    await tool.execute!({ text: 'The user works in Rust' }, {} as never);
 
     expect(storeInsight).toHaveBeenCalledWith(expect.objectContaining({ memoryCognition: 'christopher' }));
   });
@@ -46,7 +46,7 @@ describe('createMemoryCognitionRememberTool', () => {
     const storeInsight = vi.fn().mockRejectedValue(new Error('embed down'));
     const tool = createMemoryCognitionRememberTool({ scope, storeInsight });
 
-    const result = await tool.execute({ text: 'Doomed insight' }, {} as never);
+    const result = await tool.execute!({ text: 'Doomed insight' }, {} as never);
 
     expect(result).toEqual({ stored: false, error: 'embed down' });
   });

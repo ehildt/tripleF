@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { OllamaApiService } from '@triplef/ollama-api';
 import { Job } from 'bullmq';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { OllamaModelsService } from '../../ai-sdk/services/ollama-models.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
 import { buildChatRequest } from '../helpers/build-chat-request.helper.js';
@@ -29,7 +29,7 @@ export class HarnessContextService {
     private readonly documentConversionService: DocumentConversionService,
     private readonly minioService: MinioService,
     private readonly ollamaConfigService: OllamaConfigService,
-    private readonly ollamaModelsService: OllamaModelsService,
+    private readonly ollamaApiService: OllamaApiService,
     private readonly sharpService: SharpService,
     private readonly stepRegistryService: StepRegistryService,
   ) {}
@@ -80,18 +80,43 @@ export class HarnessContextService {
       documentUploadMeta,
     );
 
+    // Page images already ride in as referenced images (the client registers
+    // them at select time). The conversion service treats a referenced page as
+    // an authoritative selection: it only synthesizes pages for originals with
+    // no referenced pages at all (bootstrap fallback for legacy clients).
+    const attachedPageHashes = new Set(
+      imageUploadMeta.map((entry) => entry.hash),
+    );
+
+    // One capability probe per job, shared by the document pipeline (pdf page
+    // descriptions need a vision model) and the image gate below. Lazy, so a
+    // text-only turn never pays for it.
+    let visionSupport: boolean | undefined;
+    const resolveVisionSupport = async (): Promise<boolean> => {
+      if (visionSupport !== undefined) return visionSupport;
+      visionSupport = filters.model
+        ? await this.ollamaApiService.supportsCapability(
+            filters.model,
+            'vision',
+          )
+        : false;
+      return visionSupport;
+    };
+
     const resolvedDocuments =
       await this.documentConversionService.resolveOriginals(
         sessionId,
         filters.conversationId,
         requestId,
         documentMeta,
+        attachedPageHashes,
+        {
+          model: filters.model,
+          ready: documentMeta.length > 0 ? await resolveVisionSupport() : false,
+        },
       );
-    // Page images already ride in as referenced images (client registers
-    // them at select time) — never attach the same page twice.
-    const attachedPageHashes = new Set(
-      imageUploadMeta.map((entry) => entry.hash),
-    );
+    // Belt-and-braces dedup for the fallback path — never attach the same
+    // page twice.
     const newPageImageMeta = resolvedDocuments.pageImageMeta.filter(
       (entry) => !attachedPageHashes.has(entry.hash),
     );
@@ -129,10 +154,7 @@ export class HarnessContextService {
     let effectiveMeta = imageMeta;
 
     if (hasImages) {
-      const supportsVision = await this.ollamaModelsService.supportsCapability(
-        filters.model!,
-        'vision',
-      );
+      const supportsVision = await resolveVisionSupport();
 
       if (supportsVision) {
         const download = await this.minioService.downloadBuffers(
@@ -215,7 +237,7 @@ export class HarnessContextService {
       job,
       // Preprocessing resolves from the live server-side config at execution
       // time: the next query — fresh or requeued — always uses the latest
-      // SysCtl settings, never whatever the client sent.
+      // Settings values, never whatever the client sent.
       filters: {
         ...filters,
         preprocessing: this.sharpService.buildOptions(),

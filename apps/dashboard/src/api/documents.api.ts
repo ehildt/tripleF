@@ -3,6 +3,8 @@ import { getApiUrl } from '@/api/api-url';
 export interface ConvertedPageImage {
   name: string;
   hash: string;
+  /** 1-based page number within the source document. */
+  page: number;
 }
 
 export interface ConvertedDocument {

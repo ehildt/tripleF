@@ -1,21 +1,11 @@
 import { buildStructuredJsonPrompt } from '@triplef/agent/prompts';
 import { buildIntentSelectionPrompt } from '@triplef/agent/prompts';
+import { formatCurrentTimestamp } from '@triplef/agent/prompts';
+import { buildClassifyTranscript } from '@triplef/agent/prompts';
 import type { InputMessage } from '@triplef/ai-sdk';
 
-import { buildClassifyTranscript } from './build-classify-transcript.helper.js';
-
 function buildSystemPrompt(basePrompt: string): string {
-  const now = new Date()
-    .toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short',
-    })
-    .replace(' at ', ', '); // "Friday, January 3, 2025, 10:30 AM GMT"
+  const now = formatCurrentTimestamp();
   return `${basePrompt}\n\nCurrent date and time: ${now}\nUse this temporal context when classifying time-sensitive requests.`;
 }
 

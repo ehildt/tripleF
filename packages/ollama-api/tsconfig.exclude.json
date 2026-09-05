@@ -1,0 +1,25 @@
+{
+  "exclude": [
+    "dist",
+    ".husky",
+    ".vscode",
+    ".storybook",
+    "node_modules",
+    "jest.config.ts",
+    "eslint.config.ts",
+    "tsup.config.ts",
+    "src/**/*.stories.?sx",
+    "**/read-depbadgerc-with-defaults.ts",
+    "**/depbadgerc.type.ts",
+    "**/vitest.config.ts",
+    "src/index.ts",
+    "src/ollama-api/index.ts",
+    "src/ollama-api/ollama-api.constants.ts",
+    "src/ollama-api/ollama-api.model.ts",
+    "src/ollama-api/ollama-api.module.ts",
+    "src/ollama-api/ollama-api.schema.ts",
+    "src/ollama-api/ollama-api.service.ts",
+    "src/ollama-api/helpers/*.ts"
+  ],
+  "extends": "./tsconfig.json"
+}

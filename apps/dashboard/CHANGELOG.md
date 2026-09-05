@@ -32,7 +32,7 @@
   - `use-playlist-library` and `saved-playlists` state reworked; floating playlist and playlist-menu stories updated
   - Server `.env.example` documents the new playlist-related env vars
 - 95c4b7c: - New playlist panel with queue management, plus a reusable `CollapsiblePanel` component
-  - SysCtl sections expanded: search-engines, system, widgets (toast/video-popout/tab-menu panels), and a new playlist-preview widget
+  - Settings sections expanded: search-engines, system, widgets (toast/video-popout/tab-menu panels), and a new playlist-preview widget
   - Floating playlist and playlist-settings state reworked; `use-chat-panel` composable added
 - 95c4b7c: - Server: playlists persisted to PostgreSQL via a new `HarnessPlaylist` Prisma model and a playlist controller (list by session/conversation, save, rename, delete)
   - Dashboard: `playlists.api` client for the new endpoints; playlist state refactored around server persistence, replacing the browser-only saved-playlists store
@@ -49,17 +49,17 @@
   - App shell refactored: `AppMainContent` removed in favor of a router-driven layout; new router, app store tab state, and app view context
   - Shared input components (text, textarea, number, combo-box, switch) and debug section updated
 - 5eb1f5c: - Server: Serper tool family consolidated and explicitly named — `serperBusinessReviewsSearch` (Google Maps reviews by `cid`/`placeId`), `serperWebpageScrape` (rendered page text), plus web/image/news/places/shopping/video search; legacy `webpageFetch` config rows migrate to `scrape` on boot
-  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or SysCtl
+  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or Settings
   - Server: per-provider/end-point enable+toggles and result counts runtime-managed; sources config supports preferred/blocked domain policy applied before the model sees results
   - Server: search queries are date-anchored and support an optional recency window (day/week/month/year) on web, image, and news search
-  - Dashboard: SysCtl Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
+  - Dashboard: Settings Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
   - Dashboard: prompt-bar source tags list available search engines; one `videos` tag toggles both Serper and YouTube providers
-- 5eb1f5c: - SysCtl evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
+- 5eb1f5c: - Settings evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
   - All runtime provider configs persisted in the database via provider overrides (encrypted API keys with `TRIPLEF_SECRETS_KEY`, masked in every API response, lazy restore with backoff on boot)
   - Legacy config rows migrate on boot (e.g. Serper `webpageFetch` → `scrape`); masked keys are never accepted back as real keys
   - Ollama connection (host + API key, local or Ollama Cloud) runtime-tunable via a sibling overrides controller
   - Debug tab overhauled: request list/tags, request details with endpoint/token/payload tabs, live queue console; fixed a sorting bug in the debug list
-  - SysCtl config loads through URL-keyed fetch helpers with clamped endpoint results
+  - Settings config loads through URL-keyed fetch helpers with clamped endpoint results
 - 95c4b7c: - Wiki gains a "Business Logic" section explaining how the features work and their dependencies
   - Media extraction refactored: `extractMediaFromToolResults`/`extractMediaFromTools` helpers, verified-media filtering, and image-URL collection tightened; search-engine availability composable reworked
   - Sanitize action and media surfaces (article hero, video gallery/list items, product spotlight media) updated to the refactored pipeline
@@ -104,18 +104,18 @@
 - 95c4b7c: - Playlist panel now detects whether the current conversation contains videos so the docked player's empty state and hints are reachable even with an empty queue
   - New `conversationHasVideos` helper with spec; floating media bar and playlist panel wiring updated
 - 12b4c82: - Replaced the `ListCheck` icon with `ListMinus` on the playlist add/remove toggle across all media surfaces (floating media bar, video list items, hero media, video gallery items) to better communicate the "remove from playlist" state
-- 95c4b7c: - SysCtl popout preview is now a persistent toggle (stays visible until dismissed) instead of a timed 3s preview; switching tabs dismisses it
+- 95c4b7c: - Settings popout preview is now a persistent toggle (stays visible until dismissed) instead of a timed 3s preview; switching tabs dismisses it
   - Popup geometry uses a symmetric edge inset for anchored positions; preview button and video popout panel updated
 - 95c4b7c: - Popout gains a "show bar always" setting (persisted in localStorage): when off, the media bar fades in on hover and out on leave so media fills the freed space
   - `FieldCard` supports hiding its checkbox while keeping the checked styling; floating popout and video popout panel updated
   - Playwright skill documents the `/dashboard/` base path for the sidecar; sharp constants adjusted
 - 12b4c82: - Product banner shows a glassy "+N" image-count badge (same frosted look as the video/iframe play block) in the top-right corner of the figure, telling the user the total number of product images (banner + gallery)
-- 95c4b7c: - New shared `SysCtlSection` component (loading/error/panel layout) reused by the preprocessing and search-engines sections, replacing duplicated per-section state markup
-  - SearchEnginesSection refactored onto `PanelLayout` + `SysCtlSection`; panel header title simplified (chevron prefix removed)
+- 95c4b7c: - New shared `SettingsSection` component (loading/error/panel layout) reused by the preprocessing and search-engines sections, replacing duplicated per-section state markup
+  - SearchEnginesSection refactored onto `PanelLayout` + `SettingsSection`; panel header title simplified (chevron prefix removed)
 - 95c4b7c: - Test infrastructure refactored: App, DebugSection, TabMenu, Chat, and Dlq specs now mount through a shared `mockAppViewContext` helper and install a memory router where RouterLinks are rendered
   - App spec mirrors the route into the app store via a memory router; debug/tab-menu specs provide the app view context through the injection key
 - 95c4b7c: - Removed three game-inspired themes (ghostwire, wukong, yakuza) and their palette files
-  - Theme store and SysCtl config adapters (serper/sources/youtube) refactored; DLQ list header and exclusive-filter-menu cleaned up
+  - Theme store and Settings config adapters (serper/sources/youtube) refactored; DLQ list header and exclusive-filter-menu cleaned up
 - 95c4b7c: - Toast container uses symmetric edge insets so an anchored stack sits the same distance from its two adjacent screen edges (top/bottom/left/right all `3rem`)
 
 ## 0.4.0
@@ -147,17 +147,17 @@
   - Server: storage controller with session/conversation/hash-scoped GET and DELETE endpoints; payloads fetched through media-URL validation (SSRF-guarded schemes/targets)
   - Dashboard: conversations persisted to the server and rehydrated on load (fetch/save/delete conversation APIs)
 - 845278c: - Server: Serper tool family consolidated and explicitly named — `serperBusinessReviewsSearch` (Google Maps reviews by `cid`/`placeId`), `serperWebpageScrape` (rendered page text), plus web/image/news/places/shopping/video search; legacy `webpageFetch` config rows migrate to `scrape` on boot
-  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or SysCtl
+  - Server: `youtubeVideoSearch` tool via the official YouTube Data API v3 (`search.list` + batch `videos.list` enrichment: duration, views, channel, language, direct thumbnails), enabled by `YOUTUBE_API_KEY` or Settings
   - Server: per-provider/end-point enable+toggles and result counts runtime-managed; sources config supports preferred/blocked domain policy applied before the model sees results
   - Server: search queries are date-anchored and support an optional recency window (day/week/month/year) on web, image, and news search
-  - Dashboard: SysCtl Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
+  - Dashboard: Settings Search Engines section — per-provider cards with enable, masked API key management, and per-endpoint results
   - Dashboard: prompt-bar source tags list available search engines; one `videos` tag toggles both Serper and YouTube providers
-- 845278c: - SysCtl evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
+- 845278c: - Settings evolved into the system control center: search-engines providers, preprocessing settings, system connection + health tiles, tab visibility, and widgets
   - All runtime provider configs persisted in the database via provider overrides (encrypted API keys with `TRIPLEF_SECRETS_KEY`, masked in every API response, lazy restore with backoff on boot)
   - Legacy config rows migrate on boot (e.g. Serper `webpageFetch` → `scrape`); masked keys are never accepted back as real keys
   - Ollama connection (host + API key, local or Ollama Cloud) runtime-tunable via a sibling overrides controller
   - Debug tab overhauled: request list/tags, request details with endpoint/token/payload tabs, live queue console; fixed a sorting bug in the debug list
-  - SysCtl config loads through URL-keyed fetch helpers with clamped endpoint results
+  - Settings config loads through URL-keyed fetch helpers with clamped endpoint results
 
 ### Patch Changes
 

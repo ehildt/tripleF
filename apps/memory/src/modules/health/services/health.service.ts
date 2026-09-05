@@ -8,7 +8,7 @@ import {
 } from '@nestjs/terminus';
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
-import { OllamaOverridesService } from '../../ai-sdk/services/ollama-overrides.service.js';
+import { OllamaOverridesService } from '../../ollama/services/ollama-overrides.service.js';
 import { QdrantHealthIndicator } from '../../qdrant/services/qdrant-health-indicator.service.js';
 
 /**

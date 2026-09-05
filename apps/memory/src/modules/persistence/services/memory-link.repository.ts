@@ -9,20 +9,21 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../../postgres/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
+import type { MemoryLane } from '../constants/memory-lane.constant.js';
 
 import { mapLinkRowToEdge } from './helpers/map-link-row-to-edge.helper.js';
 
-/** The three constellation lanes — one per memory layer. */
-export type MemoryLinkLane = 'partition' | 'cognition' | 'lexicon';
+/** The three constellation lanes — one per memory layer (MemoryLane alias). */
+export type MemoryLinkLane = MemoryLane;
 
-/**
- * Edge kind: `semantic` edges are the enforced kNN links written by the
- * store paths; `topical` edges are suggestions written by the relink job
- * (related-but-not-enforced — recall ignores them, the dashboard may render
- * them faintly). One edge per point pair: the unique constraint keeps a
- * single row, and semantic wins when both would apply.
+/** Edge kind: `semantic` = enforced kNN link (store paths); `topical` =
+ * suggested link (relink job — recall ignores it, the dashboard may render
+ * it faintly); `evidence` = a bridge record's citation edge to a fact it
+ * synthesizes (conviction store path — exact, not similarity-derived). One
+ * edge per pair: the unique constraint keeps a single row, and semantic wins
+ * when both would apply.
  */
-export type MemoryLinkKind = 'semantic' | 'topical';
+export type MemoryLinkKind = 'semantic' | 'topical' | 'evidence';
 
 /** One undirected edge read back for the dashboard. */
 export interface MemoryLinkEdge {
@@ -97,6 +98,23 @@ export class MemoryLinkRepository implements OnModuleInit, OnModuleDestroy {
       where: { lane, collection, scopeKey },
       orderBy: { score: 'desc' },
       take: limit,
+    });
+    return rows.map(mapLinkRowToEdge);
+  }
+
+  /**
+   * Every edge of one scope, uncapped — the cluster-detection input. The
+   * dashboard read stays capped (`listEdges`); detection needs the FULL
+   * graph to compute connected components correctly.
+   */
+  async listAllEdges(
+    lane: MemoryLinkLane,
+    collection: string,
+    scopeKey: string,
+  ): Promise<MemoryLinkEdge[]> {
+    const rows = await this.prisma.memoryLink.findMany({
+      where: { lane, collection, scopeKey },
+      orderBy: { score: 'desc' },
     });
     return rows.map(mapLinkRowToEdge);
   }

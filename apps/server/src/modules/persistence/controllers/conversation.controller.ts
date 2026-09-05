@@ -10,6 +10,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { UpsertConversationDto } from '../dtos/conversation.dto.js';
+import { ConversationParamsDto } from '../dtos/conversation-params.dto.js';
 import { ConversationService } from '../services/conversation.service.js';
 
 @ApiTags('Conversations')
@@ -19,19 +20,16 @@ export class ConversationController {
 
   @Get(':sessionId')
   @ApiOperation({ summary: 'List conversations for a session' })
-  async list(@Param('sessionId') sessionId: string) {
-    return this.conversationService.listConversations(sessionId);
+  async list(@Param() params: ConversationParamsDto) {
+    return this.conversationService.listConversations(params.sessionId);
   }
 
   @Get(':sessionId/:conversationId')
   @ApiOperation({ summary: 'Get the latest state of one conversation' })
-  async getOne(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-  ) {
+  async getOne(@Param() params: ConversationParamsDto) {
     const conversation = await this.conversationService.getConversation(
-      sessionId,
-      conversationId,
+      params.sessionId,
+      params.conversationId!,
     );
 
     if (!conversation) throw new NotFoundException();
@@ -42,15 +40,13 @@ export class ConversationController {
   @Put(':sessionId/:conversationId/:requestId')
   @ApiOperation({ summary: 'Upsert a conversation turn' })
   async upsert(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('requestId') requestId: string,
+    @Param() params: ConversationParamsDto,
     @Body() body: UpsertConversationDto,
   ) {
     return this.conversationService.saveTurn({
-      sessionId,
-      conversationId,
-      requestId,
+      sessionId: params.sessionId,
+      conversationId: params.conversationId!,
+      requestId: params.requestId!,
       title: body.content.title,
       content: body.content as unknown as Record<string, unknown>,
     });
@@ -58,27 +54,20 @@ export class ConversationController {
 
   @Delete(':sessionId/:conversationId')
   @ApiOperation({ summary: 'Delete a conversation and all its turns' })
-  async delete(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-  ) {
+  async delete(@Param() params: ConversationParamsDto) {
     return this.conversationService.deleteConversation(
-      sessionId,
-      conversationId,
+      params.sessionId,
+      params.conversationId!,
     );
   }
 
   @Delete(':sessionId/:conversationId/:requestId')
   @ApiOperation({ summary: 'Delete one conversation turn' })
-  async deleteTurn(
-    @Param('sessionId') sessionId: string,
-    @Param('conversationId') conversationId: string,
-    @Param('requestId') requestId: string,
-  ) {
+  async deleteTurn(@Param() params: ConversationParamsDto) {
     return this.conversationService.deleteTurn(
-      sessionId,
-      conversationId,
-      requestId,
+      params.sessionId,
+      params.conversationId!,
+      params.requestId!,
     );
   }
 }

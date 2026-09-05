@@ -28,8 +28,10 @@ import {
   ApiUpsertDlqEntry,
 } from '../decorators/openapi.decorators.js';
 import { CreateDlqEntryDto } from '../dtos/create-dlq-entry.dto.js';
+import { DlqParamsDto } from '../dtos/dlq-params.dto.js';
 import { QueryDlqEntriesDto } from '../dtos/query-dlq-entries.dto.js';
 import { ReinstateDlqDto } from '../dtos/reinstate-dlq.dto.js';
+import { ReinstateQueryDto } from '../dtos/reinstate-query.dto.js';
 import { UpdateDlqEntryDto } from '../dtos/update-dlq-entry.dto.js';
 import { DeadLetterRepository } from '../services/repository.service.js';
 
@@ -49,16 +51,16 @@ export class DeadLetterController {
       status: query.status,
       queueName: query.queueName,
       jobName: query.jobName,
-      limit: query.limit ? Number(query.limit) : undefined,
-      offset: query.offset ? Number(query.offset) : undefined,
+      limit: query.limit,
+      offset: query.offset,
       search: query.search,
     });
   }
 
   @Get(':id')
   @ApiFindOneDlqEntry()
-  async findOne(@Param('id') id: string) {
-    const result = await this.dlqRepository.findById(id);
+  async findOne(@Param() params: DlqParamsDto) {
+    const result = await this.dlqRepository.findById(params.id);
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -86,8 +88,8 @@ export class DeadLetterController {
 
   @Patch(':id')
   @ApiUpdateDlqEntry()
-  async update(@Param('id') id: string, @Body() body: UpdateDlqEntryDto) {
-    const existing = await this.dlqRepository.findById(id);
+  async update(@Param() params: DlqParamsDto, @Body() body: UpdateDlqEntryDto) {
+    const existing = await this.dlqRepository.findById(params.id);
     if (!existing) throw new NotFoundException();
     if (existing.status === 'Removed') {
       throw new BadRequestException(
@@ -109,13 +111,13 @@ export class DeadLetterController {
       failureHistory: body.failureHistory as Prisma.InputJsonValue,
       nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
     };
-    return this.dlqRepository.update(id, data);
+    return this.dlqRepository.update(params.id, data);
   }
 
   @Patch(':id/upsert')
   @ApiUpsertDlqEntry()
-  async upsert(@Param('id') id: string, @Body() body: UpdateDlqEntryDto) {
-    const existing = await this.dlqRepository.findById(id);
+  async upsert(@Param() params: DlqParamsDto, @Body() body: UpdateDlqEntryDto) {
+    const existing = await this.dlqRepository.findById(params.id);
     if (!existing) throw new NotFoundException();
     if (existing.status === 'Removed') {
       throw new BadRequestException(
@@ -148,22 +150,22 @@ export class DeadLetterController {
 
   @Delete(':id')
   @ApiDeleteDlqEntry()
-  async remove(@Param('id') id: string) {
-    const existing = await this.dlqRepository.findById(id);
+  async remove(@Param() params: DlqParamsDto) {
+    const existing = await this.dlqRepository.findById(params.id);
     if (!existing) throw new NotFoundException();
-    return this.dlqRepository.remove(id);
+    return this.dlqRepository.remove(params.id);
   }
 
   @Post('reinstate')
   @HttpCode(HttpStatus.OK)
   @ApiReinstateDlqEntries()
   async reinstate(
-    @Query('batchSize') batchSize?: string,
+    @Query() query: ReinstateQueryDto,
     @Body() body?: ReinstateDlqDto,
   ) {
     return this.jobReinstatementService.reinstate({
       ids: body?.ids,
-      batchSize: batchSize ? Number(batchSize) : undefined,
+      batchSize: query.batchSize,
     });
   }
 

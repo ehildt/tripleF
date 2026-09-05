@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AiSdkService } from '@triplef/ai-sdk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { OllamaConfigService } from '../../ai-sdk/configs/ollama-config.service.js';
-import { ToolSelectionService } from '../../ai-sdk/services/tool-selection.service.js';
+import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
+import { ToolSelectionService } from '../services/tool-selection.service.js';
 
 import { ExecuteActionService } from './execute.action.js';
 
@@ -35,6 +35,8 @@ describe('ExecuteActionService', () => {
           provide: ToolSelectionService,
           useValue: {
             selectToolsByName: vi.fn().mockReturnValue({}),
+            // Memory feature off in these tests: no always-on wave tools.
+            getAlwaysOnToolNames: vi.fn().mockReturnValue([]),
           },
         },
         {

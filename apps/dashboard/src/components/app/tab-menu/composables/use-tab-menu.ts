@@ -6,7 +6,7 @@ import { tabMenuAutoClose, tabMenuSide } from './tab-menu-settings.state';
 /**
  * Slide-out behavior of the tab menu: the drawer starts open and stays open
  * until the user toggles the edge handle (or presses Escape) — togglable by
- * default. With autoclose on (SysCtl → Widgets → Tab Menu), the drawer also
+ * default. With autoclose on (Settings → Widgets → Tab Menu), the drawer also
  * closes itself after a tab was picked or a click landed outside the menu.
  * The menu is docked to the configured screen edge; it is fixed to that
  * edge and cannot be dragged.

@@ -6,11 +6,22 @@ export const VECTORIZE_JOB = 'vectorize';
 export const MEMORY_WRITE_JOB = 'memory-write';
 export const MEMORY_PROFILE_JOB = 'memory-profile';
 
-/** Topic tags on cognition insight records — the sanitize probe filter. */
-export const INSIGHT_TAGS = ['cognition', 'insight'];
+/**
+ * Distinguishing tag on cognition insight records — the sanitize probe
+ * filter. Insights and episodes both carry the shared 'cognition' tag, so an
+ * any-match over the full tag array would cross-match the two lanes; the
+ * distinguishing tag is the exact filter.
+ */
+export const INSIGHT_TAG = 'insight';
 
-/** Topic tags on cognition episode records — the short-term conversation-memory probe filter. */
-export const EPISODE_TAGS = ['cognition', 'episode'];
+/** Distinguishing tag on cognition episode records — the short-term conversation-memory probe filter. */
+export const EPISODE_TAG = 'episode';
+
+/** Max conviction records injected into the respond context per turn. */
+export const CONVICTION_PROBE_LIMIT = 3;
+
+/** Max cluster summaries injected into the respond context per turn (graphRag). */
+export const CLUSTER_PROBE_LIMIT = 3;
 
 /** Max episode records injected into the respond context per turn. */
 export const EPISODE_PROBE_LIMIT = 3;

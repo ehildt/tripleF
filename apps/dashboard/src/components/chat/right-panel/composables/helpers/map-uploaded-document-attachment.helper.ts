@@ -15,6 +15,7 @@ export function mapUploadedDocumentAttachment(
     isSelected: doc.selected !== false,
     pendingIndex: null,
     source: 'local',
+    size: doc.size,
     kind: 'document',
   };
 }
