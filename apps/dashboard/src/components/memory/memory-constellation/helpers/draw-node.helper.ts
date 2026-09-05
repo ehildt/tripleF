@@ -115,7 +115,16 @@ export function drawNode(
   ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
   ctx.fillStyle = dotColor;
   ctx.globalAlpha = (isHovered ? 1 : 0.75) * opacity;
+  // Heat shadow: a soft glow for hovered/hub dots — attached to the dot fill
+  // itself and reset immediately after. (Re-filling at the end of the draw
+  // would paint whatever path is latest — the friction pulse ring above —
+  // inflating a hovered friction dot to ring size.)
+  if (isHovered || isHub) {
+    ctx.shadowColor = heat;
+    ctx.shadowBlur = isHub ? 16 : 12;
+  }
   ctx.fill();
+  ctx.shadowBlur = 0;
   if (isTopic) {
     ctx.strokeStyle = dotColor;
     ctx.lineWidth = 1.5;
@@ -157,13 +166,6 @@ export function drawNode(
     ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2);
     ctx.stroke();
     ctx.globalAlpha = 1;
-  }
-  // Heat shadow: a soft glow for hovered/hub dots.
-  if (isHovered || isHub) {
-    ctx.shadowColor = heat;
-    ctx.shadowBlur = isHub ? 16 : 12;
-    ctx.fill();
-    ctx.shadowBlur = 0;
   }
   ctx.globalAlpha = 1;
 }

@@ -42,7 +42,7 @@ export async function fetchMemoryTaxonomy(
 ): Promise<MemoryTaxonomyNodeRecord[]> {
   const res = await fetch(
     getMemoryApiUrl(
-      `/api/v1/qdrant/memory/taxonomy?lane=${encodeURIComponent(lane)}&scopeKey=${encodeURIComponent(scopeKey)}`,
+      `/api/v1/memory/taxonomy?lane=${encodeURIComponent(lane)}&scopeKey=${encodeURIComponent(scopeKey)}`,
     ),
   );
   if (!res.ok) throw new Error(`Failed to load memory taxonomy: ${res.status}`);
@@ -56,7 +56,7 @@ export async function updateMemoryTaxonomyNode(
   update: { name?: string; icon?: string | null },
 ): Promise<void> {
   const res = await fetch(
-    getMemoryApiUrl(`/api/v1/qdrant/memory/taxonomy/${encodeURIComponent(id)}`),
+    getMemoryApiUrl(`/api/v1/memory/taxonomy/${encodeURIComponent(id)}`),
     {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -74,9 +74,7 @@ export async function mergeMemoryTaxonomyNode(
   into: string,
 ): Promise<void> {
   const res = await fetch(
-    getMemoryApiUrl(
-      `/api/v1/qdrant/memory/taxonomy/${encodeURIComponent(id)}/merge`,
-    ),
+    getMemoryApiUrl(`/api/v1/memory/taxonomy/${encodeURIComponent(id)}/merge`),
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

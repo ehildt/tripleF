@@ -128,9 +128,8 @@ interface DeleteRecordsOutcome {
 }
 
 /**
- * HTTP client for the outsourced memory app (the qdrant/vector-memory
- * service). Every method mirrors the memory app's REST surface
- * (/api/v1/qdrant/*) and the failure semantics of the services it replaces:
+ * HTTP client for the outsourced memory app (the memory service). Every method mirrors the memory app's REST surface
+ * (/api/v1/memory/*) and the failure semantics of the services it replaces:
  * read paths degrade to empty results so the harness never breaks on memory,
  * write paths throw so the memory tools can report honest failures.
  */
@@ -148,7 +147,7 @@ export class MemoryClientService {
 
   /** Qdrant collection status (health probes). */
   async status(): Promise<unknown> {
-    return this.request(`${this.baseUrl}/qdrant/status`);
+    return this.request(`${this.baseUrl}/memory/status`);
   }
 
   /** Semantic text search — read path of the memory-partition-recall tool + sanitize probe. */
@@ -156,7 +155,7 @@ export class MemoryClientService {
     if (!this.config.enabled) return [];
     try {
       return await this.request<MemoryPoint[]>(
-        `${this.baseUrl}/qdrant/search/text`,
+        `${this.baseUrl}/memory/search/text`,
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -180,7 +179,7 @@ export class MemoryClientService {
     if (!this.config.enabled) return { points: [], clusters: [] };
     try {
       return await this.request<SearchWithClusters>(
-        `${this.baseUrl}/qdrant/search/text/clusters`,
+        `${this.baseUrl}/memory/search/text/clusters`,
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -205,7 +204,7 @@ export class MemoryClientService {
     if (!this.config.enabled) return [];
     try {
       return await this.request<SynopsisHit[]>(
-        `${this.baseUrl}/qdrant/search/synopses`,
+        `${this.baseUrl}/memory/search/synopses`,
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -230,7 +229,7 @@ export class MemoryClientService {
     if (!this.config.enabled) return [];
     try {
       return await this.request<MemoryPoint[]>(
-        `${this.baseUrl}/qdrant/search/convictions`,
+        `${this.baseUrl}/memory/search/convictions`,
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -354,7 +353,7 @@ export class MemoryClientService {
     memoryCognition: string,
   ): Promise<MemoryCognitionSnapshot> {
     return this.request<MemoryCognitionSnapshot>(
-      `${this.baseUrl}/qdrant/memory/cognition?memoryCognition=${encodeURIComponent(memoryCognition)}`,
+      `${this.baseUrl}/memory/cognition?memoryCognition=${encodeURIComponent(memoryCognition)}`,
     );
   }
 
@@ -369,7 +368,7 @@ export class MemoryClientService {
   async storeRecord(input: StoreRecordInput): Promise<string> {
     if (!this.config.enabled) throw new Error('Memory feature is disabled');
     const res = await this.request<{ accepted: boolean; id?: string }>(
-      `${this.baseUrl}/qdrant/text`,
+      `${this.baseUrl}/memory/text`,
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -389,7 +388,7 @@ export class MemoryClientService {
   async storeInsight(input: StoreInsightInput): Promise<string> {
     if (!this.config.enabled) throw new Error('Memory feature is disabled');
     const res = await this.request<{ accepted: boolean; id?: string }>(
-      `${this.baseUrl}/qdrant/memory/cognition/insights`,
+      `${this.baseUrl}/memory/cognition/insights`,
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -417,7 +416,7 @@ export class MemoryClientService {
     if (input.contains) params.set('contains', input.contains);
     if (input.tags?.length) params.set('tags', input.tags.join(','));
     const res = await this.request<{ deleted: number; texts: string[] }>(
-      `${this.baseUrl}/qdrant/text?${params.toString()}`,
+      `${this.baseUrl}/memory/text?${params.toString()}`,
       { method: 'DELETE' },
     );
     return { deleted: res.deleted, texts: res.texts, matched: res.deleted };
@@ -430,7 +429,7 @@ export class MemoryClientService {
       cognition: 'true',
     });
     const res = await this.request<{ deleted: number; texts: string[] }>(
-      `${this.baseUrl}/qdrant/text?${params.toString()}`,
+      `${this.baseUrl}/memory/text?${params.toString()}`,
       { method: 'DELETE' },
     );
     return res.texts;
@@ -457,7 +456,7 @@ export class MemoryClientService {
       deleted: number;
       texts: string[];
       pruned?: string[];
-    }>(`${this.baseUrl}/qdrant/text?${params.toString()}`, {
+    }>(`${this.baseUrl}/memory/text?${params.toString()}`, {
       method: 'DELETE',
     });
     return { deleted: res.deleted, texts: res.texts, pruned: res.pruned ?? [] };

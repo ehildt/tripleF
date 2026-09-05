@@ -37,7 +37,6 @@ export function useSynopsisCanvas(
   nodes: Ref<SynopsisTreeNode[]>,
   links: Ref<SynopsisTreeLink[]>,
   canvasRef: Ref<HTMLCanvasElement | null>,
-  tooltipRef: Ref<HTMLDivElement | null>,
   colors: Ref<{ accent: string; muted: string }>,
 ) {
   const hoveredNode = ref<SynopsisTreeNode | null>(null);

@@ -52,13 +52,14 @@ describe('drawNode', () => {
     expect(ctx.fill).toHaveBeenCalled();
   });
 
-  it('adds a halo ring and a heat shadow fill for hub dots', () => {
+  it('adds a halo and a shadow glow for hub dots', () => {
     const ctx = makeCtx();
     drawNode(ctx, { ...params, isHub: true });
 
-    // Halo + dot + shadow re-fill = three fills, two circles.
+    // Halo + dot (the dot fill carries the shadow glow) = two fills.
     expect(ctx.arc).toHaveBeenCalledTimes(2);
-    expect(ctx.fill).toHaveBeenCalledTimes(3);
+    expect(ctx.fill).toHaveBeenCalledTimes(2);
+    expect(ctx.shadowBlur).toBe(0);
   });
 
   it('outlines category dots', () => {
@@ -124,5 +125,16 @@ describe('drawNode', () => {
     drawNode(supersededCtx, { ...params, isSuperseded: true });
     expect(supersededCtx.stroke).toHaveBeenCalledTimes(1);
     expect(supersededCtx.strokeStyle).toContain('rgba(0, 0, 0');
+  });
+
+  it('never paints the friction pulse ring as a filled shape on hover', () => {
+    const ctx = makeCtx();
+    drawNode(ctx, { ...params, isFriction: true, isHovered: true });
+
+    // One fill (the dot itself, with the heat glow) — the pulse ring's arc
+    // must only ever be stroked, or a hovered friction dot inflates to ring
+    // size.
+    expect(ctx.fill).toHaveBeenCalledTimes(1);
+    expect(ctx.arc).toHaveBeenCalledTimes(2);
   });
 });

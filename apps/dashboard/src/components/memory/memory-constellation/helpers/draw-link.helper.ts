@@ -9,9 +9,10 @@ import { drawDroplet } from './draw-droplet.helper';
  *  sibling sub-categories) and long-distance (inter-topic) edges. */
 const GRAY_LINK_COLOR = '#6b7280';
 
-/** Warning orange for friction (contested) edges — the reflection pass's
- *  open conflict pairs, drawn distinct from the semantic link graph. */
-const FRICTION_LINK_COLOR = '#ff9933';
+/** Black for friction (contested) edges — matching the black pulse ring on
+ *  contested dots; the reflection pass's open conflict pairs, drawn distinct
+ *  from the semantic link graph. */
+const FRICTION_LINK_COLOR = '#000000';
 
 /** Edge kinds drawn as gray lines (hierarchy + long-distance). */
 const GRAY_KINDS = new Set([
@@ -77,7 +78,7 @@ export function drawLink(
   const isFriction = link.kind === 'friction';
   const isDashed = DASHED_KINDS.has(link.kind);
   // Hierarchy + long-distance edges are gray; intra (leaf → main dot) edges
-  // stay in the topic color. Friction edges are warning-orange and dashed
+  // stay in the topic color. Friction edges are black and dashed
   // — a conflict, not a relationship.
   let dashPattern: number[] = [];
   if (isDashed) {

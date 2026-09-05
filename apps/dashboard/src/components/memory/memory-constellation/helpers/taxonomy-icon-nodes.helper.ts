@@ -1,3 +1,4 @@
+import type { LucideIconNode } from '@lucide/icons';
 import {
   Activity,
   Anchor,
@@ -95,11 +96,12 @@ import {
   Zap,
 } from '@lucide/icons';
 
-/** One Lucide SVG child node: `[tag, attributes]`. */
-export type TaxonomyIconNode = readonly [
-  string,
-  Record<string, string | number>,
-];
+/**
+ * One Lucide SVG node tuple — aliased from the library's own type
+ * (`[tag, attrs]` plus the forward-compat `[tag, attrs, children]` variant;
+ * no curated icon uses children in 1.41).
+ */
+export type TaxonomyIconNode = LucideIconNode;
 
 /**
  * The curated taxonomy icon set — kebab name → Lucide node tuples. MUST

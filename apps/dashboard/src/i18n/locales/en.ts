@@ -486,6 +486,7 @@ const en: LocaleMessages = {
     memoryTaxonomyRename: 'Rename',
     memoryTaxonomyRenameSave: 'Save name',
     memoryTaxonomyMergeInto: 'Merge into',
+    memoryTaxonomyMergePlaceholder: 'Pick a label…',
     memoryTaxonomyMergeConfirm: 'Merge labels (payloads rewrite)',
     memoryTaxonomyIcon: 'Icon',
     memoryTaxonomyIconClear: 'Clear icon',

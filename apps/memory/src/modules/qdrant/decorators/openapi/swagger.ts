@@ -1,24 +1,26 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { MemoryClusterDto } from '../../dtos/memory-cluster.dto.js';
-import { MemoryClusterResponseDto } from '../../dtos/memory-cluster-response.dto.js';
-import { MemoryCognitionSnapshotDto } from '../../dtos/memory-cognition-snapshot.dto.js';
-import { MemoryConsolidateResponseDto } from '../../dtos/memory-consolidate-response.dto.js';
-import { MemoryConvictionResponseDto } from '../../dtos/memory-conviction-response.dto.js';
-import { MemoryDeleteResponseDto } from '../../dtos/memory-delete-response.dto.js';
-import { MemoryFrictionDto } from '../../dtos/memory-friction.dto.js';
+import { MemoryCognitionSnapshotDto } from '../../../memory-cognition/dtos/memory-cognition-snapshot.dto.js';
+import { MemoryClusterDto } from '../../../memory-partition/dtos/memory-cluster.dto.js';
+import { MemoryClusterResponseDto } from '../../../memory-partition/dtos/memory-cluster-response.dto.js';
+import { MemoryConsolidateResponseDto } from '../../../memory-partition/dtos/memory-consolidate-response.dto.js';
+import { MemoryConvictionResponseDto } from '../../../memory-partition/dtos/memory-conviction-response.dto.js';
+import { MemoryDeleteResponseDto } from '../../../memory-partition/dtos/memory-delete-response.dto.js';
+import { MemoryFrictionDto } from '../../../memory-partition/dtos/memory-friction.dto.js';
+import { MemoryLinkDto } from '../../../memory-partition/dtos/memory-link.dto.js';
+import { MemoryLinksRecomputeResponseDto } from '../../../memory-partition/dtos/memory-links-recompute-response.dto.js';
+import { MemoryPruneResponseDto } from '../../../memory-partition/dtos/memory-prune-response.dto.js';
+import { MemoryReflectResponseDto } from '../../../memory-partition/dtos/memory-reflect-response.dto.js';
+import { MemoryRelinkResponseDto } from '../../../memory-partition/dtos/memory-relink-response.dto.js';
+import { MemorySearchClustersResponseDto } from '../../../memory-partition/dtos/memory-search-clusters-response.dto.js';
+import { MemorySynopsisDto } from '../../../memory-partition/dtos/memory-synopsis.dto.js';
 import { MemoryItemDto } from '../../dtos/memory-item.dto.js';
-import { MemoryLinkDto } from '../../dtos/memory-link.dto.js';
-import { MemoryLinksRecomputeResponseDto } from '../../dtos/memory-links-recompute-response.dto.js';
-import { MemoryPruneResponseDto } from '../../dtos/memory-prune-response.dto.js';
-import { MemoryReflectResponseDto } from '../../dtos/memory-reflect-response.dto.js';
-import { MemoryRelinkResponseDto } from '../../dtos/memory-relink-response.dto.js';
-import { MemorySearchClustersResponseDto } from '../../dtos/memory-search-clusters-response.dto.js';
-import { MemorySynopsisDto } from '../../dtos/memory-synopsis.dto.js';
-import { QdrantStatusResponseDto } from '../../dtos/qdrant-status.dto.js';
+import { MemoryStatusResponseDto } from '../../dtos/memory-status.dto.js';
 
-export const ApeTagsQdrant = () => ApiTags('Qdrant');
+export const ApeTagsMemory = () => ApiTags('Memory');
+
+export const ApeTagsMemoryCognition = () => ApiTags('Memory Cognition');
 
 export const ApeTagsPartitionMaintenance = () =>
   ApiTags('Memory Partition Maintenance');
@@ -26,15 +28,15 @@ export const ApeTagsPartitionMaintenance = () =>
 export const ApeTagsCognitionMaintenance = () =>
   ApiTags('Memory Cognition Maintenance');
 
-export const ApeGetQdrantStatus = () =>
+export const ApeGetMemoryStatus = () =>
   applyDecorators(
-    ApiResponse({ status: 200, type: QdrantStatusResponseDto }),
+    ApiResponse({ status: 200, type: MemoryStatusResponseDto }),
     ApiOperation({
-      summary: 'Qdrant collection status (feature flag, existence, indexes)',
+      summary: 'Memory storage status (feature flag, collections, indexes)',
     }),
   );
 
-export const ApeGetQdrantMemoryCognition = () =>
+export const ApeGetMemoryCognition = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryCognitionSnapshotDto }),
     ApiOperation({
@@ -43,7 +45,7 @@ export const ApeGetQdrantMemoryCognition = () =>
     }),
   );
 
-export const ApeGetQdrantMemory = () =>
+export const ApeGetMemoryList = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({
@@ -51,7 +53,7 @@ export const ApeGetQdrantMemory = () =>
     }),
   );
 
-export const ApeGetQdrantMemoryLinks = () =>
+export const ApeGetMemoryLinks = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryLinkDto] }),
     ApiOperation({
@@ -60,7 +62,7 @@ export const ApeGetQdrantMemoryLinks = () =>
     }),
   );
 
-export const ApeGetQdrantMemoryFrictions = () =>
+export const ApeGetMemoryFrictions = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryFrictionDto] }),
     ApiOperation({
@@ -69,7 +71,7 @@ export const ApeGetQdrantMemoryFrictions = () =>
     }),
   );
 
-export const ApeGetQdrantMemoryClusters = () =>
+export const ApeGetMemoryClusters = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryClusterDto] }),
     ApiOperation({
@@ -78,7 +80,7 @@ export const ApeGetQdrantMemoryClusters = () =>
     }),
   );
 
-export const ApePostQdrantMemoryLinksRecompute = () =>
+export const ApePostMemoryLinksRecompute = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryLinksRecomputeResponseDto }),
     ApiOperation({
@@ -87,7 +89,7 @@ export const ApePostQdrantMemoryLinksRecompute = () =>
     }),
   );
 
-export const ApePostQdrantText = () =>
+export const ApePostMemoryText = () =>
   applyDecorators(
     ApiResponse({
       status: 200,
@@ -99,7 +101,7 @@ export const ApePostQdrantText = () =>
     }),
   );
 
-export const ApePostQdrantCognitionInsight = () =>
+export const ApePostCognitionInsight = () =>
   applyDecorators(
     ApiResponse({
       status: 200,
@@ -111,7 +113,7 @@ export const ApePostQdrantCognitionInsight = () =>
     }),
   );
 
-export const ApeDeleteQdrantText = () =>
+export const ApeDeleteMemoryText = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryDeleteResponseDto }),
     ApiOperation({
@@ -120,7 +122,7 @@ export const ApeDeleteQdrantText = () =>
     }),
   );
 
-export const ApePostQdrantSearchText = () =>
+export const ApePostMemorySearchText = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({
@@ -128,7 +130,7 @@ export const ApePostQdrantSearchText = () =>
     }),
   );
 
-export const ApePostQdrantSearchTextClusters = () =>
+export const ApePostMemorySearchTextClusters = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemorySearchClustersResponseDto }),
     ApiOperation({
@@ -137,7 +139,7 @@ export const ApePostQdrantSearchTextClusters = () =>
     }),
   );
 
-export const ApePostQdrantSearchSynopses = () =>
+export const ApePostMemorySearchSynopses = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemorySynopsisDto, isArray: true }),
     ApiOperation({
@@ -146,13 +148,13 @@ export const ApePostQdrantSearchSynopses = () =>
     }),
   );
 
-export const ApePostQdrantSearchVector = () =>
+export const ApePostMemorySearchVector = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({ summary: 'Search memory by a raw query vector' }),
   );
 
-export const ApePostQdrantSearchBridges = () =>
+export const ApePostMemorySearchBridges = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({
@@ -161,7 +163,7 @@ export const ApePostQdrantSearchBridges = () =>
     }),
   );
 
-export const ApePostQdrantSearchConvictions = () =>
+export const ApePostMemorySearchConvictions = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: [MemoryItemDto] }),
     ApiOperation({
@@ -170,7 +172,7 @@ export const ApePostQdrantSearchConvictions = () =>
     }),
   );
 
-export const ApeDeleteQdrantMemory = () =>
+export const ApeDeleteMemory = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryPruneResponseDto }),
     ApiOperation({

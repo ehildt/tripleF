@@ -31,7 +31,6 @@ const {
 const { memoryPartition } = storeToRefs(useAppStore());
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const tooltipRef = ref<HTMLDivElement | null>(null);
 
 /** Theme colors for the canvas painter (resolved once from CSS vars). */
 const colors = ref({ accent: '#f2b01e', muted: '#94a3b8' });
@@ -43,7 +42,7 @@ const {
   onPointerMove,
   onPointerUp,
   onWheel,
-} = useSynopsisCanvas(nodes, links, canvasRef, tooltipRef, colors);
+} = useSynopsisCanvas(nodes, links, canvasRef, colors);
 
 onMounted(() => {
   const style = getComputedStyle(document.documentElement);
@@ -119,7 +118,6 @@ onMounted(() => {
       />
       <div
         v-show="hoveredNode"
-        ref="tooltipRef"
         class="synopsis-space__tooltip"
         :style="tooltipStyle"
       >

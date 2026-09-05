@@ -44,7 +44,7 @@ export async function fetchMemoryCognition(
 ): Promise<MemoryCognitionSnapshot> {
   const res = await fetch(
     getMemoryApiUrl(
-      `/api/v1/qdrant/memory/cognition?memoryCognition=${encodeURIComponent(cognitionKey)}`,
+      `/api/v1/memory/cognition?memoryCognition=${encodeURIComponent(cognitionKey)}`,
     ),
   );
   if (!res.ok)
@@ -144,7 +144,7 @@ export async function fetchMemoryFacts(
 ): Promise<MemoryFactRecord[]> {
   const res = await fetch(
     getMemoryApiUrl(
-      `/api/v1/qdrant/memory?memoryPartition=${encodeURIComponent(partitionKey)}&limit=${encodeURIComponent(limit)}`,
+      `/api/v1/memory?memoryPartition=${encodeURIComponent(partitionKey)}&limit=${encodeURIComponent(limit)}`,
     ),
   );
   if (!res.ok) throw new Error(`Failed to load memory facts: ${res.status}`);
@@ -171,14 +171,14 @@ export async function fetchMemoryFacts(
 }
 
 /**
- * Prune the whole fact partition via DELETE /qdrant/memory — fact records
+ * Prune the whole fact partition via DELETE /memory — fact records
  * ONLY (the AI cognition lane has its own wipe). Returns the number of
  * removed records (0 when the partition was empty).
  */
 export async function wipeMemoryFacts(partitionKey: string): Promise<number> {
   const res = await fetch(
     getMemoryApiUrl(
-      `/api/v1/qdrant/memory?memoryPartition=${encodeURIComponent(partitionKey)}`,
+      `/api/v1/memory?memoryPartition=${encodeURIComponent(partitionKey)}`,
     ),
     { method: 'DELETE' },
   );
@@ -189,7 +189,7 @@ export async function wipeMemoryFacts(partitionKey: string): Promise<number> {
 
 /**
  * Wipe the AI's whole cognition space for a key (profile + insights) via
- * DELETE /qdrant/text in cognition mode. Returns the number of removed
+ * DELETE /memory/text in cognition mode. Returns the number of removed
  * records (0 when the space was empty).
  */
 export async function wipeMemoryCognition(
@@ -197,7 +197,7 @@ export async function wipeMemoryCognition(
 ): Promise<number> {
   const res = await fetch(
     getMemoryApiUrl(
-      `/api/v1/qdrant/text?memoryPartition=${encodeURIComponent(cognitionKey)}&cognition=true`,
+      `/api/v1/memory/text?memoryPartition=${encodeURIComponent(cognitionKey)}&cognition=true`,
     ),
     { method: 'DELETE' },
   );
@@ -314,9 +314,7 @@ export async function fetchMemoryLinks(scope: {
     params.set('memoryPartition', scope.memoryPartition);
   if (scope.memoryCognition)
     params.set('memoryCognition', scope.memoryCognition);
-  const res = await fetch(
-    getMemoryApiUrl(`/api/v1/qdrant/memory/links?${params}`),
-  );
+  const res = await fetch(getMemoryApiUrl(`/api/v1/memory/links?${params}`));
   if (!res.ok) throw new Error(`Failed to load memory links: ${res.status}`);
   return (await res.json()) as MemoryLinkRecord[];
 }
@@ -370,7 +368,7 @@ export async function fetchMemoryClusters(
 ): Promise<MemoryClusterRecord[]> {
   const res = await fetch(
     getMemoryApiUrl(
-      `/api/v1/qdrant/memory/clusters?memoryPartition=${encodeURIComponent(partitionKey)}`,
+      `/api/v1/memory/clusters?memoryPartition=${encodeURIComponent(partitionKey)}`,
     ),
   );
   if (!res.ok) throw new Error(`Failed to load memory clusters: ${res.status}`);
@@ -405,7 +403,7 @@ export async function fetchMemoryFrictions(scope: {
   if (scope.memoryCognition)
     params.set('memoryCognition', scope.memoryCognition);
   const res = await fetch(
-    getMemoryApiUrl(`/api/v1/qdrant/memory/frictions?${params}`),
+    getMemoryApiUrl(`/api/v1/memory/frictions?${params}`),
   );
   if (!res.ok)
     throw new Error(`Failed to load memory frictions: ${res.status}`);

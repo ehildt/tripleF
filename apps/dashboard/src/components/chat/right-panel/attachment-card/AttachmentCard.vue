@@ -39,6 +39,18 @@ const sourceTitle = computed(() =>
     ? 'Downloaded from the web'
     : 'Uploaded by the user',
 );
+
+/**
+ * The document-shaped view of the entry (null for image/gallery kinds).
+ * Vue can't narrow a union-typed `kind` prop across template branch chains,
+ * so the document row renders from this explicit computed instead of an
+ * inline branch on `item.kind`.
+ */
+const documentItem = computed(() =>
+  props.item.kind === 'document'
+    ? { ...props.item, kind: 'document' as const }
+    : null,
+);
 </script>
 
 <template>
@@ -51,8 +63,8 @@ const sourceTitle = computed(() =>
     @remove-page="(hash) => emit('removePage', hash)"
   />
   <AttachmentDocumentRow
-    v-else-if="item.kind === 'document'"
-    :item="item"
+    v-else-if="documentItem"
+    :item="documentItem"
     @toggle="emit('toggle')"
     @remove="emit('remove')"
   />

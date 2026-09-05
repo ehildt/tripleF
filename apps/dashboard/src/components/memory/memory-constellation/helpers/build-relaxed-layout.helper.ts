@@ -61,7 +61,6 @@ function communitySeed(
  */
 function clusterSeed(
   cluster: ConstellationCluster,
-  communities: readonly ConstellationCommunity[],
   communityIdByTopic: ReadonlyMap<string, string>,
   centroids: ReadonlyMap<string, ConstellationPosition>,
   seed: ReadonlyMap<string, ConstellationPosition>,
@@ -118,13 +117,7 @@ export function buildRelaxedLayout(
   for (const cluster of clusters) {
     seed.set(
       clusterNodeId(cluster.key),
-      clusterSeed(
-        cluster,
-        communities,
-        communityIdByTopic,
-        layout.centroids,
-        seed,
-      ),
+      clusterSeed(cluster, communityIdByTopic, layout.centroids, seed),
     );
   }
   const edges = buildEdges(

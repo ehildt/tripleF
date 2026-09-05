@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
 import { VECTORIZE_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
+import { mapVectorizeJob } from '../../memory-partition/helpers/map-vectorize-job.helper.js';
 import {
   ENCYCLOPEDIA_CLASSIFY_JOB,
   ENCYCLOPEDIA_CONSOLIDATE_JOB,
@@ -32,8 +33,6 @@ import type {
   VectorizeJobData,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
-
-import { mapVectorizeJob } from './helpers/map-vectorize-job.helper.js';
 
 interface EnqueueTurnInput {
   /** Fact partition the records belong to; defaults to the session id. */

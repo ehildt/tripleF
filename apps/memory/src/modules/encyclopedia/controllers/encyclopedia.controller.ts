@@ -8,11 +8,11 @@ import {
   Query,
 } from '@nestjs/common';
 
+import { MemoryClusterDto } from '../../memory-partition/dtos/memory-cluster.dto.js';
+import { MemoryFrictionDto } from '../../memory-partition/dtos/memory-friction.dto.js';
+import { MemoryLinkDto } from '../../memory-partition/dtos/memory-link.dto.js';
+import { MemoryLinksRecomputeResponseDto } from '../../memory-partition/dtos/memory-links-recompute-response.dto.js';
 import { MemoryClusterRepository } from '../../persistence/services/memory-cluster.repository.js';
-import { MemoryClusterDto } from '../../qdrant/dtos/memory-cluster.dto.js';
-import { MemoryFrictionDto } from '../../qdrant/dtos/memory-friction.dto.js';
-import { MemoryLinkDto } from '../../qdrant/dtos/memory-link.dto.js';
-import { MemoryLinksRecomputeResponseDto } from '../../qdrant/dtos/memory-links-recompute-response.dto.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
 import {
   ApeGetEncyclopedia,

@@ -48,6 +48,16 @@ export interface ConstellationNode {
   clusterKey?: string;
   /** Synthetic cluster hub dot (click to toggle its member topics). */
   isCluster?: boolean;
+  /** Mid-tier sub-family the record belongs to (a plural label like
+   *  `survival-games`) — topics sharing one key form a community hub between
+   *  the topic and cluster tiers. */
+  communityKey?: string;
+  /** Synthetic community hub dot (click to toggle its member topics). */
+  isCommunity?: boolean;
+  /** Curated Lucide icon name, attached post-layout from the taxonomy
+   *  registry (`labelMeta`) — the hub dot renders the icon instead of a
+   *  plain fill. */
+  icon?: string;
   /** Synthetic ZERO root dot at the scene origin (0,0,0). */
   isRoot?: boolean;
   /** True once the consolidation sweep adjudicated this point. */
@@ -135,6 +145,25 @@ export interface ConstellationCluster {
   title?: string;
   /** LLM-written one/two-sentence summary (server cluster) — shown in the hub tooltip/meta. */
   summary?: string;
+}
+
+/**
+ * A mid-tier group sitting between a cluster and its member topics: topics
+ * whose members share one `communityKey` (a plural sub-family like
+ * `survival-games`). A topic only joins a community when it also belongs
+ * to the parent cluster — community-less topics attach to the cluster
+ * directly. Communities inherit the parent cluster's palette color.
+ */
+export interface ConstellationCommunity {
+  key: string;
+  label: string;
+  color: string;
+  /** Parent cluster key this community hangs under. */
+  clusterKey: string;
+  /** Topic keys grouped into this community. */
+  memberTopicKeys: string[];
+  /** Every real node id across the member topics. */
+  memberIds: string[];
 }
 
 /** A server-detected cluster summary (the memory graph's topic report). */

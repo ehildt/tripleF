@@ -149,7 +149,11 @@ function confirmMerge(): void {
         <label class="taxonomy-node-row__label">{{
           $t('common.memoryTaxonomyMergeInto')
         }}</label>
-        <ComboBox v-model="mergeTargetName" :options="mergeOptions" />
+        <ComboBox
+          v-model="mergeTargetName"
+          :options="mergeOptions"
+          :placeholder="$t('common.memoryTaxonomyMergePlaceholder')"
+        />
         <IconButton
           :title="$t('common.memoryTaxonomyMergeConfirm')"
           size="sm"

@@ -8,9 +8,9 @@ import {
   Post,
 } from '@nestjs/common';
 
+import { MemoryClusterResponseDto } from '../../memory-partition/dtos/memory-cluster-response.dto.js';
+import { MemoryReflectResponseDto } from '../../memory-partition/dtos/memory-reflect-response.dto.js';
 import { EncyclopediaLedgerRepository } from '../../persistence/services/encyclopedia-ledger.repository.js';
-import { MemoryClusterResponseDto } from '../../qdrant/dtos/memory-cluster-response.dto.js';
-import { MemoryReflectResponseDto } from '../../qdrant/dtos/memory-reflect-response.dto.js';
 import { MemoryEnqueueService } from '../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.service.js';
 import { ENCYCLOPEDIA_CONFIG } from '../constants/encyclopedia.constants.js';

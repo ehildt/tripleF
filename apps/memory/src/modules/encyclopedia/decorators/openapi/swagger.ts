@@ -1,12 +1,12 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { MemoryClusterDto } from '../../../qdrant/dtos/memory-cluster.dto.js';
-import { MemoryClusterResponseDto } from '../../../qdrant/dtos/memory-cluster-response.dto.js';
-import { MemoryFrictionDto } from '../../../qdrant/dtos/memory-friction.dto.js';
-import { MemoryLinkDto } from '../../../qdrant/dtos/memory-link.dto.js';
-import { MemoryLinksRecomputeResponseDto } from '../../../qdrant/dtos/memory-links-recompute-response.dto.js';
-import { MemoryReflectResponseDto } from '../../../qdrant/dtos/memory-reflect-response.dto.js';
+import { MemoryClusterDto } from '../../../memory-partition/dtos/memory-cluster.dto.js';
+import { MemoryClusterResponseDto } from '../../../memory-partition/dtos/memory-cluster-response.dto.js';
+import { MemoryFrictionDto } from '../../../memory-partition/dtos/memory-friction.dto.js';
+import { MemoryLinkDto } from '../../../memory-partition/dtos/memory-link.dto.js';
+import { MemoryLinksRecomputeResponseDto } from '../../../memory-partition/dtos/memory-links-recompute-response.dto.js';
+import { MemoryReflectResponseDto } from '../../../memory-partition/dtos/memory-reflect-response.dto.js';
 import { EncyclopediaChunkDto } from '../../dtos/encyclopedia-chunk.dto.js';
 
 export const ApeTagsEncyclopedia = () => ApiTags('Encyclopedia');

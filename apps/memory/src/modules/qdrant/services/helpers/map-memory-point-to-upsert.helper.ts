@@ -1,4 +1,4 @@
-import { normalizeCategory } from '../../helpers/normalize-category.helper.js';
+import { normalizeCategory } from '../../../memory-partition/helpers/normalize-category.helper.js';
 import { normalizeCommunity } from '../../helpers/normalize-community.helper.js';
 import type { UpsertBatchInput } from '../../models/memory.model.js';
 
