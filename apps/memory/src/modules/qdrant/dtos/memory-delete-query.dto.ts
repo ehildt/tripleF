@@ -25,8 +25,10 @@ const parseTags = ({ value }: { value: unknown }): string[] | undefined => {
  * Filtered record delete. The space is required (partition id, falling back
  * to the session id), plus at least one matcher — an unscoped
  * delete-nothing-matched call is rejected, mirroring the list endpoint's
- * tightening vocabulary. `cognition=true` wipes the AI's cognition document
- * instead of fact records and needs no further matcher.
+ * tightening vocabulary. `cognition=true` targets the AI's cognition space
+ * instead of fact records: WITH a matcher (verbatim insight `text` and/or a
+ * profile `path`) it is the targeted per-item delete, WITHOUT one it wipes
+ * the whole cognition space.
  */
 export class MemoryDeleteQueryDto {
   @ApiPropertyOptional({
@@ -95,9 +97,19 @@ export class MemoryDeleteQueryDto {
   requestId?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Cognition mode only: prune one profile routing topic by its path ("field.keyword", e.g. "likes.jazz").',
+    example: 'likes.jazz',
+  })
+  @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  path?: string;
+
+  @ApiPropertyOptional({
     type: Boolean,
     description:
-      "true deletes the AI's cognition document for the partition (its accumulated understanding of the user) instead of fact records.",
+      "true deletes from the AI's cognition space for the partition (its accumulated understanding of the user) instead of fact records — with text/path the targeted per-item delete, without any matcher the whole-space wipe.",
     example: true,
   })
   @Transform(({ value }: { value: unknown }) => {

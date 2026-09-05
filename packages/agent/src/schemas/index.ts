@@ -23,6 +23,7 @@ export * from './memory/enrichment.schema.js';
 export * from './memory/extraction.schema.js';
 export * from './memory/memory-cognition.model.js';
 export * from './memory/merge-cognition-profiles.helper.js';
+export * from './memory/prune-profile-topic.helper.js';
 export * from './memory/research-friction-query.schema.js';
 export * from './memory/research-triage.schema.js';
 export * from './response/card-json.schema.js';

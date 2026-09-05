@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class MemoryDeleteResponseDto {
   @ApiProperty({
@@ -14,4 +14,12 @@ export class MemoryDeleteResponseDto {
     example: ['I prefer single-line if statements.'],
   })
   texts!: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Profile topics pruned by a targeted cognition delete (the removed routing values/keys). Only set on the cognition path — absent for fact-record deletes.',
+    example: ['jazz'],
+  })
+  pruned?: string[];
 }

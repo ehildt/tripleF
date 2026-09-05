@@ -1,7 +1,7 @@
 {
   "name": "@triplef/agent",
   "description": "tripleF (3F) agent domain — structured-output schemas, prompt builders, and model tools shared across the apps.",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "packageManager": "pnpm@11.25.0",
   "license": "MIT",
   "type": "module",
@@ -60,7 +60,7 @@
     "turndown": "^7.2.4"
   },
   "peerDependencies": {
-    "ai": "^7.0.92",
+    "ai": "^7.0.93",
     "zod": "^4.5.4"
   },
   "peerDependenciesMeta": {

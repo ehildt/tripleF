@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ENCYCLOPEDIA_TOOL_NAMES, type ToolName } from '@triplef/agent/schemas';
 import { createEncyclopediaReadTool } from '@triplef/agent/tools';
 import { createEncyclopediaSearchTool } from '@triplef/agent/tools';
+import { createMemoryCognitionDeleteTool } from '@triplef/agent/tools';
 import { createMemoryCognitionForgetTool } from '@triplef/agent/tools';
 import { createMemoryCognitionRememberTool } from '@triplef/agent/tools';
 import { createMemoryPartitionDeleteTool } from '@triplef/agent/tools';
@@ -61,9 +62,10 @@ export class ToolSelectionService {
     );
     // Browser tools come from the Playwright MCP sidecar (empty when disabled
     // or unreachable) and are merged under their canonical browser_* names.
-    // Memory tools are agentic: the partition remember/recall/delete trio and
-    // the cognition remember/forget pair are offered only when the memory
-    // feature is enabled AND a partition scope is threaded from the turn.
+    // Memory tools are agentic: the partition remember/recall/delete trio
+    // and the cognition remember/delete/forget trio are offered only when
+    // the memory feature is enabled AND a partition scope is threaded from
+    // the turn.
     const memoryTools =
       memoryScope && this.memoryConfig.enabled
         ? {
@@ -82,6 +84,11 @@ export class ToolSelectionService {
             'memory-cognition-remember': createMemoryCognitionRememberTool({
               scope: memoryScope,
               storeInsight: (input) => this.memoryClient.storeInsight(input),
+            }),
+            'memory-cognition-delete': createMemoryCognitionDeleteTool({
+              scope: memoryScope,
+              deleteCognitionRecords: (input) =>
+                this.memoryClient.deleteCognitionRecords(input),
             }),
             'memory-cognition-forget': createMemoryCognitionForgetTool({
               scope: memoryScope,

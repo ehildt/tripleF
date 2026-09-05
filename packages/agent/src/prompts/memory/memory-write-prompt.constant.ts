@@ -14,8 +14,8 @@ import { buildVocabularySection } from './vocabulary-section.helper.js';
 export const MEMORY_WRITE_INSTRUCTIONS = `MEMORY WRITE JOB — one purpose: decide whether THIS turn yielded anything worth persisting, and store it in the correct lane via the memory-partition-remember or memory-cognition-remember tool.
 
 Two lanes, never confused:
-- memory-partition = the user's OWN statements (facts they stated or asked you to remember).
-- memory-cognition = YOUR derived understanding of the user (inferred traits, standing interests, connections).
+- memory-partition = the OBJECTIVE fact store: external-world facts, factual records, project details, and events the user stated, subjects gathered this turn, or facts the user asked you to remember.
+- memory-cognition = the SUBJECTIVE profile store: every preference, interest, trait, or internal state of the user (stated or inferred) — YOUR understanding of the user, persona learnings included.
 
 You receive:
 - USER REQUEST: what the user asked.
@@ -23,14 +23,16 @@ You receive:
 - PROBED THIS TURN: what memory-partition-recall already surfaced for this turn (may be empty) — already known, never re-store.
 - GATHERED DATA: summarized tool results from this turn (web searches, lookups).
 
-Store into the PARTITION lane (call memory-partition-remember) only when it is durable and user-specific:
-- A preference, interest, or durable detail the user states about themselves (favorite X, their setup, contact info, a decision — however phrased, any language).
-- A notable fact the user asks you to track or remember.
+Store into the PARTITION lane (call memory-partition-remember) only when it is durable, objective, and user-specific:
+- A factual record the user states or asks you to track (contact info, a decision, a project detail, an event, their setup — however phrased, any language).
 - Knowledge about a subject the user cares about that was gathered this turn and extends what is already in PRIOR MEMORY.
 
-Store into the COGNITION lane (call memory-cognition-remember) only when it is something you LEARN about the user that they did not state outright:
+ROUTING CONSTRAINT (absolute): extract ONLY objective, external facts to the partition. You MUST NOT store user preferences, behavioral traits, or internal states there ("the user likes…", "the user is interested in…", "the user prefers…"). All user profile and persona data is deferred to the cognition tier.
+
+Store into the COGNITION lane (call memory-cognition-remember) whenever the turn yields SUBJECTIVE user data, stated or derived:
+- A preference or interest the user states outright (favorite X, a like or dislike, a style choice) — stated preferences live HERE, never in the partition.
 - An inferred trait, a standing interest, a working nuance, or a connection between facts the turn supports.
-- Never a stated fact — those belong in the partition lane.
+- Never an objective fact — those belong in the partition lane.
 
 STORAGE MECHANICS — how your memory works (write for the retriever):
 - Each stored record is embedded as a whole AND matched sentence-by-sentence at recall time (multi-variant retrieval). One self-contained fact per call; a single long, dense sentence is fine, but lead with the subject ("Sam's phone number is 555-1234", never "His number is …").
@@ -79,4 +81,4 @@ export function buildMemoryWritePrompt(params: {
 }
 
 const MEMORY_WRITE_VERDICT =
-  'Decide: store each durable user-specific fact with one memory-partition-remember call, each derived understanding with one memory-cognition-remember call, or answer "none" if the turn surfaced nothing durable about this user.';
+  'Decide: store each durable objective fact with one memory-partition-remember call, each subjective user datum (stated or derived) with one memory-cognition-remember call, or answer "none" if the turn surfaced nothing durable about this user.';

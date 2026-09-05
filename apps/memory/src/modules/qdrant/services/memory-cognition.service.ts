@@ -12,6 +12,7 @@ import {
   type MemoryProfileInsight,
   normalizeInsightPath,
   parseStoredProfile,
+  pruneProfileTopic,
 } from '@triplef/agent/schemas';
 
 import { MemoryCognitionProfileRepository } from '../../persistence/services/memory-cognition-profile.repository.js';
@@ -329,6 +330,55 @@ export class MemoryCognitionService {
       ],
     });
     return 1;
+  }
+
+  /**
+   * Targeted cognition delete (the agentic `memory-cognition-delete` tool /
+   * REST text-delete in cognition mode): removes one verbatim insight record
+   * (exact text identity — insights dedupe by text, so repeats never stack)
+   * and/or prunes one routing topic from the profile document ("likes.jazz"
+   * drops "jazz" from likes). Insights only — episodes share the space but
+   * are activity, never preference depth. The per-item counterpart to the
+   * deleteCognition wipe; returns the removed texts and pruned topics for
+   * transparent confirmation — all-empty is an honest miss.
+   */
+  async deleteCognitionRecords(input: {
+    memoryCognition: string;
+    text?: string;
+    path?: string;
+  }): Promise<{ deleted: number; texts: string[]; pruned: string[] }> {
+    const removed: string[] = [];
+    const pruned: string[] = [];
+
+    if (input.text) {
+      const matches = await this.memoryRepository.listMemory({
+        memoryCognition: input.memoryCognition,
+        // The distinguishing tag: episodes share the 'cognition' tag, so an
+        // any-match over INSIGHT_TAGS would also match episodes.
+        tags: ['insight'],
+        text: input.text,
+      });
+      await this.memoryRepository.deleteByIds(matches.map((point) => point.id));
+      removed.push(...matches.map((point) => point.text));
+    }
+
+    if (input.path) {
+      const profile = await this.getProfile(input.memoryCognition);
+      if (profile) {
+        const outcome = pruneProfileTopic(profile, input.path);
+        // Same reference means the path matched nothing — no store round-trip.
+        if (outcome.removed) {
+          await this.profileRepository.upsert(
+            input.memoryCognition,
+            outcome.profile as Record<string, unknown>,
+            {},
+          );
+          pruned.push(outcome.removed);
+        }
+      }
+    }
+
+    return { deleted: removed.length, texts: removed, pruned };
   }
 
   /**

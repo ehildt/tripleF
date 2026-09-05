@@ -19,18 +19,21 @@ interface MemoryCognitionRememberDeps {
 }
 
 /**
- * Agentic `memory-cognition-remember` tool: stores one derived insight into
- * the AI's cognition space — the model's own understanding of the user
- * (inferred traits, standing interests, working nuances, connections between
- * facts). Distinct from the fact partition: stated facts belong in
- * memory-partition-remember, derived understanding belongs here. Stores one
- * record synchronously (embed + upsert, deterministic id so re-stating the
- * same insight updates it in place).
+ * Agentic `memory-cognition-remember` tool: stores one insight into the AI's
+ * cognition space — the EXCLUSIVE store for subjective user data. It holds
+ * both what the user STATES about themselves (preferences, interests, likes
+ * and dislikes) and what the model DERIVES (inferred traits, standing
+ * interests, working nuances, connections between facts). Distinct from the
+ * fact partition: objective facts (contact info, decisions, project details,
+ * events) belong in memory-partition-remember, subjective user data belongs
+ * here — never the other way around. Stores one record synchronously (embed
+ * + upsert, deterministic id so re-stating the same insight updates it in
+ * place).
  */
 export function createMemoryCognitionRememberTool(deps: MemoryCognitionRememberDeps): Tool {
   return tool({
     description:
-      'Store one derived insight into your cognition space (memory-cognition) — your own understanding of the user (inferred traits, standing interests, working nuances, connections between facts). Use for what you LEARN about the user, not what they stated; stated facts belong in memory-partition-remember. One self-contained third-person sentence per call, lead with the topic. Optionally attach a path (e.g. "likes.cars") when the insight deepens a stored profile value. Restating an insight verbatim updates it in place.',
+      'Store one insight into your cognition space (memory-cognition) — the exclusive store for SUBJECTIVE user data: preferences and interests the user STATES ("the user likes…", "the user is interested in…") plus what you LEARN about them (inferred traits, standing interests, working nuances, connections between facts). Objective facts (contact info, decisions, project details, events) belong in memory-partition-remember, never here. One self-contained third-person sentence per call, lead with the topic. Optionally attach a path (e.g. "likes.cars") when the insight deepens a stored profile value. Restating an insight verbatim updates it in place.',
     inputSchema: memoryCognitionRememberSchema,
     execute: async ({ text, path }: MemoryCognitionRememberInput) => {
       try {

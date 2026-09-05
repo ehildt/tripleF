@@ -80,7 +80,7 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^11.2.3",
-    "ai": "^7.0.92",
+    "ai": "^7.0.93",
     "joi": "^18.2.8"
   }
 }

@@ -116,7 +116,7 @@ export const ApeDeleteQdrantText = () =>
     ApiResponse({ status: 200, type: MemoryDeleteResponseDto }),
     ApiOperation({
       summary:
-        "Delete memory records by filters, or the AI's cognition document (cognition=true)",
+        "Delete memory records by filters — or, with cognition=true, delete from the AI's cognition space: with text/path the targeted per-item delete, without matchers the whole-space wipe",
     }),
   );
 

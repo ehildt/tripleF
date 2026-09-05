@@ -22,18 +22,19 @@ export function buildExtractionPrompt(
     before: 'OUTPUT FORMAT — output ONLY valid JSON matching this exact schema:',
     after: `
 YOUR TASK — decide what is worth remembering:
-- A fact is durable information that remains useful in a later, unrelated conversation: user preferences, decisions, contact details, project facts, technical constraints (e.g. "User prefers single-line if statements", "Sam's phone number is 555-1234", "User is building a vector memory feature").
-- Be sensitive to the user's data: capture anything durable and user-specific the turn reveals — a stated preference, a decision, a constraint, a project detail, a person or subject they care about — even when it is phrased casually or buried in a longer message. Noticing and storing durable user data is expected; do not wait for an explicit "remember".
+- ROUTING BOUNDARY (absolute): this extraction feeds the memory partition — the OBJECTIVE fact store ONLY. Extract only objective, external-world facts and events: factual records, project details, decisions, states, possessions, contacts, relationships between people. You MUST NOT extract subjective user data — no preferences, likes/dislikes, interests, wants, behavioral traits, or internal states ("the user likes…", "the user is interested in…", "the user prefers…"). All user profile and persona data is deferred to the cognition tier; when the turn reveals ONLY subjective user data, return an empty facts array.
+- A fact is durable, objective information that remains useful in a later, unrelated conversation: decisions, contact details, project facts, technical constraints, events (e.g. "Sam's phone number is 555-1234", "The user is building a vector memory feature", "The payments service migrated to PostgreSQL in November").
+- Be sensitive to the user's data: capture anything durable and objective the turn reveals — a decision, a constraint, a project detail, a person or subject they care about — even when it is phrased casually or buried in a longer message. Noticing and storing durable factual data is expected; do not wait for an explicit "remember".
 - Facts must be self-contained — no "this"/"that" references; write them as third-person statements.
-- Storage mechanics: each fact is embedded as a whole and matched sentence-by-sentence at recall time (multi-variant retrieval). One dense sentence is fine — put the subject up front ("User prefers single-line if statements", not "They prefer that style").
-- Skip transient content: greetings, small talk, one-off instructions, filler — anything with no future recall value. When in doubt about whether a detail is durable, keep it: a durable detail is cheaper to store than to lose.
+- Storage mechanics: each fact is embedded as a whole and matched sentence-by-sentence at recall time (multi-variant retrieval). One dense sentence is fine — put the subject up front ("The payments service runs PostgreSQL 16", not "It runs that version").
+- Skip transient content: greetings, small talk, one-off instructions, filler — anything with no future recall value. When in doubt about whether a detail is durable, keep it: a durable detail is cheaper to store than to lose. When in doubt about whether a detail is SUBJECTIVE, drop it — the cognition tier captures preferences and profile data.
 
 FACT METADATA — every fact object carries the fields the maintenance passes (consolidate/reflect/conviction) interpret:
 - text: the statement itself.
 - subject (optional): the lowercase entity the fact is about — "user" by default, or a person, product, or project name ("sam", "stellar blade", "payments service"). Maintenance only ever compares facts about the SAME subject, so name it whenever the fact is about a specific entity.
 - category (optional): ONE broad lowercase PLURAL family label for this fact, reusing the known vocabulary — inherits the turn-side category when omitted.
 - kind (required): what kind of durable thing it is:
-  - preference — likes, dislikes, wants, style choices
+  - preference — RESERVED, never emit: likes, dislikes, wants, and interests are subjective user data owned by the cognition tier (see ROUTING BOUNDARY)
   - decision — a choice that was made (adoptions, migrations, purchases committed to)
   - state — the CURRENT, changeable situation (lives in X, uses version Y, runs Z) — newer statements supersede these
   - contact — contact details of a person (phone, email, address)

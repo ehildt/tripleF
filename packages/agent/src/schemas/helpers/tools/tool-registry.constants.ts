@@ -83,13 +83,15 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   requestClahe:
     'Request a CLAHE (contrast-enhanced) version of the images. Use when details are hidden in shadows or highlights.',
   'memory-partition-remember':
-    'Store into the user\'s fact partition (memory-partition): notable facts about subjects they care about (favorites, interests, projects, followed stocks, people, past topics), preferences and durable details they state, and anything they explicitly ask you to remember. Storing gathered knowledge and noticed preferences is expected — do not wait for an explicit "remember" instruction.',
+    'Store into the user\'s fact partition (memory-partition) — OBJECTIVE facts only: notable external-world facts about subjects they care about (projects, followed stocks, people, past topics), objective details they state (contact info, decisions, constraints), and objective facts they explicitly ask you to remember. Subjective user data (preferences, interests, traits, internal states) belongs to memory-cognition-remember, never here. Storing gathered knowledge is expected — do not wait for an explicit "remember" instruction.',
   'memory-partition-recall':
     "Retrieve from the user's fact partition (memory-partition) — things they told you in past conversations or asked you to remember. These are trusted user statements, not public facts; attribute them to the user and prefer them over web results for anything personal. Check this tool whenever a request touches a subject this user has cared about before.",
   'memory-partition-delete':
     "Delete one exact fact record from the user's fact partition (memory-partition), quoted verbatim from a memory-partition-recall result. Never delete on a guess: recall first, delete the verbatim statement. Needs memory-partition-recall alongside it.",
   'memory-cognition-remember':
-    'Store one derived insight into your cognition space (memory-cognition) — your own understanding of the user (inferred traits, standing interests, working nuances, connections between facts). Use for what you LEARN about the user, not what they stated; stated facts belong in memory-partition-remember.',
+    'Store one insight into your cognition space (memory-cognition) — the exclusive store for subjective user data: preferences and interests the user states, inferred traits, standing interests, working nuances, connections between facts. Objective facts (contact info, decisions, project details, events) belong in memory-partition-remember.',
+  'memory-cognition-delete':
+    'Delete one targeted piece of your cognition space (memory-cognition): a verbatim stored insight (quoted from your cognition context) and/or one standing profile topic by its path ("likes.jazz"). The per-item forget for subjective user data; memory-cognition-forget is the whole-space wipe.',
   'memory-cognition-forget':
     'Wipe your entire cognition space (memory-cognition) of the user — the structured profile AND every derived insight — only when the user asks you to forget your learned understanding of them or to start over. Fact records in the partition are untouched.',
 };
@@ -121,6 +123,7 @@ export const MEMORY_TOOL_NAMES = [
   'memory-partition-recall',
   'memory-partition-delete',
   'memory-cognition-remember',
+  'memory-cognition-delete',
   'memory-cognition-forget',
 ] as const;
 

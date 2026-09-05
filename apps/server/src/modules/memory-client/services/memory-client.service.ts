@@ -436,6 +436,33 @@ export class MemoryClientService {
     return res.texts;
   }
 
+  /**
+   * Targeted cognition delete (the memory-cognition-delete tool): one
+   * verbatim insight text and/or one profile routing path ("likes.jazz") —
+   * the per-item counterpart to the deleteCognition wipe.
+   */
+  async deleteCognitionRecords(input: {
+    memoryCognition: string;
+    text?: string;
+    path?: string;
+  }): Promise<{ deleted: number; texts: string[]; pruned: string[] }> {
+    if (!this.config.enabled) throw new Error('Memory feature is disabled');
+    const params = new URLSearchParams({
+      memoryPartition: input.memoryCognition,
+      cognition: 'true',
+    });
+    if (input.text) params.set('text', input.text);
+    if (input.path) params.set('path', input.path);
+    const res = await this.request<{
+      deleted: number;
+      texts: string[];
+      pruned?: string[];
+    }>(`${this.baseUrl}/qdrant/text?${params.toString()}`, {
+      method: 'DELETE',
+    });
+    return { deleted: res.deleted, texts: res.texts, pruned: res.pruned ?? [] };
+  }
+
   private async request<T>(url: string, init?: RequestInit): Promise<T> {
     const res = await fetch(url, init);
     if (!res.ok) {

@@ -43,6 +43,8 @@ export * from './helpers/store-host-token.helper.js';
 export * from './image-variants/image-variant.types.js';
 export * from './image-variants/image-variants.schema.js';
 export * from './image-variants/image-variants.tool.js';
+export * from './memory/memory-cognition-delete.schema.js';
+export * from './memory/memory-cognition-delete.tool.js';
 export * from './memory/memory-cognition-forget.schema.js';
 export * from './memory/memory-cognition-forget.tool.js';
 export * from './memory/memory-cognition-remember.schema.js';

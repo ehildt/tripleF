@@ -241,9 +241,17 @@ export class QdrantController {
       );
     }
 
-    // Cognition mode: wipe the AI's whole understanding of the user (the
-    // structured profile + every derived insight) — no further matcher needed.
+    // Cognition mode: WITH a matcher (verbatim insight text and/or a profile
+    // path) this is the targeted per-item delete (memory-cognition-delete
+    // tool); WITHOUT one it wipes the AI's whole understanding of the user.
     if (query.cognition === true) {
+      if (query.text || query.path) {
+        return await this.memoryCognitionService.deleteCognitionRecords({
+          memoryCognition: partition,
+          text: query.text,
+          path: query.path,
+        });
+      }
       const texts =
         await this.memoryCognitionService.deleteCognition(partition);
       return { deleted: texts.length, texts };
