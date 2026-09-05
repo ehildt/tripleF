@@ -103,7 +103,7 @@
     "playwright": "^1.62.1",
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
-    "storybook": "^10.5.10",
+    "storybook": "^10.6.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
