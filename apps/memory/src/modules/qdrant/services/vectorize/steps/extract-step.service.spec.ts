@@ -26,8 +26,10 @@ function makeStep() {
     { generateChat } as never,
     { searchByText: vi.fn().mockResolvedValue([]) } as never,
     {
-      facetCategories: vi.fn().mockResolvedValue([]),
-      facetTags: vi.fn().mockResolvedValue([]),
+      resolveLabels: vi.fn().mockResolvedValue([]),
+    } as never,
+    {
+      rankVocabulary: vi.fn().mockResolvedValue({}),
     } as never,
     { vectorizeTextRatio: 0.5, vectorizeTextChars: 0 } as never,
   );

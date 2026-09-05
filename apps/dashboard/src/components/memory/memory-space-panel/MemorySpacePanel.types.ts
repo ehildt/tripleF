@@ -3,6 +3,7 @@ import type { LucideIcon } from '@lucide/vue';
 import type {
   ConstellationClusterSummary,
   ConstellationFriction,
+  ConstellationLabelMeta,
   ConstellationLink,
   ConstellationNode,
 } from '../memory-constellation/MemoryConstellation.types';
@@ -22,6 +23,8 @@ export interface MemorySpacePanelProps {
   frictions?: ConstellationFriction[];
   /** Server-detected cluster summaries (the memory graph's topic reports). */
   clusters?: ConstellationClusterSummary[];
+  /** Taxonomy metadata per macro-node dot id (icons + operational rows). */
+  labelMeta?: ReadonlyMap<string, ConstellationLabelMeta>;
   /** Read round-trip in flight — blocks the refresh action. */
   isLoading: boolean;
   /** Memory off or unreachable — shows the unavailable note. */

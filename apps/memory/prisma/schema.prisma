@@ -257,3 +257,60 @@ model MemoryCluster {
   @@index([lane, collection, scopeKey, level])
   @@map("memory_cluster")
 }
+
+/**
+ * Canonical macro-taxonomy of the memory constellation (owned by the main
+ * server — see its schema for the full contract): one row per label tier
+ * (`cluster` | `community` | `hub` | `tag`), scoped by (lane, scopeKey) and
+ * deliberately NOT collection-namespaced so labels survive embed-model
+ * switches. The AI adopts or mints rows via the probe contract; the user
+ * renames/merges them. `parentId` ('' for roots/flat tags) carries the tier
+ * above; label embeddings for semantic probing live in Qdrant's
+ * model-namespaced taxonomy collection (one point per node id), never here.
+ */
+model MemoryTaxonomyNode {
+  id             String   @id @default(uuid())
+  lane           String   @db.VarChar(16)
+  scopeKey       String   @db.VarChar(255)
+  kind           String   @db.VarChar(16)
+  parentId       String   @default("") @db.VarChar(64)
+  name           String   @db.VarChar(120)
+  normalizedName String   @db.VarChar(120)
+  icon           String?  @db.VarChar(64)
+  summary        String?  @db.VarChar(2000)
+  createdBy      String   @default("model") @db.VarChar(16)
+  lastReflectedAt  DateTime?
+  lastConsolidatedAt DateTime?
+  lastRelinkedAt   DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  aliases MemoryTaxonomyAlias[]
+
+  @@unique([lane, scopeKey, kind, parentId, normalizedName])
+  @@index([lane, scopeKey, kind, parentId])
+  @@map("memory_taxonomy_node")
+}
+
+/**
+ * Alias registry for taxonomy labels (owned by the main server): snapped,
+ * renamed, or merged variants resolve to the canonical node forever —
+ * killed labels can never be re-minted. `source` ('normalize' | 'fuzzy' |
+ * 'semantic' | 'llm' | 'user') + `score` keep the rewrite audit trail.
+ */
+model MemoryTaxonomyAlias {
+  id       String             @id @default(uuid())
+  node     MemoryTaxonomyNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  nodeId   String
+  lane     String   @db.VarChar(16)
+  scopeKey String   @db.VarChar(255)
+  kind     String   @db.VarChar(16)
+  alias    String   @db.VarChar(120)
+  source   String   @db.VarChar(16)
+  score    Float?
+  createdAt DateTime @default(now())
+
+  @@unique([lane, scopeKey, kind, alias])
+  @@index([nodeId])
+  @@map("memory_taxonomy_alias")
+}

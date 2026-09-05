@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { EncyclopediaClassifyService } from './encyclopedia-classify.service.js';
 
 function makeService() {
-  const aiSdkService = { generateChat: vi.fn() };
+  const aiSdkService = { generateWithTools: vi.fn() };
   const ledger = {
     listPendingClassification: vi.fn(),
     markClassified: vi.fn(),
@@ -35,6 +35,13 @@ function makeService() {
     repository as never,
     memoryEnqueue as never,
     overrides as never,
+    {
+      resolveLabels: vi.fn().mockResolvedValue([]),
+      applyIconHint: vi.fn(),
+    } as never,
+    {
+      rankVocabulary: vi.fn().mockResolvedValue({}),
+    } as never,
   );
   return {
     service,
@@ -83,7 +90,7 @@ describe('EncyclopediaClassifyService', () => {
 
     await service.execute(jobData);
 
-    expect(aiSdkService.generateChat).not.toHaveBeenCalled();
+    expect(aiSdkService.generateWithTools).not.toHaveBeenCalled();
   });
 
   it('classifies one document and fans labels out to its chunks', async () => {
@@ -93,7 +100,7 @@ describe('EncyclopediaClassifyService', () => {
       { value: 'games', count: 1 },
     ]);
     repository.scrollByUrl.mockResolvedValue([chunk]);
-    aiSdkService.generateChat.mockResolvedValue({ text: classification });
+    aiSdkService.generateWithTools.mockResolvedValue({ text: classification });
 
     await service.execute(jobData);
 
@@ -101,6 +108,7 @@ describe('EncyclopediaClassifyService', () => {
       'https://example.com/a',
       'games',
       'stellar blade',
+      undefined,
     );
     expect(ledger.markClassified).toHaveBeenCalledWith(['r1']);
   });
@@ -111,11 +119,11 @@ describe('EncyclopediaClassifyService', () => {
     ledger.listPendingClassification.mockResolvedValue([pendingRow, row2]);
     repository.facetCategories.mockResolvedValue([]);
     repository.scrollByUrl.mockResolvedValue([chunk]);
-    aiSdkService.generateChat.mockResolvedValue({ text: classification });
+    aiSdkService.generateWithTools.mockResolvedValue({ text: classification });
 
     await service.execute(jobData);
 
-    expect(aiSdkService.generateChat).toHaveBeenCalledTimes(1);
+    expect(aiSdkService.generateWithTools).toHaveBeenCalledTimes(1);
     expect(ledger.markClassified).toHaveBeenCalledWith(['r1', 'r2']);
   });
 
@@ -124,7 +132,7 @@ describe('EncyclopediaClassifyService', () => {
     ledger.listPendingClassification.mockResolvedValue([pendingRow]);
     repository.facetCategories.mockResolvedValue([]);
     repository.scrollByUrl.mockResolvedValue([chunk]);
-    aiSdkService.generateChat.mockResolvedValue({ text: 'not json' });
+    aiSdkService.generateWithTools.mockResolvedValue({ text: 'not json' });
 
     await service.execute(jobData);
 
@@ -140,7 +148,7 @@ describe('EncyclopediaClassifyService', () => {
 
     await service.execute(jobData);
 
-    expect(aiSdkService.generateChat).not.toHaveBeenCalled();
+    expect(aiSdkService.generateWithTools).not.toHaveBeenCalled();
     expect(ledger.markClassified).toHaveBeenCalledWith(['r1']);
   });
 
@@ -150,7 +158,7 @@ describe('EncyclopediaClassifyService', () => {
     ledger.listPendingClassification.mockResolvedValue([pendingRow]);
     repository.facetCategories.mockResolvedValue([]);
     repository.scrollByUrl.mockResolvedValue([chunk]);
-    aiSdkService.generateChat.mockResolvedValue({ text: classification });
+    aiSdkService.generateWithTools.mockResolvedValue({ text: classification });
 
     await service.execute({ ...jobData, dryRun: true });
 
@@ -171,7 +179,7 @@ describe('EncyclopediaClassifyService', () => {
     ledger.listPendingClassification.mockResolvedValue([pendingRow]);
     repository.facetCategories.mockResolvedValue([]);
     repository.scrollByUrl.mockResolvedValue([chunk]);
-    aiSdkService.generateChat.mockResolvedValue({ text: classification });
+    aiSdkService.generateWithTools.mockResolvedValue({ text: classification });
     overrides.getEncyclopediaReflectAutoEnabled.mockReturnValue(true);
     overrides.getReflectModel.mockReturnValue(undefined);
     overrides.getReflectBatchLimit.mockReturnValue(100);
@@ -201,7 +209,7 @@ describe('EncyclopediaClassifyService', () => {
     ledger.listPendingClassification.mockResolvedValue([pendingRow]);
     repository.facetCategories.mockResolvedValue([]);
     repository.scrollByUrl.mockResolvedValue([chunk]);
-    aiSdkService.generateChat.mockResolvedValue({ text: classification });
+    aiSdkService.generateWithTools.mockResolvedValue({ text: classification });
     overrides.getEncyclopediaReflectAutoEnabled.mockReturnValue(false);
 
     await service.execute(jobData);

@@ -1,4 +1,4 @@
-import { buildVocabularySection } from './vocabulary-section.helper.js';
+import { buildVocabularySection, type TaxonomyVocabulary } from './vocabulary-section.helper.js';
 
 /**
  * Prompt for the memory-write queue job — runs after the turn was answered,
@@ -38,7 +38,13 @@ STORAGE MECHANICS — how your memory works (write for the retriever):
 - Each stored record is embedded as a whole AND matched sentence-by-sentence at recall time (multi-variant retrieval). One self-contained fact per call; a single long, dense sentence is fine, but lead with the subject ("Sam's phone number is 555-1234", never "His number is …").
 - Restating a record verbatim OVERWRITES it in place — updates are restatements of the full corrected statement, not diffs.
 - tags are the ONLY topic-filter vocabulary at recall — reuse stable, lowercase topic labels (partition lane only). Tags are NARROW and specific: entity names, product names, game titles ("amd", "stellar blade", "stellar blade blood rain").
-- category is the broad family the fact belongs to (partition lane only): ONE lowercase PLURAL family noun per remember call — stocks, games, pets, work, health, finance, contacts … — chosen so narrow topics group into families. A category is NEVER a specific entity, product, company, or game title: "amd" is a tag under the category "stocks"; "stellar blade" and "stellar blade blood rain" are tags under the category "games". Always include it; tags stay narrow, category stays broad and plural.
+- The macro-taxonomy routes a fact into its family hierarchy (partition lane only), top-down: CLUSTER → COMMUNITY → HUB → NODE (the NODE is the stored record itself — never named):
+  - category (CLUSTER): ONE lowercase PLURAL family noun — stocks, games, pets, work, health, finance, contacts …
+  - community (COMMUNITY): ONE lowercase PLURAL sub-family narrowing the category ("survival games" under "games"); omit when no sub-family applies.
+  - subject (HUB): the lowercase SINGULAR main subject entity the fact is about ("project zomboid", "amd", "sam") — a specific name, never pluralized; always include when the fact is about a specific entity.
+  A category or community is NEVER a specific entity, product, company, or game title: "amd" is a subject under the category "stocks"; "stellar blade" is a subject under the category "games". Always include category; reuse the existing labels whenever they fit.
+
+TAXONOMY PROBING (pick first, create if necessary): before naming a community or hub you are not certain exists, call memory-taxonomy-probe top-down — cluster → community → hub — and ADOPT a returned candidate by naming it VERBATIM in the remember call (its id becomes the next probe's parentId). CREATE a new label only when every candidate misses the meaning — then follow the phrasing rules (plural family/sub-family, singular hub) and optionally pass an "icon" from the curated set for the label you create. The known-vocabulary section below already lists likely fits; probing confirms them or finds better ones.
 
 Do NOT store:
 - Public facts merely fetched this turn that do not relate to the user (e.g. generic web results).
@@ -64,10 +70,9 @@ export function buildMemoryWritePrompt(params: {
   priorMemory?: string;
   probedMemory?: string;
   gathered?: string;
-  knownCategories?: string[];
-  knownTags?: string[];
+  vocabulary?: TaxonomyVocabulary;
 }): string {
-  const vocabulary = buildVocabularySection(params.knownCategories, params.knownTags);
+  const vocabulary = buildVocabularySection(params.vocabulary);
   return [
     `USER REQUEST: ${params.userRequest}`,
     `PRIOR MEMORY: ${params.priorMemory?.trim() || '(none stored yet)'}`,

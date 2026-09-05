@@ -100,7 +100,8 @@ export interface ConstellationFriction {
 export interface ConstellationEdge {
   source: string;
   target: string;
-  kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'root';
+  /** 'community' — topic hub → community hub, and community hub → cluster hub. */
+  kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'community' | 'root';
   /** Cosine similarity (inter edges) — drives opacity. */
   score?: number;
   /** Aggregated from suggested (topical) links — rendered faintly. */
@@ -126,6 +127,8 @@ export interface ConstellationCluster {
   color: string;
   /** Cluster keys grouped under this cluster. */
   memberTopicKeys: string[];
+  /** Communities grouped under this cluster (topics without a community stay direct members). */
+  memberCommunityKeys: string[];
   /** Every real node id across the member topics. */
   memberIds: string[];
   /** LLM-written short label (server cluster) — overrides `label` when present. */
@@ -140,6 +143,16 @@ export interface ConstellationClusterSummary {
   title: string;
   summary: string;
   memberIds: string[];
+}
+
+/** Taxonomy registry metadata for one synthetic macro-node dot. */
+export interface ConstellationLabelMeta {
+  /** Curated Lucide icon name (rendered in place of the opaque dot). */
+  icon?: string;
+  /** Concise summary of what belongs under the label. */
+  summary?: string;
+  /** Extra tooltip/meta rows (counts, maintenance stamps, aliases). */
+  meta?: Array<{ label: string; value: string }>;
 }
 
 /** A node's world position in the 3D constellation space. */
@@ -159,7 +172,14 @@ export interface OrbitCenter {
 export interface PreparedLink {
   a: number;
   b: number;
-  kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'root' | 'friction';
+  kind:
+    | 'intra'
+    | 'inter'
+    | 'sibling'
+    | 'cluster'
+    | 'community'
+    | 'root'
+    | 'friction';
   /** Cosine similarity (inter edges) — drives edge opacity. */
   score?: number;
   /** Edge opacity. */
@@ -202,6 +222,8 @@ export interface PreparedConstellation {
 export interface RelaxedLayout {
   topics: ConstellationTopic[];
   clusters: ConstellationCluster[];
+  /** Mid-tier groups sitting between clusters and topics. */
+  communities: ConstellationCommunity[];
   positions: Map<string, ConstellationPosition>;
 }
 
@@ -239,6 +261,12 @@ export interface MemoryConstellationProps {
   /** Server-detected cluster summaries (the memory graph's topic reports)
    *  — attached to the matching cluster hubs by member overlap. */
   clusters?: ConstellationClusterSummary[];
+  /**
+   * Taxonomy metadata per synthetic macro-node id (`cluster:<key>`,
+   * `community:<key>`, `topic:<key>`): the registry's icon, summary and
+   * extra meta rows, attached onto the hub dots post-layout.
+   */
+  labelMeta?: ReadonlyMap<string, ConstellationLabelMeta>;
   /** Show the hub/category labels (default true). */
   showLabels?: boolean;
   /** Show the weak (suggested/topical) edges — the electricity arcs (default true). */

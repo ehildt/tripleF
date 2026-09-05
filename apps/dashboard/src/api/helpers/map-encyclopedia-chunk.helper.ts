@@ -11,6 +11,7 @@ export function mapEncyclopediaChunk(item: {
   chunkCount?: number;
   partitionScope?: string;
   category?: string;
+  community?: string;
   clusterId?: string;
   topic?: string;
   mimeType?: string;
@@ -35,6 +36,7 @@ export function mapEncyclopediaChunk(item: {
     chunkCount: item.chunkCount ?? 0,
     partitionScope: item.partitionScope ?? '',
     category: item.category,
+    community: item.community,
     clusterId: item.clusterId,
     topic: item.topic,
     mimeType: item.mimeType,

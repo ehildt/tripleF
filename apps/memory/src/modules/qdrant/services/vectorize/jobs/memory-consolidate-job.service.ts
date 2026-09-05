@@ -3,7 +3,12 @@ import type { ConsolidationVerdict } from '@triplef/agent/schemas';
 
 import type { PendingLedgerEntry } from '../../../../persistence/services/memory-insert-ledger.repository.js';
 import { MemoryInsertLedgerRepository } from '../../../../persistence/services/memory-insert-ledger.repository.js';
+import { MemoryTaxonomyRepository } from '../../../../persistence/services/memory-taxonomy.repository.js';
 import { deterministicPointId } from '../../../helpers/deterministic-point-id.helper.js';
+import {
+  taxonomyLabelEntries,
+  type TaxonomyLabelEntry,
+} from '../../../helpers/taxonomy-label-entries.helper.js';
 import type {
   MemoryConsolidateJobData,
   MemoryPoint,
@@ -56,6 +61,7 @@ export class MemoryConsolidateJobService {
     private readonly embeddingService: EmbeddingService,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
+    private readonly taxonomy: MemoryTaxonomyRepository,
   ) {}
 
   async execute(data: MemoryConsolidateJobData): Promise<void> {
@@ -74,6 +80,7 @@ export class MemoryConsolidateJobService {
       merged: 0,
       deferred: 0,
     };
+    const touched: TaxonomyLabelEntry[] = [];
 
     for (const row of pending) {
       const screened = await this.screenCandidates(data, row);
@@ -109,6 +116,19 @@ export class MemoryConsolidateJobService {
       }
 
       counts[await this.applyVerdict(data, row, source, candidates, verdict)]++;
+      for (const involved of [source, ...candidates]) {
+        touched.push(
+          ...taxonomyLabelEntries({
+            cluster: involved.category,
+            community: involved.community,
+            hub: involved.subject,
+          }),
+        );
+      }
+    }
+
+    if (!data.dryRun) {
+      await this.stampTouched(data.memoryPartition, touched);
     }
 
     this.logger.log(
@@ -128,6 +148,33 @@ export class MemoryConsolidateJobService {
    * system variable; the model falls back to the consolidation model when no
    * dedicated reflection model is configured.
    */
+  /**
+   * Stamp `lastConsolidatedAt` on the taxonomy nodes under which the
+   * adjudicated points sit (warn-and-continue — stamps are observability,
+   * never a failure domain of the sweep).
+   */
+  private async stampTouched(
+    memoryPartition: string,
+    touched: TaxonomyLabelEntry[],
+  ): Promise<void> {
+    if (touched.length === 0) return;
+    try {
+      await this.taxonomy.touchMaintenanceForLabels(
+        'partition',
+        memoryPartition,
+        touched,
+        'lastConsolidatedAt',
+        new Date(),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `memory-consolidate ${memoryPartition}: maintenance stamps skipped — ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
   private async autoTriggerReflect(
     memoryPartition: string,
     fallbackModel: string,

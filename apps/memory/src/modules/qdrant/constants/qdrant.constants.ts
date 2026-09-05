@@ -22,3 +22,5 @@ export const MEMORY_CONVICTION_JOB = 'memory-conviction';
 export const MEMORY_CLUSTER_JOB = 'memory-cluster';
 /** Gap-filling research job on the vectorize queue — closes never-fetched encyclopedia gaps, depth-capped. */
 export const ENCYCLOPEDIA_RESEARCH_JOB = 'encyclopedia-research';
+/** Taxonomy reconciliation job on the vectorize queue — label-merge sweep over one scope's registry, endpoint-triggered. */
+export const MEMORY_TAXONOMY_RECONCILE_JOB = 'memory-taxonomy-reconcile';

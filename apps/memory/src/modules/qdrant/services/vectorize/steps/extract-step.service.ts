@@ -12,10 +12,14 @@ import { buildPriorMemorySection } from '../../../helpers/build-prior-memory-sec
 import { derivePayloadChars } from '../../../helpers/derive-payload-chars.helper.js';
 import { parseExtraction } from '../../../helpers/parse-extraction.helper.js';
 import type { QdrantConfig } from '../../../models/qdrant-config.model.js';
-import { MemoryRepository } from '../../memory.repository.js';
 import { MemorySearchService } from '../../memory-search.service.js';
+import { TaxonomyProbeService } from '../../taxonomy-probe.service.js';
+import { TaxonomyResolutionService } from '../../taxonomy-resolution.service.js';
 import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
+
+import { applyTaxonomyResolution } from './helpers/apply-taxonomy-resolution.helper.js';
+import { buildTaxonomyLabelInputs } from './helpers/build-taxonomy-label-inputs.helper.js';
 /** One initial attempt + one correction pass — mirror of the interpret retry. */
 const MAX_EXTRACTION_ATTEMPTS = 2;
 
@@ -43,7 +47,8 @@ export class ExtractStepService implements VectorizeStepHandler {
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly memorySearch: MemorySearchService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly taxonomyResolution: TaxonomyResolutionService,
+    private readonly taxonomyProbe: TaxonomyProbeService,
     @Inject(QDRANT_CONFIG) private readonly qdrantConfig: QdrantConfig,
   ) {}
 
@@ -70,20 +75,19 @@ export class ExtractStepService implements VectorizeStepHandler {
       }),
     );
 
-    // The partition's existing category/tag vocabulary — a reuse-first hint
-    // so the model extends the taxonomy instead of minting near-duplicates.
-    const [categories, knownTags] = await Promise.all([
-      this.memoryRepository.facetCategories(ctx.memoryPartition),
-      this.memoryRepository.facetTags(ctx.memoryPartition),
-    ]);
+    // The partition's taxonomy vocabulary ranked by similarity to the source
+    // text — the reuse-first hint that keeps the model extending the
+    // taxonomy instead of minting near-duplicate labels.
+    const vocabulary = await this.taxonomyProbe.rankVocabulary(
+      'partition',
+      ctx.memoryPartition,
+      sourceText,
+    );
 
     const messages = [
       {
         role: 'system' as const,
-        content: buildExtractionPrompt(
-          categories.map((entry) => entry.value),
-          knownTags.map((entry) => entry.value),
-        ),
+        content: buildExtractionPrompt(vocabulary),
       },
       {
         role: 'user' as const,
@@ -92,6 +96,22 @@ export class ExtractStepService implements VectorizeStepHandler {
     ];
 
     ctx.outputs.extraction = await this.runExtraction(ctx, messages);
+
+    // Taxonomy snap: rewrite every minted label to its canonical registry
+    // form (exact → alias → fuzzy → mint) before embed/store, so case-,
+    // format-, and wording-drift can never reach the constellation.
+    const labels = buildTaxonomyLabelInputs(ctx.outputs.extraction);
+    if (labels.length > 0) {
+      const resolved = await this.taxonomyResolution.resolveLabels(
+        'partition',
+        ctx.memoryPartition,
+        labels,
+      );
+      ctx.outputs.extraction = applyTaxonomyResolution(
+        ctx.outputs.extraction,
+        resolved,
+      );
+    }
 
     const { facts, tags } = ctx.outputs.extraction;
     this.logger.log(

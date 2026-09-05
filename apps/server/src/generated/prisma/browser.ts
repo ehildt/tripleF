@@ -155,3 +155,38 @@ export type MemoryFriction = Prisma.MemoryFrictionModel
  *  * replaces a scope's rows atomically, so stale fingerprints never linger.
  */
 export type MemoryCluster = Prisma.MemoryClusterModel
+/**
+ * Model MemoryTaxonomyNode
+ * *
+ *  * Canonical macro-taxonomy of the memory constellation: one row per
+ *  * user-visible label tier — `cluster` (plural family, e.g. `games`),
+ *  * `community` (plural sub-family, e.g. `survival`), `hub` (singular entity,
+ *  * e.g. `project zomboid`), `tag` (flat recall vocabulary). Scope =
+ *  * (lane, scopeKey): partition facts per partition key, encyclopedia labels
+ *  * under 'global'; the cognition lane is path-routed and taxonomy-free.
+ *  *
+ *  * The registry is the AI's read-only pick-list and the user's rename/merge
+ *  * surface: persisted rows are never model-rewritten, only adopted (the probe
+ *  * tool picks an id, or mints a new row via CREATE_NEW). Deliberately NOT
+ *  * collection-namespaced — the taxonomy survives embed-model switches; label
+ *  * embeddings for semantic probing live in Qdrant (a small model-namespaced
+ *  * taxonomy collection, one point per node id) and are re-embedded lazily
+ *  * when the embedder changes. `parentId` holds the id of the node one tier
+ *  * up (community → cluster; hub → community, or cluster when no community
+ *  * applies; '' for cluster roots and flat tags) so one unique key serves
+ *  * every kind.
+ */
+export type MemoryTaxonomyNode = Prisma.MemoryTaxonomyNodeModel
+/**
+ * Model MemoryTaxonomyAlias
+ * *
+ *  * Alias registry for taxonomy labels: every snapped/renamed/merged variant
+ *  * stays recorded forever, so a killed label can never be re-minted by the
+ *  * model and every server-side rewrite stays auditable. Scope columns are
+ *  * denormalized from the node so one unique key covers the lookup shape.
+ *  * `source` records the snap provenance: 'normalize' (canonical form),
+ *  * 'fuzzy' (trigram snap), 'semantic' (label embedding), 'llm'
+ *  * (ambiguous-band adjudication), 'user' (rename/merge). `score` keeps the
+ *  * similarity that justified the rewrite.
+ */
+export type MemoryTaxonomyAlias = Prisma.MemoryTaxonomyAliasModel

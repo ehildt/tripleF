@@ -18,6 +18,7 @@ const {
   links,
   frictions,
   clusters,
+  labelMeta,
   isLoading,
   isUnavailable,
   refresh,
@@ -59,6 +60,7 @@ const { visibleNodes, visibleLinks, visibleFrictions } = useConstellationView(
     :links="visibleLinks"
     :frictions="visibleFrictions"
     :clusters="clusters"
+    :label-meta="labelMeta"
     :is-loading="isLoading"
     :is-unavailable="isUnavailable"
     :unavailable-text="$t('common.memoryEncyclopediaUnavailable')"

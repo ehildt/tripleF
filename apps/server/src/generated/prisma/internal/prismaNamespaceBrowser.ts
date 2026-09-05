@@ -64,7 +64,9 @@ export const ModelName = {
   MemoryEncyclopediaInsertLedger: 'MemoryEncyclopediaInsertLedger',
   MemoryLink: 'MemoryLink',
   MemoryFriction: 'MemoryFriction',
-  MemoryCluster: 'MemoryCluster'
+  MemoryCluster: 'MemoryCluster',
+  MemoryTaxonomyNode: 'MemoryTaxonomyNode',
+  MemoryTaxonomyAlias: 'MemoryTaxonomyAlias'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -283,6 +285,42 @@ export const MemoryClusterScalarFieldEnum = {
 } as const
 
 export type MemoryClusterScalarFieldEnum = (typeof MemoryClusterScalarFieldEnum)[keyof typeof MemoryClusterScalarFieldEnum]
+
+
+export const MemoryTaxonomyNodeScalarFieldEnum = {
+  id: 'id',
+  lane: 'lane',
+  scopeKey: 'scopeKey',
+  kind: 'kind',
+  parentId: 'parentId',
+  name: 'name',
+  normalizedName: 'normalizedName',
+  icon: 'icon',
+  summary: 'summary',
+  createdBy: 'createdBy',
+  lastReflectedAt: 'lastReflectedAt',
+  lastConsolidatedAt: 'lastConsolidatedAt',
+  lastRelinkedAt: 'lastRelinkedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemoryTaxonomyNodeScalarFieldEnum = (typeof MemoryTaxonomyNodeScalarFieldEnum)[keyof typeof MemoryTaxonomyNodeScalarFieldEnum]
+
+
+export const MemoryTaxonomyAliasScalarFieldEnum = {
+  id: 'id',
+  nodeId: 'nodeId',
+  lane: 'lane',
+  scopeKey: 'scopeKey',
+  kind: 'kind',
+  alias: 'alias',
+  source: 'source',
+  score: 'score',
+  createdAt: 'createdAt'
+} as const
+
+export type MemoryTaxonomyAliasScalarFieldEnum = (typeof MemoryTaxonomyAliasScalarFieldEnum)[keyof typeof MemoryTaxonomyAliasScalarFieldEnum]
 
 
 export const SortOrder = {

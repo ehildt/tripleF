@@ -47,6 +47,9 @@ export function buildMemoryMust(
   if (input.category) {
     must.push({ key: 'category', match: { value: input.category } });
   }
+  if (input.community) {
+    must.push({ key: 'community', match: { value: input.community } });
+  }
   if (input.contains) {
     must.push({ key: 'text', match: { text: input.contains } });
   }

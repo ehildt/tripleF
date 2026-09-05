@@ -243,6 +243,7 @@ describe('prepareConstellation', () => {
     const relaxedLayout = {
       topics,
       clusters: [],
+      communities: [],
       positions: new Map([
         ['a', { x: 0, y: 0, z: 0 }],
         ['b', { x: 40, y: 0, z: 0 }],

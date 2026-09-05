@@ -20,6 +20,7 @@ export function mapEncyclopediaPointToUpsert(point: EncyclopediaChunkPoint) {
       size_bytes: point.sizeBytes,
       original_hash: point.originalHash,
       category: point.category,
+      community: point.community,
       topic: point.topic,
       is_consolidated: point.isConsolidated,
       is_linked: point.isLinked,

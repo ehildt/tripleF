@@ -13,6 +13,7 @@ import {
   ApePostPartitionCluster,
   ApePostPartitionConsolidate,
   ApePostPartitionConviction,
+  ApePostPartitionReconcile,
   ApePostPartitionReflect,
   ApePostPartitionRelink,
   ApeTagsPartitionMaintenance,
@@ -27,6 +28,7 @@ import { MemoryPartitionReflectBodyDto } from '../dtos/memory-partition-reflect-
 import { MemoryReflectResponseDto } from '../dtos/memory-reflect-response.dto.js';
 import { MemoryRelinkQueryDto } from '../dtos/memory-relink-query.dto.js';
 import { MemoryRelinkResponseDto } from '../dtos/memory-relink-response.dto.js';
+import { MemoryTaxonomyReconcileBodyDto } from '../dtos/memory-taxonomy-reconcile-body.dto.js';
 import { MemoryEnqueueService } from '../services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../services/memory-overrides.service.js';
 
@@ -123,6 +125,33 @@ export class MemoryPartitionMaintenanceController {
       maxPasses: query.maxPasses,
       enrich: query.enrich === true,
       dryRun: query.dryRun === true,
+    });
+    return { accepted: true };
+  }
+
+  @Post('reconcile')
+  @HttpCode(HttpStatus.OK)
+  @ApePostPartitionReconcile()
+  async reconcileTaxonomy(
+    @Body() body: MemoryTaxonomyReconcileBodyDto,
+  ): Promise<MemoryRelinkResponseDto> {
+    const memoryPartition = body.memoryPartition.trim();
+    if (!memoryPartition) {
+      throw new BadRequestException('memoryPartition is required');
+    }
+    const model =
+      body.model?.trim() || this.memoryOverrides.getConsolidateModel();
+    if (!model) {
+      throw new BadRequestException(
+        'A reconcile model is required — pass "model", set a client override, or set MEMORY_CONSOLIDATE_MODEL',
+      );
+    }
+    await this.memoryEnqueue.enqueueTaxonomyReconcileJob({
+      lane: 'partition',
+      scopeKey: memoryPartition,
+      model,
+      limit: body.limit,
+      dryRun: body.dryRun === true,
     });
     return { accepted: true };
   }

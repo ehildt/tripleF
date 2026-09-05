@@ -5,7 +5,7 @@
  * submenu to switch spaces (default: encyclopedia). Configuration stays in
  * Settings; this page is the live view of what memory holds.
  */
-import { Brain, Fingerprint, Layers, Network } from '@lucide/vue';
+import { Brain, Fingerprint, FolderTree, Layers, Network } from '@lucide/vue';
 import { computed } from 'vue';
 
 import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
@@ -17,6 +17,7 @@ import type { MemorySpaceSubtab } from './composables/use-memory-space-subtab.ty
 import EncyclopediaSpace from './encyclopedia-space/EncyclopediaSpace.vue';
 import PartitionSpace from './partition-space/PartitionSpace.vue';
 import SynopsisSpace from './synopsis-space/SynopsisSpace.vue';
+import TaxonomyManager from './taxonomy-manager/TaxonomyManager.vue';
 
 const { activeSubtab, selectSubtab } = useMemorySpaceSubtab();
 
@@ -41,6 +42,11 @@ const SUBTAB_ITEMS = computed(() => [
     label: i18n.global.t('common.settingsMemorySynopsis'),
     icon: Layers,
   },
+  {
+    id: 'taxonomy',
+    label: i18n.global.t('common.settingsMemoryTaxonomy'),
+    icon: FolderTree,
+  },
 ]);
 </script>
 
@@ -57,6 +63,8 @@ const SUBTAB_ITEMS = computed(() => [
     <CognitionSpace v-else-if="activeSubtab === 'cognition'" />
 
     <SynopsisSpace v-else-if="activeSubtab === 'synopsis'" />
+
+    <TaxonomyManager v-else-if="activeSubtab === 'taxonomy'" />
 
     <EncyclopediaSpace v-else />
   </main>

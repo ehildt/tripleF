@@ -13,6 +13,7 @@ import {
   MEMORY_PROFILE_JOB,
   MEMORY_REFLECT_JOB,
   MEMORY_RELINK_JOB,
+  MEMORY_TAXONOMY_RECONCILE_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
 } from '../constants/qdrant.constants.js';
@@ -26,6 +27,7 @@ import type {
   MemoryProfileJobData,
   MemoryReflectJobData,
   MemoryRelinkJobData,
+  MemoryTaxonomyReconcileJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
@@ -176,6 +178,35 @@ export class MemoryEnqueueService {
     } catch (error) {
       this.logger.warn(
         `Relink enqueue failed for ${data.memoryPartition}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Taxonomy reconciliation trigger: endpoint-only (manual ops job — the
+   * ambiguous-band verdicts are O(pairs) LLM calls, so it is never
+   * auto-triggered). The fixed jobId lets BullMQ dedupe concurrent triggers
+   * for one lane+scope while a sweep is already queued or running.
+   */
+  async enqueueTaxonomyReconcileJob(
+    data: MemoryTaxonomyReconcileJobData,
+  ): Promise<void> {
+    if (!this.config.enabled) return;
+    if (!data.model) {
+      this.logger.warn(
+        'Taxonomy-reconcile enqueue skipped: no model (set MEMORY_CONSOLIDATE_MODEL or pass one)',
+      );
+      return;
+    }
+    try {
+      await this.queue.add(MEMORY_TAXONOMY_RECONCILE_JOB, data, {
+        jobId: `taxonomy-reconcile-${data.lane}-${data.scopeKey}-${data.dryRun ? 'dry' : 'apply'}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Taxonomy-reconcile enqueue failed for ${data.lane}/${data.scopeKey}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

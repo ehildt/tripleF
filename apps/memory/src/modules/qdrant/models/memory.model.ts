@@ -49,6 +49,12 @@ export interface MemoryPoint {
    */
   category?: string;
   /**
+   * Plural sub-family one tier below the category (e.g. `survival-games`
+   * under `games`) — the constellation's COMMUNITY tier. Optional: records
+   * without a community sit directly under their cluster.
+   */
+  community?: string;
+  /**
    * The lowercase entity the fact is about — extraction-classified. The
    * consolidate/reflect passes only ever compare records of the SAME
    * subject.
@@ -113,6 +119,8 @@ export interface MemoryScopeFilters {
   tags?: string[];
   /** Points whose broad `category` equals this family label. */
   category?: string;
+  /** Points whose `community` equals this sub-family label. */
+  community?: string;
   /** Full-text containment on the text payload (Qdrant `match: text`). */
   contains?: string;
   /** Exact full-string equality on the record text — the record's identity for deletion. */
@@ -145,6 +153,8 @@ export interface UpsertBatchInput {
     tags?: string[];
     /** Broad category (e.g. `games`, `pets`) — the category tier key (cluster fallback). */
     category?: string;
+    /** Plural sub-family under the category (e.g. `survival-games`) — the community tier key. */
+    community?: string;
     /** The entity the fact is about — extraction-classified (maintenance same-subject rule). */
     subject?: string;
     /** What kind of durable thing this is — extraction-classified (see MemoryPoint.kind). */
@@ -281,8 +291,7 @@ export interface MemoryConsolidateJobData {
  * then writes topical (suggested, never enforced) link edges. The optional
  * `enrich` flag additionally refines each point's tags via LLM — off by
  * default because tags are the recall filter vocabulary.
- */
-export interface MemoryRelinkJobData {
+ */ export interface MemoryRelinkJobData {
   /** The user's fact partition to relink. */
   memoryPartition: string;
   /** Chat model for dedupe verdicts + enrichment (resolved at enqueue: body model or MEMORY_CONSOLIDATE_MODEL). */
@@ -294,6 +303,28 @@ export interface MemoryRelinkJobData {
   /** Also refine tags per point via LLM (off by default — tags are recall vocabulary). */
   enrich?: boolean;
   /** Compute and log verdicts/edges without applying or marking anything. */
+  dryRun?: boolean;
+}
+
+/**
+ * Taxonomy reconciliation job payload: the label-merge sweep over one
+ * scope's registry (all four tiers for partitions, the three labeled tiers
+ * for the encyclopedia). Candidate pairs from trigram × label-embedding
+ * scoring auto-merge above the snap band (token-overlap required) and go to
+ * the LLM adjudicator in the ambiguous band below it; merges rewrite point
+ * payloads, record `llm`/`fuzzy`/`semantic` aliases, and fold the losing
+ * node into the winner.
+ */
+export interface MemoryTaxonomyReconcileJobData {
+  /** Which lane's taxonomy to reconcile (partition labels or the global encyclopedia). */
+  lane: 'partition' | 'encyclopedia';
+  /** Space key: partition key / 'global' (encyclopedia). */
+  scopeKey: string;
+  /** Chat model for the ambiguous-band verdicts (resolved at enqueue). */
+  model: string;
+  /** Max candidate pairs adjudicated per run (default 100, capped 500). */
+  limit?: number;
+  /** Compute and log merge decisions without applying anything. */
   dryRun?: boolean;
 }
 

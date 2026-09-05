@@ -68,6 +68,7 @@ const {
           :links="links"
           :frictions="frictions"
           :clusters="clusters"
+          :label-meta="labelMeta"
           :show-labels="showLabels"
           :show-suggested="showSuggested"
           :rotation-enabled="rotationEnabled"

@@ -457,6 +457,38 @@ const en: LocaleMessages = {
     settingsMemoryCognition: 'Cognition',
     settingsMemoryEncyclopedia: 'Encyclopedia',
     settingsMemorySynopsis: 'Synopsis',
+    settingsMemoryTaxonomy: 'Taxonomy',
+    memoryTaxonomyManager: 'Memory taxonomy',
+    memoryTaxonomyManagerDesc:
+      'The macro-taxonomy per lane — rename, merge, or re-icon labels; the AI adopts these read-only and every edit propagates across the graph instantly',
+    memoryTaxonomyLane: 'Taxonomy lane',
+    memoryTaxonomyRefresh: 'Refresh taxonomy',
+    memoryTaxonomyUnavailable:
+      'The taxonomy registry is unreachable — check the memory service and try again',
+    memoryTaxonomyEmpty:
+      'No labels yet — the taxonomy fills in as memory is written',
+    memoryTaxonomyClusters: 'Clusters',
+    memoryTaxonomyClustersDesc:
+      'The plural family buckets (games, stocks, work) — the top of the hierarchy',
+    memoryTaxonomyCommunities: 'Communities',
+    memoryTaxonomyCommunitiesDesc:
+      'Plural sub-families under a cluster (survival-games under games)',
+    memoryTaxonomyHubs: 'Hubs',
+    memoryTaxonomyHubsDesc:
+      'The singular subject entities anchoring the graph (project zomboid, amd)',
+    memoryTaxonomyTags: 'Tags',
+    memoryTaxonomyTagsDesc:
+      'The flat recall vocabulary — narrow topic labels used by filtered recall',
+    memoryTaxonomyRowMeta:
+      '{leaves} leaves · {linked} linked · {children} children',
+    memoryTaxonomyAliases: '{count} alias | {count} aliases',
+    memoryTaxonomyEdit: 'Edit label',
+    memoryTaxonomyRename: 'Rename',
+    memoryTaxonomyRenameSave: 'Save name',
+    memoryTaxonomyMergeInto: 'Merge into',
+    memoryTaxonomyMergeConfirm: 'Merge labels (payloads rewrite)',
+    memoryTaxonomyIcon: 'Icon',
+    memoryTaxonomyIconClear: 'Clear icon',
     memorySynopsisTitle: 'Cluster synopses',
     memorySynopsisDesc:
       'The Raptor hierarchy — every cluster summarized level by level; hover a node for its community summary (drag to pan, scroll to zoom)',
@@ -750,6 +782,12 @@ const en: LocaleMessages = {
   toast: {
     socketNotConnected:
       "Couldn't subscribe — you're not connected to the server yet. Try again in a moment.",
+    taxonomyRenamed: 'Label renamed',
+    taxonomyRenameFailed: "Couldn't rename the label",
+    taxonomyMerged: 'Labels merged',
+    taxonomyMergeFailed: "Couldn't merge the labels",
+    taxonomyIconUpdated: 'Icon updated',
+    taxonomyIconFailed: "Couldn't update the icon",
     requestError: 'The request failed (error {status}). Try again in a moment.',
     requestSent: 'Request sent',
     requestSentSocketDisconnected:

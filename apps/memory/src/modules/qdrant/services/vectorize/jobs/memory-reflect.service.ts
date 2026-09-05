@@ -2,7 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import type { MemoryFrictionLane } from '../../../../persistence/services/memory-friction.repository.js';
 import { MemoryFrictionRepository } from '../../../../persistence/services/memory-friction.repository.js';
+import type { MemoryTaxonomyMaintenanceField } from '../../../../persistence/services/memory-taxonomy.repository.js';
+import { MemoryTaxonomyRepository } from '../../../../persistence/services/memory-taxonomy.repository.js';
 import { CONVICTION_TAG } from '../../../constants/conviction.constant.js';
+import {
+  taxonomyLabelEntries,
+  type TaxonomyLabelEntry,
+} from '../../../helpers/taxonomy-label-entries.helper.js';
 import type { MemoryReflectJobData } from '../../../models/memory.model.js';
 import { EncyclopediaRepository } from '../../encyclopedia.repository.js';
 import { FrictionAdjudicatorService } from '../../friction-adjudicator.service.js';
@@ -51,6 +57,7 @@ export class MemoryReflectService {
     private readonly encyclopediaRepository: EncyclopediaRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
+    private readonly taxonomy: MemoryTaxonomyRepository,
   ) {}
 
   async execute(data: MemoryReflectJobData): Promise<void> {
@@ -132,69 +139,108 @@ export class MemoryReflectService {
 
     for (const point of points) {
       if (newlySuperseded.has(point.id)) continue;
-      const candidates = (
-        await this.memoryRepository.queryNeighborFacts({
-          ...scope,
-          vector: point.vector,
-          limit: data.maxCandidates ?? 5,
-          scoreThreshold: data.scoreThreshold ?? 0.3,
-        })
-      ).filter((candidate) => candidate.id !== point.id);
-
-      const verdict = await this.adjudicator.adjudicate(
-        data.model,
-        {
-          id: point.id,
-          text: point.text,
-          createdAt: point.createdAt,
-          subject: point.subject,
-          category: point.category,
-          kind: point.kind,
-          stability: point.stability,
-        },
-        candidates.map((candidate) => ({
-          id: candidate.id,
-          text: candidate.text,
-          createdAt: candidate.createdAt,
-          subject: candidate.subject,
-          category: candidate.category,
-          kind: candidate.kind,
-          stability: candidate.stability,
-        })),
-      );
-      if (!verdict) {
-        this.logger.warn(
-          `memory-reflect ${data.lane}/${data.scopeKey}: verdict unparseable for "${point.text.slice(0, 80)}" — point left unreflected`,
-        );
-        counts.deferred++;
-        continue;
-      }
-
-      if (verdict.contradicts && verdict.conflictingId) {
-        const loser = await this.applyFriction(
-          data,
-          data.lane,
-          this.memoryRepository.collection,
-          data.scopeKey,
-          point.id,
-          verdict.conflictingId,
-          verdict.winnerId,
-          verdict.reason,
-        );
-        counts.frictions++;
-        if (loser) {
-          newlySuperseded.add(loser);
-          counts.resolved++;
-        }
-      }
-
-      if (!data.dryRun) {
-        await this.memoryRepository.setPayloadForPoints([point.id], {
-          is_reflected: true,
-        });
-      }
-      counts.screened++;
+      await this.screenPoint(data, scope, point, counts, newlySuperseded);
     }
+
+    // Per-node maintenance stamp — the taxonomy nodes under which screened
+    // points sit get their lastReflectedAt refresh (never cognition: that
+    // lane is path-routed, taxonomy-free).
+    if (data.lane === 'partition' && !data.dryRun) {
+      await this.stampTouched(
+        'partition',
+        data.scopeKey,
+        points.flatMap((point) =>
+          taxonomyLabelEntries({
+            cluster: point.category,
+            community: point.community,
+            hub: point.subject,
+          }),
+        ),
+        'lastReflectedAt',
+      );
+    }
+  }
+
+  /** One memory point's friction screen (the per-point body of reflectMemory). */
+  private async screenPoint(
+    data: MemoryReflectJobData,
+    scope:
+      { memoryPartition: string } | { memoryCognition: string; tags: string[] },
+    point: {
+      id: string;
+      vector: number[];
+      text: string;
+      createdAt: string;
+      subject?: string;
+      category?: string;
+      kind?: string;
+      stability?: string;
+    },
+    counts: ReflectCounts,
+    newlySuperseded: Set<string>,
+  ): Promise<void> {
+    const candidates = (
+      await this.memoryRepository.queryNeighborFacts({
+        ...scope,
+        vector: point.vector,
+        limit: data.maxCandidates ?? 5,
+        scoreThreshold: data.scoreThreshold ?? 0.3,
+      })
+    ).filter((candidate) => candidate.id !== point.id);
+
+    const verdict = await this.adjudicator.adjudicate(
+      data.model,
+      {
+        id: point.id,
+        text: point.text,
+        createdAt: point.createdAt,
+        subject: point.subject,
+        category: point.category,
+        kind: point.kind,
+        stability: point.stability,
+      },
+      candidates.map((candidate) => ({
+        id: candidate.id,
+        text: candidate.text,
+        createdAt: candidate.createdAt,
+        subject: candidate.subject,
+        category: candidate.category,
+        kind: candidate.kind,
+        stability: candidate.stability,
+      })),
+    );
+    if (!verdict) {
+      this.logger.warn(
+        `memory-reflect ${data.lane}/${data.scopeKey}: verdict unparseable for "${point.text.slice(0, 80)}" — point left unreflected`,
+      );
+      counts.deferred++;
+      return;
+    }
+
+    if (verdict.contradicts && verdict.conflictingId) {
+      const loser = await this.applyFriction(
+        data,
+        data.lane,
+        this.memoryRepository.collection,
+        data.scopeKey,
+        point.id,
+        verdict.conflictingId,
+        verdict.winnerId,
+        verdict.reason,
+      );
+      counts.frictions++;
+      if (loser) {
+        newlySuperseded.add(loser);
+        counts.resolved++;
+      }
+    }
+
+    if (!data.dryRun) {
+      await this.memoryRepository.setPayloadForPoints([point.id], {
+        is_reflected: true,
+      });
+    }
+    counts.screened++;
   }
 
   /** Encyclopedia lane: unreflected content chunks of the global scope. */
@@ -265,6 +311,50 @@ export class MemoryReflectService {
         });
       }
       counts.screened++;
+    }
+
+    if (!data.dryRun) {
+      await this.stampTouched(
+        'encyclopedia',
+        'global',
+        chunks.flatMap((chunk) =>
+          taxonomyLabelEntries({
+            cluster: chunk.category,
+            community: chunk.community,
+            hub: chunk.topic,
+          }),
+        ),
+        'lastReflectedAt',
+      );
+    }
+  }
+
+  /**
+   * Stamp the maintenance field on the taxonomy nodes under which the
+   * screened points sit (warn-and-continue — stamps are observability,
+   * never a failure domain of the sweep).
+   */
+  private async stampTouched(
+    lane: 'partition' | 'encyclopedia',
+    scopeKey: string,
+    labels: TaxonomyLabelEntry[],
+    field: MemoryTaxonomyMaintenanceField,
+  ): Promise<void> {
+    if (labels.length === 0) return;
+    try {
+      await this.taxonomy.touchMaintenanceForLabels(
+        lane,
+        scopeKey,
+        labels,
+        field,
+        new Date(),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `memory-reflect ${lane}/${scopeKey}: maintenance stamps skipped — ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 

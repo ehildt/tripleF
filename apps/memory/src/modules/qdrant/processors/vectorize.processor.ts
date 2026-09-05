@@ -20,6 +20,7 @@ import {
   MEMORY_PROFILE_JOB,
   MEMORY_REFLECT_JOB,
   MEMORY_RELINK_JOB,
+  MEMORY_TAXONOMY_RECONCILE_JOB,
   MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
   VECTORIZE_JOB,
@@ -35,6 +36,7 @@ import type {
   MemoryProfileJobData,
   MemoryReflectJobData,
   MemoryRelinkJobData,
+  MemoryTaxonomyReconcileJobData,
   MemoryWriteJobData,
   VectorizeJobData,
 } from '../models/memory.model.js';
@@ -48,6 +50,7 @@ import { MemoryProfileJobService } from '../services/vectorize/jobs/memory-profi
 import { MemoryReflectService } from '../services/vectorize/jobs/memory-reflect.service.js';
 import { MemoryRelinkJobService } from '../services/vectorize/jobs/memory-relink-job.service.js';
 import { MemoryWriteJobService } from '../services/vectorize/jobs/memory-write-job.service.js';
+import { TaxonomyReconcileJobService } from '../services/vectorize/jobs/taxonomy-reconcile-job.service.js';
 import { EmbedStepService } from '../services/vectorize/steps/embed-step.service.js';
 import { ExtractStepService } from '../services/vectorize/steps/extract-step.service.js';
 import { StoreStepService } from '../services/vectorize/steps/store-step.service.js';
@@ -62,6 +65,7 @@ const KNOWN_JOB_NAMES = new Set<string>([
   MEMORY_PROFILE_JOB,
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_RELINK_JOB,
+  MEMORY_TAXONOMY_RECONCILE_JOB,
   MEMORY_REFLECT_JOB,
   MEMORY_CONVICTION_JOB,
   MEMORY_CLUSTER_JOB,
@@ -77,6 +81,7 @@ type VectorizeJob = Job<
   | MemoryProfileJobData
   | MemoryConsolidateJobData
   | MemoryRelinkJobData
+  | MemoryTaxonomyReconcileJobData
   | MemoryReflectJobData
   | MemoryConvictionJobData
   | MemoryClusterJobData
@@ -114,6 +119,7 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     private readonly memoryReflectJob: MemoryReflectService,
     private readonly memoryConvictionJob: MemoryConvictionService,
     private readonly memoryClusterJob: MemoryClusterJobService,
+    private readonly taxonomyReconcileJob: TaxonomyReconcileJobService,
     private readonly encyclopediaSweepJob: EncyclopediaSweepService,
     private readonly encyclopediaClassifyJob: EncyclopediaClassifyService,
     private readonly researchJob: ResearchJobService,
@@ -188,6 +194,10 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     } else if (job.name === ENCYCLOPEDIA_CLASSIFY_JOB) {
       await this.encyclopediaClassifyJob.execute(
         job.data as EncyclopediaClassifyJobData,
+      );
+    } else if (job.name === MEMORY_TAXONOMY_RECONCILE_JOB) {
+      await this.taxonomyReconcileJob.execute(
+        job.data as MemoryTaxonomyReconcileJobData,
       );
     } else if (job.name === ENCYCLOPEDIA_RESEARCH_JOB) {
       await this.researchJob.execute(job.data as EncyclopediaResearchJobData);

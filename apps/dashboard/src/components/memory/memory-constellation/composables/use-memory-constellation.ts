@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
 
+import { attachLabelMeta } from '../helpers/attach-label-meta.helper';
 import { buildOrbitCenters } from '../helpers/build-orbit-centers.helper';
 import { buildRelaxedLayout } from '../helpers/build-relaxed-layout.helper';
 import { computeNodeRadius } from '../helpers/compute-node-radius.helper';
@@ -23,6 +24,7 @@ import { projectPoint } from '../helpers/project-point.helper';
 import type {
   ConstellationClusterSummary,
   ConstellationFriction,
+  ConstellationLabelMeta,
   ConstellationLink,
   ConstellationNode,
   ConstellationPosition,
@@ -71,6 +73,7 @@ export function useMemoryConstellation(
   links: Ref<readonly ConstellationLink[]>,
   frictions: Ref<readonly ConstellationFriction[]>,
   clusters: Ref<readonly ConstellationClusterSummary[]>,
+  labelMeta: Ref<ReadonlyMap<string, ConstellationLabelMeta> | undefined>,
   canvasRef: Ref<HTMLCanvasElement | null>,
   tooltipRef: Ref<HTMLDivElement | null>,
   onNodeClick: ((node: ConstellationNode) => void) | undefined,
@@ -134,7 +137,7 @@ export function useMemoryConstellation(
     return collapsed;
   });
 
-  const prepared = computed(() =>
+  const preparedBase = computed(() =>
     prepareConstellation(
       nodes.value,
       relaxedLayout.value,
@@ -144,6 +147,11 @@ export function useMemoryConstellation(
       frictions.value,
       controls.showSuggested.value,
     ),
+  );
+
+  /** prepared + taxonomy registry metadata attached to the macro-node dots. */
+  const prepared = computed(() =>
+    attachLabelMeta(preparedBase.value, labelMeta.value),
   );
 
   // Camera state lives in a plain object (not reactive) — the rAF loop reads
@@ -387,6 +395,7 @@ export function useMemoryConstellation(
         opacity: nodeOpacity,
         isFriction: nodeList[i].isFriction === true,
         isSuperseded: nodeList[i].superseded === true,
+        icon: nodeList[i].icon,
       });
       if (
         controls.showLabels.value &&
@@ -817,6 +826,30 @@ export function useMemoryConstellation(
     }
   }
 
+  /**
+   * Toggle a community hub: expand every collapsed member topic at once,
+   * or — when none is collapsed — pull them all back into their category
+   * dots.
+   */
+  function toggleCommunity(key: string) {
+    const community = relaxedLayout.value.communities.find(
+      (c) => c.key === key,
+    );
+    if (!community) return;
+    const collapsedMembers = community.memberTopicKeys.filter(
+      (topicKey) => !isExpanded(topicKey),
+    );
+    if (collapsedMembers.length > 0) {
+      for (const topicKey of collapsedMembers) {
+        expandTopic(topicKey, true);
+      }
+    } else {
+      for (const topicKey of community.memberTopicKeys) {
+        if (isExpanded(topicKey)) collapseTopic(topicKey, true);
+      }
+    }
+  }
+
   function onMouseUp() {
     if (state.isPanning) {
       state.isPanning = false;
@@ -835,6 +868,9 @@ export function useMemoryConstellation(
         onNodeClick?.(node);
       } else if (node.isCluster && node.clusterKey) {
         toggleCluster(node.clusterKey);
+        onNodeClick?.(node);
+      } else if (node.isCommunity && node.communityKey) {
+        toggleCommunity(node.communityKey);
         onNodeClick?.(node);
       } else if (node.isTopic) {
         toggleTopic(node.topicKey);

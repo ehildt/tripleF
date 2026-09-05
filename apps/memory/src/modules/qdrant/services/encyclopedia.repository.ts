@@ -522,6 +522,63 @@ export class EncyclopediaRepository {
   }
 
   /**
+   * Distinct community values of the global encyclopedia with point counts —
+   * the classify job's community-reuse vocabulary (mirrors
+   * `facetCategories`; keyword index on `community`).
+   */
+  async facetCommunities(): Promise<Array<{ value: string; count: number }>> {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return [];
+    const result = await this.clientService.getClient().facet(this.collection, {
+      key: 'community',
+      limit: 1000,
+      exact: true,
+    });
+    return result.hits.map(mapFacetHit);
+  }
+
+  /**
+   * Count the global encyclopedia's chunks carrying a label — the
+   * reconciliation sweep's usage signal for picking the merge winner.
+   */
+  async countByLabel(
+    field: 'category' | 'community' | 'topic',
+    value: string,
+    opts?: { linkedOnly?: boolean },
+  ): Promise<number> {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return 0;
+    const must: Array<Record<string, unknown>> = [
+      { key: field, match: { value } },
+    ];
+    if (opts?.linkedOnly) {
+      must.push({ key: 'is_linked', match: { value: true } });
+    }
+    const result = await this.clientService.getClient().count(this.collection, {
+      filter: { must },
+      exact: true,
+    });
+    return result.count;
+  }
+
+  /**
+   * Rewrite one label value of a tier field on every matching chunk of the
+   * global encyclopedia — the reconciliation/user-merge application
+   * (payload-only, idempotent; mirrors `collapseCategory` on the partition
+   * repository).
+   */
+  async collapseLabel(
+    field: 'category' | 'community' | 'topic',
+    from: string,
+    to: string,
+  ): Promise<void> {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return;
+    await this.clientService.getClient().setPayload(this.collection, {
+      payload: { [field]: to },
+      filter: { must: [{ key: field, match: { value: from } }] },
+      wait: true,
+    });
+  }
+
+  /**
    * Write the classification labels onto every chunk of one url — a
    * payload-only change, no vector rewrite, idempotent. The classify job
    * labels a document once and fans the labels out to all its chunks.
@@ -530,10 +587,11 @@ export class EncyclopediaRepository {
     url: string,
     category: string,
     topic: string,
+    community?: string,
   ): Promise<void> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return;
     await this.clientService.getClient().setPayload(this.collection, {
-      payload: { category, topic },
+      payload: community ? { category, community, topic } : { category, topic },
       filter: { must: [{ key: 'url', match: { value: url } }] },
     });
   }
@@ -706,10 +764,16 @@ export class EncyclopediaRepository {
    * work queue for the global encyclopedia scope. `must_not is_reflected=true` is
    * the eligibility gate; content chunks only (snippets are never reflected).
    */
-  async scrollUnreflected(
-    limit: number,
-  ): Promise<
-    Array<{ id: string; vector: number[]; content: string; fetchedAt: string }>
+  async scrollUnreflected(limit: number): Promise<
+    Array<{
+      id: string;
+      vector: number[];
+      content: string;
+      fetchedAt: string;
+      category?: string;
+      community?: string;
+      topic?: string;
+    }>
   > {
     if (!(await this.clientService.hasEncyclopediaCollection())) return [];
     const client = this.clientService.getClient();
@@ -733,6 +797,9 @@ export class EncyclopediaRepository {
         vector: (point.vector as number[]) ?? [],
         content: (payload.content as string) ?? '',
         fetchedAt: (payload.fetched_at as string) ?? '',
+        category: payload.category as string | undefined,
+        community: payload.community as string | undefined,
+        topic: payload.topic as string | undefined,
       };
     });
   }
@@ -789,6 +856,7 @@ export class EncyclopediaRepository {
       partitionScope: (payload.partition_scope as string) ?? '',
       sourceType: (payload.source_type as 'content' | 'result') ?? 'content',
       category: payload.category as string | undefined,
+      community: payload.community as string | undefined,
       topic: payload.topic as string | undefined,
       mimeType: payload.mime_type as string | undefined,
       sizeBytes: payload.size_bytes as number | undefined,

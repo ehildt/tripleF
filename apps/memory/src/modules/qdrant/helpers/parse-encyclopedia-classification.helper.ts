@@ -5,6 +5,7 @@ import {
 import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { normalizeCategory } from './normalize-category.helper.js';
+import { normalizeCommunity } from './normalize-community.helper.js';
 import { normalizeTopic } from './normalize-topic.helper.js';
 
 /**
@@ -45,5 +46,10 @@ export function parseEncyclopediaClassification(
   if (!category || !topic) {
     throw new Error('Classification normalized to an empty category or topic');
   }
-  return { category, topic };
+  return {
+    category,
+    topic,
+    community: normalizeCommunity(validated.data.community),
+    icon: validated.data.icon,
+  };
 }

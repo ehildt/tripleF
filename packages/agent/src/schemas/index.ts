@@ -26,6 +26,8 @@ export * from './memory/merge-cognition-profiles.helper.js';
 export * from './memory/prune-profile-topic.helper.js';
 export * from './memory/research-friction-query.schema.js';
 export * from './memory/research-triage.schema.js';
+export * from './memory/taxonomy-icons.constant.js';
+export * from './memory/taxonomy-pair-verdict.schema.js';
 export * from './response/card-json.schema.js';
 export * from './response/chart-overlays-json.schema.js';
 export * from './response/compare-json.schema.js';

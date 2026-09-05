@@ -4,6 +4,7 @@ import { QDRANT_CONFIG } from './constants/qdrant.constants.js';
 import { MemoryCognitionMaintenanceController } from './controllers/memory-cognition-maintenance.controller.js';
 import { MemoryOverridesController } from './controllers/memory-overrides.controller.js';
 import { MemoryPartitionMaintenanceController } from './controllers/memory-partition-maintenance.controller.js';
+import { MemoryTaxonomyController } from './controllers/memory-taxonomy.controller.js';
 import { QdrantController } from './controllers/qdrant.controller.js';
 import type { QdrantModuleProps } from './models/qdrant-module.model.js';
 import { ConsolidationAdjudicatorService } from './services/consolidation-adjudicator.service.js';
@@ -17,6 +18,12 @@ import { MemoryOverridesService } from './services/memory-overrides.service.js';
 import { MemorySearchService } from './services/memory-search.service.js';
 import { QdrantClientService } from './services/qdrant-client.service.js';
 import { SynopsisRepository } from './services/synopsis.repository.js';
+import { TaxonomyService } from './services/taxonomy.service.js';
+import { TaxonomyAdjudicatorService } from './services/taxonomy-adjudicator.service.js';
+import { TaxonomyMergeService } from './services/taxonomy-merge.service.js';
+import { TaxonomyProbeService } from './services/taxonomy-probe.service.js';
+import { TaxonomyResolutionService } from './services/taxonomy-resolution.service.js';
+import { TaxonomyVectorRepository } from './services/taxonomy-vector.repository.js';
 import { VectorizeService } from './services/vectorize.service.js';
 import { EncyclopediaClassifyService } from './services/vectorize/jobs/encyclopedia-classify.service.js';
 import { EncyclopediaSweepService } from './services/vectorize/jobs/encyclopedia-sweep.service.js';
@@ -27,6 +34,7 @@ import { MemoryProfileJobService } from './services/vectorize/jobs/memory-profil
 import { MemoryReflectService } from './services/vectorize/jobs/memory-reflect.service.js';
 import { MemoryRelinkJobService } from './services/vectorize/jobs/memory-relink-job.service.js';
 import { MemoryWriteJobService } from './services/vectorize/jobs/memory-write-job.service.js';
+import { TaxonomyReconcileJobService } from './services/vectorize/jobs/taxonomy-reconcile-job.service.js';
 import { EmbedStepService } from './services/vectorize/steps/embed-step.service.js';
 import { ExtractStepService } from './services/vectorize/steps/extract-step.service.js';
 import { StoreStepService } from './services/vectorize/steps/store-step.service.js';
@@ -42,6 +50,7 @@ export class QdrantModule {
       controllers: [
         QdrantController,
         MemoryPartitionMaintenanceController,
+        MemoryTaxonomyController,
         MemoryCognitionMaintenanceController,
         MemoryOverridesController,
       ],
@@ -57,6 +66,15 @@ export class QdrantModule {
         SynopsisRepository,
         MemorySearchService,
         EmbeddingService,
+        // Taxonomy label vectors + the write-boundary snap/mint resolver.
+        TaxonomyVectorRepository,
+        TaxonomyResolutionService,
+        // The probing leg behind the memory-taxonomy-probe tool + prompts' ranked vocabulary.
+        TaxonomyProbeService,
+        // Shared label-merge application (reconcile sweep + user merges).
+        TaxonomyMergeService,
+        // The taxonomy management surface behind the dashboard API.
+        TaxonomyService,
         VectorizeService,
         MemoryCognitionService,
         MemoryOverridesService,
@@ -65,6 +83,8 @@ export class QdrantModule {
         ConsolidationAdjudicatorService,
         // Shared LLM adjudication for the reflection pass's friction screen.
         FrictionAdjudicatorService,
+        // Shared LLM adjudication for the taxonomy reconciliation sweep.
+        TaxonomyAdjudicatorService,
         // Vectorize pipeline step machine (mirrors the harness step registry).
         VectorizeStepEngineService,
         VectorizeStepRegistryService,
@@ -84,6 +104,8 @@ export class QdrantModule {
         MemoryConvictionService,
         // Cluster-detection + summarization job (memory-cluster handler).
         MemoryClusterJobService,
+        // Taxonomy reconciliation job (memory-taxonomy-reconcile handler).
+        TaxonomyReconcileJobService,
         // Encyclopedia supersede sweep job (encyclopedia-consolidate handler).
         EncyclopediaSweepService,
         // Encyclopedia classification job (encyclopedia-classify handler).
@@ -115,6 +137,7 @@ export class QdrantModule {
         MemoryReflectService,
         MemoryConvictionService,
         MemoryClusterJobService,
+        TaxonomyReconcileJobService,
         EncyclopediaSweepService,
         EncyclopediaClassifyService,
       ],

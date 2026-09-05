@@ -63,6 +63,16 @@ export class MemoryItemDto {
 
   @ApiPropertyOptional({
     description:
+      'Plural sub-family one tier below the category (e.g. survival-games) — the constellation community tier.',
+    example: 'survival-games',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  community?: string;
+
+  @ApiPropertyOptional({
+    description:
       'The entity the fact is about — extraction-classified; maintenance only compares records of the same subject.',
     example: 'user',
   })

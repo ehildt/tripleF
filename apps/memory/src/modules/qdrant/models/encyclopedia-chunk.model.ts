@@ -27,6 +27,8 @@ export interface EncyclopediaChunkPoint {
   sourceType: 'content' | 'result';
   /** Broad family label (e.g. `games`) — the constellation category tier (cluster fallback). */
   category?: string;
+  /** Plural sub-family under the category (e.g. `survival-games`) — the community tier. */
+  community?: string;
   /** Narrow topic label (e.g. `wuthering waves`) — the constellation topic tier. */
   topic?: string;
   /** Mime type of the original upload (uploaded documents only). */
@@ -58,6 +60,7 @@ export interface EncyclopediaChunkHit {
   partitionScope: string;
   sourceType: 'content' | 'result';
   category?: string;
+  community?: string;
   topic?: string;
   /** Detected cluster id this chunk belongs to (written by the cluster job). */
   clusterId?: string;

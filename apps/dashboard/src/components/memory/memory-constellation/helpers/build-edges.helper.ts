@@ -1,10 +1,12 @@
 import type {
   ConstellationCluster,
+  ConstellationCommunity,
   ConstellationEdge,
   ConstellationLink,
   ConstellationTopic,
 } from '../MemoryConstellation.types';
 import { buildClusterEdges } from './build-cluster-edges.helper';
+import { buildCommunityEdges } from './build-community-edges.helper';
 import { buildInterEdges } from './build-inter-edges.helper';
 import { buildIntraEdges } from './build-intra-edges.helper';
 import { buildRootEdges } from './build-root-edges.helper';
@@ -13,7 +15,8 @@ import { buildRootEdges } from './build-root-edges.helper';
  * Build the rendered edge set: intra-topic (each leaf → its main dot),
  * inter-topic (main dot → main dot, aggregated from cross-topic links
  * above the minimum score), sibling (main dot → main dot within one
- * category), cluster (member topic hub → its category hub), and root
+ * category), community (member topic hub → community hub), cluster
+ * (community/community-less hubs → category hub), and root
  * (category hub → ZERO). Collapsed topics contribute no intra edges (their
  * leaves are hidden) and their inter/sibling/cluster edges use the
  * synthetic category dot as the main dot.
@@ -24,11 +27,13 @@ export function buildEdges(
   collapsedKeys: ReadonlySet<string>,
   clusters: readonly ConstellationCluster[] = [],
   minScore?: number,
+  communities: readonly ConstellationCommunity[] = [],
 ): ConstellationEdge[] {
   return [
     ...buildIntraEdges(topics, collapsedKeys),
     ...buildInterEdges(topics, links, collapsedKeys, clusters, minScore),
-    ...buildClusterEdges(topics, clusters, collapsedKeys),
+    ...buildCommunityEdges(topics, communities, collapsedKeys),
+    ...buildClusterEdges(topics, clusters, collapsedKeys, communities),
     ...buildRootEdges(topics, clusters, collapsedKeys),
   ];
 }

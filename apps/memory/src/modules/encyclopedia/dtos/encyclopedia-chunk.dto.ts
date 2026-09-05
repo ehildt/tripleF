@@ -107,6 +107,13 @@ export class EncyclopediaChunkDto {
 
   @ApiPropertyOptional({
     description:
+      'Plural sub-family one tier below the category (e.g. survival-games) — the constellation community tier.',
+    example: 'survival-games',
+  })
+  community?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Detected cluster id this chunk belongs to (written by the memory-cluster job; the cluster tier grouping key).',
     example: '9f1c…',
   })

@@ -7,6 +7,7 @@ export function mapFact(
     tags?: string[];
     role?: string;
     category?: string;
+    community?: string;
     clusterId?: string;
     subject?: string;
     kind?: string;
@@ -28,6 +29,7 @@ export function mapFact(
     tags: Array.isArray(item.tags) ? item.tags : [],
     role: item.role,
     category: item.category,
+    community: item.community,
     clusterId: item.clusterId,
     subject: item.subject,
     kind: item.kind,

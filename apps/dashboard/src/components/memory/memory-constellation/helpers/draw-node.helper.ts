@@ -1,5 +1,6 @@
 import type { ProjectedPoint } from '../MemoryConstellation.types';
 import { computeNodeRadius } from './compute-node-radius.helper';
+import { drawIcon } from './draw-icon.helper';
 import { heatColor } from './heat-color.helper';
 import { lightenColor } from './lighten-color.helper';
 import { withAlpha } from './with-alpha.helper';
@@ -44,6 +45,8 @@ export interface DrawNodeParams {
   isFriction: boolean;
   /** The dot is stale (superseded by a reflection winner) — pulses black. */
   isSuperseded: boolean;
+  /** Curated taxonomy icon name — macro-node dots render it in place of the opaque fill. */
+  icon?: string;
 }
 
 /** Draw one node dot (topic-colored, sized by depth + link count). */
@@ -67,6 +70,7 @@ export function drawNode(
     opacity,
     isFriction,
     isSuperseded,
+    icon,
   } = params;
   const p = projected[index];
   const heat = heatColor(Math.sqrt(linkCount / maxLinkCount));
@@ -117,6 +121,16 @@ export function drawNode(
     ctx.lineWidth = 1.5;
     ctx.globalAlpha = 0.9 * opacity;
     ctx.stroke();
+  }
+  // Icon overlay: macro-nodes with a curated icon render it in place of the
+  // opaque dot (the halo above stays alive underneath — animations intact).
+  if (icon) {
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = withAlpha('#0b0f19', 0.85 * opacity);
+    ctx.fill();
+    drawIcon(ctx, icon, p.x, p.y, r * 1.7, lightenColor(color, 0.55), opacity);
   }
   // Multi-leaf indicator: two slim grayed rings with a small gap between
   // them — a collapsed category dot holding more than one member.

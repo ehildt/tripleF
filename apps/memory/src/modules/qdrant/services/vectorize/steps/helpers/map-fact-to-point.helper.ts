@@ -20,6 +20,9 @@ export function mapFactToPoint(
     // the narrow tags into one topic family for the constellation topic tier
     // and the relink job's per-category passes.
     category: fact.category ?? extraction.category,
+    // Per-fact sub-family first, turn-side community as the backstop — the
+    // tier between the cluster and the hub.
+    community: fact.community ?? extraction.community,
     // The extraction-classified maintenance knobs (subject / kind /
     // stability) — the consolidate/reflect/conviction passes read them.
     subject: fact.subject,

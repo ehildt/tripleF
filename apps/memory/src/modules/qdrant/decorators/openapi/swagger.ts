@@ -197,6 +197,15 @@ export const ApePostPartitionRelink = () =>
     }),
   );
 
+export const ApePostPartitionReconcile = () =>
+  applyDecorators(
+    ApiResponse({ status: 200, type: MemoryRelinkResponseDto }),
+    ApiOperation({
+      summary:
+        '②b Taxonomy reconcile — optional label sweep of the partition pipeline: merges duplicate cluster/community/hub/tag labels (auto above the snap band with token overlap, LLM-verdict in the ambiguous band) with alias provenance. Best after relink settles',
+    }),
+  );
+
 export const ApePostPartitionReflect = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryReflectResponseDto }),
@@ -234,6 +243,47 @@ export const ApePostCognitionReflect = () =>
   );
 
 export const ApeTagsMemoryOverrides = () => ApiTags('Memory Overrides');
+
+export const ApeTagsTaxonomy = () => ApiTags('Memory Taxonomy');
+
+export const ApeGetTaxonomyTree = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        "The scope's taxonomy tree: per-tier nodes with leaf/linked/child counts, maintenance stamps, icons, summaries, and the alias audit trail.",
+    }),
+    ApiOperation({
+      summary:
+        'List the macro-taxonomy of one scope (cluster → community → hub, plus the tag vocabulary) with operational metadata',
+    }),
+  );
+
+export const ApePatchTaxonomyNode = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Node updated — rename/icon propagated; the old name stays a permanent alias.',
+    }),
+    ApiOperation({
+      summary:
+        'Rename a taxonomy node and/or set its Lucide icon (AI read-only: user-managed mutations only)',
+    }),
+  );
+
+export const ApePostTaxonomyMerge = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Node merged into the target — payloads rewritten, aliases folded, children re-parented.',
+    }),
+    ApiOperation({
+      summary:
+        'Merge a taxonomy node into another node of the same scope and tier',
+    }),
+  );
 
 export const ApeGetMemoryOverrides = () =>
   ApiOperation({

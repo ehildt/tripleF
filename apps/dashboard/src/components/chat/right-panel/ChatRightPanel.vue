@@ -111,7 +111,7 @@ const appStore = useAppStore();
 .chat-right-panel {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 7rem);
+  max-height: calc(100vh - 6rem);
   gap: var(--spacing-0-5);
 }
 

@@ -11,10 +11,13 @@ import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.se
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import type { MemoryLinkRow } from '../../../../persistence/services/memory-link.repository.js';
 import { MemoryLinkRepository } from '../../../../persistence/services/memory-link.repository.js';
+import { MemoryTaxonomyRepository } from '../../../../persistence/services/memory-taxonomy.repository.js';
 import { QDRANT_CONFIG } from '../../../constants/qdrant.constants.js';
 import { deterministicPointId } from '../../../helpers/deterministic-point-id.helper.js';
 import { normalizeCategory } from '../../../helpers/normalize-category.helper.js';
 import { normalizeTags } from '../../../helpers/normalize-tags.helper.js';
+import type { TaxonomyLabelEntry } from '../../../helpers/taxonomy-label-entries.helper.js';
+import { taxonomyLabelEntries } from '../../../helpers/taxonomy-label-entries.helper.js';
 import type {
   MemoryPoint,
   MemoryRelinkJobData,
@@ -49,6 +52,10 @@ interface CategoryPoint {
   tags: string[];
   createdAt: string;
   requestId?: string;
+  subject?: string;
+  community?: string;
+  kind?: string;
+  stability?: string;
 }
 
 /** Per-run outcome tallies for the summary log. */
@@ -103,6 +110,7 @@ export class MemoryRelinkJobService {
     private readonly links: MemoryLinkRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
+    private readonly taxonomy: MemoryTaxonomyRepository,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -117,13 +125,17 @@ export class MemoryRelinkJobService {
       enriched: 0,
       passes: 0,
     };
+    // Labels touched this run — the per-node maintenance stamps and (for
+    // collapsed variants) the permanent alias rows.
+    const touched: TaxonomyLabelEntry[] = [];
 
-    counts.collapsed = await this.collapseCategories(data);
+    counts.collapsed = await this.collapseCategories(data, touched);
     counts.deduped = await this.dedupeCategories(
       data,
       limit,
       maxPasses,
       counts,
+      touched,
     );
     counts.topicalEdges = await this.linkTopical(data, limit);
     if (data.enrich) {
@@ -132,6 +144,7 @@ export class MemoryRelinkJobService {
 
     if (!data.dryRun) {
       await this.autoTriggerCluster(data.memoryPartition, data.model);
+      await this.stampTouched(data.memoryPartition, touched);
     }
 
     this.logger.log(
@@ -139,8 +152,16 @@ export class MemoryRelinkJobService {
     );
   }
 
-  /** Step A — facet the category payload and collapse identical variants. */
-  private async collapseCategories(data: MemoryRelinkJobData): Promise<number> {
+  /**
+   * Step A — facet the category payload and collapse identical variants.
+   * Collapsed wordings are recorded as permanent `normalize` aliases of the
+   * canonical cluster node (when one exists) so they can never re-enter; the
+   * canonical names join the touched set for the maintenance stamps.
+   */
+  private async collapseCategories(
+    data: MemoryRelinkJobData,
+    touched: TaxonomyLabelEntry[],
+  ): Promise<number> {
     const facets = await this.memoryRepository.facetCategories(
       data.memoryPartition,
     );
@@ -155,6 +176,7 @@ export class MemoryRelinkJobService {
 
     let collapsed = 0;
     for (const [canonical, variants] of groups) {
+      touched.push({ kind: 'cluster', normalizedName: canonical });
       for (const variant of variants) {
         if (variant === canonical) continue;
         if (data.dryRun) {
@@ -168,10 +190,48 @@ export class MemoryRelinkJobService {
           variant,
           canonical,
         );
+        await this.recordCollapsedAlias(
+          data.memoryPartition,
+          variant,
+          canonical,
+        );
         collapsed++;
       }
     }
     return collapsed;
+  }
+
+  /**
+   * One collapsed variant becomes a permanent `normalize` alias of the
+   * canonical cluster node — the killed wording can never be re-minted.
+   * Best-effort: an alias write failure never fails the sweep.
+   */
+  private async recordCollapsedAlias(
+    memoryPartition: string,
+    variant: string,
+    canonical: string,
+  ): Promise<void> {
+    try {
+      const nodes = await this.taxonomy.listNodes('partition', memoryPartition);
+      const canonicalNode = nodes.find(
+        (node) => node.kind === 'cluster' && node.normalizedName === canonical,
+      );
+      if (!canonicalNode) return;
+      await this.taxonomy.insertAlias({
+        nodeId: canonicalNode.id,
+        lane: 'partition',
+        scopeKey: memoryPartition,
+        kind: 'cluster',
+        alias: variant,
+        source: 'normalize',
+      });
+    } catch (error) {
+      this.logger.warn(
+        `memory-relink ${memoryPartition}: alias for "${variant}" → "${canonical}" skipped — ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   /**
@@ -184,6 +244,7 @@ export class MemoryRelinkJobService {
     limit: number,
     maxPasses: number,
     counts: RelinkCounts,
+    touched: TaxonomyLabelEntry[],
   ): Promise<number> {
     let applied = 0;
     for (let pass = 1; pass <= maxPasses; pass++) {
@@ -192,7 +253,12 @@ export class MemoryRelinkJobService {
       if (categories.length === 0) break;
       let passApplied = 0;
       for (const category of categories) {
-        passApplied += await this.dedupeCategory(data, category, limit);
+        passApplied += await this.dedupeCategory(
+          data,
+          category,
+          limit,
+          touched,
+        );
       }
       applied += passApplied;
       if (passApplied === 0) break;
@@ -205,6 +271,7 @@ export class MemoryRelinkJobService {
     data: MemoryRelinkJobData,
     category: string,
     limit: number,
+    touched: TaxonomyLabelEntry[],
   ): Promise<number> {
     const points = await this.memoryRepository.scrollCategoryPoints(
       data.memoryPartition,
@@ -213,49 +280,67 @@ export class MemoryRelinkJobService {
     );
     let applied = 0;
     for (const point of points) {
-      const candidates = (
-        await this.memorySearch.searchByText({
-          memoryPartition: data.memoryPartition,
-          category,
-          text: point.text,
-          limit: DEDUPE_CANDIDATES,
-        })
-      ).filter((candidate) => candidate.id !== point.id);
-      if (candidates.length === 0) continue;
-
-      const verdict = await this.adjudicator.adjudicate(
-        data.model,
-        {
-          text: point.text,
-          role: point.role,
-          createdAt: point.createdAt,
-          subject: point.subject,
-          kind: point.kind,
-          stability: point.stability,
-        },
-        candidates.map(mapCandidateToAdjudication),
-      );
-      if (!verdict) {
-        this.logger.warn(
-          `memory-relink ${data.memoryPartition}: verdict unparseable for "${point.text.slice(0, 80)}" — point left as-is`,
-        );
-        continue;
-      }
-
-      if (data.dryRun) {
-        this.logger.log(
-          `memory-relink ${data.memoryPartition} [dryRun]: ${verdict.verdict} for "${point.text.slice(0, 80)}"`,
-        );
-        continue;
-      }
-      applied += await this.applyVerdict(
-        data,
-        category,
-        point,
-        candidates,
-        verdict,
-      );
+      applied += await this.adjudicatePoint(data, category, point, touched);
     }
+    return applied;
+  }
+
+  /** One point's screen + verdict application (the per-point body of dedupe). */
+  private async adjudicatePoint(
+    data: MemoryRelinkJobData,
+    category: string,
+    point: CategoryPoint,
+    touched: TaxonomyLabelEntry[],
+  ): Promise<number> {
+    const candidates = (
+      await this.memorySearch.searchByText({
+        memoryPartition: data.memoryPartition,
+        category,
+        text: point.text,
+        limit: DEDUPE_CANDIDATES,
+      })
+    ).filter((candidate) => candidate.id !== point.id);
+    if (candidates.length === 0) return 0;
+
+    const verdict = await this.adjudicator.adjudicate(
+      data.model,
+      {
+        text: point.text,
+        role: point.role,
+        createdAt: point.createdAt,
+        subject: point.subject,
+        kind: point.kind,
+        stability: point.stability,
+      },
+      candidates.map(mapCandidateToAdjudication),
+    );
+    if (!verdict) {
+      this.logger.warn(
+        `memory-relink ${data.memoryPartition}: verdict unparseable for "${point.text.slice(0, 80)}" — point left as-is`,
+      );
+      return 0;
+    }
+
+    if (data.dryRun) {
+      this.logger.log(
+        `memory-relink ${data.memoryPartition} [dryRun]: ${verdict.verdict} for "${point.text.slice(0, 80)}"`,
+      );
+      return 0;
+    }
+    const applied = await this.applyVerdict(
+      data,
+      category,
+      point,
+      candidates,
+      verdict,
+    );
+    touched.push(
+      ...taxonomyLabelEntries({
+        cluster: category,
+        community: point.community,
+        hub: point.subject,
+      }),
+    );
     return applied;
   }
 
@@ -480,6 +565,33 @@ export class MemoryRelinkJobService {
       )
       .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
       .map((facet) => facet.value);
+  }
+
+  /**
+   * Stamp the maintenance timestamps on the taxonomy nodes this run worked
+   * under (warn-and-continue — stamps are observability, never a failure
+   * domain of the sweep).
+   */
+  private async stampTouched(
+    memoryPartition: string,
+    touched: TaxonomyLabelEntry[],
+  ): Promise<void> {
+    if (touched.length === 0) return;
+    try {
+      await this.taxonomy.touchMaintenanceForLabels(
+        'partition',
+        memoryPartition,
+        touched,
+        'lastRelinkedAt',
+        new Date(),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `memory-relink ${memoryPartition}: maintenance stamps skipped — ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   /**

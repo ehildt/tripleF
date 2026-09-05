@@ -13,6 +13,7 @@ const clusters = [
     label: 'games',
     color: '#f97316',
     memberTopicKeys: ['nte'],
+    memberCommunityKeys: [],
     memberIds: ['a', 'b'],
   },
 ];
@@ -40,6 +41,7 @@ describe('buildClusterEdges', () => {
           {
             ...clusters[0]!,
             memberTopicKeys: ['ghost'],
+            memberCommunityKeys: [],
           },
         ],
         new Set(),

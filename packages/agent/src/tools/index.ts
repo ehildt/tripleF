@@ -56,6 +56,8 @@ export * from './memory/memory-partition-recall.tool.js';
 export * from './memory/memory-partition-remember.schema.js';
 export * from './memory/memory-partition-remember.tool.js';
 export * from './memory/memory-point.model.js';
+export * from './memory/memory-taxonomy-probe.schema.js';
+export * from './memory/memory-taxonomy-probe.tool.js';
 export * from './memory/memory-tool-scope.js';
 export * from './serper/business-reviews-search.schema.js';
 export * from './serper/business-reviews-search.tool.js';

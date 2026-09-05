@@ -39,6 +39,12 @@ function makeService() {
     links as never,
     memoryEnqueue as never,
     overrides as never,
+    {
+      resolveAlias: vi.fn().mockResolvedValue(undefined),
+      listNodes: vi.fn().mockResolvedValue([]),
+      insertAlias: vi.fn().mockResolvedValue(undefined),
+      touchMaintenanceForLabels: vi.fn().mockResolvedValue(undefined),
+    } as never,
     config,
   );
   return {

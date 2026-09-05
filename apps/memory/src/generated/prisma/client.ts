@@ -131,3 +131,25 @@ export type MemoryFriction = Prisma.MemoryFrictionModel
  *  * replaces a scope's rows atomically, so stale fingerprints never linger.
  */
 export type MemoryCluster = Prisma.MemoryClusterModel
+/**
+ * Model MemoryTaxonomyNode
+ * *
+ *  * Canonical macro-taxonomy of the memory constellation (owned by the main
+ *  * server — see its schema for the full contract): one row per label tier
+ *  * (`cluster` | `community` | `hub` | `tag`), scoped by (lane, scopeKey) and
+ *  * deliberately NOT collection-namespaced so labels survive embed-model
+ *  * switches. The AI adopts or mints rows via the probe contract; the user
+ *  * renames/merges them. `parentId` ('' for roots/flat tags) carries the tier
+ *  * above; label embeddings for semantic probing live in Qdrant's
+ *  * model-namespaced taxonomy collection (one point per node id), never here.
+ */
+export type MemoryTaxonomyNode = Prisma.MemoryTaxonomyNodeModel
+/**
+ * Model MemoryTaxonomyAlias
+ * *
+ *  * Alias registry for taxonomy labels (owned by the main server): snapped,
+ *  * renamed, or merged variants resolve to the canonical node forever —
+ *  * killed labels can never be re-minted. `source` ('normalize' | 'fuzzy' |
+ *  * 'semantic' | 'llm' | 'user') + `score` keep the rewrite audit trail.
+ */
+export type MemoryTaxonomyAlias = Prisma.MemoryTaxonomyAliasModel

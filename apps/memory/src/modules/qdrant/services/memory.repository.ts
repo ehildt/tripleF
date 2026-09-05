@@ -354,6 +354,141 @@ export class MemoryRepository {
   }
 
   /**
+   * Count one partition's points carrying a label — the reconciliation
+   * sweep's usage signal for picking the merge winner. `field` is the
+   * payload key of the tier (`tags` matches via array-containment).
+   */
+  async countByLabel(
+    memoryPartition: string,
+    field: 'category' | 'community' | 'subject' | 'tags',
+    value: string,
+    opts?: { linkedOnly?: boolean },
+  ): Promise<number> {
+    if (!(await this.clientService.hasCollection())) return 0;
+    const client = this.clientService.getClient();
+    const labelFilter =
+      field === 'tags'
+        ? { key: 'tags', match: { any: [value] } }
+        : { key: field, match: { value } };
+    const must: Array<Record<string, unknown>> = [
+      { key: 'memory_partition', match: { value: memoryPartition } },
+      labelFilter,
+    ];
+    if (opts?.linkedOnly) {
+      must.push({ key: 'is_linked', match: { value: true } });
+    }
+    const result = await client.count(this.collection, {
+      filter: { must },
+      exact: true,
+    });
+    return result.count;
+  }
+
+  /**
+   * Replace one tag inside the tags arrays of every matching point of a
+   * partition (per-point read-modify-write — Qdrant has no array-element
+   * rewrite). Paginated and idempotent: the `from`-filter shrinks as points
+   * are rewritten, so a crash resumes cleanly. Returns points rewritten.
+   */
+  async retagLabel(
+    memoryPartition: string,
+    from: string,
+    to: string,
+  ): Promise<number> {
+    if (!(await this.clientService.hasCollection())) return 0;
+    const client = this.clientService.getClient();
+    let rewritten = 0;
+    for (;;) {
+      const scroll = await client.scroll(this.collection, {
+        filter: {
+          must: [
+            { key: 'memory_partition', match: { value: memoryPartition } },
+            { key: 'tags', match: { any: [from] } },
+          ],
+        },
+        limit: 100,
+        with_payload: ['tags'],
+        with_vector: false,
+      });
+      if (scroll.points.length === 0) break;
+      for (const point of scroll.points) {
+        const tags = ((point.payload?.tags as string[]) ?? []).map((tag) =>
+          tag === from ? to : tag,
+        );
+        await client.setPayload(this.collection, {
+          payload: { tags: [...new Set(tags)] },
+          points: [point.id as string],
+          wait: true,
+        });
+        rewritten++;
+      }
+    }
+    return rewritten;
+  }
+
+  /** Distinct community values of one partition — the community vocabulary. */
+  async facetCommunities(
+    memoryPartition: string,
+  ): Promise<Array<{ value: string; count: number }>> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const result = await client.facet(this.collection, {
+      key: 'community',
+      limit: 1000,
+      exact: true,
+      filter: {
+        must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
+      },
+    });
+    return result.hits.map(mapFacetHit);
+  }
+
+  /**
+   * Rewrite one community value on every point of a partition — a
+   * payload-only change, no vector rewrite, idempotent (the taxonomy
+   * snap/merge application, mirroring `collapseCategory`).
+   */
+  async collapseCommunity(
+    memoryPartition: string,
+    from: string,
+    to: string,
+  ): Promise<void> {
+    if (!(await this.clientService.hasCollection())) return;
+    await this.clientService.getClient().setPayload(this.collection, {
+      payload: { community: to },
+      filter: {
+        must: [
+          { key: 'memory_partition', match: { value: memoryPartition } },
+          { key: 'community', match: { value: from } },
+        ],
+      },
+      wait: true,
+    });
+  }
+
+  /**
+   * Rewrite one subject value on every point of a partition — the hub-tier
+   * snap/merge application (payload-only, idempotent).
+   */
+  async collapseSubject(
+    memoryPartition: string,
+    from: string,
+    to: string,
+  ): Promise<void> {
+    if (!(await this.clientService.hasCollection())) return;
+    await this.clientService.getClient().setPayload(this.collection, {
+      payload: { subject: to },
+      filter: {
+        must: [
+          { key: 'memory_partition', match: { value: memoryPartition } },
+          { key: 'subject', match: { value: from } },
+        ],
+      },
+      wait: true,
+    });
+  }
+
+  /**
    * Rewrite one category value to its canonical form on every point of a
    * partition — a payload-only change, no vector rewrite, idempotent.
    */
@@ -393,6 +528,7 @@ export class MemoryRepository {
       createdAt: string;
       requestId?: string;
       subject?: string;
+      community?: string;
       kind?: string;
       stability?: string;
     }>
@@ -414,6 +550,7 @@ export class MemoryRepository {
       createdAt: string;
       requestId?: string;
       subject?: string;
+      community?: string;
       kind?: string;
       stability?: string;
     }> = [];
@@ -439,6 +576,7 @@ export class MemoryRepository {
           createdAt: (payload.created_at as string) ?? '',
           requestId: payload.request_id as string | undefined,
           subject: payload.subject as string | undefined,
+          community: payload.community as string | undefined,
           kind: payload.kind as string | undefined,
           stability: payload.stability as string | undefined,
         });
@@ -502,6 +640,7 @@ export class MemoryRepository {
       createdAt: string;
       subject?: string;
       category?: string;
+      community?: string;
       kind?: string;
       stability?: string;
     }>
@@ -531,6 +670,7 @@ export class MemoryRepository {
         createdAt: (payload.created_at as string) ?? '',
         subject: payload.subject as string | undefined,
         category: payload.category as string | undefined,
+        community: payload.community as string | undefined,
         kind: payload.kind as string | undefined,
         stability: payload.stability as string | undefined,
       };
@@ -582,6 +722,7 @@ export class MemoryRepository {
         createdAt: (payload.created_at as string) ?? '',
         subject: payload.subject as string | undefined,
         category: payload.category as string | undefined,
+        community: payload.community as string | undefined,
         kind: payload.kind as string | undefined,
         stability: payload.stability as string | undefined,
       };
@@ -639,6 +780,7 @@ export class MemoryRepository {
         role: (payload.role as MemoryPoint['role']) ?? 'user',
         createdAt: (payload.created_at as string) ?? '',
         category: payload.category as string | undefined,
+        community: payload.community as string | undefined,
         subject: payload.subject as string | undefined,
         kind: payload.kind as string | undefined,
         stability: payload.stability as string | undefined,
@@ -778,6 +920,7 @@ export class MemoryRepository {
       vector: number[];
       text: string;
       category?: string;
+      community?: string;
       tags: string[];
     }> = [];
     let offset: string | number | null = null;
@@ -798,6 +941,7 @@ export class MemoryRepository {
           vector: vector as number[],
           text: (payload.text as string) ?? '',
           category: payload.category as string | undefined,
+          community: payload.community as string | undefined,
           tags: (payload.tags as string[]) ?? [],
         });
         if (points.length >= limit) return points;
@@ -1201,6 +1345,7 @@ export class MemoryRepository {
       text: (payload.text as string) ?? '',
       tags: (payload.tags as string[]) ?? [],
       category: payload.category as string | undefined,
+      community: payload.community as string | undefined,
       subject: payload.subject as string | undefined,
       kind: payload.kind as string | undefined,
       stability: payload.stability as string | undefined,

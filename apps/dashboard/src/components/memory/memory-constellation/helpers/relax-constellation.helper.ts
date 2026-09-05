@@ -28,6 +28,9 @@ const INTER_DISTANCE = 80;
 /** Cluster (hub → cluster hub) distance — wider than inter so category
  *  hubs sit outside the ring of their member topics. */
 const CLUSTER_DISTANCE = 140;
+/** Community (hub → community hub) distance — between inter and cluster: the
+ *  mid-tier dot settles inside the cluster halo, outside the topic ring. */
+const COMMUNITY_DISTANCE = 110;
 
 /** Target distance per edge kind — structural edges sit close, inter-topic
  *  edges apart, cluster hubs widest. */
@@ -36,6 +39,7 @@ const LINK_DISTANCE: Record<SimLink['kind'], number> = {
   inter: INTER_DISTANCE,
   sibling: INTER_DISTANCE,
   cluster: CLUSTER_DISTANCE,
+  community: COMMUNITY_DISTANCE,
   root: CLUSTER_DISTANCE,
 };
 /** Repulsion strength (negative = repel). */
@@ -48,7 +52,7 @@ interface SimNode extends SimulationNodeDatum {
 }
 
 interface SimLink extends SimulationLinkDatum<SimNode> {
-  kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'root';
+  kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'community' | 'root';
   score?: number;
 }
 

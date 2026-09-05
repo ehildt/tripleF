@@ -35,6 +35,9 @@ function makeService() {
     encyclopediaRepository as never,
     memoryEnqueue as never,
     overrides as never,
+    {
+      touchMaintenanceForLabels: vi.fn().mockResolvedValue(undefined),
+    } as never,
   );
   return {
     service,

@@ -10,7 +10,9 @@ describe('buildEncyclopediaClassifyPrompt', () => {
   });
 
   it('appends the known-category vocabulary when provided', () => {
-    const prompt = buildEncyclopediaClassifyPrompt(['games', 'work']);
+    const prompt = buildEncyclopediaClassifyPrompt({
+      categories: ['games', 'work'],
+    });
 
     expect(prompt).toContain('games, work');
   });

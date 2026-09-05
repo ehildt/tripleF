@@ -5,14 +5,15 @@ import {
 } from '@triplef/agent/prompts';
 import { createMemoryCognitionRememberTool } from '@triplef/agent/tools';
 import { createMemoryPartitionRememberTool } from '@triplef/agent/tools';
+import { createMemoryTaxonomyProbeTool } from '@triplef/agent/tools';
 import { AiSdkService } from '@triplef/ai-sdk';
 
 import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import type { MemoryWriteJobData } from '../../../models/memory.model.js';
-import { MemoryRepository } from '../../memory.repository.js';
 import { MemoryCognitionService } from '../../memory-cognition.service.js';
 import { MemorySearchService } from '../../memory-search.service.js';
+import { TaxonomyProbeService } from '../../taxonomy-probe.service.js';
 import { VectorizeService } from '../../vectorize.service.js';
 
 /**
@@ -37,7 +38,7 @@ export class MemoryWriteJobService {
     private readonly memorySearch: MemorySearchService,
     private readonly vectorizeService: VectorizeService,
     private readonly memoryCognition: MemoryCognitionService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly taxonomyProbe: TaxonomyProbeService,
   ) {}
 
   async execute(data: MemoryWriteJobData): Promise<void> {
@@ -49,12 +50,16 @@ export class MemoryWriteJobService {
     });
     const priorMemory = prior.map((p) => `- ${p.text}`).join('\n');
 
-    // The partition's existing category/tag vocabulary — a reuse-first hint
-    // so the model extends the taxonomy instead of minting near-duplicates.
-    const [categories, tags] = await Promise.all([
-      this.memoryRepository.facetCategories(data.memoryPartition),
-      this.memoryRepository.facetTags(data.memoryPartition),
-    ]);
+    // The partition's taxonomy vocabulary ranked by similarity to the turn
+    // text — the reuse-first hint; the probe tool below does the confirming.
+    const taxonomyText = [data.userRequest, data.gathered]
+      .filter(Boolean)
+      .join('\n');
+    const vocabulary = await this.taxonomyProbe.rankVocabulary(
+      'partition',
+      data.memoryPartition,
+      taxonomyText,
+    );
 
     const scope = {
       memoryPartition: data.memoryPartition,
@@ -81,6 +86,10 @@ export class MemoryWriteJobService {
           { text: input.text, path: input.path },
         ),
     });
+    const taxonomyProbeTool = createMemoryTaxonomyProbeTool({
+      probe: (input) =>
+        this.taxonomyProbe.probe('partition', data.memoryPartition, input),
+    });
 
     const result = await this.aiSdkService.generateWithTools({
       model: data.model,
@@ -93,16 +102,19 @@ export class MemoryWriteJobService {
             priorMemory,
             probedMemory: data.probedMemory,
             gathered: data.gathered,
-            knownCategories: categories.map((entry) => entry.value),
-            knownTags: tags.map((entry) => entry.value),
+            vocabulary,
           }),
         },
       ],
       tools: {
         'memory-partition-remember': partitionRememberTool,
         'memory-cognition-remember': cognitionRememberTool,
+        'memory-taxonomy-probe': taxonomyProbeTool,
       } as any,
       toolChoice: 'auto',
+      // Probe chains (cluster → community → hub) are sequential tool steps;
+      // the remember calls land in the follow-up steps.
+      maxSteps: 8,
       providerOptions: buildProviderOptions({
         keepAlive: this.ollamaConfigService.config.keepAlive,
         numCtx: data.numCtx,

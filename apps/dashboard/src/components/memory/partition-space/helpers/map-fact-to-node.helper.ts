@@ -29,6 +29,7 @@ export function mapFactToNode(
     label: isBridge ? BRIDGE_TAG : topicKey,
     topicKey,
     clusterKey: fact.clusterId?.trim() || fact.category?.trim() || undefined,
+    communityKey: fact.community?.trim() || undefined,
     text: fact.text,
     summary: fact.text,
     timestamp: fact.createdAt,

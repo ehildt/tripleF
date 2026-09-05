@@ -1,4 +1,5 @@
 import { normalizeCategory } from '../../helpers/normalize-category.helper.js';
+import { normalizeCommunity } from '../../helpers/normalize-community.helper.js';
 import type { UpsertBatchInput } from '../../models/memory.model.js';
 
 type UpsertPoint = UpsertBatchInput['points'][number];
@@ -24,6 +25,7 @@ export function mapMemoryPointToUpsert(
       // Every write boundary funnels through here — the category is
       // normalized once, so case/format drift cannot re-enter the system.
       category: normalizeCategory(point.category),
+      community: normalizeCommunity(point.community),
       // The extraction-classified maintenance knobs — arrive normalized
       // from the extraction parse; absent on records written by paths that
       // don't classify (the remember tool).

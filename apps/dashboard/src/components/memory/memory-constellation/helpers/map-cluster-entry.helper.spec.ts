@@ -15,6 +15,7 @@ describe('mapClusterEntry', () => {
       label: 'games',
       color: '#f97316',
       memberTopicKeys: ['c1', 'c2'],
+      memberCommunityKeys: [],
       memberIds: ['n1', 'n2'],
     });
   });

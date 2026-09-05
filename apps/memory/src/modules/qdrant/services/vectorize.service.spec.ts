@@ -24,6 +24,10 @@ function makeService() {
     ledger as never,
     memoryEnqueue as never,
     overrides as never,
+    {
+      resolveLabels: vi.fn().mockResolvedValue([]),
+      applyIconHint: vi.fn(),
+    } as never,
     { enabled: true, consolidateThreshold: 50 } as QdrantConfig,
   );
   embed.mockImplementation((input: string[]) =>
@@ -93,6 +97,10 @@ describe('VectorizeService.storeRecord', () => {
       { insertMany: vi.fn(), countPending: vi.fn() } as never,
       { enqueueConsolidateJob: vi.fn() } as never,
       { getConsolidateModel: vi.fn() } as never,
+      {
+        resolveLabels: vi.fn().mockResolvedValue([]),
+        applyIconHint: vi.fn(),
+      } as never,
       { enabled: false, consolidateThreshold: 50 } as QdrantConfig,
     );
 

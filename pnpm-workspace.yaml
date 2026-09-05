@@ -97,7 +97,7 @@ minimumReleaseAgeExclude:
   - '@vue/runtime-dom@3.5.42'
   - '@vue/server-renderer@3.5.42'
   - '@vue/shared@3.5.42'
-  - lint-staged@17.4.1
+  - lint-staged@17.4.1 || 17.5.0
   - vue@3.5.42
   - '@vue/test-utils@2.5.0'
   - markdown-it@15.0.1
@@ -137,3 +137,5 @@ minimumReleaseAgeExclude:
   - '@swc/core-win32-ia32-msvc@1.16.2'
   - '@swc/core-win32-x64-msvc@1.16.2'
   - '@swc/core@1.16.2'
+  - playwright-core@1.63.0
+  - playwright@1.63.0

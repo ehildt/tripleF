@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<MemoryConstellationProps>(), {
   toggleAllSignal: 0,
   frictions: () => [],
   clusters: () => [],
+  labelMeta: undefined,
 });
 const emit = defineEmits<MemoryConstellationEmits>();
 
@@ -34,6 +35,7 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
   toRef(props, 'links'),
   toRef(props, 'frictions'),
   toRef(props, 'clusters'),
+  toRef(props, 'labelMeta'),
   canvasRef,
   tooltipRef,
   (node) => emit('nodeClick', node),

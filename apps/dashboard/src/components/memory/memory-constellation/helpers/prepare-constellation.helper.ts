@@ -8,6 +8,7 @@ import type {
   RelaxedLayout,
 } from '../MemoryConstellation.types';
 import { appendClusterNodes } from './append-cluster-nodes.helper';
+import { appendCommunityNodes } from './append-community-nodes.helper';
 import { appendRootNode } from './append-root-node.helper';
 import { buildEdges } from './build-edges.helper';
 import { buildFrictionLinks } from './build-friction-links.helper';
@@ -38,7 +39,12 @@ export function prepareConstellation(
   frictions: readonly ConstellationFriction[] = [],
   showSuggested = true,
 ): PreparedConstellation {
-  const { topics, clusters, positions: relaxedPositions } = relaxedLayout;
+  const {
+    topics,
+    clusters,
+    communities,
+    positions: relaxedPositions,
+  } = relaxedLayout;
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   const acc = buildVisibleNodes(
@@ -49,6 +55,7 @@ export function prepareConstellation(
     frictions,
   );
   appendClusterNodes(clusters, relaxedPositions, acc, nodeById, frictions);
+  appendCommunityNodes(communities, relaxedPositions, acc, nodeById, frictions);
   appendRootNode(
     acc,
     buildRootHealthMeta(nodes, topics, clusters, links, frictions),
@@ -60,6 +67,7 @@ export function prepareConstellation(
     collapsedKeys,
     clusters,
     interLinkMinScore,
+    communities,
   );
   const linkIndices = [
     ...buildLinkIndices(edges, nodeIndex, interLinkMinScore),
@@ -69,8 +77,8 @@ export function prepareConstellation(
     ? linkIndices
     : linkIndices.filter((link) => !link.weak);
   const linkCounts = buildLinkCounts(visibleLinkIndices, visibleNodes);
-  const nodeColor = buildNodeColor(topics, clusters);
-  const hubIds = buildHubIds(topics, collapsedKeys, clusters);
+  const nodeColor = buildNodeColor(topics, clusters, communities);
+  const hubIds = buildHubIds(topics, collapsedKeys, clusters, communities);
   const topicFog = buildTopicFog(topics, relaxedPositions, collapsedKeys);
 
   return {

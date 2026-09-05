@@ -18,6 +18,7 @@ import {
   ApePostEncyclopediaClassify,
   ApePostEncyclopediaCluster,
   ApePostEncyclopediaConsolidate,
+  ApePostEncyclopediaReconcile,
   ApePostEncyclopediaReflect,
   ApePostEncyclopediaResearch,
   ApeTagsEncyclopediaMaintenance,
@@ -26,6 +27,7 @@ import { EncyclopediaClassifyBodyDto } from '../dtos/encyclopedia-classify-body.
 import { EncyclopediaClusterBodyDto } from '../dtos/encyclopedia-cluster-body.dto.js';
 import { EncyclopediaConsolidateBodyDto } from '../dtos/encyclopedia-consolidate-body.dto.js';
 import { EncyclopediaConsolidateResponseDto } from '../dtos/encyclopedia-consolidate-response.dto.js';
+import { EncyclopediaReconcileBodyDto } from '../dtos/encyclopedia-reconcile-body.dto.js';
 import { EncyclopediaReflectBodyDto } from '../dtos/encyclopedia-reflect-body.dto.js';
 import { EncyclopediaResearchBodyDto } from '../dtos/encyclopedia-research-body.dto.js';
 import type { EncyclopediaConfig } from '../models/encyclopedia-config.model.js';
@@ -104,6 +106,28 @@ export class EncyclopediaMaintenanceController {
       dryRun: body.dryRun === true,
     });
     return { accepted: true, pending };
+  }
+
+  @Post('reconcile')
+  @HttpCode(HttpStatus.OK)
+  @ApePostEncyclopediaReconcile()
+  async reconcileTaxonomy(
+    @Body() body: EncyclopediaReconcileBodyDto,
+  ): Promise<MemoryReflectResponseDto> {
+    const model = body.model ?? this.memoryOverrides.getConsolidateModel();
+    if (!model) {
+      throw new BadRequestException(
+        'A reconcile model is required — pass "model", set a client override, or set MEMORY_CONSOLIDATE_MODEL',
+      );
+    }
+    await this.memoryEnqueue.enqueueTaxonomyReconcileJob({
+      lane: 'encyclopedia',
+      scopeKey: 'global',
+      model,
+      limit: body.limit,
+      dryRun: body.dryRun === true,
+    });
+    return { accepted: true };
   }
 
   @Post('reflect')

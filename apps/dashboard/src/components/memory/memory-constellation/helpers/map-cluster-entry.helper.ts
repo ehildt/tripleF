@@ -23,6 +23,7 @@ export function mapClusterEntry(
     label: key,
     color: CLUSTER_PALETTE[index % CLUSTER_PALETTE.length],
     memberTopicKeys: topicKeys,
+    memberCommunityKeys: [],
     memberIds: memberIdsByCluster.get(key) ?? [],
   };
 }

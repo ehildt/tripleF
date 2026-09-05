@@ -115,6 +115,19 @@ export const ApePostEncyclopediaClassify = () =>
     }),
   );
 
+export const ApePostEncyclopediaReconcile = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        'Taxonomy reconciliation job enqueued (merges duplicate cluster/community/hub labels of the global encyclopedia).',
+    }),
+    ApiOperation({
+      summary:
+        '②b Taxonomy reconcile — optional label sweep after classification: merges duplicate cluster/community/hub labels (auto above the snap band with token overlap, LLM-verdict in the ambiguous band) with alias provenance',
+    }),
+  );
+
 export const ApePostEncyclopediaReflect = () =>
   applyDecorators(
     ApiResponse({ status: 200, type: MemoryReflectResponseDto }),

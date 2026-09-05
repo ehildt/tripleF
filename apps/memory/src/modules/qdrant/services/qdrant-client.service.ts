@@ -64,6 +64,8 @@ export class QdrantClientService implements OnModuleInit {
       await this.ensureEncyclopediaPayloadIndexes();
       await this.ensureSynopsisCollections(modelDims);
       await this.ensureSynopsisPayloadIndexes();
+      await this.ensureTaxonomyCollection(modelDims);
+      await this.ensureTaxonomyPayloadIndexes();
     } catch (error) {
       this.logger.warn(
         `Qdrant bootstrap failed — memory reads/writes will be unavailable: ${
@@ -103,6 +105,20 @@ export class QdrantClientService implements OnModuleInit {
   get encyclopediaSynopsisCollection(): string {
     return buildCollectionName(
       `${this.config.encyclopediaCollection}-synopsis`,
+      this.config.embedModel,
+    );
+  }
+
+  /**
+   * Resolved taxonomy label collection name (model-namespaced) — one point
+   * per `memory_taxonomy_node` id holding its label embedding for semantic
+   * probing. The Postgres registry owns the labels/hierarchy and survives
+   * embed-model switches; these vectors are re-minted lazily against a fresh
+   * collection.
+   */
+  get taxonomyCollection(): string {
+    return buildCollectionName(
+      `${this.config.collection}-taxonomy`,
       this.config.embedModel,
     );
   }
@@ -181,6 +197,9 @@ export class QdrantClientService implements OnModuleInit {
       // category is the broad family label — keyword index powers the facet
       // inventory (relink job) and category-scoped filters.
       { field_name: 'category', field_schema: 'keyword' },
+      // community is the plural sub-family tier one level below category —
+      // keyword index powers community-scoped filters (taxonomy routing).
+      { field_name: 'community', field_schema: 'keyword' },
       // Full-text schema on text enables RAG-style containment filters
       // (`match: { text: ... }`) over the record content.
       { field_name: 'text', field_schema: 'text' },
@@ -335,6 +354,8 @@ export class QdrantClientService implements OnModuleInit {
       // the classify job's reuse-first facet vocabulary and topic filters.
       { field_name: 'category', field_schema: 'keyword' },
       { field_name: 'topic', field_schema: 'keyword' },
+      // community is the plural sub-family tier between category and topic.
+      { field_name: 'community', field_schema: 'keyword' },
       // Lifecycle flags — bool indexes power the strict/recommended view
       // filters and the Phase 2 recall formula boosts over these payloads.
       { field_name: 'is_consolidated', field_schema: 'bool' },
@@ -352,6 +373,57 @@ export class QdrantClientService implements OnModuleInit {
       });
       this.logger.log(
         `Created payload index "${index.field_name}" on "${this.encyclopediaCollection}"`,
+      );
+    }
+  }
+
+  /**
+   * Create the taxonomy label collection if missing (Cosine, same model dims
+   * as the lane collections): one embedded point per taxonomy node, id = the
+   * node's Postgres id.
+   */
+  async ensureTaxonomyCollection(modelDims?: number): Promise<void> {
+    const client = this.getClient();
+    const { exists } = await client.collectionExists(this.taxonomyCollection);
+    if (exists) return;
+    const size = modelDims ?? this.config.vectorSize;
+    await client.createCollection(this.taxonomyCollection, {
+      vectors: { size, distance: 'Cosine' },
+    });
+    this.logger.log(
+      `Created Qdrant collection "${this.taxonomyCollection}" (${size} dims, Cosine)`,
+    );
+  }
+
+  /**
+   * Keyword indexes on the taxonomy label payload: `lane` + `scope_key` (the
+   * registry scope; tenant marker co-locates one scope's labels), `kind` (the
+   * tier filter), `parent_id` (the probe's top-down lock-in constraint), and
+   * `normalized_name` (exact-lookup backstop).
+   */
+  async ensureTaxonomyPayloadIndexes(): Promise<void> {
+    const client = this.getClient();
+    const info = await client.getCollection(this.taxonomyCollection);
+    const existing = new Set(Object.keys(info.payload_schema ?? {}));
+    const indexes = [
+      { field_name: 'lane', field_schema: 'keyword' },
+      {
+        field_name: 'scope_key',
+        field_schema: { type: 'keyword', is_tenant: true },
+      },
+      { field_name: 'kind', field_schema: 'keyword' },
+      { field_name: 'parent_id', field_schema: 'keyword' },
+      { field_name: 'normalized_name', field_schema: 'keyword' },
+    ] as const;
+    for (const index of indexes) {
+      if (existing.has(index.field_name)) continue;
+      await client.createPayloadIndex(this.taxonomyCollection, {
+        field_name: index.field_name,
+        field_schema: index.field_schema,
+        wait: true,
+      });
+      this.logger.log(
+        `Created payload index "${index.field_name}" on "${this.taxonomyCollection}"`,
       );
     }
   }

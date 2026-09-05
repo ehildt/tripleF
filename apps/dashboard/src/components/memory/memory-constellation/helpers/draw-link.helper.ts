@@ -14,11 +14,23 @@ const GRAY_LINK_COLOR = '#6b7280';
 const FRICTION_LINK_COLOR = '#ff9933';
 
 /** Edge kinds drawn as gray lines (hierarchy + long-distance). */
-const GRAY_KINDS = new Set(['inter', 'sibling', 'cluster', 'root']);
+const GRAY_KINDS = new Set([
+  'inter',
+  'sibling',
+  'cluster',
+  'community',
+  'root',
+]);
 /** Edge kinds drawn dashed (long-distance + root). */
 const DASHED_KINDS = new Set(['inter', 'root']);
 /** Edge kinds that carry traveling light droplets. */
-const DROPLET_KINDS = new Set(['inter', 'sibling', 'cluster', 'root']);
+const DROPLET_KINDS = new Set([
+  'inter',
+  'sibling',
+  'cluster',
+  'community',
+  'root',
+]);
 
 /**
  * Draw one link edge (projected quadratic curve, opacity by score). Light

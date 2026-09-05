@@ -6,6 +6,7 @@ import {
 import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { normalizeCategory } from './normalize-category.helper.js';
+import { normalizeCommunity } from './normalize-community.helper.js';
 import { normalizeSubject } from './normalize-subject.helper.js';
 import { normalizeTags } from './normalize-tags.helper.js';
 
@@ -59,6 +60,7 @@ export function parseExtraction(text: string): MemoryExtraction {
       text: claim,
       subject: normalizeSubject(fact.subject),
       category: normalizeCategory(fact.category),
+      community: normalizeCommunity(fact.community),
     });
   }
 
@@ -66,5 +68,6 @@ export function parseExtraction(text: string): MemoryExtraction {
     facts,
     tags: normalizeTags(validated.data.tags),
     category: normalizeCategory(validated.data.category),
+    community: normalizeCommunity(validated.data.community),
   };
 }

@@ -43,16 +43,26 @@ export const ExtractedFactSchema = z.object({
   text: z.string(),
   /**
    * The lowercase entity the fact is about (default `user`; a person,
-   * product, or project name). Maintenance adjudication only ever compares
+   * product, or project name) — the constellation's HUB tier: singular,
+   * specific, stable. Maintenance adjudication only ever compares
    * facts about the SAME subject.
    */
   subject: z.string().optional(),
   /**
    * One broad lowercase PLURAL family label for THIS fact (e.g. `stocks`,
-   * `pets`, `games`) — inherits the turn-side category when omitted. Never
+   * `pets`, `games`) — the constellation's CLUSTER tier. Inherits the
+   * turn-side category when omitted. Never
    * a specific entity, product, company, or game title.
    */
   category: z.string().optional(),
+  /**
+   * One lowercase PLURAL sub-family label narrowing THIS fact's category
+   * (e.g. `survival-games` under `games`) — the constellation's COMMUNITY
+   * tier, one level below the cluster. Inherits the turn-side community when
+   * omitted; omit when no sub-family applies. Never a specific entity,
+   * product, or title.
+   */
+  community: z.string().optional(),
   /** What kind of durable thing this is (see FACT_KINDS). */
   kind: z.enum(FACT_KINDS),
   /** Whether a newer statement is expected to replace this one (see FACT_STABILITIES). */
@@ -78,14 +88,23 @@ export const ExtractionSchema = z.object({
   tags: z.array(z.string()),
   /**
    * One broad lowercase PLURAL family label for the whole turn-side (e.g.
-   * `stocks`, `pets`, `games`) — groups the narrow tags into one topic family
-   * for the constellation's community tier and the relink job's per-category
-   * passes, and backstops facts that omit their own `category`. Never a
+   * `stocks`, `pets`, `games`) — the constellation's CLUSTER tier. Groups
+   * the narrow tags into one topic family, powers the relink job's
+   * per-category passes, and backstops facts that omit their own `category`. Never a
    * specific entity, product, company, or game title: `amd` belongs under
    * `stocks`; `stellar blade` belongs under `games`. Optional: a turn with
    * nothing durable may omit it.
    */
   category: z.string().optional(),
+  /**
+   * One lowercase PLURAL sub-family label narrowing the turn-side category
+   * (e.g. `survival-games` under `games`) — the constellation's COMMUNITY
+   * tier: a genre, project family, or domain branch one level below the
+   * cluster. Backstops facts that omit their own `community`. Optional:
+   * omit it when no sub-family applies. Never a specific entity, product,
+   * or title.
+   */
+  community: z.string().optional(),
 });
 
 export type MemoryExtraction = z.infer<typeof ExtractionSchema>;

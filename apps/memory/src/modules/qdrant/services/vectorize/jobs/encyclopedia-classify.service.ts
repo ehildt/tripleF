@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { buildEncyclopediaClassifyPrompt } from '@triplef/agent/prompts';
+import { createMemoryTaxonomyProbeTool } from '@triplef/agent/tools';
 import { AiSdkService } from '@triplef/ai-sdk';
 
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
@@ -9,17 +10,25 @@ import type { EncyclopediaClassifyJobData } from '../../../models/memory.model.j
 import { EncyclopediaRepository } from '../../encyclopedia.repository.js';
 import { MemoryEnqueueService } from '../../memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../memory-overrides.service.js';
+import { TaxonomyProbeService } from '../../taxonomy-probe.service.js';
+import { TaxonomyResolutionService } from '../../taxonomy-resolution.service.js';
 
 /** Hard cap on pending documents processed per run (mirrors the sweep). */
 const MAX_PENDING_PER_RUN = 500;
 /** Content prefix fed to the classifier — enough to label, cheap to send. */
 const CLASSIFY_CONTENT_CHARS = 1600;
+/** Probe steps a classification may take before answering (cluster → community → hub, with slack). */
+const CLASSIFY_MAX_STEPS = 5;
 
 /**
  * Encyclopedia classification job handler (vectorize queue): labels stored
- * documents with their source-agnostic category + topic (the constellation's
- * category + topic tiers). One LLM call per document; the labels fan out
- * to every chunk of the url via a payload-only setPayload.
+ * documents with their source-agnostic cluster/community/hub labels (the
+ * constellation's taxonomy tiers). One tool-loop call per document — the
+ * model probes the macro-taxonomy top-down (memory-taxonomy-probe) and
+ * adopts existing nodes VERBATIM or mints phrasing-compliant new ones —
+ * then the labels fan out to every chunk of the url via a payload-only
+ * setPayload, after the deterministic taxonomy snap (exact → alias → fuzzy →
+ * mint) guarantees the stored wording is the registry's canonical label.
  *
  * Two pending queues, one per tier:
  * - Tier-2 documents are ledger-driven: `classifiedAt` null marks a row
@@ -47,18 +56,13 @@ export class EncyclopediaClassifyService {
     private readonly repository: EncyclopediaRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
+    private readonly taxonomyResolution: TaxonomyResolutionService,
+    private readonly taxonomyProbe: TaxonomyProbeService,
   ) {}
 
   async execute(data: EncyclopediaClassifyJobData): Promise<void> {
     const limit = Math.min(data.limit ?? 100, MAX_PENDING_PER_RUN);
     const pending = await this.ledger.listPendingClassification(limit);
-
-    const knownCategories = (await this.repository.facetCategories()).map(
-      (entry) => entry.value,
-    );
-    const knownTopics = (await this.repository.facetTopics()).map(
-      (entry) => entry.value,
-    );
 
     // Dedupe by url: a superseded document can leave several ledger rows for
     // one url, but the current chunks are classified once.
@@ -72,13 +76,7 @@ export class EncyclopediaClassifyService {
     let classified = 0;
     let deferred = 0;
     for (const [url, rows] of rowsByUrl) {
-      const outcome = await this.classifyOne(
-        url,
-        rows,
-        data,
-        knownCategories,
-        knownTopics,
-      );
+      const outcome = await this.classifyOne(url, rows, data);
       if (outcome === 'classified') classified++;
       else if (outcome === 'deferred') deferred++;
     }
@@ -89,18 +87,13 @@ export class EncyclopediaClassifyService {
     let snippetsClassified = 0;
     let snippetsDeferred = 0;
     for (const url of snippetUrls) {
-      const outcome = await this.classifySnippetUrl(
-        url,
-        data,
-        knownCategories,
-        knownTopics,
-      );
+      const outcome = await this.classifySnippetUrl(url, data);
       if (outcome === 'classified') snippetsClassified++;
       else if (outcome === 'deferred') snippetsDeferred++;
     }
 
     this.logger.log(
-      `encyclopedia-classify: ${rowsByUrl.size} documents — classified ${classified}, deferred ${deferred}; ${snippetUrls.length} snippet urls — classified ${snippetsClassified}, deferred ${snippetsDeferred}${data.dryRun ? ' (dryRun)' : ''}`,
+      `encyclopedia-classify: ${rowsByUrl.size} documents — classified ${classified}, deferred ${deferred}; ${snippetUrls.length} snippet urls — classified ${snippetsClassified}, snippets deferred ${snippetsDeferred}${data.dryRun ? ' (dryRun)' : ''}`,
     );
 
     if (!data.dryRun) {
@@ -149,8 +142,6 @@ export class EncyclopediaClassifyService {
     url: string,
     rows: Array<{ id: string }>,
     data: EncyclopediaClassifyJobData,
-    knownCategories: string[],
-    knownTopics: string[],
   ): Promise<'classified' | 'deferred' | 'skipped'> {
     const chunks = await this.repository.scrollByUrl(url);
     if (chunks.length === 0) {
@@ -162,22 +153,22 @@ export class EncyclopediaClassifyService {
     }
 
     try {
-      const classification = await this.classifyDocument(
-        data.model,
-        knownCategories,
-        knownTopics,
-        chunks,
-      );
+      const classification = await this.classifyDocument(data.model, chunks);
       if (data.dryRun) {
         this.logger.log(
-          `encyclopedia-classify [dryRun]: ${url} → ${classification.category}/${classification.topic}`,
+          `encyclopedia-classify [dryRun]: ${url} → ${classification.category}/${classification.community ?? '-'}/${classification.topic}`,
         );
         return 'skipped';
       }
+      // Taxonomy snap (exact → alias → fuzzy → mint) — the registry's
+      // canonical labels are what lands on the chunks. Resolution writes
+      // (mint/aliases), so it stays behind the dryRun guard.
+      const resolved = await this.resolveClassification(classification);
       await this.repository.setClassificationByUrl(
         url,
-        classification.category,
-        classification.topic,
+        resolved.category,
+        resolved.topic,
+        resolved.community,
       );
       await this.ledger.markClassified(rows.map((row) => row.id));
       return 'classified';
@@ -199,8 +190,6 @@ export class EncyclopediaClassifyService {
   private async classifySnippetUrl(
     url: string,
     data: EncyclopediaClassifyJobData,
-    knownCategories: string[],
-    knownTopics: string[],
   ): Promise<'classified' | 'deferred' | 'skipped'> {
     const snippets = await this.repository.scrollSnippetsByUrl(url);
     if (snippets.length === 0) {
@@ -208,22 +197,20 @@ export class EncyclopediaClassifyService {
     }
 
     try {
-      const classification = await this.classifyDocument(
-        data.model,
-        knownCategories,
-        knownTopics,
-        snippets,
-      );
+      const classification = await this.classifyDocument(data.model, snippets);
       if (data.dryRun) {
         this.logger.log(
-          `encyclopedia-classify [dryRun]: snippet ${url} → ${classification.category}/${classification.topic}`,
+          `encyclopedia-classify [dryRun]: snippet ${url} → ${classification.category}/${classification.community ?? '-'}/${classification.topic}`,
         );
         return 'skipped';
       }
+      // Taxonomy snap (exact → alias → fuzzy → mint), mirroring classifyOne.
+      const resolved = await this.resolveClassification(classification);
       await this.repository.setClassificationByUrl(
         url,
-        classification.category,
-        classification.topic,
+        resolved.category,
+        resolved.topic,
+        resolved.community,
       );
       return 'classified';
     } catch (error) {
@@ -236,13 +223,70 @@ export class EncyclopediaClassifyService {
     }
   }
 
-  /** One LLM call: title + content prefix → { category, topic }. */
+  /**
+   * Snap a parsed classification to the canonical registry labels and apply
+   * the model's icon hint to the deepest newly minted node (when valid).
+   */
+  private async resolveClassification(classification: {
+    category: string;
+    topic: string;
+    community?: string;
+    icon?: string;
+  }): Promise<{ category: string; community?: string; topic: string }> {
+    const resolved = await this.taxonomyResolution.resolveLabels(
+      'encyclopedia',
+      'global',
+      [
+        { kind: 'cluster', label: classification.category },
+        ...(classification.community
+          ? [
+              {
+                kind: 'community' as const,
+                label: classification.community,
+                parentRef: classification.category,
+              },
+            ]
+          : []),
+        {
+          kind: 'hub',
+          label: classification.topic,
+          parentRef: classification.community ?? classification.category,
+        },
+      ],
+    );
+    await this.taxonomyResolution.applyIconHint(classification.icon, resolved);
+    const canonical = new Map(
+      resolved.map((entry) => [`${entry.kind}|${entry.input}`, entry.name]),
+    );
+    return {
+      category:
+        canonical.get(`cluster|${classification.category}`) ??
+        classification.category,
+      community: classification.community
+        ? (canonical.get(`community|${classification.community}`) ??
+          classification.community)
+        : undefined,
+      topic:
+        canonical.get(`hub|${classification.topic}`) ?? classification.topic,
+    };
+  }
+
+  /**
+   * One tool-loop call per document: the model may probe the macro-taxonomy
+   * (memory-taxonomy-probe, top-down cluster → community → hub) before
+   * answering with the { category, community?, topic, icon? } JSON. The
+   * prompt's vocabulary section carries only the labels ranked closest to
+   * this document — never the full dump.
+   */
   private async classifyDocument(
     model: string,
-    knownCategories: string[],
-    knownTopics: string[],
     chunks: Array<{ title?: string; content: string }>,
-  ): Promise<{ category: string; topic: string }> {
+  ): Promise<{
+    category: string;
+    topic: string;
+    community?: string;
+    icon?: string;
+  }> {
     const title = chunks.find((chunk) => chunk.title)?.title;
     const content = chunks
       .map((chunk) => chunk.content)
@@ -252,20 +296,31 @@ export class EncyclopediaClassifyService {
       .filter(Boolean)
       .join('\n');
 
-    const { text } = await this.aiSdkService.generateChat({
+    const vocabulary = await this.taxonomyProbe.rankVocabulary(
+      'encyclopedia',
+      'global',
+      input,
+    );
+    const taxonomyProbeTool = createMemoryTaxonomyProbeTool({
+      probe: (probeInput) =>
+        this.taxonomyProbe.probe('encyclopedia', 'global', probeInput),
+    });
+
+    const { text } = await this.aiSdkService.generateWithTools({
       model,
       messages: [
         {
           role: 'system' as const,
-          content: buildEncyclopediaClassifyPrompt(
-            knownCategories,
-            knownTopics,
-          ),
+          content: buildEncyclopediaClassifyPrompt(vocabulary),
         },
         { role: 'user' as const, content: input },
       ],
+      tools: { 'memory-taxonomy-probe': taxonomyProbeTool } as any,
+      // Zero probes is a correct outcome — adoption hints already sit in the
+      // prompt's ranked vocabulary; the boundary snap backstops the rest.
+      toolChoice: 'auto',
+      maxSteps: CLASSIFY_MAX_STEPS,
       providerOptions: buildProviderOptions({ think: false }),
-      tools: {},
     });
     return parseEncyclopediaClassification(text);
   }

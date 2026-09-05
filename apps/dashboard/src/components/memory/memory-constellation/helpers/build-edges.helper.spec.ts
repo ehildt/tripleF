@@ -17,6 +17,7 @@ const clusters: ConstellationCluster[] = [
     label: 'games',
     color: '#f97316',
     memberTopicKeys: ['x'],
+    memberCommunityKeys: [],
     memberIds: ['a', 'b'],
   },
 ];

@@ -3,6 +3,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { MemoryInsertLedgerRepository } from '../../persistence/services/memory-insert-ledger.repository.js';
 import { QDRANT_CONFIG } from '../constants/qdrant.constants.js';
 import { deterministicPointId } from '../helpers/deterministic-point-id.helper.js';
+import { normalizeCategory } from '../helpers/normalize-category.helper.js';
+import { normalizeCommunity } from '../helpers/normalize-community.helper.js';
+import { normalizeSubject } from '../helpers/normalize-subject.helper.js';
+import { normalizeTags } from '../helpers/normalize-tags.helper.js';
 import type { MemoryScopeFilters } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
@@ -10,6 +14,7 @@ import { EmbeddingService } from './embedding.service.js';
 import { MemoryRepository } from './memory.repository.js';
 import { MemoryEnqueueService } from './memory-enqueue.service.js';
 import { MemoryOverridesService } from './memory-overrides.service.js';
+import { TaxonomyResolutionService } from './taxonomy-resolution.service.js';
 
 /** A filtered delete removes at most this many records per call. */
 const DELETE_RECORDS_CAP = 50;
@@ -41,6 +46,7 @@ export class VectorizeService {
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
+    private readonly taxonomyResolution: TaxonomyResolutionService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -60,6 +66,9 @@ export class VectorizeService {
     text: string;
     tags?: string[];
     category?: string;
+    community?: string;
+    subject?: string;
+    icon?: string;
   }): Promise<string> {
     if (!this.config.enabled) {
       throw new Error('Memory feature is disabled');
@@ -70,6 +79,54 @@ export class VectorizeService {
     const [vector] = await this.embeddingService.embed([text], 'document');
     if (!vector) throw new Error('Embedding returned no vector');
 
+    // Taxonomy snap (exact → alias → fuzzy → mint): the model names labels
+    // freely, the registry's canonical names are what land on the point.
+    const category = normalizeCategory(input.category);
+    const community = normalizeCommunity(input.community);
+    const subject = normalizeSubject(input.subject);
+    const tags = normalizeTags(input.tags);
+    const labels = [
+      ...(category ? [{ kind: 'cluster' as const, label: category }] : []),
+      ...(community
+        ? [
+            {
+              kind: 'community' as const,
+              label: community,
+              parentRef: category,
+            },
+          ]
+        : []),
+      ...(subject
+        ? [
+            {
+              kind: 'hub' as const,
+              label: subject,
+              parentRef: community ?? category,
+            },
+          ]
+        : []),
+      ...tags.map((tag) => ({ kind: 'tag' as const, label: tag })),
+    ];
+    const resolved = await this.taxonomyResolution.resolveLabels(
+      'partition',
+      input.memoryPartition,
+      labels,
+    );
+    await this.taxonomyResolution.applyIconHint(input.icon, resolved);
+    const canonical = new Map(
+      resolved.map((entry) => [`${entry.kind}|${entry.input}`, entry.name]),
+    );
+    const resolvedCategory = category
+      ? (canonical.get(`cluster|${category}`) ?? category)
+      : undefined;
+    const resolvedCommunity = community
+      ? (canonical.get(`community|${community}`) ?? community)
+      : undefined;
+    const resolvedSubject = subject
+      ? (canonical.get(`hub|${subject}`) ?? subject)
+      : undefined;
+    const resolvedTags = tags.map((tag) => canonical.get(`tag|${tag}`) ?? tag);
+
     const id = deterministicPointId(`${input.memoryPartition}|user|${text}`);
     await this.memoryRepository.upsertBatch({
       memoryPartition: input.memoryPartition,
@@ -78,7 +135,15 @@ export class VectorizeService {
       conversationId: input.conversationId,
       requestId: input.requestId,
       points: [
-        { id, vector, text, tags: input.tags ?? [], category: input.category },
+        {
+          id,
+          vector,
+          text,
+          tags: resolvedTags,
+          category: resolvedCategory,
+          community: resolvedCommunity,
+          subject: resolvedSubject,
+        },
       ],
     });
     this.logger.log(
@@ -87,8 +152,8 @@ export class VectorizeService {
         requestId: input.requestId,
         pointId: id,
         text,
-        tags: input.tags ?? [],
-        category: input.category,
+        tags: resolvedTags,
+        category: resolvedCategory,
       },
       'memory record stored',
     );

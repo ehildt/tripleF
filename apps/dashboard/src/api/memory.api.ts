@@ -106,6 +106,8 @@ export interface MemoryFactRecord {
    * the cold-scope fallback cluster key when the server has not clustered yet.
    */
   category?: string;
+  /** Plural sub-family under the category — the constellation community tier. */
+  community?: string;
   /** Server-detected cluster id (written by the memory-cluster job) — the authoritative cluster key. */
   clusterId?: string;
   /** The entity the fact is about — extraction-classified (the maintenance same-subject rule). */
@@ -227,6 +229,8 @@ export interface EncyclopediaChunkRecord {
   category?: string;
   /** Narrow topic label (e.g. wuthering waves) — the constellation topic tier. */
   topic?: string;
+  /** Plural sub-family under the category — the constellation community tier. */
+  community?: string;
   /** Server-detected cluster id (written by the memory-cluster job) — the authoritative cluster key. */
   clusterId?: string;
   /** True once the supersede sweep adjudicated this chunk. */

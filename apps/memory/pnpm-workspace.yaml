@@ -14,7 +14,7 @@ minimumReleaseAgeExclude:
   - '@triplef/config-factory@1.1.3'
   - npm-check-updates@23.1.0
   - '@triplef/core-logger@0.0.0 || 0.0.2 || 0.1.0'
-  - '@ai-sdk/gateway@4.0.64 || 4.0.68 || 4.0.71 || 4.0.72'
+  - '@ai-sdk/gateway@4.0.64 || 4.0.68 || 4.0.71 || 4.0.72 || 4.0.75'
   - '@ai-sdk/provider-utils@5.0.30 || 5.0.33 || 5.0.35 || 5.0.36'
   - '@ai-sdk/provider@4.0.8 || 4.0.10'
   - '@nestjs/common@11.2.3'
@@ -29,9 +29,25 @@ minimumReleaseAgeExclude:
   - '@triplef/bullmq-logger@1.2.4'
   - '@triplef/bullmq@1.1.4'
   - '@types/node@26.3.0 || 26.4.1'
-  - ai@7.0.79 || 7.0.84 || 7.0.89 || 7.0.90
+  - ai@7.0.79 || 7.0.84 || 7.0.89 || 7.0.90 || 7.0.93
   - bullmq@6.2.1 || 6.3.2
   - prisma@7.10.0
   - '@triplef/agent@0.1.6 || 0.1.7 || 0.1.14 || 0.1.15'
   - zod@4.5.2 || 4.5.4
   - globals@17.12.0
+  - '@swc/core-darwin-arm64@1.16.2'
+  - '@swc/core-darwin-x64@1.16.2'
+  - '@swc/core-linux-arm-gnueabihf@1.16.2'
+  - '@swc/core-linux-arm64-gnu@1.16.2'
+  - '@swc/core-linux-arm64-musl@1.16.2'
+  - '@swc/core-linux-ppc64-gnu@1.16.2'
+  - '@swc/core-linux-s390x-gnu@1.16.2'
+  - '@swc/core-linux-x64-gnu@1.16.2'
+  - '@swc/core-linux-x64-musl@1.16.2'
+  - '@swc/core-win32-arm64-msvc@1.16.2'
+  - '@swc/core-win32-ia32-msvc@1.16.2'
+  - '@swc/core-win32-x64-msvc@1.16.2'
+  - '@swc/core@1.16.2'
+  - eslint@10.10.0
+overrides:
+  '@triplef/agent': link:../../packages/agent
