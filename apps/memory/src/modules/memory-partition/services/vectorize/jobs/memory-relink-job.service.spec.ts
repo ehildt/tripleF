@@ -33,6 +33,7 @@ function makeService() {
     getClusterModel: vi.fn(),
     getClusterMinMembers: vi.fn(),
   };
+  const taxonomyProbe = { rankVocabulary: vi.fn().mockResolvedValue({}) };
   const service = new MemoryRelinkJobService(
     adjudicator as never,
     aiSdkService as never,
@@ -49,6 +50,7 @@ function makeService() {
       insertAlias: vi.fn().mockResolvedValue(undefined),
       touchMaintenanceForLabels: vi.fn().mockResolvedValue(undefined),
     } as never,
+    taxonomyProbe as never,
     config,
   );
   return {

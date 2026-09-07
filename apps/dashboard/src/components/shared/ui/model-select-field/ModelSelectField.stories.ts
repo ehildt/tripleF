@@ -2,24 +2,36 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import ModelSelectField from './ModelSelectField.vue';
 
-const MODELS = ['qwen3.8:27b', 'gemma4:26b', 'gpt-oss:120b'];
+const LOCAL_MODELS = [
+  { model: 'qwen3.8:27b', parameter_size: '27B' },
+  { model: 'gemma4:26b', parameter_size: '26B' },
+];
+const CLOUD_MODELS = [
+  { model: 'gpt-oss:120b', origin: 'cloud', parameter_size: '120B' },
+];
 
 const meta = {
-  title: 'Settings/MemorySection/ModelSelectField',
+  title: 'Shared/UI/ModelSelectField',
   component: ModelSelectField,
   tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
         component: `
-Model-override picker for the Memory tab fields: a borderless InputSelect
-whose first option is the env-baseline "Default" — picking it clears the
-override. An override missing from the catalog is appended so it stays
-visible and selectable.`,
+Model-override picker for the Memory tab fields: a borderless trigger in the
+FieldCard's field slot, a teleported dropdown with the shared searchable model
+list, and a "Default" pseudo-option that clears the override (env baseline).
+An override missing from the catalog is prepended so it stays selectable.
+`,
       },
     },
   },
-  args: { modelValue: '', options: MODELS },
+  args: {
+    modelValue: '',
+    localModels: LOCAL_MODELS,
+    cloudModels: CLOUD_MODELS,
+    loading: false,
+  },
   argTypes: {
     modelValue: { control: 'text' },
   },
@@ -42,4 +54,6 @@ export const OverrideMissingFromCatalog: Story = {
 };
 
 /** Empty catalog (models not loaded) — the default option still renders. */
-export const EmptyCatalog: Story = { args: { options: [] } };
+export const EmptyCatalog: Story = {
+  args: { localModels: [], cloudModels: [], loading: false },
+};

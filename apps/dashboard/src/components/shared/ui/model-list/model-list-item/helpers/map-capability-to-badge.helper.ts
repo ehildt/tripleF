@@ -1,4 +1,4 @@
-import { CAPABILITY_META } from '../../../../shared/ui/capability-badge/capability-meta';
+import { CAPABILITY_META } from '../../../capability-badge/capability-meta';
 import type { ModelCapability } from './model-capabilities.helper';
 
 /** Build one capability badge from its key. */

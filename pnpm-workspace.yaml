@@ -21,7 +21,7 @@ allowBuilds:
   vue-demi: true
 
 minimumReleaseAgeExclude:
-  - '@triplef/agent@0.1.28'
+  - '@triplef/agent@0.1.28 || 1.0.1'
   - '@triplef/bullmq-logger@1.2.5'
   - '@triplef/helpers@1.5.6'
   - dompurify@3.4.15
@@ -39,3 +39,11 @@ minimumReleaseAgeExclude:
   - '@typescript-eslint/visitor-keys@8.70.0'
   - typescript-eslint@8.70.0
   - unplugin-swc@1.6.0
+  - '@ai-sdk/gateway@4.0.76'
+  - '@ai-sdk/mcp@2.0.46'
+  - '@ai-sdk/provider-utils@5.0.37'
+  - '@ai-sdk/provider@4.0.11'
+  - '@lucide/icons@1.43.0'
+  - '@lucide/vue@1.43.0'
+  - ai@7.0.94
+  - jszip@3.10.2

@@ -4,7 +4,7 @@ import { ref, watch } from 'vue';
 import ModelList from './ModelList.vue';
 
 const meta = {
-  title: 'Chat/Toolbar/ModelSelector/ModelList/ModelList',
+  title: 'Shared/UI/ModelList/ModelList',
   component: ModelList,
   tags: ['autodocs'],
   parameters: {

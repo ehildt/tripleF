@@ -106,25 +106,11 @@ export function useDlqActions(options: DlqActionsOptions) {
     }
   }
 
-  async function onSaveQueue(id: string, queueName: string) {
-    try {
-      const updated = await updateMutation.mutateAsync({
-        id,
-        data: { queueName },
-      });
-      toast.success(i18n.global.t('toast.queueUpdated'));
-      dlqStore.updateEntry(updated);
-    } catch {
-      toast.error(i18n.global.t('toast.queueUpdateFailed'));
-    }
-  }
-
   return {
     onSelect,
     onRetry,
     onArchive,
     onDelete,
     onSavePayload,
-    onSaveQueue,
   };
 }

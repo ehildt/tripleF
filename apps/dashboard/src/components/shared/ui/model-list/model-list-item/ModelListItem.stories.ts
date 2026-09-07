@@ -4,7 +4,7 @@ import { fn } from 'storybook/test';
 import ModelListItem from './ModelListItem.vue';
 
 const meta = {
-  title: 'Chat/Toolbar/ModelSelector/ModelList/ModelListItem',
+  title: 'Shared/UI/ModelList/ModelListItem',
   component: ModelListItem,
   tags: ['autodocs'],
   parameters: {

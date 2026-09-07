@@ -21,9 +21,9 @@ function makeCtx(overrides: Partial<VectorizeContext> = {}): VectorizeContext {
 }
 
 function makeStep() {
-  const generateChat = vi.fn();
+  const generateWithTools = vi.fn();
   const step = new ExtractStepService(
-    { generateChat } as never,
+    { generateWithTools } as never,
     { searchByText: vi.fn().mockResolvedValue([]) } as never,
     {
       resolveLabels: vi.fn().mockResolvedValue([]),
@@ -33,7 +33,7 @@ function makeStep() {
     } as never,
     { vectorizeTextRatio: 0.5, vectorizeTextChars: 0 } as never,
   );
-  return { step, generateChat };
+  return { step, generateWithTools };
 }
 
 const conciseFact = {
@@ -47,8 +47,8 @@ describe('ExtractStepService', () => {
   beforeEach(() => vi.resetAllMocks());
 
   it('extracts facts and tags on the first pass', async () => {
-    const { step, generateChat } = makeStep();
-    generateChat.mockResolvedValue({
+    const { step, generateWithTools } = makeStep();
+    generateWithTools.mockResolvedValue({
       text: JSON.stringify({
         facts: [conciseFact],
         tags: ['style'],
@@ -62,12 +62,12 @@ describe('ExtractStepService', () => {
       facts: [conciseFact],
       tags: ['style'],
     });
-    expect(generateChat).toHaveBeenCalledTimes(1);
+    expect(generateWithTools).toHaveBeenCalledTimes(1);
   });
 
   it('tolerates fenced JSON from smarter chat models', async () => {
-    const { step, generateChat } = makeStep();
-    generateChat.mockResolvedValue({
+    const { step, generateWithTools } = makeStep();
+    generateWithTools.mockResolvedValue({
       text: `\`\`\`json\n${JSON.stringify({ facts: [conciseFact], tags: ['work'] })}\n\`\`\``,
     });
 
@@ -81,8 +81,8 @@ describe('ExtractStepService', () => {
   });
 
   it('runs one correction pass when the first output fails the schema', async () => {
-    const { step, generateChat } = makeStep();
-    generateChat
+    const { step, generateWithTools } = makeStep();
+    generateWithTools
       .mockResolvedValueOnce({ text: '{"facts": "not-an-array"}' })
       .mockResolvedValueOnce({
         text: JSON.stringify({ facts: [conciseFact], tags: ['work'] }),
@@ -91,9 +91,10 @@ describe('ExtractStepService', () => {
     const ctx = makeCtx();
     await step.execute(ctx);
 
-    expect(generateChat).toHaveBeenCalledTimes(2);
+    expect(generateWithTools).toHaveBeenCalledTimes(2);
     // Correction attempt echoes the failed output plus the error instruction.
-    const secondCallMessages = generateChat.mock.calls[1][0].messages as Array<{
+    const secondCallMessages = generateWithTools.mock.calls[1][0]
+      .messages as Array<{
       role: string;
       content: string;
     }>;
@@ -109,34 +110,34 @@ describe('ExtractStepService', () => {
   });
 
   it('degrades to empty when correction still fails', async () => {
-    const { step, generateChat } = makeStep();
-    generateChat.mockResolvedValue({ text: 'not json at all' });
+    const { step, generateWithTools } = makeStep();
+    generateWithTools.mockResolvedValue({ text: 'not json at all' });
 
     const ctx = makeCtx();
     await step.execute(ctx);
 
-    expect(generateChat).toHaveBeenCalledTimes(2);
+    expect(generateWithTools).toHaveBeenCalledTimes(2);
     expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
   });
 
   it('degrades immediately when the LLM call itself fails', async () => {
-    const { step, generateChat } = makeStep();
-    generateChat.mockRejectedValue(new Error('model down'));
+    const { step, generateWithTools } = makeStep();
+    generateWithTools.mockRejectedValue(new Error('model down'));
 
     const ctx = makeCtx();
     await step.execute(ctx);
 
-    expect(generateChat).toHaveBeenCalledTimes(1);
+    expect(generateWithTools).toHaveBeenCalledTimes(1);
     expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
   });
 
   it('skips extraction entirely when the job carries no model', async () => {
-    const { step, generateChat } = makeStep();
+    const { step, generateWithTools } = makeStep();
     const ctx = makeCtx({ model: undefined });
 
     await step.execute(ctx);
 
-    expect(generateChat).not.toHaveBeenCalled();
+    expect(generateWithTools).not.toHaveBeenCalled();
     expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
   });
 });

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
+import Tooltip from '../tooltip/Tooltip.vue';
 import { CAPABILITY_META } from './capability-meta';
 
 const props = defineProps<{

@@ -53,7 +53,6 @@ selected.
     entry: baseEntry,
     models: ['llama3', 'mistral'],
     onSavePayload: fn(),
-    onSaveQueue: fn(),
   },
 } satisfies Meta<typeof DlqDetailsBody>;
 

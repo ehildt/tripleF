@@ -1,15 +1,14 @@
 import { computed, onMounted, onUnmounted, type Ref, ref } from 'vue';
 
-import { useMenuPosition } from '../../../../chat/toolbar/model-selector/composables/use-menu-position';
+import { useMenuPosition } from '@/composables/use-menu-position';
 
 /**
  * Menu state for the SpaceSelector trigger + teleported dropdown, modeled on
  * the language menu: open/search state, fixed anchoring to the trigger
- * (extending leftward — the System tab sits in the right content area), and
- * close on outside mousedown. Selection/create/remove are emitted by the
- * component; this composable only owns the dropdown mechanics. The three
- * element refs are declared in the component (template-ref pattern) and
- * passed in here.
+ * (opening below it, select-style), and close on outside mousedown.
+ * Selection/create/remove are emitted by the component; this composable only
+ * owns the dropdown mechanics. The three element refs are declared in the
+ * component (template-ref pattern) and passed in here.
  */
 export function useSpaceSelector(
   spaces: Ref<string[]>,
@@ -24,7 +23,7 @@ export function useSpaceSelector(
   const searchQuery = ref('');
 
   const { positionStyle } = useMenuPosition(triggerRef, isOpen, {
-    align: 'left',
+    side: 'bottom',
   });
 
   const normalizedQuery = computed(() => searchQuery.value.trim());

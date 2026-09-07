@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { ref, watch } from 'vue';
 
+import ModelList from '@/components/shared/ui/model-list/ModelList.vue';
 import { formatCtx } from '@/utils/format-ctx.helper';
 
 import DropDown from './DropDown.vue';
@@ -262,6 +263,55 @@ export const CenteredMenu: Story = {
     menuStyle: 'centered',
     modelValue: 'Poison Berry',
   },
+};
+
+export const SlottedMenu: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The #menu slot replaces the plain option list with custom content — here the shared searchable ModelList. The slot receives `close` so the content can dismiss the menu; the rich menu is fixed-width and drops the height cap so the content scrolls itself.',
+      },
+    },
+  },
+  render: () => ({
+    components: { DropDown, Cherry, ModelList },
+    setup() {
+      const modelValue = ref('llama3:8b');
+      const localModels = [
+        { model: 'llama3:8b', parameter_size: '8B' },
+        { model: 'mistral:7b', parameter_size: '7B' },
+        { model: 'gemma3:12b', parameter_size: '12B' },
+      ];
+      function onSelect(model: string, close: () => void) {
+        modelValue.value = model;
+        close();
+      }
+      return { modelValue, localModels, onSelect };
+    },
+    template: `
+      <div style="display: flex; justify-content: center; padding-top: 40px; height: 420px;">
+        <div style="width: 260px;">
+          <DropDown
+            label="Model"
+            :model-value="modelValue"
+            side="bottom"
+          >
+            <component :is="Cherry" style="width: 16px; height: 16px;" />
+            <template #menu="{ close }">
+              <ModelList
+                :local-models="localModels"
+                :cloud-models="[]"
+                :selected-model="modelValue"
+                :loading="false"
+                @select="onSelect($event, close)"
+              />
+            </template>
+          </DropDown>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 export const InteractionTest: Story = {

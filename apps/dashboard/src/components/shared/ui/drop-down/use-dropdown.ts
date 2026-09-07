@@ -6,6 +6,7 @@ export function useDropdown(
   onSelect: (value: string) => void,
   onOpen?: () => void,
   disabled?: Ref<boolean>,
+  menuRef?: Ref<HTMLElement | null>,
 ) {
   const open = ref(false);
 
@@ -24,7 +25,9 @@ export function useDropdown(
     open.value = false;
   }
 
-  onClickOutside(containerRef, close);
+  onClickOutside(containerRef, close, {
+    ignore: menuRef ? () => (menuRef.value ? [menuRef.value] : []) : undefined,
+  });
   onKeyStroke('Escape', close);
 
   return { open, toggle, select, close };

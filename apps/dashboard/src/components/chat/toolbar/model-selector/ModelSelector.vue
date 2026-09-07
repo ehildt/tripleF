@@ -2,11 +2,12 @@
 import { Brain } from '@lucide/vue';
 import { ref, toRef } from 'vue';
 
+import ModelList from '@/components/shared/ui/model-list/ModelList.vue';
+import { useMenuPosition } from '@/composables/use-menu-position';
+
 import type { OllamaModel } from '../../../../types/ollama-model.model';
 import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
-import { useMenuPosition } from './composables/use-menu-position';
-import ModelList from './model-list/ModelList.vue';
 
 const props = defineProps<{
   isOpen: boolean;

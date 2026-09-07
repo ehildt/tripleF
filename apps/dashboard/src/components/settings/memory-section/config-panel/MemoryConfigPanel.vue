@@ -42,13 +42,13 @@ import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import InputSelect from '@/components/shared/ui/input-select/InputSelect.vue';
 import InputText from '@/components/shared/ui/input-text/InputText.vue';
+import ModelSelectField from '@/components/shared/ui/model-select-field/ModelSelectField.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import { useMemoryOverrides } from '@/composables/use-memory-overrides';
 import { useAppStore } from '@/stores/app';
 import { useModelsStore } from '@/stores/models';
 
 import SpaceSelector from '../../system-section/space-selector/SpaceSelector.vue';
-import ModelSelectField from './model-select-field/ModelSelectField.vue';
 import type { MemoryConfigPanelProps } from './MemoryConfigPanel.types';
 
 defineProps<MemoryConfigPanelProps>();
@@ -127,7 +127,8 @@ const {
 } = useMemoryOverrides();
 
 /** Catalog models offered by the model-override pickers. */
-const { modelNames } = storeToRefs(useModelsStore());
+const { localModels, cloudModels, modelsLoading } =
+  storeToRefs(useModelsStore());
 
 /** The search providers the gap-filling researcher can use. */
 const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
@@ -317,7 +318,10 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           <template #field>
             <ModelSelectField
               :model-value="consolidateModel"
-              :options="modelNames"
+              :local-models="localModels"
+              :cloud-models="cloudModels"
+              :loading="modelsLoading"
+              :default-label="$t('common.memoryModelDefault')"
               @update:model-value="saveConsolidateModel"
             />
           </template>
@@ -331,7 +335,10 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           <template #field>
             <ModelSelectField
               :model-value="classifyModel"
-              :options="modelNames"
+              :local-models="localModels"
+              :cloud-models="cloudModels"
+              :loading="modelsLoading"
+              :default-label="$t('common.memoryModelDefault')"
               @update:model-value="saveClassifyModel"
             />
           </template>
@@ -345,7 +352,10 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           <template #field>
             <ModelSelectField
               :model-value="reflectModel"
-              :options="modelNames"
+              :local-models="localModels"
+              :cloud-models="cloudModels"
+              :loading="modelsLoading"
+              :default-label="$t('common.memoryModelDefault')"
               @update:model-value="saveReflectModel"
             />
           </template>
@@ -359,7 +369,10 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           <template #field>
             <ModelSelectField
               :model-value="convictionModel"
-              :options="modelNames"
+              :local-models="localModels"
+              :cloud-models="cloudModels"
+              :loading="modelsLoading"
+              :default-label="$t('common.memoryModelDefault')"
               @update:model-value="saveConvictionModel"
             />
           </template>
@@ -373,7 +386,10 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           <template #field>
             <ModelSelectField
               :model-value="clusterModel"
-              :options="modelNames"
+              :local-models="localModels"
+              :cloud-models="cloudModels"
+              :loading="modelsLoading"
+              :default-label="$t('common.memoryModelDefault')"
               @update:model-value="saveClusterModel"
             />
           </template>
@@ -572,7 +588,10 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           <template #field>
             <ModelSelectField
               :model-value="researchModel"
-              :options="modelNames"
+              :local-models="localModels"
+              :cloud-models="cloudModels"
+              :loading="modelsLoading"
+              :default-label="$t('common.memoryModelDefault')"
               @update:model-value="saveResearchModel"
             />
           </template>

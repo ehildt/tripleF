@@ -2,7 +2,8 @@
 import { LoaderCircle, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
-import type { OllamaModel } from '../../../../../types/ollama-model.model';
+import type { OllamaModel } from '@/types/ollama-model.model';
+
 import ModelListItem from './model-list-item/ModelListItem.vue';
 
 defineEmits<{
@@ -18,6 +19,8 @@ const props = defineProps<{
   selectedModel: string;
   /** Whether models are still loading. */
   loading: boolean;
+  /** Optional label for a "clear/default" row rendered above the list; selecting it emits an empty string. */
+  defaultLabel?: string;
 }>();
 
 const searchQuery = ref('');
@@ -44,6 +47,17 @@ const filteredModels = computed(() => {
     </div>
 
     <div class="model-list-items">
+      <!-- Clear/default pseudo-option: restores the env baseline. Hidden
+           while searching so the results stay focused. -->
+      <button
+        v-if="defaultLabel && !searchQuery.trim()"
+        class="model-list-default"
+        :class="{ 'model-list-default--selected': selectedModel === '' }"
+        @click="$emit('select', '')"
+      >
+        {{ defaultLabel }}
+      </button>
+
       <!-- Loading state: only while the very first catalog is missing — a
            background refresh keeps rendering the models it already has. -->
       <div v-if="loading && !allModels.length" class="model-list-loading">
@@ -132,6 +146,38 @@ const filteredModels = computed(() => {
   gap: var(--spacing-1);
   padding-inline: var(--spacing-1);
   padding-bottom: var(--spacing-1);
+}
+
+/* Clear/default pseudo-option — same card rhythm as the model rows. */
+.model-list-default {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-2);
+  text-align: left;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-secondary);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.model-list-default:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-tertiary) 80%,
+    transparent
+  );
+}
+
+.model-list-default--selected {
+  color: var(--color-accent-primary);
 }
 
 .model-list-loading {
