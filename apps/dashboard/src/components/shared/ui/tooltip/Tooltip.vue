@@ -212,8 +212,9 @@ onBeforeUnmount(() => {
    surface with a backdrop blur and no frame. Teleported to <body> so it
    escapes any ancestor stacking context (e.g. a `transform` on the trigger's
    container) and always floats above the page. `position: fixed` keeps it out
-   of flow so it never affects surrounding layout. Kept very transparent
-   (≈10% fill) so the glassy/icy look reads clearly over content. */
+   of flow so it never affects surrounding layout. Kept translucent (≈20% fill)
+   so the glassy/icy look reads clearly over content while staying a touch
+   darker than the floating player. */
 .tooltip__panel {
   position: fixed;
   /* Above the tab-menu drawer (1200) and floating playlist (1250) so a
@@ -222,7 +223,7 @@ onBeforeUnmount(() => {
   padding: var(--spacing-2) var(--spacing-3);
   background-color: color-mix(
     in srgb,
-    var(--color-bg-secondary) 10%,
+    var(--color-bg-secondary) 20%,
     transparent
   );
   backdrop-filter: blur(12px);

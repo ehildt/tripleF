@@ -2,10 +2,10 @@
 import { Cloud, HardDrive } from '@lucide/vue';
 import { computed } from 'vue';
 
+import type { OllamaModel } from '@/types/ollama-model.model';
 import { formatCtx } from '@/utils/format-ctx.helper';
 
-import type { OllamaModel } from '../../../../../../types/ollama-model.model';
-import Tooltip from '../../../../../shared/ui/tooltip/Tooltip.vue';
+import Tooltip from '../../tooltip/Tooltip.vue';
 import { formatParameterSize } from './helpers/format-parameter-size.helper';
 import { mapCapabilityToBadge } from './helpers/map-capability-to-badge.helper';
 import { modelCapabilities } from './helpers/model-capabilities.helper';

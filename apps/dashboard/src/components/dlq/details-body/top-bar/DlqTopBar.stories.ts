@@ -1,9 +1,26 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
+import { useModelsStore } from '@/stores/models';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import DlqTopBar from './DlqTopBar.vue';
+
+function renderStory(args: Record<string, unknown>) {
+  return {
+    components: { DlqTopBar },
+    setup() {
+      const modelsStore = useModelsStore();
+      modelsStore.models = [
+        { model: 'llama3', parameter_size: '8B', context_length: 131072 },
+        { model: 'mistral', parameter_size: '7B', context_length: 32768 },
+      ];
+      modelsStore.numCtxOptions = [4096, 8192, 16384, 32768];
+      return { args };
+    },
+    template: '<DlqTopBar v-bind="args" />',
+  };
+}
 
 const meta = {
   title: 'Dlq/DetailsBody/TopBar/DlqTopBar',
@@ -13,10 +30,10 @@ const meta = {
     docs: {
       description: {
         component: `
-The top bar of the DLQ details body. Hosts the model / queue dropdowns,
-the event / room ID text fields, the stream flag, and the context size
-selector. All controls derive their initial value from
-\`payload.filters\` via \`useDlqTopBarFilters\`.
+The top bar of the DLQ details body. Hosts the model / context dropdowns,
+the event / room ID text fields, and the stream flag. The model field opens
+the shared searchable model list; all controls derive their initial value
+from \`payload.filters\` via \`useDlqTopBarFilters\`.
 `,
       },
     },
@@ -48,8 +65,8 @@ selector. All controls derive their initial value from
     models: ['llama3', 'mistral'],
     isImmutable: false,
     onUpdateFilter: fn(),
-    onSaveQueue: fn(),
   },
+  render: renderStory,
 } satisfies Meta<typeof DlqTopBar>;
 
 export default meta;

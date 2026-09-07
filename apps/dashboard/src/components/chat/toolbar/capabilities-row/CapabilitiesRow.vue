@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CapabilityBadge from '../shared/ui/capability-badge/CapabilityBadge.vue';
+import CapabilityBadge from '@/components/shared/ui/capability-badge/CapabilityBadge.vue';
 
 defineProps<{
   capabilities: readonly string[];

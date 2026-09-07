@@ -18,8 +18,10 @@ const props = withDefaults(
     errored?: boolean;
     /** Whether the picked option is marked with a check icon (default true). */
     checkmark?: boolean;
+    /** Optional transform applied to the displayed value and each option label. */
+    formatValue?: (value: string) => string;
   }>(),
-  { checkmark: true, placeholder: '' },
+  { checkmark: true, placeholder: '', formatValue: undefined },
 );
 
 const emit = defineEmits<{
@@ -28,7 +30,9 @@ const emit = defineEmits<{
 
 const displayValue = computed(() => {
   if (!props.modelValue) return props.placeholder || 'Select...';
-  return props.modelValue;
+  return props.formatValue
+    ? props.formatValue(props.modelValue)
+    : props.modelValue;
 });
 </script>
 
@@ -67,7 +71,9 @@ const displayValue = computed(() => {
               'input-select__option--selected': selected,
             }"
           >
-            <span>{{ option }}</span>
+            <span>{{
+              props.formatValue ? props.formatValue(option) : option
+            }}</span>
             <Check
               v-if="selected && checkmark"
               class="input-select__check-icon"

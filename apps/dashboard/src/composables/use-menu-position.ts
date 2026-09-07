@@ -1,7 +1,11 @@
 import { tryOnScopeDispose } from '@vueuse/core';
 import { nextTick, onMounted, type Ref, ref, watch } from 'vue';
 
-import type { MenuAlign, MenuPositionStyle } from './use-menu-position.types';
+import type {
+  MenuAlign,
+  MenuPositionStyle,
+  MenuSide,
+} from './use-menu-position.types';
 
 /**
  * Fixed-position style that anchors the teleported menu to its trigger.
@@ -16,19 +20,32 @@ import type { MenuAlign, MenuPositionStyle } from './use-menu-position.types';
  * rail and must extend leftward). Expandable toolbar lists stay inline in
  * the toolbar flow instead, so they push sibling groups down rather than
  * floating over them.
+ *
+ * `side` overrides the side-anchoring: `'bottom'` opens the menu directly
+ * below the trigger (select-style field dropdowns, e.g. the memory model
+ * pickers).
  */
 export function useMenuPosition(
   triggerRef: Ref<HTMLElement | null>,
   isOpen: Ref<boolean>,
-  options: { align?: MenuAlign } = {},
+  options: { align?: MenuAlign; side?: MenuSide } = {},
 ) {
-  const { align = 'right' } = options;
+  const { align = 'right', side = 'top' } = options;
   const positionStyle = ref<MenuPositionStyle | null>(null);
 
   function updatePosition() {
     const rect = triggerRef.value?.getBoundingClientRect();
     if (!rect) {
       positionStyle.value = null;
+      return;
+    }
+    if (side === 'bottom') {
+      positionStyle.value = {
+        left: `${rect.left + rect.width / 2}px`,
+        top: `${rect.bottom + 4}px`,
+        minWidth: `${rect.width}px`,
+        transform: 'translateX(-50%)',
+      };
       return;
     }
     positionStyle.value =

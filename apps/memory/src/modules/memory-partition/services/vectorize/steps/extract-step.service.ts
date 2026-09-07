@@ -3,6 +3,7 @@ import {
   buildExtractionCorrectionPrompt,
   buildExtractionPrompt,
 } from '@triplef/agent/prompts';
+import { createMemoryTaxonomyProbeTool } from '@triplef/agent/tools';
 import { AiSdkService } from '@triplef/ai-sdk';
 import { limitText } from '@triplef/helpers/limit-text';
 
@@ -21,6 +22,8 @@ import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
 /** One initial attempt + one correction pass — mirror of the interpret retry. */
 const MAX_EXTRACTION_ATTEMPTS = 2;
+/** Probe steps an extraction may take before answering (cluster → community → hub, with slack). */
+const EXTRACT_MAX_STEPS = 5;
 
 /**
  * 'extract' — the LLM step of the vectorize pipeline: the chat model reads the
@@ -96,7 +99,19 @@ export class ExtractStepService implements VectorizeStepHandler {
       },
     ];
 
-    ctx.outputs.extraction = await this.runExtraction(ctx, messages);
+    // The interactive probe: the model may confirm the ranked vocabulary
+    // top-down (cluster → community → hub) before answering, adopting
+    // existing nodes VERBATIM instead of minting near-duplicate labels.
+    const taxonomyProbeTool = createMemoryTaxonomyProbeTool({
+      probe: (input) =>
+        this.taxonomyProbe.probe('partition', ctx.memoryPartition, input),
+    });
+
+    ctx.outputs.extraction = await this.runExtraction(
+      ctx,
+      messages,
+      taxonomyProbeTool,
+    );
 
     // Taxonomy snap: rewrite every minted label to its canonical registry
     // form (exact → alias → fuzzy → mint) before embed/store, so case-,
@@ -140,9 +155,14 @@ export class ExtractStepService implements VectorizeStepHandler {
   private async runExtraction(
     ctx: VectorizeContext,
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    taxonomyProbeTool: ReturnType<typeof createMemoryTaxonomyProbeTool>,
   ) {
     for (let attempt = 1; attempt <= MAX_EXTRACTION_ATTEMPTS; attempt++) {
-      const text = await this.fetchExtractionText(ctx, messages);
+      const text = await this.fetchExtractionText(
+        ctx,
+        messages,
+        taxonomyProbeTool,
+      );
       if (text === null) return { facts: [], tags: [] };
 
       try {
@@ -179,15 +199,20 @@ export class ExtractStepService implements VectorizeStepHandler {
   private async fetchExtractionText(
     ctx: VectorizeContext,
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    taxonomyProbeTool: ReturnType<typeof createMemoryTaxonomyProbeTool>,
   ): Promise<string | null> {
     try {
-      const { text } = await this.aiSdkService.generateChat({
+      const { text } = await this.aiSdkService.generateWithTools({
         model: ctx.model!,
         messages: messages as never,
+        tools: { 'memory-taxonomy-probe': taxonomyProbeTool } as any,
+        // Zero probes is a correct outcome — the ranked vocabulary already
+        // lists likely fits; the probe confirms them or finds better ones.
+        toolChoice: 'auto',
+        maxSteps: EXTRACT_MAX_STEPS,
         providerOptions: buildProviderOptions({
           think: false,
         }),
-        tools: {},
       });
       return text;
     } catch (error) {

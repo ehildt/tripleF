@@ -2,8 +2,9 @@
 import { Network, Radio, RadioTower, Tag } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
+import { useMenuPosition } from '@/composables/use-menu-position';
+
 import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
-import { useMenuPosition } from '../model-selector/composables/use-menu-position';
 import ToolbarLabel from '../shared/ui/toolbar-label/ToolbarLabel.vue';
 
 const props = defineProps<{

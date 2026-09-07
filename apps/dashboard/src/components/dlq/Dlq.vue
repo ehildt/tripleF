@@ -44,8 +44,8 @@ async function handleRefresh() {
   await guardedRefetch();
 }
 
-const { onSelect, onRetry, onArchive, onDelete, onSavePayload, onSaveQueue } =
-  useDlqActions({
+const { onSelect, onRetry, onArchive, onDelete, onSavePayload } = useDlqActions(
+  {
     dlqStore,
     socketStore: {
       ensureSocketConnection: socketStore.ensureSocketConnection,
@@ -58,7 +58,8 @@ const { onSelect, onRetry, onArchive, onDelete, onSavePayload, onSaveQueue } =
     deleteMutation,
     updateMutation,
     guardedRefetch,
-  });
+  },
+);
 
 watch(dlqData, (val) => {
   if (val) {
@@ -137,7 +138,6 @@ watch(
       :entry="dlqStore.selectedEntry"
       :models="viewModels"
       @save-payload="onSavePayload"
-      @save-queue="onSaveQueue"
     />
   </div>
 </template>

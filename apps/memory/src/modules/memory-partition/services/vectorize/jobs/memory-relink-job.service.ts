@@ -9,6 +9,7 @@ import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import type { TaxonomyLabelEntry } from '../../../../memory-taxonomy/helpers/taxonomy-label-entries.helper.js';
 import { taxonomyLabelEntries } from '../../../../memory-taxonomy/helpers/taxonomy-label-entries.helper.js';
+import { TaxonomyProbeService } from '../../../../memory-taxonomy/services/taxonomy-probe.service.js';
 import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
 import type { MemoryLinkRow } from '../../../../persistence/services/memory-link.repository.js';
@@ -111,6 +112,7 @@ export class MemoryRelinkJobService {
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
     private readonly taxonomy: MemoryTaxonomyRepository,
+    private readonly taxonomyProbe: TaxonomyProbeService,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}
 
@@ -512,7 +514,19 @@ export class MemoryRelinkJobService {
         limit,
       );
       for (const point of points) {
-        const tags = await this.refineTags(data.model, point);
+        // The partition's tag vocabulary ranked by similarity to this record
+        // — the reuse-first hint that keeps enrichment extending the recall
+        // vocabulary instead of minting near-duplicate labels.
+        const vocabulary = await this.taxonomyProbe.rankVocabulary(
+          'partition',
+          data.memoryPartition,
+          point.text,
+        );
+        const tags = await this.refineTags(
+          data.model,
+          point,
+          vocabulary.tags ?? [],
+        );
         if (!tags) continue;
         if (data.dryRun) {
           this.logger.log(
@@ -531,11 +545,12 @@ export class MemoryRelinkJobService {
   private async refineTags(
     model: string,
     point: CategoryPoint,
+    knownTags: readonly string[],
   ): Promise<string[] | undefined> {
     const { text } = await this.aiSdkService.generateChat({
       model,
       messages: [
-        { role: 'system', content: buildEnrichPrompt() },
+        { role: 'system', content: buildEnrichPrompt(knownTags) },
         {
           role: 'user',
           content: `Record: ${point.text}\nCurrent tags: ${point.tags.join(', ')}`,

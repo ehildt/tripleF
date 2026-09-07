@@ -2,6 +2,7 @@
 import { Check } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
+import { useMenuPosition } from '@/composables/use-menu-position';
 import { stripHtml } from '@/utils/strip-html.helper';
 
 import Tooltip from '../tooltip/Tooltip.vue';
@@ -20,8 +21,8 @@ const props = withDefaults(
     side?: 'top' | 'bottom';
     /** Label text displayed in the trigger button (labeled variant only). */
     label: string;
-    /** Available options to select from. */
-    options: readonly string[];
+    /** Available options to select from. Ignored when the #menu slot renders custom content. */
+    options?: readonly string[];
     /** Currently selected value. */
     modelValue: string;
     /** Disables interaction and dims the trigger. */
@@ -32,16 +33,20 @@ const props = withDefaults(
     formatValue?: (value: string) => string;
     /** Shows an error indicator on the trigger. Requires `#error-icon` slot content. */
     errored?: boolean;
+    /** Teleports the menu to <body> and anchors it below the trigger (escapes scroll/clip contexts). */
+    teleport?: boolean;
   }>(),
   {
     variant: 'labeled',
     menuStyle: 'default',
     align: 'left',
     side: 'top',
+    options: () => [],
     disabled: false,
     placeholder: '',
     formatValue: undefined,
     errored: false,
+    teleport: false,
   },
 );
 
@@ -51,13 +56,20 @@ const emit = defineEmits<{
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
+const triggerRef = ref<HTMLElement | null>(null);
+const dropdownRef = ref<HTMLElement | null>(null);
 
 const { open, toggle, select, close } = useDropdown(
   containerRef,
   (value: string) => emit('update:modelValue', value),
   () => emit('open'),
   computed(() => props.disabled),
+  props.teleport ? dropdownRef : undefined,
 );
+
+const { positionStyle } = useMenuPosition(triggerRef, open, {
+  side: 'bottom',
+});
 
 defineExpose({ close });
 </script>
@@ -70,6 +82,7 @@ defineExpose({ close });
   >
     <template v-if="variant === 'labeled'">
       <button
+        ref="triggerRef"
         class="dropdown-trigger"
         :class="{ 'dropdown-trigger--errored': errored }"
         :disabled="disabled"
@@ -93,6 +106,7 @@ defineExpose({ close });
     <template v-else>
       <Tooltip :text="$t('common.selectLabel', { label: label.toLowerCase() })">
         <button
+          ref="triggerRef"
           class="dropdown-trigger--icon-only"
           :class="{ 'dropdown-trigger--icon-only--active': open }"
           :disabled="disabled"
@@ -103,37 +117,47 @@ defineExpose({ close });
         </button>
       </Tooltip>
     </template>
-    <Transition name="dropdown">
-      <div
-        v-if="open"
-        class="dropdown-menu"
-        :class="[
-          side === 'top' ? 'dropdown-menu--top' : 'dropdown-menu--bottom',
-          align === 'left'
-            ? 'dropdown-menu--left'
-            : align === 'center'
-              ? 'dropdown-menu--center'
-              : 'dropdown-menu--right',
-          variant === 'icon-only' && 'dropdown-menu--icon-only',
-          menuStyle === 'centered' && 'dropdown-menu--centered',
-        ]"
-        @click.stop
-      >
-        <button
-          v-for="opt in options"
-          :key="opt"
-          class="dropdown-item"
-          :class="{ 'dropdown-item--selected': modelValue === opt }"
-          @click="select(opt)"
+    <Teleport to="body" :disabled="!teleport">
+      <Transition name="dropdown">
+        <div
+          v-if="open"
+          ref="dropdownRef"
+          class="dropdown-menu"
+          :class="[
+            side === 'top' ? 'dropdown-menu--top' : 'dropdown-menu--bottom',
+            align === 'left'
+              ? 'dropdown-menu--left'
+              : align === 'center'
+                ? 'dropdown-menu--center'
+                : 'dropdown-menu--right',
+            variant === 'icon-only' && 'dropdown-menu--icon-only',
+            menuStyle === 'centered' && 'dropdown-menu--centered',
+            $slots.menu && 'dropdown-menu--rich',
+            teleport && 'dropdown-menu--teleported',
+          ]"
+          :style="teleport ? (positionStyle ?? undefined) : undefined"
+          @click.stop
         >
-          <template v-if="variant !== 'icon-only' && menuStyle !== 'centered'">
-            <Check v-if="modelValue === opt" class="dropdown-item__check" />
-            <span v-else class="dropdown-item__check-placeholder" />
-          </template>
-          {{ stripHtml(props.formatValue ? props.formatValue(opt) : opt) }}
-        </button>
-      </div>
-    </Transition>
+          <slot name="menu" :close="close">
+            <button
+              v-for="opt in options"
+              :key="opt"
+              class="dropdown-item"
+              :class="{ 'dropdown-item--selected': modelValue === opt }"
+              @click="select(opt)"
+            >
+              <template
+                v-if="variant !== 'icon-only' && menuStyle !== 'centered'"
+              >
+                <Check v-if="modelValue === opt" class="dropdown-item__check" />
+                <span v-else class="dropdown-item__check-placeholder" />
+              </template>
+              {{ stripHtml(props.formatValue ? props.formatValue(opt) : opt) }}
+            </button>
+          </slot>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -296,6 +320,34 @@ defineExpose({ close });
 .dropdown-menu--icon-only {
   width: auto;
   white-space: nowrap;
+}
+
+/* Slotted rich menus (e.g. the searchable model list) size and scroll their
+   own content — drop the item-list height cap and fade instead of animating
+   the height. */
+.dropdown-menu--rich {
+  width: 14rem;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Teleported menus are fixed-positioned by useMenuPosition (anchored below
+   the trigger) instead of absolutely positioned within the trigger. */
+.dropdown-menu--teleported {
+  position: fixed;
+}
+
+.dropdown-menu--rich.dropdown-enter-active,
+.dropdown-menu--rich.dropdown-leave-active {
+  transition: opacity 150ms ease;
+  overflow: visible;
+}
+
+.dropdown-menu--rich.dropdown-enter-from,
+.dropdown-menu--rich.dropdown-leave-to,
+.dropdown-menu--rich.dropdown-enter-to,
+.dropdown-menu--rich.dropdown-leave-from {
+  max-height: none;
 }
 
 .dropdown-item {
