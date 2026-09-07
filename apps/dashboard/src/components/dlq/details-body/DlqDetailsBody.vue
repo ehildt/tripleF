@@ -27,7 +27,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'savePayload', id: string, payload: Record<string, unknown>): void;
-  (e: 'saveQueue', id: string, queueName: string): void;
 }>();
 
 const { t } = useI18n();
@@ -75,11 +74,6 @@ function handleSavePayload(id: string, payload: Record<string, unknown>) {
   emit('savePayload', id, payload);
 }
 
-function handleSaveQueue(queueName: string) {
-  if (!props.entry) return;
-  emit('saveQueue', props.entry.id, queueName);
-}
-
 const { copy, copied: isCopied } = useClipboard({ legacy: true });
 
 function copyPayload() {
@@ -101,7 +95,6 @@ function copyPayload() {
         :models="models"
         :is-immutable="isImmutable(entry)"
         @update-filter="handleUpdateFilter"
-        @save-queue="handleSaveQueue"
       />
 
       <TabPanel

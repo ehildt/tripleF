@@ -2,9 +2,10 @@
 import { Globe, Languages, Search } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
+import { useMenuPosition } from '@/composables/use-menu-position';
+
 import { useLocale } from '../../../i18n/composables/use-locale';
 import { locales } from '../../../i18n/locale-registry';
-import { useMenuPosition } from '../../chat/toolbar/model-selector/composables/use-menu-position';
 import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 import { mapLocaleToOption } from './helpers/map-locale-to-option.helper';

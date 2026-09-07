@@ -106,27 +106,6 @@ function removeSpace(event: MouseEvent, space: string) {
             </div>
             <div class="space-selector__items">
               <div
-                v-if="!searchQuery.trim()"
-                class="space-selector__item"
-                :class="{
-                  'space-selector__item--active': activeSpace === '',
-                }"
-                role="option"
-                :aria-selected="activeSpace === ''"
-                tabindex="0"
-                @click="selectSpace('')"
-                @keydown.enter="selectSpace('')"
-              >
-                <Check
-                  v-if="activeSpace === ''"
-                  class="space-selector__check"
-                />
-                <span class="space-selector__name">{{
-                  $t('common.memoryCognitionSpaceDefault')
-                }}</span>
-              </div>
-
-              <div
                 v-for="space in filteredSpaces"
                 :key="space"
                 class="space-selector__item"

@@ -182,23 +182,6 @@ describe('useDlqActions', () => {
     expect(store.updateEntry).toHaveBeenCalledWith(updatedEntry);
   });
 
-  it('onSaveQueue calls updateEntry with mutation result', async () => {
-    const store = mockDlqStore();
-    const updatedEntry = { id: 'rec-1', queueName: 'harness' };
-    const updateMutation = {
-      mutateAsync: vi.fn().mockResolvedValue(updatedEntry),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({ dlqStore: store, updateMutation }),
-    );
-    await actions.onSaveQueue('rec-1', 'ocr');
-    expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
-      id: 'rec-1',
-      data: { queueName: 'ocr' },
-    });
-    expect(store.updateEntry).toHaveBeenCalledWith(updatedEntry);
-  });
-
   it('ensureSocketSubscription resubscribes when event and room missing', async () => {
     const socketStore = mockSocketStore();
     const store = mockDlqStore();
