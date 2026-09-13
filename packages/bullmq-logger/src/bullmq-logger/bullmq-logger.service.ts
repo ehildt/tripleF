@@ -137,9 +137,9 @@ export class BullMQLoggerService implements LoggerService {
     return 'error';
   }
 
-  /** Renders the optional identifier segment (` 📌 <id>`) or an empty string. */
+  /** Renders the optional identifier segment (` 💽 <id>`) or an empty string. */
   private formatIdentifier(identifier?: string): string {
-    return identifier ? ` 📌 ${identifier}` : '';
+    return identifier ? ` 💽 ${identifier}` : '';
   }
 
   /** Maps job states to emoji icons for log visualization. */

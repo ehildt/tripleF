@@ -162,6 +162,5 @@ function handleSourcesReset(key: 'preferred' | 'blocked') {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   gap: var(--spacing-3);
-  padding: var(--spacing-1);
 }
 </style>

@@ -67,6 +67,15 @@ const { positionStyle } = useMenuPosition(triggerRef, toRef(props, 'isOpen'));
 </template>
 
 <style scoped>
+.model-menu {
+  padding: var(--spacing-2);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+  background-color: var(--color-bg-secondary);
+  width: 100%;
+}
+
 .model-selector {
   display: flex;
   align-items: center;

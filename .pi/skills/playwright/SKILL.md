@@ -7,6 +7,8 @@ description: Playwright MCP browser-automation tools for AI models. Use when wor
 
 Browser automation for the harness's AI models via the official [Playwright MCP](https://github.com/microsoft/playwright-mcp) server. The model drives a headless chromium through `browser_*` tools; page content arrives as accessibility-tree snapshots, so no vision model is required.
 
+> **⚠️ Permission required (token cost).** Browser automation is token-expensive — every `browser_*` call (navigate, snapshot, click, evaluate, screenshot) drains context. **Always ask the user for explicit permission before using any `browser_*` tool**, and never start a browser session speculatively or as part of a larger autonomous run.
+
 ## Architecture (read before changing anything)
 
 `playwright-mcp` sidecar container → `PlaywrightMcpClientService` (AI SDK `createMCPClient`, HTTP transport) → cached `ToolSet` merged by `ToolSelectionService` → intent classifier picks `browser_*` names → execute step chains calls (8-step budget for browser intents only).
@@ -69,6 +71,8 @@ open http://dashboard:5173/dashboard/ and report any console errors or failed ne
 
 The `browser_*` tools are also exposed to pi itself (via `.pi/mcp.json`), so you can drive the same headless chromium to verify UI work. The workflow is **snapshot-driven, not vision-driven** — page content arrives as an accessibility tree, so you don't need to read screenshots.
 
+**Ask permission first.** Every `browser_*` call costs tokens — get the user's explicit go-ahead before driving the browser, and don't spin up a browser session speculatively.
+
 ### Workflow
 
 1. `browser_navigate` to the URL (container hostname + `/dashboard/` base).
@@ -104,6 +108,7 @@ If you genuinely need the image file, pull it out of the container: `docker cp p
 
 ## Checklist
 
+- [ ] Agent asked the user for explicit permission before using any `browser_*` tool (token cost)
 - [ ] Server log shows `Connected to http://playwright-mcp:8931/mcp — N browser tools exposed`
 - [ ] Deny-list intact — no `browser_run_code*`/`browser_evaluate`/`browser_file_upload` exposed **to the harness models** (pi-side MCP tools are governed by pi itself; pi already has unrestricted `bash`)
 - [ ] `--allowed-hosts` entries include the port
