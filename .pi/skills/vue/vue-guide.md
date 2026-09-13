@@ -112,7 +112,7 @@ The props type is the single source of truth: a composable that derives the comp
 
 ### Componentize template sections
 
-When a template block renders a distinct concern — a header, a callout, a list, a panel row — extract it into a presentational sub-component in its own folder with a story. The orchestrator keeps the visibility `v-if` and passes the data; the leaf takes props and renders:
+When a template block renders a distinct concern — a header, a callout, a list, a panel row — extract it into a presentational sub-component in its own folder (no leaf story — see §4). The orchestrator keeps the visibility `v-if` and passes the data; the leaf takes props and renders:
 
 ```vue
 <!-- orchestrator -->
@@ -142,7 +142,7 @@ defineProps<{
 
 Rules for the extracted leaf:
 
-- **Own folder + story.** Every extracted component gets `Xxx.vue` + `Xxx.stories.ts` in its own folder inside the parent's folder.
+- **Own folder, no leaf story.** Every extracted component gets `Xxx.vue` + a co-located `Xxx.types.ts` in its own folder inside the parent's folder. Leaf components don't get a `.stories.ts` — behavior is covered by a `.spec.ts` (when the leaf owns interaction logic) or the parent's spec.
 - **Presentational only.** No store calls, no computeds, no refs — props in, markup out. Any logic lives in a helper or the orchestrator's composable.
 - **The parent owns visibility.** The `v-if` stays on the component in the orchestrator's template; the leaf does not self-hide.
 - **BEM block per component.** The leaf's root class is its own block (`stockmarket-item-recommendation`), not the parent's (`stockmarket-item-response__recommendation`).
@@ -414,8 +414,13 @@ export function hasReadResult(result: DebugResult): boolean {
 | A wrapper that just calls `store.isX(r.id)` or `props.x.has(r.id)`      | **Inline it.** The call site is already clear.                   |
 | A wrapper used 3+ times in the same file with the _same argument shape_ | **Name the result** (a `Set`, a `computed`) — see option 2.      |
 | A wrapper used across many files, with a domain meaning                 | **Promote it to a `.helper.ts` predicate** with its own spec.    |
-| A wrapper that branches, supplies defaults, or reshapes its input       | **Keep it** — that is real logic.                                |
+| A wrapper that branches, supplies defaults, or has side effects         | **Keep it** — that is real logic.                                |
+| A wrapper that only coerces/reshapes a value then calls once (`formatCtx(Number(v))`) | **Inline it** — the call site already says it.                    |
 | A composable's `isX(id)` factory that returns a `computed` per key      | **Keep it** — the factory creates reactive state, not a synonym. |
+
+### Dependency injection is not a wrapper
+
+A higher-order component/function that imports a store or composable and passes only the derived props a leaf needs is **not** the rename-wrapper anti-pattern — it earns its name by decoupling the leaf from the store/composable. The leaf stays presentational and testable; the HOC owns the dependency.
 
 ### Anti-examples to leave alone
 
@@ -492,9 +497,9 @@ Those are pre-existing barrels. They are not an argument to add new ones. New co
 
 ---
 
-## 4. Stories: Visual Documentation for Every Component
+## 4. Stories: Visual Documentation for Orchestrators and Widgets
 
-Every component gets a story. Story files are co-located with their components. See the [folder structure in section 2](#2-composables-stateful-logic-extraction) for where they live in the tree.
+Orchestrators and stateful widgets get a story; leaf components don't. Story files are co-located with their components. See the [folder structure in section 2](#2-composables-stateful-logic-extraction) for where they live in the tree. A leaf's visual states are already exercised through its parent's story/spec, and per-leaf stories only bloat the Storybook sidebar.
 
 ### Story structure
 
@@ -630,6 +635,18 @@ The orchestrator component shares the **same folder** as its sub-components, com
 
 This makes the directory structure self-documenting: everything related to the toolbar is in `toolbar/`, including the component that wires it all together.
 
+### Dropdown menus: orchestrator + trigger
+
+A dropdown menu splits into the orchestrator and a co-located `XxxTrigger` component. The trigger owns the anchor `ref`, the `useMenuPosition` call, and the `<Teleport>`; it exposes a **default slot** for the menu body, so the orchestrator supplies the form/data as slot content while the trigger keeps the positioning concern. This keeps `triggerRef`/positioning out of the orchestrator's data path.
+
+```
+conversation-menu/
+├── ConversationMenu.vue                 ← orchestrator (form + data)
+├── conversation-menu-trigger/
+│   └── ConversationMenuTrigger.vue      ← anchor + positioning + Teleport + default slot
+└── …
+```
+
 ### Example orchestrator script
 
 ```ts
@@ -722,7 +739,7 @@ The parent's folder name is the kebab-case form of the main orchestrator's name:
 
 ### The principle: test by logic density, not file size
 
-A `.vue` file's complexity is measured by **how much behavior it owns**, not by how many lines it has. A 300-line atom can be a thin wrapper around a composable (skip the test, test the composable). A 17-line `Badge.vue` can be pure markup and styling (skip the test, the story covers it).
+A `.vue` file's complexity is measured by **how much behavior it owns**, not by how many lines it has. A 300-line atom can be a thin wrapper around a composable (skip the test, test the composable). A 17-line `Badge.vue` can be pure markup and styling (skip the test — its parent's spec covers it).
 
 **Write a `.spec.ts` when the component owns meaningful behavior:**
 
@@ -743,10 +760,14 @@ A `.vue` file's complexity is measured by **how much behavior it owns**, not by 
 | Orchestrator (e.g. `ChatToolbar.vue`)               | ✓     | The wiring IS the component's behavior.                                            |
 | Widget with state and interaction (e.g. `DropDown`) | ✓     | Keyboard handling, open/close, focus management are its reason for existing.       |
 | Component with a meaningful `<script setup>`        | ✓     | Any computed/branching/event logic deserves a test.                                |
-| Pure presentational: props → markup/styles          | skip  | A story captures the visual states; any logic is in a tested helper or composable. |
+| Pure presentational: props → markup/styles          | skip  | Covered by the parent's spec/story; any logic is in a tested helper or composable. |
 | Leaf that just re-emits parent events               | skip  | Trivial pass-through; tested transitively by the orchestrator's test.              |
 
 **Story coverage is not a substitute for tests.** A `.stories.ts` captures the _visual states_ of a component. It does not assert behavior over time, branch on user input, or verify store interactions. A drop-down's story shows the menu open and closed; a test verifies that pressing `Escape` closes it.
+
+### Teleport and event propagation
+
+A leaf rendered inside a `<Teleport>` still emits to its parent component (the slot owner), so events flow normally in the app. In tests, **don't stub `Teleport`** (`stubs: { Teleport: true }`) when a teleported child emits to its parent — the stub swallows non-`update:*` component emits. Mount for real and query the teleported DOM via `document.body`.
 
 ---
 

@@ -79,7 +79,6 @@ const stateTone = computed(() => {
   /* Keep the header row clear of the overlaid toggle. */
   padding-inline-end: calc(var(--spacing-3) + 1.75rem);
   border: 1px solid var(--color-divider);
-  border-radius: calc(var(--spacing-1) * 1.5);
   background-color: var(--color-bg-secondary);
   color: var(--color-fg-primary);
   text-align: start;
