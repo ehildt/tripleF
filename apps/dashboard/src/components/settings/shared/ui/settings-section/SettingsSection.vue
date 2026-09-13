@@ -55,7 +55,6 @@ const errorMessage = computed(
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  padding: var(--spacing-1);
 }
 
 .settings-section__state {

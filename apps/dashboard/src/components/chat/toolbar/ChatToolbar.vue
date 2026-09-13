@@ -9,8 +9,8 @@ import { useAppStore } from '../../../stores/app';
 import { useModelsStore } from '../../../stores/models';
 import CapabilitiesRow from './capabilities-row/CapabilitiesRow.vue';
 import ConversationList from './conversation-list/ConversationList.vue';
+import ConversationMenu from './conversation-menu/ConversationMenu.vue';
 import ModelSelector from './model-selector/ModelSelector.vue';
-import NewConversationMenu from './new-conversation-menu/NewConversationMenu.vue';
 import { useAttachedFiles } from './shared/composables/use-attached-files';
 import { useConversationList } from './shared/composables/use-conversation-list';
 import { useEventSubscriptions } from './shared/composables/use-event-subscriptions';
@@ -22,6 +22,7 @@ import SubscribedEventsList from './subscribed-events-list/SubscribedEventsList.
 import type { ChatToolbarProps } from './ChatToolbar.types';
 
 const VISION_CAPABILITY = 'vision';
+const ACCEPTED_FILE_TYPES = 'image/*,.pdf,.docx,.pptx,.txt,.md,.csv,.json,.log';
 
 const props = defineProps<ChatToolbarProps>();
 
@@ -113,52 +114,16 @@ function onSelectModel(modelName: string) {
 }
 
 // ── Conversation list ──────────────────────────────────────────
-const {
-  isConversationListExpanded,
-  newConversationName,
-  newConversationEvent,
-  newConversationRoomId,
-  switchToConversation,
-  deleteConversation,
-  createNewConversation,
-} = useConversationList();
+const { isConversationListExpanded, switchToConversation, deleteConversation } =
+  useConversationList();
 
-function toggleNewConversationMenu() {
+function toggleConversationMenu() {
   if (hasNoModelSelected.value) return;
   const wasOpen = isMenuOpen('newSession').value;
   closeAllMenus();
   if (wasOpen) return;
   toggleMenu('newSession');
   if (!modelsStore.models.length) modelsStore.fetchModels({ refresh: true });
-}
-
-// ── NumCtx ────────────────────────────────────────────────
-const allNumCtxOptions = computed(() => modelsStore.numCtxOptions.map(String));
-const filteredNumCtxOptions = computed(() => {
-  if (modelsStore.modelsLoading) return [];
-  const ctx = selectedModelDetails.value?.context_length;
-  if (!ctx) return allNumCtxOptions.value;
-  return allNumCtxOptions.value.filter((opt) => Number(opt) <= ctx);
-});
-
-const conversationNumCtx = computed(() => {
-  return conversationStore.getConversation(conversationId.value)?.numCtx || '';
-});
-
-const defaultNumCtx = computed(() => {
-  return filteredNumCtxOptions.value.at(-1) || modelsStore.defaultNumCtx || '';
-});
-
-function selectNumCtx(ctx: string) {
-  let sid = conversationId.value;
-  if (!sid) {
-    const conversation = conversationStore.ensureConversation();
-    sid = conversation.id;
-  }
-  const maxCtx = selectedModelDetails.value?.context_length;
-  if (maxCtx && Number(ctx) > maxCtx) ctx = String(maxCtx);
-
-  conversationStore.setNumCtx(sid, ctx);
 }
 
 // ── Stream settings ───────────────────────────────────────
@@ -169,17 +134,13 @@ function toggleStreamSettingsMenu() {
   if (hasNoModelSelected.value) return;
   const wasOpen = isMenuOpen('streamSettings').value;
   closeAllMenus();
-  if (!wasOpen) {
-    toggleMenu('streamSettings');
-  }
+  if (!wasOpen) toggleMenu('streamSettings');
 }
 
 // ── Event subscriptions ────────────────────────────────────
 const {
   subscriptions,
   isSubscriptionListExpanded,
-  availableSocketEvents,
-  availableRoomsByEvent,
   conversationNamesByEvent,
   subscribeToEvent,
   toggleSubscriptionActive,
@@ -257,37 +218,46 @@ defineExpose({
       />
     </div>
 
+    <!-- >
+    the uncommented section below (chat-toolbar__group) is pure garbage and needs to be properly implemented.
+    here is the example of how it should be implemented. we would need to complete the implementation. 
+
+    <div class="chat-toolbar__group">
+
+  <ConversationMenu
+    :is-open="isNewSessionOpen"
+    :blinking="conversationsBlink.isBlinking"
+    @mouseenter="brainBlink?.start"
+    @mouseleave="brainBlink?.stop"
+    @toggle-menu="toggleConversationMenu"
+    @created="closeAllMenus"
+  />
+
+
+  <ConversationList
+    v-if="hasConversations"
+    class="chat-toolbar__list"
+    :conversations="conversationStore.conversations"
+    :active-conversation-id="conversationStore.activeConversationId"
+    :is-expanded="isConversationListExpanded"
+    :show-divider="areSocketsVisible"
+    @toggle-expanded="toggleConversationList"
+    @select-conversation="switchToConversation"
+    @delete-conversation="handleDeleteConversation"
+    @toggle-type="handleToggleType"
+  />
+</div>
+    < -->
+
     <div class="chat-toolbar__group">
       <!-- New Conversation -->
-      <NewConversationMenu
+      <ConversationMenu
         :is-open="isMenuOpen('newSession').value"
-        :is-disabled="hasNoModelSelected"
-        :new-conversation-name="newConversationName"
-        :new-conversation-event="newConversationEvent"
-        :new-conversation-room-id="newConversationRoomId"
-        :available-socket-events="availableSocketEvents"
-        :available-rooms="availableRoomsByEvent[newConversationEvent] ?? []"
-        :filtered-num-ctx-options="filteredNumCtxOptions"
-        :current-num-ctx="conversationNumCtx || defaultNumCtx"
-        :default-num-ctx="defaultNumCtx"
-        :format-ctx="(n: number) => modelsStore.formatCtx(n)"
         :blinking="conversationsBlink.isBlinking"
         :on-mouse-enter="brainBlink?.start"
         :on-mouse-leave="brainBlink?.stop"
-        @toggle-menu="toggleNewConversationMenu"
-        @update:new-conversation-name="newConversationName = $event"
-        @update:new-conversation-event="newConversationEvent = $event"
-        @update:new-conversation-room-id="newConversationRoomId = $event"
-        @create-conversation="
-          createNewConversation(
-            $event,
-            newConversationName,
-            newConversationEvent,
-            newConversationRoomId,
-          );
-          closeAllMenus();
-        "
-        @select-num-ctx="selectNumCtx"
+        @toggle-menu="toggleConversationMenu"
+        @created="closeAllMenus"
       />
 
       <!-- Conversations list -->
@@ -353,7 +323,7 @@ defineExpose({
       type="file"
       name="chat-attachments"
       multiple
-      accept="image/*,.pdf,.docx,.pptx,.txt,.md,.csv,.json,.log"
+      :accept="ACCEPTED_FILE_TYPES"
       class="hidden"
       @change="onFileInputChange"
     />

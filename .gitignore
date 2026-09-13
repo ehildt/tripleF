@@ -4,6 +4,8 @@ coverage
 .depbadge
 TODO.md
 todo.md
+NOTES.md
+notes.md
 .env
 .eslintcache
 ollama_data

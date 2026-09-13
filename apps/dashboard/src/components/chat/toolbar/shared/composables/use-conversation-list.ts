@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useSocketStore } from '../../../../../stores/socket';
-import { createId } from '../../../../../utils/id.helper';
 import { isSocketEventInUse } from '../../conversation-list/helpers/is-socket-event-in-use.helper';
 import { isSocketShared } from '../../conversation-list/helpers/is-socket-shared.helper';
 import {
@@ -12,7 +11,7 @@ import {
 } from './subscriptions.state';
 
 /**
- * Manages the list of conversations and conversation creation logic.
+ * Manages the list of conversations.
  * Owns the conversation list expansion state.
  */
 export function useConversationList() {
@@ -34,11 +33,6 @@ export function useConversationList() {
       (a, b) => b.updatedAt - a.updatedAt,
     ),
   );
-
-  // ── New conversation form ─────────────────────────────────────
-  const newConversationName = ref('');
-  const newConversationEvent = ref('');
-  const newConversationRoomId = ref('');
 
   // ── Conversation actions ──────────────────────────────────────
   function switchToConversation(id: string) {
@@ -90,65 +84,10 @@ export function useConversationList() {
     await conversationStore.deleteCurrentConversation(id);
   }
 
-  /**
-   * Create a new conversation from the current form values.
-   * Wires up the socket connection and subscriptions.
-   * A blank event generates a fresh id; a blank roomId joins no room.
-   */
-  function createNewConversation(
-    type: 'temporary' | 'persistent',
-    newConversationNameValue: string,
-    newConversationEventValue: string,
-    newConversationRoomIdValue: string,
-  ) {
-    const name = newConversationNameValue.trim();
-    const enteredEvent = newConversationEventValue.trim();
-
-    const event = enteredEvent || createId();
-    const roomId = newConversationRoomIdValue.trim() || undefined;
-
-    socketStore.ensureSocketConnection();
-    socketStore.listenToEvent(event);
-    if (roomId) socketStore.joinRoom(roomId, event);
-
-    conversationStore.createNewConversation(type, event, roomId);
-    if (name) {
-      conversationStore.renameConversation(
-        conversationStore.activeConversationId!,
-        name,
-      );
-    }
-
-    const newId = conversationStore.activeConversationId;
-    if (newId) {
-      conversationStore.setSubscriptions(newId, [
-        { event, roomId: roomId || '' },
-      ]);
-    }
-
-    // A conversation bound to a socket inherits that socket's stream mode,
-    // so a socket created (or re-decided) as "full response at once" is
-    // honored by the very first request sent on the conversation.
-    const matchedSubscription = subscriptions.value.find(
-      (s) => s.event === event && (s.roomId ?? '') === (roomId ?? ''),
-    );
-    if (matchedSubscription && newId) {
-      conversationStore.setStream(newId, matchedSubscription.stream);
-    }
-
-    newConversationName.value = '';
-    newConversationEvent.value = '';
-    newConversationRoomId.value = '';
-  }
-
   return {
     isConversationListExpanded,
     conversationsSortedByUpdated,
-    newConversationName,
-    newConversationEvent,
-    newConversationRoomId,
     switchToConversation,
     deleteConversation,
-    createNewConversation,
   };
 }
