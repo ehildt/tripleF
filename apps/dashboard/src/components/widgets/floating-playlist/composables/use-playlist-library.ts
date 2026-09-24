@@ -1,17 +1,8 @@
-import { computed, type Ref, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
-
-import {
-  activePlaylistName,
-  createPlaylist as createPlaylistState,
-  deletePlaylist as deletePlaylistState,
-  getPlaylists,
-  loadPlaylists,
-  renamePlaylist as renamePlaylistState,
-  selectPlaylist as selectPlaylistState,
-} from './playlist.state';
+import { usePlaylistStore } from '@/stores/playlist';
 
 /**
  * Playlist behavior of the playlist panel, action-driven and database-backed:
@@ -19,43 +10,35 @@ import {
  * makes it active; each playlist in the menu carries its own Trash button to
  * delete it. Picking a playlist in the menu makes it active, which loads its
  * videos into the queue. Playlists are global across the session — the panel
- * shows every playlist; the conversation id is only used when creating a new
- * playlist (it is part of the DB compound key).
+ * shows every playlist.
  */
-export function usePlaylistLibrary(conversationId: Ref<string>) {
+export function usePlaylistLibrary() {
   const toast = useToast();
+  const playlistStore = usePlaylistStore();
 
   /** Name being typed for a new playlist ('' once created — the field clears). */
   const playlistNameInput = ref('');
 
   const playlistNames = computed(() =>
-    getPlaylists().map((playlist) => playlist.name),
+    playlistStore.getPlaylists().map((playlist) => playlist.name),
   );
 
-  const activePlaylistNameValue = computed(() => activePlaylistName.value);
-
-  // Load all playlists for the session from the database, restoring the
-  // active playlist (defaulting to the first one).
-  watch(
-    conversationId,
-    () => {
-      void loadPlaylists();
-    },
-    { immediate: true },
+  const activePlaylistNameValue = computed(
+    () => playlistStore.activePlaylistName,
   );
 
   /** Create a new empty playlist from the typed name, then clear the field. */
   function createPlaylist() {
     const name = playlistNameInput.value.trim();
     if (!name) return;
-    createPlaylistState(conversationId.value, name);
+    playlistStore.createPlaylist(name);
     toast.info(i18n.global.t('toast.playlistCreated', { name }));
     playlistNameInput.value = '';
   }
 
   /** Delete a playlist by name. */
   function deletePlaylist(name: string) {
-    deletePlaylistState(name);
+    playlistStore.deletePlaylist(name);
     toast.info(i18n.global.t('toast.playlistDeleted', { name }));
     if (activePlaylistNameValue.value === name) {
       playlistNameInput.value = '';
@@ -64,7 +47,7 @@ export function usePlaylistLibrary(conversationId: Ref<string>) {
 
   /** Rename a playlist, showing an error on a taken name. */
   function renamePlaylist(oldName: string, newName: string) {
-    const renamed = renamePlaylistState(oldName, newName);
+    const renamed = playlistStore.renamePlaylist(oldName, newName);
     if (!renamed) {
       toast.error(i18n.global.t('toast.playlistNameExists'));
     }
@@ -72,7 +55,7 @@ export function usePlaylistLibrary(conversationId: Ref<string>) {
 
   /** Make a playlist active, loading its videos into the queue. */
   function selectPlaylist(name: string) {
-    selectPlaylistState(name);
+    playlistStore.selectPlaylist(name);
     toast.info(i18n.global.t('toast.playlistLoaded', { name }));
   }
 

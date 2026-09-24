@@ -2,12 +2,12 @@
 /**
  * App-level floating playlist, mounted in App.vue (visible on every tab, so
  * it survives tab switches). Active while the playlist mode is 'floating'
- * (Settings → Widgets → Playlist); the chat right panel hides its playlist
+ * (Settings → Widgets → Playlist); the chat right toolbar hides its playlist
  * tab then.
  *
  * The window reuses the shared PlaylistPanel for its content (transport
  * bar, active playlist name, saved-playlists menu, and the queued list) —
- * the same player the chat right panel shows when docked. Open, the
+ * the same player the chat right toolbar shows when docked. Open, the
  * toolbar row holds the transport icons on the left and the saved-playlists
  * menu icon plus the X close icon on the very right — clicking the X
  * collapses the window. The now-playing title animates inside the selected
@@ -22,26 +22,13 @@ import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { useConversationStore } from '@/stores/conversation';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
 
-import PlaylistPanel from '../../chat/right-panel/playlist-panel/PlaylistPanel.vue';
-import {
-  playlistAnchor,
-  playlistMode,
-} from './composables/playlist-settings.state';
+import PlaylistPanel from '../../chat/chat-right-toolbar/tabs/playlist/PlaylistPanel.vue';
 import { useFloatingPlaylistGeometry } from './composables/use-floating-playlist-geometry';
 import { useFloatingPlaylistVisibility } from './composables/use-floating-playlist-visibility';
 
-/**
- * Conversation the floating playlist shows: the active conversation, so the
- * floating window mirrors the docked panel's playlists. In panel mode the
- * widget is hidden; in floating mode it shows the active conversation's
- * playlists.
- */
-const conversationStore = useConversationStore();
-const conversationId = computed(
-  () => conversationStore.activeConversationId ?? '',
-);
+const playlistSettingsStore = usePlaylistSettingsStore();
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
@@ -53,19 +40,23 @@ const { isOpen, togglePlaylist, closeOnAutoclose } =
  * Bottom anchors stand the handle below the window, so the window sweeps
  * open upward and folds back down into it instead (see the closed clip).
  */
-const anchorVertical = computed(() => playlistAnchor.value.split('-')[0]);
+const anchorVertical = computed(
+  () => playlistSettingsStore.playlistAnchor.split('-')[0],
+);
 const isBottomAnchored = computed(() => anchorVertical.value === 'bottom');
 
 /**
  * Horizontal side the collapsed compact handle hugs inside the assembly
  * column: the anchor's horizontal component.
  */
-const anchorHorizontal = computed(() => playlistAnchor.value.split('-')[1]);
+const anchorHorizontal = computed(
+  () => playlistSettingsStore.playlistAnchor.split('-')[1],
+);
 </script>
 
 <template>
   <div
-    v-if="playlistMode === 'floating'"
+    v-if="playlistSettingsStore.playlistMode === 'floating'"
     class="floating-playlist-root"
     data-floating-playlist-root
   >
@@ -97,10 +88,7 @@ const anchorHorizontal = computed(() => playlistAnchor.value.split('-')[1]);
         class="floating-playlist shadow-floating"
         :aria-label="$t('common.floatingPlaylist')"
       >
-        <PlaylistPanel
-          :conversation-id="conversationId"
-          @play="closeOnAutoclose"
-        >
+        <PlaylistPanel @play="closeOnAutoclose">
           <template #toolbar-actions>
             <Tooltip :text="$t('common.collapsePlaylist')">
               <button

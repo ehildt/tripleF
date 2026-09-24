@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Playlist settings: keep the playlist in the chat right panel or float it as an app-level, draggable window that survives tab switches — plus the floating window's initial position, position memory, and autoclose.",
+          "Playlist settings: keep the playlist in the chat right toolbar or float it as an app-level, draggable window that survives tab switches — plus the floating window's initial position, position memory, and autoclose.",
       },
     },
   },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Floating player settings: the app's floating player (a video playlist
- * queue) can be docked into the chat right panel or float as an app-level
+ * queue) can be docked into the chat right toolbar or float as an app-level
  * window that survives tab switches — plus the floating window's initial
  * position, whether it closes itself after a pick or an outside click —
  * and a reset back to the defaults.
@@ -23,31 +23,24 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import { hidePopoutPreview } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import type { PlaylistAnchor } from '@/stores/playlist-settings.types';
+import { usePopoutSettingsStore } from '@/stores/popout-settings';
 
-import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
-import {
-  playlistAnchor,
-  playlistAutoClose,
-  playlistMode,
-  playlistPreviewVisible,
-  resetPlaylistSettings,
-  setPlaylistAnchor,
-  setPlaylistAutoClose,
-  setPlaylistMode,
-  togglePlaylistPreview,
-} from '../../../widgets/floating-playlist/composables/playlist-settings.state';
-import type { PlaylistAnchor } from '../../../widgets/floating-playlist/composables/playlist-settings.state.types';
 import type {
   PlaylistHorizontal,
   PlaylistVertical,
 } from './PlaylistPanel.types';
+
+const popoutSettingsStore = usePopoutSettingsStore();
+const playlistSettingsStore = usePlaylistSettingsStore();
 
 const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -69,28 +62,35 @@ const HORIZONTAL_OPTIONS = computed(() => [
   { value: 'right', icon: ArrowRight, tooltip: i18n.global.t('common.right') },
 ]);
 
-/** Floating mode on/off — off keeps the playlist in the chat right panel. */
-const floatingEnabled = computed(() => playlistMode.value === 'floating');
+/** Floating mode on/off — off keeps the playlist in the chat right toolbar. */
+const floatingEnabled = computed(
+  () => playlistSettingsStore.playlistMode === 'floating',
+);
 
 const vertical = computed(
-  () => playlistAnchor.value.split('-')[0] as PlaylistVertical,
+  () => playlistSettingsStore.playlistAnchor.split('-')[0] as PlaylistVertical,
 );
 const horizontal = computed(
-  () => playlistAnchor.value.split('-')[1] as PlaylistHorizontal,
+  () =>
+    playlistSettingsStore.playlistAnchor.split('-')[1] as PlaylistHorizontal,
 );
 
 function setVertical(value: string) {
-  setPlaylistAnchor(`${value}-${horizontal.value}` as PlaylistAnchor);
+  playlistSettingsStore.setPlaylistAnchor(
+    `${value}-${horizontal.value}` as PlaylistAnchor,
+  );
 }
 
 function setHorizontal(value: string) {
-  setPlaylistAnchor(`${vertical.value}-${value}` as PlaylistAnchor);
+  playlistSettingsStore.setPlaylistAnchor(
+    `${vertical.value}-${value}` as PlaylistAnchor,
+  );
 }
 
 /** Toggle the floating-player preview; showing it hides the popout preview. */
 function handlePreviewToggle() {
-  hidePopoutPreview();
-  togglePlaylistPreview();
+  popoutSettingsStore.hidePopoutPreview();
+  playlistSettingsStore.togglePlaylistPreview();
 }
 </script>
 
@@ -98,9 +98,9 @@ function handlePreviewToggle() {
   <div class="playlist-panel">
     <div class="playlist-panel__actions">
       <PreviewButton
-        :active="playlistPreviewVisible"
+        :active="playlistSettingsStore.playlistPreviewVisible"
         :title="
-          playlistPreviewVisible
+          playlistSettingsStore.playlistPreviewVisible
             ? $t('common.hideExampleFloatingPlayer')
             : $t('common.showExampleFloatingPlayer')
         "
@@ -108,12 +108,16 @@ function handlePreviewToggle() {
       />
       <ResetButton
         :title="$t('common.resetFloatingPlayerSettingsToDefaults')"
-        @click="resetPlaylistSettings"
+        @click="playlistSettingsStore.resetPlaylistSettings"
       />
       <PowerToggle
         :enabled="floatingEnabled"
         :title="$t('common.floatPlayerAsAppWindow')"
-        @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
+        @toggle="
+          playlistSettingsStore.setPlaylistMode(
+            floatingEnabled ? 'panel' : 'floating',
+          )
+        "
       />
     </div>
 
@@ -128,7 +132,11 @@ function handlePreviewToggle() {
           :label="$t('common.dockingMode')"
           :description="$t('common.dockingModeDesc')"
           :checked="floatingEnabled"
-          @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
+          @toggle="
+            playlistSettingsStore.setPlaylistMode(
+              floatingEnabled ? 'panel' : 'floating',
+            )
+          "
         />
 
         <FieldCard
@@ -165,9 +173,13 @@ function handlePreviewToggle() {
           :icon="PanelRightClose"
           :label="$t('common.autoclose')"
           :description="$t('common.floatingPlayerAutocloseDesc')"
-          :checked="playlistAutoClose"
+          :checked="playlistSettingsStore.playlistAutoClose"
           :disabled="!floatingEnabled"
-          @toggle="setPlaylistAutoClose(!playlistAutoClose)"
+          @toggle="
+            playlistSettingsStore.setPlaylistAutoClose(
+              !playlistSettingsStore.playlistAutoClose,
+            )
+          "
         />
       </div>
     </div>

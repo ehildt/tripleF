@@ -1,45 +1,20 @@
+import { useChatViewStore } from '@/stores/chat-view';
+
 import type { UseChatActionsOptions } from './use-chat-actions.types';
 
 /**
- * Provides the action handlers that wire user gestures in the chat view
- * to the toolbar and exchange-list template refs.
+ * Wires the right-toolbar history-item click to a scroll request the
+ * exchange list consumes (via the chat-view store) instead of a defineExpose
+ * chain.
  */
 export function useChatActions(options: UseChatActionsOptions) {
-  const {
-    chatListRef,
-    userExchanges,
-    toolbarRef,
-    hasNoModelSelected,
-    supportsVision,
-  } = options;
-
-  function scrollToExchange(id: string) {
-    chatListRef.value?.scrollToExchange(id);
-  }
+  const chatViewStore = useChatViewStore();
+  const { userExchanges } = options;
 
   function onPromptClick(idx: number) {
     const id = userExchanges.value[idx]?.id;
-    if (id) scrollToExchange(id);
+    if (id) chatViewStore.requestScrollToExchange(id);
   }
 
-  function triggerFileSelect() {
-    if (hasNoModelSelected.value || !supportsVision.value) return;
-    toolbarRef.value?.fileInputRef?.click();
-  }
-
-  function onRemoveAttachedFile(index: number) {
-    toolbarRef.value?.removeFile(index);
-  }
-
-  function onToggleAttachedFileSelected(index: number) {
-    toolbarRef.value?.toggleFileSelected(index);
-  }
-
-  return {
-    scrollToExchange,
-    onPromptClick,
-    triggerFileSelect,
-    onRemoveAttachedFile,
-    onToggleAttachedFileSelected,
-  };
+  return { onPromptClick };
 }

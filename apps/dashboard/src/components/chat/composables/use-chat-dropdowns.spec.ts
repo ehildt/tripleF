@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  type DropdownRef,
-  type SetDropdownRef,
-  useChatDropdowns,
-} from './use-chat-dropdowns';
+import type {
+  DropdownRef,
+  SetDropdownRef,
+} from '../shared/composables/use-chat-dropdowns.types';
+import { useChatDropdowns } from './use-chat-dropdowns';
 
 function mockDropdown(): DropdownRef {
   return { close: vi.fn() };

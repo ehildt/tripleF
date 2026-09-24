@@ -1,11 +1,10 @@
+import { appendLabeledFields } from '@/stores/helpers/harness/sources/append-labeled-fields.helper';
+import { appendList } from '@/stores/helpers/harness/sources/append-list.helper';
+import { buildArticleCardsLines } from '@/stores/helpers/harness/sources/build-article-cards-lines.helper';
+import { buildRelatedStoriesLines } from '@/stores/helpers/harness/sources/build-related-stories-lines.helper';
+import { buildShopOffersLines } from '@/stores/helpers/harness/sources/build-shop-offers-lines.helper';
+import { buildSourcesLines } from '@/stores/helpers/harness/sources/build-sources-lines.helper';
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
-
-import { appendLabeledFields } from '../../../components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/sources/append-labeled-fields.helper';
-import { appendList } from '../../../components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/sources/append-list.helper';
-import { buildArticleCardsLines } from '../../../components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/sources/build-article-cards-lines.helper';
-import { buildRelatedStoriesLines } from '../../../components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/sources/build-related-stories-lines.helper';
-import { buildShopOffersLines } from '../../../components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/sources/build-shop-offers-lines.helper';
-import { buildSourcesLines } from '../../../components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/sources/build-sources-lines.helper';
 
 function buildScoreLine(score: number, scoreLabel?: string): string {
   const label = scoreLabel ? ` (${scoreLabel})` : '';

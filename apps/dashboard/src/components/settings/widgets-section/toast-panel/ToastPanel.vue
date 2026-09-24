@@ -36,31 +36,17 @@ import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
-import {
-  resetToastSettings,
-  setToastAnchor,
-  setToastAutoHide,
-  setToastDurationSeconds,
-  setToastEnabled,
-  setToastPinEnabled,
-  setToastTypeFilter,
-  toastAnchor,
-  toastAutoHide,
-  toastDurationSeconds,
-  toastEnabled,
-  toastMutedMessages,
-  toastPinEnabled,
-  toastTypeFilters,
-  unmuteToastMessage,
-} from '@/components/widgets/toast/composables/toast-settings.state';
-import type { ToastAnchor } from '@/components/widgets/toast/composables/toast-settings.state.types';
-import type { ToastType } from '@/composables/toast-state';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
+import { useToastSettingsStore } from '@/stores/toast-settings';
+import type { ToastAnchor } from '@/stores/toast-settings.types';
+import type { ToastType } from '@/types/toast-type.model';
 
+const toastSettingsStore = useToastSettingsStore();
 const { preview: previewToast } = useToast();
 
-import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
+
 import type { ToastHorizontal, ToastVertical } from './ToastPanel.types';
 
 const VERTICAL_OPTIONS = computed(() => [
@@ -130,18 +116,22 @@ const TYPE_OPTIONS = computed<
 ]);
 
 const vertical = computed(
-  () => toastAnchor.value.split('-')[0] as ToastVertical,
+  () => toastSettingsStore.toastAnchor.split('-')[0] as ToastVertical,
 );
 const horizontal = computed(
-  () => toastAnchor.value.split('-')[1] as ToastHorizontal,
+  () => toastSettingsStore.toastAnchor.split('-')[1] as ToastHorizontal,
 );
 
 function setVertical(value: string) {
-  setToastAnchor(`${value}-${horizontal.value}` as ToastAnchor);
+  toastSettingsStore.setToastAnchor(
+    `${value}-${horizontal.value}` as ToastAnchor,
+  );
 }
 
 function setHorizontal(value: string) {
-  setToastAnchor(`${vertical.value}-${value}` as ToastAnchor);
+  toastSettingsStore.setToastAnchor(
+    `${vertical.value}-${value}` as ToastAnchor,
+  );
 }
 </script>
 
@@ -154,12 +144,14 @@ function setHorizontal(value: string) {
       />
       <ResetButton
         :title="$t('common.resetToastSettingsToDefaults')"
-        @click="resetToastSettings"
+        @click="toastSettingsStore.resetToastSettings"
       />
       <PowerToggle
-        :enabled="toastEnabled"
+        :enabled="toastSettingsStore.toastEnabled"
         :title="$t('common.enableToastNotifications')"
-        @toggle="setToastEnabled(!toastEnabled)"
+        @toggle="
+          toastSettingsStore.setToastEnabled(!toastSettingsStore.toastEnabled)
+        "
       />
     </div>
 
@@ -170,7 +162,7 @@ function setHorizontal(value: string) {
           :icon="Anchor"
           :label="$t('common.initialPosition')"
           :description="$t('common.toastPositionDesc')"
-          :disabled="!toastEnabled"
+          :disabled="!toastSettingsStore.toastEnabled"
         >
           <template #controls>
             <SegmentedToggle
@@ -197,32 +189,42 @@ function setHorizontal(value: string) {
           :icon="Timer"
           :label="$t('common.autoHide')"
           :description="$t('common.autoHideDesc')"
-          :disabled="!toastEnabled"
+          :disabled="!toastSettingsStore.toastEnabled"
         >
           <template #controls>
             <button
               type="button"
               class="toast-panel__checkbox"
-              :class="{ 'toast-panel__checkbox--checked': toastAutoHide }"
-              :disabled="!toastEnabled"
-              :aria-pressed="toastAutoHide"
+              :class="{
+                'toast-panel__checkbox--checked':
+                  toastSettingsStore.toastAutoHide,
+              }"
+              :disabled="!toastSettingsStore.toastEnabled"
+              :aria-pressed="toastSettingsStore.toastAutoHide"
               :aria-label="$t('common.autoHideToasts')"
-              @click="setToastAutoHide(!toastAutoHide)"
+              @click="
+                toastSettingsStore.setToastAutoHide(
+                  !toastSettingsStore.toastAutoHide,
+                )
+              "
             >
               <Check
-                v-if="toastAutoHide"
+                v-if="toastSettingsStore.toastAutoHide"
                 class="toast-panel__check-icon"
                 stroke-width="3"
               />
             </button>
             <div class="toast-panel__number">
               <InputNumber
-                :model-value="toastDurationSeconds"
+                :model-value="toastSettingsStore.toastDurationSeconds"
                 :min="1"
                 :max="30"
                 :step="0.5"
-                :disabled="!toastAutoHide || !toastEnabled"
-                @update:model-value="setToastDurationSeconds"
+                :disabled="
+                  !toastSettingsStore.toastAutoHide ||
+                  !toastSettingsStore.toastEnabled
+                "
+                @update:model-value="toastSettingsStore.setToastDurationSeconds"
               />
             </div>
           </template>
@@ -232,9 +234,13 @@ function setHorizontal(value: string) {
           :icon="Pin"
           :label="$t('common.showPin')"
           :description="$t('common.showPinDesc')"
-          :checked="toastPinEnabled"
-          :disabled="!toastEnabled"
-          @toggle="setToastPinEnabled(!toastPinEnabled)"
+          :checked="toastSettingsStore.toastPinEnabled"
+          :disabled="!toastSettingsStore.toastEnabled"
+          @toggle="
+            toastSettingsStore.setToastPinEnabled(
+              !toastSettingsStore.toastPinEnabled,
+            )
+          "
         />
       </div>
     </div>
@@ -248,9 +254,14 @@ function setHorizontal(value: string) {
           :icon="icon"
           :label="label"
           :description="description"
-          :checked="toastTypeFilters[type]"
-          :disabled="!toastEnabled"
-          @toggle="setToastTypeFilter(type, !toastTypeFilters[type])"
+          :checked="toastSettingsStore.toastTypeFilters[type]"
+          :disabled="!toastSettingsStore.toastEnabled"
+          @toggle="
+            toastSettingsStore.setToastTypeFilter(
+              type,
+              !toastSettingsStore.toastTypeFilters[type],
+            )
+          "
         />
       </div>
     </div>
@@ -259,9 +270,12 @@ function setHorizontal(value: string) {
         :icon="BellOff"
         :title="$t('common.mutedMessagesSection')"
       />
-      <div v-if="toastMutedMessages.length" class="toast-panel__muted-list">
+      <div
+        v-if="toastSettingsStore.toastMutedMessages.length"
+        class="toast-panel__muted-list"
+      >
         <div
-          v-for="muted in toastMutedMessages"
+          v-for="muted in toastSettingsStore.toastMutedMessages"
           :key="muted.key"
           class="toast-panel__muted-row"
         >
@@ -269,7 +283,7 @@ function setHorizontal(value: string) {
           <IconButton
             size="sm"
             :title="$t('common.showToastAgain')"
-            @click="unmuteToastMessage(muted.key)"
+            @click="toastSettingsStore.unmuteToastMessage(muted.key)"
           >
             <BellRing />
           </IconButton>

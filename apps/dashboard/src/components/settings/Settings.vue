@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 
+import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
+import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import { i18n } from '@/i18n/i18n';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import { usePopoutSettingsStore } from '@/stores/popout-settings';
 
-import { hidePopoutPreview } from '../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
-import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
-import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
-import { hidePlaylistPreview } from '../widgets/floating-playlist/composables/playlist-settings.state';
 import ChatNavigationSection from './chat-navigation-section/ChatNavigationSection.vue';
 import { useSettingsHealthTiles } from './composables/use-settings-health-tiles';
 import { useSettingsTab } from './composables/use-settings-tab';
@@ -23,12 +23,14 @@ import WidgetsSection from './widgets-section/WidgetsSection.vue';
 
 const { activeSettingsTab, selectSettingsTab } = useSettingsTab();
 const { tiles } = useSettingsHealthTiles();
+const popoutSettingsStore = usePopoutSettingsStore();
+const playlistSettingsStore = usePlaylistSettingsStore();
 
 // The Settings previews are transient: switching the panel's own section
 // (Integrations → Preprocessing → … → System) dismisses them too.
 watch(activeSettingsTab, () => {
-  hidePopoutPreview();
-  hidePlaylistPreview();
+  popoutSettingsStore.hidePopoutPreview();
+  playlistSettingsStore.hidePlaylistPreview();
 });
 
 const TAB_TITLE_KEYS: Record<SettingsTab, string> = {

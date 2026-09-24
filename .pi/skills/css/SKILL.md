@@ -18,6 +18,8 @@ Read the full guide before writing or modifying any component styles:
 5. **Spacing** → `var(--spacing-*)` tokens; arbitrary values stay as `rem`.
 6. **Fonts** → `var(--font-mono)` or `var(--font-sans)`.
 7. **New tokens** go in `src/assets/css/tokens/` — only add values actually used.
+8. **The scoped BEM block mirrors the component name.** A component's root class is its kebab-case name (`ChatRightToolbar` → `.chat-right-toolbar`); `__element` and `--modifier` suffixes extend it. Rename the block, elements, and modifiers in the same change as the component.
+9. **Floating panels/menus carry a `__backdrop` element.** A fixed transparent backdrop sits beneath every teleported dropdown/popover so it can self-close on an outside click: `{block}__backdrop { position: fixed; inset: 0; z-index: <panel z-index − 1>; background: transparent; }` — the panel itself keeps the higher z-index. Do not paint the backdrop (no tint, no blur) for plain popovers; it is an invisible click-catcher (tint/blur is for modal surfaces like the lightbox/slide-over).
 
 ## Token Files
 
@@ -31,14 +33,7 @@ Read the full guide before writing or modifying any component styles:
 
 ## File Structure
 
-```
-src/assets/css/
-├── style.css          ← Entry point (imports only)
-├── tokens/            ← @theme blocks: variable defaults
-├── palettes/          ← Per-palette color overrides
-├── modes/             ← Display mode overrides
-└── components/        ← Global unscoped component styles
-```
+The CSS lives in a single directory: `style.css` is the entry point (imports only, in cascade order); `tokens/` holds `@theme` blocks with variable defaults; `palettes/` holds per-palette color overrides; `modes/` holds display-mode overrides; `components/` holds global (unscoped) component styles.
 
 ## Adding a New Token
 

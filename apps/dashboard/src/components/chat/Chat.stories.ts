@@ -17,7 +17,7 @@ const meta = {
       description: {
         component: `
 Main orchestrator for the chat group. Wires the toolbar, the exchange
-list, the prompt input, and the right-side panel (files / history)
+list, the prompt input, and the right toolbar (files / history)
 together. Owns the socket subscription, the conversation/model/task wiring,
 and the cross-component coordination (file select trigger, scroll to
 exchange, dropdown exclusivity).

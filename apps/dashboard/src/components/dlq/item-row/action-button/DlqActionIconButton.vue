@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { type Component, computed } from 'vue';
 
-import MotionIcon from '../../../shared/ui/motion-icon/MotionIcon.vue';
-import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
+import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 const props = defineProps<{
   icon: Component;

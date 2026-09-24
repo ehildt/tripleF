@@ -20,21 +20,21 @@ services:
     networks:
       - triplef
 
-  minio:
-    image: minio/minio:latest
-    container_name: minio
-    restart: on-failure
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - triplef
+#  minio:
+#    image: minio/minio:latest
+#    container_name: minio
+#    restart: on-failure
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#    environment:
+#      MINIO_ROOT_USER: minioadmin
+#      MINIO_ROOT_PASSWORD: minioadmin
+#    volumes:
+#      - minio_data:/data
+#    command: server /data --console-address ":9001"
+#    networks:
+#      - triplef
 
   keydb:
     image: eqalpha/keydb
@@ -112,11 +112,31 @@ services:
     networks:
       - triplef
 
+  mongodb:
+    image: mongodb/mongodb-atlas-local:latest
+    container_name: mongodb
+    hostname: mongodb
+    restart: on-failure
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=triplef
+      - MONGODB_INITDB_ROOT_PASSWORD=triplef
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - mongodb_mongot:/data/mongot
+    networks:
+      - triplef
+
 volumes:
   postgres_data:
   minio_data:
   keydb_data:
   qdrant_data:
+  mongodb_data:
+  mongodb_config:
+  mongodb_mongot:
 #  ollama_data:
 
 networks:

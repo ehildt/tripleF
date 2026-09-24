@@ -24,21 +24,17 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import {
-  resetTabMenuSettings,
-  setTabMenuAutoClose,
-  setTabMenuSide,
-  tabMenuAutoClose,
-  tabMenuSide,
-} from '@/components/app/tab-menu/composables/tab-menu-settings.state';
-import type { TabMenuSide } from '@/components/app/tab-menu/composables/tab-menu-settings.state.types';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
+import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
+import type { TabMenuSide } from '@/stores/tab-menu-settings.types';
 
-import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 import { useSettingsTabVisibility } from '../../composables/use-settings-tab-visibility';
+
+const tabMenuSettingsStore = useTabMenuSettingsStore();
 
 const SIDE_OPTIONS = computed(() => [
   { value: 'left', icon: PanelLeft, tooltip: i18n.global.t('common.left') },
@@ -49,7 +45,7 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
   useSettingsTabVisibility();
 
 function setSide(value: string) {
-  setTabMenuSide(value as TabMenuSide);
+  tabMenuSettingsStore.setTabMenuSide(value as TabMenuSide);
 }
 </script>
 
@@ -58,7 +54,7 @@ function setSide(value: string) {
     <div class="tab-menu-panel__actions">
       <ResetButton
         :title="$t('common.resetTabMenuSettingsToDefaults')"
-        @click="resetTabMenuSettings"
+        @click="tabMenuSettingsStore.resetTabMenuSettings"
       />
     </div>
 
@@ -73,7 +69,7 @@ function setSide(value: string) {
           <template #controls>
             <SegmentedToggle
               :options="SIDE_OPTIONS"
-              :model-value="tabMenuSide"
+              :model-value="tabMenuSettingsStore.tabMenuSide"
               :aria-label="$t('common.menuSide')"
               @update:model-value="setSide"
             />
@@ -84,8 +80,12 @@ function setSide(value: string) {
           :icon="X"
           :label="$t('common.autoclose')"
           :description="$t('common.tabMenuAutocloseDesc')"
-          :checked="tabMenuAutoClose"
-          @toggle="setTabMenuAutoClose(!tabMenuAutoClose)"
+          :checked="tabMenuSettingsStore.tabMenuAutoClose"
+          @toggle="
+            tabMenuSettingsStore.setTabMenuAutoClose(
+              !tabMenuSettingsStore.tabMenuAutoClose,
+            )
+          "
         />
       </div>
     </div>

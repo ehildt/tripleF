@@ -1,6 +1,9 @@
 import { ref } from 'vue';
 
-import type { DropdownRef, SetDropdownRef } from './use-chat-dropdowns.types';
+import type {
+  DropdownRef,
+  SetDropdownRef,
+} from '../shared/composables/use-chat-dropdowns.types';
 
 /**
  * Holds the dropdown template refs for the chat action bar and keeps

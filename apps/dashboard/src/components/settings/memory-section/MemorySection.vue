@@ -18,11 +18,11 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import type { SubMenuItem } from '@/components/shared/ui/settings-submenu/SettingsSubMenu.types';
 import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 import type { MemoryGroupId } from './config-panel/MemoryConfigPanel.types';
 import MemoryConfigPanel from './config-panel/MemoryConfigPanel.vue';
 

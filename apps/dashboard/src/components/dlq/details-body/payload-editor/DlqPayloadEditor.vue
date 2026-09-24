@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Check, FilePenLine, Undo2, X } from '@lucide/vue';
 
+import InputTextArea from '@/components/shared/ui/input-text-area/InputTextArea.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { formatBody } from '@/utils/format-body.helper';
 
-import InputTextArea from '../../../shared/ui/input-text-area/InputTextArea.vue';
-import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import { useDlqPayloadEdit } from './composables/use-dlq-payload-edit';
 
 const props = defineProps<{

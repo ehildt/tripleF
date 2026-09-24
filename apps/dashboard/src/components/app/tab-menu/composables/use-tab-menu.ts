@@ -1,7 +1,7 @@
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
 import { computed, type Ref, ref } from 'vue';
 
-import { tabMenuAutoClose, tabMenuSide } from './tab-menu-settings.state';
+import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
 
 /**
  * Slide-out behavior of the tab menu: the drawer starts open and stays open
@@ -12,9 +12,10 @@ import { tabMenuAutoClose, tabMenuSide } from './tab-menu-settings.state';
  * edge and cannot be dragged.
  */
 export function useTabMenu(menuRef: Ref<HTMLElement | null>) {
+  const tabMenuSettingsStore = useTabMenuSettingsStore();
   const isOpen = ref(true);
 
-  const side = computed(() => tabMenuSide.value);
+  const side = computed(() => tabMenuSettingsStore.tabMenuSide);
 
   function toggleMenu() {
     isOpen.value = !isOpen.value;
@@ -26,11 +27,11 @@ export function useTabMenu(menuRef: Ref<HTMLElement | null>) {
 
   /** Close after an action inside the drawer — only when autoclose is on. */
   function closeOnAutoclose() {
-    if (tabMenuAutoClose.value) closeMenu();
+    if (tabMenuSettingsStore.tabMenuAutoClose) closeMenu();
   }
 
   onClickOutside(menuRef, () => {
-    if (tabMenuAutoClose.value) closeMenu();
+    if (tabMenuSettingsStore.tabMenuAutoClose) closeMenu();
   });
 
   onKeyStroke('Escape', () => {

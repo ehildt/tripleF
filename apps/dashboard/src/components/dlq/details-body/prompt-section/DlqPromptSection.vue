@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import ExpandableMessageListBody from '@/components/shared/ui/expandable-message-list/expandable-message-list-body/ExpandableMessageListBody.vue';
+import ExpandableMessageList from '@/components/shared/ui/expandable-message-list/ExpandableMessageList.vue';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { sanitizeHtml } from '@/utils/sanitize-html.helper';
-
-import ExpandableMessageListBody from '../../../shared/ui/expandable-message-list/expandable-message-list-body/ExpandableMessageListBody.vue';
-import ExpandableMessageList from '../../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
 
 const props = defineProps<{
   entry: DlqEntry;

@@ -13,17 +13,13 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import {
-  type ToastType,
-  useToastState,
-} from '../../../../composables/toast-state';
-import IconButton from '../../../shared/ui/icon-button/IconButton.vue';
-import {
-  toastAnchor,
-  toastPinEnabled,
-} from '../composables/toast-settings.state';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import { useToastStore } from '@/stores/toast';
+import { useToastSettingsStore } from '@/stores/toast-settings';
+import type { ToastType } from '@/types/toast-type.model';
 
-const { toasts, remove, pause, resume, togglePin, muteToast } = useToastState();
+const { toasts, remove, pause, resume, togglePin, muteToast } = useToastStore();
+const toastSettingsStore = useToastSettingsStore();
 
 const iconMap: Record<ToastType, LucideIcon> = {
   success: Check,
@@ -34,8 +30,12 @@ const iconMap: Record<ToastType, LucideIcon> = {
   default: Info,
 };
 
-const anchorVertical = computed(() => toastAnchor.value.split('-')[0]);
-const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
+const anchorVertical = computed(
+  () => toastSettingsStore.toastAnchor.split('-')[0],
+);
+const anchorHorizontal = computed(
+  () => toastSettingsStore.toastAnchor.split('-')[1],
+);
 </script>
 
 <template>
@@ -64,7 +64,7 @@ const anchorHorizontal = computed(() => toastAnchor.value.split('-')[1]);
         />
         <span class="toast__message">{{ t.message }}</span>
         <IconButton
-          v-if="toastPinEnabled"
+          v-if="toastSettingsStore.toastPinEnabled"
           size="sm"
           :active="t.pinned"
           :aria-label="t.pinned ? $t('common.unpin') : $t('common.pin')"

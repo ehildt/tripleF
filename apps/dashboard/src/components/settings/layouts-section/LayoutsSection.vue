@@ -25,23 +25,22 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
-import {
-  TEMPLATE_NAMES,
-  TEMPLATE_PARTS,
-  type TemplateName,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/template-parts.constant';
-import {
-  isTemplatePartVisible,
-  toggleTemplatePartVisible,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/template-parts-settings.state';
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
+import {
+  TEMPLATE_NAMES,
+  TEMPLATE_PARTS,
+  type TemplateName,
+} from '@/stores/template-parts.constant';
+import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings';
 
 import { useSettingsConfig } from '../composables/use-settings-config';
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 import { mapSubtabToItem } from './helpers/map-subtab-to-item.helper';
+
+const templatePartsSettingsStore = useTemplatePartsSettingsStore();
 
 const TEMPLATE_META: Record<
   Exclude<TemplateName, 'text'>,
@@ -122,13 +121,13 @@ const activeParts = computed(
 
 function isPartChecked(partId: string): boolean {
   return activeSubtab.value.templates.every((template) =>
-    isTemplatePartVisible(template, partId),
+    templatePartsSettingsStore.isTemplatePartVisible(template, partId),
   );
 }
 
 function togglePart(partId: string) {
   for (const template of activeSubtab.value.templates) {
-    toggleTemplatePartVisible(template, partId);
+    templatePartsSettingsStore.toggleTemplatePartVisible(template, partId);
   }
 }
 

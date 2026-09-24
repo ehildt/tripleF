@@ -7,12 +7,10 @@ describe('mapPlaylistSnapshot', () => {
     expect(
       mapPlaylistSnapshot({
         name: 'My list',
-        conversationId: 'c1',
         videos: [{ videoUrl: 'https://example.com/v.mp4' }],
       }),
     ).toEqual({
       name: 'My list',
-      conversationId: 'c1',
       videos: [{ videoUrl: 'https://example.com/v.mp4' }],
     });
   });

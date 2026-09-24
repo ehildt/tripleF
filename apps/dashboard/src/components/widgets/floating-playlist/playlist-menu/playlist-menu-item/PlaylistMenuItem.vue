@@ -11,7 +11,7 @@
 import { Pencil, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 
-import IconButton from '../../../../shared/ui/icon-button/IconButton.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 
 const props = defineProps<{
   /** The saved playlist's name. */
