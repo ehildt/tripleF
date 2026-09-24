@@ -8,7 +8,6 @@ describe('mapPlaylistSnapshot', () => {
     expect(
       mapPlaylistSnapshot({
         sessionId: 's',
-        conversationId: 'c',
         name: 'My list',
         videos: [{ url: 'https://example.com' }],
         createdAt: updatedAt,
@@ -16,7 +15,6 @@ describe('mapPlaylistSnapshot', () => {
       }),
     ).toEqual({
       name: 'My list',
-      conversationId: 'c',
       videos: [{ url: 'https://example.com' }],
       updatedAt,
     });

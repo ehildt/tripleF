@@ -1,4 +1,4 @@
-import { harnessResponseToText } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/text/harness-response-to-text.helper';
+import { harnessResponseToText } from '@/stores/helpers/harness/text/harness-response-to-text.helper';
 import type { HarnessResponseData } from '@/types/harness-response-data.model';
 
 import type {

@@ -1,9 +1,9 @@
 import { Activity, Clock, Wallet } from '@lucide/vue';
 
+import type { CapabilityRow } from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.types';
 import { i18n } from '@/i18n/i18n';
 
 import type { BrightDataCapabilities } from '../../settings-config.model';
-import type { CapabilityRow } from '../shared/ui/capabilities-panel/CapabilitiesPanel.types';
 
 /**
  * Bright Data account/usage metadata rows for the capabilities panel. Empty

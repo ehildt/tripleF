@@ -10,16 +10,15 @@
 import { X } from '@lucide/vue';
 import { computed } from 'vue';
 
-import PlaylistTransportBar from '@/components/chat/right-panel/playlist-transport-bar/PlaylistTransportBar.vue';
+import PlaylistTransportBar from '@/components/chat/chat-right-toolbar/tabs/playlist/playlist-transport-bar/PlaylistTransportBar.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
 
-import {
-  hidePlaylistPreview,
-  playlistPreviewVisible,
-} from '../floating-playlist/composables/playlist-settings.state';
 import { useFloatingPlaylistGeometry } from '../floating-playlist/composables/use-floating-playlist-geometry';
+
+const playlistSettingsStore = usePlaylistSettingsStore();
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
@@ -32,7 +31,7 @@ function noop() {
 
 <template>
   <div
-    v-if="playlistPreviewVisible"
+    v-if="playlistSettingsStore.playlistPreviewVisible"
     class="playlist-preview shadow-floating"
     data-playlist-preview
     :style="previewStyle"
@@ -66,7 +65,7 @@ function noop() {
           <IconButton
             size="sm"
             :title="$t('common.closePreview')"
-            @click="hidePlaylistPreview"
+            @click="playlistSettingsStore.hidePlaylistPreview"
           >
             <X />
           </IconButton>

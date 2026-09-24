@@ -1,41 +1,28 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core';
-import type { ComponentPublicInstance } from 'vue';
-import { computed, provide, ref, watch } from 'vue';
+import { computed, onActivated } from 'vue';
 
+import { useChatViewStore } from '@/stores/chat-view';
 import { useConversationStore } from '@/stores/conversation';
+import { useRightToolbarStore } from '@/stores/right-toolbar';
 
-import { useActionBar } from '../../composables/use-action-bar';
 import { useAppViewContext } from '../../composables/use-app-view-context';
-import { useBlink } from '../../composables/use-blink';
 import { useChatContextSize } from '../../composables/use-chat-context-size';
 import { useChatInput } from '../../composables/use-chat-input';
 import { useChatThink } from '../../composables/use-chat-think';
 import { useSocketSubscription } from '../../composables/use-socket-subscription';
 import { useToast } from '../../composables/use-toast';
+import { useLeftToolbarStore } from '../../stores/left-toolbar';
 import { useModelsStore } from '../../stores/models';
-import {
-  getPlaylists,
-  loadPlaylists,
-} from '../widgets/floating-playlist/composables/playlist.state';
-import { playlistMode } from '../widgets/floating-playlist/composables/playlist-settings.state';
-import { conversationHasVideos } from './composables/conversation-has-videos.helper';
+import ChatLeftToolbar from './chat-left-toolbar/ChatLeftToolbar.vue';
+import ChatPromptActionBar from './chat-prompt-action-bar/ChatPromptActionBar.vue';
+import ChatRightToolbar from './chat-right-toolbar/ChatRightToolbar.vue';
+import ChatViewPanel from './chat-view-panel/ChatViewPanel.vue';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
-import { useChatPanel } from './composables/use-chat-panel';
 import { useSearchEngineAvailability } from './composables/use-search-engine-availability';
 import { useSubmit } from './composables/use-submit';
-import {
-  launchedFromPlaylist,
-  launchedVideo,
-} from './exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
-import ChatMainColumn from './main-column/ChatMainColumn.vue';
-import ChatRightPanel from './right-panel/ChatRightPanel.vue';
-import { useAttachmentActions } from './right-panel/composables/use-attachment-actions';
-import { useAttachmentList } from './right-panel/composables/use-attachment-list';
-import { useVideoPlaylist } from './right-panel/composables/use-video-playlist';
-import ChatToolbar from './toolbar/ChatToolbar.vue';
 
 const { socketProvider } = useAppViewContext();
 
@@ -51,19 +38,26 @@ const { arguments_, submit, persistArguments } = useSubmit({
   isRoomConnected,
 });
 
-const { actionBarRef } = useActionBar();
-
 const {
   searchEngineState,
   searchSources,
   eodhdState,
+  refresh: refreshSearchEngineAvailability,
   toggleSearchEngine,
   toggleSource,
   toggleEodhd,
 } = useSearchEngineAvailability();
 
+// KeepAlive caches Chat across tab switches, so the mount-only fetch in the
+// composable never re-runs after a Settings toggle. Refresh on every
+// activation so newly enabled/disabled engines reflect immediately.
+onActivated(refreshSearchEngineAvailability);
+
 const modelsStore = useModelsStore();
 const conversationStore = useConversationStore();
+const leftToolbarStore = useLeftToolbarStore();
+const rightToolbarStore = useRightToolbarStore();
+const chatViewStore = useChatViewStore();
 const toast = useToast();
 
 const {
@@ -115,118 +109,15 @@ const {
   onContextSizeOpen,
 } = useChatDropdowns();
 
-const brainBlink = useBlink();
-provide('brainBlink', brainBlink);
+const hasNoModelSelected = computed(() => leftToolbarStore.hasNoModelSelected);
 
-const toolbarRef = ref<InstanceType<typeof ChatToolbar> | null>(null);
-const mainColumnRef = ref<InstanceType<typeof ChatMainColumn> | null>(null);
-const chatListRef = computed(
-  () => mainColumnRef.value?.exchangeListRef ?? null,
-);
-
-const activeUserExchangeId = computed(
-  () => mainColumnRef.value?.activeUserExchangeId ?? null,
-);
-
-const hasNoModelSelected = computed(
-  () => !(conversation.value?.model || toolbarRef.value?.selectedModel),
-);
-
-const supportsVision = computed(() => toolbarRef.value?.supportsVision ?? true);
+const supportsVision = computed(() => leftToolbarStore.supportsVision);
 
 const isFileSelectDisabled = computed(
   () => hasNoModelSelected.value || !supportsVision.value,
 );
 
-const activeConversationId = computed(() => {
-  if (!conversation.value?.id) return '';
-  return conversationStore.getConversationId(conversation.value.id);
-});
-
-const attachedFiles = computed(() => toolbarRef.value?.selectedFiles ?? []);
-
-const uploadedImagesForConversation = computed(() => {
-  if (!conversation.value?.id || !activeConversationId.value) return [];
-  return conversationStore.getUploadedImagesForConversation(
-    conversation.value.id,
-    activeConversationId.value,
-  );
-});
-
-const uploadedDocumentsForConversation = computed(() => {
-  if (!conversation.value?.id || !activeConversationId.value) return [];
-  return conversationStore.getUploadedDocumentsForConversation(
-    conversation.value.id,
-    activeConversationId.value,
-  );
-});
-
-const { attachments, hasAttachments } = useAttachmentList({
-  attachedFiles,
-  uploadedImages: uploadedImagesForConversation,
-  uploadedDocuments: uploadedDocumentsForConversation,
-});
-
-const {
-  onPromptClick,
-  triggerFileSelect,
-  onRemoveAttachedFile,
-  onToggleAttachedFileSelected,
-} = useChatActions({
-  chatListRef,
-  userExchanges,
-  toolbarRef,
-  hasNoModelSelected,
-  supportsVision,
-});
-
-const { removeAttachment, toggleAttachment, removePage } = useAttachmentActions(
-  {
-    attachments,
-    attachedFiles,
-    conversation,
-    activeConversationId,
-    removePendingFile: onRemoveAttachedFile,
-    togglePendingFile: onToggleAttachedFileSelected,
-  },
-);
-
-// The playlist is scoped to the active conversation: the active playlist's
-// videos are the queue, and switching playlists swaps them.
-const { playlistVideos } = useVideoPlaylist();
-
-// Load the active conversation's playlists from the database so the playlist
-// tab can appear even before the panel mounts.
-watch(conversationId, () => void loadPlaylists(), {
-  immediate: true,
-});
-
-// In floating mode the playlist lives in the app-level window (Settings →
-// Widgets → Playlist): the right panel drops its playlist tab entirely.
-const panelPlaylistVideos = computed(() =>
-  playlistMode.value === 'floating' ? [] : playlistVideos.value,
-);
-// The player shows when it has anything to act on: an added video, a
-// playlist to load from an empty queue, a playlist video currently playing,
-// or — in docked mode — a conversation that contains videos (so the empty
-// state and its hints are reachable).
-const hasPanelPlaylist = computed(
-  () =>
-    panelPlaylistVideos.value.length > 0 ||
-    getPlaylists().length > 0 ||
-    (launchedFromPlaylist.value && Boolean(launchedVideo.value)) ||
-    (playlistMode.value !== 'floating' &&
-      conversationHasVideos(conversation.value)),
-);
-
-const { rightPanelView, selectPanelView } = useChatPanel(
-  hasAttachments,
-  computed(() => userExchanges.value.length > 0),
-  hasPanelPlaylist,
-  computed(() => panelPlaylistVideos.value.length),
-  computed(() => attachments.value.length),
-  computed(() => messageListItems.value.length),
-);
+const { onPromptClick } = useChatActions({ userExchanges });
 
 const { copy } = useClipboard({ legacy: true });
 
@@ -234,14 +125,6 @@ function handleCopyHistoryItem(index: number) {
   const content = messageListItems.value[index]?.content;
   if (content) copy(content);
 }
-
-const shouldShowRightPanel = computed(
-  () =>
-    conversation.value !== null &&
-    (hasAttachments.value ||
-      hasPanelPlaylist.value ||
-      userExchanges.value.length > 0),
-);
 
 const currentThinkValue = computed(() => conversation.value?.think || 'medium');
 
@@ -257,81 +140,66 @@ function onRetry(text: string) {
   return submit(text);
 }
 
-function onSetActionBarRef(el: Element | ComponentPublicInstance | null) {
-  actionBarRef.value = el as HTMLElement | null;
-}
-
 function onDeleteConversation(id: string) {
-  toolbarRef.value?.deleteConversation?.(id);
+  void leftToolbarStore.deleteConversation(id);
 }
-
-defineExpose({ actionBarRef });
 </script>
 
 <template>
-  <ChatToolbar
-    ref="toolbarRef"
+  <ChatLeftToolbar
     class="lg:col-span-2 lg:col-start-1 min-w-0 h-fit lg:sticky lg:top-12 z-50"
     :chat-active="true"
-    :prompt-focused="false"
   />
 
-  <ChatMainColumn
-    ref="mainColumnRef"
-    class="lg:col-span-8 lg:col-start-3 min-w-0 h-fit lg:sticky lg:top-12"
-    :conversation-id="conversationId"
-    :value="arguments_"
-    :think-options="filteredThinkOptions"
-    :think-value="currentThinkValue"
-    :context-size-options="filteredContextSizeOptions"
-    :context-size-value="currentContextSizeValue"
-    :default-context-size="defaultContextSize"
-    :format-context-size="formatContextSize"
-    :is-disabled="hasNoModelSelected"
-    :is-file-select-disabled="isFileSelectDisabled"
-    :file-select-disabled-reason="
-      !supportsVision ? 'Selected model does not support images' : undefined
-    "
-    :search-engine-state="searchEngineState"
-    :search-sources="searchSources"
-    :eodhd-state="eodhdState"
-    :set-action-bar-ref="onSetActionBarRef"
-    :set-think-dropdown-ref="setThinkDropdownRef"
-    :set-context-size-dropdown-ref="setContextSizeDropdownRef"
-    :retry-handler="onRetry"
-    @input="onPromptInput"
-    @keydown="onCollapsedKeydown"
-    @focus="onPromptFocus"
-    @select-think="selectThink"
-    @select-context-size="selectContextSize"
-    @open-think="onThinkOpen"
-    @open-context-size="onContextSizeOpen"
-    @disabled-hover-start="brainBlink.start"
-    @disabled-hover-end="brainBlink.stop"
-    @file-select="triggerFileSelect"
-    @toggle-search-engine="toggleSearchEngine"
-    @toggle-source="toggleSource"
-    @toggle-eodhd="toggleEodhd"
-    @delete-conversation="onDeleteConversation"
-    @scroll="selectPanelView('history')"
-  />
+  <div class="lg:col-span-8 lg:col-start-3 min-w-0 h-fit lg:sticky lg:top-12">
+    <ChatViewPanel
+      :compact="true"
+      :retry-handler="onRetry"
+      @delete-conversation="onDeleteConversation"
+      @scroll="rightToolbarStore.selectView('history')"
+    />
 
-  <ChatRightPanel
-    v-if="shouldShowRightPanel"
+    <ChatPromptActionBar
+      :conversation-id="conversationId"
+      :value="arguments_"
+      :think-options="filteredThinkOptions"
+      :think-value="currentThinkValue"
+      :context-size-options="filteredContextSizeOptions"
+      :context-size-value="currentContextSizeValue"
+      :default-context-size="defaultContextSize"
+      :format-context-size="formatContextSize"
+      :is-disabled="hasNoModelSelected"
+      :is-file-select-disabled="isFileSelectDisabled"
+      :file-select-disabled-reason="
+        !supportsVision ? 'Selected model does not support images' : undefined
+      "
+      :search-engine-state="searchEngineState"
+      :search-sources="searchSources"
+      :eodhd-state="eodhdState"
+      :set-think-dropdown-ref="setThinkDropdownRef"
+      :set-context-size-dropdown-ref="setContextSizeDropdownRef"
+      @input="onPromptInput"
+      @keydown="onCollapsedKeydown"
+      @focus="onPromptFocus"
+      @select-think="selectThink"
+      @select-context-size="selectContextSize"
+      @open-think="onThinkOpen"
+      @open-context-size="onContextSizeOpen"
+      @disabled-hover-start="leftToolbarStore.startBrainBlink"
+      @disabled-hover-end="leftToolbarStore.stopBrainBlink"
+      @toggle-search-engine="toggleSearchEngine"
+      @toggle-source="toggleSource"
+      @toggle-eodhd="toggleEodhd"
+    />
+  </div>
+
+  <ChatRightToolbar
+    v-if="rightToolbarStore.shouldShow"
     class="lg:col-span-2 lg:col-start-11 min-w-0 h-fit lg:sticky lg:top-12"
-    :attachments="attachments"
-    :conversation="conversation"
     :message-list-items="messageListItems"
     :can-merge="canMerge"
     :merge-armed="mergeArmed"
-    :playlist-videos="panelPlaylistVideos"
-    :conversation-id="conversationId"
-    :right-panel-view="rightPanelView"
-    :active-user-exchange-id="activeUserExchangeId"
-    @select-view="selectPanelView"
-    @remove-attachment="removeAttachment"
-    @toggle-attachment="toggleAttachment"
-    @remove-page="removePage"
+    :active-user-exchange-id="chatViewStore.activeUserExchangeId"
     @prompt-click="onPromptClick"
     @copy="handleCopyHistoryItem"
     @toggle-include="toggleUserExchangeIncluded"

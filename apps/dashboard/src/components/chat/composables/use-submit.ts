@@ -1,19 +1,13 @@
 import { computed, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
-import { useMergeSelection } from '@/components/chat/exchange-list/composables/use-merge-selection';
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
 import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
 import { buildModelVisionWarning } from '@/components/chat/helpers/build-model-vision-warning.helper';
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
 import { classifySelectedFiles } from '@/components/chat/helpers/classify-selected-files.helper';
+import { useMergeSelection } from '@/components/chat/shared/composables/use-merge-selection';
 import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
-import {
-  clearPendingFilesForConversation,
-  makeKey,
-  pendingFilesByConversation,
-} from '@/composables/attached-files.state';
-import { markMergePending } from '@/composables/merge-selection.state';
 import {
   TOAST_KEY_CONTEXT_FULL,
   TOAST_KEY_MODEL_NO_IMAGES,
@@ -21,8 +15,10 @@ import {
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
+import { useAttachedFilesStore } from '@/stores/attached-files';
 import type { Exchange, UploadedDocument } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
+import { useMergeSelectionStore } from '@/stores/merge-selection';
 import { useModelsStore } from '@/stores/models';
 import type {
   ConversationMetadata,
@@ -302,10 +298,10 @@ export function useSubmit(options: UseSubmitOptions) {
     ensureSocketSubscription(event, room);
     const socket = socketProvider.getSocket();
 
-    const pendingEntries =
-      pendingFilesByConversation.value.get(
-        makeKey(sid ?? '', conversationId),
-      ) ?? [];
+    const pendingEntries = useAttachedFilesStore().pendingFilesFor(
+      sid ?? '',
+      conversationId,
+    );
     const selectedEntries = pendingEntries.filter(
       (entry) => entry.isSelected && entry.conversationId === conversationId,
     );
@@ -408,7 +404,7 @@ export function useSubmit(options: UseSubmitOptions) {
     // pending merge — marking the sources as merged respectively leaving
     // them untouched for a retry.
     if (sid && isMergeSubmit) {
-      markMergePending(sid, requestId);
+      useMergeSelectionStore().markMergePending(sid, requestId);
     }
 
     addCrossSessionExchanges(
@@ -519,7 +515,10 @@ export function useSubmit(options: UseSubmitOptions) {
       if (sid) {
         conversationStore.setUploadedImages(sid, referencedImages);
         conversationStore.setUploadedDocuments(sid, newDocuments);
-        clearPendingFilesForConversation(sid, conversationId);
+        useAttachedFilesStore().clearPendingFilesForConversation(
+          sid,
+          conversationId,
+        );
         conversationStore.setFiles(sid, []);
       }
     } catch (e: unknown) {

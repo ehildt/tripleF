@@ -8,14 +8,14 @@
 import { Activity, KeyRound, Server } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import InputText from '@/components/shared/ui/input-text/InputText.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import { useAppStore } from '@/stores/app';
 
-import SectionHeader from '../../shared/ui/section-header/SectionHeader.vue';
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
 import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import { useOllamaConnection } from './composables/use-ollama-connection';

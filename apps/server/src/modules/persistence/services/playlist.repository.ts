@@ -35,13 +35,6 @@ export class PlaylistRepository implements OnModuleInit, OnModuleDestroy {
     this._prisma = null;
   }
 
-  async findManyByConversation(sessionId: string, conversationId: string) {
-    return this.prisma.harnessPlaylist.findMany({
-      where: { sessionId, conversationId },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
   async findManyBySession(sessionId: string) {
     return this.prisma.harnessPlaylist.findMany({
       where: { sessionId },
@@ -49,52 +42,38 @@ export class PlaylistRepository implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async findById(sessionId: string, conversationId: string, name: string) {
+  async findById(sessionId: string, name: string) {
     return this.prisma.harnessPlaylist.findUnique({
       where: {
-        sessionId_conversationId_name: {
+        sessionId_name: {
           sessionId,
-          conversationId,
           name,
         },
       },
     });
   }
 
-  async upsert(
-    sessionId: string,
-    conversationId: string,
-    name: string,
-    videos: Prisma.InputJsonValue,
-  ) {
+  async upsert(sessionId: string, name: string, videos: Prisma.InputJsonValue) {
     return this.prisma.harnessPlaylist.upsert({
       where: {
-        sessionId_conversationId_name: {
+        sessionId_name: {
           sessionId,
-          conversationId,
           name,
         },
       },
-      create: { sessionId, conversationId, name, videos },
+      create: { sessionId, name, videos },
       update: { videos },
     });
   }
 
-  async delete(sessionId: string, conversationId: string, name: string) {
+  async delete(sessionId: string, name: string) {
     return this.prisma.harnessPlaylist.delete({
       where: {
-        sessionId_conversationId_name: {
+        sessionId_name: {
           sessionId,
-          conversationId,
           name,
         },
       },
-    });
-  }
-
-  async deleteByConversation(sessionId: string, conversationId: string) {
-    return this.prisma.harnessPlaylist.deleteMany({
-      where: { sessionId, conversationId },
     });
   }
 }

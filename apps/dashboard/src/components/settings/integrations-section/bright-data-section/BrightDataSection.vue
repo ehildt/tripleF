@@ -11,6 +11,8 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import CapabilitiesPanel from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.vue';
+import ProviderSection from '@/components/settings/integrations-section/shared/ui/provider-section/ProviderSection.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import InputText from '@/components/shared/ui/input-text/InputText.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
@@ -19,8 +21,6 @@ import { i18n } from '@/i18n/i18n';
 import { useApiKeyForm } from '../../composables/use-api-key-form';
 import type { BrightDataConfig } from '../../settings-config.model';
 import { buildBrightDataCapabilityRows } from '../helpers/build-bright-data-capability-rows.helper';
-import CapabilitiesPanel from '../shared/ui/capabilities-panel/CapabilitiesPanel.vue';
-import ProviderSection from '../shared/ui/provider-section/ProviderSection.vue';
 
 const props = defineProps<{
   config: BrightDataConfig;

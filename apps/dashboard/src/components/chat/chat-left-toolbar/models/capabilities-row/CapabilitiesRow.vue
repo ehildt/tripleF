@@ -1,0 +1,23 @@
+<script setup lang="ts">
+import CapabilityBadge from '@/components/shared/ui/capability-badge/CapabilityBadge.vue';
+
+import type { CapabilitiesRowProps } from './CapabilitiesRow.types';
+
+defineProps<CapabilitiesRowProps>();
+</script>
+
+<template>
+  <div class="capabilities-row">
+    <CapabilityBadge v-for="cap in capabilities" :key="cap" :capability="cap" />
+  </div>
+</template>
+
+<style scoped>
+.capabilities-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  padding: var(--spacing-2);
+}
+</style>

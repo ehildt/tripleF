@@ -8,7 +8,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import Tooltip from '../../../../shared/ui/tooltip/Tooltip.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 const props = withDefaults(
   /* eslint-disable vue/require-default-prop -- fallbacks resolved reactively below so they track locale changes */

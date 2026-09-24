@@ -9,7 +9,7 @@
  */
 import { Minus, MirrorRectangular, X } from '@lucide/vue';
 
-import PlaylistToggleButton from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
+import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
 
 import Marquee from '../marquee/Marquee.vue';
 import MotionIcon from '../motion-icon/MotionIcon.vue';

@@ -37,21 +37,7 @@ Use this skill before making framework-level changes so implementations follow o
 
 ## Monorepo Layout
 
-```
-.
-├── package.json              # Root workspace manifest
-├── pnpm-workspace.yaml       # Workspace definition
-├── pnpm-lock.yaml            # Lockfile (do not edit manually)
-├── compose.yml               # App services (server, dashboard)
-├── infra.compose.yml         # Infra services (postgres, minio, keydb)
-├── server/                   # NestJS backend
-│   ├── package.json
-│   ├── prisma/
-│   └── src/
-└── dashboard/                # Vue 3 frontend
-    ├── package.json
-    └── src/
-```
+The repository root holds the workspace manifest (`package.json`), the workspace definition (`pnpm-workspace.yaml`), the lockfile (never edit by hand), and two compose files (app services; infra services). The two workspaces are `server/` (NestJS backend: `package.json`, `prisma/`, `src/`) and `dashboard/` (Vue 3 frontend: `package.json`, `src/`).
 
 ## Local Development
 

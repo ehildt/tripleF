@@ -1,5 +1,5 @@
-import type { AttachedFileEntry } from '@/composables/attached-files.state.types';
 import type { UploadedDocument } from '@/stores/conversation';
+import type { AttachedFileEntry } from '@/types/attached-files.model';
 
 /** Convert a pending document entry into an uploaded document. */
 export function mapDocumentEntry(

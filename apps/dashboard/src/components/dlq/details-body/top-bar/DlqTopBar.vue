@@ -2,15 +2,15 @@
 import { Brain, CircleGauge, Network, Radio, Tag } from '@lucide/vue';
 import { computed, toRef } from 'vue';
 
+import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import InputSelect from '@/components/shared/ui/input-select/InputSelect.vue';
+import InputText from '@/components/shared/ui/input-text/InputText.vue';
+import ModelSelectField from '@/components/shared/ui/model-select-field/ModelSelectField.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useModelsStore } from '../../../../stores/models';
-import FieldCard from '../../../shared/ui/field-card/FieldCard.vue';
-import FieldGrid from '../../../shared/ui/field-grid/FieldGrid.vue';
-import InputSelect from '../../../shared/ui/input-select/InputSelect.vue';
-import InputText from '../../../shared/ui/input-text/InputText.vue';
-import ModelSelectField from '../../../shared/ui/model-select-field/ModelSelectField.vue';
-import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 import { useDlqTopBarFilters } from './composables/use-dlq-top-bar-filters';
 
 const props = defineProps<{

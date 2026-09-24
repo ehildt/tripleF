@@ -4,14 +4,14 @@ import { useClipboard } from '@vueuse/core';
 import { computed, ref, toRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
+import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
+import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
+import TabPanel from '@/components/shared/ui/tab-panel/TabPanel.vue';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { formatBody } from '@/utils/format-body.helper';
 
-import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.vue';
-import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
-import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
-import PanelLayout from '../../shared/ui/panel-layout/PanelLayout.vue';
-import TabPanel from '../../shared/ui/tab-panel/TabPanel.vue';
 import { useDlqDetailsState } from './composables/use-dlq-details-state';
 import { useDlqFailureText } from './composables/use-dlq-failure-text';
 import DlqMetadataSection from './metadata-section/DlqMetadataSection.vue';

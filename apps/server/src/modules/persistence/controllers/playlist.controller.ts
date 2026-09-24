@@ -24,21 +24,11 @@ export class PlaylistController {
     return this.playlistService.listAllPlaylists(params.sessionId);
   }
 
-  @Get(':sessionId/:conversationId')
-  @ApiOperation({ summary: 'List playlists for a conversation' })
-  async list(@Param() params: PlaylistParamsDto) {
-    return this.playlistService.listPlaylists(
-      params.sessionId,
-      params.conversationId!,
-    );
-  }
-
-  @Get(':sessionId/:conversationId/:name')
+  @Get(':sessionId/:name')
   @ApiOperation({ summary: 'Get one playlist by name' })
   async getOne(@Param() params: PlaylistParamsDto) {
     const playlist = await this.playlistService.getPlaylist(
       params.sessionId,
-      params.conversationId!,
       params.name!,
     );
 
@@ -47,7 +37,7 @@ export class PlaylistController {
     return playlist;
   }
 
-  @Put(':sessionId/:conversationId/:name')
+  @Put(':sessionId/:name')
   @ApiOperation({ summary: 'Create or update a playlist' })
   async upsert(
     @Param() params: PlaylistParamsDto,
@@ -55,13 +45,12 @@ export class PlaylistController {
   ) {
     return this.playlistService.savePlaylist(
       params.sessionId,
-      params.conversationId!,
       params.name!,
       body.videos,
     );
   }
 
-  @Put(':sessionId/:conversationId/:name/rename')
+  @Put(':sessionId/:name/rename')
   @ApiOperation({ summary: 'Rename a playlist' })
   async rename(
     @Param() params: PlaylistParamsDto,
@@ -69,7 +58,6 @@ export class PlaylistController {
   ) {
     const renamed = await this.playlistService.renamePlaylist(
       params.sessionId,
-      params.conversationId!,
       params.name!,
       body.newName,
     );
@@ -79,13 +67,9 @@ export class PlaylistController {
     return renamed;
   }
 
-  @Delete(':sessionId/:conversationId/:name')
+  @Delete(':sessionId/:name')
   @ApiOperation({ summary: 'Delete a playlist' })
   async delete(@Param() params: PlaylistParamsDto) {
-    return this.playlistService.deletePlaylist(
-      params.sessionId,
-      params.conversationId!,
-      params.name!,
-    );
+    return this.playlistService.deletePlaylist(params.sessionId, params.name!);
   }
 }

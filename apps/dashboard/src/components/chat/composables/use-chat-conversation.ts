@@ -1,16 +1,16 @@
 import { computed } from 'vue';
 
+import { useMergeSelection } from '@/components/chat/shared/composables/use-merge-selection';
 import { useConversationStore } from '@/stores/conversation';
 
 import { useModelsStore } from '../../../stores/models';
-import { useMergeSelection } from '../exchange-list/composables/use-merge-selection';
 import { mapExchangeToListItem } from './helpers/map-exchange-to-list-item.helper';
 import { useBranchExchange } from './use-branch-exchange';
 
 /**
  * Maps the active conversation and its selected model into the reactive
  * values the chat orchestrator needs for the exchange list, the prompt
- * action bar, and the right-side panel.
+ * action bar, and the right toolbar.
  */
 export function useChatConversation() {
   const conversationStore = useConversationStore();

@@ -1,9 +1,9 @@
+import { buildBranchExchanges } from '@/components/chat/shared/helpers/build-branch-exchanges.helper';
 import type { Exchange } from '@/stores/conversation';
 import { useConversationStore } from '@/stores/conversation';
 import { useSocketStore } from '@/stores/socket';
 import { createId } from '@/utils/id.helper';
 
-import { buildBranchExchanges } from '../exchange-list/helpers/build-branch-exchanges.helper';
 import { mapExchangeToNewSession } from './helpers/map-exchange-to-new-session.helper';
 
 /**

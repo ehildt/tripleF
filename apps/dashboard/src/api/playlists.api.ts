@@ -20,28 +20,14 @@ export async function fetchAllPlaylists(
   return (await res.json()) as PlaylistSnapshot[];
 }
 
-export async function fetchPlaylists(
-  sessionId: string,
-  conversationId: string,
-): Promise<PlaylistSnapshot[]> {
-  const res = await fetch(
-    getApiUrl(
-      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}`,
-    ),
-  );
-  if (!res.ok) throw new Error(`Failed to list playlists: ${res.status}`);
-  return (await res.json()) as PlaylistSnapshot[];
-}
-
 export async function savePlaylist(
   sessionId: string,
-  conversationId: string,
   name: string,
   videos: Array<Record<string, unknown>>,
 ): Promise<void> {
   const res = await fetch(
     getApiUrl(
-      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}/${encodeSegment(name)}`,
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(name)}`,
     ),
     {
       method: 'PUT',
@@ -54,13 +40,12 @@ export async function savePlaylist(
 
 export async function renamePlaylist(
   sessionId: string,
-  conversationId: string,
   name: string,
   newName: string,
 ): Promise<void> {
   const res = await fetch(
     getApiUrl(
-      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}/${encodeSegment(name)}/rename`,
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(name)}/rename`,
     ),
     {
       method: 'PUT',
@@ -73,12 +58,11 @@ export async function renamePlaylist(
 
 export async function deletePlaylist(
   sessionId: string,
-  conversationId: string,
   name: string,
 ): Promise<void> {
   const res = await fetch(
     getApiUrl(
-      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(conversationId)}/${encodeSegment(name)}`,
+      `/api/v1/playlists/${encodeSegment(sessionId)}/${encodeSegment(name)}`,
     ),
     { method: 'DELETE' },
   );

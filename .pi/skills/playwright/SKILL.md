@@ -37,12 +37,10 @@ Browser automation for the harness's AI models via the official [Playwright MCP]
 
 ## Operations
 
-```bash
-docker compose up -d playwright-mcp                   # start / first pull of mcr.microsoft.com/playwright/mcp
-docker logs playwright-mcp                            # MCP requests hitting the sidecar
-docker logs server 2>&1 | grep "browser tools"        # expect: Connected to http://playwright-mcp:8931/mcp — N browser tools exposed
-docker compose restart server                         # re-read server/.env, reconnect at bootstrap
-```
+- Start (and first pull of the image): `docker compose up -d playwright-mcp`.
+- Watch MCP traffic hitting the sidecar: `docker logs playwright-mcp`.
+- Confirm the server connected: the server log should show it connected to the sidecar's MCP URL and how many browser tools were exposed (`docker logs server` and grep for the browser-tools message).
+- Reload server env config after changing `server/.env`: `docker compose restart server` so the client reconnects at bootstrap.
 
 Env knobs (`server/.env`; recreate the server container after changes):
 
@@ -52,14 +50,7 @@ Env knobs (`server/.env`; recreate the server container after changes):
 
 ## Using it (manual test prompts)
 
-Browse explicitly so the intent classifier prefers `browser_*` over the cheaper search/fetch tools:
-
-```
-open https://example.com and tell me the page heading
-open the hacker news front page and summarize the top 5 stories
-go to https://demo.playwright.dev/todomvc, add two todos, and check the counter
-open http://dashboard:5173/dashboard/ and report any console errors or failed network requests
-```
+When testing manually, write the prompt so the intent classifier prefers `browser_*` over the cheaper search/fetch tools: name an explicit URL and an explicit action ("open https://example.com and …"), and point browser prompts at container hostnames with the `/dashboard/` base path for local UI checks.
 
 ## Reaching the dashboard from the sidecar
 

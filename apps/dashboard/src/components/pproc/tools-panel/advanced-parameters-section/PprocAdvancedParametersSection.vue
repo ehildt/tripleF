@@ -14,9 +14,8 @@ import {
 } from '@lucide/vue';
 
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
-
-import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
 
 const store = usePreprocessingStore();
 

@@ -7,7 +7,6 @@ export function mapPlaylistSnapshot(
 ): PlaylistSnapshot {
   return {
     name: playlist.name,
-    conversationId: playlist.conversationId,
     videos: playlist.videos as unknown[],
     updatedAt: playlist.updatedAt,
   };

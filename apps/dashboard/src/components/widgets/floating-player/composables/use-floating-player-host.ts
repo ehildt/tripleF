@@ -1,32 +1,11 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 
-import {
-  dockedAnchorCandidate,
-  dockedAnchorElement,
-  dockPlayback,
-  engagePlayback,
-  forceShowPlayer,
-  latchFloating,
-  playbackDockMode,
-  visibleAnchorCandidate,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/playback-anchor.state';
-import {
-  popoutAutoDock,
-  popoutEnabled,
-  popoutHideOnPlaylist,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import { usePausablePlayer } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-pausable-player';
-import { usePopupGeometry } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-popup-geometry';
-import {
-  activePlaybackPlaying,
-  floatingPopupOpacity,
-  launchedFromPlaylist,
-  launchedVideo,
-  playlistAutoplayEnabled,
-  playNextPlaylistVideo,
-  stopActivePlayback,
-} from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/video-playback.state';
+import { usePausablePlayer } from '@/composables/use-pausable-player';
+import { usePopupGeometry } from '@/composables/use-popup-geometry';
 import { useConversationStore } from '@/stores/conversation';
+import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
+import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import { useVideoPlaybackStore } from '@/stores/video-playback';
 
 /**
  * State for the standalone floating player host — the single mounted player
@@ -49,16 +28,26 @@ import { useConversationStore } from '@/stores/conversation';
  * comes from usePausablePlayer.
  */
 export function useFloatingPlayerHost() {
+  const playbackAnchorStore = usePlaybackAnchorStore();
+  const popoutSettingsStore = usePopoutSettingsStore();
+  const videoPlaybackStore = useVideoPlaybackStore();
+  const conversationStore = useConversationStore();
+
   const { popupStyle, startDrag, startResize, setOpacity } = usePopupGeometry();
 
+  const launchedVideo = computed(() => videoPlaybackStore.launchedVideo);
   const launchedVideoUrl = computed(() => launchedVideo.value?.videoUrl ?? '');
   const { playerSrc, isDirectVideo, isUnembeddable, setPlayerElement } =
     usePausablePlayer(launchedVideoUrl, undefined, onVideoEnded);
 
   /** Playlist autoplay: an ended video hands over to the next queue entry. */
   function onVideoEnded() {
-    if (playlistAutoplayEnabled.value && launchedFromPlaylist.value)
-      playNextPlaylistVideo();
+    if (
+      videoPlaybackStore.playlistAutoplayEnabled &&
+      videoPlaybackStore.launchedFromPlaylist
+    ) {
+      videoPlaybackStore.playNextPlaylistVideo();
+    }
   }
 
   /** Autoplay on launch where the provider allows it. */
@@ -72,12 +61,14 @@ export function useFloatingPlayerHost() {
   });
 
   const opacityPercent = computed(() =>
-    Math.round(floatingPopupOpacity.value * 100),
+    Math.round(videoPlaybackStore.floatingPopupOpacity * 100),
   );
 
   // ---------- docked-inline vs floating vs hidden ----------
 
-  const dockedInline = computed(() => dockedAnchorElement.value !== null);
+  const dockedInline = computed(
+    () => playbackAnchorStore.dockedAnchorElement !== null,
+  );
 
   /**
    * Popout autodock off: once the anchor is lost, latch into floating mode
@@ -86,33 +77,44 @@ export function useFloatingPlayerHost() {
    * optimistic-in-view until the observer's first callback.
    */
   watch(
-    [visibleAnchorCandidate, playbackDockMode],
+    [
+      () => playbackAnchorStore.visibleAnchorCandidate,
+      () => playbackAnchorStore.playbackDockMode,
+    ],
     () => {
       if (
-        popoutEnabled.value &&
-        !popoutAutoDock.value &&
-        playbackDockMode.value === 'auto' &&
+        popoutSettingsStore.popoutEnabled &&
+        !popoutSettingsStore.popoutAutoDock &&
+        playbackAnchorStore.playbackDockMode === 'auto' &&
         launchedVideo.value &&
-        !visibleAnchorCandidate.value
+        !playbackAnchorStore.visibleAnchorCandidate
       ) {
-        latchFloating();
+        playbackAnchorStore.latchFloating();
       }
     },
     { immediate: true },
   );
 
   // Resuming paused playback re-follows the anchor (old dismissal re-arm).
-  watch(activePlaybackPlaying, (playing) => {
-    if (playing && playbackDockMode.value === 'dock-dismissed')
-      engagePlayback();
-  });
+  watch(
+    () => videoPlaybackStore.activePlaybackPlaying,
+    (playing) => {
+      if (
+        playing &&
+        playbackAnchorStore.playbackDockMode === 'dock-dismissed'
+      ) {
+        playbackAnchorStore.engagePlayback();
+      }
+    },
+  );
 
   const windowHidden = computed(
     () =>
-      !forceShowPlayer.value &&
-      (playbackDockMode.value === 'dock-dismissed' ||
-        (popoutHideOnPlaylist.value && launchedFromPlaylist.value) ||
-        (!popoutEnabled.value &&
+      !playbackAnchorStore.forceShowPlayer &&
+      (playbackAnchorStore.playbackDockMode === 'dock-dismissed' ||
+        (popoutSettingsStore.popoutHideOnPlaylist &&
+          videoPlaybackStore.launchedFromPlaylist) ||
+        (!popoutSettingsStore.popoutEnabled &&
           Boolean(launchedVideo.value) &&
           !dockedInline.value)),
   );
@@ -120,13 +122,12 @@ export function useFloatingPlayerHost() {
   // A conversation switch while a video is playing always shows the player:
   // re-engage auto-following and override the hide-on-playlist background
   // setting so the window stays visible across the switch.
-  const conversationStore = useConversationStore();
   watch(
     () => conversationStore.activeConversationId,
     () => {
       if (!launchedVideo.value) return;
-      forceShowPlayer.value = true;
-      engagePlayback();
+      playbackAnchorStore.forceShowPlayer = true;
+      playbackAnchorStore.engagePlayback();
     },
   );
 
@@ -162,7 +163,7 @@ export function useFloatingPlayerHost() {
   }
 
   watch(
-    dockedAnchorCandidate,
+    () => playbackAnchorStore.dockedAnchorCandidate,
     (candidate) =>
       candidate
         ? trackAnchor(candidate.el, candidate.scrollRoot)
@@ -233,7 +234,7 @@ export function useFloatingPlayerHost() {
    * running.
    */
   function minimize() {
-    dockPlayback();
+    playbackAnchorStore.dockPlayback();
   }
 
   /**
@@ -241,7 +242,7 @@ export function useFloatingPlayerHost() {
    * launched popup, exactly like the transport bar's dedicated Stop button.
    */
   function stop() {
-    stopActivePlayback();
+    videoPlaybackStore.stopActivePlayback();
   }
 
   return {
