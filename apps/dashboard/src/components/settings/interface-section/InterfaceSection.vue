@@ -7,13 +7,13 @@
  */
 import { ListFilter, PanelsTopLeft, PanelTop, Plug } from '@lucide/vue';
 
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 
-import SectionHeader from '../../shared/ui/section-header/SectionHeader.vue';
 import { useSettingsMenuVisibility } from '../composables/use-settings-menu-visibility';
 import { useSettingsTabVisibility } from '../composables/use-settings-tab-visibility';
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 
 const { isTabVisible, toggleTab } = useSettingsTabVisibility();
 

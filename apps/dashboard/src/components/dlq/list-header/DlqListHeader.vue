@@ -3,12 +3,13 @@ import { CircleAlert, Mail, MailOpen, Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import FilterMenu from '../../shared/ui/filter-menu/FilterMenu.vue';
-import IconButton from '../../shared/ui/icon-button/IconButton.vue';
-import Pagination from '../../shared/ui/pagination/Pagination.vue';
-import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
-import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
-import DlqReloadButton from '../shared/ui/reload-button/DlqReloadButton.vue';
+import DlqReloadButton from '@/components/dlq/shared/ui/reload-button/DlqReloadButton.vue';
+import FilterMenu from '@/components/shared/ui/filter-menu/FilterMenu.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import Pagination from '@/components/shared/ui/pagination/Pagination.vue';
+import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
+import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
+
 import { useExclusiveFilterMenu } from './composables/use-exclusive-filter-menu';
 
 const props = defineProps<{

@@ -10,31 +10,29 @@ import { PictureInPicture2 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
+import { ANCHOR_STYLES } from '@/composables/use-popup-geometry';
+import { usePopoutSettingsStore } from '@/stores/popout-settings';
 
-import {
-  hidePopoutPreview,
-  popoutAnchor,
-  popoutPreviewVisible,
-  popoutShowBarAlways,
-} from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import { ANCHOR_STYLES } from '../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-popup-geometry';
+const popoutSettingsStore = usePopoutSettingsStore();
 
-const anchorStyle = computed(() => ANCHOR_STYLES[popoutAnchor.value]);
+const anchorStyle = computed(
+  () => ANCHOR_STYLES[popoutSettingsStore.popoutAnchor],
+);
 </script>
 
 <template>
   <FloatingPopout
-    v-if="popoutPreviewVisible"
+    v-if="popoutSettingsStore.popoutPreviewVisible"
     class="popout-preview"
     :style="anchorStyle"
     :title="$t('common.examplePopout')"
     :opacity-percent="100"
     :is-in-playlist="false"
-    :bar-always-visible="popoutShowBarAlways"
+    :bar-always-visible="popoutSettingsStore.popoutShowBarAlways"
     minimize-:title="$t('common.minimizePreview')"
     close-:title="$t('common.closePreview')"
-    @minimize="hidePopoutPreview"
-    @close="hidePopoutPreview"
+    @minimize="popoutSettingsStore.hidePopoutPreview"
+    @close="popoutSettingsStore.hidePopoutPreview"
   >
     <div class="popout-preview__media">
       <PictureInPicture2 class="popout-preview__media-icon" />

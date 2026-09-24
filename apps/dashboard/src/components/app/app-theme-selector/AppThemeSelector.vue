@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Moon, Sun, SwatchBook } from '@lucide/vue';
 
-import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
-import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
+import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+
 import { useThemeSelector } from './composables/use-theme-selector';
 
 const themeSelector = useThemeSelector();

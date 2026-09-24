@@ -41,7 +41,7 @@
   - Server `.env.example` documents the new playlist-related env vars
 - 95c4b7c: - New playlist panel with queue management, plus a reusable `CollapsiblePanel` component
   - Settings sections expanded: search-engines, system, widgets (toast/video-popout/tab-menu panels), and a new playlist-preview widget
-  - Floating playlist and playlist-settings state reworked; `use-chat-panel` composable added
+  - Floating playlist and playlist-settings state reworked; `use-right-toolbar-view` composable added
 - 95c4b7c: - Server: playlists persisted to PostgreSQL via a new `HarnessPlaylist` Prisma model and a playlist controller (list by session/conversation, save, rename, delete)
   - Dashboard: `playlists.api` client for the new endpoints; playlist state refactored around server persistence, replacing the browser-only saved-playlists store
 - 5eb1f5c: - Server: PostgreSQL persistence via Prisma — typed client module, config service with Joi validation, and generated client under `src/generated/`

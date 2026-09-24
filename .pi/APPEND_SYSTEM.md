@@ -7,6 +7,10 @@
 - Do **not** run git commands that modify the repository tree (e.g. `git checkout`, `git reset`, `git commit`, `git rebase`, `git merge`, `git cherry-pick`, `git stash`, or any destructive reset). Read-only git commands such as `git status`, `git log`, or `git diff` are acceptable when needed.
 - Do **not** argue with the user. Focus on the current request and move forward; pre-existing errors are treated as leftover context from prior sessions.
 
+# Skills Authoring
+
+- **Skill files contain no code examples — ever.** Skills (`SKILL.md` and any companion guide files) are written in prose only: state the rule, the convention, and the reason. Never include fenced code blocks, code snippets, or copy-paste samples in a skill. If a structure or shape matters, describe it in words (names, ordering, placement, file naming). Inline references to a command name or identifier inside prose (e.g. `pnpm lint`) are fine — the ban is on sample code you could copy-paste. This rule is absolute.
+
 # Project Resources
 
 Pi loads `AGENTS.md` at startup for high-level project context. This project uses a dedicated skill for each domain:
@@ -59,3 +63,4 @@ Before proposing or implementing any non-trivial change, the agent must:
 - When documentation and existing code conflict, verify the intended behavior and follow the documented approach unless there is a project-specific requirement to do otherwise.
 - For official documentation links and project stack guidance, see `./skills/tech-stack/SKILL.md`.
 - For framework-specific conventions, see the relevant skill under `./skills/`.
+- **Check conventions before running the quality gates.** After implementing — and before lint, tests, or Storybook stories — self-review the finished change against the relevant skills (folder structure and naming, props types, CSS tokens and BEM, i18n keys, store/composable boundaries) and report any deviations you find. Passing type-check and lint is not proof the conventions were followed.

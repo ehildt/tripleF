@@ -1802,7 +1802,6 @@ export type HarnessProviderOverrideScalarFieldEnum = (typeof HarnessProviderOver
 
 export const HarnessPlaylistScalarFieldEnum = {
   sessionId: 'sessionId',
-  conversationId: 'conversationId',
   name: 'name',
   videos: 'videos',
   createdAt: 'createdAt',

@@ -4,6 +4,8 @@ coverage
 .depbadge
 TODO.md
 todo.md
+PERF.md
+perf.md
 NOTES.md
 notes.md
 .env
@@ -13,6 +15,8 @@ ollama_data
 *storybook.log
 storybook-static
 .playwright-mcp
+Modelfile 
+.agents
 
 # Nested workspace lockfiles (root pnpm-lock.yaml is the source of truth)
 apps/*/pnpm-lock.yaml

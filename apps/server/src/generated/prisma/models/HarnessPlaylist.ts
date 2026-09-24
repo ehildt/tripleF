@@ -15,11 +15,10 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 /**
  * Model HarnessPlaylist
  * *
- *  * A named playlist scoped to one conversation. Videos are stored as a Json
- *  * array of VideoGalleryItem and belong to the playlist (the active playlist
- *  * is the queue). The compound key is (sessionId, conversationId, name), so
- *  * playlist names are unique per conversation. Rows are purged when their
- *  * conversation is deleted.
+ *  * A named playlist scoped to one session. Videos are stored as a Json array
+ *  * of VideoGalleryItem and belong to the playlist (the active playlist is the
+ *  * queue). The compound key is (sessionId, name), so playlist names are unique
+ *  * per session.
  */
 export type HarnessPlaylistModel = runtime.Types.Result.DefaultSelection<Prisma.$HarnessPlaylistPayload>
 
@@ -31,7 +30,6 @@ export type AggregateHarnessPlaylist = {
 
 export type HarnessPlaylistMinAggregateOutputType = {
   sessionId: string | null
-  conversationId: string | null
   name: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -39,7 +37,6 @@ export type HarnessPlaylistMinAggregateOutputType = {
 
 export type HarnessPlaylistMaxAggregateOutputType = {
   sessionId: string | null
-  conversationId: string | null
   name: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -47,7 +44,6 @@ export type HarnessPlaylistMaxAggregateOutputType = {
 
 export type HarnessPlaylistCountAggregateOutputType = {
   sessionId: number
-  conversationId: number
   name: number
   videos: number
   createdAt: number
@@ -58,7 +54,6 @@ export type HarnessPlaylistCountAggregateOutputType = {
 
 export type HarnessPlaylistMinAggregateInputType = {
   sessionId?: true
-  conversationId?: true
   name?: true
   createdAt?: true
   updatedAt?: true
@@ -66,7 +61,6 @@ export type HarnessPlaylistMinAggregateInputType = {
 
 export type HarnessPlaylistMaxAggregateInputType = {
   sessionId?: true
-  conversationId?: true
   name?: true
   createdAt?: true
   updatedAt?: true
@@ -74,7 +68,6 @@ export type HarnessPlaylistMaxAggregateInputType = {
 
 export type HarnessPlaylistCountAggregateInputType = {
   sessionId?: true
-  conversationId?: true
   name?: true
   videos?: true
   createdAt?: true
@@ -156,7 +149,6 @@ export type HarnessPlaylistGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 
 export type HarnessPlaylistGroupByOutputType = {
   sessionId: string
-  conversationId: string
   name: string
   videos: runtime.JsonValue
   createdAt: Date
@@ -186,7 +178,6 @@ export type HarnessPlaylistWhereInput = {
   OR?: Prisma.HarnessPlaylistWhereInput[]
   NOT?: Prisma.HarnessPlaylistWhereInput | Prisma.HarnessPlaylistWhereInput[]
   sessionId?: Prisma.StringFilter<"HarnessPlaylist"> | string
-  conversationId?: Prisma.StringFilter<"HarnessPlaylist"> | string
   name?: Prisma.StringFilter<"HarnessPlaylist"> | string
   videos?: Prisma.JsonFilter<"HarnessPlaylist">
   createdAt?: Prisma.DateTimeFilter<"HarnessPlaylist"> | Date | string
@@ -195,7 +186,6 @@ export type HarnessPlaylistWhereInput = {
 
 export type HarnessPlaylistOrderByWithRelationInput = {
   sessionId?: Prisma.SortOrder
-  conversationId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   videos?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -203,21 +193,19 @@ export type HarnessPlaylistOrderByWithRelationInput = {
 }
 
 export type HarnessPlaylistWhereUniqueInput = Prisma.AtLeast<{
-  sessionId_conversationId_name?: Prisma.HarnessPlaylistSessionIdConversationIdNameCompoundUniqueInput
+  sessionId_name?: Prisma.HarnessPlaylistSessionIdNameCompoundUniqueInput
   AND?: Prisma.HarnessPlaylistWhereInput | Prisma.HarnessPlaylistWhereInput[]
   OR?: Prisma.HarnessPlaylistWhereInput[]
   NOT?: Prisma.HarnessPlaylistWhereInput | Prisma.HarnessPlaylistWhereInput[]
   sessionId?: Prisma.StringFilter<"HarnessPlaylist"> | string
-  conversationId?: Prisma.StringFilter<"HarnessPlaylist"> | string
   name?: Prisma.StringFilter<"HarnessPlaylist"> | string
   videos?: Prisma.JsonFilter<"HarnessPlaylist">
   createdAt?: Prisma.DateTimeFilter<"HarnessPlaylist"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"HarnessPlaylist"> | Date | string
-}, "sessionId_conversationId_name">
+}, "sessionId_name">
 
 export type HarnessPlaylistOrderByWithAggregationInput = {
   sessionId?: Prisma.SortOrder
-  conversationId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   videos?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -232,7 +220,6 @@ export type HarnessPlaylistScalarWhereWithAggregatesInput = {
   OR?: Prisma.HarnessPlaylistScalarWhereWithAggregatesInput[]
   NOT?: Prisma.HarnessPlaylistScalarWhereWithAggregatesInput | Prisma.HarnessPlaylistScalarWhereWithAggregatesInput[]
   sessionId?: Prisma.StringWithAggregatesFilter<"HarnessPlaylist"> | string
-  conversationId?: Prisma.StringWithAggregatesFilter<"HarnessPlaylist"> | string
   name?: Prisma.StringWithAggregatesFilter<"HarnessPlaylist"> | string
   videos?: Prisma.JsonWithAggregatesFilter<"HarnessPlaylist">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"HarnessPlaylist"> | Date | string
@@ -241,7 +228,6 @@ export type HarnessPlaylistScalarWhereWithAggregatesInput = {
 
 export type HarnessPlaylistCreateInput = {
   sessionId: string
-  conversationId: string
   name: string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -250,7 +236,6 @@ export type HarnessPlaylistCreateInput = {
 
 export type HarnessPlaylistUncheckedCreateInput = {
   sessionId: string
-  conversationId: string
   name: string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -259,7 +244,6 @@ export type HarnessPlaylistUncheckedCreateInput = {
 
 export type HarnessPlaylistUpdateInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
-  conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -268,7 +252,6 @@ export type HarnessPlaylistUpdateInput = {
 
 export type HarnessPlaylistUncheckedUpdateInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
-  conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -277,7 +260,6 @@ export type HarnessPlaylistUncheckedUpdateInput = {
 
 export type HarnessPlaylistCreateManyInput = {
   sessionId: string
-  conversationId: string
   name: string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -286,7 +268,6 @@ export type HarnessPlaylistCreateManyInput = {
 
 export type HarnessPlaylistUpdateManyMutationInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
-  conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -295,22 +276,19 @@ export type HarnessPlaylistUpdateManyMutationInput = {
 
 export type HarnessPlaylistUncheckedUpdateManyInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
-  conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   videos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type HarnessPlaylistSessionIdConversationIdNameCompoundUniqueInput = {
+export type HarnessPlaylistSessionIdNameCompoundUniqueInput = {
   sessionId: string
-  conversationId: string
   name: string
 }
 
 export type HarnessPlaylistCountOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
-  conversationId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   videos?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -319,7 +297,6 @@ export type HarnessPlaylistCountOrderByAggregateInput = {
 
 export type HarnessPlaylistMaxOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
-  conversationId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -327,7 +304,6 @@ export type HarnessPlaylistMaxOrderByAggregateInput = {
 
 export type HarnessPlaylistMinOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
-  conversationId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -337,7 +313,6 @@ export type HarnessPlaylistMinOrderByAggregateInput = {
 
 export type HarnessPlaylistSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   sessionId?: boolean
-  conversationId?: boolean
   name?: boolean
   videos?: boolean
   createdAt?: boolean
@@ -346,7 +321,6 @@ export type HarnessPlaylistSelect<ExtArgs extends runtime.Types.Extensions.Inter
 
 export type HarnessPlaylistSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   sessionId?: boolean
-  conversationId?: boolean
   name?: boolean
   videos?: boolean
   createdAt?: boolean
@@ -355,7 +329,6 @@ export type HarnessPlaylistSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
 
 export type HarnessPlaylistSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   sessionId?: boolean
-  conversationId?: boolean
   name?: boolean
   videos?: boolean
   createdAt?: boolean
@@ -364,21 +337,19 @@ export type HarnessPlaylistSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
 
 export type HarnessPlaylistSelectScalar = {
   sessionId?: boolean
-  conversationId?: boolean
   name?: boolean
   videos?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type HarnessPlaylistOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"sessionId" | "conversationId" | "name" | "videos" | "createdAt" | "updatedAt", ExtArgs["result"]["harnessPlaylist"]>
+export type HarnessPlaylistOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"sessionId" | "name" | "videos" | "createdAt" | "updatedAt", ExtArgs["result"]["harnessPlaylist"]>
 
 export type $HarnessPlaylistPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HarnessPlaylist"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     sessionId: string
-    conversationId: string
     name: string
     videos: runtime.JsonValue
     createdAt: Date
@@ -807,7 +778,6 @@ export interface Prisma__HarnessPlaylistClient<T, Null = never, ExtArgs extends 
  */
 export interface HarnessPlaylistFieldRefs {
   readonly sessionId: Prisma.FieldRef<"HarnessPlaylist", 'String'>
-  readonly conversationId: Prisma.FieldRef<"HarnessPlaylist", 'String'>
   readonly name: Prisma.FieldRef<"HarnessPlaylist", 'String'>
   readonly videos: Prisma.FieldRef<"HarnessPlaylist", 'Json'>
   readonly createdAt: Prisma.FieldRef<"HarnessPlaylist", 'DateTime'>

@@ -1,19 +1,10 @@
 <script setup lang="ts">
-import {
-  computed,
-  onBeforeMount,
-  onMounted,
-  onUnmounted,
-  provide,
-  watch,
-} from 'vue';
+import { onBeforeMount, onMounted, onUnmounted, provide, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import AppFooter from './components/app/app-footer/AppFooter.vue';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
-import { hidePopoutPreview } from './components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
 import FloatingPlayer from './components/widgets/floating-player/FloatingPlayer.vue';
-import { hidePlaylistPreview } from './components/widgets/floating-playlist/composables/playlist-settings.state';
 import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPlaylist.vue';
 import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPreview.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
@@ -25,6 +16,9 @@ import { useDlqStore } from './stores/dlq';
 import { createSocketProvider } from './stores/helpers/socket/create-socket-provider.helper';
 import { useApiMessagesStore } from './stores/messages';
 import { useModelsStore } from './stores/models';
+import { usePlaylistStore } from './stores/playlist';
+import { usePlaylistSettingsStore } from './stores/playlist-settings';
+import { usePopoutSettingsStore } from './stores/popout-settings';
 import { usePreprocessingStore } from './stores/preprocessing';
 import { useSocketStore } from './stores/socket';
 import { useThemeStore } from './stores/theme';
@@ -38,6 +32,15 @@ const themeStore = useThemeStore();
 const socketStore = useSocketStore();
 const dlqStore = useDlqStore();
 const preprocessingStore = usePreprocessingStore();
+const popoutSettingsStore = usePopoutSettingsStore();
+const playlistSettingsStore = usePlaylistSettingsStore();
+const playlistStore = usePlaylistStore();
+
+// Playlists are session-global (keyed by sessionId, not conversation). Load
+// them once at boot so every surface — the chat right toolbar tab and the
+// floating playlist — reads the same hydrated state without refetching on
+// each mount.
+void playlistStore.loadPlaylists();
 
 // Push the persisted preprocessing settings to the server on boot: the
 // server applies preprocessing from its own effective config, so it needs
@@ -59,8 +62,8 @@ scheduleIdle(() => appStore.syncMemoryCognitionFromServer());
 watch(
   () => appStore.activeTab,
   () => {
-    hidePopoutPreview();
-    hidePlaylistPreview();
+    popoutSettingsStore.hidePopoutPreview();
+    playlistSettingsStore.hidePlaylistPreview();
   },
 );
 
@@ -93,21 +96,9 @@ const socketProvider = createSocketProvider(
   apiMessagesStore,
 );
 
-provide(appViewContextKey, {
-  socketProvider,
-  // Store-derived data is provided as computed refs (not unwrapped values)
-  // so route views react to store changes — e.g. selecting a debug request
-  // must update the details panel, and models must appear in the DLQ selector
-  // once they finish loading.
-  viewModels: computed(() => modelsStore.modelNames),
-  debugResults: computed(() => debugStore.debugResults),
-  selectedDebugResult: computed(() => debugStore.selectedDebugResult),
-  clearDebugResults: debugStore.clearDebugResults,
-  selectDebugResult: (result) => {
-    debugStore.selectedDebugResult = result;
-  },
-  selectDebugMarkRead: debugStore.markDebugAsRead,
-});
+// The socket provider is the one app-level service singleton provided via
+// provide/inject; route views consume store state through stores directly.
+provide(appViewContextKey, { socketProvider });
 
 // The route is the source of truth for the active tab; mirror it into the
 // store so non-component logic (e.g. chat-star notifications) can read it.
@@ -159,7 +150,7 @@ onUnmounted(() => {
              burst. Other tabs mount/unmount as before. -->
         <router-view v-slot="{ Component }">
           <KeepAlive :include="['Chat']">
-            <component :is="Component" />
+            <component :is="Component" :key="route.fullPath" />
           </KeepAlive>
         </router-view>
       </div>

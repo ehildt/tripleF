@@ -37,8 +37,10 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
@@ -50,9 +52,6 @@ import type {
   ChatIconKey,
   ScrollMode,
 } from '@/types/app.model';
-
-import SectionHeader from '../../shared/ui/section-header/SectionHeader.vue';
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 
 const appStore = useAppStore();
 

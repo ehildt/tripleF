@@ -5,21 +5,21 @@ description: Vue component architecture, composable design, helper conventions, 
 
 # Vue Component Architecture & Conventions
 
-The full guide with examples and rationale lives in [vue-guide.md](vue-guide.md). This file is the quick reference — use it to check rules before committing.
+The full guide with rules and rationale lives in [vue-guide.md](vue-guide.md). This file is the quick reference — use it to check rules before committing.
 
 ## Quick Rules
 
 1. **Names express intent.** Every variable, function, component, and file name must answer "what does this do?" on its own. No abbreviations, no vague containers.
 2. **Components are presentational:** props in, events out. Store access belongs in composables or the orchestrator, not inside leaf components.
-3. **Composables own stateful logic.** Every `ref`, `computed`, `watch`, and store call moves into a composable with an intentional name. **Complex components, orchestrators, and widgets** have a co-located `.spec.ts`; pure presentational leaves are covered transitively by their parent's spec.
+3. **Composables own component-scoped stateful logic.** Every `ref`, `computed`, `watch`, and store call that is scoped to one component tree moves into a composable with an intentional name. **Shared (cross-component) state does not live in a composable — it lives in a Pinia store (rule 18).** **Complex components, orchestrators, and widgets** have a co-located `.spec.ts`; pure presentational leaves are covered transitively by their parent's spec.
 4. **One pure function per `.helper.ts` file.** Each helper lives in its own file named after the function, inside a `helpers/` folder co-located with its consumer, and every helper **must** have a co-located `.helper.spec.ts` test file. Composables with non-trivial logic also need a `.spec.ts`; trivial wrappers around tested helpers can skip.
 5. **Stories for orchestrators and stateful widgets only.** Orchestrators and interactive widgets get a `.stories.ts` — their visual states are the documentation. Leaf components don't get stories: a leaf that owns interaction logic gets a `.spec.ts`; a pure-markup leaf is covered transitively by its parent's spec. Per-leaf stories only bloat Storybook.
 6. **Scoped CSS with `var()` tokens.** Follow the [CSS skill](../css/SKILL.md) for all styling.
 7. **One feature per file.** A composable does one thing. A component renders one concern. A helper file contains exactly one exported function.
 8. **Co-locate related code.** Composables, helpers, tests, and stories that serve a single component group live next to that group — not in a global `composables/` directory. Only shared composables that are used across the codebase belong in `src/composables/`.
-9. **Each orchestrator gets its own folder.** The orchestrator component (e.g., `ChatToolbar.vue`) lives inside the folder that contains its sub-components, composables, helpers, and stories.
+9. **Each orchestrator gets its own folder.** The orchestrator component (e.g., `ChatLeftToolbar.vue`) lives inside the folder that contains its sub-components, composables, helpers, and stories.
 10. **Each component gets its own folder.** Sub-components live inside their parent's folder. Shared resources go in `shared/` with sub-folders: `shared/ui/`, `shared/composables/`, `shared/helpers/`.
-11. **The parent folder name describes the orchestrator's purpose.** A folder named `chat/exchange/` is wrong — rename to `chat/exchange-list/` so the name matches the orchestrator and follows the kebab-case pattern of sibling folders (`pending-indicator/`, `session-header/`, `toolbar/`).
+11. **The parent folder name describes the orchestrator's purpose.** A folder named `chat/exchange/` is wrong — rename to `chat/exchange-list/` so the name matches the orchestrator and follows the kebab-case pattern of sibling folders (`pending-indicator/`, `session-header/`, `chat-left-toolbar/`).
 12. **Every component group has a main orchestrator in the root.** The main component that wires the group together lives as a sibling of the sub-component folders, not inside one of them. The parent folder's name is the kebab-case form of the main orchestrator's name (e.g. `chat/Chat.vue`, `dlq/Dlq.vue`).
 13. **Don't write wrapper functions that rename a field or delegate to a single call.** A function earns its name only if the call site can't already see what it does — branching, default values, side effects, or domain meaning used in 3+ places. Pure rename-wrappers like `function isResultRead(r) { return store.isRead(r.id) }` add indirection without information. Either inline the call at the use site (`store.isRead(r.id)`) or replace the wrapper with a real abstraction (a named `computed`, a Set/Map binding, a `.helper.ts` predicate with its own tests). If you need a _name_ for the result, name the _binding_ — not a one-line function around it.
 
@@ -30,6 +30,14 @@ The full guide with examples and rationale lives in [vue-guide.md](vue-guide.md)
 14. **Never add barrel files (re-export-only `index.ts`).** Import directly from the file that defines the symbol. A barrel hides where a symbol lives, makes refactors brittle, and is not needed for tree-shaking. The path is the file. See [vue-guide.md §3b](./vue-guide.md#3b-no-barrel-files).
 15. **Props types live in a co-located `.types.ts` file.** No inline `defineProps<{ ... }>()` — extract to a named `XxxProps` interface with JSDoc on each field, in `Xxx.types.ts` next to the component. Composables that derive the component's data import the same props type instead of re-declaring a subset. See [vue-guide.md §1](./vue-guide.md#1-components-presentational-props-in-events-out).
 16. **The orchestrator is thin; template sections become components.** The orchestrator's `<script setup>` is props + store calls that wire child config + one data composable call + template. Every `ref`/`computed`/`watch`/function moves into the composable. Each distinct template block (header, callout, list, panels) becomes a presentational sub-component in its own folder (no leaf story); the orchestrator owns the visibility `v-if`s. See [vue-guide.md §5](./vue-guide.md#5-the-orchestrator-pattern).
+17. **Renaming is all-or-nothing.** When a component or a component-group folder is renamed, update the whole set in one pass: the component `.vue`, its co-located `.types.ts`/`.stories.ts`/`.spec.ts`, the scoped BEM block prefix (see the [CSS skill](../css/SKILL.md)), the Storybook `title`, every import and usage, and any `data-*` attributes or prose comments that name it. Finish by grepping the old identifier across `src` and confirming zero hits — no stale names left behind.
+18. **Shared cross-component state lives in a Pinia store, not a composable or a context.** Menus, selections, subscriptions, pending files, expansion flags — any state more than one component reads or writes belongs in a setup-style store (`defineStore('x', () => { … })`) that owns the state, its actions, and its watchers. Anti-patterns that this rule exists to prevent:
+
+    - a bespoke `provide`/`inject` context that shuttles shared mutable state to children (hidden dependencies, no compile-time guarantee);
+    - a composable that mirrors a store value into its own local `ref` and syncs it back with a `watch` (dual source of truth);
+    - a hand-rolled `*.state.ts` module that holds exported `ref`/`shallowRef` maps (a store without actions/getters/spec).
+
+    Keep `provide`/`inject` only for true app-level service singletons (e.g. the socket provider), and keep composables for component-scoped logic (`useBlink`, `useMenuPosition`). The container/orchestrator reads the store and passes plain props down to leaves.
 
 ## Folder rules (one-liners)
 
@@ -39,11 +47,11 @@ The full guide with examples and rationale lives in [vue-guide.md](vue-guide.md)
 - **Shared resources go in `shared/`** with `ui/`, `composables/`, `helpers/` sub-folders. If only UI, name it `ui/` not `shared/`.
 - **Composables in `composables/` folders**, parallel to `helpers/`. Local composables next to their consumer; `shared/composables/` only for composables used by multiple sub-components.
 - **Helpers in `helpers/` folders**, one function per file. Local helpers next to consumer; shared helpers in `shared/helpers/` at the component group level.
-- **Dropdown menus split into orchestrator + `XxxTrigger`.** The trigger owns the anchor `ref`, `useMenuPosition`, and the `Teleport`, exposing a default slot for the menu body.
+- **Dropdown menus split into orchestrator + `XxxTrigger`.** The trigger owns the anchor `ref`, `useMenuPosition`, the `Teleport`, and a default slot for the menu body; it also renders a fixed transparent `{menu}__backdrop` that emits `close`, so the menu self-closes on an outside click (the slide-over/lightbox pattern) instead of a coordinator-level `onClickOutside` with `[data-*]` ignore selectors.
 
 ## Co-location rule
 
-A file belongs **next to its consumer** (in the component group directory) unless it is **shared across the codebase**. Shared means "imported from more than one unrelated area." See vue-guide.md for the full tree.
+A file belongs **next to its consumer** (in the component group directory) unless it is **shared across the codebase**. Shared means "imported from more than one unrelated area." See vue-guide.md for the full folder structure rules.
 
 ## Naming
 
@@ -88,7 +96,9 @@ The Quick Rules and Folder Rules above are the source of truth. Use this checkli
 - [ ] Orchestrators and stateful widgets have a `.stories.ts`; leaf components don't
 - [ ] CSS uses `var()` tokens, no hardcoded colors, no `@apply`, BEM-style class names
 - [ ] No logic in templates that belongs in script — format data in helpers or computeds
-- [ ] `defineExpose` in the orchestrator is stable (parent consumers don't break when internal names change)
+- [ ] Shared cross-component state lives in a Pinia store — not in a composable, a `provide`/`inject` context, or a `*.state.ts` module (rule 18); a composable never mirrors a store value into a local `ref`
+- [ ] Menus/dropdowns self-close via a fixed transparent `{menu}__backdrop` with a `close` emit — no coordinator-level `onClickOutside` + `[data-*]` ignore list
+- [ ] No `defineExpose` for shared state — consumers read the store directly; `defineExpose` only exposes genuine imperative DOM handles (element refs the parent must own, e.g. a scrollable list), named identically to their variables
 - [ ] Every component group has a main orchestrator in the root (the group's `Chat.vue` / `Dlq.vue` / …)
 - [ ] The parent folder's name is the kebab-case form of the main orchestrator's name
 - [ ] No new `index.ts` barrel files were added; imports go directly to the file that defines the symbol
@@ -96,3 +106,4 @@ The Quick Rules and Folder Rules above are the source of truth. Use this checkli
 - [ ] The orchestrator's script is thin: props type + store wiring + one data composable call
 - [ ] Distinct template blocks are presentational sub-components with their own folder (no leaf stories); the orchestrator owns the visibility `v-if`s
 - [ ] Toast copy follows the style guide above: friendly i18n text for users, technical details only via `toast.debug`
+- [ ] A rename updated the whole set (component + `.types.ts`/`.stories.ts`/`.spec.ts` + BEM block prefix + story title + all imports/comments/attributes); a global grep for the old identifier is empty

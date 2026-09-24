@@ -9,10 +9,5 @@ export class PlaylistParamsDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  conversationId?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
   name?: string;
 }

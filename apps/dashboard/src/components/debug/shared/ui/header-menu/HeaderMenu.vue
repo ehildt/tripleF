@@ -9,9 +9,10 @@ import {
 } from '@lucide/vue';
 import { ref } from 'vue';
 
+import FilterMenu from '@/components/shared/ui/filter-menu/FilterMenu.vue';
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+
 import { useDebugStore } from '../../../../../stores/debug';
-import FilterMenu from '../../../../shared/ui/filter-menu/FilterMenu.vue';
-import IconButton from '../../../../shared/ui/icon-button/IconButton.vue';
 import {
   type HeaderMenuEmits,
   useHeaderMenu,

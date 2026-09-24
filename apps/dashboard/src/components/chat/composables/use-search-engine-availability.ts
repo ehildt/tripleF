@@ -1,4 +1,4 @@
-import { computed, getCurrentInstance, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
@@ -6,10 +6,10 @@ import { i18n } from '@/i18n/i18n';
 import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
 
 import { useToast } from '../../../composables/use-toast';
+import type { SearchEngineState } from '../shared/composables/use-search-engine-availability.types';
 import { configuredEngines } from './helpers/configured-engines.helper';
 import { engineIsEnabled } from './helpers/engine-is-enabled.helper';
 import { listSearchSources } from './list-search-sources.helper';
-import type { SearchEngineState } from './use-search-engine-availability.types';
 
 /**
  * Whether the assistant currently has a search engine at its disposal, plus
@@ -299,10 +299,6 @@ export function useSearchEngineAvailability() {
       isToggling.value = false;
     }
   }
-
-  // Load on mount only when consumed inside a component; bare callers
-  // (tests, stores) drive refresh() explicitly.
-  if (getCurrentInstance()) onMounted(refresh);
 
   return {
     searchEngineState,

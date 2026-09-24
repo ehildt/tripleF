@@ -2,8 +2,9 @@
 import { useClipboard } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+
 import { useToast } from '../../../composables/use-toast';
-import Tooltip from '../../shared/ui/tooltip/Tooltip.vue';
 
 const props = defineProps<{
   socketId?: string | null;

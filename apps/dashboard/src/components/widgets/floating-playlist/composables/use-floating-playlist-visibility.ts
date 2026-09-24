@@ -1,24 +1,26 @@
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
+import { storeToRefs } from 'pinia';
 import type { Ref } from 'vue';
 
-import {
-  floatingPlaylistOpen,
-  playlistAutoClose,
-} from './playlist-settings.state';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
 
 /**
  * Open/collapse behavior of the floating playlist — mirrors the tab menu:
  * the window starts collapsed (a compact handle stays at the anchor) and
  * stays open until the user collapses it via the toggle handle or the X
- * icon (the window sweeps in or out of the handle) or presses Escape. With autoclose on (Settings → Widgets → Playlist), the
- * window also collapses after a video was launched or a click landed
- * outside the window. The open state is shared module state (see
- * playlist-settings.state) so the now-playing marquee can follow it.
+ * icon (the window sweeps in or out of the handle) or presses Escape. With
+ * autoclose on (Settings → Widgets → Playlist), the window also collapses
+ * after a video was launched or a click landed outside the window. The open
+ * state lives in the playlist-settings store so the now-playing marquee can
+ * follow it.
  */
 export function useFloatingPlaylistVisibility(
   playlistRef: Ref<HTMLElement | null>,
 ) {
-  const isOpen = floatingPlaylistOpen;
+  const playlistSettingsStore = usePlaylistSettingsStore();
+  const { floatingPlaylistOpen: isOpen, playlistAutoClose } = storeToRefs(
+    playlistSettingsStore,
+  );
 
   function togglePlaylist() {
     isOpen.value = !isOpen.value;

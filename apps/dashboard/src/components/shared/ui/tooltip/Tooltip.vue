@@ -176,7 +176,6 @@ onBeforeUnmount(() => {
     @mouseleave="hide"
     @focusin="show"
     @focusout="hide"
-    @click.capture="hide"
   >
     <slot />
     <Teleport to="body">

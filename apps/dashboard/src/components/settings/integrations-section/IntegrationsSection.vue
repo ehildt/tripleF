@@ -8,10 +8,10 @@
  * capabilities). Enabling an integration without credentials opens its
  * drawer instead of flipping the switch.
  */
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import SlideOver from '@/components/shared/ui/slide-over/SlideOver.vue';
 
 import { useSettingsConfig } from '../composables/use-settings-config';
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 import BrightDataSection from './bright-data-section/BrightDataSection.vue';
 import { useIntegrationsDrawer } from './composables/use-integrations-drawer';
 import EodhdSection from './eodhd-section/EodhdSection.vue';

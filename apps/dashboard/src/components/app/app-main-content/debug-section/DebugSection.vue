@@ -1,15 +1,9 @@
 <script setup lang="ts">
 import Debug from '../../../../components/debug/Debug.vue';
 import RequestDetails from '../../../../components/debug/request-details/RequestDetails.vue';
-import { useAppViewContext } from '../../../../composables/use-app-view-context';
+import { useDebugStore } from '../../../../stores/debug';
 
-const {
-  debugResults,
-  selectedDebugResult,
-  clearDebugResults,
-  selectDebugResult,
-  selectDebugMarkRead,
-} = useAppViewContext();
+const debugStore = useDebugStore();
 </script>
 
 <template>
@@ -18,18 +12,20 @@ const {
   <div class="debug-column">
     <Debug
       class="debug-column__panel"
-      :results="debugResults"
-      :selected-result="selectedDebugResult"
-      @clear="clearDebugResults"
-      @select="selectDebugResult"
-      @mark-read="selectDebugMarkRead"
+      :results="debugStore.debugResults"
+      :selected-result="debugStore.selectedDebugResult"
+      @clear="debugStore.clearDebugResults"
+      @select="debugStore.selectDebugResult"
+      @mark-read="debugStore.markDebugAsRead"
     />
   </div>
   <div class="debug-column">
     <RequestDetails
       class="debug-column__panel"
-      :class="{ 'debug-column__panel--dynamic': selectedDebugResult }"
-      :result="selectedDebugResult"
+      :class="{
+        'debug-column__panel--dynamic': debugStore.selectedDebugResult,
+      }"
+      :result="debugStore.selectedDebugResult"
     />
   </div>
 </template>

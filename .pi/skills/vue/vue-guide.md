@@ -2,6 +2,8 @@
 
 This guide defines how we write Vue components, composables, helpers, tests, and stories. Every convention exists so that code reads as English — a future reader should understand intent from names alone.
 
+**Skill files are prose-only.** This guide states rules, conventions, and reasons in words. It deliberately contains no code examples — the conventions it describes are visible in the codebase itself, which is the authoritative example.
+
 For the quick rule-of-thumb reference, see [SKILL.md](./SKILL.md).
 
 ## How to use this guide
@@ -19,7 +21,7 @@ Read sections in order on your first pass. When working, jump straight to the se
 - **Adding a test?** → Section 6 (Component Testing) + Section 7 (Composable Testing)
 - **Naming something?** → Section 8 (Reference: Naming Decision Table)
 - **Reviewing work?** → the Checklist in [SKILL.md](./SKILL.md)
-- **Setting up a new component group?** → Section 9 (Component Group Layout)
+- **Setting up a new component group?** → Section 5 (The Orchestrator Pattern) + Section 2's folder rules
 
 ---
 
@@ -29,236 +31,91 @@ A component renders UI. It receives data through props and communicates user act
 
 ### File naming
 
-Components are PascalCase, in their own subdirectory. See the [folder structure in section 2](#2-composables-stateful-logic-extraction) for the full tree.
-
-```
-session-list/
-├── SessionList.vue
-├── SessionList.stories.ts
-├── helpers/
-├── session-item/
-│   ├── SessionItem.vue
-│   └── SessionItem.stories.ts
-```
+Components are PascalCase, in their own subdirectory named kebab-case after the component. A component group folder pairs the component file with its co-located `.types.ts` (props type), `.spec.ts` (when the component owns behavior), and sub-folders for its own sub-components. See the folder rules in [Section 2](#2-composables-stateful-logic-extraction) for where helpers, composables, and shared resources sit relative to it.
 
 ### Component structure
 
 Order inside `<script setup lang="ts">`:
 
-1. Imports (Vue, external, internal)
+1. Imports (Vue first, then external, then internal)
 2. `defineProps` / `defineEmits` — the contract
 3. Computed values derived from props
 4. Template refs
 
-```vue
-<script setup lang="ts">
-import { computed } from "vue";
-import type { OllamaModel } from "../../../stores/models";
-
-const props = defineProps<{
-  models: readonly OllamaModel[];
-  selectedModelName: string;
-  isLoading: boolean;
-}>();
-
-const emit = defineEmits<{
-  selectModel: [modelName: string];
-  toggleMenu: [];
-}>();
-
-const selectedIndex = computed(() =>
-  props.models.findIndex((m) => m.model === props.selectedModelName),
-);
-</script>
-```
-
-For the full naming conventions on props (`isOpen` not `showMenu`, `selectModel` not `select`), see [Section 8: Reference: Naming Decision Table](#8-reference-naming-decision-table). Naming is documented once, not repeated per section.
+For the full naming conventions on props (prefer `isOpen` over `showMenu`, `selectModel` over bare `select`), see [Section 8: Reference: Naming Decision Table](#8-reference-naming-decision-table). Naming is documented once, not repeated per section.
 
 ### Props types live in a `.types.ts` file
 
-Props are never declared inline in `defineProps<{ ... }>()`. Extract them to a named interface in a co-located `Xxx.types.ts` file, with JSDoc on every field:
-
-```ts
-// StockmarketItemResponse.types.ts
-import type { HarnessResponseData } from "@/types/harness-response-data.model";
-
-export interface StockmarketItemResponseProps {
-  /** The raw harness response for the instrument. */
-  data?: HarnessResponseData;
-  /** Raw text fallback (unused by the card's structured render). */
-  text?: string;
-  /** Streamed tool outputs keyed by `tool:ticker` (history, intraday). */
-  chartData?: Record<string, unknown>;
-  /** Whether the respond step has started streaming (reveals the chart). */
-  revealCharts?: boolean;
-}
-```
-
-```vue
-<script setup lang="ts">
-import type { StockmarketItemResponseProps } from "./StockmarketItemResponse.types";
-
-const props = defineProps<StockmarketItemResponseProps>();
-</script>
-```
-
-The props type is the single source of truth: a composable that derives the component's data takes the same `XxxProps` type instead of re-declaring a subset of the fields.
+Props are never declared inline in `defineProps<{ … }>()`. Extract them to a named interface in a co-located `Xxx.types.ts` file, with a JSDoc comment on every field explaining what the field carries and why. The props type is the single source of truth: a composable that derives the component's data takes the same `XxxProps` type instead of re-declaring a subset of the fields.
 
 ### Templates and scoped styles
 
-- Use BEM-style class names for scoped styles.
+- Use BEM-style class names for scoped styles (see the CSS skill).
 - Format data in helpers or computeds — no complex logic in templates.
-- For CSS: use `var()` tokens, BEM class names, real CSS pseudo-classes for state. Follow the [CSS skill](../css/SKILL.md).
+- For CSS: use `var()` tokens, BEM class names, and real CSS pseudo-classes for state. Follow the [CSS skill](../css/SKILL.md).
 
 ### Componentize template sections
 
-When a template block renders a distinct concern — a header, a callout, a list, a panel row — extract it into a presentational sub-component in its own folder (no leaf story — see §4). The orchestrator keeps the visibility `v-if` and passes the data; the leaf takes props and renders:
-
-```vue
-<!-- orchestrator -->
-<StockmarketItemRecommendation
-  v-if="data?.recommendation"
-  :recommendation="data.recommendation"
-  :reasoning="data.recommendationReasoning"
-/>
-```
-
-```vue
-<!-- stockmarket-item-recommendation/StockmarketItemRecommendation.vue -->
-<script setup lang="ts">
-defineProps<{
-  recommendation: string;
-  reasoning?: string;
-}>();
-</script>
-
-<template>
-  <div class="stockmarket-item-recommendation">
-    <strong>{{ recommendation }}</strong>
-    <span v-if="reasoning">— {{ reasoning }}</span>
-  </div>
-</template>
-```
+When a template block renders a distinct concern — a header, a callout, a list, a panel row — extract it into a presentational sub-component in its own folder. The orchestrator keeps the visibility `v-if` in its own template and passes the data as props; the leaf takes props and renders.
 
 Rules for the extracted leaf:
 
 - **Own folder, no leaf story.** Every extracted component gets `Xxx.vue` + a co-located `Xxx.types.ts` in its own folder inside the parent's folder. Leaf components don't get a `.stories.ts` — behavior is covered by a `.spec.ts` (when the leaf owns interaction logic) or the parent's spec.
 - **Presentational only.** No store calls, no computeds, no refs — props in, markup out. Any logic lives in a helper or the orchestrator's composable.
 - **The parent owns visibility.** The `v-if` stays on the component in the orchestrator's template; the leaf does not self-hide.
-- **BEM block per component.** The leaf's root class is its own block (`stockmarket-item-recommendation`), not the parent's (`stockmarket-item-response__recommendation`).
+- **BEM block per component.** The leaf's root class is its own block (named after the leaf), not an element of the parent's block.
 - **One slot, default.** When a component has a single content area, use the default slot — not a named slot.
 
 ---
 
 ## 2. Composables: Stateful Logic Extraction
 
-A composable encapsulates reactive state, watchers, and store interactions. It owns the "how" — the component only knows the "what" through the composable's return value.
+A composable encapsulates reactive state, watchers, and **component-scoped** store interactions. It owns the "how" — the component only knows the "what" through the composable's return value.
+
+**Scope boundary:** a composable returns values for one caller's render cycle. State that several components read or write does not live in a composable — it lives in a Pinia store (see [Section 5](#5-the-orchestrator-pattern) shared-state rule). A composable must never duplicate store state into a local `ref` and reconcile it back with a watcher; read the store value instead.
 
 ### File naming and location
 
-Composables are named with `use-` prefix, describing **what they manage** (not where they're used). See the [naming table](#8-reference-naming-decision-table) for the full pattern.
+Composables are named with a `use-` prefix, describing **what they manage** (not where they're used). See the [naming table](#8-reference-naming-decision-table) for the full pattern.
 
-**Co-location rule:** A composable lives **next to the component(s) it serves** unless it is shared across the codebase. The test: **is this composable imported from more than one unrelated area?** If not, it belongs next to its consumers.
+**Co-location rule:** a composable lives **next to the component(s) it serves** unless it is shared across the codebase. The test for shared: is this composable imported from more than one unrelated area? If not, it belongs next to its consumers, in a `composables/` folder parallel to `helpers/`. Only composables used across the whole codebase belong in the top-level `composables/` directory.
 
-```
-src/components/chat/                              ← main group folder, named after Chat.vue
-├── Chat.vue                                      ← main orchestrator (in the root)
-├── Chat.stories.ts
-├── Chat.spec.ts
-├── composables/                                  ← composables local to the chat root
-│   ├── use-action-bar.ts
-│   └── use-chat-context-size.ts
-├── helpers/                                      ← per-function helpers in their own folder
-├── toolbar/                                      ← sub-component folder, named after its orchestrator
-│   ├── ChatToolbar.vue                           ← sub-orchestrator, in its folder's root
-│   ├── ChatToolbar.spec.ts
-│   ├── ChatToolbar.stories.ts
-│   ├── shared/                                   ← shared resources inside this sub-group
-│   │   ├── ui/
-│   │   └── composables/
-│   │       ├── use-selected-model.ts
-│   │       └── use-event-subscriptions.ts
-│   ├── model-selector/
-│   │   ├── ModelSelector.vue
-│   │   └── model-list/                          ← sub-component of ModelSelector
-│   │       └── ModelList.vue
-│   └── session-list/
-│       ├── SessionList.vue
-│       └── session-item/                        ← sub-component of SessionList
-│           └── SessionItem.vue
-├── exchange-list/                                ← another sub-group
-│   ├── ChatExchangeList.vue
-│   └── …
-├── session-header/                               ← leaf sub-component
-└── shared/                                       ← resources shared across the whole chat group
-    └── helpers/
-        └── calc-token-percent.helper.ts
-
-src/composables/                                 ← only composables shared across the codebase
-├── use-blink.ts
-├── use-toast.ts
-└── use-local-storage-sync.ts
-```
+A component group folder is named after its main orchestrator and is laid out as: the orchestrator file at the group root (plus its spec/stories/types), a `composables/` folder for group-local composables, a `helpers/` folder (one helper per file, each with a co-located spec), and one sub-folder per sub-component (each following the same layout recursively). Resources shared across the whole group go in a `shared/` folder split into `ui/`, `composables/`, and `helpers/`.
 
 ### Folder structure rules
 
-- **Each component group has a main orchestrator in the root.** A group folder (e.g. `chat/`) has exactly one main orchestrator (e.g. `Chat.vue`) as a sibling of the sub-component folders. See [Section 5: Every group has a main orchestrator](#every-group-has-a-main-orchestrator-in-the-root).
-- **Each component gets its own folder.** Even simple ones like `IconButton` get `shared/ui/icon-button/`.
+- **Each component group has a main orchestrator in the root.** A group folder has exactly one main orchestrator (the component the group is named after) as a sibling of the sub-component folders. See [Every group has a main orchestrator](#every-group-has-a-main-orchestrator-in-the-root).
+- **Each component gets its own folder.** Even simple ones.
 - **Sub-components live inside their parent's folder.**
-- **The parent folder name matches the orchestrator's name (kebab-case).** `Chat.vue` lives in `chat/`, not in `chat/sections/`. A folder containing `ChatExchangeList.vue` is named `exchange-list/`, not `exchange/` or `exchanges/`.
+- **The parent folder name matches the orchestrator's name (kebab-case).** A folder containing `ChatExchangeList.vue` is named `exchange-list/`, not `exchange/` or `exchanges/`.
 - **Shared resources go in `shared/`.** If only UI, name it `ui/`. `shared/` is for _all_ shared things.
 - **Helpers go in `helpers/` folders, one function per file.** Local helpers next to their consumer; shared helpers in `shared/helpers/` at the component group level. No loose helper files.
-- **Composables go in `composables/` folders, parallel to `helpers/`.** `shared/composables/` is reserved for composables used by multiple sub-components.
+- **Composables go in `composables/` folders, parallel to `helpers/`.** `shared/composables/` is reserved for composables used by multiple sub-components within the group.
+- **A sub-orchestrator gets its own folder** by the same rule that says sub-components live inside their parent's folder.
 
 ### Composable structure
 
-```ts
-// 1. Imports (paths relative to the component group)
-import { computed, ref, watch } from "vue";
-import { useModelsStore } from "../../../stores/models";
-import { useToast } from "../../../composables/use-toast";
+A composable file is organized top-to-bottom as:
 
-// 2. Constants (localStorage keys, etc.)
-const LOCAL_STORAGE_SELECTED_MODEL_KEY = "vision-selected-model";
+1. Imports (paths relative to the component group).
+2. Constants (localStorage keys, sentinel values, …).
+3. The exported function. Inside it, in order:
+   - Composable/store instances the logic depends on.
+   - Reactive state (`ref`).
+   - Computed values.
+   - Watchers.
+   - Functions (named `changeX` / `toggleX` / `fetchX` — descriptive verbs).
+   - The `return` of the public API — only what a consumer legitimately needs.
 
-// 3. Exported function
-export function useSelectedModel() {
-  // 3a. Store instances
-  const modelsStore = useModelsStore();
-  const toast = useToast();
+### Composables call stores directly — for component-scoped logic
 
-  // 3b. Reactive state
-  const selectedModel = ref(
-    localStorage.getItem(LOCAL_STORAGE_SELECTED_MODEL_KEY) || "",
-  );
+Composables access Pinia stores directly when the logic is scoped to one component tree (derivations, transient UI state, a widget's own flow). Components never call stores directly (unless it's a container component that reads a store and feeds leaves with props).
 
-  // 3c. Computed values
-  const isModelAvailable = computed(() => {
-    /* ... */
-  });
+### No `provide`/`inject` for shared state (app services only)
 
-  // 3d. Watchers
-  watch(/* ... */);
+A Pinia store is the channel for shared mutable UI state between components — not a `provide`/`inject` context, which hides the dependency and gives no compile-time guarantee that a provider exists. A bespoke "shuttle state to children" context is an anti-pattern: it couples leaves to a magic key and makes tests require fake providers.
 
-  // 3e. Functions
-  function changeModel(modelName: string) {
-    /* ... */
-  }
-
-  // 3f. Return — the public API
-  return { selectedModel, isModelAvailable, changeModel };
-}
-```
-
-### Composables call stores directly
-
-Composables access Pinia stores directly — they are the bridge between stores and components. Components never call stores directly (unless it's the orchestrator component wiring composables together).
-
-### No `provide` inside composables
-
-`provide` belongs in the orchestrator component — it decides what context to expose to the tree. Composables return values; the orchestrator decides what to `provide`.
-
-**Consuming context with `inject` inside a composable is fine** — it is the standard Vue pattern (Vue Router's `useRouter` injects internally). A shared composable that reads an app-level context (e.g. the harness media-priority key) with a default is the right way to dedupe that consumption across components. The rule is about *providing*: only the orchestrator creates context.
+`provide`/`inject` is still right for **app-level service singletons** set up once near the app root (for example, a socket provider), where there is exactly one value and no mutation to coordinate. When you are tempted to provide a `ref`/`computed` or a map of reactive state to children, put that state in a store instead.
 
 ---
 
@@ -274,282 +131,98 @@ Any function that:
 
 - Takes input, returns output
 - Has no side effects (no refs, no store calls, no DOM)
-- Would otherwise be inlined in a `<script setup>` or computed
+- Would otherwise be inlined in a `<script setup>` or a computed
 
 ### File naming and location
 
-Helpers go in a `helpers/` folder co-located with their consumers — one function per file, never loose at the root of a component group:
-
-```
-exchange-list/                          ← parent folder, named after its orchestrator
-├── ChatExchangeList.vue
-├── ChatExchangeList.stories.ts
-├── ChatExchangeList.spec.ts
-└── chat-exchange/                       ← sub-orchestrator's own folder
-    ├── ChatExchange.vue
-    ├── ChatExchange.stories.ts
-    ├── composables/                     ← composables local to ChatExchange
-    ├── helpers/                         ← helpers in their own folder
-    │   ├── strip-html.helper.ts         ← one function per file
-    │   ├── strip-html.helper.spec.ts    ← co-located spec
-    │   ├── truncate-text.helper.ts
-    │   └── truncate-text.helper.spec.ts
-    ├── exchange-collapsed/
-    └── exchange-content/
-```
-
-**The parent folder name describes the orchestrator's purpose.** A folder containing `ChatExchangeList.vue` is named `exchange-list/`, not `exchange/` or `exchanges/`. This matches the naming pattern of other group folders (`pending-indicator/`, `session-header/`, `toolbar/`).
-
-**A sub-orchestrator gets its own folder** by the same rule that says sub-components live inside their parent's folder. So `ChatExchange.vue` (used by `ChatExchangeList.vue`) lives in `exchange-list/chat-exchange/`, not loose at the root of `exchange-list/`.
-
-**Shared helpers** go in `shared/helpers/` at the component group level (e.g., `chat/shared/helpers/calc-token-percent.helper.ts`).
+Helpers go in a `helpers/` folder co-located with their consumers — one function per file, never loose at the root of a component group. Shared helpers go in `shared/helpers/` at the component group level.
 
 ### Helper naming
 
-Files are named after the function: `strip-html.helper.ts` exports `stripHtml`. Functions describe **what they compute or format**, using a verb prefix. See the [naming table](#8-reference-naming-decision-table) for the full pattern (`formatContextUsagePercent`, `calcTokenPercent`, `isSessionExpired`, `stripHtml`, `parseSocketBinding`, etc.).
+Files are named after the function: `strip-html.helper.ts` exports `stripHtml`. Functions describe **what they compute or format**, using a verb prefix. See the [naming table](#8-reference-naming-decision-table) for the full pattern.
 
 ### Every helper must have a spec
 
-Co-located test file with the same name plus `.spec.ts`, in the same `helpers/` folder. Example:
-
-```ts
-// strip-html.helper.ts
-export function stripHtml(html: string): string {
-  const el = document.createElement("div");
-  el.innerHTML = html;
-  return el.textContent ?? "";
-}
-```
-
-```ts
-// strip-html.helper.spec.ts
-import { describe, expect, it } from "vitest";
-import { stripHtml } from "./strip-html.helper";
-
-describe("stripHtml", () => {
-  it("strips HTML tags", () => {
-    expect(stripHtml("<p>Hello <b>world</b></p>")).toBe("Hello world");
-  });
-
-  it("returns plain text unchanged", () => {
-    expect(stripHtml("plain text")).toBe("plain text");
-  });
-
-  it("handles empty string", () => {
-    expect(stripHtml("")).toBe("");
-  });
-});
-```
+Each helper has a co-located spec file with the same name plus `.spec.ts`, in the same `helpers/` folder. The spec exercises the function's inputs and outputs directly — no component mounts needed.
 
 ---
 
 ## 3a. Don't Write Wrapper Functions
 
-A function earns its name only if the call site can't already see what it does. A wrapper that just renames a field or delegates to a single call is indirection without information.
-
-### The pattern to avoid
-
-```ts
-// ❌ isResultRead is a synonym for store.isDebugRead + .id
-function isResultRead(result: DebugResult) {
-  return debugStore.isDebugRead(result.id);
-}
-
-// call sites
-results.filter((r) => !isResultRead(r));
-sort((a, b) => Number(isResultRead(a)) - Number(isResultRead(b)));
-```
-
-Every call site says `isResultRead` but reads `isResultRead(result)`. The reader has to jump to the function to learn that "Result" reduces to `result.id`. The function name _isn't telling them anything new_ — it's just hiding the call to the store behind a verb.
+A function earns its name only if the call site can't already see what it does. A wrapper that just renames a field or delegates to a single call is indirection without information: a reader who has to jump to the function learns nothing the call site didn't already say — the name isn't telling them anything new, it's hiding a one-line call behind a verb.
 
 ### Three legitimate alternatives
 
 Pick one based on what would actually help a reader:
 
-**1. Inline the call when no name is needed.**
+**1. Inline the call when no name is needed.** The store's (or prop's) own name already says what it does, so the call site should just make the call. Slightly longer, fully self-contained.
 
-```ts
-results.filter((r) => !debugStore.isDebugRead(r.id));
-sort(
-  (a, b) =>
-    Number(debugStore.isDebugRead(a.id)) - Number(debugStore.isDebugRead(b.id)),
-);
-```
+**2. Name the _binding_, not a one-line function around it.** If a value is reused or needs domain intent attached, name the **result** — a `Set`, a `computed`, a ref — not a function that wraps a single field access.
 
-The call site is one line longer but self-contained. The store's name `isDebugRead` already says what it does. No wrapper, no indirection, and a reader who hasn't seen the store yet still knows this is a "read" check.
-
-**2. Name the _binding_, not a one-line function around it.**
-
-If the call site genuinely needs a name (because the value is reused, or to communicate domain intent), name the _value_ the name belongs to — a `Set`, a `computed`, a ref — not a function around a single field.
-
-```ts
-// The reader sees a named Set; the wrapper is gone.
-const readResultIds = computed(
-  () =>
-    new Set(
-      props.results
-        .filter((r) => debugStore.isDebugRead(r.id))
-        .map((r) => r.id),
-    ),
-);
-
-results.filter((r) => !readResultIds.value.has(r.id));
-```
-
-**3. Promote it to a real predicate in a `.helper.ts` file.**
-
-If the wrapper exists in many places and the predicate is part of the domain, give it its own file with its own tests. Then it is a _named function_ by the rules of [Section 3](#3-pure-helpers-one-function-per-file-in-helpers-folders), not a local indirection:
-
-```ts
-// debug/request-details/helpers/has-read-result.helper.ts
-export function hasReadResult(result: DebugResult): boolean {
-  return debugStore.isDebugRead(result.id);
-}
-```
+**3. Promote it to a real predicate in a `.helper.ts` file.** If the wrapper exists in many places and the predicate is part of the domain, give it its own file with its own tests. It then is a named function per the helpers rules, not a local indirection.
 
 ### How to decide
 
 | You see…                                                                | Then…                                                            |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| A wrapper that just calls `store.isX(r.id)` or `props.x.has(r.id)`      | **Inline it.** The call site is already clear.                   |
+| A wrapper that just calls a single store method or prop lookup          | **Inline it.** The call site is already clear.                   |
 | A wrapper used 3+ times in the same file with the _same argument shape_ | **Name the result** (a `Set`, a `computed`) — see option 2.      |
 | A wrapper used across many files, with a domain meaning                 | **Promote it to a `.helper.ts` predicate** with its own spec.    |
 | A wrapper that branches, supplies defaults, or has side effects         | **Keep it** — that is real logic.                                |
-| A wrapper that only coerces/reshapes a value then calls once (`formatCtx(Number(v))`) | **Inline it** — the call site already says it.                    |
-| A composable's `isX(id)` factory that returns a `computed` per key      | **Keep it** — the factory creates reactive state, not a synonym. |
+| A wrapper that only coerces/reshapes a value then calls once            | **Inline it** — the call site already says it.                    |
+| A composable factory that returns a `computed` per key                  | **Keep it** — the factory creates reactive state, not a synonym. |
 
 ### Dependency injection is not a wrapper
 
-A higher-order component/function that imports a store or composable and passes only the derived props a leaf needs is **not** the rename-wrapper anti-pattern — it earns its name by decoupling the leaf from the store/composable. The leaf stays presentational and testable; the HOC owns the dependency.
+A higher-order component/function that imports a store or composable and passes only the derived props a leaf needs is **not** the rename-wrapper anti-pattern — it earns its name by decoupling the leaf from the store/composable. The leaf stays presentational and testable; the container owns the dependency.
 
-### Anti-examples to leave alone
+### What "real work" looks like (left alone)
 
-These look like wrappers but are not — they do real work, so they stay:
+The rule removes redundant indirection, it never bans small functions. These stay because they do real work:
 
-```ts
-// Predicates with type narrowing and branching.
-function isKnownMenuId(id: string): id is DlqFilterMenuId {
-  return (menuIds as readonly string[]).includes(id);
-}
-
-// One-liner helpers with their own file and tests.
-export function isDlqEntryImmutable(entry: VisionDlq | null): boolean {
-  return entry?.status === "Removed";
-}
-
-// Composable factories that return a per-key computed.
-function isMenuOpen(key: string) {
-  return computed(() => openMenuKey.value === key);
-}
-```
-
-The rule is about removing _redundant_ indirection, not about banning all small functions.
+- **Predicates with type narrowing and branching** — a type guard that narrows the input type earns its name.
+- **One-liner helpers with their own file and tests** — a named domain predicate that lives in `helpers/` with a spec is a named function, not a wrapper.
+- **Composable factories that return a per-key computed** — the factory creates reactive state per call; that is not a synonym.
 
 ---
 
 ## 3b. No Barrel Files
 
-A barrel file is a re-export-only `index.ts` that aggregates imports from sibling files. We never add them. Import directly from the file that defines the symbol.
-
-### The pattern to avoid
-
-```ts
-// ✗ src/components/pproc/index.ts  — a barrel file
-export { default as PprocMasterToggle } from "./shared/ui/master-toggle/PprocMasterToggle.vue";
-export { default as PprocParamTile } from "./shared/ui/param-tile/PprocParamTile.vue";
-export { default as PprocSection } from "./shared/ui/section/PprocSection.vue";
-export { default as PprocToggleButton } from "./shared/ui/toggle-button/PprocToggleButton.vue";
-
-// ✗ importers pull through the barrel
-import {
-  PprocMasterToggle,
-  PprocSection,
-  PprocToggleButton,
-} from "../../../pproc";
-import { PprocParamTile } from "../../../pproc";
-import { PprocToggleButton } from "../../../pproc";
-```
-
-A barrel hides where a symbol lives. The reader sees `from "../../../pproc"` and has to open `pproc/index.ts` to find the file. With a direct import, the path _is_ the file:
-
-```ts
-// ✓ import directly from the file
-import PprocMasterToggle from "../../../pproc/shared/ui/master-toggle/PprocMasterToggle.vue";
-import PprocParamTile from "../../../pproc/shared/ui/param-tile/PprocParamTile.vue";
-import PprocSection from "../../../pproc/shared/ui/section/PprocSection.vue";
-import PprocToggleButton from "../../../pproc/shared/ui/toggle-button/PprocToggleButton.vue";
-```
+A barrel file is a re-export-only `index.ts` that aggregates imports from sibling files. We never add them. Import directly from the file that defines the symbol — the import path then _is_ the file, visible without opening anything.
 
 ### Why no barrels
 
 - **The path is the file.** A direct import shows exactly where the symbol lives — useful for code search, refactors, and reading the import list at a glance.
-- **Renames and moves stay local.** When `PprocSection.vue` moves to `pproc/shared/ui/header/`, only the direct importers change. With a barrel, the barrel also moves or the import still works against a stale path.
-- **Tree-shaking is unchanged.** Vite resolves the exact `.vue` file either way; the barrel is not buying bundle size.
+- **Renames and moves stay local.** When a file moves folder, only its direct importers change. With a barrel, the barrel also moves or the import keeps working against a stale path.
+- **Tree-shaking is unchanged.** Vite resolves the exact file either way; the barrel is not buying bundle size.
 - **Barrels grow.** A barrel tends to accrete every export in the folder, including internal helpers and types that should never leak across group boundaries.
 
 ### The folder name is the symbol, not `index.ts`
 
-The folder is the unit of co-location. If three siblings in `pproc/shared/ui/` are imported together, the readers see three explicit file paths — that is the _information_ the import is supposed to carry. A barrel turns three explicit paths into one opaque path and asks the reader to chase it.
+The folder is the unit of co-location. If three siblings are imported together, the readers see three explicit file paths — that is the _information_ the import is supposed to carry. A barrel turns three explicit paths into one opaque path and asks the reader to chase it.
 
-### What about the existing `inputs/index.ts` and `ui/index.ts`?
+### Pre-existing barrels
 
-Those are pre-existing barrels. They are not an argument to add new ones. New component groups do not get a barrel; new files do not register themselves in an existing barrel. Import directly from the file.
+A few older barrel files still exist in the codebase. They are not an argument to add new ones. New component groups do not get a barrel; new files do not register themselves in an existing barrel. Import directly from the file.
 
 ---
 
 ## 4. Stories: Visual Documentation for Orchestrators and Widgets
 
-Orchestrators and stateful widgets get a story; leaf components don't. Story files are co-located with their components. See the [folder structure in section 2](#2-composables-stateful-logic-extraction) for where they live in the tree. A leaf's visual states are already exercised through its parent's story/spec, and per-leaf stories only bloat the Storybook sidebar.
+Orchestrators and stateful widgets get a story; leaf components don't. Story files are co-located with their components. A leaf's visual states are already exercised through its parent's story/spec, and per-leaf stories only bloat the Storybook sidebar.
 
 ### Story structure
 
-```ts
-import { Brain } from "@lucide/vue";
-import type { Meta, StoryObj } from "@storybook/vue3-vite";
-import { fn } from "storybook/test";
+A story file defines a `meta` object (`satisfies Meta<typeof Component>`) with:
 
-import ModelSelector from "./ModelSelector.vue";
+- A `title` that mirrors the component group's folder hierarchy in a human-readable path (e.g. the group name, sub-group name, then the component).
+- `tags: ['autodocs']` and a `parameters.docs.description.component` prose block explaining what the component is and does.
+- `argTypes` declaring Storybook controls for visual-state props.
+- `args` providing sensible defaults — event handlers wired with `fn()` from storybook's test utilities so interactions show up in the actions panel.
 
-const meta = {
-  title: "Chat/Toolbar/ModelSelector",
-  component: ModelSelector,
-  tags: ["autodocs"],
-  parameters: {
-    docs: {
-      description: {
-        component: `
-Dropdown for selecting the active model. Shows a brain icon button that
-opens the model list. Disabled when no model is selected.
-`,
-      },
-    },
-  },
-  argTypes: {
-    isOpen: { control: "boolean" },
-    selectedModelName: { control: "text" },
-    isLoading: { control: "boolean" },
-  },
-  args: {
-    isOpen: false,
-    selectedModelName: "",
-    isLoading: false,
-    onToggleMenu: fn(),
-    onSelectModel: fn(),
-  },
-} satisfies Meta<typeof ModelSelector>;
+Each exported story is a named visual state with a JSDoc line describing what the reader sees.
 
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-/** Default closed state. */
-export const Closed: Story = {};
-
-/** Open dropdown showing model list. */
-export const Open: Story = { args: { isOpen: true } };
-
-/** Loading state. */
-export const Loading: Story = { args: { isLoading: true } };
-```
+Container components that read stores render fine in isolation: Storybook registers a fresh Pinia per story globally (see the shared preview decorator), so no local pinia setup is needed in each story.
 
 ### Story naming
 
@@ -569,128 +242,43 @@ Story names describe the visual state, not a generic "Default":
 
 ### What the orchestrator does
 
-The top-level component (e.g., `ChatToolbar.vue`) is an **orchestrator**. It:
+The top-level component (e.g., `Chat.vue`, or a section orchestrator) is an **orchestrator**. It:
 
-1. Calls composables to get reactive state and actions
-2. Wires composables together (e.g., closing menus when chat deactivates)
-3. Manages cross-cutting concerns (outside-click handling, blink providers)
+1. Calls composables to get reactive state and actions, and reads shared stores
+2. Wires shared state together (e.g., closing menus when chat deactivates)
+3. Delegates presentation — leaves get props, containers read the store
 4. Assembles presentational components in the template
-5. Re-exposes a stable interface via `defineExpose` for parent components
+5. Exposes only genuine imperative DOM handles via `defineExpose` (element refs a parent must own); shared state is read from the store by consumers directly
 
 ### What the orchestrator does NOT do
 
-- No inline business logic in `<script setup>` — delegate to composables
-- No direct store calls — composables handle that
-- No complex computed properties — move to composables or helpers
+- No inline business logic in `<script setup>` — delegate to stores or composables
+- No business-logic store mutations in markup — those live in store actions
+- No complex derived state — move it to a store getter, a composable computed, or a helper
 
 ### The thin orchestrator
 
-The orchestrator's `<script setup>` is deliberately thin: props type, store calls that wire child config, one data composable call, template. All data derivation — computeds, refs, watches, event handlers with branching — lives in a co-located data composable:
+The orchestrator's `<script setup>` is deliberately thin: the props type, store reads that wire child config, one data-composable call when there is *component-scoped* data to derive, and the template.
 
-```vue
-<script setup lang="ts">
-import { useAppStore } from "@/stores/app";
+When shared state lives in a store, the store call replaces the data composable: state, getters, and actions all come from the store, so the orchestrator holds no derivation at all. A data composable still has a place for genuinely tree-scoped derivation (formatting, per-props computed values, transient widget state) — it takes the component's props type, owns the `ref`/`computed`/`watch`/functions, and returns the display values + actions the template binds.
 
-import { useStockmarketItemData } from "./composables/use-stockmarket-item-data.composable";
-import StockmarketItemHeader from "./stockmarket-item-header/StockmarketItemHeader.vue";
-// …
-
-const appStore = useAppStore();
-const props = defineProps<StockmarketItemResponseProps>();
-
-const {
-  displayHistory,
-  showPanels,
-  showChart,
-  mergedItems,
-  newsHeading,
-  onRangeRequest,
-  toggleIntraday,
-} = useStockmarketItemData(props);
-</script>
-```
-
-The data composable takes the component's props type, owns every `ref`/`computed`/`watch`/function, and returns the display values + actions the template binds. The orchestrator keeps only what the template needs that is not data — e.g. a store's chart config passed straight to a child. Cross-cutting wiring (closing menus on deactivation, `provide`) legitimately stays in the orchestrator; data derivation does not.
+Cross-cutting wiring (closing menus on deactivation) legitimately stays in the orchestrator; data derivation does not — and shared cross-component state never lives in a composable.
 
 ### The orchestrator lives in its folder
 
-The orchestrator component shares the **same folder** as its sub-components, composables, helpers, and stories. It is NOT a sibling file outside the folder.
-
-```
-✗  chat/
-    ├── ChatToolbar.vue          ← orchestrator outside its folder
-    └── toolbar/
-        ├── ModelSelector.vue
-        └── ...
-
-✓  chat/toolbar/
-    ├── ChatToolbar.vue          ← orchestrator inside its folder
-    ├── shared/                  ← shared resources
-    ├── session-list/            ← sub-component folder
-    │   ├── SessionList.vue
-    │   └── session-item/        ← sub-component of SessionList
-    │       └── SessionItem.vue
-    └── ...
-```
-
-This makes the directory structure self-documenting: everything related to the toolbar is in `toolbar/`, including the component that wires it all together.
+The orchestrator component shares the **same folder** as its sub-components, composables, helpers, and stories. It is NOT a sibling file outside the folder. This makes the directory structure self-documenting: everything related to the group is in the group's folder, including the component that wires it all together.
 
 ### Dropdown menus: orchestrator + trigger
 
-A dropdown menu splits into the orchestrator and a co-located `XxxTrigger` component. The trigger owns the anchor `ref`, the `useMenuPosition` call, and the `<Teleport>`; it exposes a **default slot** for the menu body, so the orchestrator supplies the form/data as slot content while the trigger keeps the positioning concern. This keeps `triggerRef`/positioning out of the orchestrator's data path.
+A dropdown menu splits into the orchestrator and a co-located `XxxTrigger` component. The trigger owns the anchor `ref`, the `useMenuPosition` call, the `<Teleport>`, and the **fixed transparent backdrop**; it exposes a **default slot** for the menu body, so the orchestrator supplies the form/data as slot content while the trigger keeps the positioning and self-close concerns.
 
-```
-conversation-menu/
-├── ConversationMenu.vue                 ← orchestrator (form + data)
-├── conversation-menu-trigger/
-│   └── ConversationMenuTrigger.vue      ← anchor + positioning + Teleport + default slot
-└── …
-```
+The backdrop is a `{menu}__backdrop` element — `position: fixed`, covering the viewport, transparent, with a z-index one step under the dropdown panel — that emits `close` on click. That is how the menu closes on an outside click; **not** a coordinator-level `onClickOutside` wired with an ignore-list of `[data-*]` selectors. This keeps `triggerRef`/positioning and the close gesture out of the orchestrator's data path.
 
-### Example orchestrator script
+### defineExpose only for imperative DOM handles
 
-```ts
-<script setup lang="ts">
-import { provide, ref, watch } from 'vue';
+Shared state must not flow through `defineExpose` + template refs: a parent that reads a child ref's internal state depends on the child's internals, and aliasing the exposed names drifts from the truth and confuses readers. Consumers read the store instead — a store has no alias surface.
 
-import { useBlink } from '../../../composables/use-blink';
-import { useExclusiveMenu } from './shared/composables/use-exclusive-menu';
-import { useSelectedModel } from './shared/composables/use-selected-model';
-
-import ModelSelector from './model-selector/ModelSelector.vue';
-import SessionList from './session-list/SessionList.vue';
-
-const props = defineProps<{ chatActive: boolean }>();
-
-const { isMenuOpen, toggleMenu, closeAllMenus } = useExclusiveMenu([
-  'model',
-  'newSession',
-]);
-const { selectedModel, changeModel } = useSelectedModel();
-
-const streamBlink = useBlink(1500);
-provide('blinkStream', streamBlink.blink);
-
-watch(() => props.chatActive, (active) => {
-  if (!active) closeAllMenus();
-});
-
-defineExpose({ selectedModel });
-</script>
-```
-
-### defineExpose stability
-
-The orchestrator's `defineExpose` must maintain backward compatibility with parent consumers. If internal composable names change, re-export with the old name:
-
-```ts
-defineExpose({
-  selectedFiles: attachedFiles, // backward compat alias
-  fileInputRef,
-  handleFileSelect: onFileInputChange, // backward compat alias
-  selectedModel,
-});
-```
+Keep `defineExpose` only when a parent genuinely needs an imperative DOM handle it owns (for example, an action-bar element ref, or a list's scroll-to method), and **name exposed fields identically to their variables** — never add backward-compat aliases that rename the internal symbol.
 
 Orchestrators are the canonical case for a `.spec.ts` — see [Section 6](#6-component-testing) for the full rule.
 
@@ -702,36 +290,9 @@ The parent's folder name is the kebab-case form of the main orchestrator's name:
 
 | Group folder | Main orchestrator file   | What it wires                              |
 | ------------ | ------------------------ | ------------------------------------------ |
-| `chat/`      | `Chat.vue`               | toolbar, exchange list, input, right panel |
+| `chat/`      | `Chat.vue`               | left toolbar, exchange list, input, right toolbar |
 | `dlq/`       | `Dlq.vue`                | list header, list body, details body       |
 | `debug/`     | `Debug.vue` (or similar) | results, filters, health                   |
-
-```
-✗  chat/                                          ← group folder
-    ├── chat/ChatSection.vue                      ← main component is duplicated
-    │   └── chat/sections/ChatSection.vue
-    └── chat/exchange-list/, chat/toolbar/, …     ← sub-component folders
-
-✓  chat/
-    ├── Chat.vue                                  ← main orchestrator, in the root
-    ├── Chat.stories.ts
-    ├── Chat.spec.ts
-    ├── exchange-list/                            ← sub-component folder
-    │   └── ChatExchangeList.vue                  ← sub-orchestrator
-    ├── toolbar/                                  ← sub-component folder
-    │   └── ChatToolbar.vue                       ← sub-orchestrator
-    ├── session-header/                           ← leaf sub-component
-    ├── pending-indicator/                        ← leaf sub-component
-    └── shared/                                   ← cross-cutting resources
-```
-
-**Why the rule matters**
-
-- The folder is self-describing: `chat/` tells you exactly what lives at its top level — the main chat view, alongside its sub-component folders.
-- Consumers (`AppMainContent.vue`, the Storybook sidebar, code search) can rely on a single predictable file at the root to find the entry point.
-- Sub-orchestrators (`ChatExchangeList.vue`, `ChatToolbar.vue`) keep living in their own sub-folders, because they are the _root of their own group_. The rule composes: each sub-folder is itself a group with a root orchestrator.
-
-**Sub-orchestrators stay in their own folders.** `ChatExchangeList.vue` is the orchestrator of the `exchange-list/` sub-group and stays there — it is not promoted to the chat root just because it is "important". The chat root orchestrator composes it via `<ChatExchangeList :retry-handler="…"/>`. This is the same rule recursively: every sub-folder follows it.
 
 ---
 
@@ -739,104 +300,70 @@ The parent's folder name is the kebab-case form of the main orchestrator's name:
 
 ### The principle: test by logic density, not file size
 
-A `.vue` file's complexity is measured by **how much behavior it owns**, not by how many lines it has. A 300-line atom can be a thin wrapper around a composable (skip the test, test the composable). A 17-line `Badge.vue` can be pure markup and styling (skip the test — its parent's spec covers it).
+A `.vue` file's complexity is measured by **how much behavior it owns**, not by how many lines it has. A 300-line atom can be a thin wrapper around a composable (skip the test, test the composable). A 17-line badge can be pure markup and styling (skip the test — its parent's spec covers it).
 
 **Write a `.spec.ts` when the component owns meaningful behavior:**
 
-- **Orchestrators** — they wire composables, manage cross-cutting concerns, and re-expose a stable interface. The behavior lives in the wiring; the test verifies the wiring holds.
+- **Orchestrators** — they wire composables/stores and manage cross-cutting concerns. The behavior lives in the wiring; the test verifies the wiring holds.
 - **Widgets** — interactive controls with internal state: dropdowns with keyboard handling, modals with focus traps, lightboxes with navigation. Even when they are "small atoms," the interaction logic is the component's reason for existing.
 - **Any component with non-trivial logic in `<script setup>`** — refs, computeds, watchers, event handlers with branching, conditional rendering driven by complex rules.
 
 **Skip the `.spec.ts` when the component is a thin presentational layer:**
 
-- Pure styled markup driven by props (e.g., a `StatusBadge.vue` that maps a status to a class).
-- Components that delegate everything to a single composable — test the composable instead.
+- Pure styled markup driven by props.
+- Components that delegate everything to a single composable or store — test that instead.
 - Components that are exercised end-to-end through a story or a parent's test.
 
 ### Decision table
 
-| Component shape                                     | Test? | Why                                                                                |
-| --------------------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
-| Orchestrator (e.g. `ChatToolbar.vue`)               | ✓     | The wiring IS the component's behavior.                                            |
-| Widget with state and interaction (e.g. `DropDown`) | ✓     | Keyboard handling, open/close, focus management are its reason for existing.       |
-| Component with a meaningful `<script setup>`        | ✓     | Any computed/branching/event logic deserves a test.                                |
-| Pure presentational: props → markup/styles          | skip  | Covered by the parent's spec/story; any logic is in a tested helper or composable. |
-| Leaf that just re-emits parent events               | skip  | Trivial pass-through; tested transitively by the orchestrator's test.              |
+| Component shape                                          | Test? | Why                                                                                |
+| -------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
+| Orchestrator                                             | ✓     | The wiring IS the component's behavior.                                            |
+| Widget with state and interaction (dropdowns, modals)    | ✓     | Keyboard handling, open/close, focus management are its reason for existing.       |
+| Component with a meaningful `<script setup>`             | ✓     | Any computed/branching/event logic deserves a test.                                |
+| Pure presentational: props → markup/styles               | skip  | Covered by the parent's spec/story; any logic is in a tested helper or composable. |
+| Leaf that just re-emits parent events                    | skip  | Trivial pass-through; tested transitively by the orchestrator's test.              |
 
-**Story coverage is not a substitute for tests.** A `.stories.ts` captures the _visual states_ of a component. It does not assert behavior over time, branch on user input, or verify store interactions. A drop-down's story shows the menu open and closed; a test verifies that pressing `Escape` closes it.
+**Story coverage is not a substitute for tests.** A `.stories.ts` captures the _visual states_ of a component. It does not assert behavior over time, branch on user input, or verify store interactions. A dropdown's story shows the menu open and closed; a test verifies that pressing `Escape` closes it.
 
 ### Teleport and event propagation
 
-A leaf rendered inside a `<Teleport>` still emits to its parent component (the slot owner), so events flow normally in the app. In tests, **don't stub `Teleport`** (`stubs: { Teleport: true }`) when a teleported child emits to its parent — the stub swallows non-`update:*` component emits. Mount for real and query the teleported DOM via `document.body`.
+A leaf rendered inside a `<Teleport>` still emits to its parent component (the slot owner), so events flow normally in the app. In tests, **don't stub `Teleport`** when a teleported child emits to its parent — stubbing swallows non-`update:*` component emits. Mount for real and query the teleported DOM via the document body.
+
+### jsdom / VTU gotchas
+
+- **Object URLs**: jsdom's `URL.createObjectURL`/`revokeObjectURL` read browser-internal Blob buffers and throw on plain `File` objects. When the code under test creates object URLs, mock them in the spec setup (after any `resetAllMocks`) so `createObjectURL` returns an opaque string and `revokeObjectURL` is a no-op.
+- **Disabled controls**: VTU's `trigger()` silently drops synthetic events dispatched to a `disabled` button, so a hover/click handler never runs. Dispatch the DOM event manually to reach the attached listener. Note real browsers also don't fire mouse events on disabled buttons — a hover-hint that depends on them is a design fix, not a test fix.
+- **Watcher flush**: default watchers flush async. Assert watcher-driven effects (a localStorage persist, a store write) after awaiting a tick; `immediate` watchers already ran at instantiation. Consolidating several composables' watchers into one store changes *when* side effects fire across test paths — a prune/merge that used to live in a separate composable now runs wherever the shared store is instantiated; give test fixtures real references so the watcher behaves the way the production tree drives it.
+- **Store-backed props**: presentational leaves derive state from props. When a test types in a leaf's input, it then flows the draft back down with a prop update to simulate the container round-trip, before asserting the resulting emit.
 
 ---
 
-## 7. Composable Testing
+## 7. Composable & Store Testing
 
-### When to write composable tests
+### When to write composable/store tests
 
-Not every composable needs a test. Write tests when the composable contains:
+Write tests when the unit contains real behavior:
 
 - Pure logic mixed into reactive wrappers (extract the pure logic to a helper and test that)
-- Complex computed derivations
-- Store interaction contracts
+- Complex computed derivations or getter combinations
+- Store interaction contracts (which store methods are called, with what)
+- Side-effect wiring: watchers, persistence, socket calls, subscription sync
 
 Trivial composables that wrap a tested helper can skip the spec.
 
-### Composable test conventions
+### Test conventions
 
-Tests for **local** composables live co-located with the composable in the component group directory. Tests for **shared** composables stay in `src/composables/` next to the source.
+Tests for **local** composables live co-located with the composable in the component group directory. Tests for **shared** composables stay in the top-level `composables/` directory next to the source. Store specs (`Xxx.spec.ts`) live next to the store file they cover.
 
-### Example composable test
+A store or store-using-composable test:
 
-```ts
-import { describe, expect, it } from "vitest";
-import { useExclusiveMenu } from "./use-exclusive-menu";
-
-describe("useExclusiveMenu", () => {
-  it("starts with all menus closed", () => {
-    const { isMenuOpen } = useExclusiveMenu(["model", "stream", "sessions"]);
-    expect(isMenuOpen("model").value).toBe(false);
-    expect(isMenuOpen("stream").value).toBe(false);
-    expect(isMenuOpen("sessions").value).toBe(false);
-  });
-
-  it("opens one menu at a time", () => {
-    const { isMenuOpen, toggleMenu } = useExclusiveMenu(["model", "stream"]);
-    toggleMenu("model");
-    expect(isMenuOpen("model").value).toBe(true);
-    expect(isMenuOpen("stream").value).toBe(false);
-    toggleMenu("stream");
-    expect(isMenuOpen("model").value).toBe(false);
-    expect(isMenuOpen("stream").value).toBe(true);
-  });
-});
-```
-
-### Mock external dependencies
-
-Composables that touch the API or i18n mock them at the module level, per the established pattern. `vi.hoisted` keeps the mock reference available to the `vi.mock` factory; a `t` that returns the key lets tests assert on the key itself:
-
-```ts
-import { flushPromises } from "@vue/test-utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { reactive } from "vue";
-
-import type { StockHistoryPoint } from "@/api/stock-data.api";
-
-const fetchStockHistory = vi.hoisted(() =>
-  vi.fn<
-    (t: string, from: string, to: string) => Promise<StockHistoryPoint[]>
-  >(),
-);
-
-vi.mock("@/api/stock-data.api", () => ({ fetchStockHistory }));
-vi.mock("vue-i18n", () => ({
-  useI18n: () => ({ t: (key: string) => key }),
-}));
-```
-
-Pass the composable a `reactive` props object so changing a field (e.g. the ticker) triggers the composable's watchers, then `await flushPromises()` before asserting on the result.
+1. Creates a fresh Pinia and activates it in `beforeEach` (`createPinia` / `setActivePinia`) so each test gets isolated state.
+2. Seeds real stores with fixture state where the getters read them (assigning to setup-store refs directly works).
+3. Mocks the API and socket layers at the module level (via `vi.mock` factories, with any shared mock functions in `vi.hoisted`).
+4. Drives the store/composable's public API (calls actions, writes state refs) and asserts on getters, state, and mock interactions.
+5. Awaits a tick when asserting watcher-driven side effects, since default watchers flush async.
+6. Clears persisted keys (localStorage) between tests when the unit hydrates or persists state.
 
 ---
 
@@ -846,20 +373,19 @@ When naming anything, check this table first:
 
 | Category                | Pattern                               | Example                                                            |
 | ----------------------- | ------------------------------------- | ------------------------------------------------------------------ |
-| **Boolean ref**         | `is` + Adjective/Noun                 | `isModelMenuOpen`, `isStreamEnabled`, `isSubscriptionListExpanded` |
-| **Boolean computed**    | `is`/`has`/`should` prefix            | `hasNoModelSelected`, `isModelAvailable`, `shouldShowCapabilities` |
-| **Data ref**            | Descriptive noun                      | `selectedModel`, `newSessionName`, `attachedFiles`                 |
-| **Collection computed** | Noun + derivation                     | `sessionsSortedByUpdated`, `availableSocketBindings`               |
-| **Action function**     | Verb + Noun                           | `changeModel`, `createNewSession`, `toggleModelMenu`               |
+| **Boolean ref**         | `is` + Adjective/Noun                 | an open flag like `isModelMenuOpen`                                |
+| **Boolean computed**    | `is`/`has`/`should` prefix            | `hasNoModelSelected`, `shouldShowCapabilities`                     |
+| **Data ref**            | Descriptive noun                      | `selectedModel`, `attachedFiles`                                   |
+| **Collection computed** | Noun + derivation                     | `conversationsSortedByUpdated`                                     |
+| **Action function**     | Verb + Noun                           | `changeModel`, `toggleModelMenu`, `createConversation`             |
 | **Event handler**       | `on` + Event name                     | `onFileInputChange`, `onDocumentClick`                             |
 | **Cleanup function**    | Verb + What + Action                  | `revokeAllObjectUrls`, `closeAllMenus`                             |
-| **Formatting helper**   | `format` + What + As                  | `formatContextUsagePercent`, `formatSessionExpiry`                 |
-| **Calculation helper**  | `calc` + What                         | `calcTokenPercent`, `calcContextSize`                              |
-| **Predicate helper**    | `is`/`has` + What                     | `isSessionExpired`, `hasCompletedExchanges`                        |
+| **Formatting helper**   | `format` + What + As                  | `formatContextUsagePercent`                                        |
+| **Calculation helper**  | `calc` + What                         | `calcTokenPercent`                                                 |
+| **Predicate helper**    | `is`/`has` + What                     | `isConversationExpired`                                            |
 | **Component file**      | Noun phrase describing the UI element | `StreamSettingsMenu.vue`, `SubscribedEventItem.vue`                |
-| **Composable file**     | `use-` + Domain concept               | `use-selected-model.ts`, `use-event-subscriptions.ts`              |
-| **Helper file**         | Function name + `.helper.ts`          | `strip-html.helper.ts`, `calc-token-percent.helper.ts`             |
-| **Test file**           | Same name + `.spec.ts`                | `strip-html.helper.spec.ts`, `use-exclusive-menu.spec.ts`          |
+| **Composable file**     | `use-` + Domain concept               | `use-blink.ts`, `use-menu-position.ts`                             |
+| **Store file**          | Domain concept, setup store           | `left-toolbar.ts` → `useLeftToolbarStore`                          |
+| **Helper file**         | Function name + `.helper.ts`          | `strip-html.helper.ts`                                             |
+| **Test file**           | Same name + `.spec.ts`                | `strip-html.helper.spec.ts`                                        |
 | **Story file**          | Same name + `.stories.ts`             | `ModelSelector.stories.ts`                                         |
-
-The full checklist for finishing a task lives in [SKILL.md](./SKILL.md#checklist).

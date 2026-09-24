@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import { createHarnessResponseState } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/create-harness-response-state.helper';
-import type { HarnessResponseState } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/create-harness-response-state.helper.types';
-import { processHarnessResponseEvent } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/helpers/state/process-harness-response-event.helper';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { type Exchange, useConversationStore } from '@/stores/conversation';
+import { createHarnessResponseState } from '@/stores/helpers/harness/state/create-harness-response-state.helper';
+import type { HarnessResponseState } from '@/stores/helpers/harness/state/create-harness-response-state.helper.types';
+import { processHarnessResponseEvent } from '@/stores/helpers/harness/state/process-harness-response-event.helper';
 import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
 import { formatTime } from '@/utils/format-time.helper';
 

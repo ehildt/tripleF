@@ -16,10 +16,10 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { i18n } from '@/i18n/i18n';
 
-import MotionIcon from '../../shared/ui/motion-icon/MotionIcon.vue';
 import type { SettingsTab } from '../composables/use-settings-tab.types';
 
 defineProps<{

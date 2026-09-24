@@ -1,26 +1,25 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import { i18n } from '@/i18n/i18n';
 
 import { useDeleteDlqMutation } from '../../api/queries/use-delete-dlq-mutation';
 import { useDlqQuery } from '../../api/queries/use-dlq-query';
 import { useRetryDlqMutation } from '../../api/queries/use-retry-dlq-mutation';
 import { useUpdateDlqMutation } from '../../api/queries/use-update-dlq-mutation';
-import { useAppViewContext } from '../../composables/use-app-view-context';
 import { useToast } from '../../composables/use-toast';
 import { useDlqStore } from '../../stores/dlq';
+import { useModelsStore } from '../../stores/models';
 import { useSocketStore } from '../../stores/socket';
-import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
 import { useDlqActions } from './composables/use-dlq-actions';
 import { useDlqLoading } from './composables/use-dlq-loading';
 import DlqDetailsBody from './details-body/DlqDetailsBody.vue';
 import DlqListBody from './list-body/DlqListBody.vue';
 import DlqListHeader from './list-header/DlqListHeader.vue';
 
-const { viewModels } = useAppViewContext();
-
 const dlqStore = useDlqStore();
+const modelsStore = useModelsStore();
 const toast = useToast();
 const socketStore = useSocketStore();
 
@@ -136,7 +135,7 @@ watch(
     <DlqDetailsBody
       class="dlq-column__panel"
       :entry="dlqStore.selectedEntry"
-      :models="viewModels"
+      :models="modelsStore.modelNames"
       @save-payload="onSavePayload"
     />
   </div>

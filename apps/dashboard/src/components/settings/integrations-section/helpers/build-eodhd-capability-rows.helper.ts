@@ -1,9 +1,9 @@
 import { Activity, BadgeCheck, Coins, Gauge, Sparkles } from '@lucide/vue';
 
+import type { CapabilityRow } from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.types';
 import { i18n } from '@/i18n/i18n';
 
 import type { EodhdCapabilities } from '../../settings-config.model';
-import type { CapabilityRow } from '../shared/ui/capabilities-panel/CapabilitiesPanel.types';
 
 /**
  * EODHD plan/usage metadata rows for the capabilities panel. Empty when the

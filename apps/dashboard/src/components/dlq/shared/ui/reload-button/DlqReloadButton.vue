@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { RefreshCw } from '@lucide/vue';
 
-import ChatPendingIndicator from '../../../../chat/pending-indicator/ChatPendingIndicator.vue';
-import MotionIcon from '../../../../shared/ui/motion-icon/MotionIcon.vue';
-import Tooltip from '../../../../shared/ui/tooltip/Tooltip.vue';
+import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+
+import ChatPendingIndicator from '../pending-indicator/ChatPendingIndicator.vue';
 
 defineProps<{
   loading: boolean;

@@ -10,11 +10,11 @@
  * visible, the title becomes the scrolling now-playing marquee that
  * otherwise lives in the playlist bar.
  */
-import { playlistMarqueeVisible } from '@/components/chat/composables/right-panel-view.state';
-import { popoutShowBarAlways } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import { usePlaylistToggle } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/use-playlist-toggle';
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
 import VideoPlayerSurface from '@/components/shared/ui/video-player-surface/VideoPlayerSurface.vue';
+import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
+import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import { useRightToolbarStore } from '@/stores/right-toolbar';
 import type { ResizeDirection } from '@/types/resize-direction.model';
 
 import { useFloatingPlayerHost } from './composables/use-floating-player-host';
@@ -40,6 +40,9 @@ const {
 
 const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(launchedVideo);
 
+const rightToolbarStore = useRightToolbarStore();
+const popoutSettingsStore = usePopoutSettingsStore();
+
 function handleResize(direction: ResizeDirection, event: PointerEvent) {
   startResize(direction, event);
 }
@@ -57,10 +60,10 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
     :class="{ 'floating-player--hidden': windowHidden }"
     :style="dockedInline ? { ...dockedStyle, ...dockedClipStyle } : popupStyle"
     :docked="dockedInline"
-    :bar-always-visible="popoutShowBarAlways"
+    :bar-always-visible="popoutSettingsStore.popoutShowBarAlways"
     data-floating-player
     :title="launchedVideo.title"
-    :show-title-marquee="!playlistMarqueeVisible"
+    :show-title-marquee="!rightToolbarStore.playlistMarqueeVisible"
     :opacity-percent="opacityPercent"
     :is-in-playlist="isInPlaylist"
     minimize-:title="$t('common.minimizeVideo')"

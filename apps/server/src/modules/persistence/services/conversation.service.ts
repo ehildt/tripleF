@@ -9,7 +9,6 @@ import type {
   ConversationTurn,
   MergedConversation,
 } from './conversation.service.types.js';
-import { PlaylistService } from './playlist.service.js';
 import { ShownMediaRepository } from './shown-media.repository.js';
 
 @Injectable()
@@ -17,7 +16,6 @@ export class ConversationService {
   constructor(
     private readonly repository: ConversationRepository,
     private readonly shownMedia: ShownMediaRepository,
-    private readonly playlists: PlaylistService,
   ) {}
 
   async listConversations(sessionId: string): Promise<ConversationSnapshot[]> {
@@ -64,10 +62,9 @@ export class ConversationService {
   async deleteConversation(sessionId: string, conversationId: string) {
     // Purge the shown-media registry with the conversation — leftovers
     // would forever block fresh images/videos in any recreated
-    // conversation sharing the id.
+    // conversation sharing the id. Playlists are session-scoped and survive
+    // conversation deletion.
     await this.shownMedia.deleteByConversation(sessionId, conversationId);
-    // Purge the conversation's playlists too.
-    await this.playlists.deleteByConversation(sessionId, conversationId);
     return this.repository.deleteByConversation(sessionId, conversationId);
   }
 

@@ -3,9 +3,8 @@ import { Database, TriangleAlert } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { formatDate } from '@/utils/format-date.helper';
-
-import Tooltip from '../../../shared/ui/tooltip/Tooltip.vue';
 
 const props = defineProps<{
   queueName: string;

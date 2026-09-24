@@ -34,16 +34,7 @@ full, explicit names — never a bare `code`:
   (e.g. `'us'`, `'de'`, `'fr'`). The registry derives the flag map from this
   key, so there is no separate hand-maintained flag table.
 
-Example:
-
-```ts
-export const en: LocaleMessages = {
-  languageCode: 'en',
-  countryCode: 'us',
-  app: { /* … */ },
-  // …
-};
-```
+The two identity keys sit at the top of every locale object (the `en` file uses `'en'` and `'us'`); the registry reads them to build the locale list and flag map. The rest of the object is the schema-shaped message tree.
 
 ## Core rules
 

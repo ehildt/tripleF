@@ -1,1 +1,1 @@
-export type { ToastOptions } from './toast-state.types';
+export type { ToastOptions } from '@/stores/toast.types';

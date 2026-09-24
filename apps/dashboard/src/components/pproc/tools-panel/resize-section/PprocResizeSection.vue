@@ -6,13 +6,12 @@ import {
   MoveVertical,
 } from '@lucide/vue';
 
+import MaxHeightField from '@/components/pproc/shared/ui/max-height-field/MaxHeightField.vue';
+import MaxWidthField from '@/components/pproc/shared/ui/max-width-field/MaxWidthField.vue';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 import type { PreprocessingSize } from '@/types/preprocessing.model';
-
-import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
-import MaxHeightField from '../../shared/ui/max-height-field/MaxHeightField.vue';
-import MaxWidthField from '../../shared/ui/max-width-field/MaxWidthField.vue';
 
 const store = usePreprocessingStore();
 

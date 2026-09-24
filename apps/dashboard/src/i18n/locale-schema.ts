@@ -176,6 +176,8 @@ const commonSchema = z.object({
   playlist: z.string().optional(),
   history: z.string().optional(),
   createPlaylist: z.string().optional(),
+  downloadedFromWeb: z.string().optional(),
+  uploadedByUser: z.string().optional(),
   attemptsCount: z.string().optional(),
   reviews: z.string().optional(),
   /* ---- dynamic label prefixes ---- */
@@ -188,6 +190,7 @@ const commonSchema = z.object({
   searchEngineDisabled: z.string().optional(),
   selectLabel: z.string().optional(),
   unsubscribeFrom: z.string().optional(),
+  subscribe: z.string(),
   deletePlaylist: z.string().optional(),
   activePlaylist: z.string().optional(),
   imageN: z.string().optional(),

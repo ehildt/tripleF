@@ -25,35 +25,24 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import type { PopoutAnchor } from '@/components/chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state.types';
 import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import type { PopoutAnchor } from '@/stores/popout-settings.types';
 
-import {
-  popoutAnchor,
-  popoutAutoDock,
-  popoutEnabled,
-  popoutPreviewVisible,
-  popoutRememberPosition,
-  popoutShowBarAlways,
-  resetPopoutSettings,
-  setPopoutAnchor,
-  setPopoutAutoDock,
-  setPopoutEnabled,
-  setPopoutRememberPosition,
-  setPopoutShowBarAlways,
-  togglePopoutPreview,
-} from '../../../chat/exchange-list/chat-exchange/exchange-content/assistant-response/composables/popout-settings.state';
-import SectionHeader from '../../../shared/ui/section-header/SectionHeader.vue';
-import { hidePlaylistPreview } from '../../../widgets/floating-playlist/composables/playlist-settings.state';
 import type {
   PopoutHorizontal,
   PopoutVertical,
 } from './VideoPopoutPanel.types';
+
+const popoutSettingsStore = usePopoutSettingsStore();
+const playlistSettingsStore = usePlaylistSettingsStore();
 
 const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -76,24 +65,28 @@ const HORIZONTAL_OPTIONS = computed(() => [
 ]);
 
 const vertical = computed(
-  () => popoutAnchor.value.split('-')[0] as PopoutVertical,
+  () => popoutSettingsStore.popoutAnchor.split('-')[0] as PopoutVertical,
 );
 const horizontal = computed(
-  () => popoutAnchor.value.split('-')[1] as PopoutHorizontal,
+  () => popoutSettingsStore.popoutAnchor.split('-')[1] as PopoutHorizontal,
 );
 
 function setVertical(value: string) {
-  setPopoutAnchor(`${value}-${horizontal.value}` as PopoutAnchor);
+  popoutSettingsStore.setPopoutAnchor(
+    `${value}-${horizontal.value}` as PopoutAnchor,
+  );
 }
 
 function setHorizontal(value: string) {
-  setPopoutAnchor(`${vertical.value}-${value}` as PopoutAnchor);
+  popoutSettingsStore.setPopoutAnchor(
+    `${vertical.value}-${value}` as PopoutAnchor,
+  );
 }
 
 /** Toggle the popout preview; showing it hides the floating-player preview. */
 function handlePreviewToggle() {
-  hidePlaylistPreview();
-  togglePopoutPreview();
+  playlistSettingsStore.hidePlaylistPreview();
+  popoutSettingsStore.togglePopoutPreview();
 }
 </script>
 
@@ -101,9 +94,9 @@ function handlePreviewToggle() {
   <div class="video-popout-panel">
     <div class="video-popout-panel__actions">
       <PreviewButton
-        :active="popoutPreviewVisible"
+        :active="popoutSettingsStore.popoutPreviewVisible"
         :title="
-          popoutPreviewVisible
+          popoutSettingsStore.popoutPreviewVisible
             ? $t('common.hideExamplePopout')
             : $t('common.showExamplePopout')
         "
@@ -111,12 +104,16 @@ function handlePreviewToggle() {
       />
       <ResetButton
         :title="$t('common.resetPopoutSettingsToDefaults')"
-        @click="resetPopoutSettings"
+        @click="popoutSettingsStore.resetPopoutSettings"
       />
       <PowerToggle
-        :enabled="popoutEnabled"
+        :enabled="popoutSettingsStore.popoutEnabled"
         :title="$t('common.enableVideoPopout')"
-        @toggle="setPopoutEnabled(!popoutEnabled)"
+        @toggle="
+          popoutSettingsStore.setPopoutEnabled(
+            !popoutSettingsStore.popoutEnabled,
+          )
+        "
       />
     </div>
 
@@ -131,7 +128,7 @@ function handlePreviewToggle() {
           :icon="PictureInPicture2"
           :label="$t('common.initialPosition')"
           :description="$t('common.popoutPositionDesc')"
-          :disabled="!popoutEnabled"
+          :disabled="!popoutSettingsStore.popoutEnabled"
         >
           <template #controls>
             <SegmentedToggle
@@ -153,9 +150,13 @@ function handlePreviewToggle() {
           :icon="Pin"
           :label="$t('common.rememberPosition')"
           :description="$t('common.rememberPositionDesc')"
-          :checked="popoutRememberPosition"
-          :disabled="!popoutEnabled"
-          @toggle="setPopoutRememberPosition(!popoutRememberPosition)"
+          :checked="popoutSettingsStore.popoutRememberPosition"
+          :disabled="!popoutSettingsStore.popoutEnabled"
+          @toggle="
+            popoutSettingsStore.setPopoutRememberPosition(
+              !popoutSettingsStore.popoutRememberPosition,
+            )
+          "
         />
       </div>
     </div>
@@ -170,18 +171,26 @@ function handlePreviewToggle() {
           :icon="ArrowDownToLine"
           :label="$t('common.autodock')"
           :description="$t('common.autodockDesc')"
-          :checked="popoutAutoDock"
-          :disabled="!popoutEnabled"
-          @toggle="setPopoutAutoDock(!popoutAutoDock)"
+          :checked="popoutSettingsStore.popoutAutoDock"
+          :disabled="!popoutSettingsStore.popoutEnabled"
+          @toggle="
+            popoutSettingsStore.setPopoutAutoDock(
+              !popoutSettingsStore.popoutAutoDock,
+            )
+          "
         />
 
         <FieldCard
           :icon="Menu"
           :label="$t('common.alwaysShowBar')"
           :description="$t('common.alwaysShowBarDesc')"
-          :checked="popoutShowBarAlways"
-          :disabled="!popoutEnabled"
-          @toggle="setPopoutShowBarAlways(!popoutShowBarAlways)"
+          :checked="popoutSettingsStore.popoutShowBarAlways"
+          :disabled="!popoutSettingsStore.popoutEnabled"
+          @toggle="
+            popoutSettingsStore.setPopoutShowBarAlways(
+              !popoutSettingsStore.popoutShowBarAlways,
+            )
+          "
         />
       </div>
     </div>
@@ -198,40 +207,19 @@ function handlePreviewToggle() {
 
 .video-popout-panel__actions {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: var(--spacing-1);
-  min-height: calc(2.25rem + 2 * var(--spacing-2));
-  padding: 0 var(--spacing-3);
-  background:
-    radial-gradient(
-      ellipse 120% 140% at 12% 50%,
-      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 120% 140% at 88% 50%,
-      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
-      transparent 60%
-    ),
-    var(--color-bg-elevated);
+  gap: var(--spacing-2);
 }
 
 .video-popout-panel__group {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .video-popout-panel__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-1);
-}
-
-@media (max-width: 40rem) {
-  .video-popout-panel__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  gap: var(--spacing-2);
 }
 </style>

@@ -1,4 +1,4 @@
-import type { TabPanelTab } from '../../../shared/ui/tab-panel/TabPanel.types';
+import type { TabPanelTab } from '@/components/shared/ui/tab-panel/TabPanel.types';
 
 export type DetailTabId =
   'error' | 'params' | 'headers' | 'prompt' | 'body' | 'response';

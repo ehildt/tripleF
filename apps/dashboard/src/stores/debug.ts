@@ -149,6 +149,10 @@ export const useDebugStore = defineStore('debug', () => {
     selectedDebugResult.value = null;
   }
 
+  function selectDebugResult(result: DebugResult | null) {
+    selectedDebugResult.value = result;
+  }
+
   function incrementDebugCount(newCount: number) {
     if (newCount > lastSeenDebugCount.value) {
       lastSeenDebugCount.value = newCount;
@@ -171,6 +175,7 @@ export const useDebugStore = defineStore('debug', () => {
     addSocketDebugEntry,
     trackRequest,
     clearDebugResults,
+    selectDebugResult,
     incrementDebugCount,
     resetDebugCount,
     markDebugAsRead,

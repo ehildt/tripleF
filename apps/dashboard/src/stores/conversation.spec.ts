@@ -8,7 +8,6 @@ import {
   saveConversation,
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
-import { clearPendingFilesForConversation } from '../composables/attached-files.state';
 import { inMemoryTemporaryConversationsTable } from '../test-utils/in-memory-temporary-conversations';
 import { useAppStore } from './app';
 import { useConversationStore } from './conversation';
@@ -24,13 +23,13 @@ vi.mock('../api/storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../composables/attached-files.state', async () => {
-  const actual = await vi.importActual('../composables/attached-files.state');
-  return {
-    ...(actual as object),
-    clearPendingFilesForConversation: vi.fn(),
-  };
-});
+const mockClearPendingFilesForConversation = vi.hoisted(() => vi.fn());
+
+vi.mock('./attached-files', () => ({
+  useAttachedFilesStore: () => ({
+    clearPendingFilesForConversation: mockClearPendingFilesForConversation,
+  }),
+}));
 
 describe('useConversationStore', () => {
   beforeEach(async () => {
@@ -74,7 +73,7 @@ describe('useConversationStore', () => {
 
     await store.deleteCurrentConversation(parentId);
 
-    expect(clearPendingFilesForConversation).toHaveBeenCalledWith(
+    expect(mockClearPendingFilesForConversation).toHaveBeenCalledWith(
       parentId,
       conversationId,
     );

@@ -1,5 +1,3 @@
-import type { ComputedRef, InjectionKey } from 'vue';
-
 export interface VideoGalleryItem {
   videoUrl: string;
   title?: string;
@@ -338,11 +336,6 @@ export interface HarnessResponseData {
   cards?: ArticleCard[];
 }
 
-export type HarnessImageClickedHandler = (item: GalleryItem) => void;
-
-export const harnessImageClickedKey: InjectionKey<HarnessImageClickedHandler> =
-  Symbol('harnessImageClicked');
-
 /**
  * Art-direction layouts for snippet-composed responses (news, article,
  * evaluation): classic stacked flow, editorial pull-quote spread, split
@@ -354,11 +347,6 @@ export type ResponseLayout = 'classic' | 'editorial' | 'split' | 'mosaic';
 /** Which media gallery a news/article-style response prioritizes (renders first). */
 export type MediaPriority = 'images' | 'videos';
 
-/** Injected from an ancestor orchestrator into the assistant-response templates so
- * they can order the image vs video galleries without a deep prop thread. */
-export const mediaPriorityKey: InjectionKey<ComputedRef<MediaPriority>> =
-  Symbol('mediaPriority');
-
 /** Response content section types the user can hide/show from the prompt bar.
  * The media sections (gallery, videoGallery) are no longer hidden — they
  * switch presentations instead — so only the text sections remain. */
@@ -368,22 +356,11 @@ export type CollapsibleSectionKey =
 /** Collapse state of every response section type (`true` = hidden). */
 export type CollapsedSections = Record<CollapsibleSectionKey, boolean>;
 
-/** Injected from the orchestrator so response sections hide when their type is
- * collapsed from the prompt bar, without a deep prop thread. */
-export const sectionCollapsedKey: InjectionKey<ComputedRef<CollapsedSections>> =
-  Symbol('sectionCollapsed');
-
 /** How a media section renders: as a gallery (carousel/mosaic) or as a list (grid). */
 export type MediaPresentation = 'gallery' | 'list';
 
 /** Presentation preference per media type, switched from the prompt bar's view menu. */
 export type MediaPresentations = Record<'image' | 'video', MediaPresentation>;
-
-/** Injected from the orchestrator so the media sections read their presentation
- * from the prompt bar without a deep prop thread. */
-export const mediaPresentationsKey: InjectionKey<
-  ComputedRef<MediaPresentations>
-> = Symbol('mediaPresentations');
 
 /** A carousel/gallery slide — either an image or a video item. */
 export type MediaItem = GalleryItem | VideoGalleryItem;

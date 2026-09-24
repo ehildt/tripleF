@@ -1,24 +1,24 @@
+import { useToastStore } from '@/stores/toast';
 import type { ToastType } from '@/types/toast-type.model';
 
-import { useToastState } from './toast-state';
 import type { ToastOptions } from './use-toast.types';
 
 export type { ToastType };
 
 export function useToast() {
-  const { add, preview } = useToastState();
+  const toastStore = useToastStore();
 
   const show = (
     message: string,
     type: ToastType = 'default',
     options?: ToastOptions,
   ) => {
-    add(message, type, options);
+    toastStore.add(message, type, options);
   };
 
   return {
     show,
-    preview,
+    preview: toastStore.preview,
     info: (message: string, options?: ToastOptions) =>
       show(message, 'info', options),
     success: (message: string, options?: ToastOptions) =>

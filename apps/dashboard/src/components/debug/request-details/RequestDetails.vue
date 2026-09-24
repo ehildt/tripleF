@@ -2,13 +2,14 @@
 import { Brain, Clock, Cpu, FaceSlightlySmiling, Link2 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import ExpandableMessageList from '@/components/shared/ui/expandable-message-list/ExpandableMessageList.vue';
+import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
+import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
+import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
+import TabPanel from '@/components/shared/ui/tab-panel/TabPanel.vue';
+
 import type { DebugResult } from '../../../types/debug.model';
-import ExpandableMessageList from '../../shared/ui/expandable-message-list/ExpandableMessageList.vue';
-import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.vue';
-import PanelHeader from '../../shared/ui/panel-header/PanelHeader.vue';
-import PanelHeaderTitle from '../../shared/ui/panel-header-title/PanelHeaderTitle.vue';
-import PanelLayout from '../../shared/ui/panel-layout/PanelLayout.vue';
-import TabPanel from '../../shared/ui/tab-panel/TabPanel.vue';
 import { useRequestDetails } from './composables/use-request-details';
 import DetailTag from './detail-tag/DetailTag.vue';
 import { formatSize } from './helpers/format-size.helper';

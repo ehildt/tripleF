@@ -66,8 +66,8 @@ Server also has:
    - Read the error file and line.
    - Missing functions/variables often come from a half-implemented refactor. Either restore the missing symbol or update the call site.
    - Run from inside the target workspace:
-     - Dashboard: `cd dashboard && pnpm exec vue-tsc --noEmit`
-     - Server: `cd server && npx tsc --noEmit -p tsconfig.json`
+     - Dashboard: `cd apps/dashboard && pnpm exec vue-tsc -b` (or `pnpm exec vue-tsc --noEmit -p tsconfig.app.json`). A bare `vue-tsc --noEmit` checks nothing — the root `tsconfig.json` has `files: []` plus project references, so it exits 0 without type-checking.
+     - Server: `cd apps/server && npx tsc --noEmit -p tsconfig.json`
    - Or use recursive filters:
      - `pnpm -r --filter ./dashboard build`
      - `pnpm -r --filter ./server build` (requires `POSTGRES_URL` etc. for Prisma)

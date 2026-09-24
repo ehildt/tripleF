@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import HeaderMenu from '@/components/debug/shared/ui/header-menu/HeaderMenu.vue';
+import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
+import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
+import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
+
 import { useDebugStore } from '../../stores/debug';
 import type { DebugResult } from '../../types/debug.model';
-import PanelEmptyState from '../shared/ui/panel-empty-state/PanelEmptyState.vue';
-import PanelHeader from '../shared/ui/panel-header/PanelHeader.vue';
-import PanelHeaderTitle from '../shared/ui/panel-header-title/PanelHeaderTitle.vue';
-import PanelLayout from '../shared/ui/panel-layout/PanelLayout.vue';
 import { useDebugFilters } from './composables/use-debug-filters.composable';
 import RequestList from './request-list/RequestList.vue';
-import HeaderMenu from './shared/ui/header-menu/HeaderMenu.vue';
 import type { DebugProps } from './Debug.types';
 
 const props = defineProps<DebugProps>();

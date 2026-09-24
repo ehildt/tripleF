@@ -9,8 +9,6 @@ import {
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
 import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
-import { clearPendingFilesForConversation } from '../composables/attached-files.state';
-import { resolvePendingMerge } from '../composables/merge-selection.state';
 import type { MergedConversation } from '../types/conversation.model';
 import { createId } from '../utils/id.helper';
 import { calcInputTokenDelta } from './helpers/conversation/calc-input-token-delta.helper';
@@ -31,6 +29,7 @@ import { toPersistedConversation } from './helpers/conversation/to-persisted-con
 import { togglePairedExchangeIncluded } from './helpers/conversation/toggle-paired-exchange-included.helper';
 import { getPersistentSocketSessionId } from './helpers/socket/get-persistent-socket-session-id.helper';
 import { useAppStore } from './app';
+import { useAttachedFilesStore } from './attached-files';
 import type {
   Conversation,
   ConversationSubscription,
@@ -40,6 +39,7 @@ import type {
   UploadedImage,
 } from './conversation.model';
 import { type Exchange } from './conversation.model';
+import { useMergeSelectionStore } from './merge-selection';
 
 export type {
   Conversation,
@@ -484,7 +484,10 @@ export const useConversationStore = defineStore('conversation', () => {
       (img) => (img.conversationId ?? conversationId) === conversationId,
     );
 
-    clearPendingFilesForConversation(parentId, conversationId);
+    useAttachedFilesStore().clearPendingFilesForConversation(
+      parentId,
+      conversationId,
+    );
 
     conversation.exchanges = conversation.exchanges.filter(
       (e) => (e.conversationId ?? conversationId) !== conversationId,
@@ -664,7 +667,11 @@ export const useConversationStore = defineStore('conversation', () => {
             sourceExchangeIds.push(source.id);
           }
         }
-        resolvePendingMerge(conversationId, requestId, sourceExchangeIds);
+        useMergeSelectionStore().resolvePendingMerge(
+          conversationId,
+          requestId,
+          sourceExchangeIds,
+        );
       }
 
       conversation.updatedAt = Date.now();
@@ -699,7 +706,11 @@ export const useConversationStore = defineStore('conversation', () => {
         const sourceExchangeIds = conversation.exchanges
           .filter((e) => e.requestId && originRequestIds.has(e.requestId))
           .map((e) => e.id);
-        resolvePendingMerge(conversationId, requestId, sourceExchangeIds);
+        useMergeSelectionStore().resolvePendingMerge(
+          conversationId,
+          requestId,
+          sourceExchangeIds,
+        );
       }
     });
   }

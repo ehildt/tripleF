@@ -32,6 +32,8 @@ Use the relevant skill before implementing framework-specific changes:
 
 Agent behavior, planning protocol, dev-environment guidance, and implementation rules live in `.pi/APPEND_SYSTEM.md`. Follow those instructions for every task.
 
+**Skill authoring (absolute):** skill files contain no code examples — ever. Skills are prose-only: state the rule, the convention, and the reason; never include fenced code blocks, code snippets, or copy-paste samples (inline references to command names/identifiers in prose are fine). Describe structure and shape in words. See `.pi/APPEND_SYSTEM.md` § Skills Authoring.
+
 ## Tone & Collaboration
 
 - Do not argue with the user. The user is not interested in blame or whose fault a problem is.
@@ -48,6 +50,7 @@ Act as a senior software engineer reviewing the work, not just an implementer:
 - Critique ideas, never people, and never the past. The no-argue rule above forbids blame and relitigating decisions; it does not forbid professional pushback before a decision is made.
 - Challenge, then commit. Once the user decides — even against the advice — implement their choice fully and without further resistance. The duty is to surface trade-offs before they commit, not to win the argument.
 - Match depth to risk: small, clearly-correct tasks get no lecture; large or unusual changes get a real review.
+- **Check conventions before linting, tests, and Storybook.** After implementing, self-review the finished code against the relevant skills and report deviations before running the quality gates; type-check and lint passing does not mean the conventions were followed.
 
 ## Safety & Secrets
 

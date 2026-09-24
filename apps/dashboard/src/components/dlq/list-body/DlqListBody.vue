@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
 
+import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import PanelEmptyState from '../../shared/ui/panel-empty-state/PanelEmptyState.vue';
 import DlqItemRow from '../item-row/DlqItemRow.vue';
 import { useDlqListState } from './composables/use-dlq-list-state';
 

@@ -5,10 +5,10 @@
  */
 import { ref, watch } from 'vue';
 
+import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
 import PprocToolsPanel from '../../pproc/tools-panel/PprocToolsPanel.vue';
-import SettingsSection from '../shared/ui/settings-section/SettingsSection.vue';
 
 const store = usePreprocessingStore();
 

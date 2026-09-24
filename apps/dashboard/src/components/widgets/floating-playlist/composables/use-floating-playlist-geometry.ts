@@ -1,9 +1,8 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-import { tabMenuSide } from '@/components/app/tab-menu/composables/tab-menu-settings.state';
-
-import { playlistAnchor } from './playlist-settings.state';
-import type { PlaylistAnchor } from './playlist-settings.state.types';
+import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import type { PlaylistAnchor } from '@/stores/playlist-settings.types';
+import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
 
 /**
  * CSS anchoring per configured position, with the tab menu's offsets: the
@@ -41,6 +40,9 @@ const TAB_MENU_GAP_PX = 8;
  * position changes when the side flips or the viewport resizes.
  */
 export function useFloatingPlaylistGeometry() {
+  const tabMenuSettingsStore = useTabMenuSettingsStore();
+  const playlistSettingsStore = usePlaylistSettingsStore();
+
   /** Left edge (px from viewport left) of the tab menu; 0 = not found. */
   const tabMenuLeft = ref(0);
   /** Width (px) of the tab menu; 0 = not found. */
@@ -84,14 +86,17 @@ export function useFloatingPlaylistGeometry() {
    */
   const besideTabMenu = computed(
     () =>
-      playlistAnchor.value.split('-')[0] === 'top' &&
-      playlistAnchor.value.split('-')[1] === tabMenuSide.value,
+      playlistSettingsStore.playlistAnchor.split('-')[0] === 'top' &&
+      playlistSettingsStore.playlistAnchor.split('-')[1] ===
+        tabMenuSettingsStore.tabMenuSide,
   );
 
   const playlistStyle = computed(() => {
-    const style = { ...PLAYLIST_ANCHOR_STYLES[playlistAnchor.value] };
+    const style = {
+      ...PLAYLIST_ANCHOR_STYLES[playlistSettingsStore.playlistAnchor],
+    };
     if (besideTabMenu.value && tabMenuWidth.value > 0) {
-      if (tabMenuSide.value === 'right') {
+      if (tabMenuSettingsStore.tabMenuSide === 'right') {
         style.right = `${window.innerWidth - tabMenuLeft.value + TAB_MENU_GAP_PX}px`;
         delete style.left;
       } else {
