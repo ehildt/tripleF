@@ -1,10 +1,11 @@
 import { engineObject } from './engine-object.helper';
+import type { ProviderOverrides } from './provider-overrides.types';
 
 /**
  * Whether a provider is configured: a (masked) apiKey is present server-side.
  */
 export function engineHasApiKey(
-  snapshot: Record<string, unknown> | null | undefined,
+  snapshot: ProviderOverrides | null | undefined,
   name: string,
 ): boolean {
   const apiKey = engineObject(snapshot, name)?.apiKey;
