@@ -1,16 +1,16 @@
 import type { Ref } from 'vue';
 
 export function useChatInput(
-  arguments_: Ref<string>,
+  promptDraft: Ref<string>,
   submit: (text?: string) => Promise<void>,
-  persistArguments: () => void,
+  persistPromptDraft: () => void,
 ) {
   function onCollapsedSubmit() {
-    const trimmed = arguments_.value.trim();
+    const trimmed = promptDraft.value.trim();
     if (!trimmed) return;
     submit(trimmed);
-    arguments_.value = '';
-    persistArguments();
+    promptDraft.value = '';
+    persistPromptDraft();
   }
 
   function onCollapsedKeydown(e: KeyboardEvent) {
@@ -22,8 +22,8 @@ export function useChatInput(
 
   function onPromptInput(e: Event) {
     const val = (e.target as HTMLTextAreaElement).value;
-    arguments_.value = val;
-    persistArguments();
+    promptDraft.value = val;
+    persistPromptDraft();
   }
 
   return {

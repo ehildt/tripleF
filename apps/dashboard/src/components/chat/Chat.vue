@@ -21,6 +21,7 @@ import ChatViewPanel from './chat-view-panel/ChatViewPanel.vue';
 import { useChatActions } from './composables/use-chat-actions';
 import { useChatConversation } from './composables/use-chat-conversation';
 import { useChatDropdowns } from './composables/use-chat-dropdowns';
+import { usePromptDraft } from './composables/use-prompt-draft';
 import { useSearchEngineAvailability } from './composables/use-search-engine-availability';
 import { useSubmit } from './composables/use-submit';
 
@@ -32,10 +33,14 @@ defineOptions({ name: 'Chat' });
 const { isEventConnected, isRoomConnected } =
   useSocketSubscription(socketProvider);
 
-const { arguments_, submit, persistArguments } = useSubmit({
+const { promptDraft, persistPromptDraft, resetPromptDraft } = usePromptDraft();
+
+const { submit } = useSubmit({
   socketProvider,
   isEventConnected,
   isRoomConnected,
+  promptDraft,
+  resetPromptDraft,
 });
 
 const {
@@ -92,9 +97,9 @@ const { filteredContextSizeOptions, defaultContextSize, selectContextSize } =
   );
 
 const { onCollapsedKeydown, onPromptInput } = useChatInput(
-  arguments_,
+  promptDraft,
   submit,
-  persistArguments,
+  persistPromptDraft,
 );
 
 /** Ambient refresh: the server cache owns freshness, so focus just re-asks. */
@@ -161,7 +166,7 @@ function onDeleteConversation(id: string) {
 
     <ChatPromptActionBar
       :conversation-id="conversationId"
-      :value="arguments_"
+      :value="promptDraft"
       :think-options="filteredThinkOptions"
       :think-value="currentThinkValue"
       :context-size-options="filteredContextSizeOptions"

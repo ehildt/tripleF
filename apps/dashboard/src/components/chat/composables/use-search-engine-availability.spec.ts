@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type {
+  ProviderOverrideEntry,
+  ProviderSessionOverrides,
+} from './helpers/provider-overrides.types';
 import { useSearchEngineAvailability } from './use-search-engine-availability';
 
 vi.mock('../../../composables/use-toast', () => ({
@@ -7,19 +11,10 @@ vi.mock('../../../composables/use-toast', () => ({
 }));
 
 function mockFetchByUrl(options: {
-  serper?: {
-    enabled?: boolean;
-    apiKey?: string;
-  } & Record<string, unknown>;
-  brightData?: {
-    enabled?: boolean;
-    apiKey?: string;
-  } & Record<string, unknown>;
-  youtube?: {
-    enabled?: boolean;
-    apiKey?: string;
-  } & Record<string, unknown>;
-  sessionOverrides?: Record<string, unknown>;
+  serper?: ProviderOverrideEntry;
+  brightData?: ProviderOverrideEntry;
+  youtube?: ProviderOverrideEntry;
+  sessionOverrides?: ProviderSessionOverrides;
   providerOverridesOk?: boolean;
 }) {
   return vi.fn(async (input: unknown, init?: { method?: string }) => {
