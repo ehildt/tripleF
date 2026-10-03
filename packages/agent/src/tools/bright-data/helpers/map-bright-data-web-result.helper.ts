@@ -1,4 +1,4 @@
-import { SOURCE } from '../bright-data.constants.js';
+import { SOURCE } from '../bright-data.constant.js';
 import type { BrightDataWebSearchResponse } from '../web-search.types.js';
 
 type BrightDataOrganicResult = NonNullable<BrightDataWebSearchResponse['organic']>[number];

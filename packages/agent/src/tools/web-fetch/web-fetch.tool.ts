@@ -1,7 +1,7 @@
 import { type Tool, tool } from 'ai';
 
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
 
 import { extractArticleText } from './extract-article-text.helper.js';
 import { type WebFetchInput, webFetchSchema } from './web-fetch.schema.js';

@@ -5,6 +5,14 @@
  */
 const DEFAULT_BADGE_GAP = 18;
 
+/** Layout constraints for the dodge. */
+type BadgeDodgeOptions = {
+  /** Minimum vertical gap between two badge centers. */
+  gap?: number;
+  /** Plot bottom edge — the lowest position a badge may sit at. */
+  max?: number;
+};
+
 /**
  * Dodge vertically stacked right-axis badges so each stays legible: walk the
  * y positions top→bottom, pushing each badge at least `gap` px below the
@@ -15,10 +23,7 @@ const DEFAULT_BADGE_GAP = 18;
  */
 export function dodgeBadgePositions(
   ys: number[],
-  {
-    gap = DEFAULT_BADGE_GAP,
-    max = Infinity,
-  }: { gap?: number; max?: number } = {},
+  { gap = DEFAULT_BADGE_GAP, max = Infinity }: BadgeDodgeOptions = {},
 ): number[] {
   const dodged: number[] = [];
   let previous = -Infinity;

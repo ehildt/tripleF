@@ -1,7 +1,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
-import type { PlaylistAnchor } from '@/stores/playlist-settings.types';
+import { usePlaylistStore } from '@/stores/playlist';
+import type { PlaylistAnchor } from '@/stores/playlist.types';
 import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
 
 /**
@@ -41,7 +41,7 @@ const TAB_MENU_GAP_PX = 8;
  */
 export function useFloatingPlaylistGeometry() {
   const tabMenuSettingsStore = useTabMenuSettingsStore();
-  const playlistSettingsStore = usePlaylistSettingsStore();
+  const playlistStore = usePlaylistStore();
 
   /** Left edge (px from viewport left) of the tab menu; 0 = not found. */
   const tabMenuLeft = ref(0);
@@ -86,14 +86,14 @@ export function useFloatingPlaylistGeometry() {
    */
   const besideTabMenu = computed(
     () =>
-      playlistSettingsStore.playlistAnchor.split('-')[0] === 'top' &&
-      playlistSettingsStore.playlistAnchor.split('-')[1] ===
+      playlistStore.playlistAnchor.split('-')[0] === 'top' &&
+      playlistStore.playlistAnchor.split('-')[1] ===
         tabMenuSettingsStore.tabMenuSide,
   );
 
   const playlistStyle = computed(() => {
     const style = {
-      ...PLAYLIST_ANCHOR_STYLES[playlistSettingsStore.playlistAnchor],
+      ...PLAYLIST_ANCHOR_STYLES[playlistStore.playlistAnchor],
     };
     if (besideTabMenu.value && tabMenuWidth.value > 0) {
       if (tabMenuSettingsStore.tabMenuSide === 'right') {

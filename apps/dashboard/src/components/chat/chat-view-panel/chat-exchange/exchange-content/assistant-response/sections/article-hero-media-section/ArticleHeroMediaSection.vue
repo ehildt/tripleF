@@ -62,7 +62,9 @@ function handleClick() {
 </script>
 
 <template>
-  <figure v-if="heroVideoUrl || heroItem" class="hero-media-card">
+  <!-- Plain div (not a figure), exactly like the video gallery cards: the
+       media figure inside must never nest inside another figure. -->
+  <div v-if="heroVideoUrl || heroItem" class="hero-media-card">
     <template v-if="heroVideoUrl">
       <!-- Caption overlay anchored to the top edge, so the hero video fills
            the whole card. The title + playlist toggle stay pinned to the
@@ -85,7 +87,11 @@ function handleClick() {
           {{ heroVideoCaption }}
         </p>
       </MediaCaptionScrim>
+      <!-- The hero-media-card__video class lands on the figure's root
+           element and carries the layout constraints below, exactly like
+           video-gallery__video on the video list items. -->
       <FloatingVideoFigure
+        class="hero-media-card__video"
         :video-url="heroVideoUrl"
         :title="heroVideoTitle"
         :poster-url="heroPosterUrl"
@@ -98,7 +104,7 @@ function handleClick() {
         :image-alt="heroItem.imageAlt || ''"
         @click="handleClick"
       />
-      <figcaption
+      <div
         v-if="heroItem.title || heroItem.caption"
         class="hero-media-card__caption"
       >
@@ -106,9 +112,9 @@ function handleClick() {
           {{ heroItem.title }}
         </strong>
         <p v-if="heroItem.caption">{{ heroItem.caption }}</p>
-      </figcaption>
+      </div>
     </template>
-  </figure>
+  </div>
 </template>
 
 <style scoped>
@@ -121,10 +127,14 @@ function handleClick() {
   align-self: center;
 }
 
-/* The hero video matches the height of a lone last-row gallery banner
-   (2:1) so the two read as the same size. The header became an overlay, so
-   its former height now belongs to the video. */
-.hero-media-card :deep(.floating-video-figure .floating-video-figure__media) {
+/* Layout constraints for the FloatingVideoFigure root (class fallthrough),
+   exactly like the video gallery items: the hero's 2:1 frame lives on the
+   figure root — wider than the standard 3:2 video frame (a cinematic
+   strip). The header is an overlay, so its former height belongs to the
+   video. No deep override of the media box inside. */
+.hero-media-card__video {
+  position: relative;
+  width: 100%;
   aspect-ratio: 2 / 1;
 }
 

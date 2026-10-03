@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import { useVideoPlaybackStore } from '@/stores/video-playback';
+import { usePlaybackSession } from '@/composables/use-playback-session';
 import type { MediaItem } from '@/types/harness-response-data.model';
 
 import CarouselContent from './carousel-content/CarouselContent.vue';
@@ -14,7 +14,7 @@ const props = defineProps<AssistantCarouselProps>();
 
 const emit = defineEmits<{ remove: [item: MediaItem] }>();
 
-const videoPlaybackStore = useVideoPlaybackStore();
+const { activePlaybackVideoUrl } = usePlaybackSession();
 
 /** The track lives in CarouselContent; its ref is forwarded for scrolling. */
 const contentRef = ref<InstanceType<typeof CarouselContent> | null>(null);
@@ -25,7 +25,7 @@ const trackRef = computed(() => contentRef.value?.trackRef ?? null);
  * playback highlight). -1 when nothing in this carousel is playing.
  */
 const playingIndex = computed(() => {
-  const url = videoPlaybackStore.activePlaybackVideoUrl;
+  const url = activePlaybackVideoUrl.value;
   if (!url) return -1;
   return props.items.findIndex(
     (item) => isVideoMediaItem(item) && item.videoUrl === url,

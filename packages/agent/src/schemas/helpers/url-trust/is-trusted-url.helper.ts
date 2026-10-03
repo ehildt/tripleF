@@ -1,4 +1,4 @@
-import { BLOCKED_URL_HOSTS, NON_PAGE_EXTENSIONS } from '../../constants/url-trust.constants.js';
+import { BLOCKED_URL_HOSTS, NON_PAGE_EXTENSIONS } from '../../constants/url-trust.constant.js';
 
 import { isPrivateOrLocalhost } from './is-private-or-localhost.helper.js';
 

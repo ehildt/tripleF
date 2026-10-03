@@ -22,13 +22,13 @@ import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import { usePlaylistStore } from '@/stores/playlist';
 
-import PlaylistPanel from '../../chat/chat-right-toolbar/tabs/playlist/PlaylistPanel.vue';
+import PlaylistPanel from '../../chat/chat-right-toolbar/playlist/PlaylistPanel.vue';
 import { useFloatingPlaylistGeometry } from './composables/use-floating-playlist-geometry';
 import { useFloatingPlaylistVisibility } from './composables/use-floating-playlist-visibility';
 
-const playlistSettingsStore = usePlaylistSettingsStore();
+const playlistStore = usePlaylistStore();
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
@@ -41,7 +41,7 @@ const { isOpen, togglePlaylist, closeOnAutoclose } =
  * open upward and folds back down into it instead (see the closed clip).
  */
 const anchorVertical = computed(
-  () => playlistSettingsStore.playlistAnchor.split('-')[0],
+  () => playlistStore.playlistAnchor.split('-')[0],
 );
 const isBottomAnchored = computed(() => anchorVertical.value === 'bottom');
 
@@ -50,13 +50,13 @@ const isBottomAnchored = computed(() => anchorVertical.value === 'bottom');
  * column: the anchor's horizontal component.
  */
 const anchorHorizontal = computed(
-  () => playlistSettingsStore.playlistAnchor.split('-')[1],
+  () => playlistStore.playlistAnchor.split('-')[1],
 );
 </script>
 
 <template>
   <div
-    v-if="playlistSettingsStore.playlistMode === 'floating'"
+    v-if="playlistStore.playlistMode === 'floating'"
     class="floating-playlist-root"
     data-floating-playlist-root
   >
@@ -121,10 +121,9 @@ const anchorHorizontal = computed(
 }
 
 /* The assembly re-enables interaction inside the inert full-viewport root
-   (clicks pass through everywhere else). When collapsed the assembly
-   yields pointer events — but only after the window finishes fading out,
-   via a visibility transition delay. The handle stays visible by
-   overriding visibility on itself. */
+   (clicks pass through everywhere else). When collapsed the assembly drops
+   pointer events immediately, so the fading window never swallows a click;
+   the handle re-enables them for itself so it stays clickable. */
 .floating-playlist__assembly {
   position: fixed;
   display: flex;
@@ -139,6 +138,7 @@ const anchorHorizontal = computed(
 
 .floating-playlist__assembly--closed {
   visibility: hidden;
+  pointer-events: none;
   transition: visibility 0s linear 0.24s;
 }
 
@@ -150,7 +150,9 @@ const anchorHorizontal = computed(
 
 /* Collapsed toggle handle — absolutely positioned so it never affects the
    window's flex position. The assembly (position: fixed) is the containing
-   block. */
+   block. It overrides the closed assembly's `visibility: hidden` and
+   `pointer-events: none` so the handle stays visible and clickable while
+   the invisible window lets clicks through. */
 .floating-playlist__handle {
   position: absolute;
   top: 0;
@@ -174,6 +176,7 @@ const anchorHorizontal = computed(
   transition: color 0.2s ease;
   z-index: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .floating-playlist__handle:hover {

@@ -1,9 +1,6 @@
-import { sanitizeHtml } from '@/utils/sanitize-html.helper';
-
-export interface DocumentPreviewContent {
-  html?: string;
-  text?: string;
-}
+import { fetchManifest } from './fetch-manifest.helper';
+import { fetchOriginalText } from './fetch-original-text.helper';
+import type { DocumentPreviewContent } from './load-document-preview-content.helper.types';
 
 /**
  * Load what the preview renders for a document's storage url: pdf is
@@ -26,29 +23,4 @@ export async function loadDocumentPreviewContent(
     return manifest;
   }
   return fetchOriginalText(url);
-}
-
-async function fetchManifest(
-  url: string,
-): Promise<DocumentPreviewContent | null> {
-  try {
-    const response = await fetch(`${url}.conv`);
-    if (!response.ok) return null;
-    const manifest = (await response.json()) as {
-      html?: string;
-      slides?: string[];
-      text?: string;
-    };
-    if (manifest.html) return { html: sanitizeHtml(manifest.html) };
-    if (manifest.slides) return { text: manifest.slides.join('\n\n') };
-    return manifest.text ? { text: manifest.text } : null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchOriginalText(url: string): Promise<{ text: string }> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return { text: new TextDecoder().decode(await response.arrayBuffer()) };
 }

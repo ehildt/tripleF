@@ -1,4 +1,4 @@
-import { SOURCE } from '../bright-data.constants.js';
+import { SOURCE } from '../bright-data.constant.js';
 import type { BrightDataNewsSearchResponse } from '../news-search.types.js';
 
 type BrightDataNewsItem = NonNullable<BrightDataNewsSearchResponse['news']>[number];

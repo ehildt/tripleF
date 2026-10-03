@@ -1,13 +1,13 @@
 import { type Tool, tool } from 'ai';
 
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
-import { resolveSerperShopOfferLinks } from '../helpers/serper-shop-links.js';
-import type { ToolDependencies } from '../types/types.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
+import { resolveSerperShopOfferLinks } from '../helpers/serper-shop-links.helper.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapSerperShoppingResult } from './helpers/map-serper-shopping-result.helper.js';
-import { HEADERS } from './serper.constants.js';
+import { HEADERS } from './serper.constant.js';
 import { type SerperShoppingSearchInput, serperShoppingSearchSchema } from './shopping-search.schema.js';
 import type { SerperShoppingSearchResponse } from './shopping-search.types.js';
 

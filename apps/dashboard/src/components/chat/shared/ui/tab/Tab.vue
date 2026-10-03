@@ -6,70 +6,71 @@ defineProps<TabProps>();
 const emit = defineEmits<{
   select: [];
 }>();
-
-function onPointerDown() {
-  emit('select');
-}
-
-function onClick(event: MouseEvent) {
-  // Keyboard activation (Enter/Space) has no pointerdown; mouse clicks do.
-  // `detail` is 0 for keyboard-triggered clicks and >=1 for pointer clicks.
-  if (event.detail === 0) {
-    emit('select');
-  }
-}
 </script>
 
 <template>
   <div class="tab" :class="{ 'tab--active': isActive }">
-    <button
-      type="button"
-      class="tab__select"
-      @pointerdown="onPointerDown"
-      @click="onClick"
-    >
+    <button type="button" class="tab__select" @click="emit('select')">
       <span class="tab__icon">
         <slot />
       </span>
       <span class="tab__label">{{ label }}</span>
     </button>
-    <div v-if="$slots.menu" class="tab__menu">
-      <slot name="menu" />
-    </div>
   </div>
 </template>
 
 <style scoped>
 .tab {
+  position: relative;
   flex: 1 1 0%;
   display: flex;
-  align-items: stretch;
-  gap: var(--spacing-1);
   font-size: 0.75rem;
   font-family: var(--font-mono);
   color: var(--color-fg-muted);
-  background-color: var(--color-bg-secondary);
   border: none;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
+}
+
+/* The hover/active background lives on a dedicated layer and only its opacity
+   transitions. Opacity is composited on the GPU thread; transitioning
+   `background-color`/`color` directly would force a main-thread repaint every
+   animation frame (the dropped-frame source on tab clicks). */
+.tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-bg-tertiary);
+  opacity: 0;
+  /* Promote the fade to its own compositor layer so the hover background
+     animates on the GPU instead of repainting on the main thread. */
+  will-change: opacity;
+  transition: opacity 0.2s ease;
 }
 
 .tab:hover {
   color: var(--color-fg-primary);
-  background-color: var(--color-bg-tertiary);
+}
+
+.tab:hover::before {
+  opacity: 1;
 }
 
 .tab--active {
   color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
+}
+
+.tab--active::before {
+  opacity: 1;
 }
 
 .tab__select {
+  position: relative;
   flex: 1 1 0%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-2);
+  width: 100%;
+  height: 100%;
   min-width: 0;
   padding: var(--spacing-2);
   border: none;
@@ -78,14 +79,6 @@ function onClick(event: MouseEvent) {
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
-}
-
-.tab__menu {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-2);
-  padding-left: 0;
 }
 
 .tab__icon {

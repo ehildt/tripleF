@@ -5,22 +5,28 @@ import { useConversationStore } from '@/stores/conversation';
 
 import { useExchangeActions } from './use-exchange-actions';
 
+const submit = vi.hoisted(() => vi.fn(async () => undefined));
+
+vi.mock('@/components/chat/composables/use-submit', () => ({
+  useSubmit: () => ({ submit }),
+}));
+
 describe('useExchangeActions', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    submit.mockClear();
   });
 
   describe('retryExchange', () => {
     it('does nothing when no conversation is active', () => {
-      const retryHandler = vi.fn(async () => undefined);
-      const { retryExchange } = useExchangeActions(retryHandler);
+      const { retryExchange } = useExchangeActions();
 
       retryExchange('any-id');
 
-      expect(retryHandler).not.toHaveBeenCalled();
+      expect(submit).not.toHaveBeenCalled();
     });
 
-    it('replays the user message via retryHandler', () => {
+    it('replays the user message via the submit action', () => {
       const conversationStore = useConversationStore();
       const conversation = conversationStore.ensureConversation();
       conversationStore.addExchange(conversation.id, {
@@ -35,12 +41,11 @@ describe('useExchangeActions', () => {
       });
       const assistantId = conversation.exchanges[1].id;
 
-      const retryHandler = vi.fn(async () => undefined);
-      const { retryExchange } = useExchangeActions(retryHandler);
+      const { retryExchange } = useExchangeActions();
 
       retryExchange(assistantId);
 
-      expect(retryHandler).toHaveBeenCalledWith('Hi there');
+      expect(submit).toHaveBeenCalledWith('Hi there');
     });
   });
 });

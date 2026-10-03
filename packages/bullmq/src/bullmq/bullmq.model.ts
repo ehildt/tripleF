@@ -1,15 +1,14 @@
 import type { ModuleMetadata, Provider } from '@nestjs/common';
-import type { DefaultJobOptions } from 'bullmq';
-import type { RedisOptions } from 'ioredis';
+import type { ConnectionOptions, DefaultJobOptions } from 'bullmq';
 
 export type BullMQConfig = {
   defaultJobOptions?: DefaultJobOptions;
-  connection?: RedisOptions;
+  connection?: ConnectionOptions;
 };
 
 export type QueueConfig = {
   name: string;
-  connection?: RedisOptions;
+  connection?: ConnectionOptions;
 };
 
 export type BullMQConfigFactory = (...deps: any[]) => Promise<BullMQConfig> | BullMQConfig;

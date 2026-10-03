@@ -4,7 +4,7 @@ import {
   type MemoryCognitionRememberInput,
   memoryCognitionRememberSchema,
 } from './memory-cognition-remember.schema.js';
-import type { MemoryToolScope } from './memory-tool-scope.js';
+import type { MemoryToolScope } from './memory-tool-scope.types.js';
 
 interface MemoryCognitionRememberDeps {
   scope: MemoryToolScope;

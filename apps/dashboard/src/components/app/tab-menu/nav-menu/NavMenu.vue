@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { defineProps } from 'vue';
 import { RouterLink } from 'vue-router';
 
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
@@ -38,6 +39,11 @@ defineProps<{
         >
           ✦
         </span>
+        <span
+          v-else-if="tab.tab !== activeTab && tab.showDot"
+          class="nav-menu__badge nav-menu__badge--dot"
+          aria-hidden="true"
+        />
       </RouterLink>
     </Tooltip>
   </nav>
@@ -49,14 +55,14 @@ defineProps<{
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-0-5);
 }
 
 .nav-menu__item {
   position: relative;
   overflow: visible;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,5 +134,14 @@ defineProps<{
   background: none;
   font-size: 0.625rem;
   color: var(--color-fg-primary);
+}
+
+/* Attention dot — no text, just a pulsing filled circle. */
+.nav-menu__badge--dot {
+  min-width: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border-radius: 9999px;
 }
 </style>

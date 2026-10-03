@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { FormatZodShapeOptions } from './format-zod-shape.types.js';
+
 /**
  * Renders a Zod schema as a compact, model-facing JSON shape for prompt
  * inclusion. Field names, types, enum values, nesting, and optional markers
@@ -16,16 +18,6 @@ type JsonSchemaNode = {
   anyOf?: JsonSchemaNode[];
   additionalProperties?: JsonSchemaNode;
 };
-
-export interface FormatZodShapeOptions {
-  /**
-   * Top-level field overrides: replace a field's derived type hint with a
-   * custom one. Used for vocabularies the prompt supplies elsewhere (e.g.
-   * the enabled tool catalog), so the shape stays a placeholder instead of
-   * repeating the full enum.
-   */
-  overrides?: Record<string, string>;
-}
 
 const INDENT = '  ';
 

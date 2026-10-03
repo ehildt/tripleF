@@ -1,41 +1,11 @@
-/** A buy/sell marker anchored to a bar. */
-export interface PivotMarker {
-  time: string;
-  position: 'aboveBar' | 'belowBar';
-  color: string;
-  shape: 'arrowUp' | 'arrowDown';
-  text: string;
-}
-
-/** The history slice pivot detection runs over. */
-export interface PivotHistoryPoint {
-  time: string;
-  high: number;
-  low: number;
-}
-
-/** Points on each side a bar must exceed to count as a pivot high/low. */
-const PIVOT_WINDOW = 3;
-/** Maximum number of markers to render (most recent kept). */
-const MAX_MARKERS = 20;
-
-/** Whether the bar at `i` is higher than every bar in its pivot window. */
-function isPivotHigh(history: PivotHistoryPoint[], i: number): boolean {
-  for (let j = i - PIVOT_WINDOW; j <= i + PIVOT_WINDOW; j++) {
-    if (j === i) continue;
-    if (history[j].high >= history[i].high) return false;
-  }
-  return true;
-}
-
-/** Whether the bar at `i` is lower than every bar in its pivot window. */
-function isPivotLow(history: PivotHistoryPoint[], i: number): boolean {
-  for (let j = i - PIVOT_WINDOW; j <= i + PIVOT_WINDOW; j++) {
-    if (j === i) continue;
-    if (history[j].low <= history[i].low) return false;
-  }
-  return true;
-}
+import type {
+  PivotHistoryPoint,
+  PivotMarker,
+  PivotMarkerColors,
+} from './build-pivot-markers.helper.types';
+import { isPivotHigh } from './is-pivot-high.helper';
+import { isPivotLow } from './is-pivot-low.helper';
+import { MAX_MARKERS, PIVOT_WINDOW } from './pivot-marker.constant';
 
 /**
  * Buy/sell markers from price pivots: a bar that is the local high marks a
@@ -45,7 +15,7 @@ function isPivotLow(history: PivotHistoryPoint[], i: number): boolean {
  */
 export function buildPivotMarkers(
   history: PivotHistoryPoint[],
-  colors: { buy: string; sell: string },
+  colors: PivotMarkerColors,
 ): PivotMarker[] {
   const markers: PivotMarker[] = [];
   for (let i = PIVOT_WINDOW; i < history.length - PIVOT_WINDOW; i++) {

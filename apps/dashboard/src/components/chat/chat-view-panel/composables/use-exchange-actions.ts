@@ -1,3 +1,4 @@
+import { useSubmit } from '@/components/chat/composables/use-submit';
 import { useConversationStore } from '@/stores/conversation';
 
 import type { ExchangeActions } from './use-exchange-actions.types';
@@ -5,13 +6,13 @@ import type { ExchangeActions } from './use-exchange-actions.types';
 /**
  * Wire the orchestrator to the conversation store: retry the failed
  * assistant exchange of the active conversation. Delete and branch moved
- * with their icons to the right-toolbar history items (use-chat-conversation's
- * deleteUserExchange / branchUserExchange).
+ * with their icons to the right-toolbar history items (use-history-panel's
+ * deleteUserExchange / branchUserExchange). Composes the submit action by
+ * import.
  */
-export function useExchangeActions(
-  retryHandler: (text: string) => Promise<void>,
-): ExchangeActions {
+export function useExchangeActions(): ExchangeActions {
   const conversationStore = useConversationStore();
+  const { submit: retryHandler } = useSubmit();
 
   function retryExchange(exchangeId: string) {
     const id = conversationStore.activeConversationId;

@@ -3,22 +3,14 @@ import { ref } from 'vue';
 import { useId } from 'vue';
 
 import { useComboBox } from './composables/use-combo-box';
+import type { ComboBoxProps } from './ComboBox.types';
 
-const props = withDefaults(
-  defineProps<{
-    /** Current value (free text or a picked option). */
-    modelValue: string;
-    /** Existing values offered below the divider. Empty → plain input. */
-    options?: readonly string[];
-    /** Placeholder shown in the input and the empty trigger. */
-    placeholder: string;
-    /** Stable id for the field. Auto-generated if omitted. */
-    id?: string;
-    /** Name attribute, aids browser autofill. */
-    name?: string;
-  }>(),
-  { options: () => [], id: () => useId(), name: undefined },
-);
+const props = withDefaults(defineProps<ComboBoxProps>(), {
+  options: () => [],
+  id: () => useId(),
+  name: undefined,
+  side: 'bottom',
+});
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -69,7 +61,12 @@ function onInput(event: Event) {
           {{ props.modelValue || props.placeholder }}
         </span>
       </button>
-      <div v-if="open" class="combo-box__menu" @click.stop>
+      <div
+        v-if="open"
+        class="combo-box__menu"
+        :class="{ 'combo-box__menu--above': side === 'top' }"
+        @click.stop
+      >
         <input
           :id="id"
           ref="menuInputRef"
@@ -196,6 +193,11 @@ function onInput(event: Event) {
   border: 1px solid var(--color-divider);
   box-shadow: 0 10px 15px -3px
     color-mix(in srgb, var(--color-bg-primary) 10%, transparent);
+}
+
+.combo-box__menu--above {
+  top: auto;
+  bottom: 100%;
 }
 
 .combo-box__divider {

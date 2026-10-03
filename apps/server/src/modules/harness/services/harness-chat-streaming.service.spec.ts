@@ -67,12 +67,13 @@ describe('HarnessChatStreamingService', () => {
     expect(aiSdkService.streamChat).not.toHaveBeenCalled();
     expect(aiSdkService.generateChat).not.toHaveBeenCalled();
     expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      model: 'model',
-      template: 'text',
-      delta: 'What do you mean?',
-      done: true,
+      v: 1,
+      kind: 'event',
+      type: 'harness:completed',
+      id: expect.any(String),
+      at: expect.any(String),
+      meta: { requestId: 'req-1', roomId: 'room-1' },
+      data: { template: 'text', result: 'What do you mean?' },
     });
   });
 
@@ -92,13 +93,13 @@ describe('HarnessChatStreamingService', () => {
     expect(aiSdkService.streamChat).not.toHaveBeenCalled();
     expect(aiSdkService.generateChat).not.toHaveBeenCalled();
     expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      model: 'model',
-      template: 'text',
-      delta: 'boom',
-      error: 'boom',
-      done: true,
+      v: 1,
+      kind: 'event',
+      type: 'harness:failed',
+      id: expect.any(String),
+      at: expect.any(String),
+      meta: { requestId: 'req-1', roomId: 'room-1' },
+      data: { reason: 'boom' },
     });
   });
 
@@ -120,13 +121,13 @@ describe('HarnessChatStreamingService', () => {
     expect(aiSdkService.streamChat).not.toHaveBeenCalled();
     expect(aiSdkService.generateChat).not.toHaveBeenCalled();
     expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      model: 'model',
-      template: 'text',
-      delta: 'No response content produced',
-      error: 'No response content produced',
-      done: true,
+      v: 1,
+      kind: 'event',
+      type: 'harness:failed',
+      id: expect.any(String),
+      at: expect.any(String),
+      meta: { requestId: 'req-1', roomId: 'room-1' },
+      data: { reason: 'No response content produced' },
     });
   });
 
@@ -158,23 +159,28 @@ describe('HarnessChatStreamingService', () => {
     expect(aiSdkService.generateChat).not.toHaveBeenCalled();
 
     expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      model: 'model',
-      template: 'describe',
-      delta: '',
-      data: undefined,
-      // Image tasks: the response gallery is cloud reference images only —
-      // the user's uploaded local image never reaches the client gallery.
-      images: [],
-      toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
-      meta: [
-        { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
-      ],
-      prompt: 'describe this',
-      promptEvalCount: undefined,
-      evalCount: undefined,
-      done: true,
+      v: 1,
+      kind: 'event',
+      type: 'harness:completed',
+      id: expect.any(String),
+      at: expect.any(String),
+      meta: { requestId: 'req-1', roomId: 'room-1' },
+      data: {
+        template: 'describe',
+        result: undefined,
+        data: undefined,
+        // Image tasks: the response gallery is cloud reference images only —
+        // the user's uploaded local image never reaches the client gallery.
+        images: [],
+        toolResults: [{ toolName: 'webSearch', result: { x: 1 } }],
+        availableImages: undefined,
+        availableVideos: undefined,
+        meta: [
+          { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
+        ],
+        prompt: 'describe this',
+        usage: { promptEvalCount: undefined, evalCount: undefined },
+      },
     });
   });
 
@@ -204,23 +210,28 @@ describe('HarnessChatStreamingService', () => {
     await service.streamResult(ctx);
 
     expect(io.emitTo).toHaveBeenCalledWith('harness', 'room-1', {
-      event: 'harness',
-      requestId: 'req-1',
-      model: 'model',
-      template: 'describe',
-      delta: '{"title":"Image"}',
-      data: { title: 'Image' },
-      // Image tasks: the response gallery is cloud reference images only —
-      // the user's uploaded local image never reaches the client gallery.
-      images: [],
-      toolResults: [],
-      meta: [
-        { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
-      ],
-      prompt: 'describe this',
-      promptEvalCount: undefined,
-      evalCount: undefined,
-      done: true,
+      v: 1,
+      kind: 'event',
+      type: 'harness:completed',
+      id: expect.any(String),
+      at: expect.any(String),
+      meta: { requestId: 'req-1', roomId: 'room-1' },
+      data: {
+        template: 'describe',
+        result: '{"title":"Image"}',
+        data: { title: 'Image' },
+        // Image tasks: the response gallery is cloud reference images only —
+        // the user's uploaded local image never reaches the client gallery.
+        images: [],
+        toolResults: [],
+        availableImages: undefined,
+        availableVideos: undefined,
+        meta: [
+          { name: 'img.png', hash: 'h', source: 'local', variant: 'original' },
+        ],
+        prompt: 'describe this',
+        usage: { promptEvalCount: undefined, evalCount: undefined },
+      },
     });
   });
 });

@@ -15,14 +15,10 @@ import type {
   D3VolumeProfilePoint,
   D3VolumeStyle,
 } from '../D3Chart.types';
-import {
-  buildHeatmapCells,
-  type HeatmapDayCells,
-} from '../helpers/build-heatmap-cells.helper';
-import {
-  buildHlcAreaPaths,
-  type HlcPoint,
-} from '../helpers/build-hlc-area-paths.helper';
+import { buildHeatmapCells } from '../helpers/build-heatmap-cells.helper';
+import type { HeatmapDayCells } from '../helpers/build-heatmap-cells.helper.types';
+import { buildHlcAreaPaths } from '../helpers/build-hlc-area-paths.helper';
+import type { HlcPoint } from '../helpers/build-hlc-area-paths.helper.types';
 import {
   buildMarkerLayouts,
   type MarkerLayout,
@@ -32,10 +28,8 @@ import { buildPriceFormatter } from '../helpers/build-price-formatter.helper';
 import { buildRangeLabel } from '../helpers/build-range-label.helper';
 import { clampToPlot } from '../helpers/clamp-to-plot.helper';
 import { computeBarSpacing } from '../helpers/compute-bar-spacing.helper';
-import {
-  computeFlowColumns,
-  type FlowColumn,
-} from '../helpers/compute-flow-columns.helper';
+import { computeFlowColumns } from '../helpers/compute-flow-columns.helper';
+import type { FlowColumn } from '../helpers/compute-flow-columns.helper.types';
 import { computeSimpleMovingAverage } from '../helpers/compute-simple-moving-average.helper';
 import { dedupeReferenceLines } from '../helpers/dedupe-reference-lines.helper';
 import { dodgeBadgePositions } from '../helpers/dodge-badge-positions.helper';
@@ -43,15 +37,10 @@ import { ensureExtremeReferenceLines } from '../helpers/ensure-extreme-reference
 import { filterReferenceLinesInRange } from '../helpers/filter-reference-lines-in-range.helper';
 import { filterReferenceLinesInWindow } from '../helpers/filter-reference-lines-in-window.helper';
 import { forceExtremeMarkers } from '../helpers/force-extreme-markers.helper';
+import { formatRgba } from '../helpers/format-rgba.helper';
 import { formatVolume } from '../helpers/format-volume.helper';
+import { greenColor } from '../helpers/green-color.helper';
 import { hasIntradayTimes } from '../helpers/has-intraday-times.helper';
-import {
-  formatRgba,
-  greenColor,
-  purpleColor,
-  type RgbaColor,
-  turboColor,
-} from '../helpers/heatmap-shaders.helper';
 import { isExtremeAnnotation } from '../helpers/is-extreme-annotation.helper';
 import { isMovingAverageReferenceLine } from '../helpers/is-moving-average-reference-line.helper';
 import { mapLayoutToStackedMarker } from '../helpers/map-layout-to-stacked-marker.helper';
@@ -60,14 +49,17 @@ import { mapMarkerToLayout } from '../helpers/map-marker-to-layout.helper';
 import { mapPointToHlcPixel } from '../helpers/map-point-to-hlc-pixel.helper';
 import { mergeDuplicateReferenceLines } from '../helpers/merge-duplicate-reference-lines.helper';
 import { mergeMarkerLayouts } from '../helpers/merge-marker-layouts.helper';
+import { purpleColor } from '../helpers/purple-color.helper';
 import { resolveColor } from '../helpers/resolve-color.helper';
 import { resolveMarkerSymbolPath } from '../helpers/resolve-marker-symbol-path.helper';
 import { resolveTokenColor } from '../helpers/resolve-token-color.helper';
+import type { RgbaColor } from '../helpers/rgba-color.model';
 import type { SplitMarkerText } from '../helpers/split-marker-text.helper';
 import {
   type StackedMarkerLayout,
   stackMarkerLayouts,
 } from '../helpers/stack-marker-layouts.helper';
+import { turboColor } from '../helpers/turbo-color.helper';
 import {
   type D3ChartRenderContext,
   type D3CrosshairEvent,

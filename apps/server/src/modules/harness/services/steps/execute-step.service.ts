@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SocketIOService } from '@triplef/socketio';
 
 import { ExecuteActionService } from '../../actions/execute.action.js';
-import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import {
+  emitHarnessEvent,
+  HARNESS_EVENT_TYPES,
+} from '../../helpers/emit-harness-event.helper.js';
 import type { ToolExecutionEvent } from '../../helpers/execute/wrap-tools-with-execution-events.helper.js';
 import {
   HARNESS_ACTIVITY_KEYS,
@@ -77,20 +80,22 @@ export class ExecuteStepService implements StepHandler {
     ctx: HarnessContext,
     event: ToolExecutionEvent,
   ): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      toolCall: {
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.toolCall,
+      {
+        template: ctx.outputs.intent?.template,
         name: event.name,
         category: event.category,
         query: event.query,
         input: event.input,
         status: event.status,
+        language: resolveHarnessActivityLanguage(ctx),
       },
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    );
   }
 
   /**
@@ -104,25 +109,32 @@ export class ExecuteStepService implements StepHandler {
     toolName: string,
     chartData: unknown,
   ): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      sessionId: ctx.filters.sessionId,
-      conversationId: ctx.filters.conversationId,
-      template: ctx.outputs.intent?.template,
-      chartData: { toolName, data: chartData },
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.chart,
+      {
+        template: ctx.outputs.intent?.template,
+        toolName,
+        data: chartData,
+      },
+    );
   }
 
   private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      activity: { key },
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.activity,
+      {
+        template: ctx.outputs.intent?.template,
+        key,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 }

@@ -4,6 +4,7 @@ import { type ComponentPublicInstance, computed, toRef, watch } from 'vue';
 import { useChatViewStore } from '@/stores/chat-view';
 
 import { useNativeScroll } from '../composables/use-native-scroll';
+import { useUserScrollGate } from '../composables/use-user-scroll-gate';
 import { useVerticalCarousel } from '../composables/use-vertical-carousel';
 import ExchangeEmptyState from '../exchange-empty-state/ExchangeEmptyState.vue';
 import CarouselSection from '../vertical-carousel/carousel-section/CarouselSection.vue';
@@ -30,15 +31,14 @@ const {
   onScroll,
   activeSectionIndex,
   isProgrammaticScroll,
+  endProgrammaticScroll,
   shouldAutoScroll: carouselShouldAutoScroll,
   skipInitialScroll: skipCarouselInitialScroll,
-} = useVerticalCarousel(
-  toRef(props, 'isCompact'),
-  toRef(props, 'activeAssistantExchangeId'),
-  toRef(props, 'activeAssistantResponseStarted'),
-);
+} = useVerticalCarousel(toRef(props, 'isCompact'));
 
 const native = useNativeScroll();
+
+const userScrollGate = useUserScrollGate();
 
 const activeSectionIndexForMode = computed(() =>
   isCarousel.value ? activeSectionIndex.value : native.activeSectionIndex.value,
@@ -156,12 +156,25 @@ function setNativeScrollContainer(
 
 function onCarouselScroll() {
   onScroll();
-  if (!isProgrammaticScroll.value) emit('scroll');
+  if (!isProgrammaticScroll.value && userScrollGate.armUserScrollGesture()) {
+    emit('scroll');
+  }
 }
 
 function onNativeScroll() {
   native.onScroll();
-  if (!native.isProgrammaticScroll.value) emit('scroll');
+  if (
+    !native.isProgrammaticScroll.value &&
+    userScrollGate.armUserScrollGesture()
+  ) {
+    emit('scroll');
+  }
+}
+
+function onScrollEnd() {
+  endProgrammaticScroll();
+  native.endProgrammaticScroll();
+  userScrollGate.endUserScrollGesture();
 }
 
 function scrollToExchange(exchangeId: string) {
@@ -205,6 +218,7 @@ watch(
     class="vertical-carousel"
     data-playback-scroll-root
     @scroll="onCarouselScroll"
+    @scrollend="onScrollEnd"
   >
     <Transition name="exchange-list-state" mode="out-in">
       <ExchangeEmptyState v-if="sections.length === 0" key="empty" />
@@ -229,6 +243,7 @@ watch(
     class="native-scroll"
     data-playback-scroll-root
     @scroll="onNativeScroll"
+    @scrollend="onScrollEnd"
   >
     <ExchangeEmptyState v-if="sections.length === 0" />
     <div v-else class="native-scroll__list">

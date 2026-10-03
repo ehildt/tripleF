@@ -30,8 +30,8 @@ import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
-import type { PlaylistAnchor } from '@/stores/playlist-settings.types';
+import { usePlaylistStore } from '@/stores/playlist';
+import type { PlaylistAnchor } from '@/stores/playlist.types';
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
 
 import type {
@@ -40,7 +40,7 @@ import type {
 } from './PlaylistPanel.types';
 
 const popoutSettingsStore = usePopoutSettingsStore();
-const playlistSettingsStore = usePlaylistSettingsStore();
+const playlistStore = usePlaylistStore();
 
 const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -64,25 +64,24 @@ const HORIZONTAL_OPTIONS = computed(() => [
 
 /** Floating mode on/off — off keeps the playlist in the chat right toolbar. */
 const floatingEnabled = computed(
-  () => playlistSettingsStore.playlistMode === 'floating',
+  () => playlistStore.playlistMode === 'floating',
 );
 
 const vertical = computed(
-  () => playlistSettingsStore.playlistAnchor.split('-')[0] as PlaylistVertical,
+  () => playlistStore.playlistAnchor.split('-')[0] as PlaylistVertical,
 );
 const horizontal = computed(
-  () =>
-    playlistSettingsStore.playlistAnchor.split('-')[1] as PlaylistHorizontal,
+  () => playlistStore.playlistAnchor.split('-')[1] as PlaylistHorizontal,
 );
 
 function setVertical(value: string) {
-  playlistSettingsStore.setPlaylistAnchor(
+  playlistStore.setPlaylistAnchor(
     `${value}-${horizontal.value}` as PlaylistAnchor,
   );
 }
 
 function setHorizontal(value: string) {
-  playlistSettingsStore.setPlaylistAnchor(
+  playlistStore.setPlaylistAnchor(
     `${vertical.value}-${value}` as PlaylistAnchor,
   );
 }
@@ -90,7 +89,7 @@ function setHorizontal(value: string) {
 /** Toggle the floating-player preview; showing it hides the popout preview. */
 function handlePreviewToggle() {
   popoutSettingsStore.hidePopoutPreview();
-  playlistSettingsStore.togglePlaylistPreview();
+  playlistStore.togglePlaylistPreview();
 }
 </script>
 
@@ -98,9 +97,9 @@ function handlePreviewToggle() {
   <div class="playlist-panel">
     <div class="playlist-panel__actions">
       <PreviewButton
-        :active="playlistSettingsStore.playlistPreviewVisible"
+        :active="playlistStore.playlistPreviewVisible"
         :title="
-          playlistSettingsStore.playlistPreviewVisible
+          playlistStore.playlistPreviewVisible
             ? $t('common.hideExampleFloatingPlayer')
             : $t('common.showExampleFloatingPlayer')
         "
@@ -108,15 +107,13 @@ function handlePreviewToggle() {
       />
       <ResetButton
         :title="$t('common.resetFloatingPlayerSettingsToDefaults')"
-        @click="playlistSettingsStore.resetPlaylistSettings"
+        @click="playlistStore.resetPlaylistSettings"
       />
       <PowerToggle
         :enabled="floatingEnabled"
         :title="$t('common.floatPlayerAsAppWindow')"
         @toggle="
-          playlistSettingsStore.setPlaylistMode(
-            floatingEnabled ? 'panel' : 'floating',
-          )
+          playlistStore.setPlaylistMode(floatingEnabled ? 'panel' : 'floating')
         "
       />
     </div>
@@ -133,7 +130,7 @@ function handlePreviewToggle() {
           :description="$t('common.dockingModeDesc')"
           :checked="floatingEnabled"
           @toggle="
-            playlistSettingsStore.setPlaylistMode(
+            playlistStore.setPlaylistMode(
               floatingEnabled ? 'panel' : 'floating',
             )
           "
@@ -173,12 +170,10 @@ function handlePreviewToggle() {
           :icon="PanelRightClose"
           :label="$t('common.autoclose')"
           :description="$t('common.floatingPlayerAutocloseDesc')"
-          :checked="playlistSettingsStore.playlistAutoClose"
+          :checked="playlistStore.playlistAutoClose"
           :disabled="!floatingEnabled"
           @toggle="
-            playlistSettingsStore.setPlaylistAutoClose(
-              !playlistSettingsStore.playlistAutoClose,
-            )
+            playlistStore.setPlaylistAutoClose(!playlistStore.playlistAutoClose)
           "
         />
       </div>

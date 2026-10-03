@@ -681,7 +681,13 @@ describe('InterpretStepService', () => {
     expect(io.emitTo).toHaveBeenCalledWith(
       'event-1',
       'room-1',
-      expect.objectContaining({ reasoningDelta: 'thinking...' }),
+      expect.objectContaining({
+        type: 'harness:delta',
+        data: expect.objectContaining({
+          channel: 'reasoning',
+          text: 'thinking...',
+        }),
+      }),
     );
   });
 });

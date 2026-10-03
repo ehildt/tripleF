@@ -1,4 +1,4 @@
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
 
 const BRIGHT_DATA_ENDPOINT = 'https://api.brightdata.com/request';
 

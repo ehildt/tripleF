@@ -1,12 +1,10 @@
 import { defineStore } from 'pinia';
-import { computed, ref, shallowRef, watch } from 'vue';
+import { ref, shallowRef } from 'vue';
 
 import type {
   AnchorCandidate,
   PlaybackDockMode,
 } from './playback-anchor.types';
-import { usePopoutSettingsStore } from './popout-settings';
-import { useVideoPlaybackStore } from './video-playback';
 
 /**
  * Anchor registry for the universal playback container.
@@ -18,11 +16,12 @@ import { useVideoPlaybackStore } from './video-playback';
  * the same launched video can appear inline in the chat, as the floating
  * popup, or across conversations and tab switches, all without ever
  * reloading the player.
+ *
+ * This store holds only the registry and the dock-mode flag. The "which video
+ * is launched" facts and the docked-overlay derivations live in the playback
+ * session composable (use-playback-session), which reads this registry.
  */
 export const usePlaybackAnchorStore = defineStore('playbackAnchor', () => {
-  const popoutSettingsStore = usePopoutSettingsStore();
-  const videoPlaybackStore = useVideoPlaybackStore();
-
   const anchorCandidates = shallowRef(new Map<string, AnchorCandidate[]>());
 
   /**
@@ -79,23 +78,6 @@ export const usePlaybackAnchorStore = defineStore('playbackAnchor', () => {
     anchorCandidates.value = next;
   }
 
-  /** All registered anchors for the currently launched video, if any. */
-  const launchedAnchorCandidates = computed<AnchorCandidate[]>(() =>
-    videoPlaybackStore.launchedVideo
-      ? (anchorCandidates.value.get(
-          videoPlaybackStore.launchedVideo.videoUrl,
-        ) ?? [])
-      : [],
-  );
-
-  /** The in-view, dockable anchor for the currently launched video, if any. */
-  const visibleAnchorCandidate = computed<AnchorCandidate | null>(
-    () =>
-      launchedAnchorCandidates.value.find(
-        (entry) => entry.inView && (entry.dockCondition?.() ?? true),
-      ) ?? null,
-  );
-
   /**
    * Dock mode of the launched player:
    * - `auto` — follows the anchor (inline when a figure is in view, floating
@@ -115,72 +97,25 @@ export const usePlaybackAnchorStore = defineStore('playbackAnchor', () => {
    */
   const forceShowPlayer = ref(false);
 
-  // A fresh launch (or a full stop) always returns to auto-following. Sync
-  // flush: launch semantics depend on the mode being reset by the time
-  // launchVideo returns (callers read dock state synchronously after).
-  watch(
-    () => videoPlaybackStore.launchedVideo,
-    () => {
-      playbackDockMode.value = 'auto';
-      forceShowPlayer.value = false;
-    },
-    { flush: 'sync' },
-  );
-
-  /**
-   * The anchor the launched player should currently overlay, if any. With
-   * popouts enabled only an in-view figure qualifies (scrolling out flips to
-   * the floating window); with popouts disabled the player keeps tracking its
-   * figure even off-screen — the overlay simply leaves the viewport and keeps
-   * playing, matching the pre-popup inline behavior. The playlist background
-   * setting (hide the window while playlist videos play) suppresses docking
-   * entirely: figures then keep their "playing in the floating player"
-   * placeholder instead of an empty docked box.
-   */
-  const dockedAnchorCandidate = computed<AnchorCandidate | null>(() => {
-    if (playbackDockMode.value !== 'auto') return null;
-    if (!videoPlaybackStore.launchedVideo) return null;
-    if (
-      popoutSettingsStore.popoutHideOnPlaylist &&
-      videoPlaybackStore.launchedFromPlaylist
-    ) {
-      return null;
-    }
-    if (popoutSettingsStore.popoutEnabled) {
-      return visibleAnchorCandidate.value;
-    }
-    return launchedAnchorCandidates.value[0] ?? null;
-  });
-
-  /** Element the launched player currently overlays (null when floating). */
-  const dockedAnchorElement = computed<HTMLElement | null>(
-    () => dockedAnchorCandidate.value?.el ?? null,
-  );
-
-  /**
-   * Scroll container of the currently docked anchor (null when floating or
-   * the anchor scrolls with the document). The floating player clips its
-   * docked overlay to this container's bounds so the video never paints over
-   * neighboring chrome (chat input, toolbar) while partially scrolled out.
-   */
-  const dockedAnchorScrollRoot = computed<HTMLElement | null>(
-    () => dockedAnchorCandidate.value?.scrollRoot ?? null,
-  );
-
   /** Fresh play intent: poster click or playlist launch — follow the anchor. */
   function engagePlayback() {
     playbackDockMode.value = 'auto';
   }
 
+  /** A fresh launch returns to auto-following and lifts the force-show. */
+  function resetDockForLaunch() {
+    playbackDockMode.value = 'auto';
+    forceShowPlayer.value = false;
+  }
+
   /**
    * Dock intent ("Dock back" button, popup close): snap inline when a
    * figure is visible; otherwise hide the window and keep the audio
-   * running until playback is re-engaged.
+   * running until playback is re-engaged. The session composable passes the
+   * visibility result — only it can see the launched video's anchors.
    */
-  function dockPlayback() {
-    playbackDockMode.value = visibleAnchorCandidate.value
-      ? 'auto'
-      : 'dock-dismissed';
+  function dockPlayback(hasVisibleAnchor: boolean) {
+    playbackDockMode.value = hasVisibleAnchor ? 'auto' : 'dock-dismissed';
     forceShowPlayer.value = false;
   }
 
@@ -188,8 +123,7 @@ export const usePlaybackAnchorStore = defineStore('playbackAnchor', () => {
    * Force-hide the window while playback keeps running — the transport
    * bar's popup-visibility toggle hiding a standalone (figure-launched)
    * video, which the playlist background setting deliberately does not
-   * cover. dockPlayback cannot serve here: it would snap a visible anchor
-   * inline instead of hiding.
+   * cover.
    */
   function dismissPlaybackWindow() {
     playbackDockMode.value = 'dock-dismissed';
@@ -203,17 +137,14 @@ export const usePlaybackAnchorStore = defineStore('playbackAnchor', () => {
   }
 
   return {
+    anchorCandidates,
     registerAnchorCandidate,
     setAnchorCandidateInView,
     unregisterAnchorCandidate,
-    launchedAnchorCandidates,
-    visibleAnchorCandidate,
     playbackDockMode,
     forceShowPlayer,
-    dockedAnchorCandidate,
-    dockedAnchorElement,
-    dockedAnchorScrollRoot,
     engagePlayback,
+    resetDockForLaunch,
     dockPlayback,
     dismissPlaybackWindow,
     latchFloating,

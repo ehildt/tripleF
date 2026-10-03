@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { STANDALONE_QUERY_DESCRIPTION } from '../constants/standalone-query.constants.js';
+import { STANDALONE_QUERY_DESCRIPTION } from '../constants/standalone-query.constant.js';
 
 export const youtubeVideoSearchSchema = z.object({
   query: z

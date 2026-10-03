@@ -20,7 +20,10 @@ import { buildProviderOptions } from '../../../ollama/helpers/provider-options.h
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import type { InterpretResult } from '../../actions/interpret.action.types.js';
 import { splitCognitionProfile } from '../../helpers/cognition/split-cognition-profile.helper.js';
-import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import {
+  emitHarnessEvent,
+  HARNESS_EVENT_TYPES,
+} from '../../helpers/emit-harness-event.helper.js';
 import {
   HARNESS_ACTIVITY_KEYS,
   resolveHarnessActivityLanguage,
@@ -355,28 +358,37 @@ export class InterpretStepService implements StepHandler {
   }
 
   private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      activity: { key },
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.activity,
+      {
+        template: ctx.outputs.intent?.template,
+        key,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 
   private async emitReasoningDelta(
     ctx: HarnessContext,
     reasoningDelta: string,
   ): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      reasoningDelta,
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.delta,
+      {
+        template: ctx.outputs.intent?.template,
+        channel: 'reasoning',
+        text: reasoningDelta,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 
   private normalizeMediaCounts(

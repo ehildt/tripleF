@@ -1,4 +1,4 @@
-import { TOOL_DESCRIPTIONS, TOOL_NAMES } from '../../../schemas/helpers/tools/tool-registry.constants.js';
+import { TOOL_DESCRIPTIONS, TOOL_NAMES } from '../../../schemas/helpers/tools/tool-registry.constant.js';
 
 /**
  * Formats a complete tool availability catalog for the intent classifier.

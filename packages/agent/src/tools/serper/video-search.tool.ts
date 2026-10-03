@@ -1,17 +1,17 @@
 import { type Tool, tool } from 'ai';
 
 import { EMBEDDABLE_VIDEO_PROVIDER_CLAUSE } from '../../schemas/constants/embeddable-video-providers.constant.js';
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
 import { localizedQuerySuffix } from '../helpers/localized-query-suffix.helper.js';
 import { repairVideoLink } from '../helpers/repair-video-link.helper.js';
-import type { ToolDependencies } from '../types/types.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapSerperVideoResult } from './helpers/map-serper-video-result.helper.js';
-import { HEADERS } from './serper.constants.js';
+import { HEADERS } from './serper.constant.js';
 import { type SerperVideoSearchInput, serperVideoSearchSchema } from './video-search.schema.js';
 import type { SerperVideoSearchResponse } from './video-search.types.js';
 

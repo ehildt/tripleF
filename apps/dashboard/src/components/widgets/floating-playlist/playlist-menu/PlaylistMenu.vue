@@ -19,7 +19,7 @@
 import { Library, Plus } from '@lucide/vue';
 import { ref } from 'vue';
 
-import { useDropdown } from '@/components/shared/ui/drop-down/use-dropdown';
+import { useDropdown } from '@/components/shared/ui/drop-down/composables/use-dropdown';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import PlaylistMenuItem from './playlist-menu-item/PlaylistMenuItem.vue';

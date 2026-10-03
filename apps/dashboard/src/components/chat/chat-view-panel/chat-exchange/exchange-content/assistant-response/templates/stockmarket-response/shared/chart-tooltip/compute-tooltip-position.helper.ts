@@ -1,5 +1,11 @@
 /** Cursor-to-tooltip gap — the panel floats clearly beside the pointer, never under it. */
-export const CURSOR_GAP = 28;
+const CURSOR_GAP = 28;
+
+/** A 2D position inside the chart container. */
+type TooltipPoint = {
+  x: number;
+  y: number;
+};
 
 /**
  * Position the tooltip panel relative to the cursor: place it after (right
@@ -7,12 +13,12 @@ export const CURSOR_GAP = 28;
  * the container's right edge, and clamp it vertically inside the container.
  */
 export function computeTooltipPosition(
-  point: { x: number; y: number },
+  point: TooltipPoint,
   width: number,
   height: number,
   containerWidth: number,
   containerHeight: number,
-): { x: number; y: number } {
+): TooltipPoint {
   let x = point.x + CURSOR_GAP;
   const maxX = containerWidth - width - CURSOR_GAP;
   if (x > maxX) {

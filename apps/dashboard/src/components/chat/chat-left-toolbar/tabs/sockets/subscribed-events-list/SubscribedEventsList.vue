@@ -12,7 +12,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div v-if="subscriptions.length" class="subscribed-events-list">
+  <div class="subscribed-events-list">
     <SubscribedEventItem
       v-for="(sub, i) in subscriptions"
       :key="i"

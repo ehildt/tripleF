@@ -3,8 +3,11 @@ import { getApiUrl } from './api-url';
 
 export async function fetchConfig(
   sessionId: string,
+  signal?: AbortSignal,
 ): Promise<SessionConfig | null> {
-  const res = await fetch(getApiUrl(`/api/v1/configs/${sessionId}`));
+  const res = await fetch(getApiUrl(`/api/v1/configs/${sessionId}`), {
+    signal,
+  });
   if (!res.ok) throw new Error(`Failed to load config: ${res.status}`);
   // A missing config is a 200 with an empty body (Fastify sends no body for
   // a null return) — treat it as "no config yet".

@@ -1,23 +1,18 @@
 <script setup lang="ts">
-import { toRef } from 'vue';
+import { onActivated } from 'vue';
 
-import {
-  type ChatPromptActionBarEmits,
-  useChatPromptActionBar,
-} from './composables/use-chat-prompt-action-bar.composable';
-import { useFileSelect } from './composables/use-file-select.composable';
+import { useChatPromptActionBar } from './composables/use-chat-prompt-action-bar.composable';
 import PromptActions from './prompt-actions/PromptActions.vue';
 import PromptInput from './prompt-input/PromptInput.vue';
+import PromptMenu from './prompt-menu/PromptMenu.vue';
 import SourcesMenu from './source-tags-strip/sources-menu/SourcesMenu.vue';
 import SourceTagsStrip from './source-tags-strip/SourceTagsStrip.vue';
 import ViewMenu from './source-tags-strip/view-menu/ViewMenu.vue';
-import type { ChatPromptActionBarProps } from './ChatPromptActionBar.types';
-
-const props = defineProps<ChatPromptActionBarProps>();
-
-const emit = defineEmits<ChatPromptActionBarEmits>();
 
 const {
+  promptDraft,
+  onCollapsedKeydown,
+  onPromptFocus,
   fileSelectTitle,
   actionsClass,
   sourceTags,
@@ -39,16 +34,35 @@ const {
   toggleSection,
   presentationToggles,
   togglePresentation,
-  onFileButtonMouseEnter,
-  onFileButtonMouseLeave,
-} = useChatPromptActionBar(props, emit);
-
-const {
+  eodhdState,
+  filteredThinkOptions,
+  currentThinkValue,
+  selectThink,
+  filteredContextSizeOptions,
+  currentContextSizeValue,
+  selectContextSize,
+  formatContextValue,
+  hasNoModelSelected,
+  setThinkDropdownRef,
+  setContextSizeDropdownRef,
+  onThinkOpen,
+  onContextSizeOpen,
+  isFileSelectDisabled,
+  searchEngineState,
+  toggleSearchEngine,
+  toggleSource,
+  toggleEodhd,
   acceptedFileTypes,
   setFileInputRef,
   triggerFileSelect,
   onFileInputChange,
-} = useFileSelect(toRef(props, 'isFileSelectDisabled'));
+  refresh,
+} = useChatPromptActionBar();
+
+// KeepAlive caches Chat across tab switches, so the mount-only fetch in the
+// search-engine composable never re-runs after a Settings toggle. Refresh on
+// every activation so newly enabled/disabled engines reflect immediately.
+onActivated(refresh);
 </script>
 
 <template>
@@ -65,8 +79,8 @@ const {
         :always-show="sourceMenuAlwaysShow"
         :toggle-title="sourceMenuToggleTitle"
         @toggle="toggleSourceMenuCollapsed"
-        @toggle-source="emit('toggleSource', $event)"
-        @toggle-eodhd="emit('toggleEodhd')"
+        @toggle-source="toggleSource"
+        @toggle-eodhd="toggleEodhd"
       />
       <ViewMenu
         :scroll-mode="scrollMode"
@@ -83,37 +97,35 @@ const {
       />
     </SourceTagsStrip>
 
-    <PromptInput
-      :value="props.value"
-      @input="emit('input', $event)"
-      @keydown="emit('keydown', $event)"
-      @focus="emit('focus')"
-    />
+    <PromptMenu>
+      <PromptActions
+        :actions-class="actionsClass"
+        :think-options="filteredThinkOptions"
+        :think-value="currentThinkValue"
+        :context-size-options="filteredContextSizeOptions"
+        :context-size-value="currentContextSizeValue"
+        :format-context-size="formatContextValue"
+        :is-disabled="hasNoModelSelected"
+        :file-select-title="fileSelectTitle"
+        :is-file-select-disabled="isFileSelectDisabled"
+        :search-engine-state="searchEngineState"
+        :search-engine-toggle-title="searchEngineToggleTitle"
+        :no-search-engine-title="noSearchEngineTitle"
+        :set-think-dropdown-ref="setThinkDropdownRef"
+        :set-context-size-dropdown-ref="setContextSizeDropdownRef"
+        @select-think="selectThink"
+        @open-think="onThinkOpen"
+        @select-context-size="selectContextSize"
+        @open-context-size="onContextSizeOpen"
+        @file-select="triggerFileSelect"
+        @toggle-search-engine="toggleSearchEngine"
+      />
+    </PromptMenu>
 
-    <PromptActions
-      :actions-class="actionsClass"
-      :think-options="props.thinkOptions"
-      :think-value="props.thinkValue"
-      :context-size-options="props.contextSizeOptions"
-      :context-size-value="props.contextSizeValue"
-      :default-context-size="props.defaultContextSize"
-      :format-context-size="props.formatContextSize"
-      :is-disabled="props.isDisabled"
-      :file-select-title="fileSelectTitle"
-      :is-file-select-disabled="props.isFileSelectDisabled"
-      :search-engine-state="props.searchEngineState"
-      :search-engine-toggle-title="searchEngineToggleTitle"
-      :no-search-engine-title="noSearchEngineTitle"
-      :set-think-dropdown-ref="props.setThinkDropdownRef"
-      :set-context-size-dropdown-ref="props.setContextSizeDropdownRef"
-      @select-think="emit('selectThink', $event)"
-      @open-think="emit('openThink')"
-      @select-context-size="emit('selectContextSize', $event)"
-      @open-context-size="emit('openContextSize')"
-      @file-select="triggerFileSelect"
-      @toggle-search-engine="emit('toggleSearchEngine')"
-      @file-button-mouse-enter="onFileButtonMouseEnter"
-      @file-button-mouse-leave="onFileButtonMouseLeave"
+    <PromptInput
+      v-model="promptDraft"
+      @keydown="onCollapsedKeydown"
+      @focus="onPromptFocus"
     />
 
     <input

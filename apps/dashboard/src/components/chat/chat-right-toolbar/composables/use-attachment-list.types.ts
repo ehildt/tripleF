@@ -1,8 +1,3 @@
-import type { Ref } from 'vue';
-
-import type { UploadedDocument, UploadedImage } from '@/stores/conversation';
-import type { AttachedFileEntry } from '@/types/attached-files.model';
-
 export interface AttachmentPage {
   name: string;
   hash: string;
@@ -24,10 +19,4 @@ export interface AttachmentItem {
   kind: 'image' | 'document' | 'gallery';
   /** Page images of a gallery entry (pdf), in page order. */
   pages?: AttachmentPage[];
-}
-
-export interface UseAttachmentListOptions {
-  attachedFiles: Ref<AttachedFileEntry[]>;
-  uploadedImages: Ref<UploadedImage[]>;
-  uploadedDocuments: Ref<UploadedDocument[]>;
 }

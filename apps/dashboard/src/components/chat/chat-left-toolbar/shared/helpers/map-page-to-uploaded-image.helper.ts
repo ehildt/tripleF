@@ -1,8 +1,21 @@
+/** A converted page image carried between the preview and the conversation. */
+type PageImage = {
+  name: string;
+  hash: string;
+  page: number;
+};
+
+/** The parent document the page image belongs to. */
+type PageImageParent = {
+  parentHash: string;
+  parentName: string;
+};
+
 /** Project a converted page image into an uploaded image. */
 export function mapPageToUploadedImage(
-  pageImage: { name: string; hash: string; page: number },
+  pageImage: PageImage,
   conversationId: string,
-  parent: { parentHash: string; parentName: string },
+  parent: PageImageParent,
 ) {
   return {
     name: pageImage.name,

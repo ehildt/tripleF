@@ -135,7 +135,7 @@ const { posterUrl, isInPlaylist, togglePlaylistVideo } = useVideoGalleryTile(
   flex: 0 0 auto;
   min-height: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 2;
   height: auto;
   max-height: 100%;
 }
@@ -146,7 +146,7 @@ const { posterUrl, isInPlaylist, togglePlaylistVideo } = useVideoGalleryTile(
 .video-gallery__item .video-gallery__video {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 2;
   min-height: 180px;
   flex: 1 1 auto;
 }

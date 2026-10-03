@@ -1,16 +1,16 @@
 import { type Tool, tool } from 'ai';
 
 import { isTrustedImageUrl } from '../../schemas/helpers/url-trust/is-trusted-image-url.helper.js';
-import { meetsMinimumImageDimensions, MIN_IMAGE_HEIGHT, MIN_IMAGE_WIDTH } from '../constants/image-search.constants.js';
-import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
+import { meetsMinimumImageDimensions, MIN_IMAGE_HEIGHT, MIN_IMAGE_WIDTH } from '../constants/image-search.constant.js';
+import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import { tbsSizeLabelForPixels } from '../helpers/image-size-buckets.js';
-import type { ToolDependencies } from '../types/types.js';
+import { tbsSizeLabelForPixels } from '../helpers/image-size-buckets.helper.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapBrightDataImageResult } from './helpers/map-bright-data-image-result.helper.js';
-import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
+import { buildGoogleUrl, engineEnabled } from './bright-data.constant.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataImageSearchInput, brightDataImageSearchSchema } from './image-search.schema.js';
 import type { BrightDataImageSearchResponse } from './image-search.types.js';

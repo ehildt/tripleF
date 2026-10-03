@@ -49,8 +49,6 @@ the ExchangeEmptyState when there are no sections yet.
     highlightedIds: new Set<string>(),
     collapsedIds: new Set<string>(),
     isCompact: false,
-    activeAssistantExchangeId: null,
-    activeAssistantResponseStarted: false,
     onDelete: fn(),
     onRetry: fn(),
     onBranch: fn(),

@@ -1,19 +1,8 @@
-/** A bar's geometry in pixel space. */
-export interface HlcPoint {
-  x: number;
-  high: number;
-  low: number;
-  close: number;
-}
-
-/** SVG path data for the HLC area style. */
-export interface HlcAreaPaths {
-  topArea: string;
-  bottomArea: string;
-  highLine: string;
-  lowLine: string;
-  closeLine: string;
-}
+import type {
+  HlcAreaPaths,
+  HlcPoint,
+} from './build-hlc-area-paths.helper.types';
+import { linePath } from './line-path.helper';
 
 const EMPTY: HlcAreaPaths = {
   topArea: '',
@@ -22,15 +11,6 @@ const EMPTY: HlcAreaPaths = {
   lowLine: '',
   closeLine: '',
 };
-
-function linePath(
-  points: HlcPoint[],
-  yAccessor: (point: HlcPoint) => number,
-): string {
-  return points
-    .map((point, i) => `${i === 0 ? 'M' : 'L'} ${point.x} ${yAccessor(point)}`)
-    .join(' ');
-}
 
 /**
  * Build the path data for the HLC area style: a high line, a low line, a

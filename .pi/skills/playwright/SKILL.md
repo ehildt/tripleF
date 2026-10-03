@@ -95,7 +95,7 @@ If you genuinely need the image file, pull it out of the container: `docker cp p
 
 1. Expose more MCP tools: add the `browser_*` name to `BROWSER_TOOL_NAMES` **and** a capability-shaped description (when to use vs. search/fetch — the classifier learns the tool from its description alone) in `TOOL_DESCRIPTIONS` (`tool-registry.constants.ts`). Capability-gated groups (`pdf`, `vision`, `storage`, `network`) additionally need `--caps <group>` in the sidecar command.
 2. After registry changes run `cd server && pnpm lint && npx tsc --noEmit && pnpm test`.
-3. Tests are deferred per the nestjs skill: implement, ask the user to verify manually, then offer `.spec.ts` coverage as a separate step.
+3. Tests are consent-gated per `.pi/APPEND_SYSTEM.md` § Tests, Stories & Browser Automation: implement, ask the user to verify manually, then offer `.spec.ts` coverage as a separate step with their go-ahead.
 
 ## Checklist
 

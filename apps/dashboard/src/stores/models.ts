@@ -71,16 +71,19 @@ export const useModelsStore = defineStore('models', () => {
 
   // Sorted alphabetically within each section so the model selector's
   // local/cloud groups read in a stable order regardless of API order.
+  // Capability-less models (e.g. embeddings) can never serve a chat request,
+  // so no picker anywhere offers them — the raw catalog stays complete for
+  // availability checks.
   const localModels = computed(() =>
     models.value
-      .filter((m) => m.origin !== 'cloud')
+      .filter((m) => m.origin !== 'cloud' && (m.capabilities?.length ?? 0) > 0)
       .sort((a, b) =>
         a.model.localeCompare(b.model, undefined, { sensitivity: 'base' }),
       ),
   );
   const cloudModels = computed(() =>
     models.value
-      .filter((m) => m.origin === 'cloud')
+      .filter((m) => m.origin === 'cloud' && (m.capabilities?.length ?? 0) > 0)
       .sort((a, b) =>
         a.model.localeCompare(b.model, undefined, { sensitivity: 'base' }),
       ),

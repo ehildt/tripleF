@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { safeUrl } from '../helpers/url-trust/url-schema.helper.js';
+import { safeUrl } from '../helpers/url-trust/safe-url.helper.js';
 
 /**
  * internationalCoverage aside entries — noteworthy results found in

@@ -1,5 +1,5 @@
 import { buildYoutubeThumbnailUrl } from '../../helpers/build-youtube-thumbnail-url.helper.js';
-import { SOURCE } from '../bright-data.constants.js';
+import { SOURCE } from '../bright-data.constant.js';
 import type { BrightDataVideoSearchResponse } from '../video-search.types.js';
 
 type BrightDataVideoItem = NonNullable<BrightDataVideoSearchResponse['organic']>[number];

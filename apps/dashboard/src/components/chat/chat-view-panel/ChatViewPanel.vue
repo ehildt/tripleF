@@ -14,18 +14,8 @@ import type { ChatViewPanelProps } from './ChatViewPanel.types';
 
 const props = defineProps<ChatViewPanelProps>();
 
-const emit = defineEmits<{
-  deleteConversation: [id: string];
-  scroll: [];
-}>();
-
-const {
-  activeConversation,
-  exchanges,
-  activeAssistantExchangeId,
-  activeAssistantResponseStarted,
-  isExchangesLoading,
-} = useActiveConversation();
+const { activeConversation, exchanges, isExchangesLoading } =
+  useActiveConversation();
 
 const { highlightedIds, collapsedIds } = useExchangeVisualState(exchanges);
 
@@ -33,7 +23,7 @@ const isCompact = computed(() => props.compact ?? false);
 
 const sections = computed(() => buildExchangeSections(exchanges.value));
 
-const { retryExchange } = useExchangeActions(props.retryHandler);
+const { retryExchange } = useExchangeActions();
 
 const appStore = useAppStore();
 
@@ -66,10 +56,7 @@ const scrollMode = computed(() =>
       :highlighted-ids="highlightedIds"
       :collapsed-ids="collapsedIds"
       :is-compact="isCompact"
-      :active-assistant-exchange-id="activeAssistantExchangeId"
-      :active-assistant-response-started="activeAssistantResponseStarted"
       @retry="retryExchange"
-      @scroll="emit('scroll')"
     />
 
     <NoConversationPanel v-else />
