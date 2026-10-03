@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { TOOL_DESCRIPTIONS, TOOL_NAMES } from '../../../schemas/index.js';
+import { TOOL_DESCRIPTIONS, TOOL_NAMES } from '../../../schemas/helpers/tools/tool-registry.constant.js';
 
 import { formatToolAvailabilityCatalog } from './tool-catalog.helper.js';
 

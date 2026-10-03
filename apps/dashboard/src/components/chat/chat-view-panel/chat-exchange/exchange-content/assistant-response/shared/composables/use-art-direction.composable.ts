@@ -17,7 +17,9 @@ const SPAN_TILES_MIN_COUNT = 3;
  * maps the model-chosen `layout` (first JSON key, validated server-side) to
  * the per-module treatments the sections consume. Each treatment degrades
  * to the classic stacked flow when its content is missing — the server
- * already coerces precondition violations, this is defense in depth.
+ * already coerces precondition violations, this is defense in depth. The
+ * image gallery always renders the carousel/single/list presentation — the
+ * same look across templates, matching news.
  */
 export function useArtDirection(props: ArtDirectionInput) {
   const direction = computed(() => props.data.layout ?? 'classic');
@@ -35,9 +37,6 @@ export function useArtDirection(props: ArtDirectionInput) {
       (props.data.sectionContent?.length ?? 0) >= MULTICOL_BODY_MIN_CHARS,
   );
 
-  /** mosaic (ar4): dense span-grid image gallery instead of the carousel. */
-  const mosaicGallery = computed(() => direction.value === 'mosaic');
-
   /** editorial/mosaic (ar5): the first card or related story spans columns. */
   const spans = computed(
     () =>
@@ -51,7 +50,6 @@ export function useArtDirection(props: ArtDirectionInput) {
     splitHero,
     quoteAside,
     multicolBody,
-    mosaicGallery,
     spans,
   };
 }

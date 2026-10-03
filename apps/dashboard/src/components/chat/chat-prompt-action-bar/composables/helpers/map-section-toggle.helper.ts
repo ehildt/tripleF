@@ -1,31 +1,38 @@
 import type { LucideIcon } from '@lucide/vue';
 
-import type { CollapsibleSectionKey } from '@/types/harness-response-data.model';
+import type {
+  CollapsedSections,
+  CollapsibleSectionKey,
+} from '@/types/harness-response-data.model';
 
-type Translate = (key: string, params?: Record<string, unknown>) => string;
+/** A response-section toggle: its type and leading icon. */
+type SectionToggleConfig = {
+  key: CollapsibleSectionKey;
+  icon: LucideIcon;
+};
 
-/** Build one section toggle from its config and current hidden state. */
+/** A resolved section toggle, ready for the caller to translate. */
+type SectionToggleData = {
+  key: CollapsibleSectionKey;
+  icon: LucideIcon;
+  hidden: boolean;
+  titleKey: string;
+};
+
+/** Build one section toggle from its config and the current collapse state:
+ * pick the show/hide title key. Translation happens in the caller. */
 export function mapSectionToggle(
-  {
-    key,
-    icon,
-    labelKey,
-  }: {
-    key: CollapsibleSectionKey;
-    icon: LucideIcon;
-    labelKey: string;
-  },
-  collapsedSections: Record<CollapsibleSectionKey, boolean>,
-  t: Translate,
-) {
+  config: SectionToggleConfig,
+  collapsedSections: CollapsedSections,
+): SectionToggleData {
+  const { key, icon } = config;
   const hidden = collapsedSections[key];
-  const name = t(labelKey);
   return {
     key,
     icon,
     hidden,
-    title: hidden
-      ? t('common.showSectionWithName', { section: name })
-      : t('common.hideSectionWithName', { section: name }),
+    titleKey: hidden
+      ? 'common.showSectionWithName'
+      : 'common.hideSectionWithName',
   };
 }

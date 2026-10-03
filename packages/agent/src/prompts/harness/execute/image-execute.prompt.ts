@@ -1,6 +1,6 @@
-import { type VariantName } from '../../../schemas/helpers/tools/tool-registry.constants.js';
+import { type VariantName } from '../../../schemas/helpers/tools/tool-registry.constant.js';
 
-import { buildExecuteLanguageInstruction } from './execute-language.helper.js';
+import { buildExecuteLanguageInstruction } from './helpers/execute-language.helper.js';
 
 const IMAGE_TASK_QUERY_GUIDANCE = `QUERY CRAFTING (image task) — phrase each tool query for its endpoint; never copy one query across tools:
 - Identify the subject first: read the visible signals (on-screen text, logos, watermarks, characters, outfits, UI elements) and use the filenames in the image inventory as hints. Filenames are hints, never verbatim queries.

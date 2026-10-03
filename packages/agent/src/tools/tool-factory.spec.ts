@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultSummarize, summarizeContent, summarizeFound, summarizeResults, withSummary } from './tool-factory.js';
+import { defaultSummarize } from './helpers/default-summarize.helper.js';
+import { summarizeContent } from './helpers/summarize-content.helper.js';
+import { summarizeFound } from './helpers/summarize-found.helper.js';
+import { summarizeResults } from './helpers/summarize-results.helper.js';
+import { withSummary } from './helpers/with-summary.helper.js';
 
 describe('tool-factory', () => {
   describe('summarizeResults', () => {

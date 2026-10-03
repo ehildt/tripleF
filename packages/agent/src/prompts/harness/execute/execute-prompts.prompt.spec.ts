@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { IntentResult } from '../../../schemas/index.js';
+import type { IntentResult } from '../../../schemas/intent.schema.js';
 
 import { buildImageExecutePrompt } from './image-execute.prompt.js';
 import { buildToolExecutePrompt } from './tool-execute.prompt.js';

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildHeatmapCells,
-  type HeatmapHistoryPoint,
-  type HeatmapProfilePoint,
-} from './build-heatmap-cells.helper';
+import { buildHeatmapCells } from './build-heatmap-cells.helper';
+import type {
+  HeatmapHistoryPoint,
+  HeatmapProfilePoint,
+} from './build-heatmap-cells.helper.types';
 
 function day(
   time: string,

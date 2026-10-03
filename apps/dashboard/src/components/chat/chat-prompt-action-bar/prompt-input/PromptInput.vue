@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import type { PromptInputProps } from './PromptInput.types';
-
 /** Prompt input block: the mono ">" caret plus the multiline textarea. */
-defineProps<PromptInputProps>();
+const model = defineModel<string>({ required: true });
 
 const emit = defineEmits<{
-  input: [event: Event];
   keydown: [event: KeyboardEvent];
   focus: [];
 }>();
@@ -15,13 +12,12 @@ const emit = defineEmits<{
   <div class="prompt-input">
     <span class="prompt-input__caret">&gt;</span>
     <textarea
-      :value="value"
+      v-model="model"
       name="prompt"
       :rows="2"
       class="prompt-input__field"
       :aria-label="$t('common.promptAria')"
       :placeholder="$t('common.askHarness')"
-      @input="emit('input', $event)"
       @keydown="emit('keydown', $event)"
       @focus="emit('focus')"
     />

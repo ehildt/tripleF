@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { CYCLE_COLOR_TOKENS, pickCycleColor } from './pick-cycle-color.helper';
+import { CYCLE_COLOR_TOKENS } from './cycle-color-tokens.constant';
+import { pickCycleColor } from './pick-cycle-color.helper';
 
 describe('pickCycleColor', () => {
   it('returns the var() reference for the token at the given index', () => {

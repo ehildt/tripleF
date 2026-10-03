@@ -1,7 +1,7 @@
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 
 import { applyLocaleParams } from './apply-locale-params.helper.js';
-import { fetchWithTimeout } from './fetch-with-timeout.js';
+import { fetchWithTimeout } from './fetch-with-timeout.helper.js';
 import { mapOrganicEntryToUrl } from './map-organic-entry-to-url.helper.js';
 import { pickMerchantResult } from './pick-merchant-result.helper.js';
 import type { ResolvableOffer } from './serper-shop-links.types.js';

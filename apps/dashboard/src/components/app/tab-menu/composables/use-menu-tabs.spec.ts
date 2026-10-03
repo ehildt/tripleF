@@ -85,11 +85,11 @@ describe('useMenuTabs', () => {
     const vm = mountComposable({
       activeTab: 'chat',
       debugCount: 7,
-      dlqCount: 3,
+      showDlqBadge: true,
     });
 
     expect(vm.tabs.find((t) => t.tab === 'debug')?.count).toBe(7);
-    expect(vm.tabs.find((t) => t.tab === 'dlq')?.count).toBe(3);
+    expect(vm.tabs.find((t) => t.tab === 'dlq')?.showDot).toBe(true);
   });
 
   it('omits counts when counters are disabled', () => {
@@ -98,11 +98,11 @@ describe('useMenuTabs', () => {
     const vm = mountComposable({
       activeTab: 'chat',
       debugCount: 7,
-      dlqCount: 3,
+      showDlqBadge: true,
     });
 
     expect(vm.tabs.find((t) => t.tab === 'debug')?.count).toBeUndefined();
-    expect(vm.tabs.find((t) => t.tab === 'dlq')?.count).toBeUndefined();
+    expect(vm.tabs.find((t) => t.tab === 'dlq')?.showDot).toBe(true);
   });
 
   it('hides tabs that the user has toggled off', async () => {

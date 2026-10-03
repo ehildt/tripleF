@@ -8,7 +8,7 @@ import {
   saveConversation as saveServerConversation,
 } from '../api/conversations.api';
 import { deleteUploadedObject } from '../api/storage.api';
-import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-token-percent.helper';
+import { calcTotalContextPercentage } from '../components/chat/shared/helpers/calc-total-context-percentage.helper';
 import type { MergedConversation } from '../types/conversation.model';
 import { createId } from '../utils/id.helper';
 import { calcInputTokenDelta } from './helpers/conversation/calc-input-token-delta.helper';
@@ -174,6 +174,17 @@ export const useConversationStore = defineStore('conversation', () => {
    */
   const inFlightLoads = new Map<string, Promise<boolean>>();
 
+  /**
+   * Activate a restored conversation only when nothing is active yet. The
+   * boot restore runs in the background, so a conversation the user created
+   * or selected while the list was still loading must never be hijacked.
+   */
+  function activateRestoredConversation(id: string) {
+    if (activeConversationId.value === null) {
+      activeConversationId.value = id;
+    }
+  }
+
   // Boot: fetch the stub list (sidebar) while the last active conversation's
   // full content fetches in parallel — the saved id is read synchronously
   // from localStorage, so the chat restore never waits for the list.
@@ -193,7 +204,13 @@ export const useConversationStore = defineStore('conversation', () => {
     // content fetch can never run ahead of the stub assignment below — the
     // apply awaits it before reading `conversations`.
     const listSettled = loadConversations().then((stubs) => {
-      conversations.value = stubs;
+      // Merge, never replace: a conversation created in-memory while the
+      // list was still loading (attach flow, first send) must survive the
+      // settle — and its in-memory state is newer than any persisted copy
+      // sharing its id, so in-memory wins the collision.
+      const inMemoryIds = new Set(conversations.value.map((c) => c.id));
+      const freshStubs = stubs.filter((stub) => !inMemoryIds.has(stub.id));
+      conversations.value = [...conversations.value, ...freshStubs];
       hydrated.value = true;
     });
 
@@ -225,7 +242,7 @@ export const useConversationStore = defineStore('conversation', () => {
       const local = conversations.value.find(
         (c) => c.conversationId === savedId,
       );
-      if (local) activeConversationId.value = local.id;
+      if (local) activateRestoredConversation(local.id);
       return;
     }
 
@@ -263,7 +280,7 @@ export const useConversationStore = defineStore('conversation', () => {
       const stub = conversations.value.find(
         (c) => c.conversationId === savedId,
       );
-      if (stub) activeConversationId.value = stub.id;
+      if (stub) activateRestoredConversation(stub.id);
       return false;
     }
     await listSettled;
@@ -274,7 +291,7 @@ export const useConversationStore = defineStore('conversation', () => {
       const stub = conversations.value.find(
         (c) => c.conversationId === savedId,
       );
-      if (stub) activeConversationId.value = stub.id;
+      if (stub) activateRestoredConversation(stub.id);
       else localStorage.removeItem(LAST_ACTIVE_CONVERSATION_KEY);
       return false;
     }
@@ -293,10 +310,10 @@ export const useConversationStore = defineStore('conversation', () => {
         stub.exchanges,
         stub.numCtx,
       );
-      activeConversationId.value = stub.id;
+      activateRestoredConversation(stub.id);
     } else {
       conversations.value.unshift(loaded);
-      activeConversationId.value = loaded.id;
+      activateRestoredConversation(loaded.id);
     }
     return true;
   }

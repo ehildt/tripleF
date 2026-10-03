@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  computeTooltipPosition,
-  CURSOR_GAP,
-} from './compute-tooltip-position.helper';
+import { computeTooltipPosition } from './compute-tooltip-position.helper';
+
+/** Mirrors the helper's private cursor-to-tooltip gap. */
+const CURSOR_GAP = 28;
 
 describe('computeTooltipPosition', () => {
   it('places the panel after the cursor by the cursor gap', () => {

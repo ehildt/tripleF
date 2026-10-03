@@ -1,10 +1,4 @@
 import type { UploadedDocument, UploadedImage } from '@/stores/conversation';
-import type { SocketProvider } from '@/types/socket-provider.model';
-
-export interface UseHarnessRequestOptions {
-  /** Socket provider used to register the in-flight request for tracking. */
-  socketProvider: SocketProvider;
-}
 
 /** One prepared harness request: everything the transport needs to POST it. */
 export interface PostHarnessRequestOptions {
@@ -28,8 +22,8 @@ export interface PostHarnessRequestOptions {
   numCtx: string;
   /** Registered images the prompt references. */
   referencedImages: UploadedImage[];
-  /** Documents newly attached in this request. */
+  /** Newly uploaded documents attached to the prompt. */
   newDocuments: UploadedDocument[];
-  /** Conversation id used to scope pending-file cleanup. */
+  /** Conversation id the prompt belongs to. */
   conversationId: string;
 }

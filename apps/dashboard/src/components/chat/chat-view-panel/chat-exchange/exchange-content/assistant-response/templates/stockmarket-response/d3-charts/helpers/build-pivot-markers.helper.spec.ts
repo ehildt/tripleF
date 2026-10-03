@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildPivotMarkers,
-  type PivotHistoryPoint,
-} from './build-pivot-markers.helper';
+import { buildPivotMarkers } from './build-pivot-markers.helper';
+import type { PivotHistoryPoint } from './build-pivot-markers.helper.types';
 
 const COLORS = { buy: '#00cc7f', sell: '#ff4466' };
 

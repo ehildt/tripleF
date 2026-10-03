@@ -78,17 +78,20 @@ describe('useActivityLabel', () => {
     scope.stop();
   });
 
-  it('shows the consolidating descriptor while reasoning streams', async () => {
+  it('keeps showing the current step activity while reasoning streams', async () => {
     const scope = effectScope();
     const activityLabel = scope.run(() => {
       const exchange = ref(
-        makeExchange({ reasoning: 'Thinking through the request' }),
+        makeExchange({
+          reasoning: 'Thinking through the request',
+          activity: { key: 'activity.responding' },
+        }),
       );
       return useActivityLabel(exchange).activityLabel;
     });
 
     await nextTick();
-    expect(activityLabel!.value).toBe('activity.consolidating');
+    expect(activityLabel!.value).toBe('activity.responding');
     scope.stop();
   });
 

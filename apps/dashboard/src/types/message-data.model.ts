@@ -1,5 +1,11 @@
-import type { HarnessActivityDescriptor } from './harness-activity.model';
-
+/**
+ * Socket message-list bookkeeping shape (pending → done tracking, unread
+ * badge, DLQ retry dedup). Server traffic arrives as v1 `SocketEvent`
+ * envelopes (types in `harness-socket-event.model.ts`) and is routed by the
+ * messages store's typed dispatcher — the old flat grab-bag of ~30 optional
+ * phase keys was retired with the envelope migration; the entries here keep
+ * only what the client-side bookkeeping touches. See docs/socket-event-bus.md.
+ */
 export interface MessageData {
   pending?: boolean;
   done?: boolean;
@@ -7,38 +13,5 @@ export interface MessageData {
   event?: string;
   roomId?: string;
   stream?: boolean;
-  message?: {
-    content?: string;
-  };
-  meta?: Array<{ requestId?: string }>;
-  aborted?: boolean;
-  canceled?: boolean;
-  status?: string;
-  /** Structured pipeline activity: an i18n key plus meta, localized by the client. */
-  activity?: HarnessActivityDescriptor;
-  /** Language the model chose to respond in — activity labels are localized in it. */
-  language?: string;
   conversationId?: string;
-  promptEvalCount?: number;
-  evalCount?: number;
-  evalDuration?: number;
-  totalDuration?: number;
-  reasoningDelta?: string;
-  toolCall?: {
-    name: string;
-    category?: string;
-    query?: string;
-    input?: unknown;
-    status: string;
-  };
-  /* ── Authoritative structured payload when streaming finishes ───────── */
-  data?: Record<string, unknown>;
-  template?: string;
-  delta?: string;
-  prompt?: string;
-  images?: Array<Record<string, string>>;
-  toolResults?: Array<{ toolName: string; result: unknown }>;
-  /** Chart series streamed right after an EODHD tool ran (buffered, then revealed). */
-  chartData?: { toolName: string; data: unknown };
-  error?: string;
 }

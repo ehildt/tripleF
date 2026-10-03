@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAttachedFilesStore } from '@/stores/attached-files';
 import { useConversationStore } from '@/stores/conversation';
-import type { SocketProvider } from '@/types/socket-provider.model';
+import { useDebugStore } from '@/stores/debug';
+import { useSocketStore } from '@/stores/socket';
 
 import { useHarnessRequest } from './use-harness-request';
 import type { PostHarnessRequestOptions } from './use-harness-request.types';
@@ -21,15 +22,22 @@ vi.mock('@/i18n/i18n', () => ({
   i18n: { global: { t: (key: string) => key, locale: { value: 'en' } } },
 }));
 
-function createSocketProvider() {
+/**
+ * The transport reads the socket facade from the real stores. Spy the store
+ * actions that would otherwise open a socket.io connection (`getSocket`) or
+ * append debug records (`trackRequest`) in jsdom, and return spies the tests
+ * can assert against.
+ */
+function stubSocketProvider() {
   const socket = { connected: true };
-  const provider = {
-    getSocket: vi.fn(() => socket),
-    trackRequest: vi.fn(),
-    connectedEvents: new Set<string>(),
-    connectedRooms: new Map<string, Set<string>>(),
-  };
-  return { provider: provider as unknown as SocketProvider, socket };
+  const socketStore = useSocketStore();
+  vi.spyOn(socketStore, 'ensureSocketConnection').mockReturnValue(
+    socket as unknown as ReturnType<typeof socketStore.ensureSocketConnection>,
+  );
+  const trackRequest = vi
+    .spyOn(useDebugStore(), 'trackRequest')
+    .mockResolvedValue({} as Response);
+  return { socket, trackRequest };
 }
 
 /**
@@ -84,7 +92,7 @@ describe('useHarnessRequest', () => {
 
   it('posts, tracks the request, and promotes attachments on success', async () => {
     const fetchMock = stubHarnessFetch(() => ({ ok: true, status: 200 }));
-    const { provider } = createSocketProvider();
+    const { trackRequest } = stubSocketProvider();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.createNewConversation();
     const setUploadedImages = vi.spyOn(conversationStore, 'setUploadedImages');
@@ -99,9 +107,7 @@ describe('useHarnessRequest', () => {
       'clearPendingFilesForConversation',
     );
 
-    const { postHarnessRequest } = useHarnessRequest({
-      socketProvider: provider,
-    });
+    const { postHarnessRequest } = useHarnessRequest();
     const request = createRequest({
       sid: conversation.id,
       referencedImages: [],
@@ -121,7 +127,7 @@ describe('useHarnessRequest', () => {
     expect(url).toContain('/api/v1/harness?requestId=req-1');
     expect(init.method).toBe('POST');
     expect(init.body).toBe(request.formData);
-    expect(provider.trackRequest).toHaveBeenCalledWith(
+    expect(trackRequest).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/harness?requestId=req-1'),
       'POST',
       expect.anything(),
@@ -148,14 +154,12 @@ describe('useHarnessRequest', () => {
       status: 500,
       text: async () => 'boom',
     }));
-    const { provider } = createSocketProvider();
+    stubSocketProvider();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.createNewConversation();
     const markExchangeError = vi.spyOn(conversationStore, 'markExchangeError');
 
-    const { postHarnessRequest } = useHarnessRequest({
-      socketProvider: provider,
-    });
+    const { postHarnessRequest } = useHarnessRequest();
 
     await postHarnessRequest(createRequest({ sid: conversation.id }));
 
@@ -172,14 +176,12 @@ describe('useHarnessRequest', () => {
     stubHarnessFetch(() => {
       throw new Error('network down');
     });
-    const { provider } = createSocketProvider();
+    stubSocketProvider();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.createNewConversation();
     const markExchangeError = vi.spyOn(conversationStore, 'markExchangeError');
 
-    const { postHarnessRequest } = useHarnessRequest({
-      socketProvider: provider,
-    });
+    const { postHarnessRequest } = useHarnessRequest();
 
     await postHarnessRequest(createRequest({ sid: conversation.id }));
 
@@ -194,7 +196,7 @@ describe('useHarnessRequest', () => {
 
   it('skips attachment promotion when there is no session id', async () => {
     stubHarnessFetch(() => ({ ok: true, status: 200 }));
-    const { provider } = createSocketProvider();
+    stubSocketProvider();
     const conversationStore = useConversationStore();
     const setUploadedImages = vi.spyOn(conversationStore, 'setUploadedImages');
     const clearPending = vi.spyOn(
@@ -202,9 +204,7 @@ describe('useHarnessRequest', () => {
       'clearPendingFilesForConversation',
     );
 
-    const { postHarnessRequest } = useHarnessRequest({
-      socketProvider: provider,
-    });
+    const { postHarnessRequest } = useHarnessRequest();
 
     await postHarnessRequest(createRequest({ sid: '' }));
 

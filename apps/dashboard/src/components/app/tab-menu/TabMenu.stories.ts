@@ -18,13 +18,13 @@ const meta = {
   argTypes: {
     activeTab: { control: 'select' },
     debugCount: { control: 'number' },
-    dlqCount: { control: 'number' },
+    showDlqBadge: { control: 'boolean' },
     showChatStar: { control: 'boolean' },
   },
   args: {
     activeTab: 'http',
     debugCount: 0,
-    dlqCount: 0,
+    showDlqBadge: false,
     showChatStar: false,
     onTabChange: fn(),
   },
@@ -41,7 +41,7 @@ export const WithNotifications: Story = {
   args: {
     activeTab: 'settings',
     showChatStar: true,
-    dlqCount: 12,
+    showDlqBadge: true,
     debugCount: 5,
   },
 };

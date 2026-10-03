@@ -6,6 +6,4 @@ export interface ScrollableExchangeListProps {
   highlightedIds: Set<string>;
   collapsedIds: Set<string>;
   isCompact: boolean;
-  activeAssistantExchangeId: string | null;
-  activeAssistantResponseStarted: boolean;
 }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
+import { parseSocketEvent } from '@/composables/helpers/parse-socket-event.helper';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { type Exchange, useConversationStore } from '@/stores/conversation';
@@ -8,19 +9,24 @@ import { createHarnessResponseState } from '@/stores/helpers/harness/state/creat
 import type { HarnessResponseState } from '@/stores/helpers/harness/state/create-harness-response-state.helper.types';
 import { processHarnessResponseEvent } from '@/stores/helpers/harness/state/process-harness-response-event.helper';
 import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
+import type {
+  HarnessActivityData,
+  HarnessChartData,
+  HarnessCompletedData,
+  HarnessDeltaData,
+  HarnessFailedData,
+  HarnessToolCallData,
+} from '@/types/harness-socket-event.model';
+import type { HarnessStreamEvent } from '@/types/harness-stream-event.model';
+import type { Message } from '@/types/message.model';
+import type { MessageData } from '@/types/message-data.model';
+import type { SocketEvent } from '@/types/socket-event.model';
 import { formatTime } from '@/utils/format-time.helper';
 
 import { useReadTracker } from '../composables/use-read-tracker';
 import { useAppStore } from '../stores/app';
 import { useModelsStore } from '../stores/models';
-import type { HarnessStreamEvent } from '../types/harness-stream-event.model';
-import type { Message } from '../types/message.model';
-import type { MessageData } from '../types/message-data.model';
 import { extractUploadedImagesFromResponse } from './helpers/messages/extract-uploaded-images-from-response.helper';
-import { isErrorStreamEvent } from './helpers/messages/is-error-stream-event.helper';
-import { isHarnessStreamEvent } from './helpers/messages/is-harness-stream-event.helper';
-import { mergeExistingMessageData } from './helpers/messages/merge-existing-message-data.helper';
-import { normalizeRawData } from './helpers/messages/normalize-raw-data.helper';
 import type { Conversation } from './conversation.model';
 
 /**
@@ -41,48 +47,12 @@ function findAssistantExchange(
   );
 }
 
-/**
- * Apply the latest streamed state to an existing assistant exchange. The
- * done event clears the activity even when it carries no delta — structured
- * responses (e.g. stockmarket) stream no text, so a delta-only guard would
- * leave the "Assembling…" label stuck after completion.
- */
-function applyStreamingState(
-  existing: Exchange,
-  state: HarnessResponseState,
-  d: MessageData,
-  status: Exchange['status'],
-  fallbackContent: string,
-  isError: boolean,
-): void {
-  if (isError) {
-    existing.content = `Error: ${d.error}`;
-    existing.status = status;
-    return;
-  }
-  existing.content = fallbackContent;
-  existing.status = status;
-  existing.harnessTemplate = state.template ?? undefined;
-  existing.harnessData = state.lastValidData ?? undefined;
-  existing.text = state.text || undefined;
-  existing.chartData = state.chartData;
-  existing.revealCharts = state.revealCharts;
-  if (d.done === true) {
-    existing.reasoning = undefined;
-    existing.activity = undefined;
-    existing.activityLanguage = undefined;
-  } else if (d.delta) {
-    existing.reasoning = undefined;
-    existing.activity = STREAMING_ACTIVITY;
-    existing.activityLanguage = d.language;
-  }
-}
-
 export const useApiMessagesStore = defineStore('apiMessages', () => {
   const messages = ref<Message[]>([]);
   const trackedRequestIds = ref<Set<string>>(new Set());
   const readTracker = useReadTracker('read-api-ids');
   const harnessStreamStates = new Map<string, HarnessResponseState>();
+  const appStore = useAppStore();
 
   function trackRequest(requestId: string) {
     trackedRequestIds.value.add(requestId);
@@ -99,411 +69,284 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     return state;
   }
 
-  function updateHarnessMessageEntry(
-    d: MessageData,
-    event: string,
-    requestId: string,
-  ): void {
-    const existingIndex = messages.value.findIndex(
-      (m) => m.data.requestId === requestId,
-    );
+  /**
+   * Route one parsed v1 envelope by its `type`. The socket channel
+   * (`eventName`) identifies the subscribed conversation; `meta.requestId`
+   * correlates the turn. Conversation/exchange state is the only target —
+   * the raw debug log lives in the socket debug store.
+   */
+  function addMessage(eventName: string, data: unknown) {
+    const envelope = parseSocketEvent(data);
+    if (!envelope) return;
+    const requestId = envelope.meta?.requestId;
+    if (!requestId) return;
 
-    if (existingIndex !== -1) {
-      const existing = messages.value[existingIndex];
-      messages.value.splice(existingIndex, 1, {
-        ...existing,
-        data: {
-          ...existing.data,
-          ...d,
-          pending: d.done === true ? undefined : existing.data.pending,
-          done: d.done === true ? true : existing.data.done,
-        },
-      });
-    } else {
-      messages.value = [
-        {
-          time: formatTime(Date.now(), i18n.global.locale.value),
-          event,
-          data: { ...d, pending: d.done === true ? undefined : true },
-        },
-        ...messages.value,
-      ];
+    switch (envelope.type) {
+      case 'harness:activity':
+        handleActivity(eventName, requestId, envelope);
+        break;
+      case 'harness:tool-call':
+        handleToolCall(eventName, requestId, envelope);
+        break;
+      case 'harness:delta':
+        handleDelta(eventName, requestId, envelope);
+        break;
+      case 'harness:chart':
+        handleChart(eventName, requestId, envelope);
+        break;
+      case 'harness:completed':
+        handleCompleted(eventName, requestId, envelope);
+        break;
+      case 'harness:failed':
+        handleFailed(eventName, requestId, envelope);
+        break;
+      case 'harness:cancelled':
+        handleCancelled(requestId);
+        break;
+      default:
+        break;
     }
   }
 
-  function updateHarnessSessionExchange(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    state: HarnessResponseState,
-    d: MessageData,
-    event: string,
-    requestId: string,
-  ): void {
-    const conversationStore = useConversationStore();
-    handlePrompt(
-      conversation,
-      d.prompt as string | undefined,
-      requestId,
-      event,
+  // ── Per-channel conversation targeting ────────────────────────────────
+  /** Conversations subscribed to the emitting channel. */
+  function targetConversations(eventName: string): Conversation[] {
+    return useConversationStore().conversations.filter(
+      (conversation) => !conversation.event || conversation.event === eventName,
     );
+  }
 
-    const existing = findAssistantExchange(conversation, requestId);
-
-    const isError = isErrorStreamEvent(d);
-    const status = d.done === true ? 'done' : 'streaming';
-
-    // Terminal error events surface the provider's message both in the
-    // exchange and as a toast — e.g. quota/rate-limit rejections from the
-    // model provider carry actionable instructions in the message body.
-    if (isError && d.error) {
-      useToast().error(String(d.error));
+  function forEachAssistantExchange(
+    eventName: string,
+    requestId: string,
+    mutate: (ex: Exchange, conversation: Conversation) => void,
+  ): void {
+    for (const conversation of targetConversations(eventName)) {
+      const ex = findAssistantExchange(conversation, requestId);
+      if (ex) mutate(ex, conversation);
     }
+  }
 
-    const fallbackContent = state.text || state.lastValidData?.title || '';
+  /** Find the assistant exchange, creating a pending placeholder if absent. */
+  function ensureAssistantExchange(
+    conversation: Conversation,
+    requestId: string,
+  ): Exchange | undefined {
+    const existing = findAssistantExchange(conversation, requestId);
+    if (existing) return existing;
+    useConversationStore().addExchange(conversation.id, {
+      role: 'assistant',
+      content: '',
+      requestId,
+      status: 'pending',
+    });
+    return findAssistantExchange(conversation, requestId);
+  }
 
-    if (!existing) {
-      if (isError) {
-        conversationStore.addExchange(conversation.id, {
-          role: 'assistant',
-          content: `Error: ${d.error}`,
-          requestId,
-          status,
-          event,
-          promptEvalCount: d.promptEvalCount,
-          evalCount: d.evalCount,
-        });
+  // ── Phase handlers ─────────────────────────────────────────────────────
+  function handleActivity(
+    eventName: string,
+    requestId: string,
+    envelope: SocketEvent,
+  ): void {
+    const data = envelope.data as HarnessActivityData;
+    const { key, language } = data;
+    if (!key) return;
+    forEachAssistantExchange(eventName, requestId, (ex) => {
+      ex.activity = { key };
+      if (language) ex.activityLanguage = language;
+    });
+    trackEnvelopeEntry(eventName, requestId, false);
+    appStore.notifyChatResponse();
+  }
+
+  function handleToolCall(
+    eventName: string,
+    requestId: string,
+    envelope: SocketEvent,
+  ): void {
+    const tc = envelope.data as HarnessToolCallData;
+    if (!tc.name) return;
+    for (const conversation of targetConversations(eventName)) {
+      const ex = ensureAssistantExchange(conversation, requestId);
+      if (!ex) continue;
+
+      // Key active calls by (name, query): parallel searches with different
+      // queries are each real searches — collapsing by name under-counts.
+      const toolKey = (call: { name?: string; query?: string }) =>
+        `${call.name ?? ''}${call.query ?? ''}`;
+      const active = (ex.toolCalls ?? []).filter(
+        (t) => toolKey(t) !== toolKey(tc),
+      );
+      const language = tc.language;
+      if (language) ex.activityLanguage = language;
+
+      if (tc.status === 'done' || tc.status === 'error') {
+        ex.toolCalls = active.length ? active : undefined;
       } else {
-        conversationStore.addExchange(conversation.id, {
-          role: 'assistant',
-          content: fallbackContent,
-          requestId,
-          status,
-          event,
-          harnessTemplate: state.template ?? undefined,
-          harnessData: state.lastValidData ?? undefined,
-          text: state.text || undefined,
-          chartData: state.chartData,
-          revealCharts: state.revealCharts,
-          activity: d.done === true ? undefined : STREAMING_ACTIVITY,
-          activityLanguage: d.language,
-          promptEvalCount: d.promptEvalCount,
-          evalCount: d.evalCount,
-        });
+        ex.toolCalls = [
+          ...active,
+          {
+            name: tc.name,
+            category: tc.category,
+            query: tc.query,
+            status: tc.status ?? 'start',
+          },
+        ];
       }
+    }
+    trackEnvelopeEntry(eventName, requestId, false);
+    appStore.notifyChatResponse();
+  }
 
-      if (d.done === true) {
-        ensureConversationNumCtx(conversation);
-      }
+  function handleDelta(
+    eventName: string,
+    requestId: string,
+    envelope: SocketEvent,
+  ): void {
+    const { channel, text, template, language, images } =
+      envelope.data as HarnessDeltaData;
+
+    if (channel === 'reasoning') {
+      forEachAssistantExchange(eventName, requestId, (ex) => {
+        ex.reasoning = (ex.reasoning ?? '') + (text ?? '');
+        if (language) ex.activityLanguage = language;
+      });
+      trackEnvelopeEntry(eventName, requestId, false);
+      appStore.notifyChatResponse();
       return;
     }
 
-    applyStreamingState(existing, state, d, status, fallbackContent, isError);
-    // Only a real response delta (or done) ends the tool phase — chart-series
-    // events must not clear active tool calls.
-    if (d.delta || d.done === true) {
-      existing.toolCalls = undefined;
-    }
-    conversation.updatedAt = Date.now();
-
-    if (d.done === true) {
-      conversationStore.markExchangeDone(conversation.id, requestId, {
-        promptEvalCount: d.promptEvalCount,
-        evalCount: d.evalCount,
-      });
-      ensureConversationNumCtx(conversation);
-    }
-  }
-
-  function ensureConversationNumCtx(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-  ) {
-    const modelsStore = useModelsStore();
-    if (conversation.numCtx || !conversation.model) return;
-
-    const numCtx = modelsStore.maxNumCtxForModel(conversation.model);
-    if (numCtx) {
-      conversation.numCtx = numCtx;
-      // Persist the auto-derived context size so the stored percentage and
-      // the server snapshot stay in sync — otherwise the sidebar shows
-      // nothing for this conversation after a reload (its saved
-      // contextUsagePercent was computed with an empty numCtx).
-      useConversationStore().setNumCtx(conversation.id, numCtx);
-    }
-  }
-
-  function handleHarnessStream(event: string, data: unknown) {
-    normalizeRawData(data as Record<string, unknown>);
-    const d = data as unknown as MessageData;
-    const requestId = d.requestId;
-    if (!requestId) return;
-
+    // Content delta: feed the response-state machine (text vs structured,
+    // chart reveal), then reflect it into the assistant exchange.
     const streamEvent: HarnessStreamEvent = {
       requestId,
-      template: d.template,
-      delta: d.delta,
-      status: d.status,
-      activity: d.activity,
-      language: d.language,
-      // Authoritative payload of the non-streaming retry: when the streamed
-      // deltas were not valid JSON, this is the only place the validated
-      // response reaches the client.
-      data: d.data,
-      images: d.images,
-      toolResults: d.toolResults,
-      done: d.done,
-      // Chart series streamed right after an EODHD tool ran, buffered and
-      // revealed once the respond step streams its first delta.
-      chartData: d.chartData,
+      template,
+      delta: text,
+      language,
+      images,
+      done: false,
     };
-
     const state = processHarnessResponseEvent(
       getOrCreateHarnessStreamState(requestId),
       streamEvent,
     );
     harnessStreamStates.set(requestId, state);
 
-    updateHarnessMessageEntry(d, event, requestId);
+    for (const conversation of targetConversations(eventName)) {
+      const ex = ensureAssistantExchange(conversation, requestId);
+      if (!ex) continue;
+      applyStreamingState(ex, state, language);
+      conversation.updatedAt = Date.now();
+    }
+    trackEnvelopeEntry(eventName, requestId, false);
+    appStore.notifyChatResponse();
+  }
+
+  function handleChart(
+    eventName: string,
+    requestId: string,
+    envelope: SocketEvent,
+  ): void {
+    const { toolName, data, template } = envelope.data as HarnessChartData;
+    const state = processHarnessResponseEvent(
+      getOrCreateHarnessStreamState(requestId),
+      { requestId, template, chartData: { toolName, data }, done: false },
+    );
+    harnessStreamStates.set(requestId, state);
+
+    for (const conversation of targetConversations(eventName)) {
+      const ex = ensureAssistantExchange(conversation, requestId);
+      if (!ex) continue;
+      ex.chartData = state.chartData;
+      ex.revealCharts = state.revealCharts;
+      conversation.updatedAt = Date.now();
+    }
+    trackEnvelopeEntry(eventName, requestId, false);
+    appStore.notifyChatResponse();
+  }
+
+  function handleCompleted(
+    eventName: string,
+    requestId: string,
+    envelope: SocketEvent,
+  ): void {
+    const d = envelope.data as HarnessCompletedData;
+    if (!d) return;
+
+    // The completed payload is authoritative: the final validated `data`/
+    // `result` plus token tallies land here. Feed it through the response
+    // pipeline so structural normalization and partial-JSON retry handling
+    // stay identical to the streamed path.
+    const streamEvent: HarnessStreamEvent = {
+      requestId,
+      template: d.template,
+      delta: d.result ?? '',
+      data: d.data,
+      images: d.images,
+      toolResults: d.toolResults,
+      done: true,
+    };
+    const state = processHarnessResponseEvent(
+      getOrCreateHarnessStreamState(requestId),
+      streamEvent,
+    );
+    harnessStreamStates.set(requestId, state);
 
     const conversationStore = useConversationStore();
-    for (const conversation of conversationStore.conversations) {
-      if (conversation.event && conversation.event !== event) continue;
-      updateHarnessSessionExchange(conversation, state, d, event, requestId);
-    }
+    for (const conversation of targetConversations(eventName)) {
+      seedUserExchange(conversation, requestId, eventName, d.prompt);
+      const ex = ensureAssistantExchange(conversation, requestId);
+      if (!ex) continue;
+      finalizeAssistantExchange(conversation, ex, state, d);
+      conversation.updatedAt = Date.now();
 
-    for (const conversation of conversationStore.conversations) {
-      if (conversation.event && conversation.event !== event) continue;
+      // Backfill context size once the model is known.
+      ensureConversationNumCtx(conversation);
+
+      // Completed responses contribute their media to the conversation
+      // gallery for re-use in later turns.
       const uploadedImages = extractUploadedImagesFromResponse(
-        data as Record<string, unknown>,
+        { meta: d.meta } as Record<string, unknown>,
         conversationStore.getConversationId(conversation.id),
       );
       if (uploadedImages.length > 0) {
         conversationStore.setUploadedImages(conversation.id, uploadedImages);
       }
     }
-
-    useAppStore().notifyChatResponse();
+    trackEnvelopeEntry(eventName, requestId, true);
+    appStore.notifyChatResponse();
   }
 
-  function handlePrompt(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    prompt: string | undefined,
+  function handleFailed(
+    eventName: string,
     requestId: string,
-    event: string,
-  ) {
-    if (!prompt) return;
-    const conversationStore = useConversationStore();
-    if (
-      conversation.exchanges.some(
-        (e) => e.role === 'user' && e.requestId === requestId,
-      )
-    )
-      return;
-
-    conversationStore.addExchange(conversation.id, {
-      role: 'user',
-      content: prompt,
-      requestId,
-      status: 'done',
-      event,
-    });
-  }
-
-  function handleNewContent(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    newContent: string | undefined,
-    requestId: string,
-    d: MessageData,
-  ) {
-    if (!newContent) return;
-    const conversationStore = useConversationStore();
-    const hasExchange = conversation.exchanges.some(
-      (e) => e.requestId === requestId && e.role === 'assistant',
-    );
-
-    if (!hasExchange) {
-      conversationStore.addExchange(conversation.id, {
-        role: 'assistant',
-        content: newContent,
-        requestId,
-        status: d.done ? 'done' : 'streaming',
-        activity: d.done ? undefined : STREAMING_ACTIVITY,
-        activityLanguage: d.language,
-        promptEvalCount: d.promptEvalCount,
-        evalCount: d.evalCount,
-      });
-    } else {
-      const ex = findAssistantExchange(conversation, requestId);
-      if (ex) {
-        ex.toolCalls = undefined;
-        // Streamed content ends the thinking phase — see
-        // updateHarnessSessionExchange for the same transition.
-        ex.reasoning = undefined;
-        ex.activity = d.done ? undefined : STREAMING_ACTIVITY;
-        ex.activityLanguage = d.language;
-      }
-      conversationStore.appendExchangeContent(
-        conversation.id,
-        requestId,
-        newContent,
-      );
-    }
-  }
-
-  function handleDone(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    requestId: string,
-    d: MessageData,
-  ) {
-    if (d.done !== true) return;
-    const conversationStore = useConversationStore();
-
-    conversationStore.markExchangeDone(conversation.id, requestId, {
-      promptEvalCount: d.promptEvalCount,
-      evalCount: d.evalCount,
-    });
-
-    ensureConversationNumCtx(conversation);
-
-    const ex = findAssistantExchange(conversation, requestId);
-    if (ex) {
+    envelope: SocketEvent,
+  ): void {
+    const reason =
+      (envelope.data as HarnessFailedData)?.reason ??
+      'An unexpected error occurred';
+    // Terminal error: surface the provider's message as a toast and render it
+    // in the exchange — quota/rate-limit rejections carry actionable text.
+    useToast().error(String(reason));
+    for (const conversation of targetConversations(eventName)) {
+      const ex = ensureAssistantExchange(conversation, requestId);
+      if (!ex) continue;
+      ex.content = `Error: ${reason}`;
       ex.activity = undefined;
       ex.reasoning = undefined;
       ex.toolCalls = undefined;
+      conversation.updatedAt = Date.now();
+      // Terminal status flows through markExchangeDone (also resolves pending
+      // merges) and the context backfill — same as the completed path.
+      useConversationStore().markExchangeDone(conversation.id, requestId);
+      ensureConversationNumCtx(conversation);
     }
+    trackEnvelopeEntry(eventName, requestId, true);
+    appStore.notifyChatResponse();
   }
 
-  function handleActivityStatus(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    raw: Record<string, unknown>,
-    requestId: string,
-  ) {
-    if (raw.done === true) return;
-    const activity = raw.activity as HarnessActivityDescriptor | undefined;
-    if (!activity?.key) return;
-    const language = raw.language as string | undefined;
-    const ex = findAssistantExchange(conversation, requestId);
-    if (ex) {
-      ex.activity = activity;
-      if (language) ex.activityLanguage = language;
-    }
-  }
-
-  function handleReasoningDelta(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    raw: Record<string, unknown>,
-    requestId: string,
-  ) {
-    const delta = raw.reasoningDelta as string | undefined;
-    if (!delta) return;
-    const ex = findAssistantExchange(conversation, requestId);
-    if (ex) {
-      ex.reasoning = (ex.reasoning ?? '') + delta;
-      const language = raw.language as string | undefined;
-      if (language) ex.activityLanguage = language;
-    }
-  }
-
-  function handleToolCall(
-    conversation: ReturnType<
-      typeof useConversationStore
-    >['conversations'][number],
-    raw: Record<string, unknown>,
-    requestId: string,
-  ) {
-    const tc = raw.toolCall as
-      | {
-          name?: string;
-          category?: string;
-          query?: string;
-          status?: string;
-        }
-      | undefined;
-    if (!tc?.name) return;
-    const conversationStore = useConversationStore();
-
-    let ex = findAssistantExchange(conversation, requestId);
-    if (!ex) {
-      conversationStore.addExchange(conversation.id, {
-        role: 'assistant',
-        content: '',
-        requestId,
-        status: 'pending',
-      });
-      ex = findAssistantExchange(conversation, requestId);
-    }
-    if (!ex) return;
-
-    // Key active calls by (name, query): the same tool can run several
-    // parallel searches with different queries, and each is a real,
-    // countable search — collapsing them by name alone would under-report
-    // the count (e.g. always "2" for the two video tools).
-    const toolKey = (call: { name?: string; query?: string }) =>
-      `${call.name ?? ''}\u0000${call.query ?? ''}`;
-    const active = (ex.toolCalls ?? []).filter(
-      (t) => toolKey(t) !== toolKey(tc),
-    );
-    const language = raw.language as string | undefined;
-    if (language) ex.activityLanguage = language;
-
-    if (tc.status === 'done' || tc.status === 'error') {
-      ex.toolCalls = active.length ? active : undefined;
-      return;
-    }
-
-    ex.toolCalls = [
-      ...active,
-      {
-        name: tc.name,
-        category: tc.category,
-        query: tc.query,
-        status: tc.status ?? 'start',
-      },
-    ];
-  }
-
-  function bridgeToSession(event: string, data: unknown) {
-    const raw = data as Record<string, unknown>;
-    normalizeRawData(raw);
-
-    const d = raw as unknown as MessageData;
-    const requestId = d?.requestId || d?.meta?.[0]?.requestId;
-    if (!requestId) return;
-
-    const conversationStore = useConversationStore();
-    const newContent = d.message?.content;
-
-    for (const conversation of conversationStore.conversations) {
-      if (conversation.event && conversation.event !== event) continue;
-
-      handlePrompt(
-        conversation,
-        raw.prompt as string | undefined,
-        requestId,
-        event,
-      );
-      handleNewContent(conversation, newContent, requestId, d);
-      handleActivityStatus(conversation, raw, requestId);
-      handleReasoningDelta(conversation, raw, requestId);
-      handleDone(conversation, requestId, d);
-      handleToolCall(conversation, raw, requestId);
-    }
-  }
-
-  function handleCanceledMessage(requestId: string | undefined) {
-    if (!requestId) return;
+  function handleCancelled(requestId: string): void {
     const conversationStore = useConversationStore();
     for (const conversation of conversationStore.conversations) {
       for (const ex of conversation.exchanges) {
@@ -515,64 +358,133 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     }
   }
 
-  function tryUpdateExistingMessage(
+  // ── Conversation state transitions ────────────────────────────────────
+  /** Seed the user exchange from the completed turn's prompt (fallback for
+   *  cross-device/session continuation where client submit seeded nothing). */
+  function seedUserExchange(
+    conversation: Conversation,
     requestId: string,
-    d: MessageData,
-    event: string,
-    data: unknown,
-  ): boolean {
-    const existingIndex = messages.value.findIndex(
-      (m) =>
-        m.data.requestId === requestId ||
-        m.data.meta?.[0]?.requestId === requestId,
+    eventName: string,
+    prompt: string | undefined,
+  ): void {
+    if (!prompt) return;
+    const conversationStore = useConversationStore();
+    const exists = conversation.exchanges.some(
+      (e) => e.role === 'user' && e.requestId === requestId,
     );
-    if (existingIndex === -1) return false;
-
-    const existing = messages.value[existingIndex];
-    const updatedData = mergeExistingMessageData(existing.data, d);
-
-    messages.value.splice(existingIndex, 1, {
-      ...existing,
-      data: updatedData,
+    if (exists) return;
+    conversationStore.addExchange(conversation.id, {
+      role: 'user',
+      content: prompt,
+      requestId,
+      status: 'done',
+      event: eventName,
     });
-
-    bridgeToSession(event, data);
-    useAppStore().notifyChatResponse();
-    return true;
   }
 
-  function addMessage(event: string, data: unknown) {
-    const raw = data as Record<string, unknown>;
-    normalizeRawData(raw);
+  /** Reflect in-flight pipeline state into a streaming assistant exchange. */
+  function applyStreamingState(
+    ex: Exchange,
+    state: HarnessResponseState,
+    language: string | undefined,
+  ): void {
+    const fallback = state.text || state.lastValidData?.title || '';
+    ex.content = fallback;
+    ex.status = 'streaming';
+    ex.harnessTemplate = state.template ?? undefined;
+    ex.harnessData = state.lastValidData ?? undefined;
+    ex.text = state.text || undefined;
+    ex.chartData = state.chartData;
+    ex.revealCharts = state.revealCharts;
+    ex.reasoning = undefined;
+    // A real content delta ends the tool phase: the model is now assembling.
+    ex.toolCalls = undefined;
+    ex.activity = STREAMING_ACTIVITY;
+    if (language) ex.activityLanguage = language;
+  }
 
-    const d = raw as unknown as MessageData;
-    const requestId = d?.requestId || d?.meta?.[0]?.requestId;
+  /** Finalize the assistant exchange from the authoritative completed payload. */
+  function finalizeAssistantExchange(
+    conversation: Conversation,
+    ex: Exchange,
+    state: HarnessResponseState,
+    d: HarnessCompletedData,
+  ): void {
+    const content = state.text || state.lastValidData?.title || d.result || '';
+    ex.content = content;
+    ex.status = 'done';
+    ex.harnessTemplate = d.template ?? state.template ?? undefined;
+    ex.harnessData =
+      state.lastValidData ?? (d.data as Exchange['harnessData'] | undefined);
+    ex.text = state.text || undefined;
+    ex.chartData = state.chartData;
+    ex.revealCharts = state.revealCharts;
+    ex.reasoning = undefined;
+    ex.activity = undefined;
+    ex.activityLanguage = undefined;
+    ex.toolCalls = undefined;
+    useConversationStore().markExchangeDone(
+      conversation.id,
+      ex.requestId ?? '',
+      {
+        promptEvalCount: d.usage?.promptEvalCount,
+        evalCount: d.usage?.evalCount,
+      },
+    );
+  }
 
-    if (d?.canceled || d?.status === 'canceled') {
-      handleCanceledMessage(requestId);
+  function ensureConversationNumCtx(conversation: Conversation): void {
+    const modelsStore = useModelsStore();
+    if (conversation.numCtx || !conversation.model) return;
+    const numCtx = modelsStore.maxNumCtxForModel(conversation.model);
+    if (numCtx) {
+      conversation.numCtx = numCtx;
+      // Persist so the sidebar/context % stays in sync after a reload —
+      // otherwise the cached contextUsagePercent was computed with an empty
+      // numCtx and the sidebar shows nothing.
+      useConversationStore().setNumCtx(conversation.id, numCtx);
+    }
+  }
+
+  // ── Message-list bookkeeping (unread badge + DLQ retry dedup) ─────────
+  /**
+   * Keep one tracked entry per request id. Non-terminal phases keep it
+   * pending (excluded from the unread count); terminal phases (completed /
+   * failed / cancelled) mark it done so it becomes a live unread id.
+   */
+  function trackEnvelopeEntry(
+    eventName: string,
+    requestId: string,
+    done: boolean,
+  ): void {
+    const index = messages.value.findIndex(
+      (m) => m.data.requestId === requestId,
+    );
+    if (index !== -1) {
+      const existing = messages.value[index];
+      messages.value.splice(index, 1, {
+        ...existing,
+        data: {
+          ...existing.data,
+          pending: done ? undefined : existing.data.pending,
+          done: done ? true : existing.data.done,
+        },
+      });
       return;
     }
-
-    if (requestId && isHarnessStreamEvent(d)) {
-      handleHarnessStream(event, data);
-      return;
-    }
-
-    if (requestId && tryUpdateExistingMessage(requestId, d, event, data)) {
-      return;
-    }
-
     messages.value = [
       {
         time: formatTime(Date.now(), i18n.global.locale.value),
-        event,
-        data: d as MessageData,
+        event: eventName,
+        data: {
+          requestId,
+          event: eventName || undefined,
+          pending: done ? undefined : true,
+          done: done ? true : undefined,
+        },
       },
       ...messages.value,
     ];
-
-    bridgeToSession(event, data);
-    useAppStore().notifyChatResponse();
   }
 
   function addPendingMessage(
@@ -606,7 +518,6 @@ export const useApiMessagesStore = defineStore('apiMessages', () => {
     );
     if (msg && msg.data.pending) {
       msg.data = { ...msg.data, ...d, pending: false };
-      bridgeToSession(d.event ?? '', data);
     }
   }
 

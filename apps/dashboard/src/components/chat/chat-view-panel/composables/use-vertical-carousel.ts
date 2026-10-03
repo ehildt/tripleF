@@ -3,6 +3,8 @@ import { nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
 
 import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
 
+import { useActiveConversation } from './use-active-conversation';
+
 const SCROLL_BOTTOM_THRESHOLD_PX = 8;
 
 /**
@@ -22,11 +24,10 @@ const SCROLL_BOTTOM_THRESHOLD_PX = 8;
  * response content arrives, the view stops chasing the growing tail so the
  * user can start reading from the top of the response.
  */
-export function useVerticalCarousel(
-  isCompact: Ref<boolean>,
-  activeAssistantExchangeId: Ref<string | null>,
-  activeAssistantResponseStarted: Ref<boolean>,
-) {
+export function useVerticalCarousel(isCompact: Ref<boolean>) {
+  const { activeAssistantExchangeId, activeAssistantResponseStarted } =
+    useActiveConversation();
+
   const verticalCarouselStore = useVerticalCarouselStore();
   const {
     scrollContainerRef,
@@ -35,6 +36,9 @@ export function useVerticalCarousel(
     activeSectionIndex,
     isProgrammaticScroll,
   } = storeToRefs(verticalCarouselStore);
+
+  const { armProgrammaticScroll, endProgrammaticScroll } =
+    verticalCarouselStore;
 
   const shouldAutoScroll = ref(true);
   // When true, the container-creation auto-scroll-to-bottom is skipped. Used
@@ -63,11 +67,16 @@ export function useVerticalCarousel(
     const container = getContainer();
     if (!container || container.scrollHeight === 0) return;
 
-    isProgrammaticScroll.value = true;
     requestAnimationFrame(() => {
+      const target = Math.max(
+        0,
+        container.scrollHeight - container.clientHeight,
+      );
+      if (container.scrollTop !== target) {
+        armProgrammaticScroll();
+      }
       container.scrollTop = container.scrollHeight;
       verticalCarouselStore.syncScrollRefs(container);
-      isProgrammaticScroll.value = false;
     });
   }
 
@@ -87,6 +96,9 @@ export function useVerticalCarousel(
       // already scrolled back down, keep them there and discard the stale saved
       // position.
       if (!isAtBottom(container)) {
+        if (container.scrollTop !== position) {
+          armProgrammaticScroll();
+        }
         container.scrollTop = position;
       }
       verticalCarouselStore.syncScrollRefs(container);
@@ -238,6 +250,7 @@ export function useVerticalCarousel(
     onScroll,
     activeSectionIndex,
     isProgrammaticScroll,
+    endProgrammaticScroll,
     shouldAutoScroll,
     skipInitialScroll,
   };

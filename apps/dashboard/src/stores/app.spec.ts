@@ -2,6 +2,9 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
+import { fetchConfig, saveConfig } from '@/api/config.api';
+import type { SessionConfig } from '@/types/session-config.model';
+
 import { useAppStore } from './app';
 
 vi.mock('@vueuse/core', () => ({
@@ -27,6 +30,11 @@ vi.mock('@vueuse/core', () => ({
         },
       };
     }),
+}));
+
+vi.mock('@/api/config.api', () => ({
+  fetchConfig: vi.fn(async () => null),
+  saveConfig: vi.fn(async () => {}),
 }));
 
 describe('useAppStore', () => {
@@ -418,6 +426,124 @@ describe('useAppStore', () => {
       store.removeMemoryCognitionSpace('alice');
       expect(store.memoryCognitionSpaces).toEqual(['work', 'default']);
       expect(store.memoryCognition).toBe('work');
+    });
+  });
+
+  describe('memory space sync', () => {
+    beforeEach(() => {
+      vi.mocked(fetchConfig).mockReset();
+      vi.mocked(saveConfig).mockReset();
+    });
+
+    it('adopts server values for both ids and records the cognition space', async () => {
+      vi.mocked(fetchConfig).mockResolvedValue({
+        sessionId: 's1',
+        memoryPartition: 'server-partition',
+        memoryCognition: 'server-cognition',
+      });
+
+      const store = useAppStore();
+      await store.syncMemorySpacesFromServer();
+
+      expect(store.memoryPartition).toBe('server-partition');
+      expect(store.memoryCognition).toBe('server-cognition');
+      expect(store.memoryCognitionSpaces).toContain('server-cognition');
+      expect(saveConfig).not.toHaveBeenCalled();
+    });
+
+    it('pushes local defaults back when the server has none', async () => {
+      vi.mocked(fetchConfig).mockResolvedValue(null);
+
+      const store = useAppStore();
+      store.memoryPartition = 'local-partition';
+      store.memoryCognition = 'local-cognition';
+      await store.syncMemorySpacesFromServer();
+
+      expect(saveConfig).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          memoryPartition: 'local-partition',
+          memoryCognition: 'local-cognition',
+        }),
+      );
+    });
+
+    it('adopts what the server has and pushes back only the missing id', async () => {
+      vi.mocked(fetchConfig).mockResolvedValue({
+        sessionId: 's1',
+        memoryPartition: 'server-partition',
+      });
+
+      const store = useAppStore();
+      store.memoryCognition = 'local-cognition';
+      await store.syncMemorySpacesFromServer();
+
+      expect(store.memoryPartition).toBe('server-partition');
+      expect(saveConfig).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ memoryCognition: 'local-cognition' }),
+      );
+      expect(saveConfig).not.toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ memoryPartition: expect.anything() }),
+      );
+    });
+
+    it('dedupes concurrent calls into one fetch', async () => {
+      vi.mocked(fetchConfig).mockResolvedValue({ sessionId: 's1' });
+      const store = useAppStore();
+
+      const first = store.syncMemorySpacesFromServer();
+      const second = store.syncMemorySpacesFromServer();
+
+      await Promise.all([first, second]);
+      expect(fetchConfig).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps local values when the sync is cancelled mid-flight', async () => {
+      vi.mocked(fetchConfig).mockImplementation(
+        (sessionId, signal) =>
+          new Promise<SessionConfig | null>((resolve, reject) => {
+            signal?.addEventListener('abort', () =>
+              reject(new Error(`aborted ${sessionId}`)),
+            );
+          }),
+      );
+
+      const store = useAppStore();
+      store.memoryPartition = 'local-partition';
+      const sync = store.syncMemorySpacesFromServer();
+      store.cancelMemorySpaceSync();
+
+      await sync;
+      expect(store.memoryPartition).toBe('local-partition');
+      expect(saveConfig).not.toHaveBeenCalled();
+    });
+
+    it('restarts after a cancelled sync instead of reusing the aborted fetch', async () => {
+      vi.mocked(fetchConfig)
+        .mockImplementationOnce(
+          (_sessionId, signal) =>
+            new Promise<SessionConfig | null>((_resolve, reject) => {
+              signal?.addEventListener('abort', () =>
+                reject(new Error('aborted')),
+              );
+            }),
+        )
+        .mockResolvedValue({
+          sessionId: 's1',
+          memoryPartition: 'server-partition',
+        });
+
+      const store = useAppStore();
+      const first = store.syncMemorySpacesFromServer();
+      store.cancelMemorySpaceSync();
+      const second = store.syncMemorySpacesFromServer();
+
+      expect(fetchConfig).toHaveBeenCalledTimes(2);
+
+      await Promise.all([first, second]);
+      expect(store.memoryPartition).toBe('server-partition');
     });
   });
 });

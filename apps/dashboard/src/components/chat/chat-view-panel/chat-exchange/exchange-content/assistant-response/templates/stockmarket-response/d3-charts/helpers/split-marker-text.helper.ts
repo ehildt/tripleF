@@ -1,12 +1,9 @@
+import { isPriceToken } from './is-price-token.helper';
+
 /** A marker label split into its price and word parts. */
 export interface SplitMarkerText {
   price: string | null;
   word: string | null;
-}
-
-/** Whether a token looks like a price (digits, dots, commas). */
-function isPriceToken(token: string): boolean {
-  return /^[\d.,]+$/.test(token);
 }
 
 /**

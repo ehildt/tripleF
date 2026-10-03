@@ -16,9 +16,6 @@ vi.mock('./stores/app', () => ({
     setActiveTab: vi.fn(),
     isTabVisible: () => true,
     tabVisibility: {},
-    // Boot syncs the server-persisted memory ids (deferred to idle).
-    syncMemoryPartitionFromServer: vi.fn(),
-    syncMemoryCognitionFromServer: vi.fn(),
   }),
 }));
 
@@ -98,6 +95,16 @@ vi.mock('./stores/theme', () => ({
     { key: 'souls', name: 'Dark Souls', primary: '#e6a23c' },
     { key: 'residentevil', name: 'Resident Evil', primary: '#c0392b' },
   ],
+}));
+
+// App.vue boots the playlist store, which fetches playlists over HTTP. Stub
+// the api module so that boot fetch resolves empty instead of hitting a real
+// URL in jsdom.
+vi.mock('@/api/playlists.api', () => ({
+  fetchAllPlaylists: vi.fn(async () => []),
+  savePlaylist: vi.fn(async () => {}),
+  renamePlaylist: vi.fn(async () => {}),
+  deletePlaylist: vi.fn(async () => {}),
 }));
 
 describe('App', () => {

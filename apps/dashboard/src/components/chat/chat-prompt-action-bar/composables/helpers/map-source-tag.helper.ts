@@ -1,23 +1,37 @@
 import { type LucideIcon, Search } from '@lucide/vue';
 
-type Translate = (key: string, params?: Record<string, unknown>) => string;
+type SourceMeta = Record<string, { icon: LucideIcon; label: string }>;
 
-/** Build one search-source tag from its config. */
+/** A toggleable search source: its key plus on/off state. */
+type SourceTagInput = {
+  key: string;
+  enabled: boolean;
+};
+
+/** A resolved search-source tag, ready for the caller to translate. */
+type SourceTagData = {
+  key: string;
+  enabled: boolean;
+  icon: LucideIcon;
+  label: string;
+  titleKey: string;
+};
+
+/** Build one search-source tag from its config: resolve the icon and label
+ * (falling back to Search and the raw key for unknown sources) and pick the
+ * enabled/disabled title key. Translation happens in the caller. */
 export function mapSourceTag(
-  { key, enabled }: { key: string; enabled: boolean },
-  sourceMeta: Record<string, { icon: LucideIcon; label: string }>,
-  t: Translate,
-) {
+  sourceTag: SourceTagInput,
+  sourceMeta: SourceMeta,
+): SourceTagData {
+  const { key, enabled } = sourceTag;
   const label = sourceMeta[key]?.label ?? key;
+  const icon = sourceMeta[key]?.icon ?? Search;
   return {
     key,
     enabled,
-    // Unknown sources fall back to a distinct Search icon — never one of
-    // the mapped icons, so the tags never repeat.
-    icon: sourceMeta[key]?.icon ?? Search,
+    icon,
     label,
-    title: enabled
-      ? t('common.sourceEnabled', { label })
-      : t('common.sourceDisabled', { label }),
+    titleKey: enabled ? 'common.sourceEnabled' : 'common.sourceDisabled',
   };
 }

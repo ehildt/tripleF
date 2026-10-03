@@ -338,9 +338,10 @@ export interface HarnessResponseData {
 
 /**
  * Art-direction layouts for snippet-composed responses (news, article,
- * evaluation): classic stacked flow, editorial pull-quote spread, split
- * hero, or dense mosaic gallery. Kept in sync with the server's
- * RESPONSE_LAYOUTS constant.
+ * evaluation): classic stacked flow, editorial pull-quote spread, or split
+ * hero (`'mosaic'` stays valid for server compatibility — the image gallery
+ * renders the carousel regardless, the same look across templates).
+ * Kept in sync with the server's RESPONSE_LAYOUTS constant.
  */
 export type ResponseLayout = 'classic' | 'editorial' | 'split' | 'mosaic';
 
@@ -356,7 +357,7 @@ export type CollapsibleSectionKey =
 /** Collapse state of every response section type (`true` = hidden). */
 export type CollapsedSections = Record<CollapsibleSectionKey, boolean>;
 
-/** How a media section renders: as a gallery (carousel/mosaic) or as a list (grid). */
+/** How a media section renders: as a gallery (carousel) or as a list (grid). */
 export type MediaPresentation = 'gallery' | 'list';
 
 /** Presentation preference per media type, switched from the prompt bar's view menu. */

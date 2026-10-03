@@ -1,4 +1,4 @@
-import { BLOCKED_IMAGE_HOSTS } from '../../constants/blocked-image-hosts.js';
+import { BLOCKED_IMAGE_HOSTS } from '../../constants/blocked-image-hosts.constant.js';
 
 /** Return true when the url points to a known blocked image host. */
 export function hasBlockedImageHost(url: string): boolean {

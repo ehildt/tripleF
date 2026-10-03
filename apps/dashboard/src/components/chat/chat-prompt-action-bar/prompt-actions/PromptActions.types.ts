@@ -8,7 +8,6 @@ export interface PromptActionsProps {
   thinkValue: string;
   contextSizeOptions: readonly string[];
   contextSizeValue: string;
-  defaultContextSize: string;
   formatContextSize: (value: string) => string;
   isDisabled: boolean;
   fileSelectTitle: string;

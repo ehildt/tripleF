@@ -33,6 +33,7 @@ import { QueryDlqEntriesDto } from '../dtos/query-dlq-entries.dto.js';
 import { ReinstateDlqDto } from '../dtos/reinstate-dlq.dto.js';
 import { ReinstateQueryDto } from '../dtos/reinstate-query.dto.js';
 import { UpdateDlqEntryDto } from '../dtos/update-dlq-entry.dto.js';
+import { DlqEventsService } from '../services/dlq-events.service.js';
 import { DeadLetterRepository } from '../services/repository.service.js';
 
 @ApiTags('DLQ')
@@ -42,6 +43,7 @@ export class DeadLetterController {
     private readonly dlqRepository: DeadLetterRepository,
     private readonly minioService: MinioService,
     private readonly jobReinstatementService: JobReinstatementService,
+    private readonly dlqEventsService: DlqEventsService,
   ) {}
 
   @Get()
@@ -83,7 +85,9 @@ export class DeadLetterController {
       failureHistory: body.failureHistory as Prisma.InputJsonValue,
       nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
     };
-    return this.dlqRepository.create(data);
+    const result = await this.dlqRepository.create(data);
+    this.dlqEventsService.broadcastDlqChanged();
+    return result;
   }
 
   @Patch(':id')
@@ -111,7 +115,9 @@ export class DeadLetterController {
       failureHistory: body.failureHistory as Prisma.InputJsonValue,
       nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
     };
-    return this.dlqRepository.update(params.id, data);
+    const result = await this.dlqRepository.update(params.id, data);
+    this.dlqEventsService.broadcastDlqChanged();
+    return result;
   }
 
   @Patch(':id/upsert')
@@ -125,7 +131,7 @@ export class DeadLetterController {
       );
     }
 
-    return this.dlqRepository.upsertByQueueJob(
+    const result = await this.dlqRepository.upsertByQueueJob(
       {
         queueName: existing.queueName,
         jobId: existing.jobId,
@@ -146,6 +152,8 @@ export class DeadLetterController {
         nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
       },
     );
+    this.dlqEventsService.broadcastDlqChanged();
+    return result;
   }
 
   @Delete(':id')
@@ -153,7 +161,9 @@ export class DeadLetterController {
   async remove(@Param() params: DlqParamsDto) {
     const existing = await this.dlqRepository.findById(params.id);
     if (!existing) throw new NotFoundException();
-    return this.dlqRepository.remove(params.id);
+    const result = await this.dlqRepository.remove(params.id);
+    this.dlqEventsService.broadcastDlqChanged();
+    return result;
   }
 
   @Post('reinstate')
@@ -163,10 +173,12 @@ export class DeadLetterController {
     @Query() query: ReinstateQueryDto,
     @Body() body?: ReinstateDlqDto,
   ) {
-    return this.jobReinstatementService.reinstate({
+    const result = await this.jobReinstatementService.reinstate({
       ids: body?.ids,
       batchSize: query.batchSize,
     });
+    this.dlqEventsService.broadcastDlqChanged();
+    return result;
   }
 
   @Delete()
@@ -215,6 +227,7 @@ export class DeadLetterController {
       'Cleared',
     );
 
+    this.dlqEventsService.broadcastDlqChanged();
     return {
       deleted: deletedCount,
       stages: { failed, cleared, removed },

@@ -24,8 +24,6 @@ const emit = defineEmits<{
   openContextSize: [];
   fileSelect: [];
   toggleSearchEngine: [];
-  fileButtonMouseEnter: [];
-  fileButtonMouseLeave: [];
 }>();
 </script>
 
@@ -34,7 +32,9 @@ const emit = defineEmits<{
     <Dropdown
       :ref="props.setThinkDropdownRef"
       variant="icon-only"
-      align="center"
+      align="left"
+      menu-style="centered"
+      size="sm"
       :label="$t('common.thinkLevel')"
       :options="props.thinkOptions"
       :model-value="props.thinkValue"
@@ -49,7 +49,9 @@ const emit = defineEmits<{
     <Dropdown
       :ref="props.setContextSizeDropdownRef"
       variant="icon-only"
-      align="center"
+      align="left"
+      menu-style="centered"
+      size="sm"
       :label="$t('common.context')"
       :options="props.contextSizeOptions"
       :model-value="props.contextSizeValue"
@@ -63,10 +65,9 @@ const emit = defineEmits<{
       </MotionIcon>
     </Dropdown>
     <IconButton
+      size="sm"
       :title="props.fileSelectTitle"
       :disabled="props.isFileSelectDisabled"
-      @mouseenter="emit('fileButtonMouseEnter')"
-      @mouseleave="emit('fileButtonMouseLeave')"
       @click="emit('fileSelect')"
     >
       <Upload />
@@ -76,6 +77,7 @@ const emit = defineEmits<{
         props.searchEngineState === 'enabled' ||
         props.searchEngineState === 'disabled'
       "
+      size="sm"
       :title="props.searchEngineToggleTitle"
       @click="emit('toggleSearchEngine')"
     >
@@ -112,13 +114,13 @@ const emit = defineEmits<{
 .prompt-actions__offline-indicator {
   display: flex;
   align-items: center;
-  padding: var(--spacing-1);
+  padding: var(--spacing-0-5);
   color: var(--color-status-warning);
   cursor: help;
 }
 
 .prompt-actions__icon {
-  width: 1rem;
-  height: 1rem;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 </style>

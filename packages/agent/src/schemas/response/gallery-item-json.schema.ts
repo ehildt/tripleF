@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { safeMediaUrl } from '../helpers/url-trust/url-schema.helper.js';
+import { safeMediaUrl } from '../helpers/url-trust/safe-media-url.helper.js';
 
 /**
  * One entry of a galleryItems array — shared by every snippet-composed

@@ -2,6 +2,8 @@ import type { MarkerLayout } from './build-marker-layout.helper';
 import {
   computeRangeExtremes,
   type DatedPricePoint,
+  type ExtremeColors,
+  type VisibleRange,
 } from './compute-range-extremes.helper';
 import { decorateExtremeMarker } from './decorate-extreme-marker.helper';
 
@@ -17,9 +19,9 @@ import { decorateExtremeMarker } from './decorate-extreme-marker.helper';
 export function forceExtremeMarkers(
   layouts: MarkerLayout[],
   points: DatedPricePoint[],
-  range: { from: number; to: number },
+  range: VisibleRange,
   label: string,
-  colors: { high: string; low: string },
+  colors: ExtremeColors,
   formatPrice: (price: number) => string,
 ): MarkerLayout[] {
   const extremes = computeRangeExtremes(points, range.from, range.to);

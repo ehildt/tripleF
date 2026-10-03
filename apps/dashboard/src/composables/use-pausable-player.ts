@@ -1,7 +1,5 @@
 import { computed, nextTick, onUnmounted, type Ref, ref, watch } from 'vue';
 
-import { useVideoPlaybackStore } from '@/stores/video-playback';
-
 import { loadYouTubeIframeApi } from './helpers/load-youtube-iframe-api.helper';
 import { toEmbedUrl } from './helpers/to-embed-url.helper';
 import type {
@@ -16,13 +14,21 @@ import type {
  * true play state. Single-playback is guaranteed structurally — only the
  * app-level floating player is mounted at any time (see use-floating-player-host)
  * — so this composable never needs to pause other players.
+ *
+ * The playback session is the single source of truth for observed play state
+ * and control support; the player reports both through the `report` callbacks
+ * and applies a play/pause toggle to its own element — the session never
+ * holds this player's controls.
  */
 export function usePausablePlayer(
   videoUrl: Ref<string>,
-  onPlayingChange?: (playing: boolean) => void,
-  onEnded?: () => void,
+  report: {
+    onPlayingChange?: (playing: boolean) => void;
+    onEnded?: () => void;
+    reportPlaying: (playing: boolean) => void;
+    reportControlSupported: (supported: boolean) => void;
+  },
 ) {
-  const videoPlaybackStore = useVideoPlaybackStore();
   const playerElement = ref<HTMLElement | null>(null);
   let ytPlayer: YouTubePlayerHandle | null = null;
   let detachDirectVideoListeners: (() => void) | null = null;
@@ -30,23 +36,36 @@ export function usePausablePlayer(
   let endNotified = false;
   let endPollTimer: number | undefined;
 
-  /** Report play state to the shared transport state and the host. */
-  function reportPlaying(playing: boolean) {
-    videoPlaybackStore.setActivePlaybackPlaying(playing);
-    onPlayingChange?.(playing);
+  /** Local mirror of the observed play state, kept in lockstep with the
+   *  session report so the toggle can decide play vs pause without reading
+   *  the session back. */
+  const playing = ref(false);
+
+  /** Report play state to the session and the host. */
+  function reportPlaying(playingValue: boolean) {
+    playing.value = playingValue;
+    report.reportPlaying(playingValue);
+    report.onPlayingChange?.(playingValue);
   }
 
   /** Mount means autoplay intent — register transport controls optimistically. */
   function registerControls(controls: PlayerControls) {
     playerControls = controls;
-    videoPlaybackStore.registerActivePlayerControls(controls);
-    videoPlaybackStore.setActivePlaybackPlaying(true);
+    report.reportControlSupported(true);
+    reportPlaying(true);
   }
 
   function unregisterControls() {
     if (!playerControls) return;
-    videoPlaybackStore.unregisterActivePlayerControls(playerControls);
+    report.reportControlSupported(false);
     playerControls = null;
+  }
+
+  /** Toggle play/pause on the mounted player. No-op without controls. */
+  function togglePlayback() {
+    if (!playerControls) return;
+    if (playing.value) playerControls.pause();
+    else playerControls.play();
   }
 
   /** Vimeo embeds (api=1) accept legacy postMessage commands without an SDK. */
@@ -61,11 +80,11 @@ export function usePausablePlayer(
     registerControls({
       play: () => {
         postVimeoCommand('play');
-        videoPlaybackStore.setActivePlaybackPlaying(true);
+        reportPlaying(true);
       },
       pause: () => {
         postVimeoCommand('pause');
-        videoPlaybackStore.setActivePlaybackPlaying(false);
+        reportPlaying(false);
       },
     });
   }
@@ -77,7 +96,7 @@ export function usePausablePlayer(
   function notifyEndedOnce() {
     if (endNotified) return;
     endNotified = true;
-    onEnded?.();
+    report.onEnded?.();
   }
 
   /**
@@ -141,7 +160,7 @@ export function usePausablePlayer(
   function attachDirectVideoListeners(el: HTMLVideoElement) {
     const onPlay = () => reportPlaying(true);
     const onPausedOrEnded = () => reportPlaying(false);
-    const onNativeEnded = () => onEnded?.();
+    const onNativeEnded = () => report.onEnded?.();
     el.addEventListener('play', onPlay);
     el.addEventListener('pause', onPausedOrEnded);
     el.addEventListener('ended', onPausedOrEnded);
@@ -195,7 +214,7 @@ export function usePausablePlayer(
     });
 
     endNotified = false;
-    if (onEnded) startYouTubeEndPolling();
+    if (report.onEnded) startYouTubeEndPolling();
   }
 
   watch(
@@ -243,5 +262,6 @@ export function usePausablePlayer(
     isUnembeddable,
     isYouTubeEmbed,
     setPlayerElement,
+    togglePlayback,
   };
 }

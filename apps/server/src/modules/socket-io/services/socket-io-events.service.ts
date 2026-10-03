@@ -1,7 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { SocketIOService } from '@triplef/socketio';
 
+import { HARNESS_EVENT_TYPES } from '../../harness/helpers/emit-harness-event.helper.js';
 import { HarnessQueueService } from '../../harness/services/harness-queue.service.js';
+import { buildSocketEvent } from '../helpers/build-socket-event.helper.js';
 
 @Injectable()
 export class SocketIOEventsService implements OnModuleInit {
@@ -54,10 +56,16 @@ export class SocketIOEventsService implements OnModuleInit {
         );
         try {
           const result = await this.harnessQueueService.cancel(requestId);
-          socket.emit('cancel_result', {
-            requestId,
-            success: result,
-          });
+          // The ack goes back on the original 'cancel_result' channel, now
+          // carrying a v1 reply envelope whose type is 'harness:cancelled'.
+          socket.emit(
+            'cancel_result',
+            buildSocketEvent(
+              HARNESS_EVENT_TYPES.cancelled,
+              { success: result },
+              { kind: 'reply', meta: { requestId } },
+            ),
+          );
         } catch (err) {
           this.logger.error(`Socket cancel failed for ${requestId}:`, err);
         }
@@ -69,37 +77,5 @@ export class SocketIOEventsService implements OnModuleInit {
         );
       });
     });
-  }
-
-  async emitToRoom(
-    roomId: string,
-    event: string,
-    data: unknown,
-  ): Promise<void> {
-    const socketIO = this.socketIOService.io;
-    if (!socketIO) {
-      this.logger.warn('Socket.IO instance not available for emit');
-      return;
-    }
-    this.logger.debug(`[emitToRoom] Emitting event=${event} to room=${roomId}`);
-    try {
-      socketIO.to(roomId).emit(event, data);
-    } catch (err) {
-      this.logger.error(`[emitToRoom] Failed to emit to room ${roomId}:`, err);
-    }
-  }
-
-  async emitToAll(event: string, data: unknown): Promise<void> {
-    const socketIO = this.socketIOService.io;
-    if (!socketIO) {
-      this.logger.warn('Socket.IO instance not available for emit');
-      return;
-    }
-    this.logger.debug(`[emitToAll] Broadcasting event=${event}`);
-    try {
-      socketIO.emit(event, data);
-    } catch (err) {
-      this.logger.error(`[emitToAll] Failed to broadcast event ${event}:`, err);
-    }
   }
 }

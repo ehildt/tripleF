@@ -88,7 +88,10 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  width: 22rem;
+  /* Default open size: 480px wide → media 480×320 (3:2), above YouTube's
+     480×270 recommendation for full controls; resize never goes below the
+     player-media floor (use-popup-geometry). */
+  width: 30rem;
   max-width: calc(100vw - 2rem);
   border: 1px solid
     color-mix(in srgb, var(--color-accent-border) 45%, transparent);
@@ -128,7 +131,7 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
   flex: 1;
   min-height: 0;
   display: flex;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 2;
   background: color-mix(in srgb, var(--color-bg-tertiary) 60%, transparent);
   overflow: hidden;
 }

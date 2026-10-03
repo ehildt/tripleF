@@ -159,7 +159,7 @@ describe('ExpandableMessageList', () => {
     );
   });
 
-  it('renders content in history mode without body slot', () => {
+  it('renders header-only rows when no body slot is provided', () => {
     const wrapper = mount(ExpandableMessageList, {
       props: { items: messages },
     });

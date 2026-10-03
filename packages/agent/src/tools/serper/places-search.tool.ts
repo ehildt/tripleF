@@ -1,14 +1,14 @@
 import { type Tool, tool } from 'ai';
 
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
-import type { ToolDependencies } from '../types/types.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapSerperPlaceResult } from './helpers/map-serper-place-result.helper.js';
 import { type SerperPlacesSearchInput, serperPlacesSearchSchema } from './places-search.schema.js';
 import type { SerperPlacesSearchResponse } from './places-search.types.js';
-import { HEADERS } from './serper.constants.js';
+import { HEADERS } from './serper.constant.js';
 
 export function createSerperPlacesSearch(deps: ToolDependencies): Tool {
   return tool({

@@ -1,11 +1,11 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
-import { Job, JobState, JobType } from 'bullmq';
+import { Job, JobType } from 'bullmq';
 import pino, { LoggerOptions } from 'pino';
 import { format } from 'util';
 
 import { NESTJS_PINO_OPTIONS } from './bullmq-logger.constants.ts';
 
-type JobTypeExtended = JobType | JobState | 'canceled' | 'error' | 'stalled' | 'unknown';
+type JobTypeExtended = JobType | 'canceled' | 'error' | 'stalled' | 'unknown' | 'paused';
 
 const MSG_TEMPLATE = '📦 %s(%s) 🆔 ID-%s%s 🔄 Attempts-%d %s %s';
 
@@ -127,7 +127,7 @@ export class BullMQLoggerService implements LoggerService {
   }
 
   /** Safely gets job state, handling cases where getState() is not available. */
-  private async getJobState<T = any>(job: Job<T>, type?: JobTypeExtended): Promise<JobState | JobTypeExtended> {
+  private async getJobState<T = any>(job: Job<T>, type?: JobTypeExtended): Promise<JobTypeExtended> {
     if (type) return type;
     if (typeof job.getState === 'function') return await job.getState();
     // Fallback: infer state from job properties
@@ -143,7 +143,7 @@ export class BullMQLoggerService implements LoggerService {
   }
 
   /** Maps job states to emoji icons for log visualization. */
-  private getStateIcon(state: JobState | JobTypeExtended) {
+  private getStateIcon(state: JobTypeExtended) {
     switch (state) {
       case 'completed':
         return '🟢';

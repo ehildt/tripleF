@@ -1,27 +1,68 @@
-import { describe, expect, it } from 'vitest';
-import { ref } from 'vue';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Ref } from 'vue';
 
 import type { UploadedDocument, UploadedImage } from '@/stores/conversation';
+import type { AttachedFileEntry } from '@/types/attached-files.model';
 
-import type { AttachedFileEntry } from '../../../../composables/attached-files.state';
 import { useAttachmentList } from './use-attachment-list';
 
 const file = new File([''], 'cat.png', { type: 'image/png' });
 
+/** Drives the mocked store reads that `useAttachmentList` composes. */
+const state = vi.hoisted(() => ({})) as {
+  attachedFiles: Ref<AttachedFileEntry[]>;
+  uploadedImages: Ref<UploadedImage[]>;
+  uploadedDocuments: Ref<UploadedDocument[]>;
+};
+
+vi.mock('@/stores/attached-files', async () => {
+  const { ref } = await import('vue');
+  const attachedFiles = ref<AttachedFileEntry[]>([]);
+  state.attachedFiles = attachedFiles;
+  return {
+    useAttachedFilesStore: () => ({
+      // The real store unwraps its `attachedFiles` computed to the array; a
+      // getter mirrors that unwrapping so `useAttachmentList` reads the array.
+      get attachedFiles() {
+        return attachedFiles.value;
+      },
+    }),
+  };
+});
+
+vi.mock('@/stores/conversation', async () => {
+  const { ref } = await import('vue');
+  const uploadedImages = ref<UploadedImage[]>([]);
+  const uploadedDocuments = ref<UploadedDocument[]>([]);
+  state.uploadedImages = uploadedImages;
+  state.uploadedDocuments = uploadedDocuments;
+  return {
+    useConversationStore: () => ({
+      activeConversationId: 'conv-1',
+      getConversation: () => ({ id: 'conv-1', conversationId: 'c1' }),
+      getConversationId: () => 'c1',
+      getUploadedImagesForConversation: () => uploadedImages.value,
+      getUploadedDocumentsForConversation: () => uploadedDocuments.value,
+    }),
+  };
+});
+
 describe('useAttachmentList', () => {
+  beforeEach(() => {
+    state.attachedFiles.value = [];
+    state.uploadedImages.value = [];
+    state.uploadedDocuments.value = [];
+  });
+
   it('starts empty', () => {
-    const { attachments, hasAttachments } = useAttachmentList({
-      attachedFiles: ref([]),
-      uploadedImages: ref([]),
-      uploadedDocuments: ref([]),
-    });
+    const { attachments, hasAttachments } = useAttachmentList();
 
     expect(attachments.value).toEqual([]);
     expect(hasAttachments.value).toBe(false);
   });
 
   it('merges pending files and uploaded images', () => {
-    const attachedFiles = ref<AttachedFileEntry[]>([
+    state.attachedFiles.value = [
       {
         file,
         isSelected: true,
@@ -30,8 +71,8 @@ describe('useAttachmentList', () => {
         conversationId: 'c1',
         kind: 'image',
       },
-    ]);
-    const uploadedImages = ref<UploadedImage[]>([
+    ];
+    state.uploadedImages.value = [
       {
         name: 'dog.png',
         hash: 'h2',
@@ -39,13 +80,9 @@ describe('useAttachmentList', () => {
         selected: false,
         conversationId: 'c1',
       },
-    ]);
+    ];
 
-    const { attachments, hasAttachments } = useAttachmentList({
-      attachedFiles,
-      uploadedImages,
-      uploadedDocuments: ref([]),
-    });
+    const { attachments, hasAttachments } = useAttachmentList();
 
     expect(hasAttachments.value).toBe(true);
     expect(attachments.value).toHaveLength(2);
@@ -71,7 +108,7 @@ describe('useAttachmentList', () => {
   });
 
   it('includes uploaded documents as document entries', () => {
-    const uploadedDocuments = ref<UploadedDocument[]>([
+    state.uploadedDocuments.value = [
       {
         name: 'notes.txt',
         hash: 'h3',
@@ -80,13 +117,9 @@ describe('useAttachmentList', () => {
         selected: true,
         conversationId: 'c1',
       },
-    ]);
+    ];
 
-    const { attachments } = useAttachmentList({
-      attachedFiles: ref([]),
-      uploadedImages: ref([]),
-      uploadedDocuments,
-    });
+    const { attachments } = useAttachmentList();
 
     expect(attachments.value).toHaveLength(1);
     expect(attachments.value[0]).toMatchObject({
@@ -101,7 +134,7 @@ describe('useAttachmentList', () => {
   });
 
   it('groups pdf page images into a gallery and hides the pdf original', () => {
-    const uploadedImages = ref<UploadedImage[]>([
+    state.uploadedImages.value = [
       {
         name: 'doc.pdf · page 1',
         hash: 'p1',
@@ -122,8 +155,8 @@ describe('useAttachmentList', () => {
         selected: true,
         conversationId: 'c1',
       },
-    ]);
-    const uploadedDocuments = ref<UploadedDocument[]>([
+    ];
+    state.uploadedDocuments.value = [
       {
         name: 'doc.pdf',
         hash: 'doc-hash',
@@ -132,13 +165,9 @@ describe('useAttachmentList', () => {
         selected: true,
         conversationId: 'c1',
       },
-    ]);
+    ];
 
-    const { attachments } = useAttachmentList({
-      attachedFiles: ref([]),
-      uploadedImages,
-      uploadedDocuments,
-    });
+    const { attachments } = useAttachmentList();
 
     expect(attachments.value).toHaveLength(1);
     expect(attachments.value[0]).toMatchObject({
@@ -157,7 +186,7 @@ describe('useAttachmentList', () => {
   });
 
   it('hides a pending pdf original when its pages are grouped', () => {
-    const attachedFiles = ref<AttachedFileEntry[]>([
+    state.attachedFiles.value = [
       {
         file: new File(['%PDF'], 'doc.pdf', { type: 'application/pdf' }),
         isSelected: true,
@@ -166,8 +195,8 @@ describe('useAttachmentList', () => {
         conversationId: 'c1',
         kind: 'document',
       },
-    ]);
-    const uploadedImages = ref<UploadedImage[]>([
+    ];
+    state.uploadedImages.value = [
       {
         name: 'doc.pdf · page 1',
         hash: 'p1',
@@ -178,20 +207,16 @@ describe('useAttachmentList', () => {
         selected: true,
         conversationId: 'c1',
       },
-    ]);
+    ];
 
-    const { attachments } = useAttachmentList({
-      attachedFiles,
-      uploadedImages,
-      uploadedDocuments: ref([]),
-    });
+    const { attachments } = useAttachmentList();
 
     expect(attachments.value).toHaveLength(1);
     expect(attachments.value[0].kind).toBe('gallery');
   });
 
   it('interleaves standalone images and galleries in insertion order', () => {
-    const uploadedImages = ref<UploadedImage[]>([
+    state.uploadedImages.value = [
       { name: 'cat.png', hash: 'img1', uploadedAt: 0, conversationId: 'c1' },
       {
         name: 'doc.pdf · page 1',
@@ -204,13 +229,9 @@ describe('useAttachmentList', () => {
         conversationId: 'c1',
       },
       { name: 'dog.png', hash: 'img2', uploadedAt: 0, conversationId: 'c1' },
-    ]);
+    ];
 
-    const { attachments } = useAttachmentList({
-      attachedFiles: ref([]),
-      uploadedImages,
-      uploadedDocuments: ref([]),
-    });
+    const { attachments } = useAttachmentList();
 
     expect(attachments.value.map((a) => a.kind)).toEqual([
       'image',

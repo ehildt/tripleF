@@ -706,26 +706,82 @@ export const useAppStore = defineStore('app', () => {
 
   watch(memoryPartition, saveMemoryPartition);
 
+  /** In-flight memory-space sync — dedupes the mount + activated double-fire. */
+  let memorySpaceSyncInFlight: Promise<void> | null = null;
+  /** Controller for the in-flight sync — aborting it cancels the fetch. */
+  let memorySpaceSyncAbort: AbortController | null = null;
+
   /**
-   * Adopt the server-persisted partition id at boot (the server wins over
-   * any stale localStorage value — it is the source of truth). Deferred to
-   * idle.
+   * Adopt the server-persisted memory ids while a memory surface is open.
+   * The server wins over any stale localStorage value — it is the source of
+   * truth. Both ids come from one config fetch (the old boot code fetched the
+   * same config twice); ids the server lacks are pushed back so Postgres
+   * becomes the source of truth across browsers. Cancelled by
+   * cancelMemorySpaceSync when the surface is left.
    */
-  async function syncMemoryPartitionFromServer() {
-    try {
-      const config = await fetchConfig(getPersistentSocketSessionId());
-      if (config?.memoryPartition) {
-        memoryPartition.value = config.memoryPartition;
-      } else {
-        // No server value yet — push the local default so Postgres becomes
-        // the source of truth across browsers.
-        await saveConfig(getPersistentSocketSessionId(), {
-          memoryPartition: memoryPartition.value,
-        });
+  function syncMemorySpacesFromServer(): Promise<void> {
+    if (memorySpaceSyncInFlight) return memorySpaceSyncInFlight;
+
+    const controller = new AbortController();
+    memorySpaceSyncAbort = controller;
+
+    const run = (async () => {
+      try {
+        const config = await fetchConfig(
+          getPersistentSocketSessionId(),
+          controller.signal,
+        );
+        const pushBack: {
+          memoryPartition?: string | null;
+          memoryCognition?: string | null;
+        } = {};
+
+        if (config?.memoryPartition) {
+          memoryPartition.value = config.memoryPartition;
+        } else {
+          pushBack.memoryPartition = memoryPartition.value;
+        }
+        if (config?.memoryCognition) {
+          memoryCognition.value = config.memoryCognition;
+          rememberMemoryCognitionSpace(config.memoryCognition);
+        } else {
+          pushBack.memoryCognition = memoryCognition.value;
+        }
+
+        if (
+          pushBack.memoryPartition !== undefined ||
+          pushBack.memoryCognition !== undefined
+        ) {
+          await saveConfig(getPersistentSocketSessionId(), pushBack);
+        }
+      } catch {
+        if (controller.signal.aborted) return;
+        // Offline or transient — keep local values; the next sync retries.
+      } finally {
+        // Only clear if this run is still the current one — a cancel may
+        // have already been superseded by a fresh sync.
+        if (memorySpaceSyncAbort === controller) {
+          memorySpaceSyncAbort = null;
+          memorySpaceSyncInFlight = null;
+        }
       }
-    } catch {
-      // Offline — keep the local value; the next set persists.
-    }
+    })();
+
+    memorySpaceSyncInFlight = run;
+    return run;
+  }
+
+  /**
+   * Abort the in-flight memory-space sync (the surface was left). Clears the
+   * in-flight state synchronously so a fresh sync can start immediately
+   * instead of reusing the aborted promise.
+   */
+  function cancelMemorySpaceSync(): void {
+    if (!memorySpaceSyncAbort) return;
+    const controller = memorySpaceSyncAbort;
+    memorySpaceSyncAbort = null;
+    memorySpaceSyncInFlight = null;
+    controller.abort();
   }
 
   function setMemoryPartition(value: string) {
@@ -763,25 +819,6 @@ export const useAppStore = defineStore('app', () => {
   const memoryCognition = ref(loadMemoryCognition());
 
   watch(memoryCognition, saveMemoryCognition);
-
-  /** Adopt the server-persisted cognition id at boot (server wins). Deferred to idle. */
-  async function syncMemoryCognitionFromServer() {
-    try {
-      const config = await fetchConfig(getPersistentSocketSessionId());
-      if (config?.memoryCognition) {
-        memoryCognition.value = config.memoryCognition;
-        rememberMemoryCognitionSpace(config.memoryCognition);
-      } else {
-        // No server value yet — push the local default so Postgres becomes
-        // the source of truth across browsers.
-        await saveConfig(getPersistentSocketSessionId(), {
-          memoryCognition: memoryCognition.value,
-        });
-      }
-    } catch {
-      // Offline — keep the local value; the next set persists.
-    }
-  }
 
   function setMemoryCognition(value: string) {
     memoryCognition.value = value.trim();
@@ -931,10 +968,10 @@ export const useAppStore = defineStore('app', () => {
     warmModelOnSelect,
     memoryPartition,
     setMemoryPartition,
-    syncMemoryPartitionFromServer,
+    syncMemorySpacesFromServer,
+    cancelMemorySpaceSync,
     memoryCognition,
     setMemoryCognition,
-    syncMemoryCognitionFromServer,
     memoryCognitionSpaces,
     rememberMemoryCognitionSpace,
     removeMemoryCognitionSpace,

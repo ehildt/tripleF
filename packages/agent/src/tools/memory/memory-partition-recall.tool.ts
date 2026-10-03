@@ -2,7 +2,7 @@ import { type Tool, tool } from 'ai';
 
 import { type MemoryPartitionRecallInput, memoryPartitionRecallSchema } from './memory-partition-recall.schema.js';
 import type { MemoryPoint } from './memory-point.model.js';
-import type { MemoryToolScope } from './memory-tool-scope.js';
+import type { MemoryToolScope } from './memory-tool-scope.types.js';
 
 interface MemoryPartitionRecallDeps {
   scope: MemoryToolScope;

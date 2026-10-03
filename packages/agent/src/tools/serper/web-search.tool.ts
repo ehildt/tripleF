@@ -1,14 +1,14 @@
 import { type Tool, tool } from 'ai';
 
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
-import type { ToolDependencies } from '../types/types.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapSerperWebResult } from './helpers/map-serper-web-result.helper.js';
-import { HEADERS } from './serper.constants.js';
+import { HEADERS } from './serper.constant.js';
 import { type SerperWebSearchInput, serperWebSearchSchema } from './web-search.schema.js';
 import type { SerperWebSearchResponse } from './web-search.types.js';
 

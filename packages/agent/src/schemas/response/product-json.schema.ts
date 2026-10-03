@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { safeMediaUrlOrEmpty, safeUrl } from '../helpers/url-trust/url-schema.helper.js';
+import { safeMediaUrlOrEmpty } from '../helpers/url-trust/safe-media-url-or-empty.helper.js';
+import { safeUrl } from '../helpers/url-trust/safe-url.helper.js';
 
 import { galleryItemSchema } from './gallery-item-json.schema.js';
 import { internationalCoverageSchema } from './international-coverage-json.schema.js';

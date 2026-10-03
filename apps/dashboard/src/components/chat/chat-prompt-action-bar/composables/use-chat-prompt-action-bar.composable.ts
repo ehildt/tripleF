@@ -14,32 +14,25 @@ import {
   ShoppingCart,
   Star,
 } from '@lucide/vue';
-import { computed, type EmitFn } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { useAppStore } from '@/stores/app';
+import { useModelsStore } from '@/stores/models';
 import type { ScrollMode } from '@/types/app.model';
 import type { CollapsibleSectionKey } from '@/types/harness-response-data.model';
 
-import type { ChatPromptActionBarProps } from '../ChatPromptActionBar.types';
+import { useChatContextSize } from '../../composables/use-chat-context-size';
+import { useChatConversation } from '../../composables/use-chat-conversation';
+import { useChatDropdowns } from '../../composables/use-chat-dropdowns';
+import { useChatInput } from '../../composables/use-chat-input';
+import { useChatThink } from '../../composables/use-chat-think';
+import { usePromptDraft } from '../../composables/use-prompt-draft';
+import { useSearchEngineAvailability } from '../../composables/use-search-engine-availability';
 import { mapPresentationToggle } from './helpers/map-presentation-toggle.helper';
 import { mapSectionToggle } from './helpers/map-section-toggle.helper';
 import { mapSourceTag } from './helpers/map-source-tag.helper';
-
-export interface ChatPromptActionBarEmits {
-  input: [event: Event];
-  keydown: [event: KeyboardEvent];
-  focus: [];
-  selectThink: [think: string];
-  selectContextSize: [ctx: string];
-  openThink: [];
-  openContextSize: [];
-  disabledHoverStart: [];
-  disabledHoverEnd: [];
-  toggleSearchEngine: [];
-  toggleSource: [source: string];
-  toggleEodhd: [];
-}
+import { useFileSelect } from './use-file-select.composable';
 
 /** Icon and label per known search source; unknown sources fall back to Search. */
 const SOURCE_META: Record<string, { icon: LucideIcon; label: string }> = {
@@ -96,15 +89,82 @@ const PRESENTATION_SWITCH_KEYS: Record<
 };
 
 /**
- * Derives the prompt action bar's display state from its props: the file
- * button classes, the search-source tags, and the engine toggle titles.
+ * The prompt action bar's full self-contained surface: display derivations,
+ * model capability checks, the prompt draft, and every action the bar's
+ * controls bind to. Composes its dependencies — the active conversation,
+ * think/context/dropdown/search-engine state, the prompt draft, and the file
+ * picker — by import, so the bar component binds one composable and the
+ * chat orchestrator knows nothing about the bar's internals.
  */
-export function useChatPromptActionBar(
-  props: ChatPromptActionBarProps,
-  emit: EmitFn<ChatPromptActionBarEmits>,
-) {
+export function useChatPromptActionBar() {
   const { t } = useI18n();
   const appStore = useAppStore();
+  const modelsStore = useModelsStore();
+
+  const { conversationId, conversation, selectedModelObj } =
+    useChatConversation();
+  const { filteredThinkOptions, selectThink } = useChatThink();
+  const { filteredContextSizeOptions, defaultContextSize, selectContextSize } =
+    useChatContextSize();
+  const {
+    setThinkDropdownRef,
+    setContextSizeDropdownRef,
+    onThinkOpen,
+    onContextSizeOpen,
+  } = useChatDropdowns();
+  const { onCollapsedKeydown } = useChatInput();
+  const { promptDraft } = usePromptDraft();
+  const {
+    searchEngineState,
+    searchSources,
+    eodhdState,
+    refresh,
+    toggleSearchEngine,
+    toggleSource,
+    toggleEodhd,
+  } = useSearchEngineAvailability();
+
+  /** Whether the active conversation has any model picked — name-based so
+   * the bar never disables while the catalog is still loading (a selected
+   * model whose entry has not resolved yet must still read as "has a model"). */
+  const selectedModelName = computed(
+    () => conversation.value?.model || modelsStore.selectedModel,
+  );
+  const hasNoModelSelected = computed(() => !selectedModelName.value);
+
+  /** Vision capability; models without reported capabilities are allowed
+   * until their details load, matching the chat model-sync semantics. */
+  const supportsVision = computed(
+    () => selectedModelObj.value?.capabilities?.includes('vision') ?? true,
+  );
+
+  const isFileSelectDisabled = computed(
+    () => hasNoModelSelected.value || !supportsVision.value,
+  );
+
+  const currentThinkValue = computed(
+    () => conversation.value?.think || 'medium',
+  );
+
+  const currentContextSizeValue = computed(
+    () => conversation.value?.numCtx || defaultContextSize.value,
+  );
+
+  /** Formats the raw numCtx option for the context dropdown. */
+  const formatContextValue = (value: string): string =>
+    modelsStore.formatCtx(Number(value));
+
+  /** Ambient refresh: the server cache owns freshness, so focus just re-asks. */
+  function onPromptFocus() {
+    modelsStore.fetchModels({ silent: true });
+  }
+
+  const {
+    acceptedFileTypes,
+    setFileInputRef,
+    triggerFileSelect,
+    onFileInputChange,
+  } = useFileSelect(isFileSelectDisabled);
 
   /** Tooltip shown on the engine toggle when no search engine is configured. */
   const noSearchEngineTitle = computed(() =>
@@ -112,13 +172,13 @@ export function useChatPromptActionBar(
   );
 
   const scrollMode = computed(() =>
-    appStore.getConversationScrollMode(props.conversationId),
+    appStore.getConversationScrollMode(conversationId.value),
   );
 
   function toggleScrollMode() {
     const next: ScrollMode =
       scrollMode.value === 'carousel' ? 'native' : 'carousel';
-    appStore.setConversationScrollMode(props.conversationId, next);
+    appStore.setConversationScrollMode(conversationId.value, next);
   }
 
   const scrollModeTitle = computed(() =>
@@ -128,24 +188,24 @@ export function useChatPromptActionBar(
   );
 
   const sourceMenuCollapsed = computed(() =>
-    appStore.getSourceMenuCollapsed(props.conversationId, 'sources'),
+    appStore.getSourceMenuCollapsed(conversationId.value, 'sources'),
   );
 
   const viewMenuCollapsed = computed(() =>
-    appStore.getSourceMenuCollapsed(props.conversationId, 'view'),
+    appStore.getSourceMenuCollapsed(conversationId.value, 'view'),
   );
 
   const sourceMenuAlwaysShow = computed(() =>
-    appStore.getSourceMenuAlwaysShow(props.conversationId, 'sources'),
+    appStore.getSourceMenuAlwaysShow(conversationId.value, 'sources'),
   );
 
   const viewMenuAlwaysShow = computed(() =>
-    appStore.getSourceMenuAlwaysShow(props.conversationId, 'view'),
+    appStore.getSourceMenuAlwaysShow(conversationId.value, 'view'),
   );
 
   function toggleSourceMenuCollapsed() {
     appStore.setSourceMenuCollapsed(
-      props.conversationId,
+      conversationId.value,
       'sources',
       !sourceMenuCollapsed.value,
     );
@@ -153,7 +213,7 @@ export function useChatPromptActionBar(
 
   function toggleViewMenuCollapsed() {
     appStore.setSourceMenuCollapsed(
-      props.conversationId,
+      conversationId.value,
       'view',
       !viewMenuCollapsed.value,
     );
@@ -175,9 +235,18 @@ export function useChatPromptActionBar(
    * hidden state and a localized hide/show label — the sections are hidden,
    * not collapsed, so the wording says so. */
   const sectionToggles = computed(() =>
-    SECTION_TOGGLES.map((toggle) =>
-      mapSectionToggle(toggle, appStore.collapsedSections, t),
-    ),
+    SECTION_TOGGLES.map((toggle) => {
+      const { key, icon, hidden, titleKey } = mapSectionToggle(
+        toggle,
+        appStore.collapsedSections,
+      );
+      return {
+        key,
+        icon,
+        hidden,
+        title: t(titleKey, { section: t(toggle.labelKey) }),
+      };
+    }),
   );
 
   function toggleSection(section: CollapsibleSectionKey) {
@@ -188,29 +257,30 @@ export function useChatPromptActionBar(
    * presentation and a localized switch label. The media sections are never
    * hidden — the toggle flips gallery ↔ list. */
   const presentationToggles = computed(() =>
-    PRESENTATION_TOGGLES.map((toggle) =>
-      mapPresentationToggle(
-        toggle,
-        appStore.mediaPresentations,
-        PRESENTATION_SWITCH_KEYS,
-        t,
-      ),
-    ),
+    PRESENTATION_TOGGLES.map((toggle) => {
+      const { key, media, icon, presentation, titleKey } =
+        mapPresentationToggle(
+          toggle,
+          appStore.mediaPresentations,
+          PRESENTATION_SWITCH_KEYS,
+        );
+      return { key, media, icon, presentation, title: t(titleKey) };
+    }),
   );
 
   function togglePresentation(media: 'image' | 'video') {
     appStore.toggleMediaPresentation(media);
   }
 
-  const fileSelectTitle = computed(
-    () => props.fileSelectDisabledReason || t('common.selectFiles'),
+  const fileSelectTitle = computed(() =>
+    !supportsVision.value
+      ? t('common.fileSelectNoImages')
+      : t('common.selectFiles'),
   );
 
   const actionsClass = computed(() => ({
     'prompt-actions': true,
-    'prompt-actions--with-indicator':
-      props.searchEngineState !== undefined &&
-      props.searchEngineState !== 'unknown',
+    'prompt-actions--with-indicator': searchEngineState.value !== 'unknown',
   }));
 
   /**
@@ -222,36 +292,31 @@ export function useChatPromptActionBar(
    * clicking flips the state with immediate visual feedback.
    */
   const sourceTags = computed(() =>
-    (props.searchSources ?? []).map((source) =>
-      mapSourceTag(source, SOURCE_META, t),
-    ),
+    searchSources.value.map((source) => {
+      const { key, enabled, icon, label, titleKey } = mapSourceTag(
+        source,
+        SOURCE_META,
+      );
+      return { key, enabled, icon, title: t(titleKey, { label }) };
+    }),
   );
 
   const searchEngineToggleTitle = computed(() =>
-    props.searchEngineState === 'enabled'
+    searchEngineState.value === 'enabled'
       ? t('common.searchEngineConnected')
       : t('common.searchEngineDisabled'),
   );
 
   const eodhdToggleTitle = computed(() =>
-    props.eodhdState?.enabled
+    eodhdState.value?.enabled
       ? t('common.eodhdEnabled')
       : t('common.eodhdDisabled'),
   );
 
-  function onFileButtonMouseEnter() {
-    if (props.isFileSelectDisabled) {
-      emit('disabledHoverStart');
-    }
-  }
-
-  function onFileButtonMouseLeave() {
-    if (props.isFileSelectDisabled) {
-      emit('disabledHoverEnd');
-    }
-  }
-
   return {
+    promptDraft,
+    onCollapsedKeydown,
+    onPromptFocus,
     fileSelectTitle,
     actionsClass,
     sourceTags,
@@ -273,7 +338,28 @@ export function useChatPromptActionBar(
     toggleSection,
     presentationToggles,
     togglePresentation,
-    onFileButtonMouseEnter,
-    onFileButtonMouseLeave,
+    eodhdState,
+    filteredThinkOptions,
+    currentThinkValue,
+    selectThink,
+    filteredContextSizeOptions,
+    currentContextSizeValue,
+    selectContextSize,
+    formatContextValue,
+    hasNoModelSelected,
+    setThinkDropdownRef,
+    setContextSizeDropdownRef,
+    onThinkOpen,
+    onContextSizeOpen,
+    isFileSelectDisabled,
+    searchEngineState,
+    toggleSearchEngine,
+    toggleSource,
+    toggleEodhd,
+    acceptedFileTypes,
+    setFileInputRef,
+    triggerFileSelect,
+    onFileInputChange,
+    refresh,
   };
 }

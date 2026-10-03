@@ -1,6 +1,6 @@
 ---
 name: nestjs
-description: NestJS, BullMQ, and server-side architecture conventions for the ckir.io/visions monorepo. Use when creating or editing NestJS modules, controllers, processors, gateways, services, helpers, DTOs, or actions in server/src. Covers entry-point thinning, naming, helper rules, inline patterns, and deferred tests.
+description: NestJS, BullMQ, and server-side architecture conventions for the ckir.io/visions monorepo. Use when creating or editing NestJS modules, controllers, processors, gateways, services, helpers, DTOs, or actions in server/src. Covers entry-point thinning, naming, helper rules, inline patterns, and consent-gated tests.
 ---
 
 # NestJS Server-Side Conventions
@@ -8,6 +8,8 @@ description: NestJS, BullMQ, and server-side architecture conventions for the ck
 This skill governs all code under `server/src`: modules, controllers, services, helpers, processors, gateways, DTOs, and actions.
 
 Official NestJS documentation: https://docs.nestjs.com
+
+Generic structure rules — names express intent, one function per file, co-located explicit types, role suffixes, co-location, no barrels, no wrapper functions — are canonically defined in the [code-structure](../code-structure/SKILL.md) skill; where wording overlaps with this skill, code-structure is canonical.
 
 ## Quick Rules
 
@@ -41,8 +43,8 @@ Official NestJS documentation: https://docs.nestjs.com
 10. **No wrapper functions.**
     A function earns its name only if the call site can't already see what it does. Pure rename-wrappers add indirection without information.
 
-11. **Tests and stories are deferred.**
-    Do not create `.spec.ts`, `.test.ts`, or `.stories.ts` during implementation. After implementing code, ask the user to test it manually. Once behavior is confirmed, offer tests as a separate step.
+11. **Tests and stories are consent-gated.**
+    Do not create `.spec.ts`, `.test.ts`, or `.stories.ts` files during implementation — creating them requires explicit user consent (`.pi/APPEND_SYSTEM.md` § Tests, Stories & Browser Automation). After implementing code, ask the user to test it manually; once behavior is confirmed, offer tests as a separate step.
 
 ## Entry-Point Conventions
 
@@ -97,7 +99,7 @@ Every variable, function, service, and file name must answer "what does this do?
 
 - Each helper lives in its own `.helper.ts` file inside a `helpers/` folder.
 - Helpers are **pure and stateless** — no NestJS decorators, no injected deps. (Those belong in services.)
-- Every `.helper.ts` gets a co-located `.helper.spec.ts` test file.
+- Every `.helper.ts` pairs with a co-located `.helper.spec.ts` test file (created only with user consent — see Tests and Stories).
 - No barrel files (`index.ts`). Import directly from the defining file.
 
 ## Prefer Inline Patterns
@@ -120,7 +122,11 @@ A function earns its name only if the call site can't already see what it does. 
 
 ## Tests and Stories
 
-Do **not** create `.spec.ts`, `.test.ts`, or `.stories.ts` files during implementation. After implementing code, ask the user to test it manually. Once the user confirms the behavior is correct, offer to generate the corresponding test/story files as a separate step.
+Tests and stories are consent-gated: creating them requires explicit user consent (`.pi/APPEND_SYSTEM.md` § Tests, Stories & Browser Automation). Do not create them during implementation; ask the user to test manually first, then offer tests/stories as a separate step.
+
+Existing tests are a regression net — run them after changes. A test is a contract, not infallible: it documents how the code worked when written and may drift from the code, so neither a failing nor a passing test is blindly trusted. When a change would break an existing test, report it to the user before modifying either the code or the test.
+
+When specs do exist, the convention is a co-located `.helper.spec.ts` for every helper and a `.spec.ts` beside each file that exports logic.
 
 ## Example Mapping (abstract)
 

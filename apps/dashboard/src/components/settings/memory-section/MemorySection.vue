@@ -21,6 +21,7 @@ import { computed, ref } from 'vue';
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import type { SubMenuItem } from '@/components/shared/ui/settings-submenu/SettingsSubMenu.types';
 import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
+import { useMemorySpaceSync } from '@/composables/use-memory-space-sync';
 import { i18n } from '@/i18n/i18n';
 
 import type { MemoryGroupId } from './config-panel/MemoryConfigPanel.types';
@@ -75,6 +76,9 @@ const GROUP_ITEMS = computed<SubMenuItem[]>(() => [
 
 /** Which configuration group the submenu currently shows. */
 const activeGroup = ref<MemoryGroupId>('spaces');
+
+// Settings is not kept alive, so this syncs once per visit (mounted/unmounted).
+useMemorySpaceSync();
 </script>
 
 <template>

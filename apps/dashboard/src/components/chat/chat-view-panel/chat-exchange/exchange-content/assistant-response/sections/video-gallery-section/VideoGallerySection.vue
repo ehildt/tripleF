@@ -7,6 +7,7 @@
  * template.
  */
 import { computed, useId } from 'vue';
+import { defineProps } from 'vue';
 
 import { useHarnessMediaPresentation } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-presentation.composable';
 import AssistantCarousel from '@/components/chat/shared/ui/media-carousel/AssistantCarousel.vue';
@@ -80,7 +81,7 @@ const presentation = useHarnessMediaPresentation('video');
 .video-gallery-section {
   width: 100%;
   background-color: var(--color-bg-primary);
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: var(--spacing-1) var(--spacing-1);
 }
 
 .video-gallery {
@@ -129,9 +130,9 @@ const presentation = useHarnessMediaPresentation('video');
     flex: 0 0 100%;
   }
 
-  /* The lone last-row item keeps full width but is shorter (banner-like):
-     a 2:1 frame, ~89% of a 16:9 video's height. The header became a caption
-     overlay, so its former height now belongs to the video. */
+  /* The lone last-row item spans the full row at the standard 3:2 video
+     ratio. The header became a caption overlay, so its former height now
+     belongs to the video. */
   .video-gallery--count-3-plus
     > :deep(li:nth-child(2n + 1):last-child)
     .video-gallery__card {
@@ -146,7 +147,7 @@ const presentation = useHarnessMediaPresentation('video');
     flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 3 / 2;
     height: auto;
     max-height: 100%;
   }
@@ -172,9 +173,9 @@ const presentation = useHarnessMediaPresentation('video');
     flex: 0 0 100%;
   }
 
-  /* The lone last-row item keeps full width but is shorter (banner-like):
-     a 2:1 frame, ~89% of a 16:9 video's height. The header became a caption
-     overlay, so its former height now belongs to the video. */
+  /* The lone last-row item spans the full row at the standard 3:2 video
+     ratio. The header became a caption overlay, so its former height now
+     belongs to the video. */
   .video-gallery--count-3-plus
     > :deep(li:nth-child(3n + 1):last-child)
     .video-gallery__card {
@@ -189,7 +190,7 @@ const presentation = useHarnessMediaPresentation('video');
     flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 3 / 2;
     height: auto;
     max-height: 100%;
   }
