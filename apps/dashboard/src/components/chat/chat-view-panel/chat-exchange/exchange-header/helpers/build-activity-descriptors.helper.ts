@@ -5,17 +5,15 @@ import type { BuildActivityDescriptorsParams } from './build-activity-descriptor
 
 /**
  * Resolve the activity descriptors shown while an assistant exchange is
- * pending. Thinking takes precedence: once the model streams reasoning, only
- * the "consolidating" descriptor remains. Otherwise parallel tool calls each
- * yield their own descriptor (one per category — the client cycles through
- * them), falling back to the current pipeline step descriptor sent by the
- * server.
+ * pending. Parallel tool calls each yield their own descriptor (one per
+ * category — the client cycles through them), falling back to the current
+ * pipeline step descriptor sent by the server. Reasoning never drives the
+ * label: the thinking trace renders in the exchange's reasoning panel, so
+ * the label keeps naming the step that is actually running.
  */
 export function buildActivityDescriptors(
   params: BuildActivityDescriptorsParams,
 ): HarnessActivityDescriptor[] {
-  if (params.reasoning?.trim()) return [{ key: 'activity.consolidating' }];
-
   const toolDescriptors = buildToolActivityDescriptors(params.toolCalls ?? []);
   if (toolDescriptors.length) return toolDescriptors;
 

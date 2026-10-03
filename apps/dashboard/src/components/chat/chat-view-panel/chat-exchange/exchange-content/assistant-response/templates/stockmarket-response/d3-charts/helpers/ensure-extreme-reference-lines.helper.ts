@@ -2,6 +2,7 @@ import type { D3ReferenceLine } from '../D3Chart.types';
 import {
   computeRangeExtremes,
   type DatedPricePoint,
+  type VisibleRange,
 } from './compute-range-extremes.helper';
 import { mapLineWithNormalizedLabel } from './map-line-with-normalized-label.helper';
 
@@ -17,7 +18,7 @@ import { mapLineWithNormalizedLabel } from './map-line-with-normalized-label.hel
 export function ensureExtremeReferenceLines(
   lines: D3ReferenceLine[],
   points: DatedPricePoint[],
-  range: { from: number; to: number },
+  range: VisibleRange,
   label: string,
   enabled = true,
 ): D3ReferenceLine[] {

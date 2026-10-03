@@ -1,4 +1,5 @@
-import { buildVocabularySection, type TaxonomyVocabulary } from './vocabulary-section.helper.js';
+import { buildVocabularySection } from './vocabulary-section.helper.js';
+import type { TaxonomyVocabulary } from './vocabulary-section.types.js';
 
 /**
  * Prompt for the memory-write queue job — runs after the turn was answered,

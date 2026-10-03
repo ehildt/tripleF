@@ -5,4 +5,6 @@ export interface ConversationListProps {
   conversations: readonly Conversation[];
   /** Id of the active conversation, highlighted in the list. */
   activeConversationId: string | null;
+  /** Temporary-conversation retention in minutes (expiry tooltip). */
+  temporaryRetentionMinutes: number;
 }

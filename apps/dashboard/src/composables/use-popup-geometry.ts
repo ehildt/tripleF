@@ -1,15 +1,22 @@
-import { computed } from 'vue';
+import { computed, type Ref } from 'vue';
 
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
 import type { PopoutAnchor } from '@/stores/popout-settings.types';
-import { useVideoPlaybackStore } from '@/stores/video-playback';
 import type { ResizeDirection } from '@/types/resize-direction.model';
 
 import { clampRectToViewport } from './helpers/clamp-rect-to-viewport.helper';
 import { trackPointerGesture } from './helpers/track-pointer-gesture.helper';
+import {
+  FLOATING_MEDIA_BAR_HEIGHT_PX,
+  MIN_PLAYER_MEDIA_HEIGHT_PX,
+  MIN_PLAYER_MEDIA_WIDTH_PX,
+} from './player-media-floor.constant';
 
-const MIN_POPUP_WIDTH_PX = 240;
-const MIN_POPUP_HEIGHT_PX = 160;
+/** Smallest popup: the media box keeps ≥360×200px (YouTube's hard floor for
+ * players showing controls) even with the media bar visible on top. */
+const MIN_POPUP_WIDTH_PX = MIN_PLAYER_MEDIA_WIDTH_PX;
+const MIN_POPUP_HEIGHT_PX =
+  MIN_PLAYER_MEDIA_HEIGHT_PX + FLOATING_MEDIA_BAR_HEIGHT_PX;
 const VIEWPORT_MARGIN_PX = 16;
 const OPACITY_SNAP_STEP_PERCENT = 25;
 const OPACITY_SNAP_THRESHOLD_PERCENT = 3;
@@ -57,13 +64,15 @@ export const ANCHOR_STYLES: Record<PopoutAnchor, Record<string, string>> = {
  * otherwise every popout opens at the initial anchor. Dragging keeps the
  * position, resizing keeps the aspect ratio.
  */
-export function usePopupGeometry() {
+export function usePopupGeometry(
+  floatingPopupOpacity: Ref<number>,
+  setFloatingPopupOpacity: (opacity: number) => void,
+) {
   const popoutSettingsStore = usePopoutSettingsStore();
-  const videoPlaybackStore = useVideoPlaybackStore();
 
   const popupStyle = computed(() => {
     const style: Record<string, string> = {
-      opacity: String(videoPlaybackStore.floatingPopupOpacity),
+      opacity: String(floatingPopupOpacity.value),
       ...(popoutSettingsStore.floatingPopupRect
         ? {
             left: `${popoutSettingsStore.floatingPopupRect.x}px`,
@@ -188,8 +197,7 @@ export function usePopupGeometry() {
       OPACITY_SNAP_STEP_PERCENT;
     const withinSnapZone =
       Math.abs(percent - snapped) <= OPACITY_SNAP_THRESHOLD_PERCENT;
-    videoPlaybackStore.floatingPopupOpacity =
-      (withinSnapZone ? snapped : percent) / 100;
+    setFloatingPopupOpacity((withinSnapZone ? snapped : percent) / 100);
   }
 
   return { popupStyle, startDrag, startResize, setOpacity };

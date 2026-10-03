@@ -41,13 +41,7 @@ function cleanProfileValue(value: unknown): unknown {
   return Object.keys(inner).length > 0 ? inner : undefined;
 }
 
-/** Outcome of resolving a model-authored patch over the stored profile document. */
-export interface MergedCognitionProfile {
-  /** The document to persist; undefined when the patch yields no effective change (skip the write). */
-  profile?: MemoryCognitionProfile;
-  /** Top-level fields the patch deleted (null-valued keys) — surfaced for logging. */
-  removals: string[];
-}
+import type { MergedCognitionProfile } from './merge-cognition-profiles.types.js';
 
 /**
  * Resolve one memoryProfile verdict patch over the stored document — the

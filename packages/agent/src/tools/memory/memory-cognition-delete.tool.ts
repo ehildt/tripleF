@@ -1,7 +1,7 @@
 import { type Tool, tool } from 'ai';
 
 import { type MemoryCognitionDeleteInput, memoryCognitionDeleteSchema } from './memory-cognition-delete.schema.js';
-import type { MemoryToolScope } from './memory-tool-scope.js';
+import type { MemoryToolScope } from './memory-tool-scope.types.js';
 
 export interface MemoryCognitionDeleteOutcome {
   deleted: number;

@@ -4,14 +4,17 @@ import { vi } from 'vitest';
 
 import { BullMQConfigService } from '../../bullmq/configs/bullmq-config.service.js';
 
+import { DlqEventsService } from './dlq-events.service.js';
 import { LifecycleService } from './lifecycle.service.js';
 import { DeadLetterRepository } from './repository.service.js';
 
 describe('LifecycleService', () => {
   let service: LifecycleService;
   let dlqRepository: DeadLetterRepository;
+  let broadcastDlqChanged: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    broadcastDlqChanged = vi.fn();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LifecycleService,
@@ -32,6 +35,10 @@ describe('LifecycleService', () => {
               failedJobRetryDelayMs: 1000,
             },
           },
+        },
+        {
+          provide: DlqEventsService,
+          useValue: { broadcastDlqChanged },
         },
       ],
     }).compile();
@@ -68,6 +75,7 @@ describe('LifecycleService', () => {
         status: 'Cleared',
         failedReason: null,
       });
+      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
     });
 
     it('does nothing when no DLQ entry exists', async () => {
@@ -76,6 +84,7 @@ describe('LifecycleService', () => {
       await service.onJobCompleted(createJob());
 
       expect(dlqRepository.update).not.toHaveBeenCalled();
+      expect(broadcastDlqChanged).not.toHaveBeenCalled();
     });
   });
 
@@ -103,6 +112,7 @@ describe('LifecycleService', () => {
         }),
       );
       expect(job.remove).toHaveBeenCalled();
+      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
 
       const [, data] = vi.mocked(dlqRepository.upsertByQueueJob).mock.calls[0];
       const nextRetryAt = data.nextRetryAt as Date;
@@ -116,6 +126,7 @@ describe('LifecycleService', () => {
 
       expect(dlqRepository.upsertByQueueJob).not.toHaveBeenCalled();
       expect(job.remove).not.toHaveBeenCalled();
+      expect(broadcastDlqChanged).not.toHaveBeenCalled();
     });
 
     it('works for any queue (vectorize job)', async () => {
@@ -145,6 +156,7 @@ describe('LifecycleService', () => {
           payload: expect.objectContaining({ requestId: 'req-42' }),
         }),
       );
+      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -160,6 +172,7 @@ describe('LifecycleService', () => {
           failedReason: 'model not found',
         }),
       );
+      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
     });
   });
 });

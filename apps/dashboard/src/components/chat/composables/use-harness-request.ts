@@ -1,4 +1,5 @@
 import { getApiUrl } from '@/api/api-url';
+import { useSocketProvider } from '@/composables/use-socket-provider';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAttachedFilesStore } from '@/stores/attached-files';
@@ -6,10 +7,7 @@ import { useConversationStore } from '@/stores/conversation';
 import { buildHeaders } from '@/utils/build-headers.helper';
 import { handleResponse } from '@/utils/handle-response.helper';
 
-import type {
-  PostHarnessRequestOptions,
-  UseHarnessRequestOptions,
-} from './use-harness-request.types';
+import type { PostHarnessRequestOptions } from './use-harness-request.types';
 
 /**
  * Sends a prepared prompt to the harness, registers the in-flight request for
@@ -17,8 +15,8 @@ import type {
  * attachments, failure marks the exchange as errored. Errors are reported
  * through toasts; the caller owns the loading state.
  */
-export function useHarnessRequest(options: UseHarnessRequestOptions) {
-  const { socketProvider } = options;
+export function useHarnessRequest() {
+  const socketProvider = useSocketProvider();
 
   const conversationStore = useConversationStore();
   const attachedFilesStore = useAttachedFilesStore();

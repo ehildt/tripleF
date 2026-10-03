@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { resolveOfferMerchantUrl } from './resolve-offer-merchant-url.helper.js';
 
-vi.mock('./fetch-with-timeout.js', () => ({
+vi.mock('./fetch-with-timeout.helper.js', () => ({
   fetchWithTimeout: vi.fn(),
 }));
 
-import { fetchWithTimeout } from './fetch-with-timeout.js';
+import { fetchWithTimeout } from './fetch-with-timeout.helper.js';
 
 const mockFetchWithTimeout = vi.mocked(fetchWithTimeout);
 

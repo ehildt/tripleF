@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { safeMediaUrlOrEmpty, safeVideoUrl } from '../helpers/url-trust/url-schema.helper.js';
+import { safeMediaUrlOrEmpty } from '../helpers/url-trust/safe-media-url-or-empty.helper.js';
+import { safeVideoUrl } from '../helpers/url-trust/safe-video-url.helper.js';
 
 /**
  * One entry of a videoGalleryItems array — shared by every template with a

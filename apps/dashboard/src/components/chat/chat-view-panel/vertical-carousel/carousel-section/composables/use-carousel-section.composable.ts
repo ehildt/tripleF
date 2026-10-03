@@ -32,11 +32,7 @@ export function useCarouselSection(props: CarouselSectionProps) {
   );
   const scrollToSection = carouselStore.scrollToSection;
 
-  const { opacity: blendOpacity } = useCarouselBlend(
-    toRef(props, 'index'),
-    scrollTop,
-    viewportHeight,
-  );
+  const { opacity: blendOpacity } = useCarouselBlend(toRef(props, 'index'));
   // The blend only applies to carousel slides. In native mode the carousel
   // state is still written (useVerticalCarousel is called unconditionally),
   // so force full opacity here rather than inheriting a stale blend value.

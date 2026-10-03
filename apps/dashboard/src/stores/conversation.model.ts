@@ -70,9 +70,10 @@ export interface Exchange {
     status: string;
   }>;
   // Live activity while the request is processed: the current step or tool
-  // descriptor (fallback for non-thinking models) and the streamed thinking
-  // text. `activity` is a structured i18n key + meta, localized by the client
-  // in `activityLanguage` (the language the model chose to respond in).
+  // descriptor drives the header label for every model, while the streamed
+  // thinking text renders in the exchange's reasoning panel. `activity` is a
+  // structured i18n key + meta, localized by the client in `activityLanguage`
+  // (the language the model chose to respond in).
   activity?: HarnessActivityDescriptor;
   activityLanguage?: string;
   reasoning?: string;

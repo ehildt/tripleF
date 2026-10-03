@@ -26,28 +26,50 @@ minimumReleaseAgeExclude:
   - '@triplef/helpers@1.5.6'
   - dompurify@3.4.15
   - eslint-plugin-vue@10.11.0
-  - '@types/node@26.5.0 || 26.6.2'
-  - '@typescript-eslint/eslint-plugin@8.70.0'
-  - '@typescript-eslint/parser@8.70.0'
-  - '@typescript-eslint/project-service@8.70.0'
-  - '@typescript-eslint/scope-manager@8.70.0'
-  - '@typescript-eslint/tsconfig-utils@8.70.0'
-  - '@typescript-eslint/type-utils@8.70.0'
-  - '@typescript-eslint/types@8.70.0'
-  - '@typescript-eslint/typescript-estree@8.70.0'
-  - '@typescript-eslint/utils@8.70.0'
-  - '@typescript-eslint/visitor-keys@8.70.0'
-  - typescript-eslint@8.70.0
+  - '@types/node@26.5.0 || 26.6.2 || 26.6.5'
+  - '@typescript-eslint/eslint-plugin@8.70.0 || 8.71.1'
+  - '@typescript-eslint/parser@8.70.0 || 8.71.1'
+  - '@typescript-eslint/project-service@8.70.0 || 8.71.1'
+  - '@typescript-eslint/scope-manager@8.70.0 || 8.71.1'
+  - '@typescript-eslint/tsconfig-utils@8.70.0 || 8.71.1'
+  - '@typescript-eslint/type-utils@8.70.0 || 8.71.1'
+  - '@typescript-eslint/types@8.70.0 || 8.71.1'
+  - '@typescript-eslint/typescript-estree@8.70.0 || 8.71.1'
+  - '@typescript-eslint/utils@8.70.0 || 8.71.1'
+  - '@typescript-eslint/visitor-keys@8.70.0 || 8.71.1'
+  - typescript-eslint@8.70.0 || 8.71.1
   - unplugin-swc@1.6.0
-  - '@ai-sdk/gateway@4.0.76 || 4.0.86 || 4.0.87'
-  - '@ai-sdk/mcp@2.0.46 || 2.0.53 || 2.0.54'
-  - '@ai-sdk/provider-utils@5.0.37 || 5.0.44 || 5.0.45'
-  - '@ai-sdk/provider@4.0.11'
-  - '@lucide/icons@1.43.0'
-  - '@lucide/vue@1.43.0'
-  - ai@7.0.94 || 7.0.106 || 7.0.107
+  - '@ai-sdk/gateway@4.0.76 || 4.0.86 || 4.0.87 || 4.0.104'
+  - '@ai-sdk/mcp@2.0.46 || 2.0.53 || 2.0.54 || 2.0.67'
+  - '@ai-sdk/provider-utils@5.0.37 || 5.0.44 || 5.0.45 || 5.0.54'
+  - '@ai-sdk/provider@4.0.11 || 4.0.22'
+  - '@lucide/icons@1.43.0 || 1.51.0 || 1.55.0'
+  - '@lucide/vue@1.43.0 || 1.51.0 || 1.55.0'
+  - ai@7.0.94 || 7.0.106 || 7.0.107 || 7.0.128
   - jszip@3.10.2
   - zod@4.6.4
   - bullmq@6.3.7 || 6.3.8
-  - prettier@3.9.8
-  - eslint@10.11.0
+  - prettier@3.9.8 || 3.9.10
+  - eslint@10.11.0 || 10.12.0
+  - pdfjs-dist@6.4.299
+  - postcss@8.5.29
+  - '@intlify/core-base@11.4.14'
+  - '@intlify/devtools-types@11.4.14'
+  - '@intlify/message-compiler@11.4.14'
+  - '@intlify/shared@11.4.14'
+  - '@napi-rs/canvas-android-arm64@1.0.11'
+  - '@napi-rs/canvas-darwin-arm64@1.0.11'
+  - '@napi-rs/canvas-darwin-x64@1.0.11'
+  - '@napi-rs/canvas-linux-arm-gnueabihf@1.0.11'
+  - '@napi-rs/canvas-linux-arm64-gnu@1.0.11'
+  - '@napi-rs/canvas-linux-arm64-musl@1.0.11'
+  - '@napi-rs/canvas-linux-riscv64-gnu@1.0.11'
+  - '@napi-rs/canvas-linux-x64-gnu@1.0.11'
+  - '@napi-rs/canvas-linux-x64-musl@1.0.11'
+  - '@napi-rs/canvas-win32-arm64-msvc@1.0.11'
+  - '@napi-rs/canvas-win32-x64-msvc@1.0.11'
+  - '@napi-rs/canvas@1.0.11'
+  - '@vitejs/plugin-vue@6.0.10'
+  - '@vue/language-core@3.3.13'
+  - vue-i18n@11.4.14
+  - vue-tsc@3.3.13

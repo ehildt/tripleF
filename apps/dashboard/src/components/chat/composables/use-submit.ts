@@ -2,15 +2,16 @@ import { computed, ref } from 'vue';
 
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
 import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
-import { buildModelVisionWarning } from '@/components/chat/helpers/build-model-vision-warning.helper';
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
 import { classifySelectedFiles } from '@/components/chat/helpers/classify-selected-files.helper';
+import { hasVisionConflict } from '@/components/chat/helpers/has-vision-conflict.helper';
 import { useMergeSelection } from '@/components/chat/shared/composables/use-merge-selection';
-import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
+import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-total-context-percentage.helper';
 import {
   TOAST_KEY_CONTEXT_FULL,
   TOAST_KEY_MODEL_NO_IMAGES,
 } from '@/composables/toast-keys';
+import { useSocketProvider } from '@/composables/use-socket-provider';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
@@ -31,16 +32,11 @@ import { mapDocumentEntry } from './helpers/map-document-entry.helper';
 import { mapDocumentToOriginal } from './helpers/map-document-to-original.helper';
 import { mapDocumentToPrompt } from './helpers/map-document-to-prompt.helper';
 import { useHarnessRequest } from './use-harness-request';
-import type { UseSubmitOptions } from './use-submit.types';
+import { usePromptDraft } from './use-prompt-draft';
 
-export function useSubmit(options: UseSubmitOptions) {
-  const {
-    socketProvider,
-    isEventConnected,
-    isRoomConnected,
-    promptDraft,
-    resetPromptDraft,
-  } = options;
+export function useSubmit() {
+  const { promptDraft, resetPromptDraft } = usePromptDraft();
+  const socketProvider = useSocketProvider();
 
   const appStore = useAppStore();
   const conversationStore = useConversationStore();
@@ -49,7 +45,7 @@ export function useSubmit(options: UseSubmitOptions) {
   const mergeSelection = useMergeSelection();
   const mergeSelectionStore = useMergeSelectionStore();
   const toast = useToast();
-  const { postHarnessRequest } = useHarnessRequest({ socketProvider });
+  const { postHarnessRequest } = useHarnessRequest();
 
   const isSubmitting = ref(false);
 
@@ -89,10 +85,13 @@ export function useSubmit(options: UseSubmitOptions) {
   }
 
   function ensureSocketSubscription(eventName: string, room: string) {
-    if (!isEventConnected(eventName)) {
+    if (!socketProvider.connectedEvents.has(eventName)) {
       socketProvider.listenToEvent?.(eventName);
     }
-    if (room && !isRoomConnected(eventName, room)) {
+    if (
+      room &&
+      !(socketProvider.connectedRooms.get(eventName)?.has(room) ?? false)
+    ) {
       socketProvider.joinRoom?.(room, eventName);
     }
   }
@@ -270,13 +269,13 @@ export function useSubmit(options: UseSubmitOptions) {
     ];
     conversationStore.setFiles(sid!, currentFiles);
 
-    const visionWarning = buildModelVisionWarning(
-      model,
-      modelsStore.getModel(model)?.capabilities,
-      currentFiles,
-    );
-    if (visionWarning)
-      toast.warning(visionWarning, { key: TOAST_KEY_MODEL_NO_IMAGES });
+    if (
+      hasVisionConflict(modelsStore.getModel(model)?.capabilities, currentFiles)
+    ) {
+      toast.warning(i18n.global.t('toast.modelNoImages', { model }), {
+        key: TOAST_KEY_MODEL_NO_IMAGES,
+      });
+    }
 
     const conversation = sid ? conversationStore.getConversation(sid) : null;
     const preUploadImages = conversation?.uploadedImages ?? [];

@@ -3,9 +3,16 @@
 - Do **not** use generated scripts, one-off automation, or custom tooling to bulk-modify the codebase without explicit user approval. Prefer manual, reviewable edits or project-native tooling (skills, linters, formatters).
 - Do **not** implement workarounds, shortcuts, or brittle hacks to bypass a proper solution. If the correct implementation requires more effort, architecture, or user input, do the correct implementation.
 - Do **not** introduce custom implementations, abstractions, or project-wide conventions without first proposing them to the user and getting explicit approval. Prefer the patterns and tooling already present in the codebase.
-- Do **not** be lazy. Fully implement the requested behavior, including tests, type safety, edge cases, and cleanup, without waiting to be prompted for each step.
+- Do **not** be lazy. Fully implement the requested behavior — type safety, edge cases, and cleanup — without waiting to be prompted for each step. (Tests, stories, and browser automation are the exception: they require explicit user consent — see below.)
 - Do **not** run git commands that modify the repository tree (e.g. `git checkout`, `git reset`, `git commit`, `git rebase`, `git merge`, `git cherry-pick`, `git stash`, or any destructive reset). Read-only git commands such as `git status`, `git log`, or `git diff` are acceptable when needed.
 - Do **not** argue with the user. Focus on the current request and move forward; pre-existing errors are treated as leftover context from prior sessions.
+
+## Tests, Stories & Browser Automation
+
+- **Never create `.spec.ts`, `.test.ts`, or `.stories.ts` files, or use `browser_*` tools, without explicit user consent.** Do not add them speculatively or as a "while I'm here" step; ask first.
+- **Existing tests are a regression net.** After changing code, run the existing test suite that covers the touched area and report failures.
+- **Tests are a contract, not infallible.** They document how the code worked when written; code and tests can drift. A failing test is not automatically proof the code is wrong, and a passing test is not automatically proof the code is right — investigate rather than blindly trusting either side.
+- **When a change would break a test, stop and report before fixing.** If extending a function, service, controller, module, or other unit would break an existing test, communicate this to the user before modifying either the code or the test.
 
 # Skills Authoring
 
@@ -24,6 +31,7 @@ Pi loads `AGENTS.md` at startup for high-level project context. This project use
 | Linting / type-checking        | `./skills/lint/SKILL.md`          |
 | Localization (i18n)            | `./skills/localization/SKILL.md`  |
 | Official docs / stack overview | `./skills/tech-stack/SKILL.md`    |
+| Framework-agnostic structure   | `./skills/code-structure/SKILL.md` |
 
 Use the relevant skill before implementing framework-specific changes.
 

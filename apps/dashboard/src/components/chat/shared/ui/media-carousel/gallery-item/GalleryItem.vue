@@ -116,7 +116,8 @@ const { canAddToFiles, isInFiles, toggleAddToFiles } = useAddImageToFiles(
   background: var(--color-bg-tertiary);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* Fixed default height; the section contexts override it (carousel sizes
+     absolutely via insets, single stretches to 100%). */
   height: 360px;
   width: 80%;
 }

@@ -32,7 +32,7 @@ import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import { usePlaylistStore } from '@/stores/playlist';
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
 import type { PopoutAnchor } from '@/stores/popout-settings.types';
 
@@ -42,7 +42,7 @@ import type {
 } from './VideoPopoutPanel.types';
 
 const popoutSettingsStore = usePopoutSettingsStore();
-const playlistSettingsStore = usePlaylistSettingsStore();
+const playlistStore = usePlaylistStore();
 
 const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -85,7 +85,7 @@ function setHorizontal(value: string) {
 
 /** Toggle the popout preview; showing it hides the floating-player preview. */
 function handlePreviewToggle() {
-  playlistSettingsStore.hidePlaylistPreview();
+  playlistStore.hidePlaylistPreview();
   popoutSettingsStore.togglePopoutPreview();
 }
 </script>

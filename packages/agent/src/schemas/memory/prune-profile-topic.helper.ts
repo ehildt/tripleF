@@ -1,4 +1,6 @@
-import { type MemoryCognitionProfile, normalizeInsightPath } from './memory-cognition.model.js';
+import { type MemoryCognitionProfile } from './memory-cognition.model.js';
+import { normalizeInsightPath } from './normalize-insight-path.helper.js';
+import type { PruneProfileTopicOutcome } from './prune-profile-topic.types.js';
 
 /**
  * Targeted cognition delete — the profile half. Prunes ONE standing topic
@@ -27,13 +29,6 @@ const isPruneableRecordField = (field: string): field is PruneableRecordField =>
 
 /** The canonical probe-key comparison form (same rule as normalizePathSegment). */
 const toProbeKey = (value: string): string => value.trim().toLowerCase().replace(/\s+/g, '-');
-
-export interface PruneProfileTopicOutcome {
-  /** The pruned document — the SAME reference when nothing matched, so callers persist only on a hit. */
-  profile: MemoryCognitionProfile;
-  /** The stored value/key that was removed — undefined when the path matched nothing. */
-  removed?: string;
-}
 
 export function pruneProfileTopic(profile: MemoryCognitionProfile, path: string): PruneProfileTopicOutcome {
   const normalized = normalizeInsightPath(path);

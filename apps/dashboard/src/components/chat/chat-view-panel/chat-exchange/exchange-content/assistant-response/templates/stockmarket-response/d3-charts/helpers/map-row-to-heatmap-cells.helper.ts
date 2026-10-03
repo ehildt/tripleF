@@ -1,14 +1,14 @@
-import type { HeatmapCell } from './build-heatmap-cells.helper';
+import type { BandGrid, HeatmapCell } from './build-heatmap-cells.helper.types';
 
-interface BandGrid {
-  minPrice: number;
-  step: number;
-  bandCount: number;
+/** One heatmap day: its timestamp plus the per-band volumes for that day. */
+interface VolumeRow {
+  time: string;
+  volumes: number[];
 }
 
 /** Build one heatmap day's non-empty cells from its volume row. */
 export function mapRowToHeatmapCells(
-  row: { time: string; volumes: number[] },
+  row: VolumeRow,
   grid: BandGrid,
   maxVolume: number,
 ) {

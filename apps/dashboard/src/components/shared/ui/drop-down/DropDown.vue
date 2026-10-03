@@ -1,54 +1,28 @@
 <script setup lang="ts">
-import { Check } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
 import { useMenuPosition } from '@/composables/use-menu-position';
 import { stripHtml } from '@/utils/strip-html.helper';
 
-import Tooltip from '../tooltip/Tooltip.vue';
+import { useDropdown } from './composables/use-dropdown';
+import DropDownItem from './drop-down-item/DropDownItem.vue';
+import DropDownTrigger from './drop-down-trigger/DropDownTrigger.vue';
 import { displayValue } from './helpers/display-value.helper';
-import { useDropdown } from './use-dropdown';
+import type { DropDownProps } from './DropDown.types';
 
-const props = withDefaults(
-  defineProps<{
-    /** Visual style: `labeled` for input-style trigger, `icon-only` for compact toolbar button. */
-    variant?: 'labeled' | 'icon-only';
-    /** Menu item appearance: `default` shows a check on the selected item, `centered` hides it and centers the option text. */
-    menuStyle?: 'default' | 'centered';
-    /** Horizontal alignment of the dropdown menu relative to the trigger. */
-    align?: 'left' | 'center' | 'right';
-    /** Vertical side the menu opens toward. */
-    side?: 'top' | 'bottom';
-    /** Label text displayed in the trigger button (labeled variant only). */
-    label: string;
-    /** Available options to select from. Ignored when the #menu slot renders custom content. */
-    options?: readonly string[];
-    /** Currently selected value. */
-    modelValue: string;
-    /** Disables interaction and dims the trigger. */
-    disabled?: boolean;
-    /** Placeholder text shown when no value is selected (falls back to `label`). */
-    placeholder?: string;
-    /** Optional transform applied to the displayed value and each option label. */
-    formatValue?: (value: string) => string;
-    /** Shows an error indicator on the trigger. Requires `#error-icon` slot content. */
-    errored?: boolean;
-    /** Teleports the menu to <body> and anchors it below the trigger (escapes scroll/clip contexts). */
-    teleport?: boolean;
-  }>(),
-  {
-    variant: 'labeled',
-    menuStyle: 'default',
-    align: 'left',
-    side: 'top',
-    options: () => [],
-    disabled: false,
-    placeholder: '',
-    formatValue: undefined,
-    errored: false,
-    teleport: false,
-  },
-);
+const props = withDefaults(defineProps<DropDownProps>(), {
+  variant: 'labeled',
+  menuStyle: 'default',
+  align: 'left',
+  side: 'top',
+  options: () => [],
+  disabled: false,
+  placeholder: '',
+  formatValue: undefined,
+  errored: false,
+  size: 'md',
+  teleport: false,
+});
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -56,8 +30,12 @@ const emit = defineEmits<{
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
-const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
+
+// The trigger button lives in the trigger child — read its element handle to
+// anchor the menu (the composable only needs the trigger's rect).
+const triggerComponentRef = ref<{ triggerEl: HTMLElement | null } | null>(null);
+const triggerEl = computed(() => triggerComponentRef.value?.triggerEl ?? null);
 
 const { open, toggle, select, close } = useDropdown(
   containerRef,
@@ -67,93 +45,79 @@ const { open, toggle, select, close } = useDropdown(
   props.teleport ? dropdownRef : undefined,
 );
 
-const { positionStyle } = useMenuPosition(triggerRef, open, {
+const { positionStyle } = useMenuPosition(triggerEl, open, {
   side: 'bottom',
 });
 
 defineExpose({ close });
+
+/** The labeled trigger's right-hand value text (placeholder/label fallback). */
+const triggerValueText = computed(() =>
+  displayValue(
+    props.modelValue,
+    props.placeholder,
+    props.label,
+    props.formatValue,
+  ),
+);
+
+/** Option text: formatted when a formatter is given, always plain text. */
+function optionLabel(option: string): string {
+  return stripHtml(props.formatValue ? props.formatValue(option) : option);
+}
 </script>
 
 <template>
   <div
     ref="containerRef"
-    class="dropdown"
-    :class="{ 'dropdown--icon-only': variant === 'icon-only' }"
+    class="drop-down"
+    :class="{ 'drop-down--icon-only': variant === 'icon-only' }"
   >
-    <template v-if="variant === 'labeled'">
-      <button
-        ref="triggerRef"
-        class="dropdown-trigger"
-        :class="{ 'dropdown-trigger--errored': errored }"
-        :disabled="disabled"
-        @click.stop="toggle"
-      >
-        <slot />
-        <span class="dropdown-label">{{ label }}</span>
-        <span class="dropdown-value">{{
-          displayValue(
-            props.modelValue,
-            props.placeholder,
-            props.label,
-            props.formatValue,
-          )
-        }}</span>
-        <span v-if="errored" class="dropdown-error-icon">
-          <slot name="error-icon" />
-        </span>
-      </button>
-    </template>
-    <template v-else>
-      <Tooltip :text="$t('common.selectLabel', { label: label.toLowerCase() })">
-        <button
-          ref="triggerRef"
-          class="dropdown-trigger--icon-only"
-          :class="{ 'dropdown-trigger--icon-only--active': open }"
-          :disabled="disabled"
-          :aria-label="$t('common.selectLabel', { label: label.toLowerCase() })"
-          @click.stop="toggle"
-        >
-          <slot />
-        </button>
-      </Tooltip>
-    </template>
+    <DropDownTrigger
+      ref="triggerComponentRef"
+      :variant="variant"
+      :label="label"
+      :value-text="triggerValueText"
+      :disabled="disabled"
+      :errored="errored"
+      :open="open"
+      :size="size"
+      @toggle="toggle"
+    >
+      <slot />
+      <template #error-icon><slot name="error-icon" /></template>
+    </DropDownTrigger>
     <Teleport to="body" :disabled="!teleport">
-      <Transition name="dropdown">
+      <Transition name="drop-down">
         <div
           v-if="open"
           ref="dropdownRef"
-          class="dropdown-menu"
+          class="drop-down__menu"
           :class="[
-            side === 'top' ? 'dropdown-menu--top' : 'dropdown-menu--bottom',
+            side === 'top' ? 'drop-down__menu--top' : 'drop-down__menu--bottom',
             align === 'left'
-              ? 'dropdown-menu--left'
+              ? 'drop-down__menu--left'
               : align === 'center'
-                ? 'dropdown-menu--center'
-                : 'dropdown-menu--right',
-            variant === 'icon-only' && 'dropdown-menu--icon-only',
-            menuStyle === 'centered' && 'dropdown-menu--centered',
-            $slots.menu && 'dropdown-menu--rich',
-            teleport && 'dropdown-menu--teleported',
+                ? 'drop-down__menu--center'
+                : 'drop-down__menu--right',
+            variant === 'icon-only' && 'drop-down__menu--icon-only',
+            menuStyle === 'centered' && 'drop-down__menu--centered',
+            $slots.menu && 'drop-down__menu--rich',
+            teleport && 'drop-down__menu--teleported',
           ]"
           :style="teleport ? (positionStyle ?? undefined) : undefined"
           @click.stop
         >
           <slot name="menu" :close="close">
-            <button
+            <DropDownItem
               v-for="opt in options"
               :key="opt"
-              class="dropdown-item"
-              :class="{ 'dropdown-item--selected': modelValue === opt }"
-              @click="select(opt)"
-            >
-              <template
-                v-if="variant !== 'icon-only' && menuStyle !== 'centered'"
-              >
-                <Check v-if="modelValue === opt" class="dropdown-item__check" />
-                <span v-else class="dropdown-item__check-placeholder" />
-              </template>
-              {{ stripHtml(props.formatValue ? props.formatValue(opt) : opt) }}
-            </button>
+              :option="opt"
+              :label="optionLabel(opt)"
+              :selected="modelValue === opt"
+              :show-check="variant !== 'icon-only' && menuStyle !== 'centered'"
+              @select="select"
+            />
           </slot>
         </div>
       </Transition>
@@ -162,91 +126,19 @@ defineExpose({ close });
 </template>
 
 <style scoped>
-.dropdown {
+.drop-down {
   position: relative;
   flex: 1;
   min-width: 0;
   height: fit-content;
 }
 
-.dropdown--icon-only {
+.drop-down--icon-only {
   flex: none;
   min-width: 0;
 }
 
-.dropdown-trigger {
-  width: 100%;
-  padding: var(--spacing-1-5) var(--spacing-3);
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-divider);
-  color: var(--color-fg-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.dropdown-trigger:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.dropdown-trigger:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-}
-
-.dropdown-trigger--icon-only {
-  padding: var(--spacing-1);
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.dropdown-trigger--icon-only:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.dropdown-trigger--icon-only:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
-}
-
-.dropdown-trigger--icon-only--active {
-  color: var(--color-accent-primary);
-  background-color: var(--color-bg-tertiary);
-}
-
-.dropdown-label {
-  flex: 1;
-  text-align: left;
-}
-
-.dropdown-value {
-  font-size: 0.625rem;
-  color: var(--color-fg-muted);
-  font-family: var(--font-mono);
-}
-
-.dropdown-trigger--errored {
-  border-color: var(--color-status-error);
-}
-
-.dropdown-error-icon {
-  display: flex;
-  align-items: center;
-}
-
-.dropdown-menu {
+.drop-down__menu {
   position: absolute;
   z-index: 50;
   background-color: var(--color-bg-elevated);
@@ -259,65 +151,111 @@ defineExpose({ close });
   scrollbar-width: thin;
 }
 
-.dropdown-menu::-webkit-scrollbar {
-  width: 6px;
+.drop-down__menu::-webkit-scrollbar {
+  width: 0.375rem;
 }
 
-.dropdown-menu::-webkit-scrollbar-track {
+.drop-down__menu::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.dropdown-menu::-webkit-scrollbar-thumb {
+.drop-down__menu::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
 }
 
-.dropdown-enter-active,
-.dropdown-leave-active {
+.drop-down-enter-active,
+.drop-down-leave-active {
   transition:
     max-height 150ms ease,
     opacity 150ms ease;
   overflow: hidden;
 }
 
-.dropdown-enter-from,
-.dropdown-leave-to {
+.drop-down-enter-from,
+.drop-down-leave-to {
   max-height: 0;
   opacity: 0;
 }
 
-.dropdown-enter-to,
-.dropdown-leave-from {
+.drop-down-enter-to,
+.drop-down-leave-from {
   max-height: 8rem;
   opacity: 1;
 }
 
-.dropdown-menu--left {
+.drop-down__menu--left {
   left: 0;
   right: auto;
 }
 
-.dropdown-menu--center {
+/* Field-style (labeled) triggers span their container, so the option list
+   matches the trigger width instead of shrinking to the option text — the
+   same width the combo-box menus in the same panel use. */
+.drop-down:not(.drop-down--icon-only) .drop-down__menu--left {
+  right: 0;
+}
+
+.drop-down__menu--center {
   left: 50%;
   transform: translateX(-50%);
   right: auto;
 }
 
-.dropdown-menu--right {
+.drop-down__menu--right {
   left: auto;
   right: 0;
 }
 
-.dropdown-menu--top {
+.drop-down__menu--top {
   bottom: 100%;
   margin-bottom: var(--spacing-1);
 }
 
-.dropdown-menu--bottom {
+/* Centered menus (the chat menu's context select) mirror the model-list
+   panels: the list itself is the scroll container, capped at the same
+   height, with the app-wide accent scrollbar — the default option list
+   keeps its own thin muted scrollbar — but without the model list's sticky
+   search header. */
+.drop-down__menu--centered {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
+  max-height: min(24rem, 70vh);
+  scrollbar-width: auto;
+}
+
+.drop-down__menu--centered::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.drop-down__menu--centered::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+.drop-down__menu--centered::-webkit-scrollbar-thumb {
+  background: var(--color-accent-primary);
+}
+
+.drop-down__menu--centered::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-secondary);
+}
+
+/* Grow up to the menu's own cap: the shared enter target (8rem) would clamp
+   the taller centered menu mid-animation. */
+.drop-down__menu--centered.drop-down-enter-to,
+.drop-down__menu--centered.drop-down-leave-from {
+  max-height: min(24rem, 70vh);
+}
+
+.drop-down__menu--bottom {
   top: 100%;
   margin-top: var(--spacing-1);
 }
 
-.dropdown-menu--icon-only {
+.drop-down__menu--icon-only {
+  /* Shrink-to-fit the widest option row — the strip dropdowns size to their
+     content, like the model list's rows. */
   width: auto;
   white-space: nowrap;
 }
@@ -325,7 +263,7 @@ defineExpose({ close });
 /* Slotted rich menus (e.g. the searchable model list) size and scroll their
    own content — drop the item-list height cap and fade instead of animating
    the height. */
-.dropdown-menu--rich {
+.drop-down__menu--rich {
   width: 14rem;
   max-height: none;
   overflow: visible;
@@ -333,64 +271,52 @@ defineExpose({ close });
 
 /* Teleported menus are fixed-positioned by useMenuPosition (anchored below
    the trigger) instead of absolutely positioned within the trigger. */
-.dropdown-menu--teleported {
+.drop-down__menu--teleported {
   position: fixed;
 }
 
-.dropdown-menu--rich.dropdown-enter-active,
-.dropdown-menu--rich.dropdown-leave-active {
+.drop-down__menu--rich.drop-down-enter-active,
+.drop-down__menu--rich.drop-down-leave-active {
   transition: opacity 150ms ease;
   overflow: visible;
 }
 
-.dropdown-menu--rich.dropdown-enter-from,
-.dropdown-menu--rich.dropdown-leave-to,
-.dropdown-menu--rich.dropdown-enter-to,
-.dropdown-menu--rich.dropdown-leave-from {
+.drop-down__menu--rich.drop-down-enter-from,
+.drop-down__menu--rich.drop-down-leave-to,
+.drop-down__menu--rich.drop-down-enter-to,
+.drop-down__menu--rich.drop-down-leave-from {
   max-height: none;
 }
 
-.dropdown-item {
-  width: 100%;
-  padding: var(--spacing-1-5) var(--spacing-3);
-  text-align: left;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  color: var(--color-fg-secondary);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.dropdown-item:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
-/* Icon-only and centered menus are compact single-line lists — center the
-   option text. */
-.dropdown-menu--icon-only .dropdown-item,
-.dropdown-menu--centered .dropdown-item {
+/* Icon-only menus are compact single-line lists — center the option text. */
+.drop-down__menu--icon-only .drop-down-item {
   justify-content: center;
   text-align: center;
 }
 
-.dropdown-item--selected {
-  color: var(--color-accent-primary);
+/* Centered menus render the options as model-list style card rows. */
+.drop-down__menu--centered .drop-down-item {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  padding: var(--spacing-2);
+  text-align: left;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
 }
 
-.dropdown-item__check {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex-shrink: 0;
+.drop-down__menu--centered .drop-down-item:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-tertiary) 80%,
+    transparent
+  );
 }
 
-.dropdown-item__check-placeholder {
-  width: 0.75rem;
-  height: 0.75rem;
-  flex-shrink: 0;
+/* Strip dropdowns (icon-only + centered cards): the option text centers in
+   its card, keeping the compact single-line behavior of the icon-only look. */
+.drop-down__menu--icon-only.drop-down__menu--centered .drop-down-item {
+  justify-content: center;
+  text-align: center;
 }
 </style>

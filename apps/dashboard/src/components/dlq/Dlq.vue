@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue';
+import { onMounted, watch } from 'vue';
 
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import { i18n } from '@/i18n/i18n';
@@ -22,6 +22,10 @@ const dlqStore = useDlqStore();
 const modelsStore = useModelsStore();
 const toast = useToast();
 const socketStore = useSocketStore();
+
+// Opening the DLQ tab clears the activity dot — the list loads on open as
+// before, so the user has now "seen" the latest state.
+onMounted(() => dlqStore.clearDlqActivity());
 
 const {
   data: dlqData,

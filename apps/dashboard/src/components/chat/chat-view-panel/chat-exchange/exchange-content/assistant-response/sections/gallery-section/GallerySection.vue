@@ -6,21 +6,15 @@ import ImageGrid from '@/components/chat/chat-view-panel/chat-exchange/exchange-
 import AssistantCarousel from '@/components/chat/shared/ui/media-carousel/AssistantCarousel.vue';
 import GalleryItemComponent from '@/components/chat/shared/ui/media-carousel/gallery-item/GalleryItem.vue';
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { GalleryItem } from '@/types/harness-response-data.model';
 
-defineProps<{
-  title?: string;
-  items?: GalleryItem[];
-  /** Dense span-grid mosaic (ar4) instead of the carousel, set by the art direction. */
-  mosaic?: boolean;
-  /** Opens the owning surface's lightbox for a clicked image. */
-  onImageClick?: (item: GalleryItem) => void;
-}>();
+import type { GallerySectionProps } from './GallerySection.types';
+
+defineProps<GallerySectionProps>();
 
 /** Lets the section reference its own title when one is shown. */
 const titleId = useId();
 
-/** The prompt-bar presentation switch: gallery (carousel/mosaic/single) or list. */
+/** The prompt-bar presentation switch: gallery (carousel/single) or list. */
 const presentation = useHarnessMediaPresentation('image');
 </script>
 
@@ -32,7 +26,7 @@ const presentation = useHarnessMediaPresentation('image');
     :aria-label="title ? undefined : $t('common.imageGallery')"
   >
     <SectionTitle
-      v-if="title && (presentation === 'list' || items.length === 1 || mosaic)"
+      v-if="title && (presentation === 'list' || items.length === 1)"
       :id="titleId"
       :title="title"
     />
@@ -49,14 +43,6 @@ const presentation = useHarnessMediaPresentation('image');
         class="harness-gallery harness-gallery--single"
       >
         <GalleryItemComponent :item="items[0]" :on-image-click="onImageClick" />
-      </ul>
-      <ul v-else-if="mosaic" class="harness-gallery harness-gallery--mosaic">
-        <GalleryItemComponent
-          v-for="(item, index) in items"
-          :key="index"
-          :item="item"
-          :on-image-click="onImageClick"
-        />
       </ul>
       <AssistantCarousel
         v-else
@@ -92,49 +78,9 @@ const presentation = useHarnessMediaPresentation('image');
   height: 35rem;
 }
 
-.harness-gallery--single > :deep(li) figure {
+.harness-gallery--single > :deep(li figure) {
   max-width: none;
   width: 100%;
   height: 100%;
-}
-
-/* Mosaic direction (ar4): a dense span-grid of fixed-height rows. Captions
-   hide in the mosaic; they still show in the lightbox titles. */
-.harness-gallery--mosaic {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: 10rem;
-  grid-auto-flow: dense;
-  gap: var(--spacing-2);
-}
-
-.harness-gallery--mosaic > :deep(li figure) {
-  width: 100%;
-  min-height: 0;
-}
-
-.harness-gallery--mosaic > :deep(li .harness-gallery__trigger) {
-  aspect-ratio: auto;
-  min-height: 0;
-}
-
-.harness-gallery--mosaic :deep(.harness-gallery__caption) {
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .harness-gallery--mosaic {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  /* Repeating span pattern: one big tile, then two, then a wide tile. */
-  .harness-gallery--mosaic > :deep(li:nth-child(5n + 1)) {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-
-  .harness-gallery--mosaic > :deep(li:nth-child(5n + 4)) {
-    grid-column: span 2;
-  }
 }
 </style>

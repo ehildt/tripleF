@@ -7,6 +7,8 @@ import {
   watch,
 } from 'vue';
 
+import { useProgrammaticScrollWindow } from './use-programmatic-scroll-window';
+
 const SCROLL_BOTTOM_THRESHOLD_PX = 8;
 
 /**
@@ -22,10 +24,14 @@ export function useNativeScroll() {
   const scrollTop = ref(0);
   const shouldAutoScroll = ref(true);
   const activeSectionIndex = ref(0);
-  // True while a programmatic scroll (auto-scroll-to-bottom, scroll-to-section)
-  // is in flight, so callers can tell a user-initiated scroll from one the
-  // composable triggered itself.
-  const isProgrammaticScroll = ref(false);
+
+  const {
+    isProgrammaticScroll,
+    armProgrammaticScroll,
+    endProgrammaticScroll,
+    disposeProgrammaticScrollWindow,
+  } = useProgrammaticScrollWindow();
+
   // When true, the container-creation auto-scroll-to-bottom is skipped. Used
   // when switching from the carousel so the native list can restore the
   // section the user was reading instead of jumping to the bottom.
@@ -59,11 +65,16 @@ export function useNativeScroll() {
     shouldAutoScroll.value = true;
     const container = getContainer();
     if (!container || container.scrollHeight === 0) return;
-    isProgrammaticScroll.value = true;
     requestAnimationFrame(() => {
+      const target = Math.max(
+        0,
+        container.scrollHeight - container.clientHeight,
+      );
+      if (container.scrollTop !== target) {
+        armProgrammaticScroll();
+      }
       container.scrollTop = container.scrollHeight;
       syncScrollState(container);
-      isProgrammaticScroll.value = false;
     });
   }
 
@@ -77,19 +88,15 @@ export function useNativeScroll() {
     // bottom: stop following the stream so a later resize/mutation does not
     // yank the view back down.
     shouldAutoScroll.value = false;
-    isProgrammaticScroll.value = true;
+    const target = (section as HTMLElement).offsetTop;
+    if (container.scrollTop !== target) {
+      armProgrammaticScroll();
+    }
     container.scrollTo({
-      top: (section as HTMLElement).offsetTop,
+      top: target,
       behavior: smooth ? 'smooth' : 'auto',
     });
     syncScrollState(container);
-    if (smooth) {
-      window.setTimeout(() => {
-        isProgrammaticScroll.value = false;
-      }, 400);
-    } else {
-      isProgrammaticScroll.value = false;
-    }
   }
 
   /** The section whose top is nearest the container's scroll position. */
@@ -190,6 +197,7 @@ export function useNativeScroll() {
 
     onUnmounted(() => {
       unobserveContainer();
+      disposeProgrammaticScrollWindow();
     });
   }
 
@@ -200,6 +208,7 @@ export function useNativeScroll() {
     onScroll,
     activeSectionIndex,
     isProgrammaticScroll,
+    endProgrammaticScroll,
     shouldAutoScroll,
     skipInitialScroll,
   };

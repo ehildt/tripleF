@@ -17,7 +17,7 @@ import type { ArticleResponseProps } from './ArticleResponse.types';
 const props = defineProps<ArticleResponseProps>();
 
 const { videosFirst } = useHarnessMediaPriority(props.data);
-const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
+const { direction, splitHero, quoteAside, multicolBody, spans } =
   useArtDirection(props);
 </script>
 
@@ -65,7 +65,6 @@ const { direction, splitHero, quoteAside, multicolBody, mosaicGallery, spans } =
       :video-gallery-items="data.videoGalleryItems"
       :gallery-title="data.galleryTitle"
       :gallery-items="data.galleryItems"
-      :mosaic="mosaicGallery"
       :on-image-click="onImageClick"
     />
     <ArticleCardsSection

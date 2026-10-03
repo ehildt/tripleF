@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { safeMediaUrlOrEmpty, safeVideoUrlOrEmpty } from '../../schemas/helpers/url-trust/url-schema.helper.js';
+import { safeMediaUrlOrEmpty } from '../../schemas/helpers/url-trust/safe-media-url-or-empty.helper.js';
+import { safeVideoUrlOrEmpty } from '../../schemas/helpers/url-trust/safe-video-url-or-empty.helper.js';
 import { createTextItemSchema } from '../../schemas/response/text-item-json.schema.js';
 import { HERO_VIDEO_TITLE_ISSUE, heroVideoHasTitle } from '../../schemas/response/video-gallery-item-json.schema.js';
 

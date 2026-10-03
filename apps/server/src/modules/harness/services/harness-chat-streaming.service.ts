@@ -3,7 +3,10 @@ import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { SocketIOService } from '@triplef/socketio';
 
 import { MinioService } from '../../minio/services/minio.service.js';
-import { emitToSocket } from '../helpers/emit-to-socket.helper.js';
+import {
+  emitHarnessEvent,
+  HARNESS_EVENT_TYPES,
+} from '../helpers/emit-harness-event.helper.js';
 import {
   buildGalleryItems,
   type GalleryItem,
@@ -56,25 +59,31 @@ export class HarnessChatStreamingService {
 
   async streamResult(ctx: HarnessContext): Promise<void> {
     if (ctx.doneReason === 'clarification') {
-      await emitToSocket(this.io, ctx.roomId, ctx.event, {
-        requestId: ctx.requestId,
-        model: ctx.model,
-        template: 'text',
-        delta: ctx.outputs.intent!.clarificationQuestion,
-        done: true,
-      });
+      await emitHarnessEvent(
+        this.io,
+        ctx.event,
+        ctx.roomId,
+        ctx.requestId,
+        HARNESS_EVENT_TYPES.completed,
+        {
+          template: 'text',
+          result: ctx.outputs.intent!.clarificationQuestion,
+        },
+      );
       return;
     }
 
     if (ctx.doneReason === 'error') {
-      await emitToSocket(this.io, ctx.roomId, ctx.event, {
-        requestId: ctx.requestId,
-        model: ctx.model,
-        template: 'text',
-        delta: ctx.error || 'An unexpected error occurred',
-        error: ctx.error,
-        done: true,
-      });
+      await emitHarnessEvent(
+        this.io,
+        ctx.event,
+        ctx.roomId,
+        ctx.requestId,
+        HARNESS_EVENT_TYPES.failed,
+        {
+          reason: ctx.error || 'An unexpected error occurred',
+        },
+      );
       return;
     }
 
@@ -83,14 +92,16 @@ export class HarnessChatStreamingService {
         ctx.outputs.finalContent === undefined
           ? 'No response content produced'
           : 'The model returned an empty response';
-      await emitToSocket(this.io, ctx.roomId, ctx.event, {
-        requestId: ctx.requestId,
-        model: ctx.model,
-        template: 'text',
-        delta: message,
-        error: message,
-        done: true,
-      });
+      await emitHarnessEvent(
+        this.io,
+        ctx.event,
+        ctx.roomId,
+        ctx.requestId,
+        HARNESS_EVENT_TYPES.failed,
+        {
+          reason: message,
+        },
+      );
       return;
     }
 
@@ -143,12 +154,10 @@ export class HarnessChatStreamingService {
     // The guarded response data (media membership enforced, shop offers
     // merged, local images injected) is authoritative for every mode —
     // stream and non-stream alike. Without it a non-streamed response
-    // would reach the client as the raw, pre-guard model JSON via delta.
+    // would reach the client as the raw, pre-guard model JSON.
     const streamPayload = {
-      requestId: ctx.requestId,
-      model: ctx.model,
       template,
-      delta: ctx.stream ? '' : ctx.outputs.finalContent,
+      result: ctx.stream ? undefined : ctx.outputs.finalContent,
       data: ctx.outputs.finalData,
       images: responseImages,
       toolResults: ctx.outputs.toolResults,
@@ -156,24 +165,31 @@ export class HarnessChatStreamingService {
       availableVideos: ctx.outputs.availableVideos,
       meta: metaForStream,
       prompt: ctx.lastUserPrompt,
-      promptEvalCount: ctx.outputs.inputTokens,
-      evalCount: ctx.outputs.outputTokens,
-      done: true,
+      usage: {
+        promptEvalCount: ctx.outputs.inputTokens,
+        evalCount: ctx.outputs.outputTokens,
+      },
     };
 
     this.logger.log(
       {
         requestId: ctx.requestId,
         step: 'stream',
-        hasDoneFlag: streamPayload.done === true,
-        hasPromptEvalCount: streamPayload.promptEvalCount != null,
-        hasEvalCount: streamPayload.evalCount != null,
+        hasPromptEvalCount: streamPayload.usage.promptEvalCount != null,
+        hasEvalCount: streamPayload.usage.evalCount != null,
         hasData: streamPayload.data != null,
-        deltaLength: streamPayload.delta?.length ?? 0,
+        resultLength: streamPayload.result?.length ?? 0,
       },
       'emitting final payload',
     );
 
-    await emitToSocket(this.io, ctx.roomId, ctx.event, streamPayload);
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.completed,
+      streamPayload,
+    );
   }
 }

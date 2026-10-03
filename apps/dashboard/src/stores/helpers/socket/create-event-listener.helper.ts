@@ -1,83 +1,72 @@
+import { parseSocketEvent } from '../../../composables/helpers/parse-socket-event.helper';
 import type { EventListenerDependencies } from './create-event-listener.helper.types';
 import { makeDebugEntry } from './make-debug-entry.helper';
 
 /**
- * Build the callback attached to a socket event. Every incoming payload is
- * stamped with the current session id and forwarded to the message store,
- * then logged into the socket debug log: one DATA entry per request id and
- * a DONE entry when the final event carries token statistics. Ollama's
- * snake_case token fields are normalized for the debug entry.
+ * Build the callback attached to a socket channel. Each payload is parsed
+ * against the v1 envelope contract (docs/socket-event-bus.md); valid
+ * envelopes are forwarded to the message store so its typed dispatcher can
+ * route by `envelope.type`, then logged into the socket debug log: one DATA
+ * entry per request id and a DONE entry when the final (completed) event
+ * carries token statistics. Payloads that are not valid envelopes (e.g. a
+ * manually subscribed foreign channel) are forwarded raw, unlogged.
  */
 export function createEventListener(
-  eventName: string,
+  channelName: string,
   deps: EventListenerDependencies,
-): (data: unknown) => void {
+): (raw: unknown) => void {
   const { socketId, loggedRequestIds, onMessage, onDebugEntry } = deps;
 
-  return (data: unknown) => {
-    // Inject conversationId into the data before passing to message callback
-    const dataWithSession = data as Record<string, unknown>;
-    if (typeof dataWithSession === 'object' && dataWithSession !== null) {
-      dataWithSession.conversationId = socketId.value;
+  return (raw: unknown) => {
+    const envelope = parseSocketEvent(raw);
+
+    // Route to the message store. Envelopes are dispatched by their `type`;
+    // raw (non-envelope) payloads still reach the store so a manually
+    // subscribed foreign channel keeps its debug entry.
+    onMessage?.(channelName, envelope ?? raw);
+
+    if (!envelope) return;
+
+    const requestId = envelope.meta?.requestId;
+    if (!requestId) return;
+
+    // First DATA event per requestId
+    if (!loggedRequestIds.value.has(requestId)) {
+      loggedRequestIds.value.add(requestId);
+      onDebugEntry?.(
+        makeDebugEntry({
+          endpoint: `socket.io:${channelName}`,
+          method: 'DATA',
+          status: 'success',
+          direction: 'response',
+          requestId,
+          roomId: envelope.meta?.roomId,
+          event: envelope.type,
+          conversationId: socketId.value || undefined,
+        }),
+      );
     }
 
-    // Route to message store - it will filter based on tracked request IDs
-    onMessage?.(eventName, dataWithSession);
-
-    // Normalize Ollama snake_case fields
-    const raw = dataWithSession as Record<string, unknown>;
-    const promptEvalCount = (raw.promptEvalCount ?? raw.prompt_eval_count) as
-      number | undefined;
-    const evalCount = (raw.evalCount ?? raw.eval_count) as number | undefined;
-    const evalDuration = (raw.evalDuration ?? raw.eval_duration) as
-      number | undefined;
-    const totalDuration = (raw.totalDuration ?? raw.total_duration) as
-      number | undefined;
-
-    // Log socket data received in debug log
-    const d = raw as unknown as {
-      requestId?: string;
-      roomId?: string;
-      meta?: Array<{ requestId?: string }>;
-      stream?: boolean;
-      done?: boolean;
-    };
-    const requestId = d?.requestId || d?.meta?.[0]?.requestId;
-
-    if (requestId) {
-      // First DATA event per requestId
-      if (!loggedRequestIds.value.has(requestId)) {
-        loggedRequestIds.value.add(requestId);
+    // Final event with token data — the completed envelope carries usage.
+    if (envelope.type === 'harness:completed') {
+      const usage = (
+        envelope.data as
+          | { usage?: { promptEvalCount?: number; evalCount?: number } }
+          | undefined
+      )?.usage;
+      if (usage && (usage.promptEvalCount != null || usage.evalCount != null)) {
         onDebugEntry?.(
           makeDebugEntry({
-            endpoint: `socket.io:${eventName}`,
-            method: 'DATA',
-            status: 'success',
-            direction: 'response',
-            requestId: requestId,
-            roomId: d?.roomId,
-            event: eventName,
-            stream: d?.stream,
-            conversationId: socketId.value || undefined,
-          }),
-        );
-      }
-      // Final event with token data
-      if (d?.done && (promptEvalCount != null || evalCount != null)) {
-        onDebugEntry?.(
-          makeDebugEntry({
-            endpoint: `socket.io:${eventName}`,
+            endpoint: `socket.io:${channelName}`,
             method: 'DONE',
             status: 'success',
             direction: 'response',
-            requestId: requestId,
-            roomId: d?.roomId,
-            event: eventName,
+            requestId,
+            roomId: envelope.meta?.roomId,
+            event: envelope.type,
             conversationId: socketId.value || undefined,
-            promptEvalCount,
-            evalCount,
-            evalDuration,
-            totalDuration,
+            promptEvalCount: usage.promptEvalCount,
+            evalCount: usage.evalCount,
           }),
         );
       }

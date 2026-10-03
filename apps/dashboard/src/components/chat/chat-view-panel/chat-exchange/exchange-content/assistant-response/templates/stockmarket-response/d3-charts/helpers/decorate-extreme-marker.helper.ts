@@ -1,12 +1,15 @@
 import type { MarkerLayout } from './build-marker-layout.helper';
-import type { RangeExtremes } from './compute-range-extremes.helper';
+import type {
+  ExtremeColors,
+  RangeExtremes,
+} from './compute-range-extremes.helper';
 
 /** Decorate one marker when it sits on the range's high or low bar. */
 export function decorateExtremeMarker(
   layout: MarkerLayout,
   extremes: RangeExtremes,
   label: string,
-  colors: { high: string; low: string },
+  colors: ExtremeColors,
   formatPrice: (price: number) => string,
 ): MarkerLayout {
   const { high, low } = extremes;

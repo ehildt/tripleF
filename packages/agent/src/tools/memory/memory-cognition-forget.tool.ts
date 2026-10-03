@@ -1,7 +1,7 @@
 import { type Tool, tool } from 'ai';
 
 import { memoryCognitionForgetSchema } from './memory-cognition-forget.schema.js';
-import type { MemoryToolScope } from './memory-tool-scope.js';
+import type { MemoryToolScope } from './memory-tool-scope.types.js';
 
 interface MemoryCognitionForgetDeps {
   scope: MemoryToolScope;

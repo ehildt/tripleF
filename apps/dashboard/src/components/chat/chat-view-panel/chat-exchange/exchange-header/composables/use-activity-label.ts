@@ -68,10 +68,10 @@ function translateDescriptor(
 
 /**
  * Derive the activity label shown next to the cancel icon while the assistant
- * exchange is pending ("thinking..", a tool step, or the current pipeline
- * step). Each activity is localized in the language the model chose to respond
- * in; when several tool categories run in parallel the label cycles through
- * them one at a time instead of chaining them with separators.
+ * exchange is pending (a tool step or the current pipeline step). Each
+ * activity is localized in the language the model chose to respond in; when
+ * several tool categories run in parallel the label cycles through them one
+ * at a time instead of chaining them with separators.
  */
 export function useActivityLabel(exchange: Ref<Exchange>) {
   const activityLabel = ref('');
@@ -80,7 +80,6 @@ export function useActivityLabel(exchange: Ref<Exchange>) {
 
   const descriptors = computed(() =>
     buildActivityDescriptors({
-      reasoning: exchange.value.reasoning,
       toolCalls: exchange.value.toolCalls,
       activity: exchange.value.activity,
     }),

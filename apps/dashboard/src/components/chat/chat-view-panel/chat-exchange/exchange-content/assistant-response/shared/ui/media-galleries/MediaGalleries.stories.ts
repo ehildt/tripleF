@@ -20,7 +20,6 @@ A fragment — no wrapper box — so the parent's gap keeps spacing sections.
     videosFirst: { control: 'boolean' },
     galleryTitle: { control: 'text' },
     videoGalleryTitle: { control: 'text' },
-    mosaic: { control: 'boolean' },
   },
   args: {
     videosFirst: false,
@@ -47,6 +46,3 @@ export const ImagesFirst: Story = {};
 
 /** Videos first. */
 export const VideosFirst: Story = { args: { videosFirst: true } };
-
-/** Dense mosaic gallery (ar4). */
-export const MosaicGallery: Story = { args: { mosaic: true } };

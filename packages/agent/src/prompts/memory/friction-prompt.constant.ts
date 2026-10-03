@@ -1,4 +1,5 @@
 import { formatFactMetadata } from './format-fact-metadata.helper.js';
+import type { FrictionFact } from './friction-prompt.types.js';
 
 /**
  * System instructions for the reflection pass's friction screen. The model
@@ -40,22 +41,6 @@ Respond with JSON only:
 Rules:
 - Name a winner only when one side is clearly correct (e.g. the later statement supersedes the earlier). When both could be true or the truth is unclear, omit winnerId so the conflict stays open.
 - Never invent a conflictingId or winnerId that is not in the input.`;
-
-/** One record line for the friction screen — id + text (+ classified metadata + recency). */
-export interface FrictionFact {
-  id: string;
-  text: string;
-  /** ISO timestamp — helps the model prefer the newer statement on a tie. */
-  createdAt?: string;
-  /** The entity the record is about — conflicts require the same subject. */
-  subject?: string;
-  /** Broad family label — conflicts almost always live inside one family. */
-  category?: string;
-  /** What kind of durable thing this is (preference, state, contact, …). */
-  kind?: string;
-  /** Whether a newer statement is expected to replace this one. */
-  stability?: string;
-}
 
 /**
  * Build the user message for one friction screen: the record under review

@@ -2,6 +2,8 @@
 
 This guide defines how we write Vue components, composables, helpers, tests, and stories. Every convention exists so that code reads as English — a future reader should understand intent from names alone.
 
+Generic structure rules — names express intent, one function per file, co-located explicit types, role suffixes, co-location, no barrels, no wrapper functions — are canonically defined in the [code-structure](../code-structure/SKILL.md) skill; where wording overlaps with this guide, code-structure is canonical. Tests and stories are consent-gated: creating or updating them requires explicit user consent (`.pi/APPEND_SYSTEM.md` § Tests, Stories & Browser Automation); the sections on testing and stories here describe their shape when they exist.
+
 **Skill files are prose-only.** This guide states rules, conventions, and reasons in words. It deliberately contains no code examples — the conventions it describes are visible in the codebase itself, which is the authoritative example.
 
 For the quick rule-of-thumb reference, see [SKILL.md](./SKILL.md).
@@ -44,6 +46,10 @@ Order inside `<script setup lang="ts">`:
 
 For the full naming conventions on props (prefer `isOpen` over `showMenu`, `selectModel` over bare `select`), see [Section 8: Reference: Naming Decision Table](#8-reference-naming-decision-table). Naming is documented once, not repeated per section.
 
+### The v-model contract
+
+A leaf whose job is wrapping a single native input, textarea, or select exposes its value through `v-model`, declared with the `defineModel` compiler macro and bound straight to the native element — no parallel `value` prop plus `input` emit pair. The smell this bans is an input or change emit whose payload is the browser's event object so the consumer can read the element's value off it: that forces every consumer to know the element's DOM shape and is a `v-model` in disguise. Value travels as a value. Interaction events that carry semantic intent — a keydown the consumer branches on, a focus that triggers a side effect — remain plain emits; the ban applies to value-sync only.
+
 ### Props types live in a `.types.ts` file
 
 Props are never declared inline in `defineProps<{ … }>()`. Extract them to a named interface in a co-located `Xxx.types.ts` file, with a JSDoc comment on every field explaining what the field carries and why. The props type is the single source of truth: a composable that derives the component's data takes the same `XxxProps` type instead of re-declaring a subset of the fields.
@@ -72,7 +78,9 @@ Rules for the extracted leaf:
 
 A composable encapsulates reactive state, watchers, and **component-scoped** store interactions. It owns the "how" — the component only knows the "what" through the composable's return value.
 
-**Scope boundary:** a composable returns values for one caller's render cycle. State that several components read or write does not live in a composable — it lives in a Pinia store (see [Section 5](#5-the-orchestrator-pattern) shared-state rule). A composable must never duplicate store state into a local `ref` and reconcile it back with a watcher; read the store value instead.
+**Scope boundary:** a composable returns values for one caller's render cycle. Shared state that crosses components surfaces through a composable owned by their common orchestrator and is passed to leaves as props (see [Section 5](#5-the-orchestrator-pattern)); a Pinia store is a deliberate exception for data that genuinely has to route across many unrelated components — opt-in, never the blanket default. A composable must never duplicate store state into a local `ref` and reconcile it back with a watcher; read the store value instead.
+
+**Presence derives from identifiers, not resolved data.** A boolean answering "is X selected or present" is derived from the source-of-truth identifier — a name, an id, a key — never from a resolved object. Resolved data is null while it loads, and null-during-load is not absence; treating it as such disables UI at the exact moment the data is arriving. Where a capability check cannot yet resolve, default permissive and let the real data decide — the codebase's allow-until-loaded convention.
 
 ### File naming and location
 
@@ -107,15 +115,27 @@ A composable file is organized top-to-bottom as:
    - Functions (named `changeX` / `toggleX` / `fetchX` — descriptive verbs).
    - The `return` of the public API — only what a consumer legitimately needs.
 
+### Composition over relay: composables import composables
+
+When a composable needs a store, a helper, a service facade, or another composable, it imports and calls that unit itself. A composable never receives singletons, service facades, or shared reactive state as arguments forwarded from a component's `<script setup>`. The component's setup script calls the composables it binds from and relays **nothing** between them: destructuring one composable's outputs to pass them into a sibling composable is wiring that belongs inside the composables. Keep an argument only when its value genuinely varies per call site — a prompt callback parameter is fine; a `Ref` owned by a sibling, a socket client, or a connection-check pair are not. This mirrors how Pinia stores already work: every importer of a store resolves the same pinia-managed instance, so callers never thread stores through their parents. Composables apply the same rule to each other (the wrapper-composable pattern: a higher-level composable composes lower-level ones by calling them directly).
+
+**Dependency direction stays one-way toward the local.** A shared composable (top-level `composables/`, or a group's `shared/composables/`) never imports feature-local composables or helpers. If a composable's dependencies are feature-local, move the composable into that feature's `composables/` folder — do not widen what you pass in just to keep the file in a shared location.
+
+**App singletons resolve by import, not provide/inject.** A service assembled from stores (an imperative facade over the socket/messages/debug stores, for instance) is exposed through a dedicated composable that calls the underlying stores and the plain assembler/factory helper, then returns the facade. Any composable or component that needs the service calls that composable. There is no app-root `provide`, no injection key, no `inject` fallback contract.
+
+### Shared composable state lives at module scope
+
+The default stays state created inside the composable's function body — fresh per caller. When the state is semantically a singleton (one draft/editor/menu state for the whole feature regardless of which composable or component asks), declare the `ref`/`reactive` at **module scope** of the composable file and return the same instance plus its mutating actions from every call. Document the singleton nature in the file's JSDoc and give the composable's spec a reset step between tests so module state cannot leak across assertions. This is the one sanctioned exception to the stray-state-module anti-pattern (rule 18 in [SKILL.md](./SKILL.md)): state hoisted inside its owning composable and exposed only through the composable's own API is still a composable. A bare `Xxx.state.ts` drawer of exported refs without actions and a spec remains banned.
+
 ### Composables call stores directly — for component-scoped logic
 
 Composables access Pinia stores directly when the logic is scoped to one component tree (derivations, transient UI state, a widget's own flow). Components never call stores directly (unless it's a container component that reads a store and feeds leaves with props).
 
-### No `provide`/`inject` for shared state (app services only)
+### No `provide`/`inject` — for anything
 
-A Pinia store is the channel for shared mutable UI state between components — not a `provide`/`inject` context, which hides the dependency and gives no compile-time guarantee that a provider exists. A bespoke "shuttle state to children" context is an anti-pattern: it couples leaves to a magic key and makes tests require fake providers.
+`provide`/`inject` is banned — for shared mutable state as a "context shuttle," and equally for app-level service singletons. Both hide the dependency behind a runtime key with **no compile-time guarantee** that a provider exists, and both force components to do dependency plumbing for their composables. Shared UI state follows the rule-18 ladder: a composable owned by the orchestrator passed to leaves as props, or — deliberately — a Pinia store. Services and app singletons resolve **by import** per the composition rule above: a dedicated composable assembles the facade from stores and returns it; consumers import and call it. Pre-existing provide/inject wiring is migrated away as it is touched, never extended.
 
-`provide`/`inject` is still right for **app-level service singletons** set up once near the app root (for example, a socket provider), where there is exactly one value and no mutation to coordinate. When you are tempted to provide a `ref`/`computed` or a map of reactive state to children, put that state in a store instead.
+---
 
 ---
 
@@ -132,6 +152,10 @@ Any function that:
 - Takes input, returns output
 - Has no side effects (no refs, no store calls, no DOM)
 - Would otherwise be inlined in a `<script setup>` or a computed
+
+### Helpers never localize
+
+A helper that builds display data returns the translation machinery's input — the i18n key and its interpolation params — never a translated string. The caller performs the `t` call, because it already owns the translation runtime via `useI18n` or the `i18n` singleton. Passing the translate function as an argument, or importing the i18n singleton inside a helper, couples a pure transform to that runtime, scatters key namespaces across files that have no other reason to know them, and forces every spec to mock i18n. With the key returned instead, specs assert the key and stay pure — the locale schema test already guarantees the key exists. A helper also returns only the fields a consumer reads; a returned field that nobody renders is dead weight the type system will not flag.
 
 ### File naming and location
 
@@ -248,21 +272,29 @@ The top-level component (e.g., `Chat.vue`, or a section orchestrator) is an **or
 2. Wires shared state together (e.g., closing menus when chat deactivates)
 3. Delegates presentation — leaves get props, containers read the store
 4. Assembles presentational components in the template
-5. Exposes only genuine imperative DOM handles via `defineExpose` (element refs a parent must own); shared state is read from the store by consumers directly
+5. Exposes only genuine imperative DOM handles via `defineExpose` (element refs a parent must own); shared state is read from the store — or received as props — by consumers directly
 
 ### What the orchestrator does NOT do
 
 - No inline business logic in `<script setup>` — delegate to stores or composables
 - No business-logic store mutations in markup — those live in store actions
 - No complex derived state — move it to a store getter, a composable computed, or a helper
+- A store is a deliberate exception, not the default; share data via the orchestrator's composable and pass it to leaves as props
+- No store ever holds a component instance, a template ref, or a component's imperative methods; no store action commands a component
 
 ### The thin orchestrator
 
 The orchestrator's `<script setup>` is deliberately thin: the props type, store reads that wire child config, one data-composable call when there is *component-scoped* data to derive, and the template.
 
-When shared state lives in a store, the store call replaces the data composable: state, getters, and actions all come from the store, so the orchestrator holds no derivation at all. A data composable still has a place for genuinely tree-scoped derivation (formatting, per-props computed values, transient widget state) — it takes the component's props type, owns the `ref`/`computed`/`watch`/functions, and returns the display values + actions the template binds.
+The thin-orchestrator rule also bans **wiring between composables in the setup script**: calling composable A and forwarding its return value into composable B is choreography the composables must do themselves (see Section 2, *Composition over relay*). The orchestrator calls each composable it binds from, binds template slots/props from their returns, and stops there.
 
-Cross-cutting wiring (closing menus on deactivation) legitimately stays in the orchestrator; data derivation does not — and shared cross-component state never lives in a composable.
+The orchestrator's shared state lives in its composable and is passed to leaves as props. Reach for a store only as a deliberate exception for data that genuinely routes across many unrelated components — and even then the store holds data plus data mutations, never component handles, and never commands a component. A data composable still has a place for genuinely tree-scoped derivation (formatting, per-props computed values, transient widget state) — it takes the component's props type, owns the `ref`/`computed`/`watch`/functions, and returns the display values + actions the template binds. Feature-scoped state the orchestrator itself owns — a playback session, a wizard's steps — lives in that composable and is passed to leaves as props; no store exists for it.
+
+Cross-cutting wiring (closing menus on deactivation) legitimately stays in the orchestrator; data derivation does not. Shared data stays in the orchestrator's composable and is passed down as props; a store is the deliberate exception for the genuinely cross-cutting case.
+
+### Recognizing a relay
+
+A component that renders other components but owns no state of its own is a relay, not an orchestrator. Three symptoms give it away: its props interface mirrors the parent's destructured composable returns; every event it emits forwards the payload of an event it received, unchanged; and at least one prop is declared and passed down the chain yet never rendered anywhere below. A healthy leaf announces the user's own intents; a relay only repeats another component's announcements. The symptom matters because contract size drifts monotonically upward when control sits in the parent — every new control touches three layers and nothing ever leaves the contract. A prop that never reaches a rendered output is dead: delete it together with the declarations and bindings above it. When state moves down into such a component, the lifecycle hook that refreshes that state moves with it; state and its activation belong in one place.
 
 ### The orchestrator lives in its folder
 
@@ -336,6 +368,7 @@ A leaf rendered inside a `<Teleport>` still emits to its parent component (the s
 - **Disabled controls**: VTU's `trigger()` silently drops synthetic events dispatched to a `disabled` button, so a hover/click handler never runs. Dispatch the DOM event manually to reach the attached listener. Note real browsers also don't fire mouse events on disabled buttons — a hover-hint that depends on them is a design fix, not a test fix.
 - **Watcher flush**: default watchers flush async. Assert watcher-driven effects (a localStorage persist, a store write) after awaiting a tick; `immediate` watchers already ran at instantiation. Consolidating several composables' watchers into one store changes *when* side effects fire across test paths — a prune/merge that used to live in a separate composable now runs wherever the shared store is instantiated; give test fixtures real references so the watcher behaves the way the production tree drives it.
 - **Store-backed props**: presentational leaves derive state from props. When a test types in a leaf's input, it then flows the draft back down with a prop update to simulate the container round-trip, before asserting the resulting emit.
+- **Specs aren't type-checked**: `tsconfig.app.json` excludes `*.spec.ts` and `*.stories.ts`, so fixture literals drift silently — a union-typed key widening to a plain string never fails compile. Type fixtures as faithfully as production inputs: freeze literal configs, and type records against their imported domain types.
 
 ---
 

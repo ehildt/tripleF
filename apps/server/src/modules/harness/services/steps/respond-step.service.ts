@@ -4,7 +4,10 @@ import { SocketIOService } from '@triplef/socketio';
 
 import { MinioService } from '../../../minio/services/minio.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
-import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import {
+  emitHarnessEvent,
+  HARNESS_EVENT_TYPES,
+} from '../../helpers/emit-harness-event.helper.js';
 import {
   HARNESS_ACTIVITY_KEYS,
   resolveHarnessActivityLanguage,
@@ -93,6 +96,12 @@ export class RespondStepService implements StepHandler {
       },
       'preparing final response',
     );
+
+    // Announce the model call itself: the client shows the latest step beat
+    // verbatim (reasoning no longer masks it), so the thinking phase needs
+    // its own truthful label until the first content delta flips it to
+    // "assembling".
+    await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.responding);
 
     const { content, data, inputTokens, outputTokens } =
       await this.respondAction.execute({
@@ -326,28 +335,37 @@ export class RespondStepService implements StepHandler {
   }
 
   private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      activity: { key },
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.activity,
+      {
+        template: ctx.outputs.intent?.template,
+        key,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 
   private async emitReasoningDelta(
     ctx: HarnessContext,
     reasoningDelta: string,
   ): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      reasoningDelta,
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.delta,
+      {
+        template: ctx.outputs.intent?.template,
+        channel: 'reasoning',
+        text: reasoningDelta,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 
   private async emitStreamDelta(
@@ -355,14 +373,19 @@ export class RespondStepService implements StepHandler {
     delta: string,
     galleryItems: GalleryItem[],
   ): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      delta,
-      images: galleryItems,
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.delta,
+      {
+        template: ctx.outputs.intent?.template,
+        channel: 'content',
+        text: delta,
+        images: galleryItems,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 }

@@ -1,24 +1,20 @@
 <script setup lang="ts">
 import { ChevronsDown, ChevronsUp } from '@lucide/vue';
 import { computed, useTemplateRef, watch } from 'vue';
+import { defineProps } from 'vue';
 import { useRoute } from 'vue-router';
 
 import type { TooltipPosition } from '@/components/shared/ui/tooltip/Tooltip.types';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-import type { ActiveTab } from '../../../types/app.model';
 import AppThemeSelector from '../app-theme-selector/AppThemeSelector.vue';
 import LanguageSelector from '../language-selector/LanguageSelector.vue';
 import { useMenuTabs } from './composables/use-menu-tabs';
 import { useTabMenu } from './composables/use-tab-menu';
 import NavMenu from './nav-menu/NavMenu.vue';
+import type { TabMenuProps } from './TabMenu.types';
 
-const props = defineProps<{
-  activeTab: ActiveTab;
-  debugCount: number;
-  showChatStar?: boolean;
-  dlqCount?: number;
-}>();
+const props = defineProps<TabMenuProps>();
 
 const { tabs } = useMenuTabs(props);
 
@@ -71,7 +67,6 @@ watch(
       :aria-label="$t('common.tabMenuTitle')"
     >
       <NavMenu :tabs="tabs" :active-tab="activeTab" />
-      <hr />
       <div class="tab-menu__footer">
         <AppThemeSelector />
         <LanguageSelector />
@@ -112,9 +107,9 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-2);
-  width: 3.25rem;
-  padding: var(--spacing-3) 0;
+  gap: var(--spacing-1);
+  width: 2.75rem;
+  padding: var(--spacing-1) 0;
   background-color: color-mix(
     in srgb,
     var(--color-bg-secondary) 50%,
@@ -148,15 +143,14 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-1-5);
   width: 100%;
-  padding-top: var(--spacing-2);
+  padding-top: var(--spacing-1);
 }
 
 /* Same tile rhythm as the nav items above the divider. */
 .tab-menu__footer :deep(.theme-selector__button) {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 /* On the left edge the theme dropdown must extend rightward to stay on

@@ -5,16 +5,18 @@ import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
 import { buildActivityDescriptors } from './build-activity-descriptors.helper';
 
 describe('buildActivityDescriptors', () => {
-  it('prioritizes the consolidating descriptor while reasoning streams', () => {
+  it('prioritizes tool descriptors over the server step activity', () => {
     const activity: HarnessActivityDescriptor = { key: 'activity.verifying' };
     const result = buildActivityDescriptors({
-      reasoning: 'Thinking through the request',
+      toolCalls: [{ name: 'webSearch', category: 'web', query: 'laptops' }],
       activity,
     });
-    expect(result).toEqual([{ key: 'activity.consolidating' }]);
+    expect(result).toEqual([
+      { key: 'activity.web', meta: { query: 'laptops', count: 1 } },
+    ]);
   });
 
-  it('returns tool descriptors when no reasoning is present', () => {
+  it('returns tool descriptors when parallel searches run', () => {
     const result = buildActivityDescriptors({
       toolCalls: [
         { name: 'webSearch', category: 'web', query: 'laptops' },

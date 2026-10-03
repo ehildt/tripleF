@@ -1,4 +1,4 @@
-import type { SourcePolicyConfig } from '../shared/source-policy.prompt.js';
+import type { SourcePolicyConfig } from '../shared/source-policy.types.js';
 
 export type ContentSystemPromptParams = {
   template: string;

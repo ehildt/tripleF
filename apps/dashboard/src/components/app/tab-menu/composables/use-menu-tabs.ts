@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n';
 
 import { useAppStore } from '../../../../stores/app';
 import type { ActiveTab } from '../../../../types/app.model';
+import type { TabMenuProps } from '../TabMenu.types';
 import type { MenuTab } from './use-menu-tabs.types';
 
 const TAB_TINTS: Record<ActiveTab, number> = {
@@ -28,12 +29,7 @@ const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
   settings: SlidersHorizontal,
 };
 
-export function useMenuTabs(props: {
-  activeTab: ActiveTab;
-  debugCount: number;
-  dlqCount?: number;
-  showChatStar?: boolean;
-}) {
+export function useMenuTabs(props: TabMenuProps) {
   const appStore = useAppStore();
   const { t } = useI18n();
 
@@ -59,7 +55,7 @@ export function useMenuTabs(props: {
         tab: 'dlq',
         icon: TAB_ICONS.dlq,
         tint: TAB_TINTS.dlq,
-        count: showCounters ? (props.dlqCount ?? 0) : undefined,
+        showDot: props.showDlqBadge,
       },
       {
         label: t('nav.debug'),

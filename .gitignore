@@ -12,6 +12,11 @@ notes.md
 .eslintcache
 ollama_data
 .pnpm-store/
+
+# Core dumps (crash artifacts, e.g. core.<pid>)
+core
+core.*
+
 *storybook.log
 storybook-static
 .playwright-mcp

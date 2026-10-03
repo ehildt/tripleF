@@ -27,6 +27,7 @@ Use the relevant skill before implementing framework-specific changes:
 - `playwright` — Playwright MCP browser tools for AI models (sidecar ops, browser_* tools, debugging).
 - `localization` — i18n conventions: Zod schema, `language` key, auto-discovery, and the en-first test workflow.
 - `tech-stack` — Official docs links and project stack overview.
+- `code-structure` — Framework-agnostic module/file structure: one function per file, co-located explicit types, role suffixes, co-location, no barrels.
 
 ## Working Rules
 

@@ -1,4 +1,4 @@
-import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
+import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-total-context-percentage.helper';
 
 import type {
   Conversation,

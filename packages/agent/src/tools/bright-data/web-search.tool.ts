@@ -1,13 +1,13 @@
 import { type Tool, tool } from 'ai';
 
-import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
+import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import type { ToolDependencies } from '../types/types.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapBrightDataWebResult } from './helpers/map-bright-data-web-result.helper.js';
-import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
+import { buildGoogleUrl, engineEnabled } from './bright-data.constant.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataWebSearchInput, brightDataWebSearchSchema } from './web-search.schema.js';
 import type { BrightDataWebSearchResponse } from './web-search.types.js';

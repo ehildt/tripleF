@@ -11,8 +11,6 @@ export interface MediaGalleriesProps {
   videoGalleryItems?: VideoGalleryItem[];
   galleryTitle?: string;
   galleryItems?: GalleryItem[];
-  /** Dense span-grid mosaic for the image gallery (ar4). */
-  mosaic?: boolean;
   /** Opens the owning surface's lightbox for a clicked image. */
   onImageClick?: (item: GalleryItem) => void;
 }

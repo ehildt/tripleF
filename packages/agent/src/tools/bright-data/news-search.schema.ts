@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { RECENCY_DESCRIPTION } from '../constants/recency.constants.js';
-import { STANDALONE_QUERY_DESCRIPTION } from '../constants/standalone-query.constants.js';
+import { RECENCY_DESCRIPTION } from '../constants/recency.constant.js';
+import { STANDALONE_QUERY_DESCRIPTION } from '../constants/standalone-query.constant.js';
 
 export const brightDataNewsSearchSchema = z.object({
   query: z

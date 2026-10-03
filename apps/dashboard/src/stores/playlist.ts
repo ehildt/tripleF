@@ -13,11 +13,31 @@ import { i18n } from '@/i18n/i18n';
 import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
-import type { Playlist } from './playlist.types';
+import type { Playlist, PlaylistAnchor, PlaylistMode } from './playlist.types';
 
 const SESSION_ID = getPersistentSocketSessionId();
 
 const ACTIVE_PLAYLIST_STORAGE_KEY = 'vision-active-playlist';
+
+const DEFAULT_PLAYLIST_MODE: PlaylistMode = 'panel';
+const DEFAULT_PLAYLIST_ANCHOR: PlaylistAnchor = 'top-right';
+const DEFAULT_PLAYLIST_AUTO_CLOSE = false;
+
+const PLAYLIST_MODE_STORAGE_KEY = 'vision-playlist-mode';
+const PLAYLIST_ANCHOR_STORAGE_KEY = 'vision-playlist-anchor';
+const PLAYLIST_AUTO_CLOSE_STORAGE_KEY = 'vision-playlist-auto-close';
+
+const PLAYLIST_ANCHORS: readonly PlaylistAnchor[] = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'middle-left',
+  'middle-center',
+  'middle-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+];
 
 function loadActivePlaylist(): string {
   try {
@@ -27,18 +47,82 @@ function loadActivePlaylist(): string {
   }
 }
 
+function loadBoolean(key: string, fallback: boolean): boolean {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved === null ? fallback : saved === 'true';
+  } catch {
+    return fallback;
+  }
+}
+
+function saveBoolean(key: string, value: boolean): void {
+  try {
+    localStorage.setItem(key, String(value));
+  } catch {
+    /* storage unavailable — the setting stays in-memory only */
+  }
+}
+
+function loadPlaylistMode(): PlaylistMode {
+  try {
+    const saved = localStorage.getItem(PLAYLIST_MODE_STORAGE_KEY);
+    return saved === 'floating' ? 'floating' : DEFAULT_PLAYLIST_MODE;
+  } catch {
+    return DEFAULT_PLAYLIST_MODE;
+  }
+}
+
+function loadPlaylistAnchor(): PlaylistAnchor {
+  try {
+    const saved = localStorage.getItem(PLAYLIST_ANCHOR_STORAGE_KEY);
+    return PLAYLIST_ANCHORS.includes(saved as PlaylistAnchor)
+      ? (saved as PlaylistAnchor)
+      : DEFAULT_PLAYLIST_ANCHOR;
+  } catch {
+    return DEFAULT_PLAYLIST_ANCHOR;
+  }
+}
+
 /**
- * All playlists for the session. The playlist is global: the panel shows
- * every playlist, and the active playlist is the queue. Playlists are
- * persisted to the database keyed by (sessionId, name), so names are unique
- * per session.
+ * The playlist feature in one store: the session's playlists (server-backed
+ * data) plus the playlist widget's persisted settings and its transient
+ * window/preview state. The mode decides whether the playlist renders in the
+ * chat right toolbar or as an app-level floating window; the anchor fixes the
+ * floating window's position (it is not draggable — a same-side top anchor
+ * stacks below the tab menu); and autoclose mirrors the tab menu.
+ * Configured in Settings → Widgets → Playlist.
  */
 export const usePlaylistStore = defineStore('playlist', () => {
   const toast = useToast();
 
+  // ── Data ────────────────────────────────────────────────
   const playlists = ref<Playlist[]>([]);
   /** Name of the active playlist (global across the session). */
   const activePlaylistName = ref<string>(loadActivePlaylist());
+
+  // ── Settings ────────────────────────────────────────────
+  const playlistMode = ref<PlaylistMode>(loadPlaylistMode());
+  const playlistAnchor = ref<PlaylistAnchor>(loadPlaylistAnchor());
+  const playlistAutoClose = ref<boolean>(
+    loadBoolean(PLAYLIST_AUTO_CLOSE_STORAGE_KEY, DEFAULT_PLAYLIST_AUTO_CLOSE),
+  );
+
+  // ── Transient window state ──────────────────────────────
+  /**
+   * Whether the floating playlist window is open. Opens by default whenever
+   * it holds anything to act on — a playlist or an added video. In-memory
+   * only.
+   */
+  const floatingPlaylistOpen = ref(
+    playlists.value.length > 0 || getActivePlaylistVideos().length > 0,
+  );
+
+  /**
+   * Example floating player shown from Settings → Widgets to preview the
+   * configured anchor. Persistent (not timed); hides on tab switch or close.
+   */
+  const playlistPreviewVisible = ref(false);
 
   function persistActivePlaylist() {
     try {
@@ -51,6 +135,7 @@ export const usePlaylistStore = defineStore('playlist', () => {
     }
   }
 
+  // ── Data actions ────────────────────────────────────────
   function getPlaylists(): Playlist[] {
     return playlists.value;
   }
@@ -207,9 +292,57 @@ export const usePlaylistStore = defineStore('playlist', () => {
     setActivePlaylist(name);
   }
 
+  // ── Settings actions ────────────────────────────────────
+  function setPlaylistMode(mode: PlaylistMode) {
+    playlistMode.value = mode;
+    // Enabling floating mode surfaces the player window immediately.
+    if (mode === 'floating') {
+      floatingPlaylistOpen.value = true;
+    }
+    try {
+      localStorage.setItem(PLAYLIST_MODE_STORAGE_KEY, mode);
+    } catch {
+      /* storage unavailable — the setting stays in-memory only */
+    }
+  }
+
+  function setPlaylistAnchor(anchor: PlaylistAnchor) {
+    playlistAnchor.value = anchor;
+    try {
+      localStorage.setItem(PLAYLIST_ANCHOR_STORAGE_KEY, anchor);
+    } catch {
+      /* storage unavailable — the setting stays in-memory only */
+    }
+  }
+
+  function setPlaylistAutoClose(enabled: boolean) {
+    playlistAutoClose.value = enabled;
+    saveBoolean(PLAYLIST_AUTO_CLOSE_STORAGE_KEY, enabled);
+  }
+
+  function togglePlaylistPreview() {
+    playlistPreviewVisible.value = !playlistPreviewVisible.value;
+  }
+
+  function hidePlaylistPreview() {
+    playlistPreviewVisible.value = false;
+  }
+
+  /** Restore the playlist settings to their defaults. */
+  function resetPlaylistSettings() {
+    setPlaylistMode(DEFAULT_PLAYLIST_MODE);
+    setPlaylistAnchor(DEFAULT_PLAYLIST_ANCHOR);
+    setPlaylistAutoClose(DEFAULT_PLAYLIST_AUTO_CLOSE);
+  }
+
   return {
     playlists,
     activePlaylistName,
+    playlistMode,
+    playlistAnchor,
+    playlistAutoClose,
+    floatingPlaylistOpen,
+    playlistPreviewVisible,
     getPlaylists,
     getActivePlaylist,
     getActivePlaylistVideos,
@@ -223,5 +356,11 @@ export const usePlaylistStore = defineStore('playlist', () => {
     renamePlaylist,
     deletePlaylist,
     selectPlaylist,
+    setPlaylistMode,
+    setPlaylistAnchor,
+    setPlaylistAutoClose,
+    togglePlaylistPreview,
+    hidePlaylistPreview,
+    resetPlaylistSettings,
   };
 });

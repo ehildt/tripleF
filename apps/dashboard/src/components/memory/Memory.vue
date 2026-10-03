@@ -9,6 +9,7 @@ import { Brain, Fingerprint, FolderTree, Layers, Network } from '@lucide/vue';
 import { computed } from 'vue';
 
 import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
+import { useMemorySpaceSync } from '@/composables/use-memory-space-sync';
 import { i18n } from '@/i18n/i18n';
 
 import CognitionSpace from './cognition-space/CognitionSpace.vue';
@@ -20,6 +21,10 @@ import SynopsisSpace from './synopsis-space/SynopsisSpace.vue';
 import TaxonomyManager from './taxonomy-manager/TaxonomyManager.vue';
 
 const { activeSubtab, selectSubtab } = useMemorySpaceSubtab();
+
+// Load the server-persisted memory ids while the tab is open; the store
+// aborts the in-flight sync when KeepAlive deactivates this component.
+useMemorySpaceSync();
 
 const SUBTAB_ITEMS = computed(() => [
   {

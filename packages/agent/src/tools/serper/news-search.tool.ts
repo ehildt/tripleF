@@ -1,16 +1,16 @@
 import { type Tool, tool } from 'ai';
 
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
-import type { ToolDependencies } from '../types/types.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapSerperNewsResult } from './helpers/map-serper-news-result.helper.js';
 import { type SerperNewsSearchInput, serperNewsSearchSchema } from './news-search.schema.js';
 import type { SerperNewsSearchResponse } from './news-search.types.js';
-import { HEADERS } from './serper.constants.js';
+import { HEADERS } from './serper.constant.js';
 
 export function createSerperNewsSearch(deps: ToolDependencies): Tool {
   return tool({

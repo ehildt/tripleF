@@ -44,9 +44,13 @@ describe('useModelsStore', () => {
         json: () =>
           Promise.resolve({
             models: [
-              { model: 'llama', origin: 'local' },
-              { model: 'gpt-oss:120b', origin: 'cloud' },
-              { model: 'mistral' },
+              { model: 'llama', origin: 'local', capabilities: ['completion'] },
+              {
+                model: 'gpt-oss:120b',
+                origin: 'cloud',
+                capabilities: ['completion'],
+              },
+              { model: 'mistral', capabilities: ['completion'] },
             ],
           }),
       }),
@@ -55,11 +59,11 @@ describe('useModelsStore', () => {
     await store.fetchModels();
     // Models without an origin tag count as local.
     expect(store.localModels).toEqual([
-      { model: 'llama', origin: 'local' },
-      { model: 'mistral' },
+      { model: 'llama', origin: 'local', capabilities: ['completion'] },
+      { model: 'mistral', capabilities: ['completion'] },
     ]);
     expect(store.cloudModels).toEqual([
-      { model: 'gpt-oss:120b', origin: 'cloud' },
+      { model: 'gpt-oss:120b', origin: 'cloud', capabilities: ['completion'] },
     ]);
   });
 
@@ -73,11 +77,31 @@ describe('useModelsStore', () => {
         json: () =>
           Promise.resolve({
             models: [
-              { model: 'qwen3:8b', origin: 'local' },
-              { model: 'kimi-k2:1t', origin: 'cloud' },
-              { model: 'Mistral:7b', origin: 'local' },
-              { model: 'gpt-oss:120b', origin: 'cloud' },
-              { model: 'gemma4:12b', origin: 'local' },
+              {
+                model: 'qwen3:8b',
+                origin: 'local',
+                capabilities: ['completion'],
+              },
+              {
+                model: 'kimi-k2:1t',
+                origin: 'cloud',
+                capabilities: ['completion'],
+              },
+              {
+                model: 'Mistral:7b',
+                origin: 'local',
+                capabilities: ['completion'],
+              },
+              {
+                model: 'gpt-oss:120b',
+                origin: 'cloud',
+                capabilities: ['completion'],
+              },
+              {
+                model: 'gemma4:12b',
+                origin: 'local',
+                capabilities: ['completion'],
+              },
             ],
           }),
       }),
@@ -93,6 +117,42 @@ describe('useModelsStore', () => {
       'gpt-oss:120b',
       'kimi-k2:1t',
     ]);
+  });
+
+  it('excludes capability-less models from both picker groups', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: () =>
+          Promise.resolve({
+            models: [
+              { model: 'llama', origin: 'local', capabilities: ['completion'] },
+              { model: 'nomic-embed-text', origin: 'local', capabilities: [] },
+              {
+                model: 'gpt-oss:120b',
+                origin: 'cloud',
+                capabilities: ['completion'],
+              },
+              { model: 'embed', origin: 'cloud' },
+            ],
+          }),
+      }),
+    );
+    const store = useModelsStore();
+    await store.fetchModels();
+    // The raw catalog stays complete for availability checks...
+    expect(store.models.map((m) => m.model)).toEqual([
+      'llama',
+      'nomic-embed-text',
+      'gpt-oss:120b',
+      'embed',
+    ]);
+    // ...but the picker lists never offer a model that can't run a chat request.
+    expect(store.localModels.map((m) => m.model)).toEqual(['llama']);
+    expect(store.cloudModels.map((m) => m.model)).toEqual(['gpt-oss:120b']);
   });
 
   it('fetchModels shows toast on refresh', async () => {

@@ -26,15 +26,6 @@ export function useReadTracker(storageKey: string) {
     return liveSet.size - readIds.value.filter((id) => liveSet.has(id)).length;
   }
 
-  function pruneMissing(liveIds: string[]) {
-    const liveSet = new Set(liveIds);
-    const next = readIds.value.filter((id) => liveSet.has(id));
-    if (next.length !== readIds.value.length) {
-      readIds.value = next;
-      persist();
-    }
-  }
-
   function removeRead(id: string) {
     if (!readIds.value.includes(id)) return;
     readIds.value = readIds.value.filter((rid) => rid !== id);
@@ -47,7 +38,6 @@ export function useReadTracker(storageKey: string) {
     markAsRead,
     isRead,
     unreadCount,
-    pruneMissing,
     removeRead,
     readCount,
   };

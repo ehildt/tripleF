@@ -1,4 +1,14 @@
-import type { SocketEventConsumer } from './is-socket-event-in-use.helper.types';
+/** The event a subscription entry is bound to. */
+type SocketSubscription = {
+  event: string;
+};
+
+/** A conversation's socket-event usage: its own binding plus extra subscriptions. */
+type SocketEventConsumer = {
+  id: string;
+  event?: string;
+  subscriptions?: SocketSubscription[];
+};
 
 /**
  * True when the socket event is still used on any room: by another
@@ -7,7 +17,7 @@ import type { SocketEventConsumer } from './is-socket-event-in-use.helper.types'
  */
 export function isSocketEventInUse(
   conversations: SocketEventConsumer[],
-  subscriptions: { event: string }[],
+  subscriptions: SocketSubscription[],
   excludeConversationId: string,
   event: string,
 ): boolean {

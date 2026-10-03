@@ -1,7 +1,7 @@
 import { type Tool, tool } from 'ai';
 
-import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.js';
-import type { ToolDependencies } from '../types/types.js';
+import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataWebpageScrapeInput, brightDataWebpageScrapeSchema } from './webpage-scrape.schema.js';

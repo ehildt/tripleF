@@ -1,11 +1,4 @@
-/**
- * Minimal source-policy shape the prompt needs — the server's SourcesConfig
- * satisfies it structurally, so the prompt stays decoupled from app config.
- */
-export interface SourcePolicyConfig {
-  preferred?: string[];
-  blocked?: string[];
-}
+import type { SourcePolicyConfig } from './source-policy.types.js';
 
 /**
  * SOURCE POLICY section for the response-step system prompt. Preferred

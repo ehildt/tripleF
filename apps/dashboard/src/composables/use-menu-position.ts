@@ -23,7 +23,8 @@ import type {
  *
  * `side` overrides the side-anchoring: `'bottom'` opens the menu directly
  * below the trigger (select-style field dropdowns, e.g. the memory model
- * pickers).
+ * pickers), `'above'` opens it above the trigger with the left edges aligned
+ * (prompt-bar menus, whose triggers sit at the bottom of the viewport).
  */
 export function useMenuPosition(
   triggerRef: Ref<HTMLElement | null>,
@@ -45,6 +46,16 @@ export function useMenuPosition(
         top: `${rect.bottom + 4}px`,
         minWidth: `${rect.width}px`,
         transform: 'translateX(-50%)',
+      };
+      return;
+    }
+    if (side === 'above') {
+      // Bottom-anchor over the trigger so the panel grows upward — a fixed
+      // `top` would pin the panel's top edge and let it overflow down over
+      // the bar.
+      positionStyle.value = {
+        left: `${rect.left}px`,
+        bottom: `${window.innerHeight - rect.top + 4}px`,
       };
       return;
     }

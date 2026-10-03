@@ -6,7 +6,10 @@ import {
   SanitizeActionService,
   type SanitizeResult,
 } from '../../actions/sanitize.action.js';
-import { emitToSocket } from '../../helpers/emit-to-socket.helper.js';
+import {
+  emitHarnessEvent,
+  HARNESS_EVENT_TYPES,
+} from '../../helpers/emit-harness-event.helper.js';
 import {
   HARNESS_ACTIVITY_KEYS,
   resolveHarnessActivityLanguage,
@@ -121,13 +124,17 @@ export class SanitizeStepService implements StepHandler {
   }
 
   private async emitStatus(ctx: HarnessContext, key: string): Promise<void> {
-    await emitToSocket(this.io, ctx.roomId, ctx.event, {
-      requestId: ctx.requestId,
-      model: ctx.model,
-      template: ctx.outputs.intent?.template,
-      activity: { key },
-      language: resolveHarnessActivityLanguage(ctx),
-      done: false,
-    });
+    await emitHarnessEvent(
+      this.io,
+      ctx.event,
+      ctx.roomId,
+      ctx.requestId,
+      HARNESS_EVENT_TYPES.activity,
+      {
+        template: ctx.outputs.intent?.template,
+        key,
+        language: resolveHarnessActivityLanguage(ctx),
+      },
+    );
   }
 }

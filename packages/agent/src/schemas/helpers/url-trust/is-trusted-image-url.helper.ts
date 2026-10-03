@@ -1,4 +1,4 @@
-import { BLOCKED_IMAGE_HOSTS } from '../../constants/blocked-image-hosts.js';
+import { BLOCKED_IMAGE_HOSTS } from '../../constants/blocked-image-hosts.constant.js';
 
 /** Reputable image hosts and CDNs we explicitly trust. */
 const TRUSTED_IMAGE_HOSTS = new Set([

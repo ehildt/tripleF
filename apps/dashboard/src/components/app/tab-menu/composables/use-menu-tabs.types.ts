@@ -9,4 +9,5 @@ export interface MenuTab {
   tint: number;
   count?: number;
   showStar?: boolean;
+  showDot?: boolean;
 }

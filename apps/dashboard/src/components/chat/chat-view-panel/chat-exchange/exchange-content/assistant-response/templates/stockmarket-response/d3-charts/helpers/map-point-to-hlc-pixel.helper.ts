@@ -1,6 +1,6 @@
 import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable';
 import type { D3ChartPoint } from '../D3Chart.types';
-import type { HlcPoint } from './build-hlc-area-paths.helper';
+import type { HlcPoint } from './build-hlc-area-paths.helper.types';
 
 /** Project one chart point into HLC pixel geometry. */
 export function mapPointToHlcPixel(

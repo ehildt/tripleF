@@ -7,6 +7,7 @@ export const HARNESS_ACTIVITY_KEYS = {
   analyzingImages: 'activity.analyzingImages',
   verifying: 'activity.verifying',
   gatheringImages: 'activity.gatheringImages',
+  responding: 'activity.responding',
   refining: 'activity.refining',
 } as const;
 

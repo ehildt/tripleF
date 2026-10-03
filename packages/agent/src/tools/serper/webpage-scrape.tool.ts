@@ -1,10 +1,10 @@
 import { type Tool, tool } from 'ai';
 
-import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.js';
-import { fetchWithTimeout } from '../helpers/fetch-with-timeout.js';
-import type { ToolDependencies } from '../types/types.js';
+import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
+import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
-import { HEADERS } from './serper.constants.js';
+import { HEADERS } from './serper.constant.js';
 import { type SerperWebpageScrapeInput, serperWebpageScrapeSchema } from './webpage-scrape.schema.js';
 import type { SerperWebpageScrapeResponse } from './webpage-scrape.types.js';
 

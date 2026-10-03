@@ -23,7 +23,6 @@ defineProps<MediaGalleriesProps>();
     <GallerySection
       :title="galleryTitle"
       :items="galleryItems"
-      :mosaic="mosaic"
       :on-image-click="onImageClick"
     />
   </template>
@@ -31,7 +30,6 @@ defineProps<MediaGalleriesProps>();
     <GallerySection
       :title="galleryTitle"
       :items="galleryItems"
-      :mosaic="mosaic"
       :on-image-click="onImageClick"
     />
     <VideoGallerySection

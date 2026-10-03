@@ -13,6 +13,13 @@ vi.mock('@/api/memory-overrides.api', () => ({
   updateMemoryOverrides: vi.fn(async () => ({}) as MemoryOverridesConfig),
 }));
 
+// The memory-space sync fires on mount; stub the config fetch so it never
+// hits the network in tests.
+vi.mock('@/api/config.api', () => ({
+  fetchConfig: vi.fn(async () => null),
+  saveConfig: vi.fn(async () => {}),
+}));
+
 describe('MemorySection', () => {
   beforeEach(() => {
     setActivePinia(createPinia());

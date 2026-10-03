@@ -2,8 +2,8 @@ import { DEFAULT_MEDIA_COUNT } from '../../../schemas/constants/media-counts.con
 import { type IntentResult } from '../../../schemas/intent.schema.js';
 import { formatCurrentTimestamp } from '../helpers/format-current-timestamp.helper.js';
 
-import { buildExecuteLanguageInstruction } from './execute-language.helper.js';
-import { buildStockmarketNote } from './stockmarket-note.helper.js';
+import { buildExecuteLanguageInstruction } from './helpers/execute-language.helper.js';
+import { buildStockmarketNote } from './helpers/stockmarket-note.helper.js';
 
 /**
  * The non-negotiable contract for every search query argument. External

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-token-percent.helper';
-import { useAppStore } from '@/stores/app';
+import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-total-context-percentage.helper';
 import type { Conversation } from '@/stores/conversation';
 
 import ConversationItem from './conversation-item/ConversationItem.vue';
@@ -17,8 +16,6 @@ defineEmits<{
   'delete-conversation': [id: string];
   'toggle-type': [id: string];
 }>();
-
-const appStore = useAppStore();
 
 const sortedConversations = computed(() =>
   [...props.conversations].sort((a, b) => b.updatedAt - a.updatedAt),
@@ -38,7 +35,7 @@ function contextUsagePercent(c: Conversation): string | null {
 </script>
 
 <template>
-  <div v-if="conversations.length" class="conversation-list">
+  <div class="conversation-list">
     <ConversationItem
       v-for="c in sortedConversations"
       :key="c.id"
@@ -46,10 +43,7 @@ function contextUsagePercent(c: Conversation): string | null {
       :is-active="c.id === activeConversationId"
       :context-usage-percent="contextUsagePercent(c)"
       :expires-label="
-        formatConversationExpiry(
-          c.updatedAt,
-          appStore.temporaryRetentionMinutes,
-        )
+        formatConversationExpiry(c.updatedAt, temporaryRetentionMinutes)
       "
       @select="$emit('select-conversation', c.id)"
       @delete="$emit('delete-conversation', c.id)"

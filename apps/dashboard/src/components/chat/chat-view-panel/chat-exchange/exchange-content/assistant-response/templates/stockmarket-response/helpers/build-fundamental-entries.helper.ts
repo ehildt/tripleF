@@ -1,5 +1,7 @@
 import type { StockmarketFundamentals } from '@/types/harness-response-data.model';
 
+import { compactNumber } from './compact-number.helper';
+
 /** A display-ready label/value pair for the fundamentals grid. */
 export interface FundamentalEntry {
   key: string;
@@ -16,15 +18,6 @@ const LABELS: Record<keyof StockmarketFundamentals, string> = {
   revenue: 'Revenue',
   profitMargin: 'Profit Margin',
 };
-
-/** Compact large magnitudes: 1_240_000_000 -> "1.24B". */
-function compactNumber(value: number): string {
-  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
-  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
-  return String(value);
-}
 
 /** How to format a numeric value per field (strings pass through untouched). */
 const FIELD_FORMATTERS: Partial<

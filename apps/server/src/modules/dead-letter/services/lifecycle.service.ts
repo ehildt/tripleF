@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { Prisma } from '../../../generated/prisma/client.js';
 import { BullMQConfigService } from '../../bullmq/configs/bullmq-config.service.js';
 
+import { DlqEventsService } from './dlq-events.service.js';
 import { DeadLetterRepository } from './repository.service.js';
 
 /**
@@ -21,6 +22,7 @@ export class LifecycleService {
   constructor(
     private readonly dlqRepository: DeadLetterRepository,
     private readonly bullMQConfigService: BullMQConfigService,
+    private readonly dlqEventsService: DlqEventsService,
   ) {}
 
   /**
@@ -54,6 +56,7 @@ export class LifecycleService {
       status: 'Cleared',
       failedReason: null,
     });
+    this.dlqEventsService.broadcastDlqChanged();
   }
 
   async onJobFailed(): Promise<void> {}
@@ -100,6 +103,7 @@ export class LifecycleService {
         payload: (job.data ?? {}) as Prisma.InputJsonValue,
       },
     );
+    this.dlqEventsService.broadcastDlqChanged();
   }
 
   private hasReachedMaxAttempts(job: Job): boolean {

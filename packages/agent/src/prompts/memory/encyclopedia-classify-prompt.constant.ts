@@ -1,7 +1,8 @@
 import { EncyclopediaClassifySchema } from '../../schemas/encyclopedia-classify.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
 
-import { buildVocabularySection, type TaxonomyVocabulary } from './vocabulary-section.helper.js';
+import { buildVocabularySection } from './vocabulary-section.helper.js';
+import type { TaxonomyVocabulary } from './vocabulary-section.types.js';
 
 /**
  * Structured output contract + task for the encyclopedia classification model. The

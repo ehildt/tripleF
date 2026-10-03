@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import { fetchAllDlqEntries } from '../api/queries/fetch-all-dlq-entries.helper';
 import { useReadTracker } from '../composables/use-read-tracker';
 import type { DlqEntry } from '../types/dlq-entry.model';
 import type { DlqListResponse } from '../types/dlq-list-response.model';
@@ -11,7 +10,7 @@ export const useDlqStore = defineStore('dlq', () => {
   const entries = ref<DlqEntry[]>([]);
   const selectedEntry = ref<DlqEntry | null>(null);
   const readTracker = useReadTracker('read-dlq-ids');
-  const knownIds = ref<string[]>([]);
+  const hasDlqActivity = ref(false);
   const total = ref(0);
   const limit = ref(20);
   const offset = ref(0);
@@ -30,19 +29,22 @@ export const useDlqStore = defineStore('dlq', () => {
     return `${e.id}::${e.failedAt ?? ''}::${e.attemptsMade}`;
   }
 
-  const unreadDlqCount = computed(() => {
-    const currentIds = knownIds.value.length
-      ? knownIds.value
-      : entries.value.map(entryReadKey);
-    return readTracker.unreadCount(currentIds);
-  });
-
   function markEntryAsRead(entry: DlqEntry) {
     readTracker.markAsRead(entryReadKey(entry));
   }
 
   function isEntryRead(entry: DlqEntry) {
     return readTracker.isRead(entryReadKey(entry));
+  }
+
+  /** Flag that the DLQ changed since the user last opened the tab. */
+  function markDlqActivity() {
+    hasDlqActivity.value = true;
+  }
+
+  /** Clear the flag once the user has opened the DLQ tab. */
+  function clearDlqActivity() {
+    hasDlqActivity.value = false;
   }
 
   function setEntries(res: DlqListResponse) {
@@ -106,18 +108,10 @@ export const useDlqStore = defineStore('dlq', () => {
     return params;
   }
 
-  async function fetchDlqCount() {
-    const snapshot = await fetchAllDlqEntries();
-    if (!snapshot) return;
-    total.value = snapshot.total;
-    knownIds.value = snapshot.entries.map(entryReadKey);
-    readTracker.pruneMissing(knownIds.value);
-  }
-
   return {
     entries,
     selectedEntry,
-    knownIds,
+    hasDlqActivity,
     total,
     limit,
     offset,
@@ -137,8 +131,8 @@ export const useDlqStore = defineStore('dlq', () => {
     nextPage,
     prevPage,
     getQueryParams,
-    fetchDlqCount,
-    unreadDlqCount,
+    markDlqActivity,
+    clearDlqActivity,
     markEntryAsRead,
     isEntryRead,
     entryReadKey,

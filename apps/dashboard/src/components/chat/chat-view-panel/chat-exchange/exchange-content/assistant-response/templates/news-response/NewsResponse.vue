@@ -16,8 +16,7 @@ import type { NewsResponseProps } from './NewsResponse.types';
 const props = defineProps<NewsResponseProps>();
 
 const { videosFirst, hasAnyContent } = useNewsResponseData(props);
-const { direction, splitHero, multicolBody, mosaicGallery, spans } =
-  useArtDirection(props);
+const { direction, splitHero, multicolBody, spans } = useArtDirection(props);
 </script>
 
 <template>
@@ -54,7 +53,6 @@ const { direction, splitHero, multicolBody, mosaicGallery, spans } =
         :video-gallery-items="data.videoGalleryItems"
         :gallery-title="data.galleryTitle"
         :gallery-items="data.galleryItems"
-        :mosaic="mosaicGallery"
         :on-image-click="onImageClick"
       />
       <RelatedStoriesSection :items="data.relatedStories" :spans="spans" />

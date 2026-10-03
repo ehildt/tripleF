@@ -1,4 +1,13 @@
-import { computed, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
+import {
+  computed,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  type Ref,
+  ref,
+  watch,
+} from 'vue';
 
 import { attachLabelMeta } from '../helpers/attach-label-meta.helper';
 import { buildFrictionPeerMap } from '../helpers/build-friction-peer-map.helper';
@@ -215,8 +224,13 @@ export function useMemoryConstellation(
   let animFrame = 0;
   let prevFrameTime = 0;
   let resizeObserver: ResizeObserver | null = null;
+  /** True while KeepAlive has deactivated the host (tab switch away from Memory). */
+  let isDeactivated = false;
 
   function draw() {
+    // Parked while the Memory tab is hidden: do not render to the detached
+    // canvas and do not reschedule the next frame.
+    if (isDeactivated) return;
     const canvas = canvasRef.value;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -936,10 +950,26 @@ export function useMemoryConstellation(
     hoveredNode.value = null;
   }
 
+  /** Start the render loop if it is not already running. */
+  function startLoop() {
+    if (animFrame !== 0) return;
+    animFrame = requestAnimationFrame(draw);
+  }
+
+  /** Cancel the pending frame and forget the previous timestamp so the first
+   * frame after a pause does not compute a huge idle-rotation delta. */
+  function stopLoop() {
+    if (animFrame !== 0) {
+      cancelAnimationFrame(animFrame);
+      animFrame = 0;
+    }
+    prevFrameTime = 0;
+  }
+
   onMounted(() => {
     resize();
     fitZoom();
-    animFrame = requestAnimationFrame(draw);
+    startLoop();
     const canvas = canvasRef.value;
     canvas?.addEventListener('wheel', onWheel, { passive: false });
     canvas?.addEventListener('mousemove', onMouseMove);
@@ -956,8 +986,23 @@ export function useMemoryConstellation(
     onExpandedStateChange?.(isAllExpanded());
   });
 
+  // KeepAlive deactivates (not unmounts) the Memory tree on a tab switch —
+  // park the render loop so the constellation stops drawing offscreen while
+  // Chat (or another tab) is visible, then resume and refit on return.
+  onActivated(() => {
+    isDeactivated = false;
+    resize();
+    fitZoom();
+    startLoop();
+  });
+
+  onDeactivated(() => {
+    isDeactivated = true;
+    stopLoop();
+  });
+
   onUnmounted(() => {
-    cancelAnimationFrame(animFrame);
+    stopLoop();
     resizeObserver?.disconnect();
     resizeObserver = null;
     const canvas = canvasRef.value;

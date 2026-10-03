@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { safeMediaUrl, safeUrl } from '../helpers/url-trust/url-schema.helper.js';
+import { safeMediaUrl } from '../helpers/url-trust/safe-media-url.helper.js';
+import { safeUrl } from '../helpers/url-trust/safe-url.helper.js';
 
 /**
  * One relatedStories card. Image-backed by contract: the dashboard renders

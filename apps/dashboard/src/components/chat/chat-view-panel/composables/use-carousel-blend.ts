@@ -1,4 +1,7 @@
+import { storeToRefs } from 'pinia';
 import { computed, type Ref } from 'vue';
+
+import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -18,14 +21,17 @@ function clamp(value: number, min: number, max: number): number {
  * sibling is added or removed and the slide re-indexes — otherwise a deleted
  * section leaves the remaining slides stuck at opacity 0 (an empty view).
  *
+ * The scroll offset and viewport height live in the vertical-carousel store
+ * (single source of truth) and are read here by import; only the per-slide
+ * index is an argument.
+ *
  * Opacity-only (no transform/contain) so the slide never becomes a
  * containing block for the floating video popup's fixed-position overlay.
  */
-export function useCarouselBlend(
-  index: Ref<number>,
-  scrollTop: Ref<number>,
-  viewportHeight: Ref<number>,
-) {
+export function useCarouselBlend(index: Ref<number>) {
+  const verticalCarouselStore = useVerticalCarouselStore();
+  const { scrollTop, viewportHeight } = storeToRefs(verticalCarouselStore);
+
   const opacity = computed(() => {
     if (viewportHeight.value === 0) return 1;
 

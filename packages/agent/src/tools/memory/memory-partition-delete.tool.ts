@@ -1,7 +1,7 @@
 import { type Tool, tool } from 'ai';
 
 import { type MemoryPartitionDeleteInput, memoryPartitionDeleteSchema } from './memory-partition-delete.schema.js';
-import type { MemoryToolScope } from './memory-tool-scope.js';
+import type { MemoryToolScope } from './memory-tool-scope.types.js';
 
 interface MemoryPartitionDeleteDeps {
   scope: MemoryToolScope;

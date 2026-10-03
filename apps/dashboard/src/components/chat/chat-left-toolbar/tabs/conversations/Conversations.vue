@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { useConversationStore } from '@/stores/conversation';
-import { useLeftToolbarStore } from '@/stores/left-toolbar';
-
 import ConversationList from './conversation-list/ConversationList.vue';
+import type { ConversationsProps } from './Conversations.types';
 
-const toolbarStore = useLeftToolbarStore();
-const conversationStore = useConversationStore();
+defineProps<ConversationsProps>();
+
+const emit = defineEmits<{
+  selectConversation: [id: string];
+  deleteConversation: [id: string];
+  toggleConversationType: [id: string];
+}>();
 </script>
 
 <template>
   <ConversationList
-    v-if="toolbarStore.hasConversations"
-    :conversations="conversationStore.conversations"
-    :active-conversation-id="conversationStore.activeConversationId"
-    @select-conversation="conversationStore.setActiveConversation"
-    @delete-conversation="toolbarStore.deleteConversation"
-    @toggle-type="conversationStore.toggleConversationType"
+    :conversations="conversations"
+    :active-conversation-id="activeConversationId"
+    :temporary-retention-minutes="temporaryRetentionMinutes"
+    @select-conversation="emit('selectConversation', $event)"
+    @delete-conversation="emit('deleteConversation', $event)"
+    @toggle-type="emit('toggleConversationType', $event)"
   />
 </template>

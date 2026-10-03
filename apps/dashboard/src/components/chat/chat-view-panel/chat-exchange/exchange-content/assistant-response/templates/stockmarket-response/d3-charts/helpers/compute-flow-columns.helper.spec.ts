@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { HeatmapCell } from './build-heatmap-cells.helper';
+import type { HeatmapCell } from './build-heatmap-cells.helper.types';
 import { computeFlowColumns } from './compute-flow-columns.helper';
 
 function cells(entries: Array<[number, number, number]>): HeatmapCell[] {

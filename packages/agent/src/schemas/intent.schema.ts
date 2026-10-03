@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { DEFAULT_MEDIA_COUNT } from './constants/media-counts.constant.js';
-import { TOOL_NAMES, VARIANT_NAMES } from './helpers/tools/tool-registry.constants.js';
+import { TOOL_NAMES, VARIANT_NAMES } from './helpers/tools/tool-registry.constant.js';
 
 export const DEFAULT_VARIANT_ID = 'default';
 

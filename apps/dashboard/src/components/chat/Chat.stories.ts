@@ -2,10 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { h } from 'vue';
 
 import ChatAppGrid from '../../../.storybook/ChatAppGrid.vue';
-import { createMockSocketProvider } from '../../../.storybook/mock-socket-provider';
 import Chat from './Chat.vue';
-
-const mockSocket = createMockSocketProvider();
 
 const meta = {
   title: 'Chat/Chat',
@@ -24,9 +21,6 @@ exchange, dropdown exclusivity).
 `,
       },
     },
-  },
-  args: {
-    socketProvider: mockSocket,
   },
   decorators: [(story) => () => h(ChatAppGrid, null, () => h(story()))],
 } satisfies Meta<typeof Chat>;

@@ -11,6 +11,18 @@ export interface RangeExtremes {
   low: { index: number; price: number };
 }
 
+/** Theme hues for the visible range's extremes — one per extreme. */
+export interface ExtremeColors {
+  high: string;
+  low: string;
+}
+
+/** The visible slice of the series, as half-open indices [from, to). */
+export interface VisibleRange {
+  from: number;
+  to: number;
+}
+
 /**
  * The highest high and lowest low over `points[from..to)` — the visible
  * range the user selected. Both the level lines and the marker bullets are

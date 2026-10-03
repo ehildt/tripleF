@@ -55,6 +55,7 @@ The repository root holds the workspace manifest (`package.json`), the workspace
 | NestJS modules, controllers, services, processors, helpers | [nestjs](../nestjs/SKILL.md) |
 | ESLint, TypeScript, Prettier, depcheck, depcruise          | [lint](../lint/SKILL.md)     |
 | Framework docs, project stack, official references         | tech-stack (this file)       |
+| Framework-agnostic structure: naming, types placement, co-location, barrels | [code-structure](../code-structure/SKILL.md) |
 
 ## Checklist
 

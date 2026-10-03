@@ -2,7 +2,8 @@ import { formatZodShape } from '../../schemas/helpers/zod/format-zod-shape.helpe
 import { ExtractionSchema } from '../../schemas/memory/extraction.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
 
-import { buildVocabularySection, type TaxonomyVocabulary } from './vocabulary-section.helper.js';
+import { buildVocabularySection } from './vocabulary-section.helper.js';
+import type { TaxonomyVocabulary } from './vocabulary-section.types.js';
 
 /** Static prompt strings for the vectorize extraction LLM step. */
 

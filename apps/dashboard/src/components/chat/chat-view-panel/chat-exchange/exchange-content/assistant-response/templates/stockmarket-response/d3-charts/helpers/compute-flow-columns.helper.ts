@@ -1,37 +1,7 @@
-import type { HeatmapCell } from './build-heatmap-cells.helper';
+import { aggregateDay } from './aggregate-day.helper';
+import type { HeatmapCell } from './build-heatmap-cells.helper.types';
+import type { DayStats, FlowColumn } from './compute-flow-columns.helper.types';
 import { mapCarriedToColumn } from './map-carried-to-column.helper';
-
-/** One day of flow-ribbon geometry (price space). */
-export interface FlowColumn {
-  /** Volume-weighted center price of the day. */
-  centroid: number;
-  /** Half the ribbon height in price units (volume-weighted spread). */
-  halfWidth: number;
-  /** 0..1: the day's volume share of the busiest day. */
-  intensity: number;
-}
-
-interface DayStats {
-  total: number;
-  centroid: number;
-  spread: number;
-}
-
-/** Raw per-day aggregates from a day's band cells. */
-function aggregateDay(cells: HeatmapCell[]): DayStats | null {
-  const total = cells.reduce((sum, c) => sum + c.amount, 0);
-  if (total <= 0) return null;
-  const centroid =
-    cells.reduce((sum, c) => sum + c.amount * ((c.low + c.high) / 2), 0) /
-    total;
-  const spread = Math.sqrt(
-    cells.reduce(
-      (sum, c) => sum + c.amount * ((c.low + c.high) / 2 - centroid) ** 2,
-      0,
-    ) / total,
-  );
-  return { total, centroid, spread };
-}
 
 /**
  * Compute the flow-ribbon geometry per day from band cells: a volume-weighted

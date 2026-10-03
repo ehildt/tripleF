@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeMount, onMounted, onUnmounted, provide, watch } from 'vue';
+import { computed, onBeforeMount, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import AppFooter from './components/app/app-footer/AppFooter.vue';
@@ -9,15 +9,15 @@ import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPla
 import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPreview.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
-import { appViewContextKey } from './composables/use-app-view-context';
+import { useDlqActivityEvents } from './composables/use-dlq-activity-events';
+import { usePlaybackSession } from './composables/use-playback-session';
+import { usePlaylistMarquee } from './composables/use-playlist-marquee';
 import { useAppStore } from './stores/app';
 import { useDebugStore } from './stores/debug';
 import { useDlqStore } from './stores/dlq';
-import { createSocketProvider } from './stores/helpers/socket/create-socket-provider.helper';
 import { useApiMessagesStore } from './stores/messages';
 import { useModelsStore } from './stores/models';
 import { usePlaylistStore } from './stores/playlist';
-import { usePlaylistSettingsStore } from './stores/playlist-settings';
 import { usePopoutSettingsStore } from './stores/popout-settings';
 import { usePreprocessingStore } from './stores/preprocessing';
 import { useSocketStore } from './stores/socket';
@@ -33,8 +33,13 @@ const socketStore = useSocketStore();
 const dlqStore = useDlqStore();
 const preprocessingStore = usePreprocessingStore();
 const popoutSettingsStore = usePopoutSettingsStore();
-const playlistSettingsStore = usePlaylistSettingsStore();
 const playlistStore = usePlaylistStore();
+
+// The playback session is an app-level service: created once here, shared by
+// import across the tree, and passed as a prop to the floating player.
+const playback = usePlaybackSession();
+
+const { playlistMarqueeVisible } = usePlaylistMarquee(playback);
 
 // Playlists are session-global (keyed by sessionId, not conversation). Load
 // them once at boot so every surface — the chat right toolbar tab and the
@@ -48,14 +53,6 @@ void playlistStore.loadPlaylists();
 // is a write, not something first paint depends on.
 scheduleIdle(() => preprocessingStore.pushSettingsToServer());
 
-// The memory partition id is server-persisted (Postgres) so it survives
-// localStorage clears — adopt it at boot, deferred to idle like the
-// preprocessing push.
-scheduleIdle(() => appStore.syncMemoryPartitionFromServer());
-
-// Same contract for the cognition space id (the AI's memory space).
-scheduleIdle(() => appStore.syncMemoryCognitionFromServer());
-
 // The Settings popout preview is transient: switching tabs dismisses it.
 // Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
 // cannot be used directly as a watch source.
@@ -63,19 +60,16 @@ watch(
   () => appStore.activeTab,
   () => {
     popoutSettingsStore.hidePopoutPreview();
-    playlistSettingsStore.hidePlaylistPreview();
+    playlistStore.hidePlaylistPreview();
   },
 );
-
-const DLQ_POLL_INTERVAL = 30_000;
-let dlqPollTimer: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Run a callback when the browser is idle, falling back to a macrotask when
  * requestIdleCallback is unavailable (jsdom, older engines). Used to push
- * non-critical boot work (DLQ badge, preprocessing push) off the first-paint
- * path so it doesn't compete with the conversation restore and route chunks
- * for the connection budget on HTTP/1.1.
+ * non-critical boot work (the preprocessing push) off the first-paint path so
+ * it doesn't compete with the conversation restore and route chunks for the
+ * connection budget on HTTP/1.1.
  */
 function scheduleIdle(callback: () => void) {
   if (typeof window.requestIdleCallback === 'function') {
@@ -90,15 +84,13 @@ socketStore.setCallbacks(
   apiMessagesStore.addMessage,
 );
 
-const socketProvider = createSocketProvider(
-  socketStore,
-  debugStore,
-  apiMessagesStore,
+// The DLQ badge is an event-driven attention dot: the server broadcasts
+// dlq:changed on every DLQ mutation, and the dot only shows while the user is
+// not already on the DLQ tab.
+useDlqActivityEvents();
+const showDlqBadge = computed(
+  () => dlqStore.hasDlqActivity && appStore.activeTab !== 'dlq',
 );
-
-// The socket provider is the one app-level service singleton provided via
-// provide/inject; route views consume store state through stores directly.
-provide(appViewContextKey, { socketProvider });
 
 // The route is the source of truth for the active tab; mirror it into the
 // store so non-component logic (e.g. chat-star notifications) can read it.
@@ -117,16 +109,7 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  // The DLQ badge is not on the first-paint path: defer the initial fetch so
-  // it doesn't queue behind the conversation restore and route chunks. The
-  // 30s poll keeps it fresh from here on.
-  scheduleIdle(() => dlqStore.fetchDlqCount());
-  dlqPollTimer = setInterval(() => dlqStore.fetchDlqCount(), DLQ_POLL_INTERVAL);
   socketStore.ensureSocketConnection();
-});
-
-onUnmounted(() => {
-  if (dlqPollTimer) clearInterval(dlqPollTimer);
 });
 </script>
 
@@ -139,7 +122,7 @@ onUnmounted(() => {
       :active-tab="appStore.activeTab"
       :debug-count="debugStore.debugLogCount"
       :show-chat-star="appStore.showChatStar"
-      :dlq-count="dlqStore.unreadDlqCount"
+      :show-dlq-badge="showDlqBadge"
     />
 
     <main class="app-main-content">
@@ -149,7 +132,7 @@ onUnmounted(() => {
              return visit never pays the remount + full-list re-render
              burst. Other tabs mount/unmount as before. -->
         <router-view v-slot="{ Component }">
-          <KeepAlive :include="['Chat']">
+          <KeepAlive :include="['Chat', 'Memory']">
             <component :is="Component" :key="route.fullPath" />
           </KeepAlive>
         </router-view>
@@ -159,7 +142,11 @@ onUnmounted(() => {
     <ToastContainer />
     <PopoutPreview />
     <PlaylistPreview />
-    <FloatingPlayer />
+    <FloatingPlayer
+      :session="playback"
+      :show-title-marquee="!playlistMarqueeVisible"
+      :popout-show-bar-always="popoutSettingsStore.popoutShowBarAlways"
+    />
     <FloatingPlaylist />
     <AppFooter :socket-id="socketStore.socketId" />
   </div>

@@ -2,8 +2,8 @@ import { Info } from '@lucide/vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
 
-import PlaylistToggleButton from '../playlist-toggle-button/PlaylistToggleButton.vue';
 import MediaCardHeader from './MediaCardHeader.vue';
 
 const meta = {

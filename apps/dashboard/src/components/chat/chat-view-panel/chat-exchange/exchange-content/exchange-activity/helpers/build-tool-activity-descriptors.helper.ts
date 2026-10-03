@@ -1,6 +1,7 @@
 import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
 
 import type { ActiveToolCall } from './build-tool-activity-descriptors.helper.types';
+import { truncateQuery } from './truncate-query.helper';
 
 /** Tool categories with a dedicated `activity.*` translation key. Anything
  *  else falls back to the generic "executing {tool}" label. */
@@ -17,14 +18,6 @@ const KNOWN_CATEGORY_KEYS: Record<string, string> = {
   variants: 'activity.variants',
   market: 'activity.market',
 };
-
-const MAX_QUERY_LENGTH = 48;
-
-function truncateQuery(query: string): string {
-  return query.length > MAX_QUERY_LENGTH
-    ? `${query.slice(0, MAX_QUERY_LENGTH).trimEnd()}…`
-    : query;
-}
 
 /**
  * Build one activity descriptor per running tool-call category — never a

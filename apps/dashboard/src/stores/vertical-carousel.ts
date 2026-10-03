@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
+import { useProgrammaticScrollWindow } from '@/components/chat/chat-view-panel/composables/use-programmatic-scroll-window';
+
 /**
  * Shared scroll state for the chat's vertical carousel. Every slide reads
  * this store to compute its blend opacity and reset its internal scroll when
@@ -12,10 +14,10 @@ export const useVerticalCarouselStore = defineStore('vertical-carousel', () => {
   const scrollContainerRef = ref<HTMLElement | null>(null);
   const scrollTop = ref(0);
   const viewportHeight = ref(0);
-  /** True while a programmatic scroll (auto-scroll-to-bottom, snap-to-section)
-   * is in flight, so callers can tell a user-initiated scroll from one the
-   * composable triggered itself. */
-  const isProgrammaticScroll = ref(false);
+
+  const { isProgrammaticScroll, armProgrammaticScroll, endProgrammaticScroll } =
+    useProgrammaticScrollWindow();
+
   const previousActiveSectionIndex = ref(0);
   // Set when a history click should land the target section at its top
   // regardless of scroll direction (see scrollToSection's resetToTop).
@@ -45,19 +47,11 @@ export const useVerticalCarouselStore = defineStore('vertical-carousel', () => {
     if (!container) return;
     if (resetToTop) forceTopOnNextTransition.value = true;
     const top = index * container.clientHeight;
-    isProgrammaticScroll.value = true;
+    if (container.scrollTop !== top) {
+      armProgrammaticScroll();
+    }
     container.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
     syncScrollRefs(container);
-    // Smooth scrolls fire many scroll events; keep the flag set until the
-    // snap settles so those intermediate events are not treated as user
-    // scrolls. Auto scrolls settle synchronously.
-    if (smooth) {
-      window.setTimeout(() => {
-        isProgrammaticScroll.value = false;
-      }, 400);
-    } else {
-      isProgrammaticScroll.value = false;
-    }
   }
 
   return {
@@ -68,6 +62,8 @@ export const useVerticalCarouselStore = defineStore('vertical-carousel', () => {
     previousActiveSectionIndex,
     forceTopOnNextTransition,
     isProgrammaticScroll,
+    armProgrammaticScroll,
+    endProgrammaticScroll,
     scrollToSection,
     syncScrollRefs,
   };

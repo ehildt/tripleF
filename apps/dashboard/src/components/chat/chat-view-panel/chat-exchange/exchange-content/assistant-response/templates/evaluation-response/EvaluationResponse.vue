@@ -23,7 +23,7 @@ const {
   comparisonView,
   hasAnyContent,
 } = useEvaluationResponseData(props);
-const { direction, splitHero, mosaicGallery } = useArtDirection(props);
+const { direction, splitHero } = useArtDirection(props);
 </script>
 
 <template>
@@ -81,7 +81,6 @@ const { direction, splitHero, mosaicGallery } = useArtDirection(props);
         :video-gallery-items="data.videoGalleryItems"
         :gallery-title="data.galleryTitle"
         :gallery-items="data.galleryItems"
-        :mosaic="mosaicGallery"
         :on-image-click="onImageClick"
       />
 

@@ -1,4 +1,11 @@
-import { getCurrentInstance, onMounted, onUnmounted, type Ref } from 'vue';
+import {
+  getCurrentInstance,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  type Ref,
+} from 'vue';
 
 import { calcConnectionOpacity } from '../helpers/calc-connection-opacity.helper';
 import type { Particle } from './use-constellation-animation.types';
@@ -35,6 +42,11 @@ export function useConstellationAnimation(
   let animationFrameId: number | null = null;
   let resizeObserver: ResizeObserver | null = null;
   let themeObserver: MutationObserver | null = null;
+  let visibilityObserver: IntersectionObserver | null = null;
+  /** True while KeepAlive has deactivated the host component (tab switch). */
+  let isDeactivated = false;
+  /** False while the canvas is scrolled out of view (IntersectionObserver). */
+  let isCanvasVisible = true;
 
   let particles: Particle[] = [];
   let dpr = 1;
@@ -173,6 +185,11 @@ export function useConstellationAnimation(
     if (!ctx) return;
 
     const maxDistance = CSS_CONNECTION_DISTANCE * dpr;
+    // Stroke style and width are constant across every connection — set them
+    // once instead of per line so the inner loop only mutates the per-line
+    // alpha (which genuinely varies with each pair's distance and opacity).
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1 * dpr;
 
     for (let i = 0; i < particles.length; i += 1) {
       for (let j = i + 1; j < particles.length; j += 1) {
@@ -195,10 +212,8 @@ export function useConstellationAnimation(
         const distanceOpacity = calcConnectionOpacity(distance, maxDistance);
         const opacity = distanceOpacity * particleOpacity * MAX_LINE_OPACITY;
 
-        ctx.beginPath();
-        ctx.strokeStyle = lineColor;
         ctx.globalAlpha = opacity;
-        ctx.lineWidth = 1 * dpr;
+        ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
@@ -247,6 +262,27 @@ export function useConstellationAnimation(
     });
   }
 
+  /** Cancel the pending frame without tearing down observers. */
+  function cancelFrame() {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+
+  /** Park or resume the loop based on activation and visibility. A parked
+   * loop (deactivated or off-screen) is a no-op; resuming schedules the next
+   * frame. Reduced motion renders one static frame instead of looping. */
+  function syncLoop() {
+    if (isDeactivated || !isCanvasVisible) {
+      cancelFrame();
+      return;
+    }
+    if (animationFrameId === null) {
+      scheduleFrame();
+    }
+  }
+
   /**
    * Idempotent: tears down any running loop and observers first. Called
    * from the canvas watch and onMounted, so without the teardown both would
@@ -254,6 +290,11 @@ export function useConstellationAnimation(
    */
   function start() {
     stop();
+
+    // A fresh start is active and assumed visible until the visibility
+    // observer reports otherwise (a deactivated restart must not stay parked).
+    isDeactivated = false;
+    isCanvasVisible = true;
 
     const canvas = canvasRef.value;
     if (!canvas) return;
@@ -269,20 +310,21 @@ export function useConstellationAnimation(
 
     observeResize();
     observeThemeChanges();
-    scheduleFrame();
+    observeVisibility();
+    syncLoop();
   }
 
   function stop() {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
+    cancelFrame();
 
     resizeObserver?.disconnect();
     resizeObserver = null;
 
     themeObserver?.disconnect();
     themeObserver = null;
+
+    visibilityObserver?.disconnect();
+    visibilityObserver = null;
   }
 
   function observeResize() {
@@ -316,9 +358,37 @@ export function useConstellationAnimation(
     });
   }
 
+  /** Pause drawing while the canvas is scrolled out of view; resume when it
+   * re-enters the viewport. Hidden browser tabs already have their rAF
+   * throttled by the browser, so this only needs to cover in-page visibility. */
+  function observeVisibility() {
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    visibilityObserver = new IntersectionObserver((entries) => {
+      isCanvasVisible = entries.some((entry) => entry.isIntersecting);
+      syncLoop();
+    });
+
+    if (canvasRef.value) {
+      visibilityObserver.observe(canvasRef.value);
+    }
+  }
+
   if (getCurrentInstance()) {
     onMounted(() => {
       start();
+    });
+
+    // KeepAlive tab switches deactivate (not unmount) the chat tree — park
+    // the loop so the starfield doesn't keep drawing while the tab is hidden,
+    // and resume it on return.
+    onActivated(() => {
+      start();
+    });
+
+    onDeactivated(() => {
+      isDeactivated = true;
+      cancelFrame();
     });
 
     onUnmounted(() => {

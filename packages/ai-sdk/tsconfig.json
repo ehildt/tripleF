@@ -20,7 +20,7 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "types": ["node", "vitest/globals"],
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src/", "eslint.config.ts", "prettier.config.mjs", "tsup.config.ts", "vitest.config.ts"]
 }

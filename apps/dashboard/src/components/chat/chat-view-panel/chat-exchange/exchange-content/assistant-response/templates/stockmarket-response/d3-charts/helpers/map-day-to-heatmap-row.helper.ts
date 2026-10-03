@@ -1,13 +1,8 @@
 import type {
+  BandGrid,
   HeatmapHistoryPoint,
   HeatmapProfilePoint,
-} from './build-heatmap-cells.helper';
-
-interface BandGrid {
-  minPrice: number;
-  step: number;
-  bandCount: number;
-}
+} from './build-heatmap-cells.helper.types';
 
 /** Build one heatmap row (day → volumes) from its profile or daily range. */
 export function mapDayToHeatmapRow(

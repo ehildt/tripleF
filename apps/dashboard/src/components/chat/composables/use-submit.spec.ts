@@ -1,17 +1,17 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { type Ref, ref } from 'vue';
 
 import { useAppStore } from '@/stores/app';
 import { useConversationStore } from '@/stores/conversation';
 import type { Exchange } from '@/stores/conversation.model';
 import { useMergeSelectionStore } from '@/stores/merge-selection';
+import { useApiMessagesStore } from '@/stores/messages';
 import { useModelsStore } from '@/stores/models';
-import type { SocketProvider } from '@/types/socket-provider.model';
+import { useSocketStore } from '@/stores/socket';
 
 import type { PostHarnessRequestOptions } from './use-harness-request.types';
+import { usePromptDraft } from './use-prompt-draft';
 import { useSubmit } from './use-submit';
-import type { UseSubmitOptions } from './use-submit.types';
 
 const toast = vi.hoisted(() => ({
   debug: vi.fn(),
@@ -32,28 +32,10 @@ vi.mock('./use-harness-request', () => ({
   useHarnessRequest: () => ({ postHarnessRequest }),
 }));
 
-function createSocketProvider() {
-  const addPendingMessage = vi.fn();
-  const listenToEvent = vi.fn();
-  const joinRoom = vi.fn();
-  const provider = {
-    getSocket: vi.fn(() => ({ connected: true })),
-    trackRequest: vi.fn(),
-    addPendingMessage,
-    listenToEvent,
-    joinRoom,
-    connectedEvents: new Set<string>(),
-    connectedRooms: new Map<string, Set<string>>(),
-  };
-  return {
-    socketProvider: provider as unknown as SocketProvider,
-    addPendingMessage,
-    listenToEvent,
-    joinRoom,
-  };
-}
-
-/** Route fetch so the stores' boot GETs get benign payloads. */
+/**
+ * Route fetch so the stores' boot GETs get benign payloads. The harness POST
+ * itself is mocked at the module boundary (`./use-harness-request`).
+ */
 function stubBenignFetch() {
   vi.stubGlobal(
     'fetch',
@@ -69,18 +51,28 @@ function stubBenignFetch() {
   );
 }
 
-function createOptions(promptText = 'hello') {
-  const promptDraft = ref(promptText);
-  const resetPromptDraft = vi.fn();
-  const socket = createSocketProvider();
-  const options: UseSubmitOptions = {
-    socketProvider: socket.socketProvider,
-    isEventConnected: () => false,
-    isRoomConnected: () => false,
-    promptDraft: promptDraft as Ref<string>,
-    resetPromptDraft,
-  };
-  return { options, promptDraft, resetPromptDraft, ...socket };
+/**
+ * The submit path reads the socket facade from the real stores. Spy the
+ * store actions that would otherwise open a socket.io connection in jsdom;
+ * `addPendingMessage` is spied so the tests can assert the in-flight
+ * registration without touching the messages store's internals.
+ */
+function stubSocketSideEffects() {
+  const socketStore = useSocketStore();
+  const apiMessagesStore = useApiMessagesStore();
+
+  vi.spyOn(socketStore, 'listenToEvent').mockImplementation(() => {});
+  vi.spyOn(socketStore, 'joinRoom').mockImplementation(() => {});
+  const addPendingMessage = vi
+    .spyOn(apiMessagesStore, 'addPendingMessage')
+    .mockImplementation(() => {});
+
+  return { addPendingMessage };
+}
+
+/** Seed the shared prompt draft that `useSubmit` reads and clears. */
+function seedDraft(text = 'hello') {
+  usePromptDraft().promptDraft.value = text;
 }
 
 function userExchange(overrides: Partial<Exchange> = {}): Exchange {
@@ -106,16 +98,18 @@ describe('useSubmit', () => {
     toast.success.mockClear();
     toast.warning.mockClear();
     postHarnessRequest.mockClear();
+    usePromptDraft().promptDraft.value = '';
   });
 
   it('submits the prompt through the harness transport', async () => {
-    const { options, resetPromptDraft, addPendingMessage } = createOptions();
+    seedDraft();
+    const { addPendingMessage } = stubSocketSideEffects();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.createNewConversation();
     conversation.model = 'llama3';
     vi.spyOn(conversationStore, 'buildPrompt').mockResolvedValue('[]');
 
-    const { isSubmitting, submit } = useSubmit(options);
+    const { isSubmitting, submit } = useSubmit();
     await submit();
 
     expect(postHarnessRequest).toHaveBeenCalledTimes(1);
@@ -131,7 +125,7 @@ describe('useSubmit', () => {
     expect(request.params.get('sessionId')).toBe(conversation.id);
     expect(request.params.get('requestId')).toBe(useAppStore().requestId);
     expect(request.formData).toBeInstanceOf(FormData);
-    expect(resetPromptDraft).toHaveBeenCalledTimes(1);
+    expect(usePromptDraft().promptDraft.value).toBe('');
     expect(addPendingMessage).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
@@ -143,7 +137,7 @@ describe('useSubmit', () => {
   });
 
   it('warns and skips the submit when the context is full', async () => {
-    const { options } = createOptions();
+    seedDraft();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.createNewConversation();
     conversation.model = 'llama3';
@@ -160,7 +154,7 @@ describe('useSubmit', () => {
       },
     ];
 
-    const { submit } = useSubmit(options);
+    const { submit } = useSubmit();
     await submit();
 
     expect(postHarnessRequest).not.toHaveBeenCalled();
@@ -170,13 +164,13 @@ describe('useSubmit', () => {
   });
 
   it('stops before the transport when no model is available', async () => {
-    const { options } = createOptions();
+    seedDraft();
     const conversationStore = useConversationStore();
     conversationStore.createNewConversation();
     const modelsStore = useModelsStore();
     vi.spyOn(modelsStore, 'whenModelsReady').mockResolvedValue(undefined);
 
-    const { isSubmitting, submit } = useSubmit(options);
+    const { isSubmitting, submit } = useSubmit();
     await submit();
 
     expect(postHarnessRequest).not.toHaveBeenCalled();
@@ -185,7 +179,8 @@ describe('useSubmit', () => {
   });
 
   it('marks the merge as pending for a merge submit', async () => {
-    const { options } = createOptions();
+    seedDraft();
+    stubSocketSideEffects();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.createNewConversation();
     conversation.model = 'llama3';
@@ -194,7 +189,7 @@ describe('useSubmit', () => {
     mergeSelectionStore.setMergeSelectedIds(conversation.id, ['ex-1']);
     const markMergePending = vi.spyOn(mergeSelectionStore, 'markMergePending');
 
-    const { submit } = useSubmit(options);
+    const { submit } = useSubmit();
     await submit();
 
     expect(markMergePending).toHaveBeenCalledWith(

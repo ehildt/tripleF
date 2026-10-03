@@ -1,11 +1,11 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 
 import { usePausablePlayer } from '@/composables/use-pausable-player';
+import type { PlaybackSession } from '@/composables/use-playback-session';
 import { usePopupGeometry } from '@/composables/use-popup-geometry';
 import { useConversationStore } from '@/stores/conversation';
 import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
-import { useVideoPlaybackStore } from '@/stores/video-playback';
 
 /**
  * State for the standalone floating player host — the single mounted player
@@ -25,50 +25,65 @@ import { useVideoPlaybackStore } from '@/stores/video-playback';
  *
  * Autoplay where the provider allows it happens per fresh mount (keyed by
  * video URL). Player wiring (embed flags, provider APIs, pause handlers)
- * comes from usePausablePlayer.
+ * comes from usePausablePlayer. The playback session is the single source of
+ * truth for what is playing; this host applies the session's toggle request
+ * to its own player and reports observed state back.
  */
-export function useFloatingPlayerHost() {
+export function useFloatingPlayerHost(session: PlaybackSession) {
   const playbackAnchorStore = usePlaybackAnchorStore();
   const popoutSettingsStore = usePopoutSettingsStore();
-  const videoPlaybackStore = useVideoPlaybackStore();
   const conversationStore = useConversationStore();
 
-  const { popupStyle, startDrag, startResize, setOpacity } = usePopupGeometry();
+  const { popupStyle, startDrag, startResize, setOpacity } = usePopupGeometry(
+    session.floatingPopupOpacity,
+    session.setFloatingPopupOpacity,
+  );
 
-  const launchedVideo = computed(() => videoPlaybackStore.launchedVideo);
+  const launchedVideo = computed(() => session.launchedVideo.value);
   const launchedVideoUrl = computed(() => launchedVideo.value?.videoUrl ?? '');
-  const { playerSrc, isDirectVideo, isUnembeddable, setPlayerElement } =
-    usePausablePlayer(launchedVideoUrl, undefined, onVideoEnded);
+  const pausablePlayer = usePausablePlayer(launchedVideoUrl, {
+    onEnded: onVideoEnded,
+    reportPlaying: session.reportPlaying,
+    reportControlSupported: session.reportControlSupported,
+  });
+
+  // The session issues a toggle request as data; apply it to this player.
+  watch(
+    () => session.playbackToggleRequestId.value,
+    () => pausablePlayer.togglePlayback(),
+  );
 
   /** Playlist autoplay: an ended video hands over to the next queue entry. */
   function onVideoEnded() {
     if (
-      videoPlaybackStore.playlistAutoplayEnabled &&
-      videoPlaybackStore.launchedFromPlaylist
+      session.playlistAutoplayEnabled.value &&
+      session.launchedFromPlaylist.value
     ) {
-      videoPlaybackStore.playNextPlaylistVideo();
+      session.playNextPlaylistVideo();
     }
   }
 
   /** Autoplay on launch where the provider allows it. */
   const embedSrc = computed(() => {
-    if (!launchedVideo.value || !playerSrc.value) return '';
-    if (/youtube(?:-nocookie)?\.com\/embed\//.test(playerSrc.value)) {
-      const separator = playerSrc.value.includes('?') ? '&' : '?';
-      return `${playerSrc.value}${separator}autoplay=1`;
+    if (!launchedVideo.value || !pausablePlayer.playerSrc.value) return '';
+    if (
+      /youtube(?:-nocookie)?\.com\/embed\//.test(pausablePlayer.playerSrc.value)
+    ) {
+      const separator = pausablePlayer.playerSrc.value.includes('?')
+        ? '&'
+        : '?';
+      return `${pausablePlayer.playerSrc.value}${separator}autoplay=1`;
     }
-    return playerSrc.value;
+    return pausablePlayer.playerSrc.value;
   });
 
   const opacityPercent = computed(() =>
-    Math.round(videoPlaybackStore.floatingPopupOpacity * 100),
+    Math.round(session.floatingPopupOpacity.value * 100),
   );
 
   // ---------- docked-inline vs floating vs hidden ----------
 
-  const dockedInline = computed(
-    () => playbackAnchorStore.dockedAnchorElement !== null,
-  );
+  const dockedInline = computed(() => session.dockedInline.value);
 
   /**
    * Popout autodock off: once the anchor is lost, latch into floating mode
@@ -78,7 +93,7 @@ export function useFloatingPlayerHost() {
    */
   watch(
     [
-      () => playbackAnchorStore.visibleAnchorCandidate,
+      () => session.visibleAnchorCandidate.value,
       () => playbackAnchorStore.playbackDockMode,
     ],
     () => {
@@ -87,9 +102,9 @@ export function useFloatingPlayerHost() {
         !popoutSettingsStore.popoutAutoDock &&
         playbackAnchorStore.playbackDockMode === 'auto' &&
         launchedVideo.value &&
-        !playbackAnchorStore.visibleAnchorCandidate
+        !session.visibleAnchorCandidate.value
       ) {
-        playbackAnchorStore.latchFloating();
+        session.latchFloating();
       }
     },
     { immediate: true },
@@ -97,13 +112,13 @@ export function useFloatingPlayerHost() {
 
   // Resuming paused playback re-follows the anchor (old dismissal re-arm).
   watch(
-    () => videoPlaybackStore.activePlaybackPlaying,
+    () => session.activePlaybackPlaying.value,
     (playing) => {
       if (
         playing &&
         playbackAnchorStore.playbackDockMode === 'dock-dismissed'
       ) {
-        playbackAnchorStore.engagePlayback();
+        session.engagePlayback();
       }
     },
   );
@@ -113,7 +128,7 @@ export function useFloatingPlayerHost() {
       !playbackAnchorStore.forceShowPlayer &&
       (playbackAnchorStore.playbackDockMode === 'dock-dismissed' ||
         (popoutSettingsStore.popoutHideOnPlaylist &&
-          videoPlaybackStore.launchedFromPlaylist) ||
+          session.launchedFromPlaylist.value) ||
         (!popoutSettingsStore.popoutEnabled &&
           Boolean(launchedVideo.value) &&
           !dockedInline.value)),
@@ -163,7 +178,7 @@ export function useFloatingPlayerHost() {
   }
 
   watch(
-    () => playbackAnchorStore.dockedAnchorCandidate,
+    () => session.dockedAnchorCandidate.value,
     (candidate) =>
       candidate
         ? trackAnchor(candidate.el, candidate.scrollRoot)
@@ -234,7 +249,7 @@ export function useFloatingPlayerHost() {
    * running.
    */
   function minimize() {
-    playbackAnchorStore.dockPlayback();
+    session.dockPlayback();
   }
 
   /**
@@ -242,7 +257,7 @@ export function useFloatingPlayerHost() {
    * launched popup, exactly like the transport bar's dedicated Stop button.
    */
   function stop() {
-    videoPlaybackStore.stopActivePlayback();
+    session.stopPlayback();
   }
 
   return {
@@ -254,9 +269,9 @@ export function useFloatingPlayerHost() {
     showsPopupChrome,
     popupStyle,
     embedSrc,
-    isDirectVideo,
-    isUnembeddable,
-    setPlayerElement,
+    isDirectVideo: pausablePlayer.isDirectVideo,
+    isUnembeddable: pausablePlayer.isUnembeddable,
+    setPlayerElement: pausablePlayer.setPlayerElement,
     opacityPercent,
     setOpacity,
     startDrag,

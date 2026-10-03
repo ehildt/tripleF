@@ -1,31 +1,35 @@
-import { computed, type Ref } from 'vue';
+import { computed } from 'vue';
 
+import { usePlaybackSession } from '@/composables/use-playback-session';
 import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
 import { usePlaylistStore } from '@/stores/playlist';
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
-import { useVideoPlaybackStore } from '@/stores/video-playback';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+
+import { usePlaylistPanel } from '../playlist/composables/use-playlist-panel';
 
 /**
  * Transport-bar state for a playlist surface — the chat right toolbar tab and
  * the app-level floating playlist: whether anything is playing, whether the
  * provider supports controls, and the play/stop/autoplay actions — plus the
- * per-item launch/remove actions.
+ * per-item launch/remove actions. Reads the playback session and the active
+ * playlist queue by import; it never touches a player element.
  */
-export function usePlaylistTransport(playlistVideos: Ref<VideoGalleryItem[]>) {
+export function usePlaylistTransport() {
+  const playback = usePlaybackSession();
+  const { playlistVideos } = usePlaylistPanel();
   const playbackAnchorStore = usePlaybackAnchorStore();
   const popoutSettingsStore = usePopoutSettingsStore();
-  const videoPlaybackStore = useVideoPlaybackStore();
   const playlistStore = usePlaylistStore();
 
   const activePlaybackVideoUrl = computed(
-    () => videoPlaybackStore.activePlaybackVideoUrl,
+    () => playback.activePlaybackVideoUrl.value,
   );
   const activePlaybackPlaying = computed(
-    () => videoPlaybackStore.activePlaybackPlaying,
+    () => playback.activePlaybackPlaying.value,
   );
   const playlistAutoplayEnabled = computed(
-    () => videoPlaybackStore.playlistAutoplayEnabled,
+    () => playback.playlistAutoplayEnabled.value,
   );
 
   const hasActivePlayback = computed(() =>
@@ -41,22 +45,21 @@ export function usePlaylistTransport(playlistVideos: Ref<VideoGalleryItem[]>) {
     () =>
       playlistVideos.value.find(
         (video) => video.videoUrl === activePlaybackVideoUrl.value,
-      )?.title ?? videoPlaybackStore.nowPlayingTitle,
+      )?.title ?? playback.nowPlayingTitle.value,
   );
   const canTogglePlayback = computed(
     () =>
-      hasActivePlayback.value &&
-      videoPlaybackStore.activePlaybackControlSupported,
+      hasActivePlayback.value && playback.activePlaybackControlSupported.value,
   );
   const playbackToggleTitle = computed(() => {
     if (!hasActivePlayback.value) return 'Nothing is playing';
-    if (!videoPlaybackStore.activePlaybackControlSupported)
+    if (!playback.activePlaybackControlSupported.value)
       return 'Playback controls unavailable for this provider';
     return activePlaybackPlaying.value ? 'Pause' : 'Play';
   });
 
   function onPlayItem(item: VideoGalleryItem) {
-    videoPlaybackStore.launchVideo(item, {
+    playback.launchVideo(item, {
       videos: playlistVideos.value,
     });
   }
@@ -74,7 +77,7 @@ export function usePlaylistTransport(playlistVideos: Ref<VideoGalleryItem[]>) {
   const popoutHidden = computed(
     () =>
       (popoutSettingsStore.popoutHideOnPlaylist &&
-        videoPlaybackStore.launchedFromPlaylist) ||
+        playback.launchedFromPlaylist.value) ||
       playbackAnchorStore.playbackDockMode === 'dock-dismissed',
   );
 
@@ -93,10 +96,7 @@ export function usePlaylistTransport(playlistVideos: Ref<VideoGalleryItem[]>) {
     // via the persistent setting; a standalone (figure-launched) window
     // dismisses instead. With nothing launched the eye plain toggles the
     // setting, like it always has.
-    if (
-      videoPlaybackStore.launchedFromPlaylist ||
-      !videoPlaybackStore.launchedVideo
-    ) {
+    if (playback.launchedFromPlaylist.value || !playback.launchedVideo.value) {
       popoutSettingsStore.setPopoutHideOnPlaylist(true);
       return;
     }
@@ -113,9 +113,9 @@ export function usePlaylistTransport(playlistVideos: Ref<VideoGalleryItem[]>) {
     hasActivePlayback,
     canTogglePlayback,
     playbackToggleTitle,
-    toggleActivePlayback: videoPlaybackStore.toggleActivePlayback,
-    stopActivePlayback: videoPlaybackStore.stopActivePlayback,
-    togglePlaylistAutoplay: videoPlaybackStore.togglePlaylistAutoplay,
+    toggleActivePlayback: playback.requestPlaybackToggle,
+    stopActivePlayback: playback.stopPlayback,
+    togglePlaylistAutoplay: playback.togglePlaylistAutoplay,
     onPlayItem,
     onRemoveItem,
   };

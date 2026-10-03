@@ -10,6 +10,7 @@ const baseEntry: DlqEntry = {
   requestId: 'req-1',
   queueName: 'harness',
   jobId: 'job-5',
+  jobName: 'req-1',
   status: 'Failed',
   payload: { filters: { model: 'llama3' } },
   failedReason: null,

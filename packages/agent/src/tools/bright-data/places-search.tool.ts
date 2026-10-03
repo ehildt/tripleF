@@ -1,11 +1,11 @@
 import { type Tool, tool } from 'ai';
 
-import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.js';
+import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
-import type { ToolDependencies } from '../types/types.js';
+import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapBrightDataPlaceResult } from './helpers/map-bright-data-place-result.helper.js';
-import { buildGoogleUrl, engineEnabled } from './bright-data.constants.js';
+import { buildGoogleUrl, engineEnabled } from './bright-data.constant.js';
 import { requestBrightData } from './bright-data-client.js';
 import { type BrightDataPlacesSearchInput, brightDataPlacesSearchSchema } from './places-search.schema.js';
 import type { BrightDataPlacesSearchResponse } from './places-search.types.js';

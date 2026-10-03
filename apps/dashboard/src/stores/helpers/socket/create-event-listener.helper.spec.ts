@@ -1,7 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
+import type { SocketEvent } from '../../../types/socket-event.model';
 import { createEventListener } from './create-event-listener.helper';
+
+function makeEnvelope(
+  requestId: string,
+  overrides: Partial<SocketEvent> & { data?: unknown } = {},
+): SocketEvent {
+  return {
+    v: 1,
+    kind: 'event',
+    type: 'harness:delta',
+    id: `${requestId}-evt`,
+    at: new Date().toISOString(),
+    meta: { requestId, roomId: 'room-a' },
+    data: { channel: 'content', text: 'chunk' },
+    ...overrides,
+  } as SocketEvent;
+}
 
 describe('createEventListener', () => {
   const socketId = ref<string | null>('session-1');
@@ -9,8 +26,8 @@ describe('createEventListener', () => {
   const onMessage = vi.fn();
   const onDebugEntry = vi.fn();
 
-  function listener() {
-    return createEventListener('harness', {
+  function listener(channelName = 'harness') {
+    return createEventListener(channelName, {
       socketId,
       loggedRequestIds,
       onMessage,
@@ -25,42 +42,51 @@ describe('createEventListener', () => {
     onDebugEntry.mockClear();
   });
 
-  it('stamps the payload with the session id and forwards it', () => {
-    const data = { requestId: 'r1', roomId: 'room-a' };
-    listener()(data);
+  it('forwards a parsed envelope to the message store', () => {
+    const envelope = makeEnvelope('r1');
+    listener()(envelope);
 
-    expect(data).toHaveProperty('conversationId', 'session-1');
-    expect(onMessage).toHaveBeenCalledWith('harness', data);
+    expect(onMessage).toHaveBeenCalledWith('harness', envelope);
+  });
+
+  it('forwards non-envelope payloads raw without logging', () => {
+    const raw = { requestId: 'legacy-1' };
+    listener('foreign-channel')(raw);
+
+    expect(onMessage).toHaveBeenCalledWith('foreign-channel', raw);
+    expect(onDebugEntry).not.toHaveBeenCalled();
   });
 
   it('emits one DATA debug entry per request id', () => {
     const emit = listener();
-    emit({ requestId: 'r1', roomId: 'room-a', stream: true });
-    emit({ requestId: 'r1', roomId: 'room-a', stream: true });
+    emit(makeEnvelope('r1'));
+    emit(makeEnvelope('r1'));
+    emit(makeEnvelope('r2'));
 
     const dataEntries = onDebugEntry.mock.calls
       .map(([entry]) => entry)
       .filter((entry) => entry.method === 'DATA');
-    expect(dataEntries).toHaveLength(1);
+    expect(dataEntries).toHaveLength(2);
     expect(dataEntries[0]).toMatchObject({
       method: 'DATA',
       requestId: 'r1',
       roomId: 'room-a',
-      event: 'harness',
-      stream: true,
+      event: 'harness:delta',
       conversationId: 'session-1',
     });
   });
 
-  it('emits a DONE entry with normalized token stats', () => {
-    listener()({
-      requestId: 'r1',
-      done: true,
-      prompt_eval_count: 120,
-      eval_count: 30,
-      eval_duration: 5,
-      total_duration: 9,
-    });
+  it('emits a DONE entry with token stats on the completed envelope', () => {
+    listener()(
+      makeEnvelope('r1', {
+        type: 'harness:completed',
+        data: {
+          template: 'text',
+          result: 'done',
+          usage: { promptEvalCount: 120, evalCount: 30 },
+        },
+      }),
+    );
 
     const doneEntry = onDebugEntry.mock.calls
       .map(([entry]) => entry)
@@ -70,21 +96,24 @@ describe('createEventListener', () => {
       requestId: 'r1',
       promptEvalCount: 120,
       evalCount: 30,
-      evalDuration: 5,
-      totalDuration: 9,
     });
   });
 
-  it('falls back to meta[0].requestId when requestId is missing', () => {
-    listener()({ meta: [{ requestId: 'nested-1' }] });
-
-    expect(onDebugEntry).toHaveBeenCalledWith(
-      expect.objectContaining({ requestId: 'nested-1' }),
+  it('does not emit a DONE entry for completed envelopes without token stats', () => {
+    listener()(
+      makeEnvelope('r1', {
+        type: 'harness:completed',
+        data: { template: 'text', result: 'done' },
+      }),
     );
+
+    expect(
+      onDebugEntry.mock.calls.map(([entry]) => entry.method),
+    ).not.toContain('DONE');
   });
 
-  it('skips debug logging when there is no request id at all', () => {
-    listener()({ roomId: 'room-a' });
+  it('skips debug logging when the envelope carries no request id', () => {
+    listener()(makeEnvelope('ignored', { meta: { roomId: 'room-a' } }));
 
     expect(onMessage).toHaveBeenCalled();
     expect(onDebugEntry).not.toHaveBeenCalled();
@@ -92,7 +121,7 @@ describe('createEventListener', () => {
 
   it('omits the conversation id on debug entries when disconnected', () => {
     socketId.value = null;
-    listener()({ requestId: 'r1' });
+    listener()(makeEnvelope('r1'));
 
     expect(onDebugEntry).toHaveBeenCalledWith(
       expect.objectContaining({ conversationId: undefined }),

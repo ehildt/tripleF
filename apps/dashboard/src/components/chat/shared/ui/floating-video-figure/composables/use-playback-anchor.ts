@@ -1,9 +1,9 @@
 import { computed, onMounted, onUnmounted, type Ref, ref } from 'vue';
 
 import { toEmbedUrl } from '@/composables/helpers/to-embed-url.helper';
+import { usePlaybackSession } from '@/composables/use-playback-session';
 import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
 import type { AnchorCandidate } from '@/stores/playback-anchor.types';
-import { useVideoPlaybackStore } from '@/stores/video-playback';
 
 import { findAnchorScrollRoot } from './helpers/find-anchor-scroll-root.helper';
 import type { TemplateRefTarget } from './use-playback-anchor.types';
@@ -18,12 +18,21 @@ import type { TemplateRefTarget } from './use-playback-anchor.types';
 const TOP_CHROME_CLEARANCE_PX = 56;
 
 /**
- * Minimum visible ratio before the figure counts as in view: the player
- * pops out into the floating window the moment the figure starts sliding
- * past the scroll container's top or bottom edge (fully visible = in view).
- * Slightly below 1.0 to absorb sub-pixel rounding.
+ * A figure counts as in view when its vertical center sits inside the
+ * scroll root, inset by this margin — never a "fully visible" ratio: full
+ * visibility is unreachable for figures taller than the visible region
+ * (big/wide videos, short windows), so the video popped out on scroll and
+ * could not dock back, with the breakage varying by monitor and window
+ * size. A center point is reachable for any figure size and viewport.
  */
-const FULLY_VISIBLE_RATIO = 0.99;
+const DOCK_EDGE_INSET_PX = 24;
+
+/**
+ * Dense ratio steps so the observer callback keeps firing while the figure
+ * slides through the scroller; center-in-bounds is evaluated per callback
+ * and the steps only exist to keep the callbacks flowing.
+ */
+const VISIBILITY_RATIO_STEPS = Array.from({ length: 21 }, (_, i) => i / 20);
 
 /**
  * Anchor wiring for one video figure: registers the figure's media box as
@@ -40,7 +49,7 @@ export function usePlaybackAnchor(
   options?: { dockCondition?: () => boolean },
 ) {
   const playbackAnchorStore = usePlaybackAnchorStore();
-  const videoPlaybackStore = useVideoPlaybackStore();
+  const playback = usePlaybackSession();
 
   const anchorElement = ref<HTMLElement | null>(null);
 
@@ -55,15 +64,15 @@ export function usePlaybackAnchor(
   );
 
   const isLaunchedHere = computed(
-    () => videoPlaybackStore.launchedVideo?.videoUrl === videoUrl.value,
+    () => playback.launchedVideo.value?.videoUrl === videoUrl.value,
   );
 
   /** The floating player currently overlays this figure's media box. */
   const isDockedHere = computed(
     () =>
       isLaunchedHere.value &&
-      playbackAnchorStore.dockedAnchorElement !== null &&
-      playbackAnchorStore.dockedAnchorElement === anchorElement.value,
+      playback.dockedAnchorElement.value !== null &&
+      playback.dockedAnchorElement.value === anchorElement.value,
   );
 
   /**
@@ -83,7 +92,7 @@ export function usePlaybackAnchor(
         true,
       );
     }
-    videoPlaybackStore.launchVideo({
+    playback.launchVideo({
       videoUrl: item.value.videoUrl,
       title: item.value.title,
     });
@@ -101,18 +110,23 @@ export function usePlaybackAnchor(
     observer = new IntersectionObserver(
       ([entry]) => {
         if (candidate && anchorElement.value) {
+          const rect = entry.boundingClientRect;
+          const centerY = rect.top + rect.height / 2;
+          const rootTop = entry.rootBounds?.top ?? 0;
+          const rootBottom = entry.rootBounds?.bottom ?? window.innerHeight;
           playbackAnchorStore.setAnchorCandidateInView(
             videoUrl.value,
             candidate,
             entry.isIntersecting &&
-              entry.intersectionRatio >= FULLY_VISIBLE_RATIO,
+              centerY >= rootTop + DOCK_EDGE_INSET_PX &&
+              centerY <= rootBottom - DOCK_EDGE_INSET_PX,
           );
         }
       },
       scrollRoot
-        ? { root: scrollRoot, threshold: [0, FULLY_VISIBLE_RATIO] }
+        ? { root: scrollRoot, threshold: VISIBILITY_RATIO_STEPS }
         : {
-            threshold: [0, FULLY_VISIBLE_RATIO],
+            threshold: VISIBILITY_RATIO_STEPS,
             rootMargin: `-${TOP_CHROME_CLEARANCE_PX}px 0px 0px 0px`,
           },
     );

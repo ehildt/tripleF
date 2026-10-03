@@ -3,7 +3,7 @@
  * Embeddable video figure used by every video surface in the chat (video
  * lists, video galleries, hero media). Figures never mount a player
  * themselves: they render a poster, and clicking it launches the video into
- * the app-level floating player (see video-playback.state). While the
+ * the app-level floating player (see use-playback-session). While the
  * figure is in view, that player overlays this figure's media box exactly —
  * positioned via CSS alone, never re-parented, so playback continues
  * uninterrupted when it flips between inline, floating popup, and back
@@ -151,14 +151,14 @@ function handlePosterLoad() {
 
 /* The chained selector beats the global .exchange-message :deep(div)
    padding so the player sits flush inside its card. height: 100% lets the
-   media fill taller-than-16/9 boxes (gallery rows stretch cards to equal
+   media fill taller-than-3/2 boxes (gallery rows stretch cards to equal
    heights); aspect-ratio still drives the box when the parent height is
    indefinite. */
 .floating-video-figure .floating-video-figure__media {
   position: relative;
   width: 100%;
   height: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 2;
   padding: 0;
   background: var(--color-bg-tertiary);
 }
@@ -258,7 +258,7 @@ function handlePosterLoad() {
   position: relative;
   width: 100%;
   height: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 2;
   padding: 0;
   border: none;
   background-color: var(--color-bg-tertiary);

@@ -4,7 +4,7 @@ import {
   type MemoryPartitionRememberInput,
   memoryPartitionRememberSchema,
 } from './memory-partition-remember.schema.js';
-import type { MemoryToolScope } from './memory-tool-scope.js';
+import type { MemoryToolScope } from './memory-tool-scope.types.js';
 
 interface MemoryPartitionRememberDeps {
   scope: MemoryToolScope;

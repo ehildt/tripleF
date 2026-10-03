@@ -10,6 +10,7 @@ const baseEntry: DlqEntry = {
   requestId: 'req-1',
   queueName: 'harness',
   jobId: null,
+  jobName: 'req-1',
   status: 'Failed',
   payload: { filters: { model: 'llama3', event: 'harness', roomId: 'r1' } },
   failedReason: null,
@@ -37,9 +38,12 @@ describe('DlqTopBar', () => {
     const wrapper = mount(DlqTopBar, {
       props: { entry: baseEntry, models: ['llama3'], isImmutable: false },
     });
-    const trigger = wrapper.find('.dropdown-trigger');
+    const trigger = wrapper.find('.model-select-field__trigger');
     await trigger.trigger('click');
-    expect(wrapper.find('.model-list-search__input').exists()).toBe(true);
+    // The dropdown teleports to the body; query the document for the list.
+    expect(
+      document.body.querySelector('.model-list-search__input'),
+    ).toBeTruthy();
   });
 
   it('does not show editable controls when immutable', () => {

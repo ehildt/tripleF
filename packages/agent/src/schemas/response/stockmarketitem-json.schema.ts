@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { safeUrl } from '../helpers/url-trust/url-schema.helper.js';
+import { safeUrl } from '../helpers/url-trust/safe-url.helper.js';
 
 import { markerSchema, referenceLineSchema } from './chart-overlays-json.schema.js';
 import { internationalCoverageSchema } from './international-coverage-json.schema.js';

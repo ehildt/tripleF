@@ -5,7 +5,7 @@ import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistSettingsStore } from '@/stores/playlist-settings';
+import { usePlaylistStore } from '@/stores/playlist';
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
 
 import ChatNavigationSection from './chat-navigation-section/ChatNavigationSection.vue';
@@ -24,13 +24,13 @@ import WidgetsSection from './widgets-section/WidgetsSection.vue';
 const { activeSettingsTab, selectSettingsTab } = useSettingsTab();
 const { tiles } = useSettingsHealthTiles();
 const popoutSettingsStore = usePopoutSettingsStore();
-const playlistSettingsStore = usePlaylistSettingsStore();
+const playlistStore = usePlaylistStore();
 
 // The Settings previews are transient: switching the panel's own section
 // (Integrations → Preprocessing → … → System) dismisses them too.
 watch(activeSettingsTab, () => {
   popoutSettingsStore.hidePopoutPreview();
-  playlistSettingsStore.hidePlaylistPreview();
+  playlistStore.hidePlaylistPreview();
 });
 
 const TAB_TITLE_KEYS: Record<SettingsTab, string> = {

@@ -9,15 +9,19 @@
  * hosts the playlist add/remove toggle; when the playlist panel is not
  * visible, the title becomes the scrolling now-playing marquee that
  * otherwise lives in the playlist bar.
+ *
+ * Presentational: the marquee and bar-visibility decisions are provided by
+ * the app orchestrator as props, not read from a store here.
  */
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
 import VideoPlayerSurface from '@/components/shared/ui/video-player-surface/VideoPlayerSurface.vue';
 import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
-import { useRightToolbarStore } from '@/stores/right-toolbar';
 import type { ResizeDirection } from '@/types/resize-direction.model';
 
 import { useFloatingPlayerHost } from './composables/use-floating-player-host';
+import type { FloatingPlayerProps } from './FloatingPlayer.types';
+
+const props = defineProps<FloatingPlayerProps>();
 
 const {
   launchedVideo,
@@ -36,12 +40,9 @@ const {
   startResize,
   minimize,
   stop,
-} = useFloatingPlayerHost();
+} = useFloatingPlayerHost(props.session);
 
 const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(launchedVideo);
-
-const rightToolbarStore = useRightToolbarStore();
-const popoutSettingsStore = usePopoutSettingsStore();
 
 function handleResize(direction: ResizeDirection, event: PointerEvent) {
   startResize(direction, event);
@@ -60,14 +61,14 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
     :class="{ 'floating-player--hidden': windowHidden }"
     :style="dockedInline ? { ...dockedStyle, ...dockedClipStyle } : popupStyle"
     :docked="dockedInline"
-    :bar-always-visible="popoutSettingsStore.popoutShowBarAlways"
+    :bar-always-visible="popoutShowBarAlways"
     data-floating-player
     :title="launchedVideo.title"
-    :show-title-marquee="!rightToolbarStore.playlistMarqueeVisible"
+    :show-title-marquee="showTitleMarquee"
     :opacity-percent="opacityPercent"
     :is-in-playlist="isInPlaylist"
-    minimize-:title="$t('common.minimizeVideo')"
-    close-:title="$t('common.stopVideo')"
+    :minimize-title="$t('common.minimizeVideo')"
+    :close-title="$t('common.stopVideo')"
     @drag="startDrag"
     @opacity-input="setOpacity"
     @toggle-playlist="togglePlaylistVideo"

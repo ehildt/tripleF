@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { STANDALONE_QUERY_DESCRIPTION, STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constants.js';
+import { STANDALONE_QUERY_DESCRIPTION, STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 
 import { createSerperBusinessReviewsSearch } from './business-reviews-search.tool.js';
 import { createSerperImageSearch } from './image-search.tool.js';
