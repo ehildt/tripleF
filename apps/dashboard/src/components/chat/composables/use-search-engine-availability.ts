@@ -7,9 +7,17 @@ import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persis
 
 import { useToast } from '../../../composables/use-toast';
 import type { SearchEngineState } from '../shared/composables/use-search-engine-availability.types';
+import { buildMirroredOverrides } from './helpers/build-mirrored-overrides.helper';
 import { configuredEngines } from './helpers/configured-engines.helper';
 import { engineIsEnabled } from './helpers/engine-is-enabled.helper';
-import { listSearchSources } from './list-search-sources.helper';
+import { listSearchSources } from './helpers/list-search-sources.helper';
+import { mergeSourceEndpoint } from './helpers/merge-source-endpoint.helper';
+import type {
+  ProviderOverrides,
+  ProviderSessionOverrides,
+  ProviderSourceEndpoint,
+} from './helpers/provider-overrides.types';
+import { resolveSourceTargets } from './helpers/resolve-source-targets.helper';
 
 /**
  * Whether the assistant currently has a search engine at its disposal, plus
@@ -32,11 +40,8 @@ export function useSearchEngineAvailability() {
   const isEnabled = ref(false);
   const isLoaded = ref(false);
   const isToggling = ref(false);
-  const snapshotConfig = ref<Record<string, unknown> | null>(null);
-  const sessionOverrides = ref<Record<
-    string,
-    Record<string, unknown> | undefined
-  > | null>(null);
+  const snapshotConfig = ref<ProviderOverrides | null>(null);
+  const sessionOverrides = ref<ProviderSessionOverrides | null>(null);
 
   /** Every toggleable search source (web, images, news, …) + its state. */
   const searchSources = computed(() =>
@@ -68,9 +73,9 @@ export function useSearchEngineAvailability() {
         fetchConfig(getPersistentSocketSessionId()),
       ]);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const snapshot = (await res.json()) as Record<string, unknown>;
+      const snapshot = (await res.json()) as ProviderOverrides;
       const overridesConfig = (sessionConfig?.providerOverrides ??
-        null) as Record<string, Record<string, unknown> | undefined> | null;
+        null) as ProviderSessionOverrides | null;
       const configured = configuredEngines(snapshot);
       hasApiKey.value = configured.length > 0;
       // Search counts as on when at least one configured engine is enabled.
@@ -95,80 +100,12 @@ export function useSearchEngineAvailability() {
     const config = await fetchConfig(sessionId);
     const overrides = {
       ...(config?.providerOverrides ?? {}),
-    } as Record<string, Record<string, unknown>>;
+    } as ProviderSessionOverrides;
     for (const name of engines) {
       overrides[name] = { ...overrides[name], enabled };
     }
     await saveConfig(sessionId, { providerOverrides: overrides });
     sessionOverrides.value = overrides;
-  }
-
-  /** All engines that offer a given source toggle, in snapshot order. */
-  function findSourceProviders(source: string): string[] {
-    const providers: string[] = [];
-    for (const [provider, engine] of Object.entries(
-      snapshotConfig.value ?? {},
-    )) {
-      if (!engine || typeof engine !== 'object') continue;
-      if (source in (engine as Record<string, unknown>))
-        providers.push(provider);
-    }
-    return providers;
-  }
-
-  /** The source's endpoint config, session overrides merged over the snapshot. */
-  function sourceEndpoint(
-    provider: string,
-    source: string,
-  ): Record<string, unknown> {
-    const snapshot = ((
-      snapshotConfig.value?.[provider] as Record<string, unknown> | undefined
-    )?.[source] ?? {}) as Record<string, unknown>;
-    const session = (sessionOverrides.value?.[provider]?.[source] ??
-      {}) as Record<string, unknown>;
-    return { ...snapshot, ...session };
-  }
-
-  /** Optimistically mirror a source toggle into the local refs. */
-  function mirrorSourceLocally(
-    provider: string,
-    source: string,
-    endpoint: Record<string, unknown>,
-  ) {
-    const snapshot = { ...(snapshotConfig.value ?? {}) };
-    const engine = { ...(snapshot[provider] as Record<string, unknown>) };
-    engine[source] = {
-      ...(engine[source] as Record<string, unknown>),
-      ...endpoint,
-    };
-    snapshot[provider] = engine;
-    snapshotConfig.value = snapshot;
-
-    const session = { ...(sessionOverrides.value ?? {}) };
-    const sessionEngine = { ...(session[provider] ?? {}) };
-    sessionEngine[source] = {
-      ...(sessionEngine[source] as Record<string, unknown>),
-      ...endpoint,
-    };
-    session[provider] = sessionEngine;
-    sessionOverrides.value = session;
-  }
-
-  /**
-   * The engines a source toggle should affect: only the ones that currently
-   * have that source enabled (so a toggle never flips an engine the user
-   * turned off, e.g. Serper on + Bright Data off → toggling only affects
-   * Serper). When the source is off everywhere, the toggle re-enables it on
-   * the primary engine (Serper, else the first configured engine) so the
-   * tag can light back up without unexpectedly re-enabling every engine.
-   */
-  function resolveSourceTargets(source: string): string[] {
-    const offering = findSourceProviders(source);
-    const active = offering.filter(
-      (provider) => sourceEndpoint(provider, source).enabled === true,
-    );
-    if (active.length) return active;
-    return offering.includes('serper') ? ['serper'] : offering.slice(0, 1);
   }
 
   /**
@@ -182,24 +119,50 @@ export function useSearchEngineAvailability() {
    */
   async function toggleSource(source: string) {
     if (isToggling.value) return;
-    const providers = resolveSourceTargets(source);
+    const providers = resolveSourceTargets(
+      snapshotConfig.value,
+      sessionOverrides.value,
+      source,
+    );
     if (!providers.length) return;
     // Spread each endpoint so sibling settings (results, …) survive the
     // toggle — a bare {enabled} write would drop them.
     const previous = providers.some(
-      (provider) => sourceEndpoint(provider, source).enabled === true,
+      (provider) =>
+        mergeSourceEndpoint(
+          snapshotConfig.value,
+          sessionOverrides.value,
+          provider,
+          source,
+        ).enabled === true,
     );
     const next = !previous;
     const nextEndpoints = Object.fromEntries(
       providers.map((provider) => [
         provider,
-        { ...sourceEndpoint(provider, source), enabled: next },
+        {
+          ...mergeSourceEndpoint(
+            snapshotConfig.value,
+            sessionOverrides.value,
+            provider,
+            source,
+          ),
+          enabled: next,
+        },
       ]),
     );
     const backupSnapshot = snapshotConfig.value;
     const backupSession = sessionOverrides.value;
     for (const [provider, endpoint] of Object.entries(nextEndpoints)) {
-      mirrorSourceLocally(provider, source, endpoint);
+      const mirrored = buildMirroredOverrides(
+        snapshotConfig.value,
+        sessionOverrides.value,
+        provider,
+        source,
+        endpoint,
+      );
+      snapshotConfig.value = mirrored.snapshot;
+      sessionOverrides.value = mirrored.session;
     }
     isToggling.value = true;
     try {
@@ -220,12 +183,10 @@ export function useSearchEngineAvailability() {
       const config = await fetchConfig(sessionId);
       const overrides = {
         ...(config?.providerOverrides ?? {}),
-      } as Record<string, Record<string, unknown>>;
+      } as ProviderSessionOverrides;
       for (const provider of providers) {
-        const existing = (overrides[provider]?.[source] ?? {}) as Record<
-          string,
-          unknown
-        >;
+        const existing = (overrides[provider]?.[source] ??
+          {}) as ProviderSourceEndpoint;
         overrides[provider] = {
           ...overrides[provider],
           [source]: { ...existing, enabled: next },

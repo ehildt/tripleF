@@ -34,15 +34,15 @@ const valueTypeClass = computed(() => {
   if (
     typeof v === 'boolean' ||
     (typeof v === 'string' && (v === 'true' || v === 'false'))
-  ) {
+  )
     return 'detail-tag__value--boolean';
-  }
+
   if (
     typeof v === 'number' ||
     (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v))
-  ) {
+  )
     return 'detail-tag__value--number';
-  }
+
   return null;
 });
 </script>

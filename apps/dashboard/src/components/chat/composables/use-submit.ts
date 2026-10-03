@@ -1,6 +1,5 @@
 import { computed, ref } from 'vue';
 
-import { getApiUrl } from '@/api/api-url';
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
 import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
 import { buildModelVisionWarning } from '@/components/chat/helpers/build-model-vision-warning.helper';
@@ -21,53 +20,38 @@ import { useConversationStore } from '@/stores/conversation';
 import { useMergeSelectionStore } from '@/stores/merge-selection';
 import { useModelsStore } from '@/stores/models';
 import type {
-  ConversationMetadata,
   ConversationMetadataDocument,
   ConversationMetadataImage,
 } from '@/types/form-query-params.model';
 import { buildFormData } from '@/utils/build-form-data.helper';
-import { buildHeaders } from '@/utils/build-headers.helper';
-import { buildQueryParams } from '@/utils/build-query-params.helper';
-import { handleResponse } from '@/utils/handle-response.helper';
 import { requireModel } from '@/utils/require-model.helper';
 
+import { buildSubmitQueryParams } from './helpers/build-submit-query-params.helper';
 import { mapDocumentEntry } from './helpers/map-document-entry.helper';
 import { mapDocumentToOriginal } from './helpers/map-document-to-original.helper';
 import { mapDocumentToPrompt } from './helpers/map-document-to-prompt.helper';
-import type { SendRequestOptions, UseSubmitOptions } from './use-submit.types';
+import { useHarnessRequest } from './use-harness-request';
+import type { UseSubmitOptions } from './use-submit.types';
 
 export function useSubmit(options: UseSubmitOptions) {
-  const { socketProvider, isEventConnected, isRoomConnected } = options;
+  const {
+    socketProvider,
+    isEventConnected,
+    isRoomConnected,
+    promptDraft,
+    resetPromptDraft,
+  } = options;
 
   const appStore = useAppStore();
   const conversationStore = useConversationStore();
   const modelsStore = useModelsStore();
+  const attachedFilesStore = useAttachedFilesStore();
+  const mergeSelection = useMergeSelection();
+  const mergeSelectionStore = useMergeSelectionStore();
   const toast = useToast();
+  const { postHarnessRequest } = useHarnessRequest({ socketProvider });
 
-  const loading = ref(false);
-  const arguments_ = ref('');
-
-  const STORAGE_KEY = 'api-fields';
-
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      arguments_.value = parsed.arguments_ ?? '';
-    } catch {
-      /* ignore */
-    }
-  }
-
-  function persistArguments() {
-    try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-      existing.arguments_ = arguments_.value;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-    } catch {
-      /* ignore */
-    }
-  }
+  const isSubmitting = ref(false);
 
   const activeConversation = computed(() => {
     if (!conversationStore.activeConversationId) return null;
@@ -96,7 +80,7 @@ export function useSubmit(options: UseSubmitOptions) {
     return Number(percent) >= 100;
   }
 
-  function ensureConversation(): string {
+  function ensureActiveConversation(): string {
     if (conversationStore.activeConversationId)
       return conversationStore.activeConversationId;
     const s = conversationStore.createNewConversation();
@@ -113,14 +97,14 @@ export function useSubmit(options: UseSubmitOptions) {
     }
   }
 
-  async function buildConversation(mergedContent?: string): Promise<string> {
+  async function buildPromptPayload(mergedContent?: string): Promise<string> {
     if (mergedContent) {
       return JSON.stringify([{ role: 'user', content: mergedContent }]);
     }
     const id = conversationStore.activeConversationId;
     if (!id)
       return JSON.stringify([
-        { role: 'user', content: arguments_.value.trim() },
+        { role: 'user', content: promptDraft.value.trim() },
       ]);
     return conversationStore.buildPrompt(id);
   }
@@ -218,7 +202,6 @@ export function useSubmit(options: UseSubmitOptions) {
       await modelsStore.whenModelsReady();
     }
     if (!requireModel(conversationModel, toast)) {
-      loading.value = false;
       return null;
     }
 
@@ -226,11 +209,10 @@ export function useSubmit(options: UseSubmitOptions) {
     const event = (activeConversation.value?.event ?? '').trim();
     const room = (activeConversation.value?.roomId ?? '').trim();
     const requestId = appStore.requestId;
-    const userContent = arguments_.value.trim();
+    const userContent = promptDraft.value.trim();
     const sid = conversationStore.activeConversationId;
     const conversationId = sid ? conversationStore.getConversationId(sid) : '';
 
-    const mergeSelection = useMergeSelection();
     const selectedForMerge = sid ? mergeSelection.selectedExchanges(sid) : [];
     const isMergeSubmit = selectedForMerge.length > 0;
     const mergeFromRequestIds =
@@ -250,35 +232,7 @@ export function useSubmit(options: UseSubmitOptions) {
     };
   }
 
-  function buildSubmitParams(
-    requestId: string,
-    sid: string,
-    room: string,
-    event: string,
-    hasNewImages: boolean,
-    conversationMetadata: ConversationMetadata,
-    conversationId: string,
-  ): URLSearchParams {
-    return buildQueryParams({
-      requestId,
-      sessionId: sid ?? '',
-      // Memory partition override (settings → system): empty = the session id is the partition.
-      memoryPartition: appStore.memoryPartition,
-      // Cognition space override (settings → system): empty = cognition lives in the memory partition.
-      memoryCognition: appStore.memoryCognition,
-      conversationId,
-      roomId: room,
-      stream: activeConversation.value?.stream ?? true,
-      event,
-      numCtx: activeConversation.value?.numCtx ?? '',
-      think: activeConversation.value?.think ?? 'medium',
-      hasNewImages,
-      conversationMetadata,
-      language: i18n.global.locale.value,
-    });
-  }
-
-  async function submitRest() {
+  async function submitCurrentPrompt() {
     const ctx = await buildSubmitContext();
     if (!ctx) return;
 
@@ -296,9 +250,8 @@ export function useSubmit(options: UseSubmitOptions) {
     } = ctx;
 
     ensureSocketSubscription(event, room);
-    const socket = socketProvider.getSocket();
 
-    const pendingEntries = useAttachedFilesStore().pendingFilesFor(
+    const pendingEntries = attachedFilesStore.pendingFilesFor(
       sid ?? '',
       conversationId,
     );
@@ -387,7 +340,7 @@ export function useSubmit(options: UseSubmitOptions) {
       );
     }
 
-    const conv = await buildConversation(mergedPromptContent);
+    const conv = await buildPromptPayload(mergedPromptContent);
 
     const formData = buildFormData(newFiles, {
       prompt: conv,
@@ -395,8 +348,7 @@ export function useSubmit(options: UseSubmitOptions) {
       documentTextLimit: appStore.documentTextLimit,
     });
 
-    arguments_.value = '';
-    persistArguments();
+    resetPromptDraft();
 
     // The selection is NOT consumed by the submit: the source icons keep
     // pulsing while the merged request is in flight. Only when the unified
@@ -404,7 +356,7 @@ export function useSubmit(options: UseSubmitOptions) {
     // pending merge — marking the sources as merged respectively leaving
     // them untouched for a retry.
     if (sid && isMergeSubmit) {
-      useMergeSelectionStore().markMergePending(sid, requestId);
+      mergeSelectionStore.markMergePending(sid, requestId);
     }
 
     addCrossSessionExchanges(
@@ -418,15 +370,21 @@ export function useSubmit(options: UseSubmitOptions) {
       promptDocuments,
     );
 
-    const params = buildSubmitParams(
+    const params = buildSubmitQueryParams({
       requestId,
-      sid,
-      room,
+      sessionId: sid ?? '',
+      memoryPartition: appStore.memoryPartition,
+      memoryCognition: appStore.memoryCognition,
+      conversationId,
+      roomId: room,
+      stream: activeConversation.value?.stream,
       event,
+      numCtx: activeConversation.value?.numCtx,
+      think: activeConversation.value?.think,
       hasNewImages,
       conversationMetadata,
-      conversationId,
-    );
+      language: i18n.global.locale.value,
+    });
 
     socketProvider.addPendingMessage(
       event,
@@ -435,7 +393,7 @@ export function useSubmit(options: UseSubmitOptions) {
       activeConversation.value?.stream ?? true,
     );
 
-    await sendRequest({
+    await postHarnessRequest({
       model,
       requestId,
       sid,
@@ -443,98 +401,17 @@ export function useSubmit(options: UseSubmitOptions) {
       event,
       params,
       formData,
-      socket,
+      stream: activeConversation.value?.stream ?? true,
+      numCtx: activeConversation.value?.numCtx ?? '',
       referencedImages,
       newDocuments,
       conversationId,
     });
   }
 
-  async function sendRequest(options: SendRequestOptions) {
-    const {
-      model,
-      requestId,
-      sid,
-      room,
-      event,
-      params,
-      formData,
-      socket,
-      referencedImages,
-      newDocuments,
-      conversationId,
-    } = options;
-
-    const headers = buildHeaders(model);
-
-    const fetchPromise = fetch(
-      getApiUrl(`/api/v1/harness?${params.toString()}`),
-      {
-        method: 'POST',
-        headers,
-        body: formData,
-      },
-    );
-
-    socketProvider.trackRequest(
-      getApiUrl(
-        `/api/v1/harness${params.toString() ? '?' + params.toString() : ''}`,
-      ),
-      'POST',
-      fetchPromise,
-      {
-        headers,
-        formData,
-        requestId,
-        roomId: room,
-        event,
-        numCtx: activeConversation.value?.numCtx ?? '',
-        stream: activeConversation.value?.stream ?? true,
-        model,
-      },
-    );
-
-    try {
-      const res = await fetchPromise;
-      if (!res.ok) {
-        const text = await res.text();
-        const msg = `${res.status}: ${text}`;
-        toast.debug(msg);
-        toast.error(
-          i18n.global.t('toast.requestError', { status: res.status }),
-        );
-        const id = conversationStore.activeConversationId;
-        if (id) conversationStore.markExchangeError(id, requestId, msg);
-        return;
-      }
-
-      handleResponse(res, socket, toast);
-
-      // Promote pending previews to uploaded metadata and clear the pending
-      // attachment state for this conversation.
-      if (sid) {
-        conversationStore.setUploadedImages(sid, referencedImages);
-        conversationStore.setUploadedDocuments(sid, newDocuments);
-        useAttachedFilesStore().clearPendingFilesForConversation(
-          sid,
-          conversationId,
-        );
-        conversationStore.setFiles(sid, []);
-      }
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.debug(msg);
-      toast.error(i18n.global.t('toast.serverUnreachable'));
-      const id = conversationStore.activeConversationId;
-      if (id) conversationStore.markExchangeError(id, requestId, msg);
-    } finally {
-      loading.value = false;
-    }
-  }
-
   async function submit(text?: string) {
     if (text !== undefined) {
-      arguments_.value = text;
+      promptDraft.value = text;
     }
 
     if (isTokenContextFull()) {
@@ -544,18 +421,20 @@ export function useSubmit(options: UseSubmitOptions) {
       return;
     }
 
-    ensureConversation();
+    ensureActiveConversation();
 
     appStore.refreshRequestId();
-    loading.value = true;
+    isSubmitting.value = true;
 
-    await submitRest();
+    try {
+      await submitCurrentPrompt();
+    } finally {
+      isSubmitting.value = false;
+    }
   }
 
   return {
-    loading,
-    arguments_,
+    isSubmitting,
     submit,
-    persistArguments,
   };
 }

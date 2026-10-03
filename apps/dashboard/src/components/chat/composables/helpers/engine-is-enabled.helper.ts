@@ -1,13 +1,16 @@
 import { engineObject } from './engine-object.helper';
+import type {
+  ProviderOverrides,
+  ProviderSessionOverrides,
+} from './provider-overrides.types';
 
 /**
  * A provider's effective enabled flag — the session override wins, then the
  * snapshot value.
  */
 export function engineIsEnabled(
-  snapshot: Record<string, unknown> | null | undefined,
-  sessionOverrides:
-    Record<string, Record<string, unknown> | undefined> | null | undefined,
+  snapshot: ProviderOverrides | null | undefined,
+  sessionOverrides: ProviderSessionOverrides | null | undefined,
   name: string,
 ): boolean {
   const session = sessionOverrides?.[name];
