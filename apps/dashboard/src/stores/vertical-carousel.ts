@@ -15,8 +15,7 @@ export const useVerticalCarouselStore = defineStore('vertical-carousel', () => {
   const scrollTop = ref(0);
   const viewportHeight = ref(0);
 
-  const { isProgrammaticScroll, armProgrammaticScroll, endProgrammaticScroll } =
-    useProgrammaticScrollWindow();
+  const { armProgrammaticScroll } = useProgrammaticScrollWindow();
 
   const previousActiveSectionIndex = ref(0);
   // Set when a history click should land the target section at its top
@@ -61,9 +60,6 @@ export const useVerticalCarouselStore = defineStore('vertical-carousel', () => {
     activeSectionIndex,
     previousActiveSectionIndex,
     forceTopOnNextTransition,
-    isProgrammaticScroll,
-    armProgrammaticScroll,
-    endProgrammaticScroll,
     scrollToSection,
     syncScrollRefs,
   };

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronFirst, ChevronLast, Landmark } from '@lucide/vue';
 
+import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import type { SourcesMenuProps } from './SourcesMenu.types';
@@ -46,11 +47,13 @@ const emit = defineEmits<{
           :aria-pressed="tag.enabled"
           @click="emit('toggleSource', tag.key)"
         >
-          <component
-            :is="tag.icon"
-            class="sources-menu__tag-icon"
-            aria-hidden="true"
-          />
+          <MotionIcon>
+            <component
+              :is="tag.icon"
+              class="sources-menu__tag-icon"
+              aria-hidden="true"
+            />
+          </MotionIcon>
         </button>
       </Tooltip>
       <Tooltip v-if="eodhdState?.available" :text="eodhdToggleTitle">
@@ -62,7 +65,9 @@ const emit = defineEmits<{
           :aria-pressed="eodhdState.enabled"
           @click="emit('toggleEodhd')"
         >
-          <Landmark class="sources-menu__tag-icon" aria-hidden="true" />
+          <MotionIcon>
+            <Landmark class="sources-menu__tag-icon" aria-hidden="true" />
+          </MotionIcon>
         </button>
       </Tooltip>
     </template>
@@ -88,7 +93,7 @@ const emit = defineEmits<{
 }
 
 .sources-menu__toggle:hover {
-  color: var(--color-accent-secondary);
+  color: color-mix(in srgb, var(--color-accent-primary) 60%, white);
 }
 
 .sources-menu__toggle-icon {
@@ -107,12 +112,16 @@ const emit = defineEmits<{
   transition: color 0.2s ease;
 }
 
+/* Enabled tags lighten toward white on hover, same as the view-menu tags
+   beside them; the accent hue keeps the search sources distinct from the
+   blueish view toggles. Disabled sources render muted so their state reads
+   at a glance. */
 .sources-menu__tag--disabled {
   color: var(--color-fg-muted);
 }
 
 .sources-menu__tag:hover {
-  color: var(--color-accent-secondary);
+  color: color-mix(in srgb, var(--color-accent-primary) 60%, white);
 }
 
 .sources-menu__tag-icon {

@@ -14,7 +14,7 @@ defineProps<CompareResponseProps>();
 </script>
 
 <template>
-  <article class="harness-compare">
+  <article class="compare-response">
     <header class="hero">
       <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
@@ -31,7 +31,7 @@ defineProps<CompareResponseProps>();
       :title="data.videoGalleryTitle"
       :items="data.videoGalleryItems"
     />
-    <p v-if="data.note" class="harness-compare__note">{{ data.note }}</p>
+    <p v-if="data.note" class="compare-response__note">{{ data.note }}</p>
     <KeyFindingsSection
       :items="data.keyFindings"
       :title="$t('common.keyFindings')"
@@ -43,13 +43,13 @@ defineProps<CompareResponseProps>();
 </template>
 
 <style scoped>
-.harness-compare {
+.compare-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;
 }
 
-.harness-compare__note {
+.compare-response__note {
   font-size: 0.875rem;
   color: var(--color-fg-muted);
   font-style: italic;

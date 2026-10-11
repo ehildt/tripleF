@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LoaderCircle, Search } from '@lucide/vue';
+import { Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
 import type { OllamaModel } from '@/types/ollama-model.model';
@@ -58,11 +58,21 @@ const filteredModels = computed(() => {
         {{ defaultLabel }}
       </button>
 
-      <!-- Loading state: only while the very first catalog is missing — a
-           background refresh keeps rendering the models it already has. -->
-      <div v-if="loading && !allModels.length" class="model-list-loading">
-        <LoaderCircle class="model-list-loading__icon" />
-        <span class="model-list-loading__text">{{ $t('common.loading') }}</span>
+      <!-- Loading state: pulse skeleton rows shaped like the model entries,
+           shown only while the very first catalog is missing — a background
+           refresh keeps rendering the models it already has. Decorative
+           (aria-hidden), like every loading skeleton in the app. -->
+      <div
+        v-if="loading && !allModels.length"
+        class="model-list-skeleton"
+        aria-hidden="true"
+      >
+        <div v-for="row in 3" :key="row" class="model-list-skeleton__row">
+          <div class="model-list-skeleton__line" />
+          <div
+            class="model-list-skeleton__line model-list-skeleton__line--meta"
+          />
+        </div>
       </div>
 
       <!-- Model list: local models first, then cloud. -->
@@ -180,24 +190,39 @@ const filteredModels = computed(() => {
   color: var(--color-accent-primary);
 }
 
-.model-list-loading {
+/* Loading placeholders mirror the model-list-item shape and share the
+   app's standard 2s skeleton pulse (globally defined in style.css), so
+   every loading list animates identically. */
+.model-list-skeleton {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-3) 0;
+  flex-direction: column;
+  gap: var(--spacing-1);
 }
 
-.model-list-loading__icon {
-  width: 1rem;
-  height: 1rem;
-  animation: spin 1s linear infinite;
-  color: var(--color-accent-primary);
+.model-list-skeleton__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-divider);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.model-list-loading__text {
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-muted);
+.model-list-skeleton__line {
+  height: 0.75rem;
+  width: 55%;
+  border-radius: 0.25rem;
+  background-color: color-mix(
+    in srgb,
+    var(--color-fg-muted) 18%,
+    var(--color-bg-tertiary)
+  );
+}
+
+.model-list-skeleton__line--meta {
+  height: 0.625rem;
+  width: 35%;
 }
 
 .model-list-empty {

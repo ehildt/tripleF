@@ -67,14 +67,21 @@ vi.mock('@/components/chat/composables/use-chat-conversation', async () => {
   };
 });
 
-vi.mock('./files/composables/use-files', async () => {
+vi.mock('./composables/use-attachment-list', async () => {
   const { ref } = await import('vue');
   const hasAttachments = ref(false);
   toolbar.hasAttachments = hasAttachments;
   return {
-    useFiles: () => ({
+    useAttachmentList: () => ({
       attachments: ref([]),
       hasAttachments,
+    }),
+  };
+});
+
+vi.mock('./files/composables/use-files', () => {
+  return {
+    useFiles: () => ({
       previewUrl: vi.fn(() => ''),
       previewUrlForHash: vi.fn(() => ''),
       removeAttachment: vi.fn(),

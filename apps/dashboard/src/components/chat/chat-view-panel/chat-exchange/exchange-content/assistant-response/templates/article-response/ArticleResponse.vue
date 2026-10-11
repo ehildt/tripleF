@@ -22,7 +22,7 @@ const { direction, splitHero, quoteAside, multicolBody, spans } =
 </script>
 
 <template>
-  <article class="article" :class="`article--${direction}`">
+  <article class="article-response" :class="`article-response--${direction}`">
     <ArticleHero
       :title="data.title"
       :subtitle="data.subtitle"
@@ -83,7 +83,7 @@ const { direction, splitHero, quoteAside, multicolBody, spans } =
 </template>
 
 <style scoped>
-.article {
+.article-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;

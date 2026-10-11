@@ -94,7 +94,7 @@ const dimensions = computed(() =>
   overflow: hidden;
   border: 1px solid var(--color-divider);
   background-color: var(--color-bg-tertiary);
-  cursor: zoom-in;
+  cursor: pointer;
   transition: border-color 0.2s ease;
 }
 

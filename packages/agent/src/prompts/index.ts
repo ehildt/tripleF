@@ -50,6 +50,7 @@ export * from './memory/research-friction-query.prompt.js';
 export * from './memory/research-triage.prompt.js';
 export * from './memory/taxonomy-reconcile-prompt.constant.js';
 export * from './memory/vectorize-prompt.constant.js';
+export * from './memory/vectorize-prompt.types.js';
 export * from './memory/vocabulary-section.helper.js';
 export * from './memory/vocabulary-section.types.js';
 export * from './shared/commonmark-format.prompt.js';

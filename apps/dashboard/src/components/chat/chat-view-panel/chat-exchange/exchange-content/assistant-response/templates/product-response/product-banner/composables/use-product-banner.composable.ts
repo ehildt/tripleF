@@ -46,6 +46,17 @@ export function useProductBanner(props: ProductBannerProps) {
     props.ratingCount ? t('common.reviews', { count: props.ratingCount }) : '',
   );
 
+  const ratingValue = computed(() =>
+    hasRating.value && props.rating !== undefined
+      ? props.rating.toFixed(1)
+      : '',
+  );
+  const countText = computed(() =>
+    ratingCountNumber.value && reviewsLabel.value
+      ? `${ratingCountNumber.value} ${reviewsLabel.value}`
+      : '',
+  );
+
   function openLightbox() {
     if (slide.value) props.onImageClick?.(slide.value);
   }
@@ -55,8 +66,8 @@ export function useProductBanner(props: ProductBannerProps) {
     hasRating,
     slide,
     label,
-    ratingCountNumber,
-    reviewsLabel,
+    ratingValue,
+    countText,
     openLightbox,
   };
 }

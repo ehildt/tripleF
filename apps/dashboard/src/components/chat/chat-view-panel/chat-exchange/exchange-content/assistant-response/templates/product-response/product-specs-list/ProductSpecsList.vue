@@ -3,30 +3,29 @@
  * Full spec table: eyebrow heading plus label/value rows separated by
  * hairlines — editorial style, no box, no zebra, no truncation.
  */
-import { computed } from 'vue';
-
 import EyebrowTitle from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/eyebrow-title/EyebrowTitle.vue';
-import type { KeyFinding } from '@/types/harness-response-data.model';
 
-import { splitSpecLabel } from '../../../shared/helpers/split-spec-label.helper';
+import { useProductSpecsList } from './composables/use-product-specs-list.composable';
+import type { ProductSpecsListProps } from './ProductSpecsList.types';
 
-const props = defineProps<{ items: readonly KeyFinding[] }>();
+const props = defineProps<ProductSpecsListProps>();
 
-const rows = computed(() =>
-  (props.items ?? []).map((item) => splitSpecLabel(item.text)),
-);
+const { rows } = useProductSpecsList(props);
 </script>
 
 <template>
-  <section class="spec-list">
+  <section class="product-specs-list">
     <EyebrowTitle :title="$t('common.keySpecs')" />
-    <ul class="spec-list__table">
-      <li v-for="(row, idx) in rows" :key="idx" class="spec-list__row">
+    <ul class="product-specs-list__table">
+      <li v-for="(row, idx) in rows" :key="idx" class="product-specs-list__row">
         <template v-if="row.label">
-          <span class="spec-list__label">{{ row.label }}</span>
-          <span class="spec-list__value">{{ row.value }}</span>
+          <span class="product-specs-list__label">{{ row.label }}</span>
+          <span class="product-specs-list__value">{{ row.value }}</span>
         </template>
-        <span v-else class="spec-list__value spec-list__value--full">
+        <span
+          v-else
+          class="product-specs-list__value product-specs-list__value--full"
+        >
           {{ row.value }}
         </span>
       </li>
@@ -35,13 +34,13 @@ const rows = computed(() =>
 </template>
 
 <style scoped>
-.spec-list {
+.product-specs-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1-5);
 }
 
-.spec-list__table {
+.product-specs-list__table {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -49,7 +48,7 @@ const rows = computed(() =>
   flex-direction: column;
 }
 
-.spec-list__row {
+.product-specs-list__row {
   display: flex;
   align-items: baseline;
   gap: var(--spacing-3);
@@ -57,11 +56,11 @@ const rows = computed(() =>
   border-bottom: 1px solid var(--color-divider);
 }
 
-.spec-list__row:first-child {
+.product-specs-list__row:first-child {
   border-top: 1px solid var(--color-divider);
 }
 
-.spec-list__label {
+.product-specs-list__label {
   flex-shrink: 0;
   width: 9rem;
   font-size: 0.7rem;
@@ -72,19 +71,19 @@ const rows = computed(() =>
   overflow-wrap: anywhere;
 }
 
-.spec-list__value {
+.product-specs-list__value {
   min-width: 0;
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--color-fg-primary);
 }
 
-.spec-list__value--full {
+.product-specs-list__value--full {
   color: var(--color-fg-secondary);
 }
 
 @media (max-width: 40rem) {
-  .spec-list__label {
+  .product-specs-list__label {
     width: 6.5rem;
   }
 }

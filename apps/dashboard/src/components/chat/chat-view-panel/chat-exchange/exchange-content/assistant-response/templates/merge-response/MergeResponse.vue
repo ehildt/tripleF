@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
+import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
@@ -16,48 +15,20 @@ import { useEvaluationResponseData } from '../evaluation-response/composables/us
 import EvaluationComparisonSection from '../evaluation-response/sections/evaluation-comparison-section/EvaluationComparisonSection.vue';
 import EvaluationListSection from '../evaluation-response/sections/evaluation-list-section/EvaluationListSection.vue';
 import EvaluationSubjectProfile from '../evaluation-response/sections/evaluation-subject-profile/EvaluationSubjectProfile.vue';
+import { hasAnyMergeContent } from './helpers/has-any-merge-content.helper';
 import MergeBodySection from './merge-body-section/MergeBodySection.vue';
 import type { MergeResponseProps } from './MergeResponse.types';
 
 const props = defineProps<MergeResponseProps>();
 
-const { subjectProfiles, comparisonView, isMultiSubject, videosFirst } =
+const { subjectProfiles, comparisonView, isMultiSubject } =
   useEvaluationResponseData(props);
-
-const hasAnyContent = computed(() =>
-  Boolean(
-    props.data.category ||
-    props.data.title ||
-    props.data.subtitle ||
-    props.data.summary ||
-    props.data.introduction ||
-    props.data.subject ||
-    props.data.verdict ||
-    props.data.reasoning ||
-    props.data.strengths?.length ||
-    props.data.weaknesses?.length ||
-    props.data.recommendations?.length ||
-    props.data.subjects?.length ||
-    props.data.comparison ||
-    props.data.mergedEvaluations?.length ||
-    props.data.bodySections?.length ||
-    props.data.sectionTitle ||
-    props.data.sectionContent ||
-    props.data.keyFindings?.length ||
-    props.data.cards?.length ||
-    props.data.galleryItems?.length ||
-    props.data.videoGalleryItems?.length ||
-    props.data.sources?.length ||
-    props.data.internationalCoverage?.length ||
-    props.data.heroImageUrl ||
-    props.data.heroVideoUrl,
-  ),
-);
+const { videosFirst } = useHarnessMediaPriority(props.data);
 </script>
 
 <template>
-  <article class="harness-merge">
-    <template v-if="hasAnyContent">
+  <article class="merge-response">
+    <template v-if="hasAnyMergeContent(data)">
       <ArticleHero
         :title="data.title"
         :subtitle="data.subtitle"
@@ -171,7 +142,7 @@ const hasAnyContent = computed(() =>
 </template>
 
 <style scoped>
-.harness-merge {
+.merge-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;

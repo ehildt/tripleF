@@ -14,7 +14,8 @@ export const VARIANT_SELECTION_RULES = `PROMPT SELECTION RULES
 - default for product: use when the user asks about a specific product they want to buy, compare prices, find where to buy something, or look up best deals.
 - default for shoplist: use for follow-up shopping questions about a product the conversation already covered with a full product overview — the user keeps asking about the same product (prices again, other shops, availability) and needs a compact purchase list, not another deep-dive.
 - coding: use for text when the user asks for code help or technical implementation.
-- familiarity: use for text when the user asks whether you know or have heard of something (see FAMILIARITY QUESTION RULES).`;
+- familiarity: use for text when the user asks whether you know or have heard of something (see FAMILIARITY QUESTION RULES).
+- opinion: use for text when the user asks for YOUR personal judgment, take, opinion, or recommendation on a subject (see OPINION QUESTION RULES).`;
 
 /**
  * "Do you know X?" opens a conversation about a public subject — it is never
@@ -28,3 +29,16 @@ export const FAMILIARITY_QUESTION_RULES = `FAMILIARITY QUESTION RULES
 - Example: "kennst du dich mit NTE aus?" → template: "text", prompt: "familiarity", tools: [serperWebSearch]
 - Example: "have you heard of the new Dune movie?" → template: "text", prompt: "familiarity", tools: [serperWebSearch]
 - Example: "do you know the Pythagorean theorem?" → template: "text", prompt: "familiarity", tools: []`;
+
+/**
+ * "Do you think I should…?" asks for YOUR judgment in conversation — it is
+ * never a report commission, so it always lands on text:opinion, grounded by
+ * a web search whenever the subject is recent, niche, or living.
+ */
+export const OPINION_QUESTION_RULES = `OPINION QUESTION RULES
+- Questions asking for YOUR personal judgment, take, opinion, or recommendation — "do you think X is any good?", "should I try X?", "would you recommend X?", "what's your take on X?", "is X worth it?" — are opinion questions: the user wants your conversational verdict, not a structured review document.
+- Opinion questions MUST use template "text" with prompt variant "opinion" — NEVER "article", "news", or "evaluation". The evaluation template renders an editorial review piece (headline, score panel, galleries) — that shape is only for explicit review commissions ("evaluate X", "write a review of X with pros and cons").
+- Include the enabled *WebSearch tool whenever the subject is niche, recent, a living topic, or a specific named entity — a grounded verdict needs the current reception and facts. This overrides the "personal opinion: exclude *WebSearch" line in TOPIC-BASED TOOL SELECTION for living subjects. Omit tools only for timeless, purely conceptual subjects.
+- Example: "do you think i should try aion 2?" → template: "text", prompt: "opinion", tools: [serperWebSearch]
+- Example: "would you recommend the new Dune movie to a casual viewer?" → template: "text", prompt: "opinion", tools: [serperWebSearch]
+- Example: "what do you think of stoicism?" (timeless concept) → template: "text", prompt: "opinion", tools: []`;

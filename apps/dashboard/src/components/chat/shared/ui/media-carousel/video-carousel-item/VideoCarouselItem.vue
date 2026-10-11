@@ -2,6 +2,7 @@
 import { useVideoGalleryTile } from '@/components/chat/shared/composables/use-video-gallery-tile.composable';
 import FloatingVideoFigure from '@/components/chat/shared/ui/floating-video-figure/FloatingVideoFigure.vue';
 import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
+import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import MediaCaptionScrim from '../../media-caption-scrim/MediaCaptionScrim.vue';
@@ -14,7 +15,8 @@ const props = defineProps<{
   active?: boolean;
 }>();
 
-const { posterUrl, isInPlaylist, togglePlaylistVideo } = useVideoGalleryTile(
+const { posterUrl } = useVideoGalleryTile(() => props.item);
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   () => props.item,
 );
 </script>

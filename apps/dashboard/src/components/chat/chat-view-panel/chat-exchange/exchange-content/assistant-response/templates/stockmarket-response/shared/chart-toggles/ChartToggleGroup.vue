@@ -1,19 +1,9 @@
 <script setup lang="ts" generic="T extends string">
 import ChartToggle from './ChartToggle.vue';
-import type { ChartToggleOption } from './ChartToggleGroup.types';
+import type { ChartToggleGroupProps } from './ChartToggleGroup.types';
 
-defineProps<{
-  /** Accessible name for the group (e.g. "Price style"). */
-  groupLabel: string;
-  /** Options rendered left to right. */
-  options: ChartToggleOption<T>[];
-  /** Active option id (`v-model`). */
-  modelValue: T;
-  /** Disables every toggle in the group (and hides the active state). */
-  disabled?: boolean;
-}>();
-
-const emit = defineEmits<{ 'update:modelValue': [value: T] }>();
+defineProps<ChartToggleGroupProps<T>>();
+const modelValue = defineModel<T>({ required: true });
 </script>
 
 <template>
@@ -25,7 +15,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: T] }>();
       :disabled="disabled"
       :label="$t(option.labelKey)"
       :icon="option.icon"
-      @click="emit('update:modelValue', option.id)"
+      @click="modelValue = option.id"
     />
   </div>
 </template>

@@ -21,9 +21,8 @@ export const FOLLOW_UP_RULES = `FOLLOW-UP / REFINEMENT RULES
   → If the user also asks for external facts, online research, images, or videos, include the enabled *WebSearch tool and every enabled *ImageSearch and *VideoSearch tool.
   → Otherwise, do NOT invoke a *WebSearch or other tools unless external facts are explicitly requested.
 - If the user asks for an evaluation, critique, review, pros/cons, or judgment about items from the prior conversation:
-  → Choose template "evaluation".
-  → Always include every enabled *ImageSearch and *VideoSearch tool.
-  → Also include the enabled *WebSearch tool when the user asks for external facts or online research.
+  → For a commissioned structured review piece: choose template "evaluation", include every enabled *ImageSearch and *VideoSearch tool, and also the enabled *WebSearch tool when the user asks for external facts or online research.
+  → When the user instead asks for YOUR take, opinion, or a personal recommendation ("do you think I should…?", "is it still worth it?", "your honest opinion?"): choose template "text", prompt "opinion" per the OPINION QUESTION RULES — no media tools.
 - Examples:
   Prior: article about "Gothic remake". User: "now show me images" → article, tools: [serperWebSearch, serperImageSearch]
   Prior: article about "Gothic remake". User: "add videos too" → article, tools: [serperWebSearch, serperImageSearch, serperVideoSearch]
@@ -34,7 +33,7 @@ export const FOLLOW_UP_RULES = `FOLLOW-UP / REFINEMENT RULES
   Prior: article about "Gothic remake". User: "evaluate this game" → evaluation, tools: [serperImageSearch, serperVideoSearch].
   Prior: product overview for "Sony WH-1000XM5" ([Template: product]). User: "where else can I buy it?" → shoplist, tools: [serperWebSearch, serperShoppingSearch, serperImageSearch].
   Prior: product overview for "Samsung 990 Pro 2TB" ([Template: product]). User: "gibt es das auch woanders günstiger?" (German — is it cheaper anywhere else?) → shoplist, tools: [serperWebSearch, serperShoppingSearch, serperImageSearch].
-  Prior: product overview for "Sony WH-1000XM5" ([Template: product]). User: "is it still worth it?" → evaluation, tools: [serperImageSearch, serperVideoSearch].
+  Prior: product overview for "Sony WH-1000XM5" ([Template: product]). User: "is it still worth it?" → text:opinion (your verdict asked, not a new review piece), tools: [serperWebSearch].
 - If the user provides corrections (e.g. "I wanted images"), add the missing tools to the existing set.
 - Do NOT downgrade template to text just because the user is clarifying.
 - If the latest message alone seems vague ("show me"), check prior turns for context.
@@ -47,7 +46,7 @@ When template is article, news, or text and the user query involves:
   - factual research, data, statistics: include the enabled *WebSearch tool
   - specific named entities (games, movies, books, people): include the enabled *WebSearch tool
   - current events, news, announcements: include the enabled *WebSearch tool + newsSearch
-  - personal opinion, creative writing, brainstorming: exclude *WebSearch tools
+  - personal opinion, creative writing, brainstorming: exclude *WebSearch tools — EXCEPT opinion questions about recent, niche, or living subjects (see OPINION QUESTION RULES), which include the enabled *WebSearch tool for grounding
   - coding help: exclude the *WebSearch tool unless user asks about a specific library/framework version`;
 
 export const CLARIFICATION_RULES = `CLARIFICATION RULES

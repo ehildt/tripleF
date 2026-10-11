@@ -28,7 +28,10 @@ export function stackMarkerLayouts(
     const above = group.filter((layout) => layout.textAbove);
     const below = group.filter((layout) => !layout.textAbove);
     above.forEach((layout, slot) => {
-      result.push({ ...layout, stackOffset: -slot * STACK_GAP });
+      result.push({
+        ...layout,
+        stackOffset: slot === 0 ? 0 : -slot * STACK_GAP,
+      });
     });
     below.forEach((layout, slot) => {
       result.push({ ...layout, stackOffset: slot * STACK_GAP });

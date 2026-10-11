@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
+import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import { useMenuPosition } from '@/composables/use-menu-position';
 
 import type { ToolbarMenuTriggerProps } from './ToolbarMenuTrigger.types';
 
 const props = withDefaults(defineProps<ToolbarMenuTriggerProps>(), {
+  isDisabled: false,
   dropdownWidth: '14rem',
 });
 
 const emit = defineEmits<{
   toggleMenu: [];
   close: [];
-  mouseenter: [];
-  mouseleave: [];
 }>();
 
 const triggerRef = ref<HTMLElement | null>(null);
@@ -30,32 +30,31 @@ const dropdownStyle = computed(() => ({
   ...positionStyle.value,
   width: props.dropdownWidth,
 }));
-
-/** Hover hints (brain blink) only make sense while the trigger is disabled —
- *  an enabled menu needs no "select a model first" cue. */
-function onIconMouseEnter() {
-  if (props.isDisabled) emit('mouseenter');
-}
-
-function onIconMouseLeave() {
-  if (props.isDisabled) emit('mouseleave');
-}
 </script>
 
 <template>
   <div ref="triggerRef" class="toolbar-menu-trigger">
-    <IconButton
-      size="sm"
-      :active="isOpen"
-      :disabled="isDisabled"
-      :blinking="blinking"
-      :title="title"
-      @mouseenter="onIconMouseEnter"
-      @mouseleave="onIconMouseLeave"
-      @click.stop="emit('toggleMenu')"
-    >
-      <component :is="triggerIcon" />
-    </IconButton>
+    <!-- The tooltip keeps working while the button is enabled; a disabled
+         trigger (no model selected) suppresses it, matching the strip's
+         other menus. -->
+    <Tooltip :text="title" :disabled="isDisabled">
+      <button
+        type="button"
+        class="toolbar-menu-trigger__button"
+        :aria-label="title"
+        :aria-expanded="isOpen"
+        :disabled="isDisabled"
+        @click.stop="emit('toggleMenu')"
+      >
+        <MotionIcon>
+          <component
+            :is="triggerIcon"
+            class="toolbar-menu-trigger__icon"
+            aria-hidden="true"
+          />
+        </MotionIcon>
+      </button>
+    </Tooltip>
     <Teleport to="body">
       <!-- The transparent backdrop carries the close intent: the first
            outside click dismisses the menu (slide-over/lightbox pattern). -->
@@ -82,6 +81,38 @@ function onIconMouseLeave() {
   flex-shrink: 0;
 }
 
+/* The trigger mirrors the view-menu's ghost-icon recipe so the prompt menus
+   read as one menu family with the strips on the right of the bar: a bare
+   button, a 0.8rem icon in a saturated hue at rest that lightens toward
+   white on hover (or while its menu is open), and the MotionIcon
+   micro-interaction. The accent hue marks the prompt controls; a disabled
+   trigger (no model selected) recedes into the muted tone. */
+.toolbar-menu-trigger__button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-accent-primary);
+  transition: color 0.2s ease;
+}
+
+.toolbar-menu-trigger__button:hover:not(:disabled),
+.toolbar-menu-trigger__button[aria-expanded='true'] {
+  color: color-mix(in srgb, var(--color-accent-primary) 60%, white);
+}
+
+.toolbar-menu-trigger__button:disabled {
+  color: var(--color-fg-muted);
+  cursor: default;
+}
+
+.toolbar-menu-trigger__icon {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
 .toolbar-menu-trigger__backdrop {
   position: fixed;
   inset: 0;
@@ -92,9 +123,8 @@ function onIconMouseLeave() {
 
 .toolbar-menu-trigger__dropdown {
   /* Teleported to <body>: above the chat column (z-60) and the floating
-     video popouts (z-1000), below the lightbox (1100) — same layer as the
-     model-select menu. Position comes from the trigger anchor inline style
-     (anchored above the trigger). */
+     video popouts (z-1000), below the lightbox (1100). Position comes from
+     the trigger anchor inline style (anchored above the trigger). */
   position: fixed;
   z-index: 1050;
   background-color: var(--color-bg-elevated);

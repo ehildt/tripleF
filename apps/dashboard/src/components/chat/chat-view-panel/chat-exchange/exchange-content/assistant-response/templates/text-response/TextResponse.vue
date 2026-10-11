@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
-import { extractHarnessText } from '@/stores/helpers/harness/text/extract-harness-text.helper';
-import { renderMarkdown } from '@/utils/render-markdown.helper';
-
+import { useTextResponse } from './composables/use-text-response.composable';
 import type { TextResponseProps } from './TextResponse.types';
 
 const props = defineProps<TextResponseProps>();
 
-const renderedHtml = computed(() =>
-  renderMarkdown(extractHarnessText(props.text ?? '')),
-);
+const { renderedHtml } = useTextResponse(props);
 </script>
 
 <template>
-  <div v-if="renderedHtml" class="response-container">
+  <div v-if="renderedHtml" class="text-response">
     <!-- eslint-disable vue/no-v-html -- HTML is rendered by markdown-it and sanitized by DOMPurify -->
     <section class="response-text" v-html="renderedHtml" />
     <!-- eslint-enable vue/no-v-html -->
@@ -22,7 +16,7 @@ const renderedHtml = computed(() =>
 </template>
 
 <style scoped>
-.response-container {
+.text-response {
   line-height: 1.65;
 }
 

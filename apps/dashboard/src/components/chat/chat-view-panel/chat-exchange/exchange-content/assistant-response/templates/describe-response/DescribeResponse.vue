@@ -14,11 +14,11 @@ defineProps<DescribeResponseProps>();
 </script>
 
 <template>
-  <article class="harness-describe">
+  <article class="describe-response">
     <header class="hero">
       <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
-    <p v-if="data.note" class="harness-describe__note">{{ data.note }}</p>
+    <p v-if="data.note" class="describe-response__note">{{ data.note }}</p>
     <GallerySection :title="data.galleryTitle" :items="data.galleryItems" />
     <ParagraphSection
       :title="$t('common.description')"
@@ -39,13 +39,13 @@ defineProps<DescribeResponseProps>();
 </template>
 
 <style scoped>
-.harness-describe {
+.describe-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;
 }
 
-.harness-describe__note {
+.describe-response__note {
   margin: 0;
   font-size: 0.9em;
   color: var(--color-fg-muted);

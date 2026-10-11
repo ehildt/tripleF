@@ -1,13 +1,13 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
-import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
 import { buildVideoPosterUrl } from '@/stores/helpers/harness/media/build-video-poster-url.helper';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 /**
- * Shared state for one video tile (the card-grid item and the carousel
- * slide): the poster URL (thumbnail when present, else derived from the
- * video URL) and the playlist membership toggle.
+ * Shared poster URL for one video tile (the card-grid item and the carousel
+ * slide): the thumbnail when present, else derived from the video URL. The
+ * playlist membership toggle is bound by the tile consumers directly from
+ * `usePlaylistToggle` — it is not re-exported here.
  */
 export function useVideoGalleryTile(item: MaybeRefOrGetter<VideoGalleryItem>) {
   const posterUrl = computed(() => {
@@ -15,7 +15,5 @@ export function useVideoGalleryTile(item: MaybeRefOrGetter<VideoGalleryItem>) {
     return video.thumbnailUrl || buildVideoPosterUrl(video.videoUrl);
   });
 
-  const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(item);
-
-  return { posterUrl, isInPlaylist, togglePlaylistVideo };
+  return { posterUrl };
 }

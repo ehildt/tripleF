@@ -1,4 +1,4 @@
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
 import { markerTextShift } from './marker-text-shift.helper';
 import { splitMarkerText } from './split-marker-text.helper';
 import type { StackedMarkerLayout } from './stack-marker-layouts.helper';

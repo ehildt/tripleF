@@ -4,13 +4,9 @@ import { computed, ref } from 'vue';
 import ChartControls from '../shared/chart-controls/ChartControls.vue';
 import { DEFAULT_RANGE_BARS } from './composables/use-d3-chart.composable';
 import { useD3StackedAreaChart } from './composables/use-d3-stacked-area-chart.composable';
-import type { D3StackedAreaSeries } from './D3Chart.types';
+import type { D3StackedAreaChartProps } from './D3StackedAreaChart.types';
 
-const props = defineProps<{
-  series: D3StackedAreaSeries[];
-  /** normalized = each series rebased to 100; raw = original values. */
-  mode?: 'normalized' | 'raw';
-}>();
+const props = defineProps<D3StackedAreaChartProps>();
 
 /** The chart canvas mount point, created by this component's template. */
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -26,7 +22,7 @@ const { STACKED_AREA_PALETTE, zoomIn, zoomOut, reset, setRange } = chart;
 </script>
 
 <template>
-  <div class="stacked-area-chart">
+  <div class="d3-stacked-area-chart">
     <ChartControls
       :show-range="true"
       :default-bars="DEFAULT_RANGE_BARS"
@@ -35,15 +31,15 @@ const { STACKED_AREA_PALETTE, zoomIn, zoomOut, reset, setRange } = chart;
       :on-reset="reset"
       :on-range="setRange"
     />
-    <div ref="containerRef" class="stacked-area-chart__canvas" />
-    <ul v-if="series.length" class="stacked-area-chart__legend">
+    <div ref="containerRef" class="d3-stacked-area-chart__canvas" />
+    <ul v-if="series.length" class="d3-stacked-area-chart__legend">
       <li
         v-for="(s, i) in series"
         :key="s.name"
-        class="stacked-area-chart__legend-item"
+        class="d3-stacked-area-chart__legend-item"
       >
         <span
-          class="stacked-area-chart__swatch"
+          class="d3-stacked-area-chart__swatch"
           :style="{
             backgroundColor:
               STACKED_AREA_PALETTE[i % STACKED_AREA_PALETTE.length],
@@ -56,7 +52,7 @@ const { STACKED_AREA_PALETTE, zoomIn, zoomOut, reset, setRange } = chart;
 </template>
 
 <style scoped>
-.stacked-area-chart {
+.d3-stacked-area-chart {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
@@ -64,18 +60,18 @@ const { STACKED_AREA_PALETTE, zoomIn, zoomOut, reset, setRange } = chart;
   -webkit-user-select: none;
 }
 
-.stacked-area-chart__canvas {
+.d3-stacked-area-chart__canvas {
   width: 100%;
   height: 16rem;
 }
 
 /* Reset the global .exchange-message div padding leak so the svg fills the
    canvas exactly and the engine's size measurement matches the render. */
-.stacked-area-chart__canvas {
+.d3-stacked-area-chart__canvas {
   padding: 0;
 }
 
-.stacked-area-chart__legend {
+.d3-stacked-area-chart__legend {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-2) var(--spacing-3);
@@ -84,7 +80,7 @@ const { STACKED_AREA_PALETTE, zoomIn, zoomOut, reset, setRange } = chart;
   list-style: none;
 }
 
-.stacked-area-chart__legend-item {
+.d3-stacked-area-chart__legend-item {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
@@ -92,7 +88,7 @@ const { STACKED_AREA_PALETTE, zoomIn, zoomOut, reset, setRange } = chart;
   color: var(--color-fg-muted);
 }
 
-.stacked-area-chart__swatch {
+.d3-stacked-area-chart__swatch {
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 50%;
