@@ -55,7 +55,7 @@ function handleImageError() {
   position: relative;
   display: block;
   width: 100%;
-  cursor: zoom-in;
+  cursor: pointer;
   background: var(--color-bg-tertiary);
   aspect-ratio: 16 / 9;
 }

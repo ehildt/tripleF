@@ -22,7 +22,7 @@ describe('EvaluationListSection', () => {
     });
 
     expect(wrapper.findAll('li')).toHaveLength(2);
-    expect(wrapper.find('li .icon').text()).toBe('→');
+    expect(wrapper.find('li .evaluation-list-section__icon').text()).toBe('→');
   });
 
   it('applies the semantic variant class for strengths and weaknesses', () => {
@@ -33,7 +33,9 @@ describe('EvaluationListSection', () => {
         items: [{ text: 'Fast' }],
       },
     });
-    expect(strengths.find('section').classes()).toContain('strength');
+    expect(strengths.find('section').classes()).toContain(
+      'evaluation-list-section--strength',
+    );
 
     const weaknesses = mount(EvaluationListSection, {
       props: {
@@ -42,7 +44,9 @@ describe('EvaluationListSection', () => {
         items: [{ text: 'Buggy' }],
       },
     });
-    expect(weaknesses.find('section').classes()).toContain('weakness');
+    expect(weaknesses.find('section').classes()).toContain(
+      'evaluation-list-section--weakness',
+    );
   });
 
   it('assigns a cycling color to recommendation icons', () => {

@@ -12,22 +12,16 @@
  * carries total.
  */
 import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-header/ResponseHeader.vue';
-import StarRatingIndicator from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/star-rating-indicator/StarRatingIndicator.vue';
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 
 import { useProductBanner } from './composables/use-product-banner.composable';
+import ProductBannerRating from './product-banner-rating/ProductBannerRating.vue';
 import type { ProductBannerProps } from './ProductBanner.types';
 
 const props = defineProps<ProductBannerProps>();
 
-const {
-  hasImage,
-  hasRating,
-  label,
-  ratingCountNumber,
-  reviewsLabel,
-  openLightbox,
-} = useProductBanner(props);
+const { hasImage, hasRating, label, ratingValue, countText, openLightbox } =
+  useProductBanner(props);
 </script>
 
 <template>
@@ -55,18 +49,14 @@ const {
           eager
         />
 
-        <span v-if="hasRating" class="product-banner__rating">
-          <StarRatingIndicator :rating="rating!" :count="ratingCount" />
-          <span class="product-banner__rating-value">
-            {{ rating!.toFixed(1) }}
-          </span>
-          <span v-if="ratingCount" class="product-banner__rating-count">
-            · {{ ratingCountNumber }} {{ reviewsLabel }}
-          </span>
-          <span v-if="ratingLabel" class="product-banner__rating-label">
-            {{ ratingLabel }}
-          </span>
-        </span>
+        <ProductBannerRating
+          v-if="hasRating"
+          :rating="rating!"
+          :rating-count="ratingCount"
+          :rating-value="ratingValue"
+          :count-text="countText"
+          :label="ratingLabel"
+        />
       </button>
 
       <div v-else class="product-banner__placeholder">
@@ -133,7 +123,7 @@ const {
   width: 100%;
   height: 360px;
   overflow: hidden;
-  cursor: zoom-in;
+  cursor: pointer;
 }
 
 .product-banner__trigger:focus-visible {
@@ -150,34 +140,6 @@ const {
   font-family: var(--font-mono);
   letter-spacing: 0.1em;
   color: var(--color-fg-muted);
-}
-
-/* Always-visible rating overlay pinned to the bottom of the image. */
-.product-banner__rating {
-  position: absolute;
-  inset: auto 0 0 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-1-5);
-  padding: var(--spacing-2) var(--spacing-3);
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, black 80%, transparent),
-    transparent
-  );
-  color: white;
-  font-size: 0.85rem;
-}
-
-.product-banner__rating-value {
-  font-weight: 700;
-}
-
-.product-banner__rating-count {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: color-mix(in srgb, white 80%, transparent);
 }
 
 /* Glassy "+N" image-count badge pinned to the top-right corner of the
@@ -201,15 +163,6 @@ const {
   color: white;
   font-size: 0.85rem;
   font-weight: 700;
-}
-
-.product-banner__rating-label {
-  margin-left: auto;
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: color-mix(in srgb, white 85%, transparent);
 }
 
 .product-banner__caption {

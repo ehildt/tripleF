@@ -58,11 +58,6 @@ describe('IconButton', () => {
     expect(button(wrapper).classes()).toContain('icon-button--armed');
   });
 
-  it('applies the blinking class', () => {
-    const wrapper = mount(IconButton, { props: { blinking: true } });
-    expect(button(wrapper).classes()).toContain('icon-button--blinking');
-  });
-
   it('applies the compact sm class', () => {
     const wrapper = mount(IconButton, { props: { size: 'sm' } });
     expect(button(wrapper).classes()).toContain('icon-button--sm');

@@ -50,7 +50,11 @@ import {
   TOOL_SELECTION_MODEL,
   WHEN_TO_USE_TOOLS_RULES,
 } from './intent-selection/tool-selection.prompt.js';
-import { FAMILIARITY_QUESTION_RULES, VARIANT_SELECTION_RULES } from './intent-selection/variant-selection.prompt.js';
+import {
+  FAMILIARITY_QUESTION_RULES,
+  OPINION_QUESTION_RULES,
+  VARIANT_SELECTION_RULES,
+} from './intent-selection/variant-selection.prompt.js';
 
 /**
  * The intent-classifier system prompt, composed from the section modules in
@@ -94,6 +98,8 @@ ${VARIANT_SELECTION_RULES}
 ${MEMORY_RULES}
 
 ${FAMILIARITY_QUESTION_RULES}
+
+${OPINION_QUESTION_RULES}
 
 ${PRODUCT_TEMPLATE_RULES}
 

@@ -1,32 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { RelatedStory } from '@/types/harness-response-data.model';
 
+import { useRelatedStoriesSection } from './composables/use-related-stories-section.composable';
 import RelatedStoryCard from './related-story-card/RelatedStoryCard.vue';
+import type { RelatedStoriesSectionProps } from './RelatedStoriesSection.types';
 
-const props = defineProps<{
-  items?: RelatedStory[];
-  /** First story spans the full row (ar5), set by the art direction. */
-  spans?: boolean;
-}>();
+const props = defineProps<RelatedStoriesSectionProps>();
 
-/**
- * Related-story cards are designed to hold an image; a card without one
- * renders as an empty placeholder box. Keep only image-backed cards.
- */
-const validItems = computed(() =>
-  (props.items ?? []).filter(
-    (item): item is RelatedStory =>
-      typeof item === 'object' &&
-      item !== null &&
-      typeof item.imageUrl === 'string' &&
-      item.imageUrl.length > 0 &&
-      (typeof (item as RelatedStory).url === 'string' ||
-        typeof (item as RelatedStory).title === 'string'),
-  ),
-);
+const { validItems } = useRelatedStoriesSection(props);
 </script>
 
 <template>

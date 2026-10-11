@@ -13,8 +13,6 @@ export interface IconButtonProps {
   danger?: boolean;
   /** Destructive confirm state: pulsing red until the second click. */
   armed?: boolean;
-  /** Attention cue: pulsing accent ring until the state clears. */
-  blinking?: boolean;
   /** Toggle semantics for the accessibility tree (`aria-pressed`). */
   ariaPressed?: boolean;
   /**

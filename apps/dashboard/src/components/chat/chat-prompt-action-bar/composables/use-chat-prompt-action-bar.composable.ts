@@ -1,100 +1,33 @@
-import {
-  Clapperboard,
-  FileText,
-  Film,
-  Globe,
-  Image,
-  Images,
-  Key,
-  Languages,
-  Link,
-  type LucideIcon,
-  MapPin,
-  Newspaper,
-  ShoppingCart,
-  Star,
-} from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { useAppStore } from '@/stores/app';
 import { useModelsStore } from '@/stores/models';
 import type { ScrollMode } from '@/types/app.model';
-import type { CollapsibleSectionKey } from '@/types/harness-response-data.model';
 
 import { useChatContextSize } from '../../composables/use-chat-context-size';
 import { useChatConversation } from '../../composables/use-chat-conversation';
-import { useChatDropdowns } from '../../composables/use-chat-dropdowns';
-import { useChatInput } from '../../composables/use-chat-input';
-import { useChatThink } from '../../composables/use-chat-think';
-import { usePromptDraft } from '../../composables/use-prompt-draft';
 import { useSearchEngineAvailability } from '../../composables/use-search-engine-availability';
 import { mapPresentationToggle } from './helpers/map-presentation-toggle.helper';
 import { mapSectionToggle } from './helpers/map-section-toggle.helper';
 import { mapSourceTag } from './helpers/map-source-tag.helper';
-import { useFileSelect } from './use-file-select.composable';
-
-/** Icon and label per known search source; unknown sources fall back to Search. */
-const SOURCE_META: Record<string, { icon: LucideIcon; label: string }> = {
-  web: { icon: Globe, label: 'web' },
-  images: { icon: Image, label: 'images' },
-  news: { icon: Newspaper, label: 'news' },
-  shopping: { icon: ShoppingCart, label: 'shopping' },
-  webpageFetch: { icon: FileText, label: 'fetch' },
-  places: { icon: MapPin, label: 'places' },
-  videos: { icon: Film, label: 'videos' },
-  reviews: { icon: Star, label: 'reviews' },
-};
-
-/** Response-content section types the blue menu can collapse/expand. The
- * media sections (gallery, videoGallery) are not here — they switch
- * presentations instead of hiding. */
-const SECTION_TOGGLES: {
-  key: CollapsibleSectionKey;
-  icon: LucideIcon;
-  labelKey: string;
-}[] = [
-  { key: 'sources', icon: Link, labelKey: 'common.sources' },
-  { key: 'keyFindings', icon: Key, labelKey: 'common.keyFindings' },
-  {
-    key: 'internationalCoverage',
-    icon: Languages,
-    labelKey: 'common.internationalCoverage',
-  },
-];
-
-/** Media section types the blue menu switches between gallery/list. */
-const PRESENTATION_TOGGLES: {
-  key: 'gallery' | 'videoGallery';
-  media: 'image' | 'video';
-  icon: LucideIcon;
-}[] = [
-  { key: 'gallery', media: 'image', icon: Images },
-  { key: 'videoGallery', media: 'video', icon: Clapperboard },
-];
-
-/** Localized switch keys per media type — gallery and list labels. */
-const PRESENTATION_SWITCH_KEYS: Record<
-  'image' | 'video',
-  { toGallery: string; toList: string }
-> = {
-  image: {
-    toGallery: 'common.switchToImageGallery',
-    toList: 'common.switchToImageList',
-  },
-  video: {
-    toGallery: 'common.switchToVideoGallery',
-    toList: 'common.switchToVideoList',
-  },
-};
+import { SEARCH_SOURCE_META } from './search-source-meta.constant';
+import {
+  PRESENTATION_SWITCH_KEYS,
+  PRESENTATION_TOGGLES,
+  SECTION_TOGGLES,
+} from './view-menu-toggles.constant';
 
 /**
- * The prompt action bar's full self-contained surface: display derivations,
- * model capability checks, the prompt draft, and every action the bar's
- * controls bind to. Composes its dependencies — the active conversation,
- * think/context/dropdown/search-engine state, the prompt draft, and the file
- * picker — by import, so the bar component binds one composable and the
- * chat orchestrator knows nothing about the bar's internals.
+ * The prompt action bar's own derived presentation surface: display
+ * derivations, the model capability checks, the localized titles, and the
+ * bar-level store toggles (scroll mode, menu collapse, section/presentation
+ * visibility). The raw bindings the bar's controls need — the prompt draft,
+ * the think/context/dropdown surfaces, the search-engine toggles, and the
+ * file picker — are bound by ChatPromptActionBar.vue directly from their
+ * source composables; this composable imports only what it derives from
+ * (conversation, context defaults, search-engine state) and never re-exports
+ * those members unchanged.
  */
 export function useChatPromptActionBar() {
   const { t } = useI18n();
@@ -103,26 +36,9 @@ export function useChatPromptActionBar() {
 
   const { conversationId, conversation, selectedModelObj } =
     useChatConversation();
-  const { filteredThinkOptions, selectThink } = useChatThink();
-  const { filteredContextSizeOptions, defaultContextSize, selectContextSize } =
-    useChatContextSize();
-  const {
-    setThinkDropdownRef,
-    setContextSizeDropdownRef,
-    onThinkOpen,
-    onContextSizeOpen,
-  } = useChatDropdowns();
-  const { onCollapsedKeydown } = useChatInput();
-  const { promptDraft } = usePromptDraft();
-  const {
-    searchEngineState,
-    searchSources,
-    eodhdState,
-    refresh,
-    toggleSearchEngine,
-    toggleSource,
-    toggleEodhd,
-  } = useSearchEngineAvailability();
+  const { defaultContextSize } = useChatContextSize();
+  const { searchEngineState, eodhdState, searchSources } =
+    useSearchEngineAvailability();
 
   /** Whether the active conversation has any model picked — name-based so
    * the bar never disables while the catalog is still loading (a selected
@@ -138,10 +54,6 @@ export function useChatPromptActionBar() {
     () => selectedModelObj.value?.capabilities?.includes('vision') ?? true,
   );
 
-  const isFileSelectDisabled = computed(
-    () => hasNoModelSelected.value || !supportsVision.value,
-  );
-
   const currentThinkValue = computed(
     () => conversation.value?.think || 'medium',
   );
@@ -150,21 +62,10 @@ export function useChatPromptActionBar() {
     () => conversation.value?.numCtx || defaultContextSize.value,
   );
 
-  /** Formats the raw numCtx option for the context dropdown. */
-  const formatContextValue = (value: string): string =>
-    modelsStore.formatCtx(Number(value));
-
   /** Ambient refresh: the server cache owns freshness, so focus just re-asks. */
   function onPromptFocus() {
     modelsStore.fetchModels({ silent: true });
   }
-
-  const {
-    acceptedFileTypes,
-    setFileInputRef,
-    triggerFileSelect,
-    onFileInputChange,
-  } = useFileSelect(isFileSelectDisabled);
 
   /** Tooltip shown on the engine toggle when no search engine is configured. */
   const noSearchEngineTitle = computed(() =>
@@ -249,10 +150,6 @@ export function useChatPromptActionBar() {
     }),
   );
 
-  function toggleSection(section: CollapsibleSectionKey) {
-    appStore.toggleSectionCollapsed(section);
-  }
-
   /** Blue-menu media toggles: one per media section type, with its active
    * presentation and a localized switch label. The media sections are never
    * hidden — the toggle flips gallery ↔ list. */
@@ -267,10 +164,6 @@ export function useChatPromptActionBar() {
       return { key, media, icon, presentation, title: t(titleKey) };
     }),
   );
-
-  function togglePresentation(media: 'image' | 'video') {
-    appStore.toggleMediaPresentation(media);
-  }
 
   const fileSelectTitle = computed(() =>
     !supportsVision.value
@@ -295,7 +188,7 @@ export function useChatPromptActionBar() {
     searchSources.value.map((source) => {
       const { key, enabled, icon, label, titleKey } = mapSourceTag(
         source,
-        SOURCE_META,
+        SEARCH_SOURCE_META,
       );
       return { key, enabled, icon, title: t(titleKey, { label }) };
     }),
@@ -314,8 +207,6 @@ export function useChatPromptActionBar() {
   );
 
   return {
-    promptDraft,
-    onCollapsedKeydown,
     onPromptFocus,
     fileSelectTitle,
     actionsClass,
@@ -335,31 +226,9 @@ export function useChatPromptActionBar() {
     viewMenuToggleTitle,
     viewMenuAlwaysShow,
     sectionToggles,
-    toggleSection,
     presentationToggles,
-    togglePresentation,
-    eodhdState,
-    filteredThinkOptions,
     currentThinkValue,
-    selectThink,
-    filteredContextSizeOptions,
     currentContextSizeValue,
-    selectContextSize,
-    formatContextValue,
     hasNoModelSelected,
-    setThinkDropdownRef,
-    setContextSizeDropdownRef,
-    onThinkOpen,
-    onContextSizeOpen,
-    isFileSelectDisabled,
-    searchEngineState,
-    toggleSearchEngine,
-    toggleSource,
-    toggleEodhd,
-    acceptedFileTypes,
-    setFileInputRef,
-    triggerFileSelect,
-    onFileInputChange,
-    refresh,
   };
 }

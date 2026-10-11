@@ -3,10 +3,10 @@ import { ref, watch } from 'vue';
 import { useChatConversation } from '@/components/chat/composables/use-chat-conversation';
 import { usePlaybackSession } from '@/composables/use-playback-session';
 
-import { useFiles } from '../files/composables/use-files';
 import { useHistoryAvailability } from '../history/composables/use-history-availability';
 import { usePlaylistTab } from '../playlist/composables/use-playlist-tab';
 import type { RightToolbarView } from '../right-toolbar-view.type';
+import { useAttachmentList } from './use-attachment-list';
 
 /**
  * Owns the chat right toolbar's active section (files, playlist, or history).
@@ -23,7 +23,7 @@ import type { RightToolbarView } from '../right-toolbar-view.type';
 export function useRightToolbarView() {
   const playback = usePlaybackSession();
   const { conversationId: activeConversationId } = useChatConversation();
-  const { hasAttachments } = useFiles();
+  const { hasAttachments } = useAttachmentList();
   const { hasPlaylist } = usePlaylistTab();
   const { hasHistory } = useHistoryAvailability();
 

@@ -18,8 +18,6 @@ const emit = defineEmits<{
   'update:newEvent': [value: string];
   'update:newRoomId': [value: string];
   subscribeToEvent: [];
-  mouseenter: [];
-  mouseleave: [];
 }>();
 
 const canSubscribe = computed(() => props.newEvent.trim().length > 0);
@@ -29,14 +27,11 @@ const canSubscribe = computed(() => props.newEvent.trim().length > 0);
   <ToolbarMenuTrigger
     :is-open="isOpen"
     :is-disabled="isDisabled"
-    :blinking="blinking"
     :title="$t('common.streamTitle')"
     :trigger-icon="Orbit"
     dropdown-width="16rem"
     @toggle-menu="emit('toggleMenu')"
     @close="emit('close')"
-    @mouseenter="emit('mouseenter')"
-    @mouseleave="emit('mouseleave')"
   >
     <div class="stream-settings-menu__content">
       <StreamModeToggle

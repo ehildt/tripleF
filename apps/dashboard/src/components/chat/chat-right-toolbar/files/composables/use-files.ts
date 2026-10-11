@@ -35,7 +35,7 @@ export function useFiles() {
 
   const attachedFiles = computed(() => attachedFilesStore.attachedFiles);
 
-  const { attachments, hasAttachments } = useAttachmentList();
+  const { attachments } = useAttachmentList();
 
   function previewUrlForHash(hash: string): string {
     const conversation = activeConversation.value;
@@ -218,8 +218,6 @@ export function useFiles() {
   }
 
   return {
-    attachments,
-    hasAttachments,
     previewUrl,
     previewUrlForHash,
     removeAttachment,

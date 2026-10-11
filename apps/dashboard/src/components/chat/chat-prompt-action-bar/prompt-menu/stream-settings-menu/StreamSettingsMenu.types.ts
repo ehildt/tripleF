@@ -9,6 +9,4 @@ export interface StreamSettingsMenuProps {
   newEvent: string;
   /** The new subscription room/channel input value. */
   newRoomId: string;
-  /** Blink state for the trigger icon (brain-blink cue when disabled). */
-  blinking?: boolean;
 }

@@ -12,7 +12,7 @@ const meta = {
     docs: {
       description: {
         component: `
-A small icon-only button with hover/active/danger/armed/blinking states, used
+A small icon-only button with hover/active/danger/armed states, used
 for toolbar and header actions. The icon is provided through the default slot.
 
 Emits \`click\` (with the native MouseEvent), \`mouseenter\`, \`mouseleave\`,
@@ -49,9 +49,6 @@ export const Danger: Story = { args: { danger: true } };
 
 /** Armed (destructive confirm pulse). */
 export const Armed: Story = { args: { armed: true } };
-
-/** Blinking (attention pulse ring). */
-export const Blinking: Story = { args: { blinking: true } };
 
 /** Compact row-action scale. */
 export const Small: Story = { args: { size: 'sm', title: 'Compact action' } };

@@ -9,7 +9,7 @@ import type { SummaryResponseProps } from '../SummaryResponse.types';
  * media ordering and whether any content exists to render.
  */
 export function useSummaryResponseData(props: SummaryResponseProps) {
-  const { heroUrl, videosFirst } = useHarnessMediaPriority(props.data);
+  const { heroUrl } = useHarnessMediaPriority(props.data);
 
   const hasAnyContent = computed(() =>
     Boolean(
@@ -25,5 +25,5 @@ export function useSummaryResponseData(props: SummaryResponseProps) {
     ),
   );
 
-  return { videosFirst, hasAnyContent };
+  return { hasAnyContent };
 }

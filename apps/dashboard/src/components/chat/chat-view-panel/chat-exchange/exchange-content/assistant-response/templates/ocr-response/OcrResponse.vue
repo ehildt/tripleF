@@ -13,7 +13,7 @@ defineProps<OcrResponseProps>();
 </script>
 
 <template>
-  <article class="harness-ocr">
+  <article class="ocr-response">
     <header class="hero">
       <ResponseHeader :title="data.title" :subtitle="data.subtitle" panel />
     </header>
@@ -36,7 +36,7 @@ defineProps<OcrResponseProps>();
 </template>
 
 <style scoped>
-.harness-ocr {
+.ocr-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;

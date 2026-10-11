@@ -2,8 +2,10 @@
 import { type ComponentPublicInstance, computed, toRef, watch } from 'vue';
 
 import { useChatViewStore } from '@/stores/chat-view';
+import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
 
 import { useNativeScroll } from '../composables/use-native-scroll';
+import { useProgrammaticScrollWindow } from '../composables/use-programmatic-scroll-window';
 import { useUserScrollGate } from '../composables/use-user-scroll-gate';
 import { useVerticalCarousel } from '../composables/use-vertical-carousel';
 import ExchangeEmptyState from '../exchange-empty-state/ExchangeEmptyState.vue';
@@ -19,6 +21,7 @@ const emit = defineEmits<{
 }>();
 
 const chatViewStore = useChatViewStore();
+const verticalCarouselStore = useVerticalCarouselStore();
 
 const isCarousel = computed(() => props.mode === 'carousel');
 
@@ -27,16 +30,19 @@ const isCarousel = computed(() => props.mode === 'carousel');
 // stays null and its observers never attach.
 const {
   scrollContainerRef,
-  scrollToSection,
   onScroll,
   activeSectionIndex,
-  isProgrammaticScroll,
-  endProgrammaticScroll,
   shouldAutoScroll: carouselShouldAutoScroll,
   skipInitialScroll: skipCarouselInitialScroll,
 } = useVerticalCarousel(toRef(props, 'isCompact'));
 
 const native = useNativeScroll();
+
+// One shared programmatic-scroll window across both modes: the carousel
+// store's snap and the native list's auto-scroll both arm it, and scrollend
+// closes it — whichever container is currently rendered.
+const { isProgrammaticScroll, endProgrammaticScroll } =
+  useProgrammaticScrollWindow();
 
 const userScrollGate = useUserScrollGate();
 
@@ -140,7 +146,7 @@ watch(
     if (newLength >= previousLength || newLength === 0) return;
     const targetIndex = Math.min(activeSectionIndex.value, newLength - 1);
     if (targetIndex < 0) return;
-    scrollToSection(targetIndex);
+    verticalCarouselStore.scrollToSection(targetIndex);
   },
 );
 
@@ -163,17 +169,13 @@ function onCarouselScroll() {
 
 function onNativeScroll() {
   native.onScroll();
-  if (
-    !native.isProgrammaticScroll.value &&
-    userScrollGate.armUserScrollGesture()
-  ) {
+  if (!isProgrammaticScroll.value && userScrollGate.armUserScrollGesture()) {
     emit('scroll');
   }
 }
 
 function onScrollEnd() {
   endProgrammaticScroll();
-  native.endProgrammaticScroll();
   userScrollGate.endUserScrollGesture();
 }
 
@@ -186,7 +188,7 @@ function scrollToExchange(exchangeId: string) {
   if (index < 0) return;
 
   if (isCarousel.value) {
-    scrollToSection(index, true, true);
+    verticalCarouselStore.scrollToSection(index, true, true);
     // A history click always lands the section at its top. Reset it directly
     // too, so clicking the already-active section still scrolls it to the top
     // (the activation watch only fires when the active section changes).

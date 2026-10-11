@@ -14,3 +14,9 @@ export interface ChartTooltipState {
   y: number;
   rows: ChartTooltipRow[];
 }
+
+/** Props for `ChartTooltip`, the crosshair value readout panel. */
+export interface ChartTooltipProps {
+  /** Reactive tooltip state driven by the chart leaf. */
+  tooltip: ChartTooltipState;
+}

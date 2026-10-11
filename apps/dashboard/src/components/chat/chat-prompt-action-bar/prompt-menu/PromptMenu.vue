@@ -1,41 +1,57 @@
 <script setup lang="ts">
+import { useContextSize } from '@/components/chat/chat-left-toolbar/composables/use-context-size';
+import { useLeftToolbarMenus } from '@/components/chat/chat-left-toolbar/composables/use-left-toolbar-menus';
+import { useNewConversationForm } from '@/components/chat/chat-left-toolbar/composables/use-new-conversation-form';
+import { useNewSocketForm } from '@/components/chat/chat-left-toolbar/composables/use-new-socket-form';
+import { useSelectedModel } from '@/components/chat/chat-left-toolbar/composables/use-selected-model';
+import { useLeftToolbarView } from '@/components/chat/chat-left-toolbar/tabs/composables/use-left-toolbar-view';
+
 import { usePromptMenu } from './composables/use-prompt-menu';
 import ConversationMenu from './conversation-menu/ConversationMenu.vue';
 import ModelSelector from './model-selector/ModelSelector.vue';
 import StreamSettingsMenu from './stream-settings-menu/StreamSettingsMenu.vue';
 
 const {
-  areSocketsVisible,
   isModelMenuOpen,
   isConversationMenuOpen,
   isStreamMenuOpen,
+  closeAllMenus,
+  toggleModelMenu,
+} = useLeftToolbarMenus();
+
+const {
   hasNoModelSelected,
   selectedModelName,
   localModels,
   cloudModels,
   modelsLoading,
+} = useSelectedModel();
+
+const { contextOptions, selectNumCtx } = useContextSize();
+
+const {
   newSubscriptionStreamEnabled,
   newSubscriptionEvent,
   newSubscriptionRoomId,
+} = useNewSocketForm();
+
+const {
   newConversationName,
   newConversationEvent,
   newConversationRoomId,
-  numCtxValue,
-  contextOptions,
-  formatContextValue,
   availableSocketEvents,
   availableRooms,
-  closeAllMenus,
-  toggleModelMenu,
+} = useNewConversationForm();
+
+const { areSocketsVisible } = useLeftToolbarView();
+
+const {
+  numCtxValue,
   toggleChatMenu,
   toggleSocketsMenu,
-  selectNumCtx,
   selectModelAndCloseMenu,
   createConversationAndCloseMenu,
   subscribeToEventAndCloseMenu,
-  triggerBlinking,
-  startTriggerBlink,
-  stopTriggerBlink,
 } = usePromptMenu();
 </script>
 
@@ -58,16 +74,12 @@ const {
         v-model:room-id="newConversationRoomId"
         :is-open="isConversationMenuOpen"
         :is-disabled="hasNoModelSelected"
-        :blinking="triggerBlinking"
         :num-ctx-value="numCtxValue"
         :context-options="contextOptions"
-        :format-context-value="formatContextValue"
         :available-events="availableSocketEvents"
         :available-rooms="availableRooms"
         @toggle-menu="toggleChatMenu"
         @close="closeAllMenus"
-        @mouseenter="startTriggerBlink"
-        @mouseleave="stopTriggerBlink"
         @update:num-ctx="selectNumCtx"
         @create="createConversationAndCloseMenu"
       />
@@ -78,11 +90,8 @@ const {
         v-model:new-room-id="newSubscriptionRoomId"
         :is-open="isStreamMenuOpen"
         :is-disabled="hasNoModelSelected"
-        :blinking="triggerBlinking"
         @toggle-menu="toggleSocketsMenu"
         @close="closeAllMenus"
-        @mouseenter="startTriggerBlink"
-        @mouseleave="stopTriggerBlink"
         @subscribe-to-event="subscribeToEventAndCloseMenu"
       />
     </div>

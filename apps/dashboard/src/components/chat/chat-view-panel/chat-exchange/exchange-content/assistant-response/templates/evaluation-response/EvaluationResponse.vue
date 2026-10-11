@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useArtDirection } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-art-direction.composable';
+import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 
@@ -16,20 +17,16 @@ import type { EvaluationResponseProps } from './EvaluationResponse.types';
 
 const props = defineProps<EvaluationResponseProps>();
 
-const {
-  videosFirst,
-  subjectProfiles,
-  isMultiSubject,
-  comparisonView,
-  hasAnyContent,
-} = useEvaluationResponseData(props);
+const { subjectProfiles, isMultiSubject, comparisonView, hasAnyContent } =
+  useEvaluationResponseData(props);
+const { videosFirst } = useHarnessMediaPriority(props.data);
 const { direction, splitHero } = useArtDirection(props);
 </script>
 
 <template>
   <article
-    class="harness-evaluation"
-    :class="`harness-evaluation--${direction}`"
+    class="evaluation-response"
+    :class="`evaluation-response--${direction}`"
   >
     <template v-if="hasAnyContent">
       <ArticleHero
@@ -97,7 +94,7 @@ const { direction, splitHero } = useArtDirection(props);
 </template>
 
 <style scoped>
-.harness-evaluation {
+.evaluation-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;

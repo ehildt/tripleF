@@ -1,62 +1,39 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import type { RelatedStory } from '@/types/harness-response-data.model';
 
-defineProps<{
-  item: RelatedStory;
-}>();
+import { imageAltFor } from './helpers/image-alt-for.helper';
+import { linkPropsFor } from './helpers/link-props-for.helper';
+import { metaFor } from './helpers/meta-for.helper';
+import type { RelatedStoryCardProps } from './RelatedStoryCard.types';
 
-function metaFor(story: RelatedStory): string {
-  const parts: string[] = [];
-  if (story.sourceName) parts.push(story.sourceName);
-  if (story.date) parts.push(story.date);
-  return parts.join(' · ');
-}
+defineProps<RelatedStoryCardProps>();
 
-function imageAltFor(story: RelatedStory): string {
-  return story.title || story.sourceName || 'Related story image';
-}
-
-/** Whole-card link when a URL exists; inert wrapper otherwise. */
-function linkPropsFor(story: RelatedStory): {
-  is: 'a' | 'div';
-  href?: string;
-  target?: string;
-  rel?: string;
-  title?: string;
-} {
-  if (!story.url) return { is: 'div' };
-  return {
-    is: 'a',
-    href: story.url,
-    target: '_blank',
-    rel: 'noopener noreferrer',
-    title: story.title || story.url,
-  };
-}
+const { t } = useI18n();
 </script>
 
 <template>
-  <li class="related-story__item">
+  <li class="related-story-card">
     <Tooltip :text="linkPropsFor(item).title ?? ''">
       <component
         :is="linkPropsFor(item).is"
         :href="linkPropsFor(item).href"
         :target="linkPropsFor(item).target"
         :rel="linkPropsFor(item).rel"
-        class="related-story__card"
+        class="related-story-card__link"
       >
         <figure>
-          <div v-if="item.imageUrl" class="related-story__media">
+          <div v-if="item.imageUrl" class="related-story-card__media">
             <AsyncImage
               :src="encodeURI(item.imageUrl)"
-              :alt="imageAltFor(item)"
+              :alt="imageAltFor(item) || t('common.relatedStoryImageFallback')"
             />
           </div>
           <figcaption
             v-if="item.title || item.url || metaFor(item)"
-            class="related-story__caption"
+            class="related-story-card__caption"
           >
             <strong v-if="item.title">{{ item.title }}</strong>
             <strong v-else-if="item.url">{{ item.url }}</strong>
@@ -69,7 +46,7 @@ function linkPropsFor(story: RelatedStory): {
 </template>
 
 <style scoped>
-.related-story__item {
+.related-story-card {
   display: block !important;
   flex-wrap: nowrap !important;
   list-style: none;
@@ -77,18 +54,18 @@ function linkPropsFor(story: RelatedStory): {
   padding: 0 !important;
 }
 
-.related-story__card {
+.related-story-card__link {
   display: block;
   height: 100%;
   color: inherit;
   text-decoration: none;
 }
 
-a.related-story__card:hover figure {
+a.related-story-card__link:hover figure {
   border-color: var(--color-accent-border);
 }
 
-.related-story__card figure {
+.related-story-card__link figure {
   margin: 0;
   border: 1px solid var(--color-divider);
   overflow: hidden;
@@ -102,7 +79,7 @@ a.related-story__card:hover figure {
   transition: border-color 0.2s ease;
 }
 
-.related-story__media {
+.related-story-card__media {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -115,19 +92,19 @@ a.related-story__card:hover figure {
   flex: 1 1 auto;
 }
 
-.related-story__caption {
+.related-story-card__caption {
   padding: var(--spacing-1-5) var(--spacing-2);
   font-size: 0.85em;
   color: var(--color-fg-muted);
 }
 
-.related-story__caption strong {
+.related-story-card__caption strong {
   display: block;
   color: var(--color-fg-primary);
   margin-bottom: 0.25em;
 }
 
-.related-story__caption p {
+.related-story-card__caption p {
   margin: 0 0 0.5em;
   padding: 0 !important;
 }

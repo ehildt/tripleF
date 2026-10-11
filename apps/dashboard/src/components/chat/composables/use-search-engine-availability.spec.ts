@@ -64,6 +64,7 @@ async function createLoaded(
 describe('useSearchEngineAvailability', () => {
   beforeEach(() => {
     localStorage.clear();
+    useSearchEngineAvailability().reset();
   });
 
   afterEach(() => {

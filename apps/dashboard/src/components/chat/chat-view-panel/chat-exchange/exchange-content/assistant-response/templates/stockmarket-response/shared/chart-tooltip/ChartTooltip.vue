@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import type { ChartTooltipState } from './ChartTooltip.types';
+import type { ChartTooltipProps } from './ChartTooltip.types';
 
-const props = defineProps<{ tooltip: ChartTooltipState }>();
+const props = defineProps<ChartTooltipProps>();
 
 /** Anchor the panel to the cursor; `x`/`y` are already clamped by the composable. */
 const style = computed(() => ({

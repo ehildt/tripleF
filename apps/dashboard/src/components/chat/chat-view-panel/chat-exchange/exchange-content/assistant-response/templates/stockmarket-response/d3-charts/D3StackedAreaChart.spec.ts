@@ -48,7 +48,9 @@ describe('D3StackedAreaChart', () => {
 
   it('renders one legend item per series', () => {
     const wrapper = mountChart();
-    expect(wrapper.findAll('.stacked-area-chart__legend-item')).toHaveLength(3);
+    expect(wrapper.findAll('.d3-stacked-area-chart__legend-item')).toHaveLength(
+      3,
+    );
   });
 
   it('does not render the 1D button (no intraday support)', () => {

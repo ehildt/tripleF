@@ -2,8 +2,6 @@ import type { Conversation } from '@/stores/conversation';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 export interface TabsProps {
-  /** Whether any conversation exists (shows the conversations list). */
-  hasConversations: boolean;
   /** Conversations to render in the conversations section. */
   conversations: readonly Conversation[];
   /** Id of the active conversation. */

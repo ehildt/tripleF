@@ -1,59 +1,31 @@
 import { computed } from 'vue';
 
-import { useLeftToolbar } from '@/components/chat/chat-left-toolbar/composables/use-left-toolbar';
+import { useContextSize } from '@/components/chat/chat-left-toolbar/composables/use-context-size';
+import { useLeftToolbarMenus } from '@/components/chat/chat-left-toolbar/composables/use-left-toolbar-menus';
+import { useNewConversationForm } from '@/components/chat/chat-left-toolbar/composables/use-new-conversation-form';
+import { useNewSocketForm } from '@/components/chat/chat-left-toolbar/composables/use-new-socket-form';
+import { useSelectedModel } from '@/components/chat/chat-left-toolbar/composables/use-selected-model';
 import { useLeftToolbarView } from '@/components/chat/chat-left-toolbar/tabs/composables/use-left-toolbar-view';
-import { useBlink } from '@/composables/use-blink';
 
 /**
- * Everything the prompt-menu needs: the model selector, the chat (new
- * conversation) menu, and the sockets (stream settings) menu that live on
- * the left of the prompt action bar.
- *
- * Composes the chat view's singletons by import — the left-toolbar state is
- * shared with the left toolbar itself (menu exclusivity spans both trees)
- * and the toolbar view is shared so opening a menu also selects the matching
- * list section. The trigger blink stays component-scope: hinting a disabled
- * trigger only matters while this menu strip is on screen.
+ * The prompt-menu's composed behaviors: actions whose meaning spans several
+ * of the menu strip's source composables (open-a-menu-also-selects-its-view,
+ * act-then-close-menu) and the numCtx option fallback. The raw surfaces —
+ * the toolbar menu state, the selected model, the context-size options, and
+ * the socket and conversation forms — are bound by PromptMenu.vue directly
+ * from their source composables; this composable
+ * imports those singletons only to combine their members into new behavior,
+ * never to re-export them.
  */
 export function usePromptMenu() {
-  const {
-    isModelMenuOpen,
-    isConversationMenuOpen,
-    isStreamMenuOpen,
-    closeAllMenus,
-    toggleModelMenu,
-    toggleConversationMenu,
-    toggleStreamMenu,
-    hasNoModelSelected,
-    selectedModelName,
-    localModels,
-    cloudModels,
-    modelsLoading,
-    changeModel,
-    newSubscriptionStreamEnabled,
-    newSubscriptionEvent,
-    newSubscriptionRoomId,
-    subscribeToEvent,
-    newConversationName,
-    newConversationEvent,
-    newConversationRoomId,
-    availableSocketEvents,
-    availableRooms,
-    contextOptions,
-    currentNumCtx,
-    defaultNumCtx,
-    selectNumCtx,
-    createConversation,
-    formatContextValue,
-  } = useLeftToolbar();
+  const { closeAllMenus, toggleConversationMenu, toggleStreamMenu } =
+    useLeftToolbarMenus();
 
-  const { selectLeftToolbarView, areSocketsVisible } = useLeftToolbarView();
-
-  const {
-    isBlinking: triggerBlinking,
-    start: startTriggerBlink,
-    stop: stopTriggerBlink,
-  } = useBlink();
+  const { changeModel } = useSelectedModel();
+  const { currentNumCtx, defaultNumCtx } = useContextSize();
+  const { submitNewSocket } = useNewSocketForm();
+  const { createConversation } = useNewConversationForm();
+  const { selectLeftToolbarView } = useLeftToolbarView();
 
   /** The menu's option value falls back to the model's default context size
    *  while the active conversation has no numCtx of its own. */
@@ -84,45 +56,16 @@ export function usePromptMenu() {
   }
 
   function subscribeToEventAndCloseMenu() {
-    subscribeToEvent(
-      newSubscriptionEvent.value,
-      newSubscriptionRoomId.value,
-      newSubscriptionStreamEnabled.value,
-    );
+    submitNewSocket();
     closeAllMenus();
   }
 
   return {
-    areSocketsVisible,
-    isModelMenuOpen,
-    isConversationMenuOpen,
-    isStreamMenuOpen,
-    hasNoModelSelected,
-    selectedModelName,
-    localModels,
-    cloudModels,
-    modelsLoading,
-    newSubscriptionStreamEnabled,
-    newSubscriptionEvent,
-    newSubscriptionRoomId,
-    newConversationName,
-    newConversationEvent,
-    newConversationRoomId,
     numCtxValue,
-    contextOptions,
-    formatContextValue,
-    availableSocketEvents,
-    availableRooms,
-    closeAllMenus,
-    toggleModelMenu,
     toggleChatMenu,
     toggleSocketsMenu,
-    selectNumCtx,
     selectModelAndCloseMenu,
     createConversationAndCloseMenu,
     subscribeToEventAndCloseMenu,
-    triggerBlinking,
-    startTriggerBlink,
-    stopTriggerBlink,
   };
 }

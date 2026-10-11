@@ -4,6 +4,7 @@ import { computed } from 'vue';
 
 import Tab from '@/components/chat/shared/ui/tab/Tab.vue';
 
+import { useAttachmentList } from './composables/use-attachment-list';
 import { useRightToolbarView } from './composables/use-right-toolbar-view';
 import { useFiles } from './files/composables/use-files';
 import Files from './files/Files.vue';
@@ -12,9 +13,9 @@ import History from './history/History.vue';
 import { usePlaylistTab } from './playlist/composables/use-playlist-tab';
 import PlaylistPanel from './playlist/PlaylistPanel.vue';
 
+const { attachments, hasAttachments } = useAttachmentList();
+
 const {
-  attachments,
-  hasAttachments,
   previewUrl,
   previewUrlForHash,
   removeAttachment,

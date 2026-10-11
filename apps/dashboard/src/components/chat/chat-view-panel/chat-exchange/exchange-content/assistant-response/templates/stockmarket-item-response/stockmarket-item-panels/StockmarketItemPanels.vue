@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import StatTile from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/stat-tile/StatTile.vue';
-import type { KeyFinding } from '@/types/harness-response-data.model';
 
 import KeyFindingsSection from '../../../sections/key-findings-section/KeyFindingsSection.vue';
 import { pickCycleColor } from '../../../shared/helpers/pick-cycle-color.helper';
-import type { FundamentalEntry } from '../../stockmarket-response/helpers/build-fundamental-entries.helper';
+import type { StockmarketItemPanelsProps } from './StockmarketItemPanels.types';
 
 /**
  * Two-panel row below the chart: fundamentals cards and key findings share
  * one field grid, so the chart spans the full width. Cards flow two per
  * row — fundamentals first, then findings. Presentational.
  */
-defineProps<{
-  fundamentals: FundamentalEntry[];
-  keyPoints?: KeyFinding[];
-}>();
+defineProps<StockmarketItemPanelsProps>();
 </script>
 
 <template>

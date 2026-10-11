@@ -26,7 +26,7 @@ import type { EvaluationSubjectProfileProps } from '../sections/evaluation-subje
  * conversations render unchanged.
  */
 export function useEvaluationResponseData(props: EvaluationResponseProps) {
-  const { heroUrl, videosFirst } = useHarnessMediaPriority(props.data);
+  const { heroUrl } = useHarnessMediaPriority(props.data);
 
   /** Per-subject profiles, or the legacy verdict spine reshaped as one. */
   const subjectProfiles = computed<EvaluationSubjectProfileProps[]>(() => {
@@ -95,7 +95,6 @@ export function useEvaluationResponseData(props: EvaluationResponseProps) {
   );
 
   return {
-    videosFirst,
     subjectProfiles,
     isMultiSubject,
     comparisonView,

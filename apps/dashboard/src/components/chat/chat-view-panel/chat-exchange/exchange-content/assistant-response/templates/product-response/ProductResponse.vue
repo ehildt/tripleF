@@ -16,7 +16,7 @@ const { offers, videos, imageCount, hasContent } =
 </script>
 
 <template>
-  <section v-if="hasContent" class="product">
+  <section v-if="hasContent" class="product-response">
     <!-- Full-width product banner with an always-visible rating overlay -->
     <ProductBanner
       :title="data.title"
@@ -32,7 +32,7 @@ const { offers, videos, imageCount, hasContent } =
     />
 
     <!-- Brief product description -->
-    <p v-if="data.shortDescription" class="product__lead">
+    <p v-if="data.shortDescription" class="product-response__lead">
       {{ data.shortDescription }}
     </p>
 
@@ -64,13 +64,13 @@ const { offers, videos, imageCount, hasContent } =
 </template>
 
 <style scoped>
-.product {
+.product-response {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
 }
 
-.product__lead {
+.product-response__lead {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.6;

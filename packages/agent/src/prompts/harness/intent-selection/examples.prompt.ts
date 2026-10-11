@@ -24,6 +24,9 @@ Use these examples to resolve "news" vs "article":
 - User: "latest music videos from Billie Eilish" → template: "videolist", tools: [serperVideoSearch]
 - User: "how does NTE compare to Wuthering Waves?" → template: "evaluation", tools: [serperWebSearch, serperImageSearch, serperVideoSearch]
 - User: "iPhone 16 Pro vs Pixel 9 Pro — which camera is better?" → template: "evaluation", tools: [serperWebSearch, serperImageSearch, serperVideoSearch]
+- User: "write me a full review of NTE with pros and cons" → template: "evaluation", tools: [serperWebSearch, serperImageSearch, serperVideoSearch]
+- User: "do you think I should try NTE?" → template: "text", prompt: "opinion", tools: [serperWebSearch]
+- User: "would you recommend the Gothic remake to a newcomer?" → template: "text", prompt: "opinion", tools: [serperWebSearch]
 
 Follow-up media requests (user adds images/videos/news to established topic):
 - User: "show me images" (after discussing a game) → template: "article", tools: [serperWebSearch, serperImageSearch, serperVideoSearch]

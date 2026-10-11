@@ -127,7 +127,7 @@ const { canAddToFiles, isInFiles, toggleAddToFiles } = useAddImageToFiles(
   position: relative;
   display: block;
   width: 100%;
-  cursor: zoom-in;
+  cursor: pointer;
   background: var(--color-bg-tertiary);
   aspect-ratio: 4 / 3;
   flex: 1 1 auto;

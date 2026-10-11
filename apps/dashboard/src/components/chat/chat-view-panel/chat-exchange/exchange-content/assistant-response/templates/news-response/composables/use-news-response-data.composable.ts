@@ -9,7 +9,7 @@ import type { NewsResponseProps } from '../NewsResponse.types';
  * media ordering and whether any content exists to render.
  */
 export function useNewsResponseData(props: NewsResponseProps) {
-  const { heroUrl, videosFirst } = useHarnessMediaPriority(props.data);
+  const { heroUrl } = useHarnessMediaPriority(props.data);
 
   const hasAnyContent = computed(() =>
     Boolean(
@@ -26,5 +26,5 @@ export function useNewsResponseData(props: NewsResponseProps) {
     ),
   );
 
-  return { videosFirst, hasAnyContent };
+  return { hasAnyContent };
 }

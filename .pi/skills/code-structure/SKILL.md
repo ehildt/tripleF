@@ -68,6 +68,8 @@ A barrel file is a re-export-only `index.ts` that aggregates sibling imports. Do
 
 Reasons: the import path should show where the symbol lives; renames and moves stay local to their real importers; barrels grow and leak internal symbols across boundaries; tree-shaking is unchanged either way.
 
+The rule targets aggregation points, not filenames. A function or composable whose role is to gather and re-deal other units' APIs is a barrel in function form; the consumer must import the defining unit directly, never the re-dealing wrapper.
+
 One exception: a published package's declared public entry points. When `package.json` exports map a subpath to a compiled entry, that entry file is the public surface and may re-export. Inside the package, interior code never imports through that entry; it imports the defining file directly. Importing through the declared entry is exactly what external consumers of the published package do — that is what the exception is for.
 
 ## 8. No wrapper functions
@@ -75,6 +77,8 @@ One exception: a published package's declared public entry points. When `package
 A function earns its name only if the call site cannot already see what it does. A wrapper that renames a field or delegates to a single call adds indirection without information.
 
 Inline the call when no name is needed; name the binding (not a one-line function around it) when the value is reused; promote to a real `.helper.ts` predicate when it is a domain concept used in many places. A function that branches, supplies defaults, or has side effects is real logic and stays. Dependency injection that decouples a consumer from a store or service is not a wrapper — it earns its name by removing a coupling.
+
+The same rule applies to a returned object. A return object never re-publishes another unit's members unchanged, verbatim or renamed; the consumer imports the defining unit directly. A returned member earns its place by being owned, derived, or composed into new behavior. The one sanctioned delegation shape: a privately-created per-caller service instance, whose wiring the producer must keep, is exposed under a single namespaced key rather than flattened into per-member re-exports.
 
 ## 9. Naming decision table
 
@@ -107,4 +111,5 @@ The semantics — consent gate, regression net, contract-not-infallible, report-
 - Files co-located with their consumer unless shared across unrelated areas
 - No new barrel files; published package entry points are the only exception
 - No wrapper functions
+- No function or composable returns another unit's members unchanged (no proxy barrels); a privately-created service instance is exposed once as a namespaced key
 - Existing tests run after changes; a broken test is reported before fixing either code or test

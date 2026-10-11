@@ -3,6 +3,4 @@ export interface ConversationContextSelectProps {
   modelValue: string;
   /** Available context-size options. */
   options: readonly string[];
-  /** Formats an option value for display. */
-  formatValue: (value: string) => string;
 }

@@ -1,24 +1,14 @@
-import { scaleLinear } from 'd3-scale';
-import { select, type Selection } from 'd3-selection';
-import { line } from 'd3-shape';
-import { computed, type Ref, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { buildChangeLabel } from '../../helpers/build-change-label.helper';
 import type { ChartTooltipRow } from '../../shared/chart-tooltip/ChartTooltip.types';
 import type {
-  D3ChartDefaultConfig,
-  D3ChartMarker,
-  D3ChartPoint,
   D3HeatmapVariant,
   D3PriceStyle,
-  D3ReferenceLine,
-  D3VolumeProfilePoint,
   D3VolumeStyle,
 } from '../D3Chart.types';
 import { buildHeatmapCells } from '../helpers/build-heatmap-cells.helper';
 import type { HeatmapDayCells } from '../helpers/build-heatmap-cells.helper.types';
-import { buildHlcAreaPaths } from '../helpers/build-hlc-area-paths.helper';
-import type { HlcPoint } from '../helpers/build-hlc-area-paths.helper.types';
 import {
   buildMarkerLayouts,
   type MarkerLayout,
@@ -26,13 +16,11 @@ import {
 import { buildPivotMarkers } from '../helpers/build-pivot-markers.helper';
 import { buildPriceFormatter } from '../helpers/build-price-formatter.helper';
 import { buildRangeLabel } from '../helpers/build-range-label.helper';
-import { clampToPlot } from '../helpers/clamp-to-plot.helper';
-import { computeBarSpacing } from '../helpers/compute-bar-spacing.helper';
 import { computeFlowColumns } from '../helpers/compute-flow-columns.helper';
 import type { FlowColumn } from '../helpers/compute-flow-columns.helper.types';
 import { computeSimpleMovingAverage } from '../helpers/compute-simple-moving-average.helper';
+import { countChartCalendarDays } from '../helpers/count-chart-calendar-days.helper';
 import { dedupeReferenceLines } from '../helpers/dedupe-reference-lines.helper';
-import { dodgeBadgePositions } from '../helpers/dodge-badge-positions.helper';
 import { ensureExtremeReferenceLines } from '../helpers/ensure-extreme-reference-lines.helper';
 import { filterReferenceLinesInRange } from '../helpers/filter-reference-lines-in-range.helper';
 import { filterReferenceLinesInWindow } from '../helpers/filter-reference-lines-in-window.helper';
@@ -43,41 +31,39 @@ import { greenColor } from '../helpers/green-color.helper';
 import { hasIntradayTimes } from '../helpers/has-intraday-times.helper';
 import { isExtremeAnnotation } from '../helpers/is-extreme-annotation.helper';
 import { isMovingAverageReferenceLine } from '../helpers/is-moving-average-reference-line.helper';
-import { mapLayoutToStackedMarker } from '../helpers/map-layout-to-stacked-marker.helper';
 import { mapMarkerLayoutToPrice } from '../helpers/map-marker-layout-to-price.helper';
 import { mapMarkerToLayout } from '../helpers/map-marker-to-layout.helper';
-import { mapPointToHlcPixel } from '../helpers/map-point-to-hlc-pixel.helper';
 import { mergeDuplicateReferenceLines } from '../helpers/merge-duplicate-reference-lines.helper';
 import { mergeMarkerLayouts } from '../helpers/merge-marker-layouts.helper';
+import { pinMarkerLayoutsToWindow } from '../helpers/pin-marker-layouts-to-window.helper';
 import { purpleColor } from '../helpers/purple-color.helper';
 import { resolveColor } from '../helpers/resolve-color.helper';
-import { resolveMarkerSymbolPath } from '../helpers/resolve-marker-symbol-path.helper';
 import { resolveTokenColor } from '../helpers/resolve-token-color.helper';
 import type { RgbaColor } from '../helpers/rgba-color.model';
-import type { SplitMarkerText } from '../helpers/split-marker-text.helper';
-import {
-  type StackedMarkerLayout,
-  stackMarkerLayouts,
-} from '../helpers/stack-marker-layouts.helper';
 import { turboColor } from '../helpers/turbo-color.helper';
+import { CHART_LAYER_CLASSES } from '../layers/chart-layer-classes.constant';
+import { clearLayerGroups } from '../layers/clear-layer-groups.layer';
+import { drawCandles } from '../layers/draw-candles.layer';
+import { drawHeatmapCells } from '../layers/draw-heatmap-cells.layer';
+import { drawHeatmapFlow } from '../layers/draw-heatmap-flow.layer';
+import { drawHlcArea } from '../layers/draw-hlc-area.layer';
+import { drawChartMarkers } from '../layers/draw-markers.layer';
+import { drawMovingAverage } from '../layers/draw-moving-average.layer';
+import { drawPriceLine } from '../layers/draw-price-line.layer';
+import { drawReferenceLines } from '../layers/draw-reference-lines.layer';
+import { drawVolumeHistogram } from '../layers/draw-volume-histogram.layer';
 import {
-  type D3ChartRenderContext,
-  type D3CrosshairEvent,
-  DEFAULT_RANGE_BARS,
-  useD3Chart,
-} from './use-d3-chart.composable';
+  CHART_BAND_COUNT,
+  CHART_MA_LENGTH,
+  CHART_MARKER_TEXT_MARGIN,
+} from './unified-chart-tuning.constant';
+import { useD3Chart } from './use-d3-chart.composable';
+import type {
+  D3ChartRenderContext,
+  D3CrosshairEvent,
+} from './use-d3-chart.composable.types';
 import { useD3ChartTooltip } from './use-d3-chart-tooltip.composable';
-
-/** Number of fixed price bands spanning the full visible price range. */
-const BAND_COUNT = 10;
-/** Moving-average period overlaid on the price series. */
-const MA_LENGTH = 20;
-/**
- * Extra top/bottom scale margin (px) so marker text labels above the highest
- * price stay inside the pane — the price scale reserves space for the marker
- * shapes and their labels.
- */
-const MARKER_TEXT_MARGIN = 44;
+import type { UseD3UnifiedChartOptions } from './use-d3-unified-chart.composable.types';
 
 /** The preset range label for a selected bar count (engine `activeBars`). */
 const SELECTED_LABEL_BY_BARS: Record<number, string> = {
@@ -90,37 +76,13 @@ const SELECTED_LABEL_BY_BARS: Record<number, string> = {
   1260: '5Y',
 };
 
-export interface UseD3UnifiedChartOptions {
-  /** Where the chart canvas mounts (bound by the component's template). */
-  containerRef: Ref<HTMLDivElement | null>;
-  /** The tooltip panel's root element, exposed by `ChartTooltip`. */
-  tooltipRef: Ref<{ rootEl: HTMLElement | null } | null>;
-  history: Ref<D3ChartPoint[]>;
-  currency?: Ref<string | undefined>;
-  referenceLines?: Ref<D3ReferenceLine[] | undefined>;
-  markers?: Ref<D3ChartMarker[] | undefined>;
-  volumeProfile?: Ref<D3VolumeProfilePoint[] | undefined>;
-  /** The ticker's available date range from the cached history database. */
-  availableRange?: Ref<{ from: string; to: string } | null | undefined>;
-  colormap?: Ref<'turbo' | 'green' | 'purple' | undefined>;
-  /** Request older bars from the cached history endpoint before windowing. */
-  onRangeRequest?: (bars: number | null) => Promise<void> | void;
-  /** Whether the 1D (intraday) view is active. */
-  intradayActive?: Ref<boolean | undefined>;
-  /** Default style/annotation preferences applied when the chart mounts. */
-  initialConfig?: D3ChartDefaultConfig;
-  quotePrice?: Ref<number | undefined>;
-  quoteChange?: Ref<number | undefined>;
-  quoteChangeP?: Ref<number | undefined>;
-  /** i18n translate for the tooltip row labels. */
-  t: (key: string) => string;
-}
-
 /**
  * Owns the state and rendering of the unified stock chart on the D3 engine:
  * the price/volume style switches, the heatmap data and flow geometry, the
  * moving average, the reference-line badges, the buy/sell markers, the
- * crosshair tooltip, and the legend/change labels for the menu bar.
+ * crosshair tooltip, and the legend/change labels for the menu bar. The
+ * per-layer drawing lives in `../layers/`; this composable keeps the state,
+ * the derivations, and the style dispatch.
  */
 export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
   const { t } = options;
@@ -161,7 +123,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     buildHeatmapCells(
       options.history.value,
       options.volumeProfile?.value,
-      BAND_COUNT,
+      CHART_BAND_COUNT,
     ),
   );
 
@@ -189,7 +151,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
   const movingAverage = computed<Array<number | undefined>>(() =>
     computeSimpleMovingAverage(
       options.history.value.map((point) => point.close),
-      MA_LENGTH,
+      CHART_MA_LENGTH,
     ),
   );
 
@@ -224,7 +186,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     formatPrice: buildPriceFormatter(options.currency?.value),
     onRangeRequest: options.onRangeRequest,
     volumeSplit: () => false,
-    markerHeadroomPx: () => (showMarkers.value ? MARKER_TEXT_MARGIN : 0),
+    markerHeadroomPx: () => (showMarkers.value ? CHART_MARKER_TEXT_MARGIN : 0),
     getMarkerPrices: () => markerLayouts.value.map(mapMarkerLayoutToPrice),
     rightGutterWidth: () => referenceBadgeWidth() + 8,
     crosshair: true,
@@ -280,22 +242,12 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
    * server-reported coverage wins (it reflects the full retention, not the
    * lazily loaded window); the loaded history is the fallback.
    */
-  const availableDays = computed(() => {
-    const range = options.availableRange?.value;
-    if (range?.from && range.to) {
-      const from = Date.parse(range.from);
-      const to = Date.parse(range.to);
-      if (Number.isFinite(from) && Number.isFinite(to)) {
-        return Math.max(0, (to - from) / (24 * 60 * 60 * 1000));
-      }
-    }
-    const points = options.history.value;
-    if (points.length < 2) return 0;
-    const from = Date.parse(points[0].time);
-    const to = Date.parse(points[points.length - 1].time);
-    if (!Number.isFinite(from) || !Number.isFinite(to)) return 0;
-    return Math.max(0, (to - from) / (24 * 60 * 60 * 1000));
-  });
+  const availableDays = computed(() =>
+    countChartCalendarDays(
+      options.availableRange?.value,
+      options.history.value,
+    ),
+  );
 
   /** Model annotations merged into the pivot buy/sell marker layer. */
   const markerLayouts = computed<MarkerLayout[]>(() => {
@@ -342,12 +294,10 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     );
     // Pin the selected-range extremes to the visible window so they never
     // disappear while the user zooms in past their bars.
-    const { from, to } = visibleWindow.value;
-    if (to <= from) return extremes;
-    return extremes.map((layout) =>
-      layout.pinToWindow
-        ? { ...layout, index: Math.min(to - 1, Math.max(from, layout.index)) }
-        : layout,
+    return pinMarkerLayoutsToWindow(
+      extremes,
+      visibleWindow.value.from,
+      visibleWindow.value.to,
     );
   });
 
@@ -400,7 +350,7 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     return max + 46 + 4;
   }
 
-  // ---- Engine + tooltip ------------------------------------------------------
+  // ---- Tooltip -------------------------------------------------------------
 
   /** Tooltip rows for the hovered bar, per the active price style. */
   function buildTooltipRows(event: D3CrosshairEvent): ChartTooltipRow[] | null {
@@ -452,185 +402,68 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     enabled: showTooltip,
   });
 
-  // ---- Rendering -------------------------------------------------------------
+  // ---- Rendering (style dispatch; the drawing lives in ../layers/) ---------
 
   /** Track the style a layer group was last drawn with, to clear it on change. */
   let lastPriceStyle: D3PriceStyle | null = null;
   let lastVolumeStyle: D3VolumeStyle | null = null;
   let lastHeatmapVariant: D3HeatmapVariant | null = null;
 
-  function layerGroup(
-    ctx: D3ChartRenderContext,
-    className: string,
-  ): Selection<SVGGElement, unknown, null, undefined> {
-    const existing = ctx.svg.select<SVGGElement>(`g.${className}`);
-    if (!existing.empty()) return existing;
-    return ctx.svg.append('g').attr('class', className);
-  }
-
-  function clearGroups(
-    ctx: D3ChartRenderContext,
-    ...classNames: string[]
-  ): void {
-    for (const className of classNames) {
-      const group = ctx.svg.select<SVGGElement>(`g.${className}`);
-      if (!group.empty()) group.selectAll('*').remove();
-    }
-  }
-
-  function updatePath(
-    group: Selection<SVGGElement, unknown, null, undefined>,
-    className: string,
-    attrs: Record<string, string | number>,
-  ): Selection<SVGPathElement, unknown, null, undefined> {
-    let path = group.select<SVGPathElement>(`path.${className}`);
-    if (path.empty()) path = group.append('path').attr('class', className);
-    for (const [name, value] of Object.entries(attrs)) path.attr(name, value);
-    return path;
-  }
-
   function renderChart(ctx: D3ChartRenderContext): void {
-    drawPriceSeries(ctx);
-    drawVolumeSeries(ctx);
-    drawMovingAverage(ctx);
-    drawReferenceLines(ctx);
-    drawMarkers(ctx);
+    drawPriceLayers(ctx);
+    drawVolumeLayers(ctx);
+    drawMovingAverage(ctx, options.history.value, movingAverage.value);
+
+    if (!showReferenceLines.value) {
+      clearLayerGroups(ctx, CHART_LAYER_CLASSES.referenceLines);
+    } else {
+      drawReferenceLines(
+        ctx,
+        options.history.value,
+        rangedReferenceLines.value,
+      );
+    }
+
+    if (!showMarkers.value) {
+      clearLayerGroups(ctx, CHART_LAYER_CLASSES.markers);
+      return;
+    }
+    const lineYs = showReferenceLines.value
+      ? rangedReferenceLines.value.map((level) => ctx.y(level.value))
+      : [];
+    drawChartMarkers(ctx, markerLayouts.value, lineYs);
   }
 
-  // Price series: candles / line / HLC area.
-
-  function drawPriceSeries(ctx: D3ChartRenderContext): void {
+  /** Price series dispatch: clear the stale style's group on a switch, then
+   *  draw candles / line / HLC area. */
+  function drawPriceLayers(ctx: D3ChartRenderContext): void {
     if (lastPriceStyle !== priceStyle.value) {
       if (lastPriceStyle !== null) {
-        clearGroups(
+        clearLayerGroups(
           ctx,
-          'd3-chart__candles',
-          'd3-chart__line',
-          'd3-chart__hlc',
+          CHART_LAYER_CLASSES.candles,
+          CHART_LAYER_CLASSES.line,
+          CHART_LAYER_CLASSES.hlc,
         );
       }
       lastPriceStyle = priceStyle.value;
     }
-    if (priceStyle.value === 'candles') drawCandles(ctx);
-    else if (priceStyle.value === 'line') drawLine(ctx);
-    else drawHlcArea(ctx);
+    if (priceStyle.value === 'candles') drawCandles(ctx, options.history.value);
+    else if (priceStyle.value === 'line')
+      drawPriceLine(ctx, options.history.value);
+    else drawHlcArea(ctx, options.history.value);
   }
 
-  function drawCandles(ctx: D3ChartRenderContext): void {
-    const up = resolveColor('var(--color-status-success)', 1);
-    const down = resolveColor('var(--color-status-error)', 1);
-    const bodyWidth = Math.max(
-      1,
-      computeBarSpacing(
-        ctx.plot.right - ctx.plot.left,
-        ctx.visibleTo - ctx.visibleFrom,
-      ) * 0.8,
-    );
-    const group = layerGroup(ctx, 'd3-chart__candles');
-    const visible = options.history.value.slice(ctx.visibleFrom, ctx.visibleTo);
-    const bars = group
-      .selectAll<SVGGElement, D3ChartPoint>('g.d3-chart__candle')
-      .data(visible, (point) => point.time);
-    bars.exit().remove();
-    const enter = bars.enter().append('g').attr('class', 'd3-chart__candle');
-    enter.append('line').attr('class', 'd3-chart__wick');
-    enter.append('rect').attr('class', 'd3-chart__body');
-    bars.merge(enter).each(function (point, i) {
-      const index = ctx.visibleFrom + i;
-      const x = ctx.x(index);
-      const color = point.close >= point.open ? up : down;
-      select(this)
-        .select('.d3-chart__wick')
-        .attr('x1', x)
-        .attr('x2', x)
-        .attr('y1', ctx.y(point.high))
-        .attr('y2', ctx.y(point.low))
-        .attr('stroke', color)
-        .attr('stroke-width', 1);
-      const yOpen = ctx.y(point.open);
-      const yClose = ctx.y(point.close);
-      // Clamp the body inside the plot so edge candles never bleed into the
-      // y-axis gutter when zoomed in.
-      const bodyLeft = Math.max(
-        ctx.plot.left,
-        Math.min(x - bodyWidth / 2, ctx.plot.right),
-      );
-      const bodyRight = Math.max(
-        ctx.plot.left,
-        Math.min(x + bodyWidth / 2, ctx.plot.right),
-      );
-      select(this)
-        .select('.d3-chart__body')
-        .attr('x', bodyLeft)
-        .attr('width', Math.max(0, bodyRight - bodyLeft))
-        .attr('y', Math.min(yOpen, yClose))
-        .attr('height', Math.max(1, Math.abs(yClose - yOpen)))
-        .attr('fill', color);
-    });
-  }
-
-  function drawLine(ctx: D3ChartRenderContext): void {
-    const group = layerGroup(ctx, 'd3-chart__line');
-    const visible = options.history.value.slice(ctx.visibleFrom, ctx.visibleTo);
-    const lineGen = line<D3ChartPoint>()
-      .x((_point, i) => ctx.x(ctx.visibleFrom + i))
-      .y((point) => ctx.y(point.close))
-      .defined((point) => Number.isFinite(point.close));
-    group
-      .selectAll('path')
-      .data([visible])
-      .join('path')
-      .attr('d', lineGen)
-      .attr('fill', 'none')
-      .attr('stroke', resolveColor('var(--color-accent-primary)', 1))
-      .attr('stroke-width', 2);
-  }
-
-  function drawHlcArea(ctx: D3ChartRenderContext): void {
-    const visible = options.history.value.slice(ctx.visibleFrom, ctx.visibleTo);
-    const pixelPoints: HlcPoint[] = visible.map((point, i) =>
-      mapPointToHlcPixel(point, i, ctx),
-    );
-    const paths = buildHlcAreaPaths(pixelPoints);
-    const group = layerGroup(ctx, 'd3-chart__hlc');
-    updatePath(group, 'd3-chart__hlc-area--top', {
-      d: paths.topArea,
-      fill: resolveColor('var(--color-status-success)', 0.2),
-    });
-    updatePath(group, 'd3-chart__hlc-area--bottom', {
-      d: paths.bottomArea,
-      fill: resolveColor('var(--color-status-error)', 0.2),
-    });
-    updatePath(group, 'd3-chart__hlc-line--high', {
-      d: paths.highLine,
-      fill: 'none',
-      stroke: resolveColor('var(--color-status-success)', 1),
-      'stroke-width': 1,
-    });
-    updatePath(group, 'd3-chart__hlc-line--low', {
-      d: paths.lowLine,
-      fill: 'none',
-      stroke: resolveColor('var(--color-status-error)', 1),
-      'stroke-width': 1,
-    });
-    updatePath(group, 'd3-chart__hlc-line--close', {
-      d: paths.closeLine,
-      fill: 'none',
-      stroke: resolveColor('var(--color-fg-muted)', 1),
-      'stroke-width': 1,
-    });
-  }
-
-  // Volume series: histogram or heatmap (cells / flow).
-
-  function drawVolumeSeries(ctx: D3ChartRenderContext): void {
+  /** Volume series dispatch: clear the stale style/variant groups on a
+   *  switch, then draw histogram or heatmap (cells / flow). */
+  function drawVolumeLayers(ctx: D3ChartRenderContext): void {
     if (lastVolumeStyle !== volumeStyle.value) {
       if (lastVolumeStyle !== null) {
-        clearGroups(
+        clearLayerGroups(
           ctx,
-          'd3-chart__volume',
-          'd3-chart__heatmap',
-          'd3-chart__flow',
+          CHART_LAYER_CLASSES.volume,
+          CHART_LAYER_CLASSES.heatmap,
+          CHART_LAYER_CLASSES.flow,
         );
       }
       lastVolumeStyle = volumeStyle.value;
@@ -640,412 +473,18 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
       volumeStyle.value === 'heatmap' &&
       lastHeatmapVariant !== heatmapVariant.value
     ) {
-      clearGroups(ctx, 'd3-chart__heatmap', 'd3-chart__flow');
+      clearLayerGroups(
+        ctx,
+        CHART_LAYER_CLASSES.heatmap,
+        CHART_LAYER_CLASSES.flow,
+      );
       lastHeatmapVariant = heatmapVariant.value;
     }
-    if (volumeStyle.value === 'histogram') drawVolumeHistogram(ctx);
-    else if (heatmapVariant.value === 'cells') drawHeatmapCells(ctx);
-    else drawHeatmapFlow(ctx);
-  }
-
-  function drawVolumeHistogram(ctx: D3ChartRenderContext): void {
-    const up = resolveColor('var(--color-status-success)', 1);
-    const down = resolveColor('var(--color-status-error)', 1);
-    const barWidth = Math.max(
-      1,
-      computeBarSpacing(
-        ctx.plot.right - ctx.plot.left,
-        ctx.visibleTo - ctx.visibleFrom,
-      ) * 0.8,
-    );
-    const visible = options.history.value.slice(ctx.visibleFrom, ctx.visibleTo);
-    // The volume bars share the single price y-axis: they sit in the bottom
-    // quarter of the price pane, scaled to the visible volume range.
-    const maxVolume = Math.max(1, ...visible.map((point) => point.volume));
-    const bandTop = ctx.plot.bottom - (ctx.plot.bottom - ctx.plot.top) * 0.25;
-    const volumeScale = scaleLinear()
-      .domain([0, maxVolume])
-      .range([ctx.plot.bottom, bandTop]);
-    const zero = volumeScale(0);
-    const group = layerGroup(ctx, 'd3-chart__volume');
-    const bars = group
-      .selectAll<SVGRectElement, D3ChartPoint>('rect.d3-chart__volume-bar')
-      .data(visible, (point) => point.time);
-    bars.exit().remove();
-    bars
-      .merge(bars.enter().append('rect').attr('class', 'd3-chart__volume-bar'))
-      .attr('x', (_point, i) => {
-        // Clamp the bar's left edge inside the plot: a bar centred on the
-        // first visible index would otherwise bleed past the plot's left.
-        const x = ctx.x(ctx.visibleFrom + i) - barWidth / 2;
-        return Math.max(ctx.plot.left, Math.min(x, ctx.plot.right));
-      })
-      .attr('width', (_point, i) => {
-        // Clamp the right edge inside the plot so the last bar never bleeds
-        // into the y-axis gutter when zoomed in.
-        const x = ctx.x(ctx.visibleFrom + i) - barWidth / 2;
-        const left = Math.max(ctx.plot.left, Math.min(x, ctx.plot.right));
-        const right = Math.max(
-          ctx.plot.left,
-          Math.min(x + barWidth, ctx.plot.right),
-        );
-        return Math.max(0, right - left);
-      })
-      .attr('y', (point) => volumeScale(point.volume))
-      .attr('height', (point) => Math.max(0, zero - volumeScale(point.volume)))
-      .attr('fill', (point) => (point.close >= point.open ? up : down));
-  }
-
-  function drawHeatmapCells(ctx: D3ChartRenderContext): void {
-    const cellWidth = Math.max(
-      1,
-      computeBarSpacing(
-        ctx.plot.right - ctx.plot.left,
-        ctx.visibleTo - ctx.visibleFrom,
-      ) * 0.9,
-    );
-    const group = layerGroup(ctx, 'd3-chart__heatmap');
-    const cells: Array<{
-      key: string;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-      fill: string;
-    }> = [];
-    for (let i = ctx.visibleFrom; i < ctx.visibleTo; i++) {
-      const day = heatmapData.value[i];
-      if (!day) continue;
-      // Clamp the cell inside the plot so edge columns never bleed into the
-      // y-axis gutter when zoomed in.
-      const cellX = Math.max(
-        ctx.plot.left,
-        Math.min(ctx.x(i) - cellWidth / 2, ctx.plot.right),
-      );
-      const cellRight = Math.max(
-        ctx.plot.left,
-        Math.min(ctx.x(i) + cellWidth / 2, ctx.plot.right),
-      );
-      const clampedWidth = cellRight - cellX;
-      if (clampedWidth <= 0) continue;
-      for (const cell of day.cells) {
-        // Clamp the cell vertically inside the plot so bands outside the
-        // visible price domain never bleed into the x-axis gutter or above
-        // the pane when zoomed in.
-        const cellTop = Math.max(ctx.plot.top, ctx.y(cell.high));
-        const cellBottom = Math.min(ctx.plot.bottom, ctx.y(cell.low));
-        const clampedHeight = cellBottom - cellTop;
-        if (clampedHeight <= 0) continue;
-        cells.push({
-          key: `${i}:${cell.low}`,
-          x: cellX,
-          y: cellTop,
-          width: clampedWidth,
-          height: clampedHeight,
-          fill: cellShader(cell.amount),
-        });
-      }
-    }
-    group
-      .selectAll<SVGRectElement, (typeof cells)[number]>(
-        'rect.d3-chart__heatmap-cell',
-      )
-      .data(cells, (cell) => cell.key)
-      .join((enter) =>
-        enter.append('rect').attr('class', 'd3-chart__heatmap-cell'),
-      )
-      .attr('x', (cell) => cell.x)
-      .attr('y', (cell) => cell.y)
-      .attr('width', (cell) => cell.width)
-      .attr('height', (cell) => cell.height)
-      .attr('fill', (cell) => cell.fill);
-  }
-
-  function drawHeatmapFlow(ctx: D3ChartRenderContext): void {
-    const group = layerGroup(ctx, 'd3-chart__flow');
-    const quads: Array<{ key: string; d: string; fill: string }> = [];
-    for (let i = ctx.visibleFrom; i < ctx.visibleTo - 1; i++) {
-      const a = flowColumns.value[i];
-      const b = flowColumns.value[i + 1];
-      if (!a || !b) continue;
-      const x0 = ctx.x(i);
-      const x1 = ctx.x(i + 1);
-      // Clamp the ribbon into the plot so bands outside the visible price
-      // domain never bleed into the x-axis gutter or above the pane when
-      // zoomed in. Quads entirely outside the plot are skipped.
-      const yTopA = clampToPlot(ctx.y(a.centroid + a.halfWidth), ctx.plot);
-      const yTopB = clampToPlot(ctx.y(b.centroid + b.halfWidth), ctx.plot);
-      const yBottomA = clampToPlot(ctx.y(a.centroid - a.halfWidth), ctx.plot);
-      const yBottomB = clampToPlot(ctx.y(b.centroid - b.halfWidth), ctx.plot);
-      if (
-        yTopA <= ctx.plot.top &&
-        yTopB <= ctx.plot.top &&
-        yBottomA <= ctx.plot.top &&
-        yBottomB <= ctx.plot.top
-      ) {
-        continue;
-      }
-      if (
-        yTopA >= ctx.plot.bottom &&
-        yTopB >= ctx.plot.bottom &&
-        yBottomA >= ctx.plot.bottom &&
-        yBottomB >= ctx.plot.bottom
-      ) {
-        continue;
-      }
-      quads.push({
-        key: String(i),
-        d: `M ${x0} ${yTopA} L ${x1} ${yTopB} L ${x1} ${yBottomB} L ${x0} ${yBottomA} Z`,
-        fill: cellShader(((a.intensity + b.intensity) / 2) * 100),
-      });
-    }
-    group
-      .selectAll<SVGPathElement, (typeof quads)[number]>(
-        'path.d3-chart__flow-quad',
-      )
-      .data(quads, (quad) => quad.key)
-      .join((enter) =>
-        enter.append('path').attr('class', 'd3-chart__flow-quad'),
-      )
-      .attr('d', (quad) => quad.d)
-      .attr('fill', (quad) => quad.fill);
-  }
-
-  // Moving average overlay.
-
-  function drawMovingAverage(ctx: D3ChartRenderContext): void {
-    const group = layerGroup(ctx, 'd3-chart__ma');
-    const visible = options.history.value.slice(ctx.visibleFrom, ctx.visibleTo);
-    const lineGen = line<D3ChartPoint>()
-      .x((_point, i) => ctx.x(ctx.visibleFrom + i))
-      .y((_point, i) => ctx.y(movingAverage.value[ctx.visibleFrom + i] ?? NaN))
-      .defined(
-        (_point, i) => movingAverage.value[ctx.visibleFrom + i] !== undefined,
-      );
-    group
-      .selectAll('path')
-      .data([visible])
-      .join('path')
-      .attr('d', lineGen)
-      .attr('fill', 'none')
-      .attr('stroke', resolveColor('var(--color-accent-primary)', 1))
-      .attr('stroke-width', 1);
-  }
-
-  /**
-   * The x of the visible bar whose price is closest to the level — where the
-   * dashed line crosses the actual value (the extreme bar for HIGH/LOW
-   * lines, the tested bar for support/resistance). Falls back to the plot's
-   * left edge when no bar is visible.
-   */
-  function nearestBarX(ctx: D3ChartRenderContext, value: number): number {
-    let bestIndex = -1;
-    let bestDiff = Infinity;
-    for (let i = ctx.visibleFrom; i < ctx.visibleTo; i++) {
-      const point = options.history.value[i];
-      if (!point) continue;
-      const diff = Math.min(
-        Math.abs(point.high - value),
-        Math.abs(point.low - value),
-        Math.abs(point.close - value),
-      );
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestIndex = i;
-      }
-    }
-    return bestIndex >= 0 ? ctx.x(bestIndex) : ctx.plot.left;
-  }
-
-  // Reference lines with right-axis value badges.
-
-  function drawReferenceLines(ctx: D3ChartRenderContext): void {
-    const group = layerGroup(ctx, 'd3-chart__reference-lines');
-    if (!showReferenceLines.value) {
-      group.selectAll('*').remove();
-      return;
-    }
-    // Badge text sits on the colored badge background; the inverse foreground
-    // keeps contrast in dark and light modes (same as the active page).
-    const badgeText = resolveColor('var(--color-fg-inverse)', 1);
-    const levels = rangedReferenceLines.value;
-    const items: Array<{
-      key: string;
-      y: number;
-      badgeY: number;
-      x: number;
-      color: string;
-      text: string;
-    }> = [];
-    for (const level of levels) {
-      const y = ctx.y(level.value);
-      if (y < ctx.plot.top - 10 || y > ctx.plot.bottom + 10) continue;
-      items.push({
-        key: String(level.value),
-        y,
-        badgeY: y,
-        x: nearestBarX(ctx, level.value),
-        color: resolveTokenColor(level.color, 1),
-        text: level.label
-          ? `${level.label} ${ctx.formatPrice(level.value)}`
-          : ctx.formatPrice(level.value),
-      });
-    }
-    // Near-identical levels overlap in pixel space even when their values
-    // differ, so the badges dodge vertically; the dashed line and dot keep
-    // the true price — only the badge moves.
-    const sorted = [...items].sort((a, b) => a.y - b.y);
-    const badgeYs = dodgeBadgePositions(
-      sorted.map((item) => item.y),
-      { max: ctx.plot.bottom + 8 },
-    );
-    sorted.forEach((item, i) => {
-      item.badgeY = badgeYs[i];
-    });
-    const joined = group
-      .selectAll<SVGGElement, (typeof items)[number]>('g.d3-chart__reference')
-      .data(items, (item) => item.key)
-      .join((enter) => {
-        const refGroup = enter.append('g').attr('class', 'd3-chart__reference');
-        refGroup.append('line').attr('class', 'd3-chart__reference-line');
-        // A dot marks the line's left end, so every dashed level reads as a
-        // bulleted annotation even without a marker on the bar.
-        refGroup.append('circle').attr('class', 'd3-chart__reference-dot');
-        const badge = refGroup
-          .append('g')
-          .attr('class', 'd3-chart__reference-badge');
-        badge.append('rect').attr('class', 'd3-chart__reference-badge-bg');
-        badge.append('text').attr('class', 'd3-chart__reference-badge-text');
-        return refGroup;
-      });
-    joined
-      .select('line.d3-chart__reference-line')
-      .attr('x1', ctx.plot.left)
-      // The dashed line runs through the y-axis gutter and connects to the
-      // badge.
-      .attr('x2', ctx.plot.right + 46)
-      .attr('y1', (item) => item.y)
-      .attr('y2', (item) => item.y)
-      .attr('stroke', (item) => item.color);
-    joined
-      .select('circle.d3-chart__reference-dot')
-      .attr('cx', (item) => item.x)
-      .attr('cy', (item) => item.y)
-      .attr('r', 3.5)
-      .attr('fill', (item) => item.color);
-    joined
-      .select('g.d3-chart__reference-badge')
-      .attr(
-        'transform',
-        (item) => `translate(${ctx.plot.right + 46}, ${item.badgeY})`,
-      );
-    joined
-      .select('rect.d3-chart__reference-badge-bg')
-      .attr('x', 0)
-      .attr('y', -10)
-      .attr('width', (item) => item.text.length * 6 + 12)
-      .attr('height', 16)
-      .attr('fill', (item) => item.color)
-      .attr('opacity', 0.9);
-    joined
-      .select('text.d3-chart__reference-badge-text')
-      .attr('x', (item) => (item.text.length * 6 + 12) / 2)
-      .attr('y', 2)
-      .attr('text-anchor', 'middle')
-      .attr('fill', badgeText)
-      .text((item) => item.text);
-  }
-
-  // Buy/sell markers with labels.
-
-  function drawMarkers(ctx: D3ChartRenderContext): void {
-    const group = layerGroup(ctx, 'd3-chart__markers');
-    if (!showMarkers.value) {
-      group.selectAll('*').remove();
-      return;
-    }
-    const lineYs = showReferenceLines.value
-      ? rangedReferenceLines.value.map((level) => ctx.y(level.value))
-      : [];
-    const visible = stackMarkerLayouts(
-      markerLayouts.value.filter(
-        (layout) =>
-          layout.index >= ctx.visibleFrom && layout.index < ctx.visibleTo,
-      ),
-    ).map((layout) => mapLayoutToStackedMarker(layout, ctx, lineYs));
-    const joined = group
-      .selectAll<
-        SVGGElement,
-        {
-          layout: StackedMarkerLayout;
-          split: SplitMarkerText;
-          textShift: number;
-        }
-      >('g.d3-chart__marker')
-      // The key is unique per stack slot: stacked markers share the bar
-      // index, and duplicate join keys would collapse them back together.
-      .data(
-        visible,
-        (datum) =>
-          `${datum.layout.index}:${datum.layout.stackOffset}:${datum.layout.symbol}`,
-      )
-      .join((enter) => {
-        const markerGroup = enter.append('g').attr('class', 'd3-chart__marker');
-        // Paint order: the label text first (furthest back), the price in the
-        // center, and the arrow last (on top, over the dashed level line).
-        markerGroup
-          .append('text')
-          .attr('class', 'd3-chart__marker-label d3-chart__marker-word');
-        markerGroup
-          .append('text')
-          .attr('class', 'd3-chart__marker-label d3-chart__marker-price');
-        markerGroup.append('path').attr('class', 'd3-chart__marker-shape');
-        return markerGroup;
-      });
-    joined.attr(
-      'transform',
-      (datum) =>
-        `translate(${ctx.x(datum.layout.index)}, ${ctx.y(datum.layout.price) + datum.layout.stackOffset})`,
-    );
-    joined
-      .select('path.d3-chart__marker-shape')
-      .attr('d', (datum) => resolveMarkerSymbolPath(datum.layout.symbol))
-      .attr('transform', (datum) => {
-        const y = datum.layout.textAbove ? -6 : 0;
-        const rotate =
-          datum.layout.symbol === 'arrowDown' ? ' rotate(180)' : '';
-        return `translate(0, ${y})${rotate}`;
-      })
-      .attr('fill', (datum) => datum.layout.color ?? '');
-    // The marker is a three-row column with the arrow anchored to the bar:
-    // below-bar markers read arrow, price, word (top to bottom); above-bar
-    // markers are the mirror — word, price, arrow — so the arrow always sits
-    // nearest the bar, pointing at it. Word-only labels (e.g. a dividend "D")
-    // sit right beside the arrow.
-    const priceY = (textAbove: boolean) => (textAbove ? -15 : 20);
-    const wordY = (textAbove: boolean, hasPrice: boolean): number => {
-      if (!hasPrice) return priceY(textAbove);
-      return textAbove ? -30 : 36;
-    };
-    joined
-      .select('text.d3-chart__marker-price')
-      .attr('x', 0)
-      .attr('y', (datum) => priceY(datum.layout.textAbove) + datum.textShift)
-      .attr('text-anchor', 'middle')
-      .attr('fill', (datum) => datum.layout.color ?? '')
-      .text((datum) => datum.split.price ?? '');
-    joined
-      .select('text.d3-chart__marker-word')
-      .attr('x', 0)
-      .attr(
-        'y',
-        (datum) =>
-          wordY(datum.layout.textAbove, Boolean(datum.split.price)) +
-          datum.textShift,
-      )
-      .attr('text-anchor', 'middle')
-      .attr('fill', (datum) => datum.layout.color ?? '')
-      .text((datum) => datum.split.word ?? '');
+    if (volumeStyle.value === 'histogram')
+      drawVolumeHistogram(ctx, options.history.value);
+    else if (heatmapVariant.value === 'cells')
+      drawHeatmapCells(ctx, heatmapData.value, cellShader);
+    else drawHeatmapFlow(ctx, flowColumns.value, cellShader);
   }
 
   // ---- Reactive wiring -------------------------------------------------------
@@ -1099,14 +538,9 @@ export function useD3UnifiedChart(options: UseD3UnifiedChartOptions) {
     changeLabel,
     rangeLabel,
     availableDays,
-    /** The capped range the user selected (bars, or null for All). */
-    selectedRangeBars: engine.activeBars,
-    DEFAULT_RANGE_BARS,
-    zoomIn: engine.zoomIn,
-    zoomOut: engine.zoomOut,
-    panBy: engine.panBy,
-    fit: engine.fit,
-    reset: engine.reset,
-    setRange: engine.setRange,
+    /** The chart engine: the range controls bind its zoom/pan/range actions
+     *  and the selected range (`engine.activeBars`) directly, rather than
+     *  this composable re-exporting each member. */
+    engine,
   };
 }

@@ -4,6 +4,7 @@ import { nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
 import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
 
 import { useActiveConversation } from './use-active-conversation';
+import { useProgrammaticScrollWindow } from './use-programmatic-scroll-window';
 
 const SCROLL_BOTTOM_THRESHOLD_PX = 8;
 
@@ -29,16 +30,10 @@ export function useVerticalCarousel(isCompact: Ref<boolean>) {
     useActiveConversation();
 
   const verticalCarouselStore = useVerticalCarouselStore();
-  const {
-    scrollContainerRef,
-    scrollTop,
-    viewportHeight,
-    activeSectionIndex,
-    isProgrammaticScroll,
-  } = storeToRefs(verticalCarouselStore);
+  const { scrollContainerRef, scrollTop, viewportHeight, activeSectionIndex } =
+    storeToRefs(verticalCarouselStore);
 
-  const { armProgrammaticScroll, endProgrammaticScroll } =
-    verticalCarouselStore;
+  const { armProgrammaticScroll } = useProgrammaticScrollWindow();
 
   const shouldAutoScroll = ref(true);
   // When true, the container-creation auto-scroll-to-bottom is skipped. Used
@@ -246,11 +241,8 @@ export function useVerticalCarousel(isCompact: Ref<boolean>) {
   return {
     scrollContainerRef,
     scrollToBottom,
-    scrollToSection: verticalCarouselStore.scrollToSection,
     onScroll,
     activeSectionIndex,
-    isProgrammaticScroll,
-    endProgrammaticScroll,
     shouldAutoScroll,
     skipInitialScroll,
   };

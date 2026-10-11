@@ -4,31 +4,43 @@
  * and ✓/✕ markers — flat, no tinted cards.
  */
 import EyebrowTitle from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/eyebrow-title/EyebrowTitle.vue';
-import type { KeyFinding } from '@/types/harness-response-data.model';
 
-defineProps<{
-  pros?: readonly KeyFinding[];
-  cons?: readonly KeyFinding[];
-}>();
+import type { ProductProsConsProps } from './ProductProsCons.types';
+
+defineProps<ProductProsConsProps>();
 </script>
 
 <template>
-  <section v-if="pros?.length || cons?.length" class="pros-cons">
-    <div v-if="pros?.length" class="pros-cons__column">
+  <section v-if="pros?.length || cons?.length" class="product-pros-cons">
+    <div v-if="pros?.length" class="product-pros-cons__column">
       <EyebrowTitle :title="$t('common.pros')" tone="success" ruled />
-      <ul class="pros-cons__list">
-        <li v-for="(item, idx) in pros" :key="idx" class="pros-cons__row">
-          <span class="pros-cons__marker pros-cons__marker--pros">✓</span>
+      <ul class="product-pros-cons__list">
+        <li
+          v-for="(item, idx) in pros"
+          :key="idx"
+          class="product-pros-cons__row"
+        >
+          <span
+            class="product-pros-cons__marker product-pros-cons__marker--pros"
+            >✓</span
+          >
           <span>{{ item.text }}</span>
         </li>
       </ul>
     </div>
 
-    <div v-if="cons?.length" class="pros-cons__column">
+    <div v-if="cons?.length" class="product-pros-cons__column">
       <EyebrowTitle :title="$t('common.cons')" tone="error" ruled />
-      <ul class="pros-cons__list">
-        <li v-for="(item, idx) in cons" :key="idx" class="pros-cons__row">
-          <span class="pros-cons__marker pros-cons__marker--cons">✕</span>
+      <ul class="product-pros-cons__list">
+        <li
+          v-for="(item, idx) in cons"
+          :key="idx"
+          class="product-pros-cons__row"
+        >
+          <span
+            class="product-pros-cons__marker product-pros-cons__marker--cons"
+            >✕</span
+          >
           <span>{{ item.text }}</span>
         </li>
       </ul>
@@ -37,19 +49,19 @@ defineProps<{
 </template>
 
 <style scoped>
-.pros-cons {
+.product-pros-cons {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-4);
 }
 
 @media (max-width: 40rem) {
-  .pros-cons {
+  .product-pros-cons {
     grid-template-columns: 1fr;
   }
 }
 
-.pros-cons__column {
+.product-pros-cons__column {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1-5);
@@ -58,7 +70,7 @@ defineProps<{
   padding: 0;
 }
 
-.pros-cons__list {
+.product-pros-cons__list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -67,7 +79,7 @@ defineProps<{
   gap: var(--spacing-1-5);
 }
 
-.pros-cons__row {
+.product-pros-cons__row {
   display: flex;
   align-items: baseline;
   gap: var(--spacing-2);
@@ -76,17 +88,17 @@ defineProps<{
   color: var(--color-fg-secondary);
 }
 
-.pros-cons__marker {
+.product-pros-cons__marker {
   flex-shrink: 0;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
-.pros-cons__marker--pros {
+.product-pros-cons__marker--pros {
   color: var(--color-status-success);
 }
 
-.pros-cons__marker--cons {
+.product-pros-cons__marker--cons {
   color: var(--color-status-error);
 }
 </style>

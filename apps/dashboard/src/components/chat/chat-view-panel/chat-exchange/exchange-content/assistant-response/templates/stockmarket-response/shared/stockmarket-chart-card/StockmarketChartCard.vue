@@ -1,28 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import type { StockmarketChartTab } from './StockmarketChartCard.types';
+import type { StockmarketChartCardProps } from './StockmarketChartCard.types';
 
-const props = defineProps<{
-  /** Chart tabs rendered above the chart content. */
-  tabs: StockmarketChartTab[];
-  /** Id of the active tab (`v-model`). */
-  modelValue: string;
-  /** Optional ticker list for the single-instrument charts. */
-  tickers?: string[];
-  /**
-   * Whether to show the ticker selector. When omitted, it shows whenever
-   * more than one ticker is available.
-   */
-  showTickerSelector?: boolean;
-  /** Ticker currently selected in the selector (`v-model:selected-ticker`). */
-  selectedTicker?: string;
-}>();
-
-const emit = defineEmits<{
-  'update:modelValue': [value: string];
-  'update:selectedTicker': [value: string];
-}>();
+const props = defineProps<StockmarketChartCardProps>();
+const activeTab = defineModel<string>({ required: true });
+const selectedTicker = defineModel<string | undefined>('selectedTicker');
 
 const hasTickerSelector = computed(
   () => (props.tickers?.length ?? 0) > 1 && props.showTickerSelector !== false,
@@ -38,9 +21,9 @@ const hasTickerSelector = computed(
         type="button"
         class="stockmarket-chart-card__tab"
         :class="{
-          'stockmarket-chart-card__tab--active': modelValue === tab.id,
+          'stockmarket-chart-card__tab--active': activeTab === tab.id,
         }"
-        @click="emit('update:modelValue', tab.id)"
+        @click="activeTab = tab.id"
       >
         {{ tab.label }}
       </button>
@@ -58,7 +41,7 @@ const hasTickerSelector = computed(
         :class="{
           'stockmarket-chart-card__ticker--active': selectedTicker === t,
         }"
-        @click="emit('update:selectedTicker', t)"
+        @click="selectedTicker = t"
       >
         {{ t }}
       </button>

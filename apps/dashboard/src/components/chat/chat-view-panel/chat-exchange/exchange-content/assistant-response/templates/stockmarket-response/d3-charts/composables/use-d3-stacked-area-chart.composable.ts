@@ -1,18 +1,16 @@
 import type { Selection } from 'd3-selection';
 import { area, line } from 'd3-shape';
-import { computed, type Ref } from 'vue';
+import { computed } from 'vue';
 
-import type { D3StackedAreaSeries } from '../D3Chart.types';
 import {
   buildStackedAreaData,
   type StackedAreaDay,
 } from '../helpers/build-stacked-area-data.helper';
 import { computeCumulativeTops } from '../helpers/compute-cumulative-tops.helper';
 import { resolveColor } from '../helpers/resolve-color.helper';
-import {
-  type D3ChartRenderContext,
-  useD3Chart,
-} from './use-d3-chart.composable';
+import { useD3Chart } from './use-d3-chart.composable';
+import type { D3ChartRenderContext } from './use-d3-chart.composable.types';
+import type { UseD3StackedAreaChartOptions } from './use-d3-stacked-area-chart.composable.types';
 
 /** Line/area palette for the stacked series, in draw order. */
 export const STACKED_AREA_PALETTE = [
@@ -25,16 +23,6 @@ export const STACKED_AREA_PALETTE = [
   'var(--color-status-warning)',
   'var(--color-status-info)',
 ];
-
-export interface UseD3StackedAreaChartOptions {
-  /** Where the chart canvas mounts (bound by the component's template). */
-  containerRef: Ref<HTMLDivElement | null>;
-  series: Ref<D3StackedAreaSeries[]>;
-  /** normalized = each series rebased to 100; raw = original values. */
-  mode?: Ref<'normalized' | 'raw' | undefined>;
-  /** Request older bars from the cached history endpoint before windowing. */
-  onRangeRequest?: (bars: number | null) => Promise<void> | void;
-}
 
 /**
  * Owns the state and rendering of the stacked-area chart on the D3 engine:

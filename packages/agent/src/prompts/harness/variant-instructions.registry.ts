@@ -17,6 +17,7 @@ import {
   TEXT_CODING_INSTRUCTIONS,
   TEXT_FAMILIARITY_INSTRUCTIONS,
   TEXT_INSTRUCTIONS,
+  TEXT_OPINION_INSTRUCTIONS,
 } from '../instructions/text.instruction.js';
 import { VIDEOLIST_INSTRUCTIONS } from '../instructions/videolist.instruction.js';
 
@@ -42,7 +43,7 @@ export const TEMPLATE_VARIANTS: Record<TemplateName, string[]> = {
   videolist: ['default'],
   stockmarketitem: ['default'],
   stockmarketlist: ['default'],
-  text: ['default', 'coding', 'familiarity'],
+  text: ['default', 'coding', 'familiarity', 'opinion'],
 };
 
 const VARIANT_INSTRUCTIONS: Record<string, string> = {
@@ -84,6 +85,7 @@ const VARIANT_INSTRUCTIONS: Record<string, string> = {
   'text:default': TEXT_INSTRUCTIONS,
   'text:coding': TEXT_CODING_INSTRUCTIONS,
   'text:familiarity': TEXT_FAMILIARITY_INSTRUCTIONS,
+  'text:opinion': TEXT_OPINION_INSTRUCTIONS,
 };
 
 /**

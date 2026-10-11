@@ -4,25 +4,25 @@
  * only by hairlines, no box — followed by the full label/value spec table.
  * Nothing is ever truncated.
  */
-import type {
-  KeyFinding,
-  StatHighlight,
-} from '@/types/harness-response-data.model';
-
 import ProductSpecsList from '../product-specs-list/ProductSpecsList.vue';
+import type { ProductStatHighlightsProps } from './ProductStatHighlights.types';
 
-defineProps<{
-  stats?: readonly StatHighlight[];
-  specItems?: readonly KeyFinding[];
-}>();
+defineProps<ProductStatHighlightsProps>();
 </script>
 
 <template>
-  <section v-if="stats?.length || specItems?.length" class="stat-highlights">
-    <ul v-if="stats?.length" class="stat-highlights__row">
-      <li v-for="(stat, idx) in stats" :key="idx" class="stat-highlights__cell">
-        <span class="stat-highlights__value">{{ stat.value }}</span>
-        <span class="stat-highlights__label">{{ stat.label }}</span>
+  <section
+    v-if="stats?.length || specItems?.length"
+    class="product-stat-highlights"
+  >
+    <ul v-if="stats?.length" class="product-stat-highlights__row">
+      <li
+        v-for="(stat, idx) in stats"
+        :key="idx"
+        class="product-stat-highlights__cell"
+      >
+        <span class="product-stat-highlights__value">{{ stat.value }}</span>
+        <span class="product-stat-highlights__label">{{ stat.label }}</span>
       </li>
     </ul>
 
@@ -31,13 +31,13 @@ defineProps<{
 </template>
 
 <style scoped>
-.stat-highlights {
+.product-stat-highlights {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
 }
 
-.stat-highlights__row {
+.product-stat-highlights__row {
   list-style: none;
   margin: 0;
   padding: var(--spacing-2) 0;
@@ -47,7 +47,7 @@ defineProps<{
   border-bottom: 1px solid var(--color-divider);
 }
 
-.stat-highlights__cell {
+.product-stat-highlights__cell {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -56,11 +56,11 @@ defineProps<{
   text-align: center;
 }
 
-.stat-highlights__cell + .stat-highlights__cell {
+.product-stat-highlights__cell + .product-stat-highlights__cell {
   border-left: 1px solid var(--color-divider);
 }
 
-.stat-highlights__value {
+.product-stat-highlights__value {
   font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.2;
@@ -68,7 +68,7 @@ defineProps<{
   overflow-wrap: anywhere;
 }
 
-.stat-highlights__label {
+.product-stat-highlights__label {
   font-size: 0.65rem;
   font-family: var(--font-mono);
   text-transform: uppercase;

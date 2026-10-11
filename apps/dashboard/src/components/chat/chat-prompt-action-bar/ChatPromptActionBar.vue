@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { onActivated } from 'vue';
 
+import { useAppStore } from '@/stores/app';
+
+import { useChatContextSize } from '../composables/use-chat-context-size';
+import { useChatDropdowns } from '../composables/use-chat-dropdowns';
+import { useChatInput } from '../composables/use-chat-input';
+import { useChatThink } from '../composables/use-chat-think';
+import { usePromptDraft } from '../composables/use-prompt-draft';
+import { useSearchEngineAvailability } from '../composables/use-search-engine-availability';
 import { useChatPromptActionBar } from './composables/use-chat-prompt-action-bar.composable';
+import { useFileSelect } from './composables/use-file-select.composable';
+import FileInput from './file-input/FileInput.vue';
 import PromptActions from './prompt-actions/PromptActions.vue';
 import PromptInput from './prompt-input/PromptInput.vue';
 import PromptMenu from './prompt-menu/PromptMenu.vue';
@@ -9,9 +19,43 @@ import SourcesMenu from './source-tags-strip/sources-menu/SourcesMenu.vue';
 import SourceTagsStrip from './source-tags-strip/SourceTagsStrip.vue';
 import ViewMenu from './source-tags-strip/view-menu/ViewMenu.vue';
 
+const appStore = useAppStore();
 const {
-  promptDraft,
-  onCollapsedKeydown,
+  toggleSectionCollapsed: toggleSection,
+  toggleMediaPresentation: togglePresentation,
+} = appStore;
+
+const { filteredThinkOptions, selectThink } = useChatThink();
+const { filteredContextSizeOptions, selectContextSize } = useChatContextSize();
+
+const {
+  setThinkDropdownRef,
+  setContextSizeDropdownRef,
+  onThinkOpen,
+  onContextSizeOpen,
+} = useChatDropdowns();
+
+const { onCollapsedKeydown } = useChatInput();
+const { promptDraft } = usePromptDraft();
+
+const {
+  searchEngineState,
+  eodhdState,
+  refresh,
+  toggleSearchEngine,
+  toggleSource,
+  toggleEodhd,
+} = useSearchEngineAvailability();
+
+const {
+  isFileSelectDisabled,
+  acceptedFileTypes,
+  setFileInputRef,
+  triggerFileSelect,
+  onFilesSelect,
+} = useFileSelect();
+
+const {
   onPromptFocus,
   fileSelectTitle,
   actionsClass,
@@ -31,32 +75,10 @@ const {
   viewMenuToggleTitle,
   viewMenuAlwaysShow,
   sectionToggles,
-  toggleSection,
   presentationToggles,
-  togglePresentation,
-  eodhdState,
-  filteredThinkOptions,
   currentThinkValue,
-  selectThink,
-  filteredContextSizeOptions,
   currentContextSizeValue,
-  selectContextSize,
-  formatContextValue,
   hasNoModelSelected,
-  setThinkDropdownRef,
-  setContextSizeDropdownRef,
-  onThinkOpen,
-  onContextSizeOpen,
-  isFileSelectDisabled,
-  searchEngineState,
-  toggleSearchEngine,
-  toggleSource,
-  toggleEodhd,
-  acceptedFileTypes,
-  setFileInputRef,
-  triggerFileSelect,
-  onFileInputChange,
-  refresh,
 } = useChatPromptActionBar();
 
 // KeepAlive caches Chat across tab switches, so the mount-only fetch in the
@@ -104,7 +126,6 @@ onActivated(refresh);
         :think-value="currentThinkValue"
         :context-size-options="filteredContextSizeOptions"
         :context-size-value="currentContextSizeValue"
-        :format-context-size="formatContextValue"
         :is-disabled="hasNoModelSelected"
         :file-select-title="fileSelectTitle"
         :is-file-select-disabled="isFileSelectDisabled"
@@ -128,14 +149,10 @@ onActivated(refresh);
       @focus="onPromptFocus"
     />
 
-    <input
+    <FileInput
       :ref="setFileInputRef"
-      type="file"
-      name="chat-attachments"
-      multiple
       :accept="acceptedFileTypes"
-      class="chat-prompt-action-bar__file-input"
-      @change="onFileInputChange"
+      @select="onFilesSelect"
     />
   </div>
 </template>
@@ -165,9 +182,5 @@ onActivated(refresh);
   box-shadow: 0 0 0.15rem 0.05rem
     color-mix(in srgb, var(--color-accent-primary) 30%, var(--color-divider));
   opacity: 1;
-}
-
-.chat-prompt-action-bar__file-input {
-  display: none;
 }
 </style>

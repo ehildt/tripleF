@@ -154,7 +154,7 @@ describe('useD3UnifiedChart', () => {
     expect(textOf().some((text) => text.includes('3M HIGH'))).toBe(true);
 
     // Nor may it float into view above the plot after a big vertical drag.
-    api.panBy(0, 200);
+    api.engine.panBy(0, 200);
     expect(textOf().some((text) => text.includes('ATH (web)'))).toBe(false);
   });
 
@@ -162,7 +162,7 @@ describe('useD3UnifiedChart', () => {
     const { api, container } = mountHarness();
 
     // Fit the full series so both extremes are in view.
-    await api.reset();
+    await api.engine.reset();
 
     const levelTexts = [
       ...container.querySelectorAll('g.d3-chart__reference text'),
@@ -206,7 +206,7 @@ describe('useD3UnifiedChart', () => {
         { value: minLow, label: '52w Low', color: 'status-error' },
       ],
     });
-    await api.reset();
+    await api.engine.reset();
 
     const levelTexts = [
       ...container.querySelectorAll('g.d3-chart__reference text'),
@@ -294,7 +294,7 @@ describe('useD3UnifiedChart', () => {
 
   it('labels the extreme markers with the selected range', async () => {
     const { api, container } = mountHarness();
-    await api.setRange(22); // 1M
+    await api.engine.setRange(22); // 1M
 
     const markerWords = [
       ...container.querySelectorAll(
@@ -354,13 +354,13 @@ describe('useD3UnifiedChart', () => {
 
   it('requests older bars on setRange', async () => {
     const { api, onRangeRequest } = mountHarness();
-    await api.setRange(22);
+    await api.engine.setRange(22);
     expect(onRangeRequest).toHaveBeenCalledWith(22);
   });
 
   it('requests all bars on reset', async () => {
     const { api, onRangeRequest } = mountHarness();
-    await api.reset();
+    await api.engine.reset();
     expect(onRangeRequest).toHaveBeenCalledWith(null);
   });
 
@@ -384,7 +384,7 @@ describe('useD3UnifiedChart', () => {
     const { api, container } = mountHarness();
     // A 10-bar window shows a price range far narrower than the full
     // history, so full-history bands would bleed past the plot edges.
-    await api.setRange(10);
+    await api.engine.setRange(10);
     api.heatmapVariant.value = 'cells';
     await nextTick();
 
@@ -400,7 +400,7 @@ describe('useD3UnifiedChart', () => {
 
   it('clamps flow quads inside the plot when zoomed into a narrow window', async () => {
     const { api, container } = mountHarness();
-    await api.setRange(10);
+    await api.engine.setRange(10);
 
     const quads = container.querySelectorAll('path.d3-chart__flow-quad');
     expect(quads.length).toBeGreaterThan(0);
@@ -421,8 +421,8 @@ describe('useD3UnifiedChart', () => {
 
   it('never accumulates the phantom vertical offset d3-zoom injects into zoom gestures', async () => {
     const { api, container } = mountHarness();
-    api.zoomIn();
-    api.zoomIn();
+    api.engine.zoomIn();
+    api.engine.zoomIn();
     await nextTick();
 
     const overlay = overlayTransform(container);
@@ -431,11 +431,11 @@ describe('useD3UnifiedChart', () => {
 
   it('keeps deliberate vertical pans and resets them on the next zoom', async () => {
     const { api, container } = mountHarness();
-    api.panBy(0, 40);
+    api.engine.panBy(0, 40);
     await nextTick();
     expect(overlayTransform(container).y).not.toBe(0);
 
-    api.zoomIn();
+    api.engine.zoomIn();
     await nextTick();
     expect(overlayTransform(container).y).toBe(0);
   });
@@ -444,8 +444,8 @@ describe('useD3UnifiedChart', () => {
     const { api, history, container } = mountHarness();
     // Zoom in and pan away from the latest bar so keepCurrentWindow takes the
     // clamp path (instead of the follow-the-edge path).
-    api.zoomIn();
-    api.panBy(120, 40);
+    api.engine.zoomIn();
+    api.engine.panBy(120, 40);
     await nextTick();
     expect(overlayTransform(container).y).not.toBe(0);
 
@@ -474,7 +474,7 @@ describe('useD3UnifiedChart', () => {
 
   it('bounds hard vertical pans so part of the series always stays in view', async () => {
     const { api, container } = mountHarness();
-    api.panBy(0, 100000);
+    api.engine.panBy(0, 100000);
     await nextTick();
 
     const wicks = [...container.querySelectorAll('line.d3-chart__wick')].map(

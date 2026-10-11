@@ -1,16 +1,7 @@
 <script setup lang="ts">
-import type { LucideIcon } from '@lucide/vue';
+import type { ChartToggleProps } from './ChartToggle.types';
 
-defineProps<{
-  /** Whether the toggle is in its active (pressed) state. */
-  active?: boolean;
-  /** Disables the toggle (e.g. heatmap variants while volume is histogram). */
-  disabled?: boolean;
-  /** Tooltip and accessible name for the toggle. */
-  label: string;
-  /** Icon rendered inside the toggle. */
-  icon: LucideIcon;
-}>();
+defineProps<ChartToggleProps>();
 
 const emit = defineEmits<{ click: [] }>();
 </script>

@@ -8,12 +8,17 @@
  * ratio, click behavior, captions/overlays); AsyncImage fills it 100%.
  * Emits `load`/`error` so the parent can react (e.g. guarding a lightbox
  * click after an error).
+ *
+ * The state machine reconciles from the DOM (`complete` + `naturalWidth`) on
+ * mount and on `src` change, so an image that finishes before Vue observes
+ * the load/error event (cached or synchronously decoded) can't leave the
+ * skeleton pulsing over an image that is already visible.
  */
-import { ref } from 'vue';
+import { onMounted, ref, useTemplateRef, watch } from 'vue';
 
 import type { AsyncImageProps } from './AsyncImage.types';
 
-withDefaults(defineProps<AsyncImageProps>(), {
+const props = withDefaults(defineProps<AsyncImageProps>(), {
   alt: '',
   eager: false,
   fit: 'cover',
@@ -22,23 +27,65 @@ withDefaults(defineProps<AsyncImageProps>(), {
 
 const emit = defineEmits<{ load: []; error: [] }>();
 
+const imgRef = useTemplateRef<HTMLImageElement>('imgRef');
+
 const isLoaded = ref(false);
 const hasError = ref(false);
 
-function handleLoad() {
+/**
+ * Idempotent state transitions: both the live event path and the DOM-fact
+ * reconciliation funnel through these, so neither can double-fire the
+ * parent's `load`/`error` reactions.
+ */
+function markLoaded() {
+  if (isLoaded.value) return;
   isLoaded.value = true;
   emit('load');
 }
 
-function handleError() {
+function markError() {
+  if (hasError.value) return;
   hasError.value = true;
   emit('error');
 }
+
+/**
+ * Reconcile the state machine from the DOM instead of trusting events alone.
+ * A cached or synchronously-decoded image can complete before Vue's listener
+ * ever sees the `load`/`error` event; `complete` + `naturalWidth` tell us the
+ * truth regardless of event timing (`complete` is also true on a broken
+ * image, so `naturalWidth` is the success determinant).
+ */
+function syncLoadState() {
+  const img = imgRef.value;
+  if (!img || !img.complete) return;
+  if (img.naturalWidth > 0) {
+    markLoaded();
+  } else if (props.src) {
+    markError();
+  }
+}
+
+onMounted(syncLoadState);
+
+// A parent swapping `src` without remounting resets the machine and re-runs
+// the DOM check post-render, so a cached swap never flashes the skeleton and
+// an in-flight swap honestly shows loading again.
+watch(
+  () => props.src,
+  () => {
+    isLoaded.value = false;
+    hasError.value = false;
+    syncLoadState();
+  },
+  { flush: 'post' },
+);
 </script>
 
 <template>
   <span class="async-image" :class="{ 'async-image--error': hasError }">
     <img
+      ref="imgRef"
       :src="src"
       :alt="alt"
       :loading="eager ? 'eager' : 'lazy'"
@@ -50,8 +97,8 @@ function handleError() {
         'async-image__img--error': hasError,
         'async-image__img--contain': fit === 'contain',
       }"
-      @load="handleLoad"
-      @error="handleError"
+      @load="markLoaded"
+      @error="markError"
     />
 
     <!-- Pulse skeleton while the external image is still fetching: the tile

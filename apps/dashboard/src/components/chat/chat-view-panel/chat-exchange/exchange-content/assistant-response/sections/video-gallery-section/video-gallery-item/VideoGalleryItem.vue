@@ -7,13 +7,15 @@ import MediaCaptionScrim from '@/components/chat/shared/ui/media-caption-scrim/M
 import MediaCardHeader from '@/components/chat/shared/ui/media-card-header/MediaCardHeader.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
+import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 const props = defineProps<{
   item: VideoGalleryItem;
 }>();
 
-const { posterUrl, isInPlaylist, togglePlaylistVideo } = useVideoGalleryTile(
+const { posterUrl } = useVideoGalleryTile(() => props.item);
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(
   () => props.item,
 );
 </script>

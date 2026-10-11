@@ -1,44 +1,13 @@
-import { onBeforeUnmount, type Ref, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 
-import type {
-  ChartTooltipRow,
-  ChartTooltipState,
-} from '../../shared/chart-tooltip/ChartTooltip.types';
+import type { ChartTooltipState } from '../../shared/chart-tooltip/ChartTooltip.types';
 import { computeTooltipPosition } from '../../shared/chart-tooltip/compute-tooltip-position.helper';
-import type { D3CrosshairEvent } from './use-d3-chart.composable';
+import type { D3CrosshairEvent } from './use-d3-chart.composable.types';
+import type { UseD3ChartTooltipOptions } from './use-d3-chart-tooltip.composable.types';
 
 /** Fallback footprint when the tooltip element is not (yet) measurable. */
 const TOOLTIP_WIDTH = 140;
 const TOOLTIP_HEIGHT = 92;
-
-/** The chart-engine surface the tooltip subscribes to. */
-export interface D3ChartEngineTooltip {
-  onCrosshair: (
-    listener: (event: D3CrosshairEvent | null) => void,
-  ) => () => void;
-}
-
-export interface UseD3ChartTooltipOptions {
-  /** Where the chart canvas is mounted (used to clamp the tooltip in bounds). */
-  containerRef: Ref<HTMLDivElement | null>;
-  /** The D3 chart engine, which emits crosshair events on pointer move. */
-  engine: D3ChartEngineTooltip;
-  /**
-   * The tooltip panel's root element (exposed by `ChartTooltip`), measured so
-   * the panel's real width/height decide the before/after flip and clamps.
-   */
-  tooltipRef?: Ref<{ rootEl: HTMLElement | null } | null>;
-  /**
-   * Build the tooltip rows from the hovered bar. Return `null` (or an empty
-   * array) to keep the tooltip hidden for that position.
-   */
-  buildRows: (event: D3CrosshairEvent) => ChartTooltipRow[] | null;
-  /**
-   * Whether the tooltip is enabled. When `false`, crosshair moves keep the
-   * panel hidden and rows are never built. Defaults to enabled.
-   */
-  enabled?: Ref<boolean>;
-}
 
 /**
  * Turns the chart's crosshair into a floating, cursor-anchored tooltip. Tracks

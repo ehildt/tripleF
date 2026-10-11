@@ -28,7 +28,7 @@ describe('ProductResponse', () => {
     expect(wrapper.find('.response-header__title').text()).toBe(
       'Sony WH-1000XM5',
     );
-    expect(wrapper.find('.product-banner__rating').exists()).toBe(true);
+    expect(wrapper.find('.product-banner-rating').exists()).toBe(true);
     expect(wrapper.text()).toContain('4.6');
     expect(wrapper.text()).toContain('Excellent');
   });
@@ -39,7 +39,7 @@ describe('ProductResponse', () => {
       shortDescription: 'A concise product overview.',
     });
 
-    expect(wrapper.find('.product__lead').text()).toBe(
+    expect(wrapper.find('.product-response__lead').text()).toBe(
       'A concise product overview.',
     );
   });
@@ -50,7 +50,7 @@ describe('ProductResponse', () => {
       keyPoints: [{ text: '30h battery' }, { text: 'ANC on' }],
     });
 
-    expect(wrapper.find('.spec-list').exists()).toBe(true);
+    expect(wrapper.find('.product-specs-list').exists()).toBe(true);
     expect(wrapper.text()).toContain('30h battery');
     expect(wrapper.text()).toContain('ANC on');
   });
@@ -62,9 +62,11 @@ describe('ProductResponse', () => {
       keyPoints: [{ text: 'Codec: LDAC' }],
     });
 
-    expect(wrapper.find('.stat-highlights__value').text()).toBe('30 h');
-    expect(wrapper.find('.stat-highlights__label').text()).toBe('Battery');
-    expect(wrapper.find('.spec-list').exists()).toBe(true);
+    expect(wrapper.find('.product-stat-highlights__value').text()).toBe('30 h');
+    expect(wrapper.find('.product-stat-highlights__label').text()).toBe(
+      'Battery',
+    );
+    expect(wrapper.find('.product-specs-list').exists()).toBe(true);
     expect(wrapper.text()).toContain('LDAC');
   });
 
@@ -75,7 +77,7 @@ describe('ProductResponse', () => {
       cons: [{ text: 'Heavy' }],
     });
 
-    expect(wrapper.find('.pros-cons').exists()).toBe(true);
+    expect(wrapper.find('.product-pros-cons').exists()).toBe(true);
     expect(wrapper.text()).toContain('Great battery');
     expect(wrapper.text()).toContain('Heavy');
   });
@@ -110,7 +112,7 @@ describe('ProductResponse', () => {
       ],
     });
 
-    const prices = wrapper.findAll('.offer__price');
+    const prices = wrapper.findAll('.shop-offer-card-details__price');
     expect(prices[0].text()).toBe('€50.00');
     expect(prices[1].text()).toBe('€500.00');
   });
@@ -123,7 +125,7 @@ describe('ProductResponse', () => {
       ],
     });
 
-    expect(wrapper.find('.offer__shop').text()).toBe('Amazon');
+    expect(wrapper.find('.shop-offer-card-header__shop').text()).toBe('Amazon');
   });
 
   it('renders sources section', () => {
@@ -153,7 +155,9 @@ describe('ProductResponse', () => {
       ],
     });
 
-    expect(wrapper.find('.offer__price').text()).toBe('Check price');
+    expect(wrapper.find('.shop-offer-card-details__price').text()).toBe(
+      'Check price',
+    );
   });
 
   it('renders external offer links with target="_blank"', () => {
@@ -169,7 +173,7 @@ describe('ProductResponse', () => {
       ],
     });
 
-    const link = wrapper.find('a.offer__link');
+    const link = wrapper.find('a.shop-offer-card');
     expect(link.exists()).toBe(true);
     expect(link.attributes('target')).toBe('_blank');
     expect(link.attributes('rel')).toBe('noopener noreferrer');

@@ -12,6 +12,7 @@ import Dropdown from '@/components/shared/ui/drop-down/DropDown.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+import { formatCtx } from '@/utils/format-ctx.helper';
 
 import type { PromptActionsProps } from './PromptActions.types';
 
@@ -56,7 +57,7 @@ const emit = defineEmits<{
       :options="props.contextSizeOptions"
       :model-value="props.contextSizeValue"
       :disabled="props.isDisabled"
-      :format-value="props.formatContextSize"
+      :format-value="(value) => formatCtx(Number(value))"
       @update:model-value="emit('selectContextSize', $event)"
       @open="emit('openContextSize')"
     >

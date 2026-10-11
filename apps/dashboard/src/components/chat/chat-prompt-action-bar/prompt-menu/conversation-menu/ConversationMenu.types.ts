@@ -3,8 +3,6 @@ export interface ConversationMenuProps {
   isOpen: boolean;
   /** Whether the trigger is disabled (no model selected). */
   isDisabled: boolean;
-  /** Blink state for the trigger icon (brain-blink cue when disabled). */
-  blinking?: boolean;
   /** Draft conversation name. */
   name: string;
   /** Draft socket event. */
@@ -15,8 +13,6 @@ export interface ConversationMenuProps {
   numCtxValue: string;
   /** Available context size options. */
   contextOptions: string[];
-  /** Formats a context size option for display. */
-  formatContextValue: (value: string) => string;
   /** Active socket events available for the event combo box. */
   availableEvents: string[];
   /** Known channels for the currently entered socket event. */

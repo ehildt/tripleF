@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import type { StockmarketItemDescriptionProps } from './StockmarketItemDescription.types';
+
 /**
  * Short description paragraph of a single-instrument stock card.
  * Presentational.
  */
-defineProps<{
-  text: string;
-}>();
+defineProps<StockmarketItemDescriptionProps>();
 </script>
 
 <template>

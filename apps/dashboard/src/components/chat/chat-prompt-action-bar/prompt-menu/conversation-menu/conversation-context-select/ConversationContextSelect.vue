@@ -2,6 +2,7 @@
 import { CircleGauge } from '@lucide/vue';
 
 import DropDown from '@/components/shared/ui/drop-down/DropDown.vue';
+import { formatCtx } from '@/utils/format-ctx.helper';
 
 import type { ConversationContextSelectProps } from './ConversationContextSelect.types';
 
@@ -19,7 +20,7 @@ const emit = defineEmits<{
     side="top"
     :options="options"
     :model-value="modelValue"
-    :format-value="formatValue"
+    :format-value="(value) => formatCtx(Number(value))"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <CircleGauge class="w-3.5 h-3.5" />

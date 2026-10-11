@@ -1,29 +1,35 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia';
 import { onDeactivated } from 'vue';
 
+import { useAppStore } from '@/stores/app';
+import { useConversationStore } from '@/stores/conversation';
+
 import CapabilitiesRow from './capabilities-row/CapabilitiesRow.vue';
-import { useLeftToolbar } from './composables/use-left-toolbar';
+import { useDeleteConversation } from './composables/use-delete-conversation';
+import { useLeftToolbarMenus } from './composables/use-left-toolbar-menus';
+import { useSelectedModel } from './composables/use-selected-model';
+import { useSocketSubscriptions } from './composables/use-socket-subscriptions';
 import SelectedModelLabel from './selected-model-label/SelectedModelLabel.vue';
 import Tabs from './tabs/Tabs.vue';
 
+const { closeAllMenus } = useLeftToolbarMenus();
+const { selectedModelName, isModelMissing, selectedModelCapabilities } =
+  useSelectedModel();
 const {
-  closeAllMenus,
-  selectedModelName,
-  isModelMissing,
-  selectedModelCapabilities,
-  hasConversations,
-  conversations,
-  activeConversationId,
-  temporaryRetentionMinutes,
-  setActiveConversation,
-  toggleConversationType,
   subscriptions,
   conversationNamesByEvent,
   toggleSubscriptionActive,
   toggleSubscriptionStream,
   removeSubscription,
-  deleteConversation,
-} = useLeftToolbar();
+} = useSocketSubscriptions();
+const { deleteConversation } = useDeleteConversation();
+
+const conversationStore = useConversationStore();
+const appStore = useAppStore();
+const { conversations, activeConversationId } = storeToRefs(conversationStore);
+const { setActiveConversation, toggleConversationType } = conversationStore;
+const { temporaryRetentionMinutes } = storeToRefs(appStore);
 
 // KeepAlive deactivates the chat tree on a tab switch — close any open menus
 // so they never linger while another tab is on screen. The menu state is
@@ -42,7 +48,6 @@ onDeactivated(closeAllMenus);
       :capabilities="selectedModelCapabilities"
     />
     <Tabs
-      :has-conversations="hasConversations"
       :conversations="conversations"
       :active-conversation-id="activeConversationId"
       :temporary-retention-minutes="temporaryRetentionMinutes"
