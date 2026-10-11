@@ -11,6 +11,13 @@ export interface ProgrammaticScrollWindow {
   disposeProgrammaticScrollWindow: () => void;
 }
 
+/** True while a programmatic scroll is in flight. Module-scope on purpose:
+ *  every scroller that arms the window and every consumer that reads it must
+ *  share one window — only one scroll container (carousel or native) is
+ *  rendered at a time, so a single window is the correct, unambiguous source
+ *  of truth. */
+const isProgrammaticScroll = ref(false);
+
 /**
  * Tracks whether observed scroll events belong to a programmatic scroll the
  * caller triggered itself. The window opens on `armProgrammaticScroll` and
@@ -19,8 +26,6 @@ export interface ProgrammaticScrollWindow {
  * because browsers do not dispatch `scrollend` for a no-op scroll.
  */
 export function useProgrammaticScrollWindow(): ProgrammaticScrollWindow {
-  const isProgrammaticScroll = ref(false);
-
   function armProgrammaticScroll() {
     isProgrammaticScroll.value = true;
   }

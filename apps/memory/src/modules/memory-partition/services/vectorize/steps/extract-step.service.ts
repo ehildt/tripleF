@@ -91,7 +91,7 @@ export class ExtractStepService implements VectorizeStepHandler {
     const messages = [
       {
         role: 'system' as const,
-        content: buildExtractionPrompt(vocabulary),
+        content: buildExtractionPrompt(vocabulary, ctx.role),
       },
       {
         role: 'user' as const,

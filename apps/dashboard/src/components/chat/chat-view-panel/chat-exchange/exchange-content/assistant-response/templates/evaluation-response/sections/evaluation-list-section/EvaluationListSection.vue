@@ -1,43 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { KeyFinding } from '@/types/harness-response-data.model';
 
 import { pickCycleColor } from '../../../../shared/helpers/pick-cycle-color.helper';
+import { useEvaluationListSection } from './composables/use-evaluation-list-section.composable';
+import type { EvaluationListSectionProps } from './EvaluationListSection.types';
 
-const props = defineProps<{
-  title: string;
-  items?: KeyFinding[];
-  variant?: 'strength' | 'weakness' | 'recommendation';
-}>();
+const props = defineProps<EvaluationListSectionProps>();
 
-const validItems = computed(() =>
-  (props.items ?? []).filter(
-    (item): item is KeyFinding =>
-      typeof item === 'object' &&
-      item !== null &&
-      typeof (item as KeyFinding).text === 'string' &&
-      (item as KeyFinding).text.trim().length > 0,
-  ),
-);
-
-const icon = computed(() => {
-  switch (props.variant) {
-    case 'strength':
-      return '+';
-    case 'weakness':
-      return '−';
-    case 'recommendation':
-      return '→';
-    default:
-      return '•';
-  }
-});
+const { validItems, icon } = useEvaluationListSection(props);
 </script>
 
 <template>
-  <section v-if="validItems.length" class="evaluation-list" :class="variant">
+  <section
+    v-if="validItems.length"
+    class="evaluation-list-section"
+    :class="variant && `evaluation-list-section--${variant}`"
+  >
     <SectionTitle :title="title" />
     <ul>
       <li
@@ -45,22 +23,24 @@ const icon = computed(() => {
         :key="index"
         :style="{ '--item-color': pickCycleColor(index) }"
       >
-        <span class="icon" aria-hidden="true">{{ icon }}</span>
-        <span class="text">{{ item.text }}</span>
+        <span class="evaluation-list-section__icon" aria-hidden="true">{{
+          icon
+        }}</span>
+        <span class="evaluation-list-section__text">{{ item.text }}</span>
       </li>
     </ul>
   </section>
 </template>
 
 <style scoped>
-.evaluation-list ul {
+.evaluation-list-section ul {
   list-style: none;
   padding: var(--spacing-3);
   margin: 0.5em 0 0;
   background-color: var(--color-bg-secondary);
 }
 
-.evaluation-list li {
+.evaluation-list-section li {
   display: flex;
   align-items: flex-start;
   gap: 0.5em;
@@ -68,26 +48,26 @@ const icon = computed(() => {
   color: var(--color-fg-secondary);
 }
 
-.icon {
+.evaluation-list-section__icon {
   flex-shrink: 0;
   font-weight: 700;
   width: 1.25em;
   text-align: center;
 }
 
-.text {
+.evaluation-list-section__text {
   line-height: 1.5;
 }
 
-.strength .icon {
+.evaluation-list-section--strength .evaluation-list-section__icon {
   color: var(--color-status-success);
 }
 
-.weakness .icon {
+.evaluation-list-section--weakness .evaluation-list-section__icon {
   color: var(--color-status-error);
 }
 
-.recommendation .icon {
+.evaluation-list-section--recommendation .evaluation-list-section__icon {
   /* Recommendations are neutral arrows — the colour cycles so the list
      reads as a row of distinct cards, like sources/key findings. */
   color: var(--item-color, var(--color-accent-primary));

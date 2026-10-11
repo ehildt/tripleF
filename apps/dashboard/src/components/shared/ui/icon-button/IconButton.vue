@@ -35,7 +35,6 @@ const emit = defineEmits<{
         'icon-button--active': active,
         'icon-button--danger': danger,
         'icon-button--armed': armed,
-        'icon-button--blinking': blinking,
       }"
       :aria-label="ariaLabel ?? title"
       :aria-pressed="ariaPressed"
@@ -113,16 +112,8 @@ const emit = defineEmits<{
   animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Attention cue: pulsing accent ring. Works while disabled too — a disabled
-   button still receives hover/focus events, and the ring is what draws the
-   eye to the reason it is disabled. */
-.icon-button--blinking {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  box-shadow: 0 0 0 2px var(--color-accent-primary);
-}
-
-/* Defined here (scoped, auto-renamed by Vue) so the pulse animations never
-   depend on a global keyframes definition being present. */
+/* Defined here (scoped, auto-renamed by Vue) so the pulse animation never
+   depends on a global keyframes definition being present. */
 @keyframes pulse {
   0%,
   100% {

@@ -9,11 +9,13 @@ import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 import { usePlaylistPanel } from '../playlist/composables/use-playlist-panel';
 
 /**
- * Transport-bar state for a playlist surface — the chat right toolbar tab and
- * the app-level floating playlist: whether anything is playing, whether the
- * provider supports controls, and the play/stop/autoplay actions — plus the
- * per-item launch/remove actions. Reads the playback session and the active
- * playlist queue by import; it never touches a player element.
+ * Derived transport-bar state for a playlist surface — the chat right
+ * toolbar tab and the app-level floating playlist: whether anything is
+ * playing, whether the provider supports controls, the play/pause title, the
+ * popout eye, and the per-item launch/remove actions. Reads the playback
+ * session and the active playlist queue by import; it never touches a player
+ * element. The raw play/stop/autoplay controls and now-playing refs are bound
+ * by PlaylistPanel.vue directly from `usePlaybackSession`.
  */
 export function usePlaylistTransport() {
   const playback = usePlaybackSession();
@@ -27,9 +29,6 @@ export function usePlaylistTransport() {
   );
   const activePlaybackPlaying = computed(
     () => playback.activePlaybackPlaying.value,
-  );
-  const playlistAutoplayEnabled = computed(
-    () => playback.playlistAutoplayEnabled.value,
   );
 
   const hasActivePlayback = computed(() =>
@@ -104,18 +103,12 @@ export function usePlaylistTransport() {
   }
 
   return {
-    activePlaybackPlaying,
-    activePlaybackVideoUrl,
     activePlaybackTitle,
-    playlistAutoplayEnabled,
     popoutHidden,
     toggleHideOnPlaylist,
     hasActivePlayback,
     canTogglePlayback,
     playbackToggleTitle,
-    toggleActivePlayback: playback.requestPlaybackToggle,
-    stopActivePlayback: playback.stopPlayback,
-    togglePlaylistAutoplay: playback.togglePlaylistAutoplay,
     onPlayItem,
     onRemoveItem,
   };

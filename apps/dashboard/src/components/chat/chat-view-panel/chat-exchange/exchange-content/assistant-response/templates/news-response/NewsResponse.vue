@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useArtDirection } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-art-direction.composable';
+import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 
@@ -15,12 +16,13 @@ import type { NewsResponseProps } from './NewsResponse.types';
 
 const props = defineProps<NewsResponseProps>();
 
-const { videosFirst, hasAnyContent } = useNewsResponseData(props);
+const { hasAnyContent } = useNewsResponseData(props);
+const { videosFirst } = useHarnessMediaPriority(props.data);
 const { direction, splitHero, multicolBody, spans } = useArtDirection(props);
 </script>
 
 <template>
-  <article class="news" :class="`news--${direction}`">
+  <article class="news-response" :class="`news-response--${direction}`">
     <template v-if="hasAnyContent">
       <ArticleHero
         :title="data.headline"
@@ -41,7 +43,12 @@ const { direction, splitHero, multicolBody, spans } = useArtDirection(props);
       <!-- Stacked direction: the lead sits below the hero region. -->
       <ArticleLeadSection v-if="!splitHero" :summary="data.lead" />
 
-      <div :class="['news__body', { 'news__body--multicol': multicolBody }]">
+      <div
+        :class="[
+          'news-response__body',
+          { 'news-response__body--multicol': multicolBody },
+        ]"
+      >
         <ParagraphSection
           :title="data.sectionTitle"
           :content="data.sectionContent"
@@ -73,7 +80,7 @@ const { direction, splitHero, multicolBody, spans } = useArtDirection(props);
 </template>
 
 <style scoped>
-.news {
+.news-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;
@@ -81,7 +88,7 @@ const { direction, splitHero, multicolBody, spans } = useArtDirection(props);
 
 /* Newspaper columns: multicol auto-balances variable-length copy. */
 @media (min-width: 720px) {
-  .news__body--multicol :deep(.content p) {
+  .news-response__body--multicol :deep(.content p) {
     columns: 2;
     column-gap: 2em;
     column-rule: 1px solid var(--color-divider);

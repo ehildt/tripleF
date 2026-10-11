@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import EyebrowTitle from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/eyebrow-title/EyebrowTitle.vue';
-import type { ShopOffer } from '@/types/harness-response-data.model';
 
 import ShopOfferCard from './shop-offer-card/ShopOfferCard.vue';
+import type { ShopOffersSectionProps } from './ShopOffersSection.types';
 
-defineProps<{ offers: readonly ShopOffer[] }>();
+defineProps<ShopOffersSectionProps>();
 </script>
 
 <template>

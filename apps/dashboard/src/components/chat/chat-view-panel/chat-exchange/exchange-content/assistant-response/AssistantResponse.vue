@@ -15,17 +15,17 @@ import ArticleResponse from './templates/article-response/ArticleResponse.vue';
 import CompareResponse from './templates/compare-response/CompareResponse.vue';
 import DescribeResponse from './templates/describe-response/DescribeResponse.vue';
 import EvaluationResponse from './templates/evaluation-response/EvaluationResponse.vue';
-import ImageListResponse from './templates/imagelist-response/ImageListResponse.vue';
+import ImageListResponse from './templates/image-list-response/ImageListResponse.vue';
 import MergeResponse from './templates/merge-response/MergeResponse.vue';
 import NewsResponse from './templates/news-response/NewsResponse.vue';
 import OcrResponse from './templates/ocr-response/OcrResponse.vue';
 import ProductResponse from './templates/product-response/ProductResponse.vue';
-import ShopListResponse from './templates/shoplist-response/ShopListResponse.vue';
+import ShopListResponse from './templates/shop-list-response/ShopListResponse.vue';
 import StockmarketItemResponse from './templates/stockmarket-item-response/StockmarketItemResponse.vue';
 import StockmarketListResponse from './templates/stockmarket-list-response/StockmarketListResponse.vue';
 import SummaryResponse from './templates/summary-response/SummaryResponse.vue';
 import TextResponse from './templates/text-response/TextResponse.vue';
-import VideoListResponse from './templates/videolist-response/VideoListResponse.vue';
+import VideoListResponse from './templates/video-list-response/VideoListResponse.vue';
 
 const props = defineProps<{
   template: string;

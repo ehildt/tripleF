@@ -20,6 +20,7 @@ import ChartToggle from '../shared/chart-toggles/ChartToggle.vue';
 import type { ChartToggleOption } from '../shared/chart-toggles/ChartToggleGroup.types';
 import ChartToggleGroup from '../shared/chart-toggles/ChartToggleGroup.vue';
 import ChartTooltip from '../shared/chart-tooltip/ChartTooltip.vue';
+import { DEFAULT_RANGE_BARS } from './composables/use-d3-chart.composable';
 import { useD3UnifiedChart } from './composables/use-d3-unified-chart.composable';
 import type {
   D3HeatmapVariant,
@@ -86,58 +87,57 @@ const {
   changeLabel,
   rangeLabel,
   availableDays,
-  selectedRangeBars,
-  DEFAULT_RANGE_BARS,
-  zoomIn,
-  zoomOut,
-  reset,
-  setRange,
+  engine,
 } = chart;
+
+// The engine owns the selected range as a nested ref; name it at the top
+// level so the template unwraps it (nested refs are not auto-unwrapped).
+const selectedRangeBars = engine.activeBars;
 </script>
 
 <template>
-  <div class="unified-chart__wrap">
-    <div class="unified-chart__menu">
-      <div class="unified-chart__menu-quote">
+  <div class="d3-unified-stock-chart__wrap">
+    <div class="d3-unified-stock-chart__menu">
+      <div class="d3-unified-stock-chart__menu-quote">
         <template v-if="quotePrice !== undefined">
-          <span class="unified-chart__price">{{ quotePrice }}</span>
+          <span class="d3-unified-stock-chart__price">{{ quotePrice }}</span>
           <span
             v-if="changeLabel"
-            class="unified-chart__change"
-            :class="`unified-chart__change--${resolveChangeClass(quoteChangeP)}`"
+            class="d3-unified-stock-chart__change"
+            :class="`d3-unified-stock-chart__change--${resolveChangeClass(quoteChangeP)}`"
           >
             {{ changeLabel }}
           </span>
         </template>
-        <span v-else-if="legend" class="unified-chart__legend">
+        <span v-else-if="legend" class="d3-unified-stock-chart__legend">
           {{ legend }}
         </span>
       </div>
-      <div class="unified-chart__menu-controls">
-        <div class="unified-chart__toggles">
+      <div class="d3-unified-stock-chart__menu-controls">
+        <div class="d3-unified-stock-chart__toggles">
           <ChartToggleGroup
             v-model="priceStyle"
-            class="unified-chart__toggle-group--price"
-            :group-label="'Price style'"
+            class="d3-unified-stock-chart__toggle-group--price"
+            :group-label="t('common.chartPriceStyle')"
             :options="PRICE_STYLE_OPTIONS"
           />
           <ChartToggleGroup
             v-model="volumeStyle"
-            class="unified-chart__toggle-group--volume"
-            :group-label="'Volume style'"
+            class="d3-unified-stock-chart__toggle-group--volume"
+            :group-label="t('common.chartVolumeStyle')"
             :options="VOLUME_STYLE_OPTIONS"
           />
           <ChartToggleGroup
             v-model="heatmapVariant"
-            class="unified-chart__toggle-group--heatmap"
-            :group-label="'Heatmap variant'"
+            class="d3-unified-stock-chart__toggle-group--heatmap"
+            :group-label="t('common.chartHeatmapVariant')"
             :options="HEATMAP_VARIANT_OPTIONS"
             :disabled="volumeStyle !== 'heatmap'"
           />
           <div
-            class="unified-chart__toggle-group unified-chart__toggle-group--annotations"
+            class="d3-unified-stock-chart__toggle-group d3-unified-stock-chart__toggle-group--annotations"
             role="group"
-            aria-label="Reference lines"
+            :aria-label="t(REFERENCE_LINES_LABEL_KEY)"
           >
             <ChartToggle
               :active="showReferenceLines"
@@ -167,36 +167,36 @@ const {
           :active-range-label="rangeLabel"
           :selected-range-bars="selectedRangeBars"
           :available-days="availableDays"
-          :on-zoom-in="zoomIn"
-          :on-zoom-out="zoomOut"
-          :on-reset="reset"
-          :on-range="setRange"
+          :on-zoom-in="engine.zoomIn"
+          :on-zoom-out="engine.zoomOut"
+          :on-reset="engine.reset"
+          :on-range="engine.setRange"
           :on-intraday="onIntraday"
         />
       </div>
     </div>
-    <div class="unified-chart__canvas">
-      <div ref="containerRef" class="unified-chart" />
+    <div class="d3-unified-stock-chart__canvas">
+      <div ref="containerRef" class="d3-unified-stock-chart" />
       <ChartTooltip ref="chartTooltipRef" :tooltip="tooltip" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.unified-chart__wrap {
+.d3-unified-stock-chart__wrap {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
 }
 
-.unified-chart__menu {
+.d3-unified-stock-chart__menu {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-3);
 }
 
-.unified-chart__menu-quote {
+.d3-unified-stock-chart__menu-quote {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -204,31 +204,31 @@ const {
   min-width: 0;
 }
 
-.unified-chart__price {
+.d3-unified-stock-chart__price {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-fg-primary);
   white-space: nowrap;
 }
 
-.unified-chart__change {
+.d3-unified-stock-chart__change {
   font-size: 0.85rem;
   white-space: nowrap;
 }
 
-.unified-chart__change--positive {
+.d3-unified-stock-chart__change--positive {
   color: var(--color-status-success);
 }
 
-.unified-chart__change--negative {
+.d3-unified-stock-chart__change--negative {
   color: var(--color-status-error);
 }
 
-.unified-chart__change--neutral {
+.d3-unified-stock-chart__change--neutral {
   color: var(--color-fg-muted);
 }
 
-.unified-chart__legend {
+.d3-unified-stock-chart__legend {
   font-size: 0.85rem;
   color: var(--color-fg-muted);
   white-space: nowrap;
@@ -236,7 +236,7 @@ const {
   text-overflow: ellipsis;
 }
 
-.unified-chart__menu-controls {
+.d3-unified-stock-chart__menu-controls {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -244,7 +244,7 @@ const {
   gap: var(--spacing-1);
 }
 
-.unified-chart__toggles {
+.d3-unified-stock-chart__toggles {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -253,11 +253,11 @@ const {
 }
 
 /* Reset the global .exchange-message div padding leak. */
-.unified-chart__menu .unified-chart__toggles {
+.d3-unified-stock-chart__menu .d3-unified-stock-chart__toggles {
   padding: 0;
 }
 
-.unified-chart__toggle-group {
+.d3-unified-stock-chart__toggle-group {
   display: flex;
   align-items: center;
   gap: var(--spacing-1);
@@ -265,29 +265,29 @@ const {
 
 /* Each toggle group has its own active hue, passed to ChartToggle via the
    --chart-toggle-active-color custom property. */
-.unified-chart__toggle-group--price {
+.d3-unified-stock-chart__toggle-group--price {
   --chart-toggle-active-color: var(--color-accent-primary);
 }
 
-.unified-chart__toggle-group--volume {
+.d3-unified-stock-chart__toggle-group--volume {
   --chart-toggle-active-color: var(--color-harmony-1);
 }
 
-.unified-chart__toggle-group--heatmap {
+.d3-unified-stock-chart__toggle-group--heatmap {
   --chart-toggle-active-color: var(--color-harmony-3);
 }
 
-.unified-chart__toggle-group--annotations {
+.d3-unified-stock-chart__toggle-group--annotations {
   --chart-toggle-active-color: var(--color-harmony-2);
 }
 
-.unified-chart__canvas {
+.d3-unified-stock-chart__canvas {
   position: relative;
   width: 100%;
   height: 20rem;
 }
 
-.unified-chart {
+.d3-unified-stock-chart {
   width: 100%;
   height: 100%;
   user-select: none;
@@ -296,8 +296,8 @@ const {
 
 /* Reset the global .exchange-message div padding leak so the svg fills the
    canvas exactly and the engine's size measurement matches the render. */
-.unified-chart__canvas,
-.unified-chart {
+.d3-unified-stock-chart__canvas,
+.d3-unified-stock-chart {
   padding: 0;
 }
 

@@ -1,0 +1,66 @@
+<script setup lang="ts">
+/**
+ * Compact product/shop list for follow-up shopping questions about an
+ * already-introduced product: a lean header and a price-sorted list of
+ * purchase options — no galleries, videos, or review sections.
+ */
+import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-header/ResponseHeader.vue';
+
+import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
+import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
+import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
+import { useShopListResponseData } from './composables/use-shop-list-response-data.composable';
+import ShopListOfferCard from './shop-list-offer-card/ShopListOfferCard.vue';
+import type { ShopListResponseProps } from './ShopListResponse.types';
+
+const props = defineProps<ShopListResponseProps>();
+
+const { offers, hasContent } = useShopListResponseData(props);
+</script>
+
+<template>
+  <section v-if="hasContent" class="shop-list-response">
+    <!-- Lean header: product name, one line of context -->
+    <ResponseHeader :title="data.title" :subtitle="data.subtitle" />
+    <p v-if="data.shortDescription" class="shop-list-response__description">
+      {{ data.shortDescription }}
+    </p>
+
+    <!-- Purchase options sorted by ascending price -->
+    <div v-if="offers.length" class="shop-list-response__offers">
+      <ShopListOfferCard
+        v-for="(offer, index) in offers"
+        :key="offer.link ?? index"
+        :offer="offer"
+        :is-best-price="index === 0 && offers.length > 1"
+      />
+    </div>
+
+    <InternationalCoverageSection :items="data.internationalCoverage" />
+    <SourcesSection :items="data.sources" />
+  </section>
+
+  <!-- Empty state -->
+  <EmptyStateSection v-else :message="$t('common.noPurchaseOptions')" />
+</template>
+
+<style scoped>
+.shop-list-response {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.shop-list-response__description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-fg-secondary);
+}
+
+.shop-list-response__offers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1-5);
+}
+</style>

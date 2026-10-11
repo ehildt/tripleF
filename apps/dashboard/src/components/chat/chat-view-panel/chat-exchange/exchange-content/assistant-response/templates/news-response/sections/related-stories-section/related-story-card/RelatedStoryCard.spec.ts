@@ -27,8 +27,8 @@ describe('RelatedStoryCard', () => {
   it('renders the card as a link when a url exists', () => {
     const wrapper = mountCard({ title: 'T', url: 'https://example.com/a' });
 
-    expect(wrapper.find('a.related-story__card').exists()).toBe(true);
-    expect(wrapper.find('a.related-story__card').attributes('href')).toBe(
+    expect(wrapper.find('a.related-story-card__link').exists()).toBe(true);
+    expect(wrapper.find('a.related-story-card__link').attributes('href')).toBe(
       'https://example.com/a',
     );
   });
@@ -36,8 +36,8 @@ describe('RelatedStoryCard', () => {
   it('renders an inert wrapper when there is no url', () => {
     const wrapper = mountCard({ title: 'T' });
 
-    expect(wrapper.find('a.related-story__card').exists()).toBe(false);
-    expect(wrapper.find('.related-story__card').exists()).toBe(true);
+    expect(wrapper.find('a.related-story-card__link').exists()).toBe(false);
+    expect(wrapper.find('.related-story-card__link').exists()).toBe(true);
   });
 
   it('shows the skeleton until the image fires its load event', async () => {
@@ -63,6 +63,6 @@ describe('RelatedStoryCard', () => {
   it('omits the media block entirely when there is no imageUrl', () => {
     const wrapper = mountCard({ title: 'T' });
 
-    expect(wrapper.find('.related-story__media').exists()).toBe(false);
+    expect(wrapper.find('.related-story-card__media').exists()).toBe(false);
   });
 });

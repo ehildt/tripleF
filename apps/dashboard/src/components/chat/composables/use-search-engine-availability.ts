@@ -19,6 +19,18 @@ import type {
 } from './helpers/provider-overrides.types';
 import { resolveSourceTargets } from './helpers/resolve-source-targets.helper';
 
+/** The search-engine configuration is app-level state: the prompt action
+ *  bar binds the raw toggles while its data composable derives the source
+ *  tags and titles from the same snapshot, so the refs are module-scope and
+ *  every caller shares one instance (a deliberate singleton, like the prompt
+ *  draft). */
+const hasApiKey = ref(false);
+const isEnabled = ref(false);
+const isLoaded = ref(false);
+const isToggling = ref(false);
+const snapshotConfig = ref<ProviderOverrides | null>(null);
+const sessionOverrides = ref<ProviderSessionOverrides | null>(null);
+
 /**
  * Whether the assistant currently has a search engine at its disposal, plus
  * the kill switch to toggle it from the chat view.
@@ -35,13 +47,6 @@ import { resolveSourceTargets } from './helpers/resolve-source-targets.helper';
  */
 export function useSearchEngineAvailability() {
   const toast = useToast();
-
-  const hasApiKey = ref(false);
-  const isEnabled = ref(false);
-  const isLoaded = ref(false);
-  const isToggling = ref(false);
-  const snapshotConfig = ref<ProviderOverrides | null>(null);
-  const sessionOverrides = ref<ProviderSessionOverrides | null>(null);
 
   /** Every toggleable search source (web, images, news, …) + its state. */
   const searchSources = computed(() =>
@@ -261,6 +266,15 @@ export function useSearchEngineAvailability() {
     }
   }
 
+  function reset() {
+    hasApiKey.value = false;
+    isEnabled.value = false;
+    isLoaded.value = false;
+    isToggling.value = false;
+    snapshotConfig.value = null;
+    sessionOverrides.value = null;
+  }
+
   return {
     searchEngineState,
     searchSources,
@@ -270,5 +284,6 @@ export function useSearchEngineAvailability() {
     toggleSearchEngine,
     toggleSource,
     toggleEodhd,
+    reset,
   };
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 
@@ -12,11 +13,12 @@ import type { SummaryResponseProps } from './SummaryResponse.types';
 
 const props = defineProps<SummaryResponseProps>();
 
-const { videosFirst, hasAnyContent } = useSummaryResponseData(props);
+const { hasAnyContent } = useSummaryResponseData(props);
+const { videosFirst } = useHarnessMediaPriority(props.data);
 </script>
 
 <template>
-  <article class="harness-summary">
+  <article class="summary-response">
     <template v-if="hasAnyContent">
       <ArticleHero
         :title="data.title"
@@ -57,7 +59,7 @@ const { videosFirst, hasAnyContent } = useSummaryResponseData(props);
 </template>
 
 <style scoped>
-.harness-summary {
+.summary-response {
   display: flex;
   flex-direction: column;
   gap: 1.25em;

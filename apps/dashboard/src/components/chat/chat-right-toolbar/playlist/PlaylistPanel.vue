@@ -13,6 +13,7 @@
  * floating player's collapse button) slot in after the playlists menu.
  */
 import { usePlaylistLibrary } from '@/components/widgets/floating-playlist/composables/use-playlist-library';
+import { usePlaybackSession } from '@/composables/use-playback-session';
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import { usePlaylistTransport } from '../composables/use-playlist-transport';
@@ -29,18 +30,22 @@ const emit = defineEmits<{
 
 const { playlistVideos, hasQueuedVideos } = usePlaylistPanel();
 
+const playback = usePlaybackSession();
 const {
   activePlaybackPlaying,
   activePlaybackVideoUrl,
-  activePlaybackTitle,
   playlistAutoplayEnabled,
+  requestPlaybackToggle: toggleActivePlayback,
+  stopPlayback: stopActivePlayback,
+  togglePlaylistAutoplay,
+} = playback;
+
+const {
+  activePlaybackTitle,
   popoutHidden,
   hasActivePlayback,
   canTogglePlayback,
   playbackToggleTitle,
-  toggleActivePlayback,
-  stopActivePlayback,
-  togglePlaylistAutoplay,
   toggleHideOnPlaylist,
   onPlayItem,
   onRemoveItem,

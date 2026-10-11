@@ -7,12 +7,14 @@ defineProps<EvaluationComparisonSectionProps>();
 </script>
 
 <template>
-  <section class="evaluation-comparison">
+  <section class="evaluation-comparison-section">
     <SectionTitle :title="title" />
-    <p v-if="summary" class="evaluation-comparison__summary">{{ summary }}</p>
+    <p v-if="summary" class="evaluation-comparison-section__summary">
+      {{ summary }}
+    </p>
 
-    <div v-if="rows.length" class="evaluation-comparison__table-wrap">
-      <table class="evaluation-comparison__matrix">
+    <div v-if="rows.length" class="evaluation-comparison-section__table-wrap">
+      <table class="evaluation-comparison-section__matrix">
         <thead>
           <tr>
             <th scope="col" />
@@ -20,9 +22,9 @@ defineProps<EvaluationComparisonSectionProps>();
               v-for="column in columns"
               :key="column.name"
               scope="col"
-              class="evaluation-comparison__subject"
+              class="evaluation-comparison-section__subject"
               :class="{
-                'evaluation-comparison__subject--winner': column.winner,
+                'evaluation-comparison-section__subject--winner': column.winner,
               }"
             >
               {{ column.name }}
@@ -31,14 +33,16 @@ defineProps<EvaluationComparisonSectionProps>();
         </thead>
         <tbody>
           <tr v-for="row in rows" :key="row.name">
-            <th scope="row" class="evaluation-comparison__criterion">
+            <th scope="row" class="evaluation-comparison-section__criterion">
               {{ row.name }}
             </th>
             <td
               v-for="cell in row.cells"
               :key="cell.column"
-              class="evaluation-comparison__cell"
-              :class="{ 'evaluation-comparison__cell--winner': cell.winner }"
+              class="evaluation-comparison-section__cell"
+              :class="{
+                'evaluation-comparison-section__cell--winner': cell.winner,
+              }"
             >
               {{ cell.text }}
             </td>
@@ -47,15 +51,17 @@ defineProps<EvaluationComparisonSectionProps>();
       </table>
     </div>
 
-    <p v-if="winner" class="evaluation-comparison__winner">
+    <p v-if="winner" class="evaluation-comparison-section__winner">
       <strong>{{ $t('common.winner') }}:</strong> {{ winner }}
     </p>
-    <p v-if="verdict" class="evaluation-comparison__verdict">{{ verdict }}</p>
+    <p v-if="verdict" class="evaluation-comparison-section__verdict">
+      {{ verdict }}
+    </p>
   </section>
 </template>
 
 <style scoped>
-.evaluation-comparison {
+.evaluation-comparison-section {
   display: flex;
   flex-direction: column;
   gap: 0.75em;
@@ -63,7 +69,7 @@ defineProps<EvaluationComparisonSectionProps>();
   background-color: var(--color-bg-tertiary);
 }
 
-.evaluation-comparison__summary {
+.evaluation-comparison-section__summary {
   margin: 0;
   color: var(--color-fg-secondary);
   line-height: 1.6;
@@ -71,57 +77,57 @@ defineProps<EvaluationComparisonSectionProps>();
 }
 
 /* Horizontal scroll keeps wide subject matrices readable on narrow chats. */
-.evaluation-comparison__table-wrap {
+.evaluation-comparison-section__table-wrap {
   overflow-x: auto;
   background-color: var(--color-bg-secondary);
   margin-block: var(--spacing-3);
 }
 
-.evaluation-comparison__matrix {
+.evaluation-comparison-section__matrix {
   width: 100%;
   border-collapse: collapse;
 }
 
-.evaluation-comparison__matrix th,
-.evaluation-comparison__matrix td {
+.evaluation-comparison-section__matrix th,
+.evaluation-comparison-section__matrix td {
   padding: 0.5em 0.75em;
   border-bottom: 1px solid var(--color-divider);
   text-align: left;
 }
 
-.evaluation-comparison__subject {
+.evaluation-comparison-section__subject {
   color: var(--color-fg-primary);
 }
 
-.evaluation-comparison__subject--winner {
+.evaluation-comparison-section__subject--winner {
   color: var(--color-accent-primary);
 }
 
-.evaluation-comparison__criterion {
+.evaluation-comparison-section__criterion {
   color: var(--color-fg-secondary);
   font-weight: 500;
 }
 
-.evaluation-comparison__cell {
+.evaluation-comparison-section__cell {
   color: var(--color-fg-secondary);
   font-variant-numeric: tabular-nums;
 }
 
-.evaluation-comparison__cell--winner {
+.evaluation-comparison-section__cell--winner {
   color: var(--color-fg-primary);
   font-weight: 600;
 }
 
-.evaluation-comparison__winner {
+.evaluation-comparison-section__winner {
   margin: 0;
   color: var(--color-fg-primary);
 }
 
-.evaluation-comparison__winner strong {
+.evaluation-comparison-section__winner strong {
   color: var(--color-accent-primary);
 }
 
-.evaluation-comparison__verdict {
+.evaluation-comparison-section__verdict {
   margin: 0;
   color: var(--color-fg-primary);
   line-height: 1.5;

@@ -25,12 +25,8 @@ export function useNativeScroll() {
   const shouldAutoScroll = ref(true);
   const activeSectionIndex = ref(0);
 
-  const {
-    isProgrammaticScroll,
-    armProgrammaticScroll,
-    endProgrammaticScroll,
-    disposeProgrammaticScrollWindow,
-  } = useProgrammaticScrollWindow();
+  const { armProgrammaticScroll, disposeProgrammaticScrollWindow } =
+    useProgrammaticScrollWindow();
 
   // When true, the container-creation auto-scroll-to-bottom is skipped. Used
   // when switching from the carousel so the native list can restore the
@@ -207,8 +203,6 @@ export function useNativeScroll() {
     scrollToSection,
     onScroll,
     activeSectionIndex,
-    isProgrammaticScroll,
-    endProgrammaticScroll,
     shouldAutoScroll,
     skipInitialScroll,
   };

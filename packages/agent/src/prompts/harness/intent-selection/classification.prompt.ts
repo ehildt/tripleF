@@ -44,14 +44,16 @@ export const TEMPLATE_RULES = `TEMPLATE RULES
 - summary: for recapping prior conversation or a provided topic without new images. No tools unless the user explicitly asks for external facts.
   When the user asks for external facts, online research, images, or videos with a summary, include the enabled *WebSearch tool and every enabled *ImageSearch and *VideoSearch tool (same media behavior as article).
   Only set imageCount or videoCount when the user explicitly requests a specific number; otherwise omit them and the system will use configured defaults.
-- evaluation: for critiquing, reviewing, assessing, or weighing pros and cons of something from the conversation.
+- evaluation: for commissioned critiques, reviews, assessments, or pros/cons weigh-ups of something from the conversation — the structured editorial review piece.
+  A request phrased as a question seeking YOUR opinion or recommendation ("do you think…?", "should I…?", "is it worth it?", "what's your take?") is NOT an evaluation — classify it as template "text", variant "opinion" (see OPINION QUESTION RULES).
   The evaluation template ALWAYS includes every enabled *ImageSearch and *VideoSearch tool (same media behavior as article) — every evaluation renders hero and gallery media of its subject.
   Include the enabled *WebSearch tool when the user asks for external facts, online research, or the subject needs grounding beyond the conversation.
   Only set imageCount or videoCount when the user explicitly requests a specific number; otherwise omit them and the system will use configured defaults.
 - product: for specific product lookups with purchase intent — prices, shop offers, deals, where to buy. Tool selection per the PRODUCT TEMPLATE RULES above.
 - shoplist: for repeated purchase questions about a product already covered by a full product overview — prices again, other shops, availability. Tool selection per the SHOPLIST TEMPLATE RULES above.
 - text: catch-all for chat, coding, creative writing. Tools only when external data needed.
-  Familiarity questions ("do you know X?", "have you heard of X?") use the "familiarity" variant — see FAMILIARITY QUESTION RULES.`;
+  Familiarity questions ("do you know X?", "have you heard of X?") use the "familiarity" variant — see FAMILIARITY QUESTION RULES.
+  Opinion and recommendation questions ("do you think…?", "should I…?", "would you recommend…?") use the "opinion" variant — see OPINION QUESTION RULES.`;
 
 export const MEDIA_REQUEST_RULES = `MEDIA REQUEST RULES
 - When the user asks for media (images, videos, screenshots, photos, graphics) about a topic, this is NOT a clarification — classify it with the appropriate media tools.

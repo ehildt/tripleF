@@ -49,7 +49,7 @@ const { leftToolbarView, selectLeftToolbarView, areSocketsVisible } =
     </div>
 
     <Conversations
-      v-if="leftToolbarView === 'conversations' && hasConversations"
+      v-if="leftToolbarView === 'conversations' && conversations.length"
       :conversations="conversations"
       :active-conversation-id="activeConversationId"
       :temporary-retention-minutes="temporaryRetentionMinutes"

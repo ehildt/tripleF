@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { defineComponent, nextTick, type Ref, ref } from 'vue';
 
-import type { D3CrosshairEvent } from './use-d3-chart.composable';
+import type { D3CrosshairEvent } from './use-d3-chart.composable.types';
 import { useD3ChartTooltip } from './use-d3-chart-tooltip.composable';
 
 const EVENT: D3CrosshairEvent = {

@@ -2,10 +2,24 @@ import { formatZodShape } from '../../schemas/helpers/zod/format-zod-shape.helpe
 import { ExtractionSchema } from '../../schemas/memory/extraction.schema.js';
 import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper.js';
 
+import type { ExtractionSourceRole } from './vectorize-prompt.types.js';
 import { buildVocabularySection } from './vocabulary-section.helper.js';
 import type { TaxonomyVocabulary } from './vocabulary-section.types.js';
 
 /** Static prompt strings for the vectorize extraction LLM step. */
+
+/**
+ * Voice framing for the extraction source. The queue enqueues one job per
+ * turn-side; without this the extractor treats every source as the user's
+ * voice and stores the assistant's own opinions as user facts.
+ */
+const USER_SOURCE_VOICE_RULES = `SOURCE VOICE: this extraction source is the USER's own message — statements in it are the user's voice and may be attributed to the user.`;
+
+const ASSISTANT_SOURCE_VOICE_RULES = `SOURCE VOICE (absolute): this extraction source is the ASSISTANT's own generated answer — a flattened digest of its titles, verdicts, and findings — NOT the user's words.
+- First-person statements, verdicts, scores, recommendations, and "my take" phrasing are the ASSISTANT's voice. NEVER attribute them to the user: no fact of the form "the user thinks / describes / wants / would / decided …" may be drawn from this source.
+- The assistant's opinions, judgments, verdicts, and recommendations are NOT durable objective facts — never extract them. When the source only conveys the assistant's opinion, return an empty facts array (tags may still label the topic).
+- Extract only objective, checkable world facts the answer asserts, with the subject ENTITY as the hub — never "user" as the subject of assistant-voice content.
+- Statements about reception or coverage keep their true source ("available coverage of X notes …"), never "the user";`;
 
 /**
  * Structured output contract + task for the extraction model. The schema is
@@ -15,11 +29,16 @@ import type { TaxonomyVocabulary } from './vocabulary-section.types.js';
  * source text), it is appended as a reuse-first hint so the model extends
  * the taxonomy instead of minting near-duplicate labels.
  */
-export function buildExtractionPrompt(vocabulary: TaxonomyVocabulary = {}): string {
+export function buildExtractionPrompt(
+  vocabulary: TaxonomyVocabulary = {},
+  role: ExtractionSourceRole = 'user',
+): string {
+  const sourceVoiceRules = role === 'assistant' ? ASSISTANT_SOURCE_VOICE_RULES : USER_SOURCE_VOICE_RULES;
   return buildStructuredPrompt(ExtractionSchema, {
     before: 'OUTPUT FORMAT — output ONLY valid JSON matching this exact schema:',
     after: `
 YOUR TASK — decide what is worth remembering:
+${sourceVoiceRules}
 - ROUTING BOUNDARY (absolute): this extraction feeds the memory partition — the OBJECTIVE fact store ONLY. Extract only objective, external-world facts and events: factual records, project details, decisions, states, possessions, contacts, relationships between people. You MUST NOT extract subjective user data — no preferences, likes/dislikes, interests, wants, behavioral traits, or internal states ("the user likes…", "the user is interested in…", "the user prefers…"). All user profile and persona data is deferred to the cognition tier; when the turn reveals ONLY subjective user data, return an empty facts array.
 - A fact is durable, objective information that remains useful in a later, unrelated conversation: decisions, contact details, project facts, technical constraints, events (e.g. "Sam's phone number is 555-1234", "The user is building a vector memory feature", "The payments service migrated to PostgreSQL in November").
 - Be sensitive to the user's data: capture anything durable and objective the turn reveals — a decision, a constraint, a project detail, a person or subject they care about — even when it is phrased casually or buried in a longer message. Noticing and storing durable factual data is expected; do not wait for an explicit "remember".

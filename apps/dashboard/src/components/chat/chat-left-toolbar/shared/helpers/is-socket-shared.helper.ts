@@ -1,3 +1,4 @@
+import { isConversationBoundToSocket } from './is-conversation-bound-to-socket.helper';
 import type { SocketListeningConversation } from './is-socket-shared.helper.types';
 
 /**
@@ -14,12 +15,6 @@ export function isSocketShared(
   return conversations.some(
     (conversation) =>
       conversation.id !== excludeConversationId &&
-      ((conversation.event === event &&
-        (conversation.roomId ?? '') === roomId) ||
-        conversation.subscriptions?.some(
-          (subscription) =>
-            subscription.event === event &&
-            (subscription.roomId ?? '') === roomId,
-        )),
+      isConversationBoundToSocket(conversation, event, roomId),
   );
 }

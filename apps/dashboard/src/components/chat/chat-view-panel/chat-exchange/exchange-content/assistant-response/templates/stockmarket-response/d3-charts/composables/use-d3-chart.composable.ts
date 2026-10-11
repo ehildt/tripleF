@@ -1,6 +1,6 @@
 import { axisBottom, axisRight } from 'd3-axis';
 import { type ScaleLinear, scaleLinear } from 'd3-scale';
-import { pointer, select, type Selection } from 'd3-selection';
+import { pointer, select } from 'd3-selection';
 import {
   type D3ZoomEvent,
   zoom,
@@ -9,107 +9,33 @@ import {
   ZoomTransform,
   zoomTransform,
 } from 'd3-zoom';
-import { onBeforeUnmount, onMounted, type Ref, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import {
   type AxisDomains,
   buildAxisDomains,
 } from '../helpers/build-axis-domain.helper';
-import type { TimeTickLabel } from '../helpers/build-time-tick-formatter.helper';
 import { buildTimeTickPlan } from '../helpers/build-time-tick-plan.helper';
 import { buildZoomTransform } from '../helpers/build-zoom-transform.helper';
+import { clampPricePanShift } from '../helpers/clamp-price-pan-shift.helper';
 import { clampWindow } from '../helpers/clamp-window.helper';
 import { computePlot, type D3ChartPlot } from '../helpers/compute-plot.helper';
 import { computePlotBands } from '../helpers/compute-plot-bands.helper';
 import type { IndexWindow } from '../helpers/compute-visible-window.helper';
 import { computeVisibleWindow } from '../helpers/compute-visible-window.helper';
 import { confineZoomTransform } from '../helpers/confine-zoom-transform.helper';
-import { findNearestTimeIndex } from '../helpers/find-nearest-time-index.helper';
+import { expandDomainsForMarkers } from '../helpers/expand-domains-for-markers.helper';
 import { hasIntradayTimes } from '../helpers/has-intraday-times.helper';
+import { resolveVisibleTimeTicks } from '../helpers/resolve-visible-time-ticks.helper';
+import type {
+  D3ChartPointLike,
+  D3ChartRenderContext,
+  D3CrosshairEvent,
+  UseD3ChartOptions,
+} from './use-d3-chart.composable.types';
 
 /** Default visible range: the most recent quarter of trading days. */
 export const DEFAULT_RANGE_BARS = 66;
-
-/** The bars the chart knows about for domain/crosshair lookups. */
-export interface D3ChartPointLike {
-  time: string;
-  high: number;
-  low: number;
-  volume: number;
-}
-
-/** Everything a leaf render pass needs to draw its series. */
-export interface D3ChartRenderContext {
-  svg: Selection<SVGSVGElement, unknown, null, undefined>;
-  width: number;
-  height: number;
-  plot: D3ChartPlot;
-  /** Index scale with the current visible window as domain. */
-  x: ScaleLinear<number, number>;
-  /** Price scale over the visible bars. */
-  y: ScaleLinear<number, number>;
-  /** Volume scale (same range as `y` when the scales are not split). */
-  yVolume: ScaleLinear<number, number>;
-  /** First visible index (inclusive). */
-  visibleFrom: number;
-  /** Last visible index (exclusive). */
-  visibleTo: number;
-  /** The bar time at a fractional index, for axis and crosshair labels. */
-  timeOfIndex: (index: number) => string | undefined;
-  formatPrice: (price: number) => string;
-  /** Re-render (after a leaf's internal state changed). */
-  renderAll: () => void;
-}
-
-/** One crosshair position, emitted to tooltip subscribers. */
-export interface D3CrosshairEvent {
-  /** Pixel x of the snapped bar center. */
-  x: number;
-  /** Pixel y of the cursor. */
-  y: number;
-  index: number;
-  time: string;
-  price: number;
-}
-
-export interface UseD3ChartOptions {
-  containerRef: Ref<HTMLDivElement | null>;
-  /** Number of bars the range windowing is sized against. */
-  getDataLength: () => number;
-  /** Read a bar by index for domain/crosshair lookups. */
-  getPoint: (index: number) => D3ChartPointLike | undefined;
-  /** Price formatting for the right axis and crosshair label. */
-  formatPrice: (price: number) => string;
-  /** Request older bars from the cached history endpoint before windowing. */
-  onRangeRequest?: (bars: number | null) => Promise<void> | void;
-  /** Reactive sources whose changes trigger re-render + re-windowing. */
-  watchSources?: () => unknown[];
-  /** Whether the y scale is split into price + volume bands. */
-  volumeSplit: () => boolean;
-  /** Pixel headroom above/below the price domain (marker labels). */
-  markerHeadroomPx: () => number;
-  /**
-   * Prices of markers that must stay in view while panning (index + price
-   * pairs). The engine expands the fitted y domain to include any visible
-   * marker price, so markers never float above or below the plot.
-   */
-  getMarkerPrices?: () => Array<{ index: number; price: number }>;
-  /**
-   * Width of the right gutter (price labels + reference-line badges). The
-   * leaf sizes it to fit its longest badge so badges never clip.
-   */
-  rightGutterWidth?: () => number;
-  /** Whether the crosshair is drawn and its events emitted. */
-  crosshair?: boolean;
-  /**
-   * Ref the engine updates with the current visible bar window (integer
-   * `[from, to)` indices) on every render, so leaves can derive range-based
-   * annotations (e.g. the ATH/ATL markers) from what is actually shown.
-   */
-  visibleWindowRef?: Ref<{ from: number; to: number }>;
-  /** Draw the leaf's layers. */
-  render: (ctx: D3ChartRenderContext) => void;
-}
 
 /**
  * Owns the lifecycle, scales, axes, zoom/pan, crosshair, and range windowing
@@ -329,20 +255,13 @@ export function useD3Chart(options: UseD3ChartOptions) {
             hasIntradayTimes(timeOfIndex, visibleFrom, visibleTo),
           )
         : [];
-    const tickLabels = new Map<number, TimeTickLabel>();
-    const xTicks: number[] = [];
-    for (const tick of plan) {
-      const index = findNearestTimeIndex(
-        timeOfIndex,
-        getDataLength(),
-        tick.time,
-      );
-      if (index === undefined) continue;
-      const labelWidth = tick.text.length * 6.5;
-      if (x(index) - labelWidth / 2 < plot.left) continue;
-      xTicks.push(index);
-      tickLabels.set(index, { text: tick.text, isMajor: tick.isMajor });
-    }
+    const { xTicks, tickLabels } = resolveVisibleTimeTicks(
+      plan,
+      timeOfIndex,
+      getDataLength(),
+      x,
+      plot.left,
+    );
     const timeAxis = axisBottom<number>(x)
       .tickValues(xTicks)
       .tickSize(0)
@@ -367,37 +286,6 @@ export function useD3Chart(options: UseD3ChartOptions) {
       .attr('x2', (tick) => x(tick))
       .attr('y1', plot.top)
       .attr('y2', plot.bottom);
-  }
-
-  /**
-   * Expand a price domain to include any visible marker price (with a small
-   * margin so the marker label never clips), so markers never float above or
-   * below the plot — during pans and after zooms alike.
-   */
-  function expandDomainsForMarkers(
-    domains: AxisDomains,
-    markers: Array<{ index: number; price: number }>,
-    visibleFrom: number,
-    visibleTo: number,
-  ): AxisDomains {
-    const span = domains.price[1] - domains.price[0];
-    const margin = span * 0.05;
-    let result = domains;
-    for (const marker of markers) {
-      if (marker.index < visibleFrom || marker.index >= visibleTo) continue;
-      if (marker.price < result.price[0]) {
-        result = {
-          ...result,
-          price: [marker.price - margin, result.price[1]],
-        };
-      } else if (marker.price > result.price[1]) {
-        result = {
-          ...result,
-          price: [result.price[0], marker.price + margin],
-        };
-      }
-    }
-    return result;
   }
 
   function renderAll(): void {
@@ -493,16 +381,13 @@ export function useD3Chart(options: UseD3ChartOptions) {
     // domain shifts in price space, so the series keeps its shape and just
     // moves up/down. The domain can't go below zero.
     const priceSpan = domains.price[1] - domains.price[0];
-    // Bound the vertical pan to under one pane (10% of the data always stays
-    // in view, so a hard drag can never push the series off the plot). The
-    // zero floor still keeps the domain bottom at zero when prices are low.
-    const maxPriceShift = priceSpan * 0.9;
-    const yShift = Math.min(
-      maxPriceShift,
-      Math.max(
-        Math.max(0 - domains.price[0], -maxPriceShift),
-        (t.y / priceBandHeight) * priceSpan,
-      ),
+    // The vertical pan is bounded so a hard drag can never push the series
+    // off the plot; the zero floor still applies when prices are low.
+    const yShift = clampPricePanShift(
+      t.y,
+      priceBandHeight,
+      priceSpan,
+      domains.price[0],
     );
     yScale = scaleLinear()
       .domain([domains.price[0] + yShift, domains.price[1] + yShift])

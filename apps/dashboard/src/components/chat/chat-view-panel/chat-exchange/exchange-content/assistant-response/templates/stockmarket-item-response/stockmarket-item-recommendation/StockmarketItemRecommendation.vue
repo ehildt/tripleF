@@ -1,12 +1,11 @@
 <script setup lang="ts">
+import type { StockmarketItemRecommendationProps } from './StockmarketItemRecommendation.types';
+
 /**
  * Recommendation callout of a single-instrument stock card: the verdict
  * (e.g. Buy/Hold/Sell) with optional reasoning. Presentational.
  */
-defineProps<{
-  recommendation: string;
-  reasoning?: string;
-}>();
+defineProps<StockmarketItemRecommendationProps>();
 </script>
 
 <template>

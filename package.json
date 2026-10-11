@@ -2,7 +2,7 @@
   "name": "@triplef/triplef",
   "description": "tripleF (3F) monorepo — an agentic, open-source AI workbench: conversation harness + dashboard, local-first via Ollama or Ollama Cloud.",
   "version": "1.6.0",
-  "packageManager": "pnpm@12.9.1",
+  "packageManager": "pnpm@12.11.2",
   "license": "MIT",
   "author": {
     "email": "eugen.hildt@gmail.com",

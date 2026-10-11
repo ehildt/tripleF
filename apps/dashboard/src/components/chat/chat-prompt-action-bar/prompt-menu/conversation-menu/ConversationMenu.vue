@@ -17,8 +17,6 @@ const props = defineProps<ConversationMenuProps>();
 const emit = defineEmits<{
   toggleMenu: [];
   close: [];
-  mouseenter: [];
-  mouseleave: [];
   'update:name': [value: string];
   'update:event': [value: string];
   'update:roomId': [value: string];
@@ -44,13 +42,10 @@ function onCreate(type: 'temporary' | 'persistent') {
   <ToolbarMenuTrigger
     :is-open="isOpen"
     :is-disabled="isDisabled"
-    :blinking="blinking"
     :title="$t('common.newChatTooltip')"
     :trigger-icon="MessageSquare"
     @toggle-menu="emit('toggleMenu')"
     @close="emit('close')"
-    @mouseenter="emit('mouseenter')"
-    @mouseleave="emit('mouseleave')"
   >
     <div class="conversation-menu__content">
       <ConversationNameInput
@@ -62,7 +57,6 @@ function onCreate(type: 'temporary' | 'persistent') {
       <ConversationContextSelect
         :model-value="numCtxValue"
         :options="contextOptions"
-        :format-value="formatContextValue"
         @update:model-value="emit('update:numCtx', $event)"
       />
       <ConversationEventSelect

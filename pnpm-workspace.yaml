@@ -21,7 +21,7 @@ allowBuilds:
   vue-demi: true
 
 minimumReleaseAgeExclude:
-  - '@triplef/agent@0.1.28 || 1.0.1'
+  - '@triplef/agent@0.1.28 || 1.0.1 || 1.0.3'
   - '@triplef/bullmq-logger@1.2.5'
   - '@triplef/helpers@1.5.6'
   - dompurify@3.4.15
@@ -47,7 +47,7 @@ minimumReleaseAgeExclude:
   - '@lucide/vue@1.43.0 || 1.51.0 || 1.55.0'
   - ai@7.0.94 || 7.0.106 || 7.0.107 || 7.0.128
   - jszip@3.10.2
-  - zod@4.6.4
+  - zod@4.6.4 || 4.6.6
   - bullmq@6.3.7 || 6.3.8
   - prettier@3.9.8 || 3.9.10
   - eslint@10.11.0 || 10.12.0
@@ -73,3 +73,17 @@ minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.13'
   - vue-i18n@11.4.14
   - vue-tsc@3.3.13
+  - '@swc/core-darwin-arm64@1.16.18'
+  - '@swc/core-darwin-x64@1.16.18'
+  - '@swc/core-linux-arm-gnueabihf@1.16.18'
+  - '@swc/core-linux-arm64-gnu@1.16.18'
+  - '@swc/core-linux-arm64-musl@1.16.18'
+  - '@swc/core-linux-ppc64-gnu@1.16.18'
+  - '@swc/core-linux-s390x-gnu@1.16.18'
+  - '@swc/core-linux-x64-gnu@1.16.18'
+  - '@swc/core-linux-x64-musl@1.16.18'
+  - '@swc/core-win32-arm64-msvc@1.16.18'
+  - '@swc/core-win32-ia32-msvc@1.16.18'
+  - '@swc/core-win32-x64-msvc@1.16.18'
+  - '@swc/core@1.16.18'
+  - dependency-cruiser@18.6.0
