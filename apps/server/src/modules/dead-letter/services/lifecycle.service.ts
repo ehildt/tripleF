@@ -52,11 +52,11 @@ export class LifecycleService {
     );
     if (!dlqEntry) return;
 
-    await this.dlqRepository.update(dlqEntry.id, {
+    const cleared = await this.dlqRepository.update(dlqEntry.id, {
       status: 'Cleared',
       failedReason: null,
     });
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastEntryUpserted(cleared);
   }
 
   async onJobFailed(): Promise<void> {}
@@ -85,7 +85,7 @@ export class LifecycleService {
     retryDelayMs: number,
     failedReason?: string,
   ): Promise<void> {
-    await this.dlqRepository.upsertByQueueJob(
+    const entry = await this.dlqRepository.upsertByQueueJob(
       {
         queueName: job.queueName,
         jobId: String(job.id),
@@ -103,7 +103,7 @@ export class LifecycleService {
         payload: (job.data ?? {}) as Prisma.InputJsonValue,
       },
     );
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastEntryUpserted(entry);
   }
 
   private hasReachedMaxAttempts(job: Job): boolean {

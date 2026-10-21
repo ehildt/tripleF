@@ -1,103 +1,13 @@
 <script setup lang="ts">
-import {
-  Activity,
-  ArrowDownToLine,
-  ArrowUpToLine,
-  Columns3,
-  Focus,
-  Minus,
-  Rows3,
-  SlidersHorizontal,
-  Sun,
-  TrendingUp,
-  Waves,
-} from '@lucide/vue';
+import { SlidersHorizontal } from '@lucide/vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import { usePreprocessingStore } from '@/stores/preprocessing';
 
-const store = usePreprocessingStore();
+import { PprocAdvancedParameters } from './PprocAdvancedParametersSection.constants';
 
-const parameters = [
-  {
-    key: 'blurSigma',
-    icon: Waves,
-    label: 'Blur Sigma',
-    desc: 'Gaussian blur amount',
-    step: 0.1,
-    placeholder: '0.5',
-  },
-  {
-    key: 'sharpenSigma',
-    icon: Focus,
-    label: 'Sharpen Sigma',
-    desc: 'Edge radius',
-    step: 0.1,
-    placeholder: '1.0',
-  },
-  {
-    key: 'sharpenM1',
-    icon: Minus,
-    label: 'Sharpen M1',
-    desc: 'Flat factor',
-    step: 0.1,
-    placeholder: '1.0',
-  },
-  {
-    key: 'sharpenM2',
-    icon: Activity,
-    label: 'Sharpen M2',
-    desc: 'Edge factor',
-    step: 0.1,
-    placeholder: '2.0',
-  },
-  {
-    key: 'claheWidth',
-    icon: Columns3,
-    label: 'CLAHE Width',
-    desc: 'Grid width tiles',
-    placeholder: '8',
-  },
-  {
-    key: 'claheHeight',
-    icon: Rows3,
-    label: 'CLAHE Height',
-    desc: 'Grid height tiles',
-    placeholder: '8',
-  },
-  {
-    key: 'claheMaxSlope',
-    icon: TrendingUp,
-    label: 'Max Slope',
-    desc: 'Contrast limit',
-    step: 0.1,
-    placeholder: '3.0',
-  },
-  {
-    key: 'brightnessLevel',
-    icon: Sun,
-    label: 'Brightness',
-    desc: 'Brightness mult',
-    step: 0.1,
-    placeholder: '1.2',
-  },
-  {
-    key: 'normalizeLower',
-    icon: ArrowDownToLine,
-    label: 'Norm. Lower',
-    desc: 'Lower percentile',
-    step: 0.1,
-    placeholder: '1',
-  },
-  {
-    key: 'normalizeUpper',
-    icon: ArrowUpToLine,
-    label: 'Norm. Upper',
-    desc: 'Upper percentile',
-    placeholder: '99',
-  },
-] as const;
+const store = usePreprocessingStore();
 </script>
 
 <template>
@@ -107,8 +17,8 @@ const parameters = [
       :title="$t('common.advancedParameters')"
     />
     <div class="pproc-advanced-parameters-section__grid">
-      <FieldCard
-        v-for="param in parameters"
+      <NumberFieldCard
+        v-for="param in PprocAdvancedParameters"
         :key="param.key"
         :icon="param.icon"
         :label="param.label"

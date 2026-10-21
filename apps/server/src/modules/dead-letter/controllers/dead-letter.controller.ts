@@ -86,7 +86,7 @@ export class DeadLetterController {
       nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
     };
     const result = await this.dlqRepository.create(data);
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastEntryUpserted(result);
     return result;
   }
 
@@ -116,7 +116,7 @@ export class DeadLetterController {
       nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
     };
     const result = await this.dlqRepository.update(params.id, data);
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastEntryUpserted(result);
     return result;
   }
 
@@ -152,7 +152,7 @@ export class DeadLetterController {
         nextRetryAt: body.nextRetryAt ? new Date(body.nextRetryAt) : undefined,
       },
     );
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastEntryUpserted(result);
     return result;
   }
 
@@ -162,7 +162,7 @@ export class DeadLetterController {
     const existing = await this.dlqRepository.findById(params.id);
     if (!existing) throw new NotFoundException();
     const result = await this.dlqRepository.remove(params.id);
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastEntryUpserted(result);
     return result;
   }
 
@@ -177,7 +177,7 @@ export class DeadLetterController {
       ids: body?.ids,
       batchSize: query.batchSize,
     });
-    this.dlqEventsService.broadcastDlqChanged();
+    this.dlqEventsService.broadcastBulkChanged();
     return result;
   }
 
@@ -227,7 +227,12 @@ export class DeadLetterController {
       'Cleared',
     );
 
-    this.dlqEventsService.broadcastDlqChanged();
+    // The erase step permanently removed rows; the retention status moves
+    // change many more — clients refetch once instead of per row.
+    if (toDelete.length > 0) {
+      this.dlqEventsService.broadcastEntriesRemoved(toDelete.map((r) => r.id));
+    }
+    this.dlqEventsService.broadcastBulkChanged();
     return {
       deleted: deletedCount,
       stages: { failed, cleared, removed },

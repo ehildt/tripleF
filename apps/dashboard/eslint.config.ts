@@ -85,6 +85,7 @@ export default defineConfig([
       'sonarjs/todo-tag': 'warn',
       'sonarjs/no-identical-expressions': 'warn',
       'vue/multi-word-component-names': 'off',
+      'vue/require-default-prop': 'off',
     },
   }, // Keep last to disable Prettier-conflicting rules
   eslintConfigPrettier,

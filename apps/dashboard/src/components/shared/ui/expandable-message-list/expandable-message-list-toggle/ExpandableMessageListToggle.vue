@@ -6,18 +6,13 @@ import { stripHtml } from '@/utils/strip-html.helper';
 
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
 
-const props = withDefaults(
-  defineProps<{
-    expanded: boolean;
-    role: string;
-    content: string;
-    hasBody: boolean;
-    renderHtml?: (content: string) => string;
-  }>(),
-  {
-    renderHtml: undefined,
-  },
-);
+const props = defineProps<{
+  expanded: boolean;
+  role: string;
+  content: string;
+  hasBody: boolean;
+  renderHtml?: (content: string) => string;
+}>();
 
 /** Plain-text preview of the content (HTML stripped) for the static preview. */
 const previewText = computed(() =>

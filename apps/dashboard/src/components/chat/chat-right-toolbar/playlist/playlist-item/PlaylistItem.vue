@@ -8,7 +8,6 @@
  */
 import { ListMinus } from '@lucide/vue';
 import { computed } from 'vue';
-import { defineEmits, defineProps } from 'vue';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import Marquee from '@/components/shared/ui/marquee/Marquee.vue';

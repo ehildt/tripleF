@@ -17,11 +17,6 @@ const props = withDefaults(
   }>(),
   {
     id: () => useId(),
-    name: undefined,
-    placeholder: undefined,
-    step: undefined,
-    min: undefined,
-    max: undefined,
   },
 );
 

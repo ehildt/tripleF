@@ -5,7 +5,9 @@
  * to keep them on screen, and which message types get toasted at all.
  *
  * Mirrors the video popout panel: same dual segmented toggles for the
- * anchor, same checkbox FieldCards, same reset + power actions in the bar.
+ * anchor, same checkbox NumberFieldCards, same reset + power actions in the
+ * bar. Auto-hide gets its own AutoHideCard — its checkbox leads the seconds
+ * stepper instead of trailing it.
  */
 import {
   AlignCenterHorizontal,
@@ -29,13 +31,14 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
-import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
+import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
-import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
+import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { useToast } from '@/composables/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useToastSettingsStore } from '@/stores/toast-settings';
@@ -47,6 +50,7 @@ const { preview: previewToast } = useToast();
 
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 
+import AutoHideCard from './auto-hide-card/AutoHideCard.vue';
 import type { ToastHorizontal, ToastVertical } from './ToastPanel.types';
 
 const VERTICAL_OPTIONS = computed(() => [
@@ -133,11 +137,28 @@ function setHorizontal(value: string) {
     `${vertical.value}-${value}` as ToastAnchor,
   );
 }
+
+const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
+  {
+    key: 'vertical',
+    ariaLabel: i18n.global.t('common.verticalPosition'),
+    options: VERTICAL_OPTIONS.value,
+    value: vertical.value,
+    onSelect: setVertical,
+  },
+  {
+    key: 'horizontal',
+    ariaLabel: i18n.global.t('common.horizontalPosition'),
+    options: HORIZONTAL_OPTIONS.value,
+    value: horizontal.value,
+    onSelect: setHorizontal,
+  },
+]);
 </script>
 
 <template>
   <div class="toast-panel">
-    <div class="toast-panel__actions">
+    <PanelActions>
       <PreviewButton
         :title="$t('common.showExampleToast')"
         @click="previewToast(i18n.global.t('common.exampleToastNotification'))"
@@ -153,84 +174,41 @@ function setHorizontal(value: string) {
           toastSettingsStore.setToastEnabled(!toastSettingsStore.toastEnabled)
         "
       />
-    </div>
+    </PanelActions>
 
     <div class="toast-panel__group">
       <SectionHeader :icon="Anchor" :title="$t('common.positionSection')" />
       <div class="toast-panel__grid">
-        <FieldCard
+        <SegmentedFieldCard
           :icon="Anchor"
           :label="$t('common.initialPosition')"
           :description="$t('common.toastPositionDesc')"
+          :toggles="POSITION_TOGGLES"
           :disabled="!toastSettingsStore.toastEnabled"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="VERTICAL_OPTIONS"
-              :model-value="vertical"
-              :aria-label="$t('common.verticalPosition')"
-              @update:model-value="setVertical"
-            />
-            <SegmentedToggle
-              :options="HORIZONTAL_OPTIONS"
-              :model-value="horizontal"
-              :aria-label="$t('common.horizontalPosition')"
-              @update:model-value="setHorizontal"
-            />
-          </template>
-        </FieldCard>
+        />
       </div>
     </div>
 
     <div class="toast-panel__group">
       <SectionHeader :icon="Timer" :title="$t('common.behaviorSection')" />
       <div class="toast-panel__grid">
-        <FieldCard
+        <AutoHideCard
           :icon="Timer"
           :label="$t('common.autoHide')"
           :description="$t('common.autoHideDesc')"
+          :checked="toastSettingsStore.toastAutoHide"
+          :seconds="toastSettingsStore.toastDurationSeconds"
           :disabled="!toastSettingsStore.toastEnabled"
-        >
-          <template #controls>
-            <button
-              type="button"
-              class="toast-panel__checkbox"
-              :class="{
-                'toast-panel__checkbox--checked':
-                  toastSettingsStore.toastAutoHide,
-              }"
-              :disabled="!toastSettingsStore.toastEnabled"
-              :aria-pressed="toastSettingsStore.toastAutoHide"
-              :aria-label="$t('common.autoHideToasts')"
-              @click="
-                toastSettingsStore.setToastAutoHide(
-                  !toastSettingsStore.toastAutoHide,
-                )
-              "
-            >
-              <Check
-                v-if="toastSettingsStore.toastAutoHide"
-                class="toast-panel__check-icon"
-                stroke-width="3"
-              />
-            </button>
-            <div class="toast-panel__number">
-              <InputNumber
-                :model-value="toastSettingsStore.toastDurationSeconds"
-                :min="1"
-                :max="30"
-                :step="0.5"
-                :disabled="
-                  !toastSettingsStore.toastAutoHide ||
-                  !toastSettingsStore.toastEnabled
-                "
-                @update:model-value="toastSettingsStore.setToastDurationSeconds"
-              />
-            </div>
-          </template>
-        </FieldCard>
+          :checkbox-aria-label="$t('common.autoHideToasts')"
+          @toggle="
+            toastSettingsStore.setToastAutoHide(
+              !toastSettingsStore.toastAutoHide,
+            )
+          "
+          @update:seconds="toastSettingsStore.setToastDurationSeconds"
+        />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Pin"
           :label="$t('common.showPin')"
           :description="$t('common.showPinDesc')"
@@ -248,7 +226,7 @@ function setHorizontal(value: string) {
     <div class="toast-panel__group">
       <SectionHeader :icon="MessageSquare" :title="$t('common.typesSection')" />
       <div class="toast-panel__types">
-        <FieldCard
+        <NumberFieldCard
           v-for="{ type, icon, label, description } in TYPE_OPTIONS"
           :key="type"
           :icon="icon"
@@ -304,27 +282,6 @@ function setHorizontal(value: string) {
   padding: var(--spacing-2);
 }
 
-.toast-panel__actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-1);
-  min-height: calc(2.25rem + 2 * var(--spacing-2));
-  padding: 0 var(--spacing-3);
-  background:
-    radial-gradient(
-      ellipse 120% 140% at 12% 50%,
-      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 120% 140% at 88% 50%,
-      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
-      transparent 60%
-    ),
-    var(--color-bg-elevated);
-}
-
 .toast-panel__group {
   display: flex;
   flex-direction: column;
@@ -341,52 +298,6 @@ function setHorizontal(value: string) {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--spacing-1);
-}
-
-/* Checkbox + number box mirroring the FieldCard control styles — the
-   built-in FieldCard checkbox always renders last, but auto hide needs
-   the checkbox before its seconds input. */
-.toast-panel__checkbox {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid var(--color-fg-muted);
-  background: none;
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.toast-panel__checkbox:hover:not(:disabled) {
-  border-color: var(--color-fg-secondary);
-}
-
-.toast-panel__checkbox--checked {
-  border-color: var(--color-accent-primary);
-  background-color: var(--color-accent-primary);
-}
-
-.toast-panel__checkbox:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.toast-panel__check-icon {
-  width: 0.85rem;
-  height: 0.85rem;
-  color: var(--color-fg-inverse);
-}
-
-.toast-panel__number {
-  flex-shrink: 0;
-  width: 4.5rem;
-  padding: 0 var(--spacing-1);
-  border: 1px solid var(--color-divider);
-  background-color: var(--color-bg-primary);
 }
 
 .toast-panel__muted-list {

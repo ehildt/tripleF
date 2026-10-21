@@ -6,7 +6,7 @@
  * count badges and a reset back to the defaults.
  *
  * Mirrors the other widget panels: an icon-only segmented toggle for the
- * side (same pattern as the other initial positions), checkbox FieldCards
+ * side (same pattern as the other initial positions), checkbox NumberFieldCards
  * for autoclose and the optional tabs, and a reset action in the title
  * bar. The menu is the app navigation, so there is no enable/disable
  * power toggle.
@@ -24,10 +24,12 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
+import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
+import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
 import type { TabMenuSide } from '@/stores/tab-menu-settings.types';
@@ -47,36 +49,38 @@ const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
 function setSide(value: string) {
   tabMenuSettingsStore.setTabMenuSide(value as TabMenuSide);
 }
+
+const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
+  {
+    key: 'menu-side',
+    ariaLabel: i18n.global.t('common.menuSide'),
+    options: SIDE_OPTIONS.value,
+    value: tabMenuSettingsStore.tabMenuSide,
+    onSelect: setSide,
+  },
+]);
 </script>
 
 <template>
   <div class="tab-menu-panel">
-    <div class="tab-menu-panel__actions">
+    <PanelActions>
       <ResetButton
         :title="$t('common.resetTabMenuSettingsToDefaults')"
         @click="tabMenuSettingsStore.resetTabMenuSettings"
       />
-    </div>
+    </PanelActions>
 
     <div class="tab-menu-panel__group">
       <SectionHeader :icon="SquareMenu" :title="$t('common.tabMenuSection')" />
       <div class="tab-menu-panel__grid">
-        <FieldCard
+        <SegmentedFieldCard
           :icon="SquareMenu"
           :label="$t('common.side')"
           :description="$t('common.sideDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="SIDE_OPTIONS"
-              :model-value="tabMenuSettingsStore.tabMenuSide"
-              :aria-label="$t('common.menuSide')"
-              @update:model-value="setSide"
-            />
-          </template>
-        </FieldCard>
+          :toggles="SIDE_TOGGLES"
+        />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="X"
           :label="$t('common.autoclose')"
           :description="$t('common.tabMenuAutocloseDesc')"
@@ -96,7 +100,7 @@ function setSide(value: string) {
         :title="$t('common.tabMenuTabsSection')"
       />
       <div class="tab-menu-panel__tabs">
-        <FieldCard
+        <NumberFieldCard
           :icon="Brain"
           :label="$t('common.memoryTab')"
           :description="$t('common.memoryTabDesc')"
@@ -104,7 +108,7 @@ function setSide(value: string) {
           @toggle="toggleTab('memory')"
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="MailX"
           :label="$t('common.dlqTab')"
           :description="$t('common.dlqTabDesc')"
@@ -112,7 +116,7 @@ function setSide(value: string) {
           @toggle="toggleTab('dlq')"
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Bug"
           :label="$t('common.debugTab')"
           :description="$t('common.debugTabDesc')"
@@ -120,7 +124,7 @@ function setSide(value: string) {
           @toggle="toggleTab('debug')"
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Hash"
           :label="$t('common.counters')"
           :description="$t('common.countersDesc')"
@@ -138,27 +142,6 @@ function setSide(value: string) {
   flex-direction: column;
   gap: var(--spacing-1);
   padding: var(--spacing-2);
-}
-
-.tab-menu-panel__actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-1);
-  min-height: calc(2.25rem + 2 * var(--spacing-2));
-  padding: 0 var(--spacing-3);
-  background:
-    radial-gradient(
-      ellipse 120% 140% at 12% 50%,
-      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 120% 140% at 88% 50%,
-      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
-      transparent 60%
-    ),
-    var(--color-bg-elevated);
 }
 
 .tab-menu-panel__group {

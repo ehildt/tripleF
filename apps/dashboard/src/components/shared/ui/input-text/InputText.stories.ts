@@ -13,7 +13,7 @@ const meta = {
         component: `
 Single-line text input with optional prepend icon slot. Emits
 update:modelValue on input. The borderless variant drops the frame for
-the FieldCard field slots, where the surrounding box IS the frame.`,
+the field cards (e.g. TextFieldCard), where the surrounding box IS the frame.`,
       },
     },
   },
@@ -42,7 +42,7 @@ export const Filled: Story = { args: { modelValue: 'Hello world' } };
 /** Disabled input. */
 export const Disabled: Story = { args: { disabled: true } };
 
-/** Borderless variant as used inside the FieldCard field slot. */
+/** Borderless variant as used inside TextFieldCard. */
 export const Borderless: Story = {
   args: { variant: 'borderless', modelValue: 'hello:world' },
 };

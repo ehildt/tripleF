@@ -1,19 +1,24 @@
 import { useConversationStore } from '@/stores/conversation';
 import { useDebugStore } from '@/stores/debug';
 import { useApiMessagesStore } from '@/stores/messages';
+import { useSocketStore } from '@/stores/socket';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useToast } from '../../../composables/use-toast';
 import { extractPromptMessages } from '../helpers/extract-prompt-messages.helper';
-import type { DlqRetrySessionSocket } from './use-dlq-retry-session.types';
 
 /**
  * Side effects that prepare the app to follow a retried DLQ job: make sure
  * the socket room/event is subscribed, log the retry in the debug store,
  * track the pending API message, and seed the active conversation with the
- * original prompt plus a pending assistant exchange.
+ * original prompt plus a pending assistant exchange. All stores are resolved
+ * by import — a retried job always targets the app's live session.
  */
-export function useDlqRetrySession(socketStore: DlqRetrySessionSocket) {
+export function useDlqRetrySession() {
+  const socketStore = useSocketStore();
+  const conversationStore = useConversationStore();
+  const debugStore = useDebugStore();
+  const messagesStore = useApiMessagesStore();
   const toast = useToast();
 
   function ensureSocketSubscription(roomId: string, eventName: string) {
@@ -36,7 +41,6 @@ export function useDlqRetrySession(socketStore: DlqRetrySessionSocket) {
     model: string,
     entry: DlqEntry,
   ) {
-    const conversationStore = useConversationStore();
     const conversationId = conversationStore.activeConversationId;
     if (!conversationId) return;
     const conversation = conversationStore.getConversation(conversationId);
@@ -87,10 +91,6 @@ export function useDlqRetrySession(socketStore: DlqRetrySessionSocket) {
     model: string,
     entry?: DlqEntry,
   ) {
-    const debugStore = useDebugStore();
-    const messagesStore = useApiMessagesStore();
-    const conversationStore = useConversationStore();
-
     debugStore.addDebugResult({
       endpoint: '/api/v1/dlq/reinstate',
       method: 'RETRY',

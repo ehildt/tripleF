@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import FieldGrid from './FieldGrid.vue';
 
-/** A stub that renders with the `.field-card` class the grid counts on. */
-const FieldCardStub = { template: '<div class="field-card" />' };
+/** A stub that renders with the card class the grid rows carry. */
+const NumberFieldCardStub = { template: '<div class="number-field-card" />' };
 
 function mountGrid({
   itemsPerRow,
@@ -19,14 +19,15 @@ function mountGrid({
 }) {
   const prepend = Array.from(
     { length: prependCount },
-    () => '<FieldCard />',
+    () => '<NumberFieldCard />',
   ).join('');
-  const def = Array.from({ length: defaultCount }, () => '<FieldCard />').join(
-    '',
-  );
+  const def = Array.from(
+    { length: defaultCount },
+    () => '<NumberFieldCard />',
+  ).join('');
   return mount(FieldGrid, {
     props: { itemsPerRow, prependItemsPerRow },
-    global: { stubs: { FieldCard: FieldCardStub } },
+    global: { stubs: { NumberFieldCard: NumberFieldCardStub } },
     slots: {
       prepend,
       default: def,
@@ -50,7 +51,7 @@ describe('FieldGrid', () => {
       defaultCount: 3,
     });
     expect(wrapper.findAll('.field-grid__row')).toHaveLength(2);
-    expect(wrapper.findAll('.field-card')).toHaveLength(5);
+    expect(wrapper.findAll('.number-field-card')).toHaveLength(5);
   });
 
   it('applies itemsPerRow to the default slot', () => {
@@ -74,8 +75,8 @@ describe('FieldGrid', () => {
   it('omits the prepend row when the prepend slot is not provided', () => {
     const wrapper = mount(FieldGrid, {
       props: { itemsPerRow: 2, prependItemsPerRow: 2 },
-      global: { stubs: { FieldCard: FieldCardStub } },
-      slots: { default: '<FieldCard />' },
+      global: { stubs: { NumberFieldCard: NumberFieldCardStub } },
+      slots: { default: '<NumberFieldCard />' },
     });
     expect(wrapper.findAll('.field-grid__row')).toHaveLength(1);
   });

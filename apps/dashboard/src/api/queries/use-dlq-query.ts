@@ -18,7 +18,5 @@ export function useDlqQuery(
       if (!res.ok) throw new Error('Failed to fetch DLQ entries');
       return res.json() as Promise<DlqListResponse>;
     },
-    refetchInterval: 30_000,
-    refetchIntervalInBackground: false,
   });
 }

@@ -23,7 +23,9 @@ describe('PprocResizeSection', () => {
     store.setEnabled(false);
 
     const wrapper = mount(PprocResizeSection);
-    const cards = wrapper.findAll('.field-card--disabled');
+    const cards = wrapper.findAll(
+      '.select-field-card--disabled, .number-field-card--disabled',
+    );
     expect(cards.length).toBeGreaterThan(0);
   });
 });

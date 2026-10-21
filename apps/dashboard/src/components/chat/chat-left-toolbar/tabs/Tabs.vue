@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { MessagesSquare, Radio } from '@lucide/vue';
-import { defineEmits, defineProps } from 'vue';
 
 import Tab from '@/components/chat/shared/ui/tab/Tab.vue';
 

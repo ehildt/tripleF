@@ -26,7 +26,6 @@ import type { TooltipPosition, TooltipProps } from './Tooltip.types';
 const props = withDefaults(defineProps<TooltipProps>(), {
   positions: () => ['top'],
   disabled: false,
-  maxWidth: undefined,
   showDelay: '1s',
 });
 

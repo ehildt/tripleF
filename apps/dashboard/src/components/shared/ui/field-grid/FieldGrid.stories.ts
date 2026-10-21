@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import FieldCard from '../field-card/FieldCard.vue';
+import NumberFieldCard from '../number-field-card/NumberFieldCard.vue';
 import FieldGrid from './FieldGrid.vue';
 
 const meta = {
@@ -22,11 +22,11 @@ function makeCards(count: number) {
 /** A single default-slot row (no prepend). */
 export const SingleRow: Story = {
   render: () => ({
-    components: { FieldGrid, FieldCard },
+    components: { FieldGrid, NumberFieldCard },
     setup: () => ({ cards: makeCards(8) }),
     template: `
       <FieldGrid :items-per-row="4">
-        <FieldCard v-for="c in cards" :key="c.label" :label="c.label" :description="c.description" />
+        <NumberFieldCard v-for="c in cards" :key="c.label" :label="c.label" :description="c.description" />
       </FieldGrid>
     `,
   }),
@@ -35,14 +35,14 @@ export const SingleRow: Story = {
 /** Two slots, each with its own items-per-row. */
 export const TwoSlots: Story = {
   render: () => ({
-    components: { FieldGrid, FieldCard },
+    components: { FieldGrid, NumberFieldCard },
     setup: () => ({ prepend: makeCards(3), cards: makeCards(8) }),
     template: `
       <FieldGrid :items-per-row="4" :prepend-items-per-row="3">
         <template #prepend>
-          <FieldCard v-for="c in prepend" :key="c.label" :label="c.label" :description="c.description" />
+          <NumberFieldCard v-for="c in prepend" :key="c.label" :label="c.label" :description="c.description" />
         </template>
-        <FieldCard v-for="c in cards" :key="c.label" :label="c.label" :description="c.description" />
+        <NumberFieldCard v-for="c in cards" :key="c.label" :label="c.label" :description="c.description" />
       </FieldGrid>
     `,
   }),

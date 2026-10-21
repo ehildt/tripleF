@@ -38,10 +38,11 @@ import {
 import { computed } from 'vue';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
+import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 import { useAppStore } from '@/stores/app';
 import type {
@@ -201,6 +202,65 @@ function toggleChartAnnotation(
 ) {
   appStore.setChartConfig({ [key]: !appStore.chartConfig[key] });
 }
+
+/** Segmented-card descriptors: explicit (options, value, handler) triples. */
+const SCROLL_MODE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
+  () => [
+    {
+      key: 'scroll-mode',
+      ariaLabel: i18n.global.t('common.defaultScrollMode'),
+      options: SCROLL_MODE_OPTIONS.value,
+      value: appStore.defaultScrollMode,
+      onSelect: setDefaultScrollMode,
+    },
+  ],
+);
+
+const PRICE_STYLE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
+  () => [
+    {
+      key: 'price-style',
+      ariaLabel: i18n.global.t('common.chartPriceStyle'),
+      options: PRICE_STYLE_OPTIONS.value,
+      value: appStore.chartConfig.priceStyle,
+      onSelect: setPriceStyle,
+    },
+  ],
+);
+
+const VOLUME_STYLE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
+  () => [
+    {
+      key: 'volume-style',
+      ariaLabel: i18n.global.t('common.chartVolumeStyle'),
+      options: VOLUME_STYLE_OPTIONS.value,
+      value: appStore.chartConfig.volumeStyle,
+      onSelect: setVolumeStyle,
+    },
+  ],
+);
+
+const HEATMAP_VARIANT_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
+  () => [
+    {
+      key: 'heatmap-variant',
+      ariaLabel: i18n.global.t('common.chartHeatmapVariant'),
+      options: HEATMAP_VARIANT_OPTIONS.value,
+      value: appStore.chartConfig.heatmapVariant,
+      onSelect: setHeatmapVariant,
+    },
+  ],
+);
+
+const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
+  {
+    key: 'colormap',
+    ariaLabel: i18n.global.t('common.chartColormap'),
+    options: COLORMAP_OPTIONS.value,
+    value: appStore.chartConfig.colormap,
+    onSelect: setColormap,
+  },
+]);
 </script>
 
 <template>
@@ -212,22 +272,14 @@ function toggleChartAnnotation(
         :title="$t('common.conversationSection')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <SegmentedFieldCard
           :icon="GalleryVerticalEnd"
           :label="$t('common.defaultScrollMode')"
           :description="$t('common.defaultScrollModeDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="SCROLL_MODE_OPTIONS"
-              :model-value="appStore.defaultScrollMode"
-              :aria-label="$t('common.defaultScrollMode')"
-              @update:model-value="setDefaultScrollMode"
-            />
-          </template>
-        </FieldCard>
+          :toggles="SCROLL_MODE_TOGGLES"
+        />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Clock"
           :label="$t('common.tempRetention')"
           :description="$t('common.tempRetentionDesc')"
@@ -235,7 +287,7 @@ function toggleChartAnnotation(
           @update:number-value="appStore.setTemporaryRetentionMinutes"
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="FileText"
           :label="$t('common.documentTextLimit')"
           :description="$t('common.documentTextLimitDesc')"
@@ -250,7 +302,7 @@ function toggleChartAnnotation(
         :title="$t('common.headerActionsSection')"
       />
       <FieldGrid :items-per-row="4">
-        <FieldCard
+        <NumberFieldCard
           v-for="option in ICON_OPTIONS"
           :key="option.key"
           :icon="option.icon"
@@ -267,67 +319,35 @@ function toggleChartAnnotation(
         :title="$t('common.chartSection')"
       />
       <FieldGrid :items-per-row="4">
-        <FieldCard
+        <SegmentedFieldCard
           :icon="ChartCandlestick"
           :label="$t('common.chartPriceStyle')"
           :description="$t('common.chartPriceStyleDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="PRICE_STYLE_OPTIONS"
-              :model-value="appStore.chartConfig.priceStyle"
-              :aria-label="$t('common.chartPriceStyle')"
-              @update:model-value="setPriceStyle"
-            />
-          </template>
-        </FieldCard>
+          :toggles="PRICE_STYLE_TOGGLES"
+        />
 
-        <FieldCard
+        <SegmentedFieldCard
           :icon="ChartColumnStacked"
           :label="$t('common.chartVolumeStyle')"
           :description="$t('common.chartVolumeStyleDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="VOLUME_STYLE_OPTIONS"
-              :model-value="appStore.chartConfig.volumeStyle"
-              :aria-label="$t('common.chartVolumeStyle')"
-              @update:model-value="setVolumeStyle"
-            />
-          </template>
-        </FieldCard>
+          :toggles="VOLUME_STYLE_TOGGLES"
+        />
 
-        <FieldCard
+        <SegmentedFieldCard
           :icon="WavesHorizontal"
           :label="$t('common.chartHeatmapVariant')"
           :description="$t('common.chartHeatmapVariantDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="HEATMAP_VARIANT_OPTIONS"
-              :model-value="appStore.chartConfig.heatmapVariant"
-              :aria-label="$t('common.chartHeatmapVariant')"
-              @update:model-value="setHeatmapVariant"
-            />
-          </template>
-        </FieldCard>
+          :toggles="HEATMAP_VARIANT_TOGGLES"
+        />
 
-        <FieldCard
+        <SegmentedFieldCard
           :icon="Palette"
           :label="$t('common.chartColormap')"
           :description="$t('common.chartColormapDesc')"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="COLORMAP_OPTIONS"
-              :model-value="appStore.chartConfig.colormap"
-              :aria-label="$t('common.chartColormap')"
-              @update:model-value="setColormap"
-            />
-          </template>
-        </FieldCard>
+          :toggles="COLORMAP_TOGGLES"
+        />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Bookmark"
           :label="$t('common.chartMarkers')"
           :description="$t('common.chartShowMarkersDesc')"
@@ -335,7 +355,7 @@ function toggleChartAnnotation(
           @toggle="toggleChartAnnotation('showMarkers')"
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Tag"
           :label="$t('common.chartReferenceLines')"
           :description="$t('common.chartShowReferenceLinesDesc')"
@@ -343,7 +363,7 @@ function toggleChartAnnotation(
           @toggle="toggleChartAnnotation('showReferenceLines')"
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="MirrorRectangular"
           :label="$t('common.chartTooltip')"
           :description="$t('common.chartShowTooltipDesc')"

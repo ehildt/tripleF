@@ -14,8 +14,6 @@ const props = withDefaults(
   }>(),
   {
     items: null,
-    renderHtml: undefined,
-    onClick: undefined,
     expandAll: false,
   },
 );

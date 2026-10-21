@@ -12,8 +12,6 @@ import { computed } from 'vue';
 import type { ResponseHeaderProps } from './ResponseHeader.types';
 
 const props = withDefaults(defineProps<ResponseHeaderProps>(), {
-  title: undefined,
-  subtitle: undefined,
   size: 'md',
   as: 'h2',
   panel: false,

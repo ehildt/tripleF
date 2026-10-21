@@ -13,8 +13,6 @@ import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { MediaCardHeaderProps } from './MediaCardHeader.types';
 
 const props = withDefaults(defineProps<MediaCardHeaderProps>(), {
-  title: undefined,
-  url: undefined,
   clamp: 1,
   tooltip: false,
   flush: false,

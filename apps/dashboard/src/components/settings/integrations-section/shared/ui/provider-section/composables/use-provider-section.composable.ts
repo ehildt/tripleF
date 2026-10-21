@@ -57,17 +57,17 @@ export function useProviderSection(
     return hasEndpointResults(value) ? value.results : undefined;
   }
 
-  /** The prepend slot's FieldCards, counted after mount (static per provider). */
+  /** The prepend slot's TextFieldCards, counted after mount (static per provider). */
   const prependCount = ref(0);
 
   onMounted(() => {
     prependCount.value =
-      prependRef.value?.querySelectorAll('.field-card').length ?? 0;
+      prependRef.value?.querySelectorAll('.text-field-card').length ?? 0;
   });
 
   /** Evenly distribute fields: half per row, capped at 2 — the section
       renders inside the integrations slide-over, where a wider row split
-      cramps the FieldCard contents (label + number stepper + checkbox). */
+      cramps the card contents (label + number stepper + checkbox). */
   function itemsPerRowFor(count: number): number {
     return Math.min(2, Math.max(1, Math.ceil(count / 2)));
   }
