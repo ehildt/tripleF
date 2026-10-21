@@ -8,8 +8,8 @@
 import { ListFilter, PanelsTopLeft, PanelTop, Plug } from '@lucide/vue';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 
 import { useSettingsMenuVisibility } from '../composables/use-settings-menu-visibility';
@@ -35,7 +35,7 @@ const {
           :title="$t('common.chatToolbarSection')"
         />
         <FieldGrid :items-per-row="2">
-          <FieldCard
+          <NumberFieldCard
             :icon="Plug"
             :label="$t('common.sockets')"
             :description="$t('common.socketsDesc')"
@@ -52,14 +52,14 @@ const {
           :title="$t('common.chatPromptBarSection')"
         />
         <FieldGrid :items-per-row="2">
-          <FieldCard
+          <NumberFieldCard
             :icon="ListFilter"
             :label="$t('common.sourceMenuAlwaysShow')"
             :description="$t('common.sourceMenuAlwaysShowDesc')"
             :checked="sourceMenuAlwaysShow"
             @toggle="toggleSourceMenuAlwaysShow"
           />
-          <FieldCard
+          <NumberFieldCard
             :icon="PanelsTopLeft"
             :label="$t('common.viewMenuAlwaysShow')"
             :description="$t('common.viewMenuAlwaysShowDesc')"

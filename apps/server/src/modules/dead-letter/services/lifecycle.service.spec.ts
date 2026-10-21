@@ -11,10 +11,10 @@ import { DeadLetterRepository } from './repository.service.js';
 describe('LifecycleService', () => {
   let service: LifecycleService;
   let dlqRepository: DeadLetterRepository;
-  let broadcastDlqChanged: ReturnType<typeof vi.fn>;
+  let broadcastEntryUpserted: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
-    broadcastDlqChanged = vi.fn();
+    broadcastEntryUpserted = vi.fn();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LifecycleService,
@@ -38,7 +38,7 @@ describe('LifecycleService', () => {
         },
         {
           provide: DlqEventsService,
-          useValue: { broadcastDlqChanged },
+          useValue: { broadcastEntryUpserted },
         },
       ],
     }).compile();
@@ -64,6 +64,10 @@ describe('LifecycleService', () => {
       vi.mocked(dlqRepository.findByQueueJob).mockResolvedValue({
         id: 'record-1',
       } as never);
+      vi.mocked(dlqRepository.update).mockResolvedValue({
+        id: 'record-1',
+        status: 'Cleared',
+      } as never);
 
       await service.onJobCompleted(createJob());
 
@@ -75,7 +79,10 @@ describe('LifecycleService', () => {
         status: 'Cleared',
         failedReason: null,
       });
-      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
+      expect(broadcastEntryUpserted).toHaveBeenCalledWith({
+        id: 'record-1',
+        status: 'Cleared',
+      });
     });
 
     it('does nothing when no DLQ entry exists', async () => {
@@ -84,7 +91,7 @@ describe('LifecycleService', () => {
       await service.onJobCompleted(createJob());
 
       expect(dlqRepository.update).not.toHaveBeenCalled();
-      expect(broadcastDlqChanged).not.toHaveBeenCalled();
+      expect(broadcastEntryUpserted).not.toHaveBeenCalled();
     });
   });
 
@@ -96,6 +103,9 @@ describe('LifecycleService', () => {
     it('records the final failure by (queueName, jobId) and removes the job', async () => {
       const now = Date.now();
       const job = createJob();
+      vi.mocked(dlqRepository.upsertByQueueJob).mockResolvedValue({
+        id: 'record-1',
+      } as never);
       await service.handleFailed(job, 'boom');
 
       expect(dlqRepository.upsertByQueueJob).toHaveBeenCalledWith(
@@ -112,7 +122,7 @@ describe('LifecycleService', () => {
         }),
       );
       expect(job.remove).toHaveBeenCalled();
-      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
+      expect(broadcastEntryUpserted).toHaveBeenCalledWith({ id: 'record-1' });
 
       const [, data] = vi.mocked(dlqRepository.upsertByQueueJob).mock.calls[0];
       const nextRetryAt = data.nextRetryAt as Date;
@@ -126,7 +136,7 @@ describe('LifecycleService', () => {
 
       expect(dlqRepository.upsertByQueueJob).not.toHaveBeenCalled();
       expect(job.remove).not.toHaveBeenCalled();
-      expect(broadcastDlqChanged).not.toHaveBeenCalled();
+      expect(broadcastEntryUpserted).not.toHaveBeenCalled();
     });
 
     it('works for any queue (vectorize job)', async () => {
@@ -143,6 +153,9 @@ describe('LifecycleService', () => {
           text: 'Hello',
         },
       });
+      vi.mocked(dlqRepository.upsertByQueueJob).mockResolvedValue({
+        id: 'record-1',
+      } as never);
       await service.handleFailed(job, 'embed 404');
 
       expect(dlqRepository.upsertByQueueJob).toHaveBeenCalledWith(
@@ -156,13 +169,16 @@ describe('LifecycleService', () => {
           payload: expect.objectContaining({ requestId: 'req-42' }),
         }),
       );
-      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
+      expect(broadcastEntryUpserted).toHaveBeenCalledWith({ id: 'record-1' });
     });
   });
 
   describe('recordPermanentFailure', () => {
     it('records regardless of remaining attempts', async () => {
       const job = createJob({ attemptsMade: 1 });
+      vi.mocked(dlqRepository.upsertByQueueJob).mockResolvedValue({
+        id: 'record-1',
+      } as never);
       await service.recordPermanentFailure(job, 'model not found');
 
       expect(dlqRepository.upsertByQueueJob).toHaveBeenCalledWith(
@@ -172,7 +188,7 @@ describe('LifecycleService', () => {
           failedReason: 'model not found',
         }),
       );
-      expect(broadcastDlqChanged).toHaveBeenCalledTimes(1);
+      expect(broadcastEntryUpserted).toHaveBeenCalledWith({ id: 'record-1' });
     });
   });
 });

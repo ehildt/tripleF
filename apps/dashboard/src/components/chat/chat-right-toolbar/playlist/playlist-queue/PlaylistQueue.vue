@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { defineEmits, defineProps } from 'vue';
-
 import type { VideoGalleryItem } from '@/types/harness-response-data.model';
 
 import PlaylistItem from '../playlist-item/PlaylistItem.vue';

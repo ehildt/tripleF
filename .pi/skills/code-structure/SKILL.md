@@ -39,7 +39,7 @@ Generic suffixes, used everywhere:
 - `.types.ts` — hand-written type and interface declarations.
 - `.constant.ts` — a themed group of constant values.
 - `.model.ts` — the declaration file for one domain model's shape(s).
-- `.spec.ts` — a test file (created only with user consent; see Section 10).
+- `.spec.ts` — a test file (created only with user consent; see Section 11).
 
 Domain suffixes are defined where the domain lives and kept consistent within that area (in `packages`, for example, the prompt, schema, and tool roles use their own suffixes). Whatever the suffix set, it must be spelled consistently across a folder — no singular/plural drift such as `.constant.ts` beside `.constants.ts`.
 
@@ -80,7 +80,15 @@ Inline the call when no name is needed; name the binding (not a one-line functio
 
 The same rule applies to a returned object. A return object never re-publishes another unit's members unchanged, verbatim or renamed; the consumer imports the defining unit directly. A returned member earns its place by being owned, derived, or composed into new behavior. The one sanctioned delegation shape: a privately-created per-caller service instance, whose wiring the producer must keep, is exposed under a single namespaced key rather than flattened into per-member re-exports.
 
-## 9. Naming decision table
+At component level the rule reads the same: re-declaring another component's props under renamed keys, or forwarding its events unchanged, is the component form of the banned wrapper. A wrapper component earns its name only by adding its own chrome or behavior; a pure rename of the wrapped unit's API adds indirection without information.
+
+The same discipline applies to audits and recommendations: options are judged by the design they serve, not by the number of files they touch — a zero-edit option carries the same burden of proof as a change. A local constant restating a shared constant value-for-value, or a validation guard that no call path can reach once the inputs are constrained, is the leftover of a half-done simplification: finish the consolidation (collapse the duplicate into the single source, delete the dead guard) instead of defending it as safety.
+
+## 9. CSS classes are not an API
+
+Styling hooks belong to the component that renders them. Never derive behavior from another unit's DOM — counting children by class name, sniffing structure, or branching on what a selector finds turns a cosmetic name into a hidden cross-component contract that breaks silently the next time the class is renamed. If a consumer needs to know something about what was rendered (how many, which kind), that information flows the sanctioned way — props in, events out, or an explicitly passed count — never through DOM inspection of slotted or child content.
+
+## 10. Naming decision table
 
 | Category            | Pattern                  | Example                     |
 | ------------------- | ------------------------ | --------------------------- |
@@ -93,7 +101,7 @@ The same rule applies to a returned object. A return object never re-publishes a
 | Constants file      | theme + `.constant.ts`      | `media-counts.constant.ts` |
 | Model file          | domain noun + `.model.ts`   | `encyclopedia-select.model.ts` |
 
-## 10. Tests are a contract, not a mandate to create them
+## 11. Tests are a contract, not a mandate to create them
 
 The `.spec.ts` and `.stories.ts` roles exist in the suffix taxonomy, but creating those files — like using browser automation — requires explicit user consent; the agent never generates them speculatively, and a change that would break an existing test is reported before either side is touched.
 
@@ -111,5 +119,10 @@ The semantics — consent gate, regression net, contract-not-infallible, report-
 - Files co-located with their consumer unless shared across unrelated areas
 - No new barrel files; published package entry points are the only exception
 - No wrapper functions
+- No component re-declares another component's props under renamed keys or forwards its events unchanged
+- No behavior derived from DOM class lookups — CSS classes are styling hooks, not an API
+- No local constant restates a shared constant value-for-value — duplicates collapse to the single source
+- No validation guard that no call path can reach once inputs are constrained at the source
+- Recommendations argue from design merits, never from diff size — the zero-edit option carries the same burden of proof
 - No function or composable returns another unit's members unchanged (no proxy barrels); a privately-created service instance is exposed once as a namespaced key
 - Existing tests run after changes; a broken test is reported before fixing either code or test

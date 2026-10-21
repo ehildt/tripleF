@@ -18,8 +18,9 @@ const meta = {
     docs: {
       description: {
         component: `
-Model-override picker for the Memory tab fields: a borderless trigger in the
-FieldCard's field slot, a teleported dropdown with the shared searchable model
+Model-override picker for the Memory tab fields: a borderless trigger inside
+ModelFieldCard's inline field, a teleported dropdown with the shared searchable
+model
 list, and a "Default" pseudo-option that clears the override (env baseline).
 An override missing from the catalog is prepended so it stays selectable.
 `,

@@ -13,7 +13,7 @@ const props = withDefaults(
     /** Unique id used to persist the expanded/collapsed state (localStorage). */
     id?: string;
   }>(),
-  { count: undefined, defaultExpanded: true, id: undefined },
+  { defaultExpanded: true },
 );
 
 const STORAGE_PREFIX = 'settings.collapsible';

@@ -1,30 +1,31 @@
 import { i18n } from '@/i18n/i18n';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
+import { useDeleteDlqMutation } from '../../../api/queries/use-delete-dlq-mutation';
+import { useRetryDlqMutation } from '../../../api/queries/use-retry-dlq-mutation';
+import { useUpdateDlqMutation } from '../../../api/queries/use-update-dlq-mutation';
 import { useToast } from '../../../composables/use-toast';
+import { useDlqStore } from '../../../stores/dlq';
 import { extractEntryFilters } from '../helpers/extract-entry-filters.helper';
-import type { DlqActionsOptions } from './use-dlq-actions.types';
 import { useDlqRetrySession } from './use-dlq-retry-session';
 
 /**
- * DLQ row/detail actions — thin orchestration over the mutations, the
- * store, and the retry-session side effects (socket rooms, conversation
- * seeding, debug log). Entries are identified by their DLQ record id; the
+ * DLQ row/detail actions — thin orchestration over the mutations, the store,
+ * and the retry-session side effects (socket rooms, conversation seeding,
+ * debug log). Entries are identified by their DLQ record id; the
  * socket/conversation tracking uses the entry's jobName (for harness turns
- * that name IS the originating request id).
+ * that name IS the originating request id). Stores and mutation hooks are
+ * resolved by import; the only parameter is the caller's refetch callback so
+ * the list refreshes after a mutation.
  */
-export function useDlqActions(options: DlqActionsOptions) {
-  const {
-    dlqStore,
-    retryMutation,
-    deleteMutation,
-    updateMutation,
-    guardedRefetch,
-  } = options;
-
+export function useDlqActions(guardedRefetch: () => Promise<void>) {
+  const dlqStore = useDlqStore();
+  const retryMutation = useRetryDlqMutation();
+  const deleteMutation = useDeleteDlqMutation();
+  const updateMutation = useUpdateDlqMutation();
   const toast = useToast();
   const { ensureSocketSubscription, addRetryPendingMessage } =
-    useDlqRetrySession(options.socketStore);
+    useDlqRetrySession();
 
   function findEntry(id: string) {
     return dlqStore.entries.find((e) => e.id === id);

@@ -26,8 +26,8 @@ import {
 import { computed, ref } from 'vue';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 import {
@@ -157,7 +157,7 @@ function partLabelKey(partId: string): string {
       />
 
       <FieldGrid :items-per-row="5">
-        <FieldCard
+        <NumberFieldCard
           v-for="part in activeParts"
           :key="part.id"
           :icon="activeSubtab.icon"

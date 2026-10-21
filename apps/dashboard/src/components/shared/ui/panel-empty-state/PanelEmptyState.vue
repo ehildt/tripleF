@@ -5,7 +5,6 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = withDefaults(
-  // eslint-disable-next-line vue/require-default-prop -- fallback is resolved reactively below so it tracks locale changes
   defineProps<{ message?: string; submessage?: string; icon?: Component }>(),
   {},
 );

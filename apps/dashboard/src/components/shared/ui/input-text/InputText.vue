@@ -7,8 +7,8 @@ withDefaults(
     placeholder?: string;
     disabled?: boolean;
     /** Visual style: `boxed` renders the standalone framed input; `borderless`
-     *  drops the frame because the surrounding field box (e.g. a FieldCard
-     *  field slot) IS the frame. */
+     *  drops the frame because the surrounding field box (e.g. a
+     *  TextFieldCard) IS the frame. */
     variant?: 'boxed' | 'borderless';
     /** Stable id for the field. Auto-generated if omitted. */
     id?: string;
@@ -21,11 +21,7 @@ withDefaults(
   }>(),
   {
     id: () => useId(),
-    name: undefined,
-    placeholder: undefined,
     variant: 'boxed',
-    autocomplete: undefined,
-    spellcheck: undefined,
   },
 );
 

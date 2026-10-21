@@ -7,7 +7,7 @@
  */
 import { Ban, Images, ThumbsUp } from '@lucide/vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 
 import {
   MAX_IMAGE_TASK_REFERENCE_COUNT,
@@ -58,9 +58,9 @@ const {
       />
     </div>
 
-    <!-- Serper-style field row: icon tile + label + description + number +
-         checkbox. Checkbox off ⇔ pool size 0 (no reference images verified). -->
-    <FieldCard
+    <!-- Field row: icon tile + label + description + number + checkbox.
+         Checkbox off ⇔ pool size 0 (no reference images verified). -->
+    <NumberFieldCard
       :icon="Images"
       :label="$t('common.imageTaskReferences')"
       :description="$t('common.imageTaskReferencesHint')"

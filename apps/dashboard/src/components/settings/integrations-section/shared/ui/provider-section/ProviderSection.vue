@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 
 import { useProviderSection } from './composables/use-provider-section.composable';
 import type { ProviderSectionProps } from './ProviderSection.types';
 
 const props = withDefaults(defineProps<ProviderSectionProps>(), {
   icons: () => ({}),
-  endpointMaxResults: undefined,
-  endpointAvailability: undefined,
-  prependItemsPerRow: undefined,
-  itemsPerRow: undefined,
 });
 
 const emit = defineEmits<{
@@ -84,7 +80,7 @@ const {
           </div>
         </template>
 
-        <FieldCard
+        <NumberFieldCard
           v-for="[name, value] in endpointEntries"
           :key="name"
           :icon="icons[name]"
@@ -141,19 +137,19 @@ const {
 
 /* The API key field sits on the radiant actions row — let it blend in
    instead of showing its own field background. Only affects the API key
-   FieldCard, not the endpoint fields in the grid below. */
-.provider-section__api-key :deep(.field-card) {
+   TextFieldCard, not the endpoint fields in the grid below. */
+.provider-section__api-key :deep(.text-field-card) {
   background: transparent;
   width: 100%;
 }
 
 /* Let the input take the remaining width — the label/description shrink to
    their natural size instead of splitting the field evenly. */
-.provider-section__api-key :deep(.field-card__content) {
+.provider-section__api-key :deep(.text-field-card__content) {
   flex: 0 1 auto;
 }
 
-.provider-section__api-key :deep(.field-card__field) {
+.provider-section__api-key :deep(.text-field-card__field) {
   flex: 1 1 auto;
 }
 
@@ -188,7 +184,7 @@ const {
   min-width: 0;
 }
 
-/* The prepend slot's FieldCards participate directly in the shared grid. */
+/* The prepend slot's cards participate directly in the shared grid. */
 .provider-section__prepend {
   display: contents;
 }

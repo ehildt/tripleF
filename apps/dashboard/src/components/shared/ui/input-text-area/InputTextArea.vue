@@ -14,9 +14,6 @@ withDefaults(
   }>(),
   {
     id: () => useId(),
-    name: undefined,
-    placeholder: undefined,
-    rows: undefined,
   },
 );
 

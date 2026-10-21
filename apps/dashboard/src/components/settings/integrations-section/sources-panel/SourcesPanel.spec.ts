@@ -61,7 +61,7 @@ describe('SourcesPanel', () => {
       blocked: [],
       imageTaskReferenceCount: 6,
     });
-    const checkbox = wrapper.find('button.field-card__checkbox');
+    const checkbox = wrapper.find('button.number-field-card__checkbox');
     expect(checkbox.attributes('aria-pressed')).toBe('true');
     await checkbox.trigger('click');
     expect(wrapper.emitted('patch')).toContainEqual([

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * Shared shell for the three memory-layer spaces: a field-card-style header
+ * Shared shell for the three memory-layer spaces: a header in the field-card
+ * family's style
  * (icon + label + description + action slot), then either a state note
  * (unavailable / empty) or the constellation canvas beside a collapsible
  * metadata column (5/6 canvas, 1/6 metadata).

@@ -2,7 +2,7 @@
   "name": "@triplef/agent",
   "description": "tripleF (3F) agent domain — structured-output schemas, prompt builders, and model tools shared across the apps.",
   "version": "1.0.3",
-  "packageManager": "pnpm@12.12.1",
+  "packageManager": "pnpm@12.14.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -56,12 +56,12 @@
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "@triplef/helpers": "^1.6.1",
-    "linkedom": "^0.18.13",
+    "linkedom": "^0.18.14",
     "turndown": "^7.2.4"
   },
   "peerDependencies": {
-    "ai": "^7.0.137",
-    "zod": "^4.6.6"
+    "ai": "^7.0.148",
+    "zod": "^4.6.7"
   },
   "peerDependenciesMeta": {
     "ai": {
@@ -74,12 +74,12 @@
     "@types/eslint": "^9.6.1",
     "@types/node": "^26.6.5",
     "@types/turndown": "^5.0.6",
-    "@vitest/coverage-v8": "5.0.3",
+    "@vitest/coverage-v8": "5.0.5",
     "depcheck": "^1.4.7",
-    "dependency-cruiser": "^18.6.0",
-    "eslint": "^10.12.0",
+    "dependency-cruiser": "^18.7.0",
+    "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-prettier": "^5.5.7",
     "eslint-plugin-simple-import-sort": "^14.0.0",
     "eslint-plugin-sonarjs": "^4.2.2",
     "globals": "^17.13.0",
@@ -92,7 +92,7 @@
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.71.1",
-    "vitest": "^5.0.3"
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
   }
 }

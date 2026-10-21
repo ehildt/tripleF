@@ -12,14 +12,14 @@ import type {
 
 /**
  * Model picker for the settings Memory tab and the DLQ details top bar: a
- * borderless trigger in the FieldCard's field slot, a teleported dropdown
+ * borderless trigger inside ModelFieldCard's inline field, a teleported
+ * dropdown
  * with the shared searchable model list, and an optional "Default"
  * pseudo-option that clears the override (env baseline). An override missing
  * from the catalog is prepended so it stays selectable.
  */
 const props = withDefaults(defineProps<ModelSelectFieldProps>(), {
   modelValue: '',
-  defaultLabel: undefined,
   disabled: false,
   errored: false,
 });
@@ -74,7 +74,7 @@ function onSelect(model: string) {
       <ChevronDown class="model-select-field__trigger-chevron" />
     </button>
 
-    <!-- Teleported to <body>: the FieldCard's hover filter would otherwise
+    <!-- Teleported to <body>: the card's hover filter would otherwise
          paint an open dropdown under the cards after it. -->
     <Teleport to="body">
       <Transition name="dropdown">
@@ -108,7 +108,7 @@ function onSelect(model: string) {
   justify-content: center;
 }
 
-/* Trigger: fills the FieldCard field box like the former text input. */
+/* Trigger: fills the card's field box like the former text input. */
 .model-select-field__trigger {
   display: flex;
   align-items: center;

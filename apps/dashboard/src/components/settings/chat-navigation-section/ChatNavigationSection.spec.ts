@@ -45,10 +45,10 @@ describe('ChatNavigationSection', () => {
     const store = useAppStore();
     const wrapper = mount(ChatNavigationSection);
     const markersCard = wrapper
-      .findAll('.field-card')
+      .findAll('.number-field-card')
       .find((card) => card.text().includes('Markers'));
     expect(markersCard).toBeDefined();
-    await markersCard!.find('.field-card__checkbox').trigger('click');
+    await markersCard!.find('.number-field-card__checkbox').trigger('click');
     expect(store.chartConfig.showMarkers).toBe(false);
   });
 });

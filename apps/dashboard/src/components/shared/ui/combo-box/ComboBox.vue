@@ -8,7 +8,6 @@ import type { ComboBoxProps } from './ComboBox.types';
 const props = withDefaults(defineProps<ComboBoxProps>(), {
   options: () => [],
   id: () => useId(),
-  name: undefined,
   side: 'bottom',
 });
 
