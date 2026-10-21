@@ -26,10 +26,10 @@ describe('PprocVariantsSection', () => {
     store.setVariant('original', false);
 
     const wrapper = mount(PprocVariantsSection);
-    const originalCard = wrapper.findAll('.field-card')[0];
+    const originalCard = wrapper.findAll('.number-field-card')[0];
     expect(originalCard.exists()).toBe(true);
 
-    await originalCard.find('.field-card__checkbox').trigger('click');
+    await originalCard.find('.number-field-card__checkbox').trigger('click');
     expect(store.variants.original).toBe(true);
   });
 });

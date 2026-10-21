@@ -11,9 +11,9 @@ import type {
 } from './SpaceSelector.types';
 
 /**
- * Cognition-space picker for the settings System tab — modeled on the
- * language menu: a trigger button in the FieldCard's field slot, a
- * teleported dropdown with a sticky search/create input and the history
+ * Cognition-space picker for the settings Memory tab — modeled on the
+ * language menu: a trigger button inside SpaceSelectorCard's inline field,
+ * a teleported dropdown with a sticky search/create input and the history
  * list. Selecting activates a space, typing an unknown name and confirming
  * creates it (spaces are implicit keys — selection is creation), the per-
  * item X drops a space from the list without touching its data; the empty
@@ -79,7 +79,7 @@ function removeSpace(event: MouseEvent, space: string) {
       <ChevronDown class="space-selector__trigger-chevron" />
     </button>
 
-    <!-- Teleported to <body>: the FieldCard's hover filter would otherwise
+    <!-- Teleported to <body>: the card's hover filter would otherwise
          paint an open dropdown under the cards after it. -->
     <Teleport to="body">
       <Transition name="dropdown">
@@ -177,7 +177,7 @@ function removeSpace(event: MouseEvent, space: string) {
   justify-content: center;
 }
 
-/* Trigger: fills the FieldCard field box like the former text input. */
+/* Trigger: fills the card's field box like the former text input. */
 .space-selector__trigger {
   display: flex;
   align-items: center;

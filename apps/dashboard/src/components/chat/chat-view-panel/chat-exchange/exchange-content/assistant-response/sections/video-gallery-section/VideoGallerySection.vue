@@ -7,7 +7,6 @@
  * template.
  */
 import { computed, useId } from 'vue';
-import { defineProps } from 'vue';
 
 import { useHarnessMediaPresentation } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-presentation.composable';
 import AssistantCarousel from '@/components/chat/shared/ui/media-carousel/AssistantCarousel.vue';

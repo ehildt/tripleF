@@ -176,3 +176,4 @@ After creating or modifying a component's styles:
 - [ ] Browser DevTools: all `var()` references resolve to computed values
 - [ ] Browser DevTools: hover states produce the correct `color-mix()` values
 - [ ] No specificity regressions — scoped styles apply at the same specificity level
+- [ ] No wrapper elements that exist only to hold a class around one child component — the child owns its padding chrome in its own scoped rule (rule 10)

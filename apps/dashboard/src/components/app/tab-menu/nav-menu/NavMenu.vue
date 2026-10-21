@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import { RouterLink } from 'vue-router';
 
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';

@@ -18,7 +18,6 @@ const props = withDefaults(defineProps<DropDownProps>(), {
   options: () => [],
   disabled: false,
   placeholder: '',
-  formatValue: undefined,
   errored: false,
   size: 'md',
   teleport: false,

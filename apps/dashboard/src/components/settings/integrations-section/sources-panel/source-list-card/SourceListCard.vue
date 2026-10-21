@@ -53,7 +53,7 @@ const { draft, textarea, resize, save } = useSourceListCard(props, emit);
   filter: brightness(1.08);
 }
 
-/* Header row (field-card look): icon tile + label + description */
+/* Header row (NumberFieldCard look): icon tile + label + description */
 .source-list-card__header {
   background-color: var(--color-bg-tertiary);
   display: flex;

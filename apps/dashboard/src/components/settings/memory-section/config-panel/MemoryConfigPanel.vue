@@ -38,17 +38,17 @@ import {
 } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
-import InputSelect from '@/components/shared/ui/input-select/InputSelect.vue';
-import InputText from '@/components/shared/ui/input-text/InputText.vue';
-import ModelSelectField from '@/components/shared/ui/model-select-field/ModelSelectField.vue';
+import ModelFieldCard from '@/components/shared/ui/model-field-card/ModelFieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
+import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
+import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 import { useMemoryOverrides } from '@/composables/use-memory-overrides';
 import { useAppStore } from '@/stores/app';
 import { useModelsStore } from '@/stores/models';
 
-import SpaceSelector from '../../system-section/space-selector/SpaceSelector.vue';
+import SpaceSelectorCard from './space-selector-card/SpaceSelectorCard.vue';
 import type { MemoryConfigPanelProps } from './MemoryConfigPanel.types';
 
 defineProps<MemoryConfigPanelProps>();
@@ -146,37 +146,24 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memorySpacesSection')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <TextFieldCard
+          v-model="memoryPartition"
           :icon="Brain"
           :label="$t('common.memoryPartition')"
           :description="$t('common.memoryPartitionDesc')"
-        >
-          <template #field>
-            <InputText
-              v-model="memoryPartition"
-              variant="borderless"
-              name="memory-partition"
-              autocomplete="off"
-              :spellcheck="false"
-            />
-          </template>
-        </FieldCard>
+          name="memory-partition"
+        />
 
-        <FieldCard
+        <SpaceSelectorCard
           :icon="Fingerprint"
           :label="$t('common.memoryCognition')"
           :description="$t('common.memoryCognitionKeyDesc')"
-        >
-          <template #field>
-            <SpaceSelector
-              :spaces="memoryCognitionSpaces"
-              :active-space="memoryCognition"
-              @select="setMemoryCognition"
-              @create="setMemoryCognition"
-              @remove="removeMemoryCognitionSpace"
-            />
-          </template>
-        </FieldCard>
+          :spaces="memoryCognitionSpaces"
+          :active-space="memoryCognition"
+          :on-select="setMemoryCognition"
+          :on-create="setMemoryCognition"
+          :on-remove="removeMemoryCognitionSpace"
+        />
       </FieldGrid>
     </div>
 
@@ -192,7 +179,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memoryEpisodeProbeSection')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <NumberFieldCard
           :icon="Scale"
           :label="$t('common.episodeRecencyWeight')"
           :description="$t('common.episodeRecencyWeightDesc')"
@@ -203,7 +190,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveEpisodeRecencyWeight"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Clock"
           :label="$t('common.episodeRecencyScale')"
           :description="$t('common.episodeRecencyScaleDesc')"
@@ -214,7 +201,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveEpisodeRecencyScaleSeconds"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="SlidersHorizontal"
           :label="$t('common.episodeRecencyMidpoint')"
           :description="$t('common.episodeRecencyMidpointDesc')"
@@ -225,7 +212,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveEpisodeRecencyMidpoint"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Layers"
           :label="$t('common.episodeProbeLimit')"
           :description="$t('common.episodeProbeLimitDesc')"
@@ -235,7 +222,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveEpisodeProbeLimit"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Filter"
           :label="$t('common.episodeScoreThreshold')"
           :description="$t('common.episodeScoreThresholdDesc')"
@@ -259,7 +246,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memoryCognitionProfileSection')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <NumberFieldCard
           :icon="Gauge"
           :label="$t('common.memoryCognitionCap')"
           :description="$t('common.memoryCognitionCapDesc')"
@@ -283,7 +270,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memoryDiagramSection')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <NumberFieldCard
           :icon="Network"
           :label="$t('common.memoryConstellationNodeLimit')"
           :description="$t('common.memoryConstellationNodeLimitDesc')"
@@ -309,91 +296,61 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memoryMaintenanceModels')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <ModelFieldCard
           :icon="Workflow"
           :label="$t('common.memoryConsolidateModel')"
           :description="$t('common.memoryConsolidateModelDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <ModelSelectField
-              :model-value="consolidateModel"
-              :local-models="localModels"
-              :cloud-models="cloudModels"
-              :loading="modelsLoading"
-              :default-label="$t('common.memoryModelDefault')"
-              @update:model-value="saveConsolidateModel"
-            />
-          </template>
-        </FieldCard>
-        <FieldCard
+          :model-value="consolidateModel"
+          :local-models="localModels"
+          :cloud-models="cloudModels"
+          :loading="modelsLoading"
+          :default-label="$t('common.memoryModelDefault')"
+          @update:model-value="saveConsolidateModel"
+        />
+        <ModelFieldCard
           :icon="Tags"
           :label="$t('common.memoryClassifyModel')"
           :description="$t('common.memoryClassifyModelDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <ModelSelectField
-              :model-value="classifyModel"
-              :local-models="localModels"
-              :cloud-models="cloudModels"
-              :loading="modelsLoading"
-              :default-label="$t('common.memoryModelDefault')"
-              @update:model-value="saveClassifyModel"
-            />
-          </template>
-        </FieldCard>
-        <FieldCard
+          :model-value="classifyModel"
+          :local-models="localModels"
+          :cloud-models="cloudModels"
+          :loading="modelsLoading"
+          :default-label="$t('common.memoryModelDefault')"
+          @update:model-value="saveClassifyModel"
+        />
+        <ModelFieldCard
           :icon="Scale"
           :label="$t('common.memoryReflectModel')"
           :description="$t('common.memoryReflectModelDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <ModelSelectField
-              :model-value="reflectModel"
-              :local-models="localModels"
-              :cloud-models="cloudModels"
-              :loading="modelsLoading"
-              :default-label="$t('common.memoryModelDefault')"
-              @update:model-value="saveReflectModel"
-            />
-          </template>
-        </FieldCard>
-        <FieldCard
+          :model-value="reflectModel"
+          :local-models="localModels"
+          :cloud-models="cloudModels"
+          :loading="modelsLoading"
+          :default-label="$t('common.memoryModelDefault')"
+          @update:model-value="saveReflectModel"
+        />
+        <ModelFieldCard
           :icon="Sparkles"
           :label="$t('common.memoryConvictionModel')"
           :description="$t('common.memoryConvictionModelDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <ModelSelectField
-              :model-value="convictionModel"
-              :local-models="localModels"
-              :cloud-models="cloudModels"
-              :loading="modelsLoading"
-              :default-label="$t('common.memoryModelDefault')"
-              @update:model-value="saveConvictionModel"
-            />
-          </template>
-        </FieldCard>
-        <FieldCard
+          :model-value="convictionModel"
+          :local-models="localModels"
+          :cloud-models="cloudModels"
+          :loading="modelsLoading"
+          :default-label="$t('common.memoryModelDefault')"
+          @update:model-value="saveConvictionModel"
+        />
+        <ModelFieldCard
           :icon="GitBranch"
           :label="$t('common.memoryClusterModel')"
           :description="$t('common.memoryClusterModelDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <ModelSelectField
-              :model-value="clusterModel"
-              :local-models="localModels"
-              :cloud-models="cloudModels"
-              :loading="modelsLoading"
-              :default-label="$t('common.memoryModelDefault')"
-              @update:model-value="saveClusterModel"
-            />
-          </template>
-        </FieldCard>
+          :model-value="clusterModel"
+          :local-models="localModels"
+          :cloud-models="cloudModels"
+          :loading="modelsLoading"
+          :default-label="$t('common.memoryModelDefault')"
+          @update:model-value="saveClusterModel"
+        />
       </FieldGrid>
     </div>
 
@@ -405,7 +362,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
     >
       <SectionHeader :icon="Zap" :title="$t('common.memoryAutoTriggers')" />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <NumberFieldCard
           :icon="Workflow"
           :label="$t('common.memoryPartitionReflectAuto')"
           :description="$t('common.memoryPartitionReflectAutoDesc')"
@@ -414,7 +371,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
             savePartitionReflectAutoEnabled(!partitionReflectAutoEnabled)
           "
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Brain"
           :label="$t('common.memoryCognitionReflectAuto')"
           :description="$t('common.memoryCognitionReflectAutoDesc')"
@@ -423,7 +380,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
             saveCognitionReflectAutoEnabled(!cognitionReflectAutoEnabled)
           "
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Tags"
           :label="$t('common.memoryEncyclopediaReflectAuto')"
           :description="$t('common.memoryEncyclopediaReflectAutoDesc')"
@@ -432,14 +389,14 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
             saveEncyclopediaReflectAutoEnabled(!encyclopediaReflectAutoEnabled)
           "
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Sparkles"
           :label="$t('common.memoryConvictionAuto')"
           :description="$t('common.memoryConvictionAutoDesc')"
           :checked="convictionAutoEnabled"
           @toggle="saveConvictionAutoEnabled(!convictionAutoEnabled)"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="GitBranch"
           :label="$t('common.memoryClusterAuto')"
           :description="$t('common.memoryClusterAutoDesc')"
@@ -459,7 +416,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memorySweepLimits')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <NumberFieldCard
           :icon="Scale"
           :label="$t('common.memoryReflectBatchLimit')"
           :description="$t('common.memoryReflectBatchLimitDesc')"
@@ -470,7 +427,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveReflectBatchLimit"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Filter"
           :label="$t('common.memoryReflectMaxCandidates')"
           :description="$t('common.memoryReflectMaxCandidatesDesc')"
@@ -481,7 +438,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveReflectMaxCandidates"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Sparkles"
           :label="$t('common.memoryConvictionBatchLimit')"
           :description="$t('common.memoryConvictionBatchLimitDesc')"
@@ -492,7 +449,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveConvictionBatchLimit"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Layers"
           :label="$t('common.memoryConvictionMaxPerCluster')"
           :description="$t('common.memoryConvictionMaxPerClusterDesc')"
@@ -503,7 +460,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveConvictionMaxPerCluster"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="GitBranch"
           :label="$t('common.memoryClusterMinMembers')"
           :description="$t('common.memoryClusterMinMembersDesc')"
@@ -514,21 +471,21 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveClusterMinMembers"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Workflow"
           :label="$t('common.memoryRaptorEnabled')"
           :description="$t('common.memoryRaptorEnabledDesc')"
           :checked="raptorEnabled"
           @toggle="saveRaptorEnabled(!raptorEnabled)"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Flame"
           :label="$t('common.memoryHeatTrackingEnabled')"
           :description="$t('common.memoryHeatTrackingEnabledDesc')"
           :checked="heatTrackingEnabled"
           @toggle="saveHeatTrackingEnabled(!heatTrackingEnabled)"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Layers"
           :label="$t('common.memoryRaptorMaxDepth')"
           :description="$t('common.memoryRaptorMaxDepthDesc')"
@@ -551,52 +508,40 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
         :title="$t('common.memoryResearchSection')"
       />
       <FieldGrid :items-per-row="2">
-        <FieldCard
+        <NumberFieldCard
           :icon="BrainCircuit"
           :label="$t('common.memoryResearchEnabled')"
           :description="$t('common.memoryResearchEnabledDesc')"
           :checked="researchEnabled"
           @toggle="saveResearchEnabled(!researchEnabled)"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Globe"
           :label="$t('common.memoryResearchSearchEnabled')"
           :description="$t('common.memoryResearchSearchEnabledDesc')"
           :checked="researchSearchEnabled"
           @toggle="saveResearchSearchEnabled(!researchSearchEnabled)"
         />
-        <FieldCard
+        <SelectFieldCard
           :icon="Compass"
           :label="$t('common.memoryResearchProvider')"
           :description="$t('common.memoryResearchProviderDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <InputSelect
-              :model-value="researchProvider ?? 'serper'"
-              :options="RESEARCH_PROVIDER_OPTIONS"
-              @update:model-value="saveResearchProvider"
-            />
-          </template>
-        </FieldCard>
-        <FieldCard
+          :model-value="researchProvider ?? 'serper'"
+          :options="RESEARCH_PROVIDER_OPTIONS"
+          @update:model-value="saveResearchProvider"
+        />
+        <ModelFieldCard
           :icon="Cpu"
           :label="$t('common.memoryResearchModel')"
           :description="$t('common.memoryResearchModelDesc')"
-          :show-checkbox="false"
-        >
-          <template #field>
-            <ModelSelectField
-              :model-value="researchModel"
-              :local-models="localModels"
-              :cloud-models="cloudModels"
-              :loading="modelsLoading"
-              :default-label="$t('common.memoryModelDefault')"
-              @update:model-value="saveResearchModel"
-            />
-          </template>
-        </FieldCard>
-        <FieldCard
+          :model-value="researchModel"
+          :local-models="localModels"
+          :cloud-models="cloudModels"
+          :loading="modelsLoading"
+          :default-label="$t('common.memoryModelDefault')"
+          @update:model-value="saveResearchModel"
+        />
+        <NumberFieldCard
           :icon="ListChecks"
           :label="$t('common.memoryResearchGapLimit')"
           :description="$t('common.memoryResearchGapLimitDesc')"
@@ -607,7 +552,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveResearchGapLimit"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Layers"
           :label="$t('common.memoryResearchMaxDepth')"
           :description="$t('common.memoryResearchMaxDepthDesc')"
@@ -618,7 +563,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveResearchMaxDepth"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="FileDown"
           :label="$t('common.memoryResearchFetchBudget')"
           :description="$t('common.memoryResearchFetchBudgetDesc')"
@@ -629,7 +574,7 @@ const RESEARCH_PROVIDER_OPTIONS = ['serper', 'bright-data'];
           :show-checkbox="false"
           @update:number-value="saveResearchFetchBudget"
         />
-        <FieldCard
+        <NumberFieldCard
           :icon="Scale"
           :label="$t('common.memoryResearchFrictionLimit')"
           :description="$t('common.memoryResearchFrictionLimitDesc')"

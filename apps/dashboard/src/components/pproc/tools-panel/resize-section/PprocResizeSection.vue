@@ -6,23 +6,30 @@ import {
   MoveVertical,
 } from '@lucide/vue';
 
-import MaxHeightField from '@/components/pproc/shared/ui/max-height-field/MaxHeightField.vue';
-import MaxWidthField from '@/components/pproc/shared/ui/max-width-field/MaxWidthField.vue';
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import { usePreprocessingStore } from '@/stores/preprocessing';
+import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
+import {
+  PREPROCESSING_SIZES,
+  usePreprocessingStore,
+} from '@/stores/preprocessing';
 import type { PreprocessingSize } from '@/types/preprocessing.model';
 
 const store = usePreprocessingStore();
 
-const PREPROCESSING_WIDTHS: readonly PreprocessingSize[] = [
-  256, 384, 512, 640, 768, 1024,
-];
+/* Both dropdowns derive from the store's PREPROCESSING_SIZES — the single
+   source for supported sizes; height adds AUTO (no cap) on top. */
+const WIDTH_OPTIONS = PREPROCESSING_SIZES.map(String);
+const HEIGHT_OPTIONS = ['AUTO', ...PREPROCESSING_SIZES.map(String)];
 
-function updateMaxWidth(value: PreprocessingSize) {
-  if (PREPROCESSING_WIDTHS.includes(value)) {
-    store.setMaxWidth(value);
-  }
+/** The width select emits only listed sizes — parse and set. */
+function updateMaxWidth(value: string) {
+  store.setMaxWidth(parseInt(value, 10) as PreprocessingSize);
+}
+
+/** The height select emits AUTO (no cap) or a listed size. */
+function updateMaxHeight(value: string) {
+  store.setMaxHeight(value === 'AUTO' ? null : parseInt(value, 10));
 }
 </script>
 
@@ -33,39 +40,28 @@ function updateMaxWidth(value: PreprocessingSize) {
       :title="$t('common.resizeSettings')"
     />
     <div class="pproc-resize-section__grid">
-      <FieldCard
+      <SelectFieldCard
         :icon="MoveHorizontal"
         :label="$t('common.maxWidth')"
         description="in pixels"
+        :model-value="String(store.resize.maxWidth)"
+        :options="WIDTH_OPTIONS"
         :disabled="!store.enabled"
-        tone="preprocessing"
-      >
-        <template #field>
-          <MaxWidthField
-            :model-value="store.resize.maxWidth"
-            :disabled="!store.enabled"
-            @update:model-value="updateMaxWidth"
-          />
-        </template>
-      </FieldCard>
+        @update:model-value="updateMaxWidth"
+      />
 
-      <FieldCard
+      <SelectFieldCard
         :icon="MoveVertical"
         :label="$t('common.maxHeight')"
         description="in pixels"
+        :model-value="store.resize.maxHeight?.toString() ?? 'AUTO'"
+        :options="HEIGHT_OPTIONS"
+        placeholder="AUTO"
         :disabled="!store.enabled"
-        tone="preprocessing"
-      >
-        <template #field>
-          <MaxHeightField
-            :model-value="store.resize.maxHeight"
-            :disabled="!store.enabled"
-            @update:model-value="store.setMaxHeight"
-          />
-        </template>
-      </FieldCard>
+        @update:model-value="updateMaxHeight"
+      />
 
-      <FieldCard
+      <NumberFieldCard
         :icon="Maximize2"
         :label="$t('common.preventUpscaling')"
         description="skip smaller images"

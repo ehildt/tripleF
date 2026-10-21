@@ -8,7 +8,7 @@ import type {
 
 /**
  * Read-only provider account/usage metadata, rendered in the same visual
- * language as FieldCard (icon tile + mono label + value). Used in the
+ * language as the field cards (icon tile + mono label + value). Used in the
  * settings integrations drawer metadata column. `statuses` renders an optional
  * available/not-in-plan list (e.g. EODHD endpoints). Rows and statuses
  * render independently, so the panel can be split across the provider's
@@ -21,7 +21,6 @@ withDefaults(
   }>(),
   {
     rows: () => [],
-    statuses: undefined,
   },
 );
 </script>

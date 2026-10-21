@@ -1,99 +1,19 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
-
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
-import { i18n } from '@/i18n/i18n';
 
-import { useDeleteDlqMutation } from '../../api/queries/use-delete-dlq-mutation';
-import { useDlqQuery } from '../../api/queries/use-dlq-query';
-import { useRetryDlqMutation } from '../../api/queries/use-retry-dlq-mutation';
-import { useUpdateDlqMutation } from '../../api/queries/use-update-dlq-mutation';
-import { useToast } from '../../composables/use-toast';
 import { useDlqStore } from '../../stores/dlq';
 import { useModelsStore } from '../../stores/models';
-import { useSocketStore } from '../../stores/socket';
-import { useDlqActions } from './composables/use-dlq-actions';
-import { useDlqLoading } from './composables/use-dlq-loading';
-import DlqDetailsBody from './details-body/DlqDetailsBody.vue';
-import DlqListBody from './list-body/DlqListBody.vue';
-import DlqListHeader from './list-header/DlqListHeader.vue';
+import { useDlqEntries } from './composables/use-dlq-entries';
+import DlqDetailsBody from './dlq-details-body/DlqDetailsBody.vue';
+import DlqListBody from './dlq-list-body/DlqListBody.vue';
+import DlqListHeader from './dlq-list-header/DlqListHeader.vue';
 
 const dlqStore = useDlqStore();
 const modelsStore = useModelsStore();
-const toast = useToast();
-const socketStore = useSocketStore();
 
-// Opening the DLQ tab clears the activity dot — the list loads on open as
-// before, so the user has now "seen" the latest state.
-onMounted(() => dlqStore.clearDlqActivity());
-
-const {
-  data: dlqData,
-  error,
-  isError,
-  refetch,
-} = useDlqQuery(() => dlqStore.getQueryParams());
-
-const retryMutation = useRetryDlqMutation();
-const deleteMutation = useDeleteDlqMutation();
-const updateMutation = useUpdateDlqMutation();
-
-const { showLoading, guardedRefetch, instantRefetch, onDataArrived, onError } =
-  useDlqLoading({
-    refetch,
-  });
-
-async function handleRefresh() {
-  await guardedRefetch();
-}
-
-const { onSelect, onRetry, onArchive, onDelete, onSavePayload } = useDlqActions(
-  {
-    dlqStore,
-    socketStore: {
-      ensureSocketConnection: socketStore.ensureSocketConnection,
-      joinRoom: socketStore.joinRoom,
-      listenToEvent: socketStore.listenToEvent,
-      connectedEvents: socketStore.connectedEvents,
-      connectedRooms: socketStore.connectedRooms,
-    },
-    retryMutation,
-    deleteMutation,
-    updateMutation,
-    guardedRefetch,
-  },
-);
-
-watch(dlqData, (val) => {
-  if (val) {
-    dlqStore.setEntries(val);
-    onDataArrived();
-  }
-});
-
-watch(isError, (val) => {
-  if (val) {
-    onError();
-    if (error.value?.message) toast.debug(error.value.message);
-    dlqStore.error =
-      error.value?.message ?? i18n.global.t('common.failedLoadDlqEntries');
-    toast.error(i18n.global.t('common.failedLoadDlqEntries'));
-  } else {
-    dlqStore.error = null;
-  }
-});
-
-watch(
-  [
-    () => dlqStore.filterStatus,
-    () => dlqStore.filterSearch,
-    () => dlqStore.offset,
-    () => dlqStore.limit,
-  ],
-  () => {
-    instantRefetch();
-  },
-);
+// Entries lifecycle (query, loading spinner, store sync, refetch watchers)
+// and the row/detail actions composed onto it — see use-dlq-entries.
+const { showLoading, guardedRefetch, actions } = useDlqEntries();
 </script>
 
 <template>
@@ -109,7 +29,7 @@ watch(
         :total-pages="dlqStore.totalPages"
         :limit="dlqStore.limit"
         :offset="dlqStore.offset"
-        @reload="handleRefresh"
+        @reload="guardedRefetch"
         @update:filter-status="(value) => (dlqStore.filterStatus = value)"
         @update:filter-search="(value) => (dlqStore.filterSearch = value)"
         @update:hide-read="(value) => (dlqStore.hideRead = value)"
@@ -127,10 +47,10 @@ watch(
         :hide-read="dlqStore.hideRead"
         :is-entry-read="(entry) => dlqStore.isEntryRead(entry)"
         :entry-read-key="(entry) => dlqStore.entryReadKey(entry)"
-        @select="onSelect"
-        @retry="onRetry"
-        @archive="onArchive"
-        @delete="onDelete"
+        @select="actions.onSelect"
+        @retry="actions.onRetry"
+        @archive="actions.onArchive"
+        @delete="actions.onDelete"
       />
     </PanelLayout>
   </div>
@@ -140,7 +60,7 @@ watch(
       class="dlq-column__panel"
       :entry="dlqStore.selectedEntry"
       :models="modelsStore.modelNames"
-      @save-payload="onSavePayload"
+      @save-payload="actions.onSavePayload"
     />
   </div>
 </template>

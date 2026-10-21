@@ -24,8 +24,6 @@ const props = withDefaults(defineProps<MemoryConstellationProps>(), {
   toggleAllSignal: 0,
   frictions: () => [],
   clusters: () => [],
-  mainNodes: undefined,
-  labelMeta: undefined,
 });
 const emit = defineEmits<MemoryConstellationEmits>();
 

@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import { Image, Images, ScanLine, Sparkles, Zap } from '@lucide/vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import {
   usePreprocessingStore,
   VARIANT_DESCRIPTIONS,
 } from '@/stores/preprocessing';
 
-const store = usePreprocessingStore();
+type VariantKey = keyof typeof store.variants;
 
-const variantConfig: Record<
+type VariantConfig = Record<
   string,
   { icon: typeof Image; label: string; description: string }
-> = {
+>;
+
+const store = usePreprocessingStore();
+
+const variantConfig: VariantConfig = {
   original: {
     icon: Image,
     label: 'Original',
@@ -41,7 +45,7 @@ const variantConfig: Record<
   },
 };
 
-function toggleVariant(key: keyof typeof store.variants) {
+function toggleVariant(key: VariantKey) {
   if (!store.enabled) return;
   store.setVariant(key, !store.variants[key]);
 }
@@ -51,20 +55,18 @@ function toggleVariant(key: keyof typeof store.variants) {
   <div class="pproc-variants-section">
     <SectionHeader :icon="Images" :title="$t('common.imageVariants')" />
     <div class="pproc-variants-section__grid">
-      <FieldCard
+      <NumberFieldCard
         v-for="(config, key) in variantConfig"
         :key="key"
         :icon="config.icon"
         :label="config.label"
         :description="config.description"
-        :checked="store.variants[key as keyof typeof store.variants]"
+        :checked="store.variants[key as VariantKey]"
         :disabled="!store.enabled"
         :highlighted="store.isVariantHighlighted(key)"
         tone="preprocessing"
-        @toggle="toggleVariant(key as keyof typeof store.variants)"
-        @mouseenter="
-          store.setHoveredVariant(key as keyof typeof store.variants)
-        "
+        @toggle="toggleVariant(key as VariantKey)"
+        @mouseenter="store.setHoveredVariant(key as VariantKey)"
         @mouseleave="store.setHoveredVariant(null)"
       />
     </div>

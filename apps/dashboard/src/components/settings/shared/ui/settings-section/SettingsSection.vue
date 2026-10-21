@@ -11,7 +11,6 @@ import { useI18n } from 'vue-i18n';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 const props = withDefaults(
-  /* eslint-disable vue/require-default-prop -- fallbacks resolved reactively below so they track locale changes */
   defineProps<{
     loading?: boolean;
     error?: boolean;
@@ -20,7 +19,6 @@ const props = withDefaults(
     /** Shown (instead of the section content) when `error` is true. */
     errorMessage?: string;
   }>(),
-  /* eslint-enable vue/require-default-prop */
   {},
 );
 

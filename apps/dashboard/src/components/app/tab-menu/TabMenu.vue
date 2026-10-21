@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ChevronsDown, ChevronsUp } from '@lucide/vue';
 import { computed, useTemplateRef, watch } from 'vue';
-import { defineProps } from 'vue';
 import { useRoute } from 'vue-router';
 
 import type { TooltipPosition } from '@/components/shared/ui/tooltip/Tooltip.types';

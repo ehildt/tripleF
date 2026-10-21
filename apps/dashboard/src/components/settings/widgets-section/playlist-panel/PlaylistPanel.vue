@@ -6,8 +6,8 @@
  * position, whether it closes itself after a pick or an outside click —
  * and a reset back to the defaults.
  *
- * Mirrors the video popout panel: initial position is a FieldCard row with
- * two icon-only segmented toggles: vertical (top/middle/bottom) ×
+ * Mirrors the video popout panel: initial position is a SegmentedFieldCard
+ * with two icon-only segmented toggles: vertical (top/middle/bottom) ×
  * horizontal (left/center/right).
  */
 import {
@@ -23,12 +23,14 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
+import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
+import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 import { usePlaylistStore } from '@/stores/playlist';
 import type { PlaylistAnchor } from '@/stores/playlist.types';
@@ -86,6 +88,23 @@ function setHorizontal(value: string) {
   );
 }
 
+const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
+  {
+    key: 'vertical',
+    ariaLabel: i18n.global.t('common.verticalPosition'),
+    options: VERTICAL_OPTIONS.value,
+    value: vertical.value,
+    onSelect: setVertical,
+  },
+  {
+    key: 'horizontal',
+    ariaLabel: i18n.global.t('common.horizontalPosition'),
+    options: HORIZONTAL_OPTIONS.value,
+    value: horizontal.value,
+    onSelect: setHorizontal,
+  },
+]);
+
 /** Toggle the floating-player preview; showing it hides the popout preview. */
 function handlePreviewToggle() {
   popoutSettingsStore.hidePopoutPreview();
@@ -95,7 +114,7 @@ function handlePreviewToggle() {
 
 <template>
   <div class="playlist-panel">
-    <div class="playlist-panel__actions">
+    <PanelActions>
       <PreviewButton
         :active="playlistStore.playlistPreviewVisible"
         :title="
@@ -116,7 +135,7 @@ function handlePreviewToggle() {
           playlistStore.setPlaylistMode(floatingEnabled ? 'panel' : 'floating')
         "
       />
-    </div>
+    </PanelActions>
 
     <div class="playlist-panel__group">
       <SectionHeader
@@ -124,7 +143,7 @@ function handlePreviewToggle() {
         :title="$t('common.dockingSection')"
       />
       <div class="playlist-panel__grid">
-        <FieldCard
+        <NumberFieldCard
           :icon="LayoutPanelLeft"
           :label="$t('common.dockingMode')"
           :description="$t('common.dockingModeDesc')"
@@ -136,27 +155,13 @@ function handlePreviewToggle() {
           "
         />
 
-        <FieldCard
+        <SegmentedFieldCard
           :icon="ListVideo"
           :label="$t('common.initialPosition')"
           :description="$t('common.floatingPlayerPositionDesc')"
+          :toggles="POSITION_TOGGLES"
           :disabled="!floatingEnabled"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="VERTICAL_OPTIONS"
-              :model-value="vertical"
-              :aria-label="$t('common.verticalPosition')"
-              @update:model-value="setVertical"
-            />
-            <SegmentedToggle
-              :options="HORIZONTAL_OPTIONS"
-              :model-value="horizontal"
-              :aria-label="$t('common.horizontalPosition')"
-              @update:model-value="setHorizontal"
-            />
-          </template>
-        </FieldCard>
+        />
       </div>
     </div>
 
@@ -166,7 +171,7 @@ function handlePreviewToggle() {
         :title="$t('common.behaviorSection')"
       />
       <div class="playlist-panel__grid">
-        <FieldCard
+        <NumberFieldCard
           :icon="PanelRightClose"
           :label="$t('common.autoclose')"
           :description="$t('common.floatingPlayerAutocloseDesc')"
@@ -187,27 +192,6 @@ function handlePreviewToggle() {
   flex-direction: column;
   gap: var(--spacing-1);
   padding: var(--spacing-2);
-}
-
-.playlist-panel__actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-1);
-  min-height: calc(2.25rem + 2 * var(--spacing-2));
-  padding: 0 var(--spacing-3);
-  background:
-    radial-gradient(
-      ellipse 120% 140% at 12% 50%,
-      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 120% 140% at 88% 50%,
-      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
-      transparent 60%
-    ),
-    var(--color-bg-elevated);
 }
 
 .playlist-panel__group {

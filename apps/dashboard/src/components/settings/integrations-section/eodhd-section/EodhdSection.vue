@@ -3,9 +3,8 @@ import { KeyRound } from '@lucide/vue';
 
 import CapabilitiesPanel from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.vue';
 import ProviderSection from '@/components/settings/integrations-section/shared/ui/provider-section/ProviderSection.vue';
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
-import InputText from '@/components/shared/ui/input-text/InputText.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 
 import { useEodhdSection } from './composables/use-eodhd-section.composable';
 import type { EodhdSectionProps } from './EodhdSection.types';
@@ -51,23 +50,15 @@ const {
     </template>
 
     <template #apiKey>
-      <FieldCard
+      <TextFieldCard
+        v-model="draft"
         :icon="KeyRound"
         :label="$t('common.apiKey')"
         :description="$t('common.eodhdAccessKey')"
-      >
-        <template #field>
-          <InputText
-            v-model="draft"
-            variant="borderless"
-            name="eodhd-api-key"
-            autocomplete="off"
-            :spellcheck="false"
-            @focus="selectAllText"
-            @change="submit"
-          />
-        </template>
-      </FieldCard>
+        name="eodhd-api-key"
+        :on-commit="submit"
+        :on-focus="selectAllText"
+      />
     </template>
 
     <template #metadata>

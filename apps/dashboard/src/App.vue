@@ -9,7 +9,7 @@ import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPla
 import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPreview.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
-import { useDlqActivityEvents } from './composables/use-dlq-activity-events';
+import { useDlqLiveEvents } from './composables/use-dlq-live-events';
 import { usePlaybackSession } from './composables/use-playback-session';
 import { usePlaylistMarquee } from './composables/use-playlist-marquee';
 import { useAppStore } from './stores/app';
@@ -85,9 +85,10 @@ socketStore.setCallbacks(
 );
 
 // The DLQ badge is an event-driven attention dot: the server broadcasts
-// dlq:changed on every DLQ mutation, and the dot only shows while the user is
-// not already on the DLQ tab.
-useDlqActivityEvents();
+// dlq:entry-upserted / dlq:entries-removed / dlq:bulk-changed on every DLQ
+// mutation, and the dot only shows while the user is not already on the
+// DLQ tab.
+useDlqLiveEvents();
 const showDlqBadge = computed(
   () => dlqStore.hasDlqActivity && appStore.activeTab !== 'dlq',
 );

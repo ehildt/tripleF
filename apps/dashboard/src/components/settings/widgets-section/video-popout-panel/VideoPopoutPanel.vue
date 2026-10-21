@@ -7,7 +7,7 @@
  * the window and keeps playback running; the transport bar's Stop button
  * ends playback.
  *
- * Initial position is a FieldCard row with two icon-only segmented
+ * Initial position is a SegmentedFieldCard with two icon-only segmented
  * toggles: vertical (top/middle/bottom) × horizontal (left/center/right),
  * covering every position in one line.
  */
@@ -25,12 +25,13 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import FieldCard from '@/components/shared/ui/field-card/FieldCard.vue';
+import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
 import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import SegmentedToggle from '@/components/shared/ui/segmented-toggle/SegmentedToggle.vue';
+import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
+import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 import { usePlaylistStore } from '@/stores/playlist';
 import { usePopoutSettingsStore } from '@/stores/popout-settings';
@@ -83,6 +84,23 @@ function setHorizontal(value: string) {
   );
 }
 
+const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
+  {
+    key: 'vertical',
+    ariaLabel: i18n.global.t('common.verticalPosition'),
+    options: VERTICAL_OPTIONS.value,
+    value: vertical.value,
+    onSelect: setVertical,
+  },
+  {
+    key: 'horizontal',
+    ariaLabel: i18n.global.t('common.horizontalPosition'),
+    options: HORIZONTAL_OPTIONS.value,
+    value: horizontal.value,
+    onSelect: setHorizontal,
+  },
+]);
+
 /** Toggle the popout preview; showing it hides the floating-player preview. */
 function handlePreviewToggle() {
   playlistStore.hidePlaylistPreview();
@@ -124,29 +142,15 @@ function handlePreviewToggle() {
       />
       <div class="video-popout-panel__grid">
         <!-- Initial position + remember position side by side -->
-        <FieldCard
+        <SegmentedFieldCard
           :icon="PictureInPicture2"
           :label="$t('common.initialPosition')"
           :description="$t('common.popoutPositionDesc')"
+          :toggles="POSITION_TOGGLES"
           :disabled="!popoutSettingsStore.popoutEnabled"
-        >
-          <template #controls>
-            <SegmentedToggle
-              :options="VERTICAL_OPTIONS"
-              :model-value="vertical"
-              :aria-label="$t('common.verticalPosition')"
-              @update:model-value="setVertical"
-            />
-            <SegmentedToggle
-              :options="HORIZONTAL_OPTIONS"
-              :model-value="horizontal"
-              :aria-label="$t('common.horizontalPosition')"
-              @update:model-value="setHorizontal"
-            />
-          </template>
-        </FieldCard>
+        />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Pin"
           :label="$t('common.rememberPosition')"
           :description="$t('common.rememberPositionDesc')"
@@ -167,7 +171,7 @@ function handlePreviewToggle() {
         :title="$t('common.behaviorSection')"
       />
       <div class="video-popout-panel__grid">
-        <FieldCard
+        <NumberFieldCard
           :icon="ArrowDownToLine"
           :label="$t('common.autodock')"
           :description="$t('common.autodockDesc')"
@@ -180,7 +184,7 @@ function handlePreviewToggle() {
           "
         />
 
-        <FieldCard
+        <NumberFieldCard
           :icon="Menu"
           :label="$t('common.alwaysShowBar')"
           :description="$t('common.alwaysShowBarDesc')"

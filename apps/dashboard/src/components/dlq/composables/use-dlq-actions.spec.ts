@@ -1,239 +1,192 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { DlqEntry } from '@/types/dlq-entry.model';
+
+import { useDlqStore } from '../../../stores/dlq';
 import { useDlqActions } from './use-dlq-actions';
 
-function mockDlqStore() {
-  return {
-    entries: [] as any[],
-    selectedEntry: null as any,
-    error: null as any,
-    markEntryAsRead: vi.fn(),
-    selectEntry: vi.fn(),
-    updateEntry: vi.fn(),
-  } as any;
-}
+const mutationMocks = vi.hoisted(() => ({
+  retryMutateAsync: vi.fn(),
+  deleteMutateAsync: vi.fn(),
+  updateMutateAsync: vi.fn(),
+}));
 
-function mockSocketStore() {
-  return {
-    ensureSocketConnection: vi.fn(),
-    connectedEvents: new Set<string>(),
-    connectedRooms: new Map<string, Set<string>>(),
-    listenToEvent: vi.fn(),
-    joinRoom: vi.fn(),
-  } as any;
-}
+vi.mock('../../../api/queries/use-retry-dlq-mutation', () => ({
+  useRetryDlqMutation: () => ({ mutateAsync: mutationMocks.retryMutateAsync }),
+}));
+vi.mock('../../../api/queries/use-delete-dlq-mutation', () => ({
+  useDeleteDlqMutation: () => ({
+    mutateAsync: mutationMocks.deleteMutateAsync,
+  }),
+}));
+vi.mock('../../../api/queries/use-update-dlq-mutation', () => ({
+  useUpdateDlqMutation: () => ({
+    mutateAsync: mutationMocks.updateMutateAsync,
+  }),
+}));
 
-function mockMutation() {
-  return { mutateAsync: vi.fn().mockResolvedValue(undefined) } as any;
-}
+// The retry-session side effects (socket rooms, conversation seeding, debug
+// log) have their own spec — here they are mocked so the action tests stay
+// focused on the store/mutation/refetch contract.
+const sessionMocks = vi.hoisted(() => ({
+  ensureSocketSubscription: vi.fn(),
+  addRetryPendingMessage: vi.fn(),
+}));
 
-function makeGuardedRefetch() {
-  return vi.fn();
-}
+vi.mock('./use-dlq-retry-session', () => ({
+  useDlqRetrySession: () => sessionMocks,
+}));
 
-function makeCommonOptions(overrides: Record<string, any> = {}) {
-  return {
-    dlqStore: mockDlqStore(),
-    socketStore: mockSocketStore(),
-    retryMutation: mockMutation(),
-    deleteMutation: mockMutation(),
-    updateMutation: mockMutation(),
-    guardedRefetch: makeGuardedRefetch(),
+const makeEntry = (overrides: Partial<DlqEntry> = {}): DlqEntry =>
+  ({
+    id: 'rec-1',
+    queueName: 'harness',
+    jobName: 'req-1',
+    status: 'Failed',
+    payload: null,
+    failedReason: null,
+    failedAt: null,
+    attemptsMade: 0,
+    totalAttempts: 3,
+    nextRetryAt: null,
+    createdAt: '',
     ...overrides,
-  };
-}
+  }) as DlqEntry;
 
 describe('useDlqActions', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
-  it('onSelect toggles entry selection by record id', () => {
-    const store = mockDlqStore();
-    const actions = useDlqActions(makeCommonOptions({ dlqStore: store }));
-    const entry = { id: 'rec-1', jobName: 'abc' } as any;
-    store.selectedEntry = null;
-    actions.onSelect(entry);
-    expect(store.selectEntry).toHaveBeenCalledWith(entry);
+  it('onSelect toggles entry selection and marks newly selected entries read', () => {
+    const store = useDlqStore();
+    const actions = useDlqActions(vi.fn());
+    const entry = makeEntry();
 
-    store.selectEntry.mockReset();
-    store.selectedEntry = entry;
     actions.onSelect(entry);
-    expect(store.selectEntry).toHaveBeenCalledWith(null);
+    expect(store.selectedEntry).toEqual(entry);
+
+    actions.onSelect(entry);
+    expect(store.selectedEntry).toBeNull();
   });
 
-  it('onRetry calls mutation with the record id and refetches', async () => {
-    const store = mockDlqStore();
-    const guardedRefetch = makeGuardedRefetch();
-    const retryMutation = {
-      mutateAsync: vi.fn().mockResolvedValue({ restored: 1, ids: ['rec-1'] }),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({
-        dlqStore: store,
-        retryMutation,
-        guardedRefetch,
-      }),
-    );
+  it('onRetry calls the mutation with the record id and refetches', async () => {
+    useDlqStore();
+    mutationMocks.retryMutateAsync.mockResolvedValue({
+      restored: 1,
+      ids: ['rec-1'],
+    });
+    const guardedRefetch = vi.fn();
+    const actions = useDlqActions(guardedRefetch);
+
     await actions.onRetry('rec-1');
-    expect(retryMutation.mutateAsync).toHaveBeenCalledWith('rec-1');
+
+    expect(mutationMocks.retryMutateAsync).toHaveBeenCalledWith('rec-1');
     expect(guardedRefetch).toHaveBeenCalledOnce();
   });
 
-  it('onRetry clears error and shows error toast on failure', async () => {
-    const store = mockDlqStore();
+  it('onRetry does not refetch when the mutation fails', async () => {
+    const store = useDlqStore();
     store.error = 'prev error';
-    const retryMutation = {
-      mutateAsync: vi.fn().mockRejectedValue(new Error('fail')),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({ dlqStore: store, retryMutation }),
-    );
+    mutationMocks.retryMutateAsync.mockRejectedValue(new Error('fail'));
+    const guardedRefetch = vi.fn();
+    const actions = useDlqActions(guardedRefetch);
+
     await actions.onRetry('rec-1');
+
     expect(store.error).toBeNull();
+    expect(guardedRefetch).not.toHaveBeenCalled();
   });
 
-  it('onRetry seeds the retry session only for harness entries', async () => {
-    const socketStore = mockSocketStore();
-    const store = mockDlqStore();
-    // A vectorize entry: no roomId/event in payload — no socket joins.
+  it('onRetry seeds the retry session only for harness entries with a room', async () => {
+    const store = useDlqStore();
     store.entries = [
-      {
+      makeEntry({
         id: 'rec-v1',
-        jobName: 'vectorize',
         queueName: 'vectorize',
+        jobName: 'vectorize-1',
         payload: { requestId: 'req-9' },
-      },
+      }),
+      makeEntry({
+        id: 'rec-h1',
+        queueName: 'harness',
+        jobName: 'req-h1',
+        payload: { filters: { roomId: 'room1' } },
+      }),
     ];
-    const retryMutation = {
-      mutateAsync: vi.fn().mockResolvedValue({ restored: 1, ids: ['rec-v1'] }),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({ dlqStore: store, socketStore, retryMutation }),
-    );
+    mutationMocks.retryMutateAsync.mockResolvedValue({ restored: 1, ids: [] });
+    const actions = useDlqActions(vi.fn());
+
     await actions.onRetry('rec-v1');
-    expect(socketStore.joinRoom).not.toHaveBeenCalled();
+    expect(sessionMocks.ensureSocketSubscription).not.toHaveBeenCalled();
+    expect(sessionMocks.addRetryPendingMessage).not.toHaveBeenCalled();
+
+    await actions.onRetry('rec-h1');
+    expect(sessionMocks.ensureSocketSubscription).toHaveBeenCalledWith(
+      'room1',
+      'harness',
+    );
+    expect(sessionMocks.addRetryPendingMessage).toHaveBeenCalledOnce();
   });
 
-  it('onArchive prevents clearing Removed entries', async () => {
-    const store = mockDlqStore();
-    store.entries = [{ id: 'rec-2', status: 'Removed' }];
-    const updateMutation = mockMutation();
-    const actions = useDlqActions(
-      makeCommonOptions({ dlqStore: store, updateMutation }),
-    );
+  it('onArchive never clears Removed entries', async () => {
+    const store = useDlqStore();
+    store.entries = [makeEntry({ id: 'rec-2', status: 'Removed' })];
+    const actions = useDlqActions(vi.fn());
+
     await actions.onArchive('rec-2');
-    expect(updateMutation.mutateAsync).not.toHaveBeenCalled();
+
+    expect(mutationMocks.updateMutateAsync).not.toHaveBeenCalled();
   });
 
-  it('onArchive calls updateMutation and updateEntry', async () => {
-    const store = mockDlqStore();
-    store.entries = [{ id: 'rec-1', status: 'Failed' }];
-    const updatedEntry = { id: 'rec-1', status: 'Cleared' };
-    const updateMutation = {
-      mutateAsync: vi.fn().mockResolvedValue(updatedEntry),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({ dlqStore: store, updateMutation }),
-    );
+  it('onArchive clears the entry and stores the mutation result', async () => {
+    const store = useDlqStore();
+    store.entries = [makeEntry({ id: 'rec-1', status: 'Failed' })];
+    const updatedEntry = makeEntry({ id: 'rec-1', status: 'Cleared' });
+    mutationMocks.updateMutateAsync.mockResolvedValue(updatedEntry);
+    const actions = useDlqActions(vi.fn());
+
     await actions.onArchive('rec-1');
-    expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
+
+    expect(mutationMocks.updateMutateAsync).toHaveBeenCalledWith({
       id: 'rec-1',
       data: { status: 'Cleared' },
     });
-    expect(store.updateEntry).toHaveBeenCalledWith(updatedEntry);
+    expect(store.entries[0].status).toBe('Cleared');
   });
 
-  it('onDelete clears selection if deleted entry is selected', async () => {
-    const store = mockDlqStore();
-    store.selectedEntry = { id: 'rec-xyz' };
-    const deleteMutation = mockMutation();
-    const guardedRefetch = makeGuardedRefetch();
-    const actions = useDlqActions(
-      makeCommonOptions({
-        dlqStore: store,
-        deleteMutation,
-        guardedRefetch,
-      }),
-    );
+  it('onDelete clears the selection when the deleted entry was selected', async () => {
+    const store = useDlqStore();
+    store.selectedEntry = makeEntry({ id: 'rec-xyz' });
+    mutationMocks.deleteMutateAsync.mockResolvedValue(undefined);
+    const guardedRefetch = vi.fn();
+    const actions = useDlqActions(guardedRefetch);
+
     await actions.onDelete('rec-xyz');
-    expect(store.selectEntry).toHaveBeenCalledWith(null);
+
+    expect(store.selectedEntry).toBeNull();
     expect(guardedRefetch).toHaveBeenCalledOnce();
   });
 
-  it('onSavePayload calls updateEntry with mutation result', async () => {
-    const store = mockDlqStore();
-    const updatedEntry = {
+  it('onSavePayload stores the mutation result', async () => {
+    const store = useDlqStore();
+    const entry = makeEntry({ id: 'rec-1' });
+    store.entries = [entry];
+    const updatedEntry = makeEntry({
       id: 'rec-1',
       payload: { filters: { model: 'x' } },
-    };
-    const updateMutation = {
-      mutateAsync: vi.fn().mockResolvedValue(updatedEntry),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({ dlqStore: store, updateMutation }),
-    );
+    });
+    mutationMocks.updateMutateAsync.mockResolvedValue(updatedEntry);
+    const actions = useDlqActions(vi.fn());
+
     await actions.onSavePayload('rec-1', { filters: { model: 'x' } });
-    expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
+
+    expect(mutationMocks.updateMutateAsync).toHaveBeenCalledWith({
       id: 'rec-1',
       data: { payload: { filters: { model: 'x' } } },
     });
-    expect(store.updateEntry).toHaveBeenCalledWith(updatedEntry);
-  });
-
-  it('ensureSocketSubscription resubscribes when event and room missing', async () => {
-    const socketStore = mockSocketStore();
-    const store = mockDlqStore();
-    store.entries = [
-      {
-        id: 'rec-1',
-        jobName: 'abc',
-        queueName: 'harness',
-        payload: { filters: { roomId: 'room1' } },
-      },
-    ];
-    const retryMutation = {
-      mutateAsync: vi.fn().mockResolvedValue({ restored: 1, ids: ['rec-1'] }),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({
-        dlqStore: store,
-        socketStore,
-        retryMutation,
-      }),
-    );
-    await actions.onRetry('rec-1');
-    expect(socketStore.ensureSocketConnection).toHaveBeenCalledOnce();
-    expect(socketStore.listenToEvent).toHaveBeenCalledWith('harness');
-    expect(socketStore.joinRoom).toHaveBeenCalledWith('room1', 'harness');
-  });
-
-  it('ensureSocketSubscription skips when already subscribed', async () => {
-    const socketStore = mockSocketStore();
-    socketStore.connectedEvents.add('harness');
-    socketStore.connectedRooms.set('harness', new Set(['room1']));
-    const store = mockDlqStore();
-    store.entries = [
-      {
-        id: 'rec-1',
-        jobName: 'abc',
-        queueName: 'harness',
-        payload: { filters: { roomId: 'room1' } },
-      },
-    ];
-    const retryMutation = {
-      mutateAsync: vi.fn().mockResolvedValue({ restored: 1, ids: ['rec-1'] }),
-    } as any;
-    const actions = useDlqActions(
-      makeCommonOptions({
-        dlqStore: store,
-        socketStore,
-        retryMutation,
-      }),
-    );
-    await actions.onRetry('rec-1');
-    expect(socketStore.listenToEvent).not.toHaveBeenCalled();
-    expect(socketStore.joinRoom).not.toHaveBeenCalled();
+    expect(store.entries[0].payload).toEqual({ filters: { model: 'x' } });
   });
 });
