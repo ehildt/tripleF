@@ -2,27 +2,22 @@
 import { ChevronDown } from '@lucide/vue';
 import { computed } from 'vue';
 
-import { stripHtml } from '@/utils/strip-html.helper';
+import { stripHtml } from '@/utils/strip-html/strip-html.helper';
 
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
+import type {
+  ExpandableMessageListToggleEmits,
+  ExpandableMessageListToggleProps,
+} from '../ExpandableMessageList.types';
 
-const props = defineProps<{
-  expanded: boolean;
-  role: string;
-  content: string;
-  hasBody: boolean;
-  renderHtml?: (content: string) => string;
-}>();
+const props = defineProps<ExpandableMessageListToggleProps>();
 
 /** Plain-text preview of the content (HTML stripped) for the static preview. */
 const previewText = computed(() =>
   stripHtml(props.renderHtml ? props.renderHtml(props.content) : props.content),
 );
 
-defineEmits<{
-  toggle: [];
-  select: [];
-}>();
+defineEmits<ExpandableMessageListToggleEmits>();
 </script>
 
 <template>

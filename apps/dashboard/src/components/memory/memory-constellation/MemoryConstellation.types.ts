@@ -57,8 +57,13 @@ export interface ConstellationNode {
    *  `survival-games`) — topics sharing one key form a community hub between
    *  the topic and cluster tiers. */
   communityKey?: string;
+  /** The singular aspect the record addresses under its hub — the NODE tier
+   *  key; members sharing one label within a blob group under an aspect dot. */
+  node?: string;
   /** Synthetic community hub dot (click to toggle its member topics). */
   isCommunity?: boolean;
+  /** Synthetic node-tier dot (an aspect dot inside a hub blob). */
+  isNodeTier?: boolean;
   /** Curated Lucide icon name, attached post-layout from the taxonomy
    *  registry (`labelMeta`) — the hub dot renders the icon instead of a
    *  plain fill. */

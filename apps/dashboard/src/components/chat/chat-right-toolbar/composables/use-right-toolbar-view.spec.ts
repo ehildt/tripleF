@@ -18,7 +18,7 @@ const state = vi.hoisted(() => ({
   setDockedPlaylistPanelVisible: ReturnType<typeof vi.fn>;
 };
 
-vi.mock('@/composables/use-playback-session', () => ({
+vi.mock('@/composables/use-playback-session/use-playback-session', () => ({
   usePlaybackSession: () => ({
     setDockedPlaylistPanelVisible: state.setDockedPlaylistPanelVisible,
   }),

@@ -1,4 +1,4 @@
-import type { KeyFinding } from '@/types/harness-response-data.model';
+import type { KeyFinding } from '@/types/assistant-response-data.model';
 
 /** Keeps key findings that carry a non-empty text. */
 export function filterValidKeyFindings(items?: KeyFinding[]): KeyFinding[] {

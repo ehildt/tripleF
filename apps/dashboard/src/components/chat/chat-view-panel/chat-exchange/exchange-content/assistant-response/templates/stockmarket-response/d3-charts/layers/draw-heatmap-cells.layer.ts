@@ -1,4 +1,4 @@
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import type { HeatmapDayCells } from '../helpers/build-heatmap-cells.helper.types';
 import { clampCenteredBarEdges } from '../helpers/clamp-centered-bar-edges.helper';
 import { computeBarSpacing } from '../helpers/compute-bar-spacing.helper';

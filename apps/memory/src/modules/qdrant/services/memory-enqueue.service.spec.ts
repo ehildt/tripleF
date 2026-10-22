@@ -19,79 +19,7 @@ function makeService(enabled: boolean) {
   };
 }
 
-describe('MemoryEnqueueService.enqueueTurn', () => {
-  it('does nothing when the feature is disabled', async () => {
-    const { service, addBulk } = makeService(false);
-    await service.enqueueTurn({
-      sessionId: 'sess-1',
-      model: 'qwen3.8:27b',
-      userText: 'hello',
-      assistantText: 'hi there',
-    });
-    expect(addBulk).not.toHaveBeenCalled();
-  });
-
-  it('skips turns without a session id (no tenancy home)', async () => {
-    const { service, addBulk } = makeService(true);
-    await service.enqueueTurn({
-      sessionId: undefined,
-      model: 'qwen3.8:27b',
-      userText: 'hello',
-      assistantText: 'hi there',
-    });
-    expect(addBulk).not.toHaveBeenCalled();
-  });
-
-  it('enqueues one job per non-empty turn side', async () => {
-    const { service, addBulk } = makeService(true);
-    await service.enqueueTurn({
-      sessionId: 'sess-1',
-      conversationId: 'conv-1',
-      model: 'qwen3.8:27b',
-      userText: 'what is qdrant?',
-      assistantText: 'a vector store.',
-    });
-    expect(addBulk).toHaveBeenCalledTimes(1);
-    const jobs = addBulk.mock.calls[0][0] as Array<{ data: { role: string } }>;
-    expect(jobs.map((job) => job.data.role)).toEqual(['user', 'assistant']);
-  });
-
-  it('skips empty sides', async () => {
-    const { service, addBulk } = makeService(true);
-    await service.enqueueTurn({
-      sessionId: 'sess-1',
-      model: 'qwen3.8:27b',
-      userText: '   ',
-      assistantText: 'ok',
-    });
-    const jobs = addBulk.mock.calls[0][0] as Array<{ data: { role: string } }>;
-    expect(jobs.map((job) => job.data.role)).toEqual(['assistant']);
-  });
-
-  it('swallows enqueue errors (memory must never break the harness)', async () => {
-    const { service, addBulk } = makeService(true);
-    addBulk.mockRejectedValue(new Error('redis down'));
-    await expect(
-      service.enqueueTurn({
-        sessionId: 'sess-1',
-        model: 'qwen3.8:27b',
-        userText: 'hello',
-      }),
-    ).resolves.toBeUndefined();
-  });
-});
-
 describe('MemoryEnqueueService job enqueues', () => {
-  it('enqueues a write job with the job name', async () => {
-    const { service, add } = makeService(true);
-    await service.enqueueWriteJob({
-      memoryCognition: 'cog-1',
-      requestId: 'req-1',
-      model: 'm',
-    } as never);
-    expect(add).toHaveBeenCalledWith('memory-write', expect.any(Object));
-  });
-
   it('enqueues a profile job', async () => {
     const { service, add } = makeService(true);
     await service.enqueueProfileJob({
@@ -234,7 +162,7 @@ describe('MemoryEnqueueService job enqueues', () => {
 
   it('does nothing for every enqueue when the feature is disabled', async () => {
     const { service, add } = makeService(false);
-    await service.enqueueWriteJob({ requestId: 'r', model: 'm' } as never);
+    await service.enqueueProfileJob({ requestId: 'r', model: 'm' } as never);
     await service.enqueueConsolidateJob({
       memoryPartition: 's',
       model: 'm',
@@ -251,7 +179,7 @@ describe('MemoryEnqueueService job enqueues', () => {
     const { service, add } = makeService(true);
     add.mockRejectedValue(new Error('redis down'));
     await expect(
-      service.enqueueWriteJob({ requestId: 'r', model: 'm' } as never),
+      service.enqueueProfileJob({ requestId: 'r', model: 'm' } as never),
     ).resolves.toBeUndefined();
     await expect(
       service.enqueueConsolidateJob({

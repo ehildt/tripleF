@@ -2,8 +2,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
-import { useModelsStore } from '@/stores/models';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
 import { useContextSize } from './use-context-size';

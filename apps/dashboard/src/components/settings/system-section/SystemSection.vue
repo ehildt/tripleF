@@ -5,25 +5,23 @@
  * provider). Memory configuration and the memory-layer constellations live
  * on the separate Memory tab.
  */
-import { Activity, KeyRound, Server } from '@lucide/vue';
+import { Activity, KeyRound, RotateCcw, Server } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
-import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import { useOllamaConnection } from './composables/use-ollama-connection';
+import type { SystemSectionProps } from './SystemSection.types';
 
-defineProps<{
-  tiles: HealthTileViewModel[];
-}>();
+defineProps<SystemSectionProps>();
 
 const {
   isLoading,
@@ -50,12 +48,13 @@ const { toggleWarmModelOnSelect } = useAppStore();
     <div class="system-section">
       <SectionHeader :icon="Server" :title="$t('common.ollama')" />
 
-      <PanelActions>
-        <ResetButton
-          :title="$t('common.resetOllamaToDefaults')"
+      <MenuRow variant="panel" role="toolbar">
+        <MenuButton
+          :icon="RotateCcw"
+          :label="$t('common.resetOllamaToDefaults')"
           @click="resetProvider('ollama')"
         />
-      </PanelActions>
+      </MenuRow>
 
       <FieldGrid :items-per-row="2">
         <!-- API key field: displays the masked key (****************),
@@ -97,5 +96,11 @@ const { toggleWarmModelOnSelect } = useAppStore();
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+}
+
+/* The first block opens the tab: no sub tab menu here, so the larger
+   below-chrome air that usually sits under a menu line goes above it. */
+.system-section:first-child {
+  padding-top: var(--spacing-3);
 }
 </style>

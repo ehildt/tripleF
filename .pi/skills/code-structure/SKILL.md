@@ -49,6 +49,12 @@ Parameters and return types are always declared explicitly. No ambiguous types �
 
 Hand-written exported types live in a co-located `.types.ts` file named after the source file they describe, with a JSDoc comment on every field explaining what it carries and why. The `.types.ts` is the single source of truth for that shape; consumers import the type from it rather than re-declaring a subset.
 
+A types file is owned by exactly one producer file — the service, helper, or class whose public boundary the shapes describe — and sits beside it under the producer's name. There are no area-level orphan types files: a folder whose types file matches no producer in it is a drawer, and its shapes belong to the producers that use them. When one shape is consumed by several producers in the same area, it still has exactly one home: the producer owning the underlying concept (a wire receipt lives with the service that owns the endpoint family); the other producers import it. A same-area import is the consumer relation, not a reason to float the shape into a shared file.
+
+Shapes mirroring an external system — another app's DTOs, a wire protocol — name the artifact they mirror and where it lives, so drift is traceable. Mirror only the fields this consumer sends or reads, and say so when the mirror is partial. Types already declared in a shared package are imported, never re-mirrored.
+
+Export only what is imported elsewhere. Records referenced only inside their own declaration file — nested members of an exported composite — stay un-exported: an exported shape no file imports is dead surface, and the dead-export lint gate flags it.
+
 Types local to one function live in that function's file. A helper's parameter and return shapes are declared as named types above the function — never as anonymous object types written inline in the signature. An inline object type has no name, cannot carry a comment, and cannot be reused or tested against; naming it costs one line and keeps the signature readable before the body. When a shape is exported for other files, the `.types.ts` rule above applies instead.
 
 Two sanctioned exceptions to "types in their own file":
@@ -84,6 +90,8 @@ At component level the rule reads the same: re-declaring another component's pro
 
 The same discipline applies to audits and recommendations: options are judged by the design they serve, not by the number of files they touch — a zero-edit option carries the same burden of proof as a change. A local constant restating a shared constant value-for-value, or a validation guard that no call path can reach once the inputs are constrained, is the leftover of a half-done simplification: finish the consolidation (collapse the duplicate into the single source, delete the dead guard) instead of defending it as safety.
 
+An abstract base class that owns real mechanics — lifecycle bookkeeping, guard logic, failure semantics — is behavior, not a wrapper: the ban targets rename-and-delegate indirection, not behavior-owning ancestors.
+
 ## 9. CSS classes are not an API
 
 Styling hooks belong to the component that renders them. Never derive behavior from another unit's DOM — counting children by class name, sniffing structure, or branching on what a selector finds turns a cosmetic name into a hidden cross-component contract that breaks silently the next time the class is renamed. If a consumer needs to know something about what was rendered (how many, which kind), that information flows the sanctioned way — props in, events out, or an explicitly passed count — never through DOM inspection of slotted or child content.
@@ -116,6 +124,10 @@ The semantics — consent gate, regression net, contract-not-infallible, report-
 - Role suffixes spelled consistently across each folder
 - Parameters and returns explicitly typed; named types in the function file — no inline anonymous object types in signatures
 - Hand-written exported types in a co-located `.types.ts`; schema-derived types stay with their schema
+- Every `.types.ts` is owned by a same-named producer file beside it — no area-level orphan types files
+- Multi-consumer shapes live with the producer owning the underlying concept; sibling files import them
+- Wire-mirror types name the artifact they mirror; partial mirrors say so
+- No exported type that only its own declaration file references
 - Files co-located with their consumer unless shared across unrelated areas
 - No new barrel files; published package entry points are the only exception
 - No wrapper functions

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
+import { useResponseMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-priority';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
@@ -11,7 +11,7 @@ import InternationalCoverageSection from '../../sections/international-coverage-
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import { useEvaluationResponseData } from '../evaluation-response/composables/use-evaluation-response-data.composable';
+import { useEvaluationResponseData } from '../evaluation-response/composables/use-evaluation-response-data';
 import EvaluationComparisonSection from '../evaluation-response/sections/evaluation-comparison-section/EvaluationComparisonSection.vue';
 import EvaluationListSection from '../evaluation-response/sections/evaluation-list-section/EvaluationListSection.vue';
 import EvaluationSubjectProfile from '../evaluation-response/sections/evaluation-subject-profile/EvaluationSubjectProfile.vue';
@@ -23,7 +23,7 @@ const props = defineProps<MergeResponseProps>();
 
 const { subjectProfiles, comparisonView, isMultiSubject } =
   useEvaluationResponseData(props);
-const { videosFirst } = useHarnessMediaPriority(props.data);
+const { videosFirst } = useResponseMediaPriority(props.data);
 </script>
 
 <template>

@@ -6,7 +6,7 @@ import type {
 } from './helpers/provider-overrides.types';
 import { useSearchEngineAvailability } from './use-search-engine-availability';
 
-vi.mock('../../../composables/use-toast', () => ({
+vi.mock('../../../composables/use-toast/use-toast', () => ({
   useToast: vi.fn(() => ({ error: vi.fn(), success: vi.fn() })),
 }));
 

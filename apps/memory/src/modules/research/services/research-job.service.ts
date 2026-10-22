@@ -17,10 +17,8 @@ import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 import { EncyclopediaStoreService } from '../../encyclopedia/services/encyclopedia-store.service.js';
 import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
-import {
-  type MemoryFrictionRecord,
-  MemoryFrictionRepository,
-} from '../../persistence/services/memory-friction.repository.js';
+import { MemoryFrictionRepository } from '../../persistence/services/memory-friction.repository.js';
+import type { MemoryFrictionRecord } from '../../persistence/services/memory-friction.repository.types.js';
 import type { EncyclopediaResearchJobData } from '../../qdrant/models/memory.model.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
 import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
@@ -29,10 +27,8 @@ import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.s
 import { RESEARCH_CONFIG } from '../constants/research.constants.js';
 import type { ResearchConfig } from '../models/research-config.model.js';
 
-import {
-  ResearchProviderService,
-  type ResearchSearchResult,
-} from './research-provider.service.js';
+import { ResearchProviderService } from './research-provider.service.js';
+import type { ResearchSearchResult } from './research-provider.service.types.js';
 
 /** One gap candidate: a search result seen but never fetched. */
 interface GapCandidate {

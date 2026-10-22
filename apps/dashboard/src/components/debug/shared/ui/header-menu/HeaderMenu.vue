@@ -12,11 +12,11 @@ import { ref } from 'vue';
 import FilterMenu from '@/components/shared/ui/filter-menu/FilterMenu.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 
-import { useDebugStore } from '../../../../../stores/debug';
+import { useDebugStore } from '../../../../../stores/debug/debug.store';
 import {
   type HeaderMenuEmits,
   useHeaderMenu,
-} from './composables/use-header-menu.composable';
+} from './composables/use-header-menu';
 import type { HeaderMenuProps } from './HeaderMenu.types';
 
 const props = defineProps<HeaderMenuProps>();

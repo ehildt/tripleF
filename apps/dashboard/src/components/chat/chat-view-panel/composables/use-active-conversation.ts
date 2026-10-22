@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
-import type { Exchange } from '@/stores/conversation';
-import { useConversationStore } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import type {
   ActiveSession,

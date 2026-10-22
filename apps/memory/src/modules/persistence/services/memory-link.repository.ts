@@ -12,37 +12,12 @@ import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js'
 import type { MemoryLane } from '../constants/memory-lane.constant.js';
 
 import { mapLinkRowToEdge } from './helpers/map-link-row-to-edge.helper.js';
-
-/** The three constellation lanes — one per memory layer (MemoryLane alias). */
-export type MemoryLinkLane = MemoryLane;
-
-/** Edge kind: `semantic` = enforced kNN link (store paths); `topical` =
- * suggested link (relink job — recall ignores it, the dashboard may render
- * it faintly); `evidence` = a bridge record's citation edge to a fact it
- * synthesizes (conviction store path — exact, not similarity-derived). One
- * edge per pair: the unique constraint keeps a single row, and semantic wins
- * when both would apply.
- */
-export type MemoryLinkKind = 'semantic' | 'topical' | 'evidence';
-
-/** One undirected edge read back for the dashboard. */
-export interface MemoryLinkEdge {
-  source: string;
-  target: string;
-  score: number;
-  kind: MemoryLinkKind;
-}
-
-/** One edge row to write (canonical source < target ordering). */
-export interface MemoryLinkRow {
-  lane: MemoryLinkLane;
-  collection: string;
-  scopeKey: string;
-  source: string;
-  target: string;
-  score: number;
-  kind: MemoryLinkKind;
-}
+import type {
+  MemoryLinkEdge,
+  MemoryLinkKind,
+  MemoryLinkLane,
+  MemoryLinkRow,
+} from './memory-link.repository.types.js';
 
 /**
  * Postgres storage for the precomputed constellation link graph — one row

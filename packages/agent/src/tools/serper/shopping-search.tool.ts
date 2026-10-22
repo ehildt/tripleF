@@ -1,5 +1,6 @@
 import { type Tool, tool } from 'ai';
 
+import { SEARCH_API_RESULTS_CAP } from '../constants/search-results-cap.constant.js';
 import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
@@ -26,7 +27,12 @@ export function createSerperShoppingSearch(deps: ToolDependencies): Tool {
       }
 
       deps.logger.log(`Serper.dev Shopping search for "${query}"`);
-      const num = Math.min(reqCount ?? cfg.shopping.results, cfg.shopping.results);
+      const num = Math.min(reqCount ?? cfg.shopping.results, cfg.shopping.results, SEARCH_API_RESULTS_CAP);
+      if (num < (reqCount ?? cfg.shopping.results)) {
+        deps.logger.warn(
+          `Serper.dev shopping results clamped to ${SEARCH_API_RESULTS_CAP} (top-3 rank cutoff) for "${query}"`,
+        );
+      }
       const body: Record<string, unknown> = { q: query, num };
       const effectiveLang = lang ?? deps.defaultLang;
       applyLocaleParams(body, effectiveLang);

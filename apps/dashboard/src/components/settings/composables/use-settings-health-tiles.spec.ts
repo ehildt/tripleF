@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { useHealthReady } from '../../../api/queries/use-health-ready.query';
+import { useHealthReady } from '@/api/queries/use-health-ready.query';
+
 import { useSettingsHealthTiles } from './use-settings-health-tiles';
 
 vi.mock('../../../api/queries/use-health-ready.query', () => ({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { VectorizeContext } from './vectorize-context.type.js';
+import type { VectorizeContext } from './vectorize-context.types.js';
 import { VectorizeStepEngineService } from './vectorize-step-engine.service.js';
 import { VectorizeStepRegistryService } from './vectorize-step-registry.service.js';
 

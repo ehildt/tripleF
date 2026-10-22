@@ -29,21 +29,22 @@ const STANDALONE_QUERY_RULES = `STANDALONE QUERY RULES (absolute — they apply 
 const PRODUCT_QUERY_GUIDANCE = `QUERY CRAFTING (product task) — phrase each tool query for its endpoint; never reuse one query for all tools:
 - Language: phrase descriptive query words (review/test/unboxing/specs) in the detected user language; keep product names, brand names, and model numbers verbatim.
 - *ShoppingSearch: the bare product name with exact model number (e.g. "Sony WH-1000XM5"). No extra words like "buy", "price", or "review".
-- *WebSearch: factual queries such as "<product> specifications" and "<product> review" for editorial reviews and facts.
+- *WebSearch: factual queries such as "<product> specifications" and "<product> review" for editorial reviews and facts. Each call returns only the top 3 results — one call per distinct aspect, never merge different aspects into one query.
 - *ImageSearch: "<product>" optionally with "official" for clean product shots.
 - *VideoSearch: "<product> review", "<product> hands-on", or "<product> unboxing".
-- *WebpageScrape / webFetch: fetch the most authoritative review or spec page discovered by the *WebSearch results when snippets are insufficient.`;
+- *WebpageScrape / webFetch: fetch the most authoritative review or spec page discovered by the *WebSearch results when snippets are insufficient. The top 3 search results are already fetched automatically — only fetch pages beyond those.`;
 
 /**
  * Per-endpoint query crafting guidance for non-product tasks.
  */
 const GENERAL_QUERY_GUIDANCE = `QUERY CRAFTING — phrase each tool query for its endpoint; never reuse one query for all tools:
 - Language: phrase descriptive query words in the detected user language; keep entity names (products, brands, people, places) verbatim.
-- *WebSearch: precise factual queries with the key entities and qualifiers (version, model, location). Only add a year/recency qualifier when the FRESHNESS rules call for it — not for evergreen topics.
+- *WebSearch: precise factual queries with the key entities and qualifiers (version, model, location). Only add a year/recency qualifier when the FRESHNESS rules call for it — not for evergreen topics. Each call returns only the top 3 results, so a request spanning distinct topics or entities MUST issue one call per topic — never merge unrelated subjects into one query, or coverage is lost.
 - *ReviewsSearch: reviews BUSINESSES only — call it with an exact business or place name, never with a product or topic.
 - *PlacesSearch: phrase it like a Google Maps search — a business name or "<business type> in <location>".
 - *ImageSearch: short visual descriptions of the subject.
-- *VideoSearch: subject plus the video type (e.g. "review", "trailer", "tutorial"); vary queries between fresh and evergreen angles as the FRESHNESS rules describe.`;
+- *VideoSearch: subject plus the video type (e.g. "review", "trailer", "tutorial"); vary queries between fresh and evergreen angles as the FRESHNESS rules describe.
+- *WebpageScrape / webFetch: the top 3 search results are already fetched automatically — call a fetch tool only for a specific page beyond those, when snippets are insufficient.`;
 
 /**
  * Build the system prompt for tool execution tasks. Instructs the model to call mandatory tools with appropriate inputs.
@@ -59,6 +60,13 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
     : '';
   const videoCountLine = intent?.videoCount
     ? `videoCount: retrieve ${intent.videoCount} video(s). Only pass this count to *VideoSearch tools; if omitted, each tool defaults to ${DEFAULT_MEDIA_COUNT}.`
+    : '';
+
+  // Creator-scoped requests (intent.contentCreator) keep the creator name in
+  // every query — search engines rank the named channel's own videos first,
+  // and the respond step excludes whatever other channels slipped in.
+  const creatorLine = intent?.contentCreator
+    ? `Creator restriction: the user restricted content to the creator/channel "${intent.contentCreator}" (name copied verbatim from the request). Include this name verbatim in every *VideoSearch and *WebSearch query for this task — never correct, extend, translate, or rebrand it.`
     : '';
 
   const countInstruction = intent?.imageCount
@@ -85,13 +93,13 @@ export function buildToolExecutePrompt(intent?: IntentResult): string {
 You have already selected the tools needed for this task.
 ${toolList}
 ${freshnessRules}
-${langInstruction ? `${langInstruction}\n` : ''}${imageCountLine ? `${imageCountLine}\n` : ''}${videoCountLine ? `${videoCountLine}\n` : ''}${stockmarketNote ? `${stockmarketNote}\n` : ''}Your ONLY job is to call every mandatory tool with an appropriate input.
+${langInstruction ? `${langInstruction}\n` : ''}${imageCountLine ? `${imageCountLine}\n` : ''}${videoCountLine ? `${videoCountLine}\n` : ''}${creatorLine ? `${creatorLine}\n` : ''}${stockmarketNote ? `${stockmarketNote}\n` : ''}Your ONLY job is to call every mandatory tool with an appropriate input.
 Do not answer the user, do not explain, and do not produce JSON in this step.
 Derive the search query or target URL for each tool from the latest user message and the conversation context.
 ${STANDALONE_QUERY_RULES}
 ${queryGuidance}
 Emit ALL mandatory tool calls in ONE response, as parallel tool calls. Do not stop after the first tool call.
-You may call the same tool more than once with differently phrased queries when the task needs broader coverage.
+You may call the same tool more than once with differently phrased queries when the task needs broader coverage. Because each *WebSearch/*NewsSearch call returns only the top 3 results, every distinct topic or entity gets its own call — folding two subjects into one query loses the second subject's results.
 When you call the SAME search tool multiple times and an explicit imageCount/videoCount is set, split that total evenly across the calls so their sum equals the target — never pass the full count to each call. Example: total 10 across 3 queries → pass count 4, 3, 3. When no explicit count is set, make every call WITHOUT a count parameter and let each tool use its default.
 Each mandatory tool must be called at least once. Missing a mandatory tool is a failure.
 ${countInstruction}

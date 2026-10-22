@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { useHarnessSectionCollapsed } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-section-collapsed.composable';
+import { useResponseSectionCollapsed } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-section-collapsed';
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { InternationalCoverageEntry } from '@/types/harness-response-data.model';
+import type { InternationalCoverageEntry } from '@/types/assistant-response-data.model';
 
 const props = defineProps<{
   items?: InternationalCoverageEntry[];
 }>();
 
 /** Hidden while the prompt bar collapses the international-coverage section type. */
-const isCollapsed = useHarnessSectionCollapsed('internationalCoverage');
+const isCollapsed = useResponseSectionCollapsed('internationalCoverage');
 
 const validItems = computed(() =>
   (props.items ?? []).filter(

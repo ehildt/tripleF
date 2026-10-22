@@ -1,4 +1,6 @@
-import { Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
+
+import { PostgresModule } from '../postgres/postgres.module.js';
 
 import { LifecycleService } from './services/lifecycle.service.js';
 import { DeadLetterRepository } from './services/repository.service.js';
@@ -10,9 +12,21 @@ import { DeadLetterRepository } from './services/repository.service.js';
  * there). Lifecycle is generic over queues; only the harness-specific
  * markApplicationFailure path is server-side.
  */
-@Global()
-@Module({
-  providers: [LifecycleService, DeadLetterRepository],
-  exports: [LifecycleService, DeadLetterRepository],
-})
-export class DeadLetterModule {}
+@Module({})
+export class DeadLetterModule {
+  private static readonly registration: DynamicModule = {
+    module: DeadLetterModule,
+    exports: [LifecycleService, DeadLetterRepository],
+    imports: [PostgresModule.register()],
+    providers: [LifecycleService, DeadLetterRepository],
+  };
+
+  /**
+   * Shared registration object: this app uses Nest's default by-reference
+   * dynamic-module ids, so one object per module class keeps multi-site
+   * imports a single shared instance (static-module singleton semantics).
+   */
+  static register(): DynamicModule {
+    return DeadLetterModule.registration;
+  }
+}

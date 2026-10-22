@@ -1,10 +1,10 @@
 import { onMounted, watch } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
-import { useDlqStore } from '@/stores/dlq';
+import { useDlqStore } from '@/stores/dlq/dlq.store';
 
 import { useDlqQuery } from '../../../api/queries/use-dlq-query';
-import { useToast } from '../../../composables/use-toast';
+import { useToast } from '../../../composables/use-toast/use-toast';
 import { useDlqActions } from './use-dlq-actions';
 import { useDlqLoading } from './use-dlq-loading';
 

@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, type Ref } from 'vue';
 
-import { useDlqStore } from '../../../stores/dlq';
+import { useDlqStore } from '../../../stores/dlq/dlq.store';
 import { useDlqEntries } from './use-dlq-entries';
 
 /** Mutable reactive results of the mocked query/loading dependencies. The

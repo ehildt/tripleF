@@ -1,26 +1,16 @@
 <script setup lang="ts">
 import { useId } from 'vue';
 
-withDefaults(
-  defineProps<{
-    modelValue: string;
-    placeholder?: string;
-    disabled?: boolean;
-    rows?: number;
-    /** Stable id for the field. Auto-generated if omitted. */
-    id?: string;
-    /** Name attribute, aids browser autofill. */
-    name?: string;
-  }>(),
-  {
-    id: () => useId(),
-  },
-);
+import type {
+  InputTextAreaEmits,
+  InputTextAreaProps,
+} from './InputTextArea.types';
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-  (e: 'keydown', event: KeyboardEvent): void;
-}>();
+withDefaults(defineProps<InputTextAreaProps>(), {
+  id: () => useId(),
+});
+
+const emit = defineEmits<InputTextAreaEmits>();
 
 function handleInput(event: Event) {
   const target = event.target as HTMLTextAreaElement;

@@ -1,13 +1,11 @@
 <script lang="ts" setup>
 import { PartyPopper } from '@lucide/vue';
-import type { Component } from 'vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const props = withDefaults(
-  defineProps<{ message?: string; submessage?: string; icon?: Component }>(),
-  {},
-);
+import type { PanelEmptyStateProps } from './PanelEmptyState.types';
+
+const props = defineProps<PanelEmptyStateProps>();
 
 const { t } = useI18n();
 

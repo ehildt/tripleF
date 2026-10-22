@@ -2,7 +2,7 @@
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
 
 import { pickCycleColor } from '../../../../shared/helpers/pick-cycle-color.helper';
-import { useEvaluationListSection } from './composables/use-evaluation-list-section.composable';
+import { useEvaluationListSection } from './composables/use-evaluation-list-section';
 import type { EvaluationListSectionProps } from './EvaluationListSection.types';
 
 const props = defineProps<EvaluationListSectionProps>();

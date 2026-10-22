@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
 
-import { renderMarkdown } from '@/utils/render-markdown.helper';
+import { renderMarkdown } from '@/utils/render-markdown/render-markdown.helper';
 
 import { useReasoningAutoscroll } from './composables/use-reasoning-autoscroll';
 

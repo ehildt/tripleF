@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import type { MediaItem } from '@/types/harness-response-data.model';
+import type { MediaItem } from '@/types/assistant-response-data.model';
 
 import GalleryItemComponent from '../gallery-item/GalleryItem.vue';
 import { isVideoMediaItem } from '../helpers/is-video-media-item.helper';

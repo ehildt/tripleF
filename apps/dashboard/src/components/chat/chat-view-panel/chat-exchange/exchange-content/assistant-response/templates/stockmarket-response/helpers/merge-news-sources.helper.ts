@@ -1,7 +1,7 @@
 import type {
   Source,
   StockmarketNewsItem,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 import { keyOf } from './key-of.helper';
 

@@ -2,13 +2,13 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
 
-import { isTrustedImageUrl } from '@/stores/helpers/harness/media/is-trusted-image-url.helper';
-import { TEMPLATE_PARTS } from '@/stores/template-parts.constant';
-import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings';
+import { isTrustedImageUrl } from '@/stores/helpers/assistant-response/media/is-trusted-image-url.helper';
+import { TEMPLATE_PARTS } from '@/stores/template-parts-settings/template-parts-settings.constant';
+import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings/template-parts-settings.store';
 import type {
+  AssistantResponseData,
   GalleryItem,
-  HarnessResponseData,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 import type { LightboxImage } from '@/types/lightbox.model';
 
 import ArticleResponse from './templates/article-response/ArticleResponse.vue';
@@ -29,7 +29,7 @@ import VideoListResponse from './templates/video-list-response/VideoListResponse
 
 const props = defineProps<{
   template: string;
-  data?: HarnessResponseData;
+  data?: AssistantResponseData;
   text?: string;
   /** Chart data streamed from EODHD tools, keyed by tool name. */
   chartData?: Record<string, unknown>;
@@ -71,7 +71,7 @@ const templatePartsSettingsStore = useTemplatePartsSettingsStore();
  * their data is absent, so a disabled part simply never renders — the model
  * output is untouched.
  */
-const visibleData = computed<HarnessResponseData>(() => {
+const visibleData = computed<AssistantResponseData>(() => {
   const parts = TEMPLATE_PARTS[props.template as keyof typeof TEMPLATE_PARTS];
   if (!parts || parts.length === 0) return props.data ?? {};
   const hiddenKeys = new Set<string>();
@@ -85,7 +85,7 @@ const visibleData = computed<HarnessResponseData>(() => {
   if (hiddenKeys.size === 0) return props.data ?? {};
   const result: Record<string, unknown> = { ...props.data };
   for (const key of hiddenKeys) delete result[key];
-  return result as HarnessResponseData;
+  return result as AssistantResponseData;
 });
 
 /**

@@ -4,14 +4,15 @@ import { computed } from 'vue';
 import FloatingVideoFigure from '@/components/chat/shared/ui/floating-video-figure/FloatingVideoFigure.vue';
 import MediaCaptionScrim from '@/components/chat/shared/ui/media-caption-scrim/MediaCaptionScrim.vue';
 import MediaCardHeader from '@/components/chat/shared/ui/media-card-header/MediaCardHeader.vue';
-import MediaImageCard from '@/components/shared/media/media-image-card/MediaImageCard.vue';
 import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
-import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
-import { buildVideoPosterUrl } from '@/stores/helpers/harness/media/build-video-poster-url.helper';
+import { usePlaylistToggle } from '@/composables/use-playlist-toggle/use-playlist-toggle';
+import { buildVideoPosterUrl } from '@/stores/helpers/assistant-response/media/build-video-poster-url.helper';
 import type {
   GalleryItem,
   VideoGalleryItem,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
+
+import MediaImageCard from './media-image-card/MediaImageCard.vue';
 
 const props = defineProps<{
   heroVideoUrl?: string;
@@ -135,7 +136,7 @@ function handleClick() {
 .hero-media-card__video {
   position: relative;
   width: 100%;
-  aspect-ratio: 2 / 1;
+  aspect-ratio: 5 / 3;
 }
 
 /* ---------- header row (title + playlist toggle above the video) ---------- */

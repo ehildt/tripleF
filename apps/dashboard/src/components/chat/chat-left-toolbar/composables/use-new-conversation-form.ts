@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
-import { useSocketStore } from '@/stores/socket';
-import { createId } from '@/utils/id.helper';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { createId } from '@/utils/create-id/create-id.helper';
 
 import { useSocketSubscriptions } from './use-socket-subscriptions';
 
@@ -18,7 +18,7 @@ const newConversationRoomId = ref('');
 
 export function useNewConversationForm() {
   const conversationStore = useConversationStore();
-  const socketStore = useSocketStore();
+  const socketStore = useSocket();
   const { subscriptions } = useSocketSubscriptions();
 
   const availableSocketEvents = computed(() =>

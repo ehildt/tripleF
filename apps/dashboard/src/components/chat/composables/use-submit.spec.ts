@@ -1,15 +1,15 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAppStore } from '@/stores/app';
-import { useConversationStore } from '@/stores/conversation';
-import type { Exchange } from '@/stores/conversation.model';
-import { useMergeSelectionStore } from '@/stores/merge-selection';
-import { useApiMessagesStore } from '@/stores/messages';
-import { useModelsStore } from '@/stores/models';
-import { useSocketStore } from '@/stores/socket';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import { useAppStore } from '@/stores/app/app.store';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
+import { useMessagesStore } from '@/stores/messages/messages.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
-import type { PostHarnessRequestOptions } from './use-harness-request.types';
+import type { PostHarnessRequestOptions } from './use-assistant-request.types';
 import { usePromptDraft } from './use-prompt-draft';
 import { useSubmit } from './use-submit';
 
@@ -22,14 +22,14 @@ const toast = vi.hoisted(() => ({
 
 const postHarnessRequest = vi.hoisted(() => vi.fn(async () => undefined));
 
-vi.mock('@/composables/use-toast', () => ({ useToast: () => toast }));
+vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 
 vi.mock('@/i18n/i18n', () => ({
   i18n: { global: { t: (key: string) => key, locale: { value: 'en' } } },
 }));
 
-vi.mock('./use-harness-request', () => ({
-  useHarnessRequest: () => ({ postHarnessRequest }),
+vi.mock('./use-assistant-request', () => ({
+  useAssistantRequest: () => ({ postHarnessRequest }),
 }));
 
 /**
@@ -52,14 +52,15 @@ function stubBenignFetch() {
 }
 
 /**
- * The submit path reads the socket facade from the real stores. Spy the
- * store actions that would otherwise open a socket.io connection in jsdom;
- * `addPendingMessage` is spied so the tests can assert the in-flight
- * registration without touching the messages store's internals.
+ * The submit path reads the socket facade from the socket composable and the
+ * messages/debug stores. Spy the actions that would otherwise open a
+ * socket.io connection in jsdom; `addPendingMessage` is spied so the tests
+ * can assert the in-flight registration without touching the messages
+ * store's internals.
  */
 function stubSocketSideEffects() {
-  const socketStore = useSocketStore();
-  const apiMessagesStore = useApiMessagesStore();
+  const socketStore = useSocket();
+  const apiMessagesStore = useMessagesStore();
 
   vi.spyOn(socketStore, 'listenToEvent').mockImplementation(() => {});
   vi.spyOn(socketStore, 'joinRoom').mockImplementation(() => {});

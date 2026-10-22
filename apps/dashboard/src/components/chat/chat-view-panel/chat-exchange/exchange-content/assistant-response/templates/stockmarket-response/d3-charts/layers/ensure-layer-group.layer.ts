@@ -1,6 +1,6 @@
 import type { Selection } from 'd3-selection';
 
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 
 /**
  * Get (or create) the svg group a chart layer draws into: an existing

@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
-import { usePlaylistStore } from '@/stores/playlist';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 /**
  * Component-scoped state for the playlist panel: the queued videos of the

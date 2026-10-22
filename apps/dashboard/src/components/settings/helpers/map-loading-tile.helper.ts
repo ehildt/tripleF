@@ -1,4 +1,4 @@
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
+import type { HealthTileViewModel } from '../health-tile-view-model.model';
 
 /** Build a loading-state tile for a tracked key. */
 export function mapLoadingTile(key: string): HealthTileViewModel {

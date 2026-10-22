@@ -14,7 +14,7 @@
 import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-header/ResponseHeader.vue';
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 
-import { useProductBanner } from './composables/use-product-banner.composable';
+import { useProductBanner } from './composables/use-product-banner';
 import ProductBannerRating from './product-banner-rating/ProductBannerRating.vue';
 import type { ProductBannerProps } from './ProductBanner.types';
 

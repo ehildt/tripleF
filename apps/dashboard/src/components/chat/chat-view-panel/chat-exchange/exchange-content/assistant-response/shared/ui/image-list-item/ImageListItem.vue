@@ -6,12 +6,12 @@
  */
 import { computed } from 'vue';
 
-import { useAddImageToFiles } from '@/components/chat/shared/composables/use-add-image-to-files.composable';
-import { useGalleryImageTile } from '@/components/chat/shared/composables/use-gallery-image-tile.composable';
+import { useAddImageToFiles } from '@/components/chat/shared/composables/use-add-image-to-files';
+import { useGalleryImageTile } from '@/components/chat/shared/composables/use-gallery-image-tile';
 import AddToFilesButton from '@/components/chat/shared/ui/add-to-files-button/AddToFilesButton.vue';
 import MediaCardHeader from '@/components/chat/shared/ui/media-card-header/MediaCardHeader.vue';
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
-import type { GalleryItem } from '@/types/harness-response-data.model';
+import type { GalleryItem } from '@/types/assistant-response-data.model';
 
 import { formatDimensions } from './helpers/format-dimensions.helper';
 

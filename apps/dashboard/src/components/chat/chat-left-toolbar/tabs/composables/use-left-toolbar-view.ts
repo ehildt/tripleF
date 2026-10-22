@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue';
 
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import type { LeftToolbarView } from '../../left-toolbar-view.type';
 

@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
 import ExchangeHeader from './ExchangeHeader.vue';
 
@@ -37,7 +37,7 @@ describe('ExchangeHeader meta bar', () => {
       makeExchange({
         role: 'assistant',
         status: 'done',
-        harnessData: {
+        responseData: {
           category: 'Tech',
           publishDate: '2026-08-07',
           readTime: '5 min read',
@@ -67,7 +67,7 @@ describe('ExchangeHeader meta bar', () => {
         role: 'user',
         status: 'done',
         content: 'hi',
-        harnessData: { category: 'Tech' },
+        responseData: { category: 'Tech' },
       }),
       true,
     );
@@ -88,7 +88,7 @@ describe('ExchangeHeader meta bar', () => {
       makeExchange({
         role: 'assistant',
         status: 'streaming',
-        harnessData: { category: 'Tech' },
+        responseData: { category: 'Tech' },
       }),
     );
 

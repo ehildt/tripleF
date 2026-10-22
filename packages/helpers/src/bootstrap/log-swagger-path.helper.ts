@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 
-import { AppConfig } from './app-config.model.ts';
+import type { AppConfig } from './app-config.schema.ts';
 import { API_DOCS, API_DOCS_JSON } from './bootstrap.constants.ts';
 
 export function logSwaggerPath(logger: Logger, appConfig: AppConfig) {

@@ -1,10 +1,10 @@
 import { computed } from 'vue';
 
-import { usePlaybackSession } from '@/composables/use-playback-session';
-import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
-import { usePlaylistStore } from '@/stores/playlist';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import { usePlaylistPanel } from '../playlist/composables/use-playlist-panel';
 
@@ -20,7 +20,7 @@ import { usePlaylistPanel } from '../playlist/composables/use-playlist-panel';
 export function usePlaylistTransport() {
   const playback = usePlaybackSession();
   const { playlistVideos } = usePlaylistPanel();
-  const playbackAnchorStore = usePlaybackAnchorStore();
+  const playbackAnchorStore = usePlaybackAnchorRegistry();
   const popoutSettingsStore = usePopoutSettingsStore();
   const playlistStore = usePlaylistStore();
 
@@ -77,7 +77,7 @@ export function usePlaylistTransport() {
     () =>
       (popoutSettingsStore.popoutHideOnPlaylist &&
         playback.launchedFromPlaylist.value) ||
-      playbackAnchorStore.playbackDockMode === 'dock-dismissed',
+      playbackAnchorStore.playbackDockMode.value === 'dock-dismissed',
   );
 
   function toggleHideOnPlaylist() {
@@ -86,7 +86,7 @@ export function usePlaylistTransport() {
       // dismissed window — either can hide it independently, and the eye
       // icon currently reads closed either way.
       popoutSettingsStore.setPopoutHideOnPlaylist(false);
-      if (playbackAnchorStore.playbackDockMode === 'dock-dismissed') {
+      if (playbackAnchorStore.playbackDockMode.value === 'dock-dismissed') {
         playbackAnchorStore.engagePlayback();
       }
       return;

@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { formatDate } from '@/utils/format-date.helper';
+import { formatDate } from '@/utils/format-date/format-date.helper';
 
 import type { DlqItemMetaRowProps } from './DlqItemMetaRow.types';
 

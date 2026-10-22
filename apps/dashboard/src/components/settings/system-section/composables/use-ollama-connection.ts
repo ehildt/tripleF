@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useModelsStore } from '@/stores/models';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { useApiKeyForm } from '../../composables/use-api-key-form';
 import { useHostForm } from '../../composables/use-host-form';

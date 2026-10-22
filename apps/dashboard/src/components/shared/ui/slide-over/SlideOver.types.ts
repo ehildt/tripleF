@@ -6,3 +6,10 @@ export interface SlideOverProps {
   /** Tooltip/aria-label for the header close button. */
   closeTitle?: string;
 }
+
+export interface SlideOverEmits {
+  /** Close intent: Escape, backdrop click, or the header close button. */
+  close: [];
+  /** Leave transition finished — safe to unmount the body content. */
+  closed: [];
+}

@@ -1,67 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { fetchWithTimeout } from '@triplef/agent/tools';
 import { SEARCH_TIMEOUT_MS } from '@triplef/agent/tools';
 
+import type { BrightDataCapabilities } from './brightdata-discovery.service.types.js';
+import { CapabilityDiscoveryService } from './capability-discovery.service.js';
+
 const BRIGHTDATA_API_URL = 'https://api.brightdata.com';
 
-export interface BrightDataCapabilities {
-  status?: string;
-  customer?: string;
-  canMakeRequests?: boolean;
-  authFailReason?: string;
-  /** Available account balance (money), when the key has billing permission. */
-  balance?: number;
-  credit?: number;
-  prepayment?: number;
-  pendingCosts?: number;
-  /** Set when the balance endpoint is not readable (e.g. missing permission). */
-  balanceError?: string;
-  checkedAt?: string;
-}
-
 /**
- * Discovers BrightData account status and (when permitted) balance from the
- * API key via /status and /customer/balance, cached with a TTL. The balance
- * endpoint requires a key with Billing permission; if it 403s we surface a
- * balanceError instead of failing the whole check.
+ * BrightData capability lane: discovers account status and (when permitted)
+ * balance from the API key via /status and /customer/balance. The balance
+ * endpoint requires a key with Billing permission; a 403 surfaces as
+ * `balanceError` instead of failing the whole check. Cache TTL and refresh
+ * guards live in the base capability-discovery service.
  */
 @Injectable()
-export class BrightDataDiscoveryService {
-  private readonly logger = new Logger(BrightDataDiscoveryService.name);
-
-  private cached?: BrightDataCapabilities;
-  private cachedKey?: string;
-  private lastRefreshAt = 0;
-  private refreshInFlight?: Promise<void>;
-
-  private readonly ttlMs = 6 * 60 * 60 * 1000;
-
-  getCached(): BrightDataCapabilities | undefined {
-    return this.cached;
-  }
-
-  refresh(key?: string): void {
-    if (!key) return;
-    if (this.refreshInFlight) return;
-    if (
-      this.cachedKey === key &&
-      this.cached &&
-      Date.now() - this.lastRefreshAt < this.ttlMs
-    ) {
-      return;
-    }
-    this.refreshInFlight = this.doRefresh(key)
-      .catch((error) => {
-        this.logger.warn(
-          `BrightData capability check failed: ${error instanceof Error ? error.message : error}`,
-        );
-      })
-      .finally(() => {
-        this.refreshInFlight = undefined;
-      });
-  }
-
-  private async doRefresh(key: string): Promise<void> {
+export class BrightDataDiscoveryService extends CapabilityDiscoveryService<BrightDataCapabilities> {
+  protected async fetchCapabilities(
+    key: string,
+  ): Promise<BrightDataCapabilities> {
     const headers = { Authorization: `Bearer ${key}` };
     const opts = { timeoutMs: SEARCH_TIMEOUT_MS };
 
@@ -108,7 +65,7 @@ export class BrightDataDiscoveryService {
       balanceError = error instanceof Error ? error.message : String(error);
     }
 
-    this.cached = {
+    const capabilities: BrightDataCapabilities = {
       status,
       customer,
       canMakeRequests,
@@ -120,10 +77,9 @@ export class BrightDataDiscoveryService {
       balanceError,
       checkedAt: new Date().toISOString(),
     };
-    this.cachedKey = key;
-    this.lastRefreshAt = Date.now();
     this.logger.log(
       `BrightData account discovered (status=${status ?? 'unknown'}, balance=${balance ?? 'n/a'})`,
     );
+    return capabilities;
   }
 }

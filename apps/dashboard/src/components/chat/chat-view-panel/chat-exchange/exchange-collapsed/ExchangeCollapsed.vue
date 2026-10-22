@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import type { Exchange } from '@/stores/conversation';
-import { stripHtml } from '@/utils/strip-html.helper';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { stripHtml } from '@/utils/strip-html/strip-html.helper';
 
 import { truncateText } from '../helpers/truncate-text.helper';
 

@@ -2,15 +2,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { ENCYCLOPEDIA_CONFIG } from '../../encyclopedia/constants/encyclopedia.constants.js';
 import type { EncyclopediaConfig } from '../../encyclopedia/models/encyclopedia-config.model.js';
-import {
-  type MemoryFrictionEdge,
-  MemoryFrictionRepository,
-} from '../../persistence/services/memory-friction.repository.js';
-import {
-  type MemoryLinkEdge,
-  MemoryLinkRepository,
-  type MemoryLinkRow,
-} from '../../persistence/services/memory-link.repository.js';
+import { MemoryFrictionRepository } from '../../persistence/services/memory-friction.repository.js';
+import type { MemoryFrictionEdge } from '../../persistence/services/memory-friction.repository.types.js';
+import { MemoryLinkRepository } from '../../persistence/services/memory-link.repository.js';
+import type {
+  MemoryLinkEdge,
+  MemoryLinkRow,
+} from '../../persistence/services/memory-link.repository.types.js';
 import {
   DENSE_VECTOR,
   QDRANT_CONFIG,
@@ -29,6 +27,12 @@ import { groupHeatIncrements } from './helpers/group-heat-increments.helper.js';
 import { mapEncyclopediaPointToIdVector } from './helpers/map-encyclopedia-point-to-id-vector.helper.js';
 import { mapEncyclopediaPointToUpsert } from './helpers/map-encyclopedia-point-to-upsert.helper.js';
 import { mapFacetHit } from './helpers/map-facet-hit.helper.js';
+import type { FacetValueCount } from './helpers/map-facet-hit.helper.types.js';
+import type {
+  EncyclopediaChunkFilter,
+  EncyclopediaLabelChunkRow,
+  EncyclopediaSnippetCandidate,
+} from './encyclopedia.repository.types.js';
 import { QdrantClientService } from './qdrant-client.service.js';
 
 /** Qdrant filter shape for the encyclopedia vector query (url in/not-in). */
@@ -52,6 +56,16 @@ const SCROLL_PAGE = 500;
  * — computing edges on upsert and cascading them on supersede — so the
  * dashboard reads a ready graph with zero Qdrant round-trips.
  */
+/** The raw Qdrant point stub these lookups hand to the mapper. */
+interface EncyclopediaRawQueryPoint {
+  /** Point id (untyped at the wire). */
+  id: unknown;
+  /** Match/scroll score when the query carried one. */
+  score?: number;
+  /** Stored payload (absent on payload-less queries). */
+  payload?: Record<string, unknown> | null;
+}
+
 @Injectable()
 export class EncyclopediaRepository {
   private readonly logger = new Logger(EncyclopediaRepository.name);
@@ -166,11 +180,9 @@ export class EncyclopediaRepository {
    * Scroll-based listing for the settings encyclopedia surface (payload only, no
    * vectors). Optional domain / partitionScope tightenings; capped page.
    */
-  async listChunks(input: {
-    domain?: string;
-    partitionScope?: string;
-    limit?: number;
-  }): Promise<EncyclopediaChunkHit[]> {
+  async listChunks(
+    input: EncyclopediaChunkFilter,
+  ): Promise<EncyclopediaChunkHit[]> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return [];
     const must: Array<Record<string, unknown>> = [];
     if (input.domain)
@@ -417,28 +429,18 @@ export class EncyclopediaRepository {
    * to survive the content check, then returns up to `limit` gaps with their
    * title/snippet/partition provenance.
    */
-  async scrollUnfetchedSnippetUrls(limit: number): Promise<
-    Array<{
-      url: string;
-      title?: string;
-      snippet: string;
-      partitionScope?: string;
-    }>
-  > {
+  async scrollUnfetchedSnippetUrls(
+    limit: number,
+  ): Promise<EncyclopediaSnippetCandidate[]> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return [];
     const candidates = await this.collectSnippetCandidates(limit);
     return this.filterUnfetched(candidates, limit);
   }
 
   /** Distinct snippet urls (with provenance), over-fetched 2× for the content check. */
-  private async collectSnippetCandidates(limit: number): Promise<
-    Array<{
-      url: string;
-      title?: string;
-      snippet: string;
-      partitionScope?: string;
-    }>
-  > {
+  private async collectSnippetCandidates(
+    limit: number,
+  ): Promise<EncyclopediaSnippetCandidate[]> {
     const client = this.clientService.getClient();
     const candidates = new Map<
       string,
@@ -491,27 +493,10 @@ export class EncyclopediaRepository {
 
   /** Keep only candidates with no content chunks (never fetched), capped at `limit`. */
   private async filterUnfetched(
-    candidates: Array<{
-      url: string;
-      title?: string;
-      snippet: string;
-      partitionScope?: string;
-    }>,
+    candidates: EncyclopediaSnippetCandidate[],
     limit: number,
-  ): Promise<
-    Array<{
-      url: string;
-      title?: string;
-      snippet: string;
-      partitionScope?: string;
-    }>
-  > {
-    const gaps: Array<{
-      url: string;
-      title?: string;
-      snippet: string;
-      partitionScope?: string;
-    }> = [];
+  ): Promise<EncyclopediaSnippetCandidate[]> {
+    const gaps: EncyclopediaSnippetCandidate[] = [];
     for (const candidate of candidates) {
       const content = await this.scrollByUrl(candidate.url);
       if (content.length === 0) gaps.push(candidate);
@@ -550,7 +535,7 @@ export class EncyclopediaRepository {
    * classify job's reuse-first vocabulary. One facet call (Qdrant ≥1.12,
    * keyword index on `category`), exact counts.
    */
-  async facetCategories(): Promise<Array<{ value: string; count: number }>> {
+  async facetCategories(): Promise<FacetValueCount[]> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return [];
     const result = await this.clientService.getClient().facet(this.collection, {
       key: 'category',
@@ -565,7 +550,7 @@ export class EncyclopediaRepository {
    * classify job's topic-reuse vocabulary (mirrors `facetCategories`; keyword
    * index on `topic`).
    */
-  async facetTopics(): Promise<Array<{ value: string; count: number }>> {
+  async facetTopics(): Promise<FacetValueCount[]> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return [];
     const result = await this.clientService.getClient().facet(this.collection, {
       key: 'topic',
@@ -580,7 +565,7 @@ export class EncyclopediaRepository {
    * the classify job's community-reuse vocabulary (mirrors
    * `facetCategories`; keyword index on `community`).
    */
-  async facetCommunities(): Promise<Array<{ value: string; count: number }>> {
+  async facetCommunities(): Promise<FacetValueCount[]> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return [];
     const result = await this.clientService.getClient().facet(this.collection, {
       key: 'community',
@@ -595,7 +580,7 @@ export class EncyclopediaRepository {
    * reconciliation sweep's usage signal for picking the merge winner.
    */
   async countByLabel(
-    field: 'category' | 'community' | 'topic',
+    field: 'category' | 'community' | 'topic' | 'node',
     value: string,
     opts?: { linkedOnly?: boolean },
   ): Promise<number> {
@@ -614,13 +599,103 @@ export class EncyclopediaRepository {
   }
 
   /**
+   * The chunks carrying one taxonomy label value (the dashboard drill's
+   * leaf listing): one scroll page, payloads reduced to the row's fields.
+   */
+  async scrollByLabel(
+    field: 'category' | 'community' | 'topic' | 'node',
+    value: string,
+    limit: number,
+  ): Promise<EncyclopediaLabelChunkRow[]> {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return [];
+    const result = await this.clientService
+      .getClient()
+      .scroll(this.collection, {
+        filter: { must: [{ key: field, match: { value } }] },
+        limit,
+        with_payload: true,
+        with_vector: false,
+      });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        title: payload.title as string | undefined,
+        url: (payload.url as string) ?? '',
+        isLinked: (payload.is_linked as boolean) ?? false,
+        fetchedAt: (payload.fetched_at as string) ?? '',
+      };
+    });
+  }
+
+  /**
+   * Every chunk carrying one label value, paged (metadata only — the leaf
+   * drill groups chunks per source URL, so it must see ALL of a source's
+   * chunks, not just the first display page).
+   */
+  async listAllChunksByLabel(
+    field: 'category' | 'community' | 'topic' | 'node',
+    value: string,
+  ): Promise<
+    Array<{
+      id: string;
+      title?: string;
+      url: string;
+      isLinked: boolean;
+      fetchedAt: string;
+      chunkIndex?: number;
+    }>
+  > {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return [];
+    const client = this.clientService.getClient();
+    const points: Array<{
+      id: string;
+      title?: string;
+      url: string;
+      isLinked: boolean;
+      fetchedAt: string;
+      chunkIndex?: number;
+    }> = [];
+    let offset: string | number | undefined;
+    for (;;) {
+      const result = await client.scroll(this.collection, {
+        filter: { must: [{ key: field, match: { value } }] },
+        limit: SCROLL_PAGE,
+        offset,
+        with_payload: [
+          'title',
+          'url',
+          'is_linked',
+          'fetched_at',
+          'chunk_index',
+        ],
+        with_vector: false,
+      });
+      for (const point of result.points) {
+        const payload = point.payload ?? {};
+        points.push({
+          id: String(point.id),
+          title: payload.title as string | undefined,
+          url: (payload.url as string) ?? '',
+          isLinked: (payload.is_linked as boolean) ?? false,
+          fetchedAt: (payload.fetched_at as string) ?? '',
+          chunkIndex: payload.chunk_index as number | undefined,
+        });
+      }
+      offset =
+        (result.next_page_offset as string | number | undefined) ?? undefined;
+      if (!offset) return points;
+    }
+  }
+
+  /**
    * Rewrite one label value of a tier field on every matching chunk of the
    * global encyclopedia — the reconciliation/user-merge application
    * (payload-only, idempotent; mirrors `collapseCategory` on the partition
    * repository).
    */
   async collapseLabel(
-    field: 'category' | 'community' | 'topic',
+    field: 'category' | 'community' | 'topic' | 'node',
     from: string,
     to: string,
   ): Promise<void> {
@@ -641,11 +716,12 @@ export class EncyclopediaRepository {
     url: string,
     category: string,
     topic: string,
-    community?: string,
+    community: string,
+    node: string,
   ): Promise<void> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return;
     await this.clientService.getClient().setPayload(this.collection, {
-      payload: community ? { category, community, topic } : { category, topic },
+      payload: { category, community, topic, node },
       filter: { must: [{ key: 'url', match: { value: url } }] },
     });
   }
@@ -934,11 +1010,7 @@ export class EncyclopediaRepository {
     });
   }
 
-  private toHit(point: {
-    id: unknown;
-    score?: number;
-    payload?: Record<string, unknown> | null;
-  }): EncyclopediaChunkHit {
+  private toHit(point: EncyclopediaRawQueryPoint): EncyclopediaChunkHit {
     const payload = point.payload ?? {};
     return {
       id: String(point.id),

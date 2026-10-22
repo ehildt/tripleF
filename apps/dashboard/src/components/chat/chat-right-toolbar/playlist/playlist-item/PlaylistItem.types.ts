@@ -1,4 +1,4 @@
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 export interface PlaylistItemProps {
   item: VideoGalleryItem;

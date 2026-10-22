@@ -336,6 +336,10 @@ export function buildFinalMessagesForSanitize(
     role: 'system',
     content: `[TOOL CONTEXT — DO NOT OUTPUT]\n${JSON.stringify(
       {
+        // Echo the intent's creator restriction next to availableVideos (each
+        // entry carries a channel field) so the response model can exclude
+        // off-creator items instead of padding the playlist.
+        contentCreator: intent?.contentCreator || undefined,
         availableVideos: verifiedVideos,
         articles: extractedArticles,
         references: extractedReferences,

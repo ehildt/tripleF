@@ -6,11 +6,11 @@
 import { ref, watch } from 'vue';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
-import { usePreprocessingStore } from '@/stores/preprocessing';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 
 import PprocToolsPanel from '../../pproc/tools-panel/PprocToolsPanel.vue';
 
-const store = usePreprocessingStore();
+const store = usePreprocessingSettingsStore();
 
 // Brief "pop" on the panel whenever the master toggle or a variant flips —
 // same feedback the integrations panel gives on configuration changes.

@@ -1,5 +1,6 @@
 import { type Tool, tool } from 'ai';
 
+import { SEARCH_API_RESULTS_CAP } from '../constants/search-results-cap.constant.js';
 import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
@@ -15,7 +16,7 @@ import type { BrightDataWebSearchResponse } from './web-search.types.js';
 export function createBrightDataWebSearch(deps: ToolDependencies): Tool {
   return tool({
     description:
-      'Search the web using Bright Data SERP API (Google). Returns organic results with titles, snippets, and links. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results. ' +
+      'Search the web using Bright Data SERP API (Google). Returns organic results with titles, snippets, and links — at most the top 3 per call, so cover each distinct topic or entity with its own call. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: brightDataWebSearchSchema,
     execute: async ({ query, recency, lang }: BrightDataWebSearchInput) => {
@@ -27,11 +28,17 @@ export function createBrightDataWebSearch(deps: ToolDependencies): Tool {
       const body: Record<string, unknown> = {};
       applyLocaleParams(body, lang ?? deps.defaultLang);
       applyRecencyParam(body, recency);
+      const num = Math.min(cfg.web.results, SEARCH_API_RESULTS_CAP);
+      if (num < cfg.web.results) {
+        deps.logger.warn(
+          `Bright Data web results clamped from ${cfg.web.results} to ${SEARCH_API_RESULTS_CAP} (top-3 rank cutoff)`,
+        );
+      }
       const url = buildGoogleUrl(query, {
         hl: body.hl,
         gl: body.gl,
         tbs: body.tbs,
-        num: cfg.web.results,
+        num,
       });
       try {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {

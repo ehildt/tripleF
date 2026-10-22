@@ -1,6 +1,6 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
 import { buildMessageClasses } from '../../helpers/build-message-classes.helper';
 import type {
@@ -31,15 +31,15 @@ export function useExchangeRenderMode(
       return current.reasoning ? 'reasoning' : 'pending-empty';
     }
 
-    const hasHarnessTemplate = !!current.harnessTemplate;
+    const hasHarnessTemplate = !!current.responseTemplate;
     const isAssistantResponse =
       hasHarnessTemplate &&
-      (current.harnessData !== undefined || current.text !== undefined);
+      (current.responseData !== undefined || current.text !== undefined);
     const isAwaitingFirstHarnessData =
       isStreaming &&
       hasHarnessTemplate &&
-      !current.harnessData &&
-      current.harnessTemplate !== 'text';
+      !current.responseData &&
+      current.responseTemplate !== 'text';
 
     if (isAwaitingFirstHarnessData) {
       // Show the model's thinking while it works; with no reasoning yet,

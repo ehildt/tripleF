@@ -1,4 +1,4 @@
-import type { PlaybackSession } from '@/composables/use-playback-session';
+import type { PlaybackSession } from '@/composables/create-playback-session/create-playback-session';
 
 export interface FloatingPlayerProps {
   /** The app-level playback session — the player's single source of data. */

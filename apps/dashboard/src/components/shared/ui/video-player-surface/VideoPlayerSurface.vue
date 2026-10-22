@@ -8,15 +8,13 @@
 import { computed } from 'vue';
 
 import type {
-  PlayerTarget,
+  VideoPlayerSurfaceEmits,
   VideoPlayerSurfaceProps,
 } from './VideoPlayerSurface.types';
 
 const props = defineProps<VideoPlayerSurfaceProps>();
 
-const emit = defineEmits<{
-  (e: 'setPlayerElement', el: PlayerTarget): void;
-}>();
+const emit = defineEmits<VideoPlayerSurfaceEmits>();
 
 const playerKey = computed(() => props.remountKey ?? props.videoUrl);
 
@@ -37,7 +35,7 @@ function setPlayerElement(el: unknown): void {
     class="video-player-surface__player"
   />
   <iframe
-    v-else-if="!isUnembeddable"
+    v-if="!isDirectVideo && !isUnembeddable"
     :key="playerKey"
     :ref="setPlayerElement"
     :src="embedSrc"
@@ -55,7 +53,7 @@ function setPlayerElement(el: unknown): void {
     "
   />
   <a
-    v-else-if="isUnembeddable"
+    v-if="!isDirectVideo && isUnembeddable"
     :href="videoUrl"
     target="_blank"
     rel="noopener noreferrer"

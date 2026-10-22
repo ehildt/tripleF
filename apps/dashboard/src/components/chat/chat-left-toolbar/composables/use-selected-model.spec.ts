@@ -1,10 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAppStore } from '@/stores/app';
-import { useConversationStore } from '@/stores/conversation';
-import { createConversation } from '@/stores/helpers/conversation/create-conversation.helper';
-import { useModelsStore } from '@/stores/models';
+import { useAppStore } from '@/stores/app/app.store';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
+import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
 import { useSelectedModel } from './use-selected-model';
@@ -13,7 +13,7 @@ const warmModel = vi.hoisted(() => vi.fn());
 const toast = vi.hoisted(() => ({ warning: vi.fn() }));
 
 vi.mock('@/api/warm-model.api', () => ({ warmModel }));
-vi.mock('@/composables/use-toast', () => ({ useToast: () => toast }));
+vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 vi.mock('@/i18n/i18n', () => ({
   i18n: { global: { t: (key: string) => key } },
 }));

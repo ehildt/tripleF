@@ -1,12 +1,12 @@
 <script setup lang="ts">
-defineProps<{
-  count: number;
-  activeIndex: number;
-}>();
+import type {
+  LightboxFooterEmits,
+  LightboxFooterProps,
+} from '../Lightbox.types';
 
-const emit = defineEmits<{
-  (e: 'selectIndex', index: number): void;
-}>();
+defineProps<LightboxFooterProps>();
+
+const emit = defineEmits<LightboxFooterEmits>();
 </script>
 
 <template>

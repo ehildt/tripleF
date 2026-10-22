@@ -60,29 +60,27 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
     <canvas ref="canvasRef" class="memory-constellation__canvas" />
 
     <div
-      v-show="hoveredNode"
+      v-if="hoveredNode"
       ref="tooltipRef"
       class="memory-constellation__tooltip"
       :style="tooltipStyle"
     >
-      <template v-if="hoveredNode">
-        <p class="memory-constellation__tooltip-text">
-          {{ hoveredNode.summary ?? hoveredNode.text }}
-        </p>
-        <dl
-          v-if="hoveredNode.meta?.length"
-          class="memory-constellation__tooltip-meta"
+      <p class="memory-constellation__tooltip-text">
+        {{ hoveredNode.summary ?? hoveredNode.text }}
+      </p>
+      <dl
+        v-if="hoveredNode.meta?.length"
+        class="memory-constellation__tooltip-meta"
+      >
+        <div
+          v-for="row in hoveredNode.meta"
+          :key="row.label"
+          class="memory-constellation__tooltip-row"
         >
-          <div
-            v-for="row in hoveredNode.meta"
-            :key="row.label"
-            class="memory-constellation__tooltip-row"
-          >
-            <dt>{{ row.label }}</dt>
-            <dd>{{ row.value }}</dd>
-          </div>
-        </dl>
-      </template>
+          <dt>{{ row.label }}</dt>
+          <dd>{{ row.value }}</dd>
+        </div>
+      </dl>
     </div>
 
     <p class="memory-constellation__hint">
@@ -124,7 +122,6 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
   border: 1px solid var(--color-divider);
   box-shadow: 0 8px 24px
     color-mix(in srgb, var(--color-bg-primary) 35%, transparent);
-  border-radius: var(--spacing-1);
 }
 
 .memory-constellation__tooltip-text {

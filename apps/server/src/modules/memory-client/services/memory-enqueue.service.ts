@@ -7,31 +7,14 @@ import type { MemoryClientConfig } from '../configs/memory-client-config.adapter
 import {
   MEMORY_CLIENT_CONFIG,
   MEMORY_PROFILE_JOB,
-  MEMORY_WRITE_JOB,
 } from '../constants/memory-client.constants.js';
-import type {
-  MemoryProfileJobData,
-  MemoryWriteJobData,
-  VectorizeJobData,
-} from '../models/vectorize-job.model.js';
 
 import { mapVectorizeJob } from './helpers/map-vectorize-job.helper.js';
-
-interface EnqueueTurnInput {
-  /** Fact partition the records belong to; defaults to the session id. */
-  memoryPartition?: string;
-  sessionId?: string;
-  conversationId?: string;
-  /** Harness turn id — traces every stored point back to the user request. */
-  requestId?: string;
-  model: string;
-  /** Context size of the originating turn — derives the extract-step valve. */
-  numCtx?: number;
-  userText?: string;
-  assistantText?: string;
-  /** Storage urls of the turn's files, remembered on every stored point. */
-  files?: Array<{ name: string; url: string }>;
-}
+import type {
+  EnqueueTurnInput,
+  MemoryProfileJobData,
+  VectorizeJobData,
+} from './memory-enqueue.service.types.js';
 
 /**
  * Fire-and-forget write path from the harness: enqueues one vectorize job
@@ -65,36 +48,20 @@ export class MemoryEnqueueService {
         model: input.model,
         numCtx: input.numCtx,
         files: input.files,
+        gathered: input.gathered,
       };
       const jobs: VectorizeJobData[] = [];
-      if (input.userText?.trim()) {
+      if (input.userText?.trim())
         jobs.push({ ...base, role: 'user', text: input.userText });
-      }
-      if (input.assistantText?.trim()) {
+
+      if (input.assistantText?.trim())
         jobs.push({ ...base, role: 'assistant', text: input.assistantText });
-      }
+
       if (jobs.length === 0) return;
       await this.queue.addBulk(jobs.map(mapVectorizeJob));
     } catch (error) {
       this.logger.warn(
         `Memory enqueue failed — memory will be skipped: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-  }
-
-  /**
-   * Cognition write job: the harness memoryWrite step's whole job is to build
-   * this payload — the LLM tool loop then runs in the memory-app worker.
-   */
-  async enqueueWriteJob(data: MemoryWriteJobData): Promise<void> {
-    if (!this.config.enabled) return;
-    try {
-      await this.queue.add(MEMORY_WRITE_JOB, data);
-    } catch (error) {
-      this.logger.warn(
-        `Memory-write enqueue failed — write skipped for ${data.requestId}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

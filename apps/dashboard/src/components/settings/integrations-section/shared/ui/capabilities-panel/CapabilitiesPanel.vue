@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-import type {
-  CapabilityRow,
-  CapabilityStatus,
-} from './CapabilitiesPanel.types';
+import type { CapabilitiesPanelProps } from './CapabilitiesPanel.types';
 
 /**
  * Read-only provider account/usage metadata, rendered in the same visual
@@ -14,15 +11,9 @@ import type {
  * render independently, so the panel can be split across the provider's
  * two metadata columns (rows | statuses).
  */
-withDefaults(
-  defineProps<{
-    rows?: CapabilityRow[];
-    statuses?: CapabilityStatus[];
-  }>(),
-  {
-    rows: () => [],
-  },
-);
+withDefaults(defineProps<CapabilitiesPanelProps>(), {
+  rows: () => [],
+});
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ChatExchange from '../../chat-exchange/ChatExchange.vue';
-import { useCarouselSection } from './composables/use-carousel-section.composable';
+import { useCarouselSection } from './composables/use-carousel-section';
 import type { CarouselSectionProps } from './CarouselSection.types';
 
 const props = defineProps<CarouselSectionProps>();

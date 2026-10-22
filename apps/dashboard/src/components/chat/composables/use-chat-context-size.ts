@@ -1,10 +1,10 @@
 import { computed } from 'vue';
 
-import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys';
-import { useToast } from '@/composables/use-toast';
+import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys.constant';
+import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation';
-import { useModelsStore } from '@/stores/models';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { useChatConversation } from './use-chat-conversation';
 
@@ -42,8 +42,8 @@ export function useChatContextSize() {
       toast.warning(
         i18n.global.t('toast.contextClamped', {
           model: selectedModelObj.value?.model ?? '',
-          max: modelsStore.formatCtx(maxCtx),
-          value: modelsStore.formatCtx(maxCtx),
+          max: modelsStore.formatContextSize(maxCtx),
+          value: modelsStore.formatContextSize(maxCtx),
         }),
         { key: TOAST_KEY_CONTEXT_CLAMPED },
       );

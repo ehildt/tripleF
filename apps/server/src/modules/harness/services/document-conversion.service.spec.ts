@@ -3,7 +3,7 @@ import type { PdfPage } from '@triplef/pdf';
 import { PdfService } from '@triplef/pdf';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
+import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import type { DocumentManifest } from '../helpers/documents/document-manifest.helper.js';
 import { buildManifestJson } from '../helpers/documents/document-manifest.helper.js';
@@ -40,13 +40,17 @@ describe('DocumentConversionService', () => {
     extractText: ReturnType<typeof vi.fn>;
   };
   let describeService: { describePages: ReturnType<typeof vi.fn> };
-  let memoryClient: { indexEncyclopediaDocuments: ReturnType<typeof vi.fn> };
+  let memoryEncyclopedia: {
+    indexEncyclopediaDocuments: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     minioService = createMinioMock();
     pdfService = { renderPages: vi.fn(), extractText: vi.fn() };
     describeService = { describePages: vi.fn() };
-    memoryClient = { indexEncyclopediaDocuments: vi.fn(async () => null) };
+    memoryEncyclopedia = {
+      indexEncyclopediaDocuments: vi.fn(async () => null),
+    };
     pdfService.extractText.mockResolvedValue(['']);
     describeService.describePages.mockResolvedValue(new Map());
     vi.mocked(reencodePdfPageImages).mockImplementation(
@@ -64,7 +68,7 @@ describe('DocumentConversionService', () => {
         { provide: MinioService, useValue: minioService },
         { provide: PdfService, useValue: pdfService },
         { provide: PdfPageDescribeService, useValue: describeService },
-        { provide: MemoryClientService, useValue: memoryClient },
+        { provide: MemoryEncyclopediaService, useValue: memoryEncyclopedia },
       ],
     }).compile();
 
@@ -191,7 +195,9 @@ describe('DocumentConversionService', () => {
       },
     ]);
     // Non-pdf indexing rides the sanitize step; the turn path never doubles it.
-    expect(memoryClient.indexEncyclopediaDocuments).not.toHaveBeenCalled();
+    expect(
+      memoryEncyclopedia.indexEncyclopediaDocuments,
+    ).not.toHaveBeenCalled();
   });
 
   it('describes only the selected pages on a vision turn, persists, enriches', async () => {
@@ -233,8 +239,11 @@ describe('DocumentConversionService', () => {
     expect(manifest?.pageDescriptions).toEqual(['d1', null, 'd3']);
 
     // Encyclopedia node: full text layer + known descriptions.
-    expect(memoryClient.indexEncyclopediaDocuments).toHaveBeenCalledTimes(1);
-    const indexed = memoryClient.indexEncyclopediaDocuments.mock.calls[0][0];
+    expect(memoryEncyclopedia.indexEncyclopediaDocuments).toHaveBeenCalledTimes(
+      1,
+    );
+    const indexed =
+      memoryEncyclopedia.indexEncyclopediaDocuments.mock.calls[0][0];
     expect(indexed.partitionScope).toBe('sess-1');
     expect(indexed.documents[0].content).toBe(
       ['t1', 'd1', 't2', 't3', 'd3'].join('\n\n'),
@@ -262,10 +271,12 @@ describe('DocumentConversionService', () => {
 
     expect(describeService.describePages).not.toHaveBeenCalled();
     expect(lastManifestUpload()).toBeNull();
-    expect(memoryClient.indexEncyclopediaDocuments).toHaveBeenCalledTimes(1);
+    expect(memoryEncyclopedia.indexEncyclopediaDocuments).toHaveBeenCalledTimes(
+      1,
+    );
     expect(
-      memoryClient.indexEncyclopediaDocuments.mock.calls[0][0].documents[0]
-        .content,
+      memoryEncyclopedia.indexEncyclopediaDocuments.mock.calls[0][0]
+        .documents[0].content,
     ).toBe('t1');
   });
 
@@ -291,8 +302,8 @@ describe('DocumentConversionService', () => {
     expect(describeService.describePages).not.toHaveBeenCalled();
     expect(lastManifestUpload()).toBeNull();
     expect(
-      memoryClient.indexEncyclopediaDocuments.mock.calls[0][0].documents[0]
-        .content,
+      memoryEncyclopedia.indexEncyclopediaDocuments.mock.calls[0][0]
+        .documents[0].content,
     ).toBe(['t1', 'already described'].join('\n\n'));
   });
 
@@ -319,7 +330,9 @@ describe('DocumentConversionService', () => {
 
     expect(lastManifestUpload()).toBeNull();
     // Text-only node is still ensured.
-    expect(memoryClient.indexEncyclopediaDocuments).toHaveBeenCalledTimes(1);
+    expect(memoryEncyclopedia.indexEncyclopediaDocuments).toHaveBeenCalledTimes(
+      1,
+    );
   });
 
   it('heals a legacy pdf manifest missing pageTexts and indexes it', async () => {
@@ -343,8 +356,8 @@ describe('DocumentConversionService', () => {
     expect(manifest?.pageTexts).toEqual(['healed t1']);
     expect(manifest?.text).toBe('healed t1');
     expect(
-      memoryClient.indexEncyclopediaDocuments.mock.calls[0][0].documents[0]
-        .content,
+      memoryEncyclopedia.indexEncyclopediaDocuments.mock.calls[0][0]
+        .documents[0].content,
     ).toBe('healed t1');
   });
 
@@ -392,7 +405,7 @@ describe('DocumentConversionService', () => {
       pageDescriptions: ['d1'],
     });
 
-    expect(memoryClient.indexEncyclopediaDocuments).toHaveBeenCalledWith({
+    expect(memoryEncyclopedia.indexEncyclopediaDocuments).toHaveBeenCalledWith({
       partitionScope: 'sess-1',
       documents: [
         {
@@ -416,6 +429,8 @@ describe('DocumentConversionService', () => {
       pageTexts: [''],
     });
 
-    expect(memoryClient.indexEncyclopediaDocuments).not.toHaveBeenCalled();
+    expect(
+      memoryEncyclopedia.indexEncyclopediaDocuments,
+    ).not.toHaveBeenCalled();
   });
 });

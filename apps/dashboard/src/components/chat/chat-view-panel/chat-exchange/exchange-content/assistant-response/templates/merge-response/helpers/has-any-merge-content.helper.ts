@@ -1,7 +1,7 @@
-import type { HarnessResponseData } from '@/types/harness-response-data.model';
+import type { AssistantResponseData } from '@/types/assistant-response-data.model';
 
 /** True when a merge response carries any renderable content. */
-export function hasAnyMergeContent(data: HarnessResponseData): boolean {
+export function hasAnyMergeContent(data: AssistantResponseData): boolean {
   return Boolean(
     data.category ||
     data.title ||

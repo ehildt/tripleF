@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { SynopsisRepository, synopsisText } from './synopsis.repository.js';
+import { synopsisText } from './helpers/synopsis-text.helper.js';
+import { SynopsisRepository } from './synopsis.repository.js';
 
 function makeRepo() {
   const client = {

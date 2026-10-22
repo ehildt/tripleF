@@ -1,7 +1,7 @@
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
 import { computed, type Ref, ref } from 'vue';
 
-import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
+import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings/tab-menu-settings.store';
 
 /**
  * Slide-out behavior of the tab menu: the drawer starts open and stays open

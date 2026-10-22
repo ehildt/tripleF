@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
 
-import { useRelatedStoriesSection } from './composables/use-related-stories-section.composable';
+import { useRelatedStoriesSection } from './composables/use-related-stories-section';
 import RelatedStoryCard from './related-story-card/RelatedStoryCard.vue';
 import type { RelatedStoriesSectionProps } from './RelatedStoriesSection.types';
 

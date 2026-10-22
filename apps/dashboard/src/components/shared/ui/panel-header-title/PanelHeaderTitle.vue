@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-defineProps<{ label: string }>();
+import type { PanelHeaderTitleProps } from './PanelHeaderTitle.types';
+
+defineProps<PanelHeaderTitleProps>();
 </script>
 
 <template>

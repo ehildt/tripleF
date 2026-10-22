@@ -1,11 +1,11 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
 import { ValidateReturnValue, ValidateReturnValueError } from './validate-return-value.decorator.ts';
 
 class TestClass {
   private _value = 0;
 
-  @ValidateReturnValue(Joi.number().min(1))
+  @ValidateReturnValue(z.number().min(1))
   get validatedGetter() {
     return this._value;
   }
@@ -14,12 +14,12 @@ class TestClass {
     this._value = val;
   }
 
-  @ValidateReturnValue(Joi.object({ id: Joi.number().required(), name: Joi.string().required() }))
+  @ValidateReturnValue(z.object({ id: z.number(), name: z.string() }))
   getUser(id: number) {
     return { id, name: 'John' };
   }
 
-  @ValidateReturnValue(Joi.number().min(10).max(100))
+  @ValidateReturnValue(z.number().min(10).max(100))
   validateNumber(value: number) {
     return value;
   }
@@ -56,12 +56,12 @@ describe('ValidateReturnValue decorator', () => {
       expect(() => instance.getUser('invalid' as any)).toThrow(/Schema violation/);
     });
 
-    it('handles Joi transformations', () => {
+    it('returns valid method results unchanged', () => {
       const result = instance.validateNumber(50);
       expect(result).toBe(50);
     });
 
-    it('rejects values outside Joi schema range', () => {
+    it('rejects values outside the schema range', () => {
       expect(() => instance.validateNumber(5)).toThrow(/Schema violation/);
       expect(() => instance.validateNumber(150)).toThrow(/Schema violation/);
     });

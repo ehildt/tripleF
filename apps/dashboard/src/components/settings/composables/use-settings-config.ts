@@ -1,12 +1,12 @@
 import { getCurrentInstance, onMounted, ref } from 'vue';
 
+import { getApiUrl } from '@/api/api-url';
+import { fetchConfig, saveConfig } from '@/api/config.api';
+import { TOAST_KEY_SEARCH_ENGINES_REDUNDANT } from '@/composables/toast-keys.constant';
+import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
+import { getPersistentSocketSessionId } from '@/utils/get-persistent-socket-session-id/get-persistent-socket-session-id.helper';
 
-import { getApiUrl } from '../../../api/api-url';
-import { fetchConfig, saveConfig } from '../../../api/config.api';
-import { TOAST_KEY_SEARCH_ENGINES_REDUNDANT } from '../../../composables/toast-keys';
-import { useToast } from '../../../composables/use-toast';
-import { getPersistentSocketSessionId } from '../../../stores/helpers/socket/get-persistent-socket-session-id.helper';
 import { clampSettingsResults } from '../helpers/clamp-settings-results.helper';
 import type {
   ConfigSectionKey,

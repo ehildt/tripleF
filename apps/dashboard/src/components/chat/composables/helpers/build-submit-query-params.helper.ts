@@ -1,4 +1,4 @@
-import { buildQueryParams } from '@/utils/build-query-params.helper';
+import { buildQueryParams } from '@/components/chat/composables/helpers/build-query-params.helper';
 
 import type { BuildSubmitQueryParamsOptions } from './build-submit-query-params.helper.types';
 

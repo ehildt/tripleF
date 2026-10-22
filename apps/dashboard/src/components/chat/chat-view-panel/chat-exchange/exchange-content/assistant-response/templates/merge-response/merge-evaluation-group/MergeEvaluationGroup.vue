@@ -2,7 +2,7 @@
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
 
 import ParagraphSection from '../../../sections/paragraph-section/ParagraphSection.vue';
-import { useEvaluationResponseData } from '../../evaluation-response/composables/use-evaluation-response-data.composable';
+import { useEvaluationResponseData } from '../../evaluation-response/composables/use-evaluation-response-data';
 import EvaluationComparisonSection from '../../evaluation-response/sections/evaluation-comparison-section/EvaluationComparisonSection.vue';
 import EvaluationListSection from '../../evaluation-response/sections/evaluation-list-section/EvaluationListSection.vue';
 import EvaluationSubjectProfile from '../../evaluation-response/sections/evaluation-subject-profile/EvaluationSubjectProfile.vue';

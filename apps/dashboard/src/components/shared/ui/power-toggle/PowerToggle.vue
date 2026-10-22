@@ -2,25 +2,19 @@
 import { Power } from '@lucide/vue';
 
 import Tooltip from '../tooltip/Tooltip.vue';
+import type { PowerToggleEmits, PowerToggleProps } from './PowerToggle.types';
 
 /**
  * Header power toggle: a single lucide Power icon button, colored when
  * enabled and greyed out when disabled. The `tone` prop switches the accent
  * between the app accent and the preprocessing accent.
  */
-withDefaults(
-  defineProps<{
-    enabled: boolean;
-    disabled?: boolean;
-    title?: string;
-    tone?: 'accent' | 'preprocessing';
-  }>(),
-  { title: 'Toggle enabled', tone: 'accent' },
-);
+withDefaults(defineProps<PowerToggleProps>(), {
+  title: 'Toggle enabled',
+  tone: 'accent',
+});
 
-const emit = defineEmits<{
-  toggle: [];
-}>();
+const emit = defineEmits<PowerToggleEmits>();
 </script>
 
 <template>

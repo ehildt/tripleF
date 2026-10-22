@@ -4,8 +4,8 @@ import {
   type MemoryTaxonomyKind,
   type MemoryTaxonomyLane,
 } from '../../persistence/constants/memory-taxonomy.constant.js';
-import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.js';
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
+import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import type { MemoryTaxonomyReconcileJobData } from '../../qdrant/models/memory.model.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
 import { MemoryRepository } from '../../qdrant/services/memory.repository.js';

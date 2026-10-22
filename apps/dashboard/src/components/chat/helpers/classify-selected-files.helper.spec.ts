@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { UploadedImage } from '@/stores/conversation';
-import { hashFile } from '@/utils/hash-file.helper';
+import type { UploadedImage } from '@/stores/conversation/conversation.model';
+import { hashFile } from '@/utils/hash-file/hash-file.helper';
 
 import { classifySelectedFiles } from './classify-selected-files.helper';
 
-vi.mock('@/utils/hash-file.helper', () => ({
+vi.mock('@/utils/hash-file/hash-file.helper', () => ({
   hashFile: vi.fn(async (file: File) => `hash-${file.name}`),
 }));
 

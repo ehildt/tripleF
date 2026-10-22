@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 
-import { useModelsStore } from '@/stores/models';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import type { LeftToolbarMenuKey } from './use-left-toolbar-menus.types';
 import { useSelectedModel } from './use-selected-model';

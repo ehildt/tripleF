@@ -56,7 +56,7 @@ const emit = defineEmits<ConstellationToolbarEmits>();
     @click="emit('toggleAllTopics')"
   >
     <ChevronsDownUp v-if="isAllExpanded" />
-    <ChevronsUpDown v-else />
+    <ChevronsUpDown v-if="!isAllExpanded" />
   </IconButton>
   <IconButton
     :title="

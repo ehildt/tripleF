@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSettingsConfig } from './use-settings-config';
 
-vi.mock('../../../composables/use-toast', () => ({
+vi.mock('../../../composables/use-toast/use-toast', () => ({
   useToast: vi.fn(() => ({ error: vi.fn(), success: vi.fn() })),
 }));
 

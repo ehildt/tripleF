@@ -1,7 +1,7 @@
 import { computed, type MaybeRefOrGetter, ref, toValue, watch } from 'vue';
 
-import { buildVideoPosterCandidates } from '@/stores/helpers/harness/media/build-video-poster-url.helper';
-import { resolveBestVideoPosterUrl } from '@/stores/helpers/harness/media/resolve-best-video-poster-url.helper';
+import { buildVideoPosterCandidates } from '@/stores/helpers/assistant-response/media/build-video-poster-url.helper';
+import { resolveBestVideoPosterUrl } from '@/stores/helpers/assistant-response/media/resolve-best-video-poster-url.helper';
 
 /**
  * Resolve a video poster image with a graceful quality fallback. The primary

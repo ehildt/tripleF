@@ -8,7 +8,7 @@ import {
 
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import type { CollapsibleSectionKey } from '@/types/harness-response-data.model';
+import type { CollapsibleSectionKey } from '@/types/assistant-response-data.model';
 
 import type { ViewMenuProps } from './ViewMenu.types';
 

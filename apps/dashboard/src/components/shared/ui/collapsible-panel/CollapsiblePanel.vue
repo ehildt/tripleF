@@ -4,17 +4,11 @@ import { ref, watch } from 'vue';
 
 import MotionIcon from '../motion-icon/MotionIcon.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
+import type { CollapsiblePanelProps } from './CollapsiblePanel.types';
 
-const props = withDefaults(
-  defineProps<{
-    title: string;
-    count?: number;
-    defaultExpanded?: boolean;
-    /** Unique id used to persist the expanded/collapsed state (localStorage). */
-    id?: string;
-  }>(),
-  { defaultExpanded: true },
-);
+const props = withDefaults(defineProps<CollapsiblePanelProps>(), {
+  defaultExpanded: true,
+});
 
 const STORAGE_PREFIX = 'settings.collapsible';
 

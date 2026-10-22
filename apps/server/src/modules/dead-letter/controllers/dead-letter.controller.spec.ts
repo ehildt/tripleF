@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { JobReinstatementService } from '../../minio/services/job-reinstatement.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import { DlqEventsService } from '../services/dlq-events.service.js';
+import { JobReinstatementService } from '../services/job-reinstatement.service.js';
 import { DeadLetterRepository } from '../services/repository.service.js';
 
 import { DeadLetterController } from './dead-letter.controller.js';

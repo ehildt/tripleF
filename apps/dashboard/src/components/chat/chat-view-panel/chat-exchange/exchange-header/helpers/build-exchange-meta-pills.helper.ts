@@ -1,4 +1,4 @@
-import type { HarnessResponseData } from '@/types/harness-response-data.model';
+import type { AssistantResponseData } from '@/types/assistant-response-data.model';
 
 import type { ExchangeMetaPill } from './build-exchange-meta-pills.helper.types';
 
@@ -9,7 +9,7 @@ import type { ExchangeMetaPill } from './build-exchange-meta-pills.helper.types'
  * category (accent), publish date, read time, author, and a news byline line.
  */
 export function buildExchangeMetaPills(
-  data?: HarnessResponseData,
+  data?: AssistantResponseData,
 ): ExchangeMetaPill[] {
   if (!data) return [];
   const pills: ExchangeMetaPill[] = [];

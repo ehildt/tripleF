@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue';
 
 import ChartControls from '../shared/chart-controls/ChartControls.vue';
-import { DEFAULT_RANGE_BARS } from './composables/use-d3-chart.composable';
-import { useD3StackedAreaChart } from './composables/use-d3-stacked-area-chart.composable';
+import { DEFAULT_RANGE_BARS } from './composables/use-d3-chart';
+import { useD3StackedAreaChart } from './composables/use-d3-stacked-area-chart';
 import type { D3StackedAreaChartProps } from './D3StackedAreaChart.types';
 
 const props = defineProps<D3StackedAreaChartProps>();

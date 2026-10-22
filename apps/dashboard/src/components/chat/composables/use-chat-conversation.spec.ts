@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useConversationStore } from '@/stores/conversation';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { useChatConversation } from './use-chat-conversation';
 

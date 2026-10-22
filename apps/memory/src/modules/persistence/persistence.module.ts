@@ -1,7 +1,6 @@
-import { Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 
-import { PostgresConfigService } from '../postgres/configs/postgres-config.service.js';
-import { POSTGRES_CONFIG } from '../postgres/constants/postgres.constants.js';
+import { PostgresModule } from '../postgres/postgres.module.js';
 
 import { EncyclopediaLedgerRepository } from './services/encyclopedia-ledger.repository.js';
 import { MemoryClusterRepository } from './services/memory-cluster.repository.js';
@@ -19,38 +18,41 @@ import { ProviderOverridesRepository } from './services/provider-overrides.repos
  * owns the Prisma schema + migrations, this app consumes the same tables
  * with its own generated client — no migrations are run here.
  */
-@Global()
-@Module({
-  providers: [
-    PostgresConfigService,
-    {
-      provide: POSTGRES_CONFIG,
-      inject: [PostgresConfigService],
-      useFactory: (configService: PostgresConfigService) =>
-        configService.config,
-    },
-    MemoryCognitionProfileRepository,
-    MemoryInsertLedgerRepository,
-    EncyclopediaLedgerRepository,
-    MemoryLinkRepository,
-    MemoryFrictionRepository,
-    MemoryClusterRepository,
-    MemoryMainNodeRepository,
-    MemoryTaxonomyRepository,
-    ProviderOverridesRepository,
-  ],
-  exports: [
-    PostgresConfigService,
-    POSTGRES_CONFIG,
-    MemoryCognitionProfileRepository,
-    MemoryInsertLedgerRepository,
-    EncyclopediaLedgerRepository,
-    MemoryLinkRepository,
-    MemoryFrictionRepository,
-    MemoryClusterRepository,
-    MemoryMainNodeRepository,
-    MemoryTaxonomyRepository,
-    ProviderOverridesRepository,
-  ],
-})
-export class PersistenceModule {}
+@Module({})
+export class PersistenceModule {
+  private static readonly registration: DynamicModule = {
+    module: PersistenceModule,
+    exports: [
+      MemoryCognitionProfileRepository,
+      MemoryInsertLedgerRepository,
+      EncyclopediaLedgerRepository,
+      MemoryLinkRepository,
+      MemoryFrictionRepository,
+      MemoryClusterRepository,
+      MemoryMainNodeRepository,
+      MemoryTaxonomyRepository,
+      ProviderOverridesRepository,
+    ],
+    imports: [PostgresModule.register()],
+    providers: [
+      MemoryCognitionProfileRepository,
+      MemoryInsertLedgerRepository,
+      EncyclopediaLedgerRepository,
+      MemoryLinkRepository,
+      MemoryFrictionRepository,
+      MemoryClusterRepository,
+      MemoryMainNodeRepository,
+      MemoryTaxonomyRepository,
+      ProviderOverridesRepository,
+    ],
+  };
+
+  /**
+   * Shared registration object: this app uses Nest's default by-reference
+   * dynamic-module ids, so one object per module class keeps multi-site
+   * imports a single shared instance (static-module singleton semantics).
+   */
+  static register(): DynamicModule {
+    return PersistenceModule.registration;
+  }
+}

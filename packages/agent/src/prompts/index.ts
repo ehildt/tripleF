@@ -45,7 +45,6 @@ export * from './memory/memory-cluster-prompt.constant.js';
 export * from './memory/memory-consolidate-prompt.constant.js';
 export * from './memory/memory-enrich-prompt.constant.js';
 export * from './memory/memory-profile-prompt.constant.js';
-export * from './memory/memory-write-prompt.constant.js';
 export * from './memory/research-friction-query.prompt.js';
 export * from './memory/research-triage.prompt.js';
 export * from './memory/taxonomy-reconcile-prompt.constant.js';

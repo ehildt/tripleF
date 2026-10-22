@@ -3,21 +3,11 @@ import { Check } from '@lucide/vue';
 
 import MotionIcon from '../motion-icon/MotionIcon.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
+import type { FilterMenuEmits, FilterMenuProps } from './FilterMenu.types';
 
-defineProps<{
-  isOpen: boolean;
-  isActive: boolean;
-  title: string;
-  width: string;
-  options: readonly { value: string; label: string }[];
-  selectedValue: string;
-  hasTextValue?: boolean;
-}>();
+defineProps<FilterMenuProps>();
 
-const emit = defineEmits<{
-  (e: 'toggle'): void;
-  (e: 'select', value: string): void;
-}>();
+const emit = defineEmits<FilterMenuEmits>();
 </script>
 
 <template>
@@ -44,18 +34,16 @@ const emit = defineEmits<{
       :style="{ width }"
       @click.stop
     >
-      <template v-if="hasTextValue">
-        <div class="filter-menu__search">
-          <input
-            :value="selectedValue"
-            name="filter-menu"
-            :placeholder="title"
-            class="filter-menu__search-input"
-            @input="emit('select', ($event.target as HTMLInputElement).value)"
-          />
-        </div>
-      </template>
-      <template v-else>
+      <div v-if="hasTextValue" class="filter-menu__search">
+        <input
+          :value="selectedValue"
+          name="filter-menu"
+          :placeholder="title"
+          class="filter-menu__search-input"
+          @input="emit('select', ($event.target as HTMLInputElement).value)"
+        />
+      </div>
+      <template v-if="!hasTextValue">
         <button
           v-for="option in options"
           :key="option.value"
@@ -63,6 +51,7 @@ const emit = defineEmits<{
           :class="{
             'filter-menu__option--selected': selectedValue === option.value,
           }"
+          type="button"
           @click="emit('select', option.value)"
         >
           <span class="filter-menu__option-label">{{ option.label }}</span>

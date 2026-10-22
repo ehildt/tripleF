@@ -1,18 +1,13 @@
 <script setup lang="ts">
 import ExpandableMessageListToggle from '../expandable-message-list-toggle/ExpandableMessageListToggle.vue';
-import type { MessageListItem } from '../types';
+import type {
+  ExpandableMessageListItemEmits,
+  ExpandableMessageListItemProps,
+} from '../ExpandableMessageList.types';
 
-defineProps<{
-  message: MessageListItem;
-  expanded: boolean;
-  hasBody: boolean;
-  renderHtml?: (content: string) => string;
-}>();
+defineProps<ExpandableMessageListItemProps>();
 
-defineEmits<{
-  toggle: [];
-  select: [];
-}>();
+defineEmits<ExpandableMessageListItemEmits>();
 </script>
 
 <template>

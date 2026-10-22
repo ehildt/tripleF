@@ -5,7 +5,7 @@ import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 import {
   type ChatExchangeEmits,
   useChatExchange,
-} from './composables/use-chat-exchange.composable';
+} from './composables/use-chat-exchange';
 import DocumentPreview from './document-preview/DocumentPreview.vue';
 import ExchangeCollapsed from './exchange-collapsed/ExchangeCollapsed.vue';
 import ExchangeContent from './exchange-content/ExchangeContent.vue';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-header/ResponseHeader.vue';
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
@@ -9,7 +9,7 @@ import D3UnifiedStockChart from '../stockmarket-response/d3-charts/D3UnifiedStoc
 import { buildChangeLabel } from '../stockmarket-response/helpers/build-change-label.helper';
 import { resolveChangeClass } from '../stockmarket-response/helpers/resolve-change-class.helper';
 import StockmarketChartCard from '../stockmarket-response/shared/stockmarket-chart-card/StockmarketChartCard.vue';
-import { useStockmarketListData } from './composables/use-stockmarket-list-data.composable';
+import { useStockmarketListData } from './composables/use-stockmarket-list-data';
 import type { StockmarketListResponseProps } from './StockmarketListResponse.types';
 
 const appStore = useAppStore();

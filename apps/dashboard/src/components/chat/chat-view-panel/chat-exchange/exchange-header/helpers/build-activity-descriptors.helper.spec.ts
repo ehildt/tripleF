@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
+import type { AssistantActivityDescriptor } from '@/types/activity.model';
 
 import { buildActivityDescriptors } from './build-activity-descriptors.helper';
 
 describe('buildActivityDescriptors', () => {
   it('prioritizes tool descriptors over the server step activity', () => {
-    const activity: HarnessActivityDescriptor = { key: 'activity.verifying' };
+    const activity: AssistantActivityDescriptor = { key: 'activity.verifying' };
     const result = buildActivityDescriptors({
       toolCalls: [{ name: 'webSearch', category: 'web', query: 'laptops' }],
       activity,
@@ -30,7 +30,7 @@ describe('buildActivityDescriptors', () => {
   });
 
   it('falls back to the server step activity descriptor', () => {
-    const activity: HarnessActivityDescriptor = {
+    const activity: AssistantActivityDescriptor = {
       key: 'activity.understanding',
     };
     expect(buildActivityDescriptors({ activity })).toEqual([activity]);

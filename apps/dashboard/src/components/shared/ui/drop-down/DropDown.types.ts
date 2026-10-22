@@ -29,3 +29,10 @@ export interface DropDownProps {
   /** Teleports the menu to <body> and anchors it below the trigger (escapes scroll/clip contexts). */
   teleport?: boolean;
 }
+
+export interface DropDownEmits {
+  /** The selected value (v-model update). */
+  'update:modelValue': [value: string];
+  /** The menu opened. */
+  open: [];
+}

@@ -14,6 +14,8 @@ import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
 
+import type { IngestTriageOutcome } from './encyclopedia-ingest-triage.service.types.js';
+
 /** Per-document excerpt fed to the triage — enough to judge topicality. */
 const DOCUMENT_EXCERPT_CHARS = 1200;
 /** Per-result excerpt cap — snippets are short, but bound them anyway. */
@@ -21,12 +23,16 @@ const RESULT_EXCERPT_CHARS = 500;
 /** Total triage payload cap — keeps the batched call cheap. */
 const MAX_PAYLOAD_CHARS = 24_000;
 
-/** Outcome of the ingest triage: kept items plus the dropped documents. */
-export interface IngestTriageOutcome {
+/** Inputs of the ingest triage gate for one topic. */
+interface IngestTriageParams {
+  /** The topic the candidates must stay on. */
+  topic: string;
+  /** Full documents offered for ingestion. */
   documents: EncyclopediaSourceDocument[];
+  /** Web search results offered for ingestion. */
   searchResults: EncyclopediaSearchResult[];
-  /** Documents stripped as off-topic — kept ephemeral for the live turn. */
-  droppedDocuments: EncyclopediaSourceDocument[];
+  /** Model override (defaults to the encyclopedia summarize model). */
+  model?: string;
 }
 
 /**
@@ -44,12 +50,7 @@ export class EncyclopediaIngestTriageService {
 
   constructor(private readonly aiSdkService: AiSdkService) {}
 
-  async filter(params: {
-    topic: string;
-    documents: EncyclopediaSourceDocument[];
-    searchResults: EncyclopediaSearchResult[];
-    model?: string;
-  }): Promise<IngestTriageOutcome> {
+  async filter(params: IngestTriageParams): Promise<IngestTriageOutcome> {
     if (params.documents.length === 0 && params.searchResults.length === 0) {
       return {
         documents: params.documents,

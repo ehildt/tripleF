@@ -2,8 +2,8 @@
 import { storeToRefs } from 'pinia';
 import { onDeactivated } from 'vue';
 
-import { useAppStore } from '@/stores/app';
-import { useConversationStore } from '@/stores/conversation';
+import { useAppStore } from '@/stores/app/app.store';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import CapabilitiesRow from './capabilities-row/CapabilitiesRow.vue';
 import { useDeleteConversation } from './composables/use-delete-conversation';

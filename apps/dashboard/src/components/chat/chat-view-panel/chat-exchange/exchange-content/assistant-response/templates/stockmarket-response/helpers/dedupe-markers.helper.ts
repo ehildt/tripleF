@@ -1,4 +1,4 @@
-import type { ChartMarker } from '@/types/harness-response-data.model';
+import type { ChartMarker } from '@/types/assistant-response-data.model';
 
 /**
  * Collapse duplicate chart markers. The model can emit the same annotation

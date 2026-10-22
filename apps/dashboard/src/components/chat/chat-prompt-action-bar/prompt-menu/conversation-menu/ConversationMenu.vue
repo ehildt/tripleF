@@ -42,6 +42,7 @@ function onCreate(type: 'temporary' | 'persistent') {
   <ToolbarMenuTrigger
     :is-open="isOpen"
     :is-disabled="isDisabled"
+    :blinking="hasNoActiveConversation"
     :title="$t('common.newChatTooltip')"
     :trigger-icon="MessageSquare"
     @toggle-menu="emit('toggleMenu')"

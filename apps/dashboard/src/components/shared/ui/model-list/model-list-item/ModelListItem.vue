@@ -2,24 +2,20 @@
 import { Cloud, HardDrive } from '@lucide/vue';
 import { computed } from 'vue';
 
-import type { OllamaModel } from '@/types/ollama-model.model';
-import { formatCtx } from '@/utils/format-ctx.helper';
+import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 
 import Tooltip from '../../tooltip/Tooltip.vue';
+import type {
+  ModelListItemEmits,
+  ModelListItemProps,
+} from '../ModelList.types';
 import { formatParameterSize } from './helpers/format-parameter-size.helper';
 import { mapCapabilityToBadge } from './helpers/map-capability-to-badge.helper';
 import { modelCapabilities } from './helpers/model-capabilities.helper';
 
-const props = defineProps<{
-  /** The model entry to render. */
-  model: OllamaModel;
-  /** Whether this model is the currently selected one. */
-  selected: boolean;
-}>();
+const props = defineProps<ModelListItemProps>();
 
-defineEmits<{
-  select: [model: string];
-}>();
+defineEmits<ModelListItemEmits>();
 
 const metaText = computed(() =>
   [
@@ -27,7 +23,7 @@ const metaText = computed(() =>
       ? formatParameterSize(props.model.parameter_size)
       : undefined,
     props.model.context_length
-      ? formatCtx(props.model.context_length)
+      ? formatContextSize(props.model.context_length)
       : undefined,
   ]
     .filter(Boolean)
@@ -52,7 +48,10 @@ const capabilityBadges = computed(() =>
       v-if="model.origin !== 'cloud'"
       class="model-list-item__origin-icon"
     />
-    <Cloud v-else class="model-list-item__origin-icon" />
+    <Cloud
+      v-if="model.origin === 'cloud'"
+      class="model-list-item__origin-icon"
+    />
     <div class="model-list-item__info">
       <span>{{ model.model }}</span>
       <div class="model-list-item__row">

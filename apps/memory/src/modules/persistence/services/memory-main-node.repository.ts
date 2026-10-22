@@ -11,34 +11,11 @@ import type { PostgresConfig } from '../../postgres/configs/postgres-config.adap
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
 import type { MemoryLane } from '../constants/memory-lane.constant.js';
 
-/** One main node read back for the dashboard. */
-interface MemoryMainNodeRecord {
-  id: string;
-  lane: MemoryLane;
-  collection: string;
-  scopeKey: string;
-  /** The topic-blob key this main node represents (subject/tag/title/domain). */
-  groupKey: string;
-  fingerprint: string;
-  title: string;
-  summary: string;
-  memberCount: number;
-  memberIds: string[];
-}
-
-/** One main node row to write (the cluster job's replace-scope input). */
-export interface MemoryMainNodeRow {
-  id: string;
-  lane: MemoryLane;
-  collection: string;
-  scopeKey: string;
-  groupKey: string;
-  fingerprint: string;
-  title: string;
-  summary: string;
-  memberCount: number;
-  memberIds: string[];
-}
+import { mapMainNodeRowToRecord } from './helpers/map-main-node-row-to-record.helper.js';
+import type {
+  MemoryMainNodeRecord,
+  MemoryMainNodeRow,
+} from './memory-main-node.repository.types.js';
 
 /**
  * Postgres storage for the title-tier main nodes — one row per topic blob
@@ -86,7 +63,7 @@ export class MemoryMainNodeRepository implements OnModuleInit, OnModuleDestroy {
       where: { lane, collection, scopeKey },
       orderBy: { memberCount: 'desc' },
     });
-    return rows.map(mapMainNodeRow);
+    return rows.map(mapMainNodeRowToRecord);
   }
 
   /**
@@ -110,30 +87,4 @@ export class MemoryMainNodeRepository implements OnModuleInit, OnModuleDestroy {
       }),
     ]);
   }
-}
-
-function mapMainNodeRow(row: {
-  id: string;
-  lane: string;
-  collection: string;
-  scopeKey: string;
-  groupKey: string;
-  fingerprint: string;
-  title: string;
-  summary: string;
-  memberCount: number;
-  memberIds: string[];
-}): MemoryMainNodeRecord {
-  return {
-    id: row.id,
-    lane: row.lane as MemoryLane,
-    collection: row.collection,
-    scopeKey: row.scopeKey,
-    groupKey: row.groupKey,
-    fingerprint: row.fingerprint,
-    title: row.title,
-    summary: row.summary,
-    memberCount: row.memberCount,
-    memberIds: row.memberIds,
-  };
 }

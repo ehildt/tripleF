@@ -1,7 +1,7 @@
 import { createI18n } from 'vue-i18n';
 
 import { DEFAULT_LOCALE, isLocaleCode, type LocaleCode } from './locale-codes';
-import type { LocaleMessages } from './locale-messages.types';
+import type { LocaleMessages } from './locale-schema';
 import { defaultMessages, localeLoaders } from './messages';
 
 // Type the translation schema so `t(...)` keys are checked at compile time.

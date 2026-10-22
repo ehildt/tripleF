@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { type ComponentPublicInstance, computed, toRef, watch } from 'vue';
 
-import { useChatViewStore } from '@/stores/chat-view';
-import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
+import { useChatView } from '@/components/chat/shared/composables/use-chat-view';
 
+import { useCarouselScrollState } from '../composables/use-carousel-scroll-state';
 import { useNativeScroll } from '../composables/use-native-scroll';
 import { useProgrammaticScrollWindow } from '../composables/use-programmatic-scroll-window';
 import { useUserScrollGate } from '../composables/use-user-scroll-gate';
@@ -20,8 +20,8 @@ const emit = defineEmits<{
   scroll: [];
 }>();
 
-const chatViewStore = useChatViewStore();
-const verticalCarouselStore = useVerticalCarouselStore();
+const chatView = useChatView();
+const carouselScrollState = useCarouselScrollState();
 
 const isCarousel = computed(() => props.mode === 'carousel');
 
@@ -124,9 +124,9 @@ const activeUserExchangeId = computed(
   () => props.sections[activeSectionIndexForMode.value]?.user?.id ?? null,
 );
 
-// Publish the active exchange to the chat-view store so the right-toolbar
+// Publish the active exchange to the chat view so the right-toolbar
 // history can highlight the row the user is reading — no defineExpose chain.
-watch(activeUserExchangeId, (id) => chatViewStore.setActiveUserExchangeId(id), {
+watch(activeUserExchangeId, (id) => chatView.setActiveUserExchangeId(id), {
   immediate: true,
 });
 
@@ -146,7 +146,7 @@ watch(
     if (newLength >= previousLength || newLength === 0) return;
     const targetIndex = Math.min(activeSectionIndex.value, newLength - 1);
     if (targetIndex < 0) return;
-    verticalCarouselStore.scrollToSection(targetIndex);
+    carouselScrollState.scrollToSection(targetIndex);
   },
 );
 
@@ -188,7 +188,7 @@ function scrollToExchange(exchangeId: string) {
   if (index < 0) return;
 
   if (isCarousel.value) {
-    verticalCarouselStore.scrollToSection(index, true, true);
+    carouselScrollState.scrollToSection(index, true, true);
     // A history click always lands the section at its top. Reset it directly
     // too, so clicking the already-active section still scrolls it to the top
     // (the activation watch only fires when the active section changes).
@@ -202,12 +202,12 @@ function scrollToExchange(exchangeId: string) {
 }
 
 // Consume the history panel's one-shot scroll request from the chat-view
-// store (replaces the defineExpose chain). The requestId always increments,
+// request (replaces the defineExpose chain). The requestId always increments,
 // so a repeat click on the already-active exchange still re-scrolls it.
 watch(
-  () => chatViewStore.scrollToExchangeRequest?.requestId,
+  () => chatView.scrollToExchangeRequest.value?.requestId,
   () => {
-    const request = chatViewStore.scrollToExchangeRequest;
+    const request = chatView.scrollToExchangeRequest.value;
     if (request) scrollToExchange(request.exchangeId);
   },
 );

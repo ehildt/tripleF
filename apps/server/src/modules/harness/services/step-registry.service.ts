@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { StepId } from './harness-context.type.js';
 import { StepHandler } from './harness-step.interface.js';
-
-export type StepRegistry = Map<
-  StepId,
-  { handler: StepHandler; deps: StepId[] }
->;
+import type { StepRegistry } from './step-registry.service.types.js';
 
 @Injectable()
 export class StepRegistryService {

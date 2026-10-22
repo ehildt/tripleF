@@ -1,19 +1,17 @@
-import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
-import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
-
 import { useCarouselBlend } from './use-carousel-blend';
+import { useCarouselScrollState } from './use-carousel-scroll-state';
 
 function setup(index: number, scrollTop: number, viewport = 100) {
-  setActivePinia(createPinia());
-  const store = useVerticalCarouselStore();
-  store.scrollTop = scrollTop;
-  store.viewportHeight = viewport;
+  const state = useCarouselScrollState();
+  // Module-scope singleton: assign the scroll metrics each setup drives.
+  state.scrollTop.value = scrollTop;
+  state.viewportHeight.value = viewport;
   const indexRef = ref(index);
   const { opacity } = useCarouselBlend(indexRef);
-  return { opacity, indexRef, store };
+  return { opacity, indexRef, state };
 }
 
 describe('useCarouselBlend', () => {
@@ -28,10 +26,10 @@ describe('useCarouselBlend', () => {
   });
 
   it('reacts to scroll changes', () => {
-    const { opacity, store } = setup(0, 0);
+    const { opacity, state } = setup(0, 0);
     expect(opacity.value).toBe(1);
 
-    store.scrollTop = 30;
+    state.scrollTop.value = 30;
     expect(opacity.value).toBeCloseTo(0.7);
   });
 

@@ -1,4 +1,4 @@
-import { sanitizeHtml } from '@/utils/sanitize-html.helper';
+import { sanitizeHtml } from '@/utils/sanitize-html/sanitize-html.helper';
 
 import type { DocumentPreviewContent } from './load-document-preview-content.helper.types';
 

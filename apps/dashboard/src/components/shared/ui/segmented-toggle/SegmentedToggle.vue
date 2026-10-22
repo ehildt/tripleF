@@ -1,21 +1,17 @@
 <script setup lang="ts">
-import type { LucideIcon } from '@lucide/vue';
-
 import Tooltip from '../tooltip/Tooltip.vue';
+import type {
+  SegmentedToggleEmits,
+  SegmentedToggleProps,
+} from './SegmentedToggle.types';
 
 /**
  * Icon-only segmented toggle: a row of joined buttons where exactly one is
  * active. Every button is icon + tooltip only (no text).
  */
-defineProps<{
-  options: readonly { value: string; icon: LucideIcon; tooltip: string }[];
-  modelValue: string;
-  ariaLabel?: string;
-}>();
+defineProps<SegmentedToggleProps>();
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string];
-}>();
+const emit = defineEmits<SegmentedToggleEmits>();
 </script>
 
 <template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-defineProps<{
-  html: string;
-}>();
+import type { ExpandableMessageListBodyProps } from '../ExpandableMessageList.types';
+
+defineProps<ExpandableMessageListBodyProps>();
 </script>
 
 <template>

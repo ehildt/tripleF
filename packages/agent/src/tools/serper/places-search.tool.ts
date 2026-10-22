@@ -1,5 +1,6 @@
 import { type Tool, tool } from 'ai';
 
+import { SEARCH_API_RESULTS_CAP } from '../constants/search-results-cap.constant.js';
 import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
@@ -22,7 +23,12 @@ export function createSerperPlacesSearch(deps: ToolDependencies): Tool {
       }
 
       deps.logger.log(`Serper.dev Places search for "${query}"`);
-      const num = Math.min(reqCount ?? cfg.places.results, cfg.places.results);
+      const num = Math.min(reqCount ?? cfg.places.results, cfg.places.results, SEARCH_API_RESULTS_CAP);
+      if (num < (reqCount ?? cfg.places.results)) {
+        deps.logger.warn(
+          `Serper.dev places results clamped to ${SEARCH_API_RESULTS_CAP} (top-3 rank cutoff) for "${query}"`,
+        );
+      }
       const body: Record<string, unknown> = { q: query, num };
       applyLocaleParams(body, lang ?? deps.defaultLang);
       const res = await fetchWithTimeout(

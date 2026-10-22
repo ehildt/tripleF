@@ -2,8 +2,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
-import { usePlaylistStore } from '@/stores/playlist';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 
 import { usePlaylistTab } from './use-playlist-tab';
 
@@ -13,7 +13,7 @@ const playback = vi.hoisted(() => ({})) as {
   launchedVideo: Ref<{ videoUrl: string } | null>;
 };
 
-vi.mock('@/composables/use-playback-session', async () => {
+vi.mock('@/composables/use-playback-session/use-playback-session', async () => {
   const { ref } = await import('vue');
   const launchedFromPlaylist = ref(false);
   const launchedVideo = ref<{ videoUrl: string } | null>(null);
@@ -42,7 +42,7 @@ describe('usePlaylistTab', () => {
         content: '',
         status: 'done' as const,
         timestamp: 0,
-        harnessData: {
+        responseData: {
           videoGalleryItems: [{ videoUrl: 'https://video.test/one' }],
         },
       },

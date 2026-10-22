@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Debug from '../../../../components/debug/Debug.vue';
 import RequestDetails from '../../../../components/debug/request-details/RequestDetails.vue';
-import { useDebugStore } from '../../../../stores/debug';
+import { useDebugStore } from '../../../../stores/debug/debug.store';
 
 const debugStore = useDebugStore();
 </script>

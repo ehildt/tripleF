@@ -20,21 +20,22 @@ import {
   LayoutPanelLeft,
   ListVideo,
   PanelRightClose,
+  Power,
+  RotateCcw,
+  ScanSearch,
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
-import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
-import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
-import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist';
-import type { PlaylistAnchor } from '@/stores/playlist.types';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import type { PlaylistAnchor } from '@/stores/playlist/playlist.types';
+import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 import type {
   PlaylistHorizontal,
@@ -114,28 +115,31 @@ function handlePreviewToggle() {
 
 <template>
   <div class="playlist-panel">
-    <PanelActions>
-      <PreviewButton
-        :active="playlistStore.playlistPreviewVisible"
-        :title="
+    <MenuRow variant="panel" role="toolbar">
+      <MenuButton
+        :icon="ScanSearch"
+        :label="
           playlistStore.playlistPreviewVisible
             ? $t('common.hideExampleFloatingPlayer')
             : $t('common.showExampleFloatingPlayer')
         "
+        :active="playlistStore.playlistPreviewVisible"
         @click="handlePreviewToggle"
       />
-      <ResetButton
-        :title="$t('common.resetFloatingPlayerSettingsToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetFloatingPlayerSettingsToDefaults')"
         @click="playlistStore.resetPlaylistSettings"
       />
-      <PowerToggle
-        :enabled="floatingEnabled"
-        :title="$t('common.floatPlayerAsAppWindow')"
-        @toggle="
+      <MenuButton
+        :icon="Power"
+        :label="$t('common.floatPlayerAsAppWindow')"
+        :active="floatingEnabled"
+        @click="
           playlistStore.setPlaylistMode(floatingEnabled ? 'panel' : 'floating')
         "
       />
-    </PanelActions>
+    </MenuRow>
 
     <div class="playlist-panel__group">
       <SectionHeader
@@ -191,7 +195,6 @@ function handlePreviewToggle() {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-  padding: var(--spacing-2);
 }
 
 .playlist-panel__group {

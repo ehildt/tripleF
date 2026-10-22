@@ -4,10 +4,10 @@ import {
   taxonomyLabelEntries,
   type TaxonomyLabelEntry,
 } from '../../../../memory-taxonomy/helpers/taxonomy-label-entries.helper.js';
-import type { MemoryFrictionLane } from '../../../../persistence/services/memory-friction.repository.js';
 import { MemoryFrictionRepository } from '../../../../persistence/services/memory-friction.repository.js';
-import type { MemoryTaxonomyMaintenanceField } from '../../../../persistence/services/memory-taxonomy.repository.js';
+import type { MemoryFrictionLane } from '../../../../persistence/services/memory-friction.repository.types.js';
 import { MemoryTaxonomyRepository } from '../../../../persistence/services/memory-taxonomy.repository.js';
+import type { MemoryTaxonomyMaintenanceField } from '../../../../persistence/services/memory-taxonomy.repository.types.js';
 import { CONVICTION_TAG } from '../../../../qdrant/constants/conviction.constant.js';
 import type { MemoryReflectJobData } from '../../../../qdrant/models/memory.model.js';
 import { EncyclopediaRepository } from '../../../../qdrant/services/encyclopedia.repository.js';

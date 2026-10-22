@@ -27,15 +27,15 @@ import { computed, ref } from 'vue';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import MenuTabs from '@/components/shared/ui/menu-tabs/MenuTabs.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
-import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
 import { i18n } from '@/i18n/i18n';
 import {
   TEMPLATE_NAMES,
   TEMPLATE_PARTS,
   type TemplateName,
-} from '@/stores/template-parts.constant';
-import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings';
+} from '@/stores/template-parts-settings/template-parts-settings.constant';
+import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings/template-parts-settings.store';
 
 import { useSettingsConfig } from '../composables/use-settings-config';
 import { mapSubtabToItem } from './helpers/map-subtab-to-item.helper';
@@ -150,7 +150,8 @@ function partLabelKey(partId: string): string {
 <template>
   <SettingsSection>
     <div class="layouts-section">
-      <SettingsSubMenu
+      <MenuTabs
+        variant="section"
         :items="SUBTAB_ITEMS"
         :active="activeSubtabId"
         @select="activeSubtabId = $event as string"

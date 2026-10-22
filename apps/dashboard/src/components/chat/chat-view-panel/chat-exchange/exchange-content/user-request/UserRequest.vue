@@ -4,7 +4,7 @@ import { computed } from 'vue';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import type { LightboxImage } from '@/types/lightbox.model';
-import { renderMarkdown } from '@/utils/render-markdown.helper';
+import { renderMarkdown } from '@/utils/render-markdown/render-markdown.helper';
 
 const props = defineProps<{
   content: string;

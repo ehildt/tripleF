@@ -1,26 +1,31 @@
-import Joi from 'joi';
-import type { LoggerOptions } from 'pino';
+import { z } from 'zod';
 
 /**
- * Joi validation schema for pino `LoggerOptions` used by the BullMQ job
+ * Zod validation schema for pino `LoggerOptions` used by the BullMQ job
  * logger. Validates the keys the library consumes (`level`, `base`,
  * `redact`, `timestamp`, `transport`) and lets the rest of pino's
- * `LoggerOptions` through via `.unknown(true)`.
+ * `LoggerOptions` through via a loose object.
  */
-export const BullMQLoggerSchema = Joi.object<LoggerOptions>({
-  level: Joi.string().valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent').default('info'),
-  base: Joi.object().allow(null).optional(),
-  redact: Joi.object({
-    paths: Joi.array().items(Joi.string()).required(),
-    censor: Joi.string().optional(),
-  }).optional(),
-  timestamp: Joi.alternatives(Joi.func(), Joi.boolean()).optional(),
-  transport: Joi.object({
-    target: Joi.string().valid('pino-pretty').default('pino-pretty'),
-    options: Joi.object({
-      translateTime: Joi.string().default('yyyy-mm-dd HH:MM:ss.l'),
-      colorize: Joi.boolean().default(true),
-      ignore: Joi.string().default('pid,hostname'),
-    }).required(),
-  }).optional(),
-}).unknown(true);
+export const BullMQLoggerSchema = z.looseObject({
+  level: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  base: z.looseObject({}).nullable().optional(),
+  redact: z
+    .strictObject({
+      paths: z.array(z.string()),
+      censor: z.string().optional(),
+    })
+    .optional(),
+  timestamp: z
+    .union([z.custom<(...args: never[]) => unknown>((val) => typeof val === 'function'), z.boolean()])
+    .optional(),
+  transport: z
+    .strictObject({
+      target: z.literal('pino-pretty').default('pino-pretty'),
+      options: z.strictObject({
+        translateTime: z.string().default('yyyy-mm-dd HH:MM:ss.l'),
+        colorize: z.boolean().default(true),
+        ignore: z.string().default('pid,hostname'),
+      }),
+    })
+    .optional(),
+});

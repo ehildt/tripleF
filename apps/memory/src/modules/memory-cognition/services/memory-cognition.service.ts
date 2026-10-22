@@ -25,13 +25,12 @@ import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { mapInsightToItem } from '../helpers/map-insight-to-item.helper.js';
 import { mapItemToPoint } from '../helpers/map-item-to-point.helper.js';
 
-interface CognitionScope {
-  memoryCognition: string;
-  sessionId?: string;
-  conversationId?: string;
-  /** Harness turn id — traces every cognition write back to the user request. */
-  requestId?: string;
-}
+import type {
+  CognitionDeleteInput,
+  CognitionDeleteResult,
+  CognitionScope,
+  CognitionSynthesisStatement,
+} from './memory-cognition.service.types.js';
 
 /**
  * The AI's cognition lane (`memory_cognition` space): the assistant's
@@ -195,7 +194,8 @@ export class MemoryCognitionService {
   }
 
   /**
-   * Store one derived insight (the memory-cognition-remember tool) — a single
+   * Store one derived insight (manual ingest via `POST /memory/cognition/insights`)
+   * — a single
    * Qdrant point in the cognition space, id seeded on the text so repeats
    * overwrite silently. Returns the point id. Throws when the feature is off
    * or the embed fails — callers catch.
@@ -247,7 +247,7 @@ export class MemoryCognitionService {
    */
   async upsertConvictions(
     scope: CognitionScope,
-    convictions: Array<{ text: string; evidenceIds: string[] }>,
+    convictions: CognitionSynthesisStatement[],
   ): Promise<number> {
     if (!this.config.enabled) {
       throw new Error('Memory feature is disabled');
@@ -341,11 +341,9 @@ export class MemoryCognitionService {
    * deleteCognition wipe; returns the removed texts and pruned topics for
    * transparent confirmation — all-empty is an honest miss.
    */
-  async deleteCognitionRecords(input: {
-    memoryCognition: string;
-    text?: string;
-    path?: string;
-  }): Promise<{ deleted: number; texts: string[]; pruned: string[] }> {
+  async deleteCognitionRecords(
+    input: CognitionDeleteInput,
+  ): Promise<CognitionDeleteResult> {
     const removed: string[] = [];
     const pruned: string[] = [];
 

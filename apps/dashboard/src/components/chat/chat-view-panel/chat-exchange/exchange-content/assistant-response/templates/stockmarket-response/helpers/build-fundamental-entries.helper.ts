@@ -1,4 +1,4 @@
-import type { StockmarketFundamentals } from '@/types/harness-response-data.model';
+import type { StockmarketFundamentals } from '@/types/assistant-response-data.model';
 
 import { compactNumber } from './compact-number.helper';
 

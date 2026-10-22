@@ -9,7 +9,7 @@ import { type WebFetchInput, webFetchSchema } from './web-fetch.schema.js';
 export function createWebFetchTool(): Tool {
   return tool({
     description:
-      'Fetch the full content of a specific URL (e.g. a search result page). Returns the main article text as Markdown (boilerplate removed). Prefer fetching the most relevant search results to ground the answer in full source text.',
+      'Fetch the full content of a specific URL (e.g. a search result page). Returns the main article text as Markdown (boilerplate removed). The top 3 search results are already fetched automatically when no fetch tool runs — use this for a specific page beyond those, when the snippets are insufficient.',
     inputSchema: webFetchSchema,
     execute: async ({ url }: WebFetchInput) => {
       const response = await fetchWithTimeout(

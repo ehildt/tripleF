@@ -1,8 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useAppStore } from '../../../stores/app';
-import { useDebugStore } from '../../../stores/debug';
+import { useAppStore } from '@/stores/app/app.store';
+import { useDebugStore } from '@/stores/debug/debug.store';
+
 import { useSettingsTabVisibility } from './use-settings-tab-visibility';
 
 describe('useSettingsTabVisibility', () => {
@@ -13,20 +14,14 @@ describe('useSettingsTabVisibility', () => {
     setActivePinia(createPinia());
   });
 
-  it('reflects tab visibility from the app store', () => {
-    const appStore = useAppStore();
-    appStore.toggleTabVisibility('debug');
-
-    const { isTabVisible } = useSettingsTabVisibility();
-    // debug starts hidden; the toggle flips it to visible.
-    expect(isTabVisible('debug')).toBe(true);
-  });
-
   it('toggles a tab via the app store', () => {
-    const { isTabVisible, toggleTab } = useSettingsTabVisibility();
-    expect(isTabVisible('preprocessing')).toBe(true);
+    const appStore = useAppStore();
+    const { toggleTab } = useSettingsTabVisibility();
+    expect(appStore.isTabVisible('preprocessing')).toBe(true);
     toggleTab('preprocessing');
-    expect(isTabVisible('preprocessing')).toBe(false);
+    expect(appStore.isTabVisible('preprocessing')).toBe(false);
+    toggleTab('preprocessing');
+    expect(appStore.isTabVisible('preprocessing')).toBe(true);
   });
 
   it('pauses the debug log when the debug tab is hidden', () => {
@@ -39,14 +34,5 @@ describe('useSettingsTabVisibility', () => {
     expect(debugStore.debugPaused).toBe(false);
     toggleTab('debug');
     expect(debugStore.debugPaused).toBe(true);
-  });
-
-  it('toggles counters visibility', () => {
-    const { showCounters, toggleShowCounters } = useSettingsTabVisibility();
-    expect(showCounters.value).toBe(true);
-    toggleShowCounters();
-    expect(showCounters.value).toBe(false);
-    toggleShowCounters();
-    expect(showCounters.value).toBe(true);
   });
 });

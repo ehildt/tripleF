@@ -3,16 +3,16 @@ import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 
 import type {
-  HarnessResponseData,
+  AssistantResponseData,
   ShopOffer,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 import ShopListResponse from './ShopListResponse.vue';
 
-function mountShopList(data: Partial<HarnessResponseData>) {
+function mountShopList(data: Partial<AssistantResponseData>) {
   return mount(ShopListResponse, {
     global: { plugins: [createPinia()] },
-    props: { data: data as HarnessResponseData },
+    props: { data: data as AssistantResponseData },
   });
 }
 

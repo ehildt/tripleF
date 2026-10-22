@@ -9,16 +9,14 @@ import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
-import {
-  type MemoryClusterRecord,
-  MemoryClusterRepository,
-  type MemoryClusterRow,
-} from '../../../../persistence/services/memory-cluster.repository.js';
+import { MemoryClusterRepository } from '../../../../persistence/services/memory-cluster.repository.js';
+import type {
+  MemoryClusterRecord,
+  MemoryClusterRow,
+} from '../../../../persistence/services/memory-cluster.repository.types.js';
 import { MemoryLinkRepository } from '../../../../persistence/services/memory-link.repository.js';
-import {
-  MemoryMainNodeRepository,
-  type MemoryMainNodeRow,
-} from '../../../../persistence/services/memory-main-node.repository.js';
+import { MemoryMainNodeRepository } from '../../../../persistence/services/memory-main-node.repository.js';
+import type { MemoryMainNodeRow } from '../../../../persistence/services/memory-main-node.repository.types.js';
 import {
   clampClusterMinMembers,
   CLUSTER_MEMBER_TEXT_LIMIT,
@@ -32,19 +30,23 @@ import type { MemoryClusterJobData } from '../../../../qdrant/models/memory.mode
 import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model.js';
 import { EmbeddingService } from '../../../../qdrant/services/embedding.service.js';
 import { EncyclopediaRepository } from '../../../../qdrant/services/encyclopedia.repository.js';
+import { synopsisText } from '../../../../qdrant/services/helpers/synopsis-text.helper.js';
 import { MemoryRepository } from '../../../../qdrant/services/memory.repository.js';
 import { MemoryOverridesService } from '../../../../qdrant/services/memory-overrides.service.js';
-import {
-  type SynopsisPoint,
-  SynopsisRepository,
-  synopsisText,
-} from '../../../../qdrant/services/synopsis.repository.js';
+import { SynopsisRepository } from '../../../../qdrant/services/synopsis.repository.js';
+import type { SynopsisPoint } from '../../../../qdrant/services/synopsis.repository.types.js';
 import {
   type ClusterPoint,
   cosineSimilarity,
   detectClusters,
 } from '../../../helpers/detect-clusters.helper.js';
 import { groupMainNodeLeaves } from '../../../helpers/group-main-node-leaves.helper.js';
+
+import { existingFingerprintOf } from './helpers/existing-fingerprint-of.helper.js';
+import { fallbackTitle } from './helpers/fallback-title.helper.js';
+import { fallbackTitleOfClusters } from './helpers/fallback-title-of-clusters.helper.js';
+import { modalCategory } from './helpers/modal-category.helper.js';
+import { synopsisPointId } from './helpers/synopsis-point-id.helper.js';
 
 /**
  * One scrolled scope point: the cluster-detection input plus the fields the
@@ -612,58 +614,4 @@ export class MemoryClusterJobService {
       ? this.memoryRepository.collection
       : this.encyclopediaRepository.collection;
   }
-}
-
-/** Most common category among members — the summary prompt's naming hint. */
-function modalCategory(members: ClusterPoint[]): string | undefined {
-  const counts = new Map<string, number>();
-  for (const member of members) {
-    const category = member.category?.trim();
-    if (!category) continue;
-    counts.set(category, (counts.get(category) ?? 0) + 1);
-  }
-  let best: string | undefined;
-  let bestCount = 0;
-  for (const [category, count] of counts) {
-    if (count > bestCount) {
-      best = category;
-      bestCount = count;
-    }
-  }
-  return best;
-}
-
-/** Fallback title when the summary verdict is unparseable. */
-function fallbackTitle(members: ClusterPoint[]): string {
-  const category = modalCategory(members);
-  if (category) return category;
-  const first = members.find((member) => member.text.trim())?.text.trim();
-  return first ? first.slice(0, CLUSTER_TITLE_LIMIT) : 'untitled';
-}
-
-/**
- * Deterministic synopsis-point id for a cluster (`synopsis|<clusterId>`,
- * hashed to a UUID — Qdrant accepts ints/UUIDs only) — identical cluster
- * identity ⇒ identical point id ⇒ overwrite-in-place.
- */
-function synopsisPointId(clusterId: string): string {
-  return deterministicPointId(`synopsis|${clusterId}`);
-}
-
-/** Fingerprint reuse lookup (`<level>|<fingerprint>` — levels never trade). */
-function existingFingerprintOf(
-  existingByFingerprint: Map<string, MemoryClusterRecord>,
-  level: number,
-  fingerprint: string,
-): MemoryClusterRecord | undefined {
-  return existingByFingerprint.get(`${level}|${fingerprint}`);
-}
-
-/**
- * Fallback title for an upper-level (synopsis) cluster when the summary
- * verdict is unparseable: the largest child cluster's title.
- */
-function fallbackTitleOfClusters(members: MemoryClusterRow[]): string {
-  const largest = [...members].sort((a, b) => b.memberCount - a.memberCount)[0];
-  return (largest?.title.trim() ?? 'untitled').slice(0, CLUSTER_TITLE_LIMIT);
 }

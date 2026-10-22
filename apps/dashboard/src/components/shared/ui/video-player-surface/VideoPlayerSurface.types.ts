@@ -8,3 +8,8 @@ export interface VideoPlayerSurfaceProps {
   /** Optional key used to force remount when the video source changes. */
   remountKey?: string;
 }
+
+export interface VideoPlayerSurfaceEmits {
+  /** The media element mounted/changed — the pausable-player wiring target. */
+  setPlayerElement: [el: PlayerTarget];
+}

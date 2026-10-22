@@ -19,7 +19,10 @@ import FloatingMediaBar from '@/components/shared/ui/floating-media-bar/Floating
 import ResizeHandleGrid from '@/components/shared/ui/resize-handle-grid/ResizeHandleGrid.vue';
 import type { ResizeDirection } from '@/types/resize-direction.model';
 
-import type { FloatingPopoutProps } from './FloatingPopout.types';
+import type {
+  FloatingPopoutEmits,
+  FloatingPopoutProps,
+} from './FloatingPopout.types';
 
 const props = withDefaults(defineProps<FloatingPopoutProps>(), {
   title: '',
@@ -36,15 +39,7 @@ const barHovered = ref(false);
 /** The bar is shown unless auto-hide is on and the pointer is away. */
 const barVisible = computed(() => props.barAlwaysVisible || barHovered.value);
 
-const emit = defineEmits<{
-  /** Pointer down on free bar space starts dragging the popup. */
-  drag: [event: PointerEvent];
-  opacityInput: [percent: number];
-  togglePlaylist: [];
-  minimize: [];
-  close: [];
-  resize: [direction: ResizeDirection, event: PointerEvent];
-}>();
+const emit = defineEmits<FloatingPopoutEmits>();
 
 function handleResize(direction: ResizeDirection, event: PointerEvent) {
   emit('resize', direction, event);

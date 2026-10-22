@@ -29,7 +29,7 @@ export default defineConfig({
       'util',
       '@nestjs/common',
       '@nestjs/swagger',
-      'joi',
+      'zod',
       'socket.io',
       'fastify-socket.io',
     ];

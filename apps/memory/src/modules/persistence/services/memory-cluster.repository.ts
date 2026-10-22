@@ -11,39 +11,11 @@ import type { PostgresConfig } from '../../postgres/configs/postgres-config.adap
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
 import type { MemoryLane } from '../constants/memory-lane.constant.js';
 
-/** One cluster read back for the dashboard / retrieval attach. */
-export interface MemoryClusterRecord {
-  id: string;
-  lane: MemoryLane;
-  collection: string;
-  scopeKey: string;
-  fingerprint: string;
-  title: string;
-  summary: string;
-  memberCount: number;
-  memberIds: string[];
-  /** Hierarchy level: 0 = leaf cluster over points; 1+ = cluster of cluster synopses. */
-  level: number;
-  /** Parent cluster id at level+1 (null on the top level). */
-  parentId?: string;
-}
-
-/** One cluster row to write (the job's replace-scope input). */
-export interface MemoryClusterRow {
-  id: string;
-  lane: MemoryLane;
-  collection: string;
-  scopeKey: string;
-  fingerprint: string;
-  title: string;
-  summary: string;
-  memberCount: number;
-  memberIds: string[];
-  /** Hierarchy level (default 0 = leaf). */
-  level: number;
-  /** Parent cluster id at level+1 (null on the top level). */
-  parentId?: string;
-}
+import { mapClusterRowToRecord } from './helpers/map-cluster-row-to-record.helper.js';
+import type {
+  MemoryClusterRecord,
+  MemoryClusterRow,
+} from './memory-cluster.repository.types.js';
 
 /**
  * Postgres storage for the detected memory clusters — one row per cluster
@@ -90,7 +62,7 @@ export class MemoryClusterRepository implements OnModuleInit, OnModuleDestroy {
       where: { lane, collection, scopeKey },
       orderBy: { memberCount: 'desc' },
     });
-    return rows.map(mapClusterRow);
+    return rows.map(mapClusterRowToRecord);
   }
 
   /** Clusters by id — the retrieval attach lookup (hit cluster_id → row). */
@@ -99,7 +71,7 @@ export class MemoryClusterRepository implements OnModuleInit, OnModuleDestroy {
     const rows = await this.prisma.memoryCluster.findMany({
       where: { id: { in: ids } },
     });
-    return rows.map(mapClusterRow);
+    return rows.map(mapClusterRowToRecord);
   }
 
   /**
@@ -135,32 +107,4 @@ export class MemoryClusterRepository implements OnModuleInit, OnModuleDestroy {
       where: { lane, collection, scopeKey },
     });
   }
-}
-
-function mapClusterRow(row: {
-  id: string;
-  lane: string;
-  collection: string;
-  scopeKey: string;
-  fingerprint: string;
-  title: string;
-  summary: string;
-  memberCount: number;
-  memberIds: string[];
-  level: number;
-  parentId: string | null;
-}): MemoryClusterRecord {
-  return {
-    id: row.id,
-    lane: row.lane as MemoryLane,
-    collection: row.collection,
-    scopeKey: row.scopeKey,
-    fingerprint: row.fingerprint,
-    title: row.title,
-    summary: row.summary,
-    memberCount: row.memberCount,
-    memberIds: row.memberIds,
-    level: row.level,
-    parentId: row.parentId ?? undefined,
-  };
 }

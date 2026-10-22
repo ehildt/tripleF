@@ -5,8 +5,8 @@ import {
   taxonomyLabelEntries,
   type TaxonomyLabelEntry,
 } from '../../../../memory-taxonomy/helpers/taxonomy-label-entries.helper.js';
-import type { PendingLedgerEntry } from '../../../../persistence/services/memory-insert-ledger.repository.js';
 import { MemoryInsertLedgerRepository } from '../../../../persistence/services/memory-insert-ledger.repository.js';
+import type { PendingLedgerEntry } from '../../../../persistence/services/memory-insert-ledger.repository.types.js';
 import { MemoryTaxonomyRepository } from '../../../../persistence/services/memory-taxonomy.repository.js';
 import { deterministicPointId } from '../../../../qdrant/helpers/deterministic-point-id.helper.js';
 import type {

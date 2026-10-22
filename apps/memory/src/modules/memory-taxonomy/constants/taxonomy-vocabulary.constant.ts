@@ -10,6 +10,7 @@ export const VOCABULARY_RANK_LIMITS: Record<MemoryTaxonomyKind, number> = {
   cluster: 15,
   community: 10,
   hub: 10,
+  node: 8,
   tag: 8,
 };
 

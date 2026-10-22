@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -8,8 +10,12 @@ import {
   Query,
 } from '@nestjs/common';
 
+import { MemoryDeleteQueryDto } from '../../memory-partition/dtos/memory-delete-query.dto.js';
+import { MemoryDeleteResponseDto } from '../../memory-partition/dtos/memory-delete-response.dto.js';
 import { MemorySearchService } from '../../memory-partition/services/memory-search.service.js';
+import { VectorizeService } from '../../memory-partition/services/vectorize.service.js';
 import {
+  ApeDeleteMemoryText,
   ApeGetMemoryCognition,
   ApePostCognitionInsight,
   ApePostMemorySearchConvictions,
@@ -34,7 +40,74 @@ export class MemoryCognitionController {
     private readonly memoryCognitionService: MemoryCognitionService,
     private readonly memoryOverrides: MemoryOverridesService,
     private readonly memorySearchService: MemorySearchService,
+    private readonly vectorizeService: VectorizeService,
   ) {}
+
+  /**
+   * The shared text-delete route (both lanes converge here wire-wise): the
+   * cognition branch (`cognition=true`) deletes AI-side understanding, the
+   * partition branch deletes facts — always matcher-scoped, never anonymous.
+   * Lives on the cognition controller so the lane module graph stays layered
+   * (cognition imports partition, never the reverse).
+   */
+  @Delete('text')
+  @ApeDeleteMemoryText()
+  async deleteText(
+    @Query() query: MemoryDeleteQueryDto,
+  ): Promise<MemoryDeleteResponseDto> {
+    const partition = query.memoryPartition ?? query.sessionId;
+    if (!partition) {
+      throw new BadRequestException(
+        'Deletes are never anonymous: pass memoryPartition or sessionId',
+      );
+    }
+
+    // Cognition mode: WITH a matcher (verbatim insight text and/or a profile
+    // path) this is the targeted per-item delete (memory-cognition-delete
+    // tool); WITHOUT one it wipes the AI's whole understanding of the user.
+    if (query.cognition === true) {
+      if (query.text || query.path) {
+        return await this.memoryCognitionService.deleteCognitionRecords({
+          memoryCognition: partition,
+          text: query.text,
+          path: query.path,
+        });
+      }
+      const texts =
+        await this.memoryCognitionService.deleteCognition(partition);
+      return { deleted: texts.length, texts };
+    }
+
+    const hasMatcher =
+      query.text ||
+      query.contains ||
+      query.tags?.length ||
+      query.conversationId ||
+      query.requestId;
+    if (!hasMatcher) {
+      // The mem0 rule: never execute an unscoped delete. Whole-partition
+      // wipes have their own endpoint (DELETE /memory).
+      throw new BadRequestException(
+        'Pass at least one matcher (text, contains, tags, conversationId, requestId)',
+      );
+    }
+
+    try {
+      return await this.vectorizeService.deleteRecords({
+        memoryPartition: partition,
+        sessionId: query.sessionId,
+        conversationId: query.conversationId,
+        requestId: query.requestId,
+        text: query.text,
+        contains: query.contains,
+        tags: query.tags,
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'memory delete failed',
+      );
+    }
+  }
 
   @Get('cognition')
   @ApeGetMemoryCognition()

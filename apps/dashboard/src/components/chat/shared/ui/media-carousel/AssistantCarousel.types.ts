@@ -1,7 +1,7 @@
 import type {
   GalleryItem,
   MediaItem,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 export interface AssistantCarouselProps {
   items: MediaItem[];

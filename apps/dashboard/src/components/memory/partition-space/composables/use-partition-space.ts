@@ -11,8 +11,8 @@ import {
 } from '@/api/memory.api';
 import type { MemoryTaxonomyNodeRecord } from '@/api/memory-taxonomy.api';
 import { fetchMemoryTaxonomy } from '@/api/memory-taxonomy.api';
-import { useMemoryOverrides } from '@/composables/use-memory-overrides';
-import { useAppStore } from '@/stores/app';
+import { useMemoryOverrides } from '@/composables/use-memory-overrides/use-memory-overrides';
+import { useAppStore } from '@/stores/app/app.store';
 
 import { buildLabelMeta } from '../../composables/helpers/build-label-meta.helper';
 import { mapFrictions } from '../../composables/helpers/map-frictions.helper';

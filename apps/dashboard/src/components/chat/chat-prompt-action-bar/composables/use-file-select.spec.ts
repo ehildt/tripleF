@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Ref } from 'vue';
 
-import { useFileSelect } from './use-file-select.composable';
+import { useFileSelect } from './use-file-select';
 import type { FileInputRef, SetFileInputRef } from './use-file-select.types';
 
 const state = vi.hoisted(() => ({
@@ -14,11 +14,11 @@ const refs = vi.hoisted(() => ({})) as {
   selectedModelObj: Ref<{ capabilities?: string[] }>;
 };
 
-vi.mock('@/stores/attached-files', () => ({
+vi.mock('@/stores/attached-files/attached-files.store', () => ({
   useAttachedFilesStore: () => ({ addFiles: state.addFiles }),
 }));
 
-vi.mock('@/stores/models', () => ({
+vi.mock('@/stores/models/models.store', () => ({
   useModelsStore: () => ({
     get selectedModel() {
       return state.selectedModel;

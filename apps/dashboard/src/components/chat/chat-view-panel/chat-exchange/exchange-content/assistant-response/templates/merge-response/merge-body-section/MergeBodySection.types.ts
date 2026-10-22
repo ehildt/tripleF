@@ -1,4 +1,4 @@
-import type { BodySection } from '@/types/harness-response-data.model';
+import type { BodySection } from '@/types/assistant-response-data.model';
 
 export interface MergeBodySectionProps {
   /** One per-topic block of the merged narrative. */

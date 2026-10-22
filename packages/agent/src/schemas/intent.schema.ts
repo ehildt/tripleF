@@ -122,6 +122,20 @@ export const IntentSchema = z.object({
       "Two-letter ISO language code of the latest user message (e.g. 'en', 'de', 'ja', 'es'). Detect from the user's text.",
     ),
 
+  contentLanguages: z
+    .array(z.string())
+    .default([])
+    .describe(
+      'Two-letter ISO codes of languages the requested CONTENT is expected to be in, beyond the language of the user\'s message. Set ONLY when the request explicitly targets foreign-language content: "japanese dark trap music" → ["ja"], "russian news sites" → ["ru"]. Music/audio topics count — a mix or song in another language is still the requested content. Default []: foreign-language results then stay a side note, never primary content.',
+    ),
+
+  contentCreator: z
+    .string()
+    .default('')
+    .describe(
+      'The creator, channel, or publisher the user explicitly restricted the CONTENT to (e.g. "katame" in "japanese dark trap from the channel katame — drop everything else", "Vox" in "only videos by Vox"). Set ONLY on an explicit creator/channel restriction with exclusive intent; copy the name verbatim exactly as the user wrote it — never correct, extend, or translate it. Default "": no creator restriction.',
+    ),
+
   plan: z
     .object({
       images: ImagePlanSchema.optional().describe('Image processing plan. Only present when images are attached.'),

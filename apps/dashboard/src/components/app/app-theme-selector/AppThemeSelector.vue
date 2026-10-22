@@ -3,20 +3,14 @@ import { Moon, Sun, SwatchBook } from '@lucide/vue';
 
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
+import { THEMES } from '@/composables/use-theme/theme.constant';
+import { useTheme } from '@/composables/use-theme/use-theme';
 
 import { useThemeSelector } from './composables/use-theme-selector';
 
 const themeSelector = useThemeSelector();
-
-const {
-  isDropdownOpen,
-  toggleDropdown,
-  themes,
-  currentTheme,
-  isDarkMode,
-  selectTheme,
-  toggleDarkMode,
-} = themeSelector;
+const { isDropdownOpen, toggleDropdown } = themeSelector;
+const { currentTheme, isDarkMode, toggleDarkMode } = useTheme();
 </script>
 
 <template>
@@ -56,13 +50,13 @@ const {
       <div v-if="isDropdownOpen" class="theme-selector__dropdown">
         <div class="theme-selector__list">
           <button
-            v-for="theme in themes"
+            v-for="theme in THEMES"
             :key="theme.key"
             class="theme-selector__item"
             :class="{
               'theme-selector__item--active': currentTheme === theme.key,
             }"
-            @click="selectTheme(theme.key)"
+            @click="currentTheme = theme.key"
           >
             <span class="theme-selector__swatch" :data-theme="theme.key" />
             <span class="theme-selector__name">{{ theme.name }}</span>

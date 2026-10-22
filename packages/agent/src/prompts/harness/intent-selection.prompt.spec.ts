@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { buildIntentSelectionPrompt } from './intent-selection.prompt.js';
 
 describe('buildIntentSelectionPrompt', () => {
-  it('instructs the growth loop: probe, gather, capture preferences, honor explicit asks', () => {
-    const prompt = buildIntentSelectionPrompt(['memory-partition-recall', 'memory-partition-remember']);
+  it('instructs the probe duty and routes all writes to the automatic background pass', () => {
+    const prompt = buildIntentSelectionPrompt(['memory-partition-recall']);
 
     expect(prompt).toContain('MEMORY RULES');
     expect(prompt).toContain('active growth loop');
@@ -13,51 +13,28 @@ describe('buildIntentSelectionPrompt', () => {
     // in EVERY request when memory tools are enabled — never gated on topic.
     expect(prompt).toContain('ALWAYS-PROBE');
     expect(prompt).toContain('include the enabled memory-partition-recall tool in EVERY request');
-    // The model gathers more general knowledge about subjects AND stores the
-    // findings — GATHER-TO-REMEMBER must include memory-partition-remember,
-    // not just the web searches, or the gathered facts are never persisted.
-    expect(prompt).toContain('GATHER-TO-REMEMBER');
-    expect(prompt).toContain(
-      'include BOTH the enabled *WebSearch tools AND the enabled memory-partition-remember tool',
-    );
-    expect(prompt).toContain('the memory-partition-remember call stores the notable facts that were found');
-    // Stated preferences are recorded even without an explicit "remember".
-    expect(prompt).toContain('PREFERENCE CAPTURE');
-    expect(prompt).toContain('even when the user did not say "remember"');
-    // Derived understanding goes to the cognition lane, never the partition.
-    expect(prompt).toContain('DERIVED UNDERSTANDING');
-    expect(prompt).toContain('memory-cognition-remember');
-    // Explicit remember/track/learn/ follow asks are honored in any language.
-    expect(prompt).toContain('EXPLICIT INSTRUCTION');
-    expect(prompt).toContain('remember, track, follow, or learn something');
+    // Writing is automatic and judged: a background pass after every turn
+    // decides what is worth persisting — no write tool is ever selected.
+    expect(prompt).toContain('AUTOMATIC WRITE');
+    expect(prompt).toContain('persisting needs NO tool');
+    expect(prompt).toContain('Never claim you stored something during the turn');
+    expect(prompt).not.toContain('memory-partition-remember');
+    expect(prompt).not.toContain('memory-cognition-remember');
     // The probe is never replaced by web search.
     expect(prompt).toContain('never replace memory-partition-recall with web search');
     expect(prompt).toContain('CONTINUATION');
+    // Restating a stored record updates it in place via the automatic pass.
     expect(prompt).toContain('UPDATE-LOOP');
+    expect(prompt).toContain('restating a stored record updates it in place, never duplicates it');
   });
 
   it('enforces the tier boundary: subjective user data to cognition, objective facts to the partition', () => {
-    const prompt = buildIntentSelectionPrompt([
-      'memory-partition-recall',
-      'memory-partition-remember',
-      'memory-cognition-remember',
-    ]);
+    const prompt = buildIntentSelectionPrompt(['memory-partition-recall', 'memory-cognition-delete']);
 
     // The lanes are defined by subjectivity, not by who said it.
     expect(prompt).toContain('memory-partition = the OBJECTIVE fact store');
     expect(prompt).toContain('memory-cognition = the SUBJECTIVE profile store');
     expect(prompt).toContain('subjective user data NEVER goes to the partition');
-    // Stated preferences route to the cognition lane.
-    expect(prompt).toContain(
-      'include the enabled memory-cognition-remember tool so that preference is recorded in the cognition lane',
-    );
-    expect(prompt).toContain('Preferences never belong in the partition');
-    // Objective stated facts route to the partition lane.
-    expect(prompt).toContain('FACT CAPTURE');
-    // Explicit "remember" asks split by the same boundary.
-    expect(prompt).toContain(
-      'a preference or any other subjective profile datum ("remember that I like…") goes to the enabled memory-cognition-remember tool',
-    );
     // Targeted deletion covers both lanes; the wipe stays for starting over.
     expect(prompt).toContain('FORGET A PREFERENCE');
     expect(prompt).toContain('memory-cognition-delete');

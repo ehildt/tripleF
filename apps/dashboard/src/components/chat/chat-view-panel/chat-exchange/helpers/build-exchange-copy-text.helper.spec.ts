@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
 import { buildExchangeCopyText } from './build-exchange-copy-text.helper';
 
@@ -29,8 +29,8 @@ describe('buildExchangeCopyText', () => {
   it('formats structured responses instead of copying the fallback title', () => {
     const exchange = makeExchange({
       content: 'Nioh 3 Release Buzz',
-      harnessTemplate: 'article',
-      harnessData: {
+      responseTemplate: 'article',
+      responseData: {
         title: 'Nioh 3 Release Buzz',
         summary: 'Everything about the launch.',
         keyFindings: [{ text: 'Releases February 2026' }],
@@ -50,8 +50,8 @@ describe('buildExchangeCopyText', () => {
     const exchange = makeExchange({
       content: 'Fallback',
       text: 'The streamed answer.',
-      harnessTemplate: 'article',
-      harnessData: { title: 'Data title' },
+      responseTemplate: 'article',
+      responseData: { title: 'Data title' },
     });
     expect(buildExchangeCopyText(exchange)).toBe('The streamed answer.');
   });
@@ -60,12 +60,12 @@ describe('buildExchangeCopyText', () => {
     const exchange = makeExchange({
       content: JSON.stringify({
         title: 'Legacy Article',
-        summary: 'Stored before harnessData was tracked.',
+        summary: 'Stored before responseData was tracked.',
       }),
-      harnessTemplate: 'article',
+      responseTemplate: 'article',
     });
     const copyText = buildExchangeCopyText(exchange);
     expect(copyText).toContain('Legacy Article');
-    expect(copyText).toContain('Stored before harnessData was tracked.');
+    expect(copyText).toContain('Stored before responseData was tracked.');
   });
 });

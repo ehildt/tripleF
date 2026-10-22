@@ -2,8 +2,9 @@ import { EMBEDDABLE_VIDEO_PROVIDER_LABELS } from '../../schemas/constants/embedd
 
 export const MEDIA_RULES = `MEDIA RULES
 - Media-list templates (imagelist, videolist, shoplist) have NO hero media, and product has an image-only banner with NO hero video — their mode rules override every hero-related rule below.
-- Use every provided image/video URL whenever applicable.
+- Use every provided image/video URL that matches the request's explicit restrictions (platform, creator, count) — restrictions outrank completeness: a short list of correct items is always right, a padded list of off-target items is a failure.
 - The system removes duplicate media by content hash (images) and canonical provider ID or title (videos). Do not worry if the raw tool results contain duplicates; choose one representative for each unique piece of content.
+- CREATOR/CHANNEL RESTRICTION: when the user restricted content to a named creator or channel, exclude every media item whose channel or source does not match that name — match case-insensitively, and partial names count ("katame" matches channel "Katame Chill"). availableVideos entries carry a channel field for this check; toolContext echoes the restricted name as contentCreator when one applies.
 - heroVideoUrl takes priority over heroImageUrl when both exist.
 - Fill galleryItems and videoGalleryItems from the supplied media without exceeding imageTargetCount or videoTargetCount.
 - Gallery entries require all mandatory fields.

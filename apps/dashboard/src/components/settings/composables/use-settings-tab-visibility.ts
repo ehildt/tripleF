@@ -1,15 +1,15 @@
-import { computed } from 'vue';
+import { useAppStore } from '@/stores/app/app.store';
+import { useDebugStore } from '@/stores/debug/debug.store';
 
-import { useAppStore } from '../../../stores/app';
-import { useDebugStore } from '../../../stores/debug';
-
+/**
+ * Tab-visibility toggles with side effects: hiding or showing the debug
+ * tab also pauses/resumes the debug log. Plain reads (`isTabVisible`,
+ * `showCounters`) have no added value here — consumers bind the app store
+ * directly; this composable only owns the toggles that do real work.
+ */
 export function useSettingsTabVisibility() {
   const appStore = useAppStore();
   const debugStore = useDebugStore();
-
-  function isTabVisible(tab: string): boolean {
-    return appStore.isTabVisible(tab);
-  }
 
   function toggleTab(tab: string) {
     appStore.toggleTabVisibility(tab);
@@ -18,14 +18,5 @@ export function useSettingsTabVisibility() {
     }
   }
 
-  function toggleShowCounters() {
-    appStore.toggleShowCounters();
-  }
-
-  return {
-    isTabVisible,
-    toggleTab,
-    showCounters: computed(() => appStore.showCounters),
-    toggleShowCounters,
-  };
+  return { toggleTab };
 }

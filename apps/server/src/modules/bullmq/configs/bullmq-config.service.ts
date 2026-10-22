@@ -1,19 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { BullMQConfigSchema } from '@triplef/bullmq';
 import { CacheReturnValue } from '@triplef/config-factory/cache-return-value';
-import Joi from 'joi';
+import { z } from 'zod';
 
 import {
   BullMQConfigAdapter,
   ExtendedBullMQConfig,
 } from './bullmq-config.adapter.js';
 
-const ExtendedBullMQConfigSchema = BullMQConfigSchema.concat(
-  Joi.object({
-    failedJobRetryDelayMs: Joi.number().integer().min(0).optional(),
-    failedJobReinstateBatchSize: Joi.number().integer().min(1).optional(),
-  }),
-);
+const ExtendedBullMQConfigSchema = z.strictObject({
+  ...BullMQConfigSchema.shape,
+  failedJobRetryDelayMs: z.number().int().min(0).optional(),
+  failedJobReinstateBatchSize: z.number().int().min(1).optional(),
+});
 
 @Injectable()
 export class BullMQConfigService {

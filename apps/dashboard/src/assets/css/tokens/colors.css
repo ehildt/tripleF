@@ -14,10 +14,12 @@
   --color-harmony-2-source: #9932cc;
   --color-harmony-3-source: #ff8c00;
   --color-harmony-4-source: #5f9ea0;
+  --color-harmony-5-source: #3cb371;
   --color-harmony-1: var(--color-harmony-1-source);
   --color-harmony-2: var(--color-harmony-2-source);
   --color-harmony-3: var(--color-harmony-3-source);
   --color-harmony-4: var(--color-harmony-4-source);
+  --color-harmony-5: var(--color-harmony-5-source);
 
   /* Merge semantics - Selection green + merged-away purple. Dedicated tokens
      so the colors stay stable across palettes (harmony-2/status-success are

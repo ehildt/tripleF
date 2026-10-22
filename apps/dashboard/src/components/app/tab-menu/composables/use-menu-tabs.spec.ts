@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, describe, expect, it } from 'vitest';
 import { defineComponent, nextTick } from 'vue';
 
-import { useAppStore } from '../../../../stores/app';
+import { useAppStore } from '../../../../stores/app/app.store';
 import { useMenuTabs } from './use-menu-tabs';
 
 function mountComposable(props: Parameters<typeof useMenuTabs>[0]) {

@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import type { HarnessResponseData } from '@/types/harness-response-data.model';
+import type { AssistantResponseData } from '@/types/assistant-response-data.model';
 
 import { hasAnyMergeContent } from './has-any-merge-content.helper';
 
 describe('hasAnyMergeContent', () => {
   it('returns false for an empty response', () => {
-    expect(hasAnyMergeContent({} as HarnessResponseData)).toBe(false);
+    expect(hasAnyMergeContent({} as AssistantResponseData)).toBe(false);
   });
 
   it('returns true when a title is present', () => {
-    expect(hasAnyMergeContent({ title: 'T' } as HarnessResponseData)).toBe(
+    expect(hasAnyMergeContent({ title: 'T' } as AssistantResponseData)).toBe(
       true,
     );
   });
@@ -19,12 +19,12 @@ describe('hasAnyMergeContent', () => {
     expect(
       hasAnyMergeContent({
         strengths: [{ text: 'Fast' }],
-      } as HarnessResponseData),
+      } as AssistantResponseData),
     ).toBe(true);
   });
 
   it('returns false when only empty lists are present', () => {
-    expect(hasAnyMergeContent({ strengths: [] } as HarnessResponseData)).toBe(
+    expect(hasAnyMergeContent({ strengths: [] } as AssistantResponseData)).toBe(
       false,
     );
   });

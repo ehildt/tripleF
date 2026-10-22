@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 
-import type { ShopOffer } from '@/types/harness-response-data.model';
+import type { ShopOffer } from '@/types/assistant-response-data.model';
 
 import ShopListOfferCard from './ShopListOfferCard.vue';
 

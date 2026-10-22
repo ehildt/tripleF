@@ -31,7 +31,7 @@ export default defineConfig({
       '@nestjs/swagger',
       'bullmq',
       'ioredis',
-      'joi',
+      'zod',
     ];
   },
   treeshake: true,

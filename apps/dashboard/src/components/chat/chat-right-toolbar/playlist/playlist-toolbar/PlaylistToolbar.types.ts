@@ -15,8 +15,6 @@ export interface PlaylistToolbarProps {
   nowPlayingTitle: string;
   /** Name of the active playlist. */
   activePlaylistName: string;
-  /** Name being typed for a new playlist. */
-  playlistName: string;
   /** Names of the saved playlists. */
   playlists: readonly string[];
 }

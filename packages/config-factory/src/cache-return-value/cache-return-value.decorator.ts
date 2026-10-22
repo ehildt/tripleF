@@ -1,5 +1,5 @@
 import { hashPayload } from '@triplef/helpers/hash-payload';
-import Joi from 'joi';
+import type { z } from 'zod';
 
 import { ValidateReturnValueError } from '../validate-return-value/validate-return-value.decorator.ts';
 
@@ -7,9 +7,9 @@ const DEFAULT_TTL_MS = 5 * 60 * 1000;
 
 export interface CacheConfig<T = unknown> {
   /**
-   * Optional Joi schema to validate the return value.
+   * Optional Zod schema to validate the return value.
    */
-  schema?: Joi.Schema<T>;
+  schema?: z.ZodType<T>;
   /**
    * Time-to-live in milliseconds for the cached value.
    * - `number`: Cache expires after the specified milliseconds
@@ -25,36 +25,34 @@ type CacheEntry<T> = {
   refreshPromise?: Promise<T>;
 };
 
-function isJoiSchema(value: unknown): value is Joi.Schema {
+function isZodSchema(value: unknown): value is z.ZodType {
   return (
     typeof value === 'object' &&
     value !== null &&
-    'type' in value &&
-    typeof (value as Record<string, unknown>).validate === 'function'
+    '_zod' in value &&
+    typeof (value as Record<string, unknown>).safeParse === 'function'
   );
 }
 
-function parseConfig<T>(config: Joi.Schema<T> | CacheConfig<T> | false | number | undefined): {
-  schema?: Joi.Schema<T>;
+function parseConfig<T>(config: z.ZodType<T> | CacheConfig<T> | false | number | undefined): {
+  schema?: z.ZodType<T>;
   ttl: number | false;
 } {
   if (config === false) return { ttl: false };
   if (config === undefined) return { ttl: DEFAULT_TTL_MS };
   if (typeof config === 'number') return { ttl: config };
-  if (isJoiSchema(config)) return { schema: config, ttl: DEFAULT_TTL_MS };
+  if (isZodSchema(config)) return { schema: config, ttl: DEFAULT_TTL_MS };
   return {
     schema: config.schema,
     ttl: config.ttl ?? DEFAULT_TTL_MS,
   };
 }
 
-function validateValue<T>(value: unknown, schema?: Joi.Schema<T>): T {
+function validateValue<T>(value: unknown, schema?: z.ZodType<T>): T {
   if (schema) {
-    const { error, value: validated } = schema.validate(value, {
-      abortEarly: false,
-    });
-    if (error) throw new ValidateReturnValueError(`Schema violation`, error.details);
-    return validated;
+    const result = schema.safeParse(value);
+    if (!result.success) throw new ValidateReturnValueError(`Schema violation`, result.error.issues);
+    return result.data;
   }
   return value as T;
 }
@@ -66,13 +64,13 @@ function isExpired(entry: CacheEntry<unknown>, ttl: number | false): boolean {
 
 /**
  * Decorator that caches the return value of a method or a getter property.\
- * Optionally validates the cached value against a Joi schema and supports TTL-based expiration.
+ * Optionally validates the cached value against a Zod schema and supports TTL-based expiration.
  *
  * Uses stale-while-revalidate strategy: returns stale value immediately while refreshing in background.
  *
  * @template T - The expected type of the return value.
  * @param config - Configuration options:
- *   - `Joi.Schema<T>`: Validate return value with schema, use default 5min TTL
+ *   - `z.ZodType<T>`: Validate return value with schema, use default 5min TTL
  *   - `CacheConfig<T>`: Object with optional `schema` and `ttl` properties
  *   - `number`: TTL in milliseconds, no validation
  *   - `false`: Permanent cache (no expiration)
@@ -84,7 +82,7 @@ function isExpired(entry: CacheEntry<unknown>, ttl: number | false): boolean {
  *
  * @example
  * // With schema validation and default TTL
- * @CacheReturnValue(Joi.object({ id: Joi.number() }))
+ * @CacheReturnValue(z.object({ id: z.number() }))
  *
  * @example
  * // Number as TTL shorthand (60 seconds)
@@ -96,10 +94,10 @@ function isExpired(entry: CacheEntry<unknown>, ttl: number | false): boolean {
  *
  * @example
  * // Permanent cache with validation
- * @CacheReturnValue({ schema: Joi.number(), ttl: false })
+ * @CacheReturnValue({ schema: z.number(), ttl: false })
  */
 export function CacheReturnValue<T = unknown>(
-  config?: Joi.Schema<T> | CacheConfig<T> | false | number,
+  config?: z.ZodType<T> | CacheConfig<T> | false | number,
 ): MethodDecorator & PropertyDecorator {
   return function (_target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor): void {
     const { schema, ttl } = parseConfig(config);

@@ -1,31 +1,39 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
-import type { ResearchConfig } from '../models/research-config.model.js';
+/**
+ * Web-search result count for the research provider. Capped at the top 3:
+ * ranking quality decays sharply past the top 3 and deeper SERP links can
+ * arrive as unresolved google.com/goto wrappers.
+ */
+const providerEndpointSchema = z
+  .strictObject({
+    enabled: z.boolean().optional(),
+    results: z.number().int().min(1).max(3).optional(),
+  })
+  .optional();
 
-export const ResearchConfigSchema = Joi.object<ResearchConfig>({
-  enabled: Joi.boolean().optional(),
-  searchEnabled: Joi.boolean().optional(),
-  provider: Joi.string().valid('serper', 'bright-data').optional(),
-  model: Joi.string().optional(),
-  gapLimit: Joi.number().integer().min(1).max(50).optional(),
-  maxDepth: Joi.number().integer().min(1).max(3).optional(),
-  fetchBudget: Joi.number().integer().min(1).max(20).optional(),
-  frictionLimit: Joi.number().integer().min(1).max(20).optional(),
-  serper: Joi.object({
-    enabled: Joi.boolean().optional(),
-    apiKey: Joi.string().optional(),
-    web: Joi.object({
-      enabled: Joi.boolean().optional(),
-      results: Joi.number().integer().min(1).max(100).optional(),
-    }).optional(),
-  }).optional(),
-  brightData: Joi.object({
-    enabled: Joi.boolean().optional(),
-    apiKey: Joi.string().optional(),
-    serpZone: Joi.string().optional(),
-    web: Joi.object({
-      enabled: Joi.boolean().optional(),
-      results: Joi.number().integer().min(1).max(100).optional(),
-    }).optional(),
-  }).optional(),
-}).required();
+export const ResearchConfigSchema = z.strictObject({
+  enabled: z.boolean().optional(),
+  searchEnabled: z.boolean().optional(),
+  provider: z.enum(['serper', 'bright-data']).optional(),
+  model: z.string().optional(),
+  gapLimit: z.number().int().min(1).max(50).optional(),
+  maxDepth: z.number().int().min(1).max(3).optional(),
+  fetchBudget: z.number().int().min(1).max(20).optional(),
+  frictionLimit: z.number().int().min(1).max(20).optional(),
+  serper: z
+    .strictObject({
+      enabled: z.boolean().optional(),
+      apiKey: z.string().optional(),
+      web: providerEndpointSchema,
+    })
+    .optional(),
+  brightData: z
+    .strictObject({
+      enabled: z.boolean().optional(),
+      apiKey: z.string().optional(),
+      serpZone: z.string().optional(),
+      web: providerEndpointSchema,
+    })
+    .optional(),
+});

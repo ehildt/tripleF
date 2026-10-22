@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import InputTextArea from '@/components/shared/ui/input-text-area/InputTextArea.vue';
-import { formatBody } from '@/utils/format-body.helper';
+import { formatRequestBody } from '@/utils/format-request-body/format-request-body.helper';
 
 import { useDlqPayloadEdit } from './composables/use-dlq-payload-edit';
 import DlqPayloadToolbar from './dlq-payload-toolbar/DlqPayloadToolbar.vue';
@@ -53,7 +53,7 @@ function handleSave() {
         'dlq-payload-editor__read-only--scrollable': scrollable,
       }"
       @click="!isImmutable && startEdit(entry)"
-      >{{ formatBody(entry.payload ?? {}) }}</pre>
+      >{{ formatRequestBody(entry.payload ?? {}) }}</pre>
   </div>
 </template>
 

@@ -1,21 +1,18 @@
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
-import Joi from 'joi';
+import { z } from 'zod';
 
 /**
  * The sidecar URL and the optional client-side tool allow-list. The default
  * allow-list lives in `BROWSER_TOOL_NAMES` (harness tool registry).
  */
-export interface PlaywrightMcpConfig {
-  enabled: boolean;
-  url: string;
-  tools?: string[];
-}
+export const PlaywrightMcpConfigSchema = z.strictObject({
+  enabled: z.boolean(),
+  url: z.url(),
+  tools: z.array(z.string()).min(1).optional(),
+});
 
-export const PlaywrightMcpConfigSchema = Joi.object<PlaywrightMcpConfig>({
-  enabled: Joi.boolean().required(),
-  url: Joi.string().uri().required(),
-  tools: Joi.array().items(Joi.string()).min(1).optional(),
-}).required();
+/** Validated playwright-mcp config shape — derived from the schema. */
+export type PlaywrightMcpConfig = z.infer<typeof PlaywrightMcpConfigSchema>;
 
 export function PlaywrightMcpConfigAdapter(
   env = process.env,

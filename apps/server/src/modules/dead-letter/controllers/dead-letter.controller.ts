@@ -16,7 +16,6 @@ import { ApiTags } from '@nestjs/swagger';
 
 import { Prisma } from '../../../generated/prisma/client.js';
 import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
-import { JobReinstatementService } from '../../minio/services/job-reinstatement.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import {
   ApiCreateDlqEntry,
@@ -34,6 +33,7 @@ import { ReinstateDlqDto } from '../dtos/reinstate-dlq.dto.js';
 import { ReinstateQueryDto } from '../dtos/reinstate-query.dto.js';
 import { UpdateDlqEntryDto } from '../dtos/update-dlq-entry.dto.js';
 import { DlqEventsService } from '../services/dlq-events.service.js';
+import { JobReinstatementService } from '../services/job-reinstatement.service.js';
 import { DeadLetterRepository } from '../services/repository.service.js';
 
 @ApiTags('DLQ')

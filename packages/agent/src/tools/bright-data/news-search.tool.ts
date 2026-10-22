@@ -1,5 +1,6 @@
 import { type Tool, tool } from 'ai';
 
+import { SEARCH_API_RESULTS_CAP } from '../constants/search-results-cap.constant.js';
 import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
@@ -15,7 +16,7 @@ import type { BrightDataNewsSearchResponse } from './news-search.types.js';
 export function createBrightDataNewsSearch(deps: ToolDependencies): Tool {
   return tool({
     description:
-      'Search the latest news using Bright Data SERP API. Returns headlines, sources, dates, and snippets. Pass recency ("day"|"week"|"month"|"year") to restrict to a recent period. ' +
+      'Search the latest news using Bright Data SERP API. Returns headlines, sources, dates, and snippets — at most the top 3 per call, so cover each distinct topic with its own call. Pass recency ("day"|"week"|"month"|"year") to restrict to a recent period. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: brightDataNewsSearchSchema,
     execute: async ({ query, count: reqCount, recency, lang }: BrightDataNewsSearchInput) => {
@@ -27,12 +28,18 @@ export function createBrightDataNewsSearch(deps: ToolDependencies): Tool {
       const body: Record<string, unknown> = {};
       applyLocaleParams(body, lang ?? deps.defaultLang);
       applyRecencyParam(body, recency);
+      const num = Math.min(reqCount ?? cfg.news.results, SEARCH_API_RESULTS_CAP);
+      if (num < (reqCount ?? cfg.news.results)) {
+        deps.logger.warn(
+          `Bright Data news results clamped to ${SEARCH_API_RESULTS_CAP} (top-3 rank cutoff) for "${query}"`,
+        );
+      }
       const url = buildGoogleUrl(query, {
         tbm: 'nws',
         hl: body.hl,
         gl: body.gl,
         tbs: body.tbs,
-        num: reqCount ?? cfg.news.results,
+        num,
       });
       try {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {

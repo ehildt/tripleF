@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { EmbeddingService } from '../../../../qdrant/services/embedding.service.js';
-import type { VectorizeContext } from '../vectorize-context.type.js';
-import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
+import type { VectorizeContext } from '../vectorize-context.types.js';
+import type { VectorizeStepHandler } from '../vectorize-step.types.js';
 
 /**
  * 'embed' — one batch embed of the extracted facts. An out-of-spec vector

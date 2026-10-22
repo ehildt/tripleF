@@ -13,11 +13,10 @@ import { MemoryClusterJobService } from '../../memory-partition/services/vectori
 import { MemoryConsolidateJobService } from '../../memory-partition/services/vectorize/jobs/memory-consolidate-job.service.js';
 import { MemoryReflectService } from '../../memory-partition/services/vectorize/jobs/memory-reflect.service.js';
 import { MemoryRelinkJobService } from '../../memory-partition/services/vectorize/jobs/memory-relink-job.service.js';
-import { MemoryWriteJobService } from '../../memory-partition/services/vectorize/jobs/memory-write-job.service.js';
 import { EmbedStepService } from '../../memory-partition/services/vectorize/steps/embed-step.service.js';
 import { ExtractStepService } from '../../memory-partition/services/vectorize/steps/extract-step.service.js';
 import { StoreStepService } from '../../memory-partition/services/vectorize/steps/store-step.service.js';
-import type { VectorizeContext } from '../../memory-partition/services/vectorize/vectorize-context.type.js';
+import type { VectorizeContext } from '../../memory-partition/services/vectorize/vectorize-context.types.js';
 import { VectorizeStepEngineService } from '../../memory-partition/services/vectorize/vectorize-step-engine.service.js';
 import { VectorizeStepRegistryService } from '../../memory-partition/services/vectorize/vectorize-step-registry.service.js';
 import { TaxonomyReconcileJobService } from '../../memory-taxonomy/services/taxonomy-reconcile-job.service.js';
@@ -32,7 +31,6 @@ import {
   MEMORY_REFLECT_JOB,
   MEMORY_RELINK_JOB,
   MEMORY_TAXONOMY_RECONCILE_JOB,
-  MEMORY_WRITE_JOB,
   QDRANT_CONFIG,
   VECTORIZE_JOB,
 } from '../../qdrant/constants/qdrant.constants.js';
@@ -48,7 +46,6 @@ import type {
   MemoryReflectJobData,
   MemoryRelinkJobData,
   MemoryTaxonomyReconcileJobData,
-  MemoryWriteJobData,
   VectorizeJobData,
 } from '../../qdrant/models/memory.model.js';
 import type { QdrantConfig } from '../../qdrant/models/qdrant-config.model.js';
@@ -62,7 +59,6 @@ import { describeVectorizeJob } from '../helpers/describe-vectorize-job.helper.j
 /** Job names this worker owns on the shared vectorize queue. */
 const KNOWN_JOB_NAMES = new Set<string>([
   VECTORIZE_JOB,
-  MEMORY_WRITE_JOB,
   MEMORY_PROFILE_JOB,
   MEMORY_CONSOLIDATE_JOB,
   MEMORY_RELINK_JOB,
@@ -78,7 +74,6 @@ const KNOWN_JOB_NAMES = new Set<string>([
 /** The union of every job payload this worker dispatches. */
 type VectorizeJob = Job<
   | VectorizeJobData
-  | MemoryWriteJobData
   | MemoryProfileJobData
   | MemoryConsolidateJobData
   | MemoryRelinkJobData
@@ -93,8 +88,11 @@ type VectorizeJob = Job<
 
 /**
  * BullMQ worker for the vectorize queue — a step machine mirroring
- * HarnessProcessor: the pipeline extract → embed → store runs as
- * registered DAG steps through the vectorize step engine.
+ * HarnessProcessor: the pipeline extract → embed → store runs as registered
+ * DAG steps through the vectorize step engine. The extract step owns the
+ * write judgment: its schema-enforced verdict (`remember`) decides whether
+ * the turn-side is worth embedding at all — judged records only, no
+ * always-store path.
  *
  * Semantics: step failures propagate to BullMQ (transient retries, permanent
  * classified into UnrecoverableError) — a memory write is never silently
@@ -113,7 +111,6 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
     private readonly extractStep: ExtractStepService,
     private readonly embedStep: EmbedStepService,
     private readonly storeStep: StoreStepService,
-    private readonly memoryWriteJob: MemoryWriteJobService,
     private readonly memoryProfileJob: MemoryProfileJobService,
     private readonly memoryConsolidateJob: MemoryConsolidateJobService,
     private readonly memoryRelinkJob: MemoryRelinkJobService,
@@ -172,8 +169,6 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       await this.stepEngine.run(
         this.buildContext(job as Job<VectorizeJobData>),
       );
-    } else if (job.name === MEMORY_WRITE_JOB) {
-      await this.memoryWriteJob.execute(job.data as MemoryWriteJobData);
     } else if (job.name === MEMORY_CONSOLIDATE_JOB) {
       await this.memoryConsolidateJob.execute(
         job.data as MemoryConsolidateJobData,
@@ -224,6 +219,7 @@ export class VectorizeProcessor extends WorkerHost implements OnModuleInit {
       model: job.data.model,
       numCtx: job.data.numCtx,
       files: job.data.files,
+      gathered: job.data.gathered,
       steps,
       outputs: {},
       done: false,

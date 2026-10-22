@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTextResponse } from './composables/use-text-response.composable';
+import { useTextResponse } from './composables/use-text-response';
 import type { TextResponseProps } from './TextResponse.types';
 
 const props = defineProps<TextResponseProps>();

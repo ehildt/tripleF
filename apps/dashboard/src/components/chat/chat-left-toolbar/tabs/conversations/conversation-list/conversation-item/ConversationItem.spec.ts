@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import type { Component } from 'vue';
 
-import { createConversation } from '@/stores/helpers/conversation/create-conversation.helper';
+import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
 
 import ConversationItem from './ConversationItem.vue';
 

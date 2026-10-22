@@ -7,6 +7,7 @@ import {
   KeyRound,
   MapPin,
   Newspaper,
+  RotateCcw,
   ShoppingCart,
   Star,
 } from '@lucide/vue';
@@ -14,24 +15,20 @@ import { computed } from 'vue';
 
 import CapabilitiesPanel from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.vue';
 import ProviderSection from '@/components/settings/integrations-section/shared/ui/provider-section/ProviderSection.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 
 import { useApiKeyForm } from '../../composables/use-api-key-form';
-import type { SerperConfig } from '../../settings-config.model';
 import { buildSerperCapabilityRows } from '../helpers/build-serper-capability-rows.helper';
+import type {
+  SerperSectionEmits,
+  SerperSectionProps,
+} from './SerperSection.types';
 
-const props = defineProps<{
-  config: SerperConfig;
-  updateApiKey: (apiKey: string) => Promise<boolean>;
-}>();
+const props = defineProps<SerperSectionProps>();
 
-const emit = defineEmits<{
-  toggleEndpoint: [name: string];
-  updateResults: [payload: { name: string; value: string }];
-  reset: [];
-}>();
+const emit = defineEmits<SerperSectionEmits>();
 
 const configured = computed(() => !!props.config.apiKey);
 const maskedApiKey = computed(() => props.config.apiKey ?? '');
@@ -72,12 +69,14 @@ const icons = {
     :descriptions="descriptions"
     :icons="icons"
     :configured="configured"
+    :endpoint-max-results="endpointMaxResults"
     @toggle-endpoint="emit('toggleEndpoint', $event)"
     @update-results="emit('updateResults', $event)"
   >
     <template #actions>
-      <ResetButton
-        :title="$t('common.resetSerperToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetSerperToDefaults')"
         @click="emit('reset')"
       />
     </template>

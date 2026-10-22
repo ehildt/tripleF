@@ -3,9 +3,9 @@ import { computed, ref } from 'vue';
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
 import { i18n } from '@/i18n/i18n';
-import { getPersistentSocketSessionId } from '@/stores/helpers/socket/get-persistent-socket-session-id.helper';
+import { getPersistentSocketSessionId } from '@/utils/get-persistent-socket-session-id/get-persistent-socket-session-id.helper';
 
-import { useToast } from '../../../composables/use-toast';
+import { useToast } from '../../../composables/use-toast/use-toast';
 import type { SearchEngineState } from '../shared/composables/use-search-engine-availability.types';
 import { buildMirroredOverrides } from './helpers/build-mirrored-overrides.helper';
 import { configuredEngines } from './helpers/configured-engines.helper';

@@ -3,7 +3,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { resolveErrorMessage } from '../helpers/resolve-error-message.helper.js';
 
 import { HarnessContext, StepId, StepState } from './harness-context.type.js';
-import { StepRegistry, StepRegistryService } from './step-registry.service.js';
+import { StepRegistryService } from './step-registry.service.js';
+import type { StepRegistry } from './step-registry.service.types.js';
 
 @Injectable()
 export class HarnessStepEngineService {

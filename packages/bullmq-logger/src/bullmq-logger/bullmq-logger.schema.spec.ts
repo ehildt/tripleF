@@ -16,8 +16,7 @@ describe('BullMQLoggerSchema', () => {
       },
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(BullMQLoggerSchema.safeParse(config).success).toBe(true);
   });
 
   it('should use default values when config is partial', () => {
@@ -29,12 +28,14 @@ describe('BullMQLoggerSchema', () => {
       },
     };
 
-    const { error, value } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeUndefined();
-    expect(value.level).toBe('info');
-    expect(value.transport.target).toBe('pino-pretty');
-    expect(value.transport.options.colorize).toBe(true);
-    expect(value.transport.options.ignore).toBe('pid,hostname');
+    const result = BullMQLoggerSchema.safeParse(config);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.level).toBe('info');
+      expect(result.data.transport?.target).toBe('pino-pretty');
+      expect(result.data.transport?.options.colorize).toBe(true);
+      expect(result.data.transport?.options.ignore).toBe('pid,hostname');
+    }
   });
 
   it('should reject invalid level', () => {
@@ -47,9 +48,9 @@ describe('BullMQLoggerSchema', () => {
       },
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('level');
+    const result = BullMQLoggerSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('level'))).toBe(true);
   });
 
   it('should reject invalid transport target', () => {
@@ -61,9 +62,9 @@ describe('BullMQLoggerSchema', () => {
       },
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('target');
+    const result = BullMQLoggerSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('target'))).toBe(true);
   });
 
   it('should accept redact with paths and censor', () => {
@@ -75,8 +76,7 @@ describe('BullMQLoggerSchema', () => {
       },
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(BullMQLoggerSchema.safeParse(config).success).toBe(true);
   });
 
   it('should accept timestamp as false', () => {
@@ -85,8 +85,11 @@ describe('BullMQLoggerSchema', () => {
       timestamp: false,
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(BullMQLoggerSchema.safeParse(config).success).toBe(true);
+  });
+
+  it('should accept timestamp as a function', () => {
+    expect(BullMQLoggerSchema.safeParse({ timestamp: Date.now }).success).toBe(true);
   });
 
   it('should accept base as an object', () => {
@@ -95,8 +98,7 @@ describe('BullMQLoggerSchema', () => {
       base: { pid: 1234, hostname: 'localhost' },
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(BullMQLoggerSchema.safeParse(config).success).toBe(true);
   });
 
   it('should accept config without transport', () => {
@@ -104,8 +106,7 @@ describe('BullMQLoggerSchema', () => {
       level: 'info',
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(BullMQLoggerSchema.safeParse(config).success).toBe(true);
   });
 
   it('should reject invalid redact paths', () => {
@@ -113,8 +114,8 @@ describe('BullMQLoggerSchema', () => {
       redact: { paths: 'not-an-array' },
     };
 
-    const { error } = BullMQLoggerSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('paths');
+    const result = BullMQLoggerSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('paths'))).toBe(true);
   });
 });

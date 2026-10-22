@@ -10,13 +10,13 @@ import { PictureInPicture2 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
-import { ANCHOR_STYLES } from '@/composables/use-popup-geometry';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import { POPUP_ANCHOR_STYLES } from '@/components/widgets/popup-anchor-styles.constant';
+import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 const popoutSettingsStore = usePopoutSettingsStore();
 
 const anchorStyle = computed(
-  () => ANCHOR_STYLES[popoutSettingsStore.popoutAnchor],
+  () => POPUP_ANCHOR_STYLES[popoutSettingsStore.popoutAnchor],
 );
 </script>
 
