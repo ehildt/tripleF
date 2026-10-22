@@ -4,5 +4,5 @@ import Settings from '../../../settings/Settings.vue';
 </script>
 
 <template>
-  <Settings class="lg:col-span-12" />
+  <Settings />
 </template>

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 
 import {
+  ApeGetTaxonomyLeaves,
   ApeGetTaxonomyTree,
   ApePatchTaxonomyNode,
   ApePostTaxonomyMerge,
@@ -20,7 +21,10 @@ import {
 import { MemoryTaxonomyMergeBodyDto } from '../dtos/memory-taxonomy-merge-body.dto.js';
 import { MemoryTaxonomyQueryDto } from '../dtos/memory-taxonomy-query.dto.js';
 import { MemoryTaxonomyUpdateBodyDto } from '../dtos/memory-taxonomy-update-body.dto.js';
-import type { TaxonomyNodeView } from '../services/taxonomy.service.js';
+import type {
+  TaxonomyLeafView,
+  TaxonomyNodeView,
+} from '../services/taxonomy.service.js';
 import { TaxonomyService } from '../services/taxonomy.service.js';
 
 /**
@@ -48,6 +52,20 @@ export class MemoryTaxonomyController {
     if (!scopeKey) throw new BadRequestException('scopeKey is required');
     return {
       nodes: await this.taxonomyService.listTree(query.lane, scopeKey),
+    };
+  }
+
+  /** Rename a node and/or set/clear its icon. */
+  @Get(':id/leaves')
+  @ApeGetTaxonomyLeaves()
+  async listTaxonomyLeaves(
+    @Param('id') id: string,
+    @Query() query: MemoryTaxonomyQueryDto,
+  ): Promise<{ leaves: TaxonomyLeafView[] }> {
+    const scopeKey = query.scopeKey.trim();
+    if (!scopeKey) throw new BadRequestException('scopeKey is required');
+    return {
+      leaves: await this.taxonomyService.listLeaves(id, query.lane, scopeKey),
     };
   }
 

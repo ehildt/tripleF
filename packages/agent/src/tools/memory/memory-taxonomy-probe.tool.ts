@@ -31,7 +31,7 @@ interface MemoryTaxonomyProbeDeps {
 
 /**
  * Agentic `memory-taxonomy-probe` tool: the iterative, top-down semantic
- * probe over the macro-taxonomy (cluster → community → hub). Before naming a
+ * probe over the macro-taxonomy (cluster → community → hub → node). Before naming a
  * label, the model probes the tier, then either ADOPTS a returned candidate
  * (names it verbatim downstream; its id becomes the next probe's `parentId`)
  * or CREATES a new, phrasing-compliant label when nothing fits. The taxonomy

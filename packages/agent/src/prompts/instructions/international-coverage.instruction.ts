@@ -11,6 +11,6 @@ export const INTERNATIONAL_COVERAGE_INSTRUCTIONS = `INTERNATIONAL COVERAGE ASIDE
 - title: the item's original-language title, copied verbatim — never translated.
 - url: the item's URL, copied verbatim from its context entry.
 - sourceName: the publishing source or channel name from its context entry.
-- language: the item's two-letter ISO language code copied from its context entry (e.g. "zh", "ru", "en").
+- language: the item's language code copied verbatim from the "lang" field of its context entry (the pipeline pre-detected it — never invent or guess a code, never use placeholders like "zxx").
 - summary: one or two sentences in the USER'S language stating what this source reports and why it matters.
 - internationalCoverage entries must never reuse a URL that appears in any primary field (sources, hero media, galleries, sectionContent, relatedStories, cards).`;

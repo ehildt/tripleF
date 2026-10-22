@@ -55,6 +55,9 @@ describe('StoreStepService', () => {
             {
               text: 'User prefers concise.',
               subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'preference' as const,
               stability: 'durable' as const,
             },

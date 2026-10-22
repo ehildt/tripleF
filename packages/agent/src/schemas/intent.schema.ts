@@ -122,6 +122,13 @@ export const IntentSchema = z.object({
       "Two-letter ISO language code of the latest user message (e.g. 'en', 'de', 'ja', 'es'). Detect from the user's text.",
     ),
 
+  contentLanguages: z
+    .array(z.string())
+    .default([])
+    .describe(
+      'Two-letter ISO codes of languages the requested CONTENT is expected to be in, beyond the language of the user\'s message. Set ONLY when the request explicitly targets foreign-language content: "japanese dark trap music" → ["ja"], "russian news sites" → ["ru"]. Music/audio topics count — a mix or song in another language is still the requested content. Default []: foreign-language results then stay a side note, never primary content.',
+    ),
+
   plan: z
     .object({
       images: ImagePlanSchema.optional().describe('Image processing plan. Only present when images are attached.'),

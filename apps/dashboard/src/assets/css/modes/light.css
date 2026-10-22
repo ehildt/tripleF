@@ -56,6 +56,11 @@
     var(--color-harmony-4-source) 35%,
     #1c1c1e
   );
+  --color-harmony-5: color-mix(
+    in srgb,
+    var(--color-harmony-5-source) 40%,
+    #1c1c1e
+  );
 
   --color-merge-selected: color-mix(
     in srgb,

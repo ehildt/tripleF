@@ -126,6 +126,8 @@ export interface MemoryFactRecord {
   clusterId?: string;
   /** The entity the fact is about — extraction-classified (the maintenance same-subject rule). */
   subject?: string;
+  /** The singular aspect under the hub the fact addresses — the extraction-classified NODE tier. */
+  node?: string;
   /** What kind of durable thing this is — extraction-classified (preference, decision, state, …). */
   kind?: string;
   /** Whether a newer statement is expected to replace this one (`durable` | `volatile`). */
@@ -251,6 +253,8 @@ export interface EncyclopediaChunkRecord {
   topic?: string;
   /** Plural sub-family under the category — the constellation community tier. */
   community?: string;
+  /** Singular aspect under the topic the chunk files under — the NODE tier. */
+  node?: string;
   /** Server-detected cluster id (written by the memory-cluster job) — the authoritative cluster key. */
   clusterId?: string;
   /** True once the supersede sweep adjudicated this chunk. */

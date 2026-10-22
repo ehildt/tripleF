@@ -21,7 +21,7 @@ allowBuilds:
   vue-demi: true
 
 minimumReleaseAgeExclude:
-  - '@triplef/agent@0.1.28 || 1.0.1 || 1.0.3'
+  - '@triplef/agent@0.1.28 || 1.0.1 || 1.0.3 || 1.1.0'
   - '@triplef/bullmq-logger@1.2.5'
   - '@triplef/helpers@1.5.6'
   - dompurify@3.4.15
@@ -95,3 +95,6 @@ minimumReleaseAgeExclude:
   - '@nestjs/schematics@12.0.9 || 12.0.10'
   - '@nestjs/testing@12.2.0'
   - linkedom@0.18.14
+
+overrides:
+  '@triplef/agent': link:apps/memory/../../packages/agent

@@ -56,7 +56,7 @@ const SUBTAB_ITEMS = computed(() => [
 </script>
 
 <template>
-  <main class="memory-page lg:col-span-12">
+  <main class="memory-page">
     <SettingsSubMenu
       :items="SUBTAB_ITEMS"
       :active="activeSubtab"
@@ -65,13 +65,13 @@ const SUBTAB_ITEMS = computed(() => [
 
     <PartitionSpace v-if="activeSubtab === 'partition'" />
 
-    <CognitionSpace v-else-if="activeSubtab === 'cognition'" />
+    <CognitionSpace v-if="activeSubtab === 'cognition'" />
 
-    <SynopsisSpace v-else-if="activeSubtab === 'synopsis'" />
+    <SynopsisSpace v-if="activeSubtab === 'synopsis'" />
 
-    <TaxonomyManager v-else-if="activeSubtab === 'taxonomy'" />
+    <TaxonomyManager v-if="activeSubtab === 'taxonomy'" />
 
-    <EncyclopediaSpace v-else />
+    <EncyclopediaSpace v-if="activeSubtab === 'encyclopedia'" />
   </main>
 </template>
 
@@ -81,5 +81,6 @@ const SUBTAB_ITEMS = computed(() => [
   flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-3);
+  grid-column: 1 / -1;
 }
 </style>

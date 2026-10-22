@@ -2,7 +2,7 @@
   "name": "@triplef/bullmq",
   "description": "A NestJS module for BullMQ integration with configuration types and validation schemas.",
   "version": "1.1.5",
-  "packageManager": "pnpm@12.14.0",
+  "packageManager": "pnpm@12.15.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -81,7 +81,7 @@
   "peerDependencies": {
     "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^12.2.0",
-    "bullmq": "^6.3.19",
+    "bullmq": "^6.4.0",
     "ioredis": "^6.0.0",
     "joi": "^18.3.0"
   }

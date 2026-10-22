@@ -8,11 +8,14 @@ export interface MemoryTaxonomyAliasRecord {
   createdAt: string;
 }
 
+/** The taxonomy tier kinds — the server contract for a node's `kind`. */
+export type MemoryTaxonomyNodeKind =
+  'cluster' | 'community' | 'hub' | 'node' | 'tag';
+
 /** One taxonomy node with its operational metadata (server aggregation). */
 export interface MemoryTaxonomyNodeRecord {
   id: string;
-  /** 'cluster' | 'community' | 'hub' | 'tag'. */
-  kind: string;
+  kind: MemoryTaxonomyNodeKind;
   /** Parent node id ('' on cluster roots and flat tags). */
   parentId: string;
   name: string;
@@ -31,7 +34,7 @@ export interface MemoryTaxonomyNodeRecord {
 }
 
 /**
- * Read one scope's macro-taxonomy (cluster → community → hub, plus the tag
+ * Read one scope's macro-taxonomy (cluster → community → hub → node, plus the tag
  * vocabulary) with per-node metadata. Throws on failure so the caller can
  * degrade to an undecorated constellation (the taxonomy layer is optional
  * chrome, never a blocker for the graph itself).
@@ -84,4 +87,38 @@ export async function mergeMemoryTaxonomyNode(
   if (!res.ok) {
     throw new Error(`Failed to merge taxonomy node: ${res.status}`);
   }
+}
+
+/** One leaf attached to a taxonomy node (the drill's leaf listing). */
+export interface MemoryTaxonomyLeafRecord {
+  id: string;
+  /** Partition: the fact text. Encyclopedia: the chunk title. */
+  text: string;
+  /** Encyclopedia chunks link back to their source page. */
+  href?: string;
+  /** Carries at least one constellation link edge. */
+  linked: boolean;
+  /** Partition createdAt / encyclopedia fetchedAt, when known. */
+  stampedAt?: string;
+}
+
+/**
+ * Read one node's leaves (capped server-side) — the leaf listing under the
+ * drill view's node surface. Throws on failure; the panel toasts + closes.
+ */
+export async function fetchMemoryTaxonomyLeaves(
+  id: string,
+  lane: 'partition' | 'encyclopedia',
+  scopeKey: string,
+): Promise<MemoryTaxonomyLeafRecord[]> {
+  const res = await fetch(
+    getMemoryApiUrl(
+      `/api/v1/memory/taxonomy/${encodeURIComponent(id)}/leaves?lane=${encodeURIComponent(lane)}&scopeKey=${encodeURIComponent(scopeKey)}`,
+    ),
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to load taxonomy leaves: ${res.status}`);
+  }
+  const body = (await res.json()) as { leaves?: MemoryTaxonomyLeafRecord[] };
+  return Array.isArray(body.leaves) ? body.leaves : [];
 }

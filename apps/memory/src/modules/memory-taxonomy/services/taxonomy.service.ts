@@ -50,6 +50,26 @@ export interface TaxonomyNodeView {
 }
 
 /**
+ * One leaf attached to a taxonomy node (the dashboard drill's leaf listing):
+ * lane-normalized — partition rows carry fact text, encyclopedia rows carry
+ * the chunk title plus its source href.
+ */
+export interface TaxonomyLeafView {
+  id: string;
+  /** Partition: the fact text. Encyclopedia: the chunk title. */
+  text: string;
+  /** Encyclopedia chunks link back to their source page. */
+  href?: string;
+  /** Carries at least one constellation link edge. */
+  linked: boolean;
+  /** Partition createdAt / encyclopedia fetchedAt, when known. */
+  stampedAt?: string;
+}
+
+/** The leaf listing reads one scroll page. */
+const TAXONOMY_LEAVES_LIMIT = 50;
+
+/**
  * The taxonomy management surface: the dashboard's tree read and the user's
  * rename / merge / icon actions over the macro-taxonomy. The registry is the
  * AI's read-only pick-list; only these actions mutate labels after
@@ -121,6 +141,48 @@ export class TaxonomyService {
         updatedAt: node.updatedAt,
       })),
     );
+  }
+
+  /**
+   * The leaves attached to one node's label (capped): partition rows are
+   * fact texts, encyclopedia rows are chunk titles with their source hrefs.
+   * An absent lane mapping (encyclopedia has no tag bag) returns empty.
+   */
+  async listLeaves(
+    id: string,
+    lane: MemoryTaxonomyLane,
+    scopeKey: string,
+  ): Promise<TaxonomyLeafView[]> {
+    const node = await this.taxonomy.findNode(id);
+    if (!node) throw new NotFoundException('Taxonomy node not found');
+    const field = TAXONOMY_LANE_FIELDS[lane][node.kind];
+    if (!field) return [];
+    if (lane === 'encyclopedia') {
+      const chunks = await this.encyclopediaRepository.scrollByLabel(
+        field as 'category' | 'community' | 'topic' | 'node',
+        node.name,
+        TAXONOMY_LEAVES_LIMIT,
+      );
+      return chunks.map((chunk) => ({
+        id: chunk.id,
+        text: chunk.title ?? chunk.url,
+        href: chunk.url || undefined,
+        linked: chunk.isLinked,
+        stampedAt: chunk.fetchedAt || undefined,
+      }));
+    }
+    const facts = await this.memoryRepository.listByLabel(
+      scopeKey,
+      field as 'category' | 'community' | 'subject' | 'tags',
+      node.name,
+      TAXONOMY_LEAVES_LIMIT,
+    );
+    return facts.map((fact) => ({
+      id: fact.id,
+      text: fact.text,
+      linked: fact.isLinked,
+      stampedAt: fact.createdAt || undefined,
+    }));
   }
 
   /**
@@ -224,7 +286,7 @@ export class TaxonomyService {
     try {
       return lane === 'encyclopedia'
         ? await this.encyclopediaRepository.countByLabel(
-            field as 'category' | 'community' | 'topic',
+            field as 'category' | 'community' | 'topic' | 'node',
             node.name,
             { linkedOnly },
           )

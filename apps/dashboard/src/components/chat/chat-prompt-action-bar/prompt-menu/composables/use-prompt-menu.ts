@@ -6,6 +6,7 @@ import { useNewConversationForm } from '@/components/chat/chat-left-toolbar/comp
 import { useNewSocketForm } from '@/components/chat/chat-left-toolbar/composables/use-new-socket-form';
 import { useSelectedModel } from '@/components/chat/chat-left-toolbar/composables/use-selected-model';
 import { useLeftToolbarView } from '@/components/chat/chat-left-toolbar/tabs/composables/use-left-toolbar-view';
+import { useConversationStore } from '@/stores/conversation';
 
 /**
  * The prompt-menu's composed behaviors: actions whose meaning spans several
@@ -21,11 +22,18 @@ export function usePromptMenu() {
   const { closeAllMenus, toggleConversationMenu, toggleStreamMenu } =
     useLeftToolbarMenus();
 
+  const conversationStore = useConversationStore();
   const { changeModel } = useSelectedModel();
   const { currentNumCtx, defaultNumCtx } = useContextSize();
   const { submitNewSocket } = useNewSocketForm();
   const { createConversation } = useNewConversationForm();
   const { selectLeftToolbarView } = useLeftToolbarView();
+
+  /** True while no conversation is active — the conversation menu's trigger
+   *  blinks to invite starting one. */
+  const hasNoActiveConversation = computed(
+    () => !conversationStore.activeConversationId,
+  );
 
   /** The menu's option value falls back to the model's default context size
    *  while the active conversation has no numCtx of its own. */
@@ -62,6 +70,7 @@ export function usePromptMenu() {
 
   return {
     numCtxValue,
+    hasNoActiveConversation,
     toggleChatMenu,
     toggleSocketsMenu,
     selectModelAndCloseMenu,

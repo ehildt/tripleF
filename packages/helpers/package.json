@@ -2,7 +2,7 @@
   "name": "@triplef/helpers",
   "description": "A shared utility library providing helper functions for the CKIR project.",
   "version": "1.6.1",
-  "packageManager": "pnpm@12.14.0",
+  "packageManager": "pnpm@12.15.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -136,7 +136,7 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^12.2.0",
-    "@nestjs/swagger": "^12.0.2",
+    "@nestjs/swagger": "^12.0.3",
     "joi": "^18.3.0",
     "pino": "^10.4.0"
   }

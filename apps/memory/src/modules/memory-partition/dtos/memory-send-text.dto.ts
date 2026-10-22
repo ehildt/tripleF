@@ -65,11 +65,37 @@ export class MemorySendTextDto {
 
   @ApiPropertyOptional({
     description:
-      'Broad category the record belongs to (e.g. games, pets, work, health) — groups narrow tag topics into one family for the constellation category tier (cluster fallback).',
+      'Broad plural family label the record belongs to (e.g. games,) — the CLUSTER tier of the taxonomy chain.',
     example: 'games',
   })
   @IsString()
   @MaxLength(40)
-  @IsOptional()
-  category?: string;
+  category!: string;
+
+  @ApiProperty({
+    description:
+      'Plural sub-family narrowing the category (e.g. survival-games) — the COMMUNITY tier.',
+    example: 'survival-games',
+  })
+  @IsString()
+  @MaxLength(60)
+  community!: string;
+
+  @ApiProperty({
+    description:
+      'Singular subject entity the record is about (e.g. project zomboid) — the HUB tier.',
+    example: 'project zomboid',
+  })
+  @IsString()
+  @MaxLength(40)
+  subject!: string;
+
+  @ApiProperty({
+    description:
+      'Singular aspect the record addresses under its hub (e.g. base building) — the NODE tier.',
+    example: 'base building',
+  })
+  @IsString()
+  @MaxLength(120)
+  node!: string;
 }

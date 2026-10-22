@@ -41,6 +41,10 @@ describe('VectorizeService.storeRecord', () => {
     const { service, embed, upsertBatch } = makeService();
 
     const id = await service.storeRecord({
+      category: 'games',
+      community: 'video games',
+      subject: 'sam',
+      node: 'contact info',
       memoryPartition: 'sess-1',
       sessionId: 'sess-1',
       text: 'Sams phone number is 555-1234',
@@ -75,12 +79,20 @@ describe('VectorizeService.storeRecord', () => {
   it('refreshes an existing fact in place (same deterministic id)', async () => {
     const { service } = makeService();
     const first = await service.storeRecord({
+      category: 'games',
+      community: 'video games',
+      subject: 'sam',
+      node: 'contact info',
       memoryPartition: 'sess-1',
       sessionId: 'sess-1',
       text: 'Sams phone number is 555-1234',
       tags: ['contacts'],
     });
     const second = await service.storeRecord({
+      category: 'games',
+      community: 'video games',
+      subject: 'sam',
+      node: 'contact info',
       memoryPartition: 'sess-1',
       sessionId: 'sess-1',
       text: 'Sams phone number is 555-1234',
@@ -106,6 +118,10 @@ describe('VectorizeService.storeRecord', () => {
 
     await expect(
       disabled.storeRecord({
+        category: 'games',
+        community: 'video games',
+        subject: 'sam',
+        node: 'contact info',
         memoryPartition: 'sess-1',
         sessionId: 'sess-1',
         text: 'Do not remember',
@@ -120,6 +136,10 @@ describe('VectorizeService.storeRecord', () => {
 
     await expect(
       service.storeRecord({
+        category: 'games',
+        community: 'video games',
+        subject: 'sam',
+        node: 'contact info',
         memoryPartition: 'sess-1',
         text: '   ',
       }),
@@ -133,6 +153,10 @@ describe('VectorizeService.storeRecord', () => {
 
     await expect(
       service.storeRecord({
+        category: 'games',
+        community: 'video games',
+        subject: 'sam',
+        node: 'contact info',
         memoryPartition: 'sess-1',
         text: 'Some text',
       }),
@@ -161,6 +185,9 @@ describe('VectorizeService.storeRecord', () => {
     );
 
     await service.storeRecord({
+      community: 'video games',
+      subject: 'sam',
+      node: 'contact info',
       memoryPartition: 'sess-1',
       text: 'Loves vintage cars',
       category: 'cars',
@@ -210,6 +237,10 @@ describe('VectorizeService.storeRecord', () => {
     );
 
     await service.storeRecord({
+      category: 'games',
+      community: 'video games',
+      subject: 'sam',
+      node: 'contact info',
       memoryPartition: 'sess-1',
       text: 'A fact',
     });
@@ -240,6 +271,10 @@ describe('VectorizeService.storeRecord', () => {
     );
 
     const id = await service2.storeRecord({
+      category: 'games',
+      community: 'video games',
+      subject: 'sam',
+      node: 'contact info',
       memoryPartition: 'sess-1',
       text: 'A fact',
     });

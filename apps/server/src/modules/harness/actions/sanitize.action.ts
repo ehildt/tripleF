@@ -322,9 +322,14 @@ export class SanitizeActionService {
     );
 
     // 7. Language partition: reliably detected foreign-language articles and
-    //    videos leave the primary pools for the international aside. Nothing
-    //    is dropped — undetermined items stay in the primary pools.
+    //    videos leave the primary pools for the international aside — unless
+    //    the request itself targets that language (intent.contentLanguages),
+    //    e.g. "japanese dark trap" keeps Japanese videos as primary content.
+    //    Nothing is dropped — undetermined items stay in the primary pools.
     const userLang = ctx.outputs.intent?.language;
+    const contentLanguages = (ctx.outputs.intent?.contentLanguages ?? []).map(
+      (code) => code.toLowerCase(),
+    );
     await Promise.all([
       tagLanguage(articles, (a) => `${a.title ?? ''} ${a.snippet ?? ''}`),
       tagLanguage(
@@ -332,8 +337,16 @@ export class SanitizeActionService {
         (v) => `${v.title ?? ''} ${v.description ?? ''}`,
       ),
     ]);
-    const articlePool = partitionByLanguage(articles, userLang);
-    const videoPool = partitionByLanguage(verifiedVideos, userLang);
+    const articlePool = partitionByLanguage(
+      articles,
+      userLang,
+      contentLanguages,
+    );
+    const videoPool = partitionByLanguage(
+      verifiedVideos,
+      userLang,
+      contentLanguages,
+    );
     const mainArticles = articlePool.main;
     verifiedVideos = videoPool.main;
     const internationalArticles = articlePool.international.slice(
@@ -351,6 +364,7 @@ export class SanitizeActionService {
           requestId: ctx.requestId,
           step: 'sanitize',
           userLang,
+          contentLanguages,
           internationalArticleCount: internationalArticles.length,
           internationalVideoCount: internationalVideos.length,
         },

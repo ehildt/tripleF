@@ -54,7 +54,7 @@ const {
           @click="toggleMetadata"
         >
           <PanelRightOpen v-if="metadataCollapsed" />
-          <PanelRightClose v-else />
+          <PanelRightClose v-if="!metadataCollapsed" />
         </IconButton>
         <slot name="actions" />
       </div>
@@ -63,7 +63,7 @@ const {
     <div v-if="isUnavailable" class="memory-space-panel__state">
       {{ unavailableText }}
     </div>
-    <div v-else class="memory-space-panel__body">
+    <div v-if="!isUnavailable" class="memory-space-panel__body">
       <div class="memory-space-panel__canvas">
         <MemoryConstellation
           :nodes="nodes"

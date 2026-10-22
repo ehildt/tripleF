@@ -595,7 +595,7 @@ export class EncyclopediaRepository {
    * reconciliation sweep's usage signal for picking the merge winner.
    */
   async countByLabel(
-    field: 'category' | 'community' | 'topic',
+    field: 'category' | 'community' | 'topic' | 'node',
     value: string,
     opts?: { linkedOnly?: boolean },
   ): Promise<number> {
@@ -614,13 +614,51 @@ export class EncyclopediaRepository {
   }
 
   /**
+   * The chunks carrying one taxonomy label value (the dashboard drill's
+   * leaf listing): one scroll page, payloads reduced to the row's fields.
+   */
+  async scrollByLabel(
+    field: 'category' | 'community' | 'topic' | 'node',
+    value: string,
+    limit: number,
+  ): Promise<
+    Array<{
+      id: string;
+      title?: string;
+      url: string;
+      isLinked: boolean;
+      fetchedAt: string;
+    }>
+  > {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return [];
+    const result = await this.clientService
+      .getClient()
+      .scroll(this.collection, {
+        filter: { must: [{ key: field, match: { value } }] },
+        limit,
+        with_payload: true,
+        with_vector: false,
+      });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        title: payload.title as string | undefined,
+        url: (payload.url as string) ?? '',
+        isLinked: (payload.is_linked as boolean) ?? false,
+        fetchedAt: (payload.fetched_at as string) ?? '',
+      };
+    });
+  }
+
+  /**
    * Rewrite one label value of a tier field on every matching chunk of the
    * global encyclopedia — the reconciliation/user-merge application
    * (payload-only, idempotent; mirrors `collapseCategory` on the partition
    * repository).
    */
   async collapseLabel(
-    field: 'category' | 'community' | 'topic',
+    field: 'category' | 'community' | 'topic' | 'node',
     from: string,
     to: string,
   ): Promise<void> {
@@ -641,11 +679,12 @@ export class EncyclopediaRepository {
     url: string,
     category: string,
     topic: string,
-    community?: string,
+    community: string,
+    node: string,
   ): Promise<void> {
     if (!(await this.clientService.hasEncyclopediaCollection())) return;
     await this.clientService.getClient().setPayload(this.collection, {
-      payload: community ? { category, community, topic } : { category, topic },
+      payload: { category, community, topic, node },
       filter: { must: [{ key: 'url', match: { value: url } }] },
     });
   }

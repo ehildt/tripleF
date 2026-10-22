@@ -90,7 +90,7 @@ export function prepareConstellation(
     ? linkIndices
     : linkIndices.filter((link) => !link.weak);
   const linkCounts = buildLinkCounts(visibleLinkIndices, visibleNodes);
-  const nodeColor = buildNodeColor(topics, clusters, communities);
+  const nodeColor = buildNodeColor(topics, clusters, communities, visibleNodes);
   const hubIds = buildHubIds(
     topics,
     collapsedKeys,

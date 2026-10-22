@@ -82,6 +82,7 @@ describe('RespondStepService', () => {
       contextSummary: '',
       needsClarification: false,
       language: 'en',
+      contentLanguages: [],
       plan: {},
     };
 

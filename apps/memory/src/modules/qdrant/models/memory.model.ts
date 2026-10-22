@@ -50,8 +50,7 @@ export interface MemoryPoint {
   category?: string;
   /**
    * Plural sub-family one tier below the category (e.g. `survival-games`
-   * under `games`) — the constellation's COMMUNITY tier. Optional: records
-   * without a community sit directly under their cluster.
+   * under `games`) — the constellation's COMMUNITY tier.
    */
   community?: string;
   /**
@@ -60,6 +59,11 @@ export interface MemoryPoint {
    * subject.
    */
   subject?: string;
+  /**
+   * The singular aspect under the hub the fact addresses — the NODE tier
+   * key (e.g. `base building` under `project zomboid`).
+   */
+  node?: string;
   /**
    * What kind of durable thing this is — extraction-classified
    * (preference | decision | state | contact | project | possession |
@@ -165,6 +169,8 @@ export interface UpsertBatchInput {
     community?: string;
     /** The entity the fact is about — extraction-classified (maintenance same-subject rule). */
     subject?: string;
+    /** The singular aspect under the hub the fact addresses — the node tier key. */
+    node?: string;
     /** What kind of durable thing this is — extraction-classified (see MemoryPoint.kind). */
     kind?: string;
     /** `durable` claims vs `volatile` states — extraction-classified (see MemoryPoint.stability). */

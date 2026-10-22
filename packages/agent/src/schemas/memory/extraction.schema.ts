@@ -34,7 +34,13 @@ export const FACT_KINDS = [
  */
 export const FACT_STABILITIES = ['durable', 'volatile'] as const;
 
-/** One extracted fact with its maintenance metadata. */
+/**
+ * One extracted fact with its maintenance metadata. The macro-taxonomy
+ * chain is strict and named, top-down: CLUSTER (category) → COMMUNITY →
+ * HUB (subject) → NODE → LEAF, where the leaf is the fact's text itself.
+ * Every emitted fact carries ALL FOUR labels — a fact without a complete
+ * chain never enters the registry.
+ */
 export const ExtractedFactSchema = z.object({
   /**
    * The self-contained durable statement — third person, subject up front,
@@ -42,31 +48,35 @@ export const ExtractedFactSchema = z.object({
    */
   text: z.string(),
   /**
-   * The lowercase entity the fact is about (default `user`; a person,
-   * product, or project name) — the constellation's HUB tier: singular,
-   * specific, stable. Maintenance adjudication only ever compares
-   * facts about the SAME subject.
+   * The lowercase entity the fact is about — the chain's HUB tier:
+   * singular, specific, stable. Maintenance adjudication only ever
+   * compares facts about the SAME subject.
    */
-  subject: z.string().optional(),
+  subject: z.string(),
+  /**
+   * The lowercase singular ASPECT the fact addresses under its subject —
+   * the chain's NODE tier (e.g. `base building` under `project zomboid`,
+   * `ryzen 9950x3d` under `amd`). Names WHERE under the hub the fact is
+   * filed; reuse the known vocabulary instead of minting near-variants.
+   */
+  node: z.string(),
   /**
    * One broad lowercase PLURAL family label for THIS fact (e.g. `stocks`,
-   * `pets`, `games`) — the constellation's CLUSTER tier. Inherits the
-   * turn-side category when omitted. Never
+   * `pets`, `games`) — the chain's CLUSTER tier. Never
    * a specific entity, product, company, or game title. Persona/roleplay or
    * fictional content classifies by its real-world medium (a TV persona's
    * biography belongs under `shows`), never by in-universe domains (`family`,
    * `education`, `business` describe reality, not an invented life).
    */
-  category: z.string().optional(),
+  category: z.string(),
   /**
    * One lowercase PLURAL sub-family label narrowing THIS fact's category
    * (e.g. `survival-games` under `games`, `tv-shows` under `shows`) — the
-   * constellation's COMMUNITY tier, one level below the cluster. Inherits the
-   * turn-side community when omitted; omit when no sub-family applies. Never
-   * a specific entity, product, or title — a show/work title like
-   * `breaking-bad` is a tag or hub, never a community.
+   * chain's COMMUNITY tier, one level below the cluster. Never a specific
+   * entity, product, or title — a show/work title like
+   * `breaking-bad` is a hub or tag, never a community.
    */
-  community: z.string().optional(),
+  community: z.string(),
   /** What kind of durable thing this is (see FACT_KINDS). */
   kind: z.enum(FACT_KINDS),
   /** Whether a newer statement is expected to replace this one (see FACT_STABILITIES). */
@@ -107,10 +117,11 @@ export const ExtractionSchema = z.object({
    * One lowercase PLURAL sub-family label narrowing the turn-side category
    * (e.g. `survival-games` under `games`, `tv-shows` under `shows`) — the
    * constellation's COMMUNITY tier: a genre, project family, or domain branch
-   * one level below the cluster. Backstops facts that omit their own
-   * `community`. Optional: omit it when no sub-family applies. Never a
-   * specific entity, product, or title — a show/work title like
-   * `breaking-bad` is a tag or hub, never a community.
+   * One broad lowercase PLURAL sub-family label narrowing the turn-side
+   * category (e.g. `survival-games` under `games`, `tv-shows` under
+   * `shows`) — the COMMUNITY tier between the cluster and the hub.
+   * Never a specific entity, product, or title — a show/work title like
+   * `breaking-bad` is a hub or tag, never a community.
    */
   community: z.string().optional(),
 });

@@ -23,4 +23,12 @@ describe('partitionByLanguage', () => {
     const items = [{ lang: 'de' }, {}];
     expect(partitionByLanguage(items, 'en').main).toEqual([{}]);
   });
+
+  it('keeps explicitly requested content languages in main', () => {
+    const items = [{ lang: 'ja' }, { lang: 'de' }, { lang: 'en' }];
+    expect(partitionByLanguage(items, 'en', ['ja'])).toEqual({
+      main: [{ lang: 'ja' }, { lang: 'en' }],
+      international: [{ lang: 'de' }],
+    });
+  });
 });

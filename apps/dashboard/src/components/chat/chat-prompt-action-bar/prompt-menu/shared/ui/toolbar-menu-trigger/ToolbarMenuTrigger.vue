@@ -9,6 +9,7 @@ import type { ToolbarMenuTriggerProps } from './ToolbarMenuTrigger.types';
 
 const props = withDefaults(defineProps<ToolbarMenuTriggerProps>(), {
   isDisabled: false,
+  blinking: false,
   dropdownWidth: '14rem',
 });
 
@@ -41,6 +42,7 @@ const dropdownStyle = computed(() => ({
       <button
         type="button"
         class="toolbar-menu-trigger__button"
+        :class="{ 'toolbar-menu-trigger__button--blinking': blinking }"
         :aria-label="title"
         :aria-expanded="isOpen"
         :disabled="isDisabled"
@@ -106,6 +108,36 @@ const dropdownStyle = computed(() => ({
 .toolbar-menu-trigger__button:disabled {
   color: var(--color-fg-muted);
   cursor: default;
+}
+
+/* Attention blink for the "nothing selected yet" state: the same calm 2s
+   opacity breathing the shared input-select uses. A disabled trigger (e.g.
+   the chat menu while no model is picked) never blinks — a control must not
+   invite a click it refuses. */
+.toolbar-menu-trigger__button--blinking {
+  animation: toolbar-menu-trigger-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.toolbar-menu-trigger__button--blinking:disabled {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-menu-trigger__button--blinking {
+    animation: none;
+  }
+}
+
+/* Scoped (auto-renamed by Vue) so the pulse never depends on a global
+   keyframes definition being present. */
+@keyframes toolbar-menu-trigger-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .toolbar-menu-trigger__icon {

@@ -436,6 +436,47 @@ export class MemoryRepository {
   }
 
   /**
+   * The leaves carrying one taxonomy label value (the dashboard drill's
+   * leaf listing): one scroll page, newest bookkeeping order, payloads
+   * reduced to the fields the row renders.
+   */
+  async listByLabel(
+    memoryPartition: string,
+    field: 'category' | 'community' | 'subject' | 'tags',
+    value: string,
+    limit: number,
+  ): Promise<
+    Array<{ id: string; text: string; isLinked: boolean; createdAt: string }>
+  > {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const labelFilter =
+      field === 'tags'
+        ? { key: 'tags', match: { any: [value] } }
+        : { key: field, match: { value } };
+    const result = await client.scroll(this.collection, {
+      filter: {
+        must: [
+          { key: 'memory_partition', match: { value: memoryPartition } },
+          labelFilter,
+        ],
+      },
+      limit,
+      with_payload: true,
+      with_vector: false,
+    });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        text: (payload.text as string) ?? '',
+        isLinked: (payload.is_linked as boolean) ?? false,
+        createdAt: (payload.created_at as string) ?? '',
+      };
+    });
+  }
+
+  /**
    * Replace one tag inside the tags arrays of every matching point of a
    * partition (per-point read-modify-write — Qdrant has no array-element
    * rewrite). Paginated and idempotent: the `from`-filter shrinks as points

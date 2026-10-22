@@ -1,4 +1,3 @@
-import { useDebounceFn } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
@@ -127,6 +126,8 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
       settings.value = merged;
     } catch {
       // Offline — keep the defaults.
+    } finally {
+      isLoadingSettings = false;
     }
   }
 
@@ -135,10 +136,14 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
   /**
    * Server-side sync: preprocessing is applied by the server from its own
    * effective config (env defaults + overrides), so every settings change is
-   * pushed as a global override. The same settings are also persisted as a
-   * session override for cross-device recovery.
+   * pushed immediately — as the sharp-overrides override AND as the
+   * session-scoped config that the next load fetches back. Skipped while the
+   * persisted config is being loaded: applying server state must not echo
+   * another write.
    */
+  let isLoadingSettings = true;
   function pushSettingsToServer() {
+    if (isLoadingSettings) return;
     const body = JSON.stringify(settings.value);
     fetch(getApiUrl('/api/v1/sharp-overrides'), {
       method: 'PUT',
@@ -152,12 +157,7 @@ export const usePreprocessingStore = defineStore('preprocessing', () => {
     });
   }
 
-  const pushSettingsToServerDebounced = useDebounceFn(
-    pushSettingsToServer,
-    300,
-  );
-
-  watch(settings, () => pushSettingsToServerDebounced(), { deep: true });
+  watch(settings, () => pushSettingsToServer(), { deep: true });
 
   // Convenience refs — same refs exposed before, now backed by settings
   const enabled = computed({

@@ -3,6 +3,9 @@ export interface ConversationMenuProps {
   isOpen: boolean;
   /** Whether the trigger is disabled (no model selected). */
   isDisabled: boolean;
+  /** Whether no conversation is active yet — the trigger blinks until one is
+   *  started (inert while the trigger is disabled). */
+  hasNoActiveConversation: boolean;
   /** Draft conversation name. */
   name: string;
   /** Draft socket event. */

@@ -47,6 +47,7 @@ const { areSocketsVisible } = useLeftToolbarView();
 
 const {
   numCtxValue,
+  hasNoActiveConversation,
   toggleChatMenu,
   toggleSocketsMenu,
   selectModelAndCloseMenu,
@@ -60,6 +61,7 @@ const {
     <div class="prompt-menu__menus">
       <ModelSelector
         :is-open="isModelMenuOpen"
+        :has-no-model-selected="hasNoModelSelected"
         :selected-model-name="selectedModelName"
         :local-models="localModels"
         :cloud-models="cloudModels"
@@ -74,6 +76,7 @@ const {
         v-model:room-id="newConversationRoomId"
         :is-open="isConversationMenuOpen"
         :is-disabled="hasNoModelSelected"
+        :has-no-active-conversation="hasNoActiveConversation"
         :num-ctx-value="numCtxValue"
         :context-options="contextOptions"
         :available-events="availableSocketEvents"

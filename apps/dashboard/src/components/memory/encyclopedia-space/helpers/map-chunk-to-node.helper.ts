@@ -32,6 +32,7 @@ export function mapChunkToNode(
     clusterKey: chunk.clusterId?.trim() || chunk.category?.trim() || undefined,
     category: chunk.category?.trim() || undefined,
     communityKey: chunk.community?.trim() || undefined,
+    node: chunk.node?.trim() || undefined,
     text: chunk.content,
     summary: truncateText(chunk.content, SUMMARY_CHARS),
     timestamp: chunk.fetchedAt,

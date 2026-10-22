@@ -10,7 +10,6 @@ export const memoryPartitionRememberSchema = z.object({
     .string()
     .min(1)
     .max(40)
-    .optional()
     .describe(
       'One broad lowercase PLURAL category the fact belongs to, e.g. "stocks", "games", "pets", "work" — the CLUSTER tier: a family noun, never a specific entity/product/company/game name ("amd" → "stocks"; "stellar blade" → "games"). Persona/roleplay or fictional content classifies by its real-world medium (a TV persona’s biography → "shows"), never by in-universe domains ("family", "education", "business" describe reality, not an invented life). Always include it.',
     ),
@@ -18,17 +17,22 @@ export const memoryPartitionRememberSchema = z.object({
     .string()
     .min(1)
     .max(60)
-    .optional()
     .describe(
-      'One lowercase PLURAL sub-family narrowing the category, e.g. "survival games" under "games", "tv shows" under "shows" — the COMMUNITY tier, one level below the cluster (a genre, project family, or domain branch). Omit it when no sub-family applies; never a specific entity, product, or title — a show/work title like "breaking-bad" is a tag or hub, never a community.',
+      'One lowercase PLURAL sub-family narrowing the category, e.g. "survival games" under "games", "tv shows" under "shows" — the COMMUNITY tier, one level below the cluster (a genre, project family, or domain branch). Always present; never a specific entity, product, or title — a show/work title like "breaking-bad" is a hub, never a community.',
     ),
   subject: z
     .string()
     .min(1)
     .max(40)
-    .optional()
     .describe(
       'The lowercase SINGULAR entity the fact is about — the HUB tier, e.g. "project zomboid", "amd", "sam". Name it whenever the fact is about a specific entity; never a plural family label.',
+    ),
+  node: z
+    .string()
+    .min(1)
+    .max(120)
+    .describe(
+      'The lowercase SINGULAR aspect the fact addresses under its hub — the NODE tier, e.g. "base building" under "project zomboid", "ryzen 9950x3d" under "amd". Reuse existing labels whenever they fit; never pluralized, never a sentence.',
     ),
   icon: z
     .string()

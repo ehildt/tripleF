@@ -4,6 +4,10 @@ import { parseExtraction } from './parse-extraction.helper.js';
 
 const fact = {
   text: 'User prefers concise.',
+  subject: 'sam',
+  node: 'communication style',
+  category: 'work',
+  community: 'collaboration',
   kind: 'preference',
   stability: 'durable',
 };
@@ -45,10 +49,11 @@ describe('parseExtraction', () => {
     });
   });
 
-  it('omits optional per-fact metadata when absent', () => {
-    expect(
-      parseExtraction(JSON.stringify({ facts: [fact], tags: ['work'] })),
-    ).toEqual({ facts: [fact], tags: ['work'], category: undefined });
+  it('rejects a fact missing a chain label (strict taxonomy chain)', () => {
+    const incomplete = { ...fact, node: undefined };
+    expect(() =>
+      parseExtraction(JSON.stringify({ facts: [incomplete], tags: ['work'] })),
+    ).toThrow('failed the schema');
   });
 
   it('tolerates markdown fences around the JSON', () => {

@@ -76,6 +76,7 @@ describe('ExecuteStepService', () => {
           contextSummary: '',
           needsClarification: false,
           language: 'en',
+          contentLanguages: [],
           plan: {},
         },
         toolResults: [],

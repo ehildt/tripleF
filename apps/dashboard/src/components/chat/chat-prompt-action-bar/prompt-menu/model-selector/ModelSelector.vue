@@ -20,6 +20,7 @@ const emit = defineEmits<{
        look, same above-the-bar anchoring, same backdrop close. -->
   <ToolbarMenuTrigger
     :is-open="isOpen"
+    :blinking="hasNoModelSelected"
     :title="$t('common.selectModel')"
     :trigger-icon="Brain"
     @toggle-menu="emit('toggleMenu')"

@@ -179,6 +179,9 @@ export class MemoryPartitionController {
         text: body.text,
         tags: body.tags,
         category: body.category,
+        community: body.community,
+        subject: body.subject,
+        node: body.node,
       });
       return { accepted: true, id };
     } catch {

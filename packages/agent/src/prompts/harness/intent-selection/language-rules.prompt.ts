@@ -10,6 +10,16 @@ const LANGUAGE_NOISE_IMMUNITY_RULES = `- Individual foreign words, loanwords, sc
 - Example: "Why do English speakers say 'déjà vu'?" → language "en" (one French phrase inside an English sentence — not "fr").`;
 
 /**
+ * The content-language counterpart: the message language decides the
+ * response language, never the partition of tool results. When the user
+ * explicitly targets foreign-language CONTENT, its ISO codes go into
+ * "contentLanguages" so the pipeline keeps those results as primary content
+ * instead of exiling them to the international aside — otherwise the field
+ * stays empty.
+ */
+const CONTENT_LANGUAGE_RULE = `- If the user explicitly asks for foreign-language CONTENT (e.g. "japanese dark trap music" from an English speaker, "russian news sites"), fill "contentLanguages" with those ISO codes — this covers MUSIC and mixes too, not just text. Otherwise leave "contentLanguages" empty.`;
+
+/**
  * The field-level version: the same dominance judgment as one sentence, used
  * by the intent schema docs and the language-correction retry prompt.
  */
@@ -33,7 +43,8 @@ export function buildIntentLanguageRules(language?: string): string {
 - If the latest user message is in mixed languages, use the language that appears to be primary.
 - Judge the language by the DOMINANT language of the full sentence or paragraph, never by individual words.
 ${LANGUAGE_NOISE_IMMUNITY_RULES}
-- Do not use English for clarification questions, reasoning, or summaries unless the user wrote in English.`;
+- Do not use English for clarification questions, reasoning, or summaries unless the user wrote in English.
+${CONTENT_LANGUAGE_RULE}`;
   }
 
   const name = resolveLanguageName(code);
@@ -48,5 +59,6 @@ ${LANGUAGE_NOISE_IMMUNITY_RULES}
 - Never default to English unless the browser language is English or the user explicitly requests English.
 - If the user explicitly requests a language, judge it by the DOMINANT language of the full sentence or paragraph, never by individual words.
 ${LANGUAGE_NOISE_IMMUNITY_RULES}
-- Do not use English for clarification questions, reasoning, or summaries unless the browser language is English or the user explicitly requests English.`;
+- Do not use English for clarification questions, reasoning, or summaries unless the browser language is English or the user explicitly requests English.
+${CONTENT_LANGUAGE_RULE}`;
 }

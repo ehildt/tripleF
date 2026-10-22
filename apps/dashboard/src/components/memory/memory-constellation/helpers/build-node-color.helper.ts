@@ -1,6 +1,7 @@
 import type {
   ConstellationCluster,
   ConstellationCommunity,
+  ConstellationNode,
   ConstellationTopic,
 } from '../MemoryConstellation.types';
 import { clusterNodeId } from './build-cluster-node.helper';
@@ -19,6 +20,7 @@ export function buildNodeColor(
   topics: readonly ConstellationTopic[],
   clusters: readonly ConstellationCluster[] = [],
   communities: readonly ConstellationCommunity[] = [],
+  visibleNodes: readonly ConstellationNode[] = [],
 ): Map<string, string> {
   const nodeColor = new Map<string, string>();
   for (const topic of topics) {
@@ -30,6 +32,15 @@ export function buildNodeColor(
   }
   for (const cluster of clusters) {
     nodeColor.set(clusterNodeId(cluster.key), cluster.color);
+  }
+  // Node-tier dots (the aspect tier inside a hub blob) tint in their topic's color.
+  const topicColorByKey = new Map(
+    topics.map((topic) => [topic.key, topic.color]),
+  );
+  for (const node of visibleNodes) {
+    if (!node.isNodeTier) continue;
+    const color = topicColorByKey.get(node.topicKey);
+    if (color) nodeColor.set(node.id, color);
   }
   nodeColor.set(ROOT_NODE_ID, ROOT_NODE_COLOR);
   return nodeColor;

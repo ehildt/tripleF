@@ -10,7 +10,9 @@ const router = createRouter({
       component: () => import('@/components/chat/Chat.vue'),
     },
     {
-      path: '/memory',
+      /* The drill is the breadcrumb URL: alternating kind/name segment
+         pairs (catch-all :drill*, '/memory/cluster/x/community/y'). */
+      path: '/memory/:drill(.*)*',
       name: 'memory',
       component: () => import('@/components/memory/Memory.vue'),
     },

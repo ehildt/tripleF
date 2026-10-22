@@ -40,10 +40,11 @@ export function mapMemoryPointToUpsert(
       // normalized once, so case/format drift cannot re-enter the system.
       category: normalizeCategory(point.category),
       community: normalizeCommunity(point.community),
-      // The extraction-classified maintenance knobs — arrive normalized
-      // from the extraction parse; absent on records written by paths that
-      // don't classify (the remember tool).
+      // The chain's hub/node tier keys plus the extraction-classified
+      // maintenance knobs — arrive normalized from the extraction parse or
+      // the remember tool's strict storeRecord path.
       subject: point.subject,
+      node: point.node,
       kind: point.kind,
       stability: point.stability,
       path: point.path,

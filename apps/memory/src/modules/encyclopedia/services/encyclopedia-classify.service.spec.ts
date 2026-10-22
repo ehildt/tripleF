@@ -80,7 +80,9 @@ const chunk = {
 
 const classification = JSON.stringify({
   category: 'games',
+  community: 'action-rpgs',
   topic: 'stellar blade',
+  node: 'blood rain',
 });
 
 describe('EncyclopediaClassifyService', () => {
@@ -108,7 +110,8 @@ describe('EncyclopediaClassifyService', () => {
       'https://example.com/a',
       'games',
       'stellar blade',
-      undefined,
+      'action-rpgs',
+      'blood rain',
     );
     expect(ledger.markClassified).toHaveBeenCalledWith(['r1']);
   });
@@ -234,7 +237,8 @@ describe('EncyclopediaClassifyService', () => {
       'https://example.com/snippet',
       'games',
       'stellar blade',
-      undefined,
+      'action-rpgs',
+      'blood rain',
     );
     // Snippet urls have no ledger rows.
     expect(ledger.markClassified).not.toHaveBeenCalled();
@@ -284,6 +288,7 @@ describe('EncyclopediaClassifyService', () => {
         category: 'games',
         community: 'action',
         topic: 'stellar blade',
+        node: 'blood rain',
       }),
     });
 
@@ -294,6 +299,7 @@ describe('EncyclopediaClassifyService', () => {
       'games',
       'stellar blade',
       'action',
+      'blood rain',
     );
   });
 

@@ -11,6 +11,7 @@ import type { MemoryTaxonomyLane } from '../../persistence/constants/memory-taxo
 import type { MemoryTaxonomyKind } from '../../persistence/constants/memory-taxonomy.constant.js';
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
 import { normalizeCommunity } from '../../qdrant/helpers/normalize-community.helper.js';
+import { normalizeNode } from '../../qdrant/helpers/normalize-node.helper.js';
 import { normalizeSubject } from '../../qdrant/helpers/normalize-subject.helper.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
@@ -32,7 +33,9 @@ function normalizeProbeQuery(
       ? normalizeCategory(query)
       : kind === 'community'
         ? normalizeCommunity(query)
-        : normalizeSubject(query);
+        : kind === 'node'
+          ? normalizeNode(query)
+          : normalizeSubject(query);
   return normalized ?? query.trim().toLowerCase();
 }
 
@@ -40,6 +43,7 @@ const KIND_NOUN: Record<MemoryTaxonomyProbeInput['kind'], string> = {
   cluster: 'plural family noun',
   community: 'plural sub-family noun',
   hub: 'singular subject entity',
+  node: 'singular aspect noun',
 };
 
 /**

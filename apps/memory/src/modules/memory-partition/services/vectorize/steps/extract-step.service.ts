@@ -22,7 +22,7 @@ import type { VectorizeContext } from '../vectorize-context.type.js';
 import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
 /** One initial attempt + one correction pass — mirror of the interpret retry. */
 const MAX_EXTRACTION_ATTEMPTS = 2;
-/** Probe steps an extraction may take before answering (cluster → community → hub, with slack). */
+/** Probe steps an extraction may take before answering (cluster → community → hub → node, with slack). */
 const EXTRACT_MAX_STEPS = 5;
 
 /**
@@ -100,7 +100,7 @@ export class ExtractStepService implements VectorizeStepHandler {
     ];
 
     // The interactive probe: the model may confirm the ranked vocabulary
-    // top-down (cluster → community → hub) before answering, adopting
+    // top-down (cluster → community → hub → node) before answering, adopting
     // existing nodes VERBATIM instead of minting near-duplicate labels.
     const taxonomyProbeTool = createMemoryTaxonomyProbeTool({
       probe: (input) =>

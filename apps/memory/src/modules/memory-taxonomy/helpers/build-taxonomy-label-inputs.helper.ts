@@ -13,10 +13,10 @@ export function taxonomyLabelKey(
 
 /**
  * Flatten one extraction into its taxonomy-resolution entries, tier-ordered
- * (clusters → communities → hubs → tags) so parent refs resolve first.
- * Per-fact labels inherit the turn-side labels as their parent context;
- * explicit fact labels get their own entries. Deduped by
- * (kind, parentRef, label).
+ * (clusters → communities → hubs → nodes → tags) so parent refs resolve
+ * first. The chain is strict: every fact carries category/community/subject/
+ * node — no inheritance, no shortcuts. Turn-side labels still register as
+ * context; deduped by (kind, parentRef, label).
  */
 export function buildTaxonomyLabelInputs(
   extraction: MemoryExtraction,
@@ -42,23 +42,22 @@ export function buildTaxonomyLabelInputs(
   }
 
   for (const fact of extraction.facts) {
-    const categoryRef = fact.category ?? extraction.category;
-    const communityRef = fact.community ?? extraction.community;
-    if (fact.category) push({ kind: 'cluster', label: fact.category });
-    if (fact.community) {
-      push({
-        kind: 'community',
-        label: fact.community,
-        parentRef: categoryRef,
-      });
-    }
-    if (fact.subject) {
-      push({
-        kind: 'hub',
-        label: fact.subject,
-        parentRef: communityRef ?? categoryRef,
-      });
-    }
+    push({ kind: 'cluster', label: fact.category });
+    push({
+      kind: 'community',
+      label: fact.community,
+      parentRef: fact.category,
+    });
+    push({
+      kind: 'hub',
+      label: fact.subject,
+      parentRef: fact.community,
+    });
+    push({
+      kind: 'node',
+      label: fact.node,
+      parentRef: fact.subject,
+    });
   }
 
   for (const tag of extraction.tags) {

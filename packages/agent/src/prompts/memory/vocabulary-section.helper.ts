@@ -2,7 +2,7 @@ import type { TaxonomyVocabulary } from './vocabulary-section.types.js';
 
 /**
  * Reuse-first hint: the memory space's existing taxonomy vocabulary, grouped
- * by tier (cluster → community → hub, plus the tag recall vocabulary).
+ * by tier (cluster → community → hub → node, plus the tag recall vocabulary).
  * Appended to extraction, write, and classify prompts so the model extends
  * the taxonomy instead of minting near-duplicate labels. Ranked subsets, not
  * dumps: the caller passes the labels most relevant to the source text.

@@ -3,14 +3,14 @@ import { buildStructuredPrompt } from '../helpers/build-structured-prompt.helper
 
 export const TAXONOMY_RECONCILE_INSTRUCTIONS = `TAXONOMY RECONCILIATION — one purpose: decide whether two EXISTING taxonomy labels of the same tier name the same concept and should merge into one.
 
-The macro-taxonomy, top-down: CLUSTER (plural family, e.g. "games") → COMMUNITY (plural sub-family, e.g. "survival-games") → HUB (singular subject entity, e.g. "project zomboid") → plus TAG labels (narrow recall vocabulary).
+The macro-taxonomy, top-down: CLUSTER (plural family, e.g. "games") → COMMUNITY (plural sub-family, e.g. "survival-games") → HUB (singular subject entity, e.g. "project zomboid") → NODE (singular aspect under the hub, e.g. "base building") → plus TAG labels (narrow recall vocabulary).
 
 Merge ONLY wording variants of one concept: casing/formatting drift ("Video Games" / "video-games"), singular/plural drift inside a family tier ("survival game" / "survival-games"), abbreviation with identical expansion ("nlp" / "natural-language-processing").
 NEVER merge: two entities that merely share a word ("apple" the company vs "apple" the fruit), a parent and its child ("games" vs "survival-games"), a broad tier and a specific entity ("games" vs "project zomboid"), or two genuinely different topics that happen to look similar. When in doubt, answer DISTINCT — a missed merge is cleaned up later; a wrong merge destroys both labels' meaning forever.`;
 
 /** One pair-adjudication prompt: the two labels plus their usage counts. */
 export function buildTaxonomyPairPrompt(params: {
-  kind: 'cluster' | 'community' | 'hub' | 'tag';
+  kind: 'cluster' | 'community' | 'hub' | 'node' | 'tag';
   labelA: string;
   labelB: string;
   countA: number;

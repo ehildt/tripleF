@@ -31,7 +31,7 @@ const appStore = useAppStore();
 const themeStore = useThemeStore();
 const socketStore = useSocketStore();
 const dlqStore = useDlqStore();
-const preprocessingStore = usePreprocessingStore();
+usePreprocessingStore();
 const popoutSettingsStore = usePopoutSettingsStore();
 const playlistStore = usePlaylistStore();
 
@@ -47,11 +47,9 @@ const { playlistMarqueeVisible } = usePlaylistMarquee(playback);
 // each mount.
 void playlistStore.loadPlaylists();
 
-// Push the persisted preprocessing settings to the server on boot: the
-// server applies preprocessing from its own effective config, so it needs
-// the client's overrides before the next query runs. Deferred to idle — it
-// is a write, not something first paint depends on.
-scheduleIdle(() => preprocessingStore.pushSettingsToServer());
+// The preprocessing config is server-persisted per session id: the store
+// fetches it on construction and pushes every change immediately from its
+// own watch — no boot-time orchestration here.
 
 // The Settings popout preview is transient: switching tabs dismisses it.
 // Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
@@ -63,21 +61,6 @@ watch(
     playlistStore.hidePlaylistPreview();
   },
 );
-
-/**
- * Run a callback when the browser is idle, falling back to a macrotask when
- * requestIdleCallback is unavailable (jsdom, older engines). Used to push
- * non-critical boot work (the preprocessing push) off the first-paint path so
- * it doesn't compete with the conversation restore and route chunks for the
- * connection budget on HTTP/1.1.
- */
-function scheduleIdle(callback: () => void) {
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(callback, { timeout: 2000 });
-  } else {
-    window.setTimeout(callback, 0);
-  }
-}
 
 socketStore.setCallbacks(
   debugStore.addSocketDebugEntry,
@@ -131,10 +114,13 @@ onMounted(() => {
         <!-- The chat is the primary tab: keep its mounted tree alive across
              switches (scroll position, subscriptions, computed state) so a
              return visit never pays the remount + full-list re-render
-             burst. Other tabs mount/unmount as before. -->
+             burst. Keyed by route NAME, not path: the memory taxonomy drill
+             lives in the path segments themselves (/memory/cluster/.../…),
+             so a fullPath/path key would remount the tree per drill step
+             and let KeepAlive cache one mounted Memory instance per URL. -->
         <router-view v-slot="{ Component }">
           <KeepAlive :include="['Chat', 'Memory']">
-            <component :is="Component" :key="route.fullPath" />
+            <component :is="Component" :key="route.name" />
           </KeepAlive>
         </router-view>
       </div>

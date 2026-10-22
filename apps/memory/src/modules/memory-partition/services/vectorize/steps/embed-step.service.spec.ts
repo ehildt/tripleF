@@ -34,11 +34,19 @@ describe('EmbedStepService', () => {
           facts: [
             {
               text: 'User prefers concise.',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'preference' as const,
               stability: 'durable' as const,
             },
             {
               text: 'User uses vim.',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'state' as const,
               stability: 'volatile' as const,
             },
@@ -78,11 +86,19 @@ describe('EmbedStepService', () => {
           facts: [
             {
               text: 'F1',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'fact' as const,
               stability: 'durable' as const,
             },
             {
               text: 'F2',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'fact' as const,
               stability: 'durable' as const,
             },

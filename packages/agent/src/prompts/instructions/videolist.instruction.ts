@@ -40,4 +40,5 @@ Do NOT include:
 No-results rule:
 - If the searches returned no usable videos, set title to a concise statement such as 'No videos found for <topic>' and use subtitle to explain that the search did not return embeddable video sources. Set videoGalleryItems to an empty array.
 - Do not invent video URLs to fill the playlist when no results were retrieved.
+- availableVideos empty does NOT mean nothing was found: when availableVideos is empty but internationalVideos is not, the search DID find videos — in other languages than the user's. Never title it 'No videos found' in that case; use the subtitle to say the fresh results are in other languages and listed in internationalCoverage, and fill internationalCoverage from the internationalVideos pool.
 - The dashboard does not render sources for this template. Do not include a sources field.`;

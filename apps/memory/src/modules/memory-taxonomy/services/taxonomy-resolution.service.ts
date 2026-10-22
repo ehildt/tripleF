@@ -22,9 +22,9 @@ export interface TaxonomyLabelInput {
   /** Canonical-form label (already normalized at the write boundary). */
   label: string;
   /**
-   * Input `label` of the parent entry resolved earlier in the same batch
-   * (community → its category; hub → its community or category). Tags are
-   * flat and pass no parent.
+   * Input `label` of the parent entry resolved earlier in the same batch —
+   * the strict chain: community → its category; hub → its community; node →
+   * its subject. Tags are flat and pass no parent.
    */
   parentRef?: string;
 }
@@ -47,12 +47,12 @@ export interface TaxonomyResolvedLabel {
  * name labels freely, the registry stores them canonically. Resolution order
  * per label: exact normalized-name hit → permanent alias hit → trigram fuzzy
  * snap above the per-kind threshold (skipped for token-disjoint candidates —
- * a no-overlap name is a distinct topic, never a variant) → mint a new node
- * (concurrency-safe get-or-create + label vector for semantic probing).
+ * a no-overlap name is a distinct topic, never a variant) → mint a new tier
+ * entry (concurrency-safe get-or-create + label vector for semantic probing).
  * Every fuzzy snap writes an alias row so the killed wording resolves forever.
  *
  * Parent-aware within one batch: entries are processed in tier order
- * (cluster → community → hub → tag); a `parentRef` narrows exact/fuzzy
+ * (cluster → community → hub → node → tag); a `parentRef` narrows exact/fuzzy
  * candidacy to that parent's children, keeping the tree coherent.
  */
 @Injectable()

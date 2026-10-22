@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 /**
  * Structured template for the encyclopedia classification step — the JSON contract
- * the model fills when labeling one stored source document with its broad
- * category, optional community, and the topic it is about. Source-agnostic: the
+ * the model fills when labeling one stored source document with its full
+ * strict taxonomy chain (category → community → topic → node). Source-agnostic: the
  * same labels apply to fetched web pages, uploaded files, and search-result
  * snippets alike — classification reads the CONTENT, never the source shape.
  */
@@ -17,14 +17,14 @@ export const EncyclopediaClassifySchema = z.object({
    */
   category: z.string(),
   /**
-   * One lowercase PLURAL sub-family label narrowing the category (e.g.
+   * One lowercase PLURAL sub-family narrowing the category (e.g.
    * `survival-games` under `games`, `tv-shows` under `shows`) — the
-   * constellation's COMMUNITY tier, one level below the cluster. Optional:
-   * omit when no sub-family applies. Never a specific entity, product,
-   * company, or title — a show/work title like `breaking-bad` is a topic or
-   * tag, never a community.
+   * constellation's COMMUNITY tier, one level below the cluster. The chain
+   * is strict, so community is always present. Never a specific entity,
+   * product, company, or title — a show/work title like `breaking-bad` is a
+   * hub, never a community.
    */
-  community: z.string().optional(),
+  community: z.string(),
   /**
    * The narrow SINGULAR subject entity the document is about (e.g.
    * `wuthering waves`, `q3 budget`) — the constellation's HUB tier. A short,
@@ -32,11 +32,13 @@ export const EncyclopediaClassifySchema = z.object({
    */
   topic: z.string(),
   /**
-   * Lucide icon name for a label this classification CREATES (attached to
-   * the deepest NEW label: topic first, then community, then category).
-   * Only from the curated taxonomy icon set; omit when adopting existing
-   * labels or no icon fits.
+   * The SINGULAR aspect of the document under its hub (e.g. `base building`
+   * under `project zomboid`, `department spend` under `q3 budget`) — the
+   * constellation's NODE tier, one level below the hub: a named sub-entity
+   * or topic branch the chunks file under. Reuse the known vocabulary
+   * instead of minting near-variants.
    */
+  node: z.string(),
   icon: z.string().optional(),
 });
 

@@ -83,5 +83,6 @@ const activeTabTitle = computed(() =>
   flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-3);
+  grid-column: 1 / -1;
 }
 </style>

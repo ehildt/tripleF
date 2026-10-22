@@ -114,7 +114,7 @@ export class MemoryWriteJobService {
         'memory-taxonomy-probe': taxonomyProbeTool,
       } as any,
       toolChoice: 'auto',
-      // Probe chains (cluster → community → hub) are sequential tool steps;
+      // Probe chains (cluster → community → hub → node) are sequential tool steps;
       // the remember calls land in the follow-up steps.
       maxSteps: 8,
       providerOptions: buildProviderOptions({
