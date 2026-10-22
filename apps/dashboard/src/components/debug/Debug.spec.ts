@@ -6,7 +6,7 @@ import Debug from './Debug.vue';
 
 const mockReadIds: string[] = [];
 
-vi.mock('../../stores/debug', () => ({
+vi.mock('../../stores/debug/debug.store', () => ({
   useDebugStore: () => ({
     isDebugRead: vi.fn((id: string) => mockReadIds.includes(id)),
   }),

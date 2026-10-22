@@ -1,10 +1,12 @@
 import { type Tool, tool } from 'ai';
 
+import { SEARCH_API_RESULTS_CAP } from '../constants/search-results-cap.constant.js';
 import { SEARCH_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { STANDALONE_QUERY_TOOL_CLAUSE } from '../constants/standalone-query.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import { applyRecencyParam } from '../helpers/apply-recency-param.helper.js';
 import { fetchWithTimeout } from '../helpers/fetch-with-timeout.helper.js';
+import { isGoogleGotoLink } from '../helpers/is-google-goto-link.helper.js';
 import type { ToolDependencies } from '../types/tool-dependencies.types.js';
 
 import { mapSerperWebResult } from './helpers/map-serper-web-result.helper.js';
@@ -15,7 +17,7 @@ import type { SerperWebSearchResponse } from './web-search.types.js';
 export function createSerperWebSearch(deps: ToolDependencies): Tool {
   return tool({
     description:
-      'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results. ' +
+      'Search the web using Serper.dev (Google results). Returns organic results with titles, snippets, and links — at most the top 3 per call, so cover each distinct topic or entity with its own call. Pass recency ("day"|"week"|"month"|"year") to restrict to fresh results. ' +
       STANDALONE_QUERY_TOOL_CLAUSE,
     inputSchema: serperWebSearchSchema,
     execute: async ({ query, recency, lang }: SerperWebSearchInput) => {
@@ -25,9 +27,15 @@ export function createSerperWebSearch(deps: ToolDependencies): Tool {
       }
 
       deps.logger.log(`Serper.dev search for "${query}"`);
+      const num = Math.min(cfg.web.results, SEARCH_API_RESULTS_CAP);
+      if (num < cfg.web.results) {
+        deps.logger.warn(
+          `Serper.dev web results clamped from ${cfg.web.results} to ${SEARCH_API_RESULTS_CAP} (top-3 rank cutoff)`,
+        );
+      }
       const body: Record<string, unknown> = {
         q: query,
-        num: cfg.web.results,
+        num,
       };
       applyLocaleParams(body, lang ?? deps.defaultLang);
       applyRecencyParam(body, recency);
@@ -49,7 +57,17 @@ export function createSerperWebSearch(deps: ToolDependencies): Tool {
         deps.logger.warn(`Serper.dev returned 0 results for "${query}"`);
         return { results: [] };
       }
-      const results = data.organic.map(mapSerperWebResult);
+      const mapped = data.organic.map(mapSerperWebResult);
+      // Google rate-limits resolving result links beyond the top 3 right
+      // after a search, so deeper links can arrive as opaque google.com/goto
+      // wrappers. Those fetch a Google verification page instead of the
+      // site — drop them before citations and auto-fetch ever see them.
+      const results = mapped.filter((r) => !isGoogleGotoLink(r.url));
+      if (results.length < mapped.length) {
+        deps.logger.warn(
+          `Serper.dev dropped ${mapped.length - results.length} unresolved google.com/goto link(s) for "${query}"`,
+        );
+      }
       deps.logger.log(`Serper.dev returned ${results.length} results for "${query}"`);
       return { results };
     },

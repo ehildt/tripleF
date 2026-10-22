@@ -13,6 +13,7 @@ export const TAXONOMY_RECONCILE_FLOOR: Record<MemoryTaxonomyKind, number> = {
   cluster: 0.65,
   community: 0.65,
   hub: 0.65,
+  node: 0.65,
   tag: 0.6,
 };
 

@@ -4,11 +4,9 @@ import type {
   VectorizeContext,
   VectorizeStepId,
   VectorizeStepState,
-} from './vectorize-context.type.js';
-import {
-  type VectorizeStepRegistry,
-  VectorizeStepRegistryService,
-} from './vectorize-step-registry.service.js';
+} from './vectorize-context.types.js';
+import { VectorizeStepRegistryService } from './vectorize-step-registry.service.js';
+import type { VectorizeStepRegistry } from './vectorize-step-registry.service.types.js';
 
 /**
  * DAG step runner for the vectorize pipeline — mirrors HarnessStepEngineService

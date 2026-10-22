@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useArtDirection } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-art-direction.composable';
-import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
+import { useArtDirection } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-art-direction';
+import { useResponseMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-priority';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 
@@ -16,7 +16,7 @@ import type { ArticleResponseProps } from './ArticleResponse.types';
 
 const props = defineProps<ArticleResponseProps>();
 
-const { videosFirst } = useHarnessMediaPriority(props.data);
+const { videosFirst } = useResponseMediaPriority(props.data);
 const { direction, splitHero, quoteAside, multicolBody, spans } =
   useArtDirection(props);
 </script>

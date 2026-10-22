@@ -9,9 +9,9 @@ import { z } from 'zod';
  */
 export const memoryTaxonomyProbeSchema = z.object({
   kind: z
-    .enum(['cluster', 'community', 'hub'])
+    .enum(['cluster', 'community', 'hub', 'node'])
     .describe(
-      'Which tier to probe. Top-down order: cluster (PLURAL family noun) → community (PLURAL sub-family under one cluster) → hub (SINGULAR main subject entity).',
+      'Which tier to probe. Top-down order: cluster (PLURAL family noun) → community (PLURAL sub-family under one cluster) → hub (SINGULAR main subject entity) → node (SINGULAR aspect under the hub).',
     ),
   query: z
     .string()
@@ -24,7 +24,7 @@ export const memoryTaxonomyProbeSchema = z.object({
     .string()
     .optional()
     .describe(
-      'The adopted node id from the tier ABOVE (community probes pass the adopted cluster id; hub probes pass the adopted community or cluster id). Narrows the candidacy to that parent; omit only when you are about to CREATE the parent.',
+      'The adopted label id from the tier ABOVE (community probes pass the adopted cluster id; hub probes the adopted community id; node probes the adopted hub id). Narrows the candidacy to that parent; omit only when you are about to CREATE the parent.',
     ),
 });
 

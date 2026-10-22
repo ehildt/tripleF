@@ -4,7 +4,7 @@ import { expect, fn, userEvent, within } from 'storybook/test';
 import { ref, watch } from 'vue';
 
 import ModelList from '@/components/shared/ui/model-list/ModelList.vue';
-import { formatCtx } from '@/utils/format-ctx.helper';
+import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 
 import DropDown from './DropDown.vue';
 
@@ -154,7 +154,7 @@ export const LabeledLargeValue: Story = {
     label: 'Context',
     modelValue: '262144',
     options: numCtxOptions,
-    formatValue: (v: string) => formatCtx(Number(v)),
+    formatValue: (v: string) => formatContextSize(Number(v)),
     placeholder: '',
   },
 };

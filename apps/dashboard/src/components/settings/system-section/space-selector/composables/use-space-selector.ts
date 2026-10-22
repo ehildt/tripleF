@@ -1,6 +1,6 @@
 import { computed, onMounted, onUnmounted, type Ref, ref } from 'vue';
 
-import { useMenuPosition } from '@/composables/use-menu-position';
+import { useMenuPosition } from '@/composables/use-menu-position/use-menu-position';
 
 /**
  * Menu state for the SpaceSelector trigger + teleported dropdown, modeled on

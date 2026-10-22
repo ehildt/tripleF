@@ -7,15 +7,17 @@ describe('mapFactToPoint', () => {
     const fact = {
       text: 'likes games',
       subject: 'user',
+      node: 'general',
       category: 'games',
-      kind: 'preference' as const,
+      community: 'video games',
+      kind: 'fact' as const,
       stability: 'durable' as const,
     };
     const point = mapFactToPoint(
       fact,
       0,
       [[1, 2, 3]],
-      { facts: [fact], tags: ['games'], category: 'hobbies' },
+      { remember: true, facts: [fact], tags: ['games'], category: 'hobbies' },
       'p1',
       'user',
     );
@@ -24,26 +26,8 @@ describe('mapFactToPoint', () => {
     expect(point.tags).toEqual(['games']);
     expect(point.category).toBe('games');
     expect(point.subject).toBe('user');
-    expect(point.kind).toBe('preference');
+    expect(point.kind).toBe('fact');
     expect(point.stability).toBe('durable');
     expect(point.id).toBeTruthy();
-  });
-
-  it('falls back to the turn-side category when the fact omits its own', () => {
-    const fact = {
-      text: 'likes games',
-      kind: 'preference' as const,
-      stability: 'durable' as const,
-    };
-    const point = mapFactToPoint(
-      fact,
-      0,
-      [[1]],
-      { facts: [fact], tags: [], category: 'games' },
-      'p1',
-      'user',
-    );
-    expect(point.category).toBe('games');
-    expect(point.subject).toBeUndefined();
   });
 });

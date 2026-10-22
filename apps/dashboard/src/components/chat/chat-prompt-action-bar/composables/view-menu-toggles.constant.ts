@@ -7,7 +7,7 @@ import {
   type LucideIcon,
 } from '@lucide/vue';
 
-import type { CollapsibleSectionKey } from '@/types/harness-response-data.model';
+import type { CollapsibleSectionKey } from '@/types/assistant-response-data.model';
 
 /** One response-section toggle: its section type, icon, and label key. */
 type SectionToggleConfig = {

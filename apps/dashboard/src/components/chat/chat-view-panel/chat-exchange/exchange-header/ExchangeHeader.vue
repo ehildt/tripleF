@@ -14,9 +14,9 @@ import { useI18n } from 'vue-i18n';
 
 import ResponseMetaBarPill from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
 import ResponseMetaBar from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-meta-bar/ResponseMetaBar.vue';
-import { useAppStore } from '@/stores/app';
-import type { Exchange } from '@/stores/conversation';
-import { formatTime } from '@/utils/format-time.helper';
+import { useAppStore } from '@/stores/app/app.store';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { formatTime } from '@/utils/format-time/format-time.helper';
 
 import { useActivityLabel } from './composables/use-activity-label';
 import ExchangeActivityLabel from './exchange-activity-label/ExchangeActivityLabel.vue';
@@ -49,7 +49,7 @@ const { activityLabel } = useActivityLabel(toRef(props, 'exchange'));
 /** Assistant meta-bar pills (category/date/read-time/author) from the
  *  parsed response, shown after the copy action. */
 const metaPills = computed(() =>
-  buildExchangeMetaPills(props.exchange.harnessData),
+  buildExchangeMetaPills(props.exchange.responseData),
 );
 
 /**

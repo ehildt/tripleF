@@ -1,22 +1,14 @@
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
 
+import { useExpandableMessageList } from './composables/use-expandable-message-list';
 import ExpandableMessageListItem from './expandable-message-list-item/ExpandableMessageListItem.vue';
-import type { MessageListItem as MessageListItemType } from './types';
-import { useExpandableMessageList } from './use-expandable-message-list';
+import type { ExpandableMessageListProps } from './ExpandableMessageList.types';
 
-const props = withDefaults(
-  defineProps<{
-    items?: string | MessageListItemType[] | Record<string, unknown> | null;
-    renderHtml?: (content: string) => string;
-    onClick?: (index: number) => void;
-    expandAll?: boolean;
-  }>(),
-  {
-    items: null,
-    expandAll: false,
-  },
-);
+const props = withDefaults(defineProps<ExpandableMessageListProps>(), {
+  items: null,
+  expandAll: false,
+});
 
 const slots = useSlots();
 const hasBody = !!slots.body;
@@ -45,11 +37,9 @@ function handleSelect(idx: number) {
         @toggle="toggle(idx)"
         @select="handleSelect(idx)"
       >
-        <template v-if="hasBody" #body>
-          <slot name="body" :message="msg" :index="idx" />
-        </template>
-        <template v-else #body>
-          <div class="expandable-message-list__body">
+        <template #body>
+          <slot v-if="hasBody" name="body" :message="msg" :index="idx" />
+          <div v-if="!hasBody" class="expandable-message-list__body">
             <!-- eslint-disable vue/no-v-html -- HTML is pre-sanitized by the consumer-supplied renderHtml -->
             <div
               v-if="props.renderHtml"
@@ -58,7 +48,7 @@ function handleSelect(idx: number) {
             <!-- eslint-enable vue/no-v-html -->
             <!-- Plain messages render as interpolated text — raw content must
                  never reach v-html (it parses markup from untrusted input). -->
-            <div v-else class="expandable-message-list__text">
+            <div v-if="!props.renderHtml" class="expandable-message-list__text">
               {{ msg.content }}
             </div>
           </div>

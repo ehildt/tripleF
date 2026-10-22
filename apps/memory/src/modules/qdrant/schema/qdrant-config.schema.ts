@@ -11,7 +11,7 @@ import {
   EPISODE_SCORE_THRESHOLD_MAX,
   EPISODE_SCORE_THRESHOLD_MIN,
 } from '@triplef/agent/schemas';
-import Joi from 'joi';
+import { z } from 'zod';
 
 import {
   CLUSTER_MIN_MEMBERS_MAX,
@@ -35,119 +35,127 @@ import {
   REFLECT_MAX_CANDIDATES_MAX,
   REFLECT_MAX_CANDIDATES_MIN,
 } from '../constants/reflect.constant.js';
-import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
-export const QdrantConfigSchema = Joi.object<QdrantConfig>({
-  url: Joi.string().uri().optional(),
-  apiKey: Joi.string().optional(),
-  collection: Joi.string().optional(),
-  encyclopediaCollection: Joi.string().optional(),
-  vectorSize: Joi.number().integer().positive().optional(),
-  embedModel: Joi.string().optional(),
-  scoreThreshold: Joi.number().min(0).max(1).optional(),
-  embedTimeoutMs: Joi.number().integer().min(1000).optional(),
-  enabled: Joi.boolean().optional(),
+export const QdrantConfigSchema = z.strictObject({
+  url: z.url().optional(),
+  apiKey: z.string().optional(),
+  collection: z.string().optional(),
+  encyclopediaCollection: z.string().optional(),
+  vectorSize: z.number().int().positive().optional(),
+  embedModel: z.string().optional(),
+  scoreThreshold: z.number().min(0).max(1).optional(),
+  embedTimeoutMs: z.number().int().min(1000).optional(),
+  enabled: z.boolean().optional(),
   // Cognition profile character cap — env baseline for the
   // memoryCognitionLimit system variable (runtime override wins).
-  cognitionLimit: Joi.number()
-    .integer()
+  cognitionLimit: z
+    .number()
+    .int()
     .min(COGNITION_LIMIT_MIN)
     .max(COGNITION_LIMIT_MAX)
     .optional(),
   // Constellation node-load limit — env baseline for the
   // constellationNodeLimit system variable (runtime override wins).
-  constellationNodeLimit: Joi.number()
-    .integer()
+  constellationNodeLimit: z
+    .number()
+    .int()
     .min(CONSTELLATION_NODE_LIMIT_MIN)
     .max(CONSTELLATION_NODE_LIMIT_MAX)
     .optional(),
-  consolidateThreshold: Joi.number().integer().min(1).optional(),
-  consolidateModel: Joi.string().optional(),
+  consolidateThreshold: z.number().int().min(1).optional(),
+  consolidateModel: z.string().optional(),
   // Reflection pass — env baselines for the matching system variables
   // (runtime overrides win).
-  reflectModel: Joi.string().optional(),
-  reflectBatchLimit: Joi.number()
-    .integer()
+  reflectModel: z.string().optional(),
+  reflectBatchLimit: z
+    .number()
+    .int()
     .min(REFLECT_BATCH_LIMIT_MIN)
     .max(REFLECT_BATCH_LIMIT_MAX)
     .optional(),
-  reflectMaxCandidates: Joi.number()
-    .integer()
+  reflectMaxCandidates: z
+    .number()
+    .int()
     .min(REFLECT_MAX_CANDIDATES_MIN)
     .max(REFLECT_MAX_CANDIDATES_MAX)
     .optional(),
-  partitionReflectAutoEnabled: Joi.boolean().optional(),
-  cognitionReflectAutoEnabled: Joi.boolean().optional(),
-  encyclopediaReflectAutoEnabled: Joi.boolean().optional(),
+  partitionReflectAutoEnabled: z.boolean().optional(),
+  cognitionReflectAutoEnabled: z.boolean().optional(),
+  encyclopediaReflectAutoEnabled: z.boolean().optional(),
   // Conviction-synthesis pass — env baselines for the matching system
   // variables (runtime overrides win).
-  convictionModel: Joi.string().optional(),
-  convictionBatchLimit: Joi.number()
-    .integer()
+  convictionModel: z.string().optional(),
+  convictionBatchLimit: z
+    .number()
+    .int()
     .min(CONVICTION_BATCH_LIMIT_MIN)
     .max(CONVICTION_BATCH_LIMIT_MAX)
     .optional(),
-  convictionMaxPerCluster: Joi.number()
-    .integer()
+  convictionMaxPerCluster: z
+    .number()
+    .int()
     .min(CONVICTION_MAX_PER_CLUSTER_MIN)
     .max(CONVICTION_MAX_PER_CLUSTER_MAX)
     .optional(),
-  convictionAutoEnabled: Joi.boolean().optional(),
+  convictionAutoEnabled: z.boolean().optional(),
   // Cluster-detection pass — env baselines for the matching system
   // variables (runtime overrides win).
-  clusterModel: Joi.string().optional(),
-  clusterMinMembers: Joi.number()
-    .integer()
+  clusterModel: z.string().optional(),
+  clusterMinMembers: z
+    .number()
+    .int()
     .min(CLUSTER_MIN_MEMBERS_MIN)
     .max(CLUSTER_MIN_MEMBERS_MAX)
     .optional(),
-  clusterAutoEnabled: Joi.boolean().optional(),
-  raptorEnabled: Joi.boolean().optional(),
-  heatTrackingEnabled: Joi.boolean().optional(),
-  raptorMaxDepth: Joi.number()
-    .integer()
+  clusterAutoEnabled: z.boolean().optional(),
+  raptorEnabled: z.boolean().optional(),
+  heatTrackingEnabled: z.boolean().optional(),
+  raptorMaxDepth: z
+    .number()
+    .int()
     .min(RAPTOR_MAX_DEPTH_MIN)
     .max(RAPTOR_MAX_DEPTH_MAX)
     .optional(),
   // Episode-probe recency blend — env baselines for the matching system
   // variables (runtime overrides win).
-  episodeRecencyWeight: Joi.number()
+  episodeRecencyWeight: z
+    .number()
     .min(EPISODE_RECENCY_WEIGHT_MIN)
     .max(EPISODE_RECENCY_WEIGHT_MAX)
     .optional(),
-  episodeRecencyScaleSeconds: Joi.number()
-    .integer()
+  episodeRecencyScaleSeconds: z
+    .number()
+    .int()
     .min(EPISODE_RECENCY_SCALE_SECONDS_MIN)
     .max(EPISODE_RECENCY_SCALE_SECONDS_MAX)
     .optional(),
-  episodeRecencyMidpoint: Joi.number()
+  episodeRecencyMidpoint: z
+    .number()
     .min(EPISODE_RECENCY_MIDPOINT_MIN)
     .max(EPISODE_RECENCY_MIDPOINT_MAX)
     .optional(),
-  episodeProbeLimit: Joi.number()
-    .integer()
-    .min(EPISODE_PROBE_LIMIT_MIN)
-    .optional(),
-  episodeScoreThreshold: Joi.number()
+  episodeProbeLimit: z.number().int().min(EPISODE_PROBE_LIMIT_MIN).optional(),
+  episodeScoreThreshold: z
+    .number()
     .min(EPISODE_SCORE_THRESHOLD_MIN)
     .max(EPISODE_SCORE_THRESHOLD_MAX)
     .optional(),
   // numCtx-derived payload valves (0 = uncapped).
-  profilePayloadRatio: Joi.number().min(0).max(1).optional(),
-  profilePayloadChars: Joi.number().integer().min(0).optional(),
-  vectorizeTextRatio: Joi.number().min(0).max(1).optional(),
-  vectorizeTextChars: Joi.number().integer().min(0).optional(),
+  profilePayloadRatio: z.number().min(0).max(1).optional(),
+  profilePayloadChars: z.number().int().min(0).optional(),
+  vectorizeTextRatio: z.number().min(0).max(1).optional(),
+  vectorizeTextChars: z.number().int().min(0).optional(),
   // Constellation semantic-link graph knobs.
-  linkNeighbors: Joi.number().integer().min(1).max(10).optional(),
-  linkScoreThreshold: Joi.number().min(0).max(1).optional(),
-  linkTopicalThreshold: Joi.number().min(0).max(1).optional(),
-  linkBackfillMaxPoints: Joi.number().integer().min(100).max(50000).optional(),
-  linkReadMax: Joi.number().integer().min(100).optional(),
+  linkNeighbors: z.number().int().min(1).max(10).optional(),
+  linkScoreThreshold: z.number().min(0).max(1).optional(),
+  linkTopicalThreshold: z.number().min(0).max(1).optional(),
+  linkBackfillMaxPoints: z.number().int().min(100).max(50_000).optional(),
+  linkReadMax: z.number().int().min(100).optional(),
   // Hybrid retrieval (dense + sparse fused): enable switch, fusion method,
   // RRF leg weights, and the sparse prefetch depth.
-  hybridEnabled: Joi.boolean().optional(),
-  hybridFusion: Joi.string().valid('rrf', 'dbsf').optional(),
-  hybridDenseWeight: Joi.number().min(0).optional(),
-  hybridSparseWeight: Joi.number().min(0).optional(),
-  hybridSparseLimit: Joi.number().integer().min(1).max(1000).optional(),
-}).required();
+  hybridEnabled: z.boolean().optional(),
+  hybridFusion: z.enum(['rrf', 'dbsf']).optional(),
+  hybridDenseWeight: z.number().min(0).optional(),
+  hybridSparseWeight: z.number().min(0).optional(),
+  hybridSparseLimit: z.number().int().min(1).max(1000).optional(),
+});

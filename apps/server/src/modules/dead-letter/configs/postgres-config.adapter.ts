@@ -1,28 +1,23 @@
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
-import Joi from 'joi';
+import { z } from 'zod';
 
-import type { DlqStageConfig } from './postgres-config.types.js';
+const stageConfigSchema = z.strictObject({
+  retainAmount: z.number().int(),
+  maxAgeMs: z.number().int(),
+});
 
-export interface PostgresConfig {
-  url: string;
-  failed: DlqStageConfig;
-  cleared: DlqStageConfig;
-  removed: DlqStageConfig;
-}
-
-const stageConfigSchema = Joi.object<DlqStageConfig>({
-  retainAmount: Joi.number().integer().required(),
-  maxAgeMs: Joi.number().integer().required(),
-}).required();
-
-export const PostgresConfigSchema = Joi.object<PostgresConfig>({
-  url: Joi.string()
-    .uri({ scheme: ['postgres', 'postgresql'] })
-    .required(),
+export const PostgresConfigSchema = z.strictObject({
+  url: z.url({ protocol: /^postgres(ql)?$/ }),
   failed: stageConfigSchema,
   cleared: stageConfigSchema,
   removed: stageConfigSchema,
-}).required();
+});
+
+/**
+ * Shape of the validated dead-letter Postgres config. Derived from the
+ * schema, so the type can never drift from the runtime contract.
+ */
+export type PostgresConfig = z.infer<typeof PostgresConfigSchema>;
 
 export function PostgresConfigAdapter(env = process.env): PostgresConfig {
   return {

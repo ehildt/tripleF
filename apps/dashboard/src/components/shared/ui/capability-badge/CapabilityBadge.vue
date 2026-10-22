@@ -2,11 +2,10 @@
 import { computed } from 'vue';
 
 import Tooltip from '../tooltip/Tooltip.vue';
-import { CAPABILITY_META } from './capability-meta';
+import { CAPABILITY_META } from './capability-meta.constant';
+import type { CapabilityBadgeProps } from './CapabilityBadge.types';
 
-const props = defineProps<{
-  capability: string;
-}>();
+const props = defineProps<CapabilityBadgeProps>();
 
 /**
  * Known capabilities render as the same muted icon the model selector
@@ -30,7 +29,7 @@ const meta = computed(() => CAPABILITY_META[props.capability] ?? null);
       />
     </span>
   </Tooltip>
-  <Tooltip v-else :text="capability">
+  <Tooltip v-if="!meta" :text="capability">
     <span class="capability-badge">{{ capability }}</span>
   </Tooltip>
 </template>

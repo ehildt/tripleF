@@ -4,7 +4,7 @@ import type { ScrollMode } from '@/types/app.model';
 import type {
   CollapsibleSectionKey,
   MediaPresentation,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 /** One response-section hide/show toggle rendered in the view menu. */
 export interface SectionToggleData {

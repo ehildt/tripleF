@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 
-import { useSourceListCard } from './composables/use-source-list-card.composable';
+import { useSourceListCard } from './composables/use-source-list-card';
 import type {
   SourceListCardEmits,
   SourceListCardProps,

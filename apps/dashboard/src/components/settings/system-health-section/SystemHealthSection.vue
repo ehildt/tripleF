@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 import HealthTile from './health-tile/HealthTile.vue';
+import type { SystemHealthSectionProps } from './SystemHealthSection.types';
 
-defineProps<{
-  tiles: HealthTileViewModel[];
-}>();
+defineProps<SystemHealthSectionProps>();
 </script>
 
 <template>

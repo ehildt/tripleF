@@ -1,4 +1,8 @@
-import { Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
+
+import { MemoryPartitionModule } from '../memory-partition/memory-partition.module.js';
+import { MemoryTaxonomyModule } from '../memory-taxonomy/memory-taxonomy.module.js';
+import { PersistenceModule } from '../persistence/persistence.module.js';
 
 import { MemoryCognitionController } from './controllers/memory-cognition.controller.js';
 import { MemoryCognitionMaintenanceController } from './controllers/memory-cognition-maintenance.controller.js';
@@ -8,25 +12,42 @@ import { MemoryProfileJobService } from './services/memory-profile-job.service.j
 
 /**
  * The cognition lane: the profile snapshot/insight/conviction read-write
- * surface, the profile + conviction-synthesis jobs, and the cognition service.
- * Global so the partition lane's write job and the vectorize processor can
- * inject these without importing this module.
+ * surface (including the shared `DELETE /memory/text` route, whose partition
+ * branch delegates to the partition lane), the profile/conviction/write
+ * jobs, and the cognition service. Imports the partition lane for its search
+ * and store services — one-way; nothing in the partition lane imports back.
  */
-@Global()
-@Module({
-  controllers: [
-    MemoryCognitionController,
-    MemoryCognitionMaintenanceController,
-  ],
-  providers: [
-    MemoryCognitionService,
-    MemoryProfileJobService,
-    MemoryConvictionService,
-  ],
-  exports: [
-    MemoryCognitionService,
-    MemoryProfileJobService,
-    MemoryConvictionService,
-  ],
-})
-export class MemoryCognitionModule {}
+@Module({})
+export class MemoryCognitionModule {
+  private static readonly registration: DynamicModule = {
+    module: MemoryCognitionModule,
+    controllers: [
+      MemoryCognitionController,
+      MemoryCognitionMaintenanceController,
+    ],
+    exports: [
+      MemoryCognitionService,
+      MemoryProfileJobService,
+      MemoryConvictionService,
+    ],
+    imports: [
+      PersistenceModule.register(),
+      MemoryPartitionModule.register(),
+      MemoryTaxonomyModule.register(),
+    ],
+    providers: [
+      MemoryCognitionService,
+      MemoryProfileJobService,
+      MemoryConvictionService,
+    ],
+  };
+
+  /**
+   * Shared registration object: this app uses Nest's default by-reference
+   * dynamic-module ids, so one object per module class keeps multi-site
+   * imports a single shared instance (static-module singleton semantics).
+   */
+  static register(): DynamicModule {
+    return MemoryCognitionModule.registration;
+  }
+}

@@ -23,7 +23,7 @@ const state = vi.hoisted(() => ({
   joinRoom: vi.fn(),
 }));
 
-vi.mock('@/stores/conversation', async () => {
+vi.mock('@/stores/conversation/conversation.store', async () => {
   const { reactive } = await import('vue');
   const store = reactive({
     activeConversationId: '',
@@ -36,8 +36,8 @@ vi.mock('@/stores/conversation', async () => {
   return { useConversationStore: () => store };
 });
 
-vi.mock('@/stores/socket', () => ({
-  useSocketStore: () => ({
+vi.mock('@/composables/use-socket/use-socket', () => ({
+  useSocket: () => ({
     ensureSocketConnection: state.ensureSocketConnection,
     listenToEvent: state.listenToEvent,
     joinRoom: state.joinRoom,

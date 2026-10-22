@@ -1,7 +1,7 @@
-import type { LocaleMessages } from '../locale-messages.types';
+import type { LocaleMessages } from '../locale-schema';
 
 /** English UI chrome — the source of truth for all other locales. */
-const en: LocaleMessages = {
+export default {
   languageCode: 'en',
   countryCode: 'us',
   app: {
@@ -44,7 +44,6 @@ const en: LocaleMessages = {
     description: 'Description',
     stream: 'Stream',
     loading: 'Loading',
-    previewFailed: "Couldn't load the preview",
     streamRendersOnce: 'Shows once the full response is in',
     model: 'Model',
     url: 'URL',
@@ -82,7 +81,6 @@ const en: LocaleMessages = {
     conversations: 'Chats',
     close: 'Close',
     remove: 'Remove',
-    branch: 'Branch',
     pin: 'Pin',
     unpin: 'Unpin',
     clearLog: 'Clear the log',
@@ -200,7 +198,6 @@ const en: LocaleMessages = {
     resetPopoutSettingsToDefaults: 'Reset popout to defaults',
     resetPreprocessingToDefaults: 'Reset preprocessing to defaults',
     resetPreferredSources: 'Reset preferred sources',
-    resetImageTaskReferences: 'Reset reference image count',
     resetBlockedSources: 'Reset blocked sources',
     resetTabMenuSettingsToDefaults: 'Reset tab menu to defaults',
     resetToastSettingsToDefaults: 'Reset toasts to defaults',
@@ -215,7 +212,6 @@ const en: LocaleMessages = {
       "Got it — you won't see this message again. Unmute it under Settings → Widgets → Toast notifications.",
     stopPlayback: 'Stop playback',
     stopVideo: 'Stop video',
-    toggleContextInclusion: 'Toggle context inclusion',
     mergeSelection: 'Select for merge',
     mergeExcludedHint: 'Include this exchange first to merge it',
     mergeConsumedHint: 'Merged into request {requestId}',
@@ -483,12 +479,27 @@ const en: LocaleMessages = {
     memoryTaxonomyHubs: 'Hubs',
     memoryTaxonomyHubsDesc:
       'The singular subject entities anchoring the graph (project zomboid, amd)',
+    memoryTaxonomyNodes: 'Nodes',
+    memoryTaxonomyNodesDesc:
+      'The named aspects under a hub (base building under project zomboid) — their leaves are the facts',
     memoryTaxonomyTags: 'Tags',
     memoryTaxonomyTagsDesc:
       'The flat recall vocabulary — narrow topic labels used by filtered recall',
-    memoryTaxonomyRowMeta:
-      '{leaves} leaves · {linked} linked · {children} children',
     memoryTaxonomyAliases: '{count} alias | {count} aliases',
+    memoryTaxonomyCluster: 'Cluster',
+    memoryTaxonomyCommunity: 'Community',
+    memoryTaxonomyHub: 'Hub',
+    memoryTaxonomyNode: 'Node',
+    memoryTaxonomyTag: 'Tag',
+    memoryTaxonomyMetaLeaves: '{count} leaf | {count} leaves',
+    memoryTaxonomyMetaLinked: '{count} linked',
+    memoryTaxonomyMetaChildren: '{count} children',
+    memoryTaxonomyStampReflected: 'reflected',
+    memoryTaxonomyStampConsolidated: 'consolidated',
+    memoryTaxonomyStampRelinked: 'relinked',
+    memoryTaxonomyLeavesEmpty: 'No leaves attached',
+    memoryTaxonomyLeafLinked: 'Linked in the constellation',
+    memoryTaxonomyLeafSource: 'Open the source page',
     memoryTaxonomyEdit: 'Edit label',
     memoryTaxonomyRename: 'Rename',
     memoryTaxonomyRenameSave: 'Save name',
@@ -499,7 +510,7 @@ const en: LocaleMessages = {
     memoryTaxonomyIconClear: 'Clear icon',
     memorySynopsisTitle: 'Cluster synopses',
     memorySynopsisDesc:
-      'The Raptor hierarchy — every cluster summarized level by level; hover a node for its community summary (drag to pan, scroll to zoom)',
+      'The Raptor hierarchy — every cluster summarized level by level; rows start collapsed, expand one to read its summary and children',
     memorySynopsisRefresh: 'Refresh the synopsis tree',
     memorySynopsisEmpty:
       'No cluster synopses yet — run the cluster job for this space first',
@@ -789,14 +800,14 @@ const en: LocaleMessages = {
   chat: {
     noConversationTitle: 'No chat selected',
     selectModelFirst: 'Pick a model first',
+    selectModelPlaceholder: 'Please select a model',
     createOrPickChat: 'Start a new chat or pick one',
     startTalking: 'Say hi!',
   },
   toast: {
-    socketNotConnected:
-      "Couldn't subscribe — you're not connected to the server yet. Try again in a moment.",
     taxonomyRenamed: 'Label renamed',
     taxonomyRenameFailed: "Couldn't rename the label",
+    taxonomyLeavesFailed: "Couldn't load the leaves",
     taxonomyMerged: 'Labels merged',
     taxonomyMergeFailed: "Couldn't merge the labels",
     taxonomyIconUpdated: 'Icon updated',
@@ -851,10 +862,7 @@ const en: LocaleMessages = {
   activity: {
     understanding: 'Understanding your request…',
     searching: 'Searching the web and fetching media…',
-    analyzingImages: 'Analyzing your images…',
     verifying: 'Verifying links and cleaning up results…',
-    gatheringImages: 'Gathering the images…',
-    refining: 'Refining the response format…',
     assembling: 'Assembling the response…',
     responding: 'Composing the response…',
     web: 'Searching the web',
@@ -872,6 +880,4 @@ const en: LocaleMessages = {
     forQuery: 'for "{query}"',
     sourcesCount: '({count} searches)',
   },
-};
-
-export default en;
+} satisfies LocaleMessages;

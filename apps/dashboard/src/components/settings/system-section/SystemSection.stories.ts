@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
+import type { HealthTileViewModel } from '../health-tile-view-model.model';
 import SystemSection from './SystemSection.vue';
 
 const UP_TILES: HealthTileViewModel[] = [

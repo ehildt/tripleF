@@ -1,7 +1,7 @@
 import type {
   KeyFinding,
   StatHighlight,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 /** Props for `ProductStatHighlights`, the big-number stat row plus spec table. */
 export interface ProductStatHighlightsProps {

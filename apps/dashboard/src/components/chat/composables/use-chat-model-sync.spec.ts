@@ -1,9 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useConversationStore } from '@/stores/conversation';
-import { createConversation } from '@/stores/helpers/conversation/create-conversation.helper';
-import { useModelsStore } from '@/stores/models';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
+import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
 import { useChatModelSync } from './use-chat-model-sync';

@@ -9,7 +9,7 @@ import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exch
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import { useVideoListResponseData } from './composables/use-video-list-response-data.composable';
+import { useVideoListResponseData } from './composables/use-video-list-response-data';
 import type { VideoListResponseProps } from './VideoListResponse.types';
 
 const props = defineProps<VideoListResponseProps>();

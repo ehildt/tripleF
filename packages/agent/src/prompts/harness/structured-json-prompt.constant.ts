@@ -30,6 +30,7 @@ RULES:
 - If the request is ambiguous set needsClarification=true and provide a concise question in the language identified by the "language" field. The question must offer the most likely interpretations as options.
 - imageCount: set only when the user explicitly requests a number of images, or asks for more images without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system uses the configured reference-pool default (Settings Sources) for describe/compare/ocr and ${DEFAULT_MEDIA_COUNT} for other templates.
 - videoCount: set only when the user explicitly requests a number of videos, or asks for more videos without a number (then ${MORE_MEDIA_COUNT}); otherwise omit — the system defaults to ${DEFAULT_MEDIA_COUNT}.
+- contentCreator: set only on an explicit creator/channel restriction with exclusive intent (per CREATOR RESTRICTION above) — the name copied verbatim; otherwise omit or leave empty.
 - plan.images.resize should be true when images are present, unless the user explicitly asks for full resolution.
 - plan.images.variants should only include variants that would materially improve the analysis. Leave empty if the original is sufficient.
 - language: detect from the latest user message. ${INTENT_LANGUAGE_FIELD_RULE} Never default to English. If genuinely undetectable, omit the field. ALL human-readable text must be in that language.

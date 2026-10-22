@@ -2,7 +2,7 @@ import type { MemoryFriction } from '../../../../generated/prisma/client.js';
 import type {
   MemoryFrictionKind,
   MemoryFrictionStatus,
-} from '../memory-friction.repository.js';
+} from '../memory-friction.repository.types.js';
 
 /** Project a friction row into the dashboard edge shape. */
 export function mapFrictionRowToEdge(row: MemoryFriction) {

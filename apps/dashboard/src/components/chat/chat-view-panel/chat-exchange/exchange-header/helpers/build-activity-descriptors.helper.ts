@@ -1,4 +1,4 @@
-import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
+import type { AssistantActivityDescriptor } from '@/types/activity.model';
 
 import { buildToolActivityDescriptors } from '../../exchange-content/exchange-activity/helpers/build-tool-activity-descriptors.helper';
 import type { BuildActivityDescriptorsParams } from './build-activity-descriptors.helper.types';
@@ -13,7 +13,7 @@ import type { BuildActivityDescriptorsParams } from './build-activity-descriptor
  */
 export function buildActivityDescriptors(
   params: BuildActivityDescriptorsParams,
-): HarnessActivityDescriptor[] {
+): AssistantActivityDescriptor[] {
   const toolDescriptors = buildToolActivityDescriptors(params.toolCalls ?? []);
   if (toolDescriptors.length) return toolDescriptors;
 

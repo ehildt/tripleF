@@ -1,25 +1,21 @@
 <script setup lang="ts">
-import { Clapperboard, KeyRound } from '@lucide/vue';
+import { Clapperboard, KeyRound, RotateCcw } from '@lucide/vue';
 import { computed } from 'vue';
 
 import ProviderSection from '@/components/settings/integrations-section/shared/ui/provider-section/ProviderSection.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 
 import { useApiKeyForm } from '../../composables/use-api-key-form';
-import type { YouTubeConfig } from '../../settings-config.model';
+import type {
+  YoutubeSectionEmits,
+  YoutubeSectionProps,
+} from './YoutubeSection.types';
 
-const props = defineProps<{
-  config: YouTubeConfig;
-  updateApiKey: (apiKey: string) => Promise<boolean>;
-}>();
+const props = defineProps<YoutubeSectionProps>();
 
-const emit = defineEmits<{
-  toggleEndpoint: [name: string];
-  updateResults: [payload: { name: string; value: string }];
-  reset: [];
-}>();
+const emit = defineEmits<YoutubeSectionEmits>();
 
 const configured = computed(() => !!props.config.apiKey);
 const maskedApiKey = computed(() => props.config.apiKey ?? '');
@@ -47,8 +43,9 @@ const icons = {
     @update-results="emit('updateResults', $event)"
   >
     <template #actions>
-      <ResetButton
-        :title="$t('common.resetYouTubeToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetYouTubeToDefaults')"
         @click="emit('reset')"
       />
     </template>

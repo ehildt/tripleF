@@ -2,7 +2,7 @@
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
-import { useProductResponseData } from './composables/use-product-response-data.composable';
+import { useProductResponseData } from './composables/use-product-response-data';
 import ProductBanner from './product-banner/ProductBanner.vue';
 import ProductProsCons from './product-pros-cons/ProductProsCons.vue';
 import ProductStatHighlights from './product-stat-highlights/ProductStatHighlights.vue';

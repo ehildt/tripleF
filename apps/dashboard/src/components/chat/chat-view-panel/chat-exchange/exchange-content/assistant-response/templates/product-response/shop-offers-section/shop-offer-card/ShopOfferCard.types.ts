@@ -1,4 +1,4 @@
-import type { ShopOffer } from '@/types/harness-response-data.model';
+import type { ShopOffer } from '@/types/assistant-response-data.model';
 
 /** Props for `ShopOfferCard`, one purchase offer. */
 export interface ShopOfferCardProps {

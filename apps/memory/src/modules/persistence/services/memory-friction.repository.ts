@@ -12,41 +12,13 @@ import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js'
 import type { MemoryLane } from '../constants/memory-lane.constant.js';
 
 import { mapFrictionRowToEdge } from './helpers/map-friction-row-to-edge.helper.js';
-
-/** The three constellation lanes — one per memory layer (MemoryLane alias). */
-export type MemoryFrictionLane = MemoryLane;
-
-/** Friction kind — the reflection pass classifies the conflict. */
-export type MemoryFrictionKind =
-  'contradiction' | 'superseded' | 'outdated' | 'disagreement';
-
-/** Friction lifecycle state. */
-export type MemoryFrictionStatus = 'open' | 'resolved' | 'dismissed';
-
-/** One friction read back for the dashboard. */
-export interface MemoryFrictionEdge {
-  source: string;
-  target: string;
-  kind: MemoryFrictionKind;
-  status: MemoryFrictionStatus;
-  reason?: string;
-  resolution?: string;
-}
-
-/**
- * One open friction with its identity — the research job's contention input
- * (id + pair point ids + lane so the worker can load the pair's texts from
- * the right Qdrant collection).
- */
-export interface MemoryFrictionRecord {
-  id: string;
-  lane: MemoryFrictionLane;
-  scopeKey: string;
-  source: string;
-  target: string;
-  kind: MemoryFrictionKind;
-  reason?: string;
-}
+import type {
+  MemoryFrictionEdge,
+  MemoryFrictionKind,
+  MemoryFrictionLane,
+  MemoryFrictionRecord,
+  MemoryFrictionStatus,
+} from './memory-friction.repository.types.js';
 
 /** One friction row to write (canonical source < target ordering). */
 interface MemoryFrictionRow {

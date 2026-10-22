@@ -26,6 +26,22 @@ interface TaxonomyLabelHit {
   normalizedName: string;
 }
 
+/** Input of the semantic label probe (nearest labels of one kind/scope). */
+interface TaxonomyLabelSearchInput {
+  /** Memory layer lane to probe. */
+  lane: MemoryTaxonomyLane;
+  /** Space key to probe under. */
+  scopeKey: string;
+  /** Taxonomy tier of labels to return. */
+  kind: MemoryTaxonomyKind;
+  /** Restrict to children of one parent node when set. */
+  parentId?: string;
+  /** Query embedding to match against. */
+  vector: number[];
+  /** Top-k cap. */
+  limit: number;
+}
+
 /**
  * Qdrant storage for taxonomy label embeddings — one point per taxonomy
  * registry node in the model-namespaced taxonomy collection. The Postgres
@@ -88,14 +104,9 @@ export class TaxonomyVectorRepository {
    * Semantic probe: top-k label candidates of one kind/scope (optionally
    * under one parent) nearest the query vector.
    */
-  async searchLabels(input: {
-    lane: MemoryTaxonomyLane;
-    scopeKey: string;
-    kind: MemoryTaxonomyKind;
-    parentId?: string;
-    vector: number[];
-    limit: number;
-  }): Promise<TaxonomyLabelHit[]> {
+  async searchLabels(
+    input: TaxonomyLabelSearchInput,
+  ): Promise<TaxonomyLabelHit[]> {
     const client = this.clientService.getClient();
     const { exists } = await client.collectionExists(this.collection);
     if (!exists) return [];

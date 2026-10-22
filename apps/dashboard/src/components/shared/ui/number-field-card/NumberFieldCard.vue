@@ -4,7 +4,10 @@ import { Check } from '@lucide/vue';
 import InputNumber from '@/components/shared/ui/input-number/InputNumber.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-import type { NumberFieldCardProps } from './NumberFieldCard.types';
+import type {
+  NumberFieldCardEmits,
+  NumberFieldCardProps,
+} from './NumberFieldCard.types';
 
 /**
  * Full-width setting row in the image-variant design: icon tile, label +
@@ -22,10 +25,7 @@ withDefaults(defineProps<NumberFieldCardProps>(), {
   tone: 'accent',
 });
 
-const emit = defineEmits<{
-  toggle: [];
-  'update:numberValue': [value: number];
-}>();
+const emit = defineEmits<NumberFieldCardEmits>();
 </script>
 
 <template>

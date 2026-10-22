@@ -4,11 +4,8 @@ import { retryWithBackoff } from '@triplef/helpers/retry-with-backoff';
 
 import { ProviderOverridesRepository } from '../../persistence/services/provider-overrides.repository.js';
 import { SecretsCipherService } from '../../secrets/services/secrets-cipher.service.js';
-import type { BrightDataConfig } from '../configs/bright-data-config.adapter.js';
 import { BrightDataConfigService } from '../configs/bright-data-config.service.js';
-import type { EodhdConfig } from '../configs/eodhd-config.adapter.js';
 import { EodhdConfigService } from '../configs/eodhd-config.service.js';
-import type { SerperConfig } from '../configs/serper-config.adapter.js';
 import { SerperConfigService } from '../configs/serper-config.service.js';
 import { SourcesConfigService } from '../configs/sources-config.service.js';
 import { YoutubeConfigService } from '../configs/youtube-config.service.js';
@@ -18,31 +15,13 @@ import { decryptOverridesSecrets } from '../helpers/decrypt-overrides-secrets.he
 import { encryptOverridesSecrets } from '../helpers/encrypt-overrides-secrets.helper.js';
 import { updateApiKeyOverride } from '../helpers/update-api-key-override.helper.js';
 
-import type { ProviderOverridesSnapshot } from './provider-overrides.types.js';
-
-export type { ProviderOverridesSnapshot } from './provider-overrides.types.js';
-
-import {
-  BrightDataCapabilities,
-  BrightDataDiscoveryService,
-} from './brightdata-discovery.service.js';
-import {
-  type EodhdCapabilities,
-  EodhdDiscoveryService,
-} from './eodhd-discovery.service.js';
-import {
-  SerperCapabilities,
-  SerperDiscoveryService,
-} from './serper-discovery.service.js';
-
-interface ProviderOverridesMaskedSnapshot extends Omit<
+import { BrightDataDiscoveryService } from './brightdata-discovery.service.js';
+import { EodhdDiscoveryService } from './eodhd-discovery.service.js';
+import type {
+  ProviderOverridesMaskedSnapshot,
   ProviderOverridesSnapshot,
-  'serper' | 'brightData' | 'eodhd'
-> {
-  serper: SerperConfig & { capabilities?: SerperCapabilities };
-  brightData: BrightDataConfig & { capabilities?: BrightDataCapabilities };
-  eodhd: EodhdConfig & { capabilities?: EodhdCapabilities };
-}
+} from './provider-overrides.service.types.js';
+import { SerperDiscoveryService } from './serper-discovery.service.js';
 
 /** Boot restore: 5 attempts, 500ms → 8s backoff — spans compose cold starts. */
 const BOOT_RESTORE_ATTEMPTS = 5;
@@ -116,9 +95,9 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
       if (!values || typeof values !== 'object') continue;
       const record = values as Record<string, unknown>;
       // Legacy key from before the webpageFetch → scrape rename.
-      if ('webpageFetch' in record && !('scrape' in record)) {
+      if ('webpageFetch' in record && !('scrape' in record))
         record.scrape = record.webpageFetch;
-      }
+
       delete record.webpageFetch;
       const decrypted = decryptOverridesSecrets(
         { [row.provider]: record },
@@ -226,9 +205,8 @@ export class ProviderOverridesService implements OnApplicationBootstrap {
     this.restored = true;
     for (const [provider, values] of Object.entries(patch)) {
       if (!values) continue;
-      if (!this.overrides[provider]) {
-        this.overrides[provider] = {};
-      }
+      if (!this.overrides[provider]) this.overrides[provider] = {};
+
       for (const [key, val] of Object.entries(values)) {
         // Class-transformed DTO instances carry every declared field as an
         // own prop (undefined when unset) — only merge fields actually sent.

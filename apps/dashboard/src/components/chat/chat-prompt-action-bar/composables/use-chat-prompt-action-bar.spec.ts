@@ -11,7 +11,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Ref } from 'vue';
 
-import { useChatPromptActionBar } from './use-chat-prompt-action-bar.composable';
+import { useChatPromptActionBar } from './use-chat-prompt-action-bar';
 
 /** Mutable reactive inputs owned by the mocked dependency composables. The
  * mock factories assign the refs once on first call; tests mutate `.value`
@@ -57,7 +57,7 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: state.t }),
 }));
 
-vi.mock('@/stores/models', () => ({
+vi.mock('@/stores/models/models.store', () => ({
   useModelsStore: () => ({
     get selectedModel() {
       return state.selectedModel;
@@ -66,7 +66,7 @@ vi.mock('@/stores/models', () => ({
   }),
 }));
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/stores/app/app.store', () => ({
   useAppStore: () => ({
     getConversationScrollMode: state.getConversationScrollMode,
     setConversationScrollMode: state.setConversationScrollMode,

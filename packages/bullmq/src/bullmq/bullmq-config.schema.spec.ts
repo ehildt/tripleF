@@ -5,8 +5,7 @@ import { BullMQConfigSchema } from './bullmq-config.schema.ts';
 describe('BullMQConfigSchema', () => {
   describe('valid configs', () => {
     it('should accept empty config', () => {
-      const result = BullMQConfigSchema.validate({});
-      expect(result.error).toBeUndefined();
+      expect(BullMQConfigSchema.safeParse({}).success).toBe(true);
     });
 
     it('should accept valid config with all fields', () => {
@@ -38,8 +37,7 @@ describe('BullMQConfigSchema', () => {
           },
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeUndefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(true);
     });
 
     it('should accept minimal connection config', () => {
@@ -48,8 +46,7 @@ describe('BullMQConfigSchema', () => {
           host: '127.0.0.1',
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeUndefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(true);
     });
 
     it('should accept null tls', () => {
@@ -59,8 +56,23 @@ describe('BullMQConfigSchema', () => {
           tls: null,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeUndefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(true);
+    });
+
+    it('should coerce tls string values to Buffers (joi binary parity)', () => {
+      const result = BullMQConfigSchema.safeParse({
+        connection: {
+          host: 'localhost',
+          tls: { ca: 'ca-data', cert: 'cert-data', key: 'key-data' },
+        },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        const tls = result.data.connection?.tls as Record<string, unknown> | null | undefined;
+        expect(Buffer.isBuffer(tls?.ca)).toBe(true);
+        expect((tls?.cert as Buffer).toString()).toBe('cert-data');
+        expect((tls?.key as Buffer).toString()).toBe('key-data');
+      }
     });
 
     it('should accept empty password', () => {
@@ -70,8 +82,7 @@ describe('BullMQConfigSchema', () => {
           password: '',
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeUndefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(true);
     });
   });
 
@@ -82,8 +93,7 @@ describe('BullMQConfigSchema', () => {
           delay: -1,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject negative priority', () => {
@@ -92,8 +102,7 @@ describe('BullMQConfigSchema', () => {
           priority: -1,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject attempts > 50', () => {
@@ -102,8 +111,7 @@ describe('BullMQConfigSchema', () => {
           attempts: 51,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject attempts < 1', () => {
@@ -112,8 +120,7 @@ describe('BullMQConfigSchema', () => {
           attempts: 0,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject invalid backoff type', () => {
@@ -122,8 +129,7 @@ describe('BullMQConfigSchema', () => {
           backoff: { type: 'invalid' },
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject port < 1', () => {
@@ -132,8 +138,7 @@ describe('BullMQConfigSchema', () => {
           port: 0,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject port > 65535', () => {
@@ -142,8 +147,7 @@ describe('BullMQConfigSchema', () => {
           port: 65536,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject negative removeOnFail age', () => {
@@ -152,8 +156,7 @@ describe('BullMQConfigSchema', () => {
           removeOnFail: { age: -1 },
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject negative removeOnFail count', () => {
@@ -162,8 +165,7 @@ describe('BullMQConfigSchema', () => {
           removeOnFail: { count: -1 },
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject invalid host', () => {
@@ -172,8 +174,7 @@ describe('BullMQConfigSchema', () => {
           host: '',
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject connectTimeout < 1000', () => {
@@ -182,8 +183,7 @@ describe('BullMQConfigSchema', () => {
           connectTimeout: 500,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
 
     it('should reject commandTimeout < 1000', () => {
@@ -192,8 +192,7 @@ describe('BullMQConfigSchema', () => {
           commandTimeout: 500,
         },
       };
-      const result = BullMQConfigSchema.validate(config);
-      expect(result.error).toBeDefined();
+      expect(BullMQConfigSchema.safeParse(config).success).toBe(false);
     });
   });
 });

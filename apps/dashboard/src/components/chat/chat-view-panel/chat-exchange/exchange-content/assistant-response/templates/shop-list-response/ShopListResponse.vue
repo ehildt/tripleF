@@ -9,7 +9,7 @@ import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exch
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import { useShopListResponseData } from './composables/use-shop-list-response-data.composable';
+import { useShopListResponseData } from './composables/use-shop-list-response-data';
 import ShopListOfferCard from './shop-list-offer-card/ShopListOfferCard.vue';
 import type { ShopListResponseProps } from './ShopListResponse.types';
 

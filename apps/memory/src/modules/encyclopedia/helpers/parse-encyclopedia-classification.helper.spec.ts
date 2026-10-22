@@ -6,17 +6,32 @@ describe('parseEncyclopediaClassification', () => {
   it('parses and normalizes a valid classification', () => {
     expect(
       parseEncyclopediaClassification(
-        JSON.stringify({ category: 'Games', topic: '  Wuthering   Waves ' }),
+        JSON.stringify({
+          category: 'Games',
+          community: 'Soulslikes',
+          topic: '  Wuthering   Waves ',
+          node: 'Character   Builds',
+        }),
       ),
-    ).toEqual({ category: 'games', topic: 'wuthering waves' });
+    ).toEqual({
+      category: 'games',
+      community: 'soulslikes',
+      topic: 'wuthering waves',
+      node: 'character builds',
+    });
   });
 
   it('tolerates markdown fences around the JSON', () => {
     expect(
       parseEncyclopediaClassification(
-        '```json\n{"category":"work","topic":"q3 budget"}\n```',
+        '```json\n{"category":"work","community":"finance","topic":"q3 budget","node":"department spend"}\n```',
       ),
-    ).toEqual({ category: 'work', topic: 'q3 budget' });
+    ).toEqual({
+      category: 'work',
+      community: 'finance',
+      topic: 'q3 budget',
+      node: 'department spend',
+    });
   });
 
   it('throws on empty output', () => {
@@ -42,8 +57,26 @@ describe('parseEncyclopediaClassification', () => {
   it('throws when normalization yields an empty category or topic', () => {
     expect(() =>
       parseEncyclopediaClassification(
-        JSON.stringify({ category: '   ', topic: 'x' }),
+        JSON.stringify({
+          category: '   ',
+          community: 'x',
+          topic: 'y',
+          node: 'z',
+        }),
       ),
     ).toThrow(/empty category or topic/);
+  });
+
+  it('throws when normalization loses a deep-chain label (strict chain)', () => {
+    expect(() =>
+      parseEncyclopediaClassification(
+        JSON.stringify({
+          category: 'work',
+          community: 'finance',
+          topic: 'q3 budget',
+          node: 'x'.repeat(200),
+        }),
+      ),
+    ).toThrow(/taxonomy chain/);
   });
 });

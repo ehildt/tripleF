@@ -1,4 +1,4 @@
-import type { UploadedImage } from '../../../stores/conversation.model';
+import type { UploadedImage } from '../../../stores/conversation/conversation.model';
 
 export interface ClassifiedSelectedFiles {
   newFiles: File[];

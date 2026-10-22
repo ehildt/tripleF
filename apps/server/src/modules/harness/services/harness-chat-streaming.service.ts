@@ -141,10 +141,15 @@ export class HarnessChatStreamingService {
         imageCount: ctx.processedMeta.length,
         originalImageCount: originalMeta.length,
         galleryItemCount: images.length,
-        availableImageCount: extractImageCountFromToolResults(
+        // Curated pools (what the respond model and the client fallback
+        // actually saw) — not the raw tool results, whose count would mask
+        // exactly the pool shrinkage this log is meant to debug.
+        availableImageCount: ctx.outputs.availableImages?.length ?? 0,
+        availableVideoCount: ctx.outputs.availableVideos?.length ?? 0,
+        toolResultImageCount: extractImageCountFromToolResults(
           ctx.outputs.toolResults,
         ),
-        availableVideoCount: extractVideoCountFromToolResults(
+        toolResultVideoCount: extractVideoCountFromToolResults(
           ctx.outputs.toolResults,
         ),
       },

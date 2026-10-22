@@ -1,5 +1,8 @@
 import { computed, ref } from 'vue';
 
+import { buildFormData } from '@/components/chat/composables/helpers/build-form-data.helper';
+import { requireModel } from '@/components/chat/composables/helpers/require-model.helper';
+import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
 import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
@@ -10,28 +13,28 @@ import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/cal
 import {
   TOAST_KEY_CONTEXT_FULL,
   TOAST_KEY_MODEL_NO_IMAGES,
-} from '@/composables/toast-keys';
-import { useSocketProvider } from '@/composables/use-socket-provider';
-import { useToast } from '@/composables/use-toast';
+} from '@/composables/toast-keys.constant';
+import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app';
-import { useAttachedFilesStore } from '@/stores/attached-files';
-import type { Exchange, UploadedDocument } from '@/stores/conversation';
-import { useConversationStore } from '@/stores/conversation';
-import { useMergeSelectionStore } from '@/stores/merge-selection';
-import { useModelsStore } from '@/stores/models';
+import { useAppStore } from '@/stores/app/app.store';
+import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import type {
+  Exchange,
+  UploadedDocument,
+} from '@/stores/conversation/conversation.model';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
+import { useModelsStore } from '@/stores/models/models.store';
 import type {
   ConversationMetadataDocument,
   ConversationMetadataImage,
 } from '@/types/form-query-params.model';
-import { buildFormData } from '@/utils/build-form-data.helper';
-import { requireModel } from '@/utils/require-model.helper';
 
 import { buildSubmitQueryParams } from './helpers/build-submit-query-params.helper';
 import { mapDocumentEntry } from './helpers/map-document-entry.helper';
 import { mapDocumentToOriginal } from './helpers/map-document-to-original.helper';
 import { mapDocumentToPrompt } from './helpers/map-document-to-prompt.helper';
-import { useHarnessRequest } from './use-harness-request';
+import { useAssistantRequest } from './use-assistant-request';
 import { usePromptDraft } from './use-prompt-draft';
 
 export function useSubmit() {
@@ -45,7 +48,7 @@ export function useSubmit() {
   const mergeSelection = useMergeSelection();
   const mergeSelectionStore = useMergeSelectionStore();
   const toast = useToast();
-  const { postHarnessRequest } = useHarnessRequest();
+  const { postHarnessRequest } = useAssistantRequest();
 
   const isSubmitting = ref(false);
 

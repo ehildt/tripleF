@@ -2,19 +2,14 @@
 import { RotateCcw } from '@lucide/vue';
 
 import IconButton from '../icon-button/IconButton.vue';
+import type { ResetButtonEmits, ResetButtonProps } from './ResetButton.types';
 
 /** Panel-header reset icon button, next to the power toggle. */
-withDefaults(
-  defineProps<{
-    title?: string;
-    disabled?: boolean;
-  }>(),
-  { title: 'Reset to defaults' },
-);
+withDefaults(defineProps<ResetButtonProps>(), {
+  title: 'Reset to defaults',
+});
 
-const emit = defineEmits<{
-  click: [];
-}>();
+const emit = defineEmits<ResetButtonEmits>();
 </script>
 
 <template>

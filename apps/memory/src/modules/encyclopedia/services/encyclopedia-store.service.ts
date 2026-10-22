@@ -14,30 +14,11 @@ import {
 } from '../helpers/chunk-text.helper.js';
 import type { EncyclopediaConfig } from '../models/encyclopedia-config.model.js';
 
+import { deriveDomain } from './helpers/derive-domain.helper.js';
+import { latestHash } from './helpers/latest-hash.helper.js';
 import { mapContentToChunk } from './helpers/map-content-to-chunk.helper.js';
 import { mapEntryToChunk } from './helpers/map-entry-to-chunk.helper.js';
-
-/** Outcome of the persist pass — what the select flow needs to know. */
-export interface PersistOutcome {
-  reusedDocs: number;
-  storedDocs: number;
-  /** All current-turn urls (persisted + oversize-rejected) — Lane B exclusion. */
-  currentUrls: string[];
-  /** Urls present in the index — Lane A vector query filter. */
-  indexedUrls: string[];
-  /** Docs to chunk+embed in-memory (no url, or rejected). */
-  ephemeralDocs: EncyclopediaSourceDocument[];
-  /**
-   * Docs rejected from the index with a reason (oversize, or empty after
-   * chunking). In the select flow these still serve the turn in-memory
-   * (ephemeralDocs); the persist-only index flow surfaces them as drops.
-   */
-  rejectedDocs: Array<{
-    title?: string;
-    url?: string;
-    reason: 'oversize' | 'empty';
-  }>;
-}
+import type { PersistOutcome } from './encyclopedia-store.service.types.js';
 
 /**
  * Read-through persist layer of the encyclopedia select flow: for each document
@@ -302,24 +283,5 @@ export class EncyclopediaStoreService {
       this.config.chunkOverlapSentences,
       this.config.maxHeadingDepth,
     );
-  }
-}
-
-/** The newest content hash among a url's stored chunks (by fetched_at). */
-function latestHash(
-  existing: Array<{ contentHash: string; fetchedAt: string }>,
-): string | undefined {
-  if (existing.length === 0) return undefined;
-  return existing.reduce((newest, chunk) =>
-    chunk.fetchedAt > newest.fetchedAt ? chunk : newest,
-  ).contentHash;
-}
-
-/** Bare hostname of a url, lowercased and www-stripped. */
-function deriveDomain(url: string): string {
-  try {
-    return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-  } catch {
-    return '';
   }
 }

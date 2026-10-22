@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PdfService } from '@triplef/pdf';
 
-import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
+import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
 import { MinioService } from '../../minio/services/minio.service.js';
 import type { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
 import {
@@ -25,17 +25,10 @@ import { mapPageMeta } from './helpers/map-page-meta.helper.js';
 import { resolveSelectedPageIndexes } from './helpers/resolve-selected-page-indexes.helper.js';
 import { shouldSynthesizePages } from './helpers/should-synthesize-pages.helper.js';
 import { mapDocumentSection } from './steps/helpers/map-document-section.helper.js';
+import type { ResolveOriginalsVision } from './document-conversion.service.types.js';
 import { PdfPageDescribeService } from './pdf-page-describe.service.js';
 
 const MANIFEST_CONTENT_TYPE = 'application/json';
-
-/** Vision context for one turn (attachments only exist under a vision model). */
-interface ResolveOriginalsVision {
-  /** Turn chat model — describes selected pdf pages that lack one. */
-  model?: string;
-  /** False when the turn's model lacks vision (pdf pages excluded this turn). */
-  ready: boolean;
-}
 
 /**
  * Owns document-original conversion: for every original referenced by a
@@ -59,7 +52,7 @@ export class DocumentConversionService {
     private readonly minioService: MinioService,
     private readonly pdfService: PdfService,
     private readonly describeService: PdfPageDescribeService,
-    private readonly memoryClient: MemoryClientService,
+    private readonly memoryEncyclopedia: MemoryEncyclopediaService,
   ) {}
 
   /**
@@ -158,7 +151,7 @@ export class DocumentConversionService {
     const content = composeEncyclopediaContent(manifest);
     if (!content) return;
 
-    void this.memoryClient
+    void this.memoryEncyclopedia
       .indexEncyclopediaDocuments({
         documents: [
           mapDocumentSection(

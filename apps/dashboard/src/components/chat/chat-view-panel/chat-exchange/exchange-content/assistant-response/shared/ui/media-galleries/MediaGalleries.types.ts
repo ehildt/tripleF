@@ -1,7 +1,7 @@
 import type {
   GalleryItem,
   VideoGalleryItem,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 export interface MediaGalleriesProps {
   /** Videos before images (or vice versa) — driven by the app-level media

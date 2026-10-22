@@ -12,13 +12,16 @@ import { ListMinus, ListPlus } from '@lucide/vue';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 
-import type { PlaylistToggleButtonProps } from './PlaylistToggleButton.types';
+import type {
+  PlaylistToggleButtonEmits,
+  PlaylistToggleButtonProps,
+} from './PlaylistToggleButton.types';
 
 withDefaults(defineProps<PlaylistToggleButtonProps>(), {
   size: 'lg',
 });
 
-const emit = defineEmits<{ toggle: [event: MouseEvent] }>();
+const emit = defineEmits<PlaylistToggleButtonEmits>();
 
 function handleClick(event: MouseEvent) {
   event.stopPropagation();
@@ -41,6 +44,6 @@ function handleClick(event: MouseEvent) {
     @click="handleClick"
   >
     <ListMinus v-if="active" />
-    <ListPlus v-else />
+    <ListPlus v-if="!active" />
   </IconButton>
 </template>

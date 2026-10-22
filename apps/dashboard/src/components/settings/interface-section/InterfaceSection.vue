@@ -11,18 +11,17 @@ import SettingsSection from '@/components/settings/shared/ui/settings-section/Se
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
+import { useAppStore } from '@/stores/app/app.store';
 
 import { useSettingsMenuVisibility } from '../composables/use-settings-menu-visibility';
 import { useSettingsTabVisibility } from '../composables/use-settings-tab-visibility';
 
-const { isTabVisible, toggleTab } = useSettingsTabVisibility();
+const appStore = useAppStore();
 
-const {
-  sourceMenuAlwaysShow,
-  viewMenuAlwaysShow,
-  toggleSourceMenuAlwaysShow,
-  toggleViewMenuAlwaysShow,
-} = useSettingsMenuVisibility();
+const { toggleTab } = useSettingsTabVisibility();
+
+const { toggleSourceMenuAlwaysShow, toggleViewMenuAlwaysShow } =
+  useSettingsMenuVisibility();
 </script>
 
 <template>
@@ -39,7 +38,7 @@ const {
             :icon="Plug"
             :label="$t('common.sockets')"
             :description="$t('common.socketsDesc')"
-            :checked="isTabVisible('sockets')"
+            :checked="appStore.isTabVisible('sockets')"
             @toggle="toggleTab('sockets')"
           />
         </FieldGrid>
@@ -56,14 +55,14 @@ const {
             :icon="ListFilter"
             :label="$t('common.sourceMenuAlwaysShow')"
             :description="$t('common.sourceMenuAlwaysShowDesc')"
-            :checked="sourceMenuAlwaysShow"
+            :checked="appStore.sourceTagsMenuAlwaysShow.sources"
             @toggle="toggleSourceMenuAlwaysShow"
           />
           <NumberFieldCard
             :icon="PanelsTopLeft"
             :label="$t('common.viewMenuAlwaysShow')"
             :description="$t('common.viewMenuAlwaysShowDesc')"
-            :checked="viewMenuAlwaysShow"
+            :checked="appStore.sourceTagsMenuAlwaysShow.view"
             @toggle="toggleViewMenuAlwaysShow"
           />
         </FieldGrid>
@@ -77,6 +76,9 @@ const {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  /* No sub tab menu on this tab: the larger below-chrome air that usually
+     sits under a menu line goes here, above the content. */
+  padding-top: var(--spacing-3);
 }
 
 .interface-section__group {

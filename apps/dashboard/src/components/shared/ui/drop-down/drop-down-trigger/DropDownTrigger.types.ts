@@ -14,3 +14,8 @@ export interface DropDownTriggerProps {
   /** Compact sizing for the icon-only button. */
   size: 'sm' | 'md';
 }
+
+export interface DropDownTriggerEmits {
+  /** The trigger toggled the menu. */
+  toggle: [];
+}

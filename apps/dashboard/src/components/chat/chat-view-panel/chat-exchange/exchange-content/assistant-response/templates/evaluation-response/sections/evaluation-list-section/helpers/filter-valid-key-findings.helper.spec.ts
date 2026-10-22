@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { KeyFinding } from '@/types/harness-response-data.model';
+import type { KeyFinding } from '@/types/assistant-response-data.model';
 
 import { filterValidKeyFindings } from './filter-valid-key-findings.helper';
 

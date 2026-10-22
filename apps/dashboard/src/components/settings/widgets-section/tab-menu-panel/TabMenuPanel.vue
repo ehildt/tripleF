@@ -19,20 +19,22 @@ import {
   PanelLeft,
   PanelRight,
   PanelTop,
+  RotateCcw,
   SquareMenu,
   X,
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
-import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
-import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings';
-import type { TabMenuSide } from '@/stores/tab-menu-settings.types';
+import { useAppStore } from '@/stores/app/app.store';
+import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings/tab-menu-settings.store';
+import type { TabMenuSide } from '@/stores/tab-menu-settings/tab-menu-settings.types';
 
 import { useSettingsTabVisibility } from '../../composables/use-settings-tab-visibility';
 
@@ -43,8 +45,8 @@ const SIDE_OPTIONS = computed(() => [
   { value: 'right', icon: PanelRight, tooltip: i18n.global.t('common.right') },
 ]);
 
-const { isTabVisible, toggleTab, showCounters, toggleShowCounters } =
-  useSettingsTabVisibility();
+const appStore = useAppStore();
+const { toggleTab } = useSettingsTabVisibility();
 
 function setSide(value: string) {
   tabMenuSettingsStore.setTabMenuSide(value as TabMenuSide);
@@ -63,12 +65,13 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
 
 <template>
   <div class="tab-menu-panel">
-    <PanelActions>
-      <ResetButton
-        :title="$t('common.resetTabMenuSettingsToDefaults')"
+    <MenuRow variant="panel" role="toolbar">
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetTabMenuSettingsToDefaults')"
         @click="tabMenuSettingsStore.resetTabMenuSettings"
       />
-    </PanelActions>
+    </MenuRow>
 
     <div class="tab-menu-panel__group">
       <SectionHeader :icon="SquareMenu" :title="$t('common.tabMenuSection')" />
@@ -104,7 +107,7 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Brain"
           :label="$t('common.memoryTab')"
           :description="$t('common.memoryTabDesc')"
-          :checked="isTabVisible('memory')"
+          :checked="appStore.isTabVisible('memory')"
           @toggle="toggleTab('memory')"
         />
 
@@ -112,7 +115,7 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="MailX"
           :label="$t('common.dlqTab')"
           :description="$t('common.dlqTabDesc')"
-          :checked="isTabVisible('dlq')"
+          :checked="appStore.isTabVisible('dlq')"
           @toggle="toggleTab('dlq')"
         />
 
@@ -120,7 +123,7 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Bug"
           :label="$t('common.debugTab')"
           :description="$t('common.debugTabDesc')"
-          :checked="isTabVisible('debug')"
+          :checked="appStore.isTabVisible('debug')"
           @toggle="toggleTab('debug')"
         />
 
@@ -128,8 +131,8 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Hash"
           :label="$t('common.counters')"
           :description="$t('common.countersDesc')"
-          :checked="showCounters"
-          @toggle="toggleShowCounters"
+          :checked="appStore.showCounters"
+          @toggle="appStore.toggleShowCounters"
         />
       </div>
     </div>
@@ -141,7 +144,6 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-  padding: var(--spacing-2);
 }
 
 .tab-menu-panel__group {

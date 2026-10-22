@@ -1,4 +1,4 @@
-import type { KeyFinding } from '@/types/harness-response-data.model';
+import type { KeyFinding } from '@/types/assistant-response-data.model';
 
 /** Props for `ProductProsCons`, the two-column strengths/caveats panel. */
 export interface ProductProsConsProps {

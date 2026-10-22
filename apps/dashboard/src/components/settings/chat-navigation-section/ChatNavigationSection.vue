@@ -44,7 +44,7 @@ import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.v
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 import type {
   ChartColormap,
   ChartHeatmapVariant,
@@ -380,5 +380,8 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  /* No sub tab menu on this tab: the larger below-chrome air that usually
+     sits under a menu line goes here, above the content. */
+  padding-top: var(--spacing-3);
 }
 </style>

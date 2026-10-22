@@ -9,13 +9,11 @@ import {
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
-import {
-  PREPROCESSING_SIZES,
-  usePreprocessingStore,
-} from '@/stores/preprocessing';
+import { PREPROCESSING_SIZES } from '@/stores/preprocessing-settings/preprocessing-settings.constant';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 import type { PreprocessingSize } from '@/types/preprocessing.model';
 
-const store = usePreprocessingStore();
+const store = usePreprocessingSettingsStore();
 
 /* Both dropdowns derive from the store's PREPROCESSING_SIZES — the single
    source for supported sizes; height adds AUTO (no cap) on top. */

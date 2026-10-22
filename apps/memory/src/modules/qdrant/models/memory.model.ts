@@ -1,4 +1,4 @@
-import type { ThinkMode } from '../../ollama/types/think-mode.type.js';
+import type { ThinkMode } from '../../ollama/types/think-mode.types.js';
 import type { MemoryLane } from '../../persistence/constants/memory-lane.constant.js';
 import type { MemoryClusterLane } from '../constants/cluster.constant.js';
 
@@ -50,8 +50,7 @@ export interface MemoryPoint {
   category?: string;
   /**
    * Plural sub-family one tier below the category (e.g. `survival-games`
-   * under `games`) — the constellation's COMMUNITY tier. Optional: records
-   * without a community sit directly under their cluster.
+   * under `games`) — the constellation's COMMUNITY tier.
    */
   community?: string;
   /**
@@ -60,6 +59,11 @@ export interface MemoryPoint {
    * subject.
    */
   subject?: string;
+  /**
+   * The singular aspect under the hub the fact addresses — the NODE tier
+   * key (e.g. `base building` under `project zomboid`).
+   */
+  node?: string;
   /**
    * What kind of durable thing this is — extraction-classified
    * (preference | decision | state | contact | project | possession |
@@ -165,6 +169,8 @@ export interface UpsertBatchInput {
     community?: string;
     /** The entity the fact is about — extraction-classified (maintenance same-subject rule). */
     subject?: string;
+    /** The singular aspect under the hub the fact addresses — the node tier key. */
+    node?: string;
     /** What kind of durable thing this is — extraction-classified (see MemoryPoint.kind). */
     kind?: string;
     /** `durable` claims vs `volatile` states — extraction-classified (see MemoryPoint.stability). */
@@ -216,47 +222,14 @@ export interface VectorizeJobData {
   /** Harness turn id — the request this text came from (traced to the point). */
   requestId?: string;
   text: string;
-  /**
-   * Harness model that produced the turn — reused for fact extraction.
-   * Omitted for manual ingestion: the text is stored verbatim.
-   */
+  /** Harness model that produced the turn — reused for fact extraction. */
   model?: string;
   /** Context size of the originating turn — derives the extract-step valve. */
   numCtx?: number;
   /** Storage urls of the turn's attached files, remembered on every point. */
   files?: Array<{ name: string; url: string }>;
-}
-
-/**
- * Cognition-write job: the harness memoryWrite step enqueues it after an
- * answered turn whose intent included a remember tool. The LLM tool loop
- * runs in the vectorize worker — off the harness hot path, with BullMQ
- * retries.
- */
-export interface MemoryWriteJobData {
-  /** The user's fact partition. */
-  memoryPartition: string;
-  /** The AI's cognition space key — the cognition-remember lane target. */
-  memoryCognition?: string;
-  sessionId?: string;
-  conversationId?: string;
-  requestId?: string;
-  /** The user prompt of the answered turn. */
-  userRequest: string;
-  /** Summarized tool results of the turn (pre-capped by the harness step). */
+  /** The turn's summarized non-memory tool results — the extract step's judging context. */
   gathered?: string;
-  /**
-   * The turn's memory-partition-recall hits (provenance-labeled, pre-capped)
-   * — what the probe already surfaced this turn. Treated as ALREADY KNOWN:
-   * extend or update, never re-store.
-   */
-  probedMemory?: string;
-  /** Harness model that produced the turn — reused for the write judgment. */
-  model: string;
-  /** Thinking preference of the originating turn. */
-  think?: ThinkMode;
-  /** Context size of the originating turn. */
-  numCtx?: number;
 }
 
 /**

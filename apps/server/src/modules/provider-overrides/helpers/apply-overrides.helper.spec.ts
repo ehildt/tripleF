@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProviderOverridesSnapshot } from '../services/provider-overrides.service.js';
+import type { ProviderOverridesSnapshot } from '../services/provider-overrides.service.types.js';
 
 import { applyOverrides } from './apply-overrides.helper.js';
 

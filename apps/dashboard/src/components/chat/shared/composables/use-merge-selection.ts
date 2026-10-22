@@ -1,6 +1,6 @@
-import type { Exchange } from '@/stores/conversation';
-import { useConversationStore } from '@/stores/conversation';
-import { useMergeSelectionStore } from '@/stores/merge-selection';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
 
 import { getPairedExchangeIds } from '../helpers/get-paired-exchange-ids.helper';
 import type { UseMergeSelection } from './use-merge-selection.types';

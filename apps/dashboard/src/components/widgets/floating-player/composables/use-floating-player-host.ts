@@ -1,11 +1,11 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 
-import { usePausablePlayer } from '@/composables/use-pausable-player';
-import type { PlaybackSession } from '@/composables/use-playback-session';
-import { usePopupGeometry } from '@/composables/use-popup-geometry';
-import { useConversationStore } from '@/stores/conversation';
-import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import { usePausablePlayer } from '@/components/widgets/floating-player/composables/use-pausable-player';
+import { usePopupGeometry } from '@/components/widgets/floating-player/composables/use-popup-geometry';
+import type { PlaybackSession } from '@/composables/create-playback-session/create-playback-session';
+import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 /**
  * State for the standalone floating player host — the single mounted player
@@ -30,11 +30,11 @@ import { usePopoutSettingsStore } from '@/stores/popout-settings';
  * to its own player and reports observed state back.
  */
 export function useFloatingPlayerHost(session: PlaybackSession) {
-  const playbackAnchorStore = usePlaybackAnchorStore();
+  const playbackAnchorStore = usePlaybackAnchorRegistry();
   const popoutSettingsStore = usePopoutSettingsStore();
   const conversationStore = useConversationStore();
 
-  const { popupStyle, startDrag, startResize, setOpacity } = usePopupGeometry(
+  const geometry = usePopupGeometry(
     session.floatingPopupOpacity,
     session.setFloatingPopupOpacity,
   );
@@ -94,17 +94,17 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
   watch(
     [
       () => session.visibleAnchorCandidate.value,
-      () => playbackAnchorStore.playbackDockMode,
+      () => playbackAnchorStore.playbackDockMode.value,
     ],
     () => {
       if (
         popoutSettingsStore.popoutEnabled &&
         !popoutSettingsStore.popoutAutoDock &&
-        playbackAnchorStore.playbackDockMode === 'auto' &&
+        playbackAnchorStore.playbackDockMode.value === 'auto' &&
         launchedVideo.value &&
         !session.visibleAnchorCandidate.value
       ) {
-        session.latchFloating();
+        playbackAnchorStore.latchFloating();
       }
     },
     { immediate: true },
@@ -116,17 +116,17 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
     (playing) => {
       if (
         playing &&
-        playbackAnchorStore.playbackDockMode === 'dock-dismissed'
+        playbackAnchorStore.playbackDockMode.value === 'dock-dismissed'
       ) {
-        session.engagePlayback();
+        playbackAnchorStore.engagePlayback();
       }
     },
   );
 
   const windowHidden = computed(
     () =>
-      !playbackAnchorStore.forceShowPlayer &&
-      (playbackAnchorStore.playbackDockMode === 'dock-dismissed' ||
+      !playbackAnchorStore.forceShowPlayer.value &&
+      (playbackAnchorStore.playbackDockMode.value === 'dock-dismissed' ||
         (popoutSettingsStore.popoutHideOnPlaylist &&
           session.launchedFromPlaylist.value) ||
         (!popoutSettingsStore.popoutEnabled &&
@@ -141,7 +141,7 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
     () => conversationStore.activeConversationId,
     () => {
       if (!launchedVideo.value) return;
-      playbackAnchorStore.forceShowPlayer = true;
+      playbackAnchorStore.forceShowPlayer.value = true;
       playbackAnchorStore.engagePlayback();
     },
   );
@@ -242,41 +242,19 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
   });
 
   /**
-   * Minimize the popup window (the "_" button): window management, not
-   * playback control — it docks the video (inline over the figure when one
-   * is visible, hidden-but-playing when there is nothing to dock onto), like
-   * the playlist transport's popup-visibility toggle. Playback keeps
-   * running.
+   * Per-caller delegation objects: the consumer reaches into their members
+   * directly; creating a second instance would fork the popup's drag/opacity
+   * state or the player's wiring.
    */
-  function minimize() {
-    session.dockPlayback();
-  }
-
-  /**
-   * Stop playback (the X button): kills the video entirely, clearing the
-   * launched popup, exactly like the transport bar's dedicated Stop button.
-   */
-  function stop() {
-    session.stopPlayback();
-  }
-
   return {
     launchedVideo,
     dockedInline,
     dockedStyle,
     dockedClipStyle,
     windowHidden,
-    showsPopupChrome,
-    popupStyle,
     embedSrc,
-    isDirectVideo: pausablePlayer.isDirectVideo,
-    isUnembeddable: pausablePlayer.isUnembeddable,
-    setPlayerElement: pausablePlayer.setPlayerElement,
     opacityPercent,
-    setOpacity,
-    startDrag,
-    startResize,
-    minimize,
-    stop,
+    geometry,
+    pausablePlayer,
   };
 }

@@ -19,6 +19,10 @@ import IntegrationTile from './integration-tile/IntegrationTile.vue';
 import SerperSection from './serper-section/SerperSection.vue';
 import SourcesPanel from './sources-panel/SourcesPanel.vue';
 import YoutubeSection from './youtube-section/YoutubeSection.vue';
+import {
+  BRIGHT_DATA_ENDPOINT_MAX_RESULTS,
+  SERPER_ENDPOINT_MAX_RESULTS,
+} from './endpoint-max-results.constant';
 
 const {
   config,
@@ -45,10 +49,15 @@ const {
 
 function handleUpdateResults(
   provider: 'serper' | 'brightData' | 'youtube' | 'eodhd',
-  maxResults: number,
+  maxResults: number | Record<string, number>,
   { name, value }: { name: string; value: string },
 ) {
-  updateEndpointResults(provider, name, value, maxResults);
+  updateEndpointResults(
+    provider,
+    name,
+    value,
+    typeof maxResults === 'number' ? maxResults : (maxResults[name] ?? 200),
+  );
 }
 
 function handleZoneChange(zone: 'serpZone' | 'unlockerZone', value: string) {
@@ -113,8 +122,11 @@ function handleSourcesReset(key: 'preferred' | 'blocked') {
         v-if="config && drawerIntegration === 'serper'"
         :config="config.serper"
         :update-api-key="(k) => updateApiKey('serper', k)"
+        :endpoint-max-results="SERPER_ENDPOINT_MAX_RESULTS"
         @toggle-endpoint="toggleEndpoint('serper', $event)"
-        @update-results="handleUpdateResults('serper', 200, $event)"
+        @update-results="
+          handleUpdateResults('serper', SERPER_ENDPOINT_MAX_RESULTS, $event)
+        "
         @reset="resetProvider('serper')"
       />
 
@@ -122,8 +134,15 @@ function handleSourcesReset(key: 'preferred' | 'blocked') {
         v-else-if="config && drawerIntegration === 'brightData'"
         :config="config.brightData"
         :update-api-key="(k) => updateApiKey('brightData', k)"
+        :endpoint-max-results="BRIGHT_DATA_ENDPOINT_MAX_RESULTS"
         @toggle-endpoint="toggleEndpoint('brightData', $event)"
-        @update-results="handleUpdateResults('brightData', 200, $event)"
+        @update-results="
+          handleUpdateResults(
+            'brightData',
+            BRIGHT_DATA_ENDPOINT_MAX_RESULTS,
+            $event,
+          )
+        "
         @reset="resetProvider('brightData')"
         @zone-change="handleZoneChange($event.zone, $event.value)"
       />
@@ -162,5 +181,8 @@ function handleSourcesReset(key: 'preferred' | 'blocked') {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   gap: var(--spacing-3);
+  /* No sub tab menu on this tab: the larger below-chrome air that usually
+     sits under a menu line goes here, above the content. */
+  padding-top: var(--spacing-3);
 }
 </style>

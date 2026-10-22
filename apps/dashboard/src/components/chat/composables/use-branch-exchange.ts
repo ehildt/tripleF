@@ -1,8 +1,8 @@
 import { buildBranchExchanges } from '@/components/chat/shared/helpers/build-branch-exchanges.helper';
-import type { Exchange } from '@/stores/conversation';
-import { useConversationStore } from '@/stores/conversation';
-import { useSocketStore } from '@/stores/socket';
-import { createId } from '@/utils/id.helper';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { createId } from '@/utils/create-id/create-id.helper';
 
 import { mapExchangeToNewSession } from './helpers/map-exchange-to-new-session.helper';
 
@@ -45,7 +45,7 @@ export function useBranchExchange() {
     );
     newSession.title = userEx.content.slice(0, 50) || 'New Conversation';
 
-    const socketStore = useSocketStore();
+    const socketStore = useSocket();
     socketStore.ensureSocketConnection();
     socketStore.listenToEvent(newSession.event);
     if (newSession.roomId) {

@@ -18,7 +18,6 @@ import { StepRegistryService } from '../services/step-registry.service.js';
 import { ExecuteStepService } from '../services/steps/execute-step.service.js';
 import { InterpretStepService } from '../services/steps/interpret-step.service.js';
 import { MemoryProfileStepService } from '../services/steps/memory-profile-step.service.js';
-import { MemoryWriteStepService } from '../services/steps/memory-write-step.service.js';
 import { RespondStepService } from '../services/steps/respond-step.service.js';
 import { SanitizeStepService } from '../services/steps/sanitize-step.service.js';
 import { VectorizeStepService } from '../services/steps/vectorize-step.service.js';
@@ -39,7 +38,6 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
     private readonly executeStepService: ExecuteStepService,
     private readonly respondStepService: RespondStepService,
     private readonly sanitizeStepService: SanitizeStepService,
-    private readonly memoryWriteStepService: MemoryWriteStepService,
     private readonly memoryProfileStepService: MemoryProfileStepService,
     private readonly vectorizeStepService: VectorizeStepService,
     private readonly stepRegistryService: StepRegistryService,
@@ -68,27 +66,20 @@ export class HarnessProcessor extends WorkerHost implements OnModuleInit {
         { execute: (ctx) => this.respondStepService.execute(ctx) },
         ['sanitize'],
       )
-      // Memory write runs after the response with the turn's tool results in
-      // hand — the execute wave is blind, so a remember call there would
-      // store intent-text instead of the data the turn actually gathered.
-      // Only fires when the classifier picked a remember tool and the memory
-      // feature is enabled; never fails the turn.
-      .addStep(
-        'memoryWrite',
-        { execute: (ctx) => this.memoryWriteStepService.execute(ctx) },
-        ['respond'],
-      )
-      // Cognition runs last and on EVERY answered turn — derived
-      // understanding of the user accrues from ordinary turns, so unlike
-      // memoryWrite it is not classifier-gated; one dedicated call with only
-      // the turn's two sides and the current document. Never fails the turn.
+      // Cognition runs on EVERY answered turn (never classifier-gated):
+      // derived understanding of the user accrues from ordinary turns
+      // ("subconscious formation") — one dedicated call with the turn's two
+      // sides and the current document. Never fails the turn.
       .addStep(
         'memoryProfile',
         { execute: (ctx) => this.memoryProfileStepService.execute(ctx) },
-        ['memoryWrite'],
+        ['respond'],
       )
-      // Memory write runs last, only after the response succeeded (the engine
-      // stops on any step failure) — see VectorizeStepService.
+      // The judged memory write: one judged job per turn-side enqueued after
+      // the response succeeded (the engine stops on any step failure). The
+      // worker's extraction step decides with a schema-enforced verdict what
+      // (if anything) the turn is worth — no classifier gate, no blind
+      // always-store path. See VectorizeStepService.
       .addStep(
         'vectorize',
         { execute: (ctx) => this.vectorizeStepService.execute(ctx) },

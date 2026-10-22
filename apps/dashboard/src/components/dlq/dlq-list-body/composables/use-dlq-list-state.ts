@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue';
 
-import { useFrozenReadSnapshot } from '@/composables/use-frozen-read-snapshot';
+import { useFrozenReadSnapshot } from '@/composables/use-frozen-read-snapshot/use-frozen-read-snapshot';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { buildSortedDlqEntries } from '../helpers/build-sorted-dlq-entries.helper';

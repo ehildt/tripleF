@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { ArticleCard } from '@/types/harness-response-data.model.js';
+import type { ArticleCard } from '@/types/assistant-response-data.model.js';
 
 const props = defineProps<{
   title?: string;

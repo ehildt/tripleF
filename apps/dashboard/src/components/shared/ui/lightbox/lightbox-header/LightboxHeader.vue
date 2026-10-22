@@ -2,14 +2,14 @@
 import { X } from '@lucide/vue';
 
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
+import type {
+  LightboxHeaderEmits,
+  LightboxHeaderProps,
+} from '../Lightbox.types';
 
-defineProps<{
-  activeTitle?: string;
-}>();
+defineProps<LightboxHeaderProps>();
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-}>();
+const emit = defineEmits<LightboxHeaderEmits>();
 </script>
 
 <template>

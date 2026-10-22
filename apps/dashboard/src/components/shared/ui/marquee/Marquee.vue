@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { MarqueeProps } from './Marquee.types';
 /**
  * Seamless, endlessly-scrolling marquee text. Renders the text twice (the
  * second copy is aria-hidden) so the -50% translate wrap is invisible, with
@@ -7,13 +8,7 @@
  * layout sizing are left to the parent via a class on the root (inherited by
  * the text spans), so each surface keeps its own size/color.
  */
-withDefaults(
-  defineProps<{
-    /** Text to scroll. */
-    text?: string;
-  }>(),
-  { text: '' },
-);
+withDefaults(defineProps<MarqueeProps>(), { text: '' });
 </script>
 
 <template>

@@ -3,8 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { parseExtraction } from './parse-extraction.helper.js';
 
 const fact = {
-  text: 'User prefers concise.',
-  kind: 'preference',
+  text: 'Sam works on the memory app.',
+  subject: 'sam',
+  node: 'memory app',
+  category: 'work',
+  community: 'collaboration',
+  kind: 'project',
   stability: 'durable',
 };
 
@@ -13,8 +17,13 @@ describe('parseExtraction', () => {
     expect(
       parseExtraction(
         JSON.stringify({
+          remember: true,
           facts: [
-            { ...fact, text: ' User prefers concise. ', subject: ' User ' },
+            {
+              ...fact,
+              text: ' Sam works on the memory app. ',
+              subject: ' Sam ',
+            },
             fact,
             { ...fact, text: ' ' },
           ],
@@ -23,7 +32,8 @@ describe('parseExtraction', () => {
         }),
       ),
     ).toEqual({
-      facts: [{ ...fact, subject: 'user' }],
+      remember: true,
+      facts: [{ ...fact, subject: 'sam' }],
       tags: ['work', 'rust'],
       category: 'work',
     });
@@ -33,30 +43,65 @@ describe('parseExtraction', () => {
     expect(
       parseExtraction(
         JSON.stringify({
+          remember: true,
           facts: [{ ...fact, text: 'F1', category: 'PDF' }],
           tags: ['work'],
           category: 'PDF',
         }),
       ),
     ).toEqual({
+      remember: true,
       facts: [{ ...fact, text: 'F1', category: 'pdf' }],
       tags: ['work'],
       category: 'pdf',
     });
   });
 
-  it('omits optional per-fact metadata when absent', () => {
-    expect(
-      parseExtraction(JSON.stringify({ facts: [fact], tags: ['work'] })),
-    ).toEqual({ facts: [fact], tags: ['work'], category: undefined });
+  it('rejects a fact missing a chain label (strict taxonomy chain)', () => {
+    const incomplete = { ...fact, node: undefined };
+    expect(() =>
+      parseExtraction(
+        JSON.stringify({ remember: true, facts: [incomplete], tags: ['work'] }),
+      ),
+    ).toThrow('failed the schema');
   });
 
   it('tolerates markdown fences around the JSON', () => {
     expect(
       parseExtraction(
-        `\`\`\`json\n${JSON.stringify({ facts: [fact], tags: ['work'] })}\n\`\`\``,
+        `\`\`\`json\n${JSON.stringify({ remember: true, facts: [fact], tags: ['work'] })}\n\`\`\``,
       ),
-    ).toEqual({ facts: [fact], tags: ['work'] });
+    ).toEqual({ remember: true, facts: [fact], tags: ['work'] });
+  });
+
+  it('passes a clean remember=false verdict straight through, dropping nothing else', () => {
+    expect(
+      parseExtraction(
+        JSON.stringify({
+          remember: false,
+          facts: [],
+          tags: [],
+          category: 'games',
+          community: 'video games',
+        }),
+      ),
+    ).toEqual({ remember: false, facts: [], tags: [] });
+  });
+
+  it('rejects an inconsistent verdict: remember=false with facts attached', () => {
+    expect(() =>
+      parseExtraction(
+        JSON.stringify({ remember: false, facts: [fact], tags: [] }),
+      ),
+    ).toThrow('verdict inconsistent');
+  });
+
+  it('rejects an inconsistent verdict: remember=true without facts', () => {
+    expect(() =>
+      parseExtraction(
+        JSON.stringify({ remember: true, facts: [], tags: ['work'] }),
+      ),
+    ).toThrow('verdict inconsistent');
   });
 
   it('throws on empty output', () => {
@@ -64,21 +109,25 @@ describe('parseExtraction', () => {
   });
 
   it('throws a descriptive error on schema violation', () => {
-    expect(() => parseExtraction('{"facts": "not-an-array"}')).toThrow(
-      'failed the schema',
-    );
+    expect(() =>
+      parseExtraction('{"remember": true, "facts": "not-an-array"}'),
+    ).toThrow('failed the schema');
   });
 
   it('rejects the legacy bare-string fact shape', () => {
     expect(() =>
-      parseExtraction('{"facts": ["F1"], "tags": ["work"]}'),
+      parseExtraction('{"remember": true, "facts": ["F1"], "tags": ["work"]}'),
     ).toThrow('failed the schema');
   });
 
   it('requires kind and stability on every fact', () => {
     expect(() =>
       parseExtraction(
-        JSON.stringify({ facts: [{ text: 'F1' }], tags: ['work'] }),
+        JSON.stringify({
+          remember: true,
+          facts: [{ text: 'F1' }],
+          tags: ['work'],
+        }),
       ),
     ).toThrow('failed the schema');
   });
@@ -88,7 +137,9 @@ describe('parseExtraction', () => {
       'x'.repeat(41),
       ...Array.from({ length: 12 }, (_, i) => `t${i}`),
     ];
-    const result = parseExtraction(JSON.stringify({ facts: [], tags }));
+    const result = parseExtraction(
+      JSON.stringify({ remember: true, facts: [fact], tags }),
+    );
     expect(result.tags).toEqual(Array.from({ length: 8 }, (_, i) => `t${i}`));
   });
 });

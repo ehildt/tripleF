@@ -1,37 +1,14 @@
 <script setup lang="ts">
 import { useId } from 'vue';
 
-withDefaults(
-  defineProps<{
-    modelValue: string;
-    placeholder?: string;
-    disabled?: boolean;
-    /** Visual style: `boxed` renders the standalone framed input; `borderless`
-     *  drops the frame because the surrounding field box (e.g. a
-     *  TextFieldCard) IS the frame. */
-    variant?: 'boxed' | 'borderless';
-    /** Stable id for the field. Auto-generated if omitted. */
-    id?: string;
-    /** Name attribute, aids browser autofill. */
-    name?: string;
-    /** Native autocomplete attribute (e.g. 'off' for secrets). */
-    autocomplete?: string;
-    /** Native spellcheck attribute. */
-    spellcheck?: boolean;
-  }>(),
-  {
-    id: () => useId(),
-    variant: 'boxed',
-  },
-);
+import type { InputTextEmits, InputTextProps } from './InputText.types';
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-  /** Native change (blur/Enter commit) — the settings fields patch on commit. */
-  (e: 'change', event: Event): void;
-  /** Native focus — secret fields select their masked text on focus. */
-  (e: 'focus', event: FocusEvent): void;
-}>();
+withDefaults(defineProps<InputTextProps>(), {
+  id: () => useId(),
+  variant: 'boxed',
+});
+
+const emit = defineEmits<InputTextEmits>();
 
 function handleInput(event: Event) {
   const target = event.target as HTMLInputElement;

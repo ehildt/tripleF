@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
-import { clearVideoPosterProbeCache } from '@/stores/helpers/harness/media/resolve-best-video-poster-url.helper';
+import { clearVideoPosterProbeCache } from '@/stores/helpers/assistant-response/media/resolve-best-video-poster-url.helper';
 
 import { useVideoPosterFallback } from './use-video-poster-fallback';
 

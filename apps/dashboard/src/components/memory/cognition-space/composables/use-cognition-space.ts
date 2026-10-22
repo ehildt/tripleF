@@ -7,7 +7,7 @@ import {
   fetchMemoryLinks,
   wipeMemoryCognition,
 } from '@/api/memory.api';
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import { mapFrictions } from '../../composables/helpers/map-frictions.helper';
 import { mapLinkToEdge } from '../../composables/helpers/map-link-to-edge.helper';

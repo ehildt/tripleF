@@ -115,7 +115,7 @@ export type SerperToolResult =
   | SerperWebpageScrapeResult;
 
 /** A tool result entry as streamed in harness events. */
-export interface HarnessToolResult<T = unknown> {
+export interface AssistantToolResult<T = unknown> {
   toolName: string;
   result: T;
 }

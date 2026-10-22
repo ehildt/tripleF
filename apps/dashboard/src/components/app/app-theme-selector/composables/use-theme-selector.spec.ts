@@ -1,15 +1,10 @@
 import { mount } from '@vue/test-utils';
-import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 import { defineComponent, nextTick } from 'vue';
 
-import { useThemeStore } from '../../../../stores/theme';
 import { useThemeSelector } from './use-theme-selector';
 
 function mountComposable() {
-  const pinia = createPinia();
-  setActivePinia(pinia);
-
   const TestComponent = defineComponent({
     setup() {
       return useThemeSelector();
@@ -18,7 +13,6 @@ function mountComposable() {
   });
 
   const wrapper = mount(TestComponent, {
-    global: { plugins: [pinia] },
     attachTo: document.body,
   });
 
@@ -37,14 +31,6 @@ describe('useThemeSelector', () => {
     expect(vm.isDropdownOpen).toBe(true);
     vm.toggleDropdown();
     expect(vm.isDropdownOpen).toBe(false);
-  });
-
-  it('selects a theme through the store', () => {
-    const { vm } = mountComposable();
-    const store = useThemeStore();
-
-    vm.selectTheme('nioh');
-    expect(store.currentTheme).toBe('nioh');
   });
 
   it('closes dropdown on Escape', async () => {

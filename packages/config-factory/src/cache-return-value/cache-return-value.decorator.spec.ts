@@ -1,4 +1,4 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
 import { CacheReturnValue } from './cache-return-value.decorator.ts';
 
@@ -21,13 +21,13 @@ class TestClass {
     return x * 3;
   }
 
-  @CacheReturnValue(Joi.number().min(10))
+  @CacheReturnValue(z.number().min(10))
   validatedMethod(x: number) {
     this.callCount++;
     return x;
   }
 
-  @CacheReturnValue(Joi.number().min(1))
+  @CacheReturnValue(z.number().min(1))
   get validatedGetter() {
     return this._value;
   }
@@ -333,7 +333,7 @@ describe('CacheReturnValue with TTL', () => {
     class TestClass {
       callCount = 0;
 
-      @CacheReturnValue({ schema: Joi.number(), ttl: 1000 })
+      @CacheReturnValue({ schema: z.number(), ttl: 1000 })
       get value() {
         this.callCount++;
         return this.callCount;

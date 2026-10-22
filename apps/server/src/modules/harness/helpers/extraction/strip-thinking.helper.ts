@@ -6,8 +6,8 @@
  * `content` clean — but a model may instead inline its thinking as
  * `<think>…</think>` markup inside the content stream (think flag off,
  * provider without a separate reasoning field, mid-request abort). The chat
- * UI renders that stream to the user; memory must never store it — the
- * zero-facts vectorize fallback stores the whole assistant text verbatim.
+ * UI renders that stream to the user; memory must never judge or store it —
+ * the vectorize/profile enqueues feed whole turn texts downstream.
  *
  * Handles the three shapes in the wild: closed blocks anywhere, an
  * unclosed trailing block (abort mid-thought), and a dangling preamble

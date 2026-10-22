@@ -2,9 +2,9 @@ import { ref, useTemplateRef } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
-import { useToast } from '@/composables/use-toast';
+import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { usePreprocessingStore } from '@/stores/preprocessing';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 
 import { mapPreviewVariant } from './helpers/map-preview-variant.helper';
 import type { SharpPreviewVariant } from './use-preprocessing-preview.types';
@@ -18,7 +18,7 @@ import type { SharpPreviewVariant } from './use-preprocessing-preview.types';
  * a repick action to dismiss it and choose a new image.
  */
 export function usePreprocessingPreview() {
-  const store = usePreprocessingStore();
+  const store = usePreprocessingSettingsStore();
   const toast = useToast();
   const lightbox = useLightbox();
 

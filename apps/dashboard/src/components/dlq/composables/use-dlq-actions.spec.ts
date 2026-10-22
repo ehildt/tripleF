@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { useDlqStore } from '../../../stores/dlq';
+import { useDlqStore } from '../../../stores/dlq/dlq.store';
 import { useDlqActions } from './use-dlq-actions';
 
 const mutationMocks = vi.hoisted(() => ({

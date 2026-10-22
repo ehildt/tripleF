@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import { useActiveConversation } from './composables/use-active-conversation';
 import { useExchangeActions } from './composables/use-exchange-actions';

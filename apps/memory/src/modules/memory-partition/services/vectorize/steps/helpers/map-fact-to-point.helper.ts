@@ -16,16 +16,14 @@ export function mapFactToPoint(
     vector: vectors[index],
     text: fact.text,
     tags: extraction.tags,
-    // Per-fact family label first, turn-side label as the backstop — groups
-    // the narrow tags into one topic family for the constellation topic tier
-    // and the relink job's per-category passes.
-    category: fact.category ?? extraction.category,
-    // Per-fact sub-family first, turn-side community as the backstop — the
-    // tier between the cluster and the hub.
-    community: fact.community ?? extraction.community,
-    // The extraction-classified maintenance knobs (subject / kind /
-    // stability) — the consolidate/reflect/conviction passes read them.
+    // The strict taxonomy chain — every label lands on the point's flat
+    // payload so counts and leaf listings stay join-free.
+    category: fact.category,
+    community: fact.community,
     subject: fact.subject,
+    node: fact.node,
+    // The extraction-classified maintenance knobs (kind / stability) — the
+    // consolidate/reflect/conviction passes read them.
     kind: fact.kind,
     stability: fact.stability,
   };

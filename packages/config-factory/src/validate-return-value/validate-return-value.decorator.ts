@@ -1,32 +1,30 @@
-import Joi from 'joi';
+import type { z } from 'zod';
 
 /**
- * Decorator that validates the return value of a getter or method with a Joi schema.
+ * Decorator that validates the return value of a getter or method with a Zod schema.
  * Throws ValidateReturnValueError if validation fails.
  *
  * @template T - The expected type of the return value.
- * @param schema - Joi schema used to validate the return value.
+ * @param schema - Zod schema used to validate the return value.
  *
  * @example
  * class ConfigService {
- *   @ValidateReturnValue(Joi.object({ port: Joi.number() }))
+ *   @ValidateReturnValue(z.object({ port: z.number() }))
  *   get config() {
  *     return { port: 3000 };
  *   }
  * }
  */
-export function ValidateReturnValue<T>(schema: Joi.Schema<T>) {
+export function ValidateReturnValue<T>(schema: z.ZodType<T>) {
   return function (target: any, propertyKey: string, descriptor?: PropertyDescriptor) {
     // Getter
     if (descriptor?.get) {
       const originalGet = descriptor.get;
       descriptor.get = function () {
         const value = originalGet.call(this);
-        const { error, value: validated } = schema.validate(value, {
-          abortEarly: false,
-        });
-        if (!error) return validated as T;
-        throw new ValidateReturnValueError(`Schema violation`, error.details);
+        const result = schema.safeParse(value);
+        if (result.success) return result.data;
+        throw new ValidateReturnValueError(`Schema violation`, result.error.issues);
       };
       return;
     }
@@ -36,11 +34,9 @@ export function ValidateReturnValue<T>(schema: Joi.Schema<T>) {
       const originalMethod = descriptor.value;
       descriptor.value = function (...args: any[]) {
         const result = originalMethod.apply(this, args);
-        const { error, value: validated } = schema.validate(result, {
-          abortEarly: false,
-        });
-        if (!error) return validated as T;
-        throw new ValidateReturnValueError(`Schema violation`, error.details);
+        const parsed = schema.safeParse(result);
+        if (parsed.success) return parsed.data;
+        throw new ValidateReturnValueError(`Schema violation`, parsed.error.issues);
       };
       return;
     }
@@ -52,19 +48,17 @@ export function ValidateReturnValue<T>(schema: Joi.Schema<T>) {
       enumerable: true,
       get: function () {
         const value = (this as any)[privateKey];
-        const { error, value: validated } = schema.validate(value, {
-          abortEarly: false,
-        });
-        if (!error) return validated as T;
-        throw new ValidateReturnValueError(`Schema violation`, error.details);
+        const result = schema.safeParse(value);
+        if (result.success) return result.data;
+        throw new ValidateReturnValueError(`Schema violation`, result.error.issues);
       },
     });
   };
 }
 
 /**
- * Error thrown when a return value fails Joi schema validation.\
- * Extends Error with Joi validation details as the cause.
+ * Error thrown when a return value fails Zod schema validation.\
+ * Extends Error with the Zod issues as the cause.
  */
 export class ValidateReturnValueError extends Error {
   constructor(message?: string, cause?: unknown) {

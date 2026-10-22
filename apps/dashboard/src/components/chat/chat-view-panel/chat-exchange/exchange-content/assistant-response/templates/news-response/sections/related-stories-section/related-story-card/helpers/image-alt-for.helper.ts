@@ -1,4 +1,4 @@
-import type { RelatedStory } from '@/types/harness-response-data.model';
+import type { RelatedStory } from '@/types/assistant-response-data.model';
 
 /** Returns the most descriptive alt text, or an empty string when none. */
 export function imageAltFor(story: RelatedStory): string {

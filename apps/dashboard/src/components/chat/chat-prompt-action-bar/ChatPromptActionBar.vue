@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onActivated } from 'vue';
 
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import { useChatContextSize } from '../composables/use-chat-context-size';
 import { useChatDropdowns } from '../composables/use-chat-dropdowns';
@@ -9,8 +9,8 @@ import { useChatInput } from '../composables/use-chat-input';
 import { useChatThink } from '../composables/use-chat-think';
 import { usePromptDraft } from '../composables/use-prompt-draft';
 import { useSearchEngineAvailability } from '../composables/use-search-engine-availability';
-import { useChatPromptActionBar } from './composables/use-chat-prompt-action-bar.composable';
-import { useFileSelect } from './composables/use-file-select.composable';
+import { useChatPromptActionBar } from './composables/use-chat-prompt-action-bar';
+import { useFileSelect } from './composables/use-file-select';
 import FileInput from './file-input/FileInput.vue';
 import PromptActions from './prompt-actions/PromptActions.vue';
 import PromptInput from './prompt-input/PromptInput.vue';

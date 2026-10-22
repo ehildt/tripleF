@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 
 import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-total-context-percentage.helper';
-import type { Conversation } from '@/stores/conversation';
+import type { Conversation } from '@/stores/conversation/conversation.model';
 
 import ConversationItem from './conversation-item/ConversationItem.vue';
 import { formatContextUsagePercent } from './helpers/format-context-usage-percent.helper';

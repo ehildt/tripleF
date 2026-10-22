@@ -10,11 +10,11 @@ export type VariantName = (typeof VARIANT_NAMES)[number];
 
 export const TOOL_DESCRIPTIONS: Record<string, string> = {
   brightDataWebSearch:
-    'Search the web using Bright Data SERP API (Google). Returns organic results with titles, snippets, and links. Supports an optional recency window (day/week/month/year) for fresh results.',
+    'Search the web using Bright Data SERP API (Google). Returns at most the top 3 organic results per call (titles, snippets, links) — a request spanning distinct topics needs one call per topic. Supports an optional recency window (day/week/month/year) for fresh results.',
   brightDataImageSearch:
     'Search for images using Bright Data SERP API (Google Images). Returns image URLs, source pages, and dimensions. Enforces a minimum of 1280×720 (720p).',
   brightDataNewsSearch:
-    'Search latest news using Bright Data SERP API. Returns headlines, sources, dates, and snippets. Supports an optional recency window (day/week/month/year).',
+    'Search latest news using Bright Data SERP API — at most the top 3 results per call (headlines, sources, dates, snippets), so a request spanning distinct topics needs one call per topic. Supports an optional recency window (day/week/month/year).',
   brightDataPlacesSearch:
     'Search places and businesses using Bright Data SERP API (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Query with a business name or business type plus location.',
   brightDataShoppingSearch:
@@ -23,11 +23,11 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   brightDataWebpageScrape:
     'Fetch and render a full webpage using Bright Data Web Unlocker API. Returns clean Markdown text. Use for pages behind anti-bot protection that plain fetch cannot reach.',
   serperWebSearch:
-    'Search the web using Serper.dev (Google). Returns organic results with titles, snippets, and links. Supports an optional recency window (day/week/month/year) for fresh results.',
+    'Search the web using Serper.dev (Google). Returns at most the top 3 organic results per call (titles, snippets, links) — a request spanning distinct topics needs one call per topic. Supports an optional recency window (day/week/month/year) for fresh results.',
   serperImageSearch:
     'Search for images using Serper.dev (Google Images). Prefers 2560×1440 (1440p) images and enforces a minimum of 1280×720 (720p) via the Google Images tbs size filter and a client-side dimension filter. Supports an optional recency window (day/week/month/year).',
   serperNewsSearch:
-    'Search latest news using Serper.dev. Returns headlines, sources, dates, and snippets. Supports an optional recency window (day/week/month/year).',
+    'Search latest news using Serper.dev — at most the top 3 results per call (headlines, sources, dates, snippets), so a request spanning distinct topics needs one call per topic. Supports an optional recency window (day/week/month/year).',
   serperPlacesSearch:
     'Search places and businesses using Serper.dev (Google Maps). Returns addresses, phone numbers, ratings, review counts, and coordinates. Query with a business name or business type plus location.',
   serperShoppingSearch:
@@ -54,7 +54,7 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   eodhdFundamentals:
     'Fetch company fundamentals for an EODHD ticker — general info, valuation, and key financial highlights (sector, market cap, P/E, revenue, margins).',
   webFetch:
-    'Fetch the full content of a specific URL (e.g. a search result page) as clean Markdown. Prefer fetching the most relevant search results to ground the answer in full source text rather than relying on snippets alone.',
+    'Fetch the full content of a specific URL (e.g. a search result page) as clean Markdown. The top 3 web/news search results are fetched automatically when no fetch tool is selected — use this only for a specific page beyond those, when full source text is needed beyond the snippets.',
   browser_navigate:
     'Control a real browser: navigate to a URL. Use for interactive browsing — JS-heavy pages, content behind clicks, tabs, scrolling, or forms — that static search/fetch cannot reach. Follow up with browser_snapshot to read the page before acting on it.',
   browser_navigate_back: 'Go back to the previous page in the browser history.',
@@ -82,14 +82,10 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   requestSharpened: 'Request a sharpened version of the images. Use when edges or fine details are blurry.',
   requestClahe:
     'Request a CLAHE (contrast-enhanced) version of the images. Use when details are hidden in shadows or highlights.',
-  'memory-partition-remember':
-    'Store into the user\'s fact partition (memory-partition) — OBJECTIVE facts only: notable external-world facts about subjects they care about (projects, followed stocks, people, past topics), objective details they state (contact info, decisions, constraints), and objective facts they explicitly ask you to remember. Subjective user data (preferences, interests, traits, internal states) belongs to memory-cognition-remember, never here. Storing gathered knowledge is expected — do not wait for an explicit "remember" instruction.',
   'memory-partition-recall':
     "Retrieve from the user's fact partition (memory-partition) — things they told you in past conversations or asked you to remember. These are trusted user statements, not public facts; attribute them to the user and prefer them over web results for anything personal. Check this tool whenever a request touches a subject this user has cared about before.",
   'memory-partition-delete':
     "Delete one exact fact record from the user's fact partition (memory-partition), quoted verbatim from a memory-partition-recall result. Never delete on a guess: recall first, delete the verbatim statement. Needs memory-partition-recall alongside it.",
-  'memory-cognition-remember':
-    'Store one insight into your cognition space (memory-cognition) — the exclusive store for subjective user data: preferences and interests the user states, inferred traits, standing interests, working nuances, connections between facts. Objective facts (contact info, decisions, project details, events) belong in memory-partition-remember.',
   'memory-cognition-delete':
     'Delete one targeted piece of your cognition space (memory-cognition): a verbatim stored insight (quoted from your cognition context) and/or one standing profile topic by its path ("likes.jazz"). The per-item forget for subjective user data; memory-cognition-forget is the whole-space wipe.',
   'memory-cognition-forget':
@@ -119,10 +115,8 @@ export const BROWSER_TOOL_NAMES = [
 ] as const;
 
 export const MEMORY_TOOL_NAMES = [
-  'memory-partition-remember',
   'memory-partition-recall',
   'memory-partition-delete',
-  'memory-cognition-remember',
   'memory-cognition-delete',
   'memory-cognition-forget',
 ] as const;
@@ -164,10 +158,8 @@ export const TOOL_NAMES = [
   'requestDenoised',
   'requestSharpened',
   'requestClahe',
-  'memory-partition-remember',
   'memory-partition-recall',
   'memory-partition-delete',
-  'memory-cognition-remember',
   'memory-cognition-forget',
   ...BROWSER_TOOL_NAMES,
 ] as const;

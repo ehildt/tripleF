@@ -2,26 +2,12 @@
 import { Search } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
-import type { OllamaModel } from '@/types/ollama-model.model';
-
 import ModelListItem from './model-list-item/ModelListItem.vue';
+import type { ModelListEmits, ModelListProps } from './ModelList.types';
 
-defineEmits<{
-  select: [model: string];
-}>();
+defineEmits<ModelListEmits>();
 
-const props = defineProps<{
-  /** Models running on the configured Ollama host. */
-  localModels: readonly OllamaModel[];
-  /** Models available on Ollama Cloud (requires an Ollama API key). */
-  cloudModels: readonly OllamaModel[];
-  /** Name string of the currently selected model. */
-  selectedModel: string;
-  /** Whether models are still loading. */
-  loading: boolean;
-  /** Optional label for a "clear/default" row rendered above the list; selecting it emits an empty string. */
-  defaultLabel?: string;
-}>();
+const props = defineProps<ModelListProps>();
 
 const searchQuery = ref('');
 

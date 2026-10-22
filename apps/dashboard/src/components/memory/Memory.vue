@@ -8,8 +8,8 @@
 import { Brain, Fingerprint, FolderTree, Layers, Network } from '@lucide/vue';
 import { computed } from 'vue';
 
-import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
-import { useMemorySpaceSync } from '@/composables/use-memory-space-sync';
+import MenuTabs from '@/components/shared/ui/menu-tabs/MenuTabs.vue';
+import { useMemorySpaceSync } from '@/composables/use-memory-space-sync/use-memory-space-sync';
 import { i18n } from '@/i18n/i18n';
 
 import CognitionSpace from './cognition-space/CognitionSpace.vue';
@@ -56,8 +56,9 @@ const SUBTAB_ITEMS = computed(() => [
 </script>
 
 <template>
-  <main class="memory-page lg:col-span-12">
-    <SettingsSubMenu
+  <main class="memory-page">
+    <MenuTabs
+      variant="section"
       :items="SUBTAB_ITEMS"
       :active="activeSubtab"
       @select="selectSubtab($event as MemorySpaceSubtab)"
@@ -65,13 +66,13 @@ const SUBTAB_ITEMS = computed(() => [
 
     <PartitionSpace v-if="activeSubtab === 'partition'" />
 
-    <CognitionSpace v-else-if="activeSubtab === 'cognition'" />
+    <CognitionSpace v-if="activeSubtab === 'cognition'" />
 
-    <SynopsisSpace v-else-if="activeSubtab === 'synopsis'" />
+    <SynopsisSpace v-if="activeSubtab === 'synopsis'" />
 
-    <TaxonomyManager v-else-if="activeSubtab === 'taxonomy'" />
+    <TaxonomyManager v-if="activeSubtab === 'taxonomy'" />
 
-    <EncyclopediaSpace v-else />
+    <EncyclopediaSpace v-if="activeSubtab === 'encyclopedia'" />
   </main>
 </template>
 
@@ -81,5 +82,6 @@ const SUBTAB_ITEMS = computed(() => [
   flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-3);
+  grid-column: 1 / -1;
 }
 </style>

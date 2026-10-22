@@ -1,5 +1,5 @@
 import type { MemoryInsertLedger } from '../../../../generated/prisma/client.js';
-import type { PendingLedgerEntry } from '../memory-insert-ledger.repository.js';
+import type { PendingLedgerEntry } from '../memory-insert-ledger.repository.types.js';
 
 /** Project a ledger row into the pending-entry shape. */
 export function mapLedgerRowToPending(

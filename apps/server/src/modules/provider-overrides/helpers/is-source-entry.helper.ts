@@ -1,6 +1,6 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
-const hostnameSchema = Joi.string().hostname();
+const hostnameSchema = z.hostname();
 
 /**
  * A source entry is a plain hostname, a `*.glob` pattern, or a `/regex/`
@@ -25,5 +25,5 @@ export function isSourceEntry(value: unknown): value is string {
   const hostname = (isGlob ? entry.slice(2) : entry)
     .toLowerCase()
     .replace(/^www\./, '');
-  return !hostnameSchema.validate(hostname).error;
+  return hostnameSchema.safeParse(hostname).success;
 }

@@ -4,7 +4,6 @@ import { config } from '@vue/test-utils';
 import { vi } from 'vitest';
 
 import { i18n } from '@/i18n/i18n';
-import { inMemoryTemporaryConversationsTable } from '@/test-utils/in-memory-temporary-conversations';
 
 import { readAppVersion } from './app-version';
 
@@ -35,15 +34,10 @@ Object.defineProperty(window, 'localStorage', {
   writable: true,
 });
 
-// jsdom has no IndexedDB. Stand in for the dashboard's own Dexie module with
-// an in-memory implementation of its table API (same boundary mocking every
-// spec already applies to ../api/conversations.api). Real engine behavior is
-// covered by temporary-conversations.db.browser.spec.ts in real Chromium.
-vi.mock('@/stores/helpers/conversation/temporary-conversations.db', () => ({
-  temporaryConversationsDb: {
-    temporaryConversations: inMemoryTemporaryConversationsTable,
-  },
-}));
+// jsdom has no IndexedDB. Specs that exercise the temporary-conversations
+// Dexie table mock their local module boundary with plain vi.fn() stubs;
+// real engine behavior is covered by
+// temporary-conversations.db.browser.spec.ts in real Chromium.
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

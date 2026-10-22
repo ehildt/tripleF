@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import type { UploadedDocument, UploadedImage } from '@/stores/conversation';
+import type {
+  UploadedDocument,
+  UploadedImage,
+} from '@/stores/conversation/conversation.model';
 import type { AttachedFileEntry } from '@/types/attached-files.model';
 
 import { useAttachmentList } from './use-attachment-list';
@@ -15,7 +18,7 @@ const state = vi.hoisted(() => ({})) as {
   uploadedDocuments: Ref<UploadedDocument[]>;
 };
 
-vi.mock('@/stores/attached-files', async () => {
+vi.mock('@/stores/attached-files/attached-files.store', async () => {
   const { ref } = await import('vue');
   const attachedFiles = ref<AttachedFileEntry[]>([]);
   state.attachedFiles = attachedFiles;
@@ -30,7 +33,7 @@ vi.mock('@/stores/attached-files', async () => {
   };
 });
 
-vi.mock('@/stores/conversation', async () => {
+vi.mock('@/stores/conversation/conversation.store', async () => {
   const { ref } = await import('vue');
   const uploadedImages = ref<UploadedImage[]>([]);
   const uploadedDocuments = ref<UploadedDocument[]>([]);

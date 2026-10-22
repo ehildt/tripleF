@@ -1,10 +1,10 @@
 import { computed } from 'vue';
 
-import { usePlaybackSession } from '@/composables/use-playback-session';
-import { useConversationStore } from '@/stores/conversation';
-import { conversationHasVideos } from '@/stores/helpers/conversation/conversation-has-videos.helper';
-import { usePlaylistStore } from '@/stores/playlist';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { conversationHasVideos } from '@/stores/conversation/helpers/conversation-has-videos.helper';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 /**
  * Whether the chat right toolbar's playlist tab has content — and thus shows

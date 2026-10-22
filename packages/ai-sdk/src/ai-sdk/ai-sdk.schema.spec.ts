@@ -9,36 +9,34 @@ describe('AiSdkConfigSchema', () => {
       enableSmoothStream: true,
     };
 
-    const { error } = AiSdkConfigSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(AiSdkConfigSchema.safeParse(config).success).toBe(true);
   });
 
   it('should validate an empty config', () => {
-    const { error } = AiSdkConfigSchema.validate({});
-    expect(error).toBeUndefined();
+    expect(AiSdkConfigSchema.safeParse({}).success).toBe(true);
   });
 
   it('should reject a non-numeric timeout', () => {
     const config = { streamChunkTimeoutMs: 'not-a-number' };
 
-    const { error } = AiSdkConfigSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('streamChunkTimeoutMs');
+    const result = AiSdkConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('streamChunkTimeoutMs'))).toBe(true);
   });
 
   it('should reject a timeout below the minimum', () => {
     const config = { streamChunkTimeoutMs: 500 };
 
-    const { error } = AiSdkConfigSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('streamChunkTimeoutMs');
+    const result = AiSdkConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('streamChunkTimeoutMs'))).toBe(true);
   });
 
   it('should reject a non-boolean enableSmoothStream', () => {
     const config = { enableSmoothStream: 'yes' };
 
-    const { error } = AiSdkConfigSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('enableSmoothStream');
+    const result = AiSdkConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('enableSmoothStream'))).toBe(true);
   });
 });

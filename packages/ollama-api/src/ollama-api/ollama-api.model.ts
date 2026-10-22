@@ -1,3 +1,4 @@
+import type { ModuleMetadata } from '@nestjs/common';
 import type { createOllama } from 'ollama-ai-provider-v2';
 
 /** The effective Ollama connection at request time (env baseline + live overrides). */
@@ -64,6 +65,12 @@ export type OllamaApiConfigFactory = (...deps: any[]) => Promise<OllamaApiConfig
 
 export type OllamaApiModuleProps = {
   global?: boolean;
+  /**
+   * Modules the config factory depends on (the `inject` tokens resolve from
+   * here plus global providers) — e.g. the feature module exporting the
+   * overrides service when it is not globally visible.
+   */
+  imports?: ModuleMetadata['imports'];
   inject?: Array<any>;
   useFactory: OllamaApiConfigFactory;
 };

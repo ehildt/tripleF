@@ -1,4 +1,4 @@
-import type { GalleryItem } from '@/types/harness-response-data.model';
+import type { GalleryItem } from '@/types/assistant-response-data.model';
 
 export interface GallerySectionProps {
   /** Section title; the carousel shows it in its own header instead. */

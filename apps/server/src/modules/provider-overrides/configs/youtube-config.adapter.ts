@@ -1,26 +1,24 @@
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
-import Joi from 'joi';
+import { z } from 'zod';
 
-import type { ProviderEndpointConfig } from './endpoint-config.types.js';
-
-export interface YoutubeConfig {
-  enabled: boolean;
-  apiKey?: string;
-  videos: ProviderEndpointConfig;
-}
-
-const endpointSchema = Joi.object<ProviderEndpointConfig>({
-  enabled: Joi.boolean().required(),
+const endpointSchema = z.strictObject({
+  enabled: z.boolean(),
   // YouTube's search.list caps maxResults at 50 — unlike Serper endpoints.
-  results: Joi.number().integer().min(1).max(50).required(),
+  results: z.number().int().min(1).max(50),
 });
 
-export const YoutubeConfigSchema = Joi.object<YoutubeConfig>({
-  enabled: Joi.boolean().required(),
-  apiKey: Joi.string().optional(),
-  videos: endpointSchema.required(),
-}).required();
+export const YoutubeConfigSchema = z.strictObject({
+  enabled: z.boolean(),
+  apiKey: z.string().optional(),
+  videos: endpointSchema,
+});
+
+/**
+ * Shape of the validated YouTube config. Derived from the schema, so the
+ * type can never drift from the runtime contract.
+ */
+export type YoutubeConfig = z.infer<typeof YoutubeConfigSchema>;
 
 export function YoutubeConfigAdapter(env = process.env): YoutubeConfig {
   return {

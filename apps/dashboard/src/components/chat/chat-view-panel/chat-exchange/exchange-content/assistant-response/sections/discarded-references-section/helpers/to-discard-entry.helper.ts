@@ -1,4 +1,4 @@
-import type { DiscardedReference } from '@/types/harness-response-data.model';
+import type { DiscardedReference } from '@/types/assistant-response-data.model';
 
 /** Flattened, render-ready view of a discarded reference. */
 export interface DiscardEntry {

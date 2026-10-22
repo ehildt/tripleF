@@ -2,16 +2,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { INSIGHT_TAGS } from '@triplef/agent/schemas';
 
-import {
-  type MemoryFrictionEdge,
-  MemoryFrictionRepository,
-} from '../../persistence/services/memory-friction.repository.js';
-import {
-  type MemoryLinkEdge,
-  type MemoryLinkLane,
-  MemoryLinkRepository,
-  type MemoryLinkRow,
-} from '../../persistence/services/memory-link.repository.js';
+import { MemoryFrictionRepository } from '../../persistence/services/memory-friction.repository.js';
+import type { MemoryFrictionEdge } from '../../persistence/services/memory-friction.repository.types.js';
+import { MemoryLinkRepository } from '../../persistence/services/memory-link.repository.js';
+import type {
+  MemoryLinkEdge,
+  MemoryLinkLane,
+  MemoryLinkRow,
+} from '../../persistence/services/memory-link.repository.types.js';
 import { CONSTELLATION_NODE_LIMIT_MAX } from '../constants/constellation-node-limit.constant.js';
 import {
   BRIDGE_TAG,
@@ -36,8 +34,13 @@ import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
 import { groupHeatIncrements } from './helpers/group-heat-increments.helper.js';
 import { mapFacetHit } from './helpers/map-facet-hit.helper.js';
+import type { FacetValueCount } from './helpers/map-facet-hit.helper.types.js';
 import { mapMemoryPointToUpsert } from './helpers/map-memory-point-to-upsert.helper.js';
 import { mapQueryPointToMemoryPoint } from './helpers/map-query-point-to-memory-point.helper.js';
+import type {
+  MemoryLabelLeafRow,
+  MemoryScrolledPoint,
+} from './memory.repository.types.js';
 import { MemoryOverridesService } from './memory-overrides.service.js';
 import { QdrantClientService } from './qdrant-client.service.js';
 
@@ -73,6 +76,16 @@ const SCROLL_PAGE = 500;
  * computing edges on upsert and cascading them on delete — so the dashboard
  * reads a ready graph with zero Qdrant round-trips.
  */
+/** The raw Qdrant point stub search/scroll queries hand to the mapper. */
+interface MemoryRawQueryPoint {
+  /** Point id (untyped at the wire). */
+  id: unknown;
+  /** Match/scroll score when the query carried one. */
+  score?: number;
+  /** Stored payload (absent on payload-less queries). */
+  payload?: Record<string, unknown> | null;
+}
+
 @Injectable()
 export class MemoryRepository {
   private readonly logger = new Logger(MemoryRepository.name);
@@ -359,9 +372,7 @@ export class MemoryRepository {
    * job's inventory. One facet call (Qdrant ≥1.12, keyword index on
    * `category`), exact counts.
    */
-  async facetCategories(
-    memoryPartition: string,
-  ): Promise<Array<{ value: string; count: number }>> {
+  async facetCategories(memoryPartition: string): Promise<FacetValueCount[]> {
     if (!(await this.clientService.hasCollection())) return [];
     const client = this.clientService.getClient();
     const result = await client.facet(this.collection, {
@@ -388,9 +399,7 @@ export class MemoryRepository {
   }
 
   /** Distinct tag values of one partition — the write/extract vocabulary. */
-  async facetTags(
-    memoryPartition: string,
-  ): Promise<Array<{ value: string; count: number }>> {
+  async facetTags(memoryPartition: string): Promise<FacetValueCount[]> {
     if (!(await this.clientService.hasCollection())) return [];
     const client = this.clientService.getClient();
     const result = await client.facet(this.collection, {
@@ -436,6 +445,45 @@ export class MemoryRepository {
   }
 
   /**
+   * The leaves carrying one taxonomy label value (the dashboard drill's
+   * leaf listing): one scroll page, newest bookkeeping order, payloads
+   * reduced to the fields the row renders.
+   */
+  async listByLabel(
+    memoryPartition: string,
+    field: 'category' | 'community' | 'subject' | 'tags',
+    value: string,
+    limit: number,
+  ): Promise<MemoryLabelLeafRow[]> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const labelFilter =
+      field === 'tags'
+        ? { key: 'tags', match: { any: [value] } }
+        : { key: field, match: { value } };
+    const result = await client.scroll(this.collection, {
+      filter: {
+        must: [
+          { key: 'memory_partition', match: { value: memoryPartition } },
+          labelFilter,
+        ],
+      },
+      limit,
+      with_payload: true,
+      with_vector: false,
+    });
+    return result.points.map((point) => {
+      const payload = point.payload ?? {};
+      return {
+        id: String(point.id),
+        text: (payload.text as string) ?? '',
+        isLinked: (payload.is_linked as boolean) ?? false,
+        createdAt: (payload.created_at as string) ?? '',
+      };
+    });
+  }
+
+  /**
    * Replace one tag inside the tags arrays of every matching point of a
    * partition (per-point read-modify-write — Qdrant has no array-element
    * rewrite). Paginated and idempotent: the `from`-filter shrinks as points
@@ -478,9 +526,7 @@ export class MemoryRepository {
   }
 
   /** Distinct community values of one partition — the community vocabulary. */
-  async facetCommunities(
-    memoryPartition: string,
-  ): Promise<Array<{ value: string; count: number }>> {
+  async facetCommunities(memoryPartition: string): Promise<FacetValueCount[]> {
     if (!(await this.clientService.hasCollection())) return [];
     const client = this.clientService.getClient();
     const result = await client.facet(this.collection, {
@@ -569,21 +615,7 @@ export class MemoryRepository {
     memoryPartition: string,
     category: string,
     limit: number,
-  ): Promise<
-    Array<{
-      id: string;
-      vector: number[];
-      text: string;
-      role: MemoryPoint['role'];
-      tags: string[];
-      createdAt: string;
-      requestId?: string;
-      subject?: string;
-      community?: string;
-      kind?: string;
-      stability?: string;
-    }>
-  > {
+  ): Promise<MemoryScrolledPoint[]> {
     if (!(await this.clientService.hasCollection())) return [];
     const client = this.clientService.getClient();
     const filter = {
@@ -592,19 +624,7 @@ export class MemoryRepository {
         { key: 'category', match: { value: category } },
       ],
     };
-    const points: Array<{
-      id: string;
-      vector: number[];
-      text: string;
-      role: MemoryPoint['role'];
-      tags: string[];
-      createdAt: string;
-      requestId?: string;
-      subject?: string;
-      community?: string;
-      kind?: string;
-      stability?: string;
-    }> = [];
+    const points: MemoryScrolledPoint[] = [];
     let offset: string | number | null = null;
     for (;;) {
       const scroll = await client.scroll(this.collection, {
@@ -1413,11 +1433,7 @@ export class MemoryRepository {
     return undefined;
   }
 
-  private toMemoryPoint(point: {
-    id: unknown;
-    score?: number;
-    payload?: Record<string, unknown> | null;
-  }): MemoryPoint {
+  private toMemoryPoint(point: MemoryRawQueryPoint): MemoryPoint {
     const payload = point.payload ?? {};
     return {
       id: String(point.id),

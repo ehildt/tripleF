@@ -1,6 +1,7 @@
+import { filesize } from 'filesize';
+
 import { getApiUrl } from '@/api/api-url';
 import type { EncyclopediaChunkRecord } from '@/api/memory.api';
-import { formatFileSize } from '@/helpers/format-file-size.helper';
 
 import { truncateText } from '../../memory-constellation/helpers/truncate-text.helper';
 import type { ConstellationNode } from '../../memory-constellation/MemoryConstellation.types';
@@ -32,6 +33,7 @@ export function mapChunkToNode(
     clusterKey: chunk.clusterId?.trim() || chunk.category?.trim() || undefined,
     category: chunk.category?.trim() || undefined,
     communityKey: chunk.community?.trim() || undefined,
+    node: chunk.node?.trim() || undefined,
     text: chunk.content,
     summary: truncateText(chunk.content, SUMMARY_CHARS),
     timestamp: chunk.fetchedAt,
@@ -52,7 +54,12 @@ export function mapChunkToNode(
         ? [{ label: 'type', value: mimeTypeLabel(chunk.mimeType) }]
         : []),
       ...(chunk.sizeBytes !== undefined
-        ? [{ label: 'size', value: formatFileSize(chunk.sizeBytes) }]
+        ? [
+            {
+              label: 'size',
+              value: filesize(chunk.sizeBytes, { standard: 'jedec', round: 1 }),
+            },
+          ]
         : []),
       ...(chunk.heatAmount
         ? [

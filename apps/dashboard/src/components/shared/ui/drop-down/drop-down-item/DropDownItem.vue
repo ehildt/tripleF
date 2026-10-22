@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Check } from '@lucide/vue';
 
-import type { DropDownItemProps } from './DropDownItem.types';
+import type {
+  DropDownItemEmits,
+  DropDownItemProps,
+} from './DropDownItem.types';
 
 defineProps<DropDownItemProps>();
 
-const emit = defineEmits<{
-  select: [option: string];
-}>();
+const emit = defineEmits<DropDownItemEmits>();
 </script>
 
 <template>
@@ -16,10 +17,11 @@ const emit = defineEmits<{
     :class="{ 'drop-down-item--selected': selected }"
     @click="emit('select', option)"
   >
-    <template v-if="showCheck">
-      <Check v-if="selected" class="drop-down-item__check" />
-      <span v-else class="drop-down-item__check-placeholder" />
-    </template>
+    <Check v-if="showCheck && selected" class="drop-down-item__check" />
+    <span
+      v-if="showCheck && !selected"
+      class="drop-down-item__check-placeholder"
+    />
     {{ label }}
   </button>
 </template>

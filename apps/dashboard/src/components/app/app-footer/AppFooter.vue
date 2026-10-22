@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-import { useToast } from '../../../composables/use-toast';
+import { useToast } from '../../../composables/use-toast/use-toast';
 
 const props = defineProps<{
   socketId?: string | null;

@@ -28,7 +28,7 @@ describe('MemorySection', () => {
 
   it('renders one submenu tab per configuration group', () => {
     const wrapper = mount(MemorySection);
-    const tabs = wrapper.findAll('.settings-submenu__tab');
+    const tabs = wrapper.findAll('.menu-button');
     expect(tabs).toHaveLength(8);
     expect(tabs.map((tab) => tab.attributes('aria-label'))).toEqual([
       'Memory spaces',
@@ -52,7 +52,7 @@ describe('MemorySection', () => {
   it('switches the visible group when a submenu tab is clicked', async () => {
     const wrapper = mount(MemorySection);
     const maintenanceTab = wrapper
-      .findAll('.settings-submenu__tab')
+      .findAll('.menu-button')
       .find((tab) => tab.attributes('aria-label') === 'Maintenance models');
     await maintenanceTab?.trigger('click');
 
@@ -63,7 +63,7 @@ describe('MemorySection', () => {
   it('shows the auto-triggers group when its tab is clicked', async () => {
     const wrapper = mount(MemorySection);
     const autoTriggersTab = wrapper
-      .findAll('.settings-submenu__tab')
+      .findAll('.menu-button')
       .find((tab) => tab.attributes('aria-label') === 'Auto-triggers');
     await autoTriggersTab?.trigger('click');
 

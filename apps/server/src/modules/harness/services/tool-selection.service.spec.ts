@@ -2,7 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
-import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
+import { MemoryCognitionService } from '../../memory-client/services/memory-cognition.service.js';
+import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
+import { MemoryPartitionRecordsService } from '../../memory-client/services/memory-partition-records.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 
@@ -64,13 +66,22 @@ describe('ToolSelectionService', () => {
           useValue: { tools: {} },
         },
         {
-          provide: MemoryClientService,
+          provide: MemoryPartitionRecordsService,
           useValue: {
             storeRecord: vi.fn(),
             searchByText: vi.fn(),
             deleteRecords: vi.fn(),
+          },
+        },
+        {
+          provide: MemoryCognitionService,
+          useValue: {
             deleteCognition: vi.fn(),
           },
+        },
+        {
+          provide: MemoryEncyclopediaService,
+          useValue: {},
         },
         {
           provide: MEMORY_CLIENT_CONFIG,

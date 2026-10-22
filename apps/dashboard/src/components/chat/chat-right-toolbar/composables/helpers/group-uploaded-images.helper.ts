@@ -1,4 +1,4 @@
-import type { UploadedImage } from '@/stores/conversation';
+import type { UploadedImage } from '@/stores/conversation/conversation.model';
 
 export interface UploadedImageGroup {
   /** Hash of the source pdf the pages were rendered from. */

@@ -5,6 +5,7 @@ import { MemoryInsertLedgerRepository } from '../../persistence/services/memory-
 import { QDRANT_CONFIG } from '../../qdrant/constants/qdrant.constants.js';
 import { deterministicPointId } from '../../qdrant/helpers/deterministic-point-id.helper.js';
 import { normalizeCommunity } from '../../qdrant/helpers/normalize-community.helper.js';
+import { normalizeNode } from '../../qdrant/helpers/normalize-node.helper.js';
 import { normalizeSubject } from '../../qdrant/helpers/normalize-subject.helper.js';
 import type { MemoryScopeFilters } from '../../qdrant/models/memory.model.js';
 import type { QdrantConfig } from '../../qdrant/models/qdrant-config.model.js';
@@ -15,24 +16,16 @@ import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.s
 import { normalizeCategory } from '../helpers/normalize-category.helper.js';
 import { normalizeTags } from '../helpers/normalize-tags.helper.js';
 
+import type { DeleteRecordsOutcome } from './vectorize.service.types.js';
+
 /** A filtered delete removes at most this many records per call. */
 const DELETE_RECORDS_CAP = 50;
-
-/** Outcome of a filtered delete: `deleted` stays 0 when the match count exceeded the cap. */
-interface DeleteRecordsOutcome {
-  deleted: number;
-  /** Verbatim texts of the removed records — the caller confirms exactly what is gone. */
-  texts: string[];
-  /** Total matches found, including when refused (callers phrase the refusal). */
-  matched: number;
-}
 
 /**
  * Direct (non-queued) memory record writes and deletes. The turn pipeline
  * lives in the vectorize step machine (steps under services/vectorize/); this
  * service holds the synchronous record paths used by the agentic
- * `memory-partition-remember`/`memory-partition-delete` tools and the manual
- * text endpoints.
+ * `memory-partition-delete` tool and the manual text endpoints.
  * The AI's cognition document lives in MemoryCognitionService.
  */
 @Injectable()
@@ -50,12 +43,11 @@ export class VectorizeService {
   ) {}
 
   /**
-   * Synchronous single-record store (agentic `memory-partition-remember` /
-   * manual ingest): one embed call, one deterministic-id point — re-stating
-   * the same text overwrites in place, refreshing tags/timestamp. Returns the
-   * point id; throws when the feature is off or the embed fails so the
-   * calling tool can
-   * surface an honest error to the model.
+   * Synchronous single-record store (manual ingest — the caller judged the
+   * text worth storing): one embed call, one deterministic-id point —
+   * re-stating the same text overwrites in place, refreshing tags/timestamp.
+   * Returns the point id; throws when the feature is off or the embed fails
+   * so the caller surfaces an honest error.
    */
   async storeRecord(input: {
     memoryPartition: string;
@@ -64,9 +56,10 @@ export class VectorizeService {
     requestId?: string;
     text: string;
     tags?: string[];
-    category?: string;
-    community?: string;
-    subject?: string;
+    category: string;
+    community: string;
+    subject: string;
+    node: string;
     icon?: string;
   }): Promise<string> {
     if (!this.config.enabled) {
@@ -83,27 +76,20 @@ export class VectorizeService {
     const category = normalizeCategory(input.category);
     const community = normalizeCommunity(input.community);
     const subject = normalizeSubject(input.subject);
+    const node = normalizeNode(input.node);
     const tags = normalizeTags(input.tags);
+    // The taxonomy chain is strict: every label must survive normalization,
+    // and the point files exactly once — cluster → community → hub → node.
+    if (!category || !community || !subject || !node) {
+      throw new Error(
+        'Incomplete taxonomy chain — category, community, subject, and node are all required',
+      );
+    }
     const labels = [
-      ...(category ? [{ kind: 'cluster' as const, label: category }] : []),
-      ...(community
-        ? [
-            {
-              kind: 'community' as const,
-              label: community,
-              parentRef: category,
-            },
-          ]
-        : []),
-      ...(subject
-        ? [
-            {
-              kind: 'hub' as const,
-              label: subject,
-              parentRef: community ?? category,
-            },
-          ]
-        : []),
+      { kind: 'cluster' as const, label: category },
+      { kind: 'community' as const, label: community, parentRef: category },
+      { kind: 'hub' as const, label: subject, parentRef: community },
+      { kind: 'node' as const, label: node, parentRef: subject },
       ...tags.map((tag) => ({ kind: 'tag' as const, label: tag })),
     ];
     const resolved = await this.taxonomyResolution.resolveLabels(
@@ -115,15 +101,11 @@ export class VectorizeService {
     const canonical = new Map(
       resolved.map((entry) => [`${entry.kind}|${entry.input}`, entry.name]),
     );
-    const resolvedCategory = category
-      ? (canonical.get(`cluster|${category}`) ?? category)
-      : undefined;
-    const resolvedCommunity = community
-      ? (canonical.get(`community|${community}`) ?? community)
-      : undefined;
-    const resolvedSubject = subject
-      ? (canonical.get(`hub|${subject}`) ?? subject)
-      : undefined;
+    const resolvedCategory = canonical.get(`cluster|${category}`) ?? category;
+    const resolvedCommunity =
+      canonical.get(`community|${community}`) ?? community;
+    const resolvedSubject = canonical.get(`hub|${subject}`) ?? subject;
+    const resolvedNode = canonical.get(`node|${node}`) ?? node;
     const resolvedTags = tags.map((tag) => canonical.get(`tag|${tag}`) ?? tag);
 
     const id = deterministicPointId(`${input.memoryPartition}|user|${text}`);
@@ -142,6 +124,7 @@ export class VectorizeService {
           category: resolvedCategory,
           community: resolvedCommunity,
           subject: resolvedSubject,
+          node: resolvedNode,
         },
       ],
     });

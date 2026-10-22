@@ -5,7 +5,7 @@
  */
 import EyebrowTitle from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/eyebrow-title/EyebrowTitle.vue';
 
-import { useProductSpecsList } from './composables/use-product-specs-list.composable';
+import { useProductSpecsList } from './composables/use-product-specs-list';
 import type { ProductSpecsListProps } from './ProductSpecsList.types';
 
 const props = defineProps<ProductSpecsListProps>();

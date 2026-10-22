@@ -1,10 +1,10 @@
-import { useConversationStore } from '@/stores/conversation';
-import { useDebugStore } from '@/stores/debug';
-import { useApiMessagesStore } from '@/stores/messages';
-import { useSocketStore } from '@/stores/socket';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useDebugStore } from '@/stores/debug/debug.store';
+import { useMessagesStore } from '@/stores/messages/messages.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { useToast } from '../../../composables/use-toast';
+import { useToast } from '../../../composables/use-toast/use-toast';
 import { extractPromptMessages } from '../helpers/extract-prompt-messages.helper';
 
 /**
@@ -15,20 +15,22 @@ import { extractPromptMessages } from '../helpers/extract-prompt-messages.helper
  * by import — a retried job always targets the app's live session.
  */
 export function useDlqRetrySession() {
-  const socketStore = useSocketStore();
+  const socketStore = useSocket();
   const conversationStore = useConversationStore();
   const debugStore = useDebugStore();
-  const messagesStore = useApiMessagesStore();
+  const messagesStore = useMessagesStore();
   const toast = useToast();
 
   function ensureSocketSubscription(roomId: string, eventName: string) {
     socketStore.ensureSocketConnection();
 
-    if (!socketStore.connectedEvents.has(eventName)) {
+    if (!socketStore.connectedEvents.value.has(eventName)) {
       socketStore.listenToEvent(eventName);
       toast.debug(`Resubscribed to ${eventName}`);
     }
-    if (!(socketStore.connectedRooms.get(eventName)?.has(roomId) ?? false)) {
+    if (!(
+      socketStore.connectedRooms.value.get(eventName)?.has(roomId) ?? false
+    )) {
       socketStore.joinRoom(roomId, eventName);
       toast.debug(`Rejoined room: ${roomId}`);
     }

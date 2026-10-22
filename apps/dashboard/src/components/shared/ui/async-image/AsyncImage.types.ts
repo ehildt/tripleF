@@ -16,3 +16,10 @@ export interface AsyncImageProps {
    */
   showErrorLabel?: boolean;
 }
+
+export interface AsyncImageEmits {
+  /** The image finished loading. */
+  load: [];
+  /** The image failed to load. */
+  error: [];
+}

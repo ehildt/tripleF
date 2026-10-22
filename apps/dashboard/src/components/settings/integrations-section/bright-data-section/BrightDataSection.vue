@@ -7,31 +7,27 @@ import {
   KeyRound,
   MapPin,
   Newspaper,
+  RotateCcw,
   ShoppingCart,
 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import CapabilitiesPanel from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.vue';
 import ProviderSection from '@/components/settings/integrations-section/shared/ui/provider-section/ProviderSection.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 
 import { useApiKeyForm } from '../../composables/use-api-key-form';
-import type { BrightDataConfig } from '../../settings-config.model';
 import { buildBrightDataCapabilityRows } from '../helpers/build-bright-data-capability-rows.helper';
+import type {
+  BrightDataSectionEmits,
+  BrightDataSectionProps,
+} from './BrightDataSection.types';
 
-const props = defineProps<{
-  config: BrightDataConfig;
-  updateApiKey: (apiKey: string) => Promise<boolean>;
-}>();
+const props = defineProps<BrightDataSectionProps>();
 
-const emit = defineEmits<{
-  toggleEndpoint: [name: string];
-  updateResults: [payload: { name: string; value: string }];
-  reset: [];
-  zoneChange: [payload: { zone: 'serpZone' | 'unlockerZone'; value: string }];
-}>();
+const emit = defineEmits<BrightDataSectionEmits>();
 
 const configured = computed(() => !!props.config.apiKey);
 const maskedApiKey = computed(() => props.config.apiKey ?? '');
@@ -77,13 +73,15 @@ function onZoneChange(zone: 'serpZone' | 'unlockerZone', event: Event) {
     :descriptions="descriptions"
     :icons="icons"
     :configured="configured"
+    :endpoint-max-results="endpointMaxResults"
     :prepend-items-per-row="1"
     @toggle-endpoint="emit('toggleEndpoint', $event)"
     @update-results="emit('updateResults', $event)"
   >
     <template #actions>
-      <ResetButton
-        :title="$t('common.resetBrightDataToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetBrightDataToDefaults')"
         @click="emit('reset')"
       />
     </template>

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SocketIOService } from '@triplef/socketio';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
+import { MemoryEncyclopediaService } from '../../../memory-client/services/memory-encyclopedia.service.js';
 import { SanitizeActionService } from '../../actions/sanitize.action.js';
 import { HarnessContext } from '../harness-context.type.js';
 
@@ -39,7 +39,7 @@ function createContext(overrides?: Partial<HarnessContext>): HarnessContext {
 describe('SanitizeStepService', () => {
   let service: SanitizeStepService;
   let action: SanitizeActionService;
-  let memoryClient: MemoryClientService;
+  let memoryEncyclopedia: MemoryEncyclopediaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,7 +57,7 @@ describe('SanitizeStepService', () => {
           },
         },
         {
-          provide: MemoryClientService,
+          provide: MemoryEncyclopediaService,
           useValue: {
             indexEncyclopediaDocuments: vi
               .fn()
@@ -69,7 +69,9 @@ describe('SanitizeStepService', () => {
 
     service = module.get<SanitizeStepService>(SanitizeStepService);
     action = module.get<SanitizeActionService>(SanitizeActionService);
-    memoryClient = module.get<MemoryClientService>(MemoryClientService);
+    memoryEncyclopedia = module.get<MemoryEncyclopediaService>(
+      MemoryEncyclopediaService,
+    );
   });
 
   it('should be defined', () => {
@@ -128,7 +130,7 @@ describe('SanitizeStepService', () => {
 
     await service.execute(ctx);
 
-    expect(memoryClient.indexEncyclopediaDocuments).toHaveBeenCalledWith({
+    expect(memoryEncyclopedia.indexEncyclopediaDocuments).toHaveBeenCalledWith({
       documents: [
         {
           url: 'http://minio/cv.docx',

@@ -2,9 +2,10 @@
 import { ref } from 'vue';
 
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 
-import { useProviderSection } from './composables/use-provider-section.composable';
+import { useProviderSection } from './composables/use-provider-section';
 import type { ProviderSectionProps } from './ProviderSection.types';
 
 const props = withDefaults(defineProps<ProviderSectionProps>(), {
@@ -63,9 +64,9 @@ const {
       <div v-if="$slots.apiKey" class="provider-section__api-key">
         <slot name="apiKey" />
       </div>
-      <div v-if="$slots.actions" class="provider-section__actions-buttons">
+      <MenuRow v-if="$slots.actions" variant="panel" role="toolbar">
         <slot name="actions" />
-      </div>
+      </MenuRow>
     </div>
 
     <!-- … and finally the endpoint fields (checkbox + results number). -->
@@ -107,7 +108,9 @@ const {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-2);
+  /* No horizontal padding: the settings section owns the side inset, so
+     the actions line's right end lines up with the other menu rows. */
+  padding: var(--spacing-2) 0;
 }
 
 .provider-section__actions {
@@ -115,19 +118,6 @@ const {
   justify-content: space-between;
   align-items: center;
   gap: var(--spacing-1);
-  min-height: calc(2.25rem + 2 * var(--spacing-2));
-  background:
-    radial-gradient(
-      ellipse 120% 140% at 12% 50%,
-      color-mix(in srgb, var(--color-accent-primary) 18%, transparent) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 120% 140% at 88% 50%,
-      color-mix(in srgb, var(--color-accent-secondary) 14%, transparent) 0%,
-      transparent 60%
-    ),
-    var(--color-bg-elevated);
 }
 
 .provider-section__api-key {
@@ -135,11 +125,9 @@ const {
   min-width: 0;
 }
 
-/* The API key field sits on the radiant actions row — let it blend in
-   instead of showing its own field background. Only affects the API key
-   TextFieldCard, not the endpoint fields in the grid below. */
+/* Let the input take the remaining width — the label/description shrink to
+   their natural size instead of splitting the field evenly. */
 .provider-section__api-key :deep(.text-field-card) {
-  background: transparent;
   width: 100%;
 }
 
@@ -151,13 +139,6 @@ const {
 
 .provider-section__api-key :deep(.text-field-card__field) {
   flex: 1 1 auto;
-}
-
-.provider-section__actions-buttons {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  flex-shrink: 0;
 }
 
 .provider-section__metadata-row {

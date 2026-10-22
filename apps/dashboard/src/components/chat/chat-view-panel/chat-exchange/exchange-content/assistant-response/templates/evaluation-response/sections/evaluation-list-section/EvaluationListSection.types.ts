@@ -1,4 +1,4 @@
-import type { KeyFinding } from '@/types/harness-response-data.model';
+import type { KeyFinding } from '@/types/assistant-response-data.model';
 
 /** Props for `EvaluationListSection`, a titled list of strengths, weaknesses, or recommendations. */
 export interface EvaluationListSectionProps {

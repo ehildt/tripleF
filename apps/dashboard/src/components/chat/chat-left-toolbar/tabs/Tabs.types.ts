@@ -1,4 +1,4 @@
-import type { Conversation } from '@/stores/conversation';
+import type { Conversation } from '@/stores/conversation/conversation.model';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 export interface TabsProps {

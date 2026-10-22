@@ -20,8 +20,8 @@ import ChartToggle from '../shared/chart-toggles/ChartToggle.vue';
 import type { ChartToggleOption } from '../shared/chart-toggles/ChartToggleGroup.types';
 import ChartToggleGroup from '../shared/chart-toggles/ChartToggleGroup.vue';
 import ChartTooltip from '../shared/chart-tooltip/ChartTooltip.vue';
-import { DEFAULT_RANGE_BARS } from './composables/use-d3-chart.composable';
-import { useD3UnifiedChart } from './composables/use-d3-unified-chart.composable';
+import { DEFAULT_RANGE_BARS } from './composables/use-d3-chart';
+import { useD3UnifiedChart } from './composables/use-d3-unified-chart';
 import type {
   D3HeatmapVariant,
   D3PriceStyle,

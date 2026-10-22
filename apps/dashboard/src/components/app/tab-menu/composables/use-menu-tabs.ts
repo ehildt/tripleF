@@ -8,7 +8,7 @@ import {
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { useAppStore } from '../../../../stores/app';
+import { useAppStore } from '../../../../stores/app/app.store';
 import type { ActiveTab } from '../../../../types/app.model';
 import type { TabMenuProps } from '../TabMenu.types';
 import type { MenuTab } from './use-menu-tabs.types';

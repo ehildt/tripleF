@@ -6,12 +6,12 @@
  * no preview and opens no lightbox.
  */
 import { ListMinus, SquaresExclude } from '@lucide/vue';
+import { filesize } from 'filesize';
 import { computed } from 'vue';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { formatFileSize } from '@/helpers/format-file-size.helper';
 
 import type { AttachmentDocumentRowProps } from './AttachmentDocumentRow.types';
 
@@ -22,7 +22,11 @@ const emit = defineEmits<{
   remove: [];
 }>();
 
-const metaLine = computed(() => formatFileSize(props.item.size));
+const metaLine = computed(() =>
+  props.item.size === undefined
+    ? ''
+    : filesize(props.item.size, { standard: 'jedec', round: 1 }),
+);
 </script>
 
 <template>

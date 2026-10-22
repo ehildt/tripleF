@@ -1,8 +1,9 @@
 import { computed } from 'vue';
 
-import { useHealthReady } from '../../../api/queries/use-health-ready.query';
+import { useHealthReady } from '@/api/queries/use-health-ready.query';
+
+import type { HealthTileViewModel } from '../health-tile-view-model.model';
 import { buildHealthTiles } from '../helpers/build-health-tiles.helper';
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
 
 const TRACKED_KEYS = [
   'disk',

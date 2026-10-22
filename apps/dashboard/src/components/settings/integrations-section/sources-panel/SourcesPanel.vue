@@ -12,7 +12,7 @@ import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFiel
 import {
   MAX_IMAGE_TASK_REFERENCE_COUNT,
   useSourcesPanel,
-} from './composables/use-sources-panel.composable';
+} from './composables/use-sources-panel';
 import SourceListCard from './source-list-card/SourceListCard.vue';
 import type {
   SourcesPanelEmits,

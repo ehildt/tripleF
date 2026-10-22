@@ -12,26 +12,17 @@ import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js'
 
 import { mapGroupToPendingPartition } from './helpers/map-group-to-pending-partition.helper.js';
 import { mapLedgerRowToPending } from './helpers/map-ledger-row-to-pending.helper.js';
-
-/** One ledger row to write — the sweep's incremental input and the write-side audit trail. */
-interface MemoryInsertLedgerRow {
-  memoryPartition: string;
-  pointId: string;
-  role: 'user' | 'assistant';
-  text: string;
-  requestId?: string;
-}
+import type {
+  MemoryInsertLedgerRow,
+  PendingLedgerEntry,
+  PendingLedgerPartition,
+} from './memory-insert-ledger.repository.types.js';
 
 /** A pending (unswept) ledger row, oldest-first. */
-export interface PendingLedgerEntry extends MemoryInsertLedgerRow {
-  id: string;
-  createdAt: Date;
-}
-
 /**
  * Postgres storage for the memory insert ledger — one row per stored fact
  * record (the memory_partition lane in Qdrant), written by the vectorize
- * store step and the memory-partition-remember sync path. `sweptAt` null marks a row
+ * store step and the manual-ingest sync path. `sweptAt` null marks a row
  * pending consolidation; the sweep marks rows swept only after processing
  * them, so a crash mid-run resumes from the oldest unswept row.
  *
@@ -85,9 +76,7 @@ export class MemoryInsertLedgerRepository
   }
 
   /** Distinct partitions with pending rows, plus their pending counts. */
-  async listPendingPartitions(): Promise<
-    Array<{ memoryPartition: string; pending: number }>
-  > {
+  async listPendingPartitions(): Promise<PendingLedgerPartition[]> {
     const groups = await this.prisma.memoryInsertLedger.groupBy({
       by: ['memoryPartition'],
       where: { sweptAt: null },

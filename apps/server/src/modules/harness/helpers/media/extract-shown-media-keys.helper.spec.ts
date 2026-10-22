@@ -52,4 +52,29 @@ describe('extractShownMediaKeys', () => {
       'youtube:abc123def45',
     );
   });
+
+  it('records international-coverage videos but never article aside links', () => {
+    const data = {
+      internationalCoverage: [
+        {
+          title: 'Mix',
+          url: 'https://www.youtube.com/watch?v=xyz987abc65',
+          sourceName: 'Channel',
+          language: 'ja',
+          summary: 'A mix.',
+        },
+        {
+          title: 'Article',
+          url: 'https://example.com/news/story',
+          sourceName: 'Paper',
+          language: 'de',
+          summary: 'A report.',
+        },
+        'garbage',
+      ],
+    };
+    const videoKeys = extractShownMediaKeys(data, opts()).videoKeys;
+    expect(videoKeys).toContain('youtube:xyz987abc65');
+    expect(videoKeys.some((key) => key.includes('example.com'))).toBe(false);
+  });
 });

@@ -19,9 +19,9 @@ import {
 import { computed, ref } from 'vue';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
-import type { SubMenuItem } from '@/components/shared/ui/settings-submenu/SettingsSubMenu.types';
-import SettingsSubMenu from '@/components/shared/ui/settings-submenu/SettingsSubMenu.vue';
-import { useMemorySpaceSync } from '@/composables/use-memory-space-sync';
+import type { MenuTabItem } from '@/components/shared/ui/menu-tabs/MenuTabs.types';
+import MenuTabs from '@/components/shared/ui/menu-tabs/MenuTabs.vue';
+import { useMemorySpaceSync } from '@/composables/use-memory-space-sync/use-memory-space-sync';
 import { i18n } from '@/i18n/i18n';
 
 import type { MemoryGroupId } from './config-panel/MemoryConfigPanel.types';
@@ -31,7 +31,7 @@ import MemoryConfigPanel from './config-panel/MemoryConfigPanel.vue';
  * One icon tab per configuration group; the icon mirrors the group's section
  * header so the selected tab and the visible header read as the same thing.
  */
-const GROUP_ITEMS = computed<SubMenuItem[]>(() => [
+const GROUP_ITEMS = computed<MenuTabItem[]>(() => [
   {
     id: 'spaces',
     label: i18n.global.t('common.memorySpacesSection'),
@@ -84,7 +84,8 @@ useMemorySpaceSync();
 <template>
   <SettingsSection>
     <div class="memory-section">
-      <SettingsSubMenu
+      <MenuTabs
+        variant="section"
         :items="GROUP_ITEMS"
         :active="activeGroup"
         @select="activeGroup = $event as MemoryGroupId"

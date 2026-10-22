@@ -1,5 +1,5 @@
-import type { UploadedImage } from '@/stores/conversation';
-import { hashFile } from '@/utils/hash-file.helper';
+import type { UploadedImage } from '@/stores/conversation/conversation.model';
+import { hashFile } from '@/utils/hash-file/hash-file.helper';
 
 import type { ClassifiedSelectedFiles } from './classify-selected-files.helper.types';
 

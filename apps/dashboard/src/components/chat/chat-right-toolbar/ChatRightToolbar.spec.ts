@@ -52,7 +52,7 @@ vi.mock('./history/History.vue', () =>
   createPanelStub('History', 'history-stub'),
 );
 
-vi.mock('@/composables/use-playback-session', () => ({
+vi.mock('@/composables/use-playback-session/use-playback-session', () => ({
   usePlaybackSession: () => ({
     setDockedPlaylistPanelVisible: vi.fn(),
   }),

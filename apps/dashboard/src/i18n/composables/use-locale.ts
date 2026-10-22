@@ -1,7 +1,8 @@
 import { useI18n } from 'vue-i18n';
 
 import { loadLocale } from '../i18n';
-import { LOCALE_CODES, type LocaleCode } from '../locale-codes';
+import type { LocaleCode } from '../locale-codes';
+import { LOCALE_CODES } from '../locale-registry';
 
 const STORAGE_KEY = 'vision-locale';
 

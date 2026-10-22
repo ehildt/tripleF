@@ -3,11 +3,11 @@ import { computed } from 'vue';
 
 import { useBranchExchange } from '@/components/chat/composables/use-branch-exchange';
 import { useChatConversation } from '@/components/chat/composables/use-chat-conversation';
+import { useChatView } from '@/components/chat/shared/composables/use-chat-view';
 import { useMergeSelection } from '@/components/chat/shared/composables/use-merge-selection';
-import { useChatViewStore } from '@/stores/chat-view';
-import type { Exchange } from '@/stores/conversation';
-import { useConversationStore } from '@/stores/conversation';
-import { useModelsStore } from '@/stores/models';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { mapExchangeToListItem } from '../helpers/map-exchange-to-list-item.helper';
 
@@ -21,7 +21,7 @@ import { mapExchangeToListItem } from '../helpers/map-exchange-to-list-item.help
  * self-contained section children.
  */
 export function useHistoryPanel() {
-  const chatViewStore = useChatViewStore();
+  const chatView = useChatView();
   const conversationStore = useConversationStore();
   const modelsStore = useModelsStore();
   const { branchExchange } = useBranchExchange();
@@ -122,7 +122,7 @@ export function useHistoryPanel() {
   }
 
   const activeUserExchangeId = computed(
-    () => chatViewStore.activeUserExchangeId,
+    () => chatView.activeUserExchangeId.value,
   );
 
   const { copy } = useClipboard({ legacy: true });
@@ -130,7 +130,7 @@ export function useHistoryPanel() {
   /** Clicking a row jumps the exchange list to that prompt's section. */
   function onPromptClick(index: number) {
     const id = userExchanges.value[index]?.id;
-    if (id) chatViewStore.requestScrollToExchange(id);
+    if (id) chatView.requestScrollToExchange(id);
   }
 
   /** Copying a row copies its rendered message content. */

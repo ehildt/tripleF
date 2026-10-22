@@ -10,6 +10,7 @@ import AppThemeSelector from '../app-theme-selector/AppThemeSelector.vue';
 import LanguageSelector from '../language-selector/LanguageSelector.vue';
 import { useMenuTabs } from './composables/use-menu-tabs';
 import { useTabMenu } from './composables/use-tab-menu';
+import { useTabMenuRectTracking } from './composables/use-tab-menu-rect-tracking';
 import NavMenu from './nav-menu/NavMenu.vue';
 import type { TabMenuProps } from './TabMenu.types';
 
@@ -19,6 +20,10 @@ const { tabs } = useMenuTabs(props);
 
 const menuRef = useTemplateRef<HTMLElement>('menuRef');
 const { isOpen, side, toggleMenu, closeOnAutoclose } = useTabMenu(menuRef);
+
+// Publish the menu's live rect (shared via useTabMenuRect): the playlist
+// window positions itself beside the menu from it.
+useTabMenuRectTracking(menuRef);
 
 /** Down to expand (the drawer drops below), up to slide it away again. */
 const handleIcon = computed(() => (isOpen.value ? ChevronsUp : ChevronsDown));
@@ -106,9 +111,9 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-1);
+  gap: var(--spacing-3);
   width: 2.75rem;
-  padding: var(--spacing-1) 0;
+  padding: 0 var(--spacing-1);
   background-color: color-mix(
     in srgb,
     var(--color-bg-secondary) 50%,
@@ -143,7 +148,7 @@ watch(
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding-top: var(--spacing-1);
+  gap: var(--spacing-3);
 }
 
 /* Same tile rhythm as the nav items above the divider. */

@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
-import { useModelsStore } from '@/stores/models';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { useOllamaConnection } from './use-ollama-connection';
 

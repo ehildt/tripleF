@@ -2,7 +2,7 @@ import { computed, type Ref } from 'vue';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { useModelsStore } from '../../../../../stores/models';
+import { useModelsStore } from '../../../../../stores/models/models.store';
 
 export function usePayloadContextSize(entry: Ref<DlqEntry | null>) {
   const modelsStore = useModelsStore();
@@ -11,7 +11,7 @@ export function usePayloadContextSize(entry: Ref<DlqEntry | null>) {
     const payload = entry.value?.payload as Record<string, unknown> | null;
     const filters = payload?.filters as Record<string, unknown> | undefined;
     const numCtx = filters?.numCtx;
-    if (numCtx) return modelsStore.formatCtx(Number(numCtx));
+    if (numCtx) return modelsStore.formatContextSize(Number(numCtx));
     return '—';
   });
 

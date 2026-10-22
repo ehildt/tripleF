@@ -7,7 +7,7 @@ export interface SourceBudgetConfig {
   referenceDocRatio: number;
   /** Fallback per-doc ceiling when `numCtx` is absent (HARNESS_REFERENCE_DOC_CHARS, default 100000). */
   referenceDocChars: number;
-  /** Share of `numCtx × 4` for the memory-write gathered block (HARNESS_GATHERED_TOTAL_RATIO, default 0.03). */
+  /** Share of `numCtx × 4` for the vectorize step's gathered block (HARNESS_GATHERED_TOTAL_RATIO, default 0.03). */
   gatheredTotalRatio: number;
   /** Fallback gathered-block cap when `numCtx` is absent (HARNESS_GATHERED_TOTAL_CHARS, default 16000). */
   gatheredTotalChars: number;

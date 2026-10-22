@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { KeyRound } from '@lucide/vue';
+import { KeyRound, RotateCcw } from '@lucide/vue';
 
 import CapabilitiesPanel from '@/components/settings/integrations-section/shared/ui/capabilities-panel/CapabilitiesPanel.vue';
 import ProviderSection from '@/components/settings/integrations-section/shared/ui/provider-section/ProviderSection.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 
-import { useEodhdSection } from './composables/use-eodhd-section.composable';
+import { useEodhdSection } from './composables/use-eodhd-section';
 import type { EodhdSectionProps } from './EodhdSection.types';
 
 const props = defineProps<EodhdSectionProps>();
@@ -43,8 +43,9 @@ const {
     @update-results="emit('updateResults', $event)"
   >
     <template #actions>
-      <ResetButton
-        :title="$t('common.resetEodhdToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetEodhdToDefaults')"
         @click="emit('reset')"
       />
     </template>

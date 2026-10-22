@@ -8,7 +8,7 @@ import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { defineComponent, h, nextTick } from 'vue';
 
-import { sanitizeHtml } from '@/utils/sanitize-html.helper';
+import { sanitizeHtml } from '@/utils/sanitize-html/sanitize-html.helper';
 
 import StoryContainer from '../../../../../.storybook/StoryContainer.vue';
 import ExpandableMessageListBody from './expandable-message-list-body/ExpandableMessageListBody.vue';

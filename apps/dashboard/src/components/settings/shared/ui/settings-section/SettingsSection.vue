@@ -10,17 +10,9 @@ import { useI18n } from 'vue-i18n';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-const props = withDefaults(
-  defineProps<{
-    loading?: boolean;
-    error?: boolean;
-    /** Shown (instead of the section content) while `loading` is true. */
-    loadingMessage?: string;
-    /** Shown (instead of the section content) when `error` is true. */
-    errorMessage?: string;
-  }>(),
-  {},
-);
+import type { SettingsSectionProps } from './SettingsSection.types';
+
+const props = defineProps<SettingsSectionProps>();
 
 const { t } = useI18n();
 
@@ -39,12 +31,12 @@ const errorMessage = computed(
         {{ loadingMessage }}
       </p>
     </Tooltip>
-    <Tooltip v-else-if="error" :text="errorMessage">
+    <Tooltip v-if="!loading && error" :text="errorMessage">
       <p class="settings-section__state settings-section__state--error">
         {{ errorMessage }}
       </p>
     </Tooltip>
-    <slot v-else />
+    <slot v-if="!loading && !error" />
   </div>
 </template>
 

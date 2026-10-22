@@ -1,4 +1,4 @@
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
 import type { HistoryListItemData } from '../history-list/HistoryList.types';
 

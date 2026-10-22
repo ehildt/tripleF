@@ -1,4 +1,6 @@
-import { Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
+
+import { DeadLetterModule } from '../dead-letter/dead-letter.module.js';
 
 import { ConfigController } from './controllers/config.controller.js';
 import { ConversationController } from './controllers/conversation.controller.js';
@@ -12,25 +14,37 @@ import { PlaylistService } from './services/playlist.service.js';
 import { ProviderOverridesRepository } from './services/provider-overrides.repository.js';
 import { ShownMediaRepository } from './services/shown-media.repository.js';
 
-@Global()
-@Module({
-  controllers: [ConversationController, ConfigController, PlaylistController],
-  providers: [
-    ConversationRepository,
-    ConversationService,
-    ConfigRepository,
-    ConfigService,
-    PlaylistRepository,
-    PlaylistService,
-    ProviderOverridesRepository,
-    ShownMediaRepository,
-  ],
-  exports: [
-    ConversationService,
-    ConfigService,
-    PlaylistService,
-    ProviderOverridesRepository,
-    ShownMediaRepository,
-  ],
-})
-export class PersistenceModule {}
+@Module({})
+export class PersistenceModule {
+  private static readonly registration: DynamicModule = {
+    module: PersistenceModule,
+    controllers: [ConversationController, ConfigController, PlaylistController],
+    exports: [
+      ConversationService,
+      ConfigService,
+      PlaylistService,
+      ProviderOverridesRepository,
+      ShownMediaRepository,
+    ],
+    imports: [DeadLetterModule.register()],
+    providers: [
+      ConversationRepository,
+      ConversationService,
+      ConfigRepository,
+      ConfigService,
+      PlaylistRepository,
+      PlaylistService,
+      ProviderOverridesRepository,
+      ShownMediaRepository,
+    ],
+  };
+
+  /**
+   * Shared registration object: this app uses Nest's default by-reference
+   * dynamic-module ids, so one object per module class keeps multi-site
+   * imports a single shared instance (static-module singleton semantics).
+   */
+  static register(): DynamicModule {
+    return PersistenceModule.registration;
+  }
+}

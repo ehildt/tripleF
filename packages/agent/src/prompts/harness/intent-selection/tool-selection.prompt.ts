@@ -19,6 +19,18 @@ export const EXPLICIT_PROVIDER_RULES = `EXPLICIT PROVIDER MENTIONS (override the
 - If the named provider's tool is not in the enabled catalog, fall back to the enabled equivalent of that type.`;
 
 /**
+ * An explicit creator/channel mention with exclusive intent is captured
+ * verbatim in contentCreator so every later step can honor the restriction —
+ * it narrows WHO may supply the content, never WHICH tools are selected.
+ */
+export const CREATOR_RESTRICTION_RULES = `CREATOR RESTRICTION (contentCreator)
+- When the user explicitly names a creator, channel, label, or publisher with exclusive intent — "from the channel X", "only videos by X", "from X, drop everything else" — set contentCreator to that name, copied verbatim exactly as the user wrote it.
+- Both signals are required: a named creator AND exclusivity. A bare topic mention ("katame style beats", "videos like Vox") sets no restriction.
+- Genre, mood, or style words are never creators ("dark trap", "lofi beats" → leave contentCreator empty).
+- Never correct, extend, translate, or guess the name — "katame" stays "katame", never "Katame Chill". Later steps match it against the channel names in the results.
+- contentCreator narrows WHO may supply the content; it never changes WHICH tools are selected — tool choice still follows the other rules, and a named platform still narrows providers per EXPLICIT PROVIDER MENTIONS.`;
+
+/**
  * Tool selection as multi-set composition: each tool is judged independently,
  * included when it meaningfully improves the answer.
  */
@@ -50,13 +62,16 @@ export const WHEN_TO_USE_TOOLS_RULES = `WHEN TO USE TOOLS
 - user asks about specific factual entities, specifications, data, statistics → the enabled *WebSearch tool`;
 
 /**
- * Web-search selections pair with a fetch tool: the fetched full content
- * grounds the answer and populates the knowledge cache.
+ * Web/news searches are grounded automatically: when no fetch tool is
+ * selected, the harness itself fetches the top 3 result pages (free local
+ * fetch). A fetch tool earns its selection only for pages beyond that
+ * automatic grounding — an explicit page the answer needs, deeper full-text
+ * study, or anti-bot pages — never just to ground an ordinary search.
  */
 export const FETCH_AFTER_SEARCH_RULES = `FETCH-AFTER-SEARCH RULES
-- When you include a *WebSearch tool for factual research (article, news, evaluation, product, or text), also include a fetch tool — webFetch, serperWebpageScrape, or brightDataWebpageScrape — to fetch the most relevant result pages (typically 1-3; more when the topic is broad and several pages each add distinct depth).
-- The fetched full content grounds the answer in source text (not just snippets) and populates the knowledge cache for future turns.
-- You decide which pages are worth fetching: fetch only pages whose full content would meaningfully improve the answer. Skip fetching for trivial lookups, quick facts, or when the snippets already answer the request completely.
+- The top 3 results of every *WebSearch/*NewsSearch call are fetched automatically when no fetch tool is selected. Do NOT include a fetch tool merely to ground the answer — that grounding always happens on its own.
+- Include a fetch tool — webFetch, serperWebpageScrape, or brightDataWebpageScrape — only when the answer needs full text from a specific page beyond the auto-fetched top 3 (e.g. a spec sheet or review the user asked about).
+- Fetch sparingly: the 1-2 most authoritative pages whose full content meaningfully improves the answer. Skip fetching for trivial lookups, quick facts, or when the snippets already answer the request completely.
 - Prefer primary/readable sources — official sites, documentation, Wikipedia, news articles — over app stores, forums, and discussion threads, unless the question is specifically about those.
 - Prefer webFetch for plain pages; use a scrape tool for pages behind anti-bot protection.`;
 

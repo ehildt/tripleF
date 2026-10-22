@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { usePreprocessingStore } from '@/stores/preprocessing';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 
 import PprocResizeSection from './PprocResizeSection.vue';
 
@@ -19,7 +19,7 @@ describe('PprocResizeSection', () => {
   });
 
   it('disables fields when preprocessing is disabled', () => {
-    const store = usePreprocessingStore();
+    const store = usePreprocessingSettingsStore();
     store.setEnabled(false);
 
     const wrapper = mount(PprocResizeSection);

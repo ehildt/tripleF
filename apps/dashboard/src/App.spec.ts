@@ -1,17 +1,17 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
+import { ref } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
 
 import App from './App.vue';
 
-vi.mock('./stores/app', () => ({
+vi.mock('./stores/app/app.store', () => ({
   useAppStore: () => ({
     activeTab: 'chat',
     blinkLogo: false,
     requestId: 'req-id',
     refreshRequestId: vi.fn(),
-    abortJob: vi.fn(),
     handleCopyToClipboard: vi.fn(),
     setActiveTab: vi.fn(),
     isTabVisible: () => true,
@@ -19,7 +19,7 @@ vi.mock('./stores/app', () => ({
   }),
 }));
 
-vi.mock('./stores/debug', () => ({
+vi.mock('./stores/debug/debug.store', () => ({
   useDebugStore: () => ({
     debugLogCount: 0,
     debugResults: [],
@@ -29,8 +29,8 @@ vi.mock('./stores/debug', () => ({
   }),
 }));
 
-vi.mock('./stores/messages', () => ({
-  useApiMessagesStore: () => ({
+vi.mock('./stores/messages/messages.store', () => ({
+  useMessagesStore: () => ({
     completedCount: 0,
     messages: [],
     addMessage: vi.fn(),
@@ -38,21 +38,21 @@ vi.mock('./stores/messages', () => ({
   }),
 }));
 
-vi.mock('./stores/models', () => ({
+vi.mock('./stores/models/models.store', () => ({
   useModelsStore: () => ({
     models: ['llama'],
     modelNames: ['llama'],
     localModels: [],
     cloudModels: [],
     numCtxOptions: [],
-    formatCtx: (n: number) => String(n),
+    formatContextSize: (n: number) => String(n),
     modelsLoading: false,
     fetchModels: vi.fn(),
   }),
 }));
 
-vi.mock('./stores/socket', () => ({
-  useSocketStore: () => ({
+vi.mock('@/composables/use-socket/use-socket', () => ({
+  useSocket: () => ({
     connectionState: 'disconnected',
     socketId: '',
     connectedEvents: new Set(),
@@ -71,30 +71,29 @@ vi.mock('./stores/socket', () => ({
   }),
 }));
 
-vi.mock('./stores/helpers/create-socket-provider.helper', () => ({
-  createSocketProvider: () => ({
-    getSocket: vi.fn(() => ({ connected: false })),
-    trackRequest: vi.fn(),
-    addPendingMessage: vi.fn(),
-    closeEvent: vi.fn(),
-    closeRoom: vi.fn(),
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    subscribeToEvent: vi.fn(),
+vi.mock(
+  '@/components/chat/composables/helpers/create-socket-provider.helper',
+  () => ({
+    createSocketProvider: () => ({
+      getSocket: vi.fn(() => ({ connected: false })),
+      trackRequest: vi.fn(),
+      addPendingMessage: vi.fn(),
+      closeEvent: vi.fn(),
+      closeRoom: vi.fn(),
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      subscribeToEvent: vi.fn(),
+    }),
   }),
-}));
+);
 
-vi.mock('./stores/theme', () => ({
-  useThemeStore: () => ({
-    currentTheme: 'souls',
-    isDarkMode: true,
+vi.mock('./composables/use-theme/use-theme', () => ({
+  useTheme: () => ({
+    currentTheme: ref('souls'),
+    isDarkMode: ref(true),
     initTheme: vi.fn(),
     toggleDarkMode: vi.fn(),
   }),
-  THEMES: [
-    { key: 'souls', name: 'Dark Souls', primary: '#e6a23c' },
-    { key: 'residentevil', name: 'Resident Evil', primary: '#c0392b' },
-  ],
 }));
 
 // App.vue boots the playlist store, which fetches playlists over HTTP. Stub

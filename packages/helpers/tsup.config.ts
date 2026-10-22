@@ -45,7 +45,7 @@ export default defineConfig({
       'child_process',
       '@nestjs/common',
       '@nestjs/swagger',
-      'joi',
+      'zod',
     ];
   },
   treeshake: true,

@@ -39,8 +39,12 @@ export function buildLabelMeta(
   facts?: readonly { id: string; category?: string; clusterId?: string }[],
 ): ReadonlyMap<string, ConstellationLabelMeta> {
   const map = new Map<string, ConstellationLabelMeta>();
+  // Node dots address under their hub's topic key — resolve hub names by id.
+  const hubNameById = new Map(
+    nodes.filter((n) => n.kind === 'hub').map((n) => [n.id, n.name]),
+  );
   for (const node of nodes) {
-    const dotId = dotIdFor(node);
+    const dotId = dotIdFor(node, hubNameById);
     if (!dotId) continue;
     map.set(dotId, {
       icon: node.icon,
@@ -114,10 +118,21 @@ function pluralityCategory(
   return best;
 }
 
-/** Synthetic dot id of one taxonomy node (tags stay unmapped — recall vocabulary). */
-function dotIdFor(node: MemoryTaxonomyNodeRecord): string | undefined {
+/**
+ * Synthetic dot id of one taxonomy node (tags stay unmapped — recall
+ * vocabulary). Node dots are per-hub: the id joins the parent hub's topic
+ * key and the aspect name, matching the constellation's synthetic id.
+ */
+function dotIdFor(
+  node: MemoryTaxonomyNodeRecord,
+  hubNameById?: ReadonlyMap<string, string>,
+): string | undefined {
   if (node.kind === 'cluster') return `cluster:${node.name}`;
   if (node.kind === 'community') return `community:${node.name}`;
   if (node.kind === 'hub') return `topic:${node.name}`;
+  if (node.kind === 'node') {
+    const hubName = hubNameById?.get(node.parentId);
+    return hubName ? `node:${hubName}:${node.name}` : undefined;
+  }
   return undefined;
 }

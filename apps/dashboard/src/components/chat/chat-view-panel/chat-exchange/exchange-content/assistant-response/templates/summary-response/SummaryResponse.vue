@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
+import { useResponseMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-priority';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 
@@ -8,13 +8,13 @@ import InternationalCoverageSection from '../../sections/international-coverage-
 import KeyFindingsSection from '../../sections/key-findings-section/KeyFindingsSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import { useSummaryResponseData } from './composables/use-summary-response-data.composable';
+import { useSummaryResponseData } from './composables/use-summary-response-data';
 import type { SummaryResponseProps } from './SummaryResponse.types';
 
 const props = defineProps<SummaryResponseProps>();
 
 const { hasAnyContent } = useSummaryResponseData(props);
-const { videosFirst } = useHarnessMediaPriority(props.data);
+const { videosFirst } = useResponseMediaPriority(props.data);
 </script>
 
 <template>

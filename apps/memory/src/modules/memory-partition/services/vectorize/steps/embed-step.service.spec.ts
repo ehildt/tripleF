@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { VectorizeContext } from '../vectorize-context.type.js';
+import type { VectorizeContext } from '../vectorize-context.types.js';
 
 import { EmbedStepService } from './embed-step.service.js';
 
@@ -31,14 +31,23 @@ describe('EmbedStepService', () => {
     const ctx = makeCtx({
       outputs: {
         extraction: {
+          remember: true,
           facts: [
             {
               text: 'User prefers concise.',
-              kind: 'preference' as const,
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
+              kind: 'fact' as const,
               stability: 'durable' as const,
             },
             {
               text: 'User uses vim.',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'state' as const,
               stability: 'volatile' as const,
             },
@@ -75,14 +84,23 @@ describe('EmbedStepService', () => {
     const ctx = makeCtx({
       outputs: {
         extraction: {
+          remember: true,
           facts: [
             {
               text: 'F1',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'fact' as const,
               stability: 'durable' as const,
             },
             {
               text: 'F2',
+              subject: 'user',
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
               kind: 'fact' as const,
               stability: 'durable' as const,
             },

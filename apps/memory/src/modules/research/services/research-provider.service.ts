@@ -12,12 +12,7 @@ import {
 import { RESEARCH_CONFIG } from '../constants/research.constants.js';
 import type { ResearchConfig } from '../models/research-config.model.js';
 
-/** One normalized search result — the gap candidate shape. */
-export interface ResearchSearchResult {
-  url: string;
-  title?: string;
-  snippet: string;
-}
+import type { ResearchSearchResult } from './research-provider.service.types.js';
 
 /**
  * The researcher's web surface: search (Serper or Bright Data, per the

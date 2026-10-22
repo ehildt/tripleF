@@ -4,23 +4,11 @@ import { computed } from 'vue';
 import LightboxFooter from './lightbox-footer/LightboxFooter.vue';
 import LightboxHeader from './lightbox-header/LightboxHeader.vue';
 import LightboxViewer from './lightbox-viewer/LightboxViewer.vue';
+import type { LightboxEmits, LightboxProps } from './Lightbox.types';
 
-const props = defineProps<{
-  images: readonly {
-    url: string;
-    title?: string;
-  }[];
-  index: number;
-  activeTitle?: string;
-  isOpen: boolean;
-}>();
+const props = defineProps<LightboxProps>();
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'prev'): void;
-  (e: 'next'): void;
-  (e: 'selectIndex', index: number): void;
-}>();
+const emit = defineEmits<LightboxEmits>();
 
 const hasPrev = computed(() => props.index > 0);
 const hasNext = computed(() => props.index < props.images.length - 1);

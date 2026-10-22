@@ -15,8 +15,7 @@
  */
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
 import VideoPlayerSurface from '@/components/shared/ui/video-player-surface/VideoPlayerSurface.vue';
-import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
-import type { ResizeDirection } from '@/types/resize-direction.model';
+import { usePlaylistToggle } from '@/composables/use-playlist-toggle/use-playlist-toggle';
 
 import { useFloatingPlayerHost } from './composables/use-floating-player-host';
 import type { FloatingPlayerProps } from './FloatingPlayer.types';
@@ -29,24 +28,18 @@ const {
   dockedStyle,
   dockedClipStyle,
   windowHidden,
-  popupStyle,
   embedSrc,
-  isDirectVideo,
-  isUnembeddable,
-  setPlayerElement,
   opacityPercent,
-  setOpacity,
-  startDrag,
-  startResize,
-  minimize,
-  stop,
+  geometry,
+  pausablePlayer,
 } = useFloatingPlayerHost(props.session);
 
-const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(launchedVideo);
+// The delegation objects carry the popup chrome wiring; the consumer picks
+// members off the source instances (no mid-layer renaming).
+const { popupStyle, startDrag, startResize, setOpacity } = geometry;
+const { isDirectVideo, isUnembeddable, setPlayerElement } = pausablePlayer;
 
-function handleResize(direction: ResizeDirection, event: PointerEvent) {
-  startResize(direction, event);
-}
+const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(launchedVideo);
 </script>
 
 <template>
@@ -72,9 +65,9 @@ function handleResize(direction: ResizeDirection, event: PointerEvent) {
     @drag="startDrag"
     @opacity-input="setOpacity"
     @toggle-playlist="togglePlaylistVideo"
-    @minimize="minimize"
-    @close="stop"
-    @resize="handleResize"
+    @minimize="session.dockPlayback"
+    @close="session.stopPlayback"
+    @resize="startResize"
   >
     <!-- Keyed by URL so swapping the launched video remounts the player
          and the pause wiring re-attaches to the fresh element. -->

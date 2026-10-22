@@ -4,6 +4,8 @@ import { EncyclopediaLedgerRepository } from '../../persistence/services/encyclo
 import type { EncyclopediaSweepJobData } from '../../qdrant/models/memory.model.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
 
+import { latestHash } from './helpers/latest-hash.helper.js';
+
 /** Hard cap on pending documents processed per run (mirrors the memory sweep). */
 const MAX_PENDING_PER_RUN = 500;
 
@@ -60,14 +62,4 @@ export class EncyclopediaSweepService {
       `encyclopedia-consolidate: processed ${pending.length} — healed ${healed} superseded documents${data.dryRun ? ' (dryRun)' : ''}`,
     );
   }
-}
-
-/** The newest content hash among a url's stored chunks (by fetched_at). */
-function latestHash(
-  existing: Array<{ contentHash: string; fetchedAt: string }>,
-): string | undefined {
-  if (existing.length === 0) return undefined;
-  return existing.reduce((newest, chunk) =>
-    chunk.fetchedAt > newest.fetchedAt ? chunk : newest,
-  ).contentHash;
 }

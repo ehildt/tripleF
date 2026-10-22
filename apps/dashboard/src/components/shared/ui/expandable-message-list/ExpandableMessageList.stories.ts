@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from 'storybook/test';
 import type { Mock } from 'vitest';
 import { ref } from 'vue';
 
-import { sanitizeHtml } from '@/utils/sanitize-html.helper';
+import { sanitizeHtml } from '@/utils/sanitize-html/sanitize-html.helper';
 
 import ExpandableMessageListBody from './expandable-message-list-body/ExpandableMessageListBody.vue';
 import ExpandableMessageList from './ExpandableMessageList.vue';

@@ -385,13 +385,7 @@ export class ExecuteActionService {
   ): string[] {
     const allToolNames = [];
     const externalTools = (intent?.tools ?? []).filter(
-      // Both remember tools are deferred to the dedicated memory-write step:
-      // the execute wave is a single blind round, so a remember call here
-      // could never include the data this wave is about to gather.
-      (t) =>
-        !t.startsWith('request') &&
-        t !== 'memory-partition-remember' &&
-        t !== 'memory-cognition-remember',
+      (t) => !t.startsWith('request'),
     ) as string[];
     allToolNames.push(...externalTools);
 
@@ -444,11 +438,7 @@ export class ExecuteActionService {
 
     const invoked = new Set<string>(existingResults.map((tr) => tr.toolName));
     const missing = (intent.tools ?? []).filter(
-      (t) =>
-        !t.startsWith('request') &&
-        t !== 'memory-partition-remember' &&
-        t !== 'memory-cognition-remember' &&
-        !invoked.has(t),
+      (t) => !t.startsWith('request') && !invoked.has(t),
     );
     if (missing.length === 0)
       return { results: [], inputTokens: 0, outputTokens: 0 };

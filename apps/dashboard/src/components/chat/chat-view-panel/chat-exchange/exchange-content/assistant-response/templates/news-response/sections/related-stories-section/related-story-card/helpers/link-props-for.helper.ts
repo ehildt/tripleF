@@ -1,4 +1,4 @@
-import type { RelatedStory } from '@/types/harness-response-data.model';
+import type { RelatedStory } from '@/types/assistant-response-data.model';
 
 export interface RelatedStoryLinkProps {
   is: 'a' | 'div';

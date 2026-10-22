@@ -1,4 +1,4 @@
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import type { D3ChartPoint, D3ReferenceLine } from '../D3Chart.types';
 import { dodgeBadgePositions } from '../helpers/dodge-badge-positions.helper';
 import { resolveColor } from '../helpers/resolve-color.helper';

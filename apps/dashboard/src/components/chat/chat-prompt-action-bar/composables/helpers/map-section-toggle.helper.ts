@@ -3,7 +3,7 @@ import type { LucideIcon } from '@lucide/vue';
 import type {
   CollapsedSections,
   CollapsibleSectionKey,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 /** A response-section toggle: its type and leading icon. */
 type SectionToggleConfig = {

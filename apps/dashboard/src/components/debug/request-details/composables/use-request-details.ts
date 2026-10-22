@@ -2,7 +2,7 @@ import { useClipboard } from '@vueuse/core';
 import { computed, type ComputedRef, ref, watch } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
-import { formatBody } from '@/utils/format-body.helper';
+import { formatRequestBody } from '@/utils/format-request-body/format-request-body.helper';
 
 import type { DebugResult } from '../../../../types/debug.model';
 import { calcRequestTokenPercent } from '../helpers/calc-request-token-percent.helper';
@@ -49,7 +49,7 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
       items.push({
         id: 'params',
         label: i18n.global.t('common.params'),
-        content: formatBody(
+        content: formatRequestBody(
           Object.fromEntries(
             parsedEndpoint.value.params.map((p) => [p.key, p.value]),
           ),
@@ -60,21 +60,21 @@ export function useRequestDetails(result: ComputedRef<DebugResult | null>) {
       items.push({
         id: 'headers',
         label: i18n.global.t('common.headers'),
-        content: formatBody(r.requestHeaders as any),
+        content: formatRequestBody(r.requestHeaders as any),
       });
     }
     if (r.requestBody) {
       items.push({
         id: 'body',
         label: i18n.global.t('common.body'),
-        content: formatBody(r.requestBody),
+        content: formatRequestBody(r.requestBody),
       });
     }
     if (r.responseBody) {
       items.push({
         id: 'response',
         label: i18n.global.t('common.response'),
-        content: formatBody(r.responseBody),
+        content: formatRequestBody(r.responseBody),
       });
     }
     return items;

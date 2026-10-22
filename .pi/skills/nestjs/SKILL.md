@@ -46,6 +46,9 @@ Generic structure rules — names express intent, one function per file, co-loca
 11. **Tests and stories are consent-gated.**
     Do not create `.spec.ts`, `.test.ts`, or `.stories.ts` files during implementation — creating them requires explicit user consent (`.pi/APPEND_SYSTEM.md` § Tests, Stories & Browser Automation). After implementing code, ask the user to test it manually; once behavior is confirmed, offer tests as a separate step.
 
+12. **Feature modules are dynamic, optionless, and never `@Global()`.**
+    `register()` returns one memoized registration object per module class — the app runs Nest's default by-reference module ids, so a fresh object per call site would instantiate the module (and its controllers) several times. See Feature Modules & Composition.
+
 ## Entry-Point Conventions
 
 Use this section when creating or editing NestJS/BullMQ processors, controllers, gateways, or any class whose job is to receive work and hand it off.
@@ -81,6 +84,48 @@ When you find logic in a processor/controller that feels out of place, ask:
 - [ ] Lifecycle hooks only log, emit, and delegate
 - [ ] Every extracted helper has a co-located `.helper.spec.ts`
 - [ ] The entry point spec tests routing/delegation, not domain outcomes
+
+## Feature Modules & Composition
+
+This section governs how `modules/<feature>` folders package themselves and how the root module composes them.
+
+### Feature modules are dynamic and optionless
+
+A feature module is a bare `@Module({})` class with a static `register()` that returns the module metadata as a `DynamicModule`. The class holds one private static readonly registration object — built once, eagerly — and `register()` returns that same object every time. This is not ceremony: the app runs Nest's default by-reference module ids, where the framework stamps a random id on each distinct returned object, so returning fresh metadata per call site silently instantiates the module once per importing module — duplicated controllers surface at boot as duplicated routes. The shared object restores the singleton semantics a static module class used to give for free. If a module ever takes options, that memoization is exactly what must go: distinct options legitimately mean distinct registrations.
+
+Third-party dynamic modules keep their own semantics — modules whose registration is intentionally per importing module (per-module scoping of `HealthIndicatorService` is the standing example) rely on the same by-reference behavior. Never switch the app to deep-hash module ids to "fix" duplication; it would collapse those intentional per-site registrations.
+
+### No `@Global()` on feature modules
+
+Globals are reserved for connection-class package infrastructure — queue connections, the socket server, loggers, model-client modules — where the injection token must resolve everywhere like a database pool, and for the root env-config registry. Every feature dependency is an explicit `imports` edge. When the graph cycles, move provider ownership to the module whose domain owns the provider; do not re-globalize to escape the cycle. Providers live in the module of the folder they live in — a service file in another folder provided by the wrong module is a relocation waiting to happen.
+
+### Package factories resolve from their own scope
+
+A package module's `registerAsync` factory resolves its `inject` tokens from the package module's own `imports` option plus global providers — never from the importing host module's providers or imports. A factory that needs a non-global app service therefore requires the package to accept an `imports` passthrough of module metadata, and when a package lacks one, the fix is an additive extension to the package (following the publishing workflow), never a wrapper or a second registration path in the app.
+
+### The root module is a composition root
+
+The root module holds only feature-module `register()` calls, the global env-config registry, and cross-cutting client registrations that have no feature folder of their own. Controllers, services, repositories, and health indicators belong to feature modules. A root module listing feature classes is the god-module smell growing back.
+
+### Config services register twice, on purpose
+
+A config service appears both in the root env-config registry's providers (global, drives schema-backed factory registration) and in its owning feature module's providers (ownership and local resolution). This dual registration is the house pattern, not a leftover.
+
+### Module-graph changes are not done until the app boots
+
+Module DI miswiring is invisible to type-check, lint, and unit tests — all of them pass on a broken graph. After any module-structure change, the compose stack's server must boot clean and representative routes must respond before the change counts as verified.
+
+### Outbound clients split by endpoint family
+
+A service that wraps another app's REST surface is split into one service per endpoint family (lane), named explicitly after the lane — a one-method service is fine when the family is the unit. Shared HTTP plumbing (base URL, feature flag, fail-fast fetch) lives in a module-internal transport service that is not exported. The lanes are the public surface; a façade service that re-publishes them is the no-wrapper rule at class level and is deleted, not kept.
+
+### Sibling lanes with an identical skeleton share a template-method base
+
+When sibling services carry the same lifecycle mechanics — the standing example is capability-discovery lanes whose cache TTL, per-key freshness guard, single-flight, and never-throws refresh semantics are line-for-line identical — lift the mechanics into one abstract base the lanes extend. The base owns all bookkeeping on success and failure so subclasses cannot fork the semantics; each subclass keeps only the part that genuinely differs (fetching and building its snapshot). The base is DI-free and never registered as a provider: subclasses carry their own `@Injectable()` and constructor tokens, and the base builds its logger from the constructor name so each lane keeps its own log context. Name the base after the shared behavior, not after the folder it sits in. The boundary: hierarchy runs *within* one lane family, never across a folder — a base meant to unite services with unrelated jobs (persistence, secrets, merging on one side, probing on the other) is coupling dressed as reuse and is refused on sight.
+
+### Failure semantics come from consumers, not docblocks
+
+Before changing a service method's guard or catch behavior, read every call site. The observed contract — what callers defensively wrap, what they expect to throw — is the contract; class docblocks drift from it. Align the docblock to the evidence, not the other way around.
 
 ## Naming
 

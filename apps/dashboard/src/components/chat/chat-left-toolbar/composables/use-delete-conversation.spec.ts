@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import type { Conversation } from '@/stores/conversation';
+import type { Conversation } from '@/stores/conversation/conversation.model';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 import { useDeleteConversation } from './use-delete-conversation';
@@ -22,7 +22,7 @@ const state = vi.hoisted(() => ({
   closeEvent: vi.fn(),
 }));
 
-vi.mock('@/stores/conversation', async () => {
+vi.mock('@/stores/conversation/conversation.store', async () => {
   const { reactive } = await import('vue');
   const store = reactive({
     conversations: [] as Conversation[],
@@ -34,8 +34,8 @@ vi.mock('@/stores/conversation', async () => {
   return { useConversationStore: () => store };
 });
 
-vi.mock('@/stores/socket', () => ({
-  useSocketStore: () => ({
+vi.mock('@/composables/use-socket/use-socket', () => ({
+  useSocket: () => ({
     closeRoom: state.closeRoom,
     closeEvent: state.closeEvent,
   }),

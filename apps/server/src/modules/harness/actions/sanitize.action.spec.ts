@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
+import { MemoryCognitionService } from '../../memory-client/services/memory-cognition.service.js';
+import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
+import { MemoryPartitionRecordsService } from '../../memory-client/services/memory-partition-records.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { SourceBudgetConfigService } from '../configs/source-budget-config.service.js';
@@ -71,16 +73,26 @@ describe('SanitizeActionService', () => {
           },
         },
         {
-          provide: MemoryClientService,
+          provide: MemoryPartitionRecordsService,
+          useValue: {
+            searchByText: vi.fn().mockResolvedValue([]),
+            searchByTextWithClusters: vi.fn().mockResolvedValue({
+              clusters: [],
+            }),
+          },
+        },
+        {
+          provide: MemoryCognitionService,
           useValue: {
             getCognition: vi
               .fn()
               .mockResolvedValue({ profile: null, insights: [] }),
-            searchByText: vi.fn().mockResolvedValue([]),
             searchConvictions: vi.fn().mockResolvedValue([]),
-            searchByTextWithClusters: vi.fn().mockResolvedValue({
-              clusters: [],
-            }),
+          },
+        },
+        {
+          provide: MemoryEncyclopediaService,
+          useValue: {
             selectContext: vi.fn().mockResolvedValue(null),
           },
         },
@@ -674,8 +686,13 @@ describe('SanitizeActionService', () => {
   });
 
   it('injects the cognition profile and probed insights into the context', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    const memoryRecords = module.get<MemoryPartitionRecordsService>(
+      MemoryPartitionRecordsService,
+    );
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: JSON.stringify({
         persona: { name: 'F' },
         likes: { cars: 'yes' },
@@ -684,10 +701,10 @@ describe('SanitizeActionService', () => {
       convictions: [{ text: 'collects cars', isFriction: false }],
       episodeProbeLimit: 2,
     });
-    (memoryClient.searchByText as any).mockResolvedValue([
+    (memoryRecords.searchByText as any).mockResolvedValue([
       { text: 'discussed engine swaps' },
     ]);
-    (memoryClient.searchConvictions as any).mockResolvedValue([
+    (memoryCognition.searchConvictions as any).mockResolvedValue([
       { text: 'collects cars', isFriction: false },
     ]);
 
@@ -722,17 +739,22 @@ describe('SanitizeActionService', () => {
   });
 
   it('marks contested insights and convictions as contested', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    const memoryRecords = module.get<MemoryPartitionRecordsService>(
+      MemoryPartitionRecordsService,
+    );
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: JSON.stringify({ likes: { cars: 'yes' } }),
       insights: [{ text: 'likes cars', isFriction: true }],
       convictions: [{ text: 'collects cars', isFriction: true }],
       episodeProbeLimit: 0,
     });
-    (memoryClient.searchByText as any).mockResolvedValue([
+    (memoryRecords.searchByText as any).mockResolvedValue([
       { text: 'likes cars', isFriction: true },
     ]);
-    (memoryClient.searchConvictions as any).mockResolvedValue([
+    (memoryCognition.searchConvictions as any).mockResolvedValue([
       { text: 'collects cars', isFriction: true },
     ]);
 
@@ -765,13 +787,18 @@ describe('SanitizeActionService', () => {
   });
 
   it('injects cluster summaries when graphRag is enabled', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    const memoryRecords = module.get<MemoryPartitionRecordsService>(
+      MemoryPartitionRecordsService,
+    );
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: JSON.stringify({ likes: ['cars'] }),
       insights: [],
       episodeProbeLimit: 0,
     });
-    (memoryClient.searchByTextWithClusters as any).mockResolvedValue({
+    (memoryRecords.searchByTextWithClusters as any).mockResolvedValue({
       clusters: [{ title: 'Cars', summary: 'All about cars' }],
     });
 
@@ -798,8 +825,10 @@ describe('SanitizeActionService', () => {
   });
 
   it('selects references through the memory client when a query exists', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.selectContext as any).mockResolvedValue({
+    const memoryEncyclopedia = module.get<MemoryEncyclopediaService>(
+      MemoryEncyclopediaService,
+    );
+    (memoryEncyclopedia.selectContext as any).mockResolvedValue({
       chunks: [
         { url: 'https://example.com/ref', title: 'Ref', content: 'Passage' },
       ],
@@ -829,7 +858,7 @@ describe('SanitizeActionService', () => {
       [],
     );
 
-    expect(memoryClient.selectContext).toHaveBeenCalled();
+    expect(memoryEncyclopedia.selectContext).toHaveBeenCalled();
     const contextMessage = result.messages.find(
       (m: any) =>
         m.role === 'system' &&
@@ -840,8 +869,10 @@ describe('SanitizeActionService', () => {
   });
 
   it('falls back to full references when selection is unavailable', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.selectContext as any).mockResolvedValue(null);
+    const memoryEncyclopedia = module.get<MemoryEncyclopediaService>(
+      MemoryEncyclopediaService,
+    );
+    (memoryEncyclopedia.selectContext as any).mockResolvedValue(null);
 
     const ctx = createContext({
       messages: [

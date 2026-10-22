@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import { usePlaybackSession } from '@/composables/use-playback-session';
-import type { MediaItem } from '@/types/harness-response-data.model';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
+import type { MediaItem } from '@/types/assistant-response-data.model';
 
 import CarouselContent from './carousel-content/CarouselContent.vue';
 import CarouselHeader from './carousel-header/CarouselHeader.vue';
-import { useCarouselNavigation } from './composables/use-carousel-navigation.composable';
+import { useCarouselNavigation } from './composables/use-carousel-navigation';
 import { isVideoMediaItem } from './helpers/is-video-media-item.helper';
 import type { AssistantCarouselProps } from './AssistantCarousel.types';
 

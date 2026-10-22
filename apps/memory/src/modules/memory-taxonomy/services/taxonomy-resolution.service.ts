@@ -5,54 +5,35 @@ import type {
   MemoryTaxonomyLane,
 } from '../../persistence/constants/memory-taxonomy.constant.js';
 import { TAXONOMY_ROOT_PARENT } from '../../persistence/constants/memory-taxonomy.constant.js';
-import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.js';
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
+import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
 import { TAXONOMY_SNAP_THRESHOLDS } from '../constants/taxonomy-snap.constant.js';
+import { bestFuzzyMatch } from '../helpers/best-fuzzy-match.helper.js';
+import { buildResolutionOutcome } from '../helpers/build-resolution-outcome.helper.js';
 import { normalizeTaxonomyIcon } from '../helpers/normalize-taxonomy-icon.helper.js';
 import {
   sharesTokenOverlap,
   trigramSimilarity,
 } from '../helpers/trigram-similarity.helper.js';
 
-/** One label to resolve (pre-normalized by the kind's boundary normalizer). */
-export interface TaxonomyLabelInput {
-  kind: MemoryTaxonomyKind;
-  /** Canonical-form label (already normalized at the write boundary). */
-  label: string;
-  /**
-   * Input `label` of the parent entry resolved earlier in the same batch
-   * (community → its category; hub → its community or category). Tags are
-   * flat and pass no parent.
-   */
-  parentRef?: string;
-}
-
-/** Resolution outcome for one label. */
-export interface TaxonomyResolvedLabel {
-  kind: MemoryTaxonomyKind;
-  /** The label as passed in. */
-  input: string;
-  /** Canonical name to store on points. */
-  name: string;
-  nodeId: string;
-  how: 'exact' | 'alias' | 'fuzzy' | 'minted';
-  /** Fuzzy similarity that justified a snap. */
-  score?: number;
-}
+import type {
+  TaxonomyLabelInput,
+  TaxonomyResolvedLabel,
+} from './taxonomy-resolution.service.types.js';
 
 /**
  * Deterministic taxonomy snap at every memory write boundary: the model may
  * name labels freely, the registry stores them canonically. Resolution order
  * per label: exact normalized-name hit → permanent alias hit → trigram fuzzy
  * snap above the per-kind threshold (skipped for token-disjoint candidates —
- * a no-overlap name is a distinct topic, never a variant) → mint a new node
- * (concurrency-safe get-or-create + label vector for semantic probing).
+ * a no-overlap name is a distinct topic, never a variant) → mint a new tier
+ * entry (concurrency-safe get-or-create + label vector for semantic probing).
  * Every fuzzy snap writes an alias row so the killed wording resolves forever.
  *
  * Parent-aware within one batch: entries are processed in tier order
- * (cluster → community → hub → tag); a `parentRef` narrows exact/fuzzy
+ * (cluster → community → hub → node → tag); a `parentRef` narrows exact/fuzzy
  * candidacy to that parent's children, keeping the tree coherent.
  */
 @Injectable()
@@ -141,7 +122,7 @@ export class TaxonomyResolutionService {
           node.kind === entry.kind && node.normalizedName === entry.label,
       );
     if (exact) {
-      return outcome(entry, exact, 'exact');
+      return buildResolutionOutcome(entry, exact, 'exact');
     }
 
     // 2. Alias: a previously snapped/renamed/merged variant.
@@ -155,7 +136,7 @@ export class TaxonomyResolutionService {
       ? nodes.find((node) => node.id === aliasNodeId)
       : undefined;
     if (aliasNode) {
-      return outcome(entry, aliasNode, 'alias');
+      return buildResolutionOutcome(entry, aliasNode, 'alias');
     }
 
     // 3. Fuzzy: trigram snap over the candidacy (token-overlap guard).
@@ -174,14 +155,14 @@ export class TaxonomyResolutionService {
         source: 'fuzzy',
         score: fuzzy.score,
       });
-      return outcome(entry, fuzzy.node, 'fuzzy', fuzzy.score);
+      return buildResolutionOutcome(entry, fuzzy.node, 'fuzzy', fuzzy.score);
     }
 
     // 4. Mint: a genuinely new label registers (get-or-create; racing
     // workers re-resolve on the unique key).
     const minted = await this.mint(lane, scopeKey, entry, parentId);
     if (!nodes.some((node) => node.id === minted.id)) nodes.push(minted);
-    return outcome(entry, minted, 'minted');
+    return buildResolutionOutcome(entry, minted, 'minted');
   }
 
   /** Register a new node + its label embedding (warn-and-continue on embed failure). */
@@ -228,41 +209,4 @@ export class TaxonomyResolutionService {
     }
     return node;
   }
-}
-
-/** The highest-scoring candidacy snap above the kind's threshold, if any. */
-function bestFuzzyMatch(
-  label: string,
-  pool: MemoryTaxonomyNodeRecord[],
-  kind: MemoryTaxonomyKind,
-): { node: MemoryTaxonomyNodeRecord; score: number } | undefined {
-  let best: { node: MemoryTaxonomyNodeRecord; score: number } | undefined;
-  for (const node of pool) {
-    if (node.normalizedName === label) continue;
-    if (!sharesTokenOverlap(label, node.normalizedName)) continue;
-    const score = trigramSimilarity(label, node.normalizedName);
-    if (
-      score >= TAXONOMY_SNAP_THRESHOLDS[kind] &&
-      (!best || score > best.score)
-    ) {
-      best = { node, score };
-    }
-  }
-  return best;
-}
-
-function outcome(
-  entry: TaxonomyLabelInput,
-  node: MemoryTaxonomyNodeRecord,
-  how: TaxonomyResolvedLabel['how'],
-  score?: number,
-): TaxonomyResolvedLabel {
-  return {
-    kind: entry.kind,
-    input: entry.label,
-    name: node.name,
-    nodeId: node.id,
-    how,
-    score,
-  };
 }

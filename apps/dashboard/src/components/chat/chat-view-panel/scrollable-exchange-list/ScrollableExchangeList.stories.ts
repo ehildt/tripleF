@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
 import type { ExchangeSection } from '../helpers/build-exchange-sections.helper';
 import ScrollableExchangeList from './ScrollableExchangeList.vue';

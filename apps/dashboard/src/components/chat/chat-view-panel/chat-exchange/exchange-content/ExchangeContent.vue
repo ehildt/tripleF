@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 import type { LightboxImage } from '@/types/lightbox.model';
 
 import AssistantResponse from './assistant-response/AssistantResponse.vue';
@@ -58,8 +58,8 @@ const { documentTiles } = usePromptDocumentTiles(() => props.exchange);
     />
     <AssistantResponse
       v-else-if="renderMode === 'assistant-response'"
-      :template="exchange.harnessTemplate ?? ''"
-      :data="exchange.harnessData"
+      :template="exchange.responseTemplate ?? ''"
+      :data="exchange.responseData"
       :text="exchange.text"
       :chart-data="exchange.chartData"
       :reveal-charts="exchange.revealCharts"

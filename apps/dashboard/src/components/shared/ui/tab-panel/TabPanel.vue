@@ -2,14 +2,11 @@
 import { Copy } from '@lucide/vue';
 
 import IconButton from '../icon-button/IconButton.vue';
-import type { TabPanelProps } from './TabPanel.types';
+import type { TabPanelEmits, TabPanelProps } from './TabPanel.types';
 
 const props = defineProps<TabPanelProps>();
 
-const emit = defineEmits<{
-  (e: 'select', tabId: string): void;
-  (e: 'copy'): void;
-}>();
+const emit = defineEmits<TabPanelEmits>();
 
 function handleSelect(tabId: string) {
   if (props.activeTab === tabId) {

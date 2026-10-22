@@ -44,9 +44,9 @@ import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFiel
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
-import { useMemoryOverrides } from '@/composables/use-memory-overrides';
-import { useAppStore } from '@/stores/app';
-import { useModelsStore } from '@/stores/models';
+import { useMemoryOverrides } from '@/composables/use-memory-overrides/use-memory-overrides';
+import { useAppStore } from '@/stores/app/app.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import SpaceSelectorCard from './space-selector-card/SpaceSelectorCard.vue';
 import type { MemoryConfigPanelProps } from './MemoryConfigPanel.types';

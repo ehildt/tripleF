@@ -12,7 +12,9 @@ import {
   EPISODE_TAG,
   INSIGHT_TAG,
 } from '../../memory-client/constants/memory-client.constants.js';
-import { MemoryClientService } from '../../memory-client/services/memory-client.service.js';
+import { MemoryCognitionService } from '../../memory-client/services/memory-cognition.service.js';
+import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
+import { MemoryPartitionRecordsService } from '../../memory-client/services/memory-partition-records.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import {
@@ -43,6 +45,8 @@ import type {
 import { extractPlaces } from '../helpers/media/extract-places.helper.js';
 import { extractReviews } from '../helpers/media/extract-reviews.helper.js';
 import { extractShopOffers } from '../helpers/media/extract-shop-offers.helper.js';
+import { isShownImage } from '../helpers/media/is-shown-image.helper.js';
+import { isShownVideo } from '../helpers/media/is-shown-video.helper.js';
 import { applySourcePolicy } from '../helpers/sanitize/apply-source-policy.helper.js';
 import { buildFinalMessagesForSanitize } from '../helpers/sanitize/build-final-messages.helper.js';
 import { buildIngestedByUrlMap } from '../helpers/sanitize/build-ingested-by-url-map.helper.js';
@@ -64,12 +68,8 @@ import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import type { HarnessContext } from '../services/harness-context.type.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
-import {
-  isShownImage,
-  isShownVideo,
-  type ShownMediaKeys,
-  ShownMediaService,
-} from '../services/shown-media.service.js';
+import { ShownMediaService } from '../services/shown-media.service.js';
+import type { ShownMediaKeys } from '../services/shown-media.service.types.js';
 
 import { mapArticleToSearchResult } from './helpers/map-article-to-search-result.helper.js';
 import { mapChunkToEncyclopediaPassage } from './helpers/map-chunk-to-encyclopedia-passage.helper.js';
@@ -126,7 +126,9 @@ export class SanitizeActionService {
     private readonly providerOverrides: ProviderOverridesService,
     private readonly shownMedia: ShownMediaService,
     private readonly sharpService: SharpService,
-    private readonly memoryClient: MemoryClientService,
+    private readonly memoryRecords: MemoryPartitionRecordsService,
+    private readonly memoryCognition: MemoryCognitionService,
+    private readonly memoryEncyclopedia: MemoryEncyclopediaService,
     private readonly sourceBudget: SourceBudgetConfigService,
   ) {}
 
@@ -322,9 +324,14 @@ export class SanitizeActionService {
     );
 
     // 7. Language partition: reliably detected foreign-language articles and
-    //    videos leave the primary pools for the international aside. Nothing
-    //    is dropped — undetermined items stay in the primary pools.
+    //    videos leave the primary pools for the international aside — unless
+    //    the request itself targets that language (intent.contentLanguages),
+    //    e.g. "japanese dark trap" keeps Japanese videos as primary content.
+    //    Nothing is dropped — undetermined items stay in the primary pools.
     const userLang = ctx.outputs.intent?.language;
+    const contentLanguages = (ctx.outputs.intent?.contentLanguages ?? []).map(
+      (code) => code.toLowerCase(),
+    );
     await Promise.all([
       tagLanguage(articles, (a) => `${a.title ?? ''} ${a.snippet ?? ''}`),
       tagLanguage(
@@ -332,8 +339,16 @@ export class SanitizeActionService {
         (v) => `${v.title ?? ''} ${v.description ?? ''}`,
       ),
     ]);
-    const articlePool = partitionByLanguage(articles, userLang);
-    const videoPool = partitionByLanguage(verifiedVideos, userLang);
+    const articlePool = partitionByLanguage(
+      articles,
+      userLang,
+      contentLanguages,
+    );
+    const videoPool = partitionByLanguage(
+      verifiedVideos,
+      userLang,
+      contentLanguages,
+    );
     const mainArticles = articlePool.main;
     verifiedVideos = videoPool.main;
     const internationalArticles = articlePool.international.slice(
@@ -351,6 +366,7 @@ export class SanitizeActionService {
           requestId: ctx.requestId,
           step: 'sanitize',
           userLang,
+          contentLanguages,
           internationalArticleCount: internationalArticles.length,
           internationalVideoCount: internationalVideos.length,
         },
@@ -469,7 +485,7 @@ export class SanitizeActionService {
       return { references: normalized };
     }
 
-    const sel = await this.memoryClient.selectContext({
+    const sel = await this.memoryEncyclopedia.selectContext({
       query,
       documents,
       searchResults,
@@ -527,7 +543,7 @@ export class SanitizeActionService {
       return { insights: [], convictions: [], episodes: [], clusters: [] };
     }
     try {
-      const snapshot = await this.memoryClient.getCognition(cognitionKey);
+      const snapshot = await this.memoryCognition.getCognition(cognitionKey);
       const profile = snapshot.profile
         ? (JSON.parse(snapshot.profile) as Record<string, unknown> | undefined)
         : undefined;
@@ -573,7 +589,7 @@ export class SanitizeActionService {
         // The cognition-lane probe never carries a partition — insight records
         // are tag-addressed ([cognition, insight]), matching the pre-split
         // in-process behavior.
-        const hits = await this.memoryClient.searchByText({
+        const hits = await this.memoryRecords.searchByText({
           text: cognitionQuery,
           tags: [INSIGHT_TAG],
           limit: COGNITION_PROBE_LIMIT,
@@ -594,7 +610,7 @@ export class SanitizeActionService {
       const convictions =
         (snapshot.convictions?.length ?? 0) > 0
           ? (
-              await this.memoryClient.searchConvictions({
+              await this.memoryCognition.searchConvictions({
                 memoryCognition: cognitionKey,
                 text: cognitionQuery,
                 limit: CONVICTION_PROBE_LIMIT,
@@ -616,7 +632,7 @@ export class SanitizeActionService {
         snapshot.episodeProbeLimit ?? EPISODE_PROBE_LIMIT;
       const episodeHits =
         episodeProbeLimit > 0
-          ? await this.memoryClient.searchByText({
+          ? await this.memoryRecords.searchByText({
               text: prompt,
               tags: [EPISODE_TAG],
               recency: true,
@@ -658,7 +674,7 @@ export class SanitizeActionService {
   ): Promise<string[]> {
     const partition = ctx.memoryPartition ?? ctx.sessionId;
     if (!partition) return [];
-    const { clusters } = await this.memoryClient.searchByTextWithClusters({
+    const { clusters } = await this.memoryRecords.searchByTextWithClusters({
       memoryPartition: partition,
       text: prompt,
       limit: CLUSTER_PROBE_LIMIT,

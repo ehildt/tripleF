@@ -1,12 +1,12 @@
 import { computed } from 'vue';
 
 import { warmModel } from '@/api/warm-model.api';
-import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys';
-import { useToast } from '@/composables/use-toast';
+import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys.constant';
+import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app';
-import { useConversationStore } from '@/stores/conversation';
-import { useModelsStore } from '@/stores/models';
+import { useAppStore } from '@/stores/app/app.store';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { resolveNumCtxForModel } from '../shared/helpers/resolve-num-ctx-for-model.helper';
 
@@ -91,8 +91,8 @@ export function useSelectedModel() {
             toast.warning(
               i18n.global.t('toast.contextClamped', {
                 model: modelName,
-                max: modelsStore.formatCtx(m.context_length),
-                value: modelsStore.formatCtx(Number(resolution.numCtx)),
+                max: modelsStore.formatContextSize(m.context_length),
+                value: modelsStore.formatContextSize(Number(resolution.numCtx)),
               }),
               { key: TOAST_KEY_CONTEXT_CLAMPED },
             );
