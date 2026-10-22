@@ -1,7 +1,7 @@
 import { Link } from '@lucide/vue';
 import { describe, expect, it } from 'vitest';
 
-import type { CollapsedSections } from '@/types/harness-response-data.model';
+import type { CollapsedSections } from '@/types/assistant-response-data.model';
 
 import { mapSectionToggle } from './map-section-toggle.helper';
 

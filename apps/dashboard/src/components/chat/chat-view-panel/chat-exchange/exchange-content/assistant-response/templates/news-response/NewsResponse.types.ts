@@ -1,11 +1,11 @@
 import type {
+  AssistantResponseData,
   GalleryItem,
-  HarnessResponseData,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 export interface NewsResponseProps {
   /** The raw harness response for the template. */
-  data: HarnessResponseData;
+  data: AssistantResponseData;
   /** Opens the owning surface's lightbox for a clicked image. */
   onImageClick?: (item: GalleryItem) => void;
 }

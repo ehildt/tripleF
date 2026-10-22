@@ -6,8 +6,8 @@ import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model
 import { MemoryRepository } from '../../../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../../../qdrant/services/memory-overrides.service.js';
-import type { VectorizeContext } from '../vectorize-context.type.js';
-import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
+import type { VectorizeContext } from '../vectorize-context.types.js';
+import type { VectorizeStepHandler } from '../vectorize-step.types.js';
 
 import { mapFactToPoint } from './helpers/map-fact-to-point.helper.js';
 import { mapPointToLedgerRow } from './helpers/map-point-to-ledger-row.helper.js';
@@ -33,7 +33,11 @@ export class StoreStepService implements VectorizeStepHandler {
   ) {}
 
   async execute(ctx: VectorizeContext): Promise<void> {
-    const extraction = ctx.outputs.extraction ?? { facts: [], tags: [] };
+    const extraction = ctx.outputs.extraction ?? {
+      remember: false,
+      facts: [],
+      tags: [],
+    };
     const vectors = ctx.outputs.vectors ?? [];
 
     const points = extraction.facts.map((fact, index) =>

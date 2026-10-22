@@ -1,4 +1,4 @@
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import { clampToPlot } from '../helpers/clamp-to-plot.helper';
 import type { FlowColumn } from '../helpers/compute-flow-columns.helper.types';
 import { CHART_LAYER_CLASSES } from './chart-layer-classes.constant';

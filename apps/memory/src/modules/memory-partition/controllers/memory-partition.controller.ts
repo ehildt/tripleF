@@ -10,12 +10,10 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { MemoryCognitionService } from '../../memory-cognition/services/memory-cognition.service.js';
 import { MemoryClusterRepository } from '../../persistence/services/memory-cluster.repository.js';
 import { MemoryMainNodeRepository } from '../../persistence/services/memory-main-node.repository.js';
 import {
   ApeDeleteMemory,
-  ApeDeleteMemoryText,
   ApeGetMemoryClusters,
   ApeGetMemoryFrictions,
   ApeGetMemoryLinks,
@@ -34,8 +32,6 @@ import type { MemoryPoint } from '../../qdrant/models/memory.model.js';
 import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { MemoryClusterDto } from '../dtos/memory-cluster.dto.js';
 import { MemoryClustersQueryDto } from '../dtos/memory-clusters-query.dto.js';
-import { MemoryDeleteQueryDto } from '../dtos/memory-delete-query.dto.js';
-import { MemoryDeleteResponseDto } from '../dtos/memory-delete-response.dto.js';
 import { MemoryFrictionDto } from '../dtos/memory-friction.dto.js';
 import { MemoryLinkDto } from '../dtos/memory-link.dto.js';
 import { MemoryLinksQueryDto } from '../dtos/memory-links-query.dto.js';
@@ -64,7 +60,6 @@ export class MemoryPartitionController {
   constructor(
     private readonly memoryRepository: MemoryRepository,
     private readonly memorySearchService: MemorySearchService,
-    private readonly memoryCognitionService: MemoryCognitionService,
     private readonly vectorizeService: VectorizeService,
     private readonly clusters: MemoryClusterRepository,
     private readonly mainNodes: MemoryMainNodeRepository,
@@ -179,70 +174,14 @@ export class MemoryPartitionController {
         text: body.text,
         tags: body.tags,
         category: body.category,
+        community: body.community,
+        subject: body.subject,
+        node: body.node,
       });
       return { accepted: true, id };
     } catch {
       // Feature off or embed/store outage — memory is a background concern.
       return { accepted: false };
-    }
-  }
-
-  @Delete('text')
-  @ApeDeleteMemoryText()
-  async deleteText(
-    @Query() query: MemoryDeleteQueryDto,
-  ): Promise<MemoryDeleteResponseDto> {
-    const partition = query.memoryPartition ?? query.sessionId;
-    if (!partition) {
-      throw new BadRequestException(
-        'Deletes are never anonymous: pass memoryPartition or sessionId',
-      );
-    }
-
-    // Cognition mode: WITH a matcher (verbatim insight text and/or a profile
-    // path) this is the targeted per-item delete (memory-cognition-delete
-    // tool); WITHOUT one it wipes the AI's whole understanding of the user.
-    if (query.cognition === true) {
-      if (query.text || query.path) {
-        return await this.memoryCognitionService.deleteCognitionRecords({
-          memoryCognition: partition,
-          text: query.text,
-          path: query.path,
-        });
-      }
-      const texts =
-        await this.memoryCognitionService.deleteCognition(partition);
-      return { deleted: texts.length, texts };
-    }
-
-    const hasMatcher =
-      query.text ||
-      query.contains ||
-      query.tags?.length ||
-      query.conversationId ||
-      query.requestId;
-    if (!hasMatcher) {
-      // The mem0 rule: never execute an unscoped delete. Whole-partition
-      // wipes have their own endpoint (DELETE /memory).
-      throw new BadRequestException(
-        'Pass at least one matcher (text, contains, tags, conversationId, requestId)',
-      );
-    }
-
-    try {
-      return await this.vectorizeService.deleteRecords({
-        memoryPartition: partition,
-        sessionId: query.sessionId,
-        conversationId: query.conversationId,
-        requestId: query.requestId,
-        text: query.text,
-        contains: query.contains,
-        tags: query.tags,
-      });
-    } catch (error) {
-      throw new BadRequestException(
-        error instanceof Error ? error.message : 'memory delete failed',
-      );
     }
   }
 

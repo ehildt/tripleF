@@ -6,7 +6,7 @@
  */
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 
-import { useShopListOfferCard } from './composables/use-shop-list-offer-card.composable';
+import { useShopListOfferCard } from './composables/use-shop-list-offer-card';
 import ShopListOfferCardHeading from './shop-list-offer-card-heading/ShopListOfferCardHeading.vue';
 import ShopListOfferCardMeta from './shop-list-offer-card-meta/ShopListOfferCardMeta.vue';
 import type { ShopListOfferCardProps } from './ShopListOfferCard.types';

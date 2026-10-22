@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { UploadedImage } from '@/stores/conversation';
+import type { UploadedImage } from '@/stores/conversation/conversation.model';
 
 import { groupUploadedImages } from './group-uploaded-images.helper';
 

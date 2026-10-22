@@ -1,4 +1,4 @@
-import type { MessageListItem } from '../types';
+import type { MessageListItem } from '../ExpandableMessageList.types';
 
 export function parseMessages(raw: unknown): MessageListItem[] {
   if (!raw) return [];

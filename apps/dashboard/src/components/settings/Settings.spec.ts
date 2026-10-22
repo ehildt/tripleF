@@ -7,7 +7,7 @@ import { ref } from 'vue';
 
 import Settings from './Settings.vue';
 
-vi.mock('../../composables/use-toast', () => ({
+vi.mock('../../composables/use-toast/use-toast', () => ({
   useToast: vi.fn(() => ({ error: vi.fn() })),
 }));
 
@@ -113,7 +113,7 @@ describe('Settings', () => {
     label: string,
   ) {
     const tab = wrapper
-      .findAll('.settings-menu__tab')
+      .findAll('.menu-row--header .menu-button')
       .find((button) => button.attributes('aria-label') === label);
     await tab?.trigger('click');
   }
@@ -123,7 +123,7 @@ describe('Settings', () => {
     label: string,
   ) {
     const tab = wrapper
-      .findAll('.settings-submenu__tab')
+      .findAll('.menu-row--section .menu-button')
       .find((button) => button.attributes('aria-label') === label);
     await tab?.trigger('click');
   }
@@ -188,9 +188,9 @@ describe('Settings', () => {
     const wrapper = mountPanel();
     await selectMenuTab(wrapper, 'Widgets');
     await vi.waitFor(() => {
-      expect(wrapper.findAll('.settings-submenu__tab').length).toBeGreaterThan(
-        0,
-      );
+      expect(
+        wrapper.findAll('.menu-row--section .menu-button').length,
+      ).toBeGreaterThan(0);
     });
     await selectSubMenuTab(wrapper, 'Tab menu');
 

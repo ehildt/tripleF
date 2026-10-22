@@ -1,13 +1,15 @@
-import type { EodhdCapabilities } from '../../../provider-overrides/services/eodhd-discovery.service.js';
+import type { EodhdCapabilities } from '../../../provider-overrides/services/eodhd-discovery.service.types.js';
+import type { EodhdEndpointKey } from '../../../provider-overrides/services/eodhd-discovery.service.types.js';
 
-const EODHD_ENDPOINT_TOOL: Record<string, string> = {
-  search: 'eodhdSearch',
-  quote: 'eodhdQuote',
-  history: 'eodhdHistory',
-  technical: 'eodhdTechnical',
-  news: 'eodhdNews',
-  fundamentals: 'eodhdFundamentals',
-};
+/** Which endpoint each EODHD tool calls — reverse-looked up by tool name. */
+const EODHD_ENDPOINT_TOOL: [EodhdEndpointKey, string][] = [
+  ['search', 'eodhdSearch'],
+  ['quote', 'eodhdQuote'],
+  ['history', 'eodhdHistory'],
+  ['technical', 'eodhdTechnical'],
+  ['news', 'eodhdNews'],
+  ['fundamentals', 'eodhdFundamentals'],
+];
 
 /**
  * Drop EODHD tools whose endpoint the key's plan does not include (e.g. no
@@ -21,10 +23,9 @@ export function filterEodhdToolsByCapabilities(
 ): string[] {
   if (!capabilities) return toolNames;
   return toolNames.filter((name) => {
-    const endpoint = Object.keys(EODHD_ENDPOINT_TOOL).find(
-      (k) => EODHD_ENDPOINT_TOOL[k] === name,
-    );
-    if (!endpoint) return true;
+    const pair = EODHD_ENDPOINT_TOOL.find(([, toolName]) => toolName === name);
+    if (!pair) return true;
+    const [endpoint] = pair;
     return capabilities.endpoints[endpoint] !== false;
   });
 }

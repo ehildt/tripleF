@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
-import { useSocketStore } from '@/stores/socket';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 import { buildConversationNamesByEvent } from '../shared/helpers/build-conversation-names-by-event.helper';
@@ -45,7 +45,7 @@ let lifecycleStarted = false;
 
 export function useSocketSubscriptions() {
   const conversationStore = useConversationStore();
-  const socketStore = useSocketStore();
+  const socketStore = useSocket();
 
   if (!lifecycleStarted) {
     lifecycleStarted = true;

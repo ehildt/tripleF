@@ -1,14 +1,18 @@
 import { mount } from '@vue/test-utils';
-import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { THEMES, useThemeStore } from '../../../stores/theme';
+import { THEMES } from '@/composables/use-theme/theme.constant';
+import { useTheme } from '@/composables/use-theme/use-theme';
+
 import AppThemeSelector from './AppThemeSelector.vue';
 
 describe('AppThemeSelector', () => {
   beforeEach(() => {
-    setActivePinia(createPinia());
+    // Module-scope theme singleton: reset the shared refs between tests.
     localStorage.clear();
+    const theme = useTheme();
+    theme.currentTheme.value = 'stellar';
+    theme.isDarkMode.value = true;
   });
 
   it('renders a button', () => {
@@ -37,7 +41,7 @@ describe('AppThemeSelector', () => {
   });
 
   it('selects a theme on item click', async () => {
-    const store = useThemeStore();
+    const theme = useTheme();
     const wrapper = mount(AppThemeSelector);
 
     await wrapper.find('button').trigger('click');
@@ -47,7 +51,7 @@ describe('AppThemeSelector', () => {
     expect(targetItem).toBeTruthy();
     await targetItem!.trigger('click');
 
-    expect(store.currentTheme).toBe('nioh');
+    expect(theme.currentTheme.value).toBe('nioh');
   });
 
   it('stays open after selecting a theme', async () => {
@@ -102,7 +106,7 @@ describe('AppThemeSelector', () => {
   });
 
   it('toggles dark mode on moon/sun click', () => {
-    const store = useThemeStore();
+    const theme = useTheme();
     const wrapper = mount(AppThemeSelector);
     const buttons = wrapper.findAll('button');
 
@@ -112,6 +116,6 @@ describe('AppThemeSelector', () => {
     expect(toggle).toBeTruthy();
 
     toggle!.trigger('click');
-    expect(store.isDarkMode).toBe(false);
+    expect(theme.isDarkMode.value).toBe(false);
   });
 });

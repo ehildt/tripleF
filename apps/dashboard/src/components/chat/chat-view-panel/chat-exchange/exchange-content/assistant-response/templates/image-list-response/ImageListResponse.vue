@@ -10,7 +10,7 @@ import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exch
 import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSection.vue';
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import { useImageListResponseData } from './composables/use-image-list-response-data.composable';
+import { useImageListResponseData } from './composables/use-image-list-response-data';
 import type { ImageListResponseProps } from './ImageListResponse.types';
 
 const props = defineProps<ImageListResponseProps>();

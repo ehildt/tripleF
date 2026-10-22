@@ -8,10 +8,10 @@
  */
 import { computed, useId } from 'vue';
 
-import { useHarnessMediaPresentation } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-presentation.composable';
+import { useResponseMediaPresentation } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-presentation';
 import AssistantCarousel from '@/components/chat/shared/ui/media-carousel/AssistantCarousel.vue';
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import VideoGalleryItemComponent from './video-gallery-item/VideoGalleryItem.vue';
 
@@ -33,7 +33,7 @@ const columnsClass = computed(() =>
 const titleId = useId();
 
 /** The prompt-bar presentation switch: carousel (gallery) or card grid (list). */
-const presentation = useHarnessMediaPresentation('video');
+const presentation = useResponseMediaPresentation('video');
 </script>
 
 <template>

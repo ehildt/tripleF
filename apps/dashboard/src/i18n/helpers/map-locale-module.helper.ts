@@ -1,5 +1,5 @@
 import { type LocaleMessages, localeSchema } from '../locale-schema';
-import { resolveNativeLanguageName } from '../resolve-native-language-name';
+import { resolveNativeLanguageName } from './resolve-native-language-name.helper';
 
 /** Validate and project one locale module into the registry shape. */
 export function mapLocaleModule([path, mod]: [

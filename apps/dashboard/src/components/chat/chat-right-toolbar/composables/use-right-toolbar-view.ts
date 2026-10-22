@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue';
 
 import { useChatConversation } from '@/components/chat/composables/use-chat-conversation';
-import { usePlaybackSession } from '@/composables/use-playback-session';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
 
 import { useHistoryAvailability } from '../history/composables/use-history-availability';
 import { usePlaylistTab } from '../playlist/composables/use-playlist-tab';

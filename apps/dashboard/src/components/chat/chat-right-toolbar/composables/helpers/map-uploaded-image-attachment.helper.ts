@@ -1,4 +1,4 @@
-import type { UploadedImage } from '@/stores/conversation';
+import type { UploadedImage } from '@/stores/conversation/conversation.model';
 
 import type { AttachmentItem } from '../use-attachment-list.types';
 

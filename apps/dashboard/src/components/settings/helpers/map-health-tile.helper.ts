@@ -1,6 +1,6 @@
 import type { HealthCheckDetails } from '@/api/queries/use-health-ready.query.type';
 
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
+import type { HealthTileViewModel } from '../health-tile-view-model.model';
 
 /** Build a tile from the health buckets for one key. */
 export function mapHealthTile(

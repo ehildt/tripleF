@@ -1,4 +1,4 @@
-import type { MemoryLinkKind } from '../memory-link.repository.js';
+import type { MemoryLinkKind } from '../memory-link.repository.types.js';
 
 /** Project a link row into the edge shape. */
 export function mapLinkRowToEdge(row: {

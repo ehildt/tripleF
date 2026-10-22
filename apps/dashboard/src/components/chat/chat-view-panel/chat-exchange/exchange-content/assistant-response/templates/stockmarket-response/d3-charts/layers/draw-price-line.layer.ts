@@ -1,6 +1,6 @@
 import { line } from 'd3-shape';
 
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import type { D3ChartPoint } from '../D3Chart.types';
 import { resolveColor } from '../helpers/resolve-color.helper';
 import { CHART_LAYER_CLASSES } from './chart-layer-classes.constant';

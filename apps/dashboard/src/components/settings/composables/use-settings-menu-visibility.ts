@@ -1,11 +1,10 @@
-import { computed } from 'vue';
-
-import { useAppStore } from '../../../stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 /**
- * Settings "Interface" switches for the prompt bar's floating icon menus:
- * whether each menu is pinned open (always shows its icons, no collapse
- * arrow) or collapsible behind the expand arrow.
+ * Toggle actions for the prompt bar's floating icon menus (whether each
+ * menu stays pinned open or collapses behind the expand arrow). The flags
+ * persist through the app store; read-side binds
+ * `useAppStore().sourceTagsMenuAlwaysShow` directly.
  */
 export function useSettingsMenuVisibility() {
   const appStore = useAppStore();
@@ -24,12 +23,5 @@ export function useSettingsMenuVisibility() {
     );
   }
 
-  return {
-    sourceMenuAlwaysShow: computed(
-      () => appStore.sourceTagsMenuAlwaysShow.sources,
-    ),
-    viewMenuAlwaysShow: computed(() => appStore.sourceTagsMenuAlwaysShow.view),
-    toggleSourceMenuAlwaysShow,
-    toggleViewMenuAlwaysShow,
-  };
+  return { toggleSourceMenuAlwaysShow, toggleViewMenuAlwaysShow };
 }

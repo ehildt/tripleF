@@ -1,6 +1,6 @@
 import type { LocaleCode } from './locale-codes';
-import type { LocaleMessages } from './locale-messages.types';
 import { locales } from './locale-registry';
+import type { LocaleMessages } from './locale-schema';
 
 /**
  * The default locale bundle (English), statically available so the app boots

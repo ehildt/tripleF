@@ -1,11 +1,15 @@
 <script setup lang="ts">
 /**
- * Example floating player shown from Settings → Widgets: renders the actual
- * floating-player window chrome (same toolbar + empty-state body) at the
- * configured anchor, so the position and look can be previewed. It is a
- * fully separate, non-interactive instance — the toolbar's actions are
- * no-ops and no playlist state is read or written, so the real floating
- * player is unaffected.
+ * Example floating playlist shown from Settings → Widgets: renders a
+ * lookalike playlist window at the configured anchor, so the position and
+ * look can be previewed. It is a fully separate, non-interactive instance —
+ * the toolbar's actions are no-ops and no playlist state is read or
+ * written, so the real floating playlist is unaffected.
+ *
+ * Window-styled like the real floating playlist (frosted glass at the
+ * anchor) but deliberately NOT the shared panel: the real PlaylistPanel is
+ * store-coupled, so the preview composes its own inert shell from the
+ * shared building blocks (transport bar, empty state) with fixed values.
  */
 import { X } from '@lucide/vue';
 import { computed } from 'vue';
@@ -14,7 +18,7 @@ import PlaylistTransportBar from '@/components/chat/chat-right-toolbar/playlist/
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { usePlaylistStore } from '@/stores/playlist';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 
 import { useFloatingPlaylistGeometry } from '../floating-playlist/composables/use-floating-playlist-geometry';
 
@@ -37,11 +41,11 @@ function noop() {
     :style="previewStyle"
   >
     <aside
-      class="floating-playlist"
+      class="playlist-preview__window"
       :aria-label="$t('common.floatingPlayerPreview')"
     >
-      <div class="floating-playlist__top">
-        <div class="floating-playlist__toolbar">
+      <div class="playlist-preview__top">
+        <div class="playlist-preview__toolbar">
           <PlaylistTransportBar
             :playing="false"
             :can-toggle-playback="false"
@@ -58,7 +62,7 @@ function noop() {
           <Tooltip
             :text="$t('common.activePlaylist', { name: $t('common.example') })"
           >
-            <span class="floating-playlist__active-name">{{
+            <span class="playlist-preview__active-name">{{
               $t('common.example')
             }}</span>
           </Tooltip>
@@ -72,10 +76,10 @@ function noop() {
         </div>
       </div>
 
-      <div class="floating-playlist__body">
+      <div class="playlist-preview__body">
         <PanelEmptyState
           :message="$t('common.noVideosInPlaylist')"
-          sub:message="$t('common.floatingPlayerPositionHint')"
+          :submessage="$t('common.floatingPlayerPositionHint')"
         />
       </div>
     </aside>
@@ -83,7 +87,7 @@ function noop() {
 </template>
 
 <style scoped>
-/* Mirrors the real floating player's window chrome so the preview looks
+/* Mirrors the real floating playlist's window chrome so the preview looks
    identical: fixed at the configured anchor, frosted glass, no frame. */
 .playlist-preview {
   position: fixed;
@@ -93,7 +97,7 @@ function noop() {
   pointer-events: auto;
 }
 
-.floating-playlist {
+.playlist-preview__window {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 8rem);
@@ -107,7 +111,7 @@ function noop() {
   clip-path: inset(-16rem);
 }
 
-.floating-playlist__top {
+.playlist-preview__top {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
@@ -116,18 +120,18 @@ function noop() {
   user-select: none;
 }
 
-.floating-playlist__toolbar {
+.playlist-preview__toolbar {
   display: flex;
   align-items: center;
   gap: var(--spacing-1);
 }
 
-.floating-playlist__toolbar > :first-child {
+.playlist-preview__toolbar > :first-child {
   flex: 1;
   min-width: 0;
 }
 
-.floating-playlist__active-name {
+.playlist-preview__active-name {
   flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
@@ -138,7 +142,7 @@ function noop() {
   color: var(--color-fg-muted);
 }
 
-.floating-playlist__body {
+.playlist-preview__body {
   display: flex;
   flex-direction: column;
   min-height: 0;

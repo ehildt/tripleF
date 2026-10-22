@@ -1,4 +1,4 @@
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
 export interface UseMergeSelection {
   /** True when the exchange (or its paired partner) is selected for merge. */

@@ -1,4 +1,6 @@
-import { Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
+
+import { PersistenceModule } from '../persistence/persistence.module.js';
 
 import { MemoryTaxonomyController } from './controllers/memory-taxonomy.controller.js';
 import { TaxonomyService } from './services/taxonomy.service.js';
@@ -10,28 +12,39 @@ import { TaxonomyResolutionService } from './services/taxonomy-resolution.servic
 
 /**
  * The taxonomy lane: the label management surface, the probe/merge/resolution
- * services, and the reconciliation sweep job. Global so the partition write
- * job, the encyclopedia classify job, and the vectorize processor can inject
- * these without importing this module.
+ * services, and the reconciliation sweep job. Exports serve the partition
+ * write path, the encyclopedia classify job, and the vectorize processor.
  */
-@Global()
-@Module({
-  controllers: [MemoryTaxonomyController],
-  providers: [
-    TaxonomyService,
-    TaxonomyProbeService,
-    TaxonomyMergeService,
-    TaxonomyResolutionService,
-    TaxonomyAdjudicatorService,
-    TaxonomyReconcileJobService,
-  ],
-  exports: [
-    TaxonomyService,
-    TaxonomyProbeService,
-    TaxonomyMergeService,
-    TaxonomyResolutionService,
-    TaxonomyAdjudicatorService,
-    TaxonomyReconcileJobService,
-  ],
-})
-export class MemoryTaxonomyModule {}
+@Module({})
+export class MemoryTaxonomyModule {
+  private static readonly registration: DynamicModule = {
+    module: MemoryTaxonomyModule,
+    controllers: [MemoryTaxonomyController],
+    exports: [
+      TaxonomyService,
+      TaxonomyProbeService,
+      TaxonomyMergeService,
+      TaxonomyResolutionService,
+      TaxonomyAdjudicatorService,
+      TaxonomyReconcileJobService,
+    ],
+    imports: [PersistenceModule.register()],
+    providers: [
+      TaxonomyService,
+      TaxonomyProbeService,
+      TaxonomyMergeService,
+      TaxonomyResolutionService,
+      TaxonomyAdjudicatorService,
+      TaxonomyReconcileJobService,
+    ],
+  };
+
+  /**
+   * Shared registration object: this app uses Nest's default by-reference
+   * dynamic-module ids, so one object per module class keeps multi-site
+   * imports a single shared instance (static-module singleton semantics).
+   */
+  static register(): DynamicModule {
+    return MemoryTaxonomyModule.registration;
+  }
+}

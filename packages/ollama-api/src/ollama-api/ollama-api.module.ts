@@ -21,6 +21,7 @@ export class OllamaApiModule {
     };
     return {
       global: options.global,
+      imports: options.imports,
       module: OllamaApiModule,
       exports: [OLLAMA_API_CONFIG, OllamaApiService],
       providers: [configProvider, OllamaApiService],

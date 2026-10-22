@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import PlaylistItem from '../playlist-item/PlaylistItem.vue';
 import type { PlaylistQueueProps } from './PlaylistQueue.types';

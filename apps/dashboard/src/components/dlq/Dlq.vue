@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 
-import { useDlqStore } from '../../stores/dlq';
-import { useModelsStore } from '../../stores/models';
+import { useDlqStore } from '../../stores/dlq/dlq.store';
+import { useModelsStore } from '../../stores/models/models.store';
 import { useDlqEntries } from './composables/use-dlq-entries';
 import DlqDetailsBody from './dlq-details-body/DlqDetailsBody.vue';
 import DlqListBody from './dlq-list-body/DlqListBody.vue';

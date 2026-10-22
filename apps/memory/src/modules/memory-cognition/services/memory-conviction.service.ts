@@ -18,6 +18,7 @@ import { classifyStaleConvictions } from '../helpers/classify-stale-convictions.
 import { parseConvictionSynthesis } from '../helpers/parse-conviction-synthesis.helper.js';
 
 import { MemoryCognitionService } from './memory-cognition.service.js';
+import type { CognitionSynthesisStatement } from './memory-cognition.service.types.js';
 
 /** Hard cap on evidence points offered per run (mirrors the reflect sweep). */
 const MAX_EVIDENCE_PER_RUN = 500;
@@ -149,10 +150,7 @@ export class MemoryConvictionService {
     );
     const convictionsStored = await this.memoryCognition.upsertConvictions(
       { memoryCognition },
-      convictions.map((conviction) => ({
-        text: conviction.text,
-        evidenceIds: conviction.evidenceIds,
-      })),
+      convictions.map(({ text, evidenceIds }) => ({ text, evidenceIds })),
     );
 
     await this.memoryRepository.setPayloadForPoints(
@@ -195,7 +193,7 @@ export class MemoryConvictionService {
    */
   private async storeBridges(
     memoryPartition: string,
-    bridges: Array<{ text: string; evidenceIds: string[] }>,
+    bridges: CognitionSynthesisStatement[],
   ): Promise<number> {
     if (bridges.length === 0) return 0;
     const vectors = await this.embeddingService.embed(

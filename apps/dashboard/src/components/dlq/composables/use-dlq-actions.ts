@@ -4,8 +4,8 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
 import { useDeleteDlqMutation } from '../../../api/queries/use-delete-dlq-mutation';
 import { useRetryDlqMutation } from '../../../api/queries/use-retry-dlq-mutation';
 import { useUpdateDlqMutation } from '../../../api/queries/use-update-dlq-mutation';
-import { useToast } from '../../../composables/use-toast';
-import { useDlqStore } from '../../../stores/dlq';
+import { useToast } from '../../../composables/use-toast/use-toast';
+import { useDlqStore } from '../../../stores/dlq/dlq.store';
 import { extractEntryFilters } from '../helpers/extract-entry-filters.helper';
 import { useDlqRetrySession } from './use-dlq-retry-session';
 

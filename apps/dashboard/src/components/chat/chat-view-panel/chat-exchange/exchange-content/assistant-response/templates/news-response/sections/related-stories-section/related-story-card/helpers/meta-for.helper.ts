@@ -1,4 +1,4 @@
-import type { RelatedStory } from '@/types/harness-response-data.model';
+import type { RelatedStory } from '@/types/assistant-response-data.model';
 
 /** Builds the "Source · Date" meta line for a related-story card. */
 export function metaFor(story: RelatedStory): string {

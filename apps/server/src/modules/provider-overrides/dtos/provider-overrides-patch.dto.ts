@@ -41,7 +41,7 @@ function IsSourceEntry(validationOptions?: ValidationOptions) {
   };
 }
 
-/** Shared endpoint patch for Serper + Bright Data (results capped at 200). */
+/** Shared endpoint patch for Serper + Bright Data media endpoints (results capped at 200). */
 class SearchEndpointOverrideDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -53,6 +53,27 @@ class SearchEndpointOverrideDto {
   @IsInt()
   @Min(1)
   @Max(200)
+  results?: number;
+}
+
+/**
+ * Ranked content/entity endpoint patch (web, news, places, shopping,
+ * reviews): results are capped at the top 3. Ranking quality decays sharply
+ * past the top 3, and Google-backed SERP providers resolve only the top 3
+ * result links to real URLs — deeper links can arrive as unresolved
+ * google.com/goto wrappers.
+ */
+class RankedEndpointOverrideDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 3 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3)
   results?: number;
 }
 
@@ -74,11 +95,11 @@ class SerperOverrideDto {
   @IsString()
   apiKey?: string;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  web?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  web?: RankedEndpointOverrideDto;
 
   @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
   @IsOptional()
@@ -86,29 +107,29 @@ class SerperOverrideDto {
   @Type(() => SearchEndpointOverrideDto)
   images?: SearchEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  news?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  news?: RankedEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  places?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  places?: RankedEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  shopping?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  shopping?: RankedEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  reviews?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  reviews?: RankedEndpointOverrideDto;
 
   @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
   @IsOptional()
@@ -144,11 +165,11 @@ class BrightDataOverrideDto {
   @IsString()
   unlockerZone?: string;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  web?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  web?: RankedEndpointOverrideDto;
 
   @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
   @IsOptional()
@@ -156,23 +177,23 @@ class BrightDataOverrideDto {
   @Type(() => SearchEndpointOverrideDto)
   images?: SearchEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  news?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  news?: RankedEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  places?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  places?: RankedEndpointOverrideDto;
 
-  @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
+  @ApiPropertyOptional({ type: RankedEndpointOverrideDto })
   @IsOptional()
   @ValidateNested()
-  @Type(() => SearchEndpointOverrideDto)
-  shopping?: SearchEndpointOverrideDto;
+  @Type(() => RankedEndpointOverrideDto)
+  shopping?: RankedEndpointOverrideDto;
 
   @ApiPropertyOptional({ type: SearchEndpointOverrideDto })
   @IsOptional()

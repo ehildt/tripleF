@@ -1,5 +1,6 @@
 import { type Tool, tool } from 'ai';
 
+import { SEARCH_API_RESULTS_CAP } from '../constants/search-results-cap.constant.js';
 import { BRIGHT_DATA_TIMEOUT_MS } from '../constants/search-timeout.constant.js';
 import { applyLocaleParams } from '../helpers/apply-locale-params.helper.js';
 import type { ToolDependencies } from '../types/tool-dependencies.types.js';
@@ -27,11 +28,17 @@ export function createBrightDataShoppingSearch(deps: ToolDependencies): Tool {
       deps.logger.log(`Bright Data shopping search for "${query}"`);
       const body: Record<string, unknown> = {};
       applyLocaleParams(body, lang ?? deps.defaultLang);
+      const num = Math.min(reqCount ?? cfg.shopping.results, SEARCH_API_RESULTS_CAP);
+      if (num < (reqCount ?? cfg.shopping.results)) {
+        deps.logger.warn(
+          `Bright Data shopping results clamped to ${SEARCH_API_RESULTS_CAP} (top-3 rank cutoff) for "${query}"`,
+        );
+      }
       const url = buildGoogleUrl(query, {
         udm: 28,
         hl: body.hl,
         gl: body.gl,
-        num: reqCount ?? cfg.shopping.results,
+        num,
       });
       try {
         const data = (await requestBrightData(apiKey, cfg.serpZone!, url, {

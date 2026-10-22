@@ -2,36 +2,38 @@
 import { computed, onBeforeMount, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { useSocket } from '@/composables/use-socket/use-socket';
+
 import AppFooter from './components/app/app-footer/AppFooter.vue';
+import { useDlqLiveEvents } from './components/app/composables/use-dlq-live-events';
+import { usePlaylistMarquee } from './components/app/composables/use-playlist-marquee';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
 import FloatingPlayer from './components/widgets/floating-player/FloatingPlayer.vue';
 import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPlaylist.vue';
 import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPreview.vue';
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
-import ToastContainer from './components/widgets/toast/toast-container/ToastContainer.vue';
-import { useDlqLiveEvents } from './composables/use-dlq-live-events';
-import { usePlaybackSession } from './composables/use-playback-session';
-import { usePlaylistMarquee } from './composables/use-playlist-marquee';
-import { useAppStore } from './stores/app';
-import { useDebugStore } from './stores/debug';
-import { useDlqStore } from './stores/dlq';
-import { useApiMessagesStore } from './stores/messages';
-import { useModelsStore } from './stores/models';
-import { usePlaylistStore } from './stores/playlist';
-import { usePopoutSettingsStore } from './stores/popout-settings';
-import { usePreprocessingStore } from './stores/preprocessing';
-import { useSocketStore } from './stores/socket';
-import { useThemeStore } from './stores/theme';
+import ToastContainer from './components/widgets/toast-container/ToastContainer.vue';
+import { usePlaybackSession } from './composables/use-playback-session/use-playback-session';
+import { useTheme } from './composables/use-theme/use-theme';
+import { useAppStore } from './stores/app/app.store';
+import { useDebugStore } from './stores/debug/debug.store';
+import { useDlqStore } from './stores/dlq/dlq.store';
+import { useMessagesStore } from './stores/messages/messages.store';
+import { useModelsStore } from './stores/models/models.store';
+import { usePlaylistStore } from './stores/playlist/playlist.store';
+import { usePopoutSettingsStore } from './stores/popout-settings/popout-settings.store';
+import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
 import type { ActiveTab } from './types/app.model';
 
-const apiMessagesStore = useApiMessagesStore();
+const apiMessagesStore = useMessagesStore();
 const debugStore = useDebugStore();
 const modelsStore = useModelsStore();
 const appStore = useAppStore();
-const themeStore = useThemeStore();
-const socketStore = useSocketStore();
+const { initTheme } = useTheme();
+const socket = useSocket();
+const { socketId } = socket;
 const dlqStore = useDlqStore();
-const preprocessingStore = usePreprocessingStore();
+usePreprocessingSettingsStore();
 const popoutSettingsStore = usePopoutSettingsStore();
 const playlistStore = usePlaylistStore();
 
@@ -47,11 +49,9 @@ const { playlistMarqueeVisible } = usePlaylistMarquee(playback);
 // each mount.
 void playlistStore.loadPlaylists();
 
-// Push the persisted preprocessing settings to the server on boot: the
-// server applies preprocessing from its own effective config, so it needs
-// the client's overrides before the next query runs. Deferred to idle — it
-// is a write, not something first paint depends on.
-scheduleIdle(() => preprocessingStore.pushSettingsToServer());
+// The preprocessing config is server-persisted per session id: the store
+// fetches it on construction and pushes every change immediately from its
+// own watch — no boot-time orchestration here.
 
 // The Settings popout preview is transient: switching tabs dismisses it.
 // Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
@@ -64,22 +64,7 @@ watch(
   },
 );
 
-/**
- * Run a callback when the browser is idle, falling back to a macrotask when
- * requestIdleCallback is unavailable (jsdom, older engines). Used to push
- * non-critical boot work (the preprocessing push) off the first-paint path so
- * it doesn't compete with the conversation restore and route chunks for the
- * connection budget on HTTP/1.1.
- */
-function scheduleIdle(callback: () => void) {
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(callback, { timeout: 2000 });
-  } else {
-    window.setTimeout(callback, 0);
-  }
-}
-
-socketStore.setCallbacks(
+socket.setCallbacks(
   debugStore.addSocketDebugEntry,
   apiMessagesStore.addMessage,
 );
@@ -105,12 +90,12 @@ watch(
 );
 
 onBeforeMount(() => {
-  themeStore.initTheme();
+  initTheme();
   modelsStore.fetchModels();
 });
 
 onMounted(() => {
-  socketStore.ensureSocketConnection();
+  socket.ensureSocketConnection();
 });
 </script>
 
@@ -131,10 +116,13 @@ onMounted(() => {
         <!-- The chat is the primary tab: keep its mounted tree alive across
              switches (scroll position, subscriptions, computed state) so a
              return visit never pays the remount + full-list re-render
-             burst. Other tabs mount/unmount as before. -->
+             burst. Keyed by route NAME, not path: the memory taxonomy drill
+             lives in the path segments themselves (/memory/cluster/.../…),
+             so a fullPath/path key would remount the tree per drill step
+             and let KeepAlive cache one mounted Memory instance per URL. -->
         <router-view v-slot="{ Component }">
           <KeepAlive :include="['Chat', 'Memory']">
-            <component :is="Component" :key="route.fullPath" />
+            <component :is="Component" :key="route.name" />
           </KeepAlive>
         </router-view>
       </div>
@@ -149,7 +137,7 @@ onMounted(() => {
       :popout-show-bar-always="popoutSettingsStore.popoutShowBarAlways"
     />
     <FloatingPlaylist />
-    <AppFooter :socket-id="socketStore.socketId" />
+    <AppFooter :socket-id="socketId" />
   </div>
 </template>
 

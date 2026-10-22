@@ -16,6 +16,7 @@
   flex-shrink: 0;
   padding: 0 var(--spacing-4);
   background-color: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-divider);
+  /* No hard bottom border: header rows that want a divider draw it
+     themselves (e.g. the icon menus draw a fading underline). */
 }
 </style>

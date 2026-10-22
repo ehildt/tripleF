@@ -2,13 +2,14 @@
 import { ref } from 'vue';
 
 import Tooltip from '../../tooltip/Tooltip.vue';
-import type { DropDownTriggerProps } from './DropDownTrigger.types';
+import type {
+  DropDownTriggerEmits,
+  DropDownTriggerProps,
+} from './DropDownTrigger.types';
 
 defineProps<DropDownTriggerProps>();
 
-const emit = defineEmits<{
-  toggle: [];
-}>();
+const emit = defineEmits<DropDownTriggerEmits>();
 
 // The parent's useMenuPosition anchors the menu to this button — a genuine
 // imperative DOM handle, exposed for the positioning composable.
@@ -33,7 +34,7 @@ defineExpose({ triggerEl });
     </span>
   </button>
   <Tooltip
-    v-else
+    v-if="variant !== 'labeled'"
     :text="$t('common.selectLabel', { label: label.toLowerCase() })"
   >
     <button

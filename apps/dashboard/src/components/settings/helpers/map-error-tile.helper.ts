@@ -1,4 +1,4 @@
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
+import type { HealthTileViewModel } from '../health-tile-view-model.model';
 
 /** Build an error-state tile for a tracked key. */
 export function mapErrorTile(key: string): HealthTileViewModel {

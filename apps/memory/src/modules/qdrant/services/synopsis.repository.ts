@@ -1,45 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 import { groupHeatIncrements } from './helpers/group-heat-increments.helper.js';
+import { synopsisText } from './helpers/synopsis-text.helper.js';
 import { QdrantClientService } from './qdrant-client.service.js';
-
-/** The two lanes the synopsis layer covers (mirrors the cluster lanes). */
-type SynopsisLane = 'partition' | 'encyclopedia';
-
-/**
- * One cluster synopsis: the Raptor unit. A level-0 synopsis summarizes one
- * leaf cluster's points; a level-n synopsis summarizes level-(n-1) synopses.
- * Stored as its own Qdrant point in the lane's synopsis collection so a
- * cross-cutting query can vector-match the community summary directly.
- */
-interface SynopsisRecord {
-  /** Deterministic point id: `synopsis|<clusterId>` — re-runs overwrite in place. */
-  id: string;
-  /** The cluster this synopsis summarizes (drill-down + cleanup key). */
-  clusterId: string;
-  /** Space key: partition key / 'global' (encyclopedia). */
-  scopeKey: string;
-  /** Hierarchy level of the cluster (0 = leaf cluster over points). */
-  level: number;
-  title: string;
-  summary: string;
-  /** Direct members of the summarized cluster (points at level 0, clusters above). */
-  memberCount: number;
-  /** Retrieval count — incremented every time the synopsis probe surfaces this synopsis (heat tracking). */
-  heatAmount?: number;
-  /** ISO timestamp of the last probe hit. */
-  heatTimestamp?: string;
-}
-
-/** One synopsis point to write (record + vector). */
-export interface SynopsisPoint extends SynopsisRecord {
-  vector: number[];
-}
-
-/** A synopsis read back by the probe (payload + retrieval score). */
-export interface SynopsisHit extends SynopsisRecord {
-  score?: number;
-}
+import type {
+  SynopsisHit,
+  SynopsisLane,
+  SynopsisPoint,
+  SynopsisRecord,
+} from './synopsis.repository.types.js';
 
 /**
  * Qdrant storage for the cluster-synopsis layer — one embedded point per
@@ -52,6 +21,14 @@ export interface SynopsisHit extends SynopsisRecord {
  * Read paths degrade to empty when the collection is missing — a synopsis
  * outage never breaks the cluster job or the probe.
  */
+/** The raw Qdrant point stub these lookups hand to the mapper. */
+interface SynopsisRawQueryPoint {
+  /** Point id (untyped at the wire). */
+  id: unknown;
+  /** Stored payload (absent on payload-less queries). */
+  payload?: Record<string, unknown> | null;
+}
+
 @Injectable()
 export class SynopsisRepository {
   constructor(private readonly clientService: QdrantClientService) {}
@@ -200,10 +177,7 @@ export class SynopsisRepository {
       : this.clientService.encyclopediaSynopsisCollection;
   }
 
-  private toRecord(point: {
-    id: unknown;
-    payload?: Record<string, unknown> | null;
-  }): SynopsisRecord | undefined {
+  private toRecord(point: SynopsisRawQueryPoint): SynopsisRecord | undefined {
     const payload = point.payload ?? {};
     const clusterId = payload.summarizes_cluster_id as string | undefined;
     const scopeKey = payload.scope_key as string | undefined;
@@ -220,9 +194,4 @@ export class SynopsisRepository {
       heatTimestamp: payload.heat_timestamp as string | undefined,
     };
   }
-}
-
-/** The embedded text of a synopsis point (and its stored `text` payload). */
-export function synopsisText(title: string, summary: string): string {
-  return `${title}\n${summary}`.trim();
 }

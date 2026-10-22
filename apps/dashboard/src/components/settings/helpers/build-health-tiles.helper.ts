@@ -1,6 +1,6 @@
 import type { HealthResponse } from '@/api/queries/use-health-ready.query.type';
 
-import type { HealthTileViewModel } from '../types/health-tile-view-model.type';
+import type { HealthTileViewModel } from '../health-tile-view-model.model';
 import { mapErrorTile } from './map-error-tile.helper';
 import { mapHealthTile } from './map-health-tile.helper';
 import { mapLoadingTile } from './map-loading-tile.helper';

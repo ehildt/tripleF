@@ -1,3 +1,5 @@
+import type { ResizeDirection } from '@/types/resize-direction.model';
+
 export interface FloatingPopoutProps {
   /** Title shown statically or in the marquee. */
   title?: string;
@@ -23,4 +25,19 @@ export interface FloatingPopoutProps {
    * on mouse leave, letting the media fill the freed space.
    */
   barAlwaysVisible?: boolean;
+}
+
+export interface FloatingPopoutEmits {
+  /** Pointer down on free bar space starts dragging the popup. */
+  drag: [event: PointerEvent];
+  /** Opacity slider input (percent). */
+  opacityInput: [percent: number];
+  /** Toggle playlist membership of the playing video. */
+  togglePlaylist: [];
+  /** Dock the popup (playback keeps running). */
+  minimize: [];
+  /** Stop playback and close the popup. */
+  close: [];
+  /** A resize-handle drag started. */
+  resize: [direction: ResizeDirection, event: PointerEvent];
 }

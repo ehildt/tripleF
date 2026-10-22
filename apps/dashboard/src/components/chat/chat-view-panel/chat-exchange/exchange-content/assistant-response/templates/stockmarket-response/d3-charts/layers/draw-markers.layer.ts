@@ -1,4 +1,4 @@
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import type { MarkerLayout } from '../helpers/build-marker-layout.helper';
 import { mapLayoutToStackedMarker } from '../helpers/map-layout-to-stacked-marker.helper';
 import { resolveMarkerSymbolPath } from '../helpers/resolve-marker-symbol-path.helper';

@@ -1,4 +1,4 @@
-import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
+import type { AssistantActivityDescriptor } from '@/types/activity.model';
 
 import type { ActiveToolCall } from './build-tool-activity-descriptors.helper.types';
 import { truncateQuery } from './truncate-query.helper';
@@ -28,7 +28,7 @@ const KNOWN_CATEGORY_KEYS: Record<string, string> = {
  */
 export function buildToolActivityDescriptors(
   toolCalls: ActiveToolCall[],
-): HarnessActivityDescriptor[] {
+): AssistantActivityDescriptor[] {
   if (!toolCalls.length) return [];
 
   const byCategory = new Map<string, ActiveToolCall[]>();
@@ -37,7 +37,7 @@ export function buildToolActivityDescriptors(
     byCategory.set(category, [...(byCategory.get(category) ?? []), call]);
   }
 
-  const descriptors: HarnessActivityDescriptor[] = [];
+  const descriptors: AssistantActivityDescriptor[] = [];
   for (const [category, calls] of byCategory) {
     const query = calls[0].query;
     const hasUniformQuery =

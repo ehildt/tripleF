@@ -22,7 +22,7 @@ import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { usePlaylistStore } from '@/stores/playlist';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 
 import PlaylistPanel from '../../chat/chat-right-toolbar/playlist/PlaylistPanel.vue';
 import { useFloatingPlaylistGeometry } from './composables/use-floating-playlist-geometry';
@@ -57,7 +57,7 @@ const anchorHorizontal = computed(
 <template>
   <div
     v-if="playlistStore.playlistMode === 'floating'"
-    class="floating-playlist-root"
+    class="floating-playlist"
     data-floating-playlist-root
   >
     <div
@@ -85,7 +85,7 @@ const anchorHorizontal = computed(
       </Tooltip>
 
       <aside
-        class="floating-playlist shadow-floating"
+        class="floating-playlist__window shadow-floating"
         :aria-label="$t('common.floatingPlaylist')"
       >
         <PlaylistPanel @play="closeOnAutoclose">
@@ -110,10 +110,11 @@ const anchorHorizontal = computed(
 </template>
 
 <style scoped>
-/* Above the tab menu (1200): the menu's collapsed drawer keeps an
-   invisible layout box under its handle, but the playlist sits beside the
-   menu horizontally — no overlap. The higher layer is harmless. */
-.floating-playlist-root {
+/* The root is an inert, click-through layer above the tab menu (1200):
+   the menu's collapsed drawer keeps an invisible layout box under its
+   handle, but the playlist sits beside the menu horizontally — no overlap.
+   The higher layer is harmless. */
+.floating-playlist {
   position: fixed;
   inset: 0;
   z-index: 1250;
@@ -226,7 +227,7 @@ const anchorHorizontal = computed(
    already yields pointer events so the invisible window never blocks
    clicks. The PlaylistPanel inside fills the column and scrolls its own
    list. */
-.floating-playlist {
+.floating-playlist__window {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 8rem);
@@ -242,7 +243,7 @@ const anchorHorizontal = computed(
   transition: opacity 0.24s ease;
 }
 
-.floating-playlist__assembly--closed .floating-playlist {
+.floating-playlist__assembly--closed .floating-playlist__window {
   opacity: 0;
   visibility: hidden;
   transition:

@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import MotionIcon from '../motion-icon/MotionIcon.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
-import type { IconButtonProps } from './IconButton.types';
+import type { IconButtonEmits, IconButtonProps } from './IconButton.types';
 
 defineProps<IconButtonProps>();
 
-const emit = defineEmits<{
-  (e: 'click', event: MouseEvent): void;
-  (e: 'mouseenter'): void;
-  (e: 'mouseleave'): void;
-  (e: 'focus'): void;
-  (e: 'blur'): void;
-}>();
+const emit = defineEmits<IconButtonEmits>();
 </script>
 
 <template>

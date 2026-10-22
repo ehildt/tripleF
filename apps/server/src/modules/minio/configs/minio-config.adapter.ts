@@ -1,27 +1,23 @@
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
-import Joi from 'joi';
+import { z } from 'zod';
 
-export interface MinioConfig {
-  endpoint: string;
-  port: number;
-  useSsl: boolean;
-  accessKey: string;
-  secretKey: string;
-  bucket: string;
+export const MinioConfigSchema = z.strictObject({
+  endpoint: z.string(),
+  port: z.number().int().min(0).max(65535),
+  useSsl: z.boolean(),
+  accessKey: z.string(),
+  secretKey: z.string(),
+  bucket: z.string(),
   /** Default object lifetime for uploaded job buffers, in days. */
-  ttlDays: number;
-}
+  ttlDays: z.number().int().positive().default(7),
+});
 
-export const MinioConfigSchema = Joi.object<MinioConfig>({
-  endpoint: Joi.string().required(),
-  port: Joi.number().port().required(),
-  useSsl: Joi.boolean().required(),
-  accessKey: Joi.string().required(),
-  secretKey: Joi.string().required(),
-  bucket: Joi.string().required(),
-  ttlDays: Joi.number().integer().positive().default(7),
-}).required();
+/**
+ * Shape of the validated MinIO config. Derived from the schema, so the type
+ * can never drift from the runtime contract.
+ */
+export type MinioConfig = z.infer<typeof MinioConfigSchema>;
 
 export function MinioConfigAdapter(env = process.env): MinioConfig {
   return {

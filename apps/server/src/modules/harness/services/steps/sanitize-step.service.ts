@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SocketIOService } from '@triplef/socketio';
 
-import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
+import { MemoryEncyclopediaService } from '../../../memory-client/services/memory-encyclopedia.service.js';
 import {
   SanitizeActionService,
   type SanitizeResult,
@@ -31,7 +31,7 @@ export class SanitizeStepService implements StepHandler {
   constructor(
     private readonly sanitizeAction: SanitizeActionService,
     private readonly io: SocketIOService,
-    private readonly memoryClient: MemoryClientService,
+    private readonly memoryEncyclopedia: MemoryEncyclopediaService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
@@ -42,7 +42,7 @@ export class SanitizeStepService implements StepHandler {
     // Index uploaded documents into the encyclopedia (pure knowledge) —
     // fire-and-forget, independent of whether a web search ran this turn.
     if (ctx.documentSections?.length) {
-      void this.memoryClient
+      void this.memoryEncyclopedia
         .indexEncyclopediaDocuments({
           documents: ctx.documentSections.map(mapDocumentSection),
           partitionScope: ctx.memoryPartition ?? ctx.sessionId ?? 'global',

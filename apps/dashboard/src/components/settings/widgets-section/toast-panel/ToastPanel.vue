@@ -26,27 +26,28 @@ import {
   type LucideIcon,
   MessageSquare,
   Pin,
+  Power,
+  RotateCcw,
+  ScanSearch,
   Timer,
   TriangleAlert,
 } from '@lucide/vue';
 import { computed } from 'vue';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
-import PanelActions from '@/components/shared/ui/panel-actions/PanelActions.vue';
-import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
-import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
-import { useToast } from '@/composables/use-toast';
+import { useToastQueue } from '@/composables/use-toast-queue/use-toast-queue';
 import { i18n } from '@/i18n/i18n';
-import { useToastSettingsStore } from '@/stores/toast-settings';
-import type { ToastAnchor } from '@/stores/toast-settings.types';
+import { useToastSettingsStore } from '@/stores/toast-settings/toast-settings.store';
+import type { ToastAnchor } from '@/stores/toast-settings/toast-settings.types';
 import type { ToastType } from '@/types/toast-type.model';
 
 const toastSettingsStore = useToastSettingsStore();
-const { preview: previewToast } = useToast();
+const { preview: previewToast } = useToastQueue();
 
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 
@@ -158,23 +159,26 @@ const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
 
 <template>
   <div class="toast-panel">
-    <PanelActions>
-      <PreviewButton
-        :title="$t('common.showExampleToast')"
+    <MenuRow variant="panel" role="toolbar">
+      <MenuButton
+        :icon="ScanSearch"
+        :label="$t('common.showExampleToast')"
         @click="previewToast(i18n.global.t('common.exampleToastNotification'))"
       />
-      <ResetButton
-        :title="$t('common.resetToastSettingsToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetToastSettingsToDefaults')"
         @click="toastSettingsStore.resetToastSettings"
       />
-      <PowerToggle
-        :enabled="toastSettingsStore.toastEnabled"
-        :title="$t('common.enableToastNotifications')"
-        @toggle="
+      <MenuButton
+        :icon="Power"
+        :label="$t('common.enableToastNotifications')"
+        :active="toastSettingsStore.toastEnabled"
+        @click="
           toastSettingsStore.setToastEnabled(!toastSettingsStore.toastEnabled)
         "
       />
-    </PanelActions>
+    </MenuRow>
 
     <div class="toast-panel__group">
       <SectionHeader :icon="Anchor" :title="$t('common.positionSection')" />
@@ -279,7 +283,6 @@ const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-  padding: var(--spacing-2);
 }
 
 .toast-panel__group {

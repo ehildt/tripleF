@@ -45,11 +45,11 @@ const model = defineModel<string>({ required: true });
           <span class="select-field-card__skeleton-bar" />
         </span>
       </Tooltip>
-      <span v-else-if="loading" class="select-field-card__skeleton">
+      <span v-if="loading && !loadingLabel" class="select-field-card__skeleton">
         <span class="select-field-card__skeleton-bar" />
       </span>
       <InputSelect
-        v-else
+        v-if="!loading"
         v-model="model"
         :options="[...options]"
         :placeholder="placeholder"

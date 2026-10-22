@@ -12,6 +12,16 @@ import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js'
 
 import type { FindAllOptions } from './repository.service.types.js';
 
+/** Technical identity of one logical failed job (queue + job id + name). */
+interface DeadLetterJobKey {
+  /** Owning queue. */
+  queueName: string;
+  /** Job id inside the queue. */
+  jobId: string;
+  /** Registered job name. */
+  jobName: string;
+}
+
 @Injectable()
 export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
   private _prisma: PrismaClient | null = null;
@@ -125,11 +135,7 @@ export class DeadLetterRepository implements OnModuleInit, OnModuleDestroy {
    * logical job across cycles).
    */
   async upsertByQueueJob(
-    input: {
-      queueName: string;
-      jobId: string;
-      jobName: string;
-    },
+    input: DeadLetterJobKey,
     data: Partial<Prisma.DeadLetterJobCreateInput>,
   ) {
     const existing = await this.findByQueueJob(input.queueName, input.jobId);

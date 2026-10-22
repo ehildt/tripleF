@@ -267,7 +267,7 @@ export const ApeGetTaxonomyTree = () =>
     }),
     ApiOperation({
       summary:
-        'List the macro-taxonomy of one scope (cluster → community → hub, plus the tag vocabulary) with operational metadata',
+        'List the macro-taxonomy of one scope (cluster → community → hub → node, plus the tag vocabulary) with operational metadata',
     }),
   );
 
@@ -294,6 +294,19 @@ export const ApePostTaxonomyMerge = () =>
     ApiOperation({
       summary:
         'Merge a taxonomy node into another node of the same scope and tier',
+    }),
+  );
+
+export const ApeGetTaxonomyLeaves = () =>
+  applyDecorators(
+    ApiResponse({
+      status: 200,
+      description:
+        "One node's leaf entries (capped): the facts/chunks carrying its label, with link state and source hrefs.",
+    }),
+    ApiOperation({
+      summary:
+        "List the leaves attached to one taxonomy node's label (the drill view's leaf section)",
     }),
   );
 

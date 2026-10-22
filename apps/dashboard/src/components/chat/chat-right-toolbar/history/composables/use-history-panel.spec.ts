@@ -1,9 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChatViewStore } from '@/stores/chat-view';
-import { useConversationStore } from '@/stores/conversation';
-import { useSocketStore } from '@/stores/socket';
+import { useChatView } from '@/components/chat/shared/composables/use-chat-view';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { useHistoryPanel } from './use-history-panel';
 
@@ -18,6 +18,10 @@ describe('useHistoryPanel', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     copyMock.mockClear();
+    // useChatView is a module-scope singleton — reset it between tests.
+    const chatView = useChatView();
+    chatView.setActiveUserExchangeId(null);
+    chatView.scrollToExchangeRequest.value = null;
   });
 
   function seedActiveConversation() {
@@ -75,25 +79,25 @@ describe('useHistoryPanel', () => {
     expect(mergeArmed.value).toBe(false);
   });
 
-  it('tracks the active exchange highlight from the chat-view store', () => {
+  it('tracks the active exchange highlight from the chat view', () => {
     seedActiveConversation();
-    const chatViewStore = useChatViewStore();
+    const chatView = useChatView();
 
     const { activeUserExchangeId } = useHistoryPanel();
     expect(activeUserExchangeId.value).toBeNull();
 
-    chatViewStore.setActiveUserExchangeId('1');
+    chatView.setActiveUserExchangeId('1');
     expect(activeUserExchangeId.value).toBe('1');
   });
 
   it('requests a scroll to the section of the clicked row', () => {
     seedActiveConversation();
-    const chatViewStore = useChatViewStore();
+    const chatView = useChatView();
 
     const { onPromptClick } = useHistoryPanel();
     onPromptClick(0);
 
-    expect(chatViewStore.scrollToExchangeRequest?.exchangeId).toBe('1');
+    expect(chatView.scrollToExchangeRequest.value?.exchangeId).toBe('1');
   });
 
   it('copies the content of the clicked row', () => {
@@ -107,7 +111,7 @@ describe('useHistoryPanel', () => {
 
   it('branches the conversation at the user prompt with the given index', () => {
     const conversationStore = useConversationStore();
-    const socketStore = useSocketStore();
+    const socketStore = useSocket();
     vi.spyOn(socketStore, 'ensureSocketConnection').mockImplementation(
       () => {},
     );

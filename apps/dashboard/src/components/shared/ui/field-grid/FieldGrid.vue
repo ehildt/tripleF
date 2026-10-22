@@ -1,21 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import type { FieldGridProps } from './FieldGrid.types';
+
 /**
  * Renders two slots — `#prepend` and the default slot — each in its own grid
  * row. The caller decides how many items fit per row for each slot (e.g. half
  * the field count, capped at 5) and passes it via `prependItemsPerRow` and
  * `itemsPerRow`.
  */
-const props = withDefaults(
-  defineProps<{
-    /** Items per row for the default slot. */
-    itemsPerRow?: number;
-    /** Items per row for the `#prepend` slot. */
-    prependItemsPerRow?: number;
-  }>(),
-  { itemsPerRow: 5, prependItemsPerRow: 5 },
-);
+const props = withDefaults(defineProps<FieldGridProps>(), {
+  itemsPerRow: 5,
+  prependItemsPerRow: 5,
+});
 
 const defaultTemplate = computed(
   () => `repeat(${Math.max(1, props.itemsPerRow)}, minmax(0, 1fr))`,

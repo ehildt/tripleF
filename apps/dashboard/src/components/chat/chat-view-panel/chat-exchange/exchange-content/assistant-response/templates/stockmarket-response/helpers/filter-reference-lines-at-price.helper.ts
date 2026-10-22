@@ -1,4 +1,4 @@
-import type { ChartReferenceLine } from '@/types/harness-response-data.model';
+import type { ChartReferenceLine } from '@/types/assistant-response-data.model';
 
 /** Relative epsilon for considering a line "at" the current price. */
 const PRICE_EPSILON = 0.001;

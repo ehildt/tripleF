@@ -46,7 +46,7 @@ describe('AppConfigAdapter', () => {
 
 describe('AppConfigSchema', () => {
   it('validates correct config', () => {
-    const result = AppConfigSchema.validate({
+    const result = AppConfigSchema.safeParse({
       printConfig: true,
       enableSwagger: false,
       bodyLimit: 1024,
@@ -63,14 +63,14 @@ describe('AppConfigSchema', () => {
       },
     });
 
-    expect(result.error).toBeUndefined();
+    expect(result.success).toBe(true);
   });
 
   it('fails if required fields are missing', () => {
-    const result = AppConfigSchema.validate({});
-    expect(result.error).toBeDefined();
+    const result = AppConfigSchema.safeParse({});
+    expect(result.success).toBe(false);
     expect(
-      result.error?.details.some((d) => d.message.includes('printConfig')),
+      result.error?.issues.some((i) => i.path.includes('printConfig')),
     ).toBe(true);
   });
 });

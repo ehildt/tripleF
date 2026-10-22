@@ -7,7 +7,7 @@ import ModelFieldCard from '@/components/shared/ui/model-field-card/ModelFieldCa
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
-import { formatCtx } from '@/utils/format-ctx.helper';
+import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 
 import { useDlqTopBarFilters } from './composables/use-dlq-top-bar-filters';
 import type { DlqTopBarProps } from './DlqTopBar.types';
@@ -65,7 +65,7 @@ function toggleStream() {
         :options="numCtxOptions"
         :disabled="isImmutable"
         :checkmark="false"
-        :format-value="(v: string) => formatCtx(Number(v))"
+        :format-value="(v: string) => formatContextSize(Number(v))"
         :loading="numCtxOptions.length === 0"
         :loading-label="$t('common.loadingContextOptions')"
         @update:model-value="emit('updateFilter', 'numCtx', $event)"

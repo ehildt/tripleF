@@ -3,7 +3,7 @@ import { useClipboard } from '@vueuse/core';
 import { toRef } from 'vue';
 
 import TabPanel from '@/components/shared/ui/tab-panel/TabPanel.vue';
-import { formatBody } from '@/utils/format-body.helper';
+import { formatRequestBody } from '@/utils/format-request-body/format-request-body.helper';
 
 import { useDlqDetailsState } from '../composables/use-dlq-details-state';
 import { useDlqFailureText } from '../composables/use-dlq-failure-text';
@@ -48,7 +48,7 @@ const { copy, copied: isCopied } = useClipboard({ legacy: true });
 
 function copyPayload() {
   if (props.entry.payload) {
-    copy(formatBody(props.entry.payload));
+    copy(formatRequestBody(props.entry.payload));
   }
 }
 </script>

@@ -19,22 +19,22 @@ describe('AppConfigSchema', () => {
       },
     };
 
-    const { error, value } = AppConfigSchema.validate(validConfig);
-    expect(error).toBeUndefined();
-    expect(value.address).toBe('127.0.0.1');
+    const result = AppConfigSchema.safeParse(validConfig);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.address).toBe('127.0.0.1');
   });
 
   it('fails if required fields are missing', () => {
-    const { error } = AppConfigSchema.validate({}, { abortEarly: false });
-    expect(error).toBeDefined();
+    const result = AppConfigSchema.safeParse({});
+    expect(result.success).toBe(false);
 
-    const missingFields = error?.details.map((d) => d.path[0]);
+    const missingFields = (result.error?.issues ?? []).map((i) => i.path[0]);
     expect(missingFields).toContain('printConfig');
     expect(missingFields).toContain('enableSwagger');
   });
 
   it('fails if IP address is invalid', () => {
-    const { error } = AppConfigSchema.validate({
+    const result = AppConfigSchema.safeParse({
       printConfig: true,
       enableSwagger: false,
       bodyLimit: 1024,
@@ -42,12 +42,12 @@ describe('AppConfigSchema', () => {
       port: 3000,
       nodeEnv: 'development',
     });
-    expect(error).toBeDefined();
-    expect(error?.details.some((d) => d.message.includes('address'))).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('address'))).toBe(true);
   });
 
   it('fails if port is out of range', () => {
-    const { error } = AppConfigSchema.validate({
+    const result = AppConfigSchema.safeParse({
       printConfig: true,
       enableSwagger: false,
       bodyLimit: 1024,
@@ -55,8 +55,47 @@ describe('AppConfigSchema', () => {
       port: 70000, // invalid port
       nodeEnv: 'development',
     });
-    expect(error).toBeDefined();
-    expect(error?.details.some((d) => d.message.includes('port'))).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('port'))).toBe(true);
+  });
+
+  it('fails if nodeEnv is not an allowed value', () => {
+    const result = AppConfigSchema.safeParse({
+      printConfig: true,
+      enableSwagger: false,
+      bodyLimit: 1024,
+      address: '127.0.0.1',
+      port: 3000,
+      nodeEnv: 'staging',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('nodeEnv'))).toBe(true);
+  });
+
+  it('rejects unknown keys (joi default, mirrored by the schema)', () => {
+    const result = AppConfigSchema.safeParse({
+      printConfig: true,
+      enableSwagger: false,
+      bodyLimit: 1024,
+      address: '127.0.0.1',
+      port: 3000,
+      nodeEnv: 'development',
+      typoKey: true,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('validates an ipv6 address', () => {
+    const result = AppConfigSchema.safeParse({
+      printConfig: true,
+      enableSwagger: false,
+      bodyLimit: 1024,
+      address: '::1',
+      port: 3000,
+      nodeEnv: 'development',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.address).toBe('::1');
   });
 
   it('validates config with optional health', () => {
@@ -75,9 +114,9 @@ describe('AppConfigSchema', () => {
       },
     };
 
-    const { error, value } = AppConfigSchema.validate(configWithHealth);
-    expect(error).toBeUndefined();
-    expect(value.health).toEqual(configWithHealth.health);
+    const result = AppConfigSchema.safeParse(configWithHealth);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.health).toEqual(configWithHealth.health);
   });
 
   it('validates config with partial health', () => {
@@ -93,14 +132,29 @@ describe('AppConfigSchema', () => {
       },
     };
 
-    const { error, value } = AppConfigSchema.validate(configWithPartialHealth);
-    expect(error).toBeUndefined();
-    expect(value.health?.memoryHeap).toBe(512 * 1024 * 1024);
-    expect(value.health?.memoryRSS).toBeUndefined();
+    const result = AppConfigSchema.safeParse(configWithPartialHealth);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.health?.memoryHeap).toBe(512 * 1024 * 1024);
+      expect(result.data.health?.memoryRSS).toBeUndefined();
+    }
+  });
+
+  it('rejects a null cors.allowedHeaders', () => {
+    const result = AppConfigSchema.safeParse({
+      printConfig: true,
+      enableSwagger: false,
+      bodyLimit: 1024,
+      address: '127.0.0.1',
+      port: 3000,
+      nodeEnv: 'development',
+      cors: { allowedHeaders: null },
+    });
+    expect(result.success).toBe(false);
   });
 
   it('fails if health memoryHeap is negative', () => {
-    const { error } = AppConfigSchema.validate({
+    const result = AppConfigSchema.safeParse({
       printConfig: true,
       enableSwagger: false,
       bodyLimit: 1024,
@@ -111,12 +165,12 @@ describe('AppConfigSchema', () => {
         memoryHeap: -1,
       },
     });
-    expect(error).toBeDefined();
-    expect(error?.details.some((d) => d.path.includes('memoryHeap'))).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('memoryHeap'))).toBe(true);
   });
 
   it('fails if health memoryRSS is negative', () => {
-    const { error } = AppConfigSchema.validate({
+    const result = AppConfigSchema.safeParse({
       printConfig: true,
       enableSwagger: false,
       bodyLimit: 1024,
@@ -127,7 +181,7 @@ describe('AppConfigSchema', () => {
         memoryRSS: -100,
       },
     });
-    expect(error).toBeDefined();
-    expect(error?.details.some((d) => d.path.includes('memoryRSS'))).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('memoryRSS'))).toBe(true);
   });
 });

@@ -8,8 +8,8 @@ import {
 
 import type { MemoryTaxonomyLane } from '../../persistence/constants/memory-taxonomy.constant.js';
 import { TAXONOMY_ROOT_PARENT } from '../../persistence/constants/memory-taxonomy.constant.js';
-import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.js';
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
+import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
 import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
@@ -18,36 +18,14 @@ import { TAXONOMY_LANE_FIELDS } from '../constants/taxonomy-fields.constant.js';
 import { normalizeTaxonomyIcon } from '../helpers/normalize-taxonomy-icon.helper.js';
 import { normalizeTaxonomyLabel } from '../helpers/normalize-taxonomy-label.helper.js';
 
+import type {
+  TaxonomyLeafView,
+  TaxonomyNodeView,
+} from './taxonomy.service.types.js';
 import { TaxonomyMergeService } from './taxonomy-merge.service.js';
 
-/** One taxonomy node with its operational metadata, for the dashboard. */
-export interface TaxonomyNodeView {
-  id: string;
-  kind: MemoryTaxonomyNodeRecord['kind'];
-  /** '' on roots (clusters) and flat tags. */
-  parentId: string;
-  name: string;
-  icon?: string;
-  summary?: string;
-  createdBy: string;
-  /** Leaves attached to this label (Qdrant point count). */
-  leafCount: number;
-  /** Leaves with at least one constellation link edge. */
-  linkedCount: number;
-  /** Direct children in the taxonomy tree. */
-  childCount: number;
-  aliases: Array<{
-    alias: string;
-    source: string;
-    score?: number;
-    createdAt: Date;
-  }>;
-  lastReflectedAt?: Date;
-  lastConsolidatedAt?: Date;
-  lastRelinkedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+/** The leaf listing reads one scroll page. */
+const TAXONOMY_LEAVES_LIMIT = 50;
 
 /**
  * The taxonomy management surface: the dashboard's tree read and the user's
@@ -121,6 +99,99 @@ export class TaxonomyService {
         updatedAt: node.updatedAt,
       })),
     );
+  }
+
+  /**
+   * The leaves attached to one node's label (capped): partition rows are
+   * fact texts, encyclopedia rows are chunk titles with their source hrefs.
+   * An absent lane mapping (encyclopedia has no tag bag) returns empty.
+   */
+  async listLeaves(
+    id: string,
+    lane: MemoryTaxonomyLane,
+    scopeKey: string,
+  ): Promise<TaxonomyLeafView[]> {
+    const node = await this.taxonomy.findNode(id);
+    if (!node) throw new NotFoundException('Taxonomy node not found');
+    const field = TAXONOMY_LANE_FIELDS[lane][node.kind];
+    if (!field) return [];
+    if (lane === 'encyclopedia') {
+      const leaves = await this.groupEncyclopediaLeaves(
+        field as 'category' | 'community' | 'topic' | 'node',
+        node.name,
+      );
+      return leaves.slice(0, TAXONOMY_LEAVES_LIMIT);
+    }
+    const facts = await this.memoryRepository.listByLabel(
+      scopeKey,
+      field as 'category' | 'community' | 'subject' | 'tags',
+      node.name,
+      TAXONOMY_LEAVES_LIMIT,
+    );
+    return facts.map((fact) => ({
+      id: fact.id,
+      text: fact.text,
+      linked: fact.isLinked,
+      stampedAt: fact.createdAt || undefined,
+      memberIds: [fact.id],
+    }));
+  }
+
+  /**
+   * One leaf per source page: chunks of the same URL collapse into a single
+   * entry (titled chunk wins for the label, any-linked for the link flag,
+   * latest fetchedAt for the stamp), ordered by first appearance.
+   */
+  private async groupEncyclopediaLeaves(
+    field: 'category' | 'community' | 'topic' | 'node',
+    name: string,
+  ): Promise<TaxonomyLeafView[]> {
+    const chunks = await this.encyclopediaRepository.listAllChunksByLabel(
+      field,
+      name,
+    );
+    const groups = new Map<
+      string,
+      { leaf: TaxonomyLeafView; members: { id: string; chunkIndex?: number }[] }
+    >();
+    for (const chunk of chunks) {
+      const key = chunk.url || chunk.id;
+      const group = groups.get(key);
+      if (!group) {
+        groups.set(key, {
+          leaf: {
+            id: chunk.id,
+            text: chunk.title ?? chunk.url,
+            href: chunk.url || undefined,
+            linked: chunk.isLinked,
+            stampedAt: chunk.fetchedAt || undefined,
+            memberIds: [],
+          },
+          members: [{ id: chunk.id, chunkIndex: chunk.chunkIndex }],
+        });
+        continue;
+      }
+      // Prefer a real title over the fallback URL label.
+      if (group.leaf.text === group.leaf.href && chunk.title) {
+        group.leaf.text = chunk.title;
+      }
+      group.leaf.linked = group.leaf.linked || chunk.isLinked;
+      if (chunk.fetchedAt && chunk.fetchedAt > (group.leaf.stampedAt ?? '')) {
+        group.leaf.stampedAt = chunk.fetchedAt;
+      }
+      group.members.push({ id: chunk.id, chunkIndex: chunk.chunkIndex });
+    }
+    for (const { leaf, members } of groups.values()) {
+      // Chunk order (1..n first, snippets without an index last).
+      leaf.memberIds = members
+        .sort(
+          (a, b) =>
+            (a.chunkIndex ?? Number.MAX_SAFE_INTEGER) -
+            (b.chunkIndex ?? Number.MAX_SAFE_INTEGER),
+        )
+        .map((member) => member.id);
+    }
+    return [...groups.values()].map(({ leaf }) => leaf);
   }
 
   /**
@@ -222,18 +293,21 @@ export class TaxonomyService {
     const field = TAXONOMY_LANE_FIELDS[lane][node.kind];
     if (!field) return 0;
     try {
-      return lane === 'encyclopedia'
-        ? await this.encyclopediaRepository.countByLabel(
-            field as 'category' | 'community' | 'topic',
-            node.name,
-            { linkedOnly },
-          )
-        : await this.memoryRepository.countByLabel(
-            scopeKey,
-            field as 'category' | 'community' | 'subject' | 'tags',
-            node.name,
-            { linkedOnly },
-          );
+      if (lane === 'encyclopedia') {
+        const leaves = await this.groupEncyclopediaLeaves(
+          field as 'category' | 'community' | 'topic' | 'node',
+          node.name,
+        );
+        return linkedOnly
+          ? leaves.filter((leaf) => leaf.linked).length
+          : leaves.length;
+      }
+      return await this.memoryRepository.countByLabel(
+        scopeKey,
+        field as 'category' | 'community' | 'subject' | 'tags',
+        node.name,
+        { linkedOnly },
+      );
     } catch (error) {
       this.logger.warn(
         { lane, scopeKey, kind: node.kind, name: node.name },

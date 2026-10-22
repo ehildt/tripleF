@@ -1,6 +1,6 @@
 import { computed, type Ref } from 'vue';
 
-import { useModelsStore } from '@/stores/models';
+import { useModelsStore } from '@/stores/models/models.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 /**

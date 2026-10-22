@@ -1,6 +1,6 @@
 import type { Selection } from 'd3-selection';
 
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import type { D3ChartPoint } from '../D3Chart.types';
 import { buildHlcAreaPaths } from '../helpers/build-hlc-area-paths.helper';
 import { mapPointToHlcPixel } from '../helpers/map-point-to-hlc-pixel.helper';

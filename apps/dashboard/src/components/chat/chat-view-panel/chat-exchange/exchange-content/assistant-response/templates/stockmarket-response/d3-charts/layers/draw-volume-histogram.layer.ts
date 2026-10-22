@@ -1,6 +1,6 @@
 import { scaleLinear } from 'd3-scale';
 
-import type { D3ChartRenderContext } from '../composables/use-d3-chart.composable.types';
+import type { D3ChartRenderContext } from '../composables/use-d3-chart.types';
 import type { D3ChartPoint } from '../D3Chart.types';
 import { clampCenteredBarEdges } from '../helpers/clamp-centered-bar-edges.helper';
 import { computeBarSpacing } from '../helpers/compute-bar-spacing.helper';

@@ -6,10 +6,10 @@
  * whole cluster keeps the composable call, the template ref, and the lightbox
  * inside one component — nothing crosses the component boundary.
  */
-import { ImagePlus } from '@lucide/vue';
+import { ImagePlus, ScanSearch } from '@lucide/vue';
 
 import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
-import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import { usePreprocessingPreview } from '../composables/use-preprocessing-preview';
@@ -24,8 +24,9 @@ const {
 </script>
 
 <template>
-  <PreviewButton
-    :title="$t('common.previewPreprocessingOnImage')"
+  <MenuButton
+    :icon="ScanSearch"
+    :label="$t('common.previewPreprocessingOnImage')"
     :disabled="isPreviewLoading"
     @click="onPreviewClick"
   />

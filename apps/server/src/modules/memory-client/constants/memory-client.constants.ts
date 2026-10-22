@@ -1,9 +1,10 @@
+import type { MemoryCognitionSnapshot } from '../services/memory-cognition.service.types.js';
+
 /** Injection token for the resolved memory-app connection config. */
 export const MEMORY_CLIENT_CONFIG = Symbol('MEMORY_CLIENT_CONFIG');
 
 /** Job names on the shared vectorize queue (the memory app runs the worker). */
 export const VECTORIZE_JOB = 'vectorize';
-export const MEMORY_WRITE_JOB = 'memory-write';
 export const MEMORY_PROFILE_JOB = 'memory-profile';
 
 /**
@@ -25,3 +26,16 @@ export const CLUSTER_PROBE_LIMIT = 3;
 
 /** Max episode records injected into the respond context per turn. */
 export const EPISODE_PROBE_LIMIT = 3;
+
+/**
+ * Degraded cognition read: a disabled feature or a memory-app outage
+ * presents like a fresh cognition space, so harness probes degrade instead
+ * of failing the turn. The probe limit uses the same built-in default the
+ * callers fall back to.
+ */
+export const EMPTY_MEMORY_COGNITION_SNAPSHOT: MemoryCognitionSnapshot = {
+  profile: null,
+  insights: [],
+  convictions: [],
+  episodeProbeLimit: EPISODE_PROBE_LIMIT,
+};

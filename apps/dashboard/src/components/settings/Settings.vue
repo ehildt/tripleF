@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 
+import type { MenuTabItem } from '@/components/shared/ui/menu-tabs/MenuTabs.types';
+import MenuTabs from '@/components/shared/ui/menu-tabs/MenuTabs.vue';
 import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 import ChatNavigationSection from './chat-navigation-section/ChatNavigationSection.vue';
 import { useSettingsHealthTiles } from './composables/use-settings-health-tiles';
@@ -17,14 +19,27 @@ import InterfaceSection from './interface-section/InterfaceSection.vue';
 import LayoutsSection from './layouts-section/LayoutsSection.vue';
 import MemorySection from './memory-section/MemorySection.vue';
 import PreprocessingSection from './preprocessing-section/PreprocessingSection.vue';
-import SettingsMenu from './settings-menu/SettingsMenu.vue';
 import SystemSection from './system-section/SystemSection.vue';
 import WidgetsSection from './widgets-section/WidgetsSection.vue';
+import { SETTINGS_TAB_ITEMS } from './settings-tab-items.constant';
 
-const { activeSettingsTab, selectSettingsTab } = useSettingsTab();
+const { activeSettingsTab, activeTabTitle, selectSettingsTab } =
+  useSettingsTab();
 const { tiles } = useSettingsHealthTiles();
 const popoutSettingsStore = usePopoutSettingsStore();
 const playlistStore = usePlaylistStore();
+
+/**
+ * The settings panel's top tab menu: the shared tab items translated into
+ * MenuTabs items (labels translated at the consumer — constants stay data).
+ */
+const settingsMenuItems = computed<MenuTabItem[]>(() =>
+  SETTINGS_TAB_ITEMS.map((item) => ({
+    id: item.tab,
+    label: i18n.global.t(item.labelKey),
+    icon: item.icon,
+  })),
+);
 
 // The Settings previews are transient: switching the panel's own section
 // (Integrations → Preprocessing → … → System) dismisses them too.
@@ -32,48 +47,35 @@ watch(activeSettingsTab, () => {
   popoutSettingsStore.hidePopoutPreview();
   playlistStore.hidePlaylistPreview();
 });
-
-const TAB_TITLE_KEYS: Record<SettingsTab, string> = {
-  integrations: 'common.settingsIntegrations',
-  preprocessing: 'common.settingsPreprocessing',
-  layouts: 'common.settingsLayouts',
-  widgets: 'common.settingsWidgets',
-  chat: 'common.settingsChatNavigation',
-  interface: 'common.settingsInterface',
-  memory: 'common.settingsMemory',
-  system: 'common.settingsSystem',
-};
-
-const activeTabTitle = computed(() =>
-  i18n.global.t(TAB_TITLE_KEYS[activeSettingsTab.value]),
-);
 </script>
 
 <template>
   <PanelLayout class="settings">
     <PanelHeader>
       <PanelHeaderTitle :label="activeTabTitle" />
-      <SettingsMenu
-        :active-tab="activeSettingsTab"
-        @select-tab="selectSettingsTab"
+      <MenuTabs
+        variant="header"
+        :items="settingsMenuItems"
+        :active="activeSettingsTab"
+        @select="selectSettingsTab($event as SettingsTab)"
       />
     </PanelHeader>
 
     <IntegrationsSection v-if="activeSettingsTab === 'integrations'" />
 
-    <PreprocessingSection v-else-if="activeSettingsTab === 'preprocessing'" />
+    <PreprocessingSection v-if="activeSettingsTab === 'preprocessing'" />
 
-    <LayoutsSection v-else-if="activeSettingsTab === 'layouts'" />
+    <LayoutsSection v-if="activeSettingsTab === 'layouts'" />
 
-    <WidgetsSection v-else-if="activeSettingsTab === 'widgets'" />
+    <WidgetsSection v-if="activeSettingsTab === 'widgets'" />
 
-    <ChatNavigationSection v-else-if="activeSettingsTab === 'chat'" />
+    <ChatNavigationSection v-if="activeSettingsTab === 'chat'" />
 
-    <InterfaceSection v-else-if="activeSettingsTab === 'interface'" />
+    <InterfaceSection v-if="activeSettingsTab === 'interface'" />
 
-    <MemorySection v-else-if="activeSettingsTab === 'memory'" />
+    <MemorySection v-if="activeSettingsTab === 'memory'" />
 
-    <SystemSection v-else :tiles="tiles" />
+    <SystemSection v-if="activeSettingsTab === 'system'" :tiles="tiles" />
   </PanelLayout>
 </template>
 
@@ -83,5 +85,6 @@ const activeTabTitle = computed(() =>
   flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-3);
+  grid-column: 1 / -1;
 }
 </style>

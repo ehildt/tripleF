@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { deterministicPointId } from '../../../../qdrant/helpers/deterministic-point-id.helper.js';
-import type { VectorizeContext } from '../vectorize-context.type.js';
+import type { VectorizeContext } from '../vectorize-context.types.js';
 
 import { StoreStepService } from './store-step.service.js';
 
@@ -51,11 +51,15 @@ describe('StoreStepService', () => {
     const ctx = makeCtx({
       outputs: {
         extraction: {
+          remember: true,
           facts: [
             {
               text: 'User prefers concise.',
               subject: 'user',
-              kind: 'preference' as const,
+              node: 'general',
+              category: 'user facts',
+              community: 'notes',
+              kind: 'fact' as const,
               stability: 'durable' as const,
             },
           ],
@@ -91,7 +95,7 @@ describe('StoreStepService', () => {
     );
     expect(call.points[0].tags).toEqual(['style']);
     expect(call.points[0].subject).toBe('user');
-    expect(call.points[0].kind).toBe('preference');
+    expect(call.points[0].kind).toBe('fact');
     expect(call.points[0].stability).toBe('durable');
   });
 

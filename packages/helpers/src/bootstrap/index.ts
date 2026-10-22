@@ -1,5 +1,5 @@
 export { findUp } from '../find-up/index.ts';
-export type { AppConfig } from './app-config.model.ts';
+export type { AppConfig } from './app-config.schema.ts';
 export { AppConfigSchema } from './app-config.schema.ts';
 export {
   API_DOCS,

@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
-import { useAttachedFilesStore } from '@/stores/attached-files';
-import { useConversationStore } from '@/stores/conversation';
+import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { groupUploadedImages } from './helpers/group-uploaded-images.helper';
 import { mapPendingAttachment } from './helpers/map-pending-attachment.helper';

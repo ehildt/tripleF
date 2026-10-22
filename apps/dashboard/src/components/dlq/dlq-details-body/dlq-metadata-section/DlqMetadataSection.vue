@@ -3,7 +3,7 @@ import { Clock, Cpu, Image, Layers, Network, RefreshCw } from '@lucide/vue';
 import { toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { formatDate } from '@/utils/format-date.helper';
+import { formatDate } from '@/utils/format-date/format-date.helper';
 
 import { usePayloadContextSize } from './composables/use-payload-context-size';
 import DlqMetadataField from './dlq-metadata-field/DlqMetadataField.vue';

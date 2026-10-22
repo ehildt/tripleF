@@ -31,6 +31,7 @@ export function mapFactToNode(
     clusterKey: fact.clusterId?.trim() || fact.category?.trim() || undefined,
     category: fact.category?.trim() || undefined,
     communityKey: fact.community?.trim() || undefined,
+    node: fact.node?.trim() || undefined,
     text: fact.text,
     summary: fact.text,
     timestamp: fact.createdAt,
@@ -38,6 +39,7 @@ export function mapFactToNode(
     meta: [
       ...(fact.role ? [{ label: 'role', value: fact.role }] : []),
       ...(fact.subject ? [{ label: 'subject', value: fact.subject }] : []),
+      ...(fact.node ? [{ label: 'node', value: fact.node }] : []),
       ...(fact.category ? [{ label: 'category', value: fact.category }] : []),
       ...(fact.kind ? [{ label: 'kind', value: fact.kind }] : []),
       ...(fact.stability

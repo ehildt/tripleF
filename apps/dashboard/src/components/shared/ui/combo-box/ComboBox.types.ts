@@ -14,3 +14,8 @@ export interface ComboBoxProps {
    *  (the chat menu in the prompt bar). */
   side?: 'top' | 'bottom';
 }
+
+export interface ComboBoxEmits {
+  /** The input value (v-model update). */
+  'update:modelValue': [value: string];
+}

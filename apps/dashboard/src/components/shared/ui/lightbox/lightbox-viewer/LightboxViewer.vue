@@ -2,17 +2,14 @@
 import { ChevronLeft, ChevronRight } from '@lucide/vue';
 
 import MotionIcon from '../../motion-icon/MotionIcon.vue';
+import type {
+  LightboxViewerEmits,
+  LightboxViewerProps,
+} from '../Lightbox.types';
 
-defineProps<{
-  imageUrl: string;
-  hasPrev: boolean;
-  hasNext: boolean;
-}>();
+defineProps<LightboxViewerProps>();
 
-const emit = defineEmits<{
-  (e: 'prev'): void;
-  (e: 'next'): void;
-}>();
+const emit = defineEmits<LightboxViewerEmits>();
 </script>
 
 <template>

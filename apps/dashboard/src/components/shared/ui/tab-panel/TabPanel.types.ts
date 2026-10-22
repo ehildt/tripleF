@@ -9,3 +9,10 @@ export interface TabPanelProps {
   copyable?: boolean;
   copied?: boolean;
 }
+
+export interface TabPanelEmits {
+  /** A tab was selected. */
+  select: [tabId: string];
+  /** The copy action was clicked. */
+  copy: [];
+}

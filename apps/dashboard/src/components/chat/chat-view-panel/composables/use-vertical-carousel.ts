@@ -1,9 +1,7 @@
-import { storeToRefs } from 'pinia';
 import { nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
 
-import { useVerticalCarouselStore } from '@/stores/vertical-carousel';
-
 import { useActiveConversation } from './use-active-conversation';
+import { useCarouselScrollState } from './use-carousel-scroll-state';
 import { useProgrammaticScrollWindow } from './use-programmatic-scroll-window';
 
 const SCROLL_BOTTOM_THRESHOLD_PX = 8;
@@ -16,10 +14,10 @@ const SCROLL_BOTTOM_THRESHOLD_PX = 8;
  * content arrives so the user can read from the top, and a manual scroll-away
  * is preserved until the response finishes.
  *
- * The reactive scroll state the slides read lives in the vertical-carousel
- * store (single source of truth); this composable owns the component-scoped
+ * The reactive scroll state the slides read lives in the shared carousel
+ * scroll state (single source of truth); this composable owns the component-scoped
  * DOM observation and auto-scroll/pin behavior and writes the live metrics
- * back into the store.
+ * back into the shared state.
  *
  * `activeAssistantResponseStarted` releases the bottom pin: once the first
  * response content arrives, the view stops chasing the growing tail so the
@@ -29,9 +27,9 @@ export function useVerticalCarousel(isCompact: Ref<boolean>) {
   const { activeAssistantExchangeId, activeAssistantResponseStarted } =
     useActiveConversation();
 
-  const verticalCarouselStore = useVerticalCarouselStore();
+  const carouselScrollState = useCarouselScrollState();
   const { scrollContainerRef, scrollTop, viewportHeight, activeSectionIndex } =
-    storeToRefs(verticalCarouselStore);
+    carouselScrollState;
 
   const { armProgrammaticScroll } = useProgrammaticScrollWindow();
 
@@ -71,7 +69,7 @@ export function useVerticalCarousel(isCompact: Ref<boolean>) {
         armProgrammaticScroll();
       }
       container.scrollTop = container.scrollHeight;
-      verticalCarouselStore.syncScrollRefs(container);
+      carouselScrollState.syncScrollRefs(container);
     });
   }
 
@@ -96,7 +94,7 @@ export function useVerticalCarousel(isCompact: Ref<boolean>) {
         }
         container.scrollTop = position;
       }
-      verticalCarouselStore.syncScrollRefs(container);
+      carouselScrollState.syncScrollRefs(container);
       savedScrollTop.value = null;
     });
   }

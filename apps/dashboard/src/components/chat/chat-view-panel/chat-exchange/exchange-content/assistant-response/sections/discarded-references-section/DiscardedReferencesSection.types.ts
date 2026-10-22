@@ -1,4 +1,4 @@
-import type { DiscardedReference } from '@/types/harness-response-data.model';
+import type { DiscardedReference } from '@/types/assistant-response-data.model';
 
 export interface DiscardedReferencesSectionProps {
   /**

@@ -14,6 +14,7 @@ import {
 } from '../models/collection-vector-layout.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
+import { extractVectorSize } from './helpers/extract-vector-size.helper.js';
 import { EmbeddingService } from './embedding.service.js';
 
 /**
@@ -546,17 +547,4 @@ export class QdrantClientService implements OnModuleInit {
       indexes: Object.keys(info.payload_schema ?? {}),
     };
   }
-}
-
-/** Single-vector collections expose `{ size, distance }`; named vectors do not. */
-function extractVectorSize(vectors: unknown): number | undefined {
-  if (
-    vectors &&
-    typeof vectors === 'object' &&
-    'size' in vectors &&
-    typeof (vectors as { size: unknown }).size === 'number'
-  ) {
-    return (vectors as { size: number }).size;
-  }
-  return undefined;
 }

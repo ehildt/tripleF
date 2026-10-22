@@ -1,28 +1,7 @@
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
-import Joi from 'joi';
+import { z } from 'zod';
 
 import { isSourceEntry } from '../helpers/is-source-entry.helper.js';
-
-/**
- * Dynamic source config: content domains the pipeline prefers (rank boost +
- * prompt guidance) or blocks (dropped from tool context entirely). Managed
- * at runtime through the provider-overrides API (Settings), with env vars as
- * the pristine defaults — same contract as the Serper provider overrides.
- * Entries are hostnames, *.glob patterns, or /regex/ patterns — all match
- * the apex domain and its subdomains (regexes define their own scope).
- */
-export interface SourcesConfig {
-  preferred: string[];
-  blocked: string[];
-  /**
-   * How many web image candidates the pipeline pools for the image-analysis
-   * templates (describe/compare/ocr): fetched via the enabled image-search
-   * providers, verified, and offered to the response model for visual
-   * matching. An explicit count in the user's prompt still wins. 0 disables
-   * the reference pool entirely (no images verified).
-   */
-  imageTaskReferenceCount: number;
-}
 
 /** Default pool size for image-task reference candidates. */
 const DEFAULT_IMAGE_TASK_REFERENCE_COUNT = 6;
@@ -68,28 +47,50 @@ const DEFAULT_PREFERRED_SOURCES = [
 // through that parser first, and invalid env entries fail validation fast
 // instead of being silently fixed. Keep both sides' regex/glob/www
 // semantics in sync.
-const sourceEntrySchema = Joi.string().custom((value: string, helpers) => {
-  const entry = String(value).trim();
-  if (!isSourceEntry(entry)) return helpers.error('any.invalid');
-  if (entry.startsWith('/') && entry.endsWith('/')) return entry;
-  const isGlob = entry.startsWith('*.');
-  const normalized = (isGlob ? entry.slice(2) : entry)
-    .toLowerCase()
-    .replace(/^www\./, '');
-  return isGlob ? `*.${normalized}` : normalized;
-});
+const sourceEntrySchema = z
+  .string()
+  .refine((value) => isSourceEntry(value.trim()), {
+    error: 'Invalid source entry',
+  })
+  .transform((value) => {
+    const entry = value.trim();
+    if (entry.startsWith('/') && entry.endsWith('/')) return entry;
+    const isGlob = entry.startsWith('*.');
+    const normalized = (isGlob ? entry.slice(2) : entry)
+      .toLowerCase()
+      .replace(/^www\./, '');
+    return isGlob ? `*.${normalized}` : normalized;
+  });
 
-const hostnameListSchema = Joi.array().items(sourceEntrySchema).required();
+const hostnameListSchema = z.array(sourceEntrySchema);
 
-export const SourcesConfigSchema = Joi.object<SourcesConfig>({
+export const SourcesConfigSchema = z.strictObject({
   preferred: hostnameListSchema,
   blocked: hostnameListSchema,
-  imageTaskReferenceCount: Joi.number()
-    .integer()
+  /**
+   * How many web image candidates the pipeline pools for the image-analysis
+   * templates (describe/compare/ocr): fetched via the enabled image-search
+   * providers, verified, and offered to the response model for visual
+   * matching. An explicit count in the user's prompt still wins. 0 disables
+   * the reference pool entirely (no images verified).
+   */
+  imageTaskReferenceCount: z
+    .number()
+    .int()
     .min(0)
-    .max(MAX_IMAGE_TASK_REFERENCE_COUNT)
-    .required(),
-}).required();
+    .max(MAX_IMAGE_TASK_REFERENCE_COUNT),
+});
+
+/**
+ * Dynamic source config: content domains the pipeline prefers (rank boost +
+ * prompt guidance) or blocks (dropped from tool context entirely). Managed
+ * at runtime through the provider-overrides API (Settings), with env vars as
+ * the pristine defaults — same contract as the Serper provider overrides.
+ * Entries are hostnames, *.glob patterns, or /regex/ patterns — all match
+ * the apex domain and its subdomains (regexes define their own scope).
+ * Derived from the schema, so the type can never drift from validation.
+ */
+export type SourcesConfig = z.infer<typeof SourcesConfigSchema>;
 
 /** Parse a comma-separated env list into deduped lowercase hostnames. */
 function parseHostnameList(value: string | undefined): string[] {

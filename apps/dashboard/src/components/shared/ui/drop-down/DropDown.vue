@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import { useMenuPosition } from '@/composables/use-menu-position';
-import { stripHtml } from '@/utils/strip-html.helper';
+import { useMenuPosition } from '@/composables/use-menu-position/use-menu-position';
+import { stripHtml } from '@/utils/strip-html/strip-html.helper';
 
 import { useDropdown } from './composables/use-dropdown';
 import DropDownItem from './drop-down-item/DropDownItem.vue';
 import DropDownTrigger from './drop-down-trigger/DropDownTrigger.vue';
 import { displayValue } from './helpers/display-value.helper';
-import type { DropDownProps } from './DropDown.types';
+import type { DropDownEmits, DropDownProps } from './DropDown.types';
 
 const props = withDefaults(defineProps<DropDownProps>(), {
   variant: 'labeled',
@@ -23,10 +23,7 @@ const props = withDefaults(defineProps<DropDownProps>(), {
   teleport: false,
 });
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-  (e: 'open'): void;
-}>();
+const emit = defineEmits<DropDownEmits>();
 
 const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);

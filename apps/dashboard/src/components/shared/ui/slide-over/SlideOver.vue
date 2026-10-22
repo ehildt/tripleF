@@ -17,18 +17,13 @@ import { X } from '@lucide/vue';
 import { nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 
 import IconButton from '../icon-button/IconButton.vue';
-import type { SlideOverProps } from './SlideOver.types';
+import type { SlideOverEmits, SlideOverProps } from './SlideOver.types';
 
 const props = withDefaults(defineProps<SlideOverProps>(), {
   closeTitle: 'Close',
 });
 
-const emit = defineEmits<{
-  /** Close intent: Escape, backdrop click, or the header close button. */
-  close: [];
-  /** Leave transition finished — safe to unmount the body content. */
-  closed: [];
-}>();
+const emit = defineEmits<SlideOverEmits>();
 
 const titleId = useId();
 const panel = ref<HTMLElement | null>(null);

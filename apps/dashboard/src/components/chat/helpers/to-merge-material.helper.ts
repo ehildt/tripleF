@@ -1,5 +1,5 @@
-import type { Exchange } from '@/stores/conversation';
-import { toPromptMessage } from '@/stores/helpers/conversation/to-prompt-message.helper';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import { toPromptMessage } from '@/stores/conversation/helpers/to-prompt-message.helper';
 
 /**
  * One embedded exchange's material. Assistant answers carry their FULL
@@ -10,10 +10,10 @@ import { toPromptMessage } from '@/stores/helpers/conversation/to-prompt-message
  * the information a merge must consolidate. User requests stay plain text.
  */
 export function toMergeMaterial(exchange: Exchange): string {
-  if (exchange.role === 'assistant' && exchange.harnessData) {
+  if (exchange.role === 'assistant' && exchange.responseData) {
     return JSON.stringify({
-      template: exchange.harnessTemplate ?? null,
-      data: exchange.harnessData,
+      template: exchange.responseTemplate ?? null,
+      data: exchange.responseData,
     });
   }
   const message = toPromptMessage(exchange);

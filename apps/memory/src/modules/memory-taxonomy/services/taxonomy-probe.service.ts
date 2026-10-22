@@ -6,12 +6,10 @@ import type {
   MemoryTaxonomyProbeResult,
 } from '@triplef/agent/tools';
 
-import { normalizeCategory } from '../../memory-partition/helpers/normalize-category.helper.js';
 import type { MemoryTaxonomyLane } from '../../persistence/constants/memory-taxonomy.constant.js';
 import type { MemoryTaxonomyKind } from '../../persistence/constants/memory-taxonomy.constant.js';
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
-import { normalizeCommunity } from '../../qdrant/helpers/normalize-community.helper.js';
-import { normalizeSubject } from '../../qdrant/helpers/normalize-subject.helper.js';
+import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
 import {
@@ -20,26 +18,20 @@ import {
   SEMANTIC_CANDIDATE_POOL,
   VOCABULARY_RANK_LIMITS,
 } from '../constants/taxonomy-vocabulary.constant.js';
-import { trigramSimilarity } from '../helpers/trigram-similarity.helper.js';
+import { normalizeProbeQuery } from '../helpers/normalize-probe-query.helper.js';
 
-/** Normalize a probe query with its tier's boundary normalizer. */
-function normalizeProbeQuery(
-  kind: MemoryTaxonomyProbeInput['kind'],
-  query: string,
-): string {
-  const normalized =
-    kind === 'cluster'
-      ? normalizeCategory(query)
-      : kind === 'community'
-        ? normalizeCommunity(query)
-        : normalizeSubject(query);
-  return normalized ?? query.trim().toLowerCase();
-}
+/** A label handed to lazy re-embed (registry-record fields it needs). */
+type TaxonomyEmbeddedLabel = Pick<
+  MemoryTaxonomyNodeRecord,
+  'id' | 'lane' | 'scopeKey' | 'kind' | 'parentId' | 'normalizedName'
+>;
+import { trigramSimilarity } from '../helpers/trigram-similarity.helper.js';
 
 const KIND_NOUN: Record<MemoryTaxonomyProbeInput['kind'], string> = {
   cluster: 'plural family noun',
   community: 'plural sub-family noun',
   hub: 'singular subject entity',
+  node: 'singular aspect noun',
 };
 
 /**
@@ -224,14 +216,7 @@ export class TaxonomyProbeService {
    * Public: the reconciliation sweep needs full pairwise coverage.
    */
   async ensureLabelsEmbedded(
-    nodes: Array<{
-      id: string;
-      lane: MemoryTaxonomyLane;
-      scopeKey: string;
-      kind: MemoryTaxonomyKind;
-      parentId: string;
-      normalizedName: string;
-    }>,
+    nodes: TaxonomyEmbeddedLabel[],
     lane: MemoryTaxonomyLane,
     scopeKey: string,
   ): Promise<void> {

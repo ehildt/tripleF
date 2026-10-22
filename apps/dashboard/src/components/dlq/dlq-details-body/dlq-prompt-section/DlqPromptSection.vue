@@ -3,7 +3,7 @@ import { computed } from 'vue';
 
 import ExpandableMessageListBody from '@/components/shared/ui/expandable-message-list/expandable-message-list-body/ExpandableMessageListBody.vue';
 import ExpandableMessageList from '@/components/shared/ui/expandable-message-list/ExpandableMessageList.vue';
-import { sanitizeHtml } from '@/utils/sanitize-html.helper';
+import { sanitizeHtml } from '@/utils/sanitize-html/sanitize-html.helper';
 
 import { extractPromptMessages } from '../../helpers/extract-prompt-messages.helper';
 import type { DlqPromptSectionProps } from './DlqPromptSection.types';

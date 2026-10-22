@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useId } from 'vue';
 
-import { useHarnessMediaPresentation } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-presentation.composable';
+import { useResponseMediaPresentation } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-presentation';
 import ImageGrid from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/image-grid/ImageGrid.vue';
 import AssistantCarousel from '@/components/chat/shared/ui/media-carousel/AssistantCarousel.vue';
 import GalleryItemComponent from '@/components/chat/shared/ui/media-carousel/gallery-item/GalleryItem.vue';
@@ -15,7 +15,7 @@ defineProps<GallerySectionProps>();
 const titleId = useId();
 
 /** The prompt-bar presentation switch: gallery (carousel/single) or list. */
-const presentation = useHarnessMediaPresentation('image');
+const presentation = useResponseMediaPresentation('image');
 </script>
 
 <template>

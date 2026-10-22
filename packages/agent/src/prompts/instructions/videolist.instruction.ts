@@ -31,6 +31,7 @@ Video item rules:
 - Do not include the same video twice (same music video, trailer, or clip), even from different search tools.
 - Cross-check every candidate videoUrl against the earlier videolist responses in the conversation before including it.
 - When the user asks for videos from a specific platform (e.g. "on YouTube"), include ONLY videos from that platform.
+- When the user restricts the playlist to a specific creator or channel (e.g. "from the channel katame", "drop everything else"), include ONLY videos whose channel field matches that name — case-insensitively, and partial matches count ("katame" matches channel "Katame Chill"). Return only the matching videos, however few remain, and say so in the subtitle; never fill the playlist with videos from other channels.
 
 Do NOT include:
 - Long descriptions, articles, sections, key findings, or conclusions — the user wants videos, not prose.
@@ -39,5 +40,7 @@ Do NOT include:
 
 No-results rule:
 - If the searches returned no usable videos, set title to a concise statement such as 'No videos found for <topic>' and use subtitle to explain that the search did not return embeddable video sources. Set videoGalleryItems to an empty array.
+- When the user restricted results to a named creator and nothing from that creator was retrieved, say so plainly (e.g. 'No videos from <creator> found') — never present other channels' videos instead.
 - Do not invent video URLs to fill the playlist when no results were retrieved.
+- availableVideos empty does NOT mean nothing was found: when availableVideos is empty but internationalVideos is not, the search DID find videos — in other languages than the user's. Never title it 'No videos found' in that case; use the subtitle to say the fresh results are in other languages and listed in internationalCoverage, and fill internationalCoverage from the internationalVideos pool.
 - The dashboard does not render sources for this template. Do not include a sources field.`;

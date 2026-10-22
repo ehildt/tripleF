@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import ChartRow from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/chart-row/ChartRow.vue';
 import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-header/ResponseHeader.vue';
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
 import D3UnifiedStockChart from '../stockmarket-response/d3-charts/D3UnifiedStockChart.vue';
-import { useStockmarketItemData } from './composables/use-stockmarket-item-data.composable';
+import { useStockmarketItemData } from './composables/use-stockmarket-item-data';
 import StockmarketItemDescription from './stockmarket-item-description/StockmarketItemDescription.vue';
 import StockmarketItemPanels from './stockmarket-item-panels/StockmarketItemPanels.vue';
 import StockmarketItemRecommendation from './stockmarket-item-recommendation/StockmarketItemRecommendation.vue';

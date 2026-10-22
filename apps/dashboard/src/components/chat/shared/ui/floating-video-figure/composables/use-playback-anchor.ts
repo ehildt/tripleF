@@ -1,9 +1,9 @@
 import { computed, onMounted, onUnmounted, type Ref, ref } from 'vue';
 
 import { toEmbedUrl } from '@/composables/helpers/to-embed-url.helper';
-import { usePlaybackSession } from '@/composables/use-playback-session';
-import { usePlaybackAnchorStore } from '@/stores/playback-anchor';
-import type { AnchorCandidate } from '@/stores/playback-anchor.types';
+import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
+import type { AnchorCandidate } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry.types';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
 
 import { findAnchorScrollRoot } from './helpers/find-anchor-scroll-root.helper';
 import type { TemplateRefTarget } from './use-playback-anchor.types';
@@ -48,7 +48,7 @@ export function usePlaybackAnchor(
   item: Ref<{ videoUrl: string; title?: string }>,
   options?: { dockCondition?: () => boolean },
 ) {
-  const playbackAnchorStore = usePlaybackAnchorStore();
+  const playbackAnchorStore = usePlaybackAnchorRegistry();
   const playback = usePlaybackSession();
 
   const anchorElement = ref<HTMLElement | null>(null);

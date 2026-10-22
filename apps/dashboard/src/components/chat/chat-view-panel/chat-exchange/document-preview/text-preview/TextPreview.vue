@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { renderMarkdown } from '@/utils/render-markdown.helper';
+import { renderMarkdown } from '@/utils/render-markdown/render-markdown.helper';
 
 import type { TextPreviewProps } from './TextPreview.types';
 

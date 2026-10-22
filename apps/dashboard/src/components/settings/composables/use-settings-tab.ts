@@ -1,5 +1,8 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
+import { i18n } from '@/i18n/i18n';
+
+import { SETTINGS_TAB_ITEMS } from '../settings-tab-items.constant';
 import type { SettingsTab } from './use-settings-tab.types';
 
 const SETTINGS_TAB_STORAGE_KEY = 'vision-settings-tab';
@@ -38,6 +41,14 @@ function loadSettingsTab(): SettingsTab {
 export function useSettingsTab() {
   const activeSettingsTab = ref<SettingsTab>(loadSettingsTab());
 
+  /** The active tab's localized label (the panel header's title). */
+  const activeTabTitle = computed(() => {
+    const item = SETTINGS_TAB_ITEMS.find(
+      (entry) => entry.tab === activeSettingsTab.value,
+    );
+    return item ? i18n.global.t(item.labelKey) : '';
+  });
+
   function selectSettingsTab(tab: SettingsTab) {
     activeSettingsTab.value = tab;
     try {
@@ -47,5 +58,5 @@ export function useSettingsTab() {
     }
   }
 
-  return { activeSettingsTab, selectSettingsTab };
+  return { activeSettingsTab, activeTabTitle, selectSettingsTab };
 }

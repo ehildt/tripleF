@@ -1,4 +1,4 @@
-import type { ProviderOverridesSnapshot } from '../services/provider-overrides.types.js';
+import type { ProviderOverridesSnapshot } from '../services/provider-overrides.service.types.js';
 
 /**
  * Deep-copy the pristine env snapshot and merge the live overrides on top.

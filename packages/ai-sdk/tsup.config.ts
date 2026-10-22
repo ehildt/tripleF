@@ -30,7 +30,7 @@ export default defineConfig({
       '@nestjs/common',
       '@nestjs/swagger',
       'ai',
-      'joi',
+      'zod',
     ];
   },
   treeshake: true,

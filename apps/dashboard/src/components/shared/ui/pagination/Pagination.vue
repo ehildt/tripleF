@@ -9,23 +9,11 @@ import { computed } from 'vue';
 
 import IconButton from '../icon-button/IconButton.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
+import type { PaginationEmits, PaginationProps } from './Pagination.types';
 
-const props = defineProps<{
-  currentPage: number;
-  totalPages: number;
-  total: number;
-  limit: number;
-  offset: number;
-}>();
+const props = defineProps<PaginationProps>();
 
-defineEmits<{
-  (e: 'prev'): void;
-  (e: 'next'): void;
-  (e: 'first'): void;
-  (e: 'last'): void;
-  (e: 'page', page: number): void;
-  (e: 'setPageSize', size: number): void;
-}>();
+defineEmits<PaginationEmits>();
 
 const pageSizes = [5, 10, 20, 50];
 
@@ -91,7 +79,9 @@ const displayedPages = computed(() => {
         >
           {{ page }}
         </button>
-        <span v-else class="pagination__ellipsis">...</span>
+        <span v-if="typeof page !== 'number'" class="pagination__ellipsis"
+          >...</span
+        >
       </template>
 
       <IconButton

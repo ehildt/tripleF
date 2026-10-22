@@ -6,7 +6,7 @@ import { getNumberEnv } from '@triplef/helpers/get-number-env';
 export function AppConfigAdapter(env = process.env): AppConfig {
   return {
     address: env.ADDRESS ?? '0.0.0.0',
-    nodeEnv: env.NODE_ENV ?? 'development',
+    nodeEnv: (env.NODE_ENV ?? 'development') as AppConfig['nodeEnv'],
     port: getNumberEnv(env.PORT, 0) as number,
     bodyLimit: getNumberEnv(env.BODY_LIMIT, 0) as number,
     printConfig: getBooleanEnv(env.PRINT_CONFIG, false)!,

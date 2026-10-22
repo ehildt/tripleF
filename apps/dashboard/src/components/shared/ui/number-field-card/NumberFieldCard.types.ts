@@ -42,3 +42,10 @@ export interface NumberFieldCardProps {
   /** Accent source: the app accent or the preprocessing accent. */
   tone?: 'accent' | 'preprocessing';
 }
+
+export interface NumberFieldCardEmits {
+  /** The checkbox toggled. */
+  toggle: [];
+  /** The numeric value changed (v-model). */
+  'update:numberValue': [value: number];
+}

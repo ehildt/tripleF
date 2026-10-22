@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  type MemoryLinkKind,
-  MemoryLinkRepository,
-} from './memory-link.repository.js';
+import { MemoryLinkRepository } from './memory-link.repository.js';
+import type { MemoryLinkKind } from './memory-link.repository.types.js';
 
 function makeRepo(prisma: unknown): MemoryLinkRepository {
   const repo = new MemoryLinkRepository({ url: 'postgres://x' } as never);

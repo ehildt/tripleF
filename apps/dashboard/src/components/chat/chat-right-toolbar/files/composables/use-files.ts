@@ -4,10 +4,10 @@ import { getApiUrl } from '@/api/api-url';
 import { deleteUploadedObject } from '@/api/storage.api';
 import { useAttachmentList } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list';
 import type { AttachmentItem } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list.types';
-import { useToast } from '@/composables/use-toast';
+import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAttachedFilesStore } from '@/stores/attached-files';
-import { useConversationStore } from '@/stores/conversation';
+import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 /**
  * Component-scoped state for the Files panel: the merged attachment list and

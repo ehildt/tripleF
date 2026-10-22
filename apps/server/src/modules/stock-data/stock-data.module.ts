@@ -1,4 +1,7 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
+
+import { DeadLetterModule } from '../dead-letter/dead-letter.module.js';
+import { ProviderOverridesModule } from '../provider-overrides/provider-overrides.module.js';
 
 import { StockDataController } from './controllers/stock-data.controller.js';
 import { EodhdHistoryProvider } from './providers/eodhd/eodhd-history.provider.js';
@@ -12,14 +15,27 @@ import { MARKET_HISTORY_PROVIDER } from './market-data.types.js';
  * technical indicators, and a REST endpoint the dashboard paginates
  * against. Vendors plug in under `providers/`; the domain never names them.
  */
-@Module({
-  controllers: [StockDataController],
-  providers: [
-    StockHistoryService,
-    StockHistoryRepository,
-    EodhdHistoryProvider,
-    { provide: MARKET_HISTORY_PROVIDER, useExisting: EodhdHistoryProvider },
-  ],
-  exports: [StockHistoryService],
-})
-export class StockDataModule {}
+@Module({})
+export class StockDataModule {
+  private static readonly registration: DynamicModule = {
+    module: StockDataModule,
+    controllers: [StockDataController],
+    exports: [StockHistoryService],
+    imports: [DeadLetterModule.register(), ProviderOverridesModule.register()],
+    providers: [
+      StockHistoryService,
+      StockHistoryRepository,
+      EodhdHistoryProvider,
+      { provide: MARKET_HISTORY_PROVIDER, useExisting: EodhdHistoryProvider },
+    ],
+  };
+
+  /**
+   * Shared registration object: this app uses Nest's default by-reference
+   * dynamic-module ids, so one object per module class keeps multi-site
+   * imports a single shared instance (static-module singleton semantics).
+   */
+  static register(): DynamicModule {
+    return StockDataModule.registration;
+  }
+}

@@ -20,20 +20,17 @@ describe('SocketIOConfigSchema', () => {
       },
     };
 
-    const { error } = SocketIOConfigSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(SocketIOConfigSchema.safeParse(config).success).toBe(true);
   });
 
   it('should validate a port-only config', () => {
     const config = { port: 3000 };
 
-    const { error } = SocketIOConfigSchema.validate(config);
-    expect(error).toBeUndefined();
+    expect(SocketIOConfigSchema.safeParse(config).success).toBe(true);
   });
 
   it('should validate an empty config', () => {
-    const { error } = SocketIOConfigSchema.validate({});
-    expect(error).toBeUndefined();
+    expect(SocketIOConfigSchema.safeParse({}).success).toBe(true);
   });
 
   it('should reject an invalid transport', () => {
@@ -53,9 +50,9 @@ describe('SocketIOConfigSchema', () => {
       },
     };
 
-    const { error } = SocketIOConfigSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('transports');
+    const result = SocketIOConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('transports'))).toBe(true);
   });
 
   it('should reject an invalid cors method', () => {
@@ -75,16 +72,16 @@ describe('SocketIOConfigSchema', () => {
       },
     };
 
-    const { error } = SocketIOConfigSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('methods');
+    const result = SocketIOConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('methods'))).toBe(true);
   });
 
   it('should reject a non-numeric port', () => {
     const config = { port: 'not-a-number' };
 
-    const { error } = SocketIOConfigSchema.validate(config);
-    expect(error).toBeDefined();
-    expect(error!.message).toContain('port');
+    const result = SocketIOConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('port'))).toBe(true);
   });
 });

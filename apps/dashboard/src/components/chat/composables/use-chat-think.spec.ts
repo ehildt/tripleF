@@ -2,13 +2,13 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { useChatThink } from './use-chat-think';
 
 const toast = vi.hoisted(() => ({ warning: vi.fn() }));
 
-vi.mock('@/composables/use-toast', () => ({ useToast: () => toast }));
+vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 
 vi.mock('@/i18n/i18n', () => ({
   i18n: { global: { t: (key: string) => key } },

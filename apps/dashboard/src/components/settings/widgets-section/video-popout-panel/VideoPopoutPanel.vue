@@ -22,20 +22,22 @@ import {
   Menu,
   PictureInPicture2,
   Pin,
+  Power,
+  RotateCcw,
+  ScanSearch,
 } from '@lucide/vue';
 import { computed } from 'vue';
 
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
-import PowerToggle from '@/components/shared/ui/power-toggle/PowerToggle.vue';
-import PreviewButton from '@/components/shared/ui/preview-button/PreviewButton.vue';
-import ResetButton from '@/components/shared/ui/reset-button/ResetButton.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist';
-import { usePopoutSettingsStore } from '@/stores/popout-settings';
-import type { PopoutAnchor } from '@/stores/popout-settings.types';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import type { PopoutAnchor } from '@/stores/popout-settings/popout-settings.types';
 
 import type {
   PopoutHorizontal,
@@ -110,30 +112,33 @@ function handlePreviewToggle() {
 
 <template>
   <div class="video-popout-panel">
-    <div class="video-popout-panel__actions">
-      <PreviewButton
-        :active="popoutSettingsStore.popoutPreviewVisible"
-        :title="
+    <MenuRow variant="panel" role="toolbar">
+      <MenuButton
+        :icon="ScanSearch"
+        :label="
           popoutSettingsStore.popoutPreviewVisible
             ? $t('common.hideExamplePopout')
             : $t('common.showExamplePopout')
         "
+        :active="popoutSettingsStore.popoutPreviewVisible"
         @click="handlePreviewToggle"
       />
-      <ResetButton
-        :title="$t('common.resetPopoutSettingsToDefaults')"
+      <MenuButton
+        :icon="RotateCcw"
+        :label="$t('common.resetPopoutSettingsToDefaults')"
         @click="popoutSettingsStore.resetPopoutSettings"
       />
-      <PowerToggle
-        :enabled="popoutSettingsStore.popoutEnabled"
-        :title="$t('common.enableVideoPopout')"
-        @toggle="
+      <MenuButton
+        :icon="Power"
+        :label="$t('common.enableVideoPopout')"
+        :active="popoutSettingsStore.popoutEnabled"
+        @click="
           popoutSettingsStore.setPopoutEnabled(
             !popoutSettingsStore.popoutEnabled,
           )
         "
       />
-    </div>
+    </MenuRow>
 
     <div class="video-popout-panel__group">
       <SectionHeader
@@ -206,13 +211,6 @@ function handlePreviewToggle() {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-  padding: var(--spacing-2);
-}
-
-.video-popout-panel__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
 }
 
 .video-popout-panel__group {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useArtDirection } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-art-direction.composable';
-import { useHarnessMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-media-priority.composable';
+import { useArtDirection } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-art-direction';
+import { useResponseMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-priority';
 import ArticleHero from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/article-hero/ArticleHero.vue';
 import MediaGalleries from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/media-galleries/MediaGalleries.vue';
 
@@ -9,7 +9,7 @@ import EmptyStateSection from '../../sections/empty-state-section/EmptyStateSect
 import InternationalCoverageSection from '../../sections/international-coverage-section/InternationalCoverageSection.vue';
 import ParagraphSection from '../../sections/paragraph-section/ParagraphSection.vue';
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
-import { useEvaluationResponseData } from './composables/use-evaluation-response-data.composable';
+import { useEvaluationResponseData } from './composables/use-evaluation-response-data';
 import EvaluationComparisonSection from './sections/evaluation-comparison-section/EvaluationComparisonSection.vue';
 import EvaluationListSection from './sections/evaluation-list-section/EvaluationListSection.vue';
 import EvaluationSubjectProfile from './sections/evaluation-subject-profile/EvaluationSubjectProfile.vue';
@@ -19,7 +19,7 @@ const props = defineProps<EvaluationResponseProps>();
 
 const { subjectProfiles, isMultiSubject, comparisonView, hasAnyContent } =
   useEvaluationResponseData(props);
-const { videosFirst } = useHarnessMediaPriority(props.data);
+const { videosFirst } = useResponseMediaPriority(props.data);
 const { direction, splitHero } = useArtDirection(props);
 </script>
 

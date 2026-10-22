@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/chat' },
@@ -10,7 +10,9 @@ const router = createRouter({
       component: () => import('@/components/chat/Chat.vue'),
     },
     {
-      path: '/memory',
+      /* The drill is the breadcrumb URL: alternating kind/name segment
+         pairs (catch-all :drill*, '/memory/cluster/x/community/y'). */
+      path: '/memory/:drill(.*)*',
       name: 'memory',
       component: () => import('@/components/memory/Memory.vue'),
     },
@@ -33,5 +35,3 @@ const router = createRouter({
     },
   ],
 });
-
-export default router;

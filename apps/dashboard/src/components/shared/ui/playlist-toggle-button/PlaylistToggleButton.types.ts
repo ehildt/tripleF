@@ -10,3 +10,8 @@ export interface PlaylistToggleButtonProps {
    */
   size?: 'sm' | 'lg';
 }
+
+export interface PlaylistToggleButtonEmits {
+  /** The toggle was clicked (stopPropagation already applied). */
+  toggle: [event: MouseEvent];
+}

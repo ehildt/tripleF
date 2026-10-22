@@ -1,4 +1,4 @@
-import type { KeyFinding } from '@/types/harness-response-data.model';
+import type { KeyFinding } from '@/types/assistant-response-data.model';
 
 export interface EvaluationSubjectProfileProps {
   /** The evaluated subject's name. */

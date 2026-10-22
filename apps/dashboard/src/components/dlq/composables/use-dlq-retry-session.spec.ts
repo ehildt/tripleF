@@ -3,11 +3,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { useConversationStore } from '../../../stores/conversation';
-import { useDebugStore } from '../../../stores/debug';
-import { useApiMessagesStore } from '../../../stores/messages';
-import { inMemoryTemporaryConversationsTable } from '../../../test-utils/in-memory-temporary-conversations';
+import { useConversationStore } from '../../../stores/conversation/conversation.store';
+import { useDebugStore } from '../../../stores/debug/debug.store';
+import { useMessagesStore } from '../../../stores/messages/messages.store';
 import { useDlqRetrySession } from './use-dlq-retry-session';
+
+/**
+ * jsdom has no IndexedDB: the temp-conversations Dexie table gets plain
+ * stubbed methods (no round-trip needed — these tests never read it back).
+ */
+vi.mock(
+  '../../../stores/conversation/helpers/temporary-conversations.db',
+  () => ({
+    temporaryConversationsDb: {
+      temporaryConversations: {
+        toArray: vi.fn(async () => []),
+        get: vi.fn(async () => undefined),
+        put: vi.fn(async () => ''),
+        delete: vi.fn(async () => undefined),
+        bulkDelete: vi.fn(async () => undefined),
+      },
+    },
+  }),
+);
 
 // The socket store is module-mocked: the real one would open a live
 // connection; the retry-session tests assert the subscription contract only.
@@ -15,12 +33,14 @@ const socketStoreMock = vi.hoisted(() => ({
   ensureSocketConnection: vi.fn(),
   listenToEvent: vi.fn(),
   joinRoom: vi.fn(),
-  connectedEvents: new Set<string>(),
-  connectedRooms: new Map<string, Set<string>>(),
+  connectedEvents: { value: new Set<string>() } as { value: Set<string> },
+  connectedRooms: { value: new Map<string, Set<string>>() } as {
+    value: Map<string, Set<string>>;
+  },
 }));
 
-vi.mock('../../../stores/socket', () => ({
-  useSocketStore: () => socketStoreMock,
+vi.mock('@/composables/use-socket/use-socket', () => ({
+  useSocket: () => socketStoreMock,
 }));
 
 // Conversation-store persistence layers, as in stores/conversation.spec.ts.
@@ -35,7 +55,7 @@ vi.mock('../../../api/storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../../stores/attached-files', () => ({
+vi.mock('../../../stores/attached-files/attached-files.store', () => ({
   useAttachedFilesStore: () => ({ clearPendingFilesForConversation: vi.fn() }),
 }));
 
@@ -61,10 +81,9 @@ describe('useDlqRetrySession', () => {
     localStorage.clear();
     // Debug logging is paused unless explicitly unpaused in localStorage.
     localStorage.setItem('debug-paused', 'false');
-    inMemoryTemporaryConversationsTable.clear();
     vi.clearAllMocks();
-    socketStoreMock.connectedEvents = new Set();
-    socketStoreMock.connectedRooms = new Map();
+    socketStoreMock.connectedEvents.value = new Set();
+    socketStoreMock.connectedRooms.value = new Map();
     // Hydrate the conversation store before seeding — the async load would
     // otherwise wipe conversations created mid-test.
     useConversationStore();
@@ -82,8 +101,10 @@ describe('useDlqRetrySession', () => {
   });
 
   it('skips subscribing when event and room are already connected', () => {
-    socketStoreMock.connectedEvents = new Set(['harness']);
-    socketStoreMock.connectedRooms = new Map([['harness', new Set(['room1'])]]);
+    socketStoreMock.connectedEvents.value = new Set(['harness']);
+    socketStoreMock.connectedRooms.value = new Map([
+      ['harness', new Set(['room1'])],
+    ]);
     const { ensureSocketSubscription } = useDlqRetrySession();
 
     ensureSocketSubscription('room1', 'harness');
@@ -94,7 +115,7 @@ describe('useDlqRetrySession', () => {
 
   it('logs the retry and tracks a pending message once per request id', () => {
     const debugStore = useDebugStore();
-    const messagesStore = useApiMessagesStore();
+    const messagesStore = useMessagesStore();
     const { addRetryPendingMessage } = useDlqRetrySession();
 
     addRetryPendingMessage('req-1', 'room1', 'harness', 'llama3');

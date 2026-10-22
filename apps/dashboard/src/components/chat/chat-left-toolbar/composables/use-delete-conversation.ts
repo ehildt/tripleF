@@ -1,5 +1,5 @@
-import { useConversationStore } from '@/stores/conversation';
-import { useSocketStore } from '@/stores/socket';
+import { useSocket } from '@/composables/use-socket/use-socket';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { isSocketEventInUse } from '../shared/helpers/is-socket-event-in-use.helper';
 import { isSocketShared } from '../shared/helpers/is-socket-shared.helper';
@@ -12,7 +12,7 @@ import { useSocketSubscriptions } from './use-socket-subscriptions';
  */
 export function useDeleteConversation() {
   const conversationStore = useConversationStore();
-  const socketStore = useSocketStore();
+  const socketStore = useSocket();
   const { subscriptions, removeSubscriptionByEventRoom } =
     useSocketSubscriptions();
 

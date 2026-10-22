@@ -1,18 +1,19 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
-export interface SecretsConfig {
+const hexKey = z.hex().length(64);
+
+export const SecretsConfigSchema = z.strictObject({
   /** Active master key (hex, 32 bytes) — encrypts and decrypts. */
-  activeKey?: string;
-  /** Retired master key (hex, 32 bytes) — decrypts only, for rotation. */
-  previousKey?: string;
-}
-
-const hexKey = Joi.string().hex().length(64);
-
-export const SecretsConfigSchema = Joi.object<SecretsConfig>({
   activeKey: hexKey.optional(),
+  /** Retired master key (hex, 32 bytes) — decrypts only, for rotation. */
   previousKey: hexKey.optional(),
-}).required();
+});
+
+/**
+ * Master-key material for the secrets cipher. Derived from the schema, so
+ * the type can never drift from the runtime contract.
+ */
+export type SecretsConfig = z.infer<typeof SecretsConfigSchema>;
 
 export function SecretsConfigAdapter(env = process.env): SecretsConfig {
   return {

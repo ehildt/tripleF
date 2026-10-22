@@ -1,6 +1,6 @@
 import type { JSONValue } from 'ai';
 
-import { ThinkMode } from '../types/think-mode.type.js';
+import { ThinkMode } from '../types/think-mode.types.js';
 
 /**
  * Build providerOptions for ollama-ai-provider-v2.

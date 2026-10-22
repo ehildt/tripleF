@@ -24,7 +24,7 @@ export function ResearchConfigAdapter(env = process.env): ResearchConfig {
       apiKey: env.SERPER_API_KEY || undefined,
       web: {
         enabled: getBooleanEnv(env.SERPER_WEB_ENABLED, true)!,
-        results: getNumberEnv(env.SERPER_WEB_RESULTS, 10) as number,
+        results: getNumberEnv(env.SERPER_WEB_RESULTS, 3) as number,
       },
     },
     brightData: {
@@ -33,7 +33,7 @@ export function ResearchConfigAdapter(env = process.env): ResearchConfig {
       serpZone: env.BRIGHT_DATA_SERP_ZONE || undefined,
       web: {
         enabled: getBooleanEnv(env.BRIGHT_DATA_WEB_ENABLED, true)!,
-        results: getNumberEnv(env.BRIGHT_DATA_WEB_RESULTS, 10) as number,
+        results: getNumberEnv(env.BRIGHT_DATA_WEB_RESULTS, 3) as number,
       },
     },
   };

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { useHarnessSectionCollapsed } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-harness-section-collapsed.composable';
+import { useResponseSectionCollapsed } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-section-collapsed';
 import SectionTitle from '@/components/chat/shared/ui/section-title/SectionTitle.vue';
-import type { Source } from '@/types/harness-response-data.model';
+import type { Source } from '@/types/assistant-response-data.model';
 
 import { pickCycleColor } from '../../shared/helpers/pick-cycle-color.helper';
 
@@ -24,7 +24,7 @@ const validItems = computed(() =>
 );
 
 /** Hidden while the prompt bar collapses the sources section type. */
-const isCollapsed = useHarnessSectionCollapsed('sources');
+const isCollapsed = useResponseSectionCollapsed('sources');
 </script>
 
 <template>

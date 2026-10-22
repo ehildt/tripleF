@@ -8,3 +8,8 @@ export interface DropDownItemProps {
   /** Render the check column (only the default menu look has one). */
   showCheck: boolean;
 }
+
+export interface DropDownItemEmits {
+  /** This option was selected. */
+  select: [option: string];
+}

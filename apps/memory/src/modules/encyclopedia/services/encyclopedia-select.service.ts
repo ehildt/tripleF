@@ -32,14 +32,11 @@ import type { EncyclopediaConfig } from '../models/encyclopedia-config.model.js'
 import { mapChunkWithScore } from './helpers/map-chunk-with-score.helper.js';
 import { mapHitToChunk } from './helpers/map-hit-to-chunk.helper.js';
 import { mapPassageToChunk } from './helpers/map-passage-to-chunk.helper.js';
-import {
-  EncyclopediaIngestTriageService,
-  type IngestTriageOutcome,
-} from './encyclopedia-ingest-triage.service.js';
-import {
-  EncyclopediaStoreService,
-  type PersistOutcome,
-} from './encyclopedia-store.service.js';
+import { roundRobinCap } from './helpers/round-robin-cap.helper.js';
+import { EncyclopediaIngestTriageService } from './encyclopedia-ingest-triage.service.js';
+import type { IngestTriageOutcome } from './encyclopedia-ingest-triage.service.types.js';
+import { EncyclopediaStoreService } from './encyclopedia-store.service.js';
+import type { PersistOutcome } from './encyclopedia-store.service.types.js';
 
 /** Over-fetch multiplier for the global probe — absorbs deduped duplicates. */
 const PROBE_OVERFETCH_MULTIPLIER = 4;
@@ -51,6 +48,14 @@ const PROBE_OVERFETCH_MULTIPLIER = 4;
  * persisted sources (neighbor-expanded). Nothing is ever summarized — every
  * returned passage is a verbatim span.
  */
+/** Ephemeral chunking outcome: kept chunks plus the dedupe drop count. */
+interface EncyclopediaEphemeralChunks {
+  /** Chunks that survived dedupe and the round-robin cap. */
+  chunks: EncyclopediaSelectedChunk[];
+  /** Chunks dropped as duplicates. */
+  dropped: number;
+}
+
 @Injectable()
 export class EncyclopediaSelectService {
   private readonly logger = new Logger(EncyclopediaSelectService.name);
@@ -241,10 +246,9 @@ export class EncyclopediaSelectService {
   }
 
   /** Chunk + dedupe + round-robin cap the no-url/oversize documents. */
-  private chunkEphemeral(docs: EncyclopediaSourceDocument[]): {
-    chunks: EncyclopediaSelectedChunk[];
-    dropped: number;
-  } {
+  private chunkEphemeral(
+    docs: EncyclopediaSourceDocument[],
+  ): EncyclopediaEphemeralChunks {
     const chunks: EncyclopediaSelectedChunk[] = [];
     const seen = new Set<string>();
     for (const doc of docs) {
@@ -361,40 +365,4 @@ export class EncyclopediaSelectService {
 
     return [...passages, ...snippets];
   }
-}
-
-/**
- * Keep at most `maxChunks` chunks, drawing round-robin from per-document
- * groups (keyed by url/title) so every source contributes before any source
- * contributes twice.
- */
-function roundRobinCap(
-  chunks: EncyclopediaSelectedChunk[],
-  maxChunks: number,
-): EncyclopediaSelectedChunk[] {
-  const groups: EncyclopediaSelectedChunk[][] = [];
-  const groupByKey = new Map<string, EncyclopediaSelectedChunk[]>();
-  for (const chunk of chunks) {
-    const key = chunk.url ?? chunk.title ?? '';
-    let group = groupByKey.get(key);
-    if (!group) {
-      group = [];
-      groupByKey.set(key, group);
-      groups.push(group);
-    }
-    group.push(chunk);
-  }
-
-  const capped: EncyclopediaSelectedChunk[] = [];
-  let cursor = 0;
-  while (
-    capped.length < maxChunks &&
-    groups.some((group) => group.length > 0)
-  ) {
-    const group = groups[cursor % groups.length];
-    const chunk = group.shift();
-    if (chunk) capped.push(chunk);
-    cursor++;
-  }
-  return capped;
 }

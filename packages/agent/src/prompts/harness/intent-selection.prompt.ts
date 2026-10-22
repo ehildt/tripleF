@@ -38,6 +38,7 @@ import {
   VIDEOLIST_TEMPLATE_RULES,
 } from './intent-selection/template-selection.prompt.js';
 import {
+  CREATOR_RESTRICTION_RULES,
   EXPLICIT_PROVIDER_RULES,
   FETCH_AFTER_SEARCH_RULES,
   MEDIA_COUNT_RULES,
@@ -120,6 +121,8 @@ ${formatToolAvailabilityCatalog(toolNames).join('\n')}
 ${TOOL_NAME_RULES}
 
 ${EXPLICIT_PROVIDER_RULES}
+
+${CREATOR_RESTRICTION_RULES}
 
 ${TOOL_SELECTION_MODEL}
 

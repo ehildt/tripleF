@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
-import { useModelsStore } from '@/stores/models';
+import { useModelsStore } from '@/stores/models/models.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import type { OllamaModel } from '@/types/ollama-model.model';
 

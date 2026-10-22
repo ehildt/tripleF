@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MessageListItem } from '../types';
+import type { MessageListItem } from '../ExpandableMessageList.types';
 import { parseMessages } from './parse-messages.helper';
 
 describe('parseMessages', () => {

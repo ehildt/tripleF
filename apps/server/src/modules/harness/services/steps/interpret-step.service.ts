@@ -15,7 +15,10 @@ import {
   EPISODE_PROBE_LIMIT,
   EPISODE_TAG,
 } from '../../../memory-client/constants/memory-client.constants.js';
-import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
+import { MemoryCognitionService } from '../../../memory-client/services/memory-cognition.service.js';
+import { MemoryOverridesService } from '../../../memory-client/services/memory-overrides.service.js';
+import { MemoryPartitionRecordsService } from '../../../memory-client/services/memory-partition-records.service.js';
+import { MemorySynopsesService } from '../../../memory-client/services/memory-synopses.service.js';
 import { buildProviderOptions } from '../../../ollama/helpers/provider-options.helper.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import type { InterpretResult } from '../../actions/interpret.action.types.js';
@@ -55,7 +58,10 @@ export class InterpretStepService implements StepHandler {
     private readonly interpretAction: InterpretActionService,
     private readonly io: SocketIOService,
     private readonly aiSdkService: AiSdkService,
-    private readonly memoryClient: MemoryClientService,
+    private readonly memoryRecords: MemoryPartitionRecordsService,
+    private readonly memorySynopses: MemorySynopsesService,
+    private readonly memoryCognition: MemoryCognitionService,
+    private readonly memoryOverrides: MemoryOverridesService,
   ) {}
 
   async execute(ctx: HarnessContext): Promise<void> {
@@ -164,7 +170,7 @@ export class InterpretStepService implements StepHandler {
     const query = this.buildProbeQuery(ctx, firstPass);
     if (!query) return undefined;
 
-    const hits = await this.memoryClient.searchByText({
+    const hits = await this.memoryRecords.searchByText({
       memoryPartition,
       text: query,
       limit: 5,
@@ -176,12 +182,12 @@ export class InterpretStepService implements StepHandler {
     // when no single record ranks highly (≤2 hits per lane: the user's
     // partition scope plus the global encyclopedia synopses).
     const [partitionSynopses, encyclopediaSynopses] = await Promise.all([
-      this.memoryClient.searchSynopses({
+      this.memorySynopses.searchSynopses({
         memoryPartition,
         text: query,
         limit: 2,
       }),
-      this.memoryClient.searchSynopses({ text: query, limit: 2 }),
+      this.memorySynopses.searchSynopses({ text: query, limit: 2 }),
     ]);
     const synopsisSection = buildSynopsisProbeSection([
       ...partitionSynopses,
@@ -196,7 +202,7 @@ export class InterpretStepService implements StepHandler {
     const episodeProbeLimit = await this.resolveEpisodeProbeLimit();
     const episodeHits =
       cognitionKey && episodeProbeLimit > 0
-        ? await this.memoryClient.searchByText({
+        ? await this.memoryRecords.searchByText({
             text: query,
             tags: [EPISODE_TAG],
             recency: true,
@@ -293,7 +299,7 @@ export class InterpretStepService implements StepHandler {
   ): Promise<string | undefined> {
     if (!cognitionKey) return undefined;
     try {
-      const snapshot = await this.memoryClient.getCognition(cognitionKey);
+      const snapshot = await this.memoryCognition.getCognition(cognitionKey);
       if (!snapshot.profile) return undefined;
       const { userProfile } = splitCognitionProfile(
         JSON.parse(snapshot.profile) as Record<string, unknown>,
@@ -332,7 +338,7 @@ export class InterpretStepService implements StepHandler {
       ctx.memoryCognition ?? ctx.memoryPartition ?? ctx.sessionId;
     if (!cognitionKey) return undefined;
     try {
-      const snapshot = await this.memoryClient.getCognition(cognitionKey);
+      const snapshot = await this.memoryCognition.getCognition(cognitionKey);
       const profile = snapshot.profile
         ? (JSON.parse(snapshot.profile) as Record<string, unknown> | undefined)
         : undefined;
@@ -350,7 +356,7 @@ export class InterpretStepService implements StepHandler {
    */
   private async resolveEpisodeProbeLimit(): Promise<number> {
     try {
-      const overrides = await this.memoryClient.getOverrides();
+      const overrides = await this.memoryOverrides.getOverrides();
       return overrides.episodeProbeLimit ?? EPISODE_PROBE_LIMIT;
     } catch {
       return EPISODE_PROBE_LIMIT;

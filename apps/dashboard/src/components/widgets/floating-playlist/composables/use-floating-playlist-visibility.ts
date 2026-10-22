@@ -2,7 +2,7 @@ import { onClickOutside, onKeyStroke } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import type { Ref } from 'vue';
 
-import { usePlaylistStore } from '@/stores/playlist';
+import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 
 /**
  * Open/collapse behavior of the floating playlist — mirrors the tab menu:

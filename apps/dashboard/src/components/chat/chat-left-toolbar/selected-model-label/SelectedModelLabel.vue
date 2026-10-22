@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import type { SelectedModelLabelProps } from './SelectedModelLabel.types';
 
 const props = defineProps<SelectedModelLabelProps>();
 
-/** Em-dash fallback while nothing is selected — the box never renders empty. */
-const displayName = computed(() => props.selectedModelName || '—');
+const { t } = useI18n();
+
+/** While nothing is selected the box asks for a model instead of rendering
+ *  empty — the same invitation the blinking model trigger makes. */
+const hasNoModelSelected = computed(() => !props.selectedModelName);
+const displayName = computed(
+  () => props.selectedModelName || t('chat.selectModelPlaceholder'),
+);
 </script>
 
 <template>
   <span
     class="selected-model-label"
-    :class="{ 'selected-model-label--missing': isModelMissing }"
+    :class="{
+      'selected-model-label--missing': isModelMissing,
+      'selected-model-label--placeholder': hasNoModelSelected,
+    }"
     >{{ displayName }}</span
   >
 </template>
@@ -38,5 +48,11 @@ const displayName = computed(() => props.selectedModelName || '—');
 
 .selected-model-label--missing {
   color: var(--color-accent-primary);
+}
+
+/* Placeholder invitation while no model is selected: muted so it reads as
+   guidance, not as a picked model. */
+.selected-model-label--placeholder {
+  color: var(--color-fg-muted);
 }
 </style>

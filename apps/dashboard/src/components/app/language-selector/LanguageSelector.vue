@@ -4,7 +4,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { useMenuPosition } from '@/composables/use-menu-position';
+import { useMenuPosition } from '@/composables/use-menu-position/use-menu-position';
 
 import { useLocale } from '../../../i18n/composables/use-locale';
 import { locales } from '../../../i18n/locale-registry';

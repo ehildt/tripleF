@@ -1,7 +1,7 @@
 import type {
   MediaItem,
   VideoGalleryItem,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 /**
  * Narrow a media slide to a video item. Video items carry a `videoUrl`;

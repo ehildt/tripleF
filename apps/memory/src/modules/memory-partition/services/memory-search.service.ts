@@ -1,40 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TextToLines } from '@triplef/helpers/text-to-lines';
 
-import {
-  type MemoryClusterRecord,
-  MemoryClusterRepository,
-} from '../../persistence/services/memory-cluster.repository.js';
-import type {
-  MemoryPoint,
-  MemoryScopeFilters,
-} from '../../qdrant/models/memory.model.js';
+import { MemoryClusterRepository } from '../../persistence/services/memory-cluster.repository.js';
+import type { MemoryPoint } from '../../qdrant/models/memory.model.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.service.js';
-import {
-  type SynopsisHit,
-  SynopsisRepository,
-} from '../../qdrant/services/synopsis.repository.js';
+import { SynopsisRepository } from '../../qdrant/services/synopsis.repository.js';
+import type { SynopsisHit } from '../../qdrant/services/synopsis.repository.types.js';
 
-interface SearchInput extends MemoryScopeFilters {
-  limit?: number;
-  /** Blend recency into the ranking (episode probe). */
-  recency?: boolean;
-  /**
-   * Track retrieval heat for this search's hits (default true). Background
-   * bookkeeping probes (extract/write/profile prior-fact probes, consolidate
-   * and relink sweeps) pass false — maintenance retrievals are not user
-   * engagement and must not heat up records.
-   */
-  trackHeat?: boolean;
-}
-
-/** Search result with the hits' cluster summaries attached (graph-augmented recall). */
-interface MemorySearchWithClusters {
-  points: MemoryPoint[];
-  clusters: MemoryClusterRecord[];
-}
+import type {
+  MemorySearchWithClusters,
+  SearchInput,
+} from './memory-search.service.types.js';
 
 /**
  * The read path for the fact partition: search by text or by a raw vector.

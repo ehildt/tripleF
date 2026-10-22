@@ -1,5 +1,5 @@
 import { useSubmit } from '@/components/chat/composables/use-submit';
-import { useConversationStore } from '@/stores/conversation';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import type { ExchangeActions } from './use-exchange-actions.types';
 

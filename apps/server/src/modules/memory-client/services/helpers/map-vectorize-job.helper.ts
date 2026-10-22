@@ -1,5 +1,5 @@
 import { VECTORIZE_JOB } from '../../constants/memory-client.constants.js';
-import type { VectorizeJobData } from '../../models/vectorize-job.model.js';
+import type { VectorizeJobData } from '../memory-enqueue.service.types.js';
 
 /** Wrap a vectorize payload into a BullMQ job descriptor. */
 export function mapVectorizeJob(data: VectorizeJobData) {

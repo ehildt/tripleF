@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useVideoGalleryTile } from '@/components/chat/shared/composables/use-video-gallery-tile.composable';
+import { useVideoGalleryTile } from '@/components/chat/shared/composables/use-video-gallery-tile';
 import FloatingVideoFigure from '@/components/chat/shared/ui/floating-video-figure/FloatingVideoFigure.vue';
 import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
-import { usePlaylistToggle } from '@/composables/use-playlist-toggle';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import { usePlaylistToggle } from '@/composables/use-playlist-toggle/use-playlist-toggle';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import MediaCaptionScrim from '../../media-caption-scrim/MediaCaptionScrim.vue';
 import MediaCardHeader from '../../media-card-header/MediaCardHeader.vue';

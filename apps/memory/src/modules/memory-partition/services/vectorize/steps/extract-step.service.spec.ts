@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { VectorizeContext } from '../vectorize-context.type.js';
+import type { VectorizeContext } from '../vectorize-context.types.js';
 
 import { ExtractStepService } from './extract-step.service.js';
 
@@ -11,7 +11,7 @@ function makeCtx(overrides: Partial<VectorizeContext> = {}): VectorizeContext {
     memoryPartition: 'sess-1',
     sessionId: 'sess-1',
     role: 'user',
-    text: 'User prefers single-line if statements.',
+    text: 'Sam lives in Berlin.',
     model: 'qwen3.8:27b',
     steps: new Map(),
     outputs: {},
@@ -36,21 +36,25 @@ function makeStep() {
   return { step, generateWithTools };
 }
 
-const conciseFact = {
-  text: 'User prefers concise.',
-  subject: 'user',
-  kind: 'preference' as const,
+const berlinFact = {
+  text: 'Sam lives in Berlin.',
+  subject: 'sam',
+  node: 'residence',
+  category: 'people',
+  community: 'contacts',
+  kind: 'state' as const,
   stability: 'durable' as const,
 };
 
 describe('ExtractStepService', () => {
   beforeEach(() => vi.resetAllMocks());
 
-  it('extracts facts and tags on the first pass', async () => {
+  it('judges the turn worthy: verdict plus facts and tags on the first pass', async () => {
     const { step, generateWithTools } = makeStep();
     generateWithTools.mockResolvedValue({
       text: JSON.stringify({
-        facts: [conciseFact],
+        remember: true,
+        facts: [berlinFact],
         tags: ['style'],
       }),
     });
@@ -59,23 +63,65 @@ describe('ExtractStepService', () => {
     await step.execute(ctx);
 
     expect(ctx.outputs.extraction).toEqual({
-      facts: [conciseFact],
+      remember: true,
+      facts: [berlinFact],
       tags: ['style'],
     });
     expect(generateWithTools).toHaveBeenCalledTimes(1);
   });
 
+  it('passes an explicit remember=false verdict straight through', async () => {
+    const { step, generateWithTools } = makeStep();
+    generateWithTools.mockResolvedValue({
+      text: JSON.stringify({ remember: false, facts: [], tags: [] }),
+    });
+
+    const ctx = makeCtx({ text: 'find japanese dark trap music by katame' });
+    await step.execute(ctx);
+
+    expect(ctx.outputs.extraction).toEqual({
+      remember: false,
+      facts: [],
+      tags: [],
+    });
+  });
+
+  it('judges with the full turn context: attached files and gathered data ride the prompt', async () => {
+    const { step, generateWithTools } = makeStep();
+    generateWithTools.mockResolvedValue({
+      text: JSON.stringify({ remember: false, facts: [], tags: [] }),
+    });
+
+    const ctx = makeCtx({
+      files: [{ name: 'bauplan.pdf', url: 'https://files/bauplan.pdf' }],
+      gathered: '[serperWebSearch] top hits for katame',
+    });
+    await step.execute(ctx);
+
+    const userMessage = (
+      generateWithTools.mock.calls[0][0].messages as Array<{
+        role: string;
+        content: string;
+      }>
+    )[1];
+    expect(userMessage.content).toContain('ATTACHED FILES');
+    expect(userMessage.content).toContain('bauplan.pdf');
+    expect(userMessage.content).toContain('GATHERED DATA');
+    expect(userMessage.content).toContain('top hits for katame');
+  });
+
   it('tolerates fenced JSON from smarter chat models', async () => {
     const { step, generateWithTools } = makeStep();
     generateWithTools.mockResolvedValue({
-      text: `\`\`\`json\n${JSON.stringify({ facts: [conciseFact], tags: ['work'] })}\n\`\`\``,
+      text: `\`\`\`json\n${JSON.stringify({ remember: true, facts: [berlinFact], tags: ['work'] })}\n\`\`\``,
     });
 
     const ctx = makeCtx();
     await step.execute(ctx);
 
     expect(ctx.outputs.extraction).toEqual({
-      facts: [conciseFact],
+      remember: true,
+      facts: [berlinFact],
       tags: ['work'],
     });
   });
@@ -83,9 +129,15 @@ describe('ExtractStepService', () => {
   it('runs one correction pass when the first output fails the schema', async () => {
     const { step, generateWithTools } = makeStep();
     generateWithTools
-      .mockResolvedValueOnce({ text: '{"facts": "not-an-array"}' })
       .mockResolvedValueOnce({
-        text: JSON.stringify({ facts: [conciseFact], tags: ['work'] }),
+        text: '{"remember": true, "facts": "not-an-array"}',
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          remember: true,
+          facts: [berlinFact],
+          tags: ['work'],
+        }),
       });
 
     const ctx = makeCtx();
@@ -100,11 +152,12 @@ describe('ExtractStepService', () => {
     }>;
     expect(secondCallMessages[2]).toEqual({
       role: 'assistant',
-      content: '{"facts": "not-an-array"}',
+      content: '{"remember": true, "facts": "not-an-array"}',
     });
     expect(secondCallMessages[3].content).toContain('not valid');
     expect(ctx.outputs.extraction).toEqual({
-      facts: [{ ...conciseFact }],
+      remember: true,
+      facts: [{ ...berlinFact }],
       tags: ['work'],
     });
   });
@@ -117,7 +170,11 @@ describe('ExtractStepService', () => {
     await step.execute(ctx);
 
     expect(generateWithTools).toHaveBeenCalledTimes(2);
-    expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
+    expect(ctx.outputs.extraction).toEqual({
+      remember: false,
+      facts: [],
+      tags: [],
+    });
   });
 
   it('degrades immediately when the LLM call itself fails', async () => {
@@ -128,7 +185,11 @@ describe('ExtractStepService', () => {
     await step.execute(ctx);
 
     expect(generateWithTools).toHaveBeenCalledTimes(1);
-    expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
+    expect(ctx.outputs.extraction).toEqual({
+      remember: false,
+      facts: [],
+      tags: [],
+    });
   });
 
   it('skips extraction entirely when the job carries no model', async () => {
@@ -138,6 +199,10 @@ describe('ExtractStepService', () => {
     await step.execute(ctx);
 
     expect(generateWithTools).not.toHaveBeenCalled();
-    expect(ctx.outputs.extraction).toEqual({ facts: [], tags: [] });
+    expect(ctx.outputs.extraction).toEqual({
+      remember: false,
+      facts: [],
+      tags: [],
+    });
   });
 });

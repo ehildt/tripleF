@@ -2,24 +2,13 @@ import { Injectable } from '@nestjs/common';
 
 import { ShownMediaKind } from '../../../generated/prisma/client.js';
 import { ShownMediaRepository } from '../../persistence/services/shown-media.repository.js';
-import {
-  extractShownMediaKeys,
-  IMAGE_FINGERPRINT_PREFIX,
-  IMAGE_STORAGE_HASH_PREFIX,
-} from '../helpers/media/extract-shown-media-keys.helper.js';
-import { extractStorageHash } from '../helpers/media/extract-storage-hash.helper.js';
-import { videoUrlKeys } from '../helpers/url-trust/video-url-keys.helper.js';
+import { extractShownMediaKeys } from '../helpers/media/extract-shown-media-keys.helper.js';
 
 import { mapShownMediaKey } from './helpers/map-shown-media-key.helper.js';
-import type { RecordShownMediaParams } from './shown-media.service.types.js';
-
-/** Registry keys for one conversation, split for candidate matching. */
-export interface ShownMediaKeys {
-  /** `fp:<fingerprint>` and `sh:<storage hash>` entries. */
-  images: Set<string>;
-  /** Canonical video keys. */
-  videos: Set<string>;
-}
+import type {
+  RecordShownMediaParams,
+  ShownMediaKeys,
+} from './shown-media.service.types.js';
 
 /**
  * Orchestrates the shown-media registry for the harness pipeline: records
@@ -73,32 +62,4 @@ export class ShownMediaService {
       entries,
     );
   }
-}
-
-/**
- * Whether an image candidate was already shown: by content fingerprint
- * (pre-ingest candidates, freshly ingested images) or by storage hash
- * (references to objects ingested in earlier turns).
- */
-export function isShownImage(
-  keys: ShownMediaKeys,
-  opts: { fingerprint?: string; storageUrl?: string },
-): boolean {
-  if (
-    opts.fingerprint &&
-    keys.images.has(IMAGE_FINGERPRINT_PREFIX + opts.fingerprint)
-  ) {
-    return true;
-  }
-
-  if (!opts.storageUrl) return false;
-  const hash = extractStorageHash(opts.storageUrl);
-  return (
-    hash !== undefined && keys.images.has(IMAGE_STORAGE_HASH_PREFIX + hash)
-  );
-}
-
-/** Whether a video URL matches any already-shown canonical key. */
-export function isShownVideo(keys: ShownMediaKeys, videoUrl: string): boolean {
-  return videoUrlKeys(videoUrl).some((key) => keys.videos.has(key));
 }

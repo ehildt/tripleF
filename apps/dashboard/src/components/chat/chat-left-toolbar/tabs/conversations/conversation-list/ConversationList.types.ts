@@ -1,4 +1,4 @@
-import type { Conversation } from '@/stores/conversation';
+import type { Conversation } from '@/stores/conversation/conversation.model';
 
 export interface ConversationListProps {
   /** Conversations to render (the list sorts by recency). */

@@ -1,8 +1,11 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
-import type { MemoryClientConfig } from './memory-client-config.adapter.js';
-
-export const MemoryClientConfigSchema = Joi.object<MemoryClientConfig>({
-  url: Joi.string().uri().optional(),
-  enabled: Joi.boolean().optional(),
-}).required();
+/**
+ * Validates the serializable `MemoryClientConfig` env output. Looser than
+ * the interface on purpose: url and enabled are optional at this boundary
+ * (adapters fall back to defaults).
+ */
+export const MemoryClientConfigSchema = z.strictObject({
+  url: z.url().optional(),
+  enabled: z.boolean().optional(),
+});

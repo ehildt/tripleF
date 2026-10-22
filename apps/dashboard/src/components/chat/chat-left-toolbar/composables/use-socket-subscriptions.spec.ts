@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 
-import type { Conversation } from '@/stores/conversation';
+import type { Conversation } from '@/stores/conversation/conversation.model';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 const state = vi.hoisted(() => ({
@@ -18,7 +18,7 @@ const state = vi.hoisted(() => ({
   closeEvent: vi.fn(),
 }));
 
-vi.mock('@/stores/conversation', async () => {
+vi.mock('@/stores/conversation/conversation.store', async () => {
   const { reactive } = await import('vue');
   const store = reactive({
     conversations: [] as Conversation[],
@@ -29,8 +29,8 @@ vi.mock('@/stores/conversation', async () => {
   return { useConversationStore: () => store };
 });
 
-vi.mock('@/stores/socket', () => ({
-  useSocketStore: () => ({
+vi.mock('@/composables/use-socket/use-socket', () => ({
+  useSocket: () => ({
     ensureSocketConnection: state.ensureSocketConnection,
     listenToEvent: state.listenToEvent,
     joinRoom: state.joinRoom,

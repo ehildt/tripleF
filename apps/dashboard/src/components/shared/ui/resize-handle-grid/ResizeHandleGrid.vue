@@ -5,13 +5,14 @@
  */
 import type { ResizeDirection } from '@/types/resize-direction.model';
 
-defineProps<{
-  directions?: ResizeDirection[];
-}>();
+import type {
+  ResizeHandleGridEmits,
+  ResizeHandleGridProps,
+} from './ResizeHandleGrid.types';
 
-const emit = defineEmits<{
-  (e: 'resize', direction: ResizeDirection, event: PointerEvent): void;
-}>();
+defineProps<ResizeHandleGridProps>();
+
+const emit = defineEmits<ResizeHandleGridEmits>();
 
 const RESIZE_DIRECTIONS: ResizeDirection[] = [
   'n',

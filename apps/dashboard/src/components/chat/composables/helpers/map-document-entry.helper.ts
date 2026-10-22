@@ -1,4 +1,4 @@
-import type { UploadedDocument } from '@/stores/conversation';
+import type { UploadedDocument } from '@/stores/conversation/conversation.model';
 import type { AttachedFileEntry } from '@/types/attached-files.model';
 
 /** Convert a pending document entry into an uploaded document. */

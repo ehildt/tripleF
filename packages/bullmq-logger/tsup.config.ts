@@ -30,7 +30,7 @@ export default defineConfig({
       '@nestjs/common',
       '@nestjs/swagger',
       'bullmq',
-      'joi',
+      'zod',
       'pino',
       'pino-pretty',
     ];

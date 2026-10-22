@@ -1,6 +1,6 @@
 import type { MemoryExtraction } from '@triplef/agent/schemas';
 
-import type { TaxonomyResolvedLabel } from '../services/taxonomy-resolution.service.js';
+import type { TaxonomyResolvedLabel } from '../services/taxonomy-resolution.service.types.js';
 
 import {
   buildTaxonomyLabelInputs,
@@ -44,22 +44,14 @@ export function applyTaxonomyResolution(
     : undefined;
 
   return {
-    facts: extraction.facts.map((fact) => {
-      const categoryRef = fact.category ?? extraction.category;
-      const communityRef = fact.community ?? extraction.community;
-      return {
-        ...fact,
-        category: fact.category
-          ? lookup('cluster', undefined, fact.category)
-          : undefined,
-        community: fact.community
-          ? lookup('community', categoryRef, fact.community)
-          : undefined,
-        subject: fact.subject
-          ? lookup('hub', communityRef ?? categoryRef, fact.subject)
-          : undefined,
-      };
-    }),
+    remember: extraction.remember,
+    facts: extraction.facts.map((fact) => ({
+      ...fact,
+      category: lookup('cluster', undefined, fact.category),
+      community: lookup('community', fact.category, fact.community),
+      subject: lookup('hub', fact.community, fact.subject),
+      node: lookup('node', fact.subject, fact.node),
+    })),
     tags: extraction.tags.map((tag) => lookup('tag', undefined, tag)),
     category,
     community,

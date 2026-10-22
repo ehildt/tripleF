@@ -73,7 +73,7 @@ export const AssistantMetaBar: Story = {
       ...baseExchange,
       role: 'assistant',
       model: 'llama3',
-      harnessData: {
+      responseData: {
         category: 'Tech',
         publishDate: '2026-08-07',
         readTime: '5 min read',

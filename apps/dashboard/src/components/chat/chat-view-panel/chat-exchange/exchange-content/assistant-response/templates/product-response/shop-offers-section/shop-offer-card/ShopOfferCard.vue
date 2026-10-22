@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useShopOfferCard } from './composables/use-shop-offer-card.composable';
+import { useShopOfferCard } from './composables/use-shop-offer-card';
 import ShopOfferCardDetails from './shop-offer-card-details/ShopOfferCardDetails.vue';
 import ShopOfferCardHeader from './shop-offer-card-header/ShopOfferCardHeader.vue';
 import type { ShopOfferCardProps } from './ShopOfferCard.types';

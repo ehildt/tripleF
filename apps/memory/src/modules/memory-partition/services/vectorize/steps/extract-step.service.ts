@@ -18,24 +18,28 @@ import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model
 import { buildPriorMemorySection } from '../../../helpers/build-prior-memory-section.helper.js';
 import { parseExtraction } from '../../../helpers/parse-extraction.helper.js';
 import { MemorySearchService } from '../../memory-search.service.js';
-import type { VectorizeContext } from '../vectorize-context.type.js';
-import type { VectorizeStepHandler } from '../vectorize-step.interface.js';
+import type { VectorizeContext } from '../vectorize-context.types.js';
+import type { VectorizeStepHandler } from '../vectorize-step.types.js';
 /** One initial attempt + one correction pass — mirror of the interpret retry. */
 const MAX_EXTRACTION_ATTEMPTS = 2;
-/** Probe steps an extraction may take before answering (cluster → community → hub, with slack). */
+/** Probe steps an extraction may take before answering (cluster → community → hub → node, with slack). */
 const EXTRACT_MAX_STEPS = 5;
 
 /**
- * 'extract' — the LLM step of the vectorize pipeline: the chat model reads the
- * turn text, decides what is worth remembering (durable, self-contained facts),
- * and labels the topics (tags) for topic-filtered recall, under the structured
- * {facts, tags} template.
+ * 'extract' — the judged LLM step of the vectorize pipeline: the chat model
+ * reads the turn-side text with its full judging context (attached file
+ * names, the turn's gathered tool data, the ALREADY STORED prior-memory
+ * probe) and commits a schema-enforced verdict FIRST — `remember: false` is
+ * the complete, correct outcome of an ordinary turn (one-off requests,
+ * answered questions, filler) and means nothing is prepared for embedding.
+ * Only on `remember: true` does it distill durable, self-contained facts
+ * with their topic labels under the structured {remember, facts, tags}
+ * contract.
  *
- * Mirrors the harness LLM-step contract: template + structured prompt, tolerant
- * parse, one correction retry — then graceful degrade to an empty extraction.
- * The raw turn text is still stored by later steps, so memory degrades to
- * text-only, never to a failed job. No model on the job (manual ingestion)
- * skips extraction by design.
+ * Mirrors the harness LLM-step contract: template + structured prompt,
+ * tolerant parse, one correction retry — then graceful degrade to an empty
+ * extraction. No model on the job (manual ingestion) skips extraction by
+ * design.
  *
  * Prior-memory-aware: before extraction the step probes the fact partition
  * with the raw turn text and appends the hits as an ALREADY STORED block, so
@@ -56,7 +60,7 @@ export class ExtractStepService implements VectorizeStepHandler {
 
   async execute(ctx: VectorizeContext): Promise<void> {
     if (!ctx.model) {
-      ctx.outputs.extraction = { facts: [], tags: [] };
+      ctx.outputs.extraction = { remember: false, facts: [], tags: [] };
       return;
     }
 
@@ -95,12 +99,23 @@ export class ExtractStepService implements VectorizeStepHandler {
       },
       {
         role: 'user' as const,
-        content: sourceText + (priorSection ? `\n\n${priorSection}` : ''),
+        content:
+          sourceText +
+          // The judging context rides the SAME message as the source text so
+          // the verdict sees the whole turn at once: what the user uploaded,
+          // what the tools gathered, and what memory already knows.
+          (ctx.files?.length
+            ? `\n\nATTACHED FILES (the user's uploads this turn):\n${ctx.files.map((file) => `- ${file.name}`).join('\n')}`
+            : '') +
+          (ctx.gathered?.trim()
+            ? `\n\nGATHERED DATA (this turn's tool results — judge it, never echo it):\n${ctx.gathered}`
+            : '') +
+          (priorSection ? `\n\n${priorSection}` : ''),
       },
     ];
 
     // The interactive probe: the model may confirm the ranked vocabulary
-    // top-down (cluster → community → hub) before answering, adopting
+    // top-down (cluster → community → hub → node) before answering, adopting
     // existing nodes VERBATIM instead of minting near-duplicate labels.
     const taxonomyProbeTool = createMemoryTaxonomyProbeTool({
       probe: (input) =>
@@ -135,6 +150,7 @@ export class ExtractStepService implements VectorizeStepHandler {
         jobId: ctx.jobId,
         requestId: ctx.requestId,
         step: 'extract',
+        remember: ctx.outputs.extraction.remember,
         factCount: facts.length,
         tags,
         sourceChars: ctx.text.length,
@@ -163,7 +179,7 @@ export class ExtractStepService implements VectorizeStepHandler {
         messages,
         taxonomyProbeTool,
       );
-      if (text === null) return { facts: [], tags: [] };
+      if (text === null) return { remember: false, facts: [], tags: [] };
 
       try {
         return parseExtraction(text);
@@ -179,7 +195,7 @@ export class ExtractStepService implements VectorizeStepHandler {
             },
             `extraction still invalid after correction — degrading to empty for job ${ctx.jobId}`,
           );
-          return { facts: [], tags: [] };
+          return { remember: false, facts: [], tags: [] };
         }
         // One correction pass: the model sees its failed output and the error.
         messages.push(
@@ -188,7 +204,7 @@ export class ExtractStepService implements VectorizeStepHandler {
         );
       }
     }
-    return { facts: [], tags: [] };
+    return { remember: false, facts: [], tags: [] };
   }
 
   /**

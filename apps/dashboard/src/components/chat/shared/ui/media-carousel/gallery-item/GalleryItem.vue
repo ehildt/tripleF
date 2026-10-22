@@ -2,12 +2,12 @@
 import { X } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 
-import { useAddImageToFiles } from '@/components/chat/shared/composables/use-add-image-to-files.composable';
+import { useAddImageToFiles } from '@/components/chat/shared/composables/use-add-image-to-files';
 import AsyncImage from '@/components/shared/ui/async-image/AsyncImage.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
-import type { GalleryItem } from '@/types/harness-response-data.model';
+import type { GalleryItem } from '@/types/assistant-response-data.model';
 
-import { useGalleryImageTile } from '../../../composables/use-gallery-image-tile.composable';
+import { useGalleryImageTile } from '../../../composables/use-gallery-image-tile';
 import AddToFilesButton from '../../add-to-files-button/AddToFilesButton.vue';
 import MediaCaptionScrim from '../../media-caption-scrim/MediaCaptionScrim.vue';
 import MediaCardHeader from '../../media-card-header/MediaCardHeader.vue';

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useHealthTile } from './composables/use-health-tile.composable';
+import { useHealthTile } from './composables/use-health-tile';
 import type { HealthTileProps } from './HealthTile.types';
 
 const props = defineProps<HealthTileProps>();

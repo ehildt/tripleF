@@ -3,7 +3,10 @@ import { AiSdkService } from '@triplef/ai-sdk';
 import { SocketIOService } from '@triplef/socketio';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MemoryClientService } from '../../../memory-client/services/memory-client.service.js';
+import { MemoryCognitionService } from '../../../memory-client/services/memory-cognition.service.js';
+import { MemoryOverridesService } from '../../../memory-client/services/memory-overrides.service.js';
+import { MemoryPartitionRecordsService } from '../../../memory-client/services/memory-partition-records.service.js';
+import { MemorySynopsesService } from '../../../memory-client/services/memory-synopses.service.js';
 import { InterpretActionService } from '../../actions/interpret.action.js';
 import { HarnessContext } from '../harness-context.type.js';
 
@@ -51,14 +54,29 @@ describe('InterpretStepService', () => {
           useValue: { generateChat: vi.fn() },
         },
         {
-          provide: MemoryClientService,
+          provide: MemoryPartitionRecordsService,
           useValue: {
             searchByText: vi.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: MemorySynopsesService,
+          useValue: {
             searchSynopses: vi.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: MemoryCognitionService,
+          useValue: {
             getCognition: vi.fn().mockResolvedValue({
               profile: null,
               insights: [],
             }),
+          },
+        },
+        {
+          provide: MemoryOverridesService,
+          useValue: {
             getOverrides: vi.fn().mockResolvedValue({}),
           },
         },
@@ -365,16 +383,27 @@ describe('InterpretStepService', () => {
   });
 
   it('resolves a clarification from the memory probe and re-runs the classifier', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.searchByText as any).mockResolvedValue([
+    const memoryRecords = module.get<MemoryPartitionRecordsService>(
+      MemoryPartitionRecordsService,
+    );
+    const memorySynopses = module.get<MemorySynopsesService>(
+      MemorySynopsesService,
+    );
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    const memoryOverrides = module.get<MemoryOverridesService>(
+      MemoryOverridesService,
+    );
+    (memoryRecords.searchByText as any).mockResolvedValue([
       { text: 'User prefers concise answers.' },
     ]);
-    (memoryClient.searchSynopses as any).mockResolvedValue([]);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    (memorySynopses.searchSynopses as any).mockResolvedValue([]);
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: null,
       insights: [],
     });
-    (memoryClient.getOverrides as any).mockResolvedValue({
+    (memoryOverrides.getOverrides as any).mockResolvedValue({
       episodeProbeLimit: 3,
     });
 
@@ -426,14 +455,25 @@ describe('InterpretStepService', () => {
   });
 
   it('keeps the clarification when the memory probe does not resolve it', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.searchByText as any).mockResolvedValue([]);
-    (memoryClient.searchSynopses as any).mockResolvedValue([]);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    const memoryRecords = module.get<MemoryPartitionRecordsService>(
+      MemoryPartitionRecordsService,
+    );
+    const memorySynopses = module.get<MemorySynopsesService>(
+      MemorySynopsesService,
+    );
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    const memoryOverrides = module.get<MemoryOverridesService>(
+      MemoryOverridesService,
+    );
+    (memoryRecords.searchByText as any).mockResolvedValue([]);
+    (memorySynopses.searchSynopses as any).mockResolvedValue([]);
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: null,
       insights: [],
     });
-    (memoryClient.getOverrides as any).mockResolvedValue({});
+    (memoryOverrides.getOverrides as any).mockResolvedValue({});
 
     (action.execute as any).mockResolvedValue({
       intent: {
@@ -459,16 +499,27 @@ describe('InterpretStepService', () => {
   });
 
   it('falls back to the first-pass question when the second pass throws', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.searchByText as any).mockResolvedValue([
+    const memoryRecords = module.get<MemoryPartitionRecordsService>(
+      MemoryPartitionRecordsService,
+    );
+    const memorySynopses = module.get<MemorySynopsesService>(
+      MemorySynopsesService,
+    );
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    const memoryOverrides = module.get<MemoryOverridesService>(
+      MemoryOverridesService,
+    );
+    (memoryRecords.searchByText as any).mockResolvedValue([
       { text: 'Some memory hit.' },
     ]);
-    (memoryClient.searchSynopses as any).mockResolvedValue([]);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    (memorySynopses.searchSynopses as any).mockResolvedValue([]);
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: null,
       insights: [],
     });
-    (memoryClient.getOverrides as any).mockResolvedValue({});
+    (memoryOverrides.getOverrides as any).mockResolvedValue({});
 
     (action.execute as any)
       .mockResolvedValueOnce({
@@ -514,8 +565,10 @@ describe('InterpretStepService', () => {
   });
 
   it('injects the persona name into the classifier when the user set one', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.getCognition as any).mockResolvedValue({
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    (memoryCognition.getCognition as any).mockResolvedValue({
       profile: JSON.stringify({ persona: { name: 'Shinku' } }),
       insights: [],
     });
@@ -538,8 +591,10 @@ describe('InterpretStepService', () => {
   });
 
   it('degrades gracefully when the cognition read fails', async () => {
-    const memoryClient = module.get<MemoryClientService>(MemoryClientService);
-    (memoryClient.getCognition as any).mockRejectedValue(new Error('down'));
+    const memoryCognition = module.get<MemoryCognitionService>(
+      MemoryCognitionService,
+    );
+    (memoryCognition.getCognition as any).mockRejectedValue(new Error('down'));
     (action.execute as any).mockResolvedValue({
       intent: {
         template: 'text',

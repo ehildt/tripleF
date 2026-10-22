@@ -1,4 +1,4 @@
-import type { Conversation } from '@/stores/conversation';
+import type { Conversation } from '@/stores/conversation/conversation.model';
 
 export interface ConversationItemProps {
   /** The conversation to render. */

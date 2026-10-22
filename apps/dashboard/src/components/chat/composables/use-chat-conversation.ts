@@ -1,8 +1,8 @@
 import { computed } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
 
-import { useModelsStore } from '../../../stores/models';
+import { useModelsStore } from '../../../stores/models/models.store';
 
 /**
  * Maps the active conversation and its selected model into the reactive

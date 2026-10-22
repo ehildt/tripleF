@@ -3,10 +3,10 @@ import { Image, Images, ScanLine, Sparkles, Zap } from '@lucide/vue';
 
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import {
-  usePreprocessingStore,
-  VARIANT_DESCRIPTIONS,
-} from '@/stores/preprocessing';
+import { VARIANT_DESCRIPTIONS } from '@/stores/preprocessing-settings/preprocessing-settings.constant';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
+
+import { useParameterHighlight } from '../../composables/use-parameter-highlight';
 
 type VariantKey = keyof typeof store.variants;
 
@@ -15,7 +15,8 @@ type VariantConfig = Record<
   { icon: typeof Image; label: string; description: string }
 >;
 
-const store = usePreprocessingStore();
+const store = usePreprocessingSettingsStore();
+const { hoveredVariant, highlightedVariants } = useParameterHighlight();
 
 const variantConfig: VariantConfig = {
   original: {
@@ -63,11 +64,11 @@ function toggleVariant(key: VariantKey) {
         :description="config.description"
         :checked="store.variants[key as VariantKey]"
         :disabled="!store.enabled"
-        :highlighted="store.isVariantHighlighted(key)"
+        :highlighted="highlightedVariants.includes(key)"
         tone="preprocessing"
         @toggle="toggleVariant(key as VariantKey)"
-        @mouseenter="store.setHoveredVariant(key as VariantKey)"
-        @mouseleave="store.setHoveredVariant(null)"
+        @mouseenter="hoveredVariant = key as VariantKey"
+        @mouseleave="hoveredVariant = null"
       />
     </div>
   </div>

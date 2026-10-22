@@ -1,7 +1,7 @@
 import { Images } from '@lucide/vue';
 import { describe, expect, it } from 'vitest';
 
-import type { MediaPresentations } from '@/types/harness-response-data.model';
+import type { MediaPresentations } from '@/types/assistant-response-data.model';
 
 import { mapPresentationToggle } from './map-presentation-toggle.helper';
 

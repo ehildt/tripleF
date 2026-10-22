@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import type { VectorizeStepId } from './vectorize-context.type.js';
-import type { VectorizeStepHandler } from './vectorize-step.interface.js';
-
-export type VectorizeStepRegistry = Map<
-  VectorizeStepId,
-  { handler: VectorizeStepHandler; deps: VectorizeStepId[] }
->;
+import type { VectorizeStepId } from './vectorize-context.types.js';
+import type { VectorizeStepHandler } from './vectorize-step.types.js';
+import type { VectorizeStepRegistry } from './vectorize-step-registry.service.types.js';
 
 /** Registers pipeline steps with their dependencies — mirrors StepRegistryService. */
 @Injectable()

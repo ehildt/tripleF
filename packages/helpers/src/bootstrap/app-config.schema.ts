@@ -1,28 +1,34 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
-import { AppConfig } from './app-config.model.ts';
-
-export const AppConfigSchema = Joi.object<AppConfig>({
-  printConfig: Joi.boolean().required(),
-  enableSwagger: Joi.boolean().required(),
-  bodyLimit: Joi.number().min(1).required(),
-  address: Joi.string()
-    .ip({ version: ['ipv4', 'ipv6'] })
-    .required(),
-  port: Joi.number().integer().min(1).max(65535).required(),
-  nodeEnv: Joi.string().valid('development', 'production', 'test', 'local').required(),
-  cors: Joi.object({
-    origin: Joi.string().optional(),
-    methods: Joi.string().optional(),
-    preflightContinue: Joi.boolean().optional(),
-    optionsSuccessStatus: Joi.number().optional(),
-    credentials: Joi.boolean().optional(),
-    allowedHeaders: Joi.string().allow(null).optional(),
-  }).optional(),
-  health: Joi.object({
-    memoryHeap: Joi.number().min(0).optional(),
-    memoryRSS: Joi.number().min(0).optional(),
-    diskPath: Joi.string().optional(),
-    diskThresholdPercent: Joi.number().min(0).optional(),
-  }).optional(),
+export const AppConfigSchema = z.strictObject({
+  printConfig: z.boolean(),
+  enableSwagger: z.boolean(),
+  bodyLimit: z.number().min(1),
+  address: z.union([z.ipv4(), z.ipv6()]),
+  port: z.number().int().min(1).max(65535),
+  nodeEnv: z.enum(['development', 'production', 'test', 'local']),
+  cors: z
+    .strictObject({
+      origin: z.string().optional(),
+      methods: z.string().optional(),
+      preflightContinue: z.boolean().optional(),
+      optionsSuccessStatus: z.number().optional(),
+      credentials: z.boolean().optional(),
+      allowedHeaders: z.string().optional(),
+    })
+    .optional(),
+  health: z
+    .strictObject({
+      memoryHeap: z.number().min(0).optional(),
+      memoryRSS: z.number().min(0).optional(),
+      diskPath: z.string().optional(),
+      diskThresholdPercent: z.number().min(0).optional(),
+    })
+    .optional(),
 });
+
+/**
+ * Shape of the validated app config. Derived from the schema, so the type
+ * can never drift from the runtime contract.
+ */
+export type AppConfig = z.infer<typeof AppConfigSchema>;

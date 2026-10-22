@@ -1,22 +1,26 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
 /**
- * Joi validation schema for pino `LoggerOptions`. Exported so consumers can
- * validate their own pino config (e.g. via `@ValidateReturnValue`) before
+ * Zod validation schema for pino `LoggerOptions`. Exported so consumers can
+ * validate their own pino config (e.g. via `@CacheReturnValue`) before
  * handing it to `CoreLoggerModule.registerAsync`.
  */
-export const CoreLoggerSchema = Joi.object({
-  level: Joi.string().valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent').default('info'),
-  base: Joi.object().allow(null).optional(),
-  transport: Joi.object({
-    target: Joi.string().valid('pino-pretty').default('pino-pretty'),
-    options: Joi.object({
-      translateTime: Joi.string().default('yyyy-mm-dd HH:MM:ss.l'),
-      colorize: Joi.boolean().default(true),
-      ignore: Joi.string().default('pid,hostname,context'),
-      singleLine: Joi.boolean().default(false),
-      colorizeObjects: Joi.boolean().default(true),
-      messageFormat: Joi.alternatives(Joi.string(), Joi.func()).optional(),
-    }).required(),
-  }).optional(),
-}).unknown(true);
+export const CoreLoggerSchema = z.looseObject({
+  level: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  base: z.looseObject({}).nullable().optional(),
+  transport: z
+    .strictObject({
+      target: z.literal('pino-pretty').default('pino-pretty'),
+      options: z.strictObject({
+        translateTime: z.string().default('yyyy-mm-dd HH:MM:ss.l'),
+        colorize: z.boolean().default(true),
+        ignore: z.string().default('pid,hostname,context'),
+        singleLine: z.boolean().default(false),
+        colorizeObjects: z.boolean().default(true),
+        messageFormat: z
+          .union([z.string(), z.custom<(...args: never[]) => unknown>((val) => typeof val === 'function')])
+          .optional(),
+      }),
+    })
+    .optional(),
+});

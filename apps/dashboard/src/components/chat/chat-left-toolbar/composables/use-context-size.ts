@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation';
-import { useModelsStore } from '@/stores/models';
+import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { useSelectedModel } from './use-selected-model';
 

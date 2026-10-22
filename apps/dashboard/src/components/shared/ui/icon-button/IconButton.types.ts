@@ -25,3 +25,16 @@ export interface IconButtonProps {
   /** Tooltip sides in priority order; forwarded to the Tooltip (default: top). */
   tooltipPositions?: TooltipPosition[];
 }
+
+export interface IconButtonEmits {
+  /** The button was clicked. */
+  click: [event: MouseEvent];
+  /** Pointer entered the button. */
+  mouseenter: [];
+  /** Pointer left the button. */
+  mouseleave: [];
+  /** The button gained focus. */
+  focus: [];
+  /** The button lost focus. */
+  blur: [];
+}

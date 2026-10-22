@@ -19,7 +19,7 @@ import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 import {
   type GalleryItem,
   type MediaItem,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 import type { LightboxImage } from '@/types/lightbox.model';
 
 import type { AttachmentGalleryProps } from './AttachmentGallery.types';

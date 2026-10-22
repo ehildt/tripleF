@@ -12,11 +12,11 @@
  * is never touched by two panels at once. Extra toolbar actions (the
  * floating player's collapse button) slot in after the playlists menu.
  */
-import { usePlaylistLibrary } from '@/components/widgets/floating-playlist/composables/use-playlist-library';
-import { usePlaybackSession } from '@/composables/use-playback-session';
-import type { VideoGalleryItem } from '@/types/harness-response-data.model';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import { usePlaylistTransport } from '../composables/use-playlist-transport';
+import { usePlaylistLibrary } from './composables/use-playlist-library';
 import { usePlaylistPanel } from './composables/use-playlist-panel';
 import PlaylistEmptyState from './playlist-empty-state/PlaylistEmptyState.vue';
 import PlaylistQueue from './playlist-queue/PlaylistQueue.vue';

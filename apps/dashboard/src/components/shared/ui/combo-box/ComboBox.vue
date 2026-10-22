@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { useId } from 'vue';
 
 import { useComboBox } from './composables/use-combo-box';
-import type { ComboBoxProps } from './ComboBox.types';
+import type { ComboBoxEmits, ComboBoxProps } from './ComboBox.types';
 
 const props = withDefaults(defineProps<ComboBoxProps>(), {
   options: () => [],
@@ -11,9 +11,7 @@ const props = withDefaults(defineProps<ComboBoxProps>(), {
   side: 'bottom',
 });
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-}>();
+const emit = defineEmits<ComboBoxEmits>();
 
 const containerRef = ref<HTMLElement | null>(null);
 const menuInputRef = ref<HTMLInputElement | null>(null);
@@ -48,49 +46,52 @@ function onInput(event: Event) {
     </div>
 
     <!-- Existing options: trigger opens input + divider + option list. -->
-    <template v-else>
-      <button class="combo-box__trigger" type="button" @click.stop="toggle">
-        <span v-if="$slots.default" class="combo-box__icon">
-          <slot />
-        </span>
-        <span
-          class="combo-box__value"
-          :class="{ 'combo-box__value--placeholder': !props.modelValue }"
-        >
-          {{ props.modelValue || props.placeholder }}
-        </span>
-      </button>
-      <div
-        v-if="open"
-        class="combo-box__menu"
-        :class="{ 'combo-box__menu--above': side === 'top' }"
-        @click.stop
+    <button
+      v-if="props.options.length"
+      class="combo-box__trigger"
+      type="button"
+      @click.stop="toggle"
+    >
+      <span v-if="$slots.default" class="combo-box__icon">
+        <slot />
+      </span>
+      <span
+        class="combo-box__value"
+        :class="{ 'combo-box__value--placeholder': !props.modelValue }"
       >
-        <input
-          :id="id"
-          ref="menuInputRef"
-          :name="name"
-          :value="props.modelValue"
-          :placeholder="props.placeholder"
-          class="combo-box__input"
-          @input="onInput"
-          @keydown.enter="select(props.modelValue)"
-        />
-        <div class="combo-box__divider" role="separator" />
-        <button
-          v-for="option in props.options"
-          :key="option"
-          class="combo-box__option"
-          :class="{
-            'combo-box__option--selected': option === props.modelValue,
-          }"
-          type="button"
-          @click="select(option)"
-        >
-          {{ option }}
-        </button>
-      </div>
-    </template>
+        {{ props.modelValue || props.placeholder }}
+      </span>
+    </button>
+    <div
+      v-if="open && props.options.length"
+      class="combo-box__menu"
+      :class="{ 'combo-box__menu--above': side === 'top' }"
+      @click.stop
+    >
+      <input
+        :id="id"
+        ref="menuInputRef"
+        :name="name"
+        :value="props.modelValue"
+        :placeholder="props.placeholder"
+        class="combo-box__input"
+        @input="onInput"
+        @keydown.enter="select(props.modelValue)"
+      />
+      <div class="combo-box__divider" role="separator" />
+      <button
+        v-for="option in props.options"
+        :key="option"
+        class="combo-box__option"
+        :class="{
+          'combo-box__option--selected': option === props.modelValue,
+        }"
+        type="button"
+        @click="select(option)"
+      >
+        {{ option }}
+      </button>
+    </div>
   </div>
 </template>
 

@@ -1,14 +1,12 @@
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
-import {
-  type ThemeName,
-  THEMES,
-  useThemeStore,
-} from '../../../../stores/theme';
-
+/**
+ * Theme palette dropdown open/close state: owns the container ref, the
+ * outside-click and Escape closers. The palette data and its switch behavior
+ * are bound straight from use-theme and theme.constant by the component.
+ */
 export function useThemeSelector() {
-  const store = useThemeStore();
   const isDropdownOpen = ref(false);
   const containerRef = ref<HTMLElement | null>(null);
 
@@ -18,10 +16,6 @@ export function useThemeSelector() {
 
   function closeDropdown() {
     isDropdownOpen.value = false;
-  }
-
-  function selectTheme(key: ThemeName) {
-    store.currentTheme = key;
   }
 
   onClickOutside(containerRef, () => {
@@ -36,10 +30,5 @@ export function useThemeSelector() {
     isDropdownOpen,
     toggleDropdown,
     closeDropdown,
-    themes: THEMES,
-    currentTheme: computed(() => store.currentTheme),
-    isDarkMode: computed(() => store.isDarkMode),
-    selectTheme,
-    toggleDarkMode: store.toggleDarkMode,
   };
 }

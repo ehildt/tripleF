@@ -22,17 +22,6 @@ import { SocketIOModule } from '@triplef/socketio';
 import { AppConfigService } from './configs/app-config.service.js';
 import { MainModule } from './main.module.js';
 
-process.on('unhandledRejection', (reason) => {
-  const log = new Logger('UnhandledRejection');
-  log.error(reason instanceof Error ? reason : new Error(String(reason)));
-});
-
-process.on('uncaughtException', (error) => {
-  const log = new Logger('UncaughtException');
-  log.error(error);
-  process.exit(1);
-});
-
 void (async () => {
   // Fastify's own request logger stays off (adapter default): the one
   // request worth logging — the harness — logs itself with full domain
@@ -64,7 +53,11 @@ void (async () => {
     customTypes: /json/i, // only compress JSON responses (fixes Swagger UI empty page issue)
   });
 
-  APP.enableCors(appConfigService.config.cors);
+  // The adapter yields `undefined` when CORS_ORIGIN is unset (CORS off);
+  // enableCors(undefined) would register @fastify/cors with its wildcard
+  // defaults (origin: '*'), so only register when a config exists.
+  const cors = appConfigService.config.cors;
+  if (cors) APP.enableCors(cors);
   APP.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',

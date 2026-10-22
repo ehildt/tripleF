@@ -3,11 +3,13 @@ import { SlidersHorizontal } from '@lucide/vue';
 
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import { usePreprocessingStore } from '@/stores/preprocessing';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 
+import { useParameterHighlight } from '../../composables/use-parameter-highlight';
 import { PprocAdvancedParameters } from './PprocAdvancedParametersSection.constants';
 
-const store = usePreprocessingStore();
+const store = usePreprocessingSettingsStore();
+const { hoveredParameter, highlightedParameters } = useParameterHighlight();
 </script>
 
 <template>
@@ -29,11 +31,11 @@ const store = usePreprocessingStore();
         :checked="store.isParameterModified(param.key)"
         :show-checkbox="false"
         :disabled="!store.enabled"
-        :highlighted="store.isParameterHighlighted(param.key)"
+        :highlighted="highlightedParameters.includes(param.key)"
         tone="preprocessing"
         @update:number-value="store.setParameter(param.key, $event)"
-        @mouseenter="store.setHoveredParameter(param.key)"
-        @mouseleave="store.setHoveredParameter(null)"
+        @mouseenter="hoveredParameter = param.key"
+        @mouseleave="hoveredParameter = null"
       />
     </div>
   </div>

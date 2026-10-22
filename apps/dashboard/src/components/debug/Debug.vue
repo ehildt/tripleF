@@ -5,9 +5,9 @@ import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 
-import { useDebugStore } from '../../stores/debug';
+import { useDebugStore } from '../../stores/debug/debug.store';
 import type { DebugResult } from '../../types/debug.model';
-import { useDebugFilters } from './composables/use-debug-filters.composable';
+import { useDebugFilters } from './composables/use-debug-filters';
 import RequestList from './request-list/RequestList.vue';
 import type { DebugProps } from './Debug.types';
 

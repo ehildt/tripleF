@@ -1,48 +1,37 @@
 import { getBooleanEnv } from '@triplef/helpers/get-boolean-env';
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
-import Joi from 'joi';
+import { z } from 'zod';
 
-import type { ProviderEndpointConfig } from './endpoint-config.types.js';
+const endpointSchema = z.strictObject({
+  enabled: z.boolean(),
+  results: z.number().int().min(1).max(1000),
+});
 
-export interface EodhdNewsConfig extends ProviderEndpointConfig {
+const newsEndpointSchema = endpointSchema.extend({
   /** Optional news-body cap (chars); 0 = uncapped. */
-  snippetChars?: number;
-}
-
-export interface EodhdConfig {
-  enabled: boolean;
-  apiKey?: string;
-  search: ProviderEndpointConfig;
-  quote: ProviderEndpointConfig;
-  history: ProviderEndpointConfig;
-  technical: ProviderEndpointConfig;
-  intraday: ProviderEndpointConfig;
-  news: EodhdNewsConfig;
-  fundamentals: ProviderEndpointConfig;
-}
-
-const endpointSchema = Joi.object<ProviderEndpointConfig>({
-  enabled: Joi.boolean().required(),
-  results: Joi.number().integer().min(1).max(1000).required(),
+  snippetChars: z.number().int().min(0).optional(),
 });
 
-const newsEndpointSchema = Joi.object<EodhdNewsConfig>({
-  enabled: Joi.boolean().required(),
-  results: Joi.number().integer().min(1).max(1000).required(),
-  snippetChars: Joi.number().integer().min(0).optional(),
+/** The news table: an endpoint config plus the optional snippet cap. */
+export type EodhdNewsConfig = z.infer<typeof newsEndpointSchema>;
+
+export const EodhdConfigSchema = z.strictObject({
+  enabled: z.boolean(),
+  apiKey: z.string().optional(),
+  search: endpointSchema,
+  quote: endpointSchema,
+  history: endpointSchema,
+  technical: endpointSchema,
+  intraday: endpointSchema,
+  news: newsEndpointSchema,
+  fundamentals: endpointSchema,
 });
 
-export const EodhdConfigSchema = Joi.object<EodhdConfig>({
-  enabled: Joi.boolean().required(),
-  apiKey: Joi.string().optional(),
-  search: endpointSchema.required(),
-  quote: endpointSchema.required(),
-  history: endpointSchema.required(),
-  technical: endpointSchema.required(),
-  intraday: endpointSchema.required(),
-  news: newsEndpointSchema.required(),
-  fundamentals: endpointSchema.required(),
-}).required();
+/**
+ * Shape of the validated EODHD config. Derived from the schema, so the type
+ * can never drift from the runtime contract.
+ */
+export type EodhdConfig = z.infer<typeof EodhdConfigSchema>;
 
 export function EodhdConfigAdapter(env = process.env): EodhdConfig {
   return {

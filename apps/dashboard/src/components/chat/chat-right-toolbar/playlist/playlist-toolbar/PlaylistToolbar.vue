@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import PlaylistMenu from '@/components/widgets/floating-playlist/playlist-menu/PlaylistMenu.vue';
 
 import PlaylistTransportBar from '../playlist-transport-bar/PlaylistTransportBar.vue';
+import PlaylistMenu from './playlist-menu/PlaylistMenu.vue';
 import type { PlaylistToolbarProps } from './PlaylistToolbar.types';
 
 defineProps<PlaylistToolbarProps>();
+
+/** Name being typed for a new playlist — synced to the panel's name field. */
+const playlistName = defineModel<string>('playlistName', { required: true });
 
 const emit = defineEmits<{
   togglePlayback: [];
   stopPlayback: [];
   toggleAutoplay: [];
   togglePopoutVisibility: [];
-  'update:playlistName': [name: string];
   select: [name: string];
   create: [];
   rename: [oldName: string, newName: string];
@@ -45,10 +47,9 @@ const emit = defineEmits<{
         }}</span>
       </Tooltip>
       <PlaylistMenu
-        :playlist-name="playlistName"
+        v-model:playlist-name="playlistName"
         :playlists="playlists"
         :active-playlist-name="activePlaylistName"
-        @update:playlist-name="emit('update:playlistName', $event)"
         @select="emit('select', $event)"
         @create="emit('create')"
         @delete="emit('delete', $event)"

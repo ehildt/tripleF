@@ -21,6 +21,8 @@ function intent(template: IntentResult['template']): IntentResult {
     contextSummary: '',
     needsClarification: false,
     language: 'en',
+    contentLanguages: [],
+    contentCreator: '',
     plan: {},
   };
 }

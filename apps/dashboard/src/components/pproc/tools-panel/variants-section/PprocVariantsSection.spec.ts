@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { usePreprocessingStore } from '@/stores/preprocessing';
+import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 
 import PprocVariantsSection from './PprocVariantsSection.vue';
 
@@ -21,7 +21,7 @@ describe('PprocVariantsSection', () => {
   });
 
   it('toggles a variant on click when enabled', async () => {
-    const store = usePreprocessingStore();
+    const store = usePreprocessingSettingsStore();
     store.setEnabled(true);
     store.setVariant('original', false);
 

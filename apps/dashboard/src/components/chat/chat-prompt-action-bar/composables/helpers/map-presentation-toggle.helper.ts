@@ -3,7 +3,7 @@ import type { LucideIcon } from '@lucide/vue';
 import type {
   MediaPresentation,
   MediaPresentations,
-} from '@/types/harness-response-data.model';
+} from '@/types/assistant-response-data.model';
 
 /** A media presentation toggle: its section, media type, and leading icon. */
 type PresentationToggleConfig = {

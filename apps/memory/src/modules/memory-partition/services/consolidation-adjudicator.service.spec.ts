@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  type AdjudicationFact,
-  ConsolidationAdjudicatorService,
-} from './consolidation-adjudicator.service.js';
+import { ConsolidationAdjudicatorService } from './consolidation-adjudicator.service.js';
+import type { AdjudicationFact } from './consolidation-adjudicator.service.types.js';
 
 function makeService() {
   const generateChat = vi.fn();

@@ -1,8 +1,8 @@
 import { computed, onScopeDispose, type Ref, ref, watch } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
-import type { Exchange } from '@/stores/conversation';
-import type { HarnessActivityDescriptor } from '@/types/harness-activity.model';
+import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { AssistantActivityDescriptor } from '@/types/activity.model';
 
 import { buildActivityDescriptors } from '../helpers/build-activity-descriptors.helper';
 import { ensureActivityLocaleLoaded } from '../helpers/ensure-activity-locale-loaded.helper';
@@ -26,7 +26,7 @@ const TOOL_CATEGORY_KEYS = new Set([
 const CYCLE_INTERVAL_MS = 2000;
 
 function translateToolCategory(
-  descriptor: HarnessActivityDescriptor,
+  descriptor: AssistantActivityDescriptor,
   locale: string,
 ): string {
   const meta = descriptor.meta ?? {};
@@ -54,7 +54,7 @@ function translateToolCategory(
 }
 
 function translateDescriptor(
-  descriptor: HarnessActivityDescriptor,
+  descriptor: AssistantActivityDescriptor,
   locale: string,
 ): string {
   if (

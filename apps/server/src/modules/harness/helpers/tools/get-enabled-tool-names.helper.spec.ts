@@ -13,15 +13,21 @@ const baseCfg = {
 describe('getEnabledToolNames', () => {
   it('includes memory tools only when the memory feature is enabled', () => {
     expect(getEnabledToolNames(baseCfg, false)).not.toContain(
-      'memory-partition-remember',
+      'memory-partition-recall',
     );
     expect(getEnabledToolNames(baseCfg, true)).toEqual(
       expect.arrayContaining([
-        'memory-partition-remember',
         'memory-partition-recall',
         'memory-partition-delete',
-        'memory-cognition-remember',
         'memory-cognition-forget',
+      ]),
+    );
+    // No write tools are ever offered: writes are the vectorize pipeline's
+    // judged background decision, never a classifier pick.
+    expect(getEnabledToolNames(baseCfg, true)).not.toEqual(
+      expect.arrayContaining([
+        'memory-partition-remember',
+        'memory-cognition-remember',
       ]),
     );
   });

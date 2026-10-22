@@ -7,7 +7,7 @@ vi.mock('vue-i18n', () => ({
 vi.mock('../i18n', () => ({
   loadLocale: vi.fn(),
 }));
-vi.mock('../locale-codes', () => ({
+vi.mock('../locale-registry', () => ({
   LOCALE_CODES: ['en', 'de'],
 }));
 

@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAppStore } from '@/stores/app';
+import { useAppStore } from '@/stores/app/app.store';
 
 import { useCognitionSpace } from './use-cognition-space';
 

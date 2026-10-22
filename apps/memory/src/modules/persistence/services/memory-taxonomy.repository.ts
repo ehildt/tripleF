@@ -15,44 +15,61 @@ import type {
   MemoryTaxonomyLane,
 } from '../constants/memory-taxonomy.constant.js';
 
-/** One taxonomy node read back (the registry row). */
-export interface MemoryTaxonomyNodeRecord {
-  id: string;
-  lane: MemoryTaxonomyLane;
-  scopeKey: string;
-  kind: MemoryTaxonomyKind;
-  parentId: string;
-  name: string;
-  normalizedName: string;
-  icon?: string;
-  summary?: string;
-  createdBy: string;
-  lastReflectedAt?: Date;
-  lastConsolidatedAt?: Date;
-  lastRelinkedAt?: Date;
+import { buildTaxonomyNodeUniqueKey } from './helpers/build-taxonomy-node-unique-key.helper.js';
+import { mapTaxonomyNodeToRecord } from './helpers/map-taxonomy-node-to-record.helper.js';
+import type {
+  MemoryTaxonomyMaintenanceField,
+  MemoryTaxonomyNodeInput,
+  MemoryTaxonomyNodeRecord,
+} from './memory-taxonomy.repository.types.js';
+
+/** One alias-ledger row read back for the tree audit view. */
+interface MemoryTaxonomyAliasRow {
+  /** The node the alias resolves to. */
+  nodeId: string;
+  /** The normalized variant permanently tied to the node. */
+  alias: string;
+  /** Who recorded the alias (minting source: model snap, user rename/merge). */
+  source: string;
+  /** Fuzzy-snap score when the alias came from a fuzzy match. */
+  score?: number;
+  /** When the alias entered the ledger. */
   createdAt: Date;
-  updatedAt: Date;
 }
 
-/** Input for adopting or minting a taxonomy node. */
-interface MemoryTaxonomyNodeInput {
+/** Input for permanently recording one alias (idempotent on retry/race). */
+interface MemoryTaxonomyAliasInput {
+  /** The node the alias points at. */
+  nodeId: string;
+  /** Memory layer lane the node belongs to. */
   lane: MemoryTaxonomyLane;
+  /** Space key the node is scoped under. */
   scopeKey: string;
+  /** Taxonomy tier of the node. */
   kind: MemoryTaxonomyKind;
-  /** '' for cluster roots and flat tags. */
-  parentId: string;
-  /** Canonical display label as adopted. */
-  name: string;
-  /** Normalized lookup form (the store boundaries' canonical form). */
-  normalizedName: string;
-  icon?: string;
-  summary?: string;
-  createdBy: 'model' | 'user';
+  /** The normalized variant string being recorded. */
+  alias: string;
+  /** Who recorded the alias. */
+  source: MemoryTaxonomyAliasSource;
+  /** Fuzzy-snap score when applicable. */
+  score?: number;
 }
 
-/** Which maintenance stamp a job touches on the nodes it worked under. */
-export type MemoryTaxonomyMaintenanceField =
-  'lastReflectedAt' | 'lastConsolidatedAt' | 'lastRelinkedAt';
+/** One label handed to label-bulk maintenance stamping. */
+interface TaxonomyMaintenanceLabel {
+  /** Taxonomy tier of the label. */
+  kind: MemoryTaxonomyKind;
+  /** The label's normalized wording. */
+  normalizedName: string;
+}
+
+/** Provenance carried into a merge: how the kill-alias is recorded. */
+interface MemoryTaxonomyMergeProvenance {
+  /** Minting source for the killed variant's alias (defaults to 'user'). */
+  source?: MemoryTaxonomyAliasSource;
+  /** Fuzzy-snap score when the merge came from a model suggestion. */
+  score?: number;
+}
 
 /**
  * Postgres registry for the canonical macro-taxonomy — one row per label
@@ -102,22 +119,14 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
       where: { lane, scopeKey },
       orderBy: [{ kind: 'asc' }, { name: 'asc' }],
     });
-    return rows.map(mapNode);
+    return rows.map(mapTaxonomyNodeToRecord);
   }
 
   /** Every alias row of one scope (the audit ledger for the tree view). */
   async listAliases(
     lane: MemoryTaxonomyLane,
     scopeKey: string,
-  ): Promise<
-    Array<{
-      nodeId: string;
-      alias: string;
-      source: string;
-      score?: number;
-      createdAt: Date;
-    }>
-  > {
+  ): Promise<MemoryTaxonomyAliasRow[]> {
     return this.prisma.memoryTaxonomyAlias.findMany({
       where: { lane, scopeKey },
       orderBy: { createdAt: 'asc' },
@@ -136,7 +145,7 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
     const row = await this.prisma.memoryTaxonomyNode.findUnique({
       where: { id },
     });
-    return row ? mapNode(row) : undefined;
+    return row ? mapTaxonomyNodeToRecord(row) : undefined;
   }
 
   /**
@@ -146,13 +155,13 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
   async getOrCreateNode(
     input: MemoryTaxonomyNodeInput,
   ): Promise<MemoryTaxonomyNodeRecord> {
-    const key = uniqueKey(input);
+    const key = buildTaxonomyNodeUniqueKey(input);
     const existing = await this.prisma.memoryTaxonomyNode.findUnique({
       where: key,
     });
-    if (existing) return mapNode(existing);
+    if (existing) return mapTaxonomyNodeToRecord(existing);
     try {
-      return mapNode(
+      return mapTaxonomyNodeToRecord(
         await this.prisma.memoryTaxonomyNode.create({ data: input }),
       );
     } catch (error) {
@@ -163,7 +172,7 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
         const raced = await this.prisma.memoryTaxonomyNode.findUnique({
           where: key,
         });
-        if (raced) return mapNode(raced);
+        if (raced) return mapTaxonomyNodeToRecord(raced);
       }
       throw error;
     }
@@ -190,15 +199,7 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
    * of the same alias wins silently — both racers resolved to the same node
    * by construction of the caller's snap decision.
    */
-  async insertAlias(input: {
-    nodeId: string;
-    lane: MemoryTaxonomyLane;
-    scopeKey: string;
-    kind: MemoryTaxonomyKind;
-    alias: string;
-    source: MemoryTaxonomyAliasSource;
-    score?: number;
-  }): Promise<void> {
+  async insertAlias(input: MemoryTaxonomyAliasInput): Promise<void> {
     try {
       await this.prisma.memoryTaxonomyAlias.create({ data: input });
     } catch (error) {
@@ -242,7 +243,7 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
       });
       return row;
     });
-    return mapNode(updated);
+    return mapTaxonomyNodeToRecord(updated);
   }
 
   /**
@@ -256,7 +257,7 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
   async mergeNodes(
     sourceId: string,
     targetId: string,
-    provenance: { source?: MemoryTaxonomyAliasSource; score?: number } = {},
+    provenance: MemoryTaxonomyMergeProvenance = {},
   ): Promise<void> {
     const source = await this.prisma.memoryTaxonomyNode.findUnique({
       where: { id: sourceId },
@@ -368,7 +369,7 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
   async touchMaintenanceForLabels(
     lane: MemoryTaxonomyLane,
     scopeKey: string,
-    labels: Array<{ kind: MemoryTaxonomyKind; normalizedName: string }>,
+    labels: TaxonomyMaintenanceLabel[],
     field: MemoryTaxonomyMaintenanceField,
     at: Date,
   ): Promise<void> {
@@ -390,33 +391,4 @@ export class MemoryTaxonomyRepository implements OnModuleInit, OnModuleDestroy {
       });
     }
   }
-}
-
-/** Map a Prisma row to the repository record (nulls → undefined). */
-function mapNode(
-  row: Prisma.MemoryTaxonomyNodeGetPayload<object>,
-): MemoryTaxonomyNodeRecord {
-  return {
-    ...row,
-    kind: row.kind as MemoryTaxonomyKind,
-    lane: row.lane as MemoryTaxonomyLane,
-    icon: row.icon ?? undefined,
-    summary: row.summary ?? undefined,
-    lastReflectedAt: row.lastReflectedAt ?? undefined,
-    lastConsolidatedAt: row.lastConsolidatedAt ?? undefined,
-    lastRelinkedAt: row.lastRelinkedAt ?? undefined,
-  };
-}
-
-/** The compound unique lookup of one node input. */
-function uniqueKey(input: MemoryTaxonomyNodeInput) {
-  return {
-    lane_scopeKey_kind_parentId_normalizedName: {
-      lane: input.lane,
-      scopeKey: input.scopeKey,
-      kind: input.kind,
-      parentId: input.parentId,
-      normalizedName: input.normalizedName,
-    },
-  } as const;
 }

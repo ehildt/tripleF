@@ -14,7 +14,10 @@ import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/
 import Marquee from '../marquee/Marquee.vue';
 import MotionIcon from '../motion-icon/MotionIcon.vue';
 import Tooltip from '../tooltip/Tooltip.vue';
-import type { FloatingMediaBarProps } from './FloatingMediaBar.types';
+import type {
+  FloatingMediaBarEmits,
+  FloatingMediaBarProps,
+} from './FloatingMediaBar.types';
 
 const props = withDefaults(defineProps<FloatingMediaBarProps>(), {
   title: '',
@@ -23,14 +26,7 @@ const props = withDefaults(defineProps<FloatingMediaBarProps>(), {
   closeTitle: 'Close video',
 });
 
-const emit = defineEmits<{
-  /** Pointer down on free bar space starts dragging the popup. */
-  drag: [event: PointerEvent];
-  opacityInput: [percent: number];
-  togglePlaylist: [];
-  minimize: [];
-  close: [];
-}>();
+const emit = defineEmits<FloatingMediaBarEmits>();
 
 /**
  * The mirror-rectangular icon toggles the popup between opaque (100%) and
@@ -47,7 +43,7 @@ function toggleOpacity() {
       title
     }}</span>
     <Marquee
-      v-else
+      v-if="showTitleMarquee"
       class="floating-media-bar__title floating-media-bar__title--marquee"
       :text="title"
     />

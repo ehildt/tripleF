@@ -12,8 +12,8 @@ import { taxonomyLabelEntries } from '../../../../memory-taxonomy/helpers/taxono
 import { TaxonomyProbeService } from '../../../../memory-taxonomy/services/taxonomy-probe.service.js';
 import { OllamaConfigService } from '../../../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../../../ollama/helpers/provider-options.helper.js';
-import type { MemoryLinkRow } from '../../../../persistence/services/memory-link.repository.js';
 import { MemoryLinkRepository } from '../../../../persistence/services/memory-link.repository.js';
+import type { MemoryLinkRow } from '../../../../persistence/services/memory-link.repository.types.js';
 import { MemoryTaxonomyRepository } from '../../../../persistence/services/memory-taxonomy.repository.js';
 import { QDRANT_CONFIG } from '../../../../qdrant/constants/qdrant.constants.js';
 import { deterministicPointId } from '../../../../qdrant/helpers/deterministic-point-id.helper.js';

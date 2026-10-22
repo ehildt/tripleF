@@ -1,6 +1,6 @@
-import type { Exchange } from '@/stores/conversation';
+import type { Exchange } from '@/stores/conversation/conversation.model';
 
-import { createId } from '../../../../utils/id.helper';
+import { createId } from '../../../../utils/create-id/create-id.helper';
 
 /**
  * Build the list of exchanges for a new branched conversation, copying the

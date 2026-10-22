@@ -16,7 +16,7 @@
  */
 import { onMounted, ref, useTemplateRef, watch } from 'vue';
 
-import type { AsyncImageProps } from './AsyncImage.types';
+import type { AsyncImageEmits, AsyncImageProps } from './AsyncImage.types';
 
 const props = withDefaults(defineProps<AsyncImageProps>(), {
   alt: '',
@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<AsyncImageProps>(), {
   showErrorLabel: true,
 });
 
-const emit = defineEmits<{ load: []; error: [] }>();
+const emit = defineEmits<AsyncImageEmits>();
 
 const imgRef = useTemplateRef<HTMLImageElement>('imgRef');
 
