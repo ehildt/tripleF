@@ -2,7 +2,7 @@
   "name": "@triplef/socketio",
   "description": "A NestJS module for building real-time applications with Socket.IO",
   "version": "1.0.2",
-  "packageManager": "pnpm@12.17.0",
+  "packageManager": "pnpm@12.18.0",
   "license": "MIT",
   "type": "module",
   "exports": {

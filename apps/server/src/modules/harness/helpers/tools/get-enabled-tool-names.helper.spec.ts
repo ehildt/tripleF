@@ -7,7 +7,6 @@ const baseCfg = {
   brightData: { enabled: false },
   eodhd: { enabled: false },
   youtube: { enabled: false },
-  playwright: { enabled: false },
 } as never;
 
 describe('getEnabledToolNames', () => {

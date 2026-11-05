@@ -33,12 +33,6 @@ import { ToolSelectionService } from '../services/tool-selection.service.js';
 import { fetchUrlOutcome } from './helpers/fetch-url-outcome.helper.js';
 import type { ExecuteResult } from './execute.action.types.js';
 /**
- * Browsing needs a step budget: navigate → snapshot → interact, unlike the
- * single round-trip the search tools use.
- */
-const BROWSER_MAX_STEPS = 8;
-
-/**
  * Tools whose follow-up decisions need a multi-round loop: delete chains
  * memory-partition-recall → memory-partition-delete for the verbatim text;
  * the always-on encyclopedia pair chains probe → document deep-dive, or
@@ -126,14 +120,11 @@ export class ExecuteActionService {
       ...classifierPickedToolNames,
       ...this.toolSelectionService.getAlwaysOnToolNames(),
     ];
-    // Browser intents chain several browser_* calls within one execute step;
-    // chained tools (delete, encyclopedia) probe first and follow up on what
+    // Chained tools (delete, encyclopedia) probe first and follow up on what
     // they found — one blind round can never express that.
-    const maxSteps = allToolNames.some((name) => name.startsWith('browser_'))
-      ? BROWSER_MAX_STEPS
-      : allToolNames.some((name) => CHAINED_TOOL_NAMES.has(name))
-        ? TOOL_CHAIN_MAX_STEPS
-        : undefined;
+    const maxSteps = allToolNames.some((name) => CHAINED_TOOL_NAMES.has(name))
+      ? TOOL_CHAIN_MAX_STEPS
+      : undefined;
     const selectedTools =
       allToolNames.length > 0
         ? this.toolSelectionService.selectToolsByName(

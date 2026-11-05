@@ -244,7 +244,7 @@ export default {
     // combinedDependencies: false,
 
     /* if true leave symlinks untouched, otherwise use the realpath */
-    // preserveSymlinks: false,
+    preserveSymlinks: true,
 
     /* TypeScript project file ('tsconfig.json') to use for
        (1) compilation and

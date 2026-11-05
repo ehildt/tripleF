@@ -35,9 +35,7 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 // jsdom has no IndexedDB. Specs that exercise the temporary-conversations
-// Dexie table mock their local module boundary with plain vi.fn() stubs;
-// real engine behavior is covered by
-// temporary-conversations.db.browser.spec.ts in real Chromium.
+// Dexie table mock their local module boundary with plain vi.fn() stubs.
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

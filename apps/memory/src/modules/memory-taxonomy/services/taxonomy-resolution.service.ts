@@ -1,22 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import type {
-  MemoryTaxonomyKind,
-  MemoryTaxonomyLane,
-} from '../../persistence/constants/memory-taxonomy.constant.js';
+import type { MemoryTaxonomyLane } from '../../persistence/constants/memory-taxonomy.constant.js';
 import { TAXONOMY_ROOT_PARENT } from '../../persistence/constants/memory-taxonomy.constant.js';
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
 import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
-import { TAXONOMY_SNAP_THRESHOLDS } from '../constants/taxonomy-snap.constant.js';
 import { bestFuzzyMatch } from '../helpers/best-fuzzy-match.helper.js';
 import { buildResolutionOutcome } from '../helpers/build-resolution-outcome.helper.js';
 import { normalizeTaxonomyIcon } from '../helpers/normalize-taxonomy-icon.helper.js';
-import {
-  sharesTokenOverlap,
-  trigramSimilarity,
-} from '../helpers/trigram-similarity.helper.js';
 
 import type {
   TaxonomyLabelInput,

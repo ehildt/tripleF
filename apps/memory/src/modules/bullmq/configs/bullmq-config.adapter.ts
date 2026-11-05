@@ -4,6 +4,7 @@ import { getNumberEnv } from '@triplef/helpers/get-number-env';
 import type { RedisOptions } from 'ioredis';
 
 export interface ExtendedBullMQConfig extends BullMQConfig {
+  connection: RedisOptions;
   defaultJobOptions: BullMQConfig['defaultJobOptions'] & {
     backoff: { type: 'exponential' | 'fixed'; delay: number };
   };

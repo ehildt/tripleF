@@ -40,8 +40,6 @@ dependencies:
     position: center
   badgeStyle: *DEPENDENCIES_STYLE
   items:
-    - name: '@ai-sdk/mcp'
-      link: https://github.com/vercel/ai
     - name: '@fastify/compress'
       link: https://github.com/fastify/fastify-compress
     - name: '@fastify/multipart'

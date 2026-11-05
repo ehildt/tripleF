@@ -134,4 +134,34 @@ describe('useMemoryOverrides', () => {
     expect(fetchMemoryOverrides).toHaveBeenCalledTimes(2);
     expect(overrides.episodeProbeLimit.value).toBe(3);
   });
+
+  it.each([
+    ['saveConsolidateModel', { consolidateModel: 'llama3' }],
+    ['saveClassifyModel', { classifyModel: 'llama3' }],
+    ['saveConvictionModel', { convictionModel: 'llama3' }],
+    ['saveClusterModel', { clusterModel: 'llama3' }],
+    ['saveResearchModel', { researchModel: 'llama3' }],
+  ] as const)(
+    '%s trims the model name before writing',
+    async (method, patch) => {
+      const overrides = mountOverrides();
+      await flush();
+
+      await (overrides as any)[method]('  llama3  ');
+
+      expect(updateMemoryOverrides).toHaveBeenCalledWith(patch);
+    },
+  );
+
+  it('writes the selected research provider', async () => {
+    const overrides = mountOverrides();
+    await flush();
+
+    await overrides.saveResearchProvider('bright-data');
+
+    expect(overrides.researchProvider.value).toBe('bright-data');
+    expect(updateMemoryOverrides).toHaveBeenCalledWith({
+      researchProvider: 'bright-data',
+    });
+  });
 });

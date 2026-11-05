@@ -25,7 +25,6 @@ import {
   type MemoryClusterLane,
 } from '../../../../qdrant/constants/cluster.constant.js';
 import { QDRANT_CONFIG } from '../../../../qdrant/constants/qdrant.constants.js';
-import { deterministicPointId } from '../../../../qdrant/helpers/deterministic-point-id.helper.js';
 import type { MemoryClusterJobData } from '../../../../qdrant/models/memory.model.js';
 import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model.js';
 import { EmbeddingService } from '../../../../qdrant/services/embedding.service.js';

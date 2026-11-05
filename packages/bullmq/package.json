@@ -2,7 +2,7 @@
   "name": "@triplef/bullmq",
   "description": "A NestJS module for BullMQ integration with configuration types and validation schemas.",
   "version": "1.1.6",
-  "packageManager": "pnpm@12.17.0",
+  "packageManager": "pnpm@12.18.0",
   "license": "MIT",
   "type": "module",
   "exports": {

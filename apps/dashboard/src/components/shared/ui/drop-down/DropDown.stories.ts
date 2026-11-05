@@ -319,7 +319,7 @@ export const InteractionTest: Story = {
     docs: {
       description: {
         story:
-          'Playwright interaction test: opens the menu, verifies an option is visible, clicks it, and asserts the `update:modelValue` emit.',
+          'Interaction test: opens the menu, verifies an option is visible, clicks it, and asserts the `update:modelValue` emit.',
       },
     },
   },

@@ -1,4 +1,4 @@
-import type { GalleryItem } from '../media/build-gallery-items.helper.js';
+import type { GalleryItem } from '../media/build-gallery-items.helper.types.js';
 import { dedupeGalleryItems } from '../media/dedupe-gallery-items.helper.js';
 import { extractStorageHash } from '../media/extract-storage-hash.helper.js';
 

@@ -22,20 +22,11 @@ vi.mock('../../api/storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
 
-const mockClearPendingFilesForConversation = vi.hoisted(() => vi.fn());
-
-vi.mock('../attached-files/attached-files.store', () => ({
-  useAttachedFilesStore: () => ({
-    clearPendingFilesForConversation: mockClearPendingFilesForConversation,
-  }),
-}));
-
 /**
  * In-memory stand-in for the Dexie `temporaryConversations` table: vitest
  * `vi.mock` with a per-spec row map (jsdom has no IndexedDB). Rows are
  * JSON-serialized on write so later in-place mutations cannot leak into the
- * store, mirroring IndexedDB's structured clone. Real round-trips run in
- * Chromium via `./helpers/temporary-conversations.db.browser.spec.ts`.
+ * store, mirroring IndexedDB's structured clone.
  */
 const temporaryConversationsMock = vi.hoisted(() => {
   const rows = new Map<string, string>();
@@ -111,10 +102,6 @@ describe('useConversationStore', () => {
 
     await store.deleteCurrentConversation(parentId);
 
-    expect(mockClearPendingFilesForConversation).toHaveBeenCalledWith(
-      parentId,
-      conversationId,
-    );
     expect(conversation.exchanges).toHaveLength(0);
     expect(conversation.uploadedImages).toHaveLength(0);
     expect(store.conversations).toHaveLength(0);
@@ -941,6 +928,492 @@ describe('useConversationStore', () => {
         cid,
       );
       expect(images.map((i) => i.hash)).toEqual(['img1']);
+    });
+  });
+
+  describe('exchange mutation API', () => {
+    it('renames a conversation', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+
+      store.renameConversation(conversation.id, 'New title');
+
+      expect(conversation.title).toBe('New title');
+    });
+
+    it('infers a title from the first user exchange', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+
+      store.addExchange(conversation.id, {
+        role: 'user',
+        content: 'How do black holes form?',
+        status: 'done',
+        conversationId: conversation.conversationId,
+      });
+
+      expect(conversation.title).toContain('black holes');
+      expect(conversation.exchanges).toHaveLength(1);
+      expect(conversation.exchanges[0].id).toBeTruthy();
+    });
+
+    it('updates assistant content and status by request id', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: '',
+        status: 'pending',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.updateExchange(conversation.id, 'req-1', {
+        content: 'answer',
+        status: 'done',
+      });
+
+      expect(conversation.exchanges[0]).toMatchObject({
+        content: 'answer',
+        status: 'done',
+      });
+    });
+
+    it('ignores updates for unknown request ids and conversations', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'kept',
+        status: 'done',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.updateExchange(conversation.id, 'other', { content: 'nope' });
+      store.updateExchange('missing', 'req-1', { content: 'nope' });
+
+      expect(conversation.exchanges[0].content).toBe('kept');
+    });
+
+    it('appends streamed chunks and marks the exchange streaming', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'Hel',
+        status: 'pending',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.appendExchangeContent(conversation.id, 'req-1', 'lo');
+
+      expect(conversation.exchanges[0]).toMatchObject({
+        content: 'Hello',
+        status: 'streaming',
+      });
+    });
+
+    it('marks an exchange done and records token counts', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'answer',
+        status: 'streaming',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.markExchangeDone(conversation.id, 'req-1', {
+        promptEvalCount: 120,
+        evalCount: 30,
+      });
+
+      expect(conversation.exchanges[0]).toMatchObject({
+        status: 'done',
+        promptEvalCount: 120,
+        evalCount: 30,
+      });
+    });
+
+    it('marks an exchange done without token data', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'answer',
+        status: 'streaming',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.markExchangeDone(conversation.id, 'req-1');
+
+      expect(conversation.exchanges[0].status).toBe('done');
+    });
+
+    it('marks an exchange as failed and stores the message', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: '',
+        status: 'pending',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.markExchangeError(conversation.id, 'req-1', 'boom');
+
+      expect(conversation.exchanges[0]).toMatchObject({
+        status: 'error',
+        content: 'boom',
+      });
+    });
+
+    it('marks an exchange as failed without overwriting its content', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'partial',
+        status: 'streaming',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.markExchangeError(conversation.id, 'req-1');
+
+      expect(conversation.exchanges[0]).toMatchObject({
+        status: 'error',
+        content: 'partial',
+      });
+    });
+
+    it('toggles inclusion of a paired user exchange', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'user',
+        content: 'question',
+        status: 'done',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'answer',
+        status: 'done',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+      const userId = conversation.exchanges[0].id;
+
+      store.toggleExchangeIncluded(conversation.id, userId);
+
+      expect(conversation.exchanges[0].included).toBe(false);
+      expect(conversation.exchanges[1].included).toBe(false);
+    });
+
+    it('prunes a paired exchange on delete', async () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.addExchange(conversation.id, {
+        role: 'user',
+        content: 'question',
+        status: 'done',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+      store.addExchange(conversation.id, {
+        role: 'assistant',
+        content: 'answer',
+        status: 'done',
+        requestId: 'req-1',
+        conversationId: conversation.conversationId,
+      });
+
+      store.deleteExchangeAndPrune(
+        conversation.id,
+        conversation.exchanges[0].id,
+      );
+
+      expect(conversation.exchanges).toHaveLength(0);
+    });
+  });
+
+  describe('conversation settings', () => {
+    it('ignores patches for unknown conversations', () => {
+      const store = useConversationStore();
+
+      expect(() => store.setModel('missing', 'llama3')).not.toThrow();
+    });
+
+    it('returns the server conversation id, minting one when absent', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+
+      expect(store.getConversationId(conversation.id)).toBe(
+        conversation.conversationId,
+      );
+
+      conversation.conversationId = '';
+      expect(store.getConversationId(conversation.id)).toBeTruthy();
+    });
+
+    it('mints a fresh id for an unknown conversation', () => {
+      const store = useConversationStore();
+
+      expect(store.getConversationId('missing')).toBeTruthy();
+    });
+
+    it('sets a new server conversation id', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+
+      store.setConversationId(conversation.id, 'server-id');
+
+      expect(conversation.conversationId).toBe('server-id');
+    });
+
+    it('stores subscriptions', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      const subscriptions = [{ event: 'e', roomId: 'r' }] as never;
+
+      store.setSubscriptions(conversation.id, subscriptions);
+
+      expect(conversation.subscriptions).toEqual(subscriptions);
+    });
+  });
+
+  describe('attached files', () => {
+    it('stores files with their saved info', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      const file = new File(['body'], 'notes.txt', { type: 'text/plain' });
+
+      store.setFiles(conversation.id, [file]);
+
+      expect(store.getFiles(conversation.id)).toEqual([file]);
+      expect(conversation.savedFileInfos).toHaveLength(1);
+      expect(conversation.savedFileInfos[0].name).toBe('notes.txt');
+    });
+
+    it('falls back to the conversation files for unknown ids', () => {
+      const store = useConversationStore();
+
+      expect(store.getFiles('missing')).toEqual([]);
+    });
+  });
+
+  describe('uploaded images', () => {
+    const image = (
+      hash: string,
+      conversationId: string,
+      overrides: Record<string, unknown> = {},
+    ) => ({
+      name: `${hash}.png`,
+      hash,
+      uploadedAt: 1,
+      conversationId,
+      selected: true,
+      ...overrides,
+    });
+
+    it('merges images into the conversation', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+
+      store.setUploadedImages(conversation.id, [
+        image('a', conversation.conversationId),
+      ] as never);
+
+      expect(conversation.uploadedImages).toHaveLength(1);
+    });
+
+    it('reads images for the target conversation only', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [
+        image('a', conversation.conversationId),
+        image('b', 'other'),
+      ] as never);
+
+      expect(
+        store.getUploadedImagesForConversation(conversation.id),
+      ).toHaveLength(1);
+      expect(
+        store.getUploadedImagesForConversation(conversation.id, 'other'),
+      ).toHaveLength(1);
+      expect(store.getUploadedImagesForConversation('missing')).toEqual([]);
+    });
+
+    it('detects an existing image reference by hash', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [
+        image('a', conversation.conversationId),
+      ] as never);
+
+      expect(store.hasUploadedImageReference(conversation.id, 'a')).toBe(true);
+      expect(store.hasUploadedImageReference(conversation.id, 'b')).toBe(false);
+      expect(store.hasUploadedImageReference('missing', 'a')).toBe(false);
+    });
+
+    it('ignores the reference when it belongs to the excluded context', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [image('a', 'ctx-1')] as never);
+
+      expect(
+        store.hasUploadedImageReference(conversation.id, 'a', 'ctx-1'),
+      ).toBe(false);
+      expect(
+        store.hasUploadedImageReference(conversation.id, 'a', 'ctx-2'),
+      ).toBe(true);
+    });
+
+    it('toggles the selection of a hash', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [
+        image('a', conversation.conversationId),
+      ] as never);
+
+      store.toggleUploadedImageSelected(conversation.id, 'a');
+      expect(conversation.uploadedImages[0].selected).toBe(false);
+
+      store.toggleUploadedImageSelected(conversation.id, 'a');
+      expect(conversation.uploadedImages[0].selected).toBe(true);
+    });
+
+    it('snapshots, restores and deselects image selections', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [
+        image('a', conversation.conversationId),
+      ] as never);
+
+      store.snapshotImageSelections(conversation.id);
+      expect(conversation.imageSelectionSnapshot).toEqual({ a: true });
+
+      conversation.uploadedImages[0].selected = false;
+      store.restoreImageSelections(conversation.id);
+      expect(conversation.uploadedImages[0].selected).toBe(true);
+
+      store.deselectAllImages(conversation.id);
+      expect(conversation.uploadedImages[0].selected).toBe(false);
+    });
+
+    it('skips restore when no snapshot exists', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [
+        image('a', conversation.conversationId),
+      ] as never);
+
+      store.restoreImageSelections(conversation.id);
+
+      expect(conversation.uploadedImages[0].selected).toBe(true);
+    });
+
+    it('removes a single image', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      const cid = conversation.conversationId;
+      store.setUploadedImages(conversation.id, [
+        image('a', cid),
+        image('b', cid),
+      ] as never);
+
+      store.removeUploadedImage(conversation.id, 'a');
+
+      expect(conversation.uploadedImages.map((i) => i.hash)).toEqual(['b']);
+    });
+
+    it('selects and removes every page image of one pdf', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      const cid = conversation.conversationId;
+      store.setUploadedImages(conversation.id, [
+        image('p1', cid, { parentHash: 'pdf' }),
+        image('p2', cid, { parentHash: 'pdf' }),
+        image('other', cid),
+      ] as never);
+
+      store.setUploadedImagesSelectedForParent(conversation.id, 'pdf', false);
+      expect(
+        conversation.uploadedImages
+          .filter((i) => i.parentHash === 'pdf')
+          .every((i) => i.selected === false),
+      ).toBe(true);
+
+      store.removeUploadedImagesForParent(conversation.id, 'pdf');
+      expect(conversation.uploadedImages.map((i) => i.hash)).toEqual(['other']);
+    });
+
+    it('writes nothing when no page image matches the parent', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedImages(conversation.id, [
+        image('other', conversation.conversationId),
+      ] as never);
+
+      store.setUploadedImagesSelectedForParent(conversation.id, 'pdf', false);
+      store.removeUploadedImagesForParent(conversation.id, 'pdf');
+
+      expect(conversation.uploadedImages).toHaveLength(1);
+    });
+  });
+
+  describe('uploaded documents', () => {
+    const doc = (
+      hash: string,
+      conversationId: string,
+      overrides: Record<string, unknown> = {},
+    ) => ({
+      name: `${hash}.pdf`,
+      hash,
+      type: 'application/pdf',
+      uploadedAt: 1,
+      selected: true,
+      conversationId,
+      ...overrides,
+    });
+
+    it('merges, reads, toggles and removes documents', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedDocuments(conversation.id, [
+        doc('a', conversation.conversationId),
+      ] as never);
+
+      expect(
+        store.getUploadedDocumentsForConversation(conversation.id),
+      ).toHaveLength(1);
+      expect(store.getUploadedDocumentsForConversation('missing')).toEqual([]);
+
+      store.toggleUploadedDocumentSelected(conversation.id, 'a');
+      expect(conversation.uploadedDocuments[0].selected).toBe(false);
+
+      store.removeUploadedDocument(conversation.id, 'a');
+      expect(conversation.uploadedDocuments).toHaveLength(0);
+    });
+
+    it('scopes documents to the target conversation', () => {
+      const store = useConversationStore();
+      const conversation = store.createNewConversation('temporary');
+      store.setUploadedDocuments(conversation.id, [doc('a', 'ctx-1')] as never);
+
+      expect(
+        store.getUploadedDocumentsForConversation(conversation.id, 'ctx-1'),
+      ).toHaveLength(1);
+      expect(
+        store.getUploadedDocumentsForConversation(conversation.id, 'ctx-2'),
+      ).toHaveLength(0);
     });
   });
 });

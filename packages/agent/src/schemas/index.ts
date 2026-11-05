@@ -8,7 +8,6 @@ export * from './encyclopedia-search.model.js';
 export * from './encyclopedia-select.model.js';
 export * from './helpers/tools/categorize-tools.helper.js';
 export * from './helpers/tools/tool-registry.constant.js';
-export * from './helpers/tools/tool-registry.types.js';
 export * from './helpers/url-trust/has-blocked-image-host.helper.js';
 export * from './helpers/url-trust/is-absolute-http-url.helper.js';
 export * from './helpers/url-trust/is-private-or-localhost.helper.js';
