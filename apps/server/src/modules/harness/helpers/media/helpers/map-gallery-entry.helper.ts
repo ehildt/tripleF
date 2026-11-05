@@ -1,5 +1,5 @@
 import type { FastifyMultipartMeta } from '../../../dtos/harness-job.dto.js';
-import type { GalleryItem } from '../build-gallery-items.helper.js';
+import type { GalleryItem } from '../build-gallery-items.helper.types.js';
 
 /** Build one gallery item from an original attachment meta entry. */
 export function mapGalleryEntry(

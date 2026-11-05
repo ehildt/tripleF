@@ -9,7 +9,6 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../../generated/prisma/client.js';
 import type { PostgresConfig } from '../../postgres/configs/postgres-config.adapter.js';
 import { POSTGRES_CONFIG } from '../../postgres/constants/postgres.constants.js';
-import type { MemoryLane } from '../constants/memory-lane.constant.js';
 
 import { mapLinkRowToEdge } from './helpers/map-link-row-to-edge.helper.js';
 import type {

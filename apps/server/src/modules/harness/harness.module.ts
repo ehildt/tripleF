@@ -6,7 +6,6 @@ import { MemoryClientModule } from '../memory-client/memory-client.module.js';
 import { MinioModule } from '../minio/minio.module.js';
 import { OllamaModule } from '../ollama/ollama.module.js';
 import { PersistenceModule } from '../persistence/persistence.module.js';
-import { PlaywrightMcpModule } from '../playwright-mcp/playwright-mcp.module.js';
 import { ProviderOverridesModule } from '../provider-overrides/provider-overrides.module.js';
 import { SharpModule } from '../sharp/sharp.module.js';
 import { StockDataModule } from '../stock-data/stock-data.module.js';
@@ -27,7 +26,6 @@ import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
 import { PdfPageDescribeService } from './services/pdf-page-describe.service.js';
-import { PlaywrightMcpClientService } from './services/playwright-mcp-client.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
 import { ShownMediaService } from './services/shown-media.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
@@ -67,7 +65,6 @@ export class HarnessModule {
       VectorizeStepService,
       ResponseValidatorService,
       MediaUrlValidatorService,
-      PlaywrightMcpClientService,
       CloudImageIngestionService,
       ShownMediaService,
       ToolSelectionService,
@@ -79,7 +76,6 @@ export class HarnessModule {
       MinioModule.register(),
       OllamaModule.register(),
       PersistenceModule.register(),
-      PlaywrightMcpModule.register(),
       ProviderOverridesModule.register(),
       SharpModule.register(),
       StockDataModule.register(),
@@ -107,7 +103,6 @@ export class HarnessModule {
       VectorizeStepService,
       ResponseValidatorService,
       MediaUrlValidatorService,
-      PlaywrightMcpClientService,
       CloudImageIngestionService,
       ShownMediaService,
       ToolSelectionService,

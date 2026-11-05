@@ -14,7 +14,6 @@ import { calcTotalContextPercentage } from '../../components/chat/shared/helpers
 import type { MergedConversation } from '../../types/conversation.model';
 import { createId } from '../../utils/create-id/create-id.helper';
 import { useAppStore } from '../app/app.store';
-import { useAttachedFilesStore } from '../attached-files/attached-files.store';
 import { useMergeSelectionStore } from '../merge-selection/merge-selection.store';
 import { calcInputTokenDelta } from './helpers/calc-input-token-delta.helper';
 import { createConversation } from './helpers/create-conversation.helper';
@@ -493,11 +492,6 @@ export const useConversationStore = defineStore('conversation', () => {
 
     const removedImages = conversation.uploadedImages.filter(
       (img) => (img.conversationId ?? conversationId) === conversationId,
-    );
-
-    useAttachedFilesStore().clearPendingFilesForConversation(
-      parentId,
-      conversationId,
     );
 
     conversation.exchanges = conversation.exchanges.filter(

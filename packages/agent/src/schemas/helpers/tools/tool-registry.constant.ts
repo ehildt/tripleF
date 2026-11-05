@@ -55,26 +55,6 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Fetch company fundamentals for an EODHD ticker — general info, valuation, and key financial highlights (sector, market cap, P/E, revenue, margins).',
   webFetch:
     'Fetch the full content of a specific URL (e.g. a search result page) as clean Markdown. The top 3 web/news search results are fetched automatically when no fetch tool is selected — use this only for a specific page beyond those, when full source text is needed beyond the snippets.',
-  browser_navigate:
-    'Control a real browser: navigate to a URL. Use for interactive browsing — JS-heavy pages, content behind clicks, tabs, scrolling, or forms — that static search/fetch cannot reach. Follow up with browser_snapshot to read the page before acting on it.',
-  browser_navigate_back: 'Go back to the previous page in the browser history.',
-  browser_snapshot:
-    'Read the current browser page as an accessibility snapshot (structured text with element refs). The primary way to see page content and obtain the refs that browser_click/browser_type need.',
-  browser_click: 'Click an element in the browser, referenced by a ref from browser_snapshot.',
-  browser_type:
-    'Type text into an editable browser element, referenced by a ref from browser_snapshot, optionally submitting with Enter.',
-  browser_fill_form: 'Fill multiple form fields in the browser in one call.',
-  browser_select_option: 'Select an option in a dropdown in the browser.',
-  browser_press_key: 'Press a keyboard key in the browser (Enter, Tab, arrows).',
-  browser_wait_for: 'Wait for text to appear or disappear, or for a time period, in the browser.',
-  browser_take_screenshot: 'Take a screenshot of the current browser page or a specific element.',
-  browser_tabs: 'List, create, close, or switch browser tabs.',
-  browser_console_messages:
-    'Get console messages from the browser. Use to diagnose JavaScript errors on a page (e.g. when testing a web app).',
-  browser_network_requests:
-    'List network requests the browser made since page load. Use to diagnose failed or slow requests (e.g. when testing a web app).',
-  browser_verify_element_visible: 'Assert that an element is visible on the current browser page.',
-  browser_verify_text_visible: 'Assert that text is visible on the current browser page.',
   requestGrayscale:
     'Request a grayscale version of the images. Use when color noise or color information is irrelevant, for example when reading text or analyzing shapes.',
   requestDenoised:
@@ -91,28 +71,6 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
   'memory-cognition-forget':
     'Wipe your entire cognition space (memory-cognition) of the user — the structured profile AND every derived insight — only when the user asks you to forget your learned understanding of them or to start over. Fact records in the partition are untouched.',
 };
-
-/**
- * Curated allow-list of Playwright MCP browser tools (client-side filter;
- * the sidecar may offer more — dangerous ones stay suppressed).
- */
-export const BROWSER_TOOL_NAMES = [
-  'browser_navigate',
-  'browser_navigate_back',
-  'browser_snapshot',
-  'browser_click',
-  'browser_type',
-  'browser_fill_form',
-  'browser_select_option',
-  'browser_press_key',
-  'browser_wait_for',
-  'browser_take_screenshot',
-  'browser_tabs',
-  'browser_console_messages',
-  'browser_network_requests',
-  'browser_verify_element_visible',
-  'browser_verify_text_visible',
-] as const;
 
 export const MEMORY_TOOL_NAMES = [
   'memory-partition-recall',
@@ -161,7 +119,6 @@ export const TOOL_NAMES = [
   'memory-partition-recall',
   'memory-partition-delete',
   'memory-cognition-forget',
-  ...BROWSER_TOOL_NAMES,
 ] as const;
 
 export type ToolName = (typeof TOOL_NAMES)[number];

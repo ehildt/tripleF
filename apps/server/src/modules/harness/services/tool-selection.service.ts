@@ -19,7 +19,6 @@ import { ProviderOverridesService } from '../../provider-overrides/services/prov
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 import { createEnabledTools } from '../tools/sources/create-enabled-tools.js';
 
-import { PlaywrightMcpClientService } from './playwright-mcp-client.service.js';
 import type { ToolEventHandler } from './tool-selection.service.types.js';
 
 @Injectable()
@@ -28,7 +27,6 @@ export class ToolSelectionService {
 
   constructor(
     private readonly providerOverrides: ProviderOverridesService,
-    private readonly playwrightMcpClient: PlaywrightMcpClientService,
     private readonly stockHistory: StockHistoryService,
     private readonly memoryRecords: MemoryPartitionRecordsService,
     private readonly memoryCognition: MemoryCognitionService,
@@ -60,8 +58,6 @@ export class ToolSelectionService {
       },
       enabledVariants,
     );
-    // Browser tools come from the Playwright MCP sidecar (empty when disabled
-    // or unreachable) and are merged under their canonical browser_* names.
     // Memory tools are agentic: the partition recall/delete pair and the
     // cognition delete/forget pair are offered only when the memory feature
     // is enabled AND a partition scope is threaded from the turn. There are
@@ -113,7 +109,6 @@ export class ToolSelectionService {
       : {};
     return {
       ...tools,
-      ...this.playwrightMcpClient.tools,
       ...memoryTools,
       ...encyclopediaTools,
     };

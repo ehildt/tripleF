@@ -1,11 +1,12 @@
 import { categorizeTools } from '@triplef/agent/schemas';
-import { type ProviderConfig, TOOL_NAMES } from '@triplef/agent/schemas';
+import { TOOL_NAMES } from '@triplef/agent/schemas';
 import { describe, expect, it } from 'vitest';
 
 import { expandToolAliases } from './expand-tool-aliases.helper.js';
 import { getEnabledToolNames } from './get-enabled-tool-names.helper.js';
+import type { ToolProviderConfig } from './get-enabled-tool-names.helper.types.js';
 
-const fullConfig: ProviderConfig = {
+const fullConfig: ToolProviderConfig = {
   serper: {
     enabled: true,
     apiKey: 'serper-key',
@@ -45,7 +46,6 @@ const fullConfig: ProviderConfig = {
     news: { enabled: true },
     fundamentals: { enabled: true },
   },
-  playwright: { enabled: false },
 };
 
 describe('tool-registry.helper', () => {

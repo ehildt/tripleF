@@ -1,5 +1,6 @@
-import type { ProviderConfig } from '@triplef/agent/schemas';
-import { BROWSER_TOOL_NAMES, MEMORY_TOOL_NAMES } from '@triplef/agent/schemas';
+import { MEMORY_TOOL_NAMES } from '@triplef/agent/schemas';
+
+import type { ToolProviderConfig } from './get-enabled-tool-names.helper.types.js';
 
 /**
  * Return only the tool names whose search engines are currently enabled.
@@ -7,7 +8,7 @@ import { BROWSER_TOOL_NAMES, MEMORY_TOOL_NAMES } from '@triplef/agent/schemas';
  * enabled — they are gated by QDRANT_CONFIG, not the provider overrides.
  */
 export function getEnabledToolNames(
-  cfg: ProviderConfig,
+  cfg: ToolProviderConfig,
   memoryEnabled = false,
 ): string[] {
   const enabled: string[] = [];
@@ -18,14 +19,13 @@ export function getEnabledToolNames(
   addSerperTools(cfg.serper, enabled);
   addEodhdTools(cfg.eodhd, enabled);
   addYoutubeTools(cfg.youtube, enabled);
-  if (cfg.playwright.enabled) enabled.push(...BROWSER_TOOL_NAMES);
   if (memoryEnabled) enabled.push(...MEMORY_TOOL_NAMES);
 
   return enabled;
 }
 
 function addBrightDataTools(
-  brightData: ProviderConfig['brightData'],
+  brightData: ToolProviderConfig['brightData'],
   enabled: string[],
 ): void {
   if (!brightData.enabled || !brightData.apiKey) return;
@@ -39,7 +39,7 @@ function addBrightDataTools(
 }
 
 function addSerperTools(
-  serper: ProviderConfig['serper'],
+  serper: ToolProviderConfig['serper'],
   enabled: string[],
 ): void {
   if (!serper.enabled || !serper.apiKey) return;
@@ -54,7 +54,7 @@ function addSerperTools(
 }
 
 function addEodhdTools(
-  eodhd: ProviderConfig['eodhd'] | undefined,
+  eodhd: ToolProviderConfig['eodhd'] | undefined,
   enabled: string[],
 ): void {
   if (!eodhd?.enabled || !eodhd?.apiKey) return;
@@ -68,7 +68,7 @@ function addEodhdTools(
 }
 
 function addYoutubeTools(
-  youtube: ProviderConfig['youtube'],
+  youtube: ToolProviderConfig['youtube'],
   enabled: string[],
 ): void {
   if (!youtube.enabled || !youtube.apiKey) return;

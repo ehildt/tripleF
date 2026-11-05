@@ -19,7 +19,6 @@ core.*
 
 *storybook.log
 storybook-static
-.playwright-mcp
 Modelfile 
 .agents
 

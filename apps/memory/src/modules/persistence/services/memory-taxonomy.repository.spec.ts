@@ -18,6 +18,7 @@ function makeRepo() {
       findUnique: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({}),
       createMany: vi.fn().mockResolvedValue({ count: 0 }),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     $transaction: vi.fn().mockImplementation(async (fn: unknown) => {
       if (typeof fn === 'function') return fn(prisma);
@@ -296,6 +297,142 @@ describe('MemoryTaxonomyRepository', () => {
         normalizedName: { in: ['games', 'cooking'] },
       },
       data: { lastReflectedAt: at },
+    });
+  });
+
+  describe('lifecycle', () => {
+    it('disconnects the client and drops it on destroy', async () => {
+      const { repo, prisma } = makeRepo();
+
+      await repo.onModuleDestroy();
+
+      expect(prisma.$disconnect).toHaveBeenCalled();
+      expect((repo as any)._prisma).toBeNull();
+    });
+
+    it('tolerates destroy before the client was connected', async () => {
+      const repo = new MemoryTaxonomyRepository({
+        url: 'postgres://x',
+      } as never);
+
+      await expect(repo.onModuleDestroy()).resolves.toBeUndefined();
+    });
+  });
+
+  describe('mergeNodes', () => {
+    it('does nothing when the source node is gone', async () => {
+      const { repo, prisma } = makeRepo();
+      prisma.memoryTaxonomyNode.findUnique.mockResolvedValue(null);
+
+      await repo.mergeNodes('gone', 'target');
+
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('moves aliases, records the killed name and deletes the source', async () => {
+      const { repo, prisma } = makeRepo();
+      prisma.memoryTaxonomyNode.findUnique.mockResolvedValue(nodeRow);
+
+      await repo.mergeNodes('n1', 'n2', { source: 'llm', score: 0.92 });
+
+      expect(prisma.memoryTaxonomyAlias.updateMany).toHaveBeenCalledWith({
+        where: { nodeId: 'n1' },
+        data: { nodeId: 'n2' },
+      });
+      expect(prisma.memoryTaxonomyAlias.createMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            nodeId: 'n2',
+            alias: 'games',
+            source: 'llm',
+            score: 0.92,
+          }),
+        ],
+        skipDuplicates: true,
+      });
+      expect(prisma.memoryTaxonomyNode.delete).toHaveBeenCalledWith({
+        where: { id: 'n1' },
+      });
+    });
+
+    it('defaults the provenance source to the user', async () => {
+      const { repo, prisma } = makeRepo();
+      prisma.memoryTaxonomyNode.findUnique.mockResolvedValue(nodeRow);
+
+      await repo.mergeNodes('n1', 'n2');
+
+      expect(prisma.memoryTaxonomyAlias.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ source: 'user' })],
+        skipDuplicates: true,
+      });
+    });
+
+    it('re-parents non-colliding children to the target', async () => {
+      const { repo, prisma } = makeRepo();
+      prisma.memoryTaxonomyNode.findUnique.mockResolvedValue(nodeRow);
+      prisma.memoryTaxonomyNode.findMany
+        .mockResolvedValueOnce([
+          {
+            ...nodeRow,
+            id: 'child-1',
+            parentId: 'n1',
+            normalizedName: 'shooters',
+          },
+        ])
+        .mockResolvedValueOnce([]);
+
+      await repo.mergeNodes('n1', 'n2');
+
+      expect(prisma.memoryTaxonomyNode.update).toHaveBeenCalledWith({
+        where: { id: 'child-1' },
+        data: { parentId: 'n2' },
+      });
+      expect(prisma.memoryTaxonomyNode.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('collapses a name-colliding child into its target counterpart', async () => {
+      const { repo, prisma } = makeRepo();
+      prisma.memoryTaxonomyNode.findUnique.mockResolvedValue(nodeRow);
+      const collidingChild = {
+        ...nodeRow,
+        id: 'child-src',
+        parentId: 'n1',
+        normalizedName: 'shooters',
+      };
+      const targetChild = {
+        ...nodeRow,
+        id: 'child-target',
+        parentId: 'n2',
+        normalizedName: 'shooters',
+      };
+      prisma.memoryTaxonomyNode.findMany
+        // source children
+        .mockResolvedValueOnce([collidingChild])
+        // target children
+        .mockResolvedValueOnce([targetChild])
+        // grand-children of the collapsing child: none
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await repo.mergeNodes('n1', 'n2');
+
+      expect(prisma.memoryTaxonomyAlias.updateMany).toHaveBeenCalledWith({
+        where: { nodeId: 'child-src' },
+        data: { nodeId: 'child-target' },
+      });
+      expect(prisma.memoryTaxonomyNode.delete).toHaveBeenCalledWith({
+        where: { id: 'child-src' },
+      });
+    });
+  });
+
+  describe('touchMaintenance', () => {
+    it('writes nothing for an empty id list', async () => {
+      const { repo, prisma } = makeRepo();
+
+      await repo.touchMaintenance([], 'lastReflectedAt', new Date());
+
+      expect(prisma.memoryTaxonomyNode.updateMany).not.toHaveBeenCalled();
     });
   });
 });

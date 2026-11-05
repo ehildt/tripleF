@@ -271,4 +271,276 @@ describe('useMessagesStore', () => {
     expect(store.messages).toHaveLength(0);
     expect(store.completedCount).toBe(0);
   });
+
+  it('records activity and language on the assistant exchange', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.conversations[0];
+    conversationStore.addExchange(conversation.id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage(
+      'harness',
+      envelope('harness:activity', { key: 'searching', language: 'de' }),
+    );
+
+    const exchange = conversation.exchanges.find((e) => e.role === 'assistant');
+    expect(exchange?.activity).toEqual({ key: 'searching' });
+    expect(exchange?.activityLanguage).toBe('de');
+  });
+
+  it('ignores activity without a key', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage('harness', envelope('harness:activity', {}));
+
+    const exchange = conversationStore.conversations[0].exchanges.find(
+      (e) => e.role === 'assistant',
+    );
+    expect(exchange?.activity).toBeUndefined();
+  });
+
+  it('accumulates parallel tool calls keyed by name and query', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage(
+      'harness',
+      envelope('harness:tool-call', {
+        name: 'web',
+        query: 'cats',
+        status: 'start',
+      }),
+    );
+    store.addMessage(
+      'harness',
+      envelope('harness:tool-call', {
+        name: 'web',
+        query: 'dogs',
+        status: 'start',
+      }),
+    );
+
+    const exchange = conversationStore.conversations[0].exchanges.find(
+      (e) => e.role === 'assistant',
+    );
+    expect(exchange?.toolCalls).toHaveLength(2);
+    expect(exchange?.toolCalls?.map((t) => t.query)).toEqual(['cats', 'dogs']);
+  });
+
+  it('clears a finished tool call from the active list', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage(
+      'harness',
+      envelope('harness:tool-call', {
+        name: 'web',
+        query: 'cats',
+        status: 'start',
+      }),
+    );
+    store.addMessage(
+      'harness',
+      envelope('harness:tool-call', {
+        name: 'web',
+        query: 'cats',
+        status: 'done',
+      }),
+    );
+
+    const exchange = conversationStore.conversations[0].exchanges.find(
+      (e) => e.role === 'assistant',
+    );
+    expect(exchange?.toolCalls).toBeUndefined();
+  });
+
+  it('ignores tool calls without a name', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage(
+      'harness',
+      envelope('harness:tool-call', { status: 'start' }),
+    );
+
+    const exchange = conversationStore.conversations[0].exchanges.find(
+      (e) => e.role === 'assistant',
+    );
+    expect(exchange?.toolCalls).toBeUndefined();
+  });
+
+  it('accumulates reasoning deltas on the exchange', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage(
+      'harness',
+      envelope('harness:delta', { channel: 'reasoning', text: 'thinking' }),
+    );
+    store.addMessage(
+      'harness',
+      envelope('harness:delta', { channel: 'reasoning', text: ' more' }),
+    );
+
+    const exchange = conversationStore.conversations[0].exchanges.find(
+      (e) => e.role === 'assistant',
+    );
+    expect(exchange?.reasoning).toBe('thinking more');
+    expect(exchange?.status).toBe('pending');
+  });
+
+  it('marks a cancelled request done and drops its transient state', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.conversations[0];
+    conversationStore.addExchange(conversation.id, {
+      role: 'assistant',
+      content: 'partial',
+      status: 'streaming',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage('harness', envelope('harness:cancelled', {}));
+
+    const exchange = conversation.exchanges.find((e) => e.role === 'assistant');
+    expect(exchange?.status).toBe('done');
+    expect(exchange?.activity).toBeUndefined();
+    expect(exchange?.reasoning).toBeUndefined();
+  });
+
+  it('seeds the user exchange from the completed prompt when absent', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.conversations[0];
+
+    store.addMessage(
+      'harness',
+      completed({
+        prompt: 'What is Rust?',
+        result: 'A language',
+        template: 'text',
+      }),
+    );
+
+    const userExchange = conversation.exchanges.find((e) => e.role === 'user');
+    expect(userExchange?.content).toBe('What is Rust?');
+    expect(userExchange?.requestId).toBe('req-1');
+  });
+
+  it('does not duplicate an existing user exchange', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.conversations[0];
+    conversationStore.addExchange(conversation.id, {
+      role: 'user',
+      content: 'already there',
+      status: 'done',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage('harness', completed({ prompt: 'other', result: 'x' }));
+
+    expect(
+      conversation.exchanges.filter((e) => e.role === 'user'),
+    ).toHaveLength(1);
+  });
+
+  it('tracks unread completed messages until they are marked read', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+
+    store.addMessage(
+      'harness',
+      completed({ result: 'done', template: 'text' }),
+    );
+    expect(store.completedCount).toBe(1);
+    expect(store.isRead('req-1')).toBe(false);
+
+    store.markAsRead('req-1');
+
+    expect(store.isRead('req-1')).toBe(true);
+    expect(store.completedCount).toBe(0);
+  });
+
+  it('forgets read state when a message is removed', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
+      role: 'assistant',
+      content: '',
+      status: 'pending',
+      requestId: 'req-1',
+      event: 'harness',
+    });
+    store.addMessage(
+      'harness',
+      completed({ result: 'done', template: 'text' }),
+    );
+    store.markAsRead('req-1');
+
+    store.removeMessage('req-1');
+
+    expect(store.isRead('req-1')).toBe(false);
+  });
+
+  it('ignores envelopes without a request id or a known type', () => {
+    const store = useMessagesStore();
+    const conversationStore = useConversationStore();
+
+    store.addMessage('harness', { type: 'harness:delta', data: {} });
+    store.addMessage('harness', envelope('harness:unknown', {}));
+
+    expect(conversationStore.conversations[0].exchanges).toHaveLength(0);
+  });
 });

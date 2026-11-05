@@ -10,7 +10,7 @@ The package exists so the contract between the model and the system lives in exa
 
 | Subpath | Contents |
 | --- | --- |
-| `@triplef/agent/schemas` | [12.1](12.1-schemas.md) — intent + response JSON schemas (Zod), memory/consolidation/cognition models + clamps, tool registry (`TOOL_NAMES`, `BROWSER_TOOL_NAMES`, `MEMORY_TOOL_NAMES`, `ProviderConfig`), URL-trust constants/helpers, Zod formatting helpers |
+| `@triplef/agent/schemas` | [12.1](12.1-schemas.md) — intent + response JSON schemas (Zod), memory/consolidation/cognition models + clamps, tool registry (`TOOL_NAMES`, `MEMORY_TOOL_NAMES`), URL-trust constants/helpers, Zod formatting helpers |
 | `@triplef/agent/prompts` | [12.2](12.2-prompts.md) — system prompts, per-variant instructions, snippet-composed presets, memory job prompts, shared prompt fragments |
 | `@triplef/agent/tools` | [12.3](12.3-tools.md) — dependency-injected tool factories: Serper, Bright Data, YouTube, web-fetch, image-variants, memory tools |
 

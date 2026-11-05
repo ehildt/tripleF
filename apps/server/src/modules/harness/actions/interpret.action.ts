@@ -10,7 +10,6 @@ import { AiSdkService } from '@triplef/ai-sdk';
 import type { MemoryClientConfig } from '../../memory-client/configs/memory-client-config.adapter.js';
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
 import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
-import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { buildClassifyMessages } from '../helpers/interpret/build-classify-messages.helper.js';
@@ -32,7 +31,6 @@ export class InterpretActionService {
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly providerOverrides: ProviderOverridesService,
-    private readonly playwrightMcpConfig: PlaywrightMcpConfigService,
     private readonly eodhdDiscovery: EodhdDiscoveryService,
     @Inject(MEMORY_CLIENT_CONFIG)
     private readonly memoryConfig: MemoryClientConfig,
@@ -51,10 +49,7 @@ export class InterpretActionService {
   async execute(params: InterpretParams): Promise<InterpretResult> {
     const enabledToolNames = filterEodhdToolsByCapabilities(
       getEnabledToolNames(
-        {
-          ...this.providerOverrides.getConfig(),
-          playwright: this.playwrightMcpConfig.config,
-        },
+        this.providerOverrides.getConfig(),
         // Memory tools (remember/recall) are classifier-visible only when the
         // memory feature is on — they are gated by QDRANT_CONFIG, not the
         // provider overrides, so they are merged here.

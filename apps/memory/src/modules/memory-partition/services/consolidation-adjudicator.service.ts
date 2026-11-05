@@ -12,7 +12,6 @@ import { parseLlmJson } from '@triplef/helpers/parse-llm-json';
 
 import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { buildProviderOptions } from '../../ollama/helpers/provider-options.helper.js';
-import type { MemoryRole } from '../../qdrant/models/memory.model.js';
 
 import type { AdjudicationFact } from './consolidation-adjudicator.service.types.js';
 

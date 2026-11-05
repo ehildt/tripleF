@@ -1,4 +1,4 @@
-import type { GalleryItem } from './build-gallery-items.helper.js';
+import type { GalleryItem } from './build-gallery-items.helper.types.js';
 
 function extractStorageHash(imageUrl: string): string | undefined {
   if (!imageUrl.startsWith('/api/v1/storage/')) return undefined;
