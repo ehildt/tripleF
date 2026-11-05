@@ -1,4 +1,4 @@
-import type { GalleryItem } from './build-gallery-items.helper.js';
+import type { GalleryItem } from './build-gallery-items.helper.types.js';
 
 function extractHashFromUrl(url: string): string | undefined {
   if (!url) return undefined;

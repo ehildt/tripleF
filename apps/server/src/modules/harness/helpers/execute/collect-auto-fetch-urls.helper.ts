@@ -13,7 +13,6 @@ const FETCH_TOOL_NAMES = [
   'webFetch',
   'serperWebpageScrape',
   'brightDataWebpageScrape',
-  'browser_navigate',
 ] as const;
 
 /**

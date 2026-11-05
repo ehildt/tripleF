@@ -1,4 +1,5 @@
 import { useSocket } from '@/composables/use-socket/use-socket';
+import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { isSocketEventInUse } from '../shared/helpers/is-socket-event-in-use.helper';
@@ -12,6 +13,7 @@ import { useSocketSubscriptions } from './use-socket-subscriptions';
  */
 export function useDeleteConversation() {
   const conversationStore = useConversationStore();
+  const attachedFilesStore = useAttachedFilesStore();
   const socketStore = useSocket();
   const { subscriptions, removeSubscriptionByEventRoom } =
     useSocketSubscriptions();
@@ -50,6 +52,10 @@ export function useDeleteConversation() {
     conversationStore.setSubscriptions(id, []);
 
     await conversationStore.deleteCurrentConversation(id);
+    attachedFilesStore.clearPendingFilesForConversation(
+      id,
+      conversation.conversationId,
+    );
   }
 
   return { deleteConversation };

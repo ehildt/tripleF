@@ -2,14 +2,7 @@ import type { HarnessJobPayload } from '../../dtos/harness-job.dto.js';
 import { mapEntryWithIndex } from '../sanitize/helpers/map-entry-with-index.helper.js';
 
 import { mapGalleryEntry } from './helpers/map-gallery-entry.helper.js';
-
-export interface GalleryItem extends Record<string, string> {
-  imageUrl: string;
-  imageAlt: string;
-  title: string;
-  caption: string;
-  source?: 'local' | 'cloud';
-}
+import type { GalleryItem } from './build-gallery-items.helper.types.js';
 
 export function buildGalleryItems(
   sessionId: string | undefined,

@@ -8,7 +8,6 @@ import { MemoryPartitionRecordsService } from '../../memory-client/services/memo
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 import { StockHistoryService } from '../../stock-data/services/stock-history.service.js';
 
-import { PlaywrightMcpClientService } from './playwright-mcp-client.service.js';
 import { ToolSelectionService } from './tool-selection.service.js';
 
 describe('ToolSelectionService', () => {
@@ -60,10 +59,6 @@ describe('ToolSelectionService', () => {
           useValue: {
             getHistory: vi.fn().mockResolvedValue([]),
           },
-        },
-        {
-          provide: PlaywrightMcpClientService,
-          useValue: { tools: {} },
         },
         {
           provide: MemoryPartitionRecordsService,

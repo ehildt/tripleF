@@ -14,9 +14,9 @@ import {
 } from '../../helpers/harness-activity.helper.js';
 import {
   buildGalleryItems,
-  type GalleryItem,
   limitLocalGalleryItems,
 } from '../../helpers/media/build-gallery-items.helper.js';
+import type { GalleryItem } from '../../helpers/media/build-gallery-items.helper.types.js';
 import { dedupeGalleryItems } from '../../helpers/media/dedupe-gallery-items.helper.js';
 import { extractImageSearchItems } from '../../helpers/media/extract-media-from-tools.helper.js';
 import { extractShopOffers } from '../../helpers/media/extract-shop-offers.helper.js';

@@ -3,10 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { resolveToolCategory } from './resolve-tool-category.helper.js';
 
 describe('resolveToolCategory', () => {
-  it('maps browser tools', () => {
-    expect(resolveToolCategory('browser_navigate')).toBe('browser');
-  });
-
   it('maps request/variants tools', () => {
     expect(resolveToolCategory('requestImageVariants')).toBe('variants');
   });

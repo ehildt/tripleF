@@ -9,9 +9,9 @@ import {
 } from '../helpers/emit-harness-event.helper.js';
 import {
   buildGalleryItems,
-  type GalleryItem,
   limitLocalGalleryItems,
 } from '../helpers/media/build-gallery-items.helper.js';
+import type { GalleryItem } from '../helpers/media/build-gallery-items.helper.types.js';
 import { extractImageCountFromToolResults } from '../helpers/media/extract-image-count-from-tool-results.helper.js';
 import { extractVideoCountFromToolResults } from '../helpers/media/extract-video-count-from-tool-results.helper.js';
 import { filterExistingGalleryItems } from '../helpers/media/filter-existing-gallery-items.helper.js';

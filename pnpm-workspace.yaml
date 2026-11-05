@@ -39,13 +39,12 @@ minimumReleaseAgeExclude:
   - '@typescript-eslint/visitor-keys@8.70.0 || 8.71.1 || 8.72.0'
   - typescript-eslint@8.70.0 || 8.71.1 || 8.72.0
   - unplugin-swc@1.6.0
-  - '@ai-sdk/gateway@4.0.76 || 4.0.86 || 4.0.87 || 4.0.104 || 4.0.119 || 4.0.121 || 4.0.130 || 4.0.131 || 4.0.135'
-  - '@ai-sdk/mcp@2.0.46 || 2.0.53 || 2.0.54 || 2.0.67 || 2.0.80 || 2.0.81 || 2.0.87 || 2.0.88 || 2.0.90'
-  - '@ai-sdk/provider-utils@5.0.37 || 5.0.44 || 5.0.45 || 5.0.54 || 5.0.64 || 5.0.65 || 5.0.71 || 5.0.72 || 5.0.74'
-  - '@ai-sdk/provider@4.0.11 || 4.0.22 || 4.0.31 || 4.0.35'
-  - '@lucide/icons@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0'
-  - '@lucide/vue@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0'
-  - ai@7.0.94 || 7.0.106 || 7.0.107 || 7.0.128 || 7.0.146 || 7.0.148 || 7.0.157 || 7.0.158 || 7.0.162
+  - '@ai-sdk/gateway@4.0.76 || 4.0.86 || 4.0.87 || 4.0.104 || 4.0.119 || 4.0.121 || 4.0.130 || 4.0.131 || 4.0.135 || 4.0.136'
+  - '@ai-sdk/provider-utils@5.0.37 || 5.0.44 || 5.0.45 || 5.0.54 || 5.0.64 || 5.0.65 || 5.0.71 || 5.0.72 || 5.0.74 || 5.0.75'
+  - '@ai-sdk/provider@4.0.11 || 4.0.22 || 4.0.31 || 4.0.35 || 4.0.36'
+  - '@lucide/icons@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0 || 1.69.0'
+  - '@lucide/vue@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0 || 1.69.0'
+  - ai@7.0.94 || 7.0.106 || 7.0.107 || 7.0.128 || 7.0.146 || 7.0.148 || 7.0.157 || 7.0.158 || 7.0.162 || 7.0.163
   - jszip@3.10.2
   - zod@4.6.4 || 4.6.6
   - bullmq@6.3.7 || 6.3.8 || 6.3.18 || 6.3.19 || 6.5.2 || 6.5.4 || 6.6.1 || 6.7.0
@@ -73,19 +72,19 @@ minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.13 || 3.3.14'
   - vue-i18n@11.4.14 || 11.4.17 || 11.4.18
   - vue-tsc@3.3.13 || 3.3.14
-  - '@swc/core-darwin-arm64@1.16.18'
-  - '@swc/core-darwin-x64@1.16.18'
-  - '@swc/core-linux-arm-gnueabihf@1.16.18'
-  - '@swc/core-linux-arm64-gnu@1.16.18'
-  - '@swc/core-linux-arm64-musl@1.16.18'
-  - '@swc/core-linux-ppc64-gnu@1.16.18'
-  - '@swc/core-linux-s390x-gnu@1.16.18'
-  - '@swc/core-linux-x64-gnu@1.16.18'
-  - '@swc/core-linux-x64-musl@1.16.18'
-  - '@swc/core-win32-arm64-msvc@1.16.18'
-  - '@swc/core-win32-ia32-msvc@1.16.18'
-  - '@swc/core-win32-x64-msvc@1.16.18'
-  - '@swc/core@1.16.18 || 1.16.20'
+  - '@swc/core-darwin-arm64@1.16.18 || 1.16.22'
+  - '@swc/core-darwin-x64@1.16.18 || 1.16.22'
+  - '@swc/core-linux-arm-gnueabihf@1.16.18 || 1.16.22'
+  - '@swc/core-linux-arm64-gnu@1.16.18 || 1.16.22'
+  - '@swc/core-linux-arm64-musl@1.16.18 || 1.16.22'
+  - '@swc/core-linux-ppc64-gnu@1.16.18 || 1.16.22'
+  - '@swc/core-linux-s390x-gnu@1.16.18 || 1.16.22'
+  - '@swc/core-linux-x64-gnu@1.16.18 || 1.16.22'
+  - '@swc/core-linux-x64-musl@1.16.18 || 1.16.22'
+  - '@swc/core-win32-arm64-msvc@1.16.18 || 1.16.22'
+  - '@swc/core-win32-ia32-msvc@1.16.18 || 1.16.22'
+  - '@swc/core-win32-x64-msvc@1.16.18 || 1.16.22'
+  - '@swc/core@1.16.18 || 1.16.20 || 1.16.22'
   - dependency-cruiser@18.6.0 || 18.7.0 || 18.7.1 || 18.7.2
   - '@nestjs/cli@12.0.9 || 12.0.10'
   - '@nestjs/common@12.2.0 || 12.3.3'
@@ -100,7 +99,7 @@ minimumReleaseAgeExclude:
   - '@nestjs/swagger@12.0.3'
   - '@triplef/bullmq@1.1.6'
   - '@triplef/config-factory@1.2.2'
-  - '@triplef/ollama-api@0.1.2'
+  - '@triplef/ollama-api@0.1.2 || 0.2.0'
   - '@triplef/ai-sdk@1.0.2'
   - '@triplef/core-logger@1.0.2'
   - '@triplef/socketio@1.0.2'
@@ -120,9 +119,8 @@ minimumReleaseAgeExclude:
   - '@tailwindcss/oxide-win32-x64-msvc@4.3.4'
   - '@tailwindcss/oxide@4.3.4'
   - '@tailwindcss/postcss@4.3.4'
-  - '@tanstack/query-core@5.105.3 || 5.106.0'
-  - '@tanstack/vue-query@5.105.3 || 5.106.0'
-  - '@vitest/browser-playwright@5.1.0'
+  - '@tanstack/query-core@5.105.3 || 5.106.0 || 5.106.1'
+  - '@tanstack/vue-query@5.105.3 || 5.106.0 || 5.106.1'
   - '@vitest/browser@5.1.0'
   - '@vitest/coverage-v8@5.1.0'
   - '@vitest/mocker@5.1.0'
@@ -142,4 +140,23 @@ minimumReleaseAgeExclude:
   - vitest@5.1.0
   - filesize@11.0.30
   - turndown@7.2.5
+  - '@storybook/addon-a11y@10.6.6'
+  - '@storybook/addon-docs@10.6.6'
+  - '@storybook/builder-vite@10.6.6'
+  - '@storybook/react-dom-shim@10.6.6'
+  - '@storybook/vue3-vite@10.6.6'
+  - '@storybook/vue3@10.6.6'
+  - '@vue/compiler-core@3.5.45'
+  - '@vue/compiler-dom@3.5.45'
+  - '@vue/compiler-sfc@3.5.45'
+  - '@vue/compiler-ssr@3.5.45'
+  - '@vue/reactivity@3.5.45'
+  - '@vue/runtime-core@3.5.45'
+  - '@vue/runtime-dom@3.5.45'
+  - '@vue/server-renderer@3.5.45'
+  - '@vue/shared@3.5.45'
+  - eslint-plugin-storybook@10.6.6
+  - storybook@10.6.6
+  - vite@8.3.6
+  - vue@3.5.45
 

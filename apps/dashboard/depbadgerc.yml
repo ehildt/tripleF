@@ -123,8 +123,6 @@ devDependencies:
       link: https://github.com/storybookjs/storybook
     - name: '@storybook/addon-docs'
       link: https://github.com/storybookjs/storybook
-    - name: '@storybook/addon-vitest'
-      link: https://github.com/storybookjs/storybook
     - name: '@storybook/vue3-vite'
       link: https://github.com/storybookjs/storybook
     - name: '@tailwindcss/postcss'
@@ -153,8 +151,6 @@ devDependencies:
       link: https://github.com/DefinitelyTyped/DefinitelyTyped
     - name: '@vitejs/plugin-vue'
       link: https://github.com/vitejs/vite-plugin-vue
-    - name: '@vitest/browser-playwright'
-      link: https://github.com/vitest-dev/vitest
     - name: '@vitest/coverage-v8'
       link: https://github.com/vitest-dev/vitest
     - name: '@vitest/ui'
@@ -187,8 +183,6 @@ devDependencies:
       link: https://github.com/jsdom/jsdom
     - name: lint-staged
       link: https://github.com/lint-staged/lint-staged
-    - name: playwright
-      link: https://github.com/microsoft/playwright
     - name: postcss
       link: https://github.com/postcss/postcss
     - name: prettier

@@ -3,16 +3,10 @@ import { AiSdkService } from '@triplef/ai-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MEMORY_CLIENT_CONFIG } from '../../memory-client/constants/memory-client.constants.js';
-import { PlaywrightMcpConfigService } from '../../playwright-mcp/configs/playwright-mcp-config.service.js';
 import { EodhdDiscoveryService } from '../../provider-overrides/services/eodhd-discovery.service.js';
 import { ProviderOverridesService } from '../../provider-overrides/services/provider-overrides.service.js';
 
 import { InterpretActionService } from './interpret.action.js';
-
-const playwrightMcpConfigProvider = {
-  provide: PlaywrightMcpConfigService,
-  useValue: { config: { enabled: false, url: 'http://localhost:8931/mcp' } },
-};
 
 const eodhdDiscoveryProvider = {
   provide: EodhdDiscoveryService,
@@ -47,7 +41,6 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
-        playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
           provide: MEMORY_CLIENT_CONFIG,
@@ -269,7 +262,6 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
-        playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
           provide: MEMORY_CLIENT_CONFIG,
@@ -351,7 +343,6 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
-        playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
           provide: MEMORY_CLIENT_CONFIG,
@@ -457,7 +448,6 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
-        playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
           provide: MEMORY_CLIENT_CONFIG,
@@ -536,7 +526,6 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
-        playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
           provide: MEMORY_CLIENT_CONFIG,
@@ -619,7 +608,6 @@ describe('InterpretActionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterpretActionService,
-        playwrightMcpConfigProvider,
         eodhdDiscoveryProvider,
         {
           provide: MEMORY_CLIENT_CONFIG,

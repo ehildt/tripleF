@@ -24,7 +24,6 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 # Dependencies
 
-[![@ai-sdk/mcp](https://img.shields.io/badge/_ai_sdk_mcp-v2.0.45-b719c2.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b719c2&logoWidth=40&style=flat-square)](https://github.com/vercel/ai)
 [![@fastify/compress](https://img.shields.io/badge/_fastify_compress-v9.2.0-c62478.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c62478&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-compress)
 [![@fastify/multipart](https://img.shields.io/badge/_fastify_multipart-v10.1.1-3dd198.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=3dd198&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-multipart)
 [![@fastify/static](https://img.shields.io/badge/_fastify_static-v10.1.3-8ab61b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=8ab61b&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-static)

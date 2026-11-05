@@ -22,8 +22,6 @@ import { OllamaConfigService } from './modules/ollama/configs/ollama-config.serv
 import { OllamaModule } from './modules/ollama/ollama.module.js';
 import { OllamaOverridesService } from './modules/ollama/services/ollama-overrides.service.js';
 import { PersistenceModule } from './modules/persistence/persistence.module.js';
-import { PlaywrightMcpConfigService } from './modules/playwright-mcp/configs/playwright-mcp-config.service.js';
-import { PlaywrightMcpModule } from './modules/playwright-mcp/playwright-mcp.module.js';
 import { BrightDataConfigService } from './modules/provider-overrides/configs/bright-data-config.service.js';
 import { SerperConfigService } from './modules/provider-overrides/configs/serper-config.service.js';
 import { ProviderOverridesModule } from './modules/provider-overrides/provider-overrides.module.js';
@@ -71,7 +69,6 @@ import { StockDataModule } from './modules/stock-data/stock-data.module.js';
     CoreLoggerModule.register(),
     SocketIOModule.register(),
     HealthModule.register(),
-    PlaywrightMcpModule.register(),
     HarnessModule.register(),
     SharpModule.register(),
     MinioModule.register(),
@@ -93,7 +90,6 @@ import { StockDataModule } from './modules/stock-data/stock-data.module.js';
         MinioConfigService,
         NumCtxConfigService,
         CoreLoggerConfigService,
-        PlaywrightMcpConfigService,
         BrightDataConfigService,
         SerperConfigService,
         SharpConfigService,

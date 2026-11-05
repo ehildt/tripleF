@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   getConversation: vi.fn(),
   setSubscriptions: vi.fn(),
   deleteCurrentConversation: vi.fn(),
+  clearPendingFilesForConversation: vi.fn(),
   removeSubscriptionByEventRoom: vi.fn(),
   closeRoom: vi.fn(),
   closeEvent: vi.fn(),
@@ -33,6 +34,12 @@ vi.mock('@/stores/conversation/conversation.store', async () => {
   state.conversation = store;
   return { useConversationStore: () => store };
 });
+
+vi.mock('@/stores/attached-files/attached-files.store', () => ({
+  useAttachedFilesStore: () => ({
+    clearPendingFilesForConversation: state.clearPendingFilesForConversation,
+  }),
+}));
 
 vi.mock('@/composables/use-socket/use-socket', () => ({
   useSocket: () => ({
@@ -82,13 +89,18 @@ describe('useDeleteConversation', () => {
     state.setSubscriptions.mockClear();
     state.deleteCurrentConversation.mockClear();
     state.deleteCurrentConversation.mockResolvedValue(undefined);
+    state.clearPendingFilesForConversation.mockClear();
     state.removeSubscriptionByEventRoom.mockClear();
     state.closeRoom.mockClear();
     state.closeEvent.mockClear();
   });
 
   it('closes the room and event, clears subscriptions, and deletes', async () => {
-    const target = conversation({ event: 'e', roomId: 'r' });
+    const target = conversation({
+      event: 'e',
+      roomId: 'r',
+      conversationId: 'context-1',
+    });
     state.getConversation.mockReturnValue(target);
     state.conversation.conversations = [target];
     state.subscriptions.value = [
@@ -102,6 +114,10 @@ describe('useDeleteConversation', () => {
     expect(state.closeEvent).toHaveBeenCalledWith('e');
     expect(state.setSubscriptions).toHaveBeenCalledWith('c1', []);
     expect(state.deleteCurrentConversation).toHaveBeenCalledWith('c1');
+    expect(state.clearPendingFilesForConversation).toHaveBeenCalledWith(
+      'c1',
+      'context-1',
+    );
   });
 
   it('keeps a socket shared with another conversation', async () => {
