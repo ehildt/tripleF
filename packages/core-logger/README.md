@@ -67,7 +67,7 @@ A lightweight NestJS `LoggerService` backed by pino — structured logging with 
 
 # PeerDependencies
 
-[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.3.3-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 [![pino](https://img.shields.io/badge/pino-v10.4.0-2fc15b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc15b&logoWidth=40&style=flat)](https://github.com/pinojs/pino)
 [![pino-pretty](https://img.shields.io/badge/pino_pretty-v13.2.0-28acb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=28acb8&logoWidth=40&style=flat)](https://github.com/pinojs/pino-pretty)
 

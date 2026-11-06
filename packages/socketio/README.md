@@ -34,7 +34,7 @@ A NestJS module for building real-time applications with Socket.IO — room mana
 
 [![@changesets/cli](https://img.shields.io/badge/_changesets_cli-v3.0.3-82ba21.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=82ba21&logoWidth=40&style=flat-square)](https://github.com/changesets/changesets)
 [![@eslint/js](https://img.shields.io/badge/_eslint_js-v10.0.1-7a23a9.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=7a23a9&logoWidth=40&style=flat-square)](https://github.com/eslint/eslint)
-[![@nestjs/testing](https://img.shields.io/badge/_nestjs_testing-v12.3.3-c02635.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c02635&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
+[![@nestjs/testing](https://img.shields.io/badge/_nestjs_testing-v12.4.0-c02635.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c02635&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@types/eslint](https://img.shields.io/badge/_types_eslint-v9.6.1-d936d0.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=d936d0&logoWidth=40&style=flat-square)](https://github.com/DefinitelyTyped/DefinitelyTyped)
 [![@types/node](https://img.shields.io/badge/_types_node-v26.6.6-d51a33.svg?labelColor=333&cacheSeconds=3600&logo=node&logoColor=d51a33&logoWidth=40&style=flat-square)](https://github.com/DefinitelyTyped/DefinitelyTyped)
 [![@vitest/coverage-v8](https://img.shields.io/badge/_vitest_coverage_v8-5.1.0-92d435.svg?labelColor=333&cacheSeconds=3600&logo=vitest&logoColor=92d435&logoWidth=40&style=flat-square)](https://github.com/vitest-dev/vitest)
@@ -69,7 +69,7 @@ A NestJS module for building real-time applications with Socket.IO — room mana
 
 # PeerDependencies
 
-[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.3.3-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 [![socket.io](https://img.shields.io/badge/socket_io-v4.8.4-2e42d6.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2e42d6&logoWidth=40&style=flat)](https://github.com/socketio/socket.io)
 [![fastify-socket.io](https://img.shields.io/badge/fastify_socket_io-v5.1.0-c54e30.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c54e30&logoWidth=40&style=flat)](https://github.com/ducktors/fastify-socket.io)
 

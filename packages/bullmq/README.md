@@ -34,7 +34,7 @@ A NestJS module for BullMQ integration with configuration types and validation s
 
 ![@changesets/cli](https://img.shields.io/badge/_changesets_cli-v3.0.3-82ba21.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=82ba21&logoWidth=40&style=flat-square)
 ![@eslint/js](https://img.shields.io/badge/_eslint_js-v10.0.1-7a23a9.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=7a23a9&logoWidth=40&style=flat-square)
-![@nestjs/testing](https://img.shields.io/badge/_nestjs_testing-v12.3.3-c02635.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c02635&logoWidth=40&style=flat-square)
+![@nestjs/testing](https://img.shields.io/badge/_nestjs_testing-v12.4.0-c02635.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c02635&logoWidth=40&style=flat-square)
 ![@types/eslint](https://img.shields.io/badge/_types_eslint-v9.6.1-d936d0.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=d936d0&logoWidth=40&style=flat-square)
 ![@types/node](https://img.shields.io/badge/_types_node-v26.6.6-d51a33.svg?labelColor=333&cacheSeconds=3600&logo=node&logoColor=d51a33&logoWidth=40&style=flat-square)
 ![@vitest/coverage-v8](https://img.shields.io/badge/_vitest_coverage_v8-5.1.0-92d435.svg?labelColor=333&cacheSeconds=3600&logo=vitest&logoColor=92d435&logoWidth=40&style=flat-square)
@@ -69,9 +69,9 @@ A NestJS module for BullMQ integration with configuration types and validation s
 
 # PeerDependencies
 
-[![@nestjs/bullmq](https://img.shields.io/badge/_nestjs_bullmq-v12.0.0-69b927.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=69b927&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
-[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.3.3-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
-[![bullmq](https://img.shields.io/badge/bullmq-v6.7.0-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat)](https://github.com/taskforcesh/bullmq)
+[![@nestjs/bullmq](https://img.shields.io/badge/_nestjs_bullmq-v12.0.1-69b927.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=69b927&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![bullmq](https://img.shields.io/badge/bullmq-v6.7.1-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat)](https://github.com/taskforcesh/bullmq)
 [![ioredis](https://img.shields.io/badge/ioredis-v6.0.0-b0219a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b0219a&logoWidth=40&style=flat)](https://github.com/luin/ioredis)
 
 </div>

@@ -71,7 +71,7 @@ Single-owner pdfjs integration for the tripleF (3F) apps — the one and only pl
 
 # PeerDependencies
 
-[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.3.3-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 
 </div>
 <!-- DEPBADGE:END -->

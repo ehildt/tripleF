@@ -27,8 +27,8 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 # Dependencies
 
 [![@headlessui/vue](https://img.shields.io/badge/_headlessui_vue-v1.7.23-2c60c9.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2c60c9&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/headlessui)
-[![@lucide/icons](https://img.shields.io/badge/_lucide_icons-v1.69.0-2b36ab.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b36ab&logoWidth=40&style=flat-square)](https://github.com/lucide-icons/lucide)
-[![@lucide/vue](https://img.shields.io/badge/_lucide_vue-v1.69.0-26e3d3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=26e3d3&logoWidth=40&style=flat-square)](https://github.com/lucide-icons/lucide)
+[![@lucide/icons](https://img.shields.io/badge/_lucide_icons-v1.70.0-2b36ab.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b36ab&logoWidth=40&style=flat-square)](https://github.com/lucide-icons/lucide)
+[![@lucide/vue](https://img.shields.io/badge/_lucide_vue-v1.70.0-26e3d3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=26e3d3&logoWidth=40&style=flat-square)](https://github.com/lucide-icons/lucide)
 [![@paralleldrive/cuid2](https://img.shields.io/badge/_paralleldrive_cuid2-v3.3.0-b36e1a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b36e1a&logoWidth=40&style=flat-square)](https://github.com/paralleldrive/cuid2)
 [![@tanstack/vue-query](https://img.shields.io/badge/_tanstack_vue_query-v5.106.1-98d22d.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=98d22d&logoWidth=40&style=flat-square)](https://github.com/tanstack/query)
 [![@types/turndown](https://img.shields.io/badge/_types_turndown-v5.0.6-1ac76d.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1ac76d&logoWidth=40&style=flat-square)](https://github.com/DefinitelyTyped/DefinitelyTyped)
@@ -74,7 +74,7 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 [![@storybook/addon-a11y](https://img.shields.io/badge/_storybook_addon_a11y-v10.6.6-e0b629.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e0b629&logoWidth=40&style=flat-square)](https://github.com/storybookjs/storybook)
 [![@storybook/addon-docs](https://img.shields.io/badge/_storybook_addon_docs-v10.6.6-c7d440.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c7d440&logoWidth=40&style=flat-square)](https://github.com/storybookjs/storybook)
 [![@storybook/vue3-vite](https://img.shields.io/badge/_storybook_vue3_vite-v10.6.6-1de276.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1de276&logoWidth=40&style=flat-square)](https://github.com/storybookjs/storybook)
-[![@tailwindcss/postcss](https://img.shields.io/badge/_tailwindcss_postcss-v4.3.4-b72ab0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b72ab0&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
+[![@tailwindcss/postcss](https://img.shields.io/badge/_tailwindcss_postcss-v4.3.5-b72ab0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b72ab0&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
 [![@testing-library/jest-dom](https://img.shields.io/badge/_testing_library_jest_dom-v7.0.1-80de21.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=80de21&logoWidth=40&style=flat-square)](https://github.com/testing-library/jest-dom)
 [![@testing-library/vue](https://img.shields.io/badge/_testing_library_vue-v8.1.0-e326ad.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e326ad&logoWidth=40&style=flat-square)](https://github.com/testing-library/vue-testing-library)
 [![@types/d3-axis](https://img.shields.io/badge/_types_d3_axis-v3.0.6-75ba2c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=75ba2c&logoWidth=40&style=flat-square)](https://github.com/DefinitelyTyped/DefinitelyTyped)
@@ -106,12 +106,12 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 [![postcss](https://img.shields.io/badge/postcss-v8.5.32-4fb31a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4fb31a&logoWidth=40&style=flat-square)](https://github.com/postcss/postcss)
 [![prettier](https://img.shields.io/badge/prettier-v3.9.10-48bd28.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=48bd28&logoWidth=40&style=flat-square)](https://github.com/prettier/prettier)
 [![storybook](https://img.shields.io/badge/storybook-v10.6.6-1acb2c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1acb2c&logoWidth=40&style=flat-square)](https://github.com/storybookjs/storybook)
-[![tailwindcss](https://img.shields.io/badge/tailwindcss-v4.3.4-ba1ca8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ba1ca8&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
+[![tailwindcss](https://img.shields.io/badge/tailwindcss-v4.3.5-ba1ca8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ba1ca8&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
 [![typescript](https://img.shields.io/badge/typescript-v5.9.3-4c2eb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4c2eb8&logoWidth=40&style=flat-square)](https://github.com/Microsoft/TypeScript)
 [![typescript-eslint](https://img.shields.io/badge/typescript_eslint-v8.72.1-dc2e59.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dc2e59&logoWidth=40&style=flat-square)](https://github.com/typescript-eslint/typescript-eslint)
 [![vite](https://img.shields.io/badge/vite-v8.3.6-33cc66.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33cc66&logoWidth=40&style=flat-square)](https://github.com/vitejs/vite)
 [![vitest](https://img.shields.io/badge/vitest-v5.1.0-80c026.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=80c026&logoWidth=40&style=flat-square)](https://github.com/vitest-dev/vitest)
-[![vue-eslint-parser](https://img.shields.io/badge/vue_eslint_parser-v10.4.1-2fc173.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc173&logoWidth=40&style=flat-square)](https://github.com/vuejs/vue-eslint-parser)
+[![vue-eslint-parser](https://img.shields.io/badge/vue_eslint_parser-v10.4.2-2fc173.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc173&logoWidth=40&style=flat-square)](https://github.com/vuejs/vue-eslint-parser)
 [![vue-tsc](https://img.shields.io/badge/vue_tsc-v3.3.14-54bc24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=54bc24&logoWidth=40&style=flat-square)](https://github.com/vuejs/language-tools)
 
 </div>
