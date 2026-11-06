@@ -1,5 +1,11 @@
 # @triplef/agent
 
+## 2.0.1
+
+### Patch Changes
+
+- 565a256: Move object storage to RustFS and the AWS S3 SDK, use vendor-neutral application and health names, and serve media exclusively from `/api/v1/object-storage`.
+
 ## 2.0.0
 
 ### Major Changes

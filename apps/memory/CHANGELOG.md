@@ -1,5 +1,13 @@
 # @triplef/memory
 
+## 1.2.1
+
+### Patch Changes
+
+- 565a256: Split monolithic module boundaries into focused services and helpers, tighten entry-point delegation, and align the affected dashboard and memory surfaces without changing their public behavior.
+- Updated dependencies [565a256]
+  - @triplef/agent@2.0.1
+
 ## 1.2.0
 
 ### Minor Changes

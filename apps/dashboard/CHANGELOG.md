@@ -1,5 +1,12 @@
 # @triplef/dashboard
 
+## 0.6.2
+
+### Patch Changes
+
+- 565a256: Move object storage to RustFS and the AWS S3 SDK, use vendor-neutral application and health names, and serve media exclusively from `/api/v1/object-storage`.
+- 565a256: Split monolithic module boundaries into focused services and helpers, tighten entry-point delegation, and align the affected dashboard and memory surfaces without changing their public behavior.
+
 ## 0.6.1
 
 ### Patch Changes
