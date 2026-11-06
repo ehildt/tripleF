@@ -40,7 +40,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![@nestjs/terminus](https://img.shields.io/badge/_nestjs_terminus-v12.1.0-9b3dd6.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9b3dd6&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@prisma/adapter-pg](https://img.shields.io/badge/_prisma_adapter_pg-7-db5e1f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=db5e1f&logoWidth=40&style=flat-square)](https://github.com/prisma/prisma)
 [![@prisma/client](https://img.shields.io/badge/_prisma_client-7-ada825.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ada825&logoWidth=40&style=flat-square)](https://github.com/prisma/prisma)
-[![@triplef/agent](https://img.shields.io/badge/_triplef_agent-v2.0.0-327ee2.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=327ee2&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
+[![@triplef/agent](https://img.shields.io/badge/_triplef_agent-v2.0.1-327ee2.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=327ee2&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/ai-sdk](https://img.shields.io/badge/_triplef_ai_sdk-v1.0.2-af2cc3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=af2cc3&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/bullmq](https://img.shields.io/badge/_triplef_bullmq-v1.1.6-991dbf.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=991dbf&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/bullmq-logger](https://img.shields.io/badge/_triplef_bullmq_logger-v1.3.2-2fd82c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fd82c&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
