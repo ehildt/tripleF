@@ -80,8 +80,8 @@ A shared utility library providing helper functions for the CKIR project.
 
 # PeerDependencies
 
-[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.3.3-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
-[![@nestjs/swagger](https://img.shields.io/badge/_nestjs_swagger-v12.1.0-225fd8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=225fd8&logoWidth=40&style=flat)](https://github.com/nestjs/swagger)
+[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![@nestjs/swagger](https://img.shields.io/badge/_nestjs_swagger-v12.1.1-225fd8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=225fd8&logoWidth=40&style=flat)](https://github.com/nestjs/swagger)
 [![pino](https://img.shields.io/badge/pino-v10.4.0-2fc15b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc15b&logoWidth=40&style=flat)](https://github.com/pinojs/pino)
 
 </div>

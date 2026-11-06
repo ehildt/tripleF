@@ -48,6 +48,8 @@ jobs:
     if: github.event_name == 'push'
     needs: ci
     runs-on: ubuntu-latest
+    outputs:
+      release-sha: ${{ steps.release-commit.outputs.sha }}
 
     steps:
       - uses: actions/checkout@v7
@@ -105,6 +107,10 @@ jobs:
           commit_user_email: ${{ env.CI_BOT_EMAIL }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Export release commit
+        id: release-commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   # Version bumps for the published packages are handled by the root
   # (repo-update) changeset flow — their changesets live at the root.
@@ -178,7 +184,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # ensure we can see the latest commits
+          ref: ${{ needs.repo-update.outputs.release-sha }}
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v6
 
@@ -187,9 +194,8 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
+      # CI already built and tested dist. Do not resolve the workspace again:
+      # just-bumped internal versions may not exist in npm until this job runs.
       - uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.package.artifact }}
@@ -205,5 +211,5 @@ jobs:
           else
             # Trusted publishing: pnpm exchanges the GitHub OIDC token
             # (id-token: write) for a short-lived npm token automatically.
-            pnpm publish --no-git-checks --provenance
+            pnpm publish --ignore-scripts --no-git-checks --provenance
           fi
