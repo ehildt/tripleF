@@ -21,10 +21,7 @@ on:
 
 env:
   HUSKY: 0
-  # Identity for automated CI commits. NOTE: for commits to show "Verified",
-  # the GitHub account holding CI_SSH_SIGNING_KEY's public key (as a Signing
-  # key) must own this email address. github-actions[bot] can't hold keys, so
-  # point these at a dedicated CI/machine account (see team runbook).
+  # Identity for automated CI commits.
   CI_BOT_NAME: "github-actions[bot]"
   CI_BOT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -62,17 +59,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-
-      - name: Setup SSH commit signing
-        env:
-          CI_SSH_SIGNING_KEY: ${{ secrets.CI_SSH_SIGNING_KEY }}
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          echo "$CI_SSH_SIGNING_KEY" > ~/.ssh/ci_signing_key
-          chmod 600 ~/.ssh/ci_signing_key
-          git config --global gpg.format ssh
-          git config --global user.signingkey ~/.ssh/ci_signing_key
-          git config --global commit.gpgsign true
 
       - run: pnpm -r install --frozen-lockfile
 
@@ -119,17 +105,6 @@ jobs:
         with:
           repository: ${{ github.repository }}.wiki
           path: wiki
-
-      - name: Setup SSH commit signing
-        env:
-          CI_SSH_SIGNING_KEY: ${{ secrets.CI_SSH_SIGNING_KEY }}
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          echo "$CI_SSH_SIGNING_KEY" > ~/.ssh/ci_signing_key
-          chmod 600 ~/.ssh/ci_signing_key
-          git config --global gpg.format ssh
-          git config --global user.signingkey ~/.ssh/ci_signing_key
-          git config --global commit.gpgsign true
 
       - name: Sync wiki
         run: |
