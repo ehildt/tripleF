@@ -105,7 +105,7 @@ function isPrivateOrLocalhost(hostname: string): boolean {
  *
  * The server is the authoritative source of URL filtering; this helper is a
  * lightweight client-side guard. It keeps the same rules as the server so
- * local services such as MinIO continue to work.
+ * local object-storage services continue to work.
  */
 export function isTrustedImageUrl(url: string): boolean {
   if (!url) return false;
@@ -138,7 +138,7 @@ export function isTrustedImageUrl(url: string): boolean {
   }
 
   // Reject non-image private/localhost URLs; accept direct image files from
-  // local services such as MinIO.
+  // local object-storage services.
   if (isPrivate && !DIRECT_IMAGE_EXTENSION.test(parsed.pathname)) {
     return false;
   }

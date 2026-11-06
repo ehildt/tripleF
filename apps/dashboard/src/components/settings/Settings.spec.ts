@@ -36,7 +36,7 @@ vi.mock('../../api/queries/use-health-ready.query', () => ({
         memory_heap: { status: 'up' },
         memory_rss: { status: 'up' },
         postgres: { status: 'up' },
-        minio: { status: 'up' },
+        object_storage: { status: 'up' },
       },
       details: {},
       error: {},

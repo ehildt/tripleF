@@ -50,10 +50,10 @@ const UPLOADED: ConstellationNode = {
       `Section ${index + 1} — revenue and outlook details for the quarter.`,
   ).join('\n'),
   keys: ['quarterly-report.pdf'],
-  downloadUrl: '/api/v1/storage/s/c/document-hash',
+  downloadUrl: '/api/v1/object-storage/s/c/document-hash',
   meta: [
     { label: 'title', value: 'quarterly-report.pdf' },
-    { label: 'url', value: '/api/v1/storage/s/c/document-hash' },
+    { label: 'url', value: '/api/v1/object-storage/s/c/document-hash' },
     { label: 'type', value: 'pdf' },
     { label: 'size', value: '240 KB' },
     { label: 'chunk', value: '1/3' },

@@ -245,7 +245,7 @@ export interface EncyclopediaChunkRecord {
   mimeType?: string;
   /** Byte size of the original upload (uploaded documents only). */
   sizeBytes?: number;
-  /** Content hash of the ORIGINAL upload — the MinIO object identity (uploaded documents only). */
+  /** Content hash of the ORIGINAL upload — the stored object identity (uploaded documents only). */
   originalHash?: string;
   /** Broad family label (e.g. games) — the cold-scope fallback cluster key. */
   category?: string;

@@ -24,7 +24,7 @@ export function usePromptImageTiles(exchange: MaybeRefOrGetter<Exchange>) {
       mapImageToTile(
         image,
         getApiUrl(
-          `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${image.hash}`,
+          `/api/v1/object-storage/${conversation.id}/${conversation.conversationId}/${image.hash}`,
         ),
       ),
     );

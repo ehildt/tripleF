@@ -3,7 +3,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { PdfModule } from '@triplef/pdf';
 
 import { MemoryClientModule } from '../memory-client/memory-client.module.js';
-import { MinioModule } from '../minio/minio.module.js';
+import { ObjectStorageModule } from '../object-storage/object-storage.module.js';
 import { OllamaModule } from '../ollama/ollama.module.js';
 import { PersistenceModule } from '../persistence/persistence.module.js';
 import { ProviderOverridesModule } from '../provider-overrides/provider-overrides.module.js';
@@ -73,7 +73,7 @@ export class HarnessModule {
       HttpModule,
       PdfModule.registerAsync({ global: true }),
       MemoryClientModule.register(),
-      MinioModule.register(),
+      ObjectStorageModule.register(),
       OllamaModule.register(),
       PersistenceModule.register(),
       ProviderOverridesModule.register(),

@@ -8,7 +8,7 @@ import type { AddableImage } from './use-add-image-to-files';
 import { useAddImageToFiles } from './use-add-image-to-files';
 
 const CLOUD_ITEM: AddableImage = {
-  imageUrl: '/api/v1/storage/session-1/conversation-1/hash-a',
+  imageUrl: '/api/v1/object-storage/session-1/conversation-1/hash-a',
   imageAlt: 'A cloud photo',
   title: 'A cloud photo',
   source: 'cloud',

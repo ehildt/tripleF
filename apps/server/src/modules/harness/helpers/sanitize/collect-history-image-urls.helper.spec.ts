@@ -5,18 +5,18 @@ import { collectHistoryImageUrls } from './collect-history-image-urls.helper.js'
 const assistant = (content: string) => ({ role: 'assistant', content });
 
 describe('collectHistoryImageUrls', () => {
-  it('collects storage urls after the marker', () => {
+  it('collects object-storage URLs after the marker', () => {
     const messages = [
       assistant(
-        'Response\nPreviously shown images\n(/api/v1/storage/sess/conv/abc123)',
+        'Response\nPreviously shown images\n(/api/v1/object-storage/sess/conv/abc123)',
       ),
     ];
     const urls = collectHistoryImageUrls(messages as never);
-    expect(urls).toContain('/api/v1/storage/sess/conv/abc123');
+    expect(urls).toContain('/api/v1/object-storage/sess/conv/abc123');
   });
 
-  it('ignores urls before the marker', () => {
-    const messages = [assistant('(/api/v1/storage/sess/conv/abc123)')];
+  it('ignores URLs before the marker', () => {
+    const messages = [assistant('(/api/v1/object-storage/sess/conv/abc123)')];
     expect(collectHistoryImageUrls(messages as never).size).toBe(0);
   });
 
@@ -24,7 +24,8 @@ describe('collectHistoryImageUrls', () => {
     const messages = [
       {
         role: 'user',
-        content: 'Previously shown images\n(/api/v1/storage/sess/conv/abc123)',
+        content:
+          'Previously shown images\n(/api/v1/object-storage/sess/conv/abc123)',
       },
     ];
     expect(collectHistoryImageUrls(messages as never).size).toBe(0);

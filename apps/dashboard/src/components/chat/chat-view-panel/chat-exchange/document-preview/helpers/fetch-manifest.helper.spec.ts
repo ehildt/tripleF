@@ -16,7 +16,7 @@ describe('fetchManifest', () => {
           Promise.resolve({ html: '<p>ok</p><script>alert(1)</script>' }),
       }),
     );
-    const result = await fetchManifest('/api/v1/storage/s/c/doc.docx');
+    const result = await fetchManifest('/api/v1/object-storage/s/c/doc.docx');
     expect(result?.html).toBe('<p>ok</p>');
     expect(result?.html).not.toContain('<script>');
   });

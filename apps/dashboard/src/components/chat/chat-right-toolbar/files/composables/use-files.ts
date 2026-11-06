@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
-import { deleteUploadedObject } from '@/api/storage.api';
+import { deleteUploadedObject } from '@/api/object-storage.api';
 import { useAttachmentList } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list';
 import type { AttachmentItem } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list.types';
 import { useToast } from '@/composables/use-toast/use-toast';
@@ -41,7 +41,7 @@ export function useFiles() {
     const conversation = activeConversation.value;
     if (!conversation?.id) return '';
     return getApiUrl(
-      `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${hash}`,
+      `/api/v1/object-storage/${conversation.id}/${conversation.conversationId}/${hash}`,
     );
   }
 

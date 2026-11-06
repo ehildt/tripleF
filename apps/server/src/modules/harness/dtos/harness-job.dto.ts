@@ -17,7 +17,7 @@ export type FastifyMultipartDataWithFiltersReq = {
   filters: Partial<FastifyMultipartFilter>;
 };
 
-/** Metadata-only payload stored in BullMQ. Buffers are offloaded to MinIO. */
+/** Metadata-only payload stored in BullMQ. Buffers are offloaded to object storage. */
 export type HarnessJobPayload = {
   meta: Array<FastifyMultipartMeta>;
   filters: Partial<

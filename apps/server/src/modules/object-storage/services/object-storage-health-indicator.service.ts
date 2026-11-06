@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
 
-import { MinioService } from './minio.service.js';
+import { ObjectStorageService } from './object-storage.service.js';
 
 @Injectable()
-export class MinioHealthIndicator {
+export class ObjectStorageHealthIndicator {
   constructor(
     private readonly healthIndicatorService: HealthIndicatorService,
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
   ) {}
 
   async check(key: string) {
     const indicator = this.healthIndicatorService.check(key);
     try {
-      await this.minioService.ping();
+      await this.objectStorage.ping();
       return indicator.up();
     } catch (error) {
       return indicator.down({ message: String(error) });

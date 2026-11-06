@@ -35,7 +35,7 @@ export interface EncyclopediaChunkPoint {
   mimeType?: string;
   /** Byte size of the original upload (uploaded documents only). */
   sizeBytes?: number;
-  /** Content hash of the ORIGINAL upload — the MinIO object identity (uploaded documents only). */
+  /** Content hash of the ORIGINAL upload — the stored object identity (uploaded documents only). */
   originalHash?: string;
   /** Lifecycle flags — written by the maintenance jobs, read by recall/display. */
   isConsolidated?: boolean;
@@ -68,7 +68,7 @@ export interface EncyclopediaChunkHit {
   mimeType?: string;
   /** Byte size of the original upload (uploaded documents only). */
   sizeBytes?: number;
-  /** Content hash of the ORIGINAL upload — the MinIO object identity (uploaded documents only). */
+  /** Content hash of the ORIGINAL upload — the stored object identity (uploaded documents only). */
   originalHash?: string;
   isConsolidated?: boolean;
   isLinked?: boolean;

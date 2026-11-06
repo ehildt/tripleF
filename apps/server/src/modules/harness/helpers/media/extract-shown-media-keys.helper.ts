@@ -1,6 +1,7 @@
 import { canonicalVideoId } from '../url-trust/canonical-video-id.helper.js';
 import { videoUrlKeys } from '../url-trust/video-url-keys.helper.js';
 
+import { extractObjectStorageHash } from './extract-object-storage-hash.helper.js';
 import {
   IMAGE_FINGERPRINT_PREFIX,
   IMAGE_STORAGE_HASH_PREFIX,
@@ -9,9 +10,8 @@ import type {
   ExtractedShownMediaKeys,
   ShownMediaKeySourceOptions,
 } from './extract-shown-media-keys.types.js';
-import { extractStorageHash } from './extract-storage-hash.helper.js';
 
-const STORAGE_URL_PREFIX = '/api/v1/storage/';
+const OBJECT_STORAGE_URL_PREFIX = '/api/v1/object-storage/';
 
 function collectStrings(value: unknown, key: string, urls: Set<string>): void {
   if (typeof value === 'string') return;
@@ -84,7 +84,7 @@ export function extractShownMediaKeys(
 
   const imageKeys = new Set<string>();
   for (const url of imageUrls) {
-    if (!url.startsWith(STORAGE_URL_PREFIX)) continue;
+    if (!url.startsWith(OBJECT_STORAGE_URL_PREFIX)) continue;
     if (opts.localImageUrls.has(url)) continue;
 
     const fingerprint = opts.fingerprintByStorageUrl.get(url);
@@ -93,7 +93,7 @@ export function extractShownMediaKeys(
       continue;
     }
 
-    const hash = extractStorageHash(url);
+    const hash = extractObjectStorageHash(url);
     if (hash) imageKeys.add(IMAGE_STORAGE_HASH_PREFIX + hash);
   }
 

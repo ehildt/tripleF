@@ -125,7 +125,7 @@ metasearch
 metatype
 mhutchie
 mikestead
-minioadmin
+rustfs
 ministral
 mockedhash
 mongodb

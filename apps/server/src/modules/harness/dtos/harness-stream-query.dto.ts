@@ -122,7 +122,7 @@ export class HarnessStreamQueryDto {
     type: String,
     example: '{"images":[{"name":"a.png","hash":"abc123"}]}',
     description:
-      'JSON-encoded session-scoped metadata, primarily image references already stored in MinIO.',
+      'JSON-encoded session-scoped metadata, primarily image references already stored in object storage.',
   })
   @IsString()
   @IsOptional()

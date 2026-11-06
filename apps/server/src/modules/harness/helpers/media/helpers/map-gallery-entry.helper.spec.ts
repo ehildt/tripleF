@@ -11,7 +11,7 @@ describe('mapGalleryEntry', () => {
         'c1',
       ),
     ).toEqual({
-      imageUrl: '/api/v1/storage/s1/c1/h1',
+      imageUrl: '/api/v1/object-storage/s1/c1/h1',
       imageAlt: 'img.png',
       title: 'img.png',
       caption: 'img.png',

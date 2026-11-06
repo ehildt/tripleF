@@ -39,7 +39,7 @@ function isYouTubeNonVideoPath(hostname: string, pathname: string): boolean {
  * 3. Reject known thumbnail / proxy / low-resolution hosts.
  * 4. Reject YouTube non-video asset paths (e.g. /s/_/ytembeds/...).
  * 5. Reject private IP / localhost URLs unless the caller explicitly allows them.
- *    (Local services such as MinIO are handled by the image/video helpers, not here.)
+ *    (Local object-storage services are handled by the image/video helpers, not here.)
  * 6. Everything else that is a valid public URL is accepted.
  */
 export function isTrustedUrl(url: string, options: { allowPrivate?: boolean } = {}): boolean {

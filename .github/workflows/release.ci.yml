@@ -62,10 +62,25 @@ jobs:
 
       - run: pnpm -r install --frozen-lockfile
 
+      - name: Check for unreleased changesets
+        id: changesets
+        shell: bash
+        run: |
+          # Changesets 3 exits 1 when there is nothing to version; an
+          # already-versioned merge is a valid release state, not a failure.
+          if find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' -print -quit | grep -q .; then
+            echo "pending=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No unreleased changesets; skipping version bump."
+            echo "pending=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Changeset
+        if: steps.changesets.outputs.pending == 'true'
         run: pnpm changeset version
 
       - name: Commit version bump
+        if: steps.changesets.outputs.pending == 'true'
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "VERSION BUMP"

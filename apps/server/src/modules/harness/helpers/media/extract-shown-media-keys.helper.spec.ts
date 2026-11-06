@@ -20,26 +20,32 @@ describe('extractShownMediaKeys', () => {
   });
 
   it('derives fingerprint keys for ingested cloud images', () => {
-    const data = { heroImageUrl: '/api/v1/storage/sess/conv/abc123' };
+    const data = {
+      heroImageUrl: '/api/v1/object-storage/sess/conv/abc123',
+    };
     const options = opts({
       fingerprintByStorageUrl: new Map([
-        ['/api/v1/storage/sess/conv/abc123', 'fp-1'],
+        ['/api/v1/object-storage/sess/conv/abc123', 'fp-1'],
       ]),
     });
     expect(extractShownMediaKeys(data, options).imageKeys).toEqual(['fp:fp-1']);
   });
 
-  it('falls back to storage hash keys', () => {
-    const data = { heroImageUrl: '/api/v1/storage/sess/conv/abc123' };
+  it('falls back to object-storage hash keys', () => {
+    const data = {
+      heroImageUrl: '/api/v1/object-storage/sess/conv/abc123',
+    };
     expect(extractShownMediaKeys(data, opts()).imageKeys).toEqual([
       'sh:abc123',
     ]);
   });
 
   it('excludes local user uploads', () => {
-    const data = { heroImageUrl: '/api/v1/storage/sess/conv/abc123' };
+    const data = {
+      heroImageUrl: '/api/v1/object-storage/sess/conv/abc123',
+    };
     const options = opts({
-      localImageUrls: new Set(['/api/v1/storage/sess/conv/abc123']),
+      localImageUrls: new Set(['/api/v1/object-storage/sess/conv/abc123']),
     });
     expect(extractShownMediaKeys(data, options).imageKeys).toEqual([]);
   });

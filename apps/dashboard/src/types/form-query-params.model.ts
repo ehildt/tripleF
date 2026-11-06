@@ -23,7 +23,7 @@ export interface ConversationMetadataMerge {
 export interface ConversationMetadata {
   images?: ConversationMetadataImage[];
   /** Original files (pdf/docx/pptx/txt) uploaded for preview; the server
-   * stores them in MinIO but never sends them to the model. */
+   * stores them in object storage but never sends them to the model. */
   originals?: ConversationMetadataDocument[];
   merge?: ConversationMetadataMerge;
 }

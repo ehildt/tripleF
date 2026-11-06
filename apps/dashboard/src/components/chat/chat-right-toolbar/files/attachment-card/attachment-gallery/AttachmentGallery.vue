@@ -9,7 +9,7 @@
 import { SquaresExclude, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 
-import { extractStorageImageHash } from '@/components/chat/shared/helpers/extract-storage-image-hash.helper';
+import { extractObjectStorageImageHash } from '@/components/chat/shared/helpers/extract-object-storage-image-hash.helper';
 import AssistantCarousel from '@/components/chat/shared/ui/media-carousel/AssistantCarousel.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
@@ -58,7 +58,7 @@ function onImageClick(item: GalleryItem) {
 
 function onRemovePage(item: MediaItem) {
   if (!('imageUrl' in item)) return;
-  const hash = extractStorageImageHash(item.imageUrl);
+  const hash = extractObjectStorageImageHash(item.imageUrl);
   if (hash) emit('removePage', hash);
 }
 

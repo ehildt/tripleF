@@ -5,7 +5,7 @@ import sharp from 'sharp';
 
 import { buildImageFingerprint } from './build-image-fingerprint.helper.js';
 import type {
-  BuildStorageUrlFn,
+  BuildObjectStorageUrlFn,
   DownloadAndIngestOptions,
   IngestedImage,
   ObjectExistsFn,
@@ -64,14 +64,14 @@ function resolveContentType(metadata: Metadata): string {
 }
 
 /**
- * Ingest a single external image URL, reusing an existing MinIO object when the
+ * Ingest a single external image URL, reusing an existing object when the
  * resized content hash already exists.
  */
 async function ingestImage(
   item: { imageUrl: string; title?: string },
   uploadFn: UploadFn,
   objectExistsFn: ObjectExistsFn,
-  buildStorageUrl: BuildStorageUrlFn,
+  buildObjectStorageUrl: BuildObjectStorageUrlFn,
   options: DownloadAndIngestOptions,
 ): Promise<IngestedImage | undefined> {
   try {
@@ -90,7 +90,7 @@ async function ingestImage(
 
     // The model's pixel attachment: resized to the effective pproc
     // dimensions. Only these bytes travel with the entry (keepBuffers) —
-    // MinIO stores the ORIGINAL download, so the gallery and lightbox show
+    // Object storage keeps the ORIGINAL download, so the gallery and lightbox show
     // full resolution.
     const resizedBuffer = await resizeDownloadedImage(buffer, options.resize);
 
@@ -134,7 +134,7 @@ async function ingestImage(
     }
 
     return {
-      imageUrl: buildStorageUrl(hash),
+      imageUrl: buildObjectStorageUrl(hash),
       imageAlt: name,
       title: name,
       caption: name,
@@ -160,7 +160,7 @@ async function ingestImage(
 
 /**
  * Download external image URLs, verify dimensions, and upload the valid ones
- * to MinIO. Returns gallery-style entries pointing at the local storage URLs.
+ * to object storage. Returns gallery-style entries pointing at the local object-storage URLs.
  *
  * Skips duplicate URLs and skips re-uploading when an identical resized image
  * already exists for the session/conversation by content hash.
@@ -169,7 +169,7 @@ export async function downloadAndIngestImages(
   imageItems: Array<{ imageUrl: string; title?: string }>,
   uploadFn: UploadFn,
   objectExistsFn: ObjectExistsFn,
-  buildStorageUrl: BuildStorageUrlFn,
+  buildObjectStorageUrl: BuildObjectStorageUrlFn,
   options: DownloadAndIngestOptions,
 ): Promise<IngestedImage[]> {
   const uniqueItems: Array<{ imageUrl: string; title?: string }> = [];
@@ -194,7 +194,7 @@ export async function downloadAndIngestImages(
       uniqueItems[index],
       uploadFn,
       objectExistsFn,
-      buildStorageUrl,
+      buildObjectStorageUrl,
       options,
     );
     await runNext();

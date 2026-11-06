@@ -1,6 +1,6 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
-import { extractStorageImageHash } from '@/components/chat/shared/helpers/extract-storage-image-hash.helper';
+import { extractObjectStorageImageHash } from '@/components/chat/shared/helpers/extract-object-storage-image-hash.helper';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 /** The image shape every add-to-files surface provides. */
@@ -14,7 +14,7 @@ export interface AddableImage {
 /**
  * Add-to-files membership toggle for one gallery image: whether the image is
  * registered as a conversation file, and an action that adds or removes it.
- * Web images are ingested into MinIO by the server (the storage URL's last
+ * Web images are ingested into object storage by the server (the URL's last
  * segment is the object's content hash), so adding is a pure registration —
  * the entry joins the conversation's uploaded images, the Files tab shows
  * it, and the next prompt references the stored object so the user can ask
@@ -35,12 +35,12 @@ export function useAddImageToFiles(
   const canAddToFiles = computed(() => {
     const image = toValue(item);
     if (!image || image.source === 'local') return false;
-    return extractStorageImageHash(image.imageUrl) !== null;
+    return extractObjectStorageImageHash(image.imageUrl) !== null;
   });
 
   const isInFiles = computed(() => {
     const image = toValue(item);
-    const hash = image ? extractStorageImageHash(image.imageUrl) : null;
+    const hash = image ? extractObjectStorageImageHash(image.imageUrl) : null;
     const sessionId = conversationStore.activeConversationId;
     if (!hash || !sessionId) return false;
     return conversationStore
@@ -50,7 +50,7 @@ export function useAddImageToFiles(
 
   function toggleAddToFiles() {
     const image = toValue(item);
-    const hash = image ? extractStorageImageHash(image.imageUrl) : null;
+    const hash = image ? extractObjectStorageImageHash(image.imageUrl) : null;
     const sessionId = conversationStore.activeConversationId;
     if (!image || !hash || !sessionId) return;
 

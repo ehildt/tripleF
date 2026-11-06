@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { isImageTaskTemplate } from '@triplef/agent/schemas';
 import { SocketIOService } from '@triplef/socketio';
 
-import { MinioService } from '../../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../../object-storage/services/object-storage.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
 import {
   emitHarnessEvent,
@@ -42,7 +42,7 @@ export class RespondStepService implements StepHandler {
   constructor(
     private readonly respondAction: RespondActionService,
     private readonly io: SocketIOService,
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
     private readonly shownMedia: ShownMediaService,
   ) {}
 
@@ -306,7 +306,7 @@ export class RespondStepService implements StepHandler {
   }
 
   /**
-   * Gallery items point at MinIO storage objects that may have been deleted
+   * Gallery items point at object-storage objects that may have been deleted
    * since the meta was recorded. Stat each object and drop the dead ones.
    */
   private async filterToExistingStorageObjects(
@@ -317,7 +317,7 @@ export class RespondStepService implements StepHandler {
     if (!ctx.sessionId || !conversationId || items.length === 0) return items;
 
     const existing = await filterExistingGalleryItems(items, (hash) =>
-      this.minioService.objectExists(ctx.sessionId!, conversationId, hash),
+      this.objectStorage.objectExists(ctx.sessionId!, conversationId, hash),
     );
 
     if (existing.length !== items.length) {

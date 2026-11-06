@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 
 import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 
 import { HarnessCancellationService } from './harness-cancellation.service.js';
 import { HarnessQueueService } from './harness-queue.service.js';
@@ -16,7 +16,7 @@ vi.mock('../helpers/media/build-image-fingerprint.helper.js', () => ({
 describe('HarnessQueueService', () => {
   let service: HarnessQueueService;
   let queue: any;
-  let minioService: MinioService;
+  let objectStorage: ObjectStorageService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,7 +30,7 @@ describe('HarnessQueueService', () => {
           },
         },
         {
-          provide: MinioService,
+          provide: ObjectStorageService,
           useValue: {
             uploadBuffers: vi.fn(),
             deleteBuffers: vi.fn(),
@@ -47,7 +47,7 @@ describe('HarnessQueueService', () => {
 
     service = module.get<HarnessQueueService>(HarnessQueueService);
     queue = module.get(getQueueToken(HARNESS_QUEUE));
-    minioService = module.get<MinioService>(MinioService);
+    objectStorage = module.get<ObjectStorageService>(ObjectStorageService);
   });
 
   it('should be defined', () => {
@@ -80,7 +80,7 @@ describe('HarnessQueueService', () => {
 
     const job = await service.emit(req);
 
-    expect(minioService.uploadBuffers).toHaveBeenCalledWith(
+    expect(objectStorage.uploadBuffers).toHaveBeenCalledWith(
       'sess-1',
       undefined,
       'req-1',
@@ -94,7 +94,7 @@ describe('HarnessQueueService', () => {
     expect(job).toEqual({ id: 1 });
   });
 
-  it('rolls back MinIO upload when queue add fails', async () => {
+  it('rolls back object-storage upload when queue add fails', async () => {
     queue.add.mockRejectedValue(new Error('queue down'));
 
     const req = {
@@ -105,18 +105,18 @@ describe('HarnessQueueService', () => {
 
     const job = await service.emit(req);
 
-    expect(minioService.deleteBuffers).toHaveBeenCalledWith('req-1');
+    expect(objectStorage.deleteBuffers).toHaveBeenCalledWith('req-1');
     expect(job).toBeUndefined();
   });
 
-  it('removes a waiting job and cleans up MinIO on cancel', async () => {
+  it('removes a waiting job and cleans up object storage on cancel', async () => {
     const mockJob = { name: 'req-1', remove: vi.fn() };
     queue.getJobs.mockResolvedValue([mockJob]);
 
     const result = await service.cancel('req-1');
 
     expect(mockJob.remove).toHaveBeenCalled();
-    expect(minioService.deleteBuffers).toHaveBeenCalledWith('req-1');
+    expect(objectStorage.deleteBuffers).toHaveBeenCalledWith('req-1');
     expect(result).toBe(true);
   });
 });

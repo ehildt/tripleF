@@ -10,7 +10,7 @@ describe('safeVideoUrl', () => {
 
   it('rejects non-absolute values', () => {
     expect(safeVideoUrl().safeParse('not-a-url').success).toBe(false);
-    expect(safeVideoUrl().safeParse('/api/v1/storage/session/chat/abc').success).toBe(false);
+    expect(safeVideoUrl().safeParse('/api/v1/object-storage/session/chat/abc').success).toBe(false);
   });
 
   it('rejects non-http(s) schemes', () => {

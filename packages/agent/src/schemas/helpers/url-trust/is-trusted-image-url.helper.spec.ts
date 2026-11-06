@@ -5,7 +5,7 @@ import { isTrustedImageUrl } from './is-trusted-image-url.helper.js';
 
 describe('isTrustedImageUrl', () => {
   it('allows relative storage URLs', () => {
-    expect(isTrustedImageUrl('/api/v1/storage/req-1/0')).toBe(true);
+    expect(isTrustedImageUrl('/api/v1/object-storage/req-1/0')).toBe(true);
     expect(isTrustedImageUrl('/images/hero.png')).toBe(true);
   });
 
@@ -43,7 +43,7 @@ describe('isTrustedImageUrl', () => {
     expect(isTrustedImageUrl('https://localhost/image.jpg')).toBe(true);
     expect(isTrustedImageUrl('https://127.0.0.1/image.jpg')).toBe(true);
     expect(isTrustedImageUrl('https://192.168.1.1/image.jpg')).toBe(true);
-    expect(isTrustedImageUrl('http://minio:9000/bucket/photo.png')).toBe(true);
+    expect(isTrustedImageUrl('http://object-storage:9000/bucket/photo.png')).toBe(true);
     expect(isTrustedImageUrl('http://localhost:9000/bucket/photo.webp')).toBe(true);
   });
 
@@ -74,7 +74,7 @@ describe('isTrustedImageUrl', () => {
       ),
     ).toBe(true);
     expect(hasBlockedImageHost('https://example.com/photo.jpg')).toBe(false);
-    expect(hasBlockedImageHost('/api/v1/storage/req-1/0')).toBe(false);
+    expect(hasBlockedImageHost('/api/v1/object-storage/req-1/0')).toBe(false);
     expect(hasBlockedImageHost('data:image/png;base64,abc')).toBe(false);
   });
 });

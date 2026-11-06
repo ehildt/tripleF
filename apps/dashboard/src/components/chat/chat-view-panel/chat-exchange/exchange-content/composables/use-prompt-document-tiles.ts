@@ -32,7 +32,7 @@ export function usePromptDocumentTiles(exchange: MaybeRefOrGetter<Exchange>) {
         mapDocumentToTile(
           doc,
           getApiUrl(
-            `/api/v1/storage/${conversation.id}/${conversation.conversationId}/${doc.hash}`,
+            `/api/v1/object-storage/${conversation.id}/${conversation.conversationId}/${doc.hash}`,
           ),
         ),
       );

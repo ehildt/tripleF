@@ -42,12 +42,12 @@ minimumReleaseAgeExclude:
   - '@ai-sdk/gateway@4.0.76 || 4.0.86 || 4.0.87 || 4.0.104 || 4.0.119 || 4.0.121 || 4.0.130 || 4.0.131 || 4.0.135 || 4.0.136'
   - '@ai-sdk/provider-utils@5.0.37 || 5.0.44 || 5.0.45 || 5.0.54 || 5.0.64 || 5.0.65 || 5.0.71 || 5.0.72 || 5.0.74 || 5.0.75'
   - '@ai-sdk/provider@4.0.11 || 4.0.22 || 4.0.31 || 4.0.35 || 4.0.36'
-  - '@lucide/icons@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0 || 1.69.0'
-  - '@lucide/vue@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0 || 1.69.0'
+  - '@lucide/icons@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0 || 1.69.0 || 1.70.0'
+  - '@lucide/vue@1.43.0 || 1.51.0 || 1.55.0 || 1.65.0 || 1.67.0 || 1.68.0 || 1.69.0 || 1.70.0'
   - ai@7.0.94 || 7.0.106 || 7.0.107 || 7.0.128 || 7.0.146 || 7.0.148 || 7.0.157 || 7.0.158 || 7.0.162 || 7.0.163
   - jszip@3.10.2
   - zod@4.6.4 || 4.6.6
-  - bullmq@6.3.7 || 6.3.8 || 6.3.18 || 6.3.19 || 6.5.2 || 6.5.4 || 6.6.1 || 6.7.0
+  - bullmq@6.3.7 || 6.3.8 || 6.3.18 || 6.3.19 || 6.5.2 || 6.5.4 || 6.6.1 || 6.7.0 || 6.7.1
   - prettier@3.9.8 || 3.9.10
   - eslint@10.11.0 || 10.12.0
   - pdfjs-dist@6.4.299 || 6.5.438
@@ -86,17 +86,17 @@ minimumReleaseAgeExclude:
   - '@swc/core-win32-x64-msvc@1.16.18 || 1.16.22'
   - '@swc/core@1.16.18 || 1.16.20 || 1.16.22'
   - dependency-cruiser@18.6.0 || 18.7.0 || 18.7.1 || 18.7.2
-  - '@nestjs/cli@12.0.9 || 12.0.10'
-  - '@nestjs/common@12.2.0 || 12.3.3'
-  - '@nestjs/core@12.2.0 || 12.3.3'
-  - '@nestjs/microservices@12.2.0 || 12.3.3'
-  - '@nestjs/platform-fastify@12.2.0 || 12.3.3'
-  - '@nestjs/schematics@12.0.9 || 12.0.10'
-  - '@nestjs/testing@12.2.0 || 12.3.3'
+  - '@nestjs/cli@12.0.9 || 12.0.10 || 12.0.12'
+  - '@nestjs/common@12.2.0 || 12.3.3 || 12.4.0'
+  - '@nestjs/core@12.2.0 || 12.3.3 || 12.4.0'
+  - '@nestjs/microservices@12.2.0 || 12.3.3 || 12.4.0'
+  - '@nestjs/platform-fastify@12.2.0 || 12.3.3 || 12.4.0'
+  - '@nestjs/schematics@12.0.9 || 12.0.10 || 12.0.13'
+  - '@nestjs/testing@12.2.0 || 12.3.3 || 12.4.0'
   - linkedom@0.18.14
-  - '@fastify/multipart@10.1.6 || 10.1.7'
+  - '@fastify/multipart@10.1.6 || 10.1.7 || 10.1.8'
   - '@fastify/static@10.1.7 || 10.1.10'
-  - '@nestjs/swagger@12.0.3'
+  - '@nestjs/swagger@12.0.3 || 12.1.1'
   - '@triplef/bullmq@1.1.6'
   - '@triplef/config-factory@1.2.2'
   - '@triplef/ollama-api@0.1.2 || 0.2.0'
@@ -104,21 +104,21 @@ minimumReleaseAgeExclude:
   - '@triplef/core-logger@1.0.2'
   - '@triplef/socketio@1.0.2'
   - globals@17.14.0
-  - '@tailwindcss/node@4.3.4'
-  - '@tailwindcss/oxide-android-arm64@4.3.4'
-  - '@tailwindcss/oxide-darwin-arm64@4.3.4'
-  - '@tailwindcss/oxide-darwin-x64@4.3.4'
-  - '@tailwindcss/oxide-freebsd-x64@4.3.4'
-  - '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.4'
-  - '@tailwindcss/oxide-linux-arm64-gnu@4.3.4'
-  - '@tailwindcss/oxide-linux-arm64-musl@4.3.4'
-  - '@tailwindcss/oxide-linux-x64-gnu@4.3.4'
-  - '@tailwindcss/oxide-linux-x64-musl@4.3.4'
-  - '@tailwindcss/oxide-wasm32-wasi@4.3.4'
-  - '@tailwindcss/oxide-win32-arm64-msvc@4.3.4'
-  - '@tailwindcss/oxide-win32-x64-msvc@4.3.4'
-  - '@tailwindcss/oxide@4.3.4'
-  - '@tailwindcss/postcss@4.3.4'
+  - '@tailwindcss/node@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-android-arm64@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-darwin-arm64@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-darwin-x64@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-freebsd-x64@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-linux-arm64-gnu@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-linux-arm64-musl@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-linux-x64-gnu@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-linux-x64-musl@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-wasm32-wasi@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-win32-arm64-msvc@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide-win32-x64-msvc@4.3.4 || 4.3.5'
+  - '@tailwindcss/oxide@4.3.4 || 4.3.5'
+  - '@tailwindcss/postcss@4.3.4 || 4.3.5'
   - '@tanstack/query-core@5.105.3 || 5.106.0 || 5.106.1'
   - '@tanstack/vue-query@5.105.3 || 5.106.0 || 5.106.1'
   - '@vitest/browser@5.1.0'
@@ -136,7 +136,7 @@ minimumReleaseAgeExclude:
   - d3-time-format@4.1.1
   - d3-zoom@3.0.1
   - semver@7.8.6
-  - tailwindcss@4.3.4
+  - tailwindcss@4.3.4 || 4.3.5
   - vitest@5.1.0
   - filesize@11.0.30
   - turndown@7.2.5
@@ -159,4 +159,10 @@ minimumReleaseAgeExclude:
   - storybook@10.6.6
   - vite@8.3.6
   - vue@3.5.45
+  - '@aws-sdk/client-s3@3.1163.0'
+  - '@isaacs/nonrecursive-glob-match@1.1.0'
+  - '@nestjs/bull-shared@12.0.1'
+  - '@nestjs/bullmq@12.0.1'
+  - minimatch@11.0.5
+  - vue-eslint-parser@10.4.2
 

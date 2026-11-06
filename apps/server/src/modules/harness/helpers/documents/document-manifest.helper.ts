@@ -4,7 +4,7 @@ import type { DocumentKind } from './classify-document-kind.helper.js';
 const MANIFEST_HASH_SUFFIX = '.conv';
 
 /**
- * Persisted conversion result for one original document, stored in MinIO as
+ * Persisted conversion result for one original document, stored in object storage as
  * a JSON object next to the original buffer. Page images are separate
  * content-hashed objects; the manifest carries their hashes so the client
  * and the context builder can resolve pages without re-converting.
@@ -47,7 +47,7 @@ export function buildManifestHash(originalHash: string): string {
   return `${originalHash}${MANIFEST_HASH_SUFFIX}`;
 }
 
-/** Serialize the manifest for MinIO storage. */
+/** Serialize the manifest for object storage. */
 export function buildManifestJson(manifest: DocumentManifest): Buffer {
   return Buffer.from(JSON.stringify(manifest), 'utf-8');
 }
