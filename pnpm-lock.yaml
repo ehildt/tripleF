@@ -459,8 +459,8 @@ importers:
         specifier: ^1.20.0
         version: 1.20.0(typescript@5.9.3)
       '@triplef/agent':
-        specifier: ^1.0.9
-        version: 1.0.9(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(ai@7.0.163(zod@4.6.7))(pino@10.4.0)(zod@4.6.7)
+        specifier: ^2.0.0
+        version: 2.0.0(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(ai@7.0.163(zod@4.6.7))(pino@10.4.0)(zod@4.6.7)
       '@triplef/ai-sdk':
         specifier: ^1.0.2
         version: 1.0.2(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(ai@7.0.163(zod@4.6.7))(zod@4.6.7)
@@ -634,8 +634,8 @@ importers:
         specifier: '7'
         version: 7.10.1(prisma@7.10.1(@types/node@26.6.6)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3))(typescript@5.9.3)
       '@triplef/agent':
-        specifier: ^1.0.9
-        version: 1.0.9(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(ai@7.0.163(zod@4.6.7))(pino@10.4.0)(zod@4.6.7)
+        specifier: ^2.0.0
+        version: 2.0.0(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(ai@7.0.163(zod@4.6.7))(pino@10.4.0)(zod@4.6.7)
       '@triplef/ai-sdk':
         specifier: ^1.0.2
         version: 1.0.2(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(ai@7.0.163(zod@4.6.7))(zod@4.6.7)
@@ -4267,10 +4267,10 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@triplef/agent@1.0.9':
-    resolution: {integrity: sha512-8CWSBsVnD65cvw9DSRZu3ZvFqexSmWdl2uajoV5P8GSXqek2XZ+rODdoYWI47Yof+JRrFsBJiaQ47iBL6FtCqA==}
+  '@triplef/agent@2.0.0':
+    resolution: {integrity: sha512-Zg6elT7yksO1U6L5mKstH0n17ISu59Uc/RcIPXXbmGiUHOO6yZaWDYH+v/+VY57BvL9DtP2vO+/t1ud/Sp24vw==}
     peerDependencies:
-      ai: ^7.0.162
+      ai: ^7.0.163
       zod: ^4.6.7
     peerDependenciesMeta:
       ai:
@@ -11020,7 +11020,7 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@triplef/agent@1.0.9(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(ai@7.0.163(zod@4.6.7))(pino@10.4.0)(zod@4.6.7)':
+  '@triplef/agent@2.0.0(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(ai@7.0.163(zod@4.6.7))(pino@10.4.0)(zod@4.6.7)':
     dependencies:
       '@mozilla/readability': 0.6.0
       '@triplef/helpers': 1.6.3(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/swagger@12.1.0(@fastify/static@10.1.10)(@nestjs/common@12.3.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.3.3)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(typescript@5.9.3))(pino@10.4.0)(zod@4.6.7)
