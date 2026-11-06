@@ -44,9 +44,9 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   private get client(): S3Client {
-    if (!this._client) {
+    if (!this._client)
       throw new Error('Object storage client is not initialized');
-    }
+
     return this._client;
   }
 
@@ -73,9 +73,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
       );
     } catch (error) {
       const name = (error as { name?: unknown })?.name;
-      if (!isObjectNotFoundError(error) && name !== 'NoSuchBucket') {
-        throw error;
-      }
+      if (!isObjectNotFoundError(error) && name !== 'NoSuchBucket') throw error;
       await this.client.send(
         new CreateBucketCommand({ Bucket: this._config.bucket }),
       );
@@ -223,9 +221,10 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
       const output = await this.client.send(
         new GetObjectCommand({ Bucket: this._config.bucket, Key: objectName }),
       );
-      if (!output.Body) {
+
+      if (!output.Body)
         throw new Error(`Object ${objectName} returned no response body`);
-      }
+
       return Buffer.from(await output.Body.transformToByteArray());
     } catch (error) {
       if (isObjectNotFoundError(error)) return null;
@@ -280,12 +279,14 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
         Key: objectName,
       }),
     );
+
     const output = await this.client.send(
       new GetObjectCommand({ Bucket: this._config.bucket, Key: objectName }),
     );
-    if (!output.Body) {
+
+    if (!output.Body)
       throw new Error(`Object ${objectName} returned no response body`);
-    }
+
     return { stream: output.Body as Readable, meta };
   }
 
@@ -297,6 +298,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
       const output = await this.client.send(
         new HeadObjectCommand({ Bucket: this._config.bucket, Key: key }),
       );
+
       if (output.Metadata?.requestid === requestId) matchingKeys.push(key);
     }
 
@@ -348,9 +350,10 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
           ContinuationToken: continuationToken,
         }),
       );
-      for (const object of output.Contents ?? []) {
+
+      for (const object of output.Contents ?? [])
         if (object.Key) keys.push(object.Key);
-      }
+
       continuationToken = output.IsTruncated
         ? output.NextContinuationToken
         : undefined;
