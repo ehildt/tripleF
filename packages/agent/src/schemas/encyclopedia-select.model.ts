@@ -18,7 +18,7 @@ export interface EncyclopediaSourceDocument {
   /** Byte size of the original upload — uploaded documents only. */
   sizeBytes?: number;
   /**
-   * Content hash of the ORIGINAL upload (the MinIO object identity) —
+   * Content hash of the ORIGINAL upload (the stored object identity) —
    * distinct from the extracted-text content hash; uploaded documents only.
    */
   originalHash?: string;

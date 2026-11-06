@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { getNumberEnv } from '@triplef/helpers/get-number-env';
 
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { downloadAndIngestImages } from '../helpers/media/download-and-ingest-images.helper.js';
 import type { IngestedImage } from '../helpers/media/download-and-ingest-images.types.js';
@@ -16,7 +16,7 @@ const IMAGE_DOWNLOAD_TIMEOUT_MS = getNumberEnv(
 ) as number;
 
 /**
- * Downloads external image URLs and uploads the valid ones to MinIO as
+ * Downloads external image URLs and uploads the valid ones to object storage as
  * cloud-sourced images for the current conversation.
  *
  * Resize and the source-acceptance floor both come from the effective
@@ -28,7 +28,7 @@ const IMAGE_DOWNLOAD_TIMEOUT_MS = getNumberEnv(
 @Injectable()
 export class CloudImageIngestionService {
   constructor(
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
     private readonly sharpService: SharpService,
   ) {}
 
@@ -44,20 +44,20 @@ export class CloudImageIngestionService {
   ): Promise<IngestedImage[]> {
     if (!sessionId || !conversationId) return [];
 
-    const buildStorageUrl = (hash: string) =>
-      `/api/v1/storage/${sessionId}/${conversationId}/${hash}`;
+    const buildObjectStorageUrl = (hash: string) =>
+      `/api/v1/object-storage/${sessionId}/${conversationId}/${hash}`;
 
     return downloadAndIngestImages(
       imageItems,
       (sid, cid, rid, buffers, meta) =>
-        this.minioService.uploadBuffers(sid, cid, rid, buffers, meta),
+        this.objectStorage.uploadBuffers(sid, cid, rid, buffers, meta),
       (sid, cid, hash) =>
-        this.minioService.objectExists(
+        this.objectStorage.objectExists(
           sid ?? 'unknown-session',
           cid ?? 'unknown-conversation',
           hash,
         ),
-      buildStorageUrl,
+      buildObjectStorageUrl,
       {
         sessionId,
         conversationId,

@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 
-import { MinioModule } from '../minio/minio.module.js';
+import { ObjectStorageModule } from '../object-storage/object-storage.module.js';
 
 import { PostgresConfigService } from './configs/postgres-config.service.js';
 import { POSTGRES_CONFIG } from './constants/postgres.constants.js';
@@ -22,7 +22,7 @@ export class DeadLetterModule {
       DlqEventsService,
       LifecycleService,
     ],
-    imports: [MinioModule.register()],
+    imports: [ObjectStorageModule.register()],
     providers: [
       DeadLetterRepository,
       PostgresConfigService,

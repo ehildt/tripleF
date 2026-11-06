@@ -45,7 +45,7 @@ export type HarnessContext = {
    *  images, converted page images, document originals) — remembered by the
    *  embedding pipeline so recalled facts can point back at their files. */
   files?: Array<{ name: string; url: string }>;
-  /** Extracted text of uploaded documents (docx/pptx/text) with their MinIO
+  /** Extracted text of uploaded documents (docx/pptx/text) with their object-storage
    *  storage url — indexed into the encyclopedia (pure knowledge), untruncated. */
   documentSections?: DocumentSection[];
   abortSignal: AbortSignal;

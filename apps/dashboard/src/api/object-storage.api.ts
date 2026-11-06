@@ -6,7 +6,9 @@ export async function checkObjectExists(
   hash: string,
 ): Promise<boolean> {
   const res = await fetch(
-    getApiUrl(`/api/v1/storage/${sessionId}/${conversationId}/${hash}/exists`),
+    getApiUrl(
+      `/api/v1/object-storage/${sessionId}/${conversationId}/${hash}/exists`,
+    ),
   );
   if (!res.ok) return false;
   const body = (await res.json()) as { exists?: boolean };
@@ -19,7 +21,7 @@ export async function deleteUploadedObject(
   hash: string,
 ): Promise<void> {
   const res = await fetch(
-    getApiUrl(`/api/v1/storage/${sessionId}/${conversationId}/${hash}`),
+    getApiUrl(`/api/v1/object-storage/${sessionId}/${conversationId}/${hash}`),
     {
       method: 'DELETE',
     },

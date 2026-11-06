@@ -28,13 +28,13 @@ The 3F server is a **NestJS 11 application on Fastify 5** with URI versioning (`
 | `dead-letter`            | Persisted dead-letter queue (Prisma → PostgreSQL, `DeadLetterJob` table): failed envelopes with payloads, editable and re-instatable. Lifecycle service with retention pruning (`DLQ_*` envs).                                                                                  |
 | `socket-io`              | Socket.IO gateway config, room emission service, cancellation signal. See **1.4**.                                                                                                     |
 | `persistence`            | Prisma client module (generated client under `src/generated/`) + conversation/config/playlist controllers.                                                                                                                                                    |
-| `minio`                  | S3 storage for user image payloads, bucket lifecycle, job reinstatement on startup (re-queues interrupted jobs after a crash/restart).                                                                             |
+| `object-storage`         | S3-compatible storage for user image payloads and conversion manifests, bucket bootstrap, image lifecycle, and readiness checks through the AWS SDK.
 | `sharp`                  | Image preprocessing (variant generation with sharp). Dashboard overrides pushed via config endpoint.                                                                                                               |
 | `provider-overrides`     | Runtime overrides of provider behaviour (settings-managed; Serper, Bright Data, EODHD, YouTube, sources).                                                                                                              |
 | `stock-data`             | Provider-agnostic end-of-day market history: Postgres cache + coverage ledger, gap backfill from the configured provider (EODHD), locally computed technical indicators, REST endpoints. See **1.1** / **1.5**.      |
 | `secrets`                | AES-256-GCM cipher for provider API keys at rest (`TRIPLEF_SECRETS_KEY`, with `TRIPLEF_SECRETS_KEY_PREVIOUS` for rotation). See **1.5**.                                                                                                                             |
 | `pino-logger`            | Central structured logging (pretty in dev, JSON in prod).                                                                                                                                                          |
-| `health`                 | Terminus probes: memory, disk, PostgreSQL indicator, MinIO indicator — plus Ollama ping and the memory-app indicator on readiness.                                                                                                                                              |
+| `health`                 | Terminus probes: memory, disk, PostgreSQL indicator, object-storage indicator — plus Ollama ping and the memory-app indicator on readiness.
 
 ## Request lifecycle (happy path)
 
@@ -66,14 +66,14 @@ A request therefore has **two results**: the synchronous `202` carrying the real
 
 ## Configuration stack
 
-Every subsystem reads through a typed `ConfigService` (Joi schemas at startup — invalid env fails fast). Groups in `apps/server/.env.example`: server base, logger, health thresholds, CORS, Socket.IO, BullMQ (connection/TLS/job options/backoff/logger), Ollama (+ stream timeouts, smooth stream), Postgres, memory client (`MEMORY_URL` + `MEMORY_ENABLED`), harness budgets (`NUM_CTX`, `HARNESS_*` source/reference caps), Serper (all tool families), Bright Data (SERP + Web Unlocker), YouTube (Data API v3), EODHD, sources policy, MinIO/sharp (incl. `PPROC_*` preprocessing defaults), DLQ retention (`DLQ_*`), and the secrets cipher. Nothing is read ad-hoc from `process.env` in feature code. How these baselines interact with runtime overrides — and what each knob changes — is the subject of **1.8**.
+Every subsystem reads through a typed `ConfigService` (Joi schemas at startup — invalid env fails fast). Groups in `apps/server/.env.example`: server base, logger, health thresholds, CORS, Socket.IO, BullMQ (connection/TLS/job options/backoff/logger), Ollama (+ stream timeouts, smooth stream), Postgres, memory client (`MEMORY_URL` + `MEMORY_ENABLED`), harness budgets (`NUM_CTX`, `HARNESS_*` source/reference caps), Serper (all tool families), Bright Data (SERP + Web Unlocker), YouTube (Data API v3), EODHD, sources policy, object storage/sharp (incl. `PPROC_*` preprocessing defaults), DLQ retention (`DLQ_*`), and the secrets cipher. Nothing is read ad-hoc from `process.env` in feature code. How these baselines interact with runtime overrides — and what each knob changes — is the subject of **1.8**.
 
 ## Error-handling strategy
 
 - **Validation layer:** DTOs + pipes reject malformed requests (`400`); missing `x-harness-llm` is a hard `400` before a job exists.
 - **Job layer:** BullMQ attempts/backoff; terminal failures are copied into the `DeadLetterJob` table with full context instead of vanishing.
 - **Stream layer:** model/tool errors are converted into `error` events on the room so the dashboard can render them inline.
-- **Ops layer:** `/health/ready` only reports ready when the dependencies answer (disk, process memory, Ollama ping, PostgreSQL, MinIO, and the memory app) — suitable for load-balancer probes. `/health/live` is a trivial always-200 liveness.
+- **Ops layer:** `/health/ready` only reports ready when the dependencies answer (disk, process memory, Ollama ping, PostgreSQL, object storage, and the memory app) — suitable for load-balancer probes. `/health/live` is a trivial always-200 liveness.
 
 ## Cross-cutting packages
 

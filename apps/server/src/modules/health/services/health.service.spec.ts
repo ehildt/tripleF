@@ -10,8 +10,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../../configs/app-config.service.js';
 import { DeadLetterRepository } from '../../dead-letter/services/repository.service.js';
 import { MemoryHealthIndicator as MemoryAppHealthIndicator } from '../../memory-client/services/memory-health-indicator.service.js';
-import { MinioService } from '../../minio/services/minio.service.js';
-import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
+import { ObjectStorageHealthIndicator } from '../../object-storage/services/object-storage-health-indicator.service.js';
 import { OllamaOverridesService } from '../../ollama/services/ollama-overrides.service.js';
 
 import { HealthService } from './health.service.js';
@@ -27,7 +27,7 @@ describe('HealthService', () => {
       providers: [
         HealthService,
         PostgresHealthIndicator,
-        MinioHealthIndicator,
+        ObjectStorageHealthIndicator,
         {
           provide: DeadLetterRepository,
           useValue: {
@@ -35,7 +35,7 @@ describe('HealthService', () => {
           },
         },
         {
-          provide: MinioService,
+          provide: ObjectStorageService,
           useValue: {
             ping: vi.fn().mockResolvedValue(undefined),
           },
@@ -151,7 +151,7 @@ describe('HealthService', () => {
         providers: [
           HealthService,
           PostgresHealthIndicator,
-          MinioHealthIndicator,
+          ObjectStorageHealthIndicator,
           {
             provide: DeadLetterRepository,
             useValue: {
@@ -159,7 +159,7 @@ describe('HealthService', () => {
             },
           },
           {
-            provide: MinioService,
+            provide: ObjectStorageService,
             useValue: {
               ping: vi.fn().mockResolvedValue(undefined),
             },

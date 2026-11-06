@@ -1,4 +1,4 @@
-integrity: e23064d296f3a82283bf9da921b8cf2867a0cae60f35c96f0732615a5cb36dad
+integrity: 14a99d57b66dc25ad1670d02c330b781a93f3848432c2809b246a510d09660c8
 # yaml-language-server: $schema=https://raw.githubusercontent.com/ehildt/depbadge/refs/heads/main/depbadgerc.schema.json
 
 target: README.md
@@ -40,6 +40,8 @@ dependencies:
     position: center
   badgeStyle: *DEPENDENCIES_STYLE
   items:
+    - name: '@aws-sdk/client-s3'
+      link: https://github.com/aws/aws-sdk-js-v3
     - name: '@fastify/compress'
       link: https://github.com/fastify/fastify-compress
     - name: '@fastify/multipart'
@@ -108,8 +110,6 @@ dependencies:
       link: https://github.com/Stuk/jszip
     - name: mammoth
       link: https://github.com/mwilliamson/mammoth.js
-    - name: minio
-      link: https://github.com/minio/minio-js
     - name: pino
       link: https://github.com/pinojs/pino
     - name: pino-pretty

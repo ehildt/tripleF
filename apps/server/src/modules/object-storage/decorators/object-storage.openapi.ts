@@ -28,9 +28,9 @@ const ApiParamHash = () =>
 export const ApiGetBucketInfo = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Get MinIO bucket info',
+      summary: 'Get object-storage bucket info',
       description:
-        'Returns the configured bucket name and endpoint for the MinIO connection.',
+        'Returns the configured bucket name, endpoint, and region for the object-storage connection.',
     }),
     ApiResponse({
       status: HttpStatus.OK,
@@ -98,7 +98,7 @@ export const ApiDeleteObject = () =>
     ApiOperation({
       summary: 'Delete a stored object',
       description:
-        'Removes the object identified by sessionId, conversationId and content hash from MinIO.',
+        'Removes the object identified by sessionId, conversationId and content hash from object storage.',
     }),
     ApiParamSessionId(),
     ApiParamConversationId(),
@@ -114,7 +114,7 @@ export const ApiDeleteObjects = () =>
     ApiOperation({
       summary: 'Delete stored objects for a sessionId and conversationId',
       description:
-        'Removes all objects under the images/{sessionId}/{conversationId} prefix from MinIO.',
+        'Removes all objects under the images/{sessionId}/{conversationId} prefix from object storage.',
     }),
     ApiParamSessionId(),
     ApiParamConversationId(),

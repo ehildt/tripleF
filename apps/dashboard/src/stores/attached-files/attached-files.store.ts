@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, shallowRef, watch } from 'vue';
 
 import { convertDocuments } from '@/api/documents.api';
-import { checkObjectExists } from '@/api/storage.api';
+import { checkObjectExists } from '@/api/object-storage.api';
 import { classifyAttachedFile } from '@/components/chat/chat-left-toolbar/shared/helpers/classify-attached-file.helper';
 import { mapPageToUploadedImage } from '@/components/chat/chat-left-toolbar/shared/helpers/map-page-to-uploaded-image.helper';
 import { useToast } from '@/composables/use-toast/use-toast';
@@ -213,7 +213,7 @@ export const useAttachedFilesStore = defineStore('attachedFiles', () => {
       }
 
       // Keep the original as a document entry so it rides the submit's
-      // originals (idempotent MinIO store) and the originals metadata —
+      // originals (idempotent object storage) and the originals metadata —
       // the bubble still renders the page images, not a file icon.
       updateMap(sid, cid, (list) => [
         ...list,

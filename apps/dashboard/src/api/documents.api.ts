@@ -19,7 +19,7 @@ export interface ConvertedDocument {
 /**
  * Upload originals to the select-time conversion endpoint: the server
  * stores them (and the rendered page images / extraction manifest) in
- * MinIO and returns per-file references the client renders as tiles.
+ * object storage and returns per-file references the client renders as tiles.
  */
 export async function convertDocuments(
   sessionId: string,

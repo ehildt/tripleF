@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-/** Path params for the storage routes (session/conversation, optional hash). */
-export class StorageParamsDto {
+/** Path params for object-storage routes (session/conversation, optional hash). */
+export class ObjectStorageParamsDto {
   @IsString()
   @IsNotEmpty()
   sessionId!: string;

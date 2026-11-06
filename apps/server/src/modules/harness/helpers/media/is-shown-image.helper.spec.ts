@@ -24,7 +24,7 @@ describe('isShownImage', () => {
   });
 
   it('matches a candidate by storage hash', () => {
-    const storageUrl = '/api/v1/storage/sess/conv/hash-1';
+    const storageUrl = '/api/v1/object-storage/sess/conv/hash-1';
 
     expect(isShownImage(keys(['sh:hash-1']), { storageUrl })).toBe(true);
     expect(isShownImage(keys(['sh:other']), { storageUrl })).toBe(false);
@@ -41,7 +41,7 @@ describe('isShownImage', () => {
   });
 
   it('prefers the fingerprint when both identities are present', () => {
-    const storageUrl = '/api/v1/storage/sess/conv/hash-1';
+    const storageUrl = '/api/v1/object-storage/sess/conv/hash-1';
 
     expect(
       isShownImage(keys(['fp:abc']), { fingerprint: 'abc', storageUrl }),

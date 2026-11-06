@@ -11,7 +11,7 @@ const TRACKED_KEYS = [
   'memory_heap',
   'memory_rss',
   'postgres',
-  'minio',
+  'object_storage',
 ] as const;
 
 export function useSettingsHealthTiles() {

@@ -9,7 +9,7 @@ const UP_TILES: HealthTileViewModel[] = [
   { key: 'memory_heap', status: 'up', loading: false, error: false },
   { key: 'memory_rss', status: 'up', loading: false, error: false },
   { key: 'postgres', status: 'up', loading: false, error: false },
-  { key: 'minio', status: 'up', loading: false, error: false },
+  { key: 'object_storage', status: 'up', loading: false, error: false },
 ];
 
 const meta = {

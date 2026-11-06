@@ -17,7 +17,7 @@ const tiles = [
   { key: 'memory_heap', status: 'up', loading: false, error: false },
   { key: 'memory_rss', status: 'up', loading: false, error: false },
   { key: 'postgres', status: 'down', loading: false, error: false },
-  { key: 'minio', status: 'up', loading: false, error: false },
+  { key: 'object_storage', status: 'up', loading: false, error: false },
 ];
 
 /** Fully expanded system health grid. */

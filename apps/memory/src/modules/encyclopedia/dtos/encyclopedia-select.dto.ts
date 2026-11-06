@@ -54,7 +54,7 @@ export class EncyclopediaSourceDocumentDto {
 
   @ApiPropertyOptional({
     description:
-      'Content hash of the ORIGINAL upload — the MinIO object identity (uploaded documents only).',
+      'Content hash of the ORIGINAL upload — the stored object identity (uploaded documents only).',
     example: 'a3b2c1',
   })
   @IsString()

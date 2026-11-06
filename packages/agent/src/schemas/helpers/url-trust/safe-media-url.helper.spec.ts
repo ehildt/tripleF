@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { safeMediaUrl } from './safe-media-url.helper.js';
 
 describe('safeMediaUrl', () => {
-  it('accepts same-origin storage paths', () => {
-    expect(safeMediaUrl().safeParse('/api/v1/storage/session/chat/abc123').success).toBe(true);
+  it('accepts same-origin object-storage paths', () => {
+    expect(safeMediaUrl().safeParse('/api/v1/object-storage/session/chat/abc123').success).toBe(true);
   });
 
   it('accepts absolute http(s) URLs', () => {

@@ -1,0 +1,1 @@
+export const OBJECT_STORAGE_CONFIG = Symbol('OBJECT_STORAGE_CONFIG');

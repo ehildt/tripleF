@@ -9,7 +9,7 @@ import {
   fetchConversations,
   saveConversation as saveServerConversation,
 } from '../../api/conversations.api';
-import { deleteUploadedObject } from '../../api/storage.api';
+import { deleteUploadedObject } from '../../api/object-storage.api';
 import { calcTotalContextPercentage } from '../../components/chat/shared/helpers/calc-total-context-percentage.helper';
 import type { MergedConversation } from '../../types/conversation.model';
 import { createId } from '../../utils/create-id/create-id.helper';

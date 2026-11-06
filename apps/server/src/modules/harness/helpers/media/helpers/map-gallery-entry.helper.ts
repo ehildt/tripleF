@@ -11,7 +11,7 @@ export function mapGalleryEntry(
   const hash = entry?.hash ?? '';
   const imageUrl =
     sessionId && conversationId
-      ? `/api/v1/storage/${sessionId}/${conversationId}/${hash}`
+      ? `/api/v1/object-storage/${sessionId}/${conversationId}/${hash}`
       : '';
 
   return {

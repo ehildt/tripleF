@@ -4,7 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 
 import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import { FastifyMultipartDataWithFiltersReq } from '../dtos/harness-job.dto.js';
 
 import { mapFilePayload } from './helpers/map-file-payload.helper.js';
@@ -17,7 +17,7 @@ export class HarnessQueueService {
   constructor(
     @InjectQueue(HARNESS_QUEUE)
     private readonly queue: Queue,
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
     private readonly cancellationService: HarnessCancellationService,
   ) {}
 
@@ -39,7 +39,7 @@ export class HarnessQueueService {
     const requestId = req.filters.requestId!;
 
     try {
-      await this.minioService.uploadBuffers(
+      await this.objectStorage.uploadBuffers(
         req.filters.sessionId,
         req.filters.conversationId,
         requestId,
@@ -53,7 +53,7 @@ export class HarnessQueueService {
           step: 'queue',
           err: err instanceof Error ? err : new Error(String(err)),
         },
-        `Failed to upload buffers to MinIO for job ${requestId}`,
+        `Failed to upload buffers to object storage for job ${requestId}`,
       );
       return undefined;
     }
@@ -77,7 +77,7 @@ export class HarnessQueueService {
         `Failed to add job ${requestId} to queue`,
       );
       try {
-        await this.minioService.deleteBuffers(requestId);
+        await this.objectStorage.deleteBuffers(requestId);
       } catch (cleanupErr) {
         this.logger.error(
           {
@@ -88,7 +88,7 @@ export class HarnessQueueService {
                 ? cleanupErr
                 : new Error(String(cleanupErr)),
           },
-          `Failed to clean up MinIO buffers for ${requestId}`,
+          `Failed to clean up object-storage buffers for ${requestId}`,
         );
       }
       return undefined;
@@ -105,7 +105,7 @@ export class HarnessQueueService {
       const job = jobs.find((j) => j.name === requestId);
       if (job) {
         await job.remove();
-        await this.minioService.deleteBuffers(requestId);
+        await this.objectStorage.deleteBuffers(requestId);
         return true;
       }
     } catch (err) {

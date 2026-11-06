@@ -1,7 +1,7 @@
 import type { GalleryItem } from './build-gallery-items.helper.types.js';
 
-function extractStorageHash(imageUrl: string): string | undefined {
-  if (!imageUrl.startsWith('/api/v1/storage/')) return undefined;
+function extractObjectStorageHash(imageUrl: string): string | undefined {
+  if (!imageUrl.startsWith('/api/v1/object-storage/')) return undefined;
   const hash = imageUrl.split('/').pop()?.split('?')[0];
   return hash || undefined;
 }
@@ -27,7 +27,7 @@ export async function filterExistingGalleryItems(
     if (currentIndex >= items.length) return;
 
     const item = items[currentIndex];
-    const hash = extractStorageHash(item.imageUrl);
+    const hash = extractObjectStorageHash(item.imageUrl);
     results[currentIndex] =
       !hash || (await objectExists(hash)) ? item : undefined;
 

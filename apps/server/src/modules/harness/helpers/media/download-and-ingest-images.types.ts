@@ -23,7 +23,7 @@ export interface IngestedImage {
   /**
    * The pproc-resized image bytes — kept only when `keepBuffers` is set.
    * No current consumer: image tasks pick cloud reference candidates by
-   * search-result evidence, so candidate bytes stay server-side. MinIO
+   * search-result evidence, so candidate bytes stay server-side. Object storage
    * stores the original download; resized bytes are transient ingest data.
    */
   buffer?: Buffer;
@@ -68,4 +68,4 @@ export type ObjectExistsFn = (
   hash: string,
 ) => Promise<boolean>;
 
-export type BuildStorageUrlFn = (hash: string) => string;
+export type BuildObjectStorageUrlFn = (hash: string) => string;

@@ -4,7 +4,7 @@ import { PdfService } from '@triplef/pdf';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import type { DocumentManifest } from '../helpers/documents/document-manifest.helper.js';
 import { buildManifestJson } from '../helpers/documents/document-manifest.helper.js';
 import { reencodePdfPageImages } from '../helpers/documents/re-encode-pdf-pages.helper.js';
@@ -16,11 +16,11 @@ vi.mock('../helpers/documents/re-encode-pdf-pages.helper.js', () => ({
   reencodePdfPageImages: vi.fn(),
 }));
 
-function createMinioMock() {
+function createObjectStorageMock() {
   return {
     downloadBuffers: vi.fn(),
     downloadBuffer: vi.fn(),
-    buildFileUrl: vi.fn(() => '/api/v1/storage/s/c/h'),
+    buildFileUrl: vi.fn(() => '/api/v1/object-storage/s/c/h'),
     uploadBuffers: vi.fn(),
   };
 }
@@ -34,7 +34,7 @@ const pdfEntry = () => ({
 
 describe('DocumentConversionService', () => {
   let service: DocumentConversionService;
-  let minioService: ReturnType<typeof createMinioMock>;
+  let objectStorage: ReturnType<typeof createObjectStorageMock>;
   let pdfService: {
     renderPages: ReturnType<typeof vi.fn>;
     extractText: ReturnType<typeof vi.fn>;
@@ -45,7 +45,7 @@ describe('DocumentConversionService', () => {
   };
 
   beforeEach(async () => {
-    minioService = createMinioMock();
+    objectStorage = createObjectStorageMock();
     pdfService = { renderPages: vi.fn(), extractText: vi.fn() };
     describeService = { describePages: vi.fn() };
     memoryEncyclopedia = {
@@ -65,7 +65,7 @@ describe('DocumentConversionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DocumentConversionService,
-        { provide: MinioService, useValue: minioService },
+        { provide: ObjectStorageService, useValue: objectStorage },
         { provide: PdfService, useValue: pdfService },
         { provide: PdfPageDescribeService, useValue: describeService },
         { provide: MemoryEncyclopediaService, useValue: memoryEncyclopedia },
@@ -77,12 +77,12 @@ describe('DocumentConversionService', () => {
 
   /** A pdf original whose manifest already exists (no re-render needed). */
   function seedPdfManifest(manifest: DocumentManifest) {
-    minioService.downloadBuffers.mockResolvedValue({
+    objectStorage.downloadBuffers.mockResolvedValue({
       buffers: [Buffer.from('pdf-bytes')],
       keptMeta: [pdfEntry()],
     });
     // Manifest fetch (.conv hash) vs page-buffer fetch (page hashes).
-    minioService.downloadBuffer.mockImplementation(
+    objectStorage.downloadBuffer.mockImplementation(
       (_s: string, _c: string, hash: string) =>
         hash.endsWith('.conv')
           ? buildManifestJson(manifest)
@@ -92,7 +92,7 @@ describe('DocumentConversionService', () => {
 
   /** The manifest JSON of the last manifest upload (meta hash ends .conv). */
   function lastManifestUpload(): DocumentManifest | null {
-    const call = minioService.uploadBuffers.mock.calls.findLast((args) => {
+    const call = objectStorage.uploadBuffers.mock.calls.findLast((args) => {
       const meta = args[4]?.[0];
       return typeof meta?.hash === 'string' && meta.hash.endsWith('.conv');
     });
@@ -162,11 +162,11 @@ describe('DocumentConversionService', () => {
   });
 
   it('emits text sections for non-pdf originals regardless of page selection', async () => {
-    minioService.downloadBuffers.mockResolvedValue({
+    objectStorage.downloadBuffers.mockResolvedValue({
       buffers: [Buffer.from('docx-bytes')],
       keptMeta: [{ name: 'notes.docx', type: 'application/docx', hash: 'd1' }],
     });
-    minioService.downloadBuffer.mockResolvedValue(
+    objectStorage.downloadBuffer.mockResolvedValue(
       buildManifestJson({
         kind: 'docx',
         name: 'notes.docx',
@@ -188,7 +188,7 @@ describe('DocumentConversionService', () => {
       {
         name: 'notes.docx',
         text: 'extracted text',
-        url: '/api/v1/storage/s/c/h',
+        url: '/api/v1/object-storage/s/c/h',
         mimeType: 'application/docx',
         sizeBytes: 0,
         originalHash: 'd1',
@@ -362,7 +362,7 @@ describe('DocumentConversionService', () => {
   });
 
   it('converts and persists a fresh pdf original (pages + per-page text)', async () => {
-    minioService.downloadBuffer.mockResolvedValue(null);
+    objectStorage.downloadBuffer.mockResolvedValue(null);
     pdfService.renderPages.mockResolvedValue([
       { buffer: Buffer.from('png-1'), mimeType: 'image/png', pageNumber: 1 },
       { buffer: Buffer.from('png-2'), mimeType: 'image/png', pageNumber: 2 },
@@ -382,7 +382,7 @@ describe('DocumentConversionService', () => {
     );
     // Page images uploaded first …
     expect(
-      minioService.uploadBuffers.mock.calls[0][4].map(
+      objectStorage.uploadBuffers.mock.calls[0][4].map(
         (m: { hash: string }) => m.hash,
       ),
     ).toEqual(['page-hash-1', 'page-hash-2']);
@@ -409,7 +409,7 @@ describe('DocumentConversionService', () => {
       partitionScope: 'sess-1',
       documents: [
         {
-          url: '/api/v1/storage/s/c/h',
+          url: '/api/v1/object-storage/s/c/h',
           title: 'doc.pdf',
           content: ['t1', 'd1'].join('\n\n'),
           mimeType: 'application/pdf',

@@ -28,7 +28,7 @@ describe('mapChunkToNode', () => {
     const node = mapChunkToNode({
       id: 'c1',
       content: 'Body',
-      url: '/api/v1/storage/s/c/h',
+      url: '/api/v1/object-storage/s/c/h',
       domain: '',
       title: 'doc.pdf',
       fetchedAt: '2025-01-01',
@@ -48,7 +48,7 @@ describe('mapChunkToNode', () => {
     const node = mapChunkToNode({
       id: 'c1',
       content: 'Body',
-      url: '/api/v1/storage/s/c/h',
+      url: '/api/v1/object-storage/s/c/h',
       domain: '',
       title: 'quarterly-report.pdf',
       fetchedAt: '2025-01-01',
@@ -67,7 +67,7 @@ describe('mapChunkToNode', () => {
     const uploaded = mapChunkToNode({
       id: 'c1',
       content: 'Body',
-      url: '/api/v1/storage/s/c/h',
+      url: '/api/v1/object-storage/s/c/h',
       domain: '',
       title: 'doc.pdf',
       fetchedAt: '2025-01-01',
@@ -89,7 +89,7 @@ describe('mapChunkToNode', () => {
       partitionScope: 'p1',
     });
 
-    expect(uploaded.downloadUrl).toBe('/api/v1/storage/s/c/h');
+    expect(uploaded.downloadUrl).toBe('/api/v1/object-storage/s/c/h');
     expect(webChunk.downloadUrl).toBeUndefined();
   });
 

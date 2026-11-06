@@ -46,7 +46,7 @@ server ──HTTP──▶ memory (this app) ──REST──▶ qdrant:6333
 Compose runs the app with hot reload (bind mount), same as the server:
 
 ```bash
-docker compose -f infra.compose.yml up -d   # postgres, minio, keydb, qdrant
+docker compose -f infra.compose.yml up -d   # postgres, rustfs, keydb, qdrant
 docker compose up                           # server + memory + dashboard
 ```
 

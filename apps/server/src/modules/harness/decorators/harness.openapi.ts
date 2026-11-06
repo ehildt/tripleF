@@ -132,7 +132,7 @@ Images must be provided as multipart form-data.`,
           type: 'array',
           description: `**Original files**
 
-Original PDF/document files. Persisted in MinIO; their content reaches the
+Original PDF/document files. Persisted in object storage; their content reaches the
 model through server-side conversion (pdf → page images, other documents →
 extracted text).`,
           items: {
@@ -221,7 +221,7 @@ export const ApiConvertDocuments = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Convert attached documents (select time)',
-      description: `Stores originals in MinIO and converts them (pdf → page JPEGs,
+      description: `Stores originals in object storage and converts them (pdf → page JPEGs,
 other documents → extraction manifest). Returns per-file references the
 client renders as image tiles / document cards.`,
     }),

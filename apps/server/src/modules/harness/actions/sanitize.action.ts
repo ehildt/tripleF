@@ -230,7 +230,7 @@ export class SanitizeActionService {
         : 6;
     verifiedVideos = verifiedVideos.slice(0, videoTargetCount);
 
-    // 5. Ingest external images into MinIO. Bot-protected CDNs answer our
+    // 5. Ingest external images into object storage. Bot-protected CDNs answer our
     //    link probes yet block real clients (UA/Referer/TLS checks), and a
     //    download can fail regardless — so only images we could fetch and
     //    store locally may reach the response: external URLs that were not
@@ -977,7 +977,7 @@ export class SanitizeActionService {
   }
 
   /**
-   * Download verified external images into MinIO and rewrite them to local
+   * Download verified external images into object storage and rewrite them to local
    * storage URLs. External candidates the pipeline could not download are
    * dropped — never handed to the client as a fallback, because links that
    * answered our probes may still refuse real clients. Compare/describe

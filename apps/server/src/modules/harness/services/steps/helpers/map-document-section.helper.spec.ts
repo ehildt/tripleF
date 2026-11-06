@@ -17,7 +17,7 @@ describe('mapDocumentSection', () => {
     });
   });
 
-  it('delegates the original upload metadata and MinIO link', () => {
+  it('delegates the original upload metadata and object-storage link', () => {
     expect(
       mapDocumentSection({
         name: 'doc.pdf',

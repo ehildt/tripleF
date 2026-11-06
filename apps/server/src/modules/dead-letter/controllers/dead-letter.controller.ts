@@ -16,7 +16,7 @@ import { ApiTags } from '@nestjs/swagger';
 
 import { Prisma } from '../../../generated/prisma/client.js';
 import { HARNESS_QUEUE } from '../../bullmq/constants/bullmq.constants.js';
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import {
   ApiCreateDlqEntry,
   ApiDeleteDlqEntry,
@@ -41,7 +41,7 @@ import { DeadLetterRepository } from '../services/repository.service.js';
 export class DeadLetterController {
   constructor(
     private readonly dlqRepository: DeadLetterRepository,
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
     private readonly jobReinstatementService: JobReinstatementService,
     private readonly dlqEventsService: DlqEventsService,
   ) {}
@@ -196,7 +196,7 @@ export class DeadLetterController {
       // Only harness turns have buffers; vectorize/queue-agnostic records do not.
       if (record.queueName !== HARNESS_QUEUE) continue;
       try {
-        await this.minioService.deleteBuffers(record.jobName);
+        await this.objectStorage.deleteBuffers(record.jobName);
       } catch {
         // buffer cleanup is best-effort
       }
