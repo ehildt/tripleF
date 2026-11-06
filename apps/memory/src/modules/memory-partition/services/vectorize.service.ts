@@ -10,9 +10,9 @@ import { normalizeSubject } from '../../qdrant/helpers/normalize-subject.helper.
 import type { MemoryScopeFilters } from '../../qdrant/models/memory.model.js';
 import type { QdrantConfig } from '../../qdrant/models/qdrant-config.model.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../qdrant/services/memory-record.repository.js';
 import { normalizeCategory } from '../helpers/normalize-category.helper.js';
 import { normalizeTags } from '../helpers/normalize-tags.helper.js';
 
@@ -34,7 +34,7 @@ export class VectorizeService {
 
   constructor(
     private readonly embeddingService: EmbeddingService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,

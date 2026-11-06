@@ -30,8 +30,9 @@ import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model
 import { EmbeddingService } from '../../../../qdrant/services/embedding.service.js';
 import { EncyclopediaRepository } from '../../../../qdrant/services/encyclopedia.repository.js';
 import { synopsisText } from '../../../../qdrant/services/helpers/synopsis-text.helper.js';
-import { MemoryRepository } from '../../../../qdrant/services/memory.repository.js';
+import { MemoryClusterPointRepository } from '../../../../qdrant/services/memory-cluster-point.repository.js';
 import { MemoryOverridesService } from '../../../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../../../qdrant/services/memory-record.repository.js';
 import { SynopsisRepository } from '../../../../qdrant/services/synopsis.repository.js';
 import type { SynopsisPoint } from '../../../../qdrant/services/synopsis.repository.types.js';
 import {
@@ -91,7 +92,8 @@ export class MemoryClusterJobService {
   constructor(
     private readonly aiSdkService: AiSdkService,
     private readonly ollamaConfigService: OllamaConfigService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
+    private readonly clusterPoints: MemoryClusterPointRepository,
     private readonly encyclopediaRepository: EncyclopediaRepository,
     private readonly links: MemoryLinkRepository,
     private readonly clusters: MemoryClusterRepository,
@@ -587,7 +589,7 @@ export class MemoryClusterJobService {
     scopeKey: string,
   ): Promise<ScopePoint[]> {
     if (lane === 'partition') {
-      return this.memoryRepository.scrollScopePoints(
+      return this.clusterPoints.scrollScopePoints(
         scopeKey,
         this.config.constellationNodeLimit,
       );
@@ -602,7 +604,7 @@ export class MemoryClusterJobService {
     assignments: Map<string, string>,
   ): Promise<void> {
     if (lane === 'partition') {
-      await this.memoryRepository.setClusterIds(assignments);
+      await this.clusterPoints.setClusterIds(assignments);
     } else {
       await this.encyclopediaRepository.setClusterIds(assignments);
     }

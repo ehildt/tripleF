@@ -12,7 +12,7 @@ import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxo
 import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
+import { MemoryLabelRepository } from '../../qdrant/services/memory-label.repository.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
 import { TAXONOMY_LANE_FIELDS } from '../constants/taxonomy-fields.constant.js';
 import { normalizeTaxonomyIcon } from '../helpers/normalize-taxonomy-icon.helper.js';
@@ -43,7 +43,7 @@ export class TaxonomyService {
     private readonly taxonomyMerge: TaxonomyMergeService,
     private readonly taxonomyVectors: TaxonomyVectorRepository,
     private readonly embeddingService: EmbeddingService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryLabelRepository,
     private readonly encyclopediaRepository: EncyclopediaRepository,
   ) {}
 
@@ -249,9 +249,9 @@ export class TaxonomyService {
       this.taxonomy.findNode(id),
       this.taxonomy.findNode(intoId),
     ]);
-    if (!node || !target) {
+    if (!node || !target)
       throw new NotFoundException('Taxonomy node not found');
-    }
+
     if (
       node.lane !== target.lane ||
       node.scopeKey !== target.scopeKey ||
@@ -275,7 +275,7 @@ export class TaxonomyService {
     const node = await this.taxonomy.findNode(id);
     if (!node) throw new NotFoundException('Taxonomy node not found');
     const normalized = icon === null ? null : normalizeTaxonomyIcon(icon);
-    if (icon !== null && !normalized) {
+    if (normalized === undefined) {
       throw new BadRequestException(
         'Unknown icon name — pick from the curated taxonomy icon set',
       );

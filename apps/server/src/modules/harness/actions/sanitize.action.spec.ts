@@ -9,6 +9,11 @@ import { SharpService } from '../../sharp/services/sharp.service.js';
 import { SourceBudgetConfigService } from '../configs/source-budget-config.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
+import { SanitizeCognitionContextService } from '../services/sanitize/cognition-context.service.js';
+import { SanitizeImageIngestionService } from '../services/sanitize/image-ingestion.service.js';
+import { SanitizeMediaValidationService } from '../services/sanitize/media-validation.service.js';
+import { SanitizeReferenceSelectionService } from '../services/sanitize/reference-selection.service.js';
+import { SanitizeShownMediaFilterService } from '../services/sanitize/shown-media-filter.service.js';
 import { ShownMediaService } from '../services/shown-media.service.js';
 
 import { SanitizeActionService } from './sanitize.action.js';
@@ -35,6 +40,11 @@ describe('SanitizeActionService', () => {
     module = await Test.createTestingModule({
       providers: [
         SanitizeActionService,
+        SanitizeCognitionContextService,
+        SanitizeImageIngestionService,
+        SanitizeMediaValidationService,
+        SanitizeReferenceSelectionService,
+        SanitizeShownMediaFilterService,
         {
           provide: CloudImageIngestionService,
           useValue: { ingest: vi.fn().mockResolvedValue([]) },

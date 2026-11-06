@@ -1,38 +1,38 @@
 import type { MemoryPoint } from '../models/memory.model.js';
 
-/** Boundary of the memory collection reads: dashboard listing entries and
- * the dedupe/linking scroll projection. Shapes mirror the stored memory
- * point payload (`memory.model.ts`), reduced to the fields each read needs. */
+/** Payload fields that can carry a taxonomy label. */
+export type MemoryLabelField = 'category' | 'community' | 'subject' | 'tags';
 
-/** One leaf row of the dashboard's label drill listing. */
+export interface MemoryLabelCountOptions {
+  /** Count only points that already belong to the constellation graph. */
+  linkedOnly?: boolean;
+}
+
+/** One leaf row in the dashboard's label drill-down listing. */
 export interface MemoryLabelLeafRow {
   /** Leaf point id. */
   id: string;
-  /** The leaf's stored text the row renders. */
+  /** Stored text rendered by the row. */
   text: string;
-  /** Whether the leaf sits in the constellation link graph. */
+  /** Whether the leaf belongs to the constellation link graph. */
   isLinked: boolean;
-  /** Storage timestamp (ISO string). */
+  /** Storage timestamp as an ISO string. */
   createdAt: string;
 }
 
-/**
- * One point read back with its vector — the dedupe and linking sweep input.
- * Partial mirror of the memory point payload: only the fields those sweeps
- * score on.
- */
+/** One category point with the fields required by dedupe and linking sweeps. */
 export interface MemoryScrolledPoint {
   /** Leaf point id. */
   id: string;
   /** Dense vector of the point. */
   vector: number[];
-  /** Stored text. */
+  /** Stored record text. */
   text: string;
-  /** Turn role of the memory (mirrors `MemoryPoint.role`). */
+  /** Turn role of the memory, mirroring MemoryPoint.role. */
   role: MemoryPoint['role'];
   /** Stored tag labels. */
   tags: string[];
-  /** Storage timestamp (ISO string). */
+  /** Storage timestamp as an ISO string. */
   createdAt: string;
   /** Originating request id when known. */
   requestId?: string;

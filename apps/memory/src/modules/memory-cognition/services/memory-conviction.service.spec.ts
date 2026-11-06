@@ -24,6 +24,7 @@ function makeService() {
     ollamaConfigService as never,
     embeddingService as never,
     memoryRepository as never,
+    memoryRepository as never,
     memoryCognition as never,
     memoryEnqueue as never,
     overrides as never,

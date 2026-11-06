@@ -3,9 +3,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { MemoryInsertLedgerRepository } from '../../../../persistence/services/memory-insert-ledger.repository.js';
 import { QDRANT_CONFIG } from '../../../../qdrant/constants/qdrant.constants.js';
 import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model.js';
-import { MemoryRepository } from '../../../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../../../qdrant/services/memory-record.repository.js';
 import type { VectorizeContext } from '../vectorize-context.types.js';
 import type { VectorizeStepHandler } from '../vectorize-step.types.js';
 
@@ -25,7 +25,7 @@ export class StoreStepService implements VectorizeStepHandler {
   private readonly logger = new Logger(StoreStepService.name);
 
   constructor(
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
     private readonly ledger: MemoryInsertLedgerRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,

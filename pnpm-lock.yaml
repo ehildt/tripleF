@@ -2412,8 +2412,8 @@ packages:
   '@fastify/ajv-compiler@4.0.7':
     resolution: {integrity: sha512-VP0yIfwlc1ohj733keYDqyHm1VWeP9VQxYomunhr90jkC4aNNibbkrRiaNgPgqj1ORxUenILR4qzA/ppYBNAtQ==}
 
-  '@fastify/busboy@3.2.4':
-    resolution: {integrity: sha512-lQS8xcXT54rdJb+wlG/Q7SMSdtkZEpLPHooSDUZyyZm9LJD7X1kONPhVoPaHq+dsPtWUGGLIz9gBNhs9qKbylw==}
+  '@fastify/busboy@3.2.5':
+    resolution: {integrity: sha512-y8MTAeBlEQUNVnskmZQwpseZN3EgCksQNOULlfxWY6o6VEqh01+oExMgbM7gN6YLQ8pNDYeweNPKJRt8jQm2ZQ==}
 
   '@fastify/compress@9.3.0':
     resolution: {integrity: sha512-vvm+933zsfsnw7nKsy2GWyix54k7aq3j+9EkwfH6ncngt+DUt5tgVQ/uH07/JrbOWXt1mjADjZ5MbKKwu1xhmA==}
@@ -5223,8 +5223,8 @@ packages:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
 
-  caniuse-lite@1.0.30001820:
-    resolution: {integrity: sha512-gfWD6MxqVCqAOwmODfZf7DchWvlrA+SRdNX7ceLfg3xRqe5ssjjpF7EgslC/0tiLiNTajdaNN/q8c/5u/7Gz8w==}
+  caniuse-lite@1.0.30001822:
+    resolution: {integrity: sha512-Y3fvWQWzc69dlCyr07tuNrEhotv+db5FpMSPD3slZnkPKwRNOKwFBz2dP966XUmWMXLTOt+YShkFoQoom3U7hg==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -6063,8 +6063,8 @@ packages:
   fast-json-stringify@5.16.1:
     resolution: {integrity: sha512-KAdnLvy1yu/XrRtP+LJnxbBGrhN+xXu+gt3EUvZhYGKCr3lFHq/7UFJHHFgmJKoqlh6B40bZLEv7w46B0mqn1g==}
 
-  fast-json-stringify@7.2.1:
-    resolution: {integrity: sha512-GU16K+1IH8XSJ/suUaX/ONlJ5glCFvmBdra2nGI2ZGpBBXzqM/r/lzO02gjHYcRad1KKj6WvC+/RROggpg6acg==}
+  fast-json-stringify@7.3.0:
+    resolution: {integrity: sha512-+NuA3O14e66h10yOYIsCh4S3GKV+Q/pSRoDYShKarVv8G8QboaLJ8uynpyiOoH38YRW4T6U7KVefJkC/tYpePA==}
 
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
@@ -8452,12 +8452,12 @@ packages:
     resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
     engines: {node: '>=20.18.1'}
 
-  undici@7.30.1:
-    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
+  undici@7.30.2:
+    resolution: {integrity: sha512-mLyPQnHwUxaM/rideoK/+KL8DaAJLRl4aBCfmX444aCSLnIaomqPLtNRe2jdCYcsk5wZzXrDIQC8ZeYNRAYyIA==}
     engines: {node: '>=20.18.1'}
 
-  undici@8.12.3:
-    resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
+  undici@8.12.4:
+    resolution: {integrity: sha512-8Mx+uNKKER2bA4AdtedkqRbwUCIJFr2nJckXRe5yrDqzePqwLP7VNcctN8/XdmDSbF7mS+jJKIszlL+vbam1VA==}
     engines: {node: '>=22.19.0'}
 
   unicode-emoji-modifier-base@1.0.0:
@@ -8953,7 +8953,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.1
-      undici: 7.30.1
+      undici: 7.30.2
       zod: 4.6.7
 
   '@ai-sdk/provider@4.0.36':
@@ -9560,7 +9560,7 @@ snapshots:
       ajv-formats: 3.0.1
       fast-uri: 4.2.3
 
-  '@fastify/busboy@3.2.4': {}
+  '@fastify/busboy@3.2.5': {}
 
   '@fastify/compress@9.3.0':
     dependencies:
@@ -9585,7 +9585,7 @@ snapshots:
 
   '@fastify/fast-json-stringify-compiler@5.1.1':
     dependencies:
-      fast-json-stringify: 7.2.1
+      fast-json-stringify: 7.3.0
 
   '@fastify/formbody@9.0.1':
     dependencies:
@@ -9612,7 +9612,7 @@ snapshots:
 
   '@fastify/multipart@10.1.7':
     dependencies:
-      '@fastify/busboy': 3.2.4
+      '@fastify/busboy': 3.2.5
       '@fastify/deepmerge': 3.2.4
       '@fastify/error': 4.2.1
       fastify-plugin: 6.0.1
@@ -12011,7 +12011,7 @@ snapshots:
   browserslist@4.29.5:
     dependencies:
       baseline-browser-mapping: 2.11.35
-      caniuse-lite: 1.0.30001820
+      caniuse-lite: 1.0.30001822
       electron-to-chromium: 1.5.477
       node-releases: 2.0.63
       update-browserslist-db: 1.3.4(browserslist@4.29.5)
@@ -12096,7 +12096,7 @@ snapshots:
 
   camelcase@6.3.0: {}
 
-  caniuse-lite@1.0.30001820: {}
+  caniuse-lite@1.0.30001822: {}
 
   ccount@2.0.1: {}
 
@@ -13013,7 +13013,7 @@ snapshots:
       json-schema-ref-resolver: 1.0.1
       rfdc: 1.4.1
 
-  fast-json-stringify@7.2.1:
+  fast-json-stringify@7.3.0:
     dependencies:
       '@fastify/merge-json-schemas': 0.2.2
       ajv: 8.20.0
@@ -13105,7 +13105,7 @@ snapshots:
       '@fastify/proxy-addr': 5.1.2
       abstract-logging: 2.0.1
       avvio: 9.3.1
-      fast-json-stringify: 7.2.1
+      fast-json-stringify: 7.3.0
       find-my-way: 9.10.0
       light-my-request: 6.8.0
       pino: 10.4.0
@@ -13624,7 +13624,7 @@ snapshots:
       parse5: 8.1.0
       saxes: 6.0.0
       tough-cookie: 6.0.2
-      undici: 8.12.3
+      undici: 8.12.4
       w3c-xmlserializer: 6.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -15735,9 +15735,9 @@ snapshots:
 
   undici@7.29.1: {}
 
-  undici@7.30.1: {}
+  undici@7.30.2: {}
 
-  undici@8.12.3: {}
+  undici@8.12.4: {}
 
   unicode-emoji-modifier-base@1.0.0: {}
 

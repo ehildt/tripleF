@@ -40,6 +40,8 @@ function makeService() {
     ollamaConfigService as never,
     memorySearch as never,
     memoryRepository as never,
+    memoryRepository as never,
+    memoryRepository as never,
     embeddingService as never,
     links as never,
     memoryEnqueue as never,

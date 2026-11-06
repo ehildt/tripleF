@@ -11,9 +11,10 @@ import { BRIDGE_TAG } from '../../qdrant/constants/conviction.constant.js';
 import { deterministicPointId } from '../../qdrant/helpers/deterministic-point-id.helper.js';
 import type { MemoryConvictionJobData } from '../../qdrant/models/memory.model.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../qdrant/services/memory-record.repository.js';
+import { MemorySynthesisRepository } from '../../qdrant/services/memory-synthesis.repository.js';
 import { classifyStaleConvictions } from '../helpers/classify-stale-convictions.helper.js';
 import { parseConvictionSynthesis } from '../helpers/parse-conviction-synthesis.helper.js';
 
@@ -58,7 +59,8 @@ export class MemoryConvictionService {
     private readonly aiSdkService: AiSdkService,
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly embeddingService: EmbeddingService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
+    private readonly synthesisRepository: MemorySynthesisRepository,
     private readonly memoryCognition: MemoryCognitionService,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
@@ -77,7 +79,7 @@ export class MemoryConvictionService {
     }
 
     const limit = Math.min(data.limit ?? 100, MAX_EVIDENCE_PER_RUN);
-    const evidence = await this.memoryRepository.scrollSynthesizable({
+    const evidence = await this.synthesisRepository.scrollSynthesizable({
       memoryPartition: data.memoryPartition,
       limit,
     });
@@ -230,8 +232,8 @@ export class MemoryConvictionService {
     memoryCognition: string,
   ): Promise<void> {
     const [bridges, convictions] = await Promise.all([
-      this.memoryRepository.scrollBridges(memoryPartition),
-      this.memoryRepository.scrollConvictions(memoryCognition),
+      this.synthesisRepository.scrollBridges(memoryPartition),
+      this.synthesisRepository.scrollConvictions(memoryCognition),
     ]);
     const statements = [...bridges, ...convictions];
     if (statements.length === 0) return;
@@ -239,7 +241,7 @@ export class MemoryConvictionService {
     const evidenceIds = new Set(
       statements.flatMap((statement) => statement.evidenceIds),
     );
-    const state = await this.memoryRepository.retrieveSupersededState([
+    const state = await this.synthesisRepository.retrieveSupersededState([
       ...evidenceIds,
     ]);
     const { staleConvictionIds, reofferIds } = classifyStaleConvictions(

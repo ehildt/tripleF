@@ -8,7 +8,7 @@ import type {
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
 import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
+import { MemoryLabelRepository } from '../../qdrant/services/memory-label.repository.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
 import { TAXONOMY_LANE_FIELDS } from '../constants/taxonomy-fields.constant.js';
 
@@ -26,7 +26,7 @@ export class TaxonomyMergeService {
   constructor(
     private readonly taxonomy: MemoryTaxonomyRepository,
     private readonly taxonomyVectors: TaxonomyVectorRepository,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryLabelRepository,
     private readonly encyclopediaRepository: EncyclopediaRepository,
   ) {}
 

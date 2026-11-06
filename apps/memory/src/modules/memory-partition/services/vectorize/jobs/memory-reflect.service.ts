@@ -11,9 +11,10 @@ import type { MemoryTaxonomyMaintenanceField } from '../../../../persistence/ser
 import { CONVICTION_TAG } from '../../../../qdrant/constants/conviction.constant.js';
 import type { MemoryReflectJobData } from '../../../../qdrant/models/memory.model.js';
 import { EncyclopediaRepository } from '../../../../qdrant/services/encyclopedia.repository.js';
-import { MemoryRepository } from '../../../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../../../qdrant/services/memory-record.repository.js';
+import { MemoryReflectionRepository } from '../../../../qdrant/services/memory-reflection.repository.js';
 import { FrictionAdjudicatorService } from '../../friction-adjudicator.service.js';
 
 /** Hard cap on points screened per run (mirrors the consolidate sweep). */
@@ -53,7 +54,8 @@ export class MemoryReflectService {
   constructor(
     private readonly adjudicator: FrictionAdjudicatorService,
     private readonly frictions: MemoryFrictionRepository,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
+    private readonly reflectionRepository: MemoryReflectionRepository,
     private readonly encyclopediaRepository: EncyclopediaRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,
@@ -121,7 +123,7 @@ export class MemoryReflectService {
             // convictions are screened, episodes never.
             tags: ['insight', CONVICTION_TAG],
           };
-    const points = await this.memoryRepository.scrollUnreflected({
+    const points = await this.reflectionRepository.scrollUnreflected({
       ...scope,
       limit,
     });
@@ -180,7 +182,7 @@ export class MemoryReflectService {
     newlySuperseded: Set<string>,
   ): Promise<void> {
     const candidates = (
-      await this.memoryRepository.queryNeighborFacts({
+      await this.reflectionRepository.queryNeighborFacts({
         ...scope,
         vector: point.vector,
         limit: data.maxCandidates ?? 5,

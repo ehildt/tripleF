@@ -17,6 +17,8 @@ import { SanitizeActionService } from './actions/sanitize.action.js';
 import { NumCtxConfigService } from './configs/numctx-config.service.js';
 import { SourceBudgetConfigService } from './configs/source-budget-config.service.js';
 import { HarnessController } from './controllers/harness.controller.js';
+import { HarnessDocumentsController } from './controllers/harness-documents.controller.js';
+import { HarnessModelsController } from './controllers/harness-models.controller.js';
 import { CloudImageIngestionService } from './services/cloud-image-ingestion.service.js';
 import { DocumentConversionService } from './services/document-conversion.service.js';
 import { HarnessCancellationService } from './services/harness-cancellation.service.js';
@@ -27,6 +29,11 @@ import { HarnessStepEngineService } from './services/harness-step-engine.service
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
 import { PdfPageDescribeService } from './services/pdf-page-describe.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
+import { SanitizeCognitionContextService } from './services/sanitize/cognition-context.service.js';
+import { SanitizeImageIngestionService } from './services/sanitize/image-ingestion.service.js';
+import { SanitizeMediaValidationService } from './services/sanitize/media-validation.service.js';
+import { SanitizeReferenceSelectionService } from './services/sanitize/reference-selection.service.js';
+import { SanitizeShownMediaFilterService } from './services/sanitize/shown-media-filter.service.js';
 import { ShownMediaService } from './services/shown-media.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
 import { ExecuteStepService } from './services/steps/execute-step.service.js';
@@ -41,7 +48,11 @@ import { ToolSelectionService } from './services/tool-selection.service.js';
 export class HarnessModule {
   private static readonly registration: DynamicModule = {
     module: HarnessModule,
-    controllers: [HarnessController],
+    controllers: [
+      HarnessController,
+      HarnessDocumentsController,
+      HarnessModelsController,
+    ],
     exports: [
       NumCtxConfigService,
       SourceBudgetConfigService,
@@ -97,6 +108,11 @@ export class HarnessModule {
       ExecuteActionService,
       SanitizeStepService,
       SanitizeActionService,
+      SanitizeCognitionContextService,
+      SanitizeImageIngestionService,
+      SanitizeMediaValidationService,
+      SanitizeReferenceSelectionService,
+      SanitizeShownMediaFilterService,
       RespondStepService,
       RespondActionService,
       MemoryProfileStepService,

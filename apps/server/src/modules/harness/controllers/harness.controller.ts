@@ -1,118 +1,44 @@
-import { randomUUID } from 'node:crypto';
-
 import { MultipartFile } from '@fastify/multipart';
 import {
   BadRequestException,
   Body,
   Controller,
-  Get,
-  Headers,
   HttpCode,
   HttpStatus,
   Logger,
   Post,
-  Query,
-  Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { OllamaApiService } from '@triplef/ollama-api';
-import type { FastifyReply } from 'fastify';
 
-import { ModelWarmupService } from '../../ollama/services/model-warmup.service.js';
-import { NumCtxConfigService } from '../configs/numctx-config.service.js';
 import {
   AttachmentsField,
-  DocumentHashesField,
   DocumentTextLimitField,
   HarnessLLMHeader,
   HarnessStreamQuery,
   OriginalsField,
   PromptField,
 } from '../decorators/harness.decorator.js';
-import {
-  ApiCancelJob,
-  ApiConvertDocuments,
-  ApiGetModels,
-  ApiHarness,
-  ApiWarmModel,
-} from '../decorators/harness.openapi.js';
+import { ApiCancelJob, ApiHarness } from '../decorators/harness.openapi.js';
 import {
   CancelHarnessJobDto,
   CancelHarnessJobResponseDto,
 } from '../dtos/cancel-harness-job.dto.js';
-import { ConvertDocumentsQueryDto } from '../dtos/convert-documents-query.dto.js';
 import { HarnessControllerResponse } from '../dtos/harness-response.dto.js';
 import { HarnessStreamQueryDto } from '../dtos/harness-stream-query.dto.js';
 import { Prompt } from '../dtos/prompt.dto.js';
-import { WarmModelDto, WarmModelResponseDto } from '../dtos/warm-model.dto.js';
-import { buildCatalogEtag } from '../helpers/catalog-etag.helper.js';
 import { parseSessionMetadata } from '../helpers/json/parse-session-metadata.helper.js';
-import { DocumentConversionService } from '../services/document-conversion.service.js';
 import { HarnessQueueService } from '../services/harness-queue.service.js';
 
-import { mapPageImage } from './helpers/map-page-image.helper.js';
 import { mapPromptPreview } from './helpers/map-prompt-preview.helper.js';
 import { mapSessionImage } from './helpers/map-session-image.helper.js';
 
+/** Receive harness turns and cancel queued harness work. */
 @ApiTags('Harness')
 @Controller('harness')
 export class HarnessController {
   private readonly logger = new Logger(HarnessController.name);
 
-  constructor(
-    private readonly harnessQueueService: HarnessQueueService,
-    private readonly documentConversionService: DocumentConversionService,
-    private readonly ollamaApiService: OllamaApiService,
-    private readonly numCtxConfigService: NumCtxConfigService,
-    private readonly modelWarmupService: ModelWarmupService,
-  ) {}
-
-  @Post('documents')
-  @ApiConvertDocuments()
-  async convertDocuments(
-    @Query() query: ConvertDocumentsQueryDto,
-    @OriginalsField() originals?: Array<MultipartFile>,
-    @DocumentHashesField() hashes?: string[],
-  ): Promise<{ documents: ConvertedDocumentResult[] }> {
-    const payloads = originals?.length
-      ? await this.harnessQueueService.toFilePayloads(originals, hashes, false)
-      : [];
-
-    const documents: ConvertedDocumentResult[] = [];
-    const requestId = randomUUID();
-    for (const { buffer, meta } of payloads) {
-      const manifest = await this.documentConversionService.convertAndPersist(
-        query.sessionId,
-        query.conversationId,
-        requestId,
-        meta,
-        buffer,
-      );
-      if (!manifest) continue;
-      // The extracted text becomes an encyclopedia node right at upload —
-      // before the first question is ever asked about the document.
-      this.documentConversionService.indexManifest(
-        query.sessionId,
-        query.conversationId,
-        meta,
-        manifest,
-      );
-      documents.push({
-        name: meta.name,
-        hash: meta.hash,
-        type: meta.type,
-        kind: manifest.kind,
-        pageImages:
-          manifest.kind === 'pdf'
-            ? manifest.pageHashes.map((hash, index) =>
-                mapPageImage(hash, index, meta.name),
-              )
-            : undefined,
-      });
-    }
-
-    return { documents };
-  }
+  constructor(private readonly harnessQueueService: HarnessQueueService) {}
 
   @Post()
   @ApiHarness()
@@ -129,7 +55,7 @@ export class HarnessController {
 
     const { requestId, roomId, stream, numCtx, event, think, language } = query;
     const sessionMetadata = parseSessionMetadata(query.sessionMetadata);
-    const frontendHashes = sessionMetadata?.images?.map((img) => img.hash);
+    const frontendHashes = sessionMetadata?.images?.map((image) => image.hash);
     const frontendOriginalHashes = sessionMetadata?.originals?.map(
       (original) => original.hash,
     );
@@ -170,14 +96,11 @@ export class HarnessController {
       'request received',
     );
 
-    // Await the MinIO upload before answering: the client promotes pending
-    // previews to storage URLs as soon as the 202 lands, so the bytes must be
-    // durably stored first — otherwise the first preview request races the
-    // putObject and 404s. Enqueueing stays inside emit (fast, fire-and-forget
-    // from the client's perspective once the upload is done).
+    // Await durable storage before the 202 so the client's storage previews
+    // cannot race the upload and briefly request missing objects.
     await this.harnessQueueService.emit({
-      buffers: results.map((r) => r.buffer).filter(Boolean),
-      meta: results.map((r) => r.meta).filter(Boolean),
+      buffers: results.map((result) => result.buffer).filter(Boolean),
+      meta: results.map((result) => result.meta).filter(Boolean),
       filters: {
         model,
         requestId,
@@ -223,38 +146,4 @@ export class HarnessController {
       requestId: body.requestId,
     };
   }
-
-  @Post('warm')
-  @ApiWarmModel()
-  async warmModel(@Body() body: WarmModelDto): Promise<WarmModelResponseDto> {
-    this.modelWarmupService.warm(body.model);
-    return { success: true, model: body.model };
-  }
-
-  @Get('models')
-  @ApiGetModels()
-  async getModels(
-    @Headers('if-none-match') ifNoneMatch: string | undefined,
-    @Res() res: FastifyReply,
-  ) {
-    const models = await this.ollamaApiService.getModels();
-    const payload = {
-      ...models,
-      numCtxOptions: this.numCtxConfigService.config,
-    };
-    const etag = buildCatalogEtag(payload);
-    res.header('ETag', etag);
-    if (ifNoneMatch === etag) return res.status(HttpStatus.NOT_MODIFIED).send();
-    return res.send(payload);
-  }
-}
-
-/** One converted original returned by the select-time documents endpoint. */
-interface ConvertedDocumentResult {
-  name: string;
-  hash: string;
-  type: string;
-  kind: 'pdf' | 'docx' | 'pptx' | 'text';
-  /** Rendered page images (pdf only) — the client shows these as tiles. */
-  pageImages?: Array<{ name: string; hash: string }>;
 }

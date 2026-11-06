@@ -4,8 +4,8 @@ import { TextToLines } from '@triplef/helpers/text-to-lines';
 import { MemoryClusterRepository } from '../../persistence/services/memory-cluster.repository.js';
 import type { MemoryPoint } from '../../qdrant/models/memory.model.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../qdrant/services/memory-record.repository.js';
 import { SynopsisRepository } from '../../qdrant/services/synopsis.repository.js';
 import type { SynopsisHit } from '../../qdrant/services/synopsis.repository.types.js';
 
@@ -32,7 +32,7 @@ export class MemorySearchService {
 
   constructor(
     private readonly embeddingService: EmbeddingService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
     private readonly clusters: MemoryClusterRepository,
     private readonly synopses: SynopsisRepository,
     private readonly overrides: MemoryOverridesService,
@@ -90,7 +90,7 @@ export class MemorySearchService {
   async searchByVector(
     input: SearchInput & { vector: number[] },
   ): Promise<MemoryPoint[]> {
-    const hits = await this.searchRepository({
+    const hits = await this.memoryRepository.searchMemory({
       memoryPartition: input.memoryPartition,
       sessionId: input.sessionId,
       vector: input.vector,
@@ -262,11 +262,5 @@ export class MemorySearchService {
         `Heat write failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     });
-  }
-
-  private searchRepository(
-    input: Parameters<MemoryRepository['searchMemory']>[0],
-  ): Promise<MemoryPoint[]> {
-    return this.memoryRepository.searchMemory(input);
   }
 }

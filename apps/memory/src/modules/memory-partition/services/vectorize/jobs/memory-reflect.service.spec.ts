@@ -32,6 +32,7 @@ function makeService() {
     adjudicator as never,
     frictions as never,
     memoryRepository as never,
+    memoryRepository as never,
     encyclopediaRepository as never,
     memoryEnqueue as never,
     overrides as never,

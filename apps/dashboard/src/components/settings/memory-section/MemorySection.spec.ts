@@ -1,8 +1,12 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MemoryOverridesConfig } from '@/api/memory-overrides.api';
+import {
+  fetchMemoryOverrides,
+  updateMemoryOverrides,
+} from '@/api/memory-overrides.api';
 
 import MemorySection from './MemorySection.vue';
 
@@ -24,6 +28,12 @@ describe('MemorySection', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
+    vi.mocked(fetchMemoryOverrides).mockResolvedValue(
+      {} as MemoryOverridesConfig,
+    );
+    vi.mocked(updateMemoryOverrides).mockResolvedValue(
+      {} as MemoryOverridesConfig,
+    );
   });
 
   it('renders one submenu tab per configuration group', () => {
@@ -70,5 +80,36 @@ describe('MemorySection', () => {
     expect(wrapper.text()).toContain('Partition reflect auto');
     expect(wrapper.text()).toContain('Cluster auto');
     expect(wrapper.text()).not.toContain('Memory partition');
+  });
+
+  it('loads overrides once while switching through every group', async () => {
+    const wrapper = mount(MemorySection);
+    await flushPromises();
+    const tabs = wrapper.findAll('.menu-button');
+
+    for (const tab of tabs) await tab.trigger('click');
+
+    expect(tabs).toHaveLength(8);
+    expect(fetchMemoryOverrides).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves an edited cognition limit through the shared overrides state', async () => {
+    vi.mocked(fetchMemoryOverrides).mockResolvedValue({
+      cognitionLimit: 5000,
+    } as MemoryOverridesConfig);
+    const wrapper = mount(MemorySection);
+    await flushPromises();
+    const cognitionTab = wrapper
+      .findAll('.menu-button')
+      .find((tab) => tab.attributes('aria-label') === 'Cognition profile');
+    await cognitionTab?.trigger('click');
+
+    await wrapper.get('input[type="number"]').setValue('6000');
+    await flushPromises();
+
+    expect(updateMemoryOverrides).toHaveBeenCalledWith({
+      cognitionLimit: 6000,
+    });
+    expect(fetchMemoryOverrides).toHaveBeenCalledTimes(1);
   });
 });

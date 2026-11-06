@@ -12,9 +12,14 @@ import { MemoryStatusController } from './controllers/status.controller.js';
 import type { QdrantModuleProps } from './models/qdrant-module.model.js';
 import { EmbeddingService } from './services/embedding.service.js';
 import { EncyclopediaRepository } from './services/encyclopedia.repository.js';
-import { MemoryRepository } from './services/memory.repository.js';
+import { MemoryClusterPointRepository } from './services/memory-cluster-point.repository.js';
 import { MemoryEnqueueService } from './services/memory-enqueue.service.js';
+import { MemoryGraphRepository } from './services/memory-graph.repository.js';
+import { MemoryLabelRepository } from './services/memory-label.repository.js';
 import { MemoryOverridesService } from './services/memory-overrides.service.js';
+import { MemoryRecordRepository } from './services/memory-record.repository.js';
+import { MemoryReflectionRepository } from './services/memory-reflection.repository.js';
+import { MemorySynthesisRepository } from './services/memory-synthesis.repository.js';
 import { QdrantClientService } from './services/qdrant-client.service.js';
 import { QdrantHealthIndicator } from './services/qdrant-health-indicator.service.js';
 import { SynopsisRepository } from './services/synopsis.repository.js';
@@ -44,7 +49,12 @@ export class QdrantModule {
           useFactory: options.useFactory,
         },
         QdrantClientService,
-        MemoryRepository,
+        MemoryClusterPointRepository,
+        MemoryGraphRepository,
+        MemoryLabelRepository,
+        MemoryRecordRepository,
+        MemoryReflectionRepository,
+        MemorySynthesisRepository,
         EncyclopediaRepository,
         SynopsisRepository,
         EmbeddingService,
@@ -56,7 +66,12 @@ export class QdrantModule {
       exports: [
         QDRANT_CONFIG,
         QdrantClientService,
-        MemoryRepository,
+        MemoryClusterPointRepository,
+        MemoryGraphRepository,
+        MemoryLabelRepository,
+        MemoryRecordRepository,
+        MemoryReflectionRepository,
+        MemorySynthesisRepository,
         EncyclopediaRepository,
         SynopsisRepository,
         EmbeddingService,

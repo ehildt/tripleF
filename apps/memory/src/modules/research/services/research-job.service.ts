@@ -21,9 +21,9 @@ import { MemoryFrictionRepository } from '../../persistence/services/memory-fric
 import type { MemoryFrictionRecord } from '../../persistence/services/memory-friction.repository.types.js';
 import type { EncyclopediaResearchJobData } from '../../qdrant/models/memory.model.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../qdrant/services/memory-enqueue.service.js';
 import { MemoryOverridesService } from '../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../qdrant/services/memory-record.repository.js';
 import { RESEARCH_CONFIG } from '../constants/research.constants.js';
 import type { ResearchConfig } from '../models/research-config.model.js';
 
@@ -59,7 +59,7 @@ export class ResearchJobService {
     private readonly provider: ResearchProviderService,
     private readonly store: EncyclopediaStoreService,
     private readonly repository: EncyclopediaRepository,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
     private readonly frictions: MemoryFrictionRepository,
     private readonly enqueue: MemoryEnqueueService,
     private readonly overrides: MemoryOverridesService,

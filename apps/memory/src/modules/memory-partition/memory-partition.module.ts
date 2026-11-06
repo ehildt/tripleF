@@ -3,8 +3,10 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { MemoryTaxonomyModule } from '../memory-taxonomy/memory-taxonomy.module.js';
 import { PersistenceModule } from '../persistence/persistence.module.js';
 
-import { MemoryPartitionController } from './controllers/memory-partition.controller.js';
+import { MemoryConstellationController } from './controllers/memory-constellation.controller.js';
 import { MemoryPartitionMaintenanceController } from './controllers/memory-partition-maintenance.controller.js';
+import { MemoryRecordController } from './controllers/memory-record.controller.js';
+import { MemorySearchController } from './controllers/memory-search.controller.js';
 import { ConsolidationAdjudicatorService } from './services/consolidation-adjudicator.service.js';
 import { FrictionAdjudicatorService } from './services/friction-adjudicator.service.js';
 import { MemorySearchService } from './services/memory-search.service.js';
@@ -47,7 +49,9 @@ export class MemoryPartitionModule {
   private static readonly registration: DynamicModule = {
     module: MemoryPartitionModule,
     controllers: [
-      MemoryPartitionController,
+      MemoryRecordController,
+      MemorySearchController,
+      MemoryConstellationController,
       MemoryPartitionMaintenanceController,
     ],
     exports: [...LANE_PROVIDERS],

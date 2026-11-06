@@ -24,9 +24,11 @@ import type {
 } from '../../../../qdrant/models/memory.model.js';
 import type { QdrantConfig } from '../../../../qdrant/models/qdrant-config.model.js';
 import { EmbeddingService } from '../../../../qdrant/services/embedding.service.js';
-import { MemoryRepository } from '../../../../qdrant/services/memory.repository.js';
 import { MemoryEnqueueService } from '../../../../qdrant/services/memory-enqueue.service.js';
+import { MemoryGraphRepository } from '../../../../qdrant/services/memory-graph.repository.js';
+import { MemoryLabelRepository } from '../../../../qdrant/services/memory-label.repository.js';
 import { MemoryOverridesService } from '../../../../qdrant/services/memory-overrides.service.js';
+import { MemoryRecordRepository } from '../../../../qdrant/services/memory-record.repository.js';
 import { normalizeCategory } from '../../../helpers/normalize-category.helper.js';
 import { normalizeTags } from '../../../helpers/normalize-tags.helper.js';
 import { ConsolidationAdjudicatorService } from '../../consolidation-adjudicator.service.js';
@@ -106,7 +108,9 @@ export class MemoryRelinkJobService {
     private readonly aiSdkService: AiSdkService,
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly memorySearch: MemorySearchService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
+    private readonly labelRepository: MemoryLabelRepository,
+    private readonly graphRepository: MemoryGraphRepository,
     private readonly embeddingService: EmbeddingService,
     private readonly links: MemoryLinkRepository,
     private readonly memoryEnqueue: MemoryEnqueueService,
@@ -164,7 +168,7 @@ export class MemoryRelinkJobService {
     data: MemoryRelinkJobData,
     touched: TaxonomyLabelEntry[],
   ): Promise<number> {
-    const facets = await this.memoryRepository.facetCategories(
+    const facets = await this.labelRepository.facetCategories(
       data.memoryPartition,
     );
     const groups = new Map<string, string[]>();
@@ -187,7 +191,7 @@ export class MemoryRelinkJobService {
           );
           continue;
         }
-        await this.memoryRepository.collapseCategory(
+        await this.labelRepository.collapseCategory(
           data.memoryPartition,
           variant,
           canonical,
@@ -275,7 +279,7 @@ export class MemoryRelinkJobService {
     limit: number,
     touched: TaxonomyLabelEntry[],
   ): Promise<number> {
-    const points = await this.memoryRepository.scrollCategoryPoints(
+    const points = await this.labelRepository.scrollCategoryPoints(
       data.memoryPartition,
       category,
       limit,
@@ -427,7 +431,7 @@ export class MemoryRelinkJobService {
     const edges: MemoryLinkRow[] = [];
     const seen = new Set<string>();
     for (const category of categories) {
-      const points = await this.memoryRepository.scrollCategoryPoints(
+      const points = await this.labelRepository.scrollCategoryPoints(
         data.memoryPartition,
         category,
         limit,
@@ -462,7 +466,7 @@ export class MemoryRelinkJobService {
     edges: MemoryLinkRow[],
     seen: Set<string>,
   ): Promise<void> {
-    const intra = await this.memoryRepository.queryNeighbors(
+    const intra = await this.graphRepository.queryNeighbors(
       data.memoryPartition,
       category,
       point.vector,
@@ -484,7 +488,7 @@ export class MemoryRelinkJobService {
     edges: MemoryLinkRow[],
     seen: Set<string>,
   ): Promise<void> {
-    const inter = await this.memoryRepository.queryNeighbors(
+    const inter = await this.graphRepository.queryNeighbors(
       data.memoryPartition,
       undefined,
       point.vector,
@@ -508,7 +512,7 @@ export class MemoryRelinkJobService {
     const categories = await this.orderedCategories(data.memoryPartition);
     let enriched = 0;
     for (const category of categories) {
-      const points = await this.memoryRepository.scrollCategoryPoints(
+      const points = await this.labelRepository.scrollCategoryPoints(
         data.memoryPartition,
         category,
         limit,
@@ -574,7 +578,7 @@ export class MemoryRelinkJobService {
 
   /** Canonical categories of the partition, fixed order: count desc, then name. */
   private async orderedCategories(memoryPartition: string): Promise<string[]> {
-    const facets = await this.memoryRepository.facetCategories(memoryPartition);
+    const facets = await this.labelRepository.facetCategories(memoryPartition);
     return facets
       .map(mapFacetToCategory)
       .filter((facet): facet is { value: string; count: number } =>

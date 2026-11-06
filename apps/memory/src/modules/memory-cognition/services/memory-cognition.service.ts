@@ -21,7 +21,7 @@ import { deterministicPointId } from '../../qdrant/helpers/deterministic-point-i
 import type { MemoryPoint } from '../../qdrant/models/memory.model.js';
 import type { QdrantConfig } from '../../qdrant/models/qdrant-config.model.js';
 import { EmbeddingService } from '../../qdrant/services/embedding.service.js';
-import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
+import { MemoryRecordRepository } from '../../qdrant/services/memory-record.repository.js';
 import { mapInsightToItem } from '../helpers/map-insight-to-item.helper.js';
 import { mapItemToPoint } from '../helpers/map-item-to-point.helper.js';
 
@@ -52,7 +52,7 @@ import type {
 export class MemoryCognitionService {
   constructor(
     private readonly embeddingService: EmbeddingService,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly memoryRepository: MemoryRecordRepository,
     private readonly profileRepository: MemoryCognitionProfileRepository,
     @Inject(QDRANT_CONFIG) private readonly config: QdrantConfig,
   ) {}

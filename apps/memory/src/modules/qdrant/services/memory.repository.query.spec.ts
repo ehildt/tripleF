@@ -1,11 +1,15 @@
-import { describe, expect, it, vi } from 'vitest';
+import { Logger } from '@nestjs/common';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { MemoryFrictionRepository } from '../../persistence/services/memory-friction.repository.js';
 import type { MemoryLinkRepository } from '../../persistence/services/memory-link.repository.js';
+import type { UpsertBatchInput } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
 
-import { MemoryRepository } from './memory.repository.js';
+import { MemoryGraphRepository } from './memory-graph.repository.js';
+import { MemoryLabelRepository } from './memory-label.repository.js';
 import type { MemoryOverridesService } from './memory-overrides.service.js';
+import { MemoryRecordRepository } from './memory-record.repository.js';
 import type { QdrantClientService } from './qdrant-client.service.js';
 
 const COLLECTION = 'harness_memory_nomic';
@@ -21,15 +25,20 @@ const buildRepository = (options: { hasCollection?: boolean } = {}) => {
     count: vi.fn().mockResolvedValue({ count: 0 }),
     setPayload: vi.fn(),
   };
+  const vectorLayout = vi.fn().mockResolvedValue({ named: true });
   const clientService = {
     collection: COLLECTION,
     hasCollection: vi.fn().mockResolvedValue(options.hasCollection ?? true),
     getClient: vi.fn(() => client),
-    vectorLayout: vi.fn().mockResolvedValue({ named: true }),
+    vectorLayout,
   } as unknown as QdrantClientService;
   const overrides = {
     getConstellationNodeLimit: vi.fn(() => 5000),
     getHeatTrackingEnabled: vi.fn(() => true),
+    getEpisodeScoreThreshold: vi.fn(() => 0.1),
+    getEpisodeRecencyWeight: vi.fn(() => 0.3),
+    getEpisodeRecencyScaleSeconds: vi.fn(() => 604800),
+    getEpisodeRecencyMidpoint: vi.fn(() => 0.5),
   } as unknown as MemoryOverridesService;
   const links = {
     listEdges: vi.fn().mockResolvedValue([]),
@@ -42,32 +51,61 @@ const buildRepository = (options: { hasCollection?: boolean } = {}) => {
     deleteByScope: vi.fn().mockResolvedValue(undefined),
     deleteByPointIds: vi.fn().mockResolvedValue(undefined),
   };
-  const config = { linkReadMax: 250 } as QdrantConfig;
+  const config = {
+    linkReadMax: 250,
+    scoreThreshold: 0.3,
+    hybridEnabled: true,
+    hybridFusion: 'rrf',
+    hybridDenseWeight: 1,
+    hybridSparseWeight: 1,
+    hybridSparseLimit: 50,
+  } as QdrantConfig;
 
-  const repository = new MemoryRepository(
+  const graphRepository = new MemoryGraphRepository(
     clientService,
-    overrides,
     links as unknown as MemoryLinkRepository,
     frictions as unknown as MemoryFrictionRepository,
     config,
   );
+  const repository = new MemoryRecordRepository(
+    clientService,
+    overrides,
+    graphRepository,
+    config,
+  );
+  const labelRepository = new MemoryLabelRepository(clientService);
 
-  return { repository, client, clientService, links, frictions, overrides };
+  return {
+    repository,
+    labelRepository,
+    graphRepository,
+    client,
+    clientService,
+    vectorLayout,
+    links,
+    frictions,
+    overrides,
+  };
 };
 
-describe('MemoryRepository reads', () => {
+describe('Memory record, label, and graph repositories', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   describe('without a collection', () => {
     it('returns empty results instead of failing', async () => {
-      const { repository, client } = buildRepository({ hasCollection: false });
+      const { repository, labelRepository, client } = buildRepository({
+        hasCollection: false,
+      });
 
       await expect(
         repository.listMemory({ memoryPartition: 'p' } as never),
       ).resolves.toEqual([]);
-      await expect(repository.facetCategories('p')).resolves.toEqual([]);
-      await expect(repository.facetPartitions()).resolves.toEqual([]);
-      await expect(repository.facetTags('p')).resolves.toEqual([]);
+      await expect(labelRepository.facetCategories('p')).resolves.toEqual([]);
+      await expect(labelRepository.facetPartitions()).resolves.toEqual([]);
+      await expect(labelRepository.facetTags('p')).resolves.toEqual([]);
       await expect(
-        repository.countByLabel('p', 'category', 'games'),
+        labelRepository.countByLabel('p', 'category', 'games'),
       ).resolves.toBe(0);
       await expect(
         repository.deleteByConversation({
@@ -144,9 +182,135 @@ describe('MemoryRepository reads', () => {
     });
   });
 
+  describe('searchMemory', () => {
+    it('combines dense and sparse prefetches for hybrid text search', async () => {
+      const { repository, client, vectorLayout } = buildRepository();
+      vectorLayout.mockResolvedValue({ named: true, sparse: true });
+      client.query.mockResolvedValue({
+        points: [
+          {
+            id: 'memory-1',
+            score: 0.8,
+            payload: { text: 'Likes dogs', tags: ['pets'] },
+          },
+        ],
+      });
+
+      const points = await repository.searchMemory({
+        memoryPartition: 'p',
+        vector: [0.1, 0.2],
+        text: 'dogs',
+        limit: 2,
+      });
+
+      const request = client.query.mock.calls[0][1];
+      expect(request.prefetch.prefetch).toHaveLength(2);
+      expect(request.prefetch.prefetch[0]).toMatchObject({
+        query: [0.1, 0.2],
+        using: 'dense',
+        score_threshold: 0.3,
+      });
+      expect(request.prefetch.prefetch[1]).toMatchObject({
+        using: 'sparse',
+        limit: 50,
+      });
+      expect(request.prefetch.prefetch[1].query.indices).not.toHaveLength(0);
+      expect(request.limit).toBe(2);
+      expect(points[0]).toMatchObject({
+        id: 'memory-1',
+        text: 'Likes dogs',
+        score: 0.8,
+      });
+    });
+
+    it('uses dense-only recency scoring with the configured decay', async () => {
+      const { repository, client, overrides } = buildRepository();
+      client.query.mockResolvedValue({ points: [] });
+
+      await repository.searchMemory({
+        memoryPartition: 'p',
+        vector: [0.1, 0.2],
+        text: 'recent episodes',
+        recency: true,
+        limit: 3,
+      });
+
+      const request = client.query.mock.calls[0][1];
+      expect(request.prefetch).toMatchObject({
+        query: [0.1, 0.2],
+        using: 'dense',
+        score_threshold: 0.1,
+        limit: 20,
+      });
+      expect(request.query.formula.sum[1].mult[0]).toBe(0.3);
+      expect(request.query.formula.sum[1].mult[1].exp_decay).toMatchObject({
+        x: { datetime_key: 'created_at' },
+        scale: 604800,
+        midpoint: 0.5,
+      });
+      expect(overrides.getEpisodeRecencyWeight).toHaveBeenCalled();
+      expect(overrides.getEpisodeRecencyScaleSeconds).toHaveBeenCalled();
+      expect(overrides.getEpisodeRecencyMidpoint).toHaveBeenCalled();
+    });
+  });
+
+  describe('upsertBatch', () => {
+    const input: UpsertBatchInput = {
+      memoryPartition: 'p',
+      role: 'user',
+      points: [
+        {
+          id: 'memory-1',
+          vector: [0.1, 0.2],
+          text: 'Likes dogs',
+          tags: ['pets'],
+        },
+      ],
+    };
+
+    it('upserts records and synchronizes their graph links', async () => {
+      const { repository, graphRepository, client } = buildRepository();
+      const syncLinks = vi
+        .spyOn(graphRepository, 'syncLinks')
+        .mockResolvedValue(undefined);
+
+      await repository.upsertBatch(input);
+
+      expect(client.upsert).toHaveBeenCalledWith(COLLECTION, {
+        wait: true,
+        points: [
+          expect.objectContaining({
+            id: 'memory-1',
+            vector: { dense: [0.1, 0.2] },
+            payload: expect.objectContaining({
+              memory_partition: 'p',
+              text: 'Likes dogs',
+              tags: ['pets'],
+              created_at: expect.any(String),
+            }),
+          }),
+        ],
+      });
+      expect(syncLinks).toHaveBeenCalledWith('partition', 'p', input.points);
+    });
+
+    it('keeps the record write successful when graph sync fails', async () => {
+      const { repository, graphRepository, client } = buildRepository();
+      vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+      const syncLinks = vi
+        .spyOn(graphRepository, 'syncLinks')
+        .mockRejectedValue(new Error('graph unavailable'));
+
+      await expect(repository.upsertBatch(input)).resolves.toBeUndefined();
+
+      expect(client.upsert).toHaveBeenCalledOnce();
+      expect(syncLinks).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('facets', () => {
     it('maps category facet hits to string values with counts', async () => {
-      const { repository, client } = buildRepository();
+      const { labelRepository: repository, client } = buildRepository();
       client.facet.mockResolvedValue({ hits: [{ value: 'games', count: 12 }] });
 
       await expect(repository.facetCategories('p')).resolves.toEqual([
@@ -161,7 +325,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('reads partition values without a filter', async () => {
-      const { repository, client } = buildRepository();
+      const { labelRepository: repository, client } = buildRepository();
       client.facet.mockResolvedValue({ hits: [{ value: 'sess-1', count: 3 }] });
 
       await expect(repository.facetPartitions()).resolves.toEqual(['sess-1']);
@@ -173,7 +337,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('reads tag values of one partition', async () => {
-      const { repository, client } = buildRepository();
+      const { labelRepository: repository, client } = buildRepository();
       client.facet.mockResolvedValue({ hits: [{ value: 'pets', count: 2 }] });
 
       await expect(repository.facetTags('p')).resolves.toEqual([
@@ -184,7 +348,7 @@ describe('MemoryRepository reads', () => {
 
   describe('countByLabel', () => {
     it('matches tag arrays by containment', async () => {
-      const { repository, client } = buildRepository();
+      const { labelRepository: repository, client } = buildRepository();
       client.count.mockResolvedValue({ count: 4 });
 
       await expect(repository.countByLabel('p', 'tags', 'pets')).resolves.toBe(
@@ -204,7 +368,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('matches scalar labels by value', async () => {
-      const { repository, client } = buildRepository();
+      const { labelRepository: repository, client } = buildRepository();
       client.count.mockResolvedValue({ count: 2 });
 
       await repository.countByLabel('p', 'category', 'games');
@@ -289,7 +453,7 @@ describe('MemoryRepository reads', () => {
 
   describe('links', () => {
     it('delegates friction reads with the configured read limit', async () => {
-      const { repository, frictions } = buildRepository();
+      const { graphRepository: repository, frictions } = buildRepository();
 
       await repository.listFrictions('partition', 's');
 
@@ -302,7 +466,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('returns stored edges without a backfill', async () => {
-      const { repository, links, client } = buildRepository();
+      const { graphRepository: repository, links, client } = buildRepository();
       const edges = [
         { source: 'a', target: 'b', score: 0.9, kind: 'semantic' },
       ];
@@ -315,7 +479,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('backfills once for an edge-less scope and re-reads', async () => {
-      const { repository, links, client } = buildRepository();
+      const { graphRepository: repository, links, client } = buildRepository();
       links.listEdges
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
@@ -330,7 +494,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('does not backfill the same scope twice', async () => {
-      const { repository, client } = buildRepository();
+      const { graphRepository: repository, client } = buildRepository();
 
       await repository.listLinks('partition', 's');
       const afterFirst = client.scroll.mock.calls.length;
@@ -340,7 +504,7 @@ describe('MemoryRepository reads', () => {
     });
 
     it('recomputes links by purging then backfilling the scope', async () => {
-      const { repository, links, client } = buildRepository();
+      const { graphRepository: repository, links, client } = buildRepository();
 
       await repository.recomputeLinks('partition', 's');
 
@@ -354,7 +518,9 @@ describe('MemoryRepository reads', () => {
     });
 
     it('skips the backfill when the collection is missing', async () => {
-      const { repository, client } = buildRepository({ hasCollection: false });
+      const { graphRepository: repository, client } = buildRepository({
+        hasCollection: false,
+      });
 
       await expect(
         repository.recomputeLinks('partition', 's'),
