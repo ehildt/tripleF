@@ -157,8 +157,9 @@ export const usePlaylistStore = defineStore('playlist', () => {
     playlistMutationCount += 1;
   }
 
-  /** Load all playlists for the session, restoring the active playlist
-   * (defaulting to the first one). Concurrent calls share one fetch. */
+  /** Load all playlists for the session, restoring the active playlist when
+   * it still exists and otherwise defaulting to the first one (or none).
+   * Concurrent calls share one fetch. */
   async function loadPlaylists(): Promise<void> {
     if (playlistsFetchInFlight) return playlistsFetchInFlight;
     const promise = (async () => {
@@ -169,8 +170,10 @@ export const usePlaylistStore = defineStore('playlist', () => {
       if (playlistMutationCount !== mutationAtStart) return;
       const next = fetched.map(mapPlaylistSnapshot);
       setPlaylists(next);
-      if (!activePlaylistName.value && next.length > 0) {
-        setActivePlaylist(next[0].name);
+      if (
+        !next.some((playlist) => playlist.name === activePlaylistName.value)
+      ) {
+        setActivePlaylist(next[0]?.name ?? '');
       }
     })().finally(() => {
       playlistsFetchInFlight = null;

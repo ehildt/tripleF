@@ -3,16 +3,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { usePlaylistStore } from './playlist.store';
 
-const { savePlaylistMock, renamePlaylistMock, deletePlaylistMock } = vi.hoisted(
-  () => ({
-    savePlaylistMock: vi.fn().mockResolvedValue(undefined),
-    renamePlaylistMock: vi.fn().mockResolvedValue(undefined),
-    deletePlaylistMock: vi.fn().mockResolvedValue(undefined),
-  }),
-);
+const {
+  fetchAllPlaylistsMock,
+  savePlaylistMock,
+  renamePlaylistMock,
+  deletePlaylistMock,
+} = vi.hoisted(() => ({
+  fetchAllPlaylistsMock: vi.fn().mockResolvedValue([]),
+  savePlaylistMock: vi.fn().mockResolvedValue(undefined),
+  renamePlaylistMock: vi.fn().mockResolvedValue(undefined),
+  deletePlaylistMock: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('@/api/playlists.api', () => ({
-  fetchAllPlaylists: vi.fn().mockResolvedValue([]),
+  fetchAllPlaylists: fetchAllPlaylistsMock,
   savePlaylist: savePlaylistMock,
   renamePlaylist: renamePlaylistMock,
   deletePlaylist: deletePlaylistMock,
@@ -22,6 +26,7 @@ describe('usePlaylistStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
+    fetchAllPlaylistsMock.mockReset().mockResolvedValue([]);
     savePlaylistMock.mockClear();
     renamePlaylistMock.mockClear();
     deletePlaylistMock.mockClear();
@@ -94,6 +99,47 @@ describe('usePlaylistStore', () => {
     expect(store.playlistPreviewVisible).toBe(false);
   });
 
+  it('loadPlaylists preserves a persisted selection that exists', async () => {
+    localStorage.setItem('vision-active-playlist', 'second');
+    fetchAllPlaylistsMock.mockResolvedValueOnce([
+      { name: 'main', videos: [] },
+      { name: 'second', videos: [] },
+    ]);
+    const store = usePlaylistStore();
+
+    await store.loadPlaylists();
+
+    expect(store.activePlaylistName).toBe('second');
+    expect(store.getActivePlaylist()?.name).toBe('second');
+    expect(localStorage.getItem('vision-active-playlist')).toBe('second');
+  });
+
+  it('loadPlaylists replaces a stale persisted selection with the first playlist', async () => {
+    localStorage.setItem('vision-active-playlist', 'deleted');
+    fetchAllPlaylistsMock.mockResolvedValueOnce([
+      { name: 'main', videos: [] },
+      { name: 'second', videos: [] },
+    ]);
+    const store = usePlaylistStore();
+
+    await store.loadPlaylists();
+
+    expect(store.activePlaylistName).toBe('main');
+    expect(store.getActivePlaylist()?.name).toBe('main');
+    expect(localStorage.getItem('vision-active-playlist')).toBe('main');
+  });
+
+  it('loadPlaylists clears a stale persisted selection when no playlists exist', async () => {
+    localStorage.setItem('vision-active-playlist', 'deleted');
+    const store = usePlaylistStore();
+
+    await store.loadPlaylists();
+
+    expect(store.activePlaylistName).toBe('');
+    expect(store.getActivePlaylist()).toBeNull();
+    expect(localStorage.getItem('vision-active-playlist')).toBe('');
+  });
+
   it('creates a playlist, deduping by name, and activates it', () => {
     const store = usePlaylistStore();
 
@@ -102,7 +148,13 @@ describe('usePlaylistStore', () => {
 
     expect(store.playlists).toHaveLength(1);
     expect(store.activePlaylistName).toBe('main');
+    expect(localStorage.getItem('vision-active-playlist')).toBe('main');
     expect(savePlaylistMock).toHaveBeenCalledTimes(1);
+    expect(savePlaylistMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'main',
+      [],
+    );
   });
 
   it('renamePlaylist rejects a taken name and renames otherwise', () => {
@@ -124,6 +176,11 @@ describe('usePlaylistStore', () => {
 
     expect(store.playlists.map((p) => p.name)).toEqual(['main']);
     expect(store.activePlaylistName).toBe('main');
+    expect(localStorage.getItem('vision-active-playlist')).toBe('main');
+    expect(deletePlaylistMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'second',
+    );
   });
 
   it('selectPlaylist switches the active playlist', () => {
