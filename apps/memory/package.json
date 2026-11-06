@@ -54,7 +54,7 @@
     "@triplef/core-logger": "^1.0.2",
     "@triplef/helpers": "^1.6.3",
     "@triplef/ollama-api": "^0.2.0",
-    "ai": "^7.0.163",
+    "ai": "^7.0.164",
     "bullmq": "^6.7.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
