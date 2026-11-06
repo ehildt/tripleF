@@ -125,7 +125,7 @@
 | [1.2-harness](1.2-harness.md)                             | Conversation engine internals                  | Step engine, intents, structured outputs, cancellation     |
 | [1.3-bullmq](1.3-bullmq.md)                               | Job queues, workers, retries                   | Queue topology, processor pipeline, failure modes                      |
 | [1.4-socketio](1.4-socketio.md)                           | Real-time streaming                            | Rooms, event contract, cancellation signal                             |
-| [1.5-data](1.5-data.md)                                   | PostgreSQL/Prisma, MinIO, KeyDB, Qdrant            | Models, object layout, image preprocessing                             |
+| [1.5-data](1.5-data.md)                                   | PostgreSQL/Prisma, RustFS, KeyDB, Qdrant            | Models, object layout, image preprocessing                             |
 | [1.6-memory-cognition](1.6-memory-cognition.md)           | Memory cognition JSON schema                   | Profile fields, insights, episodes, merge semantics, system variables   |
 | [1.7-memory-app](1.7-memory-app.md)                       | The memory service (Qdrant + vectorize worker + encyclopedia) | Topology, workflow, maintenance pipelines, REST registry |
 | [1.8-runtime-configuration](1.8-runtime-configuration.md) | How system variables/configs alter behavior    | The four layers, per-knob behavior tables, effect timing                |

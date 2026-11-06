@@ -45,7 +45,9 @@ export const Unhealthy: Story = {
 export const Loading: Story = { args: { loading: true } };
 
 /** Error — red border, "ERR" status. */
-export const ErrorState: Story = { args: { name: 'minio', error: true } };
+export const ErrorState: Story = {
+  args: { name: 'object_storage', error: true },
+};
 
 /** Disk icon. */
 export const Disk: Story = { args: { name: 'disk', status: 'up' } };

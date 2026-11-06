@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SocketIOService } from '@triplef/socketio';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MinioService } from '../../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../../object-storage/services/object-storage.service.js';
 import { RespondActionService } from '../../actions/respond.action.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { ShownMediaService } from '../shown-media.service.js';
@@ -42,7 +42,7 @@ describe('RespondStepService', () => {
           useValue: { emit: vi.fn(), emitTo: vi.fn() },
         },
         {
-          provide: MinioService,
+          provide: ObjectStorageService,
           useValue: { objectExists: vi.fn().mockResolvedValue(true) },
         },
         {

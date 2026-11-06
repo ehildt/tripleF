@@ -3,7 +3,7 @@ import { AiSdkService } from '@triplef/ai-sdk';
 import { SocketIOService } from '@triplef/socketio';
 import { vi } from 'vitest';
 
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 
 import { HarnessChatStreamingService } from './harness-chat-streaming.service.js';
 
@@ -32,7 +32,7 @@ describe('HarnessChatStreamingService', () => {
           },
         },
         {
-          provide: MinioService,
+          provide: ObjectStorageService,
           useValue: { objectExists: vi.fn().mockResolvedValue(true) },
         },
       ],

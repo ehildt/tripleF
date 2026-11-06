@@ -2,7 +2,7 @@ import type { DocumentSection } from '../../../helpers/documents/document-sectio
 
 /**
  * Project a document section into the encyclopedia index shape — the whole
- * upload delegation: extracted text, the MinIO url (persist key + open
+ * upload delegation: extracted text, the object-storage URL (persist key + open
  * link), and the original's metadata (mime, size, content hash).
  */
 export function mapDocumentSection(section: DocumentSection) {

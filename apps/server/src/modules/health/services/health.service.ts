@@ -9,7 +9,7 @@ import {
 
 import { AppConfigService } from '../../../configs/app-config.service.js';
 import { MemoryHealthIndicator as MemoryAppHealthIndicator } from '../../memory-client/services/memory-health-indicator.service.js';
-import { MinioHealthIndicator } from '../../minio/services/minio-health-indicator.service.js';
+import { ObjectStorageHealthIndicator } from '../../object-storage/services/object-storage-health-indicator.service.js';
 import { OllamaOverridesService } from '../../ollama/services/ollama-overrides.service.js';
 
 import { PostgresHealthIndicator } from './postgres-health-indicator.service.js';
@@ -24,7 +24,7 @@ export class HealthService {
     private readonly ocfg: OllamaOverridesService,
     private readonly acfg: AppConfigService,
     private readonly pgIndicator: PostgresHealthIndicator,
-    private readonly minioIndicator: MinioHealthIndicator,
+    private readonly objectStorageIndicator: ObjectStorageHealthIndicator,
     private readonly memoryIndicator: MemoryAppHealthIndicator,
   ) {}
 
@@ -46,7 +46,7 @@ export class HealthService {
         this.memory.checkRSS('memory_rss', this.acfg.config.health!.memoryRSS!),
       () => this.http.pingCheck('ollama', this.buildOllamaPingUrl()),
       () => this.pgIndicator.check('postgres'),
-      () => this.minioIndicator.check('minio'),
+      () => this.objectStorageIndicator.check('object_storage'),
       () => this.memoryIndicator.check('memory'),
     ]);
   }

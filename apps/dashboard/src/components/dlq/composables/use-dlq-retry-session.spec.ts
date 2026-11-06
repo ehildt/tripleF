@@ -51,7 +51,7 @@ vi.mock('../../../api/conversations.api', () => ({
   deleteConversation: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../../api/storage.api', () => ({
+vi.mock('../../../api/object-storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
 

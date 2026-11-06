@@ -3,7 +3,7 @@ import { OllamaApiService } from '@triplef/ollama-api';
 import { Job } from 'bullmq';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
@@ -21,7 +21,7 @@ function createJob(payload: HarnessJobPayload): Job<HarnessJobPayload> {
 
 describe('HarnessContextService', () => {
   let service: HarnessContextService;
-  let minioService: MinioService;
+  let objectStorage: ObjectStorageService;
   let ollamaApiService: OllamaApiService;
   let documentConversionService: DocumentConversionService;
 
@@ -38,10 +38,10 @@ describe('HarnessContextService', () => {
           },
         },
         {
-          provide: MinioService,
+          provide: ObjectStorageService,
           useValue: {
             downloadBuffers: vi.fn(),
-            buildFileUrl: vi.fn(() => '/api/v1/storage/s/c/h'),
+            buildFileUrl: vi.fn(() => '/api/v1/object-storage/s/c/h'),
           },
         },
         {
@@ -76,7 +76,7 @@ describe('HarnessContextService', () => {
     }).compile();
 
     service = module.get<HarnessContextService>(HarnessContextService);
-    minioService = module.get<MinioService>(MinioService);
+    objectStorage = module.get<ObjectStorageService>(ObjectStorageService);
     ollamaApiService = module.get<OllamaApiService>(OllamaApiService);
     documentConversionService = module.get<DocumentConversionService>(
       DocumentConversionService,
@@ -92,7 +92,7 @@ describe('HarnessContextService', () => {
     await expect(service.buildContext(job)).rejects.toThrow('Invalid meta');
   });
 
-  it('skips MinIO when no images are provided', async () => {
+  it('skips object storage when no images are provided', async () => {
     const job = createJob({
       meta: [],
       filters: {
@@ -103,14 +103,14 @@ describe('HarnessContextService', () => {
 
     const ctx = await service.buildContext(job);
 
-    expect(minioService.downloadBuffers).not.toHaveBeenCalled();
+    expect(objectStorage.downloadBuffers).not.toHaveBeenCalled();
     expect(ctx.request.messages.some((m) => m.role === 'user')).toBe(true);
     expect(ctx.buffers).toEqual([]);
   });
 
   it('downloads buffers when images are provided', async () => {
     const buffers = [Buffer.from('img')];
-    (minioService.downloadBuffers as any).mockResolvedValue({
+    (objectStorage.downloadBuffers as any).mockResolvedValue({
       buffers,
       keptMeta: [{ name: 'test.png', type: 'image/png', hash: 'abc' }],
     });
@@ -122,7 +122,7 @@ describe('HarnessContextService', () => {
 
     const ctx = await service.buildContext(job);
 
-    expect(minioService.downloadBuffers).toHaveBeenCalledWith(
+    expect(objectStorage.downloadBuffers).toHaveBeenCalledWith(
       'sess-1',
       undefined,
       [{ name: 'test.png', type: 'image/png', hash: 'abc' }],
@@ -141,7 +141,7 @@ describe('HarnessContextService', () => {
     const referencedBuffers = [Buffer.from('ref')];
     const newBuffers = [Buffer.from('new')];
     const mergedBuffers = [...referencedBuffers, ...newBuffers];
-    (minioService.downloadBuffers as any).mockResolvedValue({
+    (objectStorage.downloadBuffers as any).mockResolvedValue({
       buffers: mergedBuffers,
       keptMeta: [
         { name: 'ref.png', type: 'image/*', hash: 'ref-hash', source: 'local' },
@@ -163,7 +163,7 @@ describe('HarnessContextService', () => {
 
     const ctx = await service.buildContext(job);
 
-    expect(minioService.downloadBuffers).toHaveBeenCalledWith(
+    expect(objectStorage.downloadBuffers).toHaveBeenCalledWith(
       'sess-1',
       undefined,
       [
@@ -176,7 +176,7 @@ describe('HarnessContextService', () => {
   });
 
   it('passes the referenced image hashes to resolveOriginals so page selection is authoritative', async () => {
-    (minioService.downloadBuffers as any).mockResolvedValue({
+    (objectStorage.downloadBuffers as any).mockResolvedValue({
       buffers: [Buffer.from('ref')],
       keptMeta: [
         { name: 'ref.png', type: 'image/*', hash: 'ref-hash', source: 'local' },
@@ -239,7 +239,7 @@ describe('HarnessContextService', () => {
 
     const ctx = await service.buildContext(job);
 
-    expect(minioService.downloadBuffers).not.toHaveBeenCalled();
+    expect(objectStorage.downloadBuffers).not.toHaveBeenCalled();
     expect(ctx.buffers).toEqual([]);
     expect(ctx.processedMeta).toEqual([]);
     expect(ctx.visionExcluded).toBe(true);
@@ -267,7 +267,7 @@ describe('HarnessContextService', () => {
 
     const ctx = await service.buildContext(job);
 
-    expect(minioService.downloadBuffers).not.toHaveBeenCalled();
+    expect(objectStorage.downloadBuffers).not.toHaveBeenCalled();
     expect(ctx.buffers).toEqual([]);
     expect(ctx.processedMeta).toEqual([]);
     expect(ctx.visionExcluded).toBe(true);

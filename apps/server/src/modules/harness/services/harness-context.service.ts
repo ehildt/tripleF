@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OllamaApiService } from '@triplef/ollama-api';
 import { Job } from 'bullmq';
 
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import { OllamaConfigService } from '../../ollama/configs/ollama-config.service.js';
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { HarnessJobPayload } from '../dtos/harness-job.dto.js';
@@ -27,7 +27,7 @@ export class HarnessContextService {
 
   constructor(
     private readonly documentConversionService: DocumentConversionService,
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
     private readonly ollamaConfigService: OllamaConfigService,
     private readonly ollamaApiService: OllamaApiService,
     private readonly sharpService: SharpService,
@@ -65,7 +65,7 @@ export class HarnessContextService {
     const allMeta = this.mergeMeta(referencedMeta, meta);
     // Uploaded images and document originals both travel as meta entries;
     // originals are converted here (pdf → page images, docx/pptx/text →
-    // extracted text in MinIO manifests) so their derived content can reach
+    // extracted text in object-storage manifests) so their derived content can reach
     // the model: page images ride the image pipeline, text sections are
     // injected into the prompt (text needs no vision capability; pdf pages
     // are vision-gated together with the images below).
@@ -130,7 +130,7 @@ export class HarnessContextService {
       ...imageMeta.map((entry) =>
         mapFileEntry(
           entry,
-          this.minioService.buildFileUrl(
+          this.objectStorage.buildFileUrl(
             sessionId,
             filters.conversationId,
             entry.hash,
@@ -140,7 +140,7 @@ export class HarnessContextService {
       ...documentMeta.map((entry) =>
         mapFileEntry(
           entry,
-          this.minioService.buildFileUrl(
+          this.objectStorage.buildFileUrl(
             sessionId,
             filters.conversationId,
             entry.hash,
@@ -157,7 +157,7 @@ export class HarnessContextService {
       const supportsVision = await resolveVisionSupport();
 
       if (supportsVision) {
-        const download = await this.minioService.downloadBuffers(
+        const download = await this.objectStorage.downloadBuffers(
           sessionId,
           filters.conversationId,
           imageMeta,

@@ -37,13 +37,14 @@ Use the relevant skill before implementing framework-specific changes.
 
 # Development Environment
 
-This project uses Docker Compose for local development with bind-mounted source volumes, providing hot reload for both the backend (`./server`) and the frontend (`./dashboard`).
+This project uses Docker Compose for local development with bind-mounted source volumes, providing hot reload for the backend (`./apps/server`), memory app (`./apps/memory`), and frontend (`./apps/dashboard`).
 
-- Use `docker compose up` (or `docker compose up -d`) to start the stack.
-- Do **not** instruct the user to rebuild images or restart containers when making code changes to `server/` or `dashboard/`; the running containers pick up edits automatically via volume mounts.
+- Start backing services with `docker compose -f infra.compose.yml up -d --wait`, push the server-owned Prisma schema with `pnpm --filter @triplef/server db:push`, then use `docker compose up` (or `docker compose up -d`) to start the app stack.
+- The app and infra Compose files share one project. Do **not** use `--remove-orphans` during routine split-file startup: each file would otherwise remove the other file's containers as orphans.
+- Do **not** instruct the user to rebuild images or restart containers when making code changes to `apps/server`, `apps/memory`, or `apps/dashboard`; the running containers pick up edits automatically via volume mounts.
 - Only suggest a rebuild (`docker compose build`) or a restart when:
   - `Dockerfile` or `package.json` dependency changes are made,
-  - Infra services in `compose.infra.yml` change, or
+  - Infra services in `infra.compose.yml` change, or
   - The running container is actually stale for a confirmed reason.
 
 # Package Publishing Workflow

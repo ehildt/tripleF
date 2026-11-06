@@ -2,7 +2,7 @@
 
 # 3F tripleF — Server
 
-The tripleF conversation harness: a NestJS + Fastify server driving an agentic step engine (sanitize → interpret → execute → respond) over Ollama models — fully local or Ollama Cloud — with tool-grounded structured answers, BullMQ async processing, a persisted dead-letter queue, Socket.IO streaming, PostgreSQL/Prisma persistence, and MinIO image storage.
+The tripleF conversation harness: a NestJS + Fastify server driving an agentic step engine (sanitize → interpret → execute → respond) over Ollama models — fully local or Ollama Cloud — with tool-grounded structured answers, BullMQ async processing, a persisted dead-letter queue, Socket.IO streaming, PostgreSQL/Prisma persistence, and S3-compatible object storage backed by RustFS.
 
 </div>
 
@@ -22,10 +22,9 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 <div align="center">
 
-
-
 # Dependencies
 
+[![@aws-sdk/client-s3](https://img.shields.io/badge/_aws_sdk_client_s3-3.1163.0-2b47c5.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b47c5&logoWidth=40&style=flat-square)](https://github.com/aws/aws-sdk-js-v3)
 [![@fastify/compress](https://img.shields.io/badge/_fastify_compress-v9.3.0-c62478.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c62478&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-compress)
 [![@fastify/multipart](https://img.shields.io/badge/_fastify_multipart-v10.1.7-3dd198.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=3dd198&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-multipart)
 [![@fastify/static](https://img.shields.io/badge/_fastify_static-v10.1.10-8ab61b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=8ab61b&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-static)
@@ -59,7 +58,6 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![ioredis](https://img.shields.io/badge/ioredis-v6.0.0-b0219a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b0219a&logoWidth=40&style=flat-square)](https://github.com/luin/ioredis)
 [![jszip](https://img.shields.io/badge/jszip-v3.10.2-84b521.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=84b521&logoWidth=40&style=flat-square)](https://github.com/Stuk/jszip)
 [![mammoth](https://img.shields.io/badge/mammoth-v1.13.0-b81970.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b81970&logoWidth=40&style=flat-square)](https://github.com/mwilliamson/mammoth.js)
-[![minio](https://img.shields.io/badge/minio-v8.0.7-3030cf.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=3030cf&logoWidth=40&style=flat-square)](https://github.com/minio/minio-js)
 [![pino](https://img.shields.io/badge/pino-v10.4.0-2fc15b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc15b&logoWidth=40&style=flat-square)](https://github.com/pinojs/pino)
 [![pino-pretty](https://img.shields.io/badge/pino_pretty-v13.2.0-28acb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=28acb8&logoWidth=40&style=flat-square)](https://github.com/pinojs/pino-pretty)
 [![reflect-metadata](https://img.shields.io/badge/reflect_metadata-v0.2.2-2489db.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2489db&logoWidth=40&style=flat-square)](https://github.com/rbuckton/reflect-metadata)
@@ -72,8 +70,6 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 <br>
 
 <div align="center">
-
-
 
 # DevDependencies
 

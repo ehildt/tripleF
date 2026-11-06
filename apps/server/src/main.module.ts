@@ -16,8 +16,8 @@ import { HarnessModule } from './modules/harness/harness.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MemoryClientConfigService } from './modules/memory-client/configs/memory-client-config.service.js';
 import { MemoryClientModule } from './modules/memory-client/memory-client.module.js';
-import { MinioConfigService } from './modules/minio/configs/minio-config.service.js';
-import { MinioModule } from './modules/minio/minio.module.js';
+import { ObjectStorageConfigService } from './modules/object-storage/configs/object-storage-config.service.js';
+import { ObjectStorageModule } from './modules/object-storage/object-storage.module.js';
 import { OllamaConfigService } from './modules/ollama/configs/ollama-config.service.js';
 import { OllamaModule } from './modules/ollama/ollama.module.js';
 import { OllamaOverridesService } from './modules/ollama/services/ollama-overrides.service.js';
@@ -71,7 +71,7 @@ import { StockDataModule } from './modules/stock-data/stock-data.module.js';
     HealthModule.register(),
     HarnessModule.register(),
     SharpModule.register(),
-    MinioModule.register(),
+    ObjectStorageModule.register(),
     DeadLetterModule.register(),
     PersistenceModule.register(),
     ProviderOverridesModule.register(),
@@ -87,7 +87,7 @@ import { StockDataModule } from './modules/stock-data/stock-data.module.js';
         BullMQConfigService,
         BullMQLoggerConfigService,
         PostgresConfigService,
-        MinioConfigService,
+        ObjectStorageConfigService,
         NumCtxConfigService,
         CoreLoggerConfigService,
         BrightDataConfigService,

@@ -170,7 +170,7 @@ export class HarnessController {
       'request received',
     );
 
-    // Await the MinIO upload before answering: the client promotes pending
+    // Await the object-storage upload before answering: the client promotes pending
     // previews to storage URLs as soon as the 202 lands, so the bytes must be
     // durably stored first — otherwise the first preview request races the
     // putObject and 404s. Enqueueing stays inside emit (fast, fire-and-forget

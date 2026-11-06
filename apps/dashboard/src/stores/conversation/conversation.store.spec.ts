@@ -7,7 +7,7 @@ import {
   fetchConversations,
   saveConversation,
 } from '../../api/conversations.api';
-import { deleteUploadedObject } from '../../api/storage.api';
+import { deleteUploadedObject } from '../../api/object-storage.api';
 import { useAppStore } from '../app/app.store';
 import { useConversationStore } from './conversation.store';
 
@@ -18,7 +18,7 @@ vi.mock('../../api/conversations.api', () => ({
   deleteConversation: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../api/storage.api', () => ({
+vi.mock('../../api/object-storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -107,7 +107,7 @@ describe('useConversationStore', () => {
     expect(store.conversations).toHaveLength(0);
   });
 
-  it('deleteCurrentConversation only deletes MinIO objects that are no longer referenced', async () => {
+  it('deleteCurrentConversation only deletes stored objects that are no longer referenced', async () => {
     const store = useConversationStore();
     const conversation = store.createNewConversation(
       'temporary',

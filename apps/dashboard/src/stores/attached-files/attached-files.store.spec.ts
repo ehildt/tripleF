@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { convertDocuments } from '@/api/documents.api';
-import { checkObjectExists } from '@/api/storage.api';
+import { checkObjectExists } from '@/api/object-storage.api';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { hashFile } from '@/utils/hash-file/hash-file.helper';
 
@@ -16,7 +16,7 @@ vi.mock('@/api/documents.api', () => ({
   convertDocuments: vi.fn(),
 }));
 
-vi.mock('@/api/storage.api', () => ({
+vi.mock('@/api/object-storage.api', () => ({
   checkObjectExists: vi.fn(),
   deleteUploadedObject: vi.fn(),
 }));
@@ -68,7 +68,7 @@ describe('useAttachedFilesStore', () => {
     expect(store.selectedFiles).toEqual([]);
   });
 
-  it('adds files as pending uploads when they do not exist in MinIO', async () => {
+  it('adds files as pending uploads when they do not exist in object storage', async () => {
     setupConversation();
     mockedCheckObjectExists.mockResolvedValue(false);
     const store = useAttachedFilesStore();
@@ -109,7 +109,7 @@ describe('useAttachedFilesStore', () => {
     expect(store.attachedFiles).toHaveLength(0);
   });
 
-  it('adds existing MinIO files as uploaded metadata instead of pending uploads', async () => {
+  it('adds existing stored files as uploaded metadata instead of pending uploads', async () => {
     const { conversation, conversationStore } = setupConversation();
     mockedCheckObjectExists.mockResolvedValue(true);
     const store = useAttachedFilesStore();
@@ -227,7 +227,7 @@ describe('useAttachedFilesStore', () => {
     expect(store.attachedFiles).toHaveLength(1);
   });
 
-  it('treats files as pending when the MinIO check fails', async () => {
+  it('treats files as pending when the object-storage check fails', async () => {
     setupConversation();
     mockedCheckObjectExists.mockRejectedValue(new Error('network error'));
     const store = useAttachedFilesStore();

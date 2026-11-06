@@ -10,7 +10,7 @@ describe('resolveHealthTileIcon', () => {
       'memory_heap',
       'memory_rss',
       'postgres',
-      'minio',
+      'object_storage',
       'service',
     ]) {
       expect(resolveHealthTileIcon(name)).toBeTypeOf('function');

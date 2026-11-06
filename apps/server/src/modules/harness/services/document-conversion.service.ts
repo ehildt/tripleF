@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PdfService } from '@triplef/pdf';
 
 import { MemoryEncyclopediaService } from '../../memory-client/services/memory-encyclopedia.service.js';
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import type { FastifyMultipartMeta } from '../dtos/harness-job.dto.js';
 import {
   classifyDocumentKind,
@@ -34,7 +34,7 @@ const MANIFEST_CONTENT_TYPE = 'application/json';
  * Owns document-original conversion: for every original referenced by a
  * harness job it ensures a conversion manifest (pdf → page JPEGs + per-page
  * text layer, docx → html + text, pptx → slide text, everything else → text)
- * exists in MinIO, uploads the derived page images, and returns what the LLM
+ * exists in object storage, uploads the derived page images, and returns what the LLM
  * request needs — page-image metadata that rides the regular image pipeline
  * plus the model-facing text sections of non-pdf documents (prompt
  * injection); a pdf's text lives in the encyclopedia, not the prompt.
@@ -49,7 +49,7 @@ export class DocumentConversionService {
   private readonly logger = new Logger(DocumentConversionService.name);
 
   constructor(
-    private readonly minioService: MinioService,
+    private readonly objectStorage: ObjectStorageService,
     private readonly pdfService: PdfService,
     private readonly describeService: PdfPageDescribeService,
     private readonly memoryEncyclopedia: MemoryEncyclopediaService,
@@ -138,7 +138,7 @@ export class DocumentConversionService {
   /**
    * Index one converted document's manifest into the memory encyclopedia —
    * the whole upload delegation: extracted text (plus known page
-   * descriptions), the MinIO url (persist key + open link), and the
+   * descriptions), the object-storage URL (persist key + open link), and the
    * original's metadata. Fire-and-forget: idempotent on memory's side (same
    * content → same contentHash → reuse), an outage must never break a turn.
    */
@@ -216,7 +216,7 @@ export class DocumentConversionService {
   /**
    * One describe round over the selected pdf pages that never got one.
    * Nothing is persisted when the describe fails — those pages are retried on
-   * the next vision turn. A page whose bytes are gone from MinIO is skipped
+   * the next vision turn. A page whose bytes are gone from object storage is skipped
    * for now (it stays undescribed).
    */
   private async describeMissingPages(
@@ -230,7 +230,7 @@ export class DocumentConversionService {
   ): Promise<DocumentManifest> {
     const pages: Array<{ buffer: Buffer; pageNumber: number }> = [];
     for (const index of missingIndexes) {
-      const buffer = await this.minioService.downloadBuffer(
+      const buffer = await this.objectStorage.downloadBuffer(
         sessionId,
         conversationId,
         manifest.pageHashes[index],
@@ -316,7 +316,7 @@ export class DocumentConversionService {
     return {
       name: entry.name,
       text,
-      url: this.minioService.buildFileUrl(
+      url: this.objectStorage.buildFileUrl(
         sessionId,
         conversationId,
         entry.hash,
@@ -338,7 +338,7 @@ export class DocumentConversionService {
     requestId: string,
     entry: FastifyMultipartMeta,
   ): Promise<DocumentManifest | null> {
-    const download = await this.minioService.downloadBuffers(
+    const download = await this.objectStorage.downloadBuffers(
       sessionId,
       conversationId,
       [entry],
@@ -356,7 +356,7 @@ export class DocumentConversionService {
 
   /**
    * Convert and persist one original: store its derived page images and the
-   * conversion manifest in MinIO and return the manifest (reusing an
+   * conversion manifest in object storage and return the manifest (reusing an
    * existing one when already present). Exposed for the select-time
    * document endpoint, which holds the bytes already — no download needed.
    */
@@ -367,7 +367,7 @@ export class DocumentConversionService {
     entry: FastifyMultipartMeta,
     buffer: Buffer,
   ): Promise<DocumentManifest | null> {
-    const existing = await this.minioService.downloadBuffer(
+    const existing = await this.objectStorage.downloadBuffer(
       sessionId,
       conversationId,
       buildManifestHash(entry.hash),
@@ -407,7 +407,7 @@ export class DocumentConversionService {
     );
 
     if (manifest.pageBuffers.length > 0) {
-      await this.minioService.uploadBuffers(
+      await this.objectStorage.uploadBuffers(
         sessionId,
         conversationId,
         requestId,
@@ -448,7 +448,7 @@ export class DocumentConversionService {
     manifest: DocumentManifest,
   ): Promise<void> {
     const manifestJson = buildManifestJson(manifest);
-    await this.minioService.uploadBuffers(
+    await this.objectStorage.uploadBuffers(
       sessionId,
       conversationId,
       requestId,

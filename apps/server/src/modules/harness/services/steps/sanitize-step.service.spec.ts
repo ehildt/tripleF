@@ -116,7 +116,11 @@ describe('SanitizeStepService', () => {
   it('indexes uploaded documents into the encyclopedia', async () => {
     const ctx = createContext({
       documentSections: [
-        { name: 'cv.docx', text: 'Eugen Hildt', url: 'http://minio/cv.docx' },
+        {
+          name: 'cv.docx',
+          text: 'Eugen Hildt',
+          url: 'http://object-storage/cv.docx',
+        },
       ],
     });
     (action.execute as any).mockResolvedValue({
@@ -133,7 +137,7 @@ describe('SanitizeStepService', () => {
     expect(memoryEncyclopedia.indexEncyclopediaDocuments).toHaveBeenCalledWith({
       documents: [
         {
-          url: 'http://minio/cv.docx',
+          url: 'http://object-storage/cv.docx',
           title: 'cv.docx',
           content: 'Eugen Hildt',
         },

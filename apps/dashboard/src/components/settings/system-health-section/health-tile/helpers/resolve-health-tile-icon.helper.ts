@@ -21,7 +21,7 @@ export function resolveHealthTileIcon(name: string): LucideIcon {
       return Cpu;
     case 'postgres':
       return Database;
-    case 'minio':
+    case 'object_storage':
       return FolderOpen;
     case 'service':
       return Activity;

@@ -8,7 +8,7 @@ describe('safeMediaUrlOrEmpty', () => {
   });
 
   it('accepts a storage path or an absolute URL', () => {
-    expect(safeMediaUrlOrEmpty().safeParse('/api/v1/storage/session/chat/abc').success).toBe(true);
+    expect(safeMediaUrlOrEmpty().safeParse('/api/v1/object-storage/session/chat/abc').success).toBe(true);
     expect(safeMediaUrlOrEmpty().safeParse('https://example.com/photo.jpg').success).toBe(true);
   });
 

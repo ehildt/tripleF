@@ -4,7 +4,7 @@ import { TerminusModule } from '@nestjs/terminus';
 
 import { DeadLetterModule } from '../dead-letter/dead-letter.module.js';
 import { MemoryClientModule } from '../memory-client/memory-client.module.js';
-import { MinioModule } from '../minio/minio.module.js';
+import { ObjectStorageModule } from '../object-storage/object-storage.module.js';
 import { OllamaModule } from '../ollama/ollama.module.js';
 
 import { HealthController } from './controllers/health.controller.js';
@@ -13,7 +13,7 @@ import { PostgresHealthIndicator } from './services/postgres-health-indicator.se
 
 /**
  * Readiness/liveness probes aggregating the per-infra health indicators
- * (disk, heap, ollama, postgres, minio, memory app). TerminusModule is not
+ * (disk, heap, ollama, postgres, object storage, memory app). TerminusModule is not
  * global, so it is imported here for the module's own indicators; the
  * sibling indicators come from their owning feature modules.
  */
@@ -27,7 +27,7 @@ export class HealthModule {
       TerminusModule.forRoot({ errorLogStyle: 'pretty' }),
       DeadLetterModule.register(),
       MemoryClientModule.register(),
-      MinioModule.register(),
+      ObjectStorageModule.register(),
       OllamaModule.register(),
     ],
     providers: [HealthService, PostgresHealthIndicator],

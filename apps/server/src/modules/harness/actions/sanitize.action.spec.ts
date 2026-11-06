@@ -466,7 +466,7 @@ describe('SanitizeActionService', () => {
     (cloudIngestion.ingest as any).mockResolvedValue([
       {
         sourceUrl: 'https://img.com/good.jpg',
-        imageUrl: '/api/v1/storage/sess-1/conv-1/hash',
+        imageUrl: '/api/v1/object-storage/sess-1/conv-1/hash',
         fingerprint: 'fp-good',
       },
     ]);
@@ -518,7 +518,7 @@ describe('SanitizeActionService', () => {
     // The broken URL is dropped; the good one survives as a local rewrite.
     expect(payload.availableImages).toHaveLength(1);
     expect(payload.availableImages[0].imageUrl).toBe(
-      '/api/v1/storage/sess-1/conv-1/hash',
+      '/api/v1/object-storage/sess-1/conv-1/hash',
     );
     expect(JSON.stringify(payload)).not.toContain('https://img.com/broken.jpg');
   });
@@ -912,7 +912,7 @@ describe('SanitizeActionService', () => {
     (cloudIngestion.ingest as any).mockResolvedValue([
       {
         sourceUrl: 'https://img.com/a.jpg',
-        imageUrl: '/api/v1/storage/sess-1/conv-1/hash',
+        imageUrl: '/api/v1/object-storage/sess-1/conv-1/hash',
         fingerprint: 'fp-a',
       },
     ]);
@@ -957,7 +957,7 @@ describe('SanitizeActionService', () => {
       contextMessage!.content.replace('[TOOL CONTEXT — DO NOT OUTPUT]\n', ''),
     );
     expect(payload.availableImages[0].imageUrl).toBe(
-      '/api/v1/storage/sess-1/conv-1/hash',
+      '/api/v1/object-storage/sess-1/conv-1/hash',
     );
   });
 

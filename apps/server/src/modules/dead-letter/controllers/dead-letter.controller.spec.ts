@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { MinioService } from '../../minio/services/minio.service.js';
+import { ObjectStorageService } from '../../object-storage/services/object-storage.service.js';
 import { DlqEventsService } from '../services/dlq-events.service.js';
 import { JobReinstatementService } from '../services/job-reinstatement.service.js';
 import { DeadLetterRepository } from '../services/repository.service.js';
@@ -26,7 +26,7 @@ describe('DeadLetterController', () => {
       },
     };
 
-    const minioService = { deleteBuffers: vi.fn() };
+    const objectStorage = { deleteBuffers: vi.fn() };
     const reinstatement = { reinstate: vi.fn() };
     const events = {
       broadcastEntryUpserted: vi.fn(),
@@ -36,12 +36,12 @@ describe('DeadLetterController', () => {
 
     const controller = new DeadLetterController(
       repository as unknown as DeadLetterRepository,
-      minioService as unknown as MinioService,
+      objectStorage as unknown as ObjectStorageService,
       reinstatement as unknown as JobReinstatementService,
       events as unknown as DlqEventsService,
     );
 
-    return { controller, repository, minioService, reinstatement, events };
+    return { controller, repository, objectStorage, reinstatement, events };
   }
 
   it('findAll delegates to the repository without broadcasting', async () => {

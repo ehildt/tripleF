@@ -48,7 +48,7 @@ tripleF is early in development and unapologetic about aiming for the top of the
                      └──────────┘ └────▲─────┘ └──────┬───────▲────┘
                                       │               │       │
                      ┌───────────┐    │          ┌────▼───────┴────┐     ┌────────────┐
-                     │ MinIO     │────┘          │ Qdrant (memory + │     │ Ollama     │
+                     │ RustFS    │────┘          │ Qdrant (memory + │     │ Ollama     │
                      │ (images)  │               │ encyclopedia)    │     │ (local/    │
                      └───────────┘               └──────────────────┘     │ cloud)     │
                                                                            └────────────┘
@@ -63,7 +63,7 @@ tripleF is early in development and unapologetic about aiming for the top of the
 | Inference      | Ollama (local or Ollama Cloud)                              | Vision-LLM inference + embeddings                       |
 | Async          | BullMQ + KeyDB (Redis-compatible)                           | Job queues, retries, cancellation tokens, socket pub/sub |
 | Persistence    | PostgreSQL 16 + Prisma 7                                    | Conversations, dead-letter records, system config, memory ledgers/graphs |
-| Object storage | MinIO (S3 API)                                              | Image payloads per session/conversation                 |
+| Object storage | RustFS (S3 API) + AWS SDK                                 | Image payloads per session/conversation                 |
 | Vector store   | Qdrant (`@qdrant/js-client-rest`)                           | Semantic memory + encyclopedia vectors                  |
 | Real-time      | Socket.IO 4                                                 | Result streaming rooms, cancellation, events            |
 | Frontend       | Vue 3 + Vite 8, Pinia, TanStack Query, Tailwind v4          | Workbench UI                                            |
@@ -76,7 +76,7 @@ triplef.io/
 ├── apps/
 │   ├── server/              # 3F server (NestJS + Fastify) — the harness
 │   │   ├── src/modules/     # harness, memory-client, ai-sdk, bullmq, dead-letter,
-│   │   │                    # minio, persistence, sharp, socket-io, stock-data,
+│   │   │                    # object-storage, persistence, sharp, socket-io, stock-data,
 │   │   │                    # provider-overrides, secrets ...
 │   │   ├── prisma/          # owns the shared schema: HarnessConversation, HarnessConfig,
 │   │   │                    # HarnessShownMedia, HarnessProviderOverride, HarnessPlaylist,
@@ -94,7 +94,7 @@ triplef.io/
 ├── Dockerfile               # canonical monorepo image (all targets)
 ├── compose.yml              # dev stack: deps + server + memory + dashboard
 ├── compose.prod.yml         # production stack (prod targets, nginx dashboard)
-├── infra.compose.yml        # postgres, keydb, minio, qdrant (ollama commented)
+├── infra.compose.yml        # postgres, keydb, rustfs, qdrant (ollama commented)
 └── .wiki/                   # this documentation
 ```
 

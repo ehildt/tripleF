@@ -1,6 +1,6 @@
 import type { GalleryItem } from '../media/build-gallery-items.helper.types.js';
 import { dedupeGalleryItems } from '../media/dedupe-gallery-items.helper.js';
-import { extractStorageHash } from '../media/extract-storage-hash.helper.js';
+import { extractObjectStorageHash } from '../media/extract-object-storage-hash.helper.js';
 
 /**
  * Merge uploaded local images into the response gallery, dropping any that
@@ -15,14 +15,14 @@ export function mergeLocalImagesIntoResponseData(
   const existingHashes = new Set<string>(
     ((data.galleryItems as GalleryItem[]) ?? [])
       .filter((item): item is GalleryItem => typeof item?.imageUrl === 'string')
-      .map((item) => extractStorageHash(item.imageUrl))
+      .map((item) => extractObjectStorageHash(item.imageUrl))
       .filter((hash): hash is string => !!hash),
   );
 
   const missingLocal = galleryItems
     .filter((item) => item.source === 'local')
     .filter((item) => {
-      const hash = extractStorageHash(item.imageUrl);
+      const hash = extractObjectStorageHash(item.imageUrl);
       return hash ? !existingHashes.has(hash) : false;
     });
 

@@ -6,7 +6,7 @@
 # ships the compiled static assets behind nginx, which proxies /api and
 # /socket.io to the server and /memory-api to the memory app.
 #
-# Infra services (postgres, minio, keydb) are expected to be running on the
+# Infra services (postgres, rustfs, keydb) are expected to be running on the
 # shared `triplef` network — e.g. `docker compose -f infra.compose.yml up -d`.
 #
 # Usage:
@@ -14,7 +14,7 @@
 #
 # Networking note: the dev `./server/.env` points at `localhost`, but inside
 # the container network the infra is reached by service name (postgres, keydb,
-# minio). The `environment:` overrides below retarget those hosts. The
+# rustfs). The `environment:` overrides below retarget those hosts. The
 # POSTGRES_URL defaults reuse the local infra credentials from
 # infra.compose.yml — replace them with real production secrets for a real
 # deployment (e.g. via a top-level `.env` used at `compose` invocation time).
@@ -34,7 +34,7 @@ services:
       # Retarget localhost → container service names.
       POSTGRES_URL: postgresql://${POSTGRES_USER:-triplef}:${POSTGRES_PASSWORD:-triplef}@postgres:5432/${POSTGRES_DB:-triplef}
       BULLMQ_HOST: keydb
-      MINIO_ENDPOINT: minio
+      OBJECT_STORAGE_ENDPOINT: http://rustfs:9000
       MEMORY_URL: http://memory:3400
     ports:
       - "3000:3000"

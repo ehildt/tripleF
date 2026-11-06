@@ -4,14 +4,14 @@
 
 This is a TypeScript monorepo for tripleF (3F), an open-source agentic AI workbench (conversation harness + dashboard), local-first via Ollama or Ollama Cloud.
 
-- `server/` — NestJS backend with Fastify, Prisma/PostgreSQL, BullMQ/KeyDB, MinIO.
+- `server/` — NestJS backend with Fastify, Prisma/PostgreSQL, BullMQ/KeyDB, RustFS.
 - `dashboard/` — Vue 3 frontend with Vite, Pinia, Tailwind, Storybook, Vitest.
 
 ## Monorepo & Tooling
 
 - Package manager: pnpm workspaces.
 - Local orchestration: Docker Compose.
-  - Infra: `docker compose -f infra.compose.yml up -d` (postgres, minio, keydb).
+  - Infra: `docker compose -f infra.compose.yml up -d` (postgres, rustfs, keydb).
   - App: `docker compose up` (server + dashboard with hot reload via bind mounts).
 - Quality gates: ESLint, TypeScript, Prettier, `depcheck`, `depcruise`, `ts-unused-exports`.
 - Tests: Vitest in both workspaces.
