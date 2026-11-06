@@ -1,7 +1,7 @@
 {
   "name": "@triplef/memory",
   "description": "tripleF (3F) memory app — the outsourced Qdrant/vector-memory service (NestJS + Fastify): semantic memory store, cognition profiles, and the BullMQ vectorize pipeline (embed/extract/store).",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "type": "module",
   "author": {
@@ -46,7 +46,7 @@
     "@prisma/adapter-pg": "7",
     "@prisma/client": "7",
     "@qdrant/js-client-rest": "^1.20.0",
-    "@triplef/agent": "^1.0.9",
+    "@triplef/agent": "^2.0.0",
     "@triplef/ai-sdk": "^1.0.2",
     "@triplef/bullmq": "^1.1.6",
     "@triplef/bullmq-logger": "^1.3.2",

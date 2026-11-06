@@ -1,5 +1,42 @@
 # @triplef/dashboard
 
+## 0.6.1
+
+### Patch Changes
+
+- db45436: Refactor the chat composables and helpers to one concern per file.
+
+  Split the ~570-line `useSubmit` god-composable into focused units: `usePromptDraft` (the prompt text plus its persisted draft, still reading the legacy `'api-fields'` field so existing drafts survive), `useHarnessRequest` (the harness POST, socket request tracking, and pending-attachment promotion), and a thin `useSubmit` that owns only the submit flow and the `isSubmitting` flag. All in-function store instantiations now happen once at setup.
+
+  Extract the remaining pure logic into one-function-per-file helpers with specs: `buildSubmitQueryParams`, `findSourceProviders`, `mergeSourceEndpoint`, `resolveSourceTargets`, `buildMirroredOverrides`, `isSourceToggle`, `sessionSourceEnabled`, and `collectProviderSources`. Move `listSearchSources` and its peers into the `helpers/` folder, and thin `useSearchEngineAvailability` down to the actions it actually performs.
+
+  Replace the scattered `Record<string, unknown>` shapes with named provider-override types (`ProviderOverrides`, `ProviderSessionOverrides`, `ProviderOverrideEntry`, `ProviderSourceEndpoint`, `SearchSourceToggle`).
+
+  Renames: `arguments_` → `promptDraft`, `persistArguments` → `persistPromptDraft`, `loading` → `isSubmitting`, `submitRest` → `submitCurrentPrompt`, `ensureConversation` → `ensureActiveConversation`, `buildConversation` → `buildPromptPayload`, `sendRequest` → `postHarnessRequest`. Adds co-located specs for the new composables and helpers.
+
+- cc76ef4: Complete the `ChatLeftToolbar` conversations/sockets groups to match the intended example: named open-state computeds (no `.value` in templates), `hasConversations` gating, named toggle/type handlers moved into composables, `v-model` for the stream-settings inputs, and `mouseenter`/`mouseleave` events instead of hover props on the conversation and stream menus. Also merges a duplicated vision-capability watcher.
+- cc76ef4: Migrate the chat left toolbar to store-based architecture. New Pinia stores own the toolbar state: `useLeftToolbarStore` (exclusive menus, model selection incl. vision/numCtx sync, conversation list + subscriptions, new-conversation draft, stream mode, disabled-feedback blink) and `useAttachedFilesStore` (pending-file map, replacing the hand-rolled module state file). Removed the provide/inject context, the `onClickOutside` coordinator (menus now self-close via a teleported backdrop, matching the slide-over/lightbox pattern), and the `defineExpose` template-ref plumbing — `Chat.vue` reads the stores directly and owns the hidden file input. Toolbar leaves are now purely presentational (props in / events out); the three group components are the containers that read the stores. Also fixes a latent jsdom test gap by mocking `URL.createObjectURL`/`revokeObjectURL` in the attached-files spec.
+- 378b6e9: Rework the chat toolbar's conversation-creation menu: rename `NewConversationMenu` to `ConversationMenu`, split it into an orchestrator, a `ConversationMenuTrigger`, and presentational leaves backed by a co-located `useConversationMenu` composable, removing the form-state prop drilling from `ChatToolbar`.
+- e46c218: Separate the chat history panel from the shared `ExpandableMessageList`.
+
+  The history panel now renders its own `HistoryList` component group (`HistoryList` orchestrator + `HistoryListItem` rows), owned by the expanded `useHistoryPanel` composable — the list rows, the active-exchange marquee, merge availability/arming, and the per-row copy/include/merge/branch/delete actions all live next to the history panel that consumes them.
+
+  The shared `ExpandableMessageList` is slimmed back to its read-only dlq/debug purpose (`items`/`renderHtml`/`onClick`/`expandAll`), dropping the history-only action buttons, the dead copy button, and the `MessageListItem` merge/context fields. Its consumers (`DlqPromptSection`, `RequestDetails`) are unchanged.
+
+  `useChatConversation` is reduced to the chat orchestrator's slice (`conversationId`, `conversation`, `selectedModelObj`), and `mapExchangeToListItem` moves into the history group's `helpers/` folder.
+
+- 01134ef: Consolidate the preprocessing panel and de-duplicate the settings actions bar.
+
+  Extract the image-preview cluster out of `PprocToolsPanel` into a self-contained `PprocImagePreview` component that owns the trigger button, hidden file input, shared lightbox, and repick action together with its preview composable; the panel shrinks to the actions bar plus its three sections. Introduce a shared `PanelActions` bar (end-aligned radiant gradient) and adopt it across the preprocessing panel and the system/tab-menu/toast/playlist settings panels, removing five copy-pasted CSS blocks.
+
+  Normalize the preprocessing store import to the `@/` alias and drop the now-invalid compiler-macro imports (`defineProps`, `defineEmits`) that `@vue/compiler-sfc` no longer accepts.
+
+- 378fdb2: Remove Playwright and browser automation throughout the workbench.
+
+  BREAKING: `BROWSER_TOOL_NAMES`, every `browser_*` tool description, and the shared `ProviderConfig` export are gone from `@triplef/agent/schemas`. The server no longer connects to a Playwright MCP sidecar or offers browser tools to models. The dashboard no longer includes Playwright-backed Vitest browser projects or the Storybook Vitest addon; its remaining tests run in jsdom.
+
+- b6e6476: Strict five-tier macro-taxonomy chain: cluster → community → hub → node → leaf (partition and encyclopedia lanes alike). The LLM contracts gain the named NODE tier below the hub (extraction, encyclopedia classify, remember tool, taxonomy probe) with all four chain labels mandatory — partial chains fail the schema and go through correction instead of entering the registry. Memory writes refuse incomplete chains after normalization; point payloads carry the new `node` field; `listLeaves` serves node (and tag) items. The dashboard drill follows the strict chain (hub view lists nodes, node/tag views show leaves) with a fifth harmony tint; the constellation renders node-tier aspect dots inside hub blobs (dot per distinct aspect, tinted in the topic color, registry meta attached) and leaf dots carry their node label. The preprocessing config is now strictly session-scoped server state: fetched on store construction (no boot idle-push), pushed immediately on change (no debounce), with the load echo guarded. NOTE: existing taxonomy data is incompatible — drop and rebuild.
+
 ## 0.6.0
 
 ### Minor Changes
