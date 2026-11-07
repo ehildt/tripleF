@@ -12,13 +12,13 @@ The CSS follows a three-layer cascade, enforced by import order in the entry fil
 
 Tokens (defaults) → Palettes (override token values per palette) → Modes (override token values further per display mode).
 
-| Layer      | Folder        | Purpose                                         | Contents                                                |
-| ---------- | ------------- | ----------------------------------------------- | ------------------------------------------------------- |
-| Tokens     | `tokens/`     | Design system variable definitions and defaults | `@theme` blocks only                                    |
-| Palettes   | `palettes/`   | Override token values per selected palette      | Only per-theme attribute selectors                      |
-| Modes      | `modes/`      | Override token values per display mode          | Only root attribute selectors for the display mode      |
-| Components | `components/` | Global (unscoped) component styles              | Plain CSS using `var()` references                      |
-| Entry      | `style.css`   | Import orchestration, global resets, animations | `@import` statements in correct order                    |
+| Layer      | Folder        | Purpose                                         | Contents                                           |
+| ---------- | ------------- | ----------------------------------------------- | -------------------------------------------------- |
+| Tokens     | `tokens/`     | Design system variable definitions and defaults | `@theme` blocks only                               |
+| Palettes   | `palettes/`   | Override token values per selected palette      | Only per-theme attribute selectors                 |
+| Modes      | `modes/`      | Override token values per display mode          | Only root attribute selectors for the display mode |
+| Components | `components/` | Global (unscoped) component styles              | Plain CSS using `var()` references                 |
+| Entry      | `style.css`   | Import orchestration, global resets, animations | `@import` statements in correct order              |
 
 **The import order IS the architecture.** If you get it wrong, palette/mode overrides silently fail.
 
@@ -59,7 +59,7 @@ Inside `<style scoped>`, follow these rules:
 1. **Use plain CSS properties with `var()` token references.** This is the only pattern.
 2. **Never use `@apply`.** It creates tight coupling to Tailwind internals.
 3. **Never use `@reference`.** It only exists to make `@apply` work.
-4. **Never use Tailwind utility classes inside `<style>`.** Tailwind classes in `<template>` are a separate concern and out of scope for this guide.
+4. **Use BEM component classes in `<template>`.** Do not introduce Tailwind utility classes; Tailwind remains part of the build pipeline, while component styling stays in plain CSS.
 
 ### Token rules
 
@@ -132,24 +132,24 @@ These are recurring styles expressed as plain prose — copy the shape from any 
 
 ### Colors
 
-| Intent               | Token (use `var(…)`)          |
-| -------------------- | ----------------------------- |
-| Background primary   | color bg primary              |
-| Background secondary | color bg secondary            |
-| Background tertiary  | color bg tertiary             |
-| Background elevated  | color bg elevated             |
-| Text primary         | color fg primary              |
-| Text secondary       | color fg secondary            |
-| Text muted           | color fg muted                |
-| Accent               | color accent primary          |
-| Accent secondary     | color accent secondary        |
-| Borders              | color divider                 |
-| Focus ring           | color accent primary          |
-| Tab rest             | color tab rest                |
-| Tab accent           | color tab accent              |
-| Tab debug            | color tab debug               |
-| Error                | color status error            |
-| Success              | color status success          |
+| Intent               | Token (use `var(…)`)   |
+| -------------------- | ---------------------- |
+| Background primary   | color bg primary       |
+| Background secondary | color bg secondary     |
+| Background tertiary  | color bg tertiary      |
+| Background elevated  | color bg elevated      |
+| Text primary         | color fg primary       |
+| Text secondary       | color fg secondary     |
+| Text muted           | color fg muted         |
+| Accent               | color accent primary   |
+| Accent secondary     | color accent secondary |
+| Borders              | color divider          |
+| Focus ring           | color accent primary   |
+| Tab rest             | color tab rest         |
+| Tab accent           | color tab accent       |
+| Tab debug            | color tab debug        |
+| Error                | color status error     |
+| Success              | color status success   |
 
 ### Spacing
 

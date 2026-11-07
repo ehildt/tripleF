@@ -9,7 +9,7 @@ describe('PanelLayout', () => {
       slots: { default: '<span data-testid="slot">Content</span>' },
     });
     expect(wrapper.find('[data-testid="slot"]').exists()).toBe(true);
-    expect(wrapper.find('div').classes().join(' ')).toContain('bg-elevated');
+    expect(wrapper.find('div').classes().join(' ')).toContain('panel-layout');
     expect(wrapper.find('div').classes().join(' ')).toContain('panel-glow');
   });
 });

@@ -11,10 +11,10 @@ describe('DlqStatusBadge', () => {
     expect(wrapper.text()).toBe('Failed');
   });
 
-  it('applies the success class for Active entries', () => {
+  it('applies the active modifier for Active entries', () => {
     const wrapper = mount(DlqStatusBadge, {
       props: { status: 'Active' },
     });
-    expect(wrapper.classes().join(' ')).toContain('status-success');
+    expect(wrapper.classes().join(' ')).toContain('dlq-status-badge--active');
   });
 });

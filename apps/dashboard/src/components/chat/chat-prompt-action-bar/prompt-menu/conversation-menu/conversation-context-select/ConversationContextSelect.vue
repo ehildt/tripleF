@@ -23,6 +23,13 @@ const emit = defineEmits<{
     :format-value="(value) => formatContextSize(Number(value))"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <CircleGauge class="w-3.5 h-3.5" />
+    <CircleGauge class="conversation-context-select__icon" />
   </DropDown>
 </template>
+
+<style scoped>
+.conversation-context-select__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+</style>

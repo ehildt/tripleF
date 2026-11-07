@@ -100,10 +100,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    id="app-root"
-    class="min-h-screen text-fg-primary font-sans bg-grid root-accent-gradient"
-  >
+  <div id="app-root" class="bg-grid root-accent-gradient">
     <TabMenu
       :active-tab="appStore.activeTab"
       :debug-count="debugStore.debugLogCount"
@@ -143,6 +140,9 @@ onMounted(() => {
 
 <style>
 #app-root {
+  min-height: 100vh;
+  color: var(--color-fg-primary);
+  font-family: var(--font-sans);
   transition:
     background-color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.7s cubic-bezier(0.4, 0, 0.2, 1),

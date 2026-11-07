@@ -23,7 +23,7 @@ const emit = defineEmits<{
           class="dlq-reload-button__trigger"
           @click="emit('click')"
         >
-          <MotionIcon><RefreshCw class="w-4 h-4" /></MotionIcon>
+          <MotionIcon><RefreshCw class="dlq-reload-button__icon" /></MotionIcon>
         </button>
       </Tooltip>
       <div v-else key="loading" class="dlq-reload-button__indicator">
@@ -55,6 +55,11 @@ const emit = defineEmits<{
 
 .dlq-reload-button__trigger:hover {
   color: var(--color-fg-primary);
+}
+
+.dlq-reload-button__icon {
+  width: var(--spacing-4);
+  height: var(--spacing-4);
 }
 
 .dlq-reload-button__indicator {
