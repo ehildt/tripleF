@@ -1,4 +1,4 @@
-integrity: 6eb1128e331f687601f90aef25ec564c05462af919fcdfd6c3ddbac61a2f1836
+integrity: 51fb3f9b1be037b176a03789252765f01e1e75a05c714155176acae0772df792
 # yaml-language-server: $schema=https://raw.githubusercontent.com/ehildt/depbadge/refs/heads/main/depbadgerc.schema.json
 
 target: README.md
