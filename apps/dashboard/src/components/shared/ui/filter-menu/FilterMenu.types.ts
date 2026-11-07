@@ -1,3 +1,5 @@
+import type { LucideIcon } from '@lucide/vue';
+
 export interface FilterMenuOption {
   /** The option's submitted value. */
   value: string;
@@ -8,23 +10,25 @@ export interface FilterMenuOption {
 export interface FilterMenuProps {
   /** Whether the dropdown is currently open. */
   isOpen: boolean;
-  /** Whether a non-default filter is applied (tints the trigger). */
+  /** Whether a non-default filter is applied. */
   isActive: boolean;
-  /** Trigger title. */
+  /** Accessible trigger label and tooltip. */
   title: string;
-  /** Dropdown width. */
+  /** Explicit width of the floating options panel. */
   width: string;
-  /** The filter options. */
+  /** Options available for selection. */
   options: readonly FilterMenuOption[];
-  /** The currently selected value. */
+  /** Currently selected option value. */
   selectedValue: string;
-  /** Whether the selection is a free-text value (shows the text tone). */
-  hasTextValue?: boolean;
+  /** Lucide glyph rendered inside the trigger. */
+  icon: LucideIcon;
 }
 
 export interface FilterMenuEmits {
   /** The trigger toggled the dropdown. */
-  toggle: [];
+  (event: 'toggle'): void;
+  /** The dropdown requested closure. */
+  (event: 'close'): void;
   /** An option was selected. */
-  select: [value: string];
+  (event: 'select', value: string): void;
 }

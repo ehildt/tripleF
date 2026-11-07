@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { CircleAlert, Mail, MailOpen, Search } from '@lucide/vue';
+import { ListFilter, Mail, MailOpen, Search } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import DlqReloadButton from '@/components/dlq/shared/ui/dlq-reload-button/DlqReloadButton.vue';
 import FilterMenu from '@/components/shared/ui/filter-menu/FilterMenu.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import TextFilterMenu from '@/components/shared/ui/text-filter-menu/TextFilterMenu.vue';
 
 import { useExclusiveFilterMenu } from '../composables/use-exclusive-filter-menu';
 import type {
@@ -14,14 +15,12 @@ import type {
 } from './DlqListActions.types';
 
 /**
- * The DLQ list header's action cluster: status and search filter menus (at
- * most one open at a time, closed by the transparent backdrop on the first
- * outside click), the reload button, and the read/unread visibility toggle.
- * The backdrop and the actions bar live together so their z-index pairing
- * (backdrop beneath, actions above) is one component's concern.
+ * The DLQ list header's action cluster: explicit status and search filters,
+ * reload, and read visibility. At most one filter menu is open; each menu's
+ * trigger owns the transparent backdrop that closes it on an outside click.
  */
 const props = defineProps<DlqListActionsProps>();
-
+const filterSearch = defineModel<string>('filterSearch', { required: true });
 const emit = defineEmits<DlqListActionsEmits>();
 
 const { t } = useI18n();
@@ -33,8 +32,10 @@ const statusOptions = computed(() => [
   { value: 'Removed', label: t('common.removed') },
 ]);
 
-const { isMenuOpen, isAnyMenuOpen, toggleMenu, closeAllMenus } =
-  useExclusiveFilterMenu(['status', 'search']);
+const { isMenuOpen, toggleMenu, closeAllMenus } = useExclusiveFilterMenu([
+  'status',
+  'search',
+]);
 
 function selectStatus(value: string) {
   emit('update:filterStatus', value);
@@ -43,14 +44,6 @@ function selectStatus(value: string) {
 </script>
 
 <template>
-  <!-- Transparent click-catcher while a filter menu is open: the first
-       outside click closes the menu. Sits below the actions so the
-       triggers stay clickable. -->
-  <div
-    v-if="isAnyMenuOpen"
-    class="dlq-list-actions__backdrop"
-    @click="closeAllMenus"
-  />
   <div class="dlq-list-actions">
     <FilterMenu
       :is-open="isMenuOpen('status')"
@@ -59,24 +52,21 @@ function selectStatus(value: string) {
       width="8rem"
       :options="statusOptions"
       :selected-value="props.filterStatus"
+      :icon="ListFilter"
       @toggle="toggleMenu('status')"
+      @close="closeAllMenus"
       @select="selectStatus"
-    >
-      <CircleAlert />
-    </FilterMenu>
-    <FilterMenu
+    />
+    <TextFilterMenu
+      v-model="filterSearch"
       :is-open="isMenuOpen('search')"
-      :is-active="props.filterSearch !== ''"
+      :is-active="filterSearch !== ''"
       :title="$t('common.search')"
       width="16rem"
-      :options="[]"
-      :selected-value="props.filterSearch"
-      has-text-value
+      :icon="Search"
       @toggle="toggleMenu('search')"
-      @select="emit('update:filterSearch', $event)"
-    >
-      <Search />
-    </FilterMenu>
+      @close="closeAllMenus"
+    />
     <DlqReloadButton :loading="props.showLoading" @click="emit('reload')" />
     <IconButton
       :active="props.hideRead"
@@ -94,22 +84,9 @@ function selectStatus(value: string) {
 </template>
 
 <style scoped>
-/* Fixed transparent click-catcher — closes the open filter menu on the
-   first outside click (slide-over/lightbox pattern). */
-.dlq-list-actions__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: transparent;
-}
-
 .dlq-list-actions {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  /* Above the menu backdrop: the triggers and the open filter panel (z-50
-     inside this context) stay clickable while the menu is open. */
-  position: relative;
-  z-index: 41;
 }
 </style>

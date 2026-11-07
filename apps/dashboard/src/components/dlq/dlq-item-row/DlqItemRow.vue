@@ -33,6 +33,12 @@ const failureText = computed(() => resolveFailureText(props.entry));
       <div class="dlq-item-row__header">
         <DlqRequestIdBadge :job-name="entry.jobName" />
         <DlqStatusBadge :status="entry.status" />
+        <span
+          v-if="isConversationDeleted"
+          class="dlq-item-row__conversation-deleted"
+        >
+          {{ $t('common.conversationDeleted') }}
+        </span>
       </div>
       <DlqItemMetaRow
         :queue-name="entry.queueName"
@@ -102,5 +108,18 @@ const failureText = computed(() => resolveFailureText(props.entry));
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+}
+
+.dlq-item-row__conversation-deleted {
+  padding: var(--spacing-0-5) var(--spacing-1-5);
+  border: 1px solid
+    color-mix(in srgb, var(--color-status-warning) 40%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-status-warning);
 }
 </style>

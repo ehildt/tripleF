@@ -140,19 +140,6 @@ footer,
   animation: pulse-fast 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes battery-slide {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-.animate-battery-slide {
-  animation: battery-slide 1.5s ease-in-out infinite;
-}
-
 .bg-grid {
   background-image:
     linear-gradient(
