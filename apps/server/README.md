@@ -26,7 +26,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 # Dependencies
 
-[![@aws-sdk/client-s3](https://img.shields.io/badge/_aws_sdk_client_s3-3.1163.0-2b47c5.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b47c5&logoWidth=40&style=flat-square)](https://github.com/aws/aws-sdk-js-v3)
+[![@aws-sdk/client-s3](https://img.shields.io/badge/_aws_sdk_client_s3-3.1164.0-2b47c5.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b47c5&logoWidth=40&style=flat-square)](https://github.com/aws/aws-sdk-js-v3)
 [![@fastify/compress](https://img.shields.io/badge/_fastify_compress-v9.3.0-c62478.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c62478&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-compress)
 [![@fastify/multipart](https://img.shields.io/badge/_fastify_multipart-v10.1.8-3dd198.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=3dd198&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-multipart)
 [![@fastify/static](https://img.shields.io/badge/_fastify_static-v10.1.10-8ab61b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=8ab61b&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-static)
@@ -40,7 +40,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![@nestjs/terminus](https://img.shields.io/badge/_nestjs_terminus-v12.1.0-9b3dd6.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9b3dd6&logoWidth=40&style=flat-square)](https://github.com/nestjs/nest)
 [![@prisma/adapter-pg](https://img.shields.io/badge/_prisma_adapter_pg-7-db5e1f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=db5e1f&logoWidth=40&style=flat-square)](https://github.com/prisma/prisma)
 [![@prisma/client](https://img.shields.io/badge/_prisma_client-7-ada825.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ada825&logoWidth=40&style=flat-square)](https://github.com/prisma/prisma)
-[![@triplef/agent](https://img.shields.io/badge/_triplef_agent-v2.0.1-327ee2.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=327ee2&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
+[![@triplef/agent](https://img.shields.io/badge/_triplef_agent-v2.0.0-327ee2.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=327ee2&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/ai-sdk](https://img.shields.io/badge/_triplef_ai_sdk-v1.0.2-af2cc3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=af2cc3&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/bullmq](https://img.shields.io/badge/_triplef_bullmq-v1.1.6-991dbf.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=991dbf&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/bullmq-logger](https://img.shields.io/badge/_triplef_bullmq_logger-v1.3.2-2fd82c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fd82c&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
@@ -51,7 +51,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![@triplef/pdf](https://img.shields.io/badge/_triplef_pdf-v1.0.1-c7391a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c7391a&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/socketio](https://img.shields.io/badge/_triplef_socketio-v1.0.2-33e1be.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33e1be&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@xmldom/xmldom](https://img.shields.io/badge/_xmldom_xmldom-v0.9.12-1fad42.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1fad42&logoWidth=40&style=flat-square)](https://github.com/xmldom/xmldom)
-[![ai](https://img.shields.io/badge/ai-v7.0.163-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat-square)](https://github.com/vercel/ai)
+[![ai](https://img.shields.io/badge/ai-v7.0.164-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat-square)](https://github.com/vercel/ai)
 [![bullmq](https://img.shields.io/badge/bullmq-v6.7.1-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
 [![class-transformer](https://img.shields.io/badge/class_transformer-v0.5.1-2bc59c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2bc59c&logoWidth=40&style=flat-square)](https://github.com/typestack/class-transformer)
 [![class-validator](https://img.shields.io/badge/class_validator-v0.15.1-461ddd.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=461ddd&logoWidth=40&style=flat-square)](https://github.com/typestack/class-validator)
@@ -102,7 +102,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![prisma](https://img.shields.io/badge/prisma-v7.10.1-7bd440.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=7bd440&logoWidth=40&style=flat-square)](https://github.com/prisma/prisma)
 [![rimraf](https://img.shields.io/badge/rimraf-v6.1.4-24a85b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=24a85b&logoWidth=40&style=flat-square)](https://github.com/isaacs/rimraf)
 [![source-map-support](https://img.shields.io/badge/source_map_support-v0.5.21-2ecc39.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2ecc39&logoWidth=40&style=flat-square)](https://github.com/evanw/source-map-support)
-[![supertest](https://img.shields.io/badge/supertest-v7.3.1-de21a8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=de21a8&logoWidth=40&style=flat-square)](https://github.com/visionmedia/supertest)
+[![supertest](https://img.shields.io/badge/supertest-v7.3.2-de21a8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=de21a8&logoWidth=40&style=flat-square)](https://github.com/visionmedia/supertest)
 [![ts-loader](https://img.shields.io/badge/ts_loader-v9.6.2-1e46be.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1e46be&logoWidth=40&style=flat-square)](https://github.com/TypeStrong/ts-loader)
 [![ts-node](https://img.shields.io/badge/ts_node-v10.9.2-c51b76.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c51b76&logoWidth=40&style=flat-square)](https://github.com/TypeStrong/ts-node)
 [![ts-unused-exports](https://img.shields.io/badge/ts_unused_exports-v11.0.1-5e26c0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=5e26c0&logoWidth=40&style=flat-square)](https://github.com/pinterest/ts-unused-exports)
