@@ -13,11 +13,11 @@ describe('getDlqStatusColor', () => {
 
   it('returns a default style for unknown statuses', () => {
     expect(getDlqStatusColor('UNKNOWN' as DlqStatus)).toBe(
-      'text-fg-muted border-divider',
+      'dlq-status-badge--unknown',
     );
   });
 
-  it('uses the success token for Active entries', () => {
-    expect(getDlqStatusColor('Active')).toContain('status-success');
+  it('returns the active modifier for Active entries', () => {
+    expect(getDlqStatusColor('Active')).toBe('dlq-status-badge--active');
   });
 });
