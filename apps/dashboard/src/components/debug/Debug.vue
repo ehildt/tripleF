@@ -43,14 +43,13 @@ function select(result: DebugResult) {
     <PanelHeader>
       <PanelHeaderTitle :label="$t('common.requestLog')" />
       <HeaderMenu
+        v-model:search="search"
         :filter="filter"
-        :search="search"
         :all-count="results.length"
         :http-count="httpCount"
         :socket-count="socketCount"
         :hide-read="hideRead"
         @update:filter="filter = $event"
-        @update:search="search = $event"
         @update:hide-read="hideRead = $event"
         @clear="emit('clear')"
       />

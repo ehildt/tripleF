@@ -461,6 +461,18 @@ export const useConversationStore = defineStore('conversation', () => {
     return conversation;
   }
 
+  /** Insert a recovered conversation without changing the active chat. */
+  function restoreConversation(conversation: Conversation): Conversation {
+    const existing = conversations.value.find(
+      (candidate) => candidate.conversationId === conversation.conversationId,
+    );
+    if (existing) return existing;
+
+    conversations.value.unshift(conversation);
+    persistConversation(conversation);
+    return conversation;
+  }
+
   function deleteConversation(id: string) {
     const conversation = getConversation(id);
     if (!conversation) return;
@@ -610,6 +622,43 @@ export const useConversationStore = defineStore('conversation', () => {
 
       conversation.updatedAt = Date.now();
     }
+  }
+
+  /** Reset an existing assistant response so a DLQ retry can reuse its
+   * request id without retaining the previous failure or streamed payload. */
+  function resetAssistantExchangeForRetry(
+    conversationId: string,
+    requestId: string,
+    metadata: Pick<Exchange, 'model' | 'event' | 'roomId'>,
+  ): void {
+    mutateConversation(conversationId, (conversation) => {
+      const exchange = conversation.exchanges.find(
+        (candidate) =>
+          candidate.requestId === requestId && candidate.role === 'assistant',
+      );
+      if (!exchange) return;
+
+      exchange.content = '';
+      exchange.status = 'pending';
+      exchange.model = metadata.model;
+      exchange.event = metadata.event;
+      exchange.roomId = metadata.roomId;
+      exchange.conversationId = conversation.conversationId;
+      exchange.promptEvalCount = undefined;
+      exchange.evalCount = undefined;
+      exchange.inputTokenDelta = undefined;
+      exchange.toolCalls = undefined;
+      exchange.activity = undefined;
+      exchange.activityLanguage = undefined;
+      exchange.reasoning = undefined;
+      exchange.responseTemplate = undefined;
+      exchange.responseData = undefined;
+      exchange.text = undefined;
+      exchange.chartData = undefined;
+      exchange.revealCharts = undefined;
+      conversation.updatedAt = Date.now();
+      void persistConversation(conversation);
+    });
   }
 
   function appendExchangeContent(
@@ -1060,6 +1109,8 @@ export const useConversationStore = defineStore('conversation', () => {
     ensureConversation,
     setActiveConversation,
     createNewConversation,
+    restoreConversation,
+    loadConversationForWrite,
     deleteConversation,
     deleteCurrentConversation,
     renameConversation,
@@ -1068,12 +1119,14 @@ export const useConversationStore = defineStore('conversation', () => {
     deleteExchangeAndPrune,
     toggleExchangeIncluded,
     updateExchange,
+    resetAssistantExchangeForRetry,
     appendExchangeContent,
     markExchangeDone,
     markExchangeError,
     conversationFileMap,
     getFiles,
     setFiles,
+    patchConversation,
     setModel,
     setNumCtx,
     setThink,

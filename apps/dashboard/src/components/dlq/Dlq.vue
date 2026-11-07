@@ -3,6 +3,7 @@ import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 
 import { useDlqStore } from '../../stores/dlq/dlq.store';
 import { useModelsStore } from '../../stores/models/models.store';
+import { useDlqConversationPresence } from './composables/use-dlq-conversation-presence';
 import { useDlqEntries } from './composables/use-dlq-entries';
 import DlqDetailsBody from './dlq-details-body/DlqDetailsBody.vue';
 import DlqListBody from './dlq-list-body/DlqListBody.vue';
@@ -14,15 +15,16 @@ const modelsStore = useModelsStore();
 // Entries lifecycle (query, loading spinner, store sync, refetch watchers)
 // and the row/detail actions composed onto it — see use-dlq-entries.
 const { showLoading, guardedRefetch, actions } = useDlqEntries();
+const { isConversationDeleted } = useDlqConversationPresence();
 </script>
 
 <template>
   <div class="dlq-column">
     <PanelLayout class="dlq-column__panel">
       <DlqListHeader
+        v-model:filter-search="dlqStore.filterSearch"
         :show-loading="showLoading"
         :filter-status="dlqStore.filterStatus"
-        :filter-search="dlqStore.filterSearch"
         :hide-read="dlqStore.hideRead"
         :total="dlqStore.total"
         :current-page="dlqStore.currentPage"
@@ -31,7 +33,6 @@ const { showLoading, guardedRefetch, actions } = useDlqEntries();
         :offset="dlqStore.offset"
         @reload="guardedRefetch"
         @update:filter-status="(value) => (dlqStore.filterStatus = value)"
-        @update:filter-search="(value) => (dlqStore.filterSearch = value)"
         @update:hide-read="(value) => (dlqStore.hideRead = value)"
         @first-page="dlqStore.setPage(1)"
         @prev-page="dlqStore.prevPage"
@@ -47,6 +48,7 @@ const { showLoading, guardedRefetch, actions } = useDlqEntries();
         :hide-read="dlqStore.hideRead"
         :is-entry-read="(entry) => dlqStore.isEntryRead(entry)"
         :entry-read-key="(entry) => dlqStore.entryReadKey(entry)"
+        :is-conversation-deleted="isConversationDeleted"
         @select="actions.onSelect"
         @retry="actions.onRetry"
         @archive="actions.onArchive"

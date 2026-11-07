@@ -245,6 +245,7 @@ export default {
     askHarness: 'Ask anything',
     channel: 'Channel',
     conversationName: 'Chat name',
+    conversationDeleted: 'Conversation deleted',
     newConversation: 'New chat',
     expiresIn: 'Expires {time}',
     event: 'Event',

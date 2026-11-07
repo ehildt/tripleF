@@ -512,6 +512,24 @@ export const useMessagesStore = defineStore('messages', () => {
     ];
   }
 
+  /** Restart all response and unread bookkeeping when a DLQ retry reuses a
+   * request id. The new run must not inherit accumulated stream data or the
+   * previous run's terminal/read state. */
+  function resetRequestForRetry(
+    event: string,
+    roomId: string,
+    requestId: string,
+    stream?: boolean,
+  ): void {
+    harnessStreamStates.delete(requestId);
+    readTracker.removeRead(requestId);
+    const index = messages.value.findIndex(
+      (message) => message.data.requestId === requestId,
+    );
+    if (index !== -1) messages.value.splice(index, 1);
+    addPendingMessage(event, roomId, requestId, stream);
+  }
+
   function updatePendingMessage(requestId: string, data: unknown) {
     const d = data as MessageData;
     const msg = messages.value.find(
@@ -561,6 +579,7 @@ export const useMessagesStore = defineStore('messages', () => {
     isRead,
     addMessage,
     addPendingMessage,
+    resetRequestForRetry,
     updatePendingMessage,
     removeMessage,
     clearMessages,

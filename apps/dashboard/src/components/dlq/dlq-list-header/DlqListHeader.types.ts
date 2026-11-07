@@ -1,10 +1,8 @@
 export interface DlqListHeaderProps {
-  /** Whether the reload spinner is currently showing. */
+  /** Whether the reload icon is currently pulsing. */
   showLoading: boolean;
   /** Active status filter ('' for unfiltered). */
   filterStatus: string;
-  /** Active free-text search filter ('' for unfiltered). */
-  filterSearch: string;
   /** Whether already-read entries are currently hidden from the list. */
   hideRead: boolean;
   /** Total number of entries matching the current filters. */

@@ -1,12 +1,11 @@
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import type { DlqFilterMenuId } from './use-exclusive-filter-menu.types';
 
 /**
  * Open state for the DLQ list-header's filter menus: at most one menu is
- * open at a time. Closing works through a fixed transparent backdrop the
- * header renders while a menu is open (slide-over/lightbox pattern) — no
- * coordinator-level onClickOutside.
+ * open at a time. Each menu's trigger owns the transparent backdrop that
+ * requests closure — no coordinator-level onClickOutside.
  */
 export function useExclusiveFilterMenu(menuIds: readonly DlqFilterMenuId[]) {
   const openMenus = ref<Set<DlqFilterMenuId>>(new Set());
@@ -32,11 +31,8 @@ export function useExclusiveFilterMenu(menuIds: readonly DlqFilterMenuId[]) {
     return openMenus.value.has(id);
   }
 
-  const isAnyMenuOpen = computed(() => openMenus.value.size > 0);
-
   return {
     isMenuOpen,
-    isAnyMenuOpen,
     toggleMenu,
     closeAllMenus,
   };

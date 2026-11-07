@@ -48,6 +48,7 @@ const { sortedEntries } = useDlqListState({
         :entry="entry"
         :is-read="props.isEntryRead(entry)"
         :is-active="props.selectedEntryId === entry.id"
+        :is-conversation-deleted="props.isConversationDeleted?.(entry) ?? false"
         @retry="(id: string) => emit('retry', id)"
         @archive="emit('archive', $event)"
         @delete="emit('delete', $event)"

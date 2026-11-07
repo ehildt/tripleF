@@ -13,4 +13,6 @@ export interface DlqListBodyProps {
   isEntryRead: (entry: DlqEntry) => boolean;
   /** Stable per-entry key for the read-state derivation. */
   entryReadKey: (entry: DlqEntry) => string;
+  /** Whether the harness entry's stable conversation no longer exists. */
+  isConversationDeleted?: (entry: DlqEntry) => boolean;
 }

@@ -7,10 +7,9 @@ import {
   Search,
   Trash2,
 } from '@lucide/vue';
-import { ref } from 'vue';
 
-import FilterMenu from '@/components/shared/ui/filter-menu/FilterMenu.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import TextFilterMenu from '@/components/shared/ui/text-filter-menu/TextFilterMenu.vue';
 
 import { useDebugStore } from '../../../../../stores/debug/debug.store';
 import {
@@ -20,25 +19,26 @@ import {
 import type { HeaderMenuProps } from './HeaderMenu.types';
 
 const props = defineProps<HeaderMenuProps>();
+const search = defineModel<string>('search', { required: true });
 
 const emit = defineEmits<HeaderMenuEmits>();
 
 const debugStore = useDebugStore();
 
-const headerRef = ref<HTMLElement | null>(null);
-
 const {
   isSearchOpen,
+  toggleSearch,
+  closeSearch,
   disableAll,
   disableHttp,
   disableSocket,
   clearArmed,
   handleClearClick,
-} = useHeaderMenu(props, emit, headerRef);
+} = useHeaderMenu(props, emit);
 </script>
 
 <template>
-  <div ref="headerRef" class="header-menu">
+  <div class="header-menu">
     <div class="header-menu__filters">
       <button
         :disabled="disableAll"
@@ -66,19 +66,16 @@ const {
       </button>
     </div>
 
-    <FilterMenu
+    <TextFilterMenu
+      v-model="search"
       :is-open="isSearchOpen"
       :is-active="search !== ''"
       :title="$t('common.search')"
       width="16rem"
-      :options="[]"
-      :selected-value="search"
-      has-text-value
-      @toggle="isSearchOpen = !isSearchOpen"
-      @select="emit('update:search', $event)"
-    >
-      <Search />
-    </FilterMenu>
+      :icon="Search"
+      @toggle="toggleSearch"
+      @close="closeSearch"
+    />
 
     <IconButton
       :active="hideRead"
@@ -88,7 +85,7 @@ const {
       @click="emit('update:hideRead', !hideRead)"
     >
       <Mail v-if="hideRead" />
-      <MailOpen v-else />
+      <MailOpen v-if="!hideRead" />
     </IconButton>
 
     <IconButton
@@ -101,7 +98,7 @@ const {
       @click="debugStore.toggleDebugPaused()"
     >
       <CirclePause v-if="!debugStore.debugPaused" />
-      <CirclePlay v-else />
+      <CirclePlay v-if="debugStore.debugPaused" />
     </IconButton>
 
     <IconButton

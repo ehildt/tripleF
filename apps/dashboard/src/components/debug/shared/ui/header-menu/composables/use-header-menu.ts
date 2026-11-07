@@ -1,11 +1,9 @@
-import { onClickOutside } from '@vueuse/core';
-import { computed, onUnmounted, type Ref, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 
 import type { HeaderMenuProps } from '../HeaderMenu.types';
 
 export interface HeaderMenuEmits {
   (e: 'update:filter', value: HeaderMenuProps['filter']): void;
-  (e: 'update:search', value: string): void;
   (e: 'update:hideRead', value: boolean): void;
   (e: 'clear'): void;
 }
@@ -14,16 +12,16 @@ export interface HeaderMenuEmits {
  * Owns the debug header menu's interaction state: the search popover
  * open/close, the per-filter disabled flags, and the armed two-step clear.
  */
-export function useHeaderMenu(
-  props: HeaderMenuProps,
-  emit: HeaderMenuEmits,
-  headerRef: Ref<HTMLElement | null>,
-) {
+export function useHeaderMenu(props: HeaderMenuProps, emit: HeaderMenuEmits) {
   const isSearchOpen = ref(false);
 
-  onClickOutside(headerRef, () => {
+  function toggleSearch() {
+    isSearchOpen.value = !isSearchOpen.value;
+  }
+
+  function closeSearch() {
     isSearchOpen.value = false;
-  });
+  }
 
   const disableAll = computed(() => props.allCount === 0);
   const disableHttp = computed(() => props.httpCount === 0);
@@ -55,6 +53,8 @@ export function useHeaderMenu(
 
   return {
     isSearchOpen,
+    toggleSearch,
+    closeSearch,
     disableAll,
     disableHttp,
     disableSocket,
