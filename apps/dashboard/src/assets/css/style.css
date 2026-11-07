@@ -42,8 +42,7 @@ body {
 }
 
 code,
-pre,
-.font-mono {
+pre {
   font-family: var(--font-mono);
 }
 
@@ -72,17 +71,12 @@ pre,
 button,
 select,
 a,
-[role='button'],
-.cursor-pointer {
+[role='button'] {
   cursor: pointer;
   user-select: none;
 }
 
 label,
-.font-medium,
-.uppercase,
-.tracking-wider,
-.text-xs,
 span,
 p,
 th,

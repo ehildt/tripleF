@@ -20,6 +20,13 @@ const emit = defineEmits<{
     placeholder="socket"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <Radio class="w-3.5 h-3.5" />
+    <Radio class="conversation-event-select__icon" />
   </ComboBox>
 </template>
+
+<style scoped>
+.conversation-event-select__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+</style>

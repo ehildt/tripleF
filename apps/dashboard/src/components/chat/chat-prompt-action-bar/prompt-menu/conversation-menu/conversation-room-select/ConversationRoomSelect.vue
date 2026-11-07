@@ -20,6 +20,13 @@ const emit = defineEmits<{
     placeholder="channel"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <Hash class="w-3.5 h-3.5" />
+    <Hash class="conversation-room-select__icon" />
   </ComboBox>
 </template>
+
+<style scoped>
+.conversation-room-select__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+</style>

@@ -27,8 +27,8 @@ export const Default: Story = {
     components: { PanelLayout },
     template: `
       <PanelLayout>
-        <div class="px-4 py-3 bg-secondary border-b border-divider text-xs font-mono">Header slot</div>
-        <div class="p-4 text-xs font-mono text-fg-secondary">Body slot</div>
+        <div style="padding: var(--spacing-3) var(--spacing-4); background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-divider); font-size: 0.75rem; line-height: 1rem; font-family: var(--font-mono);">Header slot</div>
+        <div style="padding: var(--spacing-4); font-size: 0.75rem; line-height: 1rem; font-family: var(--font-mono); color: var(--color-fg-secondary);">Body slot</div>
       </PanelLayout>
     `,
   }),

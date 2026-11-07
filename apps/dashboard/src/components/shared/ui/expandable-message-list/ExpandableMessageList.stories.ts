@@ -107,7 +107,7 @@ export const WithHeading: Story = {
     template: `
       <ExpandableMessageList :items="items" :render-html="args.renderHtml" :on-click="args.onClick">
         <template #heading>
-          <h4 class="text-[10px] font-mono font-bold uppercase tracking-wider text-tab-debug">Conversation History</h4>
+          <h4 style="font-size: 0.625rem; font-family: var(--font-mono); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-tab-debug);">Conversation History</h4>
         </template>
         <template #body="{ message }">
           <ExpandableMessageListBody :html="args.renderHtml ? args.renderHtml(message.content) : message.content" />
@@ -144,10 +144,10 @@ export const WithOnClick: Story = {
             <ExpandableMessageListBody :html="args.renderHtml ? args.renderHtml(message.content) : message.content" />
           </template>
         </ExpandableMessageList>
-        <p v-if="lastClicked !== null" class="mt-2 text-xs font-mono text-fg-muted">
+        <p v-if="lastClicked !== null" style="margin-top: var(--spacing-2); font-size: 0.75rem; line-height: 1rem; font-family: var(--font-mono); color: var(--color-fg-muted);">
           Last clicked index: {{ lastClicked }}
         </p>
-        <p v-else class="mt-2 text-xs font-mono text-fg-muted">
+        <p v-else style="margin-top: var(--spacing-2); font-size: 0.75rem; line-height: 1rem; font-family: var(--font-mono); color: var(--color-fg-muted);">
           Click a message preview to select it
         </p>
       </div>
@@ -173,7 +173,7 @@ export const HeaderOnly: Story = {
     template: `
       <ExpandableMessageList :items="items" :render-html="args.renderHtml" :on-click="args.onClick">
         <template #heading>
-          <h4 class="text-[10px] font-mono font-bold uppercase tracking-wider text-tab-debug">Header Only</h4>
+          <h4 style="font-size: 0.625rem; font-family: var(--font-mono); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-tab-debug);">Header Only</h4>
         </template>
       </ExpandableMessageList>
     `,
@@ -340,7 +340,7 @@ export const CustomBody: Story = {
     template: `
       <ExpandableMessageList :items="items" :on-click="args.onClick">
         <template #body="{ message }">
-          <pre class="px-2 py-1 text-[10px] font-mono text-fg-muted/70 overflow-x-auto">{{ message.content }}</pre>
+          <pre style="padding: var(--spacing-1) var(--spacing-2); font-size: 0.625rem; font-family: var(--font-mono); color: color-mix(in srgb, var(--color-fg-muted) 70%, transparent); overflow-x: auto;">{{ message.content }}</pre>
         </template>
       </ExpandableMessageList>
     `,
