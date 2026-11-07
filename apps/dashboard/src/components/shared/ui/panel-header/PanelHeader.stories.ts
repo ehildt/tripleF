@@ -27,8 +27,8 @@ export const Default: Story = {
     components: { PanelHeader },
     template: `
       <PanelHeader>
-        <span class="text-xs font-mono">Section title</span>
-        <button class="text-xs font-mono">Action</button>
+        <span style="font-size: 0.75rem; line-height: 1rem; font-family: var(--font-mono);">Section title</span>
+        <button style="font-size: 0.75rem; line-height: 1rem; font-family: var(--font-mono);">Action</button>
       </PanelHeader>
     `,
   }),

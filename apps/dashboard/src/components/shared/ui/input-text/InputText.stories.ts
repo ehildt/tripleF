@@ -57,7 +57,7 @@ export const WithPrependIcon: Story = {
     template: `
       <InputText v-bind="args">
         <template #prepend-icon>
-          <Search class="w-4 h-4 text-fg-muted" />
+          <Search style="width: 1rem; height: 1rem; color: var(--color-fg-muted);" />
         </template>
       </InputText>
     `,

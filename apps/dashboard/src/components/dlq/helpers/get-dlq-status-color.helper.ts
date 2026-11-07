@@ -3,14 +3,14 @@ import type { DlqStatus } from '../../../types/dlq-status.model';
 export function getDlqStatusColor(status: DlqStatus): string {
   switch (status) {
     case 'Failed':
-      return 'text-[var(--color-tab-debug)] border-[var(--color-tab-debug)]/40';
+      return 'dlq-status-badge--failed';
     case 'Active':
-      return 'text-status-success border-status-success/40';
+      return 'dlq-status-badge--active';
     case 'Cleared':
-      return 'text-[var(--color-tab-debug)]/60 border-[var(--color-tab-debug)]/20';
+      return 'dlq-status-badge--cleared';
     case 'Removed':
-      return 'text-status-error/60 border-status-error/30';
+      return 'dlq-status-badge--removed';
     default:
-      return 'text-fg-muted border-divider';
+      return 'dlq-status-badge--unknown';
   }
 }
