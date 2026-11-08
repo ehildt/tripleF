@@ -1,9 +1,11 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useAssistantResponseSettingsStore } from '@/stores/chat/assistant-response-settings/assistant-response-settings.store';
+import type { ScrollMode } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.model';
+import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
+import { usePromptMenuSettingsStore } from '@/stores/chat/prompt-menu-settings/prompt-menu-settings.store';
 import { useModelsStore } from '@/stores/models/models.store';
-import type { ScrollMode } from '@/types/app.model';
 
 import { useChatContextSize } from '../../composables/use-chat-context-size';
 import { useChatConversation } from '../../composables/use-chat-conversation';
@@ -31,7 +33,9 @@ import {
  */
 export function useChatPromptActionBar() {
   const { t } = useI18n();
-  const appStore = useAppStore();
+  const assistantResponseSettingsStore = useAssistantResponseSettingsStore();
+  const chatNavigationSettingsStore = useChatNavigationSettingsStore();
+  const promptMenuSettingsStore = usePromptMenuSettingsStore();
   const modelsStore = useModelsStore();
 
   const { conversationId, conversation, selectedModelObj } =
@@ -73,13 +77,16 @@ export function useChatPromptActionBar() {
   );
 
   const scrollMode = computed(() =>
-    appStore.getConversationScrollMode(conversationId.value),
+    chatNavigationSettingsStore.getConversationScrollMode(conversationId.value),
   );
 
   function toggleScrollMode() {
     const next: ScrollMode =
       scrollMode.value === 'carousel' ? 'native' : 'carousel';
-    appStore.setConversationScrollMode(conversationId.value, next);
+    chatNavigationSettingsStore.setConversationScrollMode(
+      conversationId.value,
+      next,
+    );
   }
 
   const scrollModeTitle = computed(() =>
@@ -89,23 +96,35 @@ export function useChatPromptActionBar() {
   );
 
   const sourceMenuCollapsed = computed(() =>
-    appStore.getSourceMenuCollapsed(conversationId.value, 'sources'),
+    promptMenuSettingsStore.getSourceMenuCollapsed(
+      conversationId.value,
+      'sources',
+    ),
   );
 
   const viewMenuCollapsed = computed(() =>
-    appStore.getSourceMenuCollapsed(conversationId.value, 'view'),
+    promptMenuSettingsStore.getSourceMenuCollapsed(
+      conversationId.value,
+      'view',
+    ),
   );
 
   const sourceMenuAlwaysShow = computed(() =>
-    appStore.getSourceMenuAlwaysShow(conversationId.value, 'sources'),
+    promptMenuSettingsStore.getSourceMenuAlwaysShow(
+      conversationId.value,
+      'sources',
+    ),
   );
 
   const viewMenuAlwaysShow = computed(() =>
-    appStore.getSourceMenuAlwaysShow(conversationId.value, 'view'),
+    promptMenuSettingsStore.getSourceMenuAlwaysShow(
+      conversationId.value,
+      'view',
+    ),
   );
 
   function toggleSourceMenuCollapsed() {
-    appStore.setSourceMenuCollapsed(
+    promptMenuSettingsStore.setSourceMenuCollapsed(
       conversationId.value,
       'sources',
       !sourceMenuCollapsed.value,
@@ -113,7 +132,7 @@ export function useChatPromptActionBar() {
   }
 
   function toggleViewMenuCollapsed() {
-    appStore.setSourceMenuCollapsed(
+    promptMenuSettingsStore.setSourceMenuCollapsed(
       conversationId.value,
       'view',
       !viewMenuCollapsed.value,
@@ -139,7 +158,7 @@ export function useChatPromptActionBar() {
     SECTION_TOGGLES.map((toggle) => {
       const { key, icon, hidden, titleKey } = mapSectionToggle(
         toggle,
-        appStore.collapsedSections,
+        assistantResponseSettingsStore.collapsedSections,
       );
       return {
         key,
@@ -158,7 +177,7 @@ export function useChatPromptActionBar() {
       const { key, media, icon, presentation, titleKey } =
         mapPresentationToggle(
           toggle,
-          appStore.mediaPresentations,
+          assistantResponseSettingsStore.mediaPresentations,
           PRESENTATION_SWITCH_KEYS,
         );
       return { key, media, icon, presentation, title: t(titleKey) };

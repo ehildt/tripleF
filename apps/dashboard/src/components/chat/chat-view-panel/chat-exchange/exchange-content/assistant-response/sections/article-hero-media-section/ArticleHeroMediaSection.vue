@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import { buildVideoPosterUrl } from '@/components/chat/shared/helpers/assistant-response/media/build-video-poster-url.helper';
 import FloatingVideoFigure from '@/components/chat/shared/ui/floating-video-figure/FloatingVideoFigure.vue';
 import MediaCaptionScrim from '@/components/chat/shared/ui/media-caption-scrim/MediaCaptionScrim.vue';
 import MediaCardHeader from '@/components/chat/shared/ui/media-card-header/MediaCardHeader.vue';
 import PlaylistToggleButton from '@/components/shared/ui/playlist-toggle-button/PlaylistToggleButton.vue';
 import { usePlaylistToggle } from '@/composables/use-playlist-toggle/use-playlist-toggle';
-import { buildVideoPosterUrl } from '@/stores/helpers/assistant-response/media/build-video-poster-url.helper';
 import type {
   GalleryItem,
   VideoGalleryItem,

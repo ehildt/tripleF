@@ -10,7 +10,7 @@ import {
 } from '@/api/memory-taxonomy.api';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import type { TaxonomyLane } from './use-taxonomy-manager.types';
 
@@ -127,7 +127,7 @@ function resolveDrillChain(
 export function useTaxonomyManager() {
   const route = useRoute();
   const router = useRouter();
-  const { memoryPartition } = storeToRefs(useAppStore());
+  const { memoryPartition } = storeToRefs(useMemorySpacesStore());
   const toast = useToast();
 
   /**

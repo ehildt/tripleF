@@ -1,6 +1,6 @@
 import type { MessageSquare } from '@lucide/vue';
 
-import type { ActiveTab } from '@/types/app.model';
+import type { ActiveTab } from '@/stores/app/navigation/navigation.model';
 
 export interface MenuTab {
   label: string;

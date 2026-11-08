@@ -7,7 +7,7 @@ import {
   fetchMemoryLinks,
   wipeMemoryCognition,
 } from '@/api/memory.api';
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import { mapFrictions } from '../../composables/helpers/map-frictions.helper';
 import { mapLinkToEdge } from '../../composables/helpers/map-link-to-edge.helper';
@@ -29,7 +29,9 @@ const WIPE_ARM_WINDOW_MS = 4000;
  * degrades to an unavailable note.
  */
 export function useCognitionSpace() {
-  const { memoryCognition, memoryPartition } = storeToRefs(useAppStore());
+  const { memoryCognition, memoryPartition } = storeToRefs(
+    useMemorySpacesStore(),
+  );
   const cognitionKey = computed(
     () =>
       memoryCognition.value.trim() || memoryPartition.value.trim() || 'default',

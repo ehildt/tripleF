@@ -1,7 +1,10 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Ref } from 'vue';
 import { defineComponent, h } from 'vue';
+
+import type { ActiveTab } from '@/stores/app/navigation/navigation.model';
 
 import { useDlqLiveEvents } from './use-dlq-live-events';
 
@@ -16,7 +19,7 @@ const { ensureSocketConnection } = vi.hoisted(() => ({
   ensureSocketConnection: vi.fn(),
 }));
 
-const appStoreMock = vi.hoisted(() => ({ activeTab: 'chat' }));
+const refs = vi.hoisted(() => ({})) as { activeTab: Ref<ActiveTab> };
 
 vi.mock('@/stores/dlq/dlq.store', () => ({
   useDlqStore: () => storeMocks,
@@ -26,9 +29,11 @@ vi.mock('@/composables/use-socket/use-socket', () => ({
   useSocket: () => ({ ensureSocketConnection }),
 }));
 
-vi.mock('@/stores/app/app.store', () => ({
-  useAppStore: () => appStoreMock,
-}));
+vi.mock('./use-active-tab', async () => {
+  const { ref } = await import('vue');
+  refs.activeTab = ref<ActiveTab>('chat');
+  return { useActiveTab: () => ({ activeTab: refs.activeTab }) };
+});
 
 /** Minimal consumer of the composable under test. */
 const Probe = defineComponent({
@@ -71,7 +76,7 @@ describe('useDlqLiveEvents', () => {
     socket = makeSocket();
     ensureSocketConnection.mockReset().mockReturnValue(socket);
     Object.values(storeMocks).forEach((fn) => fn.mockClear());
-    appStoreMock.activeTab = 'chat';
+    refs.activeTab.value = 'chat';
   });
 
   it('attaches listeners for the three DLQ topics on mount', () => {
@@ -124,7 +129,7 @@ describe('useDlqLiveEvents', () => {
     expect(storeMocks.markDlqActivity).toHaveBeenCalledTimes(1);
     expect(storeMocks.requestEntriesRefresh).not.toHaveBeenCalled();
 
-    appStoreMock.activeTab = 'dlq';
+    refs.activeTab.value = 'dlq';
     socket.emit('dlq:bulk-changed', envelope('dlq:bulk-changed', {}));
     expect(storeMocks.requestEntriesRefresh).toHaveBeenCalledTimes(1);
   });

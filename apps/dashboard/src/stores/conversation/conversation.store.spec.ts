@@ -8,7 +8,7 @@ import {
   saveConversation,
 } from '../../api/conversations.api';
 import { deleteUploadedObject } from '../../api/object-storage.api';
-import { useAppStore } from '../app/app.store';
+import { useConversationSettingsStore } from '../chat/conversation-settings/conversation-settings.store';
 import { useConversationStore } from './conversation.store';
 
 vi.mock('../../api/conversations.api', () => ({
@@ -796,7 +796,7 @@ describe('useConversationStore', () => {
     });
 
     it('drops unpinned conversations when retention is set to 0', async () => {
-      useAppStore().setTemporaryRetentionMinutes(0);
+      useConversationSettingsStore().setTemporaryRetentionMinutes(0);
 
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary', 'evt');

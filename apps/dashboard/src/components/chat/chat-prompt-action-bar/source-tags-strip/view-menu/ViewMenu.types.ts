@@ -1,6 +1,6 @@
 import type { LucideIcon } from '@lucide/vue';
 
-import type { ScrollMode } from '@/types/app.model';
+import type { ScrollMode } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.model';
 import type {
   CollapsibleSectionKey,
   MediaPresentation,

@@ -8,8 +8,8 @@ import {
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { useAppStore } from '../../../../stores/app/app.store';
-import type { ActiveTab } from '../../../../types/app.model';
+import type { ActiveTab } from '../../../../stores/app/navigation/navigation.model';
+import { useNavigationStore } from '../../../../stores/app/navigation/navigation.store';
 import type { TabMenuProps } from '../TabMenu.types';
 import type { MenuTab } from './use-menu-tabs.types';
 
@@ -30,11 +30,11 @@ const TAB_ICONS: Record<ActiveTab, MenuTab['icon']> = {
 };
 
 export function useMenuTabs(props: TabMenuProps) {
-  const appStore = useAppStore();
+  const navigationStore = useNavigationStore();
   const { t } = useI18n();
 
   const tabs = computed<MenuTab[]>(() => {
-    const showCounters = appStore.showCounters;
+    const showCounters = navigationStore.showCounters;
 
     const allTabs: MenuTab[] = [
       {
@@ -72,7 +72,7 @@ export function useMenuTabs(props: TabMenuProps) {
       },
     ];
 
-    return allTabs.filter((tab) => appStore.isTabVisible(tab.tab));
+    return allTabs.filter((tab) => navigationStore.isTabVisible(tab.tab));
   });
 
   return { tabs };

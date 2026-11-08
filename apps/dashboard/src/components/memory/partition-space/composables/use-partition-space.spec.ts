@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import { usePartitionSpace } from './use-partition-space';
 
@@ -60,7 +60,7 @@ describe('usePartitionSpace', () => {
         reason: 'conflict',
       },
     ]);
-    const store = useAppStore();
+    const store = useMemorySpacesStore();
     store.memoryPartition = 'test';
 
     const { nodes, links, frictions, refresh } = usePartitionSpace();
@@ -85,7 +85,7 @@ describe('usePartitionSpace', () => {
       },
     ]);
     api.fetchMemoryLinks.mockRejectedValue(new Error('down'));
-    const store = useAppStore();
+    const store = useMemorySpacesStore();
     store.memoryPartition = 'test';
 
     const { nodes, links, isUnavailable, refresh } = usePartitionSpace();
@@ -98,7 +98,7 @@ describe('usePartitionSpace', () => {
 
   it('degrades to unavailable on fetch failure', async () => {
     api.fetchMemoryFacts.mockRejectedValue(new Error('down'));
-    const store = useAppStore();
+    const store = useMemorySpacesStore();
     store.memoryPartition = 'test';
 
     const { isUnavailable, isEmpty, refresh } = usePartitionSpace();

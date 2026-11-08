@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { isTrustedImageUrl } from '@/stores/helpers/assistant-response/media/is-trusted-image-url.helper';
+import { isTrustedImageUrl } from '@/components/chat/shared/helpers/assistant-response/media/is-trusted-image-url.helper';
 import type { GalleryItem } from '@/types/assistant-response-data.model';
 
 import type { ProductBannerProps } from '../ProductBanner.types';

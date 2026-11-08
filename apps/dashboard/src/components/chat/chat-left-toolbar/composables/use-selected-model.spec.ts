@@ -1,7 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAppStore } from '@/stores/app/app.store';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
 import { useModelsStore } from '@/stores/models/models.store';
@@ -68,9 +67,8 @@ describe('useSelectedModel', () => {
   });
 
   it('changeModel warms local models only', () => {
-    const appStore = useAppStore();
-    appStore.warmModelOnSelect = true;
     const modelsStore = useModelsStore();
+    modelsStore.warmModelOnSelect = true;
     modelsStore.models = [model({ origin: 'local' })];
     vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
 
@@ -81,9 +79,8 @@ describe('useSelectedModel', () => {
   });
 
   it('changeModel skips warming cloud models', () => {
-    const appStore = useAppStore();
-    appStore.warmModelOnSelect = true;
     const modelsStore = useModelsStore();
+    modelsStore.warmModelOnSelect = true;
     modelsStore.models = [model({ origin: 'cloud' })];
     vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
 

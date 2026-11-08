@@ -44,17 +44,23 @@ import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.v
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app/app.store';
 import type {
   ChartColormap,
   ChartHeatmapVariant,
   ChartPriceStyle,
   ChartVolumeStyle,
+} from '@/stores/chat/chart-settings/chart-settings.model';
+import { useChartSettingsStore } from '@/stores/chat/chart-settings/chart-settings.store';
+import type {
   ChatIconKey,
   ScrollMode,
-} from '@/types/app.model';
+} from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.model';
+import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
+import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 
-const appStore = useAppStore();
+const chartSettingsStore = useChartSettingsStore();
+const chatNavigationSettingsStore = useChatNavigationSettingsStore();
+const conversationSettingsStore = useConversationSettingsStore();
 
 const SCROLL_MODE_OPTIONS = computed<
   readonly { value: ScrollMode; icon: LucideIcon; tooltip: string }[]
@@ -174,33 +180,40 @@ const ICON_OPTIONS: readonly {
 ];
 
 function setDefaultScrollMode(mode: string) {
-  appStore.setDefaultScrollMode(mode as ScrollMode);
+  chatNavigationSettingsStore.setDefaultScrollMode(mode as ScrollMode);
 }
 
 function toggleIcon(key: ChatIconKey) {
-  appStore.setChatIconVisibility(key, !appStore.chatIconVisibility[key]);
+  chatNavigationSettingsStore.setChatIconVisibility(
+    key,
+    !chatNavigationSettingsStore.chatIconVisibility[key],
+  );
 }
 
 function setPriceStyle(style: string) {
-  appStore.setChartConfig({ priceStyle: style as ChartPriceStyle });
+  chartSettingsStore.setChartConfig({ priceStyle: style as ChartPriceStyle });
 }
 
 function setVolumeStyle(style: string) {
-  appStore.setChartConfig({ volumeStyle: style as ChartVolumeStyle });
+  chartSettingsStore.setChartConfig({ volumeStyle: style as ChartVolumeStyle });
 }
 
 function setHeatmapVariant(variant: string) {
-  appStore.setChartConfig({ heatmapVariant: variant as ChartHeatmapVariant });
+  chartSettingsStore.setChartConfig({
+    heatmapVariant: variant as ChartHeatmapVariant,
+  });
 }
 
 function setColormap(colormap: string) {
-  appStore.setChartConfig({ colormap: colormap as ChartColormap });
+  chartSettingsStore.setChartConfig({ colormap: colormap as ChartColormap });
 }
 
 function toggleChartAnnotation(
   key: 'showMarkers' | 'showReferenceLines' | 'showTooltip',
 ) {
-  appStore.setChartConfig({ [key]: !appStore.chartConfig[key] });
+  chartSettingsStore.setChartConfig({
+    [key]: !chartSettingsStore.chartConfig[key],
+  });
 }
 
 /** Segmented-card descriptors: explicit (options, value, handler) triples. */
@@ -210,7 +223,7 @@ const SCROLL_MODE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
       key: 'scroll-mode',
       ariaLabel: i18n.global.t('common.defaultScrollMode'),
       options: SCROLL_MODE_OPTIONS.value,
-      value: appStore.defaultScrollMode,
+      value: chatNavigationSettingsStore.defaultScrollMode,
       onSelect: setDefaultScrollMode,
     },
   ],
@@ -222,7 +235,7 @@ const PRICE_STYLE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
       key: 'price-style',
       ariaLabel: i18n.global.t('common.chartPriceStyle'),
       options: PRICE_STYLE_OPTIONS.value,
-      value: appStore.chartConfig.priceStyle,
+      value: chartSettingsStore.chartConfig.priceStyle,
       onSelect: setPriceStyle,
     },
   ],
@@ -234,7 +247,7 @@ const VOLUME_STYLE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
       key: 'volume-style',
       ariaLabel: i18n.global.t('common.chartVolumeStyle'),
       options: VOLUME_STYLE_OPTIONS.value,
-      value: appStore.chartConfig.volumeStyle,
+      value: chartSettingsStore.chartConfig.volumeStyle,
       onSelect: setVolumeStyle,
     },
   ],
@@ -246,7 +259,7 @@ const HEATMAP_VARIANT_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(
       key: 'heatmap-variant',
       ariaLabel: i18n.global.t('common.chartHeatmapVariant'),
       options: HEATMAP_VARIANT_OPTIONS.value,
-      value: appStore.chartConfig.heatmapVariant,
+      value: chartSettingsStore.chartConfig.heatmapVariant,
       onSelect: setHeatmapVariant,
     },
   ],
@@ -257,7 +270,7 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
     key: 'colormap',
     ariaLabel: i18n.global.t('common.chartColormap'),
     options: COLORMAP_OPTIONS.value,
-    value: appStore.chartConfig.colormap,
+    value: chartSettingsStore.chartConfig.colormap,
     onSelect: setColormap,
   },
 ]);
@@ -283,16 +296,18 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Clock"
           :label="$t('common.tempRetention')"
           :description="$t('common.tempRetentionDesc')"
-          :number-value="appStore.temporaryRetentionMinutes"
-          @update:number-value="appStore.setTemporaryRetentionMinutes"
+          :number-value="conversationSettingsStore.temporaryRetentionMinutes"
+          @update:number-value="
+            conversationSettingsStore.setTemporaryRetentionMinutes
+          "
         />
 
         <NumberFieldCard
           :icon="FileText"
           :label="$t('common.documentTextLimit')"
           :description="$t('common.documentTextLimitDesc')"
-          :number-value="appStore.documentTextLimit"
-          @update:number-value="appStore.setDocumentTextLimit"
+          :number-value="conversationSettingsStore.documentTextLimit"
+          @update:number-value="conversationSettingsStore.setDocumentTextLimit"
         />
       </FieldGrid>
 
@@ -308,7 +323,7 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="option.icon"
           :label="$t(option.labelKey)"
           :description="$t(option.descriptionKey)"
-          :checked="appStore.chatIconVisibility[option.key]"
+          :checked="chatNavigationSettingsStore.chatIconVisibility[option.key]"
           @toggle="toggleIcon(option.key)"
         />
       </FieldGrid>
@@ -351,7 +366,7 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Bookmark"
           :label="$t('common.chartMarkers')"
           :description="$t('common.chartShowMarkersDesc')"
-          :checked="appStore.chartConfig.showMarkers"
+          :checked="chartSettingsStore.chartConfig.showMarkers"
           @toggle="toggleChartAnnotation('showMarkers')"
         />
 
@@ -359,7 +374,7 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Tag"
           :label="$t('common.chartReferenceLines')"
           :description="$t('common.chartShowReferenceLinesDesc')"
-          :checked="appStore.chartConfig.showReferenceLines"
+          :checked="chartSettingsStore.chartConfig.showReferenceLines"
           @toggle="toggleChartAnnotation('showReferenceLines')"
         />
 
@@ -367,7 +382,7 @@ const COLORMAP_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="MirrorRectangular"
           :label="$t('common.chartTooltip')"
           :description="$t('common.chartShowTooltipDesc')"
-          :checked="appStore.chartConfig.showTooltip"
+          :checked="chartSettingsStore.chartConfig.showTooltip"
           @toggle="toggleChartAnnotation('showTooltip')"
         />
       </FieldGrid>
