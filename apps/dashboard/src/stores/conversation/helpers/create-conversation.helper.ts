@@ -15,7 +15,6 @@ export function createConversation(
     id: createId(),
     title: i18n.global.t('common.newConversation'),
     exchanges: [],
-    files: [],
     savedFileInfos: [],
     uploadedImages: partial?.uploadedImages ?? [],
     uploadedDocuments: partial?.uploadedDocuments ?? [],

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
+import type { AttachedFileEntry } from '@/stores/chat/attached-files/attached-files.model';
 import type {
   UploadedDocument,
   UploadedImage,
 } from '@/stores/conversation/conversation.model';
-import type { AttachedFileEntry } from '@/types/attached-files.model';
 
 import { useAttachmentList } from './use-attachment-list';
 
@@ -18,20 +18,17 @@ const state = vi.hoisted(() => ({})) as {
   uploadedDocuments: Ref<UploadedDocument[]>;
 };
 
-vi.mock('@/stores/attached-files/attached-files.store', async () => {
-  const { ref } = await import('vue');
-  const attachedFiles = ref<AttachedFileEntry[]>([]);
-  state.attachedFiles = attachedFiles;
-  return {
-    useAttachedFilesStore: () => ({
-      // The real store unwraps its `attachedFiles` computed to the array; a
-      // getter mirrors that unwrapping so `useAttachmentList` reads the array.
-      get attachedFiles() {
-        return attachedFiles.value;
-      },
-    }),
-  };
-});
+vi.mock(
+  '@/components/chat/shared/composables/use-pending-attachments',
+  async () => {
+    const { ref } = await import('vue');
+    const attachedFiles = ref<AttachedFileEntry[]>([]);
+    state.attachedFiles = attachedFiles;
+    return {
+      usePendingAttachments: () => ({ attachedFiles }),
+    };
+  },
+);
 
 vi.mock('@/stores/conversation/conversation.store', async () => {
   const { ref } = await import('vue');
@@ -67,6 +64,7 @@ describe('useAttachmentList', () => {
   it('merges pending files and uploaded images', () => {
     state.attachedFiles.value = [
       {
+        id: 'pending-cat',
         file,
         isSelected: true,
         objectUrl: 'blob://cat',
@@ -90,13 +88,12 @@ describe('useAttachmentList', () => {
     expect(hasAttachments.value).toBe(true);
     expect(attachments.value).toHaveLength(2);
     expect(attachments.value[0]).toMatchObject({
-      id: 'pending-h1-0',
+      id: 'pending-cat',
       name: 'cat.png',
       hash: 'h1',
       previewUrl: 'blob://cat',
       isUploaded: false,
       isSelected: true,
-      pendingIndex: 0,
       kind: 'image',
     });
     expect(attachments.value[1]).toMatchObject({
@@ -105,7 +102,6 @@ describe('useAttachmentList', () => {
       hash: 'h2',
       isUploaded: true,
       isSelected: false,
-      pendingIndex: null,
       kind: 'image',
     });
   });
@@ -131,7 +127,6 @@ describe('useAttachmentList', () => {
       hash: 'h3',
       isUploaded: true,
       isSelected: true,
-      pendingIndex: null,
       kind: 'document',
     });
   });
@@ -179,7 +174,6 @@ describe('useAttachmentList', () => {
       hash: 'doc-hash',
       isUploaded: true,
       isSelected: true,
-      pendingIndex: null,
       kind: 'gallery',
     });
     expect(attachments.value[0].pages).toEqual([
@@ -191,6 +185,7 @@ describe('useAttachmentList', () => {
   it('hides a pending pdf original when its pages are grouped', () => {
     state.attachedFiles.value = [
       {
+        id: 'pending-pdf',
         file: new File(['%PDF'], 'doc.pdf', { type: 'application/pdf' }),
         isSelected: true,
         objectUrl: '',

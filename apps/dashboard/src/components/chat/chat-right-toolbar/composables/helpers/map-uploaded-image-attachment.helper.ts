@@ -13,7 +13,6 @@ export function mapUploadedImageAttachment(
     previewUrl: '',
     isUploaded: true,
     isSelected: image.selected !== false,
-    pendingIndex: null,
     source: image.source ?? 'local',
     size: image.size,
     kind: 'image',

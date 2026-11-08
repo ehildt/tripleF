@@ -29,7 +29,6 @@ describe('fromPersistedConversation', () => {
   it('defaults transient and optional fields', () => {
     const conversation = fromPersistedConversation(makePersisted());
 
-    expect(conversation.files).toEqual([]);
     expect(conversation.imageSelectionSnapshot).toEqual({});
     expect(conversation.subscriptions).toEqual([]);
     expect(conversation.type).toBe('temporary');

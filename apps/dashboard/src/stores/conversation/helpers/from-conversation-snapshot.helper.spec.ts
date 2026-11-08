@@ -27,7 +27,6 @@ describe('fromConversationSnapshot', () => {
   it('applies safe defaults for content the sidebar does not need yet', () => {
     const result = fromConversationSnapshot({ conversationId: 'c1' });
     expect(result.exchanges).toEqual([]);
-    expect(result.files).toEqual([]);
     expect(result.uploadedImages).toEqual([]);
     expect(result.model).toBe('');
     expect(result.stream).toBe(true);

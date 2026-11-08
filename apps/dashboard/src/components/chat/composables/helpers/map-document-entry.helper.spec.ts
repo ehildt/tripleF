@@ -6,6 +6,7 @@ describe('mapDocumentEntry', () => {
   it('converts a pending document entry into an uploaded document', () => {
     const result = mapDocumentEntry(
       {
+        id: 'entry-1',
         file: { name: 'doc.pdf', type: 'application/pdf', size: 10 } as File,
         isSelected: true,
         objectUrl: 'blob:1',

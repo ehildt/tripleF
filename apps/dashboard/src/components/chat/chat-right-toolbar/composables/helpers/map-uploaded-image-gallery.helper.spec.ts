@@ -22,7 +22,6 @@ describe('mapUploadedImageGallery', () => {
       previewUrl: '',
       isUploaded: true,
       isSelected: true,
-      pendingIndex: null,
       source: 'local',
       kind: 'gallery',
       pages: [

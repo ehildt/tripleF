@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue';
 
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import { useChatConversation } from '../../composables/use-chat-conversation';
+import { useAttachmentIntake } from './use-attachment-intake';
 import type { FileInputRef, SetFileInputRef } from './use-file-select.types';
 
 const ACCEPTED_FILE_TYPES = 'image/*,.pdf,.docx,.pptx,.txt,.md,.csv,.json,.log';
@@ -19,7 +19,7 @@ const ACCEPTED_FILE_TYPES = 'image/*,.pdf,.docx,.pptx,.txt,.md,.csv,.json,.log';
  * does not forward the gate in as an argument.
  */
 export function useFileSelect() {
-  const attachedFilesStore = useAttachedFilesStore();
+  const { addFiles } = useAttachmentIntake();
   const modelsStore = useModelsStore();
   const { conversation, selectedModelObj } = useChatConversation();
 
@@ -53,7 +53,7 @@ export function useFileSelect() {
   }
 
   function onFilesSelect(files: File[]) {
-    attachedFilesStore.addFiles(files);
+    void addFiles(files);
   }
 
   return {

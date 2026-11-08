@@ -7,6 +7,7 @@ import { useSocket } from '@/composables/use-socket/use-socket';
 import AppFooter from './components/app/app-footer/AppFooter.vue';
 import { useActiveTab } from './components/app/composables/use-active-tab';
 import { useAppNavigation } from './components/app/composables/use-app-navigation';
+import { useAttachmentLifecycle } from './components/app/composables/use-attachment-lifecycle';
 import { useDlqLiveEvents } from './components/app/composables/use-dlq-live-events';
 import { usePlaylistMarquee } from './components/app/composables/use-playlist-marquee';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
@@ -35,6 +36,7 @@ const { initTheme } = useTheme();
 const socket = useSocket();
 const { socketId } = socket;
 usePreprocessingSettingsStore();
+useAttachmentLifecycle();
 const popoutSettingsStore = usePopoutSettingsStore();
 const playlistStore = usePlaylistStore();
 

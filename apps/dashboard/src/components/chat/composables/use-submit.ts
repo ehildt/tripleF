@@ -16,7 +16,7 @@ import {
 } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 import type {
   Exchange,
@@ -255,13 +255,10 @@ export function useSubmit() {
 
     ensureSocketSubscription(event, room);
 
-    const pendingEntries = attachedFilesStore.pendingFilesFor(
-      sid ?? '',
+    const selectedEntries = attachedFilesStore.selectedPendingEntriesFor({
+      parentConversationId: sid ?? '',
       conversationId,
-    );
-    const selectedEntries = pendingEntries.filter(
-      (entry) => entry.isSelected && entry.conversationId === conversationId,
-    );
+    });
     const imageFiles = selectedEntries
       .filter((entry) => entry.kind === 'image')
       .map((entry) => entry.file);
@@ -272,7 +269,7 @@ export function useSubmit() {
       ...imageFiles,
       ...documentEntries.map((entry) => entry.file),
     ];
-    conversationStore.setFiles(sid!, currentFiles);
+    conversationStore.setSavedFileInfos(sid!, currentFiles);
 
     if (
       hasVisionConflict(modelsStore.getModel(model)?.capabilities, currentFiles)

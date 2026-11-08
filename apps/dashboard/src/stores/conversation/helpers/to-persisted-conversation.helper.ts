@@ -7,9 +7,9 @@ import type {
 } from '../conversation.model';
 
 /**
- * Project an in-memory conversation into the shape stored on the server:
- * everything except the transient `File` handles, which cannot be
- * serialized. The file metadata survives via `savedFileInfos`.
+ * Project an in-memory conversation into the shape stored on the server.
+ * Pending browser file handles live in the attachment store; only their
+ * metadata survives here via `savedFileInfos`.
  *
  * The result must be a PLAIN snapshot: reading fields off the reactive store
  * object returns nested reactive proxies, and IndexedDB (Dexie `put`,

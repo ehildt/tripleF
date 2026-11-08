@@ -158,7 +158,6 @@ export const useConversationStore = defineStore('conversation', () => {
   const conversations = ref<Conversation[]>([]);
   const activeConversationId = ref<string | null>(null);
   const hydrated = ref(false);
-  const conversationFileMap = ref<Record<string, File[]>>({});
 
   /**
    * Full-content fetches in flight, keyed by the stable server conversationId
@@ -483,9 +482,6 @@ export const useConversationStore = defineStore('conversation', () => {
       conversations.value.findIndex((s) => s.id === id),
       1,
     );
-    conversationFileMap.value = Object.fromEntries(
-      Object.entries(conversationFileMap.value).filter(([k]) => k !== id),
-    );
     if (activeConversationId.value === id) {
       activeConversationId.value = conversations.value[0]?.id ?? null;
     }
@@ -534,11 +530,6 @@ export const useConversationStore = defineStore('conversation', () => {
     if (shouldRemoveConversation) {
       const idx = conversations.value.findIndex((s) => s.id === parentId);
       if (idx !== -1) conversations.value.splice(idx, 1);
-      conversationFileMap.value = Object.fromEntries(
-        Object.entries(conversationFileMap.value).filter(
-          ([k]) => k !== parentId,
-        ),
-      );
       if (activeConversationId.value === parentId) {
         activeConversationId.value = conversations.value[0]?.id ?? null;
       }
@@ -770,23 +761,11 @@ export const useConversationStore = defineStore('conversation', () => {
     });
   }
 
-  function setFiles(conversationId: string, newFiles: File[]) {
+  function setSavedFileInfos(conversationId: string, newFiles: File[]) {
     mutateConversation(conversationId, (conversation) => {
-      conversationFileMap.value = {
-        ...conversationFileMap.value,
-        [conversationId]: newFiles,
-      };
-      conversation.files = newFiles;
       conversation.savedFileInfos = newFiles.map(mapFileToSavedInfo);
       void persistConversation(conversation);
     });
-  }
-
-  function getFiles(conversationId: string): File[] {
-    const conversation = getConversation(conversationId);
-    return (
-      conversationFileMap.value[conversationId] ?? conversation?.files ?? []
-    );
   }
 
   function patchConversation(
@@ -1124,9 +1103,7 @@ export const useConversationStore = defineStore('conversation', () => {
     appendExchangeContent,
     markExchangeDone,
     markExchangeError,
-    conversationFileMap,
-    getFiles,
-    setFiles,
+    setSavedFileInfos,
     patchConversation,
     setModel,
     setNumCtx,

@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSocket } from '@/composables/use-socket/use-socket';
+import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { Exchange } from '@/stores/conversation/conversation.model';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
@@ -203,6 +204,56 @@ describe('useSubmit', () => {
     expect(postHarnessRequest).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith('toast.modelRequired');
     expect(isSubmitting.value).toBe(false);
+  });
+
+  it('submits only selected pending entries without a conversation file mirror', async () => {
+    seedDraft();
+    stubSocketSideEffects();
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.createNewConversation();
+    conversation.model = 'llama3';
+    vi.spyOn(conversationStore, 'buildPrompt').mockResolvedValue('[]');
+    const attachedFilesStore = useAttachedFilesStore();
+    const scope = {
+      parentConversationId: conversation.id,
+      conversationId: conversation.conversationId,
+    };
+    const selectedFile = new File(['selected'], 'selected.txt', {
+      type: 'text/plain',
+    });
+    attachedFilesStore.appendPendingFile(scope, {
+      id: 'selected-entry',
+      file: selectedFile,
+      isSelected: true,
+      objectUrl: '',
+      hash: 'selected-hash',
+      conversationId: scope.conversationId,
+      kind: 'document',
+    });
+    attachedFilesStore.appendPendingFile(scope, {
+      id: 'deselected-entry',
+      file: new File(['skipped'], 'skipped.txt', { type: 'text/plain' }),
+      isSelected: false,
+      objectUrl: '',
+      hash: 'skipped-hash',
+      conversationId: scope.conversationId,
+      kind: 'document',
+    });
+
+    await useSubmit().submit();
+
+    const request = postHarnessRequest.mock
+      .calls[0]![0] as unknown as PostHarnessRequestOptions;
+    expect(request.newDocuments.map((document) => document.name)).toEqual([
+      'selected.txt',
+    ]);
+    expect(
+      (request.formData.getAll('originals') as File[]).map((file) => file.name),
+    ).toEqual(['selected.txt']);
+    expect(conversation).not.toHaveProperty('files');
+    expect(conversation.savedFileInfos.map((file) => file.name)).toEqual([
+      'selected.txt',
+    ]);
   });
 
   it('marks the merge as pending for a merge submit', async () => {
