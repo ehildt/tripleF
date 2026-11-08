@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import type { Component } from 'vue';
 
-import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
+import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 
 import ConversationItem from './ConversationItem.vue';
 
@@ -10,7 +10,7 @@ function makeConversation(
   overrides: Partial<ReturnType<typeof createConversation>> = {},
 ) {
   return {
-    ...createConversation({ type: 'temporary' }),
+    ...createConversation('New chat', { type: 'temporary' }),
     ...overrides,
   };
 }

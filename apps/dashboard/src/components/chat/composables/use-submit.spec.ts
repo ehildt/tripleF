@@ -1,10 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
 import { useMessagesStore } from '@/stores/messages/messages.store';
 import { useModelsStore } from '@/stores/models/models.store';
@@ -21,6 +21,11 @@ const toast = vi.hoisted(() => ({
 }));
 
 const postHarnessRequest = vi.hoisted(() => vi.fn(async () => undefined));
+const buildPrompt = vi.hoisted(() => vi.fn(async () => '[]'));
+
+vi.mock('./use-conversation-prompt', () => ({
+  useConversationPrompt: () => ({ buildPrompt }),
+}));
 
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 
@@ -103,16 +108,15 @@ describe('useSubmit', () => {
     toast.success.mockClear();
     toast.warning.mockClear();
     postHarnessRequest.mockClear();
+    buildPrompt.mockClear();
     usePromptDraft().promptDraft.value = '';
   });
 
   it('submits the prompt through the harness transport', async () => {
     seedDraft();
     const { addPendingMessage } = stubSocketSideEffects();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
+    const conversation = useConversationCatalog().createNewConversation();
     conversation.model = 'llama3';
-    vi.spyOn(conversationStore, 'buildPrompt').mockResolvedValue('[]');
 
     const { isSubmitting, submit } = useSubmit();
     await submit();
@@ -146,10 +150,8 @@ describe('useSubmit', () => {
   it('generates a fresh request id for each sequential submit', async () => {
     seedDraft();
     stubSocketSideEffects();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
+    const conversation = useConversationCatalog().createNewConversation();
     conversation.model = 'llama3';
-    vi.spyOn(conversationStore, 'buildPrompt').mockResolvedValue('[]');
     const { submit } = useSubmit();
 
     await submit();
@@ -166,8 +168,7 @@ describe('useSubmit', () => {
 
   it('warns and skips the submit when the context is full', async () => {
     seedDraft();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
+    const conversation = useConversationCatalog().createNewConversation();
     conversation.model = 'llama3';
     conversation.numCtx = '100';
     conversation.exchanges = [
@@ -193,8 +194,7 @@ describe('useSubmit', () => {
 
   it('stops before the transport when no model is available', async () => {
     seedDraft();
-    const conversationStore = useConversationStore();
-    conversationStore.createNewConversation();
+    useConversationCatalog().createNewConversation();
     const modelsStore = useModelsStore();
     vi.spyOn(modelsStore, 'whenModelsReady').mockResolvedValue(undefined);
 
@@ -209,10 +209,8 @@ describe('useSubmit', () => {
   it('submits only selected pending entries without a conversation file mirror', async () => {
     seedDraft();
     stubSocketSideEffects();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
+    const conversation = useConversationCatalog().createNewConversation();
     conversation.model = 'llama3';
-    vi.spyOn(conversationStore, 'buildPrompt').mockResolvedValue('[]');
     const attachedFilesStore = useAttachedFilesStore();
     const scope = {
       parentConversationId: conversation.id,
@@ -259,8 +257,7 @@ describe('useSubmit', () => {
   it('marks the merge as pending for a merge submit', async () => {
     seedDraft();
     stubSocketSideEffects();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
+    const conversation = useConversationCatalog().createNewConversation();
     conversation.model = 'llama3';
     conversation.exchanges = [userExchange({ id: 'ex-1', requestId: 'req-a' })];
     const mergeSelectionStore = useMergeSelectionStore();

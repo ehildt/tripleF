@@ -1,10 +1,11 @@
 import { computed } from 'vue';
 
 import { warmModel } from '@/api/warm-model.api';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import { resolveNumCtxForModel } from '../shared/helpers/resolve-num-ctx-for-model.helper';
@@ -17,6 +18,7 @@ import { resolveNumCtxForModel } from '../shared/helpers/resolve-num-ctx-for-mod
  */
 export function useSelectedModel() {
   const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
   const modelsStore = useModelsStore();
   const toast = useToast();
 
@@ -67,7 +69,7 @@ export function useSelectedModel() {
     }
 
     if (activeConversationId.value) {
-      conversationStore.setModel(activeConversationId.value, modelName);
+      void configuration.setModel(activeConversationId.value, modelName);
       const m = modelsStore.getModel(modelName);
       if (m?.context_length) {
         const maxOpt = modelsStore.maxNumCtxForModel(modelName);
@@ -81,7 +83,7 @@ export function useSelectedModel() {
           maxOpt,
         );
         if (resolution.numCtx !== null) {
-          conversationStore.setNumCtx(
+          void configuration.setNumCtx(
             activeConversationId.value,
             resolution.numCtx,
           );

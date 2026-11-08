@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 
 import { useChatConversation } from './use-chat-conversation';
 
@@ -20,9 +20,8 @@ describe('useChatConversation', () => {
   });
 
   it('exposes the active conversation and its id', () => {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
 
     const { conversationId, conversation: active } = useChatConversation();
 

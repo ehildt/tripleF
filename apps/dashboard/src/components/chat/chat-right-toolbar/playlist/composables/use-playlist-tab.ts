@@ -1,8 +1,8 @@
 import { computed } from 'vue';
 
 import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
-import { conversationHasVideos } from '@/stores/conversation/helpers/conversation-has-videos.helper';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { conversationHasVideos } from '@/stores/chat/conversation/helpers/conversation-has-videos.helper';
 import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 

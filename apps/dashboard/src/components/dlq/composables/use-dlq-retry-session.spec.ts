@@ -1,175 +1,212 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ref } from 'vue';
 
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-import { useConversationStore } from '../../../stores/conversation/conversation.store';
-import { useDebugStore } from '../../../stores/debug/debug.store';
-import { useMessagesStore } from '../../../stores/messages/messages.store';
 import { useDlqRetrySession } from './use-dlq-retry-session';
 
-/**
- * jsdom has no IndexedDB: the temp-conversations Dexie table gets plain
- * stubbed methods (no round-trip needed — these tests never read it back).
- */
-vi.mock(
-  '../../../stores/conversation/helpers/temporary-conversations.db',
-  () => ({
-    temporaryConversationsDb: {
-      temporaryConversations: {
-        toArray: vi.fn(async () => []),
-        get: vi.fn(async () => undefined),
-        put: vi.fn(async () => ''),
-        delete: vi.fn(async () => undefined),
-        bulkDelete: vi.fn(async () => undefined),
-      },
-    },
-  }),
-);
-
-// The socket store is module-mocked: the real one would open a live
-// connection; the retry-session tests assert the subscription contract only.
-const socketStoreMock = vi.hoisted(() => ({
+const catalog = vi.hoisted(() => ({
+  restoreConversation: vi.fn(),
+  loadConversationForWrite: vi.fn(),
+}));
+const exchanges = vi.hoisted(() => ({
+  prepareConversationRetry: vi.fn(async () => {}),
+}));
+const completion = vi.hoisted(() => ({
+  markExchangeError: vi.fn(async () => {}),
+}));
+const socket = vi.hoisted(() => ({
   ensureSocketConnection: vi.fn(),
   listenToEvent: vi.fn(),
   joinRoom: vi.fn(),
-  connectedEvents: { value: new Set<string>() } as { value: Set<string> },
-  connectedRooms: { value: new Map<string, Set<string>>() } as {
-    value: Map<string, Set<string>>;
-  },
+}));
+const debug = vi.hoisted(() => ({ addDebugResult: vi.fn() }));
+const messages = vi.hoisted(() => ({
+  resetRequestForRetry: vi.fn(),
+  removeMessage: vi.fn(),
+}));
+const toast = vi.hoisted(() => ({
+  debug: vi.fn(),
+  error: vi.fn(),
+  success: vi.fn(),
+  warning: vi.fn(),
 }));
 
+vi.mock('@/components/chat/composables/use-conversation-catalog', () => ({
+  useConversationCatalog: () => catalog,
+}));
+vi.mock('@/components/chat/composables/use-conversation-turns', () => ({
+  useConversationTurns: () => exchanges,
+}));
+vi.mock(
+  '@/components/chat/composables/use-conversation-exchange-completion',
+  () => ({ useConversationExchangeCompletion: () => completion }),
+);
 vi.mock('@/composables/use-socket/use-socket', () => ({
-  useSocket: () => socketStoreMock,
+  useSocket: () => ({
+    connectedEvents: ref(new Set<string>()),
+    connectedRooms: ref(new Map<string, Set<string>>()),
+    ensureSocketConnection: socket.ensureSocketConnection,
+    listenToEvent: socket.listenToEvent,
+    joinRoom: socket.joinRoom,
+  }),
+}));
+vi.mock('@/stores/debug/debug.store', () => ({
+  useDebugStore: () => debug,
+}));
+vi.mock('@/stores/messages/messages.store', () => ({
+  useMessagesStore: () => messages,
+}));
+vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
+vi.mock('@/i18n/i18n', () => ({
+  i18n: { global: { t: (key: string) => key } },
 }));
 
-vi.mock('@/components/app/composables/use-chat-response-activity', () => ({
-  useChatResponseActivity: () => ({ notifyChatResponse: vi.fn() }),
-}));
-
-// Conversation-store persistence layers, as in stores/conversation.spec.ts.
-vi.mock('../../../api/conversations.api', () => ({
-  fetchConversations: vi.fn().mockResolvedValue([]),
-  fetchConversation: vi.fn(),
-  saveConversation: vi.fn().mockResolvedValue(undefined),
-  deleteConversation: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('../../../api/object-storage.api', () => ({
-  deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
-}));
-
-const makeEntry = (overrides: Partial<DlqEntry> = {}): DlqEntry =>
-  ({
-    id: 'rec-1',
+function makeEntry(overrides: Partial<DlqEntry> = {}): DlqEntry {
+  return {
+    id: 'record-1',
     queueName: 'harness',
-    jobName: 'req-1',
+    jobId: 'job-1',
+    jobName: 'request-1',
     status: 'Failed',
-    payload: null,
-    failedReason: null,
+    payload: {
+      filters: {
+        conversationId: 'conversation-1',
+        event: 'harness',
+        roomId: 'room-1',
+        model: 'llama3',
+        numCtx: '4096',
+        think: 'medium',
+        stream: true,
+        prompt: JSON.stringify([{ role: 'user', content: 'Retry me' }]),
+      },
+    },
+    retryConfig: null,
+    failedReason: 'failed',
     failedAt: null,
-    attemptsMade: 0,
-    totalAttempts: 3,
+    attemptsMade: 1,
+    totalAttempts: 1,
+    failureHistory: null,
     nextRetryAt: null,
-    createdAt: '',
+    createdAt: '2024-01-01T00:00:00.000Z',
     ...overrides,
-  }) as DlqEntry;
+  };
+}
 
 describe('useDlqRetrySession', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     setActivePinia(createPinia());
-    localStorage.clear();
-    // Debug logging is paused unless explicitly unpaused in localStorage.
-    localStorage.setItem('debug-paused', 'false');
     vi.clearAllMocks();
-    socketStoreMock.connectedEvents.value = new Set();
-    socketStoreMock.connectedRooms.value = new Map();
-    // Hydrate the conversation store before seeding — the async load would
-    // otherwise wipe conversations created mid-test.
-    useConversationStore();
-    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
-  it('subscribes to the event and room when not yet connected', () => {
-    const { ensureSocketSubscription } = useDlqRetrySession();
+  it('prepares an existing conversation and registers pending state before requeue', async () => {
+    const conversation = createConversation('Chat', {
+      conversationId: 'conversation-1',
+    });
+    useConversationStore().insertConversation(conversation, true);
+    catalog.loadConversationForWrite.mockResolvedValue(conversation);
 
-    ensureSocketSubscription('room1', 'harness');
+    const session = await useDlqRetrySession().prepareRetrySession(makeEntry());
 
-    expect(socketStoreMock.ensureSocketConnection).toHaveBeenCalledOnce();
-    expect(socketStoreMock.listenToEvent).toHaveBeenCalledWith('harness');
-    expect(socketStoreMock.joinRoom).toHaveBeenCalledWith('room1', 'harness');
-  });
-
-  it('skips subscribing when event and room are already connected', () => {
-    socketStoreMock.connectedEvents.value = new Set(['harness']);
-    socketStoreMock.connectedRooms.value = new Map([
-      ['harness', new Set(['room1'])],
-    ]);
-    const { ensureSocketSubscription } = useDlqRetrySession();
-
-    ensureSocketSubscription('room1', 'harness');
-
-    expect(socketStoreMock.listenToEvent).not.toHaveBeenCalled();
-    expect(socketStoreMock.joinRoom).not.toHaveBeenCalled();
-  });
-
-  it('logs the retry and tracks a pending message once per request id', () => {
-    const debugStore = useDebugStore();
-    const messagesStore = useMessagesStore();
-    const { addRetryPendingMessage } = useDlqRetrySession();
-
-    addRetryPendingMessage('req-1', 'room1', 'harness', 'llama3');
-    addRetryPendingMessage('req-1', 'room1', 'harness', 'llama3');
-
-    expect(debugStore.debugResults[0]?.endpoint).toBe('/api/v1/dlq/reinstate');
-    const pending = messagesStore.messages.filter(
-      (m) => m.data.requestId === 'req-1',
+    expect(exchanges.prepareConversationRetry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationStoreId: conversation.id,
+        requestId: 'request-1',
+        serverConversationId: 'conversation-1',
+        failedPrompt: 'Retry me',
+      }),
     );
-    expect(pending).toHaveLength(1);
-    expect(pending[0].data.pending).toBe(true);
+    expect(socket.ensureSocketConnection).toHaveBeenCalled();
+    expect(socket.listenToEvent).toHaveBeenCalledWith('harness');
+    expect(socket.joinRoom).toHaveBeenCalledWith('room-1', 'harness');
+    expect(messages.resetRequestForRetry).toHaveBeenCalledWith(
+      'harness',
+      'room-1',
+      'request-1',
+      true,
+    );
+    expect(session).toEqual({
+      conversationStoreId: conversation.id,
+      requestId: 'request-1',
+      event: 'harness',
+      roomId: 'room-1',
+      stream: true,
+    });
   });
 
-  it('seeds the active conversation with the prompt and a pending answer', () => {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    const entry = makeEntry({
-      payload: {
-        filters: { prompt: [{ role: 'user', content: 'hello' }] },
-      },
+  it('recovers a missing conversation before preparing retry', async () => {
+    const recovered = createConversation('Recovered', {
+      conversationId: 'conversation-1',
     });
-    const { addRetryPendingMessage } = useDlqRetrySession();
+    catalog.restoreConversation.mockReturnValue(recovered);
 
-    addRetryPendingMessage('req-1', 'room1', 'harness', 'llama3', entry);
+    const session = await useDlqRetrySession().prepareRetrySession(makeEntry());
 
-    const stored = conversationStore.getConversation(conversation.id)!;
-    expect(stored.event).toBe('harness');
-    expect(stored.roomId).toBe('room1');
-    const exchangesByRole = (role: string) =>
-      stored.exchanges.filter(
-        (exchange) => exchange.requestId === 'req-1' && exchange.role === role,
-      );
-    expect(exchangesByRole('user')).toHaveLength(1);
-    expect(exchangesByRole('user')[0].content).toBe('hello');
-    expect(exchangesByRole('assistant')).toHaveLength(1);
-    expect(exchangesByRole('assistant')[0].status).toBe('pending');
+    expect(catalog.restoreConversation).toHaveBeenCalledOnce();
+    expect(exchanges.prepareConversationRetry).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationStoreId: recovered.id }),
+    );
+    expect(session.conversationStoreId).toBe(recovered.id);
   });
 
-  it('does not duplicate exchanges when the request is already seeded', () => {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    const entry = makeEntry({
-      payload: {
-        filters: { prompt: [{ role: 'user', content: 'hello' }] },
-      },
+  it('does not seed a duplicate prompt for an existing failed turn', async () => {
+    const conversation = createConversation('Chat', {
+      conversationId: 'conversation-1',
     });
-    const { addRetryPendingMessage } = useDlqRetrySession();
+    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().addExchange(
+      conversation.id,
+      {
+        role: 'user',
+        content: 'Existing prompt',
+        requestId: 'request-1',
+        status: 'done',
+      },
+      'New chat',
+    );
+    catalog.loadConversationForWrite.mockResolvedValue(conversation);
 
-    addRetryPendingMessage('req-1', 'room1', 'harness', 'llama3', entry);
-    addRetryPendingMessage('req-1', 'room1', 'harness', 'llama3', entry);
+    await useDlqRetrySession().prepareRetrySession(makeEntry());
 
-    const stored = conversationStore.getConversation(conversation.id)!;
-    expect(
-      stored.exchanges.filter((exchange) => exchange.requestId === 'req-1'),
-    ).toHaveLength(2);
+    const preparation = exchanges.prepareConversationRetry.mock.calls[0][0];
+    expect(preparation).not.toHaveProperty('failedPrompt');
+  });
+
+  it('records successful completion', () => {
+    useDlqRetrySession().completeRetrySession({
+      conversationStoreId: 'c1',
+      requestId: 'request-1',
+      event: 'harness',
+      roomId: 'room-1',
+      stream: true,
+    });
+
+    expect(debug.addDebugResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'RETRY',
+        status: 'success',
+        requestId: 'request-1',
+      }),
+    );
+  });
+
+  it('clears pending state and marks the exchange failed on retry failure', () => {
+    useDlqRetrySession().failRetrySession({
+      conversationStoreId: 'c1',
+      requestId: 'request-1',
+      event: 'harness',
+      roomId: 'room-1',
+      stream: true,
+    });
+
+    expect(messages.removeMessage).toHaveBeenCalledWith('request-1');
+    expect(completion.markExchangeError).toHaveBeenCalledWith(
+      'c1',
+      'request-1',
+      'toast.retryFailed',
+    );
   });
 });

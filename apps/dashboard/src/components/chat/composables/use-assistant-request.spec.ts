@@ -1,9 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useDebugStore } from '@/stores/debug/debug.store';
 
 import { useAssistantRequest } from './use-assistant-request';
@@ -14,6 +15,28 @@ const toast = vi.hoisted(() => ({
   error: vi.fn(),
   success: vi.fn(),
   warning: vi.fn(),
+}));
+
+const conversationImages = vi.hoisted(() => ({
+  setUploadedImages: vi.fn(),
+}));
+const conversationDocuments = vi.hoisted(() => ({
+  setUploadedDocuments: vi.fn(),
+}));
+
+vi.mock('./use-conversation-images', () => ({
+  useConversationImages: () => conversationImages,
+}));
+vi.mock('./use-conversation-documents', () => ({
+  useConversationDocuments: () => conversationDocuments,
+}));
+
+const completion = vi.hoisted(() => ({
+  markExchangeError: vi.fn(),
+}));
+
+vi.mock('./use-conversation-exchange-completion', () => ({
+  useConversationExchangeCompletion: () => completion,
 }));
 
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
@@ -88,20 +111,18 @@ describe('useAssistantRequest', () => {
     toast.error.mockClear();
     toast.success.mockClear();
     toast.warning.mockClear();
+    conversationImages.setUploadedImages.mockClear();
+    conversationDocuments.setUploadedDocuments.mockClear();
+    completion.markExchangeError.mockClear();
   });
 
   it('posts, tracks the request, and promotes attachments on success', async () => {
     const fetchMock = stubHarnessFetch(() => ({ ok: true, status: 200 }));
     const { trackRequest } = stubSocketProvider();
     const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
-    const setUploadedImages = vi.spyOn(conversationStore, 'setUploadedImages');
-    const setUploadedDocuments = vi.spyOn(
-      conversationStore,
-      'setUploadedDocuments',
-    );
+    const conversation = useConversationCatalog().createNewConversation();
     const setSavedFileInfos = vi.spyOn(conversationStore, 'setSavedFileInfos');
-    const markExchangeError = vi.spyOn(conversationStore, 'markExchangeError');
+    const markExchangeError = completion.markExchangeError;
     const clearPending = vi.spyOn(
       useAttachedFilesStore(),
       'clearPendingFilesForConversation',
@@ -140,8 +161,14 @@ describe('useAssistantRequest', () => {
         model: 'llama3',
       }),
     );
-    expect(setUploadedImages).toHaveBeenCalledWith(conversation.id, []);
-    expect(setUploadedDocuments).toHaveBeenCalledWith(conversation.id, []);
+    expect(conversationImages.setUploadedImages).toHaveBeenCalledWith(
+      conversation.id,
+      [],
+    );
+    expect(conversationDocuments.setUploadedDocuments).toHaveBeenCalledWith(
+      conversation.id,
+      [],
+    );
     expect(setSavedFileInfos).toHaveBeenCalledWith(conversation.id, []);
     expect(clearPending).toHaveBeenCalledWith({
       parentConversationId: conversation.id,
@@ -158,15 +185,13 @@ describe('useAssistantRequest', () => {
       text: async () => 'boom',
     }));
     stubSocketProvider();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
-    const markExchangeError = vi.spyOn(conversationStore, 'markExchangeError');
+    const conversation = useConversationCatalog().createNewConversation();
 
     const { postHarnessRequest } = useAssistantRequest();
 
     await postHarnessRequest(createRequest({ sid: conversation.id }));
 
-    expect(markExchangeError).toHaveBeenCalledWith(
+    expect(completion.markExchangeError).toHaveBeenCalledWith(
       conversation.id,
       'req-1',
       '500: boom',
@@ -180,15 +205,13 @@ describe('useAssistantRequest', () => {
       throw new Error('network down');
     });
     stubSocketProvider();
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.createNewConversation();
-    const markExchangeError = vi.spyOn(conversationStore, 'markExchangeError');
+    const conversation = useConversationCatalog().createNewConversation();
 
     const { postHarnessRequest } = useAssistantRequest();
 
     await postHarnessRequest(createRequest({ sid: conversation.id }));
 
-    expect(markExchangeError).toHaveBeenCalledWith(
+    expect(completion.markExchangeError).toHaveBeenCalledWith(
       conversation.id,
       'req-1',
       'network down',
@@ -200,8 +223,6 @@ describe('useAssistantRequest', () => {
   it('skips attachment promotion when there is no session id', async () => {
     stubHarnessFetch(() => ({ ok: true, status: 200 }));
     stubSocketProvider();
-    const conversationStore = useConversationStore();
-    const setUploadedImages = vi.spyOn(conversationStore, 'setUploadedImages');
     const clearPending = vi.spyOn(
       useAttachedFilesStore(),
       'clearPendingFilesForConversation',
@@ -211,7 +232,7 @@ describe('useAssistantRequest', () => {
 
     await postHarnessRequest(createRequest({ sid: '' }));
 
-    expect(setUploadedImages).not.toHaveBeenCalled();
+    expect(conversationImages.setUploadedImages).not.toHaveBeenCalled();
     expect(clearPending).not.toHaveBeenCalled();
   });
 });

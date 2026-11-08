@@ -3,9 +3,9 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent } from 'vue';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { useAttachmentLifecycle } from './use-attachment-lifecycle';
 
@@ -36,14 +36,12 @@ describe('useAttachmentLifecycle', () => {
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
     setActivePinia(createPinia());
-    useConversationStore();
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
   it('revokes every remaining object URL only when the app owner unmounts', () => {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
     const pending = usePendingAttachments();
     pending.addPendingFile(
       {

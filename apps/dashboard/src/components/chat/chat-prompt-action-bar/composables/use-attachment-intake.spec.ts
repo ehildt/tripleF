@@ -3,8 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { convertDocuments } from '@/api/documents.api';
 import { checkObjectExists } from '@/api/object-storage.api';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
 import { hashFile } from '@/utils/hash-file/hash-file.helper';
 
 import { useAttachmentIntake } from './use-attachment-intake';
@@ -43,8 +45,8 @@ describe('useAttachmentIntake', () => {
 
   function setupConversation() {
     const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
     return { conversation, conversationStore };
   }
 
@@ -82,16 +84,14 @@ describe('useAttachmentIntake', () => {
   });
 
   it('adds existing stored images as uploaded metadata', async () => {
-    const { conversation, conversationStore } = setupConversation();
+    const { conversation } = setupConversation();
     mockedCheckObjectExists.mockResolvedValue(true);
     const file = new File(['hello'], 'cloud.png', { type: 'image/png' });
 
     await useAttachmentIntake().addFiles([file]);
 
     expect(usePendingAttachments().attachedFiles.value).toEqual([]);
-    expect(
-      conversationStore.getUploadedImagesForConversation(conversation.id),
-    ).toEqual(
+    expect(getUploadedImagesForConversation(conversation)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: 'cloud.png',
@@ -120,7 +120,7 @@ describe('useAttachmentIntake', () => {
   });
 
   it('converts pdf pages to images and keeps the original pending', async () => {
-    const { conversation, conversationStore } = setupConversation();
+    const { conversation } = setupConversation();
     mockedConvertDocuments.mockResolvedValue([
       {
         name: 'report.pdf',
@@ -144,9 +144,7 @@ describe('useAttachmentIntake', () => {
       conversation.conversationId ?? '',
       [{ file, hash: 'report.pdf' }],
     );
-    expect(
-      conversationStore.getUploadedImagesForConversation(conversation.id),
-    ).toEqual(
+    expect(getUploadedImagesForConversation(conversation)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: 'report.pdf · page 1',

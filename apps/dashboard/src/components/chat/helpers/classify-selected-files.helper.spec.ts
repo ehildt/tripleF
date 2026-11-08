@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { UploadedImage } from '@/stores/conversation/conversation.model';
+import type { UploadedImage } from '@/stores/chat/conversation/conversation.model';
 import { hashFile } from '@/utils/hash-file/hash-file.helper';
 
 import { classifySelectedFiles } from './classify-selected-files.helper';

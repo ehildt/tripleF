@@ -2,11 +2,14 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
-
 import { useChatThink } from './use-chat-think';
 
 const toast = vi.hoisted(() => ({ warning: vi.fn() }));
+const configuration = vi.hoisted(() => ({ setThink: vi.fn() }));
+
+vi.mock('@/components/chat/composables/use-conversation-configuration', () => ({
+  useConversationConfiguration: () => configuration,
+}));
 
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 
@@ -40,6 +43,7 @@ describe('useChatThink', () => {
     localStorage.clear();
     vi.restoreAllMocks();
     toast.warning.mockClear();
+    configuration.setThink.mockClear();
     chatConversation.conversationId.value = '';
     chatConversation.selectedModel.value = null;
   });
@@ -76,29 +80,21 @@ describe('useChatThink', () => {
 
   it('selectThink persists and updates the conversation', () => {
     chatConversation.conversationId.value = 'conv-1';
-    const conversationStore = useConversationStore();
-    const setThink = vi
-      .spyOn(conversationStore, 'setThink')
-      .mockImplementation(() => {});
 
     const { selectThink } = useChatThink();
     selectThink('low');
 
     expect(localStorage.getItem('harness-selected-think')).toBe('low');
-    expect(setThink).toHaveBeenCalledWith('conv-1', 'low');
+    expect(configuration.setThink).toHaveBeenCalledWith('conv-1', 'low');
   });
 
   it('selectThink does not touch the store without a conversation id', () => {
     chatConversation.conversationId.value = '';
-    const conversationStore = useConversationStore();
-    const setThink = vi
-      .spyOn(conversationStore, 'setThink')
-      .mockImplementation(() => {});
 
     const { selectThink } = useChatThink();
     selectThink('off');
 
-    expect(setThink).not.toHaveBeenCalled();
+    expect(configuration.setThink).not.toHaveBeenCalled();
   });
 
   it('warns and resets to off when a non-thinking model is selected', async () => {

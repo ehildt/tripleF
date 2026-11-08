@@ -1,6 +1,6 @@
 import { computed, type Ref, ref } from 'vue';
 
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 
 import { computeCollapsedExchangeIds } from '../helpers/compute-collapsed-exchange-ids.helper';
 import { computeHighlightedExchangeIds } from '../helpers/compute-highlighted-exchange-ids.helper';

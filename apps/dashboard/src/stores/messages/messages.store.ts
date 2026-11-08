@@ -2,14 +2,19 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
 import { useChatResponseActivity } from '@/components/app/composables/use-chat-response-activity';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationExchangeCompletion } from '@/components/chat/composables/use-conversation-exchange-completion';
+import { useConversationExchanges } from '@/components/chat/composables/use-conversation-exchanges';
+import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { createAssistantResponseState } from '@/components/chat/shared/helpers/assistant-response/response-state/create-assistant-response-state.helper';
 import type { AssistantResponseState } from '@/components/chat/shared/helpers/assistant-response/response-state/create-assistant-response-state.helper.types';
 import { processAssistantResponseEvent } from '@/components/chat/shared/helpers/assistant-response/response-state/process-assistant-response-event.helper';
 import { parseSocketEvent } from '@/composables/helpers/parse-socket-event.helper';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
+import type { Conversation } from '@/stores/chat/conversation/conversation.model';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import type { AssistantActivityDescriptor } from '@/types/activity.model';
 import type {
   AssistantActivityData,
@@ -27,7 +32,6 @@ import { formatTime } from '@/utils/format-time/format-time.helper';
 
 import { useReadTracker } from '../../composables/use-read-tracker/use-read-tracker';
 import { useModelsStore } from '../../stores/models/models.store';
-import type { Conversation } from '../conversation/conversation.model';
 import { extractUploadedImagesFromResponse } from './helpers/extract-uploaded-images-from-response.helper';
 
 /**
@@ -54,6 +58,10 @@ export const useMessagesStore = defineStore('messages', () => {
   const readTracker = useReadTracker('read-api-ids');
   const harnessStreamStates = new Map<string, AssistantResponseState>();
   const { notifyChatResponse } = useChatResponseActivity();
+  const configuration = useConversationConfiguration();
+  const exchanges = useConversationExchanges();
+  const completion = useConversationExchangeCompletion();
+  const images = useConversationImages();
 
   function trackRequest(requestId: string) {
     trackedRequestIds.value.add(requestId);
@@ -123,8 +131,15 @@ export const useMessagesStore = defineStore('messages', () => {
     mutate: (ex: Exchange, conversation: Conversation) => void,
   ): void {
     for (const conversation of targetConversations(eventName)) {
-      const ex = findAssistantExchange(conversation, requestId);
-      if (ex) mutate(ex, conversation);
+      const exchange = findAssistantExchange(conversation, requestId);
+      if (!exchange) continue;
+      const draft = { ...exchange };
+      mutate(draft, conversation);
+      useConversationStore().patchAssistantExchange(
+        conversation.id,
+        requestId,
+        draft,
+      );
     }
   }
 
@@ -135,7 +150,7 @@ export const useMessagesStore = defineStore('messages', () => {
   ): Exchange | undefined {
     const existing = findAssistantExchange(conversation, requestId);
     if (existing) return existing;
-    useConversationStore().addExchange(conversation.id, {
+    void exchanges.addExchange(conversation.id, {
       role: 'assistant',
       content: '',
       requestId,
@@ -176,16 +191,17 @@ export const useMessagesStore = defineStore('messages', () => {
       // queries are each real searches — collapsing by name under-counts.
       const toolKey = (call: { name?: string; query?: string }) =>
         `${call.name ?? ''}${call.query ?? ''}`;
-      const active = (ex.toolCalls ?? []).filter(
+      const draft = { ...ex };
+      const active = (draft.toolCalls ?? []).filter(
         (t) => toolKey(t) !== toolKey(tc),
       );
       const language = tc.language;
-      if (language) ex.activityLanguage = language;
+      if (language) draft.activityLanguage = language;
 
       if (tc.status === 'done' || tc.status === 'error') {
-        ex.toolCalls = active.length ? active : undefined;
+        draft.toolCalls = active.length ? active : undefined;
       } else {
-        ex.toolCalls = [
+        draft.toolCalls = [
           ...active,
           {
             name: tc.name,
@@ -195,6 +211,11 @@ export const useMessagesStore = defineStore('messages', () => {
           },
         ];
       }
+      useConversationStore().patchAssistantExchange(
+        conversation.id,
+        requestId,
+        draft,
+      );
     }
     trackEnvelopeEntry(eventName, requestId, false);
     notifyChatResponse();
@@ -237,8 +258,14 @@ export const useMessagesStore = defineStore('messages', () => {
     for (const conversation of targetConversations(eventName)) {
       const ex = ensureAssistantExchange(conversation, requestId);
       if (!ex) continue;
-      applyStreamingState(ex, state, language);
-      conversation.updatedAt = Date.now();
+      const draft = { ...ex };
+      applyStreamingState(draft, state, language);
+      useConversationStore().patchAssistantExchange(
+        conversation.id,
+        requestId,
+        draft,
+        true,
+      );
     }
     trackEnvelopeEntry(eventName, requestId, false);
     notifyChatResponse();
@@ -259,9 +286,15 @@ export const useMessagesStore = defineStore('messages', () => {
     for (const conversation of targetConversations(eventName)) {
       const ex = ensureAssistantExchange(conversation, requestId);
       if (!ex) continue;
-      ex.chartData = state.chartData;
-      ex.revealCharts = state.revealCharts;
-      conversation.updatedAt = Date.now();
+      useConversationStore().patchAssistantExchange(
+        conversation.id,
+        requestId,
+        {
+          chartData: state.chartData,
+          revealCharts: state.revealCharts,
+        },
+        true,
+      );
     }
     trackEnvelopeEntry(eventName, requestId, false);
     notifyChatResponse();
@@ -299,8 +332,18 @@ export const useMessagesStore = defineStore('messages', () => {
       seedUserExchange(conversation, requestId, eventName, d.prompt);
       const ex = ensureAssistantExchange(conversation, requestId);
       if (!ex) continue;
-      finalizeAssistantExchange(conversation, ex, state, d);
-      conversation.updatedAt = Date.now();
+      const draft = { ...ex };
+      finalizeAssistantExchange(draft, state, d);
+      conversationStore.patchAssistantExchange(
+        conversation.id,
+        requestId,
+        draft,
+        true,
+      );
+      void completion.markExchangeDone(conversation.id, requestId, {
+        promptEvalCount: d.usage?.promptEvalCount,
+        evalCount: d.usage?.evalCount,
+      });
 
       // Backfill context size once the model is known.
       ensureConversationNumCtx(conversation);
@@ -312,7 +355,7 @@ export const useMessagesStore = defineStore('messages', () => {
         conversationStore.getConversationId(conversation.id),
       );
       if (uploadedImages.length > 0) {
-        conversationStore.setUploadedImages(conversation.id, uploadedImages);
+        void images.setUploadedImages(conversation.id, uploadedImages);
       }
     }
     trackEnvelopeEntry(eventName, requestId, true);
@@ -333,14 +376,20 @@ export const useMessagesStore = defineStore('messages', () => {
     for (const conversation of targetConversations(eventName)) {
       const ex = ensureAssistantExchange(conversation, requestId);
       if (!ex) continue;
-      ex.content = `Error: ${reason}`;
-      ex.activity = undefined;
-      ex.reasoning = undefined;
-      ex.toolCalls = undefined;
-      conversation.updatedAt = Date.now();
+      useConversationStore().patchAssistantExchange(
+        conversation.id,
+        requestId,
+        {
+          content: `Error: ${reason}`,
+          activity: undefined,
+          reasoning: undefined,
+          toolCalls: undefined,
+        },
+        true,
+      );
       // Terminal status flows through markExchangeDone (also resolves pending
       // merges) and the context backfill — same as the completed path.
-      useConversationStore().markExchangeDone(conversation.id, requestId);
+      void completion.markExchangeDone(conversation.id, requestId);
       ensureConversationNumCtx(conversation);
     }
     trackEnvelopeEntry(eventName, requestId, true);
@@ -352,9 +401,11 @@ export const useMessagesStore = defineStore('messages', () => {
     for (const conversation of conversationStore.conversations) {
       for (const ex of conversation.exchanges) {
         if (ex.requestId !== requestId || ex.role !== 'assistant') continue;
-        ex.status = 'done';
-        ex.activity = undefined;
-        ex.reasoning = undefined;
+        conversationStore.patchAssistantExchange(conversation.id, requestId, {
+          status: 'done',
+          activity: undefined,
+          reasoning: undefined,
+        });
       }
     }
   }
@@ -369,12 +420,11 @@ export const useMessagesStore = defineStore('messages', () => {
     prompt: string | undefined,
   ): void {
     if (!prompt) return;
-    const conversationStore = useConversationStore();
     const exists = conversation.exchanges.some(
       (e) => e.role === 'user' && e.requestId === requestId,
     );
     if (exists) return;
-    conversationStore.addExchange(conversation.id, {
+    void exchanges.addExchange(conversation.id, {
       role: 'user',
       content: prompt,
       requestId,
@@ -406,7 +456,6 @@ export const useMessagesStore = defineStore('messages', () => {
 
   /** Finalize the assistant exchange from the authoritative completed payload. */
   function finalizeAssistantExchange(
-    conversation: Conversation,
     ex: Exchange,
     state: AssistantResponseState,
     d: AssistantCompletedData,
@@ -424,14 +473,6 @@ export const useMessagesStore = defineStore('messages', () => {
     ex.activity = undefined;
     ex.activityLanguage = undefined;
     ex.toolCalls = undefined;
-    useConversationStore().markExchangeDone(
-      conversation.id,
-      ex.requestId ?? '',
-      {
-        promptEvalCount: d.usage?.promptEvalCount,
-        evalCount: d.usage?.evalCount,
-      },
-    );
   }
 
   function ensureConversationNumCtx(conversation: Conversation): void {
@@ -439,11 +480,10 @@ export const useMessagesStore = defineStore('messages', () => {
     if (conversation.numCtx || !conversation.model) return;
     const numCtx = modelsStore.maxNumCtxForModel(conversation.model);
     if (numCtx) {
-      conversation.numCtx = numCtx;
       // Persist so the sidebar/context % stays in sync after a reload —
       // otherwise the cached contextUsagePercent was computed with an empty
       // numCtx and the sidebar shows nothing.
-      useConversationStore().setNumCtx(conversation.id, numCtx);
+      void configuration.setNumCtx(conversation.id, numCtx);
     }
   }
 

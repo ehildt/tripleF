@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { UploadedImage } from '@/stores/conversation/conversation.model';
+import type { UploadedImage } from '@/stores/chat/conversation/conversation.model';
 
 import { buildConversationMetadata } from './build-conversation-metadata.helper';
 

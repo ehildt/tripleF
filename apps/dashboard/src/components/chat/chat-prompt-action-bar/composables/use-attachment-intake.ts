@@ -2,12 +2,18 @@ import { convertDocuments } from '@/api/documents.api';
 import { checkObjectExists } from '@/api/object-storage.api';
 import { classifyAttachedFile } from '@/components/chat/chat-left-toolbar/shared/helpers/classify-attached-file.helper';
 import { mapPageToUploadedImage } from '@/components/chat/chat-left-toolbar/shared/helpers/map-page-to-uploaded-image.helper';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationDocuments } from '@/components/chat/composables/use-conversation-documents';
+import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { PendingAttachmentScope } from '@/stores/chat/attached-files/attached-files.store.types';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { getUploadedDocumentsForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-documents-for-conversation.helper';
+import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
 import { createId } from '@/utils/create-id/create-id.helper';
 import { hashFile } from '@/utils/hash-file/hash-file.helper';
 
@@ -22,6 +28,10 @@ interface AttachmentIntake {
 export function useAttachmentIntake(): AttachmentIntake {
   const attachedFilesStore = useAttachedFilesStore();
   const conversationStore = useConversationStore();
+  const catalog = useConversationCatalog();
+  const configuration = useConversationConfiguration();
+  const images = useConversationImages();
+  const documents = useConversationDocuments();
   const pendingAttachments = usePendingAttachments();
   const toast = useToast();
 
@@ -29,7 +39,7 @@ export function useAttachmentIntake(): AttachmentIntake {
     const parentConversationId = conversationStore.activeConversationId;
     if (!parentConversationId) return '';
     if (!conversationStore.getConversationId(parentConversationId))
-      conversationStore.setConversationId(parentConversationId, createId());
+      void configuration.setConversationId(parentConversationId, createId());
     return conversationStore.getConversationId(parentConversationId);
   }
 
@@ -55,7 +65,7 @@ export function useAttachmentIntake(): AttachmentIntake {
     ).catch(() => false);
 
     if (exists)
-      conversationStore.setUploadedImages(scope.parentConversationId, [
+      void images.setUploadedImages(scope.parentConversationId, [
         {
           name: file.name,
           hash,
@@ -88,7 +98,7 @@ export function useAttachmentIntake(): AttachmentIntake {
     ).catch(() => false);
 
     if (exists)
-      conversationStore.setUploadedDocuments(scope.parentConversationId, [
+      void documents.setUploadedDocuments(scope.parentConversationId, [
         {
           name: file.name,
           hash,
@@ -124,7 +134,7 @@ export function useAttachmentIntake(): AttachmentIntake {
       const pageImages = converted?.pageImages ?? [];
 
       if (pageImages.length > 0) {
-        conversationStore.setUploadedImages(
+        void images.setUploadedImages(
           scope.parentConversationId,
           pageImages.map((page) =>
             mapPageToUploadedImage(page, scope.conversationId, {
@@ -171,24 +181,22 @@ export function useAttachmentIntake(): AttachmentIntake {
 
   async function addFiles(files: File[]): Promise<void> {
     const parentConversationId =
-      conversationStore.activeConversationId ||
-      conversationStore.ensureConversation().id;
+      conversationStore.activeConversationId || catalog.ensureConversation().id;
     const conversationId = ensureConversation() || createId();
     if (!parentConversationId) return;
-    conversationStore.setConversationId(parentConversationId, conversationId);
+    void configuration.setConversationId(parentConversationId, conversationId);
     const scope = { parentConversationId, conversationId };
 
     const currentHashes = new Set<string>([
       ...attachedFilesStore.pendingFilesFor(scope).map((entry) => entry.hash),
-      ...conversationStore
-        .getUploadedImagesForConversation(parentConversationId, conversationId)
-        .map((image) => image.hash),
-      ...conversationStore
-        .getUploadedDocumentsForConversation(
-          parentConversationId,
-          conversationId,
-        )
-        .map((document) => document.hash),
+      ...getUploadedImagesForConversation(
+        conversationStore.getConversation(parentConversationId),
+        conversationId,
+      ).map((image) => image.hash),
+      ...getUploadedDocumentsForConversation(
+        conversationStore.getConversation(parentConversationId),
+        conversationId,
+      ).map((document) => document.hash),
     ]);
 
     for (const file of files) await addFileEntry(scope, file, currentHashes);

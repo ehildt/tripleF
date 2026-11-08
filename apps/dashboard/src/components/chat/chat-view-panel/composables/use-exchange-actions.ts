@@ -1,5 +1,6 @@
+import { useConversationExchanges } from '@/components/chat/composables/use-conversation-exchanges';
 import { useSubmit } from '@/components/chat/composables/use-submit';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import type { ExchangeActions } from './use-exchange-actions.types';
 
@@ -12,6 +13,7 @@ import type { ExchangeActions } from './use-exchange-actions.types';
  */
 export function useExchangeActions(): ExchangeActions {
   const conversationStore = useConversationStore();
+  const exchanges = useConversationExchanges();
   const { submit: retryHandler } = useSubmit();
 
   function retryExchange(exchangeId: string) {
@@ -23,7 +25,7 @@ export function useExchangeActions(): ExchangeActions {
     if (idx < 1) return;
     const prev = conversation.exchanges[idx - 1];
     if (prev.role !== 'user') return;
-    conversation.exchanges.splice(idx - 1, 2);
+    void exchanges.deleteExchangeAndPrune(id, prev.id);
     void retryHandler(prev.content);
   }
 
