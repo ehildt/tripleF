@@ -4,7 +4,7 @@ import { usePausablePlayer } from '@/components/widgets/floating-player/composab
 import { usePopupGeometry } from '@/components/widgets/floating-player/composables/use-popup-geometry';
 import type { PlaybackSession } from '@/composables/create-playback-session/create-playback-session';
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 /**

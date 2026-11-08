@@ -1,7 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useConversationStore } from '../conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+
 import { useModelsStore } from '../models/models.store';
 import { useMessagesStore } from './messages.store';
 
@@ -44,8 +46,7 @@ describe('useMessagesStore', () => {
     // would wipe it mid-test.
     useConversationStore();
     await new Promise((resolve) => setTimeout(resolve, 0));
-    const conversationStore = useConversationStore();
-    conversationStore.createNewConversation('temporary', 'harness', '');
+    useConversationCatalog().createNewConversation('temporary', 'harness', '');
   });
 
   it('initializes with empty messages', () => {
@@ -536,6 +537,25 @@ describe('useMessagesStore', () => {
     store.removeMessage('req-1');
 
     expect(store.isRead('req-1')).toBe(false);
+  });
+
+  it('applies the completed response before the terminal persistence command', () => {
+    const conversationStore = useConversationStore();
+    const patch = vi.spyOn(conversationStore, 'patchAssistantExchange');
+    const store = useMessagesStore();
+
+    store.addMessage(
+      'harness',
+      completed({ template: 'text', result: 'final result' }),
+    );
+
+    const terminal = patch.mock.calls.findLastIndex(
+      ([, , exchangePatch]) => exchangePatch.status === 'done',
+    );
+    expect(terminal).toBeGreaterThan(0);
+    expect(patch.mock.invocationCallOrder[0]).toBeLessThan(
+      patch.mock.invocationCallOrder[terminal],
+    );
   });
 
   it('ignores envelopes without a request id or a known type', () => {

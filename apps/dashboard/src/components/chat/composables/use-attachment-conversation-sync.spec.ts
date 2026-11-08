@@ -3,8 +3,9 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, nextTick } from 'vue';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { useAttachmentConversationSync } from './use-attachment-conversation-sync';
 
@@ -37,9 +38,8 @@ describe('useAttachmentConversationSync', () => {
   });
 
   it('preserves saved file metadata as pending selection changes', async () => {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
     const scope = {
       parentConversationId: conversation.id,
       conversationId: conversation.conversationId,
@@ -61,13 +61,13 @@ describe('useAttachmentConversationSync', () => {
 
   it('synchronizes metadata for a newly active conversation pair', async () => {
     const conversationStore = useConversationStore();
-    const first = conversationStore.ensureConversation();
-    const second = conversationStore.createNewConversation();
-    conversationStore.setActiveConversation(first.id);
+    const first = useConversationCatalog().ensureConversation();
+    const second = useConversationCatalog().createNewConversation();
+    useConversationCatalog().setActiveConversation(first.id);
     const setSavedFileInfos = vi.spyOn(conversationStore, 'setSavedFileInfos');
     const wrapper = mount(SyncHost);
 
-    conversationStore.setActiveConversation(second.id);
+    useConversationCatalog().setActiveConversation(second.id);
     await nextTick();
 
     expect(setSavedFileInfos).toHaveBeenCalledWith(second.id, []);

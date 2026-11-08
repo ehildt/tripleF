@@ -1,4 +1,4 @@
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { extractEntryFilters } from '../helpers/extract-entry-filters.helper';

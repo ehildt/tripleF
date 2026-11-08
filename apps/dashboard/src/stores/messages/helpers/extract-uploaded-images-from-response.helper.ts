@@ -1,4 +1,5 @@
-import type { UploadedImage } from '../../conversation/conversation.model';
+import type { UploadedImage } from '@/stores/chat/conversation/conversation.model';
+
 import { mapEntryToUploadedImage } from './map-entry-to-uploaded-image.helper';
 
 /**

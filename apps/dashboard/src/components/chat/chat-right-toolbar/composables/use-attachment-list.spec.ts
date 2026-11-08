@@ -5,7 +5,7 @@ import type { AttachedFileEntry } from '@/stores/chat/attached-files/attached-fi
 import type {
   UploadedDocument,
   UploadedImage,
-} from '@/stores/conversation/conversation.model';
+} from '@/stores/chat/conversation/conversation.model';
 
 import { useAttachmentList } from './use-attachment-list';
 
@@ -30,7 +30,7 @@ vi.mock(
   },
 );
 
-vi.mock('@/stores/conversation/conversation.store', async () => {
+vi.mock('@/stores/chat/conversation/conversation.store', async () => {
   const { ref } = await import('vue');
   const uploadedImages = ref<UploadedImage[]>([]);
   const uploadedDocuments = ref<UploadedDocument[]>([]);
@@ -39,10 +39,13 @@ vi.mock('@/stores/conversation/conversation.store', async () => {
   return {
     useConversationStore: () => ({
       activeConversationId: 'conv-1',
-      getConversation: () => ({ id: 'conv-1', conversationId: 'c1' }),
+      getConversation: () => ({
+        id: 'conv-1',
+        conversationId: 'c1',
+        uploadedImages: uploadedImages.value,
+        uploadedDocuments: uploadedDocuments.value,
+      }),
       getConversationId: () => 'c1',
-      getUploadedImagesForConversation: () => uploadedImages.value,
-      getUploadedDocumentsForConversation: () => uploadedDocuments.value,
     }),
   };
 });

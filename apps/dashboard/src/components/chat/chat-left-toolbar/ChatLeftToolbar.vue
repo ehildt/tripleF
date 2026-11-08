@@ -2,8 +2,9 @@
 import { storeToRefs } from 'pinia';
 import { onDeactivated } from 'vue';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import CapabilitiesRow from './capabilities-row/CapabilitiesRow.vue';
 import { useDeleteConversation } from './composables/use-delete-conversation';
@@ -28,7 +29,8 @@ const { deleteConversation } = useDeleteConversation();
 const conversationStore = useConversationStore();
 const conversationSettingsStore = useConversationSettingsStore();
 const { conversations, activeConversationId } = storeToRefs(conversationStore);
-const { setActiveConversation, toggleConversationType } = conversationStore;
+const { setActiveConversation, toggleConversationType } =
+  useConversationCatalog();
 const { temporaryRetentionMinutes } = storeToRefs(conversationSettingsStore);
 
 // KeepAlive deactivates the chat tree on a tab switch — close any open menus

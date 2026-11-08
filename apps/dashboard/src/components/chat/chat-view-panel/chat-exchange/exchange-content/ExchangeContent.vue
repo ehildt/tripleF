@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import type { LightboxImage } from '@/types/lightbox.model';
 
 import AssistantResponse from './assistant-response/AssistantResponse.vue';

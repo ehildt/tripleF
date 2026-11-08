@@ -2,6 +2,10 @@ import { computed, ref } from 'vue';
 
 import { buildFormData } from '@/components/chat/composables/helpers/build-form-data.helper';
 import { requireModel } from '@/components/chat/composables/helpers/require-model.helper';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationPrompt } from '@/components/chat/composables/use-conversation-prompt';
+import { useConversationTurns } from '@/components/chat/composables/use-conversation-turns';
 import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
 import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
@@ -17,12 +21,12 @@ import {
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
-import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 import type {
   Exchange,
   UploadedDocument,
-} from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+} from '@/stores/chat/conversation/conversation.model';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
 import { useModelsStore } from '@/stores/models/models.store';
@@ -46,6 +50,10 @@ export function useSubmit() {
   const conversationSettingsStore = useConversationSettingsStore();
   const memorySpacesStore = useMemorySpacesStore();
   const conversationStore = useConversationStore();
+  const catalog = useConversationCatalog();
+  const configuration = useConversationConfiguration();
+  const turns = useConversationTurns();
+  const conversationPrompt = useConversationPrompt();
   const modelsStore = useModelsStore();
   const attachedFilesStore = useAttachedFilesStore();
   const mergeSelection = useMergeSelection();
@@ -85,9 +93,7 @@ export function useSubmit() {
   function ensureActiveConversation(): string {
     if (conversationStore.activeConversationId)
       return conversationStore.activeConversationId;
-    const s = conversationStore.createNewConversation();
-    conversationStore.activeConversationId = s.id;
-    return s.id;
+    return catalog.ensureConversation().id;
   }
 
   function ensureSocketSubscription(eventName: string, room: string) {
@@ -111,7 +117,7 @@ export function useSubmit() {
       return JSON.stringify([
         { role: 'user', content: promptDraft.value.trim() },
       ]);
-    return conversationStore.buildPrompt(id);
+    return conversationPrompt.buildPrompt(id);
   }
 
   function setupActiveSession(
@@ -126,36 +132,32 @@ export function useSubmit() {
     documents: ConversationMetadataDocument[],
     mergeOrigin?: string[],
   ) {
-    for (const seeded of buildSeededExchanges({
-      requestId,
+    void turns.seedConversationTurn({
+      conversationStoreId: sid,
+      exchanges: buildSeededExchanges({
+        requestId,
+        model,
+        event,
+        roomId: room,
+        conversationId,
+        userContent,
+        images,
+        documents,
+        mergeOrigin,
+      }),
       model,
+      numCtx:
+        conversationStore.getConversation(sid)?.numCtx ||
+        activeConversation.value?.numCtx ||
+        modelsStore.maxNumCtxForModel(model) ||
+        '',
+      think: activeConversation.value?.think ?? 'medium',
+      stream: activeConversation.value?.stream ?? true,
       event,
       roomId: room,
-      conversationId,
-      userContent,
-      images,
-      documents,
-      mergeOrigin,
-    })) {
-      conversationStore.addExchange(sid, seeded);
-    }
-    conversationStore.setModel(sid, model);
-    const numCtx =
-      conversationStore.getConversation(sid)?.numCtx ||
-      activeConversation.value?.numCtx ||
-      modelsStore.maxNumCtxForModel(model) ||
-      '';
-    conversationStore.setNumCtx(sid, numCtx);
-    conversationStore.setStream(sid, activeConversation.value?.stream ?? true);
-    conversationStore.setThink(
-      sid,
-      activeConversation.value?.think ?? 'medium',
-    );
-    const s = conversationStore.getConversation(sid);
-    if (s) {
-      s.event = event;
-      s.roomId = room;
-    }
+      patchConfiguration: true,
+      defaultTitle: i18n.global.t('common.newConversation'),
+    });
   }
 
   function addCrossSessionExchanges(
@@ -172,18 +174,27 @@ export function useSubmit() {
       if (s.id === sid) continue;
       if (s.event !== event) continue;
 
-      for (const seeded of buildSeededExchanges({
-        requestId,
+      void turns.seedConversationTurn({
+        conversationStoreId: s.id,
+        exchanges: buildSeededExchanges({
+          requestId,
+          model,
+          event,
+          roomId: room,
+          conversationId: s.conversationId,
+          userContent,
+          images,
+          documents,
+        }),
         model,
+        numCtx: s.numCtx,
+        think: s.think,
+        stream: s.stream,
         event,
         roomId: room,
-        conversationId: s.conversationId,
-        userContent,
-        images,
-        documents,
-      })) {
-        conversationStore.addExchange(s.id, seeded);
-      }
+        patchConfiguration: false,
+        defaultTitle: i18n.global.t('common.newConversation'),
+      });
     }
   }
 
@@ -269,7 +280,7 @@ export function useSubmit() {
       ...imageFiles,
       ...documentEntries.map((entry) => entry.file),
     ];
-    conversationStore.setSavedFileInfos(sid!, currentFiles);
+    void configuration.setSavedFileInfos(sid!, currentFiles);
 
     if (
       hasVisionConflict(modelsStore.getModel(model)?.capabilities, currentFiles)

@@ -93,6 +93,13 @@ vi.mock('@/api/playlists.api', () => ({
   deletePlaylist: vi.fn(async () => {}),
 }));
 
+vi.mock('./components/chat/composables/use-conversation-catalog', () => ({
+  useConversationCatalog: () => ({
+    watchActiveConversationBookmark: vi.fn(),
+    bootstrapConversations: vi.fn(async () => {}),
+  }),
+}));
+
 describe('App', () => {
   it('renders without crashing', () => {
     setActivePinia(createPinia());

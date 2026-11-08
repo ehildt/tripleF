@@ -1,9 +1,11 @@
 import { computed, watch } from 'vue';
 
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { TOAST_KEY_MODEL_NO_IMAGES } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
 const VISION_CAPABILITY = 'vision';
@@ -19,6 +21,8 @@ const VISION_CAPABILITY = 'vision';
  */
 export function useChatModelSync() {
   const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
+  const images = useConversationImages();
   const modelsStore = useModelsStore();
   const toast = useToast();
 
@@ -56,19 +60,19 @@ export function useChatModelSync() {
 
     if (supportsVision.value) {
       if (previouslyNonVision) {
-        conversationStore.restoreImageSelections(conversationIdValue);
-        s.imageSelectionSnapshot = {};
+        void images.restoreImageSelections(conversationIdValue);
+        images.clearImageSelectionSnapshot(conversationIdValue);
       }
       return;
     }
 
     if (previouslyNonVision) {
-      conversationStore.deselectAllImages(conversationIdValue);
+      void images.deselectAllImages(conversationIdValue);
       return;
     }
 
-    conversationStore.snapshotImageSelections(conversationIdValue);
-    conversationStore.deselectAllImages(conversationIdValue);
+    void images.snapshotImageSelections(conversationIdValue);
+    void images.deselectAllImages(conversationIdValue);
     // Name the model whose capabilities decided `supportsVision` — not
     // `conversation.model`, which is still '' when the model was picked
     // before a conversation existed (or while a stub is hydrating).
@@ -89,7 +93,7 @@ export function useChatModelSync() {
     if (!s || s.numCtx) return;
 
     const numCtx = modelsStore.maxNumCtxForModel(modelName);
-    if (numCtx) conversationStore.setNumCtx(conversationIdValue, numCtx);
+    if (numCtx) void configuration.setNumCtx(conversationIdValue, numCtx);
   }
 
   // Keep image selections and numCtx in sync with the active conversation's

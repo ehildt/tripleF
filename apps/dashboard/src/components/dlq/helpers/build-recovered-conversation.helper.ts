@@ -1,9 +1,10 @@
+import { i18n } from '@/i18n/i18n';
 import type {
   Conversation,
   Exchange,
-} from '@/stores/conversation/conversation.model';
-import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
-import { inferConversationTitle } from '@/stores/conversation/helpers/infer-conversation-title.helper';
+} from '@/stores/chat/conversation/conversation.model';
+import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
+import { inferConversationTitle } from '@/stores/chat/conversation/helpers/infer-conversation-title.helper';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 import { createId } from '@/utils/create-id/create-id.helper';
 
@@ -40,21 +41,25 @@ export function buildRecoveredConversation(entry: DlqEntry): Conversation {
     conversationId: filters.conversationId,
   }));
 
-  const conversation = createConversation({
-    conversationId: filters.conversationId,
-    model: filters.model,
-    ...(filters.numCtx !== undefined ? { numCtx: filters.numCtx } : {}),
-    ...(filters.think !== undefined ? { think: filters.think } : {}),
-    event: filters.event,
-    roomId: filters.roomId,
-    ...(filters.stream !== undefined ? { stream: filters.stream } : {}),
-    subscriptions: [{ event: filters.event, roomId: filters.roomId }],
-    type: 'temporary',
-  });
+  const conversation = createConversation(
+    i18n.global.t('common.newConversation'),
+    {
+      conversationId: filters.conversationId,
+      model: filters.model,
+      ...(filters.numCtx !== undefined ? { numCtx: filters.numCtx } : {}),
+      ...(filters.think !== undefined ? { think: filters.think } : {}),
+      event: filters.event,
+      roomId: filters.roomId,
+      ...(filters.stream !== undefined ? { stream: filters.stream } : {}),
+      subscriptions: [{ event: filters.event, roomId: filters.roomId }],
+      type: 'temporary',
+    },
+  );
   const firstUserPrompt = messages.find((message) => message.role === 'user');
   conversation.title = inferConversationTitle(
     conversation.title,
     firstUserPrompt?.content ?? '',
+    i18n.global.t('common.newConversation'),
   );
   conversation.exchanges = exchanges;
   return conversation;

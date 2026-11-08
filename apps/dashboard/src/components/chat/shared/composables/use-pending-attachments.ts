@@ -6,7 +6,7 @@ import type {
 } from '@/stores/chat/attached-files/attached-files.model';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { PendingAttachmentScope } from '@/stores/chat/attached-files/attached-files.store.types';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createId } from '@/utils/create-id/create-id.helper';
 
 interface PendingAttachments {

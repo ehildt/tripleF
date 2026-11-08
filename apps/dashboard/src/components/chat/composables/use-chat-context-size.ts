@@ -1,9 +1,9 @@
 import { computed } from 'vue';
 
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import { useChatConversation } from './use-chat-conversation';
@@ -16,7 +16,7 @@ import { useChatConversation } from './use-chat-conversation';
  */
 export function useChatContextSize() {
   const modelsStore = useModelsStore();
-  const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
   const toast = useToast();
   const { conversationId, selectedModelObj } = useChatConversation();
 
@@ -48,7 +48,7 @@ export function useChatContextSize() {
         { key: TOAST_KEY_CONTEXT_CLAMPED },
       );
     }
-    conversationStore.setNumCtx(conversationId.value, ctx);
+    void configuration.setNumCtx(conversationId.value, ctx);
   }
 
   return {

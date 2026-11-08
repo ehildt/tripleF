@@ -2,7 +2,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
@@ -50,21 +51,23 @@ describe('useContextSize', () => {
     selectedModel.details.value = { context_length: 8192 } as OllamaModel;
 
     const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
+    const conversation = useConversationCatalog().ensureConversation();
     const setNumCtx = vi
-      .spyOn(conversationStore, 'setNumCtx')
+      .spyOn(conversationStore, 'patchConversation')
       .mockImplementation(() => {});
 
     const { selectNumCtx } = useContextSize();
     selectNumCtx('16384');
 
-    expect(setNumCtx).toHaveBeenCalledWith(conversation.id, '8192');
+    expect(setNumCtx).toHaveBeenCalledWith(conversation.id, {
+      numCtx: '8192',
+    });
   });
 
   it('selectNumCtx ensures a conversation when none is active', () => {
     const conversationStore = useConversationStore();
     const setNumCtx = vi
-      .spyOn(conversationStore, 'setNumCtx')
+      .spyOn(conversationStore, 'patchConversation')
       .mockImplementation(() => {});
     selectedModel.details.value = null;
 

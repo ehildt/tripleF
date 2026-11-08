@@ -1,7 +1,10 @@
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationExchangeCompletion } from '@/components/chat/composables/use-conversation-exchange-completion';
+import { useConversationTurns } from '@/components/chat/composables/use-conversation-turns';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { i18n } from '@/i18n/i18n';
-import type { Conversation } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Conversation } from '@/stores/chat/conversation/conversation.model';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useDebugStore } from '@/stores/debug/debug.store';
 import { useMessagesStore } from '@/stores/messages/messages.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
@@ -13,24 +16,23 @@ import type { DlqEntryFilters } from '../helpers/extract-entry-filters.helper.ty
 import { extractPromptMessages } from '../helpers/extract-prompt-messages.helper';
 import type { DlqRetrySession } from './use-dlq-retry-session.types';
 
-/** Prepare an existing or recovered conversation for a harness DLQ replay.
- * Retry always targets the payload's stable conversation id and job name;
- * the active chat is never a fallback. */
+/** Prepare an existing or recovered conversation for a harness DLQ replay. */
 export function useDlqRetrySession() {
   const socketStore = useSocket();
   const conversationStore = useConversationStore();
+  const catalog = useConversationCatalog();
+  const turns = useConversationTurns();
+  const completion = useConversationExchangeCompletion();
   const debugStore = useDebugStore();
   const messagesStore = useMessagesStore();
   const toast = useToast();
 
   function ensureSocketSubscription(roomId: string, eventName: string): void {
     socketStore.ensureSocketConnection();
-
     if (!socketStore.connectedEvents.value.has(eventName)) {
       socketStore.listenToEvent(eventName);
       toast.debug(`Resubscribed to ${eventName}`);
     }
-
     if (
       roomId &&
       !(socketStore.connectedRooms.value.get(eventName)?.has(roomId) ?? false)
@@ -47,86 +49,16 @@ export function useDlqRetrySession() {
     const existing = conversationStore.conversations.find(
       (conversation) => conversation.conversationId === filters.conversationId,
     );
-
-    if (!existing)
-      return conversationStore.restoreConversation(
-        buildRecoveredConversation(entry),
-      );
-
-    const loaded = await conversationStore.loadConversationForWrite(
-      existing.id,
-    );
-
-    if (!loaded)
+    if (!existing) {
+      return catalog.restoreConversation(buildRecoveredConversation(entry));
+    }
+    const loaded = await catalog.loadConversationForWrite(existing.id);
+    if (!loaded) {
       throw new Error(
         `Conversation ${filters.conversationId} could not be loaded for retry`,
       );
-
-    return loaded;
-  }
-
-  function seedFailedPromptIfMissing(
-    conversation: Conversation,
-    entry: DlqEntry,
-    filters: DlqEntryFilters,
-  ): void {
-    const hasFailedTurn = conversation.exchanges.some(
-      (exchange) => exchange.requestId === entry.jobName,
-    );
-
-    if (hasFailedTurn) return;
-
-    const failedPrompt = extractPromptMessages(entry)
-      .filter((message) => message.role === 'user')
-      .at(-1);
-
-    if (!failedPrompt)
-      throw new Error(`DLQ entry ${entry.id} has no user prompt to retry`);
-
-    conversationStore.addExchange(conversation.id, {
-      role: 'user',
-      content: failedPrompt.content,
-      requestId: entry.jobName,
-      status: 'done',
-      model: filters.model,
-      event: filters.event,
-      roomId: filters.roomId,
-      conversationId: filters.conversationId,
-    });
-  }
-
-  function prepareAssistantExchange(
-    conversation: Conversation,
-    entry: DlqEntry,
-    filters: DlqEntryFilters,
-  ): void {
-    const metadata = {
-      model: filters.model,
-      event: filters.event,
-      roomId: filters.roomId,
-    };
-    const hasAssistant = conversation.exchanges.some(
-      (exchange) =>
-        exchange.requestId === entry.jobName && exchange.role === 'assistant',
-    );
-
-    if (hasAssistant) {
-      conversationStore.resetAssistantExchangeForRetry(
-        conversation.id,
-        entry.jobName,
-        metadata,
-      );
-      return;
     }
-
-    conversationStore.addExchange(conversation.id, {
-      role: 'assistant',
-      content: '',
-      requestId: entry.jobName,
-      status: 'pending',
-      ...metadata,
-      conversationId: filters.conversationId,
-    });
+    return loaded;
   }
 
   async function prepareRetrySession(
@@ -134,18 +66,33 @@ export function useDlqRetrySession() {
   ): Promise<DlqRetrySession> {
     const filters = extractEntryFilters(entry);
     const conversation = await resolveConversation(entry, filters);
+    const hasFailedTurn = conversation.exchanges.some(
+      (exchange) => exchange.requestId === entry.jobName,
+    );
+    let failedPrompt: string | undefined;
+    if (!hasFailedTurn) {
+      const prompt = extractPromptMessages(entry)
+        .filter((message) => message.role === 'user')
+        .at(-1);
+      if (!prompt) {
+        throw new Error(`DLQ entry ${entry.id} has no user prompt to retry`);
+      }
+      failedPrompt = prompt.content;
+    }
 
-    conversationStore.patchConversation(conversation.id, {
+    await turns.prepareConversationRetry({
+      conversationStoreId: conversation.id,
+      requestId: entry.jobName,
+      serverConversationId: filters.conversationId,
       model: filters.model,
       event: filters.event,
       roomId: filters.roomId,
       numCtx: filters.numCtx ?? conversation.numCtx,
       think: filters.think ?? conversation.think,
       stream: filters.stream ?? conversation.stream,
+      ...(failedPrompt !== undefined ? { failedPrompt } : {}),
+      defaultTitle: i18n.global.t('common.newConversation'),
     });
-
-    seedFailedPromptIfMissing(conversation, entry, filters);
-    prepareAssistantExchange(conversation, entry, filters);
     ensureSocketSubscription(filters.roomId, filters.event);
 
     const session: DlqRetrySession = {
@@ -155,7 +102,6 @@ export function useDlqRetrySession() {
       roomId: filters.roomId,
       stream: filters.stream ?? conversation.stream,
     };
-
     // Pending state must exist before requeueing: a fast worker can emit the
     // response before the reinstate HTTP response reaches the dashboard.
     messagesStore.resetRequestForRetry(
@@ -182,7 +128,7 @@ export function useDlqRetrySession() {
 
   function failRetrySession(session: DlqRetrySession): void {
     messagesStore.removeMessage(session.requestId);
-    conversationStore.markExchangeError(
+    void completion.markExchangeError(
       session.conversationStoreId,
       session.requestId,
       i18n.global.t('toast.retryFailed'),

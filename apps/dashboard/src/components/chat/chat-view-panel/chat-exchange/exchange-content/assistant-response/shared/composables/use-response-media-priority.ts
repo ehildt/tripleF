@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
 import { useAssistantResponseSettingsStore } from '@/stores/chat/assistant-response-settings/assistant-response-settings.store';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import type { MediaPriority } from '@/types/assistant-response-data.model';
 
 /** The hero media fields the media-priority order depends on. */

@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, type Ref, ref, watch } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import type { AssistantActivityDescriptor } from '@/types/activity.model';
 
 import { buildActivityDescriptors } from '../helpers/build-activity-descriptors.helper';

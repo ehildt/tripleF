@@ -1,4 +1,4 @@
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 
 /**
  * Resolve the exchange ids that form one logical unit with the given

@@ -1,5 +1,5 @@
 import type { AttachedFileEntry } from '@/stores/chat/attached-files/attached-files.model';
-import type { UploadedDocument } from '@/stores/conversation/conversation.model';
+import type { UploadedDocument } from '@/stores/chat/conversation/conversation.model';
 
 /** Convert a pending document entry into an uploaded document. */
 export function mapDocumentEntry(

@@ -15,7 +15,7 @@ import { useI18n } from 'vue-i18n';
 import ResponseMetaBarPill from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
 import ResponseMetaBar from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-meta-bar/ResponseMetaBar.vue';
 import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { formatTime } from '@/utils/format-time/format-time.helper';
 
 import { useActivityLabel } from './composables/use-activity-label';

@@ -1,6 +1,8 @@
 import { computed } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import { useSelectedModel } from './use-selected-model';
@@ -13,6 +15,8 @@ import { useSelectedModel } from './use-selected-model';
  */
 export function useContextSize() {
   const conversationStore = useConversationStore();
+  const catalog = useConversationCatalog();
+  const configuration = useConversationConfiguration();
   const modelsStore = useModelsStore();
   const { selectedModelDetails } = useSelectedModel();
 
@@ -46,12 +50,12 @@ export function useContextSize() {
   function selectNumCtx(ctx: string) {
     let sid = activeConversationId.value;
     if (!sid) {
-      const conversation = conversationStore.ensureConversation();
+      const conversation = catalog.ensureConversation();
       sid = conversation.id;
     }
     const maxCtx = selectedModelDetails.value?.context_length;
     if (maxCtx && Number(ctx) > maxCtx) ctx = String(maxCtx);
-    conversationStore.setNumCtx(sid, ctx);
+    void configuration.setNumCtx(sid, ctx);
   }
 
   return {

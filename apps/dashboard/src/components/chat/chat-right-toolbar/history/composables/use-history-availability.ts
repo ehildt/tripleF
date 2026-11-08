@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 /**
  * Whether the chat right toolbar's History section has content — any user

@@ -1,7 +1,8 @@
 import { computed, ref, watch } from 'vue';
 
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 import { buildConversationNamesByEvent } from '../shared/helpers/build-conversation-names-by-event.helper';
@@ -45,6 +46,7 @@ let lifecycleStarted = false;
 
 export function useSocketSubscriptions() {
   const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
   const socketStore = useSocket();
 
   if (!lifecycleStarted) {
@@ -135,7 +137,7 @@ export function useSocketSubscriptions() {
         continue;
       }
       if (conversation.stream === sub.stream) continue;
-      conversationStore.setStream(conversation.id, sub.stream);
+      void configuration.setStream(conversation.id, sub.stream);
     }
   }
 

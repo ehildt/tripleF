@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 
 import { usePlaylistTab } from './use-playlist-tab';
@@ -33,8 +33,7 @@ describe('usePlaylistTab', () => {
   });
 
   function seedConversationWithVideo() {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
+    const conversation = useConversationCatalog().ensureConversation();
     conversation.exchanges = [
       {
         id: 'e1',

@@ -1,9 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useChatView } from '@/components/chat/shared/composables/use-chat-view';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { useHistoryPanel } from './use-history-panel';
 
@@ -25,8 +26,7 @@ describe('useHistoryPanel', () => {
   });
 
   function seedActiveConversation() {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
+    const conversation = useConversationCatalog().ensureConversation();
     conversation.exchanges = [
       {
         id: '1',
@@ -43,7 +43,7 @@ describe('useHistoryPanel', () => {
         timestamp: 0,
       },
     ];
-    conversationStore.setActiveConversation(conversation.id);
+    useConversationCatalog().setActiveConversation(conversation.id);
   }
 
   it('reports whether the history section has content', () => {
@@ -118,7 +118,7 @@ describe('useHistoryPanel', () => {
     vi.spyOn(socketStore, 'listenToEvent').mockImplementation(() => {});
     vi.spyOn(socketStore, 'joinRoom').mockImplementation(() => {});
 
-    const conversation = conversationStore.ensureConversation();
+    const conversation = useConversationCatalog().ensureConversation();
     conversation.model = 'test-model';
     conversation.exchanges = [
       {
@@ -136,7 +136,7 @@ describe('useHistoryPanel', () => {
         timestamp: 0,
       },
     ];
-    conversationStore.setActiveConversation(conversation.id);
+    useConversationCatalog().setActiveConversation(conversation.id);
 
     const { branchUserExchange } = useHistoryPanel();
     branchUserExchange(0);
@@ -154,8 +154,8 @@ describe('useHistoryPanel', () => {
 
   it('ignores branch requests for out-of-range history indices', () => {
     const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
 
     const { branchUserExchange } = useHistoryPanel();
     branchUserExchange(5);

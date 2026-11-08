@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { useModelsStore } from '../../../stores/models/models.store';
 

@@ -3,7 +3,7 @@ import type {
   Exchange,
   SavedFileInfo,
   UploadedImage,
-} from '../stores/conversation/conversation.model';
+} from '../stores/chat/conversation/conversation.model';
 
 export interface ConversationContent {
   id: string;
