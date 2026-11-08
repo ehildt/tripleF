@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
 import { useDebugStore } from '@/stores/debug/debug.store';
 
 import { useSettingsTabVisibility } from './use-settings-tab-visibility';
@@ -14,14 +14,14 @@ describe('useSettingsTabVisibility', () => {
     setActivePinia(createPinia());
   });
 
-  it('toggles a tab via the app store', () => {
-    const appStore = useAppStore();
+  it('toggles a tab via the navigation store', () => {
+    const navigationStore = useNavigationStore();
     const { toggleTab } = useSettingsTabVisibility();
-    expect(appStore.isTabVisible('preprocessing')).toBe(true);
+    expect(navigationStore.isTabVisible('preprocessing')).toBe(true);
     toggleTab('preprocessing');
-    expect(appStore.isTabVisible('preprocessing')).toBe(false);
+    expect(navigationStore.isTabVisible('preprocessing')).toBe(false);
     toggleTab('preprocessing');
-    expect(appStore.isTabVisible('preprocessing')).toBe(true);
+    expect(navigationStore.isTabVisible('preprocessing')).toBe(true);
   });
 
   it('pauses the debug log when the debug tab is hidden', () => {

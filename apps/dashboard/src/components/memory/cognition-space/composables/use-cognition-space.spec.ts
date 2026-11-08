@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import { useCognitionSpace } from './use-cognition-space';
 
@@ -35,7 +35,7 @@ describe('useCognitionSpace', () => {
     });
     api.fetchMemoryLinks.mockResolvedValue([]);
     api.fetchMemoryFrictions.mockResolvedValue([]);
-    const store = useAppStore();
+    const store = useMemorySpacesStore();
     store.memoryCognition = 'test';
 
     const { nodes, refresh } = useCognitionSpace();
@@ -48,7 +48,7 @@ describe('useCognitionSpace', () => {
 
   it('degrades to unavailable on fetch failure', async () => {
     api.fetchMemoryCognition.mockRejectedValue(new Error('down'));
-    const store = useAppStore();
+    const store = useMemorySpacesStore();
     store.memoryCognition = 'test';
 
     const { isUnavailable, refresh } = useCognitionSpace();

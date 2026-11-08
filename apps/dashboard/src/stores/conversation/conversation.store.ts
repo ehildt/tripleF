@@ -13,7 +13,7 @@ import { deleteUploadedObject } from '../../api/object-storage.api';
 import { calcTotalContextPercentage } from '../../components/chat/shared/helpers/calc-total-context-percentage.helper';
 import type { MergedConversation } from '../../types/conversation.model';
 import { createId } from '../../utils/create-id/create-id.helper';
-import { useAppStore } from '../app/app.store';
+import { useConversationSettingsStore } from '../chat/conversation-settings/conversation-settings.store';
 import { useMergeSelectionStore } from '../merge-selection/merge-selection.store';
 import { calcInputTokenDelta } from './helpers/calc-input-token-delta.helper';
 import { createConversation } from './helpers/create-conversation.helper';
@@ -83,7 +83,8 @@ function removeConversationLocally(conversationId: string) {
  */
 async function loadConversations(): Promise<Conversation[]> {
   const now = Date.now();
-  const retentionMs = useAppStore().temporaryRetentionMinutes * 60 * 1000;
+  const retentionMs =
+    useConversationSettingsStore().temporaryRetentionMinutes * 60 * 1000;
 
   const persistent: Conversation[] = [];
   try {

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, watch } from 'vue';
+import { onBeforeMount, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { useSocket } from '@/composables/use-socket/use-socket';
 
 import AppFooter from './components/app/app-footer/AppFooter.vue';
+import { useActiveTab } from './components/app/composables/use-active-tab';
+import { useAppNavigation } from './components/app/composables/use-app-navigation';
 import { useDlqLiveEvents } from './components/app/composables/use-dlq-live-events';
 import { usePlaylistMarquee } from './components/app/composables/use-playlist-marquee';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
@@ -15,24 +17,23 @@ import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue
 import ToastContainer from './components/widgets/toast-container/ToastContainer.vue';
 import { usePlaybackSession } from './composables/use-playback-session/use-playback-session';
 import { useTheme } from './composables/use-theme/use-theme';
-import { useAppStore } from './stores/app/app.store';
+import { useNavigationStore } from './stores/app/navigation/navigation.store';
 import { useDebugStore } from './stores/debug/debug.store';
-import { useDlqStore } from './stores/dlq/dlq.store';
 import { useMessagesStore } from './stores/messages/messages.store';
 import { useModelsStore } from './stores/models/models.store';
 import { usePlaylistStore } from './stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from './stores/popout-settings/popout-settings.store';
 import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
-import type { ActiveTab } from './types/app.model';
 
 const apiMessagesStore = useMessagesStore();
 const debugStore = useDebugStore();
 const modelsStore = useModelsStore();
-const appStore = useAppStore();
+const navigationStore = useNavigationStore();
+const { activeTab } = useActiveTab();
+const { showDlqBadge } = useAppNavigation();
 const { initTheme } = useTheme();
 const socket = useSocket();
 const { socketId } = socket;
-const dlqStore = useDlqStore();
 usePreprocessingSettingsStore();
 const popoutSettingsStore = usePopoutSettingsStore();
 const playlistStore = usePlaylistStore();
@@ -53,17 +54,6 @@ void playlistStore.loadPlaylists();
 // fetches it on construction and pushes every change immediately from its
 // own watch — no boot-time orchestration here.
 
-// The Settings popout preview is transient: switching tabs dismisses it.
-// Watch a getter — Pinia unwraps `appStore.activeTab` to its value, so it
-// cannot be used directly as a watch source.
-watch(
-  () => appStore.activeTab,
-  () => {
-    popoutSettingsStore.hidePopoutPreview();
-    playlistStore.hidePlaylistPreview();
-  },
-);
-
 socket.setCallbacks(
   debugStore.addSocketDebugEntry,
   apiMessagesStore.addMessage,
@@ -74,20 +64,7 @@ socket.setCallbacks(
 // mutation, and the dot only shows while the user is not already on the
 // DLQ tab.
 useDlqLiveEvents();
-const showDlqBadge = computed(
-  () => dlqStore.hasDlqActivity && appStore.activeTab !== 'dlq',
-);
-
-// The route is the source of truth for the active tab; mirror it into the
-// store so non-component logic (e.g. chat-star notifications) can read it.
 const route = useRoute();
-watch(
-  () => route.name,
-  (name) => {
-    if (name) appStore.setActiveTab(name as ActiveTab);
-  },
-  { immediate: true },
-);
 
 onBeforeMount(() => {
   initTheme();
@@ -102,9 +79,9 @@ onMounted(() => {
 <template>
   <div id="app-root" class="bg-grid root-accent-gradient">
     <TabMenu
-      :active-tab="appStore.activeTab"
+      :active-tab="activeTab"
       :debug-count="debugStore.debugLogCount"
-      :show-chat-star="appStore.showChatStar"
+      :show-chat-star="navigationStore.showChatStar"
       :show-dlq-badge="showDlqBadge"
     />
 

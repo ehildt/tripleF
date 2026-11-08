@@ -43,6 +43,10 @@ vi.mock('@/composables/use-socket/use-socket', () => ({
   useSocket: () => socketStoreMock,
 }));
 
+vi.mock('@/components/app/composables/use-chat-response-activity', () => ({
+  useChatResponseActivity: () => ({ notifyChatResponse: vi.fn() }),
+}));
+
 // Conversation-store persistence layers, as in stores/conversation.spec.ts.
 vi.mock('../../../api/conversations.api', () => ({
   fetchConversations: vi.fn().mockResolvedValue([]),

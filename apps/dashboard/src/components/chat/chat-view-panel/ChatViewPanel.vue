@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
 
 import { useActiveConversation } from './composables/use-active-conversation';
 import { useExchangeActions } from './composables/use-exchange-actions';
@@ -25,13 +25,15 @@ const sections = computed(() => buildExchangeSections(exchanges.value));
 
 const { retryExchange } = useExchangeActions();
 
-const appStore = useAppStore();
+const chatNavigationSettingsStore = useChatNavigationSettingsStore();
 
 const isSessionActive = computed(() => activeConversation.value !== null);
 const activeConversationId = computed(() => activeConversation.value?.id ?? '');
 
 const scrollMode = computed(() =>
-  appStore.getConversationScrollMode(activeConversationId.value),
+  chatNavigationSettingsStore.getConversationScrollMode(
+    activeConversationId.value,
+  ),
 );
 </script>
 

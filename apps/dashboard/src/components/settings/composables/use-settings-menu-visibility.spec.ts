@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { usePromptMenuSettingsStore } from '@/stores/chat/prompt-menu-settings/prompt-menu-settings.store';
 
 import { useSettingsMenuVisibility } from './use-settings-menu-visibility';
 
@@ -12,20 +12,22 @@ describe('useSettingsMenuVisibility', () => {
   });
 
   it('toggles the source menu always-show state via the app store', () => {
-    const appStore = useAppStore();
+    const promptMenuSettingsStore = usePromptMenuSettingsStore();
     const { toggleSourceMenuAlwaysShow } = useSettingsMenuVisibility();
 
-    expect(appStore.sourceTagsMenuAlwaysShow.sources).toBe(true);
+    expect(promptMenuSettingsStore.sourceTagsMenuAlwaysShow.sources).toBe(true);
     toggleSourceMenuAlwaysShow();
-    expect(appStore.sourceTagsMenuAlwaysShow.sources).toBe(false);
+    expect(promptMenuSettingsStore.sourceTagsMenuAlwaysShow.sources).toBe(
+      false,
+    );
   });
 
   it('toggles the view menu always-show state independently', () => {
-    const appStore = useAppStore();
+    const promptMenuSettingsStore = usePromptMenuSettingsStore();
     const { toggleViewMenuAlwaysShow } = useSettingsMenuVisibility();
 
     toggleViewMenuAlwaysShow();
-    expect(appStore.sourceTagsMenuAlwaysShow.view).toBe(false);
-    expect(appStore.sourceTagsMenuAlwaysShow.sources).toBe(true);
+    expect(promptMenuSettingsStore.sourceTagsMenuAlwaysShow.view).toBe(false);
+    expect(promptMenuSettingsStore.sourceTagsMenuAlwaysShow.sources).toBe(true);
   });
 });

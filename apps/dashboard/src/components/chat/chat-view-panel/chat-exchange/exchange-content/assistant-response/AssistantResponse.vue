@@ -2,7 +2,7 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
 
-import { isTrustedImageUrl } from '@/stores/helpers/assistant-response/media/is-trusted-image-url.helper';
+import { isTrustedImageUrl } from '@/components/chat/shared/helpers/assistant-response/media/is-trusted-image-url.helper';
 import { TEMPLATE_PARTS } from '@/stores/template-parts-settings/template-parts-settings.constant';
 import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings/template-parts-settings.store';
 import type {

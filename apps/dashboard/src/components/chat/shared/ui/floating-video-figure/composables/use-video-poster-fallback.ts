@@ -1,7 +1,33 @@
 import { computed, type MaybeRefOrGetter, ref, toValue, watch } from 'vue';
 
-import { buildVideoPosterCandidates } from '@/stores/helpers/assistant-response/media/build-video-poster-url.helper';
-import { resolveBestVideoPosterUrl } from '@/stores/helpers/assistant-response/media/resolve-best-video-poster-url.helper';
+import { buildVideoPosterCandidates } from '@/components/chat/shared/helpers/assistant-response/media/build-video-poster-candidates.helper';
+
+/** Probe results are shared across every floating-video caller so repeated
+ * renders of the same poster do not issue duplicate HEAD requests. */
+const availabilityCache = new Map<string, boolean>();
+
+async function probeImageAvailability(url: string): Promise<boolean> {
+  const cached = availabilityCache.get(url);
+  if (cached !== undefined) return cached;
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    const available = response.ok;
+    availabilityCache.set(url, available);
+    return available;
+  } catch {
+    availabilityCache.set(url, false);
+    return false;
+  }
+}
+
+async function resolveBestVideoPosterUrl(
+  candidates: string[],
+): Promise<string | null> {
+  for (const candidate of candidates) {
+    if (await probeImageAvailability(candidate)) return candidate;
+  }
+  return null;
+}
 
 /**
  * Resolve a video poster image with a graceful quality fallback. The primary

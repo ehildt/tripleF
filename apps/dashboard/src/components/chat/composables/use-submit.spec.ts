@@ -2,7 +2,6 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useAppStore } from '@/stores/app/app.store';
 import type { Exchange } from '@/stores/conversation/conversation.model';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
@@ -30,6 +29,10 @@ vi.mock('@/i18n/i18n', () => ({
 
 vi.mock('./use-assistant-request', () => ({
   useAssistantRequest: () => ({ postHarnessRequest }),
+}));
+
+vi.mock('@/components/app/composables/use-chat-response-activity', () => ({
+  useChatResponseActivity: () => ({ notifyChatResponse: vi.fn() }),
 }));
 
 /**
@@ -124,17 +127,40 @@ describe('useSubmit', () => {
     });
     expect(request.params).toBeInstanceOf(URLSearchParams);
     expect(request.params.get('sessionId')).toBe(conversation.id);
-    expect(request.params.get('requestId')).toBe(useAppStore().requestId);
+    const requestId = request.params.get('requestId');
+    expect(requestId).toEqual(expect.any(String));
+    expect(requestId).not.toBe('');
     expect(request.formData).toBeInstanceOf(FormData);
     expect(usePromptDraft().promptDraft.value).toBe('');
     expect(addPendingMessage).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
-      useAppStore().requestId,
+      requestId,
       true,
     );
     expect(isSubmitting.value).toBe(false);
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('generates a fresh request id for each sequential submit', async () => {
+    seedDraft();
+    stubSocketSideEffects();
+    const conversationStore = useConversationStore();
+    const conversation = conversationStore.createNewConversation();
+    conversation.model = 'llama3';
+    vi.spyOn(conversationStore, 'buildPrompt').mockResolvedValue('[]');
+    const { submit } = useSubmit();
+
+    await submit();
+    seedDraft('again');
+    await submit();
+
+    const requestIds = postHarnessRequest.mock.calls.map((call) => {
+      const request = call[0] as unknown as PostHarnessRequestOptions;
+      return request.params.get('requestId');
+    });
+    expect(requestIds).toHaveLength(2);
+    expect(requestIds[0]).not.toBe(requestIds[1]);
   });
 
   it('warns and skips the submit when the context is full', async () => {
@@ -193,9 +219,11 @@ describe('useSubmit', () => {
     const { submit } = useSubmit();
     await submit();
 
+    const request = postHarnessRequest.mock
+      .calls[0]![0] as unknown as PostHarnessRequestOptions;
     expect(markMergePending).toHaveBeenCalledWith(
       conversation.id,
-      useAppStore().requestId,
+      request.params.get('requestId'),
     );
     expect(postHarnessRequest).toHaveBeenCalledTimes(1);
   });

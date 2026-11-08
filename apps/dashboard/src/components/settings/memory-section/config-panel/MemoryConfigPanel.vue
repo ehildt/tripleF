@@ -45,17 +45,20 @@ import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.v
 import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
 import { useMemoryOverrides } from '@/composables/use-memory-overrides/use-memory-overrides';
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
+import { useMemorySpaceSettings } from './composables/use-memory-space-settings';
 import SpaceSelectorCard from './space-selector-card/SpaceSelectorCard.vue';
 import type { MemoryConfigPanelProps } from './MemoryConfigPanel.types';
 
 defineProps<MemoryConfigPanelProps>();
 
-const { memoryPartition, memoryCognition, memoryCognitionSpaces } =
-  storeToRefs(useAppStore());
-const { setMemoryCognition, removeMemoryCognitionSpace } = useAppStore();
+const { memoryPartition, memoryCognition, memoryCognitionSpaces } = storeToRefs(
+  useMemorySpacesStore(),
+);
+const { setMemoryCognition, removeMemoryCognitionSpace } =
+  useMemorySpaceSettings();
 
 const {
   cognitionLimit,

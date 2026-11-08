@@ -1,4 +1,4 @@
-import type { ActiveTab } from '../../../types/app.model';
+import type { ActiveTab } from '../../../stores/app/navigation/navigation.model';
 
 /**
  * Props for the slide-out tab menu: the active destination, the numeric

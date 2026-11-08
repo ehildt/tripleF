@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useAssistantResponseSettingsStore } from '@/stores/chat/assistant-response-settings/assistant-response-settings.store';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import type { MediaPriority } from '@/types/assistant-response-data.model';
 
@@ -17,13 +17,13 @@ export interface AssistantMediaInput {
  * media URL (video preferred over image).
  */
 export function useResponseMediaPriority(data: AssistantMediaInput) {
-  const appStore = useAppStore();
+  const assistantResponseSettingsStore = useAssistantResponseSettingsStore();
   const conversationStore = useConversationStore();
 
   const heroUrl = computed(() => data.heroVideoUrl || data.heroImageUrl);
 
   const mediaPriority = computed<MediaPriority>(() =>
-    appStore.getConversationMediaPriority(
+    assistantResponseSettingsStore.getConversationMediaPriority(
       conversationStore.activeConversationId ?? '',
     ),
   );

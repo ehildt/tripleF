@@ -12,7 +12,7 @@ import {
 import type { MemoryTaxonomyNodeRecord } from '@/api/memory-taxonomy.api';
 import { fetchMemoryTaxonomy } from '@/api/memory-taxonomy.api';
 import { useMemoryOverrides } from '@/composables/use-memory-overrides/use-memory-overrides';
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import { buildLabelMeta } from '../../composables/helpers/build-label-meta.helper';
 import { mapFrictions } from '../../composables/helpers/map-frictions.helper';
@@ -37,7 +37,7 @@ const WIPE_ARM_WINDOW_MS = 4000;
  * the settings tab.
  */
 export function usePartitionSpace() {
-  const { memoryPartition } = storeToRefs(useAppStore());
+  const { memoryPartition } = storeToRefs(useMemorySpacesStore());
   const { constellationNodeLimit } = useMemoryOverrides();
   const partitionKey = computed(
     () => memoryPartition.value.trim() || 'default',

@@ -32,7 +32,7 @@ import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.v
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app/app.store';
+import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
 import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings/tab-menu-settings.store';
 import type { TabMenuSide } from '@/stores/tab-menu-settings/tab-menu-settings.types';
 
@@ -45,7 +45,7 @@ const SIDE_OPTIONS = computed(() => [
   { value: 'right', icon: PanelRight, tooltip: i18n.global.t('common.right') },
 ]);
 
-const appStore = useAppStore();
+const navigationStore = useNavigationStore();
 const { toggleTab } = useSettingsTabVisibility();
 
 function setSide(value: string) {
@@ -107,7 +107,7 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Brain"
           :label="$t('common.memoryTab')"
           :description="$t('common.memoryTabDesc')"
-          :checked="appStore.isTabVisible('memory')"
+          :checked="navigationStore.isTabVisible('memory')"
           @toggle="toggleTab('memory')"
         />
 
@@ -115,7 +115,7 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="MailX"
           :label="$t('common.dlqTab')"
           :description="$t('common.dlqTabDesc')"
-          :checked="appStore.isTabVisible('dlq')"
+          :checked="navigationStore.isTabVisible('dlq')"
           @toggle="toggleTab('dlq')"
         />
 
@@ -123,7 +123,7 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Bug"
           :label="$t('common.debugTab')"
           :description="$t('common.debugTabDesc')"
-          :checked="appStore.isTabVisible('debug')"
+          :checked="navigationStore.isTabVisible('debug')"
           @toggle="toggleTab('debug')"
         />
 
@@ -131,8 +131,8 @@ const SIDE_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :icon="Hash"
           :label="$t('common.counters')"
           :description="$t('common.countersDesc')"
-          :checked="appStore.showCounters"
-          @toggle="appStore.toggleShowCounters"
+          :checked="navigationStore.showCounters"
+          @toggle="navigationStore.toggleShowCounters"
         />
       </div>
     </div>

@@ -14,7 +14,7 @@ import { useI18n } from 'vue-i18n';
 
 import ResponseMetaBarPill from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-meta-bar/response-meta-bar-pill/ResponseMetaBarPill.vue';
 import ResponseMetaBar from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-meta-bar/ResponseMetaBar.vue';
-import { useAppStore } from '@/stores/app/app.store';
+import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
 import type { Exchange } from '@/stores/conversation/conversation.model';
 import { formatTime } from '@/utils/format-time/format-time.helper';
 
@@ -42,7 +42,7 @@ const emit = defineEmits<{
 }>();
 
 const { locale } = useI18n();
-const appStore = useAppStore();
+const chatNavigationSettingsStore = useChatNavigationSettingsStore();
 
 const { activityLabel } = useActivityLabel(toRef(props, 'exchange'));
 
@@ -75,7 +75,7 @@ function onCancel() {
     <Bot class="exchange-header__bot-icon" />
 
     <ExchangeHeaderAction
-      v-if="isDone && appStore.chatIconVisibility.copy"
+      v-if="isDone && chatNavigationSettingsStore.chatIconVisibility.copy"
       :title="$t('common.copy')"
       @click="emit('copy')"
     >

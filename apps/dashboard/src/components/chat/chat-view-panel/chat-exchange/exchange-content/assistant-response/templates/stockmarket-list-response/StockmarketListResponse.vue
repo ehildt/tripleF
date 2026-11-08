@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ResponseHeader from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/ui/response-header/ResponseHeader.vue';
-import { useAppStore } from '@/stores/app/app.store';
+import { useChartSettingsStore } from '@/stores/chat/chart-settings/chart-settings.store';
 
 import SourcesSection from '../../sections/sources-section/SourcesSection.vue';
 import VideoGallerySection from '../../sections/video-gallery-section/VideoGallerySection.vue';
@@ -12,7 +12,7 @@ import StockmarketChartCard from '../stockmarket-response/shared/stockmarket-cha
 import { useStockmarketListData } from './composables/use-stockmarket-list-data';
 import type { StockmarketListResponseProps } from './StockmarketListResponse.types';
 
-const appStore = useAppStore();
+const chartSettingsStore = useChartSettingsStore();
 const props = defineProps<StockmarketListResponseProps>();
 
 const {
@@ -54,8 +54,8 @@ const {
         :markers="markers"
         :volume-profile="volumeProfile"
         :available-range="coverageForChart"
-        :colormap="appStore.chartConfig.colormap"
-        :default-config="appStore.chartConfig"
+        :colormap="chartSettingsStore.chartConfig.colormap"
+        :default-config="chartSettingsStore.chartConfig"
         :on-range-request="onRangeRequest"
       />
       <D3StackedAreaChart v-else :series="chartSeries" mode="normalized" />

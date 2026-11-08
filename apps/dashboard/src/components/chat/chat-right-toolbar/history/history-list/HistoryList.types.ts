@@ -1,4 +1,4 @@
-import type { ChatIconVisibility } from '@/types/app.model';
+import type { ChatIconVisibility } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.model';
 
 /** One history row: a user prompt plus its context/merge state. */
 export interface HistoryListItemData {

@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
 import { useResponseMediaPriority } from '@/components/chat/chat-view-panel/chat-exchange/exchange-content/assistant-response/shared/composables/use-response-media-priority';
-import { formatEvaluationScore } from '@/stores/helpers/assistant-response/to-text/format-evaluation-score.helper';
+import { formatEvaluationScore } from '@/components/chat/shared/helpers/assistant-response/to-text/format-evaluation-score.helper';
 import type {
   AssistantResponseData,
   EvaluationCriterion,

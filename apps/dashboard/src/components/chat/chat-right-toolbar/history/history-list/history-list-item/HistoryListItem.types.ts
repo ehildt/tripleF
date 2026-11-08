@@ -1,4 +1,4 @@
-import type { ChatIconVisibility } from '@/types/app.model';
+import type { ChatIconVisibility } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.model';
 
 import type { HistoryListItemData } from '../HistoryList.types';
 

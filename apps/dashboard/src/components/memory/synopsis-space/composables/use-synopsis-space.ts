@@ -5,7 +5,7 @@ import {
   fetchMemoryClusters,
   type MemoryClusterRecord,
 } from '@/api/memory.api';
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import type { SynopsisScope } from './use-synopsis-space.types';
 import { useSynopsisTree } from './use-synopsis-tree';
@@ -52,7 +52,7 @@ const childrenByParent = computed<
 async function refresh() {
   // Store access happens at call time: the records above are module-scope
   // (declared before Pinia activates), stores are only safe post-mount.
-  const { memoryPartition } = useAppStore();
+  const { memoryPartition } = useMemorySpacesStore();
   isLoading.value = true;
   isUnavailable.value = false;
   try {

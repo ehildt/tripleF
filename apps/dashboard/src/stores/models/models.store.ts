@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
@@ -7,9 +7,12 @@ import { i18n } from '@/i18n/i18n';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 import { getPersistentSocketSessionId } from '@/utils/get-persistent-socket-session-id/get-persistent-socket-session-id.helper';
+import { loadBooleanSetting } from '@/utils/load-boolean-setting/load-boolean-setting.helper';
+import { saveBooleanSetting } from '@/utils/save-boolean-setting/save-boolean-setting.helper';
 
 import { useToast } from '../../composables/use-toast/use-toast';
 import type { OllamaModel } from '../../types/ollama-model.model';
+import { WARM_MODEL_ON_SELECT_KEY } from './models.constant';
 
 const SESSION_ID = getPersistentSocketSessionId();
 
@@ -38,6 +41,13 @@ export const useModelsStore = defineStore('models', () => {
   const modelsLoading = ref(false);
   const toast = useToast();
   const selectedModel = ref('');
+  /** Opt-in: pre-load local model weights in Ollama when a model is selected. */
+  const warmModelOnSelect = ref(
+    loadBooleanSetting(WARM_MODEL_ON_SELECT_KEY, false),
+  );
+  watch(warmModelOnSelect, (value) =>
+    saveBooleanSetting(WARM_MODEL_ON_SELECT_KEY, value),
+  );
   /** Whether the last catalog fetch succeeded (models may legitimately be empty). */
   const lastFetchOk = ref(false);
   /** Last catalog ETag (persisted) so conditional requests can 304. */
@@ -229,7 +239,13 @@ export const useModelsStore = defineStore('models', () => {
     await fetchModels();
   }
 
+  function toggleWarmModelOnSelect(): void {
+    warmModelOnSelect.value = !warmModelOnSelect.value;
+  }
+
   return {
+    warmModelOnSelect,
+    toggleWarmModelOnSelect,
     selectedModel,
     setSelectedModel,
     models,
