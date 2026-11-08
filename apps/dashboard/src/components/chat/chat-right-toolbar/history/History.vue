@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useAppStore } from '@/stores/app/app.store';
+import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
 
 import { useHistoryPanel } from './composables/use-history-panel';
 import HistoryList from './history-list/HistoryList.vue';
 
-const appStore = useAppStore();
+const chatNavigationSettingsStore = useChatNavigationSettingsStore();
 
 const {
   messageListItems,
@@ -25,7 +25,7 @@ const {
     <HistoryList
       :items="messageListItems"
       :active-id="activeUserExchangeId ?? null"
-      :icon-visibility="appStore.chatIconVisibility"
+      :icon-visibility="chatNavigationSettingsStore.chatIconVisibility"
       :can-merge="canMerge"
       :merge-armed="mergeArmed"
       @select="onPromptClick"

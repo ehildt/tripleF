@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue';
 
-import { createAssistantResponseState } from '@/stores/helpers/assistant-response/response-state/create-assistant-response-state.helper';
-import { processAssistantResponseEvent } from '@/stores/helpers/assistant-response/response-state/process-assistant-response-event.helper';
+import { createAssistantResponseState } from '@/components/chat/shared/helpers/assistant-response/response-state/create-assistant-response-state.helper';
+import { processAssistantResponseEvent } from '@/components/chat/shared/helpers/assistant-response/response-state/process-assistant-response-event.helper';
 import type { AssistantStreamEvent } from '@/types/assistant-stream-event.model';
 
 export function useAssistantStream(requestId: string) {

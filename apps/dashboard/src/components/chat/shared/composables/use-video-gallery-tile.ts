@@ -1,6 +1,6 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
-import { buildVideoPosterUrl } from '@/stores/helpers/assistant-response/media/build-video-poster-url.helper';
+import { buildVideoPosterUrl } from '@/components/chat/shared/helpers/assistant-response/media/build-video-poster-url.helper';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 /**

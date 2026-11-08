@@ -15,7 +15,7 @@ import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
-import { useAppStore } from '@/stores/app/app.store';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
 import { useOllamaConnection } from './composables/use-ollama-connection';
@@ -34,8 +34,9 @@ const {
   submitHost,
 } = useOllamaConnection();
 
-const { warmModelOnSelect } = storeToRefs(useAppStore());
-const { toggleWarmModelOnSelect } = useAppStore();
+const modelsStore = useModelsStore();
+const { warmModelOnSelect } = storeToRefs(modelsStore);
+const { toggleWarmModelOnSelect } = modelsStore;
 </script>
 
 <template>

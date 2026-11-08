@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onActivated } from 'vue';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useAssistantResponseSettingsStore } from '@/stores/chat/assistant-response-settings/assistant-response-settings.store';
 
 import { useChatContextSize } from '../composables/use-chat-context-size';
 import { useChatDropdowns } from '../composables/use-chat-dropdowns';
@@ -19,11 +19,11 @@ import SourcesMenu from './source-tags-strip/sources-menu/SourcesMenu.vue';
 import SourceTagsStrip from './source-tags-strip/SourceTagsStrip.vue';
 import ViewMenu from './source-tags-strip/view-menu/ViewMenu.vue';
 
-const appStore = useAppStore();
+const assistantResponseSettingsStore = useAssistantResponseSettingsStore();
 const {
   toggleSectionCollapsed: toggleSection,
   toggleMediaPresentation: togglePresentation,
-} = appStore;
+} = assistantResponseSettingsStore;
 
 const { filteredThinkOptions, selectThink } = useChatThink();
 const { filteredContextSizeOptions, selectContextSize } = useChatContextSize();

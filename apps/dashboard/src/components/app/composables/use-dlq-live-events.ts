@@ -3,9 +3,9 @@ import { onMounted, onUnmounted } from 'vue';
 
 import { parseSocketEvent } from '@/composables/helpers/parse-socket-event.helper';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useAppStore } from '@/stores/app/app.store';
 import { useDlqStore } from '@/stores/dlq/dlq.store';
 
+import { useActiveTab } from './use-active-tab';
 import type {
   DlqEntriesRemovedData,
   DlqEntryUpsertedData,
@@ -25,7 +25,7 @@ const DLQ_BULK_CHANGED_TOPIC = 'dlq:bulk-changed';
 export function useDlqLiveEvents(): void {
   const socketStore = useSocket();
   const dlqStore = useDlqStore();
-  const appStore = useAppStore();
+  const { activeTab } = useActiveTab();
 
   let socket: Socket | null = null;
 
@@ -49,7 +49,7 @@ export function useDlqLiveEvents(): void {
     const event = parseSocketEvent(payload);
     if (!event || event.type !== DLQ_BULK_CHANGED_TOPIC) return;
     dlqStore.markDlqActivity();
-    if (appStore.activeTab === 'dlq') {
+    if (activeTab.value === 'dlq') {
       dlqStore.requestEntriesRefresh();
     }
   }

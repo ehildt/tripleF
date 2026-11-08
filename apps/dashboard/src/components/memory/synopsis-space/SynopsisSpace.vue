@@ -12,7 +12,7 @@ import { storeToRefs } from 'pinia';
 import { computed, onMounted, watch } from 'vue';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
-import { useAppStore } from '@/stores/app/app.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import SpaceHeader from '../shared/ui/space-header/SpaceHeader.vue';
 import { useSynopsisSpace } from './composables/use-synopsis-space';
@@ -21,7 +21,7 @@ import SynopsisTree from './synopsis-tree/SynopsisTree.vue';
 const { scope, isLoading, isUnavailable, isEmpty, refresh, setScope } =
   useSynopsisSpace();
 
-const { memoryPartition } = storeToRefs(useAppStore());
+const { memoryPartition } = storeToRefs(useMemorySpacesStore());
 
 /** Refetch when the active partition changes while the tab is mounted. */
 const partitionKey = computed(() => memoryPartition.value.trim() || 'default');

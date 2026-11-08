@@ -35,7 +35,7 @@ const state = vi.hoisted(() => ({
   // models store
   selectedModel: 'gpt-4o',
   fetchModels: vi.fn(),
-  // app store
+  // settings stores
   getConversationScrollMode: vi.fn(),
   setConversationScrollMode: vi.fn(),
   getSourceMenuCollapsed: vi.fn(),
@@ -66,17 +66,36 @@ vi.mock('@/stores/models/models.store', () => ({
   }),
 }));
 
-vi.mock('@/stores/app/app.store', () => ({
-  useAppStore: () => ({
-    getConversationScrollMode: state.getConversationScrollMode,
-    setConversationScrollMode: state.setConversationScrollMode,
-    getSourceMenuCollapsed: state.getSourceMenuCollapsed,
-    setSourceMenuCollapsed: state.setSourceMenuCollapsed,
-    getSourceMenuAlwaysShow: state.getSourceMenuAlwaysShow,
-    collapsedSections: state.collapsedSections,
-    mediaPresentations: state.mediaPresentations,
+vi.mock(
+  '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store',
+  () => ({
+    useChatNavigationSettingsStore: () => ({
+      getConversationScrollMode: state.getConversationScrollMode,
+      setConversationScrollMode: state.setConversationScrollMode,
+    }),
   }),
-}));
+);
+
+vi.mock(
+  '@/stores/chat/prompt-menu-settings/prompt-menu-settings.store',
+  () => ({
+    usePromptMenuSettingsStore: () => ({
+      getSourceMenuCollapsed: state.getSourceMenuCollapsed,
+      setSourceMenuCollapsed: state.setSourceMenuCollapsed,
+      getSourceMenuAlwaysShow: state.getSourceMenuAlwaysShow,
+    }),
+  }),
+);
+
+vi.mock(
+  '@/stores/chat/assistant-response-settings/assistant-response-settings.store',
+  () => ({
+    useAssistantResponseSettingsStore: () => ({
+      collapsedSections: state.collapsedSections,
+      mediaPresentations: state.mediaPresentations,
+    }),
+  }),
+);
 
 vi.mock('../../composables/use-chat-conversation', async () => {
   const { ref } = await import('vue');

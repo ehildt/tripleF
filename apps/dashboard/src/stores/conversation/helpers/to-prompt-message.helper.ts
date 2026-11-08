@@ -1,4 +1,4 @@
-import { assistantResponseToText } from '@/stores/helpers/assistant-response/text/assistant-response-to-text.helper';
+import { assistantResponseToText } from '@/components/chat/shared/helpers/assistant-response/text/assistant-response-to-text.helper';
 import type { AssistantResponseData } from '@/types/assistant-response-data.model';
 
 import type {

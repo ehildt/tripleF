@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
+import { useChatResponseActivity } from '@/components/app/composables/use-chat-response-activity';
+import { createAssistantResponseState } from '@/components/chat/shared/helpers/assistant-response/response-state/create-assistant-response-state.helper';
+import type { AssistantResponseState } from '@/components/chat/shared/helpers/assistant-response/response-state/create-assistant-response-state.helper.types';
+import { processAssistantResponseEvent } from '@/components/chat/shared/helpers/assistant-response/response-state/process-assistant-response-event.helper';
 import { parseSocketEvent } from '@/composables/helpers/parse-socket-event.helper';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 import type { Exchange } from '@/stores/conversation/conversation.model';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
-import { createAssistantResponseState } from '@/stores/helpers/assistant-response/response-state/create-assistant-response-state.helper';
-import type { AssistantResponseState } from '@/stores/helpers/assistant-response/response-state/create-assistant-response-state.helper.types';
-import { processAssistantResponseEvent } from '@/stores/helpers/assistant-response/response-state/process-assistant-response-event.helper';
 import type { AssistantActivityDescriptor } from '@/types/activity.model';
 import type {
   AssistantActivityData,
@@ -25,7 +26,6 @@ import type { SocketEvent } from '@/types/socket-event.model';
 import { formatTime } from '@/utils/format-time/format-time.helper';
 
 import { useReadTracker } from '../../composables/use-read-tracker/use-read-tracker';
-import { useAppStore } from '../../stores/app/app.store';
 import { useModelsStore } from '../../stores/models/models.store';
 import type { Conversation } from '../conversation/conversation.model';
 import { extractUploadedImagesFromResponse } from './helpers/extract-uploaded-images-from-response.helper';
@@ -53,7 +53,7 @@ export const useMessagesStore = defineStore('messages', () => {
   const trackedRequestIds = ref<Set<string>>(new Set());
   const readTracker = useReadTracker('read-api-ids');
   const harnessStreamStates = new Map<string, AssistantResponseState>();
-  const appStore = useAppStore();
+  const { notifyChatResponse } = useChatResponseActivity();
 
   function trackRequest(requestId: string) {
     trackedRequestIds.value.add(requestId);
@@ -158,7 +158,7 @@ export const useMessagesStore = defineStore('messages', () => {
       if (language) ex.activityLanguage = language;
     });
     trackEnvelopeEntry(eventName, requestId, false);
-    appStore.notifyChatResponse();
+    notifyChatResponse();
   }
 
   function handleToolCall(
@@ -197,7 +197,7 @@ export const useMessagesStore = defineStore('messages', () => {
       }
     }
     trackEnvelopeEntry(eventName, requestId, false);
-    appStore.notifyChatResponse();
+    notifyChatResponse();
   }
 
   function handleDelta(
@@ -214,7 +214,7 @@ export const useMessagesStore = defineStore('messages', () => {
         if (language) ex.activityLanguage = language;
       });
       trackEnvelopeEntry(eventName, requestId, false);
-      appStore.notifyChatResponse();
+      notifyChatResponse();
       return;
     }
 
@@ -241,7 +241,7 @@ export const useMessagesStore = defineStore('messages', () => {
       conversation.updatedAt = Date.now();
     }
     trackEnvelopeEntry(eventName, requestId, false);
-    appStore.notifyChatResponse();
+    notifyChatResponse();
   }
 
   function handleChart(
@@ -264,7 +264,7 @@ export const useMessagesStore = defineStore('messages', () => {
       conversation.updatedAt = Date.now();
     }
     trackEnvelopeEntry(eventName, requestId, false);
-    appStore.notifyChatResponse();
+    notifyChatResponse();
   }
 
   function handleCompleted(
@@ -316,7 +316,7 @@ export const useMessagesStore = defineStore('messages', () => {
       }
     }
     trackEnvelopeEntry(eventName, requestId, true);
-    appStore.notifyChatResponse();
+    notifyChatResponse();
   }
 
   function handleFailed(
@@ -344,7 +344,7 @@ export const useMessagesStore = defineStore('messages', () => {
       ensureConversationNumCtx(conversation);
     }
     trackEnvelopeEntry(eventName, requestId, true);
-    appStore.notifyChatResponse();
+    notifyChatResponse();
   }
 
   function handleCancelled(requestId: string): void {

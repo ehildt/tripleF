@@ -5,6 +5,10 @@ import { useConversationStore } from '../conversation/conversation.store';
 import { useModelsStore } from '../models/models.store';
 import { useMessagesStore } from './messages.store';
 
+vi.mock('@/components/app/composables/use-chat-response-activity', () => ({
+  useChatResponseActivity: () => ({ notifyChatResponse: vi.fn() }),
+}));
+
 vi.mock('../../api/conversations.api', () => ({
   fetchConversations: vi.fn().mockResolvedValue([]),
   fetchConversation: vi.fn(),

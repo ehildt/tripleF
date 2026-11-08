@@ -6,19 +6,6 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 
 import App from './App.vue';
 
-vi.mock('./stores/app/app.store', () => ({
-  useAppStore: () => ({
-    activeTab: 'chat',
-    blinkLogo: false,
-    requestId: 'req-id',
-    refreshRequestId: vi.fn(),
-    handleCopyToClipboard: vi.fn(),
-    setActiveTab: vi.fn(),
-    isTabVisible: () => true,
-    tabVisibility: {},
-  }),
-}));
-
 vi.mock('./stores/debug/debug.store', () => ({
   useDebugStore: () => ({
     debugLogCount: 0,
@@ -109,8 +96,8 @@ vi.mock('@/api/playlists.api', () => ({
 describe('App', () => {
   it('renders without crashing', () => {
     setActivePinia(createPinia());
-    // App renders TabMenu (RouterLinks) and mirrors the route into the app
-    // store, so a memory router must be installed.
+    // App renders TabMenu RouterLinks and derives navigation from the route,
+    // so a memory router must be installed.
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [

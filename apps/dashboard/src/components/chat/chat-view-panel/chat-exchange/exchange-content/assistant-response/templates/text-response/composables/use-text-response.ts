@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { extractResponseText } from '@/stores/helpers/assistant-response/text/extract-response-text.helper';
+import { extractResponseText } from '@/components/chat/shared/helpers/assistant-response/text/extract-response-text.helper';
 import { renderMarkdown } from '@/utils/render-markdown/render-markdown.helper';
 
 import type { TextResponseProps } from '../TextResponse.types';

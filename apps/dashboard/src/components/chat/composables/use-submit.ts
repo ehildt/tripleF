@@ -16,19 +16,21 @@ import {
 } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAppStore } from '@/stores/app/app.store';
 import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 import type {
   Exchange,
   UploadedDocument,
 } from '@/stores/conversation/conversation.model';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
 import { useModelsStore } from '@/stores/models/models.store';
 import type {
   ConversationMetadataDocument,
   ConversationMetadataImage,
 } from '@/types/form-query-params.model';
+import { createId } from '@/utils/create-id/create-id.helper';
 
 import { buildSubmitQueryParams } from './helpers/build-submit-query-params.helper';
 import { mapDocumentEntry } from './helpers/map-document-entry.helper';
@@ -41,7 +43,8 @@ export function useSubmit() {
   const { promptDraft, resetPromptDraft } = usePromptDraft();
   const socketProvider = useSocketProvider();
 
-  const appStore = useAppStore();
+  const conversationSettingsStore = useConversationSettingsStore();
+  const memorySpacesStore = useMemorySpacesStore();
   const conversationStore = useConversationStore();
   const modelsStore = useModelsStore();
   const attachedFilesStore = useAttachedFilesStore();
@@ -184,7 +187,7 @@ export function useSubmit() {
     }
   }
 
-  async function buildSubmitContext(): Promise<{
+  async function buildSubmitContext(requestId: string): Promise<{
     sid: string;
     conversationId: string;
     model: string;
@@ -210,7 +213,6 @@ export function useSubmit() {
     const model = conversationModel.value;
     const event = (activeConversation.value?.event ?? '').trim();
     const room = (activeConversation.value?.roomId ?? '').trim();
-    const requestId = appStore.requestId;
     const userContent = promptDraft.value.trim();
     const sid = conversationStore.activeConversationId;
     const conversationId = sid ? conversationStore.getConversationId(sid) : '';
@@ -234,8 +236,8 @@ export function useSubmit() {
     };
   }
 
-  async function submitCurrentPrompt() {
-    const ctx = await buildSubmitContext();
+  async function submitCurrentPrompt(submitRequestId: string) {
+    const ctx = await buildSubmitContext(submitRequestId);
     if (!ctx) return;
 
     const {
@@ -347,7 +349,7 @@ export function useSubmit() {
     const formData = buildFormData(newFiles, {
       prompt: conv,
       originals: newDocumentFiles,
-      documentTextLimit: appStore.documentTextLimit,
+      documentTextLimit: conversationSettingsStore.documentTextLimit,
     });
 
     resetPromptDraft();
@@ -375,8 +377,8 @@ export function useSubmit() {
     const params = buildSubmitQueryParams({
       requestId,
       sessionId: sid ?? '',
-      memoryPartition: appStore.memoryPartition,
-      memoryCognition: appStore.memoryCognition,
+      memoryPartition: memorySpacesStore.memoryPartition,
+      memoryCognition: memorySpacesStore.memoryCognition,
       conversationId,
       roomId: room,
       stream: activeConversation.value?.stream,
@@ -425,11 +427,11 @@ export function useSubmit() {
 
     ensureActiveConversation();
 
-    appStore.refreshRequestId();
+    const requestId = createId();
     isSubmitting.value = true;
 
     try {
-      await submitCurrentPrompt();
+      await submitCurrentPrompt(requestId);
     } finally {
       isSubmitting.value = false;
     }

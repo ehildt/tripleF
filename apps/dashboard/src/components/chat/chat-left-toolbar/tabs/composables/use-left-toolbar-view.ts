@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
 
 import type { LeftToolbarView } from '../../left-toolbar-view.type';
 
@@ -18,9 +18,11 @@ const leftToolbarView = ref<LeftToolbarView>('conversations');
 let viewWatcherStarted = false;
 
 export function useLeftToolbarView() {
-  const appStore = useAppStore();
+  const navigationStore = useNavigationStore();
 
-  const areSocketsVisible = computed(() => appStore.isTabVisible('sockets'));
+  const areSocketsVisible = computed(() =>
+    navigationStore.isTabVisible('sockets'),
+  );
 
   // If the sockets section is turned off (Settings) while selected, fall back
   // to the conversations section so the view never points at a hidden tab.

@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useAppStore } from '@/stores/app/app.store';
+import { useChartSettingsStore } from '@/stores/chat/chart-settings/chart-settings.store';
 
 import ChatNavigationSection from './ChatNavigationSection.vue';
 
@@ -35,14 +35,14 @@ describe('ChatNavigationSection', () => {
   });
 
   it('updates the store when a price style is selected', async () => {
-    const store = useAppStore();
+    const store = useChartSettingsStore();
     const wrapper = mount(ChatNavigationSection);
     await wrapper.find('button[aria-label="Line"]').trigger('click');
     expect(store.chartConfig.priceStyle).toBe('line');
   });
 
   it('toggles chart annotations from the checkbox cards', async () => {
-    const store = useAppStore();
+    const store = useChartSettingsStore();
     const wrapper = mount(ChatNavigationSection);
     const markersCard = wrapper
       .findAll('.number-field-card')

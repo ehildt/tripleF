@@ -11,12 +11,14 @@ import SettingsSection from '@/components/settings/shared/ui/settings-section/Se
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
-import { useAppStore } from '@/stores/app/app.store';
+import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
+import { usePromptMenuSettingsStore } from '@/stores/chat/prompt-menu-settings/prompt-menu-settings.store';
 
 import { useSettingsMenuVisibility } from '../composables/use-settings-menu-visibility';
 import { useSettingsTabVisibility } from '../composables/use-settings-tab-visibility';
 
-const appStore = useAppStore();
+const navigationStore = useNavigationStore();
+const promptMenuSettingsStore = usePromptMenuSettingsStore();
 
 const { toggleTab } = useSettingsTabVisibility();
 
@@ -38,7 +40,7 @@ const { toggleSourceMenuAlwaysShow, toggleViewMenuAlwaysShow } =
             :icon="Plug"
             :label="$t('common.sockets')"
             :description="$t('common.socketsDesc')"
-            :checked="appStore.isTabVisible('sockets')"
+            :checked="navigationStore.isTabVisible('sockets')"
             @toggle="toggleTab('sockets')"
           />
         </FieldGrid>
@@ -55,14 +57,14 @@ const { toggleSourceMenuAlwaysShow, toggleViewMenuAlwaysShow } =
             :icon="ListFilter"
             :label="$t('common.sourceMenuAlwaysShow')"
             :description="$t('common.sourceMenuAlwaysShowDesc')"
-            :checked="appStore.sourceTagsMenuAlwaysShow.sources"
+            :checked="promptMenuSettingsStore.sourceTagsMenuAlwaysShow.sources"
             @toggle="toggleSourceMenuAlwaysShow"
           />
           <NumberFieldCard
             :icon="PanelsTopLeft"
             :label="$t('common.viewMenuAlwaysShow')"
             :description="$t('common.viewMenuAlwaysShowDesc')"
-            :checked="appStore.sourceTagsMenuAlwaysShow.view"
+            :checked="promptMenuSettingsStore.sourceTagsMenuAlwaysShow.view"
             @toggle="toggleViewMenuAlwaysShow"
           />
         </FieldGrid>

@@ -1,25 +1,25 @@
-import { useAppStore } from '@/stores/app/app.store';
+import { usePromptMenuSettingsStore } from '@/stores/chat/prompt-menu-settings/prompt-menu-settings.store';
 
 /**
  * Toggle actions for the prompt bar's floating icon menus (whether each
  * menu stays pinned open or collapses behind the expand arrow). The flags
- * persist through the app store; read-side binds
- * `useAppStore().sourceTagsMenuAlwaysShow` directly.
+ * persist through the prompt-menu settings store; read-side binds
+ * `usePromptMenuSettingsStore().sourceTagsMenuAlwaysShow` directly.
  */
 export function useSettingsMenuVisibility() {
-  const appStore = useAppStore();
+  const promptMenuSettingsStore = usePromptMenuSettingsStore();
 
   function toggleSourceMenuAlwaysShow() {
-    appStore.setSourceTagsMenuAlwaysShow(
+    promptMenuSettingsStore.setSourceTagsMenuAlwaysShow(
       'sources',
-      !appStore.sourceTagsMenuAlwaysShow.sources,
+      !promptMenuSettingsStore.sourceTagsMenuAlwaysShow.sources,
     );
   }
 
   function toggleViewMenuAlwaysShow() {
-    appStore.setSourceTagsMenuAlwaysShow(
+    promptMenuSettingsStore.setSourceTagsMenuAlwaysShow(
       'view',
-      !appStore.sourceTagsMenuAlwaysShow.view,
+      !promptMenuSettingsStore.sourceTagsMenuAlwaysShow.view,
     );
   }
 

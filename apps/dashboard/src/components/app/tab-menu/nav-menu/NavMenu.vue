@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router';
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-import type { ActiveTab } from '../../../../types/app.model';
+import type { ActiveTab } from '../../../../stores/app/navigation/navigation.model';
 import type { MenuTab } from '../composables/use-menu-tabs.types';
 
 defineProps<{
