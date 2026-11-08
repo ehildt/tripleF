@@ -115,7 +115,6 @@ export interface Conversation {
   id: string;
   title: string;
   exchanges: Exchange[];
-  files: File[];
   savedFileInfos: SavedFileInfo[];
   uploadedImages: UploadedImage[];
   uploadedDocuments: UploadedDocument[];

@@ -3,27 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { mapPendingAttachment } from './map-pending-attachment.helper';
 
 describe('mapPendingAttachment', () => {
-  it('normalizes a pending attached file', () => {
+  it('normalizes a pending attached file with its stable identity', () => {
     expect(
-      mapPendingAttachment(
-        {
-          file: { name: 'img.png' } as File,
-          isSelected: true,
-          objectUrl: 'blob:1',
-          hash: 'h1',
-          conversationId: 'c1',
-          kind: 'image',
-        },
-        2,
-      ),
+      mapPendingAttachment({
+        id: 'entry-1',
+        file: { name: 'img.png' } as File,
+        isSelected: true,
+        objectUrl: 'blob:1',
+        hash: 'h1',
+        conversationId: 'c1',
+        kind: 'image',
+      }),
     ).toEqual({
-      id: 'pending-h1-2',
+      id: 'entry-1',
       name: 'img.png',
       hash: 'h1',
       previewUrl: 'blob:1',
       isUploaded: false,
       isSelected: true,
-      pendingIndex: 2,
       source: 'local',
       kind: 'image',
     });

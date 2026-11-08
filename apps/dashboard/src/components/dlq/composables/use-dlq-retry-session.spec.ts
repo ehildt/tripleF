@@ -59,10 +59,6 @@ vi.mock('../../../api/object-storage.api', () => ({
   deleteUploadedObject: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../../stores/attached-files/attached-files.store', () => ({
-  useAttachedFilesStore: () => ({ clearPendingFilesForConversation: vi.fn() }),
-}));
-
 const makeEntry = (overrides: Partial<DlqEntry> = {}): DlqEntry =>
   ({
     id: 'rec-1',

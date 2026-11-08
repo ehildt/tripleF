@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { useDebugStore } from '@/stores/debug/debug.store';
 
@@ -100,7 +100,7 @@ describe('useAssistantRequest', () => {
       conversationStore,
       'setUploadedDocuments',
     );
-    const setFiles = vi.spyOn(conversationStore, 'setFiles');
+    const setSavedFileInfos = vi.spyOn(conversationStore, 'setSavedFileInfos');
     const markExchangeError = vi.spyOn(conversationStore, 'markExchangeError');
     const clearPending = vi.spyOn(
       useAttachedFilesStore(),
@@ -142,8 +142,11 @@ describe('useAssistantRequest', () => {
     );
     expect(setUploadedImages).toHaveBeenCalledWith(conversation.id, []);
     expect(setUploadedDocuments).toHaveBeenCalledWith(conversation.id, []);
-    expect(setFiles).toHaveBeenCalledWith(conversation.id, []);
-    expect(clearPending).toHaveBeenCalledWith(conversation.id, 'cid-1');
+    expect(setSavedFileInfos).toHaveBeenCalledWith(conversation.id, []);
+    expect(clearPending).toHaveBeenCalledWith({
+      parentConversationId: conversation.id,
+      conversationId: 'cid-1',
+    });
     expect(markExchangeError).not.toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith('toast.requestSent');
   });

@@ -1189,23 +1189,24 @@ describe('useConversationStore', () => {
     });
   });
 
-  describe('attached files', () => {
-    it('stores files with their saved info', () => {
+  describe('saved file metadata', () => {
+    it('stores saved info without retaining browser file handles', () => {
       const store = useConversationStore();
       const conversation = store.createNewConversation('temporary');
       const file = new File(['body'], 'notes.txt', { type: 'text/plain' });
 
-      store.setFiles(conversation.id, [file]);
+      store.setSavedFileInfos(conversation.id, [file]);
 
-      expect(store.getFiles(conversation.id)).toEqual([file]);
+      expect(conversation).not.toHaveProperty('files');
       expect(conversation.savedFileInfos).toHaveLength(1);
       expect(conversation.savedFileInfos[0].name).toBe('notes.txt');
     });
 
-    it('falls back to the conversation files for unknown ids', () => {
+    it('ignores unknown conversation ids', () => {
       const store = useConversationStore();
+      const file = new File(['body'], 'notes.txt', { type: 'text/plain' });
 
-      expect(store.getFiles('missing')).toEqual([]);
+      expect(() => store.setSavedFileInfos('missing', [file])).not.toThrow();
     });
   });
 

@@ -19,7 +19,6 @@ describe('mapUploadedImageAttachment', () => {
       previewUrl: '',
       isUploaded: true,
       isSelected: true,
-      pendingIndex: null,
       source: 'cloud',
       kind: 'image',
     });

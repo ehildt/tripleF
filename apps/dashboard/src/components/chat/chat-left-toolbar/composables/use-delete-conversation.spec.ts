@@ -17,7 +17,7 @@ const state = vi.hoisted(() => ({
   getConversation: vi.fn(),
   setSubscriptions: vi.fn(),
   deleteCurrentConversation: vi.fn(),
-  clearPendingFilesForConversation: vi.fn(),
+  clearPendingFiles: vi.fn(),
   removeSubscriptionByEventRoom: vi.fn(),
   closeRoom: vi.fn(),
   closeEvent: vi.fn(),
@@ -35,9 +35,9 @@ vi.mock('@/stores/conversation/conversation.store', async () => {
   return { useConversationStore: () => store };
 });
 
-vi.mock('@/stores/attached-files/attached-files.store', () => ({
-  useAttachedFilesStore: () => ({
-    clearPendingFilesForConversation: state.clearPendingFilesForConversation,
+vi.mock('@/components/chat/shared/composables/use-pending-attachments', () => ({
+  usePendingAttachments: () => ({
+    clearPendingFiles: state.clearPendingFiles,
   }),
 }));
 
@@ -89,7 +89,7 @@ describe('useDeleteConversation', () => {
     state.setSubscriptions.mockClear();
     state.deleteCurrentConversation.mockClear();
     state.deleteCurrentConversation.mockResolvedValue(undefined);
-    state.clearPendingFilesForConversation.mockClear();
+    state.clearPendingFiles.mockClear();
     state.removeSubscriptionByEventRoom.mockClear();
     state.closeRoom.mockClear();
     state.closeEvent.mockClear();
@@ -114,10 +114,10 @@ describe('useDeleteConversation', () => {
     expect(state.closeEvent).toHaveBeenCalledWith('e');
     expect(state.setSubscriptions).toHaveBeenCalledWith('c1', []);
     expect(state.deleteCurrentConversation).toHaveBeenCalledWith('c1');
-    expect(state.clearPendingFilesForConversation).toHaveBeenCalledWith(
-      'c1',
-      'context-1',
-    );
+    expect(state.clearPendingFiles).toHaveBeenCalledWith({
+      parentConversationId: 'c1',
+      conversationId: 'context-1',
+    });
   });
 
   it('keeps a socket shared with another conversation', async () => {

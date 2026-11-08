@@ -29,9 +29,8 @@ function fromPersistedExchange(exchange: PersistedExchange): Exchange {
 }
 
 /**
- * Rehydrate a conversation from its server snapshot: transient `files`
- * start empty, uploaded images default to selected, and optional fields
- * receive their in-memory defaults.
+ * Rehydrate a conversation from its server snapshot: uploaded images default
+ * to selected, and optional fields receive their in-memory defaults.
  */
 export function fromPersistedConversation(
   persisted: PersistedConversation,
@@ -39,7 +38,6 @@ export function fromPersistedConversation(
   return {
     ...persisted,
     exchanges: (persisted.exchanges ?? []).map(fromPersistedExchange),
-    files: [],
     uploadedImages: (persisted.uploadedImages ?? []).map(mapUploadedImage),
     uploadedDocuments: (persisted.uploadedDocuments ?? []).map(
       mapUploadedDocument,

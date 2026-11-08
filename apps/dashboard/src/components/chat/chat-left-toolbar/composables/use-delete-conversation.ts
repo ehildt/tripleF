@@ -1,5 +1,5 @@
+import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { isSocketEventInUse } from '../shared/helpers/is-socket-event-in-use.helper';
@@ -13,7 +13,7 @@ import { useSocketSubscriptions } from './use-socket-subscriptions';
  */
 export function useDeleteConversation() {
   const conversationStore = useConversationStore();
-  const attachedFilesStore = useAttachedFilesStore();
+  const { clearPendingFiles } = usePendingAttachments();
   const socketStore = useSocket();
   const { subscriptions, removeSubscriptionByEventRoom } =
     useSocketSubscriptions();
@@ -52,10 +52,10 @@ export function useDeleteConversation() {
     conversationStore.setSubscriptions(id, []);
 
     await conversationStore.deleteCurrentConversation(id);
-    attachedFilesStore.clearPendingFilesForConversation(
-      id,
-      conversation.conversationId,
-    );
+    clearPendingFiles({
+      parentConversationId: id,
+      conversationId: conversation.conversationId,
+    });
   }
 
   return { deleteConversation };
