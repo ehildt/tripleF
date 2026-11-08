@@ -37,6 +37,10 @@ vi.mock('./stores/models/models.store', () => ({
   }),
 }));
 
+vi.mock('@/components/app/composables/use-dlq-live-events', () => ({
+  useDlqLiveEvents: vi.fn(),
+}));
+
 vi.mock('@/composables/use-socket/use-socket', () => ({
   useSocket: () => ({
     connectionState: 'disconnected',

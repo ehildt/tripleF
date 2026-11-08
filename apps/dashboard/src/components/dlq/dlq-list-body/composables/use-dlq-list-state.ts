@@ -34,10 +34,9 @@ export function useDlqListState(options: UseDlqListStateOptions) {
     );
   }
 
-  // Deep: the store mutates entries in place (splice on updateEntry). A
-  // changed fingerprint means the list data was replaced — pagination,
-  // filters, refresh — which are the only moments the read snapshot (and
-  // with it the sort order) is re-evaluated.
+  // A changed fingerprint means the page data was replaced — pagination,
+  // filters, cache updates, refresh — which are the moments when the read
+  // snapshot (and with it the sort order) is re-evaluated.
   watch(
     entries,
     () => {

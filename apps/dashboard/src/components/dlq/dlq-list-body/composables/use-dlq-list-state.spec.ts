@@ -21,7 +21,7 @@ const makeEntry = (overrides: Partial<DlqEntry>): DlqEntry =>
     ...overrides,
   }) as DlqEntry;
 
-/** Mirrors the DLQ store's read key. */
+/** Mirrors the DLQ read service's versioned key. */
 const entryReadKey = (e: DlqEntry) =>
   `${e.requestId}::${e.failedAt ?? ''}::${e.attemptsMade}`;
 
@@ -131,7 +131,7 @@ describe('useDlqListState', () => {
     });
 
     readIds.value = ['b'];
-    // Pagination: the store replaces the entries with the next page.
+    // Pagination: the query cache supplies the next page.
     entries.value = [
       makeEntry({ requestId: 'c', failedAt: '2024-01-04T00:00:00Z' }),
       makeEntry({ requestId: 'b', failedAt: '2024-01-05T00:00:00Z' }),

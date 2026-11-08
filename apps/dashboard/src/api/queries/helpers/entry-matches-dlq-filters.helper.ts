@@ -6,7 +6,7 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
  * search is a case-insensitive contains across jobName, queueName, and
  * failedReason, with `JSON.stringify(payload)` standing in for Postgres'
  * `payload::text ILIKE` (same semantics for real JSON payloads).
- * Pure and store-free — the store action passes its current filter values.
+ * Pure and store-free — the cache updater passes the page's filter values.
  */
 export function entryMatchesDlqFilters(
   entry: DlqEntry,

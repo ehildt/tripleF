@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Ref } from 'vue';
 import { defineComponent, nextTick } from 'vue';
 
+import { useDlqActivity } from '@/components/dlq/composables/use-dlq-activity';
 import type { ActiveTab } from '@/stores/app/navigation/navigation.model';
 import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
-import { useDlqStore } from '@/stores/dlq/dlq.store';
 import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
@@ -32,13 +32,14 @@ describe('useAppNavigation', () => {
     setActivePinia(createPinia());
     localStorage.clear();
     refs.activeTab.value = 'chat';
+    useDlqActivity().clearDlqActivity();
   });
 
   it('shows the DLQ badge only away from the DLQ route', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     refs.activeTab.value = 'memory';
-    useDlqStore().hasDlqActivity = true;
+    useDlqActivity().markDlqActivity();
     const wrapper = mount(Probe, { global: { plugins: [pinia] } });
     expect(wrapper.vm.showDlqBadge).toBe(true);
 
