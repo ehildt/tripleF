@@ -6,8 +6,8 @@ import { useRetryDlqMutation } from '../../../api/queries/use-retry-dlq-mutation
 import { useUpdateDlqMutation } from '../../../api/queries/use-update-dlq-mutation';
 import { useToast } from '../../../composables/use-toast/use-toast';
 import { useDlqStore } from '../../../stores/dlq/dlq.store';
-import { extractEntryFilters } from '../helpers/extract-entry-filters.helper';
 import { useDlqRetrySession } from './use-dlq-retry-session';
+import type { DlqRetrySession } from './use-dlq-retry-session.types';
 
 /**
  * DLQ row/detail actions — thin orchestration over the mutations, the store,
@@ -24,7 +24,7 @@ export function useDlqActions(guardedRefetch: () => Promise<void>) {
   const deleteMutation = useDeleteDlqMutation();
   const updateMutation = useUpdateDlqMutation();
   const toast = useToast();
-  const { ensureSocketSubscription, addRetryPendingMessage } =
+  const { prepareRetrySession, completeRetrySession, failRetrySession } =
     useDlqRetrySession();
 
   function findEntry(id: string) {
@@ -42,26 +42,25 @@ export function useDlqActions(guardedRefetch: () => Promise<void>) {
 
   async function onRetry(id: string) {
     dlqStore.error = null;
+    let retrySession: DlqRetrySession | undefined;
     try {
       const entry = findEntry(id);
-      // Session seeding only makes sense for harness turns — a reinstated
-      // harness job streams back under its request id (= jobName). Background
-      // queue records (vectorize, ...) just re-run silently.
-      const isHarnessTurn = entry?.queueName === 'harness';
-      const { roomId, event, model } = extractEntryFilters(entry);
+      if (!entry) throw new Error(`DLQ entry ${id} is not loaded`);
 
-      if (isHarnessTurn && roomId && event)
-        ensureSocketSubscription(roomId, event);
-
-      const res = await retryMutation.mutateAsync(id);
-      toast.success(i18n.global.t('toast.retried', { count: res.restored }));
-
-      if (entry && isHarnessTurn) {
-        addRetryPendingMessage(entry.jobName, roomId, event, model, entry);
+      if (entry.queueName === 'harness') {
+        retrySession = await prepareRetrySession(entry);
       }
 
-      guardedRefetch();
+      const res = await retryMutation.mutateAsync(id);
+      if (!res.ids.includes(id)) {
+        throw new Error(`DLQ entry ${id} was not restored`);
+      }
+
+      if (retrySession) completeRetrySession(retrySession);
+      toast.success(i18n.global.t('toast.retried', { count: res.restored }));
+      void guardedRefetch();
     } catch {
+      if (retrySession) failRetrySession(retrySession);
       toast.error(i18n.global.t('toast.retryFailed'));
     }
   }

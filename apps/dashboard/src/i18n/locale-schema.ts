@@ -307,6 +307,7 @@ const commonSchema = z.object({
   askHarness: z.string().optional(),
   channel: z.string().optional(),
   conversationName: z.string().optional(),
+  conversationDeleted: z.string().optional(),
   newConversation: z.string().optional(),
   expiresIn: z.string().optional(),
   event: z.string().optional(),

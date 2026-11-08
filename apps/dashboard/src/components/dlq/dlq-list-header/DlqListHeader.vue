@@ -12,11 +12,11 @@ import type { DlqListHeaderProps } from './DlqListHeader.types';
  * header orchestrates; the actions own their filter-menu state.
  */
 const props = defineProps<DlqListHeaderProps>();
+const filterSearch = defineModel<string>('filterSearch', { required: true });
 
 const emit = defineEmits<{
   (e: 'reload'): void;
   (e: 'update:filterStatus', value: string): void;
-  (e: 'update:filterSearch', value: string): void;
   (e: 'update:hideRead', value: boolean): void;
   (e: 'firstPage'): void;
   (e: 'prevPage'): void;
@@ -33,13 +33,12 @@ const emit = defineEmits<{
       <PanelHeaderTitle :label="$t('common.jobs')" />
     </div>
     <DlqListActions
+      v-model:filter-search="filterSearch"
       :filter-status="props.filterStatus"
-      :filter-search="props.filterSearch"
       :hide-read="props.hideRead"
       :show-loading="props.showLoading"
       @reload="emit('reload')"
       @update:filter-status="emit('update:filterStatus', $event)"
-      @update:filter-search="emit('update:filterSearch', $event)"
       @update:hide-read="emit('update:hideRead', $event)"
     />
   </PanelHeader>

@@ -7,6 +7,8 @@ export interface DlqItemRowProps {
   isRead?: boolean;
   /** Whether this row is the currently selected entry. */
   isActive?: boolean;
+  /** Whether the failed turn's original conversation has been deleted. */
+  isConversationDeleted?: boolean;
 }
 
 export interface DlqItemRowEmits {

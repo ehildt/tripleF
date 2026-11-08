@@ -244,6 +244,7 @@ export default {
     askHarness: 'Frag mich was',
     channel: 'Kanal',
     conversationName: 'Chat-Name',
+    conversationDeleted: 'Chat gelöscht',
     newConversation: 'Neuer Chat',
     expiresIn: 'Läuft ab {time}',
     event: 'Event',

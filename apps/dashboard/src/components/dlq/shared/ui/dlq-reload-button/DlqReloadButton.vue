@@ -4,7 +4,6 @@ import { RefreshCw } from '@lucide/vue';
 import MotionIcon from '@/components/shared/ui/motion-icon/MotionIcon.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
-import DlqPendingIndicator from '../dlq-pending-indicator/DlqPendingIndicator.vue';
 import type { DlqReloadButtonProps } from './DlqReloadButton.types';
 
 defineProps<DlqReloadButtonProps>();
@@ -16,20 +15,21 @@ const emit = defineEmits<{
 
 <template>
   <div class="dlq-reload-button">
-    <Transition name="fade">
-      <Tooltip v-if="!loading" :text="$t('common.reload')">
-        <button
-          key="reload"
-          class="dlq-reload-button__trigger"
-          @click="emit('click')"
-        >
-          <MotionIcon><RefreshCw class="dlq-reload-button__icon" /></MotionIcon>
-        </button>
-      </Tooltip>
-      <div v-else key="loading" class="dlq-reload-button__indicator">
-        <DlqPendingIndicator />
-      </div>
-    </Transition>
+    <Tooltip :text="$t('common.reload')">
+      <button
+        class="dlq-reload-button__trigger"
+        :disabled="loading"
+        :aria-busy="loading"
+        @click="emit('click')"
+      >
+        <MotionIcon>
+          <RefreshCw
+            class="dlq-reload-button__icon"
+            :class="{ 'dlq-reload-button__icon--loading': loading }"
+          />
+        </MotionIcon>
+      </button>
+    </Tooltip>
   </div>
 </template>
 
@@ -53,8 +53,12 @@ const emit = defineEmits<{
   transition: color 0.2s ease;
 }
 
-.dlq-reload-button__trigger:hover {
+.dlq-reload-button__trigger:hover:not(:disabled) {
   color: var(--color-fg-primary);
+}
+
+.dlq-reload-button__trigger:disabled {
+  cursor: default;
 }
 
 .dlq-reload-button__icon {
@@ -62,11 +66,27 @@ const emit = defineEmits<{
   height: var(--spacing-4);
 }
 
-.dlq-reload-button__indicator {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.dlq-reload-button__icon--loading {
+  animation: dlq-reload-button-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dlq-reload-button-pulse {
+  0%,
+  100% {
+    color: var(--color-fg-muted);
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
+  50% {
+    color: var(--color-accent-primary);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlq-reload-button__icon--loading {
+    animation: none;
+  }
 }
 </style>
