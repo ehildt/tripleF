@@ -1,32 +1,24 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
 
 import { useDebugStore } from './debug.store';
-
-vi.stubGlobal('performance', { now: vi.fn().mockReturnValue(100) });
 
 describe('useDebugStore', () => {
   beforeEach(() => {
     localStorage.clear();
     setActivePinia(createPinia());
-    // Logging is off (paused) by default; unpause so the add/track tests
-    // exercise the real append behavior.
     useDebugStore().debugPaused = false;
     vi.restoreAllMocks();
   });
 
-  it('initializes empty', () => {
-    const store = useDebugStore();
-    expect(store.debugResults).toEqual([]);
-    expect(store.debugLogCount).toBe(0);
-    expect(store.selectedDebugResult).toBeNull();
-    expect(store.lastSeenDebugCount).toBe(0);
-  });
-
-  it('starts paused (logging off) by default', () => {
+  it('initializes empty and paused by default', () => {
     localStorage.clear();
     setActivePinia(createPinia());
     const store = useDebugStore();
+
+    expect(store.debugResults).toEqual([]);
+    expect(store.debugLogCount).toBe(0);
     expect(store.debugPaused).toBe(true);
     store.addDebugResult({
       endpoint: '/api',
@@ -38,7 +30,26 @@ describe('useDebugStore', () => {
     expect(store.debugResults).toHaveLength(0);
   });
 
-  it('addDebugResult prepends result with generated id and timestamp', () => {
+  it('resumes only from an explicitly false stored pause value', () => {
+    localStorage.setItem('debug-paused', 'unexpected');
+    setActivePinia(createPinia());
+    expect(useDebugStore().debugPaused).toBe(true);
+
+    localStorage.setItem('debug-paused', 'false');
+    setActivePinia(createPinia());
+    expect(useDebugStore().debugPaused).toBe(false);
+  });
+
+  it('stays paused and nonfatal when storage cannot be read', () => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+      throw new Error('storage denied');
+    });
+    setActivePinia(createPinia());
+
+    expect(useDebugStore().debugPaused).toBe(true);
+  });
+
+  it('prepends typed HTTP and socket entries with generated metadata', () => {
     const store = useDebugStore();
     store.addDebugResult({
       endpoint: '/api',
@@ -47,87 +58,67 @@ describe('useDebugStore', () => {
       responseTime: 10,
       type: 'http',
     });
-    expect(store.debugResults).toHaveLength(1);
-    expect(store.debugResults[0].endpoint).toBe('/api');
-    expect(store.debugResults[0].id).toBeDefined();
-    expect(store.debugResults[0].timestamp).toBeDefined();
-    expect(store.debugResults[0].direction).toBe('request');
-  });
-
-  it('addSocketDebugEntry prepends result', () => {
-    const store = useDebugStore();
-    store.addSocketDebugEntry({
+    store.addDebugResult({
       endpoint: 'ws',
       method: 'LISTEN',
       status: 'success',
       responseTime: 0,
       type: 'socket',
+      direction: 'response',
+    });
+
+    expect(store.debugResults).toHaveLength(2);
+    expect(store.debugResults[0]).toMatchObject({
+      type: 'socket',
+      direction: 'response',
+    });
+    expect(store.debugResults[1]).toMatchObject({
+      endpoint: '/api',
       direction: 'request',
     });
-    expect(store.debugResults).toHaveLength(1);
-    expect(store.debugResults[0].type).toBe('socket');
+    expect(store.debugResults[1].id).toBeTruthy();
+    expect(store.debugResults[1].epoch).toBeTypeOf('number');
   });
 
-  it('clearDebugResults removes all and resets selected', () => {
+  it('persists pause changes', async () => {
+    const store = useDebugStore();
+    store.debugPaused = false;
+    await nextTick();
+    expect(localStorage.getItem('debug-paused')).toBe('false');
+
+    store.toggleDebugPaused();
+    await nextTick();
+    expect(localStorage.getItem('debug-paused')).toBe('true');
+  });
+
+  it('counts unread live entries and preserves read ids when cleared', () => {
     const store = useDebugStore();
     store.addDebugResult({
-      endpoint: '/x',
-      method: 'GET',
-      status: 'error',
-      responseTime: 1,
-      type: 'http',
-      errorMessage: 'fail',
-    });
-    store.selectedDebugResult = store.debugResults[0];
-    store.clearDebugResults();
-    expect(store.debugResults).toHaveLength(0);
-    expect(store.selectedDebugResult).toBeNull();
-    expect(store.lastSeenDebugCount).toBe(0);
-  });
-
-  it('incrementDebugCount updates lastSeenDebugCount', () => {
-    const store = useDebugStore();
-    store.incrementDebugCount(5);
-    expect(store.lastSeenDebugCount).toBe(5);
-    store.incrementDebugCount(3);
-    expect(store.lastSeenDebugCount).toBe(5);
-    store.incrementDebugCount(10);
-    expect(store.lastSeenDebugCount).toBe(10);
-  });
-
-  it('resetDebugCount sets to current count', () => {
-    const store = useDebugStore();
-    store.addDebugResult({
-      endpoint: '/a',
+      endpoint: '/first',
       method: 'GET',
       status: 'success',
       responseTime: 1,
       type: 'http',
     });
-    store.resetDebugCount();
-    expect(store.lastSeenDebugCount).toBe(1);
-  });
+    const firstId = store.debugResults[0].id;
 
-  it('trackRequest records success responses', async () => {
-    vi.stubGlobal('performance', { now: vi.fn().mockReturnValue(200) });
-    const store = useDebugStore();
-    const promise = Promise.resolve(
-      new Response('{"ok":true}', { status: 200 }),
-    );
-    store.trackRequest('/api', 'POST', promise);
-    await new Promise((r) => setTimeout(r, 50));
-    expect(store.debugResults).toHaveLength(1);
-    expect(store.debugResults[0].status).toBe('success');
-    expect(store.debugResults[0].statusCode).toBe(200);
-  });
+    expect(store.debugLogCount).toBe(1);
+    store.markDebugAsRead(firstId);
+    expect(store.isDebugRead(firstId)).toBe(true);
+    expect(store.debugLogCount).toBe(0);
 
-  it('trackRequest records error responses', async () => {
-    const store = useDebugStore();
-    const promise = Promise.resolve(new Response('error', { status: 500 }));
-    store.trackRequest('/api', 'GET', promise);
-    await new Promise((r) => setTimeout(r, 50));
-    expect(store.debugResults).toHaveLength(1);
-    expect(store.debugResults[0].status).toBe('error');
-    expect(store.debugResults[0].statusCode).toBe(500);
+    store.addDebugResult({
+      endpoint: '/second',
+      method: 'GET',
+      status: 'success',
+      responseTime: 1,
+      type: 'http',
+    });
+    expect(store.debugLogCount).toBe(1);
+
+    store.clearDebugResults();
+    expect(store.debugResults).toHaveLength(0);
+    expect(store.debugLogCount).toBe(0);
+    expect(store.isDebugRead(firstId)).toBe(true);
   });
 });

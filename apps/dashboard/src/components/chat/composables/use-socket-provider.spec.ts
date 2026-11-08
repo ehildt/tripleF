@@ -13,7 +13,8 @@ const socketMock = {
   closeEvent: vi.fn(),
   closeRoom: vi.fn(),
 };
-const debugStoreMock = { trackRequest: vi.fn(), addSocketDebugEntry: vi.fn() };
+const debugStoreMock = { addDebugResult: vi.fn() };
+const requestTrackerMock = { trackRequest: vi.fn() };
 const messagesStoreMock = {
   addMessage: vi.fn(),
   addPendingMessage: vi.fn(),
@@ -25,6 +26,9 @@ vi.mock('@/composables/use-socket/use-socket', () => ({
 }));
 vi.mock('@/stores/debug/debug.store', () => ({
   useDebugStore: () => debugStoreMock,
+}));
+vi.mock('@/components/debug/composables/use-debug-request-tracker', () => ({
+  useDebugRequestTracker: () => requestTrackerMock,
 }));
 vi.mock('@/stores/messages/messages.store', () => ({
   useMessagesStore: () => messagesStoreMock,
@@ -60,9 +64,7 @@ describe('useSocketProvider', () => {
     expect(provider.addPendingMessage).toBe(
       messagesStoreMock.addPendingMessage,
     );
-    expect(provider.trackRequest).toBe(debugStoreMock.trackRequest);
-    expect(provider.addSocketDebugEntry).toBe(
-      debugStoreMock.addSocketDebugEntry,
-    );
+    expect(provider.trackRequest).toBe(requestTrackerMock.trackRequest);
+    expect(provider.addSocketDebugEntry).toBe(debugStoreMock.addDebugResult);
   });
 });

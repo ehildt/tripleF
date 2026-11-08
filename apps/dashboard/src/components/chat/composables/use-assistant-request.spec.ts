@@ -5,7 +5,6 @@ import { useConversationCatalog } from '@/components/chat/composables/use-conver
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
-import { useDebugStore } from '@/stores/debug/debug.store';
 
 import { useAssistantRequest } from './use-assistant-request';
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
@@ -39,6 +38,14 @@ vi.mock('./use-conversation-exchange-completion', () => ({
   useConversationExchangeCompletion: () => completion,
 }));
 
+const debugRequestTracker = vi.hoisted(() => ({
+  trackRequest: vi.fn(),
+}));
+
+vi.mock('@/components/debug/composables/use-debug-request-tracker', () => ({
+  useDebugRequestTracker: () => debugRequestTracker,
+}));
+
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 
 vi.mock('@/i18n/i18n', () => ({
@@ -57,9 +64,9 @@ function stubSocketProvider() {
   vi.spyOn(socketStore, 'ensureSocketConnection').mockReturnValue(
     socket as unknown as ReturnType<typeof socketStore.ensureSocketConnection>,
   );
-  const trackRequest = vi
-    .spyOn(useDebugStore(), 'trackRequest')
-    .mockResolvedValue({} as Response);
+  const trackRequest = debugRequestTracker.trackRequest.mockResolvedValue(
+    {} as Response,
+  );
   return { socket, trackRequest };
 }
 
@@ -114,6 +121,7 @@ describe('useAssistantRequest', () => {
     conversationImages.setUploadedImages.mockClear();
     conversationDocuments.setUploadedDocuments.mockClear();
     completion.markExchangeError.mockClear();
+    debugRequestTracker.trackRequest.mockClear();
   });
 
   it('posts, tracks the request, and promotes attachments on success', async () => {

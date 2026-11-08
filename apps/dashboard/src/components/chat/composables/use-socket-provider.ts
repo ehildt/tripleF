@@ -1,4 +1,5 @@
 import { createSocketProvider } from '@/components/chat/composables/helpers/create-socket-provider.helper';
+import { useDebugRequestTracker } from '@/components/debug/composables/use-debug-request-tracker';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { useDebugStore } from '@/stores/debug/debug.store';
 import { useMessagesStore } from '@/stores/messages/messages.store';
@@ -12,13 +13,18 @@ import type { SocketProvider } from '@/types/socket-provider.model';
  */
 export function useSocketProvider(): SocketProvider {
   const socket = useSocket();
+  const debugStore = useDebugStore();
+  const requestTracker = useDebugRequestTracker();
   return createSocketProvider(
     {
       ...socket,
       connectedEvents: socket.connectedEvents.value,
       connectedRooms: socket.connectedRooms.value,
     },
-    useDebugStore(),
+    {
+      trackRequest: requestTracker.trackRequest,
+      addSocketDebugEntry: debugStore.addDebugResult,
+    },
     useMessagesStore(),
   );
 }

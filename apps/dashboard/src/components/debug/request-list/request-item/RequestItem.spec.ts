@@ -9,7 +9,7 @@ describe('RequestItem', () => {
       props: {
         result: {
           id: '1',
-          timestamp: '2024-01-01T00:00:00Z',
+          epoch: 0,
           endpoint: '/api/v1/harness',
           method: 'POST',
           status: 'success',
@@ -28,7 +28,7 @@ describe('RequestItem', () => {
       props: {
         result: {
           id: '1',
-          timestamp: '2024-01-01T00:00:00Z',
+          epoch: 0,
           endpoint: '/api/v1/harness',
           method: 'POST',
           status: 'error',

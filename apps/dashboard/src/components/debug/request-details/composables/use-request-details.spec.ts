@@ -6,7 +6,7 @@ import { useRequestDetails } from './use-request-details';
 
 const baseHttp: DebugResult = {
   id: '1',
-  timestamp: '',
+  epoch: 0,
   endpoint: '/api/v1/harness?key=val',
   method: 'POST',
   status: 'success',

@@ -9,7 +9,7 @@ import { useDebugFilters } from './use-debug-filters';
 function result(id: string, type: 'http' | 'socket'): DebugResult {
   return {
     id,
-    timestamp: '2026-01-01T00:00:00Z',
+    epoch: 0,
     endpoint: '/api',
     method: 'GET',
     status: 'success',

@@ -17,7 +17,7 @@ describe('RequestDetails', () => {
       props: {
         result: {
           id: '1',
-          timestamp: '2024-01-01T00:00:00Z',
+          epoch: 0,
           endpoint: '/api/v1/harness?key=val',
           method: 'POST',
           status: 'success',
@@ -43,7 +43,7 @@ describe('RequestDetails', () => {
       props: {
         result: {
           id: '1',
-          timestamp: '2024-01-01T00:00:00Z',
+          epoch: 0,
           endpoint: '/api/v1/harness?foo=bar',
           method: 'GET',
           status: 'success',
@@ -63,7 +63,7 @@ describe('RequestDetails', () => {
       props: {
         result: {
           id: '1',
-          timestamp: '2024-01-01T00:00:00Z',
+          epoch: 0,
           endpoint: '/api/v1/harness',
           method: 'GET',
           status: 'success',

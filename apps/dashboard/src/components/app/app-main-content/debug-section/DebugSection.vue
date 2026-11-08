@@ -2,8 +2,11 @@
 import Debug from '../../../../components/debug/Debug.vue';
 import RequestDetails from '../../../../components/debug/request-details/RequestDetails.vue';
 import { useDebugStore } from '../../../../stores/debug/debug.store';
+import { useDebugSelection } from './composables/use-debug-selection';
 
 const debugStore = useDebugStore();
+const { selectedResult, selectDebugResult, clearDebugView } =
+  useDebugSelection();
 </script>
 
 <template>
@@ -13,9 +16,9 @@ const debugStore = useDebugStore();
     <Debug
       class="debug-column__panel"
       :results="debugStore.debugResults"
-      :selected-result="debugStore.selectedDebugResult"
-      @clear="debugStore.clearDebugResults"
-      @select="debugStore.selectDebugResult"
+      :selected-result="selectedResult"
+      @clear="clearDebugView"
+      @select="selectDebugResult"
       @mark-read="debugStore.markDebugAsRead"
     />
   </div>
@@ -23,9 +26,9 @@ const debugStore = useDebugStore();
     <RequestDetails
       class="debug-column__panel"
       :class="{
-        'debug-column__panel--dynamic': debugStore.selectedDebugResult,
+        'debug-column__panel--dynamic': selectedResult,
       }"
-      :result="debugStore.selectedDebugResult"
+      :result="selectedResult"
     />
   </div>
 </template>

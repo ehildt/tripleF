@@ -1,183 +1,71 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
-import { i18n } from '@/i18n/i18n';
-import { extractPrompt } from '@/stores/debug/helpers/extract-prompt.helper';
-import { formatTime } from '@/utils/format-time/format-time.helper';
+import { useReadTracker } from '@/composables/use-read-tracker/use-read-tracker';
+import type { DebugResult } from '@/types/debug.model';
+import type { DebugResultInput } from '@/types/debug-result-input.model';
+import { createId } from '@/utils/create-id/create-id.helper';
+import { saveBooleanSetting } from '@/utils/save-boolean-setting/save-boolean-setting.helper';
 
-import { useReadTracker } from '../../composables/use-read-tracker/use-read-tracker';
-import type { DebugResult } from '../../types/debug.model';
-import type { DebugResultInput } from '../../types/debug-result-input.model';
-import type { TrackRequestDetails } from '../../types/track-request-details.model';
-import { createId } from '../../utils/create-id/create-id.helper';
-import { formatResponseBody } from '../messages/helpers/format-response-body.helper';
-import { buildFormDataSummary } from './helpers/build-form-data-summary.helper';
-import { createTrackingPromise } from './helpers/create-tracking-promise.helper';
-import { sanitizeRequestBody } from './helpers/sanitize-request-body.helper';
+const DEBUG_PAUSED_STORAGE_KEY = 'debug-paused';
 
+/** Logging is paused unless the persisted value is explicitly false. */
+function loadDebugPaused(): boolean {
+  try {
+    return localStorage.getItem(DEBUG_PAUSED_STORAGE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
+
+/** Shared debug entries, pause preference, and persisted read state. */
 export const useDebugStore = defineStore('debug', () => {
   const debugResults = ref<DebugResult[]>([]);
-  const selectedDebugResult = ref<DebugResult | null>(null);
   const readTracker = useReadTracker('read-debug-ids');
-  const lastSeenDebugCount = ref(0);
-  const debugTabVisited = ref(false);
-  // Logging is off by default: only an explicit stored 'false' unpauses it.
-  const debugPaused = ref(localStorage.getItem('debug-paused') !== 'false');
+  const debugPaused = ref(loadDebugPaused());
 
-  watch(debugPaused, (v) => {
-    localStorage.setItem('debug-paused', String(v));
+  watch(debugPaused, (paused) => {
+    saveBooleanSetting(DEBUG_PAUSED_STORAGE_KEY, paused);
   });
 
-  function markDebugAsRead(id: string) {
-    readTracker.markAsRead(id);
-  }
-
   const debugLogCount = computed(() => {
-    const liveIds = debugResults.value.map((r) => r.id).filter(Boolean);
+    const liveIds = debugResults.value.map((result) => result.id);
     return readTracker.unreadCount(liveIds);
   });
 
-  function isDebugRead(id: string) {
-    return readTracker.isRead(id);
-  }
-
-  function toggleDebugPaused() {
-    debugPaused.value = !debugPaused.value;
-  }
-
-  function addDebugResult(result: DebugResultInput) {
+  function addDebugResult(result: DebugResultInput): void {
     if (debugPaused.value) return;
     debugResults.value.unshift({
       id: createId(),
-      timestamp: formatTime(Date.now(), i18n.global.locale.value),
       direction: 'request',
       ...result,
       epoch: Date.now(),
-    } as DebugResult);
+    });
   }
 
-  function addSocketDebugEntry(result: {
-    endpoint: string;
-    method: string;
-    status: 'success' | 'error';
-    statusCode?: number;
-    errorMessage?: string;
-    responseTime: number;
-    type: 'http' | 'socket';
-    direction: 'request' | 'response';
-    requestId?: string;
-    roomId?: string;
-    event?: string;
-    stream?: boolean;
-    conversationId?: string;
-  }) {
-    if (debugPaused.value) return;
-    debugResults.value.unshift({
-      id: createId(),
-      timestamp: formatTime(Date.now(), i18n.global.locale.value),
-      ...result,
-      epoch: Date.now(),
-    } as DebugResult);
-  }
-
-  function trackRequest(
-    endpoint: string,
-    method: string,
-    promise: Promise<Response>,
-    details?: TrackRequestDetails,
-  ) {
-    const tracking = createTrackingPromise(promise);
-    const prompt = extractPrompt(details?.formData, details?.body);
-    const requestBody = details?.formData
-      ? buildFormDataSummary(details.formData)
-      : sanitizeRequestBody(details?.body);
-
-    tracking.promise
-      .then(async (res) => {
-        const { responseTime, responseBody } = await (async () => {
-          const time = Math.round(performance.now() - tracking.startTime);
-          const text = await res.clone().text();
-          const body = await formatResponseBody(text);
-          return { responseTime: time, responseBody: body };
-        })();
-
-        addDebugResult({
-          endpoint,
-          method,
-          status: res.ok ? 'success' : 'error',
-          statusCode: res.status,
-          errorMessage: res.ok
-            ? undefined
-            : `HTTP ${res.status}: ${responseBody.slice(0, 200)}`,
-          responseTime,
-          type: 'http',
-          requestHeaders: details?.headers,
-          requestBody,
-          responseBody,
-          requestId: details?.requestId,
-          roomId: details?.roomId,
-          event: details?.event,
-          numCtx: details?.numCtx,
-          stream: details?.stream,
-          model: details?.model,
-          prompt,
-        });
-        return res;
-      })
-      .catch((err) => {
-        const responseTime = Math.round(performance.now() - tracking.startTime);
-        addDebugResult({
-          endpoint,
-          method,
-          status: 'error',
-          errorMessage: err instanceof Error ? err.message : String(err),
-          responseTime,
-          type: 'http',
-          requestHeaders: details?.headers,
-          requestBody,
-          prompt,
-        });
-        throw err;
-      });
-
-    return promise;
-  }
-
-  function clearDebugResults() {
+  function clearDebugResults(): void {
     debugResults.value = [];
-    lastSeenDebugCount.value = 0;
-    selectedDebugResult.value = null;
   }
 
-  function selectDebugResult(result: DebugResult | null) {
-    selectedDebugResult.value = result;
+  function toggleDebugPaused(): void {
+    debugPaused.value = !debugPaused.value;
   }
 
-  function incrementDebugCount(newCount: number) {
-    if (newCount > lastSeenDebugCount.value) {
-      lastSeenDebugCount.value = newCount;
-    }
+  function markDebugAsRead(id: string): void {
+    readTracker.markAsRead(id);
   }
 
-  function resetDebugCount() {
-    lastSeenDebugCount.value = debugResults.value.length;
+  function isDebugRead(id: string): boolean {
+    return readTracker.isRead(id);
   }
 
   return {
     debugResults,
-    selectedDebugResult,
     debugLogCount,
-    lastSeenDebugCount,
-    debugTabVisited,
     debugPaused,
     toggleDebugPaused,
     addDebugResult,
-    addSocketDebugEntry,
-    trackRequest,
     clearDebugResults,
-    selectDebugResult,
-    incrementDebugCount,
-    resetDebugCount,
     markDebugAsRead,
     isDebugRead,
   };
