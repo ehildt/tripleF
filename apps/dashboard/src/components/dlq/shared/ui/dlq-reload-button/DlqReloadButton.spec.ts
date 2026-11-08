@@ -10,20 +10,27 @@ describe('DlqReloadButton', () => {
       props: { loading: false },
     });
     expect(wrapper.findComponent(RefreshCw).exists()).toBe(true);
+    expect(wrapper.find('button').attributes('aria-busy')).toBe('false');
   });
 
-  it('shows the loading indicator when loading', () => {
+  it('animates and disables the refresh icon while loading', () => {
     const wrapper = mount(DlqReloadButton, {
       props: { loading: true },
     });
-    expect(wrapper.findComponent(RefreshCw).exists()).toBe(false);
+
+    expect(wrapper.findComponent(RefreshCw).exists()).toBe(true);
+    expect(wrapper.findComponent(RefreshCw).classes()).toContain(
+      'dlq-reload-button__icon--loading',
+    );
+    expect(wrapper.find('button').attributes('aria-busy')).toBe('true');
+    expect(wrapper.find('button').attributes('disabled')).toBeDefined();
   });
 
-  it('emits click when the refresh button is clicked', () => {
+  it('emits click when the refresh button is clicked', async () => {
     const wrapper = mount(DlqReloadButton, {
       props: { loading: false },
     });
-    wrapper.find('button').trigger('click');
+    await wrapper.find('button').trigger('click');
     expect(wrapper.emitted('click')).toBeTruthy();
   });
 });

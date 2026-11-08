@@ -1,7 +1,7 @@
 import { computed, watch } from 'vue';
 
+import { useDlqActivity } from '@/components/dlq/composables/use-dlq-activity';
 import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
-import { useDlqStore } from '@/stores/dlq/dlq.store';
 import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
@@ -11,12 +11,12 @@ import { useActiveTab } from './use-active-tab';
 export function useAppNavigation() {
   const { activeTab } = useActiveTab();
   const navigationStore = useNavigationStore();
-  const dlqStore = useDlqStore();
+  const dlqActivity = useDlqActivity();
   const popoutSettingsStore = usePopoutSettingsStore();
   const playlistStore = usePlaylistStore();
 
   const showDlqBadge = computed(
-    () => dlqStore.hasDlqActivity && activeTab.value !== 'dlq',
+    () => dlqActivity.hasDlqActivity.value && activeTab.value !== 'dlq',
   );
 
   watch(activeTab, (tab) => {

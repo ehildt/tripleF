@@ -4,54 +4,91 @@ import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { extractEntryFilters } from './extract-entry-filters.helper';
 
-const makeEntry = (payload: DlqEntry['payload']): DlqEntry =>
-  ({ payload }) as DlqEntry;
+function makeEntry(payload: DlqEntry['payload']): DlqEntry {
+  return { id: 'record-1', payload } as DlqEntry;
+}
+
+function validFilters(overrides: Record<string, unknown> = {}) {
+  return {
+    conversationId: 'conversation-1',
+    event: 'harness',
+    ...overrides,
+  };
+}
 
 describe('extractEntryFilters', () => {
-  it('returns empty strings and the harness default for a missing entry', () => {
-    expect(extractEntryFilters(undefined)).toEqual({
-      roomId: '',
-      event: 'harness',
-      model: '',
-    });
+  it('rejects a missing payload or filters object explicitly', () => {
+    expect(() => extractEntryFilters(makeEntry(null))).toThrow(
+      'record-1 has no harness filters',
+    );
+    expect(() => extractEntryFilters(makeEntry({ filters: 'room1' }))).toThrow(
+      'record-1 has no harness filters',
+    );
   });
 
-  it('returns empty strings and the harness default when there is no payload', () => {
-    expect(extractEntryFilters(makeEntry(null))).toEqual({
-      roomId: '',
-      event: 'harness',
-      model: '',
-    });
-  });
-
-  it('reads roomId, event and model from the payload filters', () => {
+  it('reads routing identity and original conversation settings', () => {
     const entry = makeEntry({
-      filters: { roomId: 'room1', event: 'chat', model: 'llama3' },
+      filters: validFilters({
+        roomId: 'room1',
+        model: 'llama3',
+        numCtx: 4096,
+        think: 'high',
+        stream: false,
+      }),
     });
+
     expect(extractEntryFilters(entry)).toEqual({
+      conversationId: 'conversation-1',
       roomId: 'room1',
-      event: 'chat',
-      model: 'llama3',
-    });
-  });
-
-  it('defaults the event to harness when the filter is absent', () => {
-    const entry = makeEntry({ filters: { roomId: 'room1' } });
-    expect(extractEntryFilters(entry).event).toBe('harness');
-  });
-
-  it('coerces non-string filter values to strings', () => {
-    const entry = makeEntry({ filters: { roomId: 42, model: 0 } });
-    expect(extractEntryFilters(entry).roomId).toBe('42');
-    expect(extractEntryFilters(entry).model).toBe('0');
-  });
-
-  it('ignores a filters value that is not an object', () => {
-    const entry = makeEntry({ filters: 'room1' });
-    expect(extractEntryFilters(entry)).toEqual({
-      roomId: '',
       event: 'harness',
-      model: '',
+      model: 'llama3',
+      numCtx: '4096',
+      think: 'high',
+      stream: false,
     });
+  });
+
+  it('preserves the original event and coerces optional scalar values', () => {
+    const entry = makeEntry({
+      filters: validFilters({ event: 'chat', roomId: 42, model: 0 }),
+    });
+
+    expect(extractEntryFilters(entry)).toMatchObject({
+      roomId: '42',
+      event: 'chat',
+      model: '0',
+    });
+  });
+
+  it('requires a non-empty conversation id and event', () => {
+    expect(() =>
+      extractEntryFilters(
+        makeEntry({ filters: validFilters({ conversationId: '' }) }),
+      ),
+    ).toThrow('missing filters.conversationId');
+    expect(() =>
+      extractEntryFilters(makeEntry({ filters: { conversationId: 'c1' } })),
+    ).toThrow('missing filters.event');
+  });
+
+  it('parses explicit boolean strings for streaming', () => {
+    expect(
+      extractEntryFilters(
+        makeEntry({ filters: validFilters({ stream: 'true' }) }),
+      ).stream,
+    ).toBe(true);
+    expect(
+      extractEntryFilters(
+        makeEntry({ filters: validFilters({ stream: 'false' }) }),
+      ).stream,
+    ).toBe(false);
+  });
+
+  it('rejects invalid streaming values instead of guessing', () => {
+    expect(() =>
+      extractEntryFilters(
+        makeEntry({ filters: validFilters({ stream: 'yes' }) }),
+      ),
+    ).toThrow('invalid filters.stream');
   });
 });

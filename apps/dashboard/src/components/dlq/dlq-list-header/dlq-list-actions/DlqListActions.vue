@@ -7,6 +7,7 @@ import DlqReloadButton from '@/components/dlq/shared/ui/dlq-reload-button/DlqRel
 import FilterMenu from '@/components/shared/ui/filter-menu/FilterMenu.vue';
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import TextFilterMenu from '@/components/shared/ui/text-filter-menu/TextFilterMenu.vue';
+import type { DlqStatusFilter } from '@/types/dlq-status.model';
 
 import { useExclusiveFilterMenu } from '../composables/use-exclusive-filter-menu';
 import type {
@@ -37,7 +38,18 @@ const { isMenuOpen, toggleMenu, closeAllMenus } = useExclusiveFilterMenu([
   'search',
 ]);
 
+function isDlqStatusFilter(value: string): value is DlqStatusFilter {
+  return (
+    value === '' ||
+    value === 'Failed' ||
+    value === 'Active' ||
+    value === 'Cleared' ||
+    value === 'Removed'
+  );
+}
+
 function selectStatus(value: string) {
+  if (!isDlqStatusFilter(value)) return;
   emit('update:filterStatus', value);
   toggleMenu('status');
 }

@@ -1,8 +1,10 @@
+import type { DlqStatusFilter } from '@/types/dlq-status.model';
+
 export interface DlqListHeaderProps {
   /** Whether the reload icon is currently pulsing. */
   showLoading: boolean;
   /** Active status filter ('' for unfiltered). */
-  filterStatus: string;
+  filterStatus: DlqStatusFilter;
   /** Whether already-read entries are currently hidden from the list. */
   hideRead: boolean;
   /** Total number of entries matching the current filters. */

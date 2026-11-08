@@ -3,19 +3,35 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, type Ref } from 'vue';
 
-import { useDlqStore } from '../../../stores/dlq/dlq.store';
-import { useDlqEntries } from './use-dlq-entries';
+import type { DlqEntry } from '@/types/dlq-entry.model';
+import type { DlqListResponse } from '@/types/dlq-list-response.model';
 
-/** Mutable reactive results of the mocked query/loading dependencies. The
- * mock factories assign the refs once on first call (vi.hoisted runs before
- * vue initializes); tests mutate `.value` between cases to drive the
- * composable's watchers. */
+import type { DlqActionsContext } from './use-dlq-actions.types';
+import { useDlqActivity } from './use-dlq-activity';
+import { useDlqEntries } from './use-dlq-entries';
+import { useDlqQueryState } from './use-dlq-query-state';
+
 const queryMock = vi.hoisted(() => ({})) as {
-  data: Ref<unknown>;
+  data: Ref<DlqListResponse | undefined>;
   error: Ref<Error | null>;
   isError: Ref<boolean>;
   refetch: ReturnType<typeof vi.fn>;
 };
+const loadingMock = vi.hoisted(() => ({
+  guardedRefetch: vi.fn(),
+  instantRefetch: vi.fn(),
+  onDataArrived: vi.fn(),
+  onError: vi.fn(),
+})) as typeof loadingMock & { showLoading: Ref<boolean> };
+const actionsMock = vi.hoisted(() => ({
+  receivedRefetch: undefined as unknown,
+  receivedContext: undefined as DlqActionsContext | undefined,
+  sentinel: { onSelect: vi.fn() },
+}));
+const toastMock = vi.hoisted(() => ({
+  debug: vi.fn(),
+  error: vi.fn(),
+}));
 
 vi.mock('../../../api/queries/use-dlq-query', async () => {
   const { ref } = await import('vue');
@@ -27,38 +43,25 @@ vi.mock('../../../api/queries/use-dlq-query', async () => {
   }
   return { useDlqQuery: () => queryMock };
 });
-
-// Loading state machine and actions are covered by their own specs; here
-// they are mocked so the entries tests assert only the wiring between them.
-const loadingMock = vi.hoisted(() => ({
-  guardedRefetch: vi.fn(),
-  instantRefetch: vi.fn(),
-  onDataArrived: vi.fn(),
-  onError: vi.fn(),
-})) as typeof loadingMock & { showLoading: Ref<boolean> };
-
 vi.mock('./use-dlq-loading', async () => {
   const { ref } = await import('vue');
   if (!loadingMock.showLoading) loadingMock.showLoading = ref(false);
-  return {
-    useDlqLoading: () => loadingMock,
-  };
+  return { useDlqLoading: () => loadingMock };
 });
-
-const actionsMock = vi.hoisted(() => ({
-  receivedRefetch: undefined as unknown,
-  sentinel: { onSelect: vi.fn() },
-}));
-
 vi.mock('./use-dlq-actions', () => ({
-  useDlqActions: (guardedRefetch: () => Promise<void>) => {
+  useDlqActions: (
+    guardedRefetch: () => Promise<void>,
+    context: DlqActionsContext,
+  ) => {
     actionsMock.receivedRefetch = guardedRefetch;
+    actionsMock.receivedContext = context;
     return actionsMock.sentinel;
   },
 }));
+vi.mock('../../../composables/use-toast/use-toast', () => ({
+  useToast: () => toastMock,
+}));
 
-// The composable registers watchers on module-mocked refs — unmount after
-// each test so they stop instead of accumulating across tests.
 const mountedWrappers: Array<{ unmount: () => void }> = [];
 
 function mountEntries() {
@@ -73,84 +76,118 @@ function mountEntries() {
   return captured;
 }
 
+function resetQueryState(): void {
+  const state = useDlqQueryState();
+  state.filterStatus.value = '';
+  state.filterSearch.value = '';
+  state.hideRead.value = false;
+  state.setPageSize(20);
+  state.setPage(1);
+  state.selectEntry(null);
+}
+
 describe('useDlqEntries', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    resetQueryState();
+    useDlqActivity().clearDlqActivity();
     queryMock.data.value = undefined;
     queryMock.error.value = null;
     queryMock.isError.value = false;
     loadingMock.showLoading.value = false;
+    actionsMock.receivedRefetch = undefined;
+    actionsMock.receivedContext = undefined;
   });
 
   afterEach(() => {
-    for (const wrapper of mountedWrappers.splice(0)) {
-      wrapper.unmount();
-    }
+    for (const wrapper of mountedWrappers.splice(0)) wrapper.unmount();
   });
 
-  it('clears the DLQ activity dot when the view mounts', () => {
-    const store = useDlqStore();
-    store.markDlqActivity();
+  it('clears DLQ activity when the view mounts', () => {
+    const activity = useDlqActivity();
+    activity.markDlqActivity();
+
     mountEntries();
-    expect(store.hasDlqActivity).toBe(false);
+
+    expect(activity.hasDlqActivity.value).toBe(false);
   });
 
-  it('composes the actions with the loading composable guarded refetch', () => {
-    const { actions } = mountEntries();
+  it('composes loading, read state, and actions without a data store copy', () => {
+    const view = mountEntries();
+
     expect(actionsMock.receivedRefetch).toBe(loadingMock.guardedRefetch);
-    expect(actions).toBe(actionsMock.sentinel);
+    expect(view.actions).toBe(actionsMock.sentinel);
+    expect(view.loading).toBe(loadingMock);
+    expect(view.readState).toBe(actionsMock.receivedContext?.readState);
   });
 
-  it('stores arriving entries and acknowledges the load', async () => {
-    const store = useDlqStore();
-    mountEntries();
+  it('derives rows, totals, pages, and selection from query data', async () => {
+    const entry = { id: 'rec-1' } as DlqEntry;
+    useDlqQueryState().selectEntry(entry);
+    const view = mountEntries();
 
     queryMock.data.value = {
-      data: [{ id: 'rec-1' }],
+      data: [entry],
+      total: 21,
+      limit: 20,
+      offset: 0,
+    };
+    await nextTick();
+
+    expect(view.entries.value).toEqual([entry]);
+    expect(view.total.value).toBe(21);
+    expect(view.currentPage.value).toBe(1);
+    expect(view.totalPages.value).toBe(2);
+    expect(view.selectedEntry.value?.id).toBe('rec-1');
+    expect(loadingMock.onDataArrived).toHaveBeenCalledOnce();
+  });
+
+  it('clears selected identity when a page response omits it', async () => {
+    useDlqQueryState().selectEntry({ id: 'rec-1' } as DlqEntry);
+    const view = mountEntries();
+
+    queryMock.data.value = {
+      data: [{ id: 'rec-2' } as DlqEntry],
       total: 1,
       limit: 20,
       offset: 0,
     };
     await nextTick();
 
-    expect(store.entries).toEqual([{ id: 'rec-1' }]);
-    expect(loadingMock.onDataArrived).toHaveBeenCalledOnce();
+    expect(view.selectedEntry.value).toBeNull();
+    expect(useDlqQueryState().selectedEntryId.value).toBeNull();
   });
 
-  it('stores the error and notifies the loading state on query failure', async () => {
-    const store = useDlqStore();
-    mountEntries();
-
+  it('derives query errors and supports retry-local dismissal', async () => {
+    const view = mountEntries();
     queryMock.error.value = new Error('Request failed');
     queryMock.isError.value = true;
     await nextTick();
 
-    expect(store.error).toBe('Request failed');
+    expect(view.errorMessage.value).toBe('Request failed');
     expect(loadingMock.onError).toHaveBeenCalledOnce();
+    expect(toastMock.debug).toHaveBeenCalledWith('Request failed');
+
+    actionsMock.receivedContext?.dismissError();
+    await nextTick();
+    expect(view.errorMessage.value).toBeNull();
 
     queryMock.isError.value = false;
     await nextTick();
-    expect(store.error).toBeNull();
+    expect(view.errorMessage.value).toBeNull();
   });
 
-  it('refetches instantly when filters or pagination change', async () => {
-    const store = useDlqStore();
+  it('keeps instant refetch behavior when filters or pagination change', async () => {
+    const state = useDlqQueryState();
     mountEntries();
 
-    store.filterSearch = 'room1';
+    state.filterSearch.value = 'room1';
     await nextTick();
-
     expect(loadingMock.instantRefetch).toHaveBeenCalled();
-  });
 
-  it('refetches instantly when a bulk DLQ change requests a refresh', async () => {
-    const store = useDlqStore();
-    mountEntries();
-
-    store.requestEntriesRefresh();
+    state.nextPage(40);
     await nextTick();
-
-    expect(loadingMock.instantRefetch).toHaveBeenCalled();
+    expect(loadingMock.instantRefetch).toHaveBeenCalledTimes(2);
   });
 });

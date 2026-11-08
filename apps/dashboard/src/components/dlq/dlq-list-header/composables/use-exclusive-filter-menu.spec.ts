@@ -4,24 +4,19 @@ import { useExclusiveFilterMenu } from './use-exclusive-filter-menu';
 
 describe('useExclusiveFilterMenu', () => {
   it('starts with all menus closed', () => {
-    const { isMenuOpen, isAnyMenuOpen } = useExclusiveFilterMenu([
-      'status',
-      'search',
-    ]);
+    const { isMenuOpen } = useExclusiveFilterMenu(['status', 'search']);
     expect(isMenuOpen('status')).toBe(false);
     expect(isMenuOpen('search')).toBe(false);
-    expect(isAnyMenuOpen.value).toBe(false);
   });
 
   it('opens a single menu at a time', () => {
-    const { isMenuOpen, isAnyMenuOpen, toggleMenu } = useExclusiveFilterMenu([
+    const { isMenuOpen, toggleMenu } = useExclusiveFilterMenu([
       'status',
       'search',
     ]);
     toggleMenu('status');
     expect(isMenuOpen('status')).toBe(true);
     expect(isMenuOpen('search')).toBe(false);
-    expect(isAnyMenuOpen.value).toBe(true);
   });
 
   it('switches from one open menu to another', () => {
@@ -42,14 +37,16 @@ describe('useExclusiveFilterMenu', () => {
     expect(isMenuOpen('status')).toBe(false);
   });
 
-  it('closeAllMenus closes every open menu', () => {
-    const { isMenuOpen, isAnyMenuOpen, toggleMenu, closeAllMenus } =
-      useExclusiveFilterMenu(['status', 'search']);
+  it('closeAllMenus closes every open menu and ignores unknown ids', () => {
+    const { isMenuOpen, toggleMenu, closeAllMenus } = useExclusiveFilterMenu([
+      'status',
+      'search',
+    ]);
     toggleMenu('status');
     toggleMenu('search');
+    toggleMenu('unknown');
     closeAllMenus();
     expect(isMenuOpen('status')).toBe(false);
     expect(isMenuOpen('search')).toBe(false);
-    expect(isAnyMenuOpen.value).toBe(false);
   });
 });

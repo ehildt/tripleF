@@ -1,53 +1,74 @@
-import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { ListFilter } from '@lucide/vue';
+import { mount, type VueWrapper } from '@vue/test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { nextTick } from 'vue';
 
 import FilterMenu from './FilterMenu.vue';
 
-describe('FilterMenu', () => {
-  const baseProps = {
-    isOpen: true,
-    isActive: false,
-    title: 'Status',
-    width: '8rem',
-    options: [
-      { value: 'Failed', label: 'Failed' },
-      { value: 'Active', label: 'Active' },
-      { value: 'Cleared', label: 'Cleared' },
-    ],
-    selectedValue: '',
-  };
+const baseProps = {
+  isOpen: true,
+  isActive: false,
+  title: 'Status',
+  width: '8rem',
+  icon: ListFilter,
+  options: [
+    { value: 'Failed', label: 'Failed' },
+    { value: 'Active', label: 'Active' },
+    { value: 'Cleared', label: 'Cleared' },
+  ],
+  selectedValue: '',
+};
 
-  it('renders all options when open', () => {
-    const wrapper = mount(FilterMenu, { props: baseProps });
-    const options = wrapper.findAll('.filter-menu__option');
-    expect(options).toHaveLength(3);
+const wrappers: VueWrapper[] = [];
+
+function mountMenu(props: Partial<typeof baseProps> = {}) {
+  const wrapper = mount(FilterMenu, {
+    props: { ...baseProps, ...props },
+    attachTo: document.body,
+  });
+  wrappers.push(wrapper);
+  return wrapper;
+}
+
+describe('FilterMenu', () => {
+  afterEach(() => {
+    for (const wrapper of wrappers.splice(0)) wrapper.unmount();
+    document.body.innerHTML = '';
   });
 
-  it('emits select with the chosen option', () => {
-    const wrapper = mount(FilterMenu, { props: baseProps });
-    const options = wrapper.findAll('.filter-menu__option');
-    options[0].trigger('click');
+  it('renders all options in the teleported dropdown when open', () => {
+    mountMenu();
+    expect(document.querySelectorAll('.filter-menu__option')).toHaveLength(3);
+  });
+
+  it('emits select with the chosen option', async () => {
+    const wrapper = mountMenu();
+    const option = document.querySelector<HTMLButtonElement>(
+      '.filter-menu__option',
+    );
+    option?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await nextTick();
     expect(wrapper.emitted('select')?.[0]).toEqual(['Failed']);
   });
 
-  it('emits toggle when the trigger is clicked', () => {
-    const wrapper = mount(FilterMenu, { props: baseProps });
-    wrapper.find('.filter-menu__trigger').trigger('click');
+  it('emits toggle when the trigger is clicked', async () => {
+    const wrapper = mountMenu();
+    await wrapper.find('.filter-menu-trigger').trigger('click');
     expect(wrapper.emitted('toggle')).toBeTruthy();
   });
 
-  it('renders a text input instead of options when hasTextValue is true', () => {
-    const wrapper = mount(FilterMenu, {
-      props: { ...baseProps, hasTextValue: true, title: 'Search' },
-    });
-    expect(wrapper.find('input').exists()).toBe(true);
-    expect(wrapper.findAll('.filter-menu__option')).toHaveLength(0);
+  it('emits close from the dropdown backdrop', async () => {
+    const wrapper = mountMenu();
+    const backdrop = document.querySelector<HTMLDivElement>(
+      '.filter-menu-trigger__backdrop',
+    );
+    backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await nextTick();
+    expect(wrapper.emitted('close')).toBeTruthy();
   });
 
   it('does not render the dropdown when closed', () => {
-    const wrapper = mount(FilterMenu, {
-      props: { ...baseProps, isOpen: false },
-    });
-    expect(wrapper.find('.filter-menu__dropdown').exists()).toBe(false);
+    mountMenu({ isOpen: false });
+    expect(document.querySelector('.filter-menu-trigger__dropdown')).toBeNull();
   });
 });

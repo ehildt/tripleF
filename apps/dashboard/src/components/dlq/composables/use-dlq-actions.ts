@@ -1,3 +1,4 @@
+import { useDlqCache } from '@/api/queries/use-dlq-cache';
 import { i18n } from '@/i18n/i18n';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
@@ -5,21 +6,18 @@ import { useDeleteDlqMutation } from '../../../api/queries/use-delete-dlq-mutati
 import { useRetryDlqMutation } from '../../../api/queries/use-retry-dlq-mutation';
 import { useUpdateDlqMutation } from '../../../api/queries/use-update-dlq-mutation';
 import { useToast } from '../../../composables/use-toast/use-toast';
-import { useDlqStore } from '../../../stores/dlq/dlq.store';
+import type { DlqActions, DlqActionsContext } from './use-dlq-actions.types';
+import { useDlqQueryState } from './use-dlq-query-state';
 import { useDlqRetrySession } from './use-dlq-retry-session';
 import type { DlqRetrySession } from './use-dlq-retry-session.types';
 
-/**
- * DLQ row/detail actions — thin orchestration over the mutations, the store,
- * and the retry-session side effects (socket rooms, conversation seeding,
- * debug log). Entries are identified by their DLQ record id; the
- * socket/conversation tracking uses the entry's jobName (for harness turns
- * that name IS the originating request id). Stores and mutation hooks are
- * resolved by import; the only parameter is the caller's refetch callback so
- * the list refreshes after a mutation.
- */
-export function useDlqActions(guardedRefetch: () => Promise<void>) {
-  const dlqStore = useDlqStore();
+/** Own DLQ row/detail controls and compose mutations, cache, and retry state. */
+export function useDlqActions(
+  guardedRefetch: () => Promise<void>,
+  context: DlqActionsContext,
+): DlqActions {
+  const queryState = useDlqQueryState();
+  const queryCache = useDlqCache();
   const retryMutation = useRetryDlqMutation();
   const deleteMutation = useDeleteDlqMutation();
   const updateMutation = useUpdateDlqMutation();
@@ -27,21 +25,21 @@ export function useDlqActions(guardedRefetch: () => Promise<void>) {
   const { prepareRetrySession, completeRetrySession, failRetrySession } =
     useDlqRetrySession();
 
-  function findEntry(id: string) {
-    return dlqStore.entries.find((e) => e.id === id);
+  function findEntry(id: string): DlqEntry | undefined {
+    return context.entries.value.find((entry) => entry.id === id);
   }
 
-  function onSelect(entry: DlqEntry) {
-    if (dlqStore.selectedEntry?.id !== entry.id) {
-      dlqStore.markEntryAsRead(entry);
+  function onSelect(entry: DlqEntry): void {
+    if (context.selectedEntry.value?.id !== entry.id) {
+      context.readState.markEntryAsRead(entry);
     }
-    dlqStore.selectEntry(
-      dlqStore.selectedEntry?.id === entry.id ? null : entry,
+    queryState.selectEntry(
+      context.selectedEntry.value?.id === entry.id ? null : entry,
     );
   }
 
-  async function onRetry(id: string) {
-    dlqStore.error = null;
+  async function onRetry(id: string): Promise<void> {
+    context.dismissError();
     let retrySession: DlqRetrySession | undefined;
     try {
       const entry = findEntry(id);
@@ -65,7 +63,7 @@ export function useDlqActions(guardedRefetch: () => Promise<void>) {
     }
   }
 
-  async function onArchive(id: string) {
+  async function onArchive(id: string): Promise<void> {
     const entry = findEntry(id);
     if (entry && entry.status === 'Removed') return;
     try {
@@ -74,43 +72,38 @@ export function useDlqActions(guardedRefetch: () => Promise<void>) {
         data: { status: 'Cleared' },
       });
       toast.success(i18n.global.t('toast.jobArchived'));
-      dlqStore.updateEntry(updated);
+      queryCache.replaceEntry(updated, queryState.getQueryParams());
     } catch {
       toast.error(i18n.global.t('toast.archiveFailed'));
     }
   }
 
-  async function onDelete(id: string) {
+  async function onDelete(id: string): Promise<void> {
     try {
       await deleteMutation.mutateAsync(id);
       toast.success(i18n.global.t('toast.markedForDeletion'));
-      if (dlqStore.selectedEntry?.id === id) {
-        dlqStore.selectEntry(null);
-      }
+      if (context.selectedEntry.value?.id === id) queryState.selectEntry(null);
       guardedRefetch();
     } catch {
       toast.error(i18n.global.t('toast.deleteFailed'));
     }
   }
 
-  async function onSavePayload(id: string, payload: Record<string, unknown>) {
+  async function onSavePayload(
+    id: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     try {
       const updated = await updateMutation.mutateAsync({
         id,
         data: { payload },
       });
       toast.success(i18n.global.t('toast.payloadUpdated'));
-      dlqStore.updateEntry(updated);
+      queryCache.replaceEntry(updated, queryState.getQueryParams());
     } catch {
       toast.error(i18n.global.t('toast.payloadUpdateFailed'));
     }
   }
 
-  return {
-    onSelect,
-    onRetry,
-    onArchive,
-    onDelete,
-    onSavePayload,
-  };
+  return { onSelect, onRetry, onArchive, onDelete, onSavePayload };
 }

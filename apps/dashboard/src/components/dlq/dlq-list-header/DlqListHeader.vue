@@ -2,6 +2,7 @@
 import Pagination from '@/components/shared/ui/pagination/Pagination.vue';
 import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
+import type { DlqStatusFilter } from '@/types/dlq-status.model';
 
 import DlqListActions from './dlq-list-actions/DlqListActions.vue';
 import type { DlqListHeaderProps } from './DlqListHeader.types';
@@ -16,7 +17,7 @@ const filterSearch = defineModel<string>('filterSearch', { required: true });
 
 const emit = defineEmits<{
   (e: 'reload'): void;
-  (e: 'update:filterStatus', value: string): void;
+  (e: 'update:filterStatus', value: DlqStatusFilter): void;
   (e: 'update:hideRead', value: boolean): void;
   (e: 'firstPage'): void;
   (e: 'prevPage'): void;
