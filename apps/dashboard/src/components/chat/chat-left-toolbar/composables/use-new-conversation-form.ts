@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
 import { createId } from '@/utils/create-id/create-id.helper';
 
 import { useSocketSubscriptions } from './use-socket-subscriptions';
@@ -17,7 +17,7 @@ const newConversationEvent = ref('');
 const newConversationRoomId = ref('');
 
 export function useNewConversationForm() {
-  const conversationStore = useConversationStore();
+  const catalog = useConversationCatalog();
   const socketStore = useSocket();
   const { subscriptions } = useSocketSubscriptions();
 
@@ -59,30 +59,14 @@ export function useNewConversationForm() {
     socketStore.listenToEvent(event);
     if (roomId) socketStore.joinRoom(roomId, event);
 
-    conversationStore.createNewConversation(type, event, roomId);
-    if (name) {
-      conversationStore.renameConversation(
-        conversationStore.activeConversationId!,
-        name,
-      );
-    }
-
-    const newId = conversationStore.activeConversationId;
-    if (newId) {
-      conversationStore.setSubscriptions(newId, [
-        { event, roomId: roomId || '' },
-      ]);
-    }
-
-    // A conversation bound to a socket inherits that socket's stream mode,
-    // so a socket created (or re-decided) as "full response at once" is
-    // honored by the very first request sent on the conversation.
     const matchedSubscription = subscriptions.value.find(
       (s) => s.event === event && (s.roomId ?? '') === (roomId ?? ''),
     );
-    if (matchedSubscription && newId) {
-      conversationStore.setStream(newId, matchedSubscription.stream);
-    }
+    catalog.createNewConversation(type, event, roomId, {
+      ...(name ? { title: name } : {}),
+      subscriptions: [{ event, roomId: roomId || '' }],
+      stream: matchedSubscription?.stream ?? true,
+    });
 
     newConversationName.value = '';
     newConversationEvent.value = '';

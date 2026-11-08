@@ -1,9 +1,9 @@
 import { computed, ref, watch } from 'vue';
 
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { TOAST_KEY_MODEL_NO_THINK } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { useChatConversation } from './use-chat-conversation';
 
@@ -17,7 +17,7 @@ const thinkOptions = ['off', 'low', 'medium', 'high'] as const;
  * conversation, the conversation store, and the toast service — by import.
  */
 export function useChatThink() {
-  const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
   const toast = useToast();
   const { conversationId, selectedModelObj } = useChatConversation();
 
@@ -48,7 +48,7 @@ export function useChatThink() {
     selectedThink.value = think;
     localStorage.setItem(THINK_KEY, think);
     if (conversationId.value) {
-      conversationStore.setThink(conversationId.value, think);
+      void configuration.setThink(conversationId.value, think);
     }
   }
 

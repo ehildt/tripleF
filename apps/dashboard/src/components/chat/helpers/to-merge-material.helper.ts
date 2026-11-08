@@ -1,5 +1,5 @@
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { toPromptMessage } from '@/stores/conversation/helpers/to-prompt-message.helper';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
+import { toPromptMessage } from '@/stores/chat/conversation/helpers/to-prompt-message.helper';
 
 /**
  * One embedded exchange's material. Assistant answers carry their FULL

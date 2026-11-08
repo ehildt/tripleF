@@ -1,7 +1,8 @@
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { buildBranchExchanges } from '@/components/chat/shared/helpers/build-branch-exchanges.helper';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createId } from '@/utils/create-id/create-id.helper';
 
 import { mapExchangeToNewSession } from './helpers/map-exchange-to-new-session.helper';
@@ -14,6 +15,7 @@ import { mapExchangeToNewSession } from './helpers/map-exchange-to-new-session.h
  */
 export function useBranchExchange() {
   const conversationStore = useConversationStore();
+  const catalog = useConversationCatalog();
 
   function branchExchange(exchangeId: string) {
     const id = conversationStore.activeConversationId;
@@ -27,23 +29,25 @@ export function useBranchExchange() {
     const partner = conversation.exchanges[idx + 1];
     const newExchanges: Exchange[] = buildBranchExchanges(userEx, partner);
 
-    conversationStore.createNewConversation('temporary', createId(), '');
-    const newSession = conversationStore.getConversation(
-      conversationStore.activeConversationId!,
+    const serverConversationId = createId();
+    const newSession = catalog.createNewConversation(
+      'temporary',
+      createId(),
+      '',
+      {
+        conversationId: serverConversationId,
+        model: conversation.model,
+        task: conversation.task,
+        numCtx: conversation.numCtx,
+        think: conversation.think,
+        // Re-tag copied exchanges to the new stable id so context deletion
+        // cannot remove the branch's seed turn.
+        exchanges: newExchanges.map((exchange) =>
+          mapExchangeToNewSession(exchange, serverConversationId),
+        ),
+        title: userEx.content.slice(0, 50) || 'New Conversation',
+      },
     );
-    if (!newSession) return;
-
-    newSession.model = conversation.model;
-    newSession.task = conversation.task;
-    newSession.numCtx = conversation.numCtx;
-    newSession.think = conversation.think;
-    // The copies still carry the parent conversation's backlink — re-tag
-    // them to the new conversation or deletion (which filters exchanges by
-    // conversationId) can never empty and remove the branched conversation.
-    newSession.exchanges = newExchanges.map((exchange) =>
-      mapExchangeToNewSession(exchange, newSession.conversationId),
-    );
-    newSession.title = userEx.content.slice(0, 50) || 'New Conversation';
 
     const socketStore = useSocket();
     socketStore.ensureSocketConnection();

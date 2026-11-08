@@ -1,8 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
-import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
@@ -10,6 +10,14 @@ import { useSelectedModel } from './use-selected-model';
 
 const warmModel = vi.hoisted(() => vi.fn());
 const toast = vi.hoisted(() => ({ warning: vi.fn() }));
+const configuration = vi.hoisted(() => ({
+  setModel: vi.fn(),
+  setNumCtx: vi.fn(),
+}));
+
+vi.mock('@/components/chat/composables/use-conversation-configuration', () => ({
+  useConversationConfiguration: () => configuration,
+}));
 
 vi.mock('@/api/warm-model.api', () => ({ warmModel }));
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
@@ -34,6 +42,8 @@ describe('useSelectedModel', () => {
     vi.restoreAllMocks();
     warmModel.mockClear();
     toast.warning.mockClear();
+    configuration.setModel.mockClear();
+    configuration.setNumCtx.mockClear();
   });
 
   it('falls back to the global selection when no conversation is active', () => {
@@ -46,7 +56,9 @@ describe('useSelectedModel', () => {
 
   it('prefers the active conversation model over the global selection', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({ model: 'conv-model' });
+    const conversation = createConversation('New chat', {
+      model: 'conv-model',
+    });
     conversationStore.conversations = [conversation];
     conversationStore.activeConversationId = conversation.id;
 
@@ -92,7 +104,7 @@ describe('useSelectedModel', () => {
 
   it('changeModel clamps an oversized numCtx and warns', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({
+    const conversation = createConversation('New chat', {
       model: 'llama',
       numCtx: '999999',
     });
@@ -103,20 +115,19 @@ describe('useSelectedModel', () => {
     modelsStore.models = [model({ context_length: 8192 })];
     modelsStore.numCtxOptions = [2048, 4096, 8192];
     vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
-    const setNumCtx = vi
-      .spyOn(conversationStore, 'setNumCtx')
-      .mockImplementation(() => {});
-
     const { changeModel } = useSelectedModel();
     changeModel('llama');
 
-    expect(setNumCtx).toHaveBeenCalledWith(conversation.id, '8192');
+    expect(configuration.setNumCtx).toHaveBeenCalledWith(
+      conversation.id,
+      '8192',
+    );
     expect(toast.warning).toHaveBeenCalled();
   });
 
   it('changeModel applies the max option without warning when within the window', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({
+    const conversation = createConversation('New chat', {
       model: 'llama',
       numCtx: '4096',
     });
@@ -127,14 +138,13 @@ describe('useSelectedModel', () => {
     modelsStore.models = [model({ context_length: 8192 })];
     modelsStore.numCtxOptions = [2048, 4096, 8192];
     vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
-    const setNumCtx = vi
-      .spyOn(conversationStore, 'setNumCtx')
-      .mockImplementation(() => {});
-
     const { changeModel } = useSelectedModel();
     changeModel('llama');
 
-    expect(setNumCtx).toHaveBeenCalledWith(conversation.id, '8192');
+    expect(configuration.setNumCtx).toHaveBeenCalledWith(
+      conversation.id,
+      '8192',
+    );
     expect(toast.warning).not.toHaveBeenCalled();
   });
 });

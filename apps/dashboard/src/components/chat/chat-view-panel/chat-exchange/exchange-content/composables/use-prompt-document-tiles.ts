@@ -1,8 +1,8 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
 import { getApiUrl } from '@/api/api-url';
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { mapDocumentToTile } from './helpers/map-document-to-tile.helper';
 

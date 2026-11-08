@@ -1,7 +1,7 @@
 import type {
   UploadedDocument,
   UploadedImage,
-} from '@/stores/conversation/conversation.model';
+} from '@/stores/chat/conversation/conversation.model';
 
 /** One prepared harness request: everything the transport needs to POST it. */
 export interface PostHarnessRequestOptions {

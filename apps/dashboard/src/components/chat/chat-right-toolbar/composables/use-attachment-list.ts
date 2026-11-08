@@ -1,7 +1,9 @@
 import { computed } from 'vue';
 
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { getUploadedDocumentsForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-documents-for-conversation.helper';
+import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
 
 import { groupUploadedImages } from './helpers/group-uploaded-images.helper';
 import { mapPendingAttachment } from './helpers/map-pending-attachment.helper';
@@ -38,16 +40,13 @@ export function useAttachmentList() {
   const uploadedImages = computed(() => {
     const conversation = activeConversation.value;
     if (!conversation?.id || !conversationId.value) return [];
-    return conversationStore.getUploadedImagesForConversation(
-      conversation.id,
-      conversationId.value,
-    );
+    return getUploadedImagesForConversation(conversation, conversationId.value);
   });
   const uploadedDocuments = computed(() => {
     const conversation = activeConversation.value;
     if (!conversation?.id || !conversationId.value) return [];
-    return conversationStore.getUploadedDocumentsForConversation(
-      conversation.id,
+    return getUploadedDocumentsForConversation(
+      conversation,
       conversationId.value,
     );
   });

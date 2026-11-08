@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue';
 import { getApiUrl } from '@/api/api-url';
 import { fetchConfig, saveConfig } from '@/api/config.api';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 import { getPersistentSocketSessionId } from '@/utils/get-persistent-socket-session-id/get-persistent-socket-session-id.helper';
 import { loadBooleanSetting } from '@/utils/load-boolean-setting/load-boolean-setting.helper';
@@ -138,14 +138,14 @@ export const useModelsStore = defineStore('models', () => {
       // adopt the globally resolved default model.
       const hasModel = models.value.some((m) => m.model === s.model);
       if (!hasModel) {
-        s.model = fallbackModel;
+        conversationStore.patchConversation(s.id, { model: fallbackModel });
       }
 
       // Always derive numCtx from the *conversation's* model context_length,
       // never from a static global default.
       const maxCtx = maxNumCtxForModel(s.model);
       if (maxCtx) {
-        s.numCtx = maxCtx;
+        conversationStore.patchConversation(s.id, { numCtx: maxCtx });
       }
     }
   }

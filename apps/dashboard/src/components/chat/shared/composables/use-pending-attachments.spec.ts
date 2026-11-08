@@ -1,9 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { PendingAttachmentScope } from '@/stores/chat/attached-files/attached-files.store.types';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { usePendingAttachments } from './use-pending-attachments';
 
@@ -36,9 +37,8 @@ describe('usePendingAttachments', () => {
   });
 
   function setupConversation(): PendingAttachmentScope {
-    const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
     return {
       parentConversationId: conversation.id,
       conversationId: conversation.conversationId,

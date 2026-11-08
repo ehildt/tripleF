@@ -1,7 +1,9 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
+import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { extractObjectStorageImageHash } from '@/components/chat/shared/helpers/extract-object-storage-image-hash.helper';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
 
 /** The image shape every add-to-files surface provides. */
 export interface AddableImage {
@@ -31,6 +33,7 @@ export function useAddImageToFiles(
   item: MaybeRefOrGetter<AddableImage | null>,
 ) {
   const conversationStore = useConversationStore();
+  const images = useConversationImages();
 
   const canAddToFiles = computed(() => {
     const image = toValue(item);
@@ -43,9 +46,9 @@ export function useAddImageToFiles(
     const hash = image ? extractObjectStorageImageHash(image.imageUrl) : null;
     const sessionId = conversationStore.activeConversationId;
     if (!hash || !sessionId) return false;
-    return conversationStore
-      .getUploadedImagesForConversation(sessionId)
-      .some((img) => img.hash === hash);
+    return getUploadedImagesForConversation(
+      conversationStore.getConversation(sessionId),
+    ).some((img) => img.hash === hash);
   });
 
   function toggleAddToFiles() {
@@ -55,11 +58,11 @@ export function useAddImageToFiles(
     if (!image || !hash || !sessionId) return;
 
     if (isInFiles.value) {
-      conversationStore.removeUploadedImage(sessionId, hash);
+      void images.removeUploadedImage(sessionId, hash);
       return;
     }
 
-    conversationStore.setUploadedImages(sessionId, [
+    void images.setUploadedImages(sessionId, [
       {
         // The file entry's display name: the gallery title (the search
         // result's name) with the content hash as the stable fallback.

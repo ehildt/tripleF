@@ -3,10 +3,10 @@ import { computed } from 'vue';
 
 import { useBranchExchange } from '@/components/chat/composables/use-branch-exchange';
 import { useChatConversation } from '@/components/chat/composables/use-chat-conversation';
+import { useConversationExchanges } from '@/components/chat/composables/use-conversation-exchanges';
 import { useChatView } from '@/components/chat/shared/composables/use-chat-view';
 import { useMergeSelection } from '@/components/chat/shared/composables/use-merge-selection';
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import { mapExchangeToListItem } from '../helpers/map-exchange-to-list-item.helper';
@@ -22,7 +22,7 @@ import { mapExchangeToListItem } from '../helpers/map-exchange-to-list-item.help
  */
 export function useHistoryPanel() {
   const chatView = useChatView();
-  const conversationStore = useConversationStore();
+  const exchanges = useConversationExchanges();
   const modelsStore = useModelsStore();
   const { branchExchange } = useBranchExchange();
   const mergeSelection = useMergeSelection();
@@ -73,10 +73,7 @@ export function useHistoryPanel() {
   function toggleUserExchangeIncluded(index: number) {
     const exchange = userExchanges.value[index];
     if (!conversation.value || !exchange) return;
-    conversationStore.toggleExchangeIncluded(
-      conversation.value.id,
-      exchange.id,
-    );
+    void exchanges.toggleExchangeIncluded(conversation.value.id, exchange.id);
   }
 
   /** Merge availability for the active conversation: icons gray out with
@@ -107,10 +104,7 @@ export function useHistoryPanel() {
   function deleteUserExchange(index: number) {
     const exchange = userExchanges.value[index];
     if (!conversation.value || !exchange) return;
-    conversationStore.deleteExchangeAndPrune(
-      conversation.value.id,
-      exchange.id,
-    );
+    void exchanges.deleteExchangeAndPrune(conversation.value.id, exchange.id);
   }
 
   /** Branch the conversation at the user prompt with the given history

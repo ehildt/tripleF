@@ -1,6 +1,7 @@
 import { watch } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { usePendingAttachments } from '../shared/composables/use-pending-attachments';
 
@@ -11,12 +12,13 @@ import { usePendingAttachments } from '../shared/composables/use-pending-attachm
  */
 export function useAttachmentConversationSync(): void {
   const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
   const { selectedFiles } = usePendingAttachments();
 
   watch(
     selectedFiles,
     (files) => {
-      conversationStore.setSavedFileInfos(
+      void configuration.setSavedFileInfos(
         conversationStore.activeConversationId ?? '',
         files,
       );

@@ -1,11 +1,15 @@
 import { getApiUrl } from '@/api/api-url';
 import { buildHeaders } from '@/components/chat/composables/helpers/build-headers.helper';
 import { handleResponse } from '@/components/chat/composables/helpers/handle-response.helper';
+import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationDocuments } from '@/components/chat/composables/use-conversation-documents';
+import { useConversationExchangeCompletion } from '@/components/chat/composables/use-conversation-exchange-completion';
+import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
 
@@ -19,6 +23,10 @@ export function useAssistantRequest() {
   const socketProvider = useSocketProvider();
 
   const conversationStore = useConversationStore();
+  const configuration = useConversationConfiguration();
+  const completion = useConversationExchangeCompletion();
+  const images = useConversationImages();
+  const documents = useConversationDocuments();
   const { clearPendingFiles } = usePendingAttachments();
   const toast = useToast();
 
@@ -80,7 +88,7 @@ export function useAssistantRequest() {
           i18n.global.t('toast.requestError', { status: res.status }),
         );
         const id = conversationStore.activeConversationId;
-        if (id) conversationStore.markExchangeError(id, requestId, msg);
+        if (id) void completion.markExchangeError(id, requestId, msg);
         return;
       }
 
@@ -89,13 +97,13 @@ export function useAssistantRequest() {
       // Promote pending previews to uploaded metadata and clear the pending
       // attachment state for this conversation.
       if (sid) {
-        conversationStore.setUploadedImages(sid, referencedImages);
-        conversationStore.setUploadedDocuments(sid, newDocuments);
+        void images.setUploadedImages(sid, referencedImages);
+        void documents.setUploadedDocuments(sid, newDocuments);
         clearPendingFiles({
           parentConversationId: sid,
           conversationId,
         });
-        conversationStore.setSavedFileInfos(sid, []);
+        void configuration.setSavedFileInfos(sid, []);
       }
     } catch (e: unknown) {
       // ! we should find a way to streamline our errors so they have a consistent shape.
@@ -104,7 +112,7 @@ export function useAssistantRequest() {
       toast.debug(msg);
       toast.error(i18n.global.t('toast.serverUnreachable'));
       const id = conversationStore.activeConversationId;
-      if (id) conversationStore.markExchangeError(id, requestId, msg);
+      if (id) void completion.markExchangeError(id, requestId, msg);
     }
   }
 

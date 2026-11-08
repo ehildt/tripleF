@@ -1,8 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
-import { createConversation } from '@/stores/conversation/helpers/create-conversation.helper';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
@@ -29,7 +29,9 @@ describe('useChatModelSync', () => {
 
   it('prefers the active conversation model over the global selection', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({ model: 'llama-text' });
+    const conversation = createConversation('New chat', {
+      model: 'llama-text',
+    });
     conversationStore.conversations = [conversation];
     conversationStore.activeConversationId = conversation.id;
 
@@ -42,7 +44,9 @@ describe('useChatModelSync', () => {
 
   it('treats an unloaded model catalog as vision-capable until details load', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({ model: 'llama-text' });
+    const conversation = createConversation('New chat', {
+      model: 'llama-text',
+    });
     conversationStore.conversations = [conversation];
     conversationStore.activeConversationId = conversation.id;
 
@@ -52,7 +56,9 @@ describe('useChatModelSync', () => {
 
   it('reports vision support from the selected model capabilities', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({ model: 'llama-vision' });
+    const conversation = createConversation('New chat', {
+      model: 'llama-vision',
+    });
     conversationStore.conversations = [conversation];
     conversationStore.activeConversationId = conversation.id;
 
@@ -66,7 +72,9 @@ describe('useChatModelSync', () => {
 
   it('reports no vision support for a text-only model', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({ model: 'llama-text' });
+    const conversation = createConversation('New chat', {
+      model: 'llama-text',
+    });
     conversationStore.conversations = [conversation];
     conversationStore.activeConversationId = conversation.id;
 
@@ -80,7 +88,7 @@ describe('useChatModelSync', () => {
 
   it('inherits numCtx on a fresh conversation from its model', () => {
     const conversationStore = useConversationStore();
-    const conversation = createConversation({
+    const conversation = createConversation('New chat', {
       model: 'llama-text',
       numCtx: '',
     });

@@ -4,11 +4,15 @@ import { getApiUrl } from '@/api/api-url';
 import { deleteUploadedObject } from '@/api/object-storage.api';
 import { useAttachmentList } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list';
 import type { AttachmentItem } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list.types';
+import { useConversationDocuments } from '@/components/chat/composables/use-conversation-documents';
+import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 import type { AttachedFileEntry } from '@/stores/chat/attached-files/attached-files.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
+import { hasUploadedImageReference } from '@/stores/chat/conversation/helpers/has-uploaded-image-reference.helper';
 
 /**
  * Component-scoped state for the Files panel: the merged attachment list and
@@ -17,6 +21,8 @@ import { useConversationStore } from '@/stores/conversation/conversation.store';
  */
 export function useFiles() {
   const conversationStore = useConversationStore();
+  const images = useConversationImages();
+  const documents = useConversationDocuments();
   const { attachedFiles, removePendingFile, togglePendingFile } =
     usePendingAttachments();
   const toast = useToast();
@@ -56,8 +62,8 @@ export function useFiles() {
 
   /** Delete a local image object unless another conversation still references it. */
   async function deleteImageObject(hash: string): Promise<boolean> {
-    const stillReferenced = conversationStore.hasUploadedImageReference(
-      activeConversationId.value,
+    const stillReferenced = hasUploadedImageReference(
+      activeConversation.value ?? undefined,
       hash,
       conversationId.value,
     );
@@ -77,12 +83,10 @@ export function useFiles() {
   }
 
   function pagesOf(parentHash: string) {
-    return conversationStore
-      .getUploadedImagesForConversation(
-        activeConversationId.value,
-        conversationId.value,
-      )
-      .filter((img) => img.parentHash === parentHash);
+    return getUploadedImagesForConversation(
+      activeConversation.value ?? undefined,
+      conversationId.value,
+    ).filter((img) => img.parentHash === parentHash);
   }
 
   /** Remove the pdf original: the pending entry pre-submit, the uploaded document after. */
@@ -92,7 +96,7 @@ export function useFiles() {
       removePendingFile(pendingEntry.id);
       return;
     }
-    conversationStore.removeUploadedDocument(
+    void documents.removeUploadedDocument(
       activeConversationId.value,
       parentHash,
       conversationId.value,
@@ -107,7 +111,7 @@ export function useFiles() {
         if (!ok) return;
       }
     }
-    conversationStore.removeUploadedImagesForParent(
+    void images.removeUploadedImagesForParent(
       activeConversationId.value,
       parentHash,
       conversationId.value,
@@ -119,7 +123,7 @@ export function useFiles() {
     const pages = pagesOf(parentHash);
     if (pages.length === 0) return;
     const allSelected = pages.every((p) => p.selected !== false);
-    conversationStore.setUploadedImagesSelectedForParent(
+    void images.setUploadedImagesSelectedForParent(
       activeConversationId.value,
       parentHash,
       !allSelected,
@@ -130,7 +134,7 @@ export function useFiles() {
       togglePendingFile(pendingEntry.id);
       return;
     }
-    conversationStore.toggleUploadedDocumentSelected(
+    void documents.toggleUploadedDocumentSelected(
       activeConversationId.value,
       parentHash,
       conversationId.value,
@@ -152,7 +156,7 @@ export function useFiles() {
       return;
     }
     if (item.kind === 'document') {
-      conversationStore.removeUploadedDocument(
+      void documents.removeUploadedDocument(
         activeConversationId.value,
         item.hash,
         conversationId.value,
@@ -163,7 +167,7 @@ export function useFiles() {
       const ok = await deleteImageObject(item.hash);
       if (!ok) return;
     }
-    conversationStore.removeUploadedImage(
+    void images.removeUploadedImage(
       activeConversationId.value,
       item.hash,
       conversationId.value,
@@ -185,14 +189,14 @@ export function useFiles() {
       return;
     }
     if (item.kind === 'document') {
-      conversationStore.toggleUploadedDocumentSelected(
+      void documents.toggleUploadedDocumentSelected(
         activeConversationId.value,
         item.hash,
         conversationId.value,
       );
       return;
     }
-    conversationStore.toggleUploadedImageSelected(
+    void images.toggleUploadedImageSelected(
       activeConversationId.value,
       item.hash,
       conversationId.value,
@@ -209,7 +213,7 @@ export function useFiles() {
       const ok = await deleteImageObject(pageHash);
       if (!ok) return;
     }
-    conversationStore.removeUploadedImage(
+    void images.removeUploadedImage(
       activeConversationId.value,
       pageHash,
       conversationId.value,

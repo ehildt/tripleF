@@ -2,7 +2,9 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
 
 import type { AddableImage } from './use-add-image-to-files';
 import { useAddImageToFiles } from './use-add-image-to-files';
@@ -14,6 +16,16 @@ const CLOUD_ITEM: AddableImage = {
   source: 'cloud',
 };
 
+function activeUploadedImages(
+  conversationStore: ReturnType<typeof useConversationStore>,
+) {
+  return getUploadedImagesForConversation(
+    conversationStore.getConversation(
+      conversationStore.activeConversationId ?? '',
+    ),
+  );
+}
+
 describe('useAddImageToFiles', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -21,8 +33,8 @@ describe('useAddImageToFiles', () => {
 
   function setupActiveConversation() {
     const conversationStore = useConversationStore();
-    const conversation = conversationStore.ensureConversation();
-    conversationStore.setActiveConversation(conversation.id);
+    const conversation = useConversationCatalog().ensureConversation();
+    useConversationCatalog().setActiveConversation(conversation.id);
     return conversationStore;
   }
 
@@ -60,9 +72,7 @@ describe('useAddImageToFiles', () => {
 
     toggleAddToFiles();
 
-    const images = conversationStore.getUploadedImagesForConversation(
-      conversationStore.activeConversationId ?? '',
-    );
+    const images = activeUploadedImages(conversationStore);
     expect(images).toHaveLength(1);
     expect(images[0]).toMatchObject({
       name: 'A cloud photo',
@@ -83,11 +93,7 @@ describe('useAddImageToFiles', () => {
     toggleAddToFiles();
 
     expect(isInFiles.value).toBe(false);
-    expect(
-      conversationStore.getUploadedImagesForConversation(
-        conversationStore.activeConversationId ?? '',
-      ),
-    ).toHaveLength(0);
+    expect(activeUploadedImages(conversationStore)).toHaveLength(0);
   });
 
   it('falls back to the hash as the file name when the item has no title', () => {
@@ -99,9 +105,7 @@ describe('useAddImageToFiles', () => {
 
     toggleAddToFiles();
 
-    const images = conversationStore.getUploadedImagesForConversation(
-      conversationStore.activeConversationId ?? '',
-    );
+    const images = activeUploadedImages(conversationStore);
     expect(images[0]?.name).toBe('hash-a');
   });
 
@@ -129,10 +133,6 @@ describe('useAddImageToFiles', () => {
 
     toggleAddToFiles();
     const conversationStore = useConversationStore();
-    expect(
-      conversationStore.getUploadedImagesForConversation(
-        conversationStore.activeConversationId ?? '',
-      ),
-    ).toHaveLength(1);
+    expect(activeUploadedImages(conversationStore)).toHaveLength(1);
   });
 });

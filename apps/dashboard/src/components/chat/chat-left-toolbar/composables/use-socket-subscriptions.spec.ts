@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 
-import type { Conversation } from '@/stores/conversation/conversation.model';
+import type { Conversation } from '@/stores/chat/conversation/conversation.model';
 import type { SubscriptionEntry } from '@/types/subscription.model';
 
 const state = vi.hoisted(() => ({
   conversation: undefined as unknown as {
     conversations: Conversation[];
     hydrated: boolean;
-    setStream: ReturnType<typeof vi.fn>;
   },
   setStream: vi.fn(),
   ensureSocketConnection: vi.fn(),
@@ -18,16 +17,19 @@ const state = vi.hoisted(() => ({
   closeEvent: vi.fn(),
 }));
 
-vi.mock('@/stores/conversation/conversation.store', async () => {
+vi.mock('@/stores/chat/conversation/conversation.store', async () => {
   const { reactive } = await import('vue');
   const store = reactive({
     conversations: [] as Conversation[],
     hydrated: false,
-    setStream: state.setStream,
   });
   state.conversation = store;
   return { useConversationStore: () => store };
 });
+
+vi.mock('@/components/chat/composables/use-conversation-configuration', () => ({
+  useConversationConfiguration: () => ({ setStream: state.setStream }),
+}));
 
 vi.mock('@/composables/use-socket/use-socket', () => ({
   useSocket: () => ({

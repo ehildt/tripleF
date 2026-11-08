@@ -1,7 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { useExchangeActions } from './use-exchange-actions';
 
@@ -28,17 +29,25 @@ describe('useExchangeActions', () => {
 
     it('replays the user message via the submit action', () => {
       const conversationStore = useConversationStore();
-      const conversation = conversationStore.ensureConversation();
-      conversationStore.addExchange(conversation.id, {
-        role: 'user',
-        content: 'Hi there',
-        status: 'done',
-      });
-      conversationStore.addExchange(conversation.id, {
-        role: 'assistant',
-        content: 'Hello back',
-        status: 'done',
-      });
+      const conversation = useConversationCatalog().createNewConversation();
+      conversationStore.addExchange(
+        conversation.id,
+        {
+          role: 'user',
+          content: 'Hi there',
+          status: 'done',
+        },
+        'New chat',
+      );
+      conversationStore.addExchange(
+        conversation.id,
+        {
+          role: 'assistant',
+          content: 'Hello back',
+          status: 'done',
+        },
+        'New chat',
+      );
       const assistantId = conversation.exchanges[1].id;
 
       const { retryExchange } = useExchangeActions();

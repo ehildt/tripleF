@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 
 import { computeHighlightedExchangeIds } from './compute-highlighted-exchange-ids.helper';
 

@@ -1,7 +1,7 @@
 import type { ComputedRef } from 'vue';
 
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import type { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
+import type { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 export type ActiveSession = ReturnType<
   ReturnType<typeof useConversationStore>['getConversation']

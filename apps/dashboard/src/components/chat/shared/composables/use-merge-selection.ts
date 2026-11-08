@@ -1,5 +1,5 @@
-import type { Exchange } from '@/stores/conversation/conversation.model';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
 
 import { getPairedExchangeIds } from '../helpers/get-paired-exchange-ids.helper';

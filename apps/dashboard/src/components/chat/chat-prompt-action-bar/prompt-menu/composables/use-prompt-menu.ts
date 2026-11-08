@@ -6,7 +6,7 @@ import { useNewConversationForm } from '@/components/chat/chat-left-toolbar/comp
 import { useNewSocketForm } from '@/components/chat/chat-left-toolbar/composables/use-new-socket-form';
 import { useSelectedModel } from '@/components/chat/chat-left-toolbar/composables/use-selected-model';
 import { useLeftToolbarView } from '@/components/chat/chat-left-toolbar/tabs/composables/use-left-toolbar-view';
-import { useConversationStore } from '@/stores/conversation/conversation.store';
+import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 /**
  * The prompt-menu's composed behaviors: actions whose meaning spans several

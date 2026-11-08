@@ -1,4 +1,4 @@
-import type { Exchange } from '@/stores/conversation/conversation.model';
+import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 
 import type { BuildMergedPromptOptions } from './build-merged-prompt.helper.types';
 import { toMergeMaterial } from './to-merge-material.helper';
