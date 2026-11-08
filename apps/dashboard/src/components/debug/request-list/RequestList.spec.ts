@@ -12,7 +12,7 @@ describe('RequestList', () => {
         results: [
           {
             id: '1',
-            timestamp: '2024-01-01T00:00:00Z',
+            epoch: 0,
             endpoint: '/api',
             method: 'GET',
             status: 'success',
@@ -36,7 +36,7 @@ describe('RequestList', () => {
         results: [
           {
             id: '1',
-            timestamp: '2024-01-01T00:00:00Z',
+            epoch: 0,
             endpoint: '/api',
             method: 'GET',
             status: 'success',

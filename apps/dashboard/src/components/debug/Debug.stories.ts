@@ -33,7 +33,7 @@ type Story = StoryObj<typeof meta>;
 const sampleResults: DebugResult[] = [
   {
     id: '1',
-    timestamp: '',
+    epoch: 1,
     endpoint: '/api/v1/harness',
     method: 'POST',
     status: 'success',
@@ -44,7 +44,7 @@ const sampleResults: DebugResult[] = [
   },
   {
     id: '2',
-    timestamp: '',
+    epoch: 2,
     endpoint: 'socket.io:harness:room-1:{}',
     method: 'GET',
     status: 'success',

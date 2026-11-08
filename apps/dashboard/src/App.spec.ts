@@ -10,8 +10,7 @@ vi.mock('./stores/debug/debug.store', () => ({
   useDebugStore: () => ({
     debugLogCount: 0,
     debugResults: [],
-    selectedDebugResult: null,
-    addSocketDebugEntry: vi.fn(),
+    addDebugResult: vi.fn(),
     clearDebugResults: vi.fn(),
   }),
 }));

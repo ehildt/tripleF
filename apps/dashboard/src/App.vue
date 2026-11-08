@@ -60,10 +60,7 @@ void playlistStore.loadPlaylists();
 // fetches it on construction and pushes every change immediately from its
 // own watch — no boot-time orchestration here.
 
-socket.setCallbacks(
-  debugStore.addSocketDebugEntry,
-  apiMessagesStore.addMessage,
-);
+socket.setCallbacks(debugStore.addDebugResult, apiMessagesStore.addMessage);
 
 // The DLQ badge is an event-driven attention dot: the server broadcasts
 // dlq:entry-upserted / dlq:entries-removed / dlq:bulk-changed on every DLQ

@@ -32,7 +32,7 @@ type Story = StoryObj<typeof meta>;
 
 const sampleHttp = {
   id: '1',
-  timestamp: '',
+  epoch: 0,
   endpoint: '/api/v1/harness',
   method: 'POST',
   status: 'success' as const,
