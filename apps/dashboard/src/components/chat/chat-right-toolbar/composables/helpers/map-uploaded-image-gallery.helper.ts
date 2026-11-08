@@ -12,7 +12,6 @@ export function mapUploadedImageGallery(
     previewUrl: '',
     isUploaded: true,
     isSelected: group.isSelected,
-    pendingIndex: null,
     source: 'local',
     kind: 'gallery',
     pages: group.pages.map((p) => ({ name: p.name, hash: p.hash })),

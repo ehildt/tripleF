@@ -9,7 +9,6 @@ describe('createConversation', () => {
     expect(conversation).toMatchObject({
       title: 'New chat',
       exchanges: [],
-      files: [],
       savedFileInfos: [],
       uploadedImages: [],
       imageSelectionSnapshot: {},

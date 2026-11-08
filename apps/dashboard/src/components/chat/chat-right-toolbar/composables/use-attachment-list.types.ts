@@ -10,7 +10,6 @@ export interface AttachmentItem {
   previewUrl: string;
   isUploaded: boolean;
   isSelected: boolean;
-  pendingIndex: number | null;
   source?: 'local' | 'cloud';
   /** Original file size in bytes (documents and images). */
   size?: number;

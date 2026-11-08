@@ -19,7 +19,6 @@ describe('mapUploadedDocumentAttachment', () => {
       previewUrl: '',
       isUploaded: true,
       isSelected: true,
-      pendingIndex: null,
       source: 'local',
       kind: 'document',
     });

@@ -14,8 +14,8 @@ const refs = vi.hoisted(() => ({})) as {
   selectedModelObj: Ref<{ capabilities?: string[] }>;
 };
 
-vi.mock('@/stores/attached-files/attached-files.store', () => ({
-  useAttachedFilesStore: () => ({ addFiles: state.addFiles }),
+vi.mock('./use-attachment-intake', () => ({
+  useAttachmentIntake: () => ({ addFiles: state.addFiles }),
 }));
 
 vi.mock('@/stores/models/models.store', () => ({
@@ -77,7 +77,7 @@ describe('useFileSelect', () => {
     expect(handle.inputRef?.click).not.toHaveBeenCalled();
   });
 
-  it('feeds the picked files to the attached-files store', () => {
+  it('feeds the picked files to attachment intake', () => {
     const { onFilesSelect } = useFileSelect();
     const files = [new File(['x'], 'x.txt')];
 

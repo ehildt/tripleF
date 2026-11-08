@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import { groupUploadedImages } from './helpers/group-uploaded-images.helper';
@@ -19,7 +19,7 @@ import type { AttachmentItem } from './use-attachment-list.types';
  */
 export function useAttachmentList() {
   const conversationStore = useConversationStore();
-  const attachedFilesStore = useAttachedFilesStore();
+  const { attachedFiles } = usePendingAttachments();
 
   const activeConversationId = computed(
     () => conversationStore.activeConversationId ?? '',
@@ -35,7 +35,6 @@ export function useAttachmentList() {
     return conversationStore.getConversationId(conversation.id);
   });
 
-  const attachedFiles = computed(() => attachedFilesStore.attachedFiles);
   const uploadedImages = computed(() => {
     const conversation = activeConversation.value;
     if (!conversation?.id || !conversationId.value) return [];

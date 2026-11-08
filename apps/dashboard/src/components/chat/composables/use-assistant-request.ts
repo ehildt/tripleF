@@ -2,9 +2,9 @@ import { getApiUrl } from '@/api/api-url';
 import { buildHeaders } from '@/components/chat/composables/helpers/build-headers.helper';
 import { handleResponse } from '@/components/chat/composables/helpers/handle-response.helper';
 import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
+import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
@@ -19,7 +19,7 @@ export function useAssistantRequest() {
   const socketProvider = useSocketProvider();
 
   const conversationStore = useConversationStore();
-  const attachedFilesStore = useAttachedFilesStore();
+  const { clearPendingFiles } = usePendingAttachments();
   const toast = useToast();
 
   async function postHarnessRequest(
@@ -91,11 +91,11 @@ export function useAssistantRequest() {
       if (sid) {
         conversationStore.setUploadedImages(sid, referencedImages);
         conversationStore.setUploadedDocuments(sid, newDocuments);
-        attachedFilesStore.clearPendingFilesForConversation(
-          sid,
+        clearPendingFiles({
+          parentConversationId: sid,
           conversationId,
-        );
-        conversationStore.setFiles(sid, []);
+        });
+        conversationStore.setSavedFileInfos(sid, []);
       }
     } catch (e: unknown) {
       // ! we should find a way to streamline our errors so they have a consistent shape.

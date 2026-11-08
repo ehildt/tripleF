@@ -3,6 +3,7 @@ import ChatLeftToolbar from './chat-left-toolbar/ChatLeftToolbar.vue';
 import ChatPromptActionBar from './chat-prompt-action-bar/ChatPromptActionBar.vue';
 import ChatRightToolbar from './chat-right-toolbar/ChatRightToolbar.vue';
 import ChatViewPanel from './chat-view-panel/ChatViewPanel.vue';
+import { useAttachmentConversationSync } from './composables/use-attachment-conversation-sync';
 import { useChatModelSync } from './composables/use-chat-model-sync';
 
 // Chat-wide model↔conversation sync (image selection snapshot/restore and
@@ -10,6 +11,7 @@ import { useChatModelSync } from './composables/use-chat-model-sync';
 // single widget. The prompt action bar owns its own state; Chat only lays out
 // the grid and keeps this cross-cutting watcher alive.
 useChatModelSync();
+useAttachmentConversationSync();
 </script>
 
 <template>

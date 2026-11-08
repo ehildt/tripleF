@@ -4,9 +4,10 @@ import { getApiUrl } from '@/api/api-url';
 import { deleteUploadedObject } from '@/api/object-storage.api';
 import { useAttachmentList } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list';
 import type { AttachmentItem } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list.types';
+import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useAttachedFilesStore } from '@/stores/attached-files/attached-files.store';
+import type { AttachedFileEntry } from '@/stores/chat/attached-files/attached-files.model';
 import { useConversationStore } from '@/stores/conversation/conversation.store';
 
 /**
@@ -16,7 +17,8 @@ import { useConversationStore } from '@/stores/conversation/conversation.store';
  */
 export function useFiles() {
   const conversationStore = useConversationStore();
-  const attachedFilesStore = useAttachedFilesStore();
+  const { attachedFiles, removePendingFile, togglePendingFile } =
+    usePendingAttachments();
   const toast = useToast();
 
   const activeConversationId = computed(
@@ -33,8 +35,6 @@ export function useFiles() {
     return conversationStore.getConversationId(conversation.id);
   });
 
-  const attachedFiles = computed(() => attachedFilesStore.attachedFiles);
-
   const { attachments } = useAttachmentList();
 
   function previewUrlForHash(hash: string): string {
@@ -50,8 +50,8 @@ export function useFiles() {
     return previewUrlForHash(item.hash);
   }
 
-  function findPendingIndex(hash: string): number {
-    return attachedFiles.value.findIndex((entry) => entry.hash === hash);
+  function findPendingEntry(hash: string): AttachedFileEntry | undefined {
+    return attachedFiles.value.find((entry) => entry.hash === hash);
   }
 
   /** Delete a local image object unless another conversation still references it. */
@@ -87,9 +87,9 @@ export function useFiles() {
 
   /** Remove the pdf original: the pending entry pre-submit, the uploaded document after. */
   function removeOriginal(parentHash: string) {
-    const pendingIndex = findPendingIndex(parentHash);
-    if (pendingIndex !== -1) {
-      attachedFilesStore.removeAttachedFile(pendingIndex);
+    const pendingEntry = findPendingEntry(parentHash);
+    if (pendingEntry) {
+      removePendingFile(pendingEntry.id);
       return;
     }
     conversationStore.removeUploadedDocument(
@@ -125,9 +125,9 @@ export function useFiles() {
       !allSelected,
       conversationId.value,
     );
-    const pendingIndex = findPendingIndex(parentHash);
-    if (pendingIndex !== -1) {
-      attachedFilesStore.toggleAttachedFile(pendingIndex);
+    const pendingEntry = findPendingEntry(parentHash);
+    if (pendingEntry) {
+      togglePendingFile(pendingEntry.id);
       return;
     }
     conversationStore.toggleUploadedDocumentSelected(
@@ -141,8 +141,8 @@ export function useFiles() {
     const item = attachments.value.find((a) => a.id === id);
     if (!item) return;
 
-    if (item.pendingIndex !== null) {
-      attachedFilesStore.removeAttachedFile(item.pendingIndex);
+    if (!item.isUploaded) {
+      removePendingFile(item.id);
       return;
     }
     if (!activeConversation.value) return;
@@ -174,8 +174,8 @@ export function useFiles() {
     const item = attachments.value.find((a) => a.id === id);
     if (!item) return;
 
-    if (item.pendingIndex !== null) {
-      attachedFilesStore.toggleAttachedFile(item.pendingIndex);
+    if (!item.isUploaded) {
+      togglePendingFile(item.id);
       return;
     }
     if (!activeConversation.value) return;
