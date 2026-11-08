@@ -9,7 +9,7 @@ export interface DlqListBodyProps {
   error?: string | null;
   /** Whether already-read entries are dimmed in the list. */
   hideRead?: boolean;
-  /** Read-state lookup passed down by the store-owning orchestrator. */
+  /** Read-state lookup passed down by the view-owning orchestrator. */
   isEntryRead: (entry: DlqEntry) => boolean;
   /** Stable per-entry key for the read-state derivation. */
   entryReadKey: (entry: DlqEntry) => string;

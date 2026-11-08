@@ -1,9 +1,11 @@
 import type { Socket } from 'socket.io-client';
 import { onMounted, onUnmounted } from 'vue';
 
+import { useDlqCache } from '@/api/queries/use-dlq-cache';
+import { useDlqActivity } from '@/components/dlq/composables/use-dlq-activity';
+import { useDlqQueryState } from '@/components/dlq/composables/use-dlq-query-state';
 import { parseSocketEvent } from '@/composables/helpers/parse-socket-event.helper';
 import { useSocket } from '@/composables/use-socket/use-socket';
-import { useDlqStore } from '@/stores/dlq/dlq.store';
 
 import { useActiveTab } from './use-active-tab';
 import type {
@@ -18,13 +20,15 @@ const DLQ_BULK_CHANGED_TOPIC = 'dlq:bulk-changed';
 /**
  * Live DLQ synchronization: the server broadcasts every DLQ mutation on three
  * topics, so the list never polls. Every event lights the tab's activity dot;
- * upserts/removals are applied to the store's current page in place, and a
- * bulk change while the tab is open asks the view for one refetch. The
+ * upserts/removals update the current query-cache page immutably, and a
+ * bulk change invalidates cached pages, refetching only when DLQ is active. The
  * listeners are attached once the socket exists and detached on unmount.
  */
 export function useDlqLiveEvents(): void {
   const socketStore = useSocket();
-  const dlqStore = useDlqStore();
+  const queryCache = useDlqCache();
+  const queryState = useDlqQueryState();
+  const { markDlqActivity } = useDlqActivity();
   const { activeTab } = useActiveTab();
 
   let socket: Socket | null = null;
@@ -33,25 +37,25 @@ export function useDlqLiveEvents(): void {
     const event = parseSocketEvent(payload);
     const entry = (event?.data as DlqEntryUpsertedData | undefined)?.entry;
     if (!event || event.type !== DLQ_ENTRY_UPSERTED_TOPIC || !entry) return;
-    dlqStore.markDlqActivity();
-    dlqStore.applyUpsertedEntry(entry);
+    markDlqActivity();
+    queryCache.applyUpsertedEntry(entry, queryState.getQueryParams());
   }
 
   function handleEntriesRemoved(payload: unknown): void {
     const event = parseSocketEvent(payload);
     const ids = (event?.data as DlqEntriesRemovedData | undefined)?.ids;
     if (!event || event.type !== DLQ_ENTRIES_REMOVED_TOPIC || !ids) return;
-    dlqStore.markDlqActivity();
-    dlqStore.applyRemovedEntries(ids);
+    markDlqActivity();
+    queryCache.applyRemovedEntries(ids, queryState.getQueryParams());
   }
 
   function handleBulkChanged(payload: unknown): void {
     const event = parseSocketEvent(payload);
     if (!event || event.type !== DLQ_BULK_CHANGED_TOPIC) return;
-    dlqStore.markDlqActivity();
-    if (activeTab.value === 'dlq') {
-      dlqStore.requestEntriesRefresh();
-    }
+    markDlqActivity();
+    queryCache.invalidateDlqQueries(
+      activeTab.value === 'dlq' ? 'active' : 'none',
+    );
   }
 
   onMounted(() => {

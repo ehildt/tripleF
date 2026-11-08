@@ -9,10 +9,12 @@ import type { ActiveTab } from '@/stores/app/navigation/navigation.model';
 import { useDlqLiveEvents } from './use-dlq-live-events';
 
 const storeMocks = vi.hoisted(() => ({
-  markDlqActivity: vi.fn(),
   applyUpsertedEntry: vi.fn(),
   applyRemovedEntries: vi.fn(),
-  requestEntriesRefresh: vi.fn(),
+  invalidateDlqQueries: vi.fn(),
+}));
+const activityMocks = vi.hoisted(() => ({
+  markDlqActivity: vi.fn(),
 }));
 
 const { ensureSocketConnection } = vi.hoisted(() => ({
@@ -21,8 +23,12 @@ const { ensureSocketConnection } = vi.hoisted(() => ({
 
 const refs = vi.hoisted(() => ({})) as { activeTab: Ref<ActiveTab> };
 
-vi.mock('@/stores/dlq/dlq.store', () => ({
-  useDlqStore: () => storeMocks,
+vi.mock('@/api/queries/use-dlq-cache', () => ({
+  useDlqCache: () => storeMocks,
+}));
+
+vi.mock('@/components/dlq/composables/use-dlq-activity', () => ({
+  useDlqActivity: () => activityMocks,
 }));
 
 vi.mock('@/composables/use-socket/use-socket', () => ({
@@ -76,6 +82,7 @@ describe('useDlqLiveEvents', () => {
     socket = makeSocket();
     ensureSocketConnection.mockReset().mockReturnValue(socket);
     Object.values(storeMocks).forEach((fn) => fn.mockClear());
+    Object.values(activityMocks).forEach((fn) => fn.mockClear());
     refs.activeTab.value = 'chat';
   });
 
@@ -102,14 +109,17 @@ describe('useDlqLiveEvents', () => {
       'dlq:entry-upserted',
       envelope('dlq:entry-upserted', { entry }),
     );
-    expect(storeMocks.markDlqActivity).toHaveBeenCalledTimes(1);
-    expect(storeMocks.applyUpsertedEntry).toHaveBeenCalledWith(entry);
+    expect(activityMocks.markDlqActivity).toHaveBeenCalledOnce();
+    expect(storeMocks.applyUpsertedEntry).toHaveBeenCalledWith(entry, {
+      limit: 20,
+      offset: 0,
+    });
   });
 
   it('drops an upserted envelope without an entry', () => {
     mount(Probe);
     socket.emit('dlq:entry-upserted', envelope('dlq:entry-upserted', {}));
-    expect(storeMocks.markDlqActivity).not.toHaveBeenCalled();
+    expect(activityMocks.markDlqActivity).not.toHaveBeenCalled();
     expect(storeMocks.applyUpsertedEntry).not.toHaveBeenCalled();
   });
 
@@ -119,25 +129,28 @@ describe('useDlqLiveEvents', () => {
       'dlq:entries-removed',
       envelope('dlq:entries-removed', { ids: ['rec-1'] }),
     );
-    expect(storeMocks.markDlqActivity).toHaveBeenCalledTimes(1);
-    expect(storeMocks.applyRemovedEntries).toHaveBeenCalledWith(['rec-1']);
+    expect(activityMocks.markDlqActivity).toHaveBeenCalledOnce();
+    expect(storeMocks.applyRemovedEntries).toHaveBeenCalledWith(['rec-1'], {
+      limit: 20,
+      offset: 0,
+    });
   });
 
-  it('requests a refetch on bulk change only while the dlq tab is open', () => {
+  it('invalidates on bulk change and refetches only while the dlq tab is open', () => {
     mount(Probe);
     socket.emit('dlq:bulk-changed', envelope('dlq:bulk-changed', {}));
-    expect(storeMocks.markDlqActivity).toHaveBeenCalledTimes(1);
-    expect(storeMocks.requestEntriesRefresh).not.toHaveBeenCalled();
+    expect(activityMocks.markDlqActivity).toHaveBeenCalledOnce();
+    expect(storeMocks.invalidateDlqQueries).toHaveBeenLastCalledWith('none');
 
     refs.activeTab.value = 'dlq';
     socket.emit('dlq:bulk-changed', envelope('dlq:bulk-changed', {}));
-    expect(storeMocks.requestEntriesRefresh).toHaveBeenCalledTimes(1);
+    expect(storeMocks.invalidateDlqQueries).toHaveBeenLastCalledWith('active');
   });
 
   it('ignores a malformed payload', () => {
     mount(Probe);
     socket.emit('dlq:entry-upserted', { not: 'an envelope' });
-    expect(storeMocks.markDlqActivity).not.toHaveBeenCalled();
+    expect(activityMocks.markDlqActivity).not.toHaveBeenCalled();
   });
 
   it('ignores an envelope with a different type', () => {
@@ -146,7 +159,7 @@ describe('useDlqLiveEvents', () => {
       'dlq:entry-upserted',
       envelope('other:event', { entry: { id: 'x' } }),
     );
-    expect(storeMocks.markDlqActivity).not.toHaveBeenCalled();
+    expect(activityMocks.markDlqActivity).not.toHaveBeenCalled();
   });
 
   it('detaches the listeners on unmount', () => {

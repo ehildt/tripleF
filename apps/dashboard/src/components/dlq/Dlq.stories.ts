@@ -16,7 +16,7 @@ const meta = {
 Main orchestrator for the DLQ group. Wires the list header, the list
 body, and the details body together. Owns the DLQ query, the
 retry/delete/update mutations, the loading state, the
-filter-to-store binding, and the selected-entry → details body binding.
+filter/query-state binding, and the selected-entry → details body binding.
 `,
       },
     },

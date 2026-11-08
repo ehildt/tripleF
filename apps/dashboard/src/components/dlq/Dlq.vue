@@ -1,20 +1,39 @@
 <script setup lang="ts">
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 
-import { useDlqStore } from '../../stores/dlq/dlq.store';
 import { useModelsStore } from '../../stores/models/models.store';
 import { useDlqConversationPresence } from './composables/use-dlq-conversation-presence';
 import { useDlqEntries } from './composables/use-dlq-entries';
+import { useDlqQueryState } from './composables/use-dlq-query-state';
 import DlqDetailsBody from './dlq-details-body/DlqDetailsBody.vue';
 import DlqListBody from './dlq-list-body/DlqListBody.vue';
 import DlqListHeader from './dlq-list-header/DlqListHeader.vue';
+import { getDlqEntryReadKey } from './helpers/get-dlq-entry-read-key.helper';
 
-const dlqStore = useDlqStore();
 const modelsStore = useModelsStore();
-
-// Entries lifecycle (query, loading spinner, store sync, refetch watchers)
-// and the row/detail actions composed onto it — see use-dlq-entries.
-const { showLoading, guardedRefetch, actions } = useDlqEntries();
+const {
+  filterSearch,
+  filterStatus,
+  hideRead,
+  limit,
+  offset,
+  setPage,
+  setPageSize,
+  nextPage,
+  prevPage,
+} = useDlqQueryState();
+const {
+  entries,
+  selectedEntry,
+  total,
+  currentPage,
+  totalPages,
+  errorMessage,
+  loading,
+  actions,
+  readState,
+} = useDlqEntries();
+const { showLoading, guardedRefetch } = loading;
 const { isConversationDeleted } = useDlqConversationPresence();
 </script>
 
@@ -22,32 +41,32 @@ const { isConversationDeleted } = useDlqConversationPresence();
   <div class="dlq-column">
     <PanelLayout class="dlq-column__panel">
       <DlqListHeader
-        v-model:filter-search="dlqStore.filterSearch"
+        v-model:filter-search="filterSearch"
         :show-loading="showLoading"
-        :filter-status="dlqStore.filterStatus"
-        :hide-read="dlqStore.hideRead"
-        :total="dlqStore.total"
-        :current-page="dlqStore.currentPage"
-        :total-pages="dlqStore.totalPages"
-        :limit="dlqStore.limit"
-        :offset="dlqStore.offset"
+        :filter-status="filterStatus"
+        :hide-read="hideRead"
+        :total="total"
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        :limit="limit"
+        :offset="offset"
         @reload="guardedRefetch"
-        @update:filter-status="(value) => (dlqStore.filterStatus = value)"
-        @update:hide-read="(value) => (dlqStore.hideRead = value)"
-        @first-page="dlqStore.setPage(1)"
-        @prev-page="dlqStore.prevPage"
-        @next-page="dlqStore.nextPage"
-        @last-page="dlqStore.setPage(dlqStore.totalPages)"
-        @set-page="dlqStore.setPage"
-        @set-page-size="dlqStore.setPageSize"
+        @update:filter-status="(value) => (filterStatus = value)"
+        @update:hide-read="(value) => (hideRead = value)"
+        @first-page="setPage(1)"
+        @prev-page="prevPage"
+        @next-page="nextPage(total)"
+        @last-page="setPage(totalPages)"
+        @set-page="setPage"
+        @set-page-size="setPageSize"
       />
       <DlqListBody
-        :entries="dlqStore.entries"
-        :selected-entry-id="dlqStore.selectedEntry?.id ?? null"
-        :error="dlqStore.error"
-        :hide-read="dlqStore.hideRead"
-        :is-entry-read="(entry) => dlqStore.isEntryRead(entry)"
-        :entry-read-key="(entry) => dlqStore.entryReadKey(entry)"
+        :entries="entries"
+        :selected-entry-id="selectedEntry?.id ?? null"
+        :error="errorMessage"
+        :hide-read="hideRead"
+        :is-entry-read="readState.isEntryRead"
+        :entry-read-key="getDlqEntryReadKey"
         :is-conversation-deleted="isConversationDeleted"
         @select="actions.onSelect"
         @retry="actions.onRetry"
@@ -60,7 +79,7 @@ const { isConversationDeleted } = useDlqConversationPresence();
   <div class="dlq-column">
     <DlqDetailsBody
       class="dlq-column__panel"
-      :entry="dlqStore.selectedEntry"
+      :entry="selectedEntry"
       :models="modelsStore.modelNames"
       @save-payload="actions.onSavePayload"
     />
