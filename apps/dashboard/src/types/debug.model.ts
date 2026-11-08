@@ -1,7 +1,6 @@
 export interface DebugResult {
   id: string;
-  timestamp: string;
-  epoch?: number;
+  epoch: number;
   endpoint: string;
   method: string;
   status: 'success' | 'error';
