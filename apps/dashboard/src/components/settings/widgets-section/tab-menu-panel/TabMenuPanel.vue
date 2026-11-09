@@ -33,8 +33,8 @@ import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { i18n } from '@/i18n/i18n';
 import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
-import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings/tab-menu-settings.store';
-import type { TabMenuSide } from '@/stores/tab-menu-settings/tab-menu-settings.types';
+import { useTabMenuSettingsStore } from '@/stores/widgets/tab-menu-settings/tab-menu-settings.store';
+import type { TabMenuSide } from '@/stores/widgets/tab-menu-settings/tab-menu-settings.types';
 
 import { useSettingsTabVisibility } from '../../composables/use-settings-tab-visibility';
 

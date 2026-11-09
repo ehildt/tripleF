@@ -1,8 +1,8 @@
 import { computed } from 'vue';
 
 import { useTabMenuRect } from '@/composables/use-tab-menu-rect/use-tab-menu-rect';
-import { useTabMenuSettingsStore } from '@/stores/tab-menu-settings/tab-menu-settings.store';
 import { usePlaylistSettingsStore } from '@/stores/widgets/playlist-settings/playlist-settings.store';
+import { useTabMenuSettingsStore } from '@/stores/widgets/tab-menu-settings/tab-menu-settings.store';
 
 import {
   PLAYLIST_ANCHOR_STYLES,

@@ -1,9 +1,13 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useTabMenuSettingsStore } from './tab-menu-settings.store';
 
 describe('useTabMenuSettingsStore', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
@@ -37,6 +41,31 @@ describe('useTabMenuSettingsStore', () => {
     store.setTabMenuAutoClose(true);
     expect(store.tabMenuAutoClose).toBe(true);
     expect(localStorage.getItem('vision-tab-menu-auto-close')).toBe('true');
+  });
+
+  it('uses defaults when storage reads are unavailable', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    const store = useTabMenuSettingsStore();
+
+    expect(store.tabMenuSide).toBe('right');
+    expect(store.tabMenuAutoClose).toBe(false);
+  });
+
+  it('keeps changes in memory when storage writes are unavailable', () => {
+    const store = useTabMenuSettingsStore();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+
+    expect(() => {
+      store.setTabMenuSide('left');
+      store.setTabMenuAutoClose(true);
+    }).not.toThrow();
+    expect(store.tabMenuSide).toBe('left');
+    expect(store.tabMenuAutoClose).toBe(true);
   });
 
   it('resets both settings to their defaults', () => {
