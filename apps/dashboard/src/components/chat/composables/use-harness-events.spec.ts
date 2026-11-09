@@ -3,12 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { useModelsStore } from '@/stores/models/models.store';
+import type { SocketEvent } from '@/types/socket-event.model';
 
-import { useModelsStore } from '../models/models.store';
-import { useMessagesStore } from './messages.store';
+import { useHarnessEvents } from './use-harness-events';
+import { useHarnessResponseStreams } from './use-harness-response-streams';
+
+const chatResponseActivity = vi.hoisted(() => ({
+  notifyChatResponse: vi.fn(),
+}));
 
 vi.mock('@/components/app/composables/use-chat-response-activity', () => ({
-  useChatResponseActivity: () => ({ notifyChatResponse: vi.fn() }),
+  useChatResponseActivity: () => chatResponseActivity,
 }));
 
 vi.mock('../../api/conversations.api', () => ({
@@ -18,8 +24,12 @@ vi.mock('../../api/conversations.api', () => ({
   deleteConversation: vi.fn().mockResolvedValue(undefined),
 }));
 
-/** Build a v1 harness envelope as the socket listener now hands it over. */
-function envelope(type: string, data: unknown, requestId = 'req-1') {
+/** Build a v1 harness envelope as the socket listener hands it over. */
+function envelope(
+  type: string,
+  data: unknown,
+  requestId = 'req-1',
+): SocketEvent {
   return {
     v: 1 as const,
     kind: 'event' as const,
@@ -31,105 +41,69 @@ function envelope(type: string, data: unknown, requestId = 'req-1') {
   };
 }
 
-const delta = (text: string, template?: string, requestId = 'req-1') =>
+const delta = (
+  text: string,
+  template?: string,
+  requestId = 'req-1',
+): SocketEvent =>
   envelope('harness:delta', { channel: 'content', text, template }, requestId);
 
-const completed = (data: Record<string, unknown>, requestId = 'req-1') =>
+const completed = (
+  data: Record<string, unknown>,
+  requestId = 'req-1',
+): SocketEvent =>
   envelope('harness:completed', { usage: {}, ...data }, requestId);
 
-describe('useMessagesStore', () => {
+describe('useHarnessEvents', () => {
   beforeEach(async () => {
     setActivePinia(createPinia());
     localStorage.clear();
-    // The conversation store hydrates persisted conversations asynchronously
-    // on creation — settle before seeding a conversation, or the load result
-    // would wipe it mid-test.
+    chatResponseActivity.notifyChatResponse.mockClear();
+    useHarnessResponseStreams().resetHarnessResponseStream('req-1');
+    useHarnessResponseStreams().resetHarnessResponseStream('unknown');
     useConversationStore();
     await new Promise((resolve) => setTimeout(resolve, 0));
     useConversationCatalog().createNewConversation('temporary', 'harness', '');
   });
 
-  it('initializes with empty messages', () => {
-    const store = useMessagesStore();
-    expect(store.messages).toEqual([]);
-    expect(store.completedCount).toBe(0);
-  });
-
-  it('addPendingMessage creates a pending message', () => {
-    const store = useMessagesStore();
-    store.addPendingMessage('harness', 'room-1', 'req-1', true);
-    expect(store.messages).toHaveLength(1);
-    expect(store.messages[0].data.pending).toBe(true);
-    expect(store.messages[0].data.requestId).toBe('req-1');
-    expect(store.messages[0].data.event).toBe('harness');
-  });
-
-  it('completed events land the assistant content and mark tracking done', () => {
-    const store = useMessagesStore();
-    store.addPendingMessage('harness', 'room-1', 'req-1');
-    store.addMessage(
+  it('lands completed assistant content in the conversation', () => {
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       completed({ template: 'text', result: 'result' }),
     );
 
-    expect(store.messages).toHaveLength(1);
-    expect(store.messages[0].data.done).toBe(true);
-    expect(store.messages[0].data.pending).toBeUndefined();
-
-    const conversationStore = useConversationStore();
-    const [exchange] = conversationStore.conversations[0].exchanges;
+    const [exchange] = useConversationStore().conversations[0].exchanges;
     expect(exchange.role).toBe('assistant');
     expect(exchange.content).toBe('result');
     expect(exchange.status).toBe('done');
   });
 
-  it('ignores canceled envelopes without an assistant exchange', () => {
-    const store = useMessagesStore();
-    store.addMessage(
+  it('ignores cancelled envelopes without an assistant exchange', () => {
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       envelope('harness:cancelled', { success: true }),
     );
+
     expect(useConversationStore().conversations[0].exchanges).toHaveLength(0);
-    expect(store.messages).toHaveLength(0);
+    expect(chatResponseActivity.notifyChatResponse).not.toHaveBeenCalled();
   });
 
-  it('accepts untracked requestIds on completed events', () => {
-    const store = useMessagesStore();
-    store.addMessage(
+  it('accepts untracked request ids on completed events', () => {
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       completed({ template: 'text', result: 'x' }, 'unknown'),
     );
 
-    expect(store.messages).toHaveLength(1);
-    expect(store.messages[0].data.requestId).toBe('unknown');
     expect(useConversationStore().conversations[0].exchanges[0].content).toBe(
       'x',
     );
   });
 
-  it('removeMessage deletes by requestId', () => {
-    const store = useMessagesStore();
-    store.addPendingMessage('harness', 'room-1', 'req-1');
-    store.removeMessage('req-1');
-    expect(store.messages).toHaveLength(0);
-  });
-
-  it('updatePendingMessage updates existing pending', () => {
-    const store = useMessagesStore();
-    store.addPendingMessage('harness', 'room-1', 'req-1');
-    store.updatePendingMessage('req-1', {
-      event: 'harness',
-      done: true,
-      conversationId: 's1',
-    });
-    expect(store.messages[0].data.conversationId).toBe('s1');
-    expect(store.messages[0].data.done).toBe(true);
-    expect(store.messages[0].data.pending).toBe(false);
-  });
-
   it('streams harness content deltas into the exchange', () => {
-    const store = useMessagesStore();
-    store.addMessage('harness', delta('{"title":"Image"', 'describe'));
+    useHarnessEvents().handleHarnessEvent(
+      'harness',
+      delta('{"title":"Image"', 'describe'),
+    );
 
     const [exchange] = useConversationStore().conversations[0].exchanges;
     expect(exchange.role).toBe('assistant');
@@ -139,9 +113,12 @@ describe('useMessagesStore', () => {
   });
 
   it('finalizes harness streaming on the completed envelope', () => {
-    const store = useMessagesStore();
-    store.addMessage('harness', delta('{"title":"Image"', 'article'));
-    store.addMessage(
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent(
+      'harness',
+      delta('{"title":"Image"', 'article'),
+    );
+    harnessEvents.handleHarnessEvent(
       'harness',
       completed({
         template: 'article',
@@ -169,16 +146,54 @@ describe('useMessagesStore', () => {
     expect(exchange.responseData?.sectionContent).toBe('A scene');
   });
 
+  it('preserves streamed text when a completed envelope is repeated after cleanup', () => {
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent('harness', delta('Hello world', 'text'));
+    harnessEvents.handleHarnessEvent(
+      'harness',
+      completed({ template: 'text' }),
+    );
+    harnessEvents.handleHarnessEvent(
+      'harness',
+      completed({ template: 'text' }),
+    );
+
+    const [exchange] = useConversationStore().conversations[0].exchanges;
+    expect(exchange.text).toBe('Hello world');
+    expect(exchange.content).toBe('Hello world');
+    expect(exchange.status).toBe('done');
+  });
+
+  it.each([
+    { type: 'harness:completed', data: { template: 'text' } },
+    { type: 'harness:failed', data: { reason: 'failed' } },
+    { type: 'harness:cancelled', data: { success: true } },
+  ])('releases response assembly state on $type', ({ type, data }) => {
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent('harness', delta('Old', 'text'));
+    harnessEvents.handleHarnessEvent('harness', envelope(type, data));
+
+    const next = useHarnessResponseStreams().processHarnessStreamEvent(
+      'req-1',
+      {
+        requestId: 'req-1',
+        template: 'text',
+        delta: 'Next',
+        done: false,
+      },
+    );
+    expect(next.text).toBe('Next');
+  });
+
   it('applies the authoritative data payload after a stream-validation retry', () => {
-    const store = useMessagesStore();
-    // The model ignored the article JSON schema and streamed markdown prose,
-    // so the harness discarded the stream and retried non-streaming. The
-    // completed envelope carries the validated article in `data`.
-    store.addMessage(
+    const harnessEvents = useHarnessEvents();
+    // The completed envelope carries the validated article after the harness
+    // discarded invalid streamed prose and regenerated the response.
+    harnessEvents.handleHarnessEvent(
       'harness',
       delta('Ja, ich kenne *Neverness to Everness* (NTE).', 'article'),
     );
-    store.addMessage(
+    harnessEvents.handleHarnessEvent(
       'harness',
       completed({
         template: 'article',
@@ -199,11 +214,12 @@ describe('useMessagesStore', () => {
   });
 
   it('handles text template harness events', () => {
-    const store = useMessagesStore();
-    // Streamed text: content deltas arrive first; the completed envelope
-    // carries no `result` (the server only sets it for non-streamed turns).
-    store.addMessage('harness', delta('Hello world', 'text'));
-    store.addMessage('harness', completed({ template: 'text' }));
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent('harness', delta('Hello world', 'text'));
+    harnessEvents.handleHarnessEvent(
+      'harness',
+      completed({ template: 'text' }),
+    );
 
     const [exchange] = useConversationStore().conversations[0].exchanges;
     expect(exchange.text).toBe('Hello world');
@@ -212,10 +228,7 @@ describe('useMessagesStore', () => {
   });
 
   it('renders a non-streamed text result carried on the completed envelope', () => {
-    const store = useMessagesStore();
-    // Non-streamed: no content deltas; the completed envelope's `result` is
-    // the only channel the validated text reaches the client on.
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       completed({ template: 'text', result: 'Full text' }),
     );
@@ -234,8 +247,7 @@ describe('useMessagesStore', () => {
     const conversationStore = useConversationStore();
     conversationStore.conversations[0].model = 'llama3';
 
-    const store = useMessagesStore();
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       completed({
         template: 'text',
@@ -247,18 +259,20 @@ describe('useMessagesStore', () => {
     expect(conversationStore.conversations[0].numCtx).toBe('4096');
   });
 
-  it('clears pending on done without content', () => {
-    const store = useMessagesStore();
-    store.addPendingMessage('harness', 'room-1', 'req-1');
-    store.addMessage('harness', completed({ template: 'text', result: '' }));
+  it('completes an empty text response without retaining pending state', () => {
+    useHarnessEvents().handleHarnessEvent(
+      'harness',
+      completed({ template: 'text', result: '' }),
+    );
 
-    expect(store.messages[0].data.pending).toBeUndefined();
-    expect(store.messages[0].data.done).toBe(true);
+    const [exchange] = useConversationStore().conversations[0].exchanges;
+    expect(exchange.content).toBe('');
+    expect(exchange.status).toBe('done');
+    expect(exchange.activity).toBeUndefined();
   });
 
   it('renders error messages for harness failures', () => {
-    const store = useMessagesStore();
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       envelope('harness:failed', { reason: 'Something went wrong' }),
     );
@@ -269,19 +283,9 @@ describe('useMessagesStore', () => {
     expect(exchange.content).toContain('Error: Something went wrong');
   });
 
-  it('clearMessages removes everything', () => {
-    const store = useMessagesStore();
-    store.addPendingMessage('harness', 'room-1', 'req-1');
-    store.clearMessages();
-    expect(store.messages).toHaveLength(0);
-    expect(store.completedCount).toBe(0);
-  });
-
   it('records activity and language on the assistant exchange', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
-    const conversation = conversationStore.conversations[0];
-    conversationStore.addExchange(conversation.id, {
+    conversationStore.addExchange(conversationStore.conversations[0].id, {
       role: 'assistant',
       content: '',
       status: 'pending',
@@ -289,18 +293,19 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       envelope('harness:activity', { key: 'searching', language: 'de' }),
     );
 
-    const exchange = conversation.exchanges.find((e) => e.role === 'assistant');
+    const exchange = conversationStore.conversations[0].exchanges.find(
+      (item) => item.role === 'assistant',
+    );
     expect(exchange?.activity).toEqual({ key: 'searching' });
     expect(exchange?.activityLanguage).toBe('de');
   });
 
   it('ignores activity without a key', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     conversationStore.addExchange(conversationStore.conversations[0].id, {
       role: 'assistant',
@@ -310,16 +315,18 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage('harness', envelope('harness:activity', {}));
+    useHarnessEvents().handleHarnessEvent(
+      'harness',
+      envelope('harness:activity', {}),
+    );
 
     const exchange = conversationStore.conversations[0].exchanges.find(
-      (e) => e.role === 'assistant',
+      (item) => item.role === 'assistant',
     );
     expect(exchange?.activity).toBeUndefined();
   });
 
   it('accumulates parallel tool calls keyed by name and query', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     conversationStore.addExchange(conversationStore.conversations[0].id, {
       role: 'assistant',
@@ -329,7 +336,8 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage(
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent(
       'harness',
       envelope('harness:tool-call', {
         name: 'web',
@@ -337,7 +345,7 @@ describe('useMessagesStore', () => {
         status: 'start',
       }),
     );
-    store.addMessage(
+    harnessEvents.handleHarnessEvent(
       'harness',
       envelope('harness:tool-call', {
         name: 'web',
@@ -347,14 +355,16 @@ describe('useMessagesStore', () => {
     );
 
     const exchange = conversationStore.conversations[0].exchanges.find(
-      (e) => e.role === 'assistant',
+      (item) => item.role === 'assistant',
     );
     expect(exchange?.toolCalls).toHaveLength(2);
-    expect(exchange?.toolCalls?.map((t) => t.query)).toEqual(['cats', 'dogs']);
+    expect(exchange?.toolCalls?.map((call) => call.query)).toEqual([
+      'cats',
+      'dogs',
+    ]);
   });
 
   it('clears a finished tool call from the active list', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     conversationStore.addExchange(conversationStore.conversations[0].id, {
       role: 'assistant',
@@ -364,7 +374,8 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage(
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent(
       'harness',
       envelope('harness:tool-call', {
         name: 'web',
@@ -372,7 +383,7 @@ describe('useMessagesStore', () => {
         status: 'start',
       }),
     );
-    store.addMessage(
+    harnessEvents.handleHarnessEvent(
       'harness',
       envelope('harness:tool-call', {
         name: 'web',
@@ -382,13 +393,12 @@ describe('useMessagesStore', () => {
     );
 
     const exchange = conversationStore.conversations[0].exchanges.find(
-      (e) => e.role === 'assistant',
+      (item) => item.role === 'assistant',
     );
     expect(exchange?.toolCalls).toBeUndefined();
   });
 
   it('ignores tool calls without a name', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     conversationStore.addExchange(conversationStore.conversations[0].id, {
       role: 'assistant',
@@ -398,19 +408,18 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       envelope('harness:tool-call', { status: 'start' }),
     );
 
     const exchange = conversationStore.conversations[0].exchanges.find(
-      (e) => e.role === 'assistant',
+      (item) => item.role === 'assistant',
     );
     expect(exchange?.toolCalls).toBeUndefined();
   });
 
   it('accumulates reasoning deltas on the exchange', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     conversationStore.addExchange(conversationStore.conversations[0].id, {
       role: 'assistant',
@@ -420,24 +429,24 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage(
+    const harnessEvents = useHarnessEvents();
+    harnessEvents.handleHarnessEvent(
       'harness',
       envelope('harness:delta', { channel: 'reasoning', text: 'thinking' }),
     );
-    store.addMessage(
+    harnessEvents.handleHarnessEvent(
       'harness',
       envelope('harness:delta', { channel: 'reasoning', text: ' more' }),
     );
 
     const exchange = conversationStore.conversations[0].exchanges.find(
-      (e) => e.role === 'assistant',
+      (item) => item.role === 'assistant',
     );
     expect(exchange?.reasoning).toBe('thinking more');
     expect(exchange?.status).toBe('pending');
   });
 
-  it('marks a cancelled request done and drops its transient state', () => {
-    const store = useMessagesStore();
+  it('marks cancellation done, clears transient state, and notifies chat activity', () => {
     const conversationStore = useConversationStore();
     const conversation = conversationStore.conversations[0];
     conversationStore.addExchange(conversation.id, {
@@ -446,22 +455,34 @@ describe('useMessagesStore', () => {
       status: 'streaming',
       requestId: 'req-1',
       event: 'harness',
+      activity: { key: 'activity.assembling' },
+      activityLanguage: 'de',
+      reasoning: 'thinking',
+      toolCalls: [{ name: 'web', status: 'start' }],
     });
 
-    store.addMessage('harness', envelope('harness:cancelled', {}));
+    useHarnessEvents().handleHarnessEvent(
+      'harness',
+      envelope('harness:cancelled', {}),
+    );
 
-    const exchange = conversation.exchanges.find((e) => e.role === 'assistant');
+    const exchange = conversation.exchanges.find(
+      (item) => item.role === 'assistant',
+    );
     expect(exchange?.status).toBe('done');
+    expect(exchange?.content).toBe('partial');
     expect(exchange?.activity).toBeUndefined();
+    expect(exchange?.activityLanguage).toBeUndefined();
     expect(exchange?.reasoning).toBeUndefined();
+    expect(exchange?.toolCalls).toBeUndefined();
+    expect(chatResponseActivity.notifyChatResponse).toHaveBeenCalledOnce();
   });
 
   it('seeds the user exchange from the completed prompt when absent', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.conversations[0];
 
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       completed({
         prompt: 'What is Rust?',
@@ -470,13 +491,14 @@ describe('useMessagesStore', () => {
       }),
     );
 
-    const userExchange = conversation.exchanges.find((e) => e.role === 'user');
+    const userExchange = conversation.exchanges.find(
+      (exchange) => exchange.role === 'user',
+    );
     expect(userExchange?.content).toBe('What is Rust?');
     expect(userExchange?.requestId).toBe('req-1');
   });
 
   it('does not duplicate an existing user exchange', () => {
-    const store = useMessagesStore();
     const conversationStore = useConversationStore();
     const conversation = conversationStore.conversations[0];
     conversationStore.addExchange(conversation.id, {
@@ -487,64 +509,55 @@ describe('useMessagesStore', () => {
       event: 'harness',
     });
 
-    store.addMessage('harness', completed({ prompt: 'other', result: 'x' }));
+    useHarnessEvents().handleHarnessEvent(
+      'harness',
+      completed({ prompt: 'other', result: 'x' }),
+    );
 
     expect(
-      conversation.exchanges.filter((e) => e.role === 'user'),
+      conversation.exchanges.filter((exchange) => exchange.role === 'user'),
     ).toHaveLength(1);
   });
 
-  it('tracks unread completed messages until they are marked read', () => {
-    const store = useMessagesStore();
-    const conversationStore = useConversationStore();
-    conversationStore.addExchange(conversationStore.conversations[0].id, {
-      role: 'assistant',
-      content: '',
-      status: 'pending',
-      requestId: 'req-1',
-      event: 'harness',
-    });
+  it('adds original response metadata to the conversation image gallery', () => {
+    const conversation = useConversationStore().conversations[0];
 
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
-      completed({ result: 'done', template: 'text' }),
+      completed({
+        template: 'text',
+        result: 'done',
+        meta: [
+          {
+            name: 'photo.png',
+            hash: 'hash-1',
+            size: 12,
+            source: 'local',
+            variant: 'original',
+          },
+          {
+            name: 'thumb.png',
+            hash: 'hash-2',
+            source: 'local',
+            variant: 'resized',
+          },
+        ],
+      }),
     );
-    expect(store.completedCount).toBe(1);
-    expect(store.isRead('req-1')).toBe(false);
 
-    store.markAsRead('req-1');
-
-    expect(store.isRead('req-1')).toBe(true);
-    expect(store.completedCount).toBe(0);
-  });
-
-  it('forgets read state when a message is removed', () => {
-    const store = useMessagesStore();
-    const conversationStore = useConversationStore();
-    conversationStore.addExchange(conversationStore.conversations[0].id, {
-      role: 'assistant',
-      content: '',
-      status: 'pending',
-      requestId: 'req-1',
-      event: 'harness',
+    expect(conversation.uploadedImages).toHaveLength(1);
+    expect(conversation.uploadedImages[0]).toMatchObject({
+      name: 'photo.png',
+      hash: 'hash-1',
+      conversationId: conversation.conversationId,
     });
-    store.addMessage(
-      'harness',
-      completed({ result: 'done', template: 'text' }),
-    );
-    store.markAsRead('req-1');
-
-    store.removeMessage('req-1');
-
-    expect(store.isRead('req-1')).toBe(false);
   });
 
   it('applies the completed response before the terminal persistence command', () => {
     const conversationStore = useConversationStore();
     const patch = vi.spyOn(conversationStore, 'patchAssistantExchange');
-    const store = useMessagesStore();
 
-    store.addMessage(
+    useHarnessEvents().handleHarnessEvent(
       'harness',
       completed({ template: 'text', result: 'final result' }),
     );
@@ -559,11 +572,17 @@ describe('useMessagesStore', () => {
   });
 
   it('ignores envelopes without a request id or a known type', () => {
-    const store = useMessagesStore();
+    const harnessEvents = useHarnessEvents();
     const conversationStore = useConversationStore();
 
-    store.addMessage('harness', { type: 'harness:delta', data: {} });
-    store.addMessage('harness', envelope('harness:unknown', {}));
+    harnessEvents.handleHarnessEvent('harness', {
+      type: 'harness:delta',
+      data: {},
+    });
+    harnessEvents.handleHarnessEvent(
+      'harness',
+      envelope('harness:unknown', {}),
+    );
 
     expect(conversationStore.conversations[0].exchanges).toHaveLength(0);
   });

@@ -1,4 +1,5 @@
 import type { AssistantActivityDescriptor } from './activity.model';
+import type { AssistantMediaReference } from './assistant-media-reference.model';
 import type { AssistantToolResult } from './serper-api.model';
 
 export interface AssistantToolCall {
@@ -6,6 +7,13 @@ export interface AssistantToolCall {
   category?: string;
   query?: string;
   status: string;
+}
+
+interface AssistantStreamChartData {
+  /** Tool that produced the chart series. */
+  toolName: string;
+  /** Raw chart series buffered until response streaming begins. */
+  data: unknown;
 }
 
 export interface AssistantStreamEvent {
@@ -24,10 +32,10 @@ export interface AssistantStreamEvent {
    * tool runs. The client buffers it and reveals it once the respond step
    * starts streaming — the model never sees the raw series.
    */
-  chartData?: { toolName: string; data: unknown };
+  chartData?: AssistantStreamChartData;
   /** Server-side model-visible (deduped) media — the only media to render/fall back to. */
-  availableImages?: Array<{ url: string; title?: string }>;
-  availableVideos?: Array<{ url: string; title?: string }>;
+  availableImages?: AssistantMediaReference[];
+  availableVideos?: AssistantMediaReference[];
   data?: Record<string, unknown>;
   done?: boolean;
 }

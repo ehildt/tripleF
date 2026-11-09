@@ -5,13 +5,18 @@ import { useConversationConfiguration } from '@/components/chat/composables/use-
 import { useConversationDocuments } from '@/components/chat/composables/use-conversation-documents';
 import { useConversationExchangeCompletion } from '@/components/chat/composables/use-conversation-exchange-completion';
 import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
-import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
 import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
+import { useDebugRequestTracker } from '@/components/debug/composables/use-debug-request-tracker';
+import { useSocket } from '@/composables/use-socket/use-socket';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
+
+interface AssistantRequest {
+  postHarnessRequest: (request: PostHarnessRequestOptions) => Promise<void>;
+}
 
 /**
  * Sends a prepared prompt to the harness, registers the in-flight request for
@@ -19,8 +24,9 @@ import type { PostHarnessRequestOptions } from './use-assistant-request.types';
  * attachments, failure marks the exchange as errored. Errors are reported
  * through toasts; the caller owns the loading state.
  */
-export function useAssistantRequest() {
-  const socketProvider = useSocketProvider();
+export function useAssistantRequest(): AssistantRequest {
+  const socket = useSocket();
+  const requestTracker = useDebugRequestTracker();
 
   const conversationSession = useConversationSession();
   const configuration = useConversationConfiguration();
@@ -48,7 +54,7 @@ export function useAssistantRequest() {
       conversationId,
     } = request;
 
-    const socket = socketProvider.getSocket();
+    const connection = socket.ensureSocketConnection();
     const headers = buildHeaders(model);
 
     const fetchPromise = fetch(
@@ -60,7 +66,7 @@ export function useAssistantRequest() {
       },
     );
 
-    socketProvider.trackRequest(
+    requestTracker.trackRequest(
       getApiUrl(
         `/api/v1/harness${params.toString() ? '?' + params.toString() : ''}`,
       ),
@@ -92,7 +98,7 @@ export function useAssistantRequest() {
         return;
       }
 
-      handleResponse(res, socket, toast);
+      handleResponse(res, connection, toast);
 
       // Promote pending previews to uploaded metadata and clear the pending
       // attachment state for this conversation.
@@ -107,7 +113,7 @@ export function useAssistantRequest() {
       }
     } catch (e: unknown) {
       // ! we should find a way to streamline our errors so they have a consistent shape.
-      // ! lets check if there a lib for vue3/alternative that already handles this for us.
+      // ! lets check if there a lib for vue3 or alternative that already handles this for us.
       const msg = e instanceof Error ? e.message : String(e);
       toast.debug(msg);
       toast.error(i18n.global.t('toast.serverUnreachable'));

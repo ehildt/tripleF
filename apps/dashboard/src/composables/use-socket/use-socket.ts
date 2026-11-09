@@ -1,5 +1,5 @@
 import { io, type Socket } from 'socket.io-client';
-import { type Ref, ref, shallowRef } from 'vue';
+import { ref, shallowRef } from 'vue';
 
 import { buildConnectedPairs } from '@/composables/helpers/build-connected-pairs.helper';
 import { createEventListener } from '@/composables/helpers/create-event-listener.helper';
@@ -8,19 +8,21 @@ import type { ConnectionState } from '@/types/connection-state.model';
 import type { SocketDebugEntry } from '@/types/socket-debug-entry.model';
 import { getPersistentSocketSessionId } from '@/utils/get-persistent-socket-session-id/get-persistent-socket-session-id.helper';
 
+import type { SocketFacade } from './use-socket.types';
+
 const SOCKET_SESSION_ID = getPersistentSocketSessionId();
 
 /**
  * The socket.io client facade: one connection, its subscription sets, and
- * the debug/message callback wiring. Module-scope singleton (rule 20): the
+ * the debug/harness callback wiring. Module-scope singleton (rule 20): the
  * app speaks over exactly one socket no matter which caller asks, so the
  * socket handle and subscription state live at module scope; specs drive
  * fresh `io` instances via the mocked socket.io module per test file.
  *
  * This used to be a Pinia store; it controls the socket client lifecycle
  * (connect, listen, join/leave) — behavior, not data — so per convention it
- * is a composable. Consumers bind it by import; the `useSocketProvider`
- * facade composes it with the debug and messages stores.
+ * is a composable. Consumers bind it directly; App separately registers the
+ * harness event handler and request-debug consumers import their owner.
  */
 const socket = shallowRef<Socket | null>(null);
 const connectionState = ref<ConnectionState>('disconnected');
@@ -35,7 +37,13 @@ const connectedPairs = ref<string[]>([]);
 const eventListeners = new Map<string, (...args: unknown[]) => void>();
 
 const pendingEvents: Set<string> = new Set();
-const pendingRooms: Array<{ roomId: string; eventName: string }> = [];
+
+interface PendingRoomSubscription {
+  roomId: string;
+  eventName: string;
+}
+
+const pendingRooms: PendingRoomSubscription[] = [];
 let addSocketDebugEntryCallback: ((entry: SocketDebugEntry) => void) | null =
   null;
 let addMessageCallback: ((event: string, data: unknown) => void) | null = null;
@@ -288,29 +296,6 @@ function leaveRoom(roomId: string, eventName: string) {
       }),
     );
   }
-}
-
-export interface SocketFacade {
-  socket: Ref<Socket | null>;
-  connectionState: Ref<ConnectionState>;
-  socketError: Ref<string | null>;
-  lastConnectionEvent: Ref<string>;
-  socketId: Ref<string | null>;
-  connectedEvents: Ref<Set<string>>;
-  connectedRooms: Ref<Map<string, Set<string>>>;
-  connectedPairs: Ref<string[]>;
-  setCallbacks: (
-    onDebug: ((entry: SocketDebugEntry) => void) | null,
-    onMessage: ((event: string, data: unknown) => void) | null,
-  ) => void;
-  initSocket: () => Socket | null;
-  ensureSocketConnection: () => Socket | null;
-  joinRoom: (roomId: string, eventName: string) => void;
-  leaveRoom: (roomId: string, eventName: string) => void;
-  listenToEvent: (eventName: string) => void;
-  stopListening: () => void;
-  closeEvent: (eventName: string) => void;
-  closeRoom: (eventName: string, roomId: string) => void;
 }
 
 /** The single shared facade instance. Every caller — and every spec spying

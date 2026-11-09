@@ -12,6 +12,7 @@ import { useDlqLiveEvents } from './components/app/composables/use-dlq-live-even
 import { usePlaylistMarquee } from './components/app/composables/use-playlist-marquee';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
 import { useConversationCatalog } from './components/chat/composables/use-conversation-catalog';
+import { useHarnessEvents } from './components/chat/composables/use-harness-events';
 import FloatingPlayer from './components/widgets/floating-player/FloatingPlayer.vue';
 import FloatingPlaylist from './components/widgets/floating-playlist/FloatingPlaylist.vue';
 import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPreview.vue';
@@ -21,16 +22,15 @@ import { usePlaybackSession } from './composables/use-playback-session/use-playb
 import { useTheme } from './composables/use-theme/use-theme';
 import { useNavigationStore } from './stores/app/navigation/navigation.store';
 import { useDebugStore } from './stores/debug/debug.store';
-import { useMessagesStore } from './stores/messages/messages.store';
 import { useModelsStore } from './stores/models/models.store';
 import { usePlaylistStore } from './stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from './stores/popout-settings/popout-settings.store';
 import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
 
-const apiMessagesStore = useMessagesStore();
 const debugStore = useDebugStore();
 const modelsStore = useModelsStore();
 const navigationStore = useNavigationStore();
+const { handleHarnessEvent } = useHarnessEvents();
 const conversationCatalog = useConversationCatalog();
 const { activeTab } = useActiveTab();
 const { showDlqBadge } = useAppNavigation();
@@ -60,7 +60,7 @@ void playlistStore.loadPlaylists();
 // fetches it on construction and pushes every change immediately from its
 // own watch — no boot-time orchestration here.
 
-socket.setCallbacks(debugStore.addDebugResult, apiMessagesStore.addMessage);
+socket.setCallbacks(debugStore.addDebugResult, handleHarnessEvent);
 
 // The DLQ badge is an event-driven attention dot: the server broadcasts
 // dlq:entry-upserted / dlq:entries-removed / dlq:bulk-changed on every DLQ

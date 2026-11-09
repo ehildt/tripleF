@@ -1,12 +1,12 @@
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useConversationExchangeCompletion } from '@/components/chat/composables/use-conversation-exchange-completion';
 import { useConversationTurns } from '@/components/chat/composables/use-conversation-turns';
+import { useHarnessResponseStreams } from '@/components/chat/composables/use-harness-response-streams';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { i18n } from '@/i18n/i18n';
 import type { Conversation } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useDebugStore } from '@/stores/debug/debug.store';
-import { useMessagesStore } from '@/stores/messages/messages.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
 import { useToast } from '../../../composables/use-toast/use-toast';
@@ -16,15 +16,21 @@ import type { DlqEntryFilters } from '../helpers/extract-entry-filters.helper.ty
 import { extractPromptMessages } from '../helpers/extract-prompt-messages.helper';
 import type { DlqRetrySession } from './use-dlq-retry-session.types';
 
+interface DlqRetrySessionController {
+  prepareRetrySession: (entry: DlqEntry) => Promise<DlqRetrySession>;
+  completeRetrySession: (session: DlqRetrySession) => void;
+  failRetrySession: (session: DlqRetrySession) => void;
+}
+
 /** Prepare an existing or recovered conversation for a harness DLQ replay. */
-export function useDlqRetrySession() {
+export function useDlqRetrySession(): DlqRetrySessionController {
   const socketStore = useSocket();
   const conversationStore = useConversationStore();
   const catalog = useConversationCatalog();
   const turns = useConversationTurns();
   const completion = useConversationExchangeCompletion();
   const debugStore = useDebugStore();
-  const messagesStore = useMessagesStore();
+  const responseStreams = useHarnessResponseStreams();
   const toast = useToast();
 
   function ensureSocketSubscription(roomId: string, eventName: string): void {
@@ -49,15 +55,16 @@ export function useDlqRetrySession() {
     const existing = conversationStore.conversations.find(
       (conversation) => conversation.conversationId === filters.conversationId,
     );
-    if (!existing) {
+
+    if (!existing)
       return catalog.restoreConversation(buildRecoveredConversation(entry));
-    }
+
     const loaded = await catalog.loadConversationForWrite(existing.id);
-    if (!loaded) {
+    if (!loaded)
       throw new Error(
         `Conversation ${filters.conversationId} could not be loaded for retry`,
       );
-    }
+
     return loaded;
   }
 
@@ -74,9 +81,10 @@ export function useDlqRetrySession() {
       const prompt = extractPromptMessages(entry)
         .filter((message) => message.role === 'user')
         .at(-1);
-      if (!prompt) {
+
+      if (!prompt)
         throw new Error(`DLQ entry ${entry.id} has no user prompt to retry`);
-      }
+
       failedPrompt = prompt.content;
     }
 
@@ -104,12 +112,7 @@ export function useDlqRetrySession() {
     };
     // Pending state must exist before requeueing: a fast worker can emit the
     // response before the reinstate HTTP response reaches the dashboard.
-    messagesStore.resetRequestForRetry(
-      session.event,
-      session.roomId,
-      session.requestId,
-      session.stream,
-    );
+    responseStreams.resetHarnessResponseStream(session.requestId);
     return session;
   }
 
@@ -127,7 +130,7 @@ export function useDlqRetrySession() {
   }
 
   function failRetrySession(session: DlqRetrySession): void {
-    messagesStore.removeMessage(session.requestId);
+    responseStreams.resetHarnessResponseStream(session.requestId);
     void completion.markExchangeError(
       session.conversationStoreId,
       session.requestId,

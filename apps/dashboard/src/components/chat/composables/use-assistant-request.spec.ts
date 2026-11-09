@@ -58,7 +58,7 @@ vi.mock('@/i18n/i18n', () => ({
  * connection (`ensureSocketConnection`) or append debug records
  * (`trackRequest`) in jsdom, and return spies the tests can assert against.
  */
-function stubSocketProvider() {
+function stubSocketDependencies() {
   const socket = { connected: true };
   const socketStore = useSocket();
   vi.spyOn(socketStore, 'ensureSocketConnection').mockReturnValue(
@@ -126,7 +126,7 @@ describe('useAssistantRequest', () => {
 
   it('posts, tracks the request, and promotes attachments on success', async () => {
     const fetchMock = stubHarnessFetch(() => ({ ok: true, status: 200 }));
-    const { trackRequest } = stubSocketProvider();
+    const { trackRequest } = stubSocketDependencies();
     const conversationStore = useConversationStore();
     const conversation = useConversationCatalog().createNewConversation();
     const setSavedFileInfos = vi.spyOn(conversationStore, 'setSavedFileInfos');
@@ -149,10 +149,7 @@ describe('useAssistantRequest', () => {
       String(url).includes('/api/v1/harness'),
     );
     expect(harnessCall).toBeDefined();
-    const [url, init] = harnessCall as unknown as [
-      string,
-      { method: string; body: FormData },
-    ];
+    const [url, init] = harnessCall as unknown as [string, RequestInit];
     expect(url).toContain('/api/v1/harness?requestId=req-1');
     expect(init.method).toBe('POST');
     expect(init.body).toBe(request.formData);
@@ -192,7 +189,7 @@ describe('useAssistantRequest', () => {
       status: 500,
       text: async () => 'boom',
     }));
-    stubSocketProvider();
+    stubSocketDependencies();
     const conversation = useConversationCatalog().createNewConversation();
 
     const { postHarnessRequest } = useAssistantRequest();
@@ -212,7 +209,7 @@ describe('useAssistantRequest', () => {
     stubHarnessFetch(() => {
       throw new Error('network down');
     });
-    stubSocketProvider();
+    stubSocketDependencies();
     const conversation = useConversationCatalog().createNewConversation();
 
     const { postHarnessRequest } = useAssistantRequest();
@@ -230,7 +227,7 @@ describe('useAssistantRequest', () => {
 
   it('skips attachment promotion when there is no session id', async () => {
     stubHarnessFetch(() => ({ ok: true, status: 200 }));
-    stubSocketProvider();
+    stubSocketDependencies();
     const clearPending = vi.spyOn(
       useAttachedFilesStore(),
       'clearPendingFilesForConversation',
