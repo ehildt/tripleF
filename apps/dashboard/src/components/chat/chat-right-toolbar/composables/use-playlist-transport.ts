@@ -1,48 +1,31 @@
+import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
 import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
-import { usePlaylistPanel } from '../playlist/composables/use-playlist-panel';
+import type { PlaylistTransportControls } from './use-playlist-transport.types';
 
-/**
- * Derived transport-bar state for a playlist surface — the chat right
- * toolbar tab and the app-level floating playlist: whether anything is
- * playing, whether the provider supports controls, the play/pause title, the
- * popout eye, and the per-item launch/remove actions. Reads the playback
- * session and the active playlist queue by import; it never touches a player
- * element. The raw play/stop/autoplay controls and now-playing refs are bound
- * by PlaylistPanel.vue directly from `usePlaybackSession`.
- */
-export function usePlaylistTransport() {
+/** Derive playlist transport state and compose launch/popout interactions. */
+export function usePlaylistTransport(): PlaylistTransportControls {
   const playback = usePlaybackSession();
-  const { playlistVideos } = usePlaylistPanel();
   const playbackAnchorStore = usePlaybackAnchorRegistry();
   const popoutSettingsStore = usePopoutSettingsStore();
   const playlistStore = usePlaylistStore();
-
-  const activePlaybackVideoUrl = computed(
-    () => playback.activePlaybackVideoUrl.value,
-  );
-  const activePlaybackPlaying = computed(
-    () => playback.activePlaybackPlaying.value,
-  );
+  const { activePlaylistVideos } = storeToRefs(playlistStore);
+  const activePlaybackVideoUrl = playback.activePlaybackVideoUrl;
+  const activePlaybackPlaying = playback.activePlaybackPlaying;
 
   const hasActivePlayback = computed(() =>
     Boolean(activePlaybackVideoUrl.value),
   );
 
-  /**
-   * Title of the currently playing track for the animated "now playing"
-   * text: the playlist's own metadata wins, videos playing outside the
-   * playlist fall back to the title they announced on engagement.
-   */
   const activePlaybackTitle = computed(
     () =>
-      playlistVideos.value.find(
+      activePlaylistVideos.value.find(
         (video) => video.videoUrl === activePlaybackVideoUrl.value,
       )?.title ?? playback.nowPlayingTitle.value,
   );
@@ -52,27 +35,16 @@ export function usePlaylistTransport() {
   );
   const playbackToggleTitle = computed(() => {
     if (!hasActivePlayback.value) return 'Nothing is playing';
-    if (!playback.activePlaybackControlSupported.value)
+    if (!playback.activePlaybackControlSupported.value) {
       return 'Playback controls unavailable for this provider';
+    }
     return activePlaybackPlaying.value ? 'Pause' : 'Play';
   });
 
-  function onPlayItem(item: VideoGalleryItem) {
-    playback.launchVideo(item, {
-      videos: playlistVideos.value,
-    });
+  function onPlayItem(item: VideoGalleryItem): void {
+    playback.launchVideo(item, { videos: activePlaylistVideos.value });
   }
 
-  function onRemoveItem(videoUrl: string) {
-    playlistStore.removeVideoFromActivePlaylist(videoUrl);
-  }
-
-  /**
-   * Whether the player window is currently suppressed — by the background
-   * setting while playlist videos play, or by the user dismissing the
-   * popout with its close. Drives the transport's eye icon: a closed
-   * popout flips it to the closed eye.
-   */
   const popoutHidden = computed(
     () =>
       (popoutSettingsStore.popoutHideOnPlaylist &&
@@ -80,21 +52,14 @@ export function usePlaylistTransport() {
       playbackAnchorStore.playbackDockMode.value === 'dock-dismissed',
   );
 
-  function toggleHideOnPlaylist() {
+  function toggleHideOnPlaylist(): void {
     if (popoutHidden.value) {
-      // Show the popout again: clear the background setting and revive a
-      // dismissed window — either can hide it independently, and the eye
-      // icon currently reads closed either way.
       popoutSettingsStore.setPopoutHideOnPlaylist(false);
       if (playbackAnchorStore.playbackDockMode.value === 'dock-dismissed') {
         playbackAnchorStore.engagePlayback();
       }
       return;
     }
-    // Hide a visible popout: playlist launches enter the background mode
-    // via the persistent setting; a standalone (figure-launched) window
-    // dismisses instead. With nothing launched the eye plain toggles the
-    // setting, like it always has.
     if (playback.launchedFromPlaylist.value || !playback.launchedVideo.value) {
       popoutSettingsStore.setPopoutHideOnPlaylist(true);
       return;
@@ -110,6 +75,5 @@ export function usePlaylistTransport() {
     canTogglePlayback,
     playbackToggleTitle,
     onPlayItem,
-    onRemoveItem,
   };
 }

@@ -22,26 +22,28 @@ import { ListVideo, X } from '@lucide/vue';
 import { computed, useTemplateRef } from 'vue';
 
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePlaylistSettingsStore } from '@/stores/widgets/playlist-settings/playlist-settings.store';
 
 import PlaylistPanel from '../../chat/chat-right-toolbar/playlist/PlaylistPanel.vue';
 import { useFloatingPlaylistGeometry } from './composables/use-floating-playlist-geometry';
+import { useFloatingPlaylistOpen } from './composables/use-floating-playlist-open';
 import { useFloatingPlaylistVisibility } from './composables/use-floating-playlist-visibility';
 
-const playlistStore = usePlaylistStore();
+const playlistSettingsStore = usePlaylistSettingsStore();
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
 const playlistRef = useTemplateRef<HTMLElement>('playlistRef');
-const { isOpen, togglePlaylist, closeOnAutoclose } =
-  useFloatingPlaylistVisibility(playlistRef);
+const { floatingPlaylistOpen: isOpen, toggleFloatingPlaylist } =
+  useFloatingPlaylistOpen();
+const { closeOnAutoclose } = useFloatingPlaylistVisibility(playlistRef);
 
 /**
  * Bottom anchors stand the handle below the window, so the window sweeps
  * open upward and folds back down into it instead (see the closed clip).
  */
 const anchorVertical = computed(
-  () => playlistStore.playlistAnchor.split('-')[0],
+  () => playlistSettingsStore.playlistAnchor.split('-')[0],
 );
 const isBottomAnchored = computed(() => anchorVertical.value === 'bottom');
 
@@ -50,13 +52,13 @@ const isBottomAnchored = computed(() => anchorVertical.value === 'bottom');
  * column: the anchor's horizontal component.
  */
 const anchorHorizontal = computed(
-  () => playlistStore.playlistAnchor.split('-')[1],
+  () => playlistSettingsStore.playlistAnchor.split('-')[1],
 );
 </script>
 
 <template>
   <div
-    v-if="playlistStore.playlistMode === 'floating'"
+    v-if="playlistSettingsStore.playlistMode === 'floating'"
     class="floating-playlist"
     data-floating-playlist-root
   >
@@ -78,7 +80,7 @@ const anchorHorizontal = computed(
           class="floating-playlist__handle shadow-floating"
           :aria-label="$t('common.togglePlaylist')"
           :aria-expanded="isOpen"
-          @click="togglePlaylist"
+          @click="toggleFloatingPlaylist"
         >
           <ListVideo class="floating-playlist__handle-icon" />
         </button>
@@ -97,7 +99,7 @@ const anchorHorizontal = computed(
                 :aria-label="$t('common.collapsePlaylist')"
                 :aria-expanded="isOpen"
                 @pointerdown.stop
-                @click.stop="togglePlaylist"
+                @click.stop="toggleFloatingPlaylist"
               >
                 <X class="floating-playlist__toggle-icon" />
               </button>

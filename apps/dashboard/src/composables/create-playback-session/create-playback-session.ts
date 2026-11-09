@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue';
 
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 const PLAYLIST_AUTOPLAY_STORAGE_KEY = 'vision-playlist-autoplay';

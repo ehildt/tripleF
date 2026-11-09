@@ -6,9 +6,8 @@ import MenuTabs from '@/components/shared/ui/menu-tabs/MenuTabs.vue';
 import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
 import PanelHeaderTitle from '@/components/shared/ui/panel-header-title/PanelHeaderTitle.vue';
 import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
+import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 import ChatNavigationSection from './chat-navigation-section/ChatNavigationSection.vue';
 import { useSettingsHealthTiles } from './composables/use-settings-health-tiles';
@@ -26,8 +25,7 @@ import { SETTINGS_TAB_ITEMS } from './settings-tab-items.constant';
 const { activeSettingsTab, activeTabTitle, selectSettingsTab } =
   useSettingsTab();
 const { tiles } = useSettingsHealthTiles();
-const popoutSettingsStore = usePopoutSettingsStore();
-const playlistStore = usePlaylistStore();
+const widgetPreview = useWidgetPreview();
 
 /**
  * The settings panel's top tab menu: the shared tab items translated into
@@ -44,8 +42,7 @@ const settingsMenuItems = computed<MenuTabItem[]>(() =>
 // The Settings previews are transient: switching the panel's own section
 // (Integrations → Preprocessing → … → System) dismisses them too.
 watch(activeSettingsTab, () => {
-  popoutSettingsStore.hidePopoutPreview();
-  playlistStore.hidePlaylistPreview();
+  widgetPreview.hideWidgetPreview();
 });
 </script>
 

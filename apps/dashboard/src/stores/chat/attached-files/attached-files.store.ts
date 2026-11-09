@@ -1,12 +1,9 @@
 import { defineStore } from 'pinia';
 import { shallowRef } from 'vue';
 
+import { buildPendingFilesKey } from './helpers/build-pending-files-key.helper';
 import type { AttachedFileEntry } from './attached-files.model';
 import type { PendingAttachmentScope } from './attached-files.store.types';
-
-function pendingFilesKey(scope: PendingAttachmentScope): string {
-  return JSON.stringify([scope.parentConversationId, scope.conversationId]);
-}
 
 /**
  * Shared pending attachment data, keyed by explicit conversation identity.
@@ -19,7 +16,9 @@ export const useAttachedFilesStore = defineStore('attachedFiles', () => {
   );
 
   function pendingFilesFor(scope: PendingAttachmentScope): AttachedFileEntry[] {
-    return pendingFilesByConversation.value.get(pendingFilesKey(scope)) ?? [];
+    return (
+      pendingFilesByConversation.value.get(buildPendingFilesKey(scope)) ?? []
+    );
   }
 
   function selectedPendingEntriesFor(
@@ -35,7 +34,7 @@ export const useAttachedFilesStore = defineStore('attachedFiles', () => {
     scope: PendingAttachmentScope,
     updater: (files: AttachedFileEntry[]) => AttachedFileEntry[],
   ): void {
-    const key = pendingFilesKey(scope);
+    const key = buildPendingFilesKey(scope);
     const map = new Map(pendingFilesByConversation.value);
     const next = updater(map.get(key) ?? []);
     if (next.length === 0) {
@@ -79,7 +78,7 @@ export const useAttachedFilesStore = defineStore('attachedFiles', () => {
     scope: PendingAttachmentScope,
   ): void {
     const map = new Map(pendingFilesByConversation.value);
-    map.delete(pendingFilesKey(scope));
+    map.delete(buildPendingFilesKey(scope));
     pendingFilesByConversation.value = map;
   }
 

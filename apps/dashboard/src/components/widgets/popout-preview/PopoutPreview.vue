@@ -13,7 +13,10 @@ import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopou
 import { POPUP_ANCHOR_STYLES } from '@/components/widgets/popup-anchor-styles.constant';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
+import { useWidgetPreview } from '../shared/composables/use-widget-preview';
+
 const popoutSettingsStore = usePopoutSettingsStore();
+const { popoutPreviewVisible, hideWidgetPreview } = useWidgetPreview();
 
 const anchorStyle = computed(
   () => POPUP_ANCHOR_STYLES[popoutSettingsStore.popoutAnchor],
@@ -22,7 +25,7 @@ const anchorStyle = computed(
 
 <template>
   <FloatingPopout
-    v-if="popoutSettingsStore.popoutPreviewVisible"
+    v-if="popoutPreviewVisible"
     class="popout-preview"
     :style="anchorStyle"
     :title="$t('common.examplePopout')"
@@ -31,8 +34,8 @@ const anchorStyle = computed(
     :bar-always-visible="popoutSettingsStore.popoutShowBarAlways"
     minimize-:title="$t('common.minimizePreview')"
     close-:title="$t('common.closePreview')"
-    @minimize="popoutSettingsStore.hidePopoutPreview"
-    @close="popoutSettingsStore.hidePopoutPreview"
+    @minimize="hideWidgetPreview"
+    @close="hideWidgetPreview"
   >
     <div class="popout-preview__media">
       <PictureInPicture2 class="popout-preview__media-icon" />

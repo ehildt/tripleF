@@ -18,11 +18,11 @@ import PlaylistTransportBar from '@/components/chat/chat-right-toolbar/playlist/
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import PanelEmptyState from '@/components/shared/ui/panel-empty-state/PanelEmptyState.vue';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 
 import { useFloatingPlaylistGeometry } from '../floating-playlist/composables/use-floating-playlist-geometry';
+import { useWidgetPreview } from '../shared/composables/use-widget-preview';
 
-const playlistStore = usePlaylistStore();
+const { playlistPreviewVisible, hideWidgetPreview } = useWidgetPreview();
 
 const { playlistStyle } = useFloatingPlaylistGeometry();
 
@@ -35,7 +35,7 @@ function noop() {
 
 <template>
   <div
-    v-if="playlistStore.playlistPreviewVisible"
+    v-if="playlistPreviewVisible"
     class="playlist-preview shadow-floating"
     data-playlist-preview
     :style="previewStyle"
@@ -69,7 +69,7 @@ function noop() {
           <IconButton
             size="sm"
             :title="$t('common.closePreview')"
-            @click="playlistStore.hidePlaylistPreview"
+            @click="hideWidgetPreview"
           >
             <X />
           </IconButton>

@@ -8,6 +8,10 @@ import type {
   MediaPresentations,
   MediaPriority,
 } from '../../../types/assistant-response-data.model';
+import { parseCollapsedSections } from './helpers/parse-collapsed-sections.helper';
+import { parseConversationMediaPriorities } from './helpers/parse-conversation-media-priorities.helper';
+import { parseMediaPresentations } from './helpers/parse-media-presentations.helper';
+import { parseMediaPriority } from './helpers/parse-media-priority.helper';
 import {
   COLLAPSED_SECTIONS_KEY,
   CONVERSATION_MEDIA_PRIORITY_KEY,
@@ -17,106 +21,96 @@ import {
   MEDIA_PRIORITY_KEY,
 } from './assistant-response-settings.constant';
 
-function loadMediaPriority(): MediaPriority {
-  try {
-    const saved = localStorage.getItem(MEDIA_PRIORITY_KEY);
-    return saved === 'videos' ? 'videos' : 'images';
-  } catch {
-    return 'images';
-  }
-}
-
-function saveMediaPriority(value: MediaPriority): void {
-  try {
-    localStorage.setItem(MEDIA_PRIORITY_KEY, value);
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadConversationMediaPriorities(): Record<string, MediaPriority> {
-  try {
-    return JSON.parse(
-      localStorage.getItem(CONVERSATION_MEDIA_PRIORITY_KEY) || '{}',
-    );
-  } catch {
-    return {};
-  }
-}
-
-function saveConversationMediaPriorities(
-  value: Record<string, MediaPriority>,
-): void {
-  try {
-    localStorage.setItem(
-      CONVERSATION_MEDIA_PRIORITY_KEY,
-      JSON.stringify(value),
-    );
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadCollapsedSections(): CollapsedSections {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(COLLAPSED_SECTIONS_KEY) || '{}',
-    );
-    return { ...DEFAULT_COLLAPSED_SECTIONS, ...saved };
-  } catch {
-    return { ...DEFAULT_COLLAPSED_SECTIONS };
-  }
-}
-
-function saveCollapsedSections(value: CollapsedSections): void {
-  try {
-    localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(value));
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadMediaPresentations(): MediaPresentations {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(MEDIA_PRESENTATIONS_KEY) || '{}',
-    );
-    return { ...DEFAULT_MEDIA_PRESENTATIONS, ...saved };
-  } catch {
-    return { ...DEFAULT_MEDIA_PRESENTATIONS };
-  }
-}
-
-function saveMediaPresentations(value: MediaPresentations): void {
-  try {
-    localStorage.setItem(MEDIA_PRESENTATIONS_KEY, JSON.stringify(value));
-  } catch {
-    /* ignore */
-  }
-}
-
 export const useAssistantResponseSettingsStore = defineStore(
   'assistant-response-settings',
   () => {
     /** Global default every conversation inherits unless overridden. */
-    const defaultMediaPriority = ref<MediaPriority>(loadMediaPriority());
-    /** Per-conversation overrides keyed by conversation id. */
-    const conversationMediaPriorities = ref<Record<string, MediaPriority>>(
-      loadConversationMediaPriorities(),
-    );
-    /** Whether each response section type is collapsed. */
-    const collapsedSections = ref<CollapsedSections>(loadCollapsedSections());
-    /** Which presentation each media section renders in (gallery or list). */
-    const mediaPresentations = ref<MediaPresentations>(
-      loadMediaPresentations(),
-    );
+    const defaultMediaPriority = ref<MediaPriority>('images');
+    try {
+      defaultMediaPriority.value = parseMediaPriority(
+        localStorage.getItem(MEDIA_PRIORITY_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain the images default. */
+    }
 
-    watch(defaultMediaPriority, saveMediaPriority);
-    watch(conversationMediaPriorities, saveConversationMediaPriorities, {
-      deep: true,
+    /** Per-conversation overrides keyed by conversation id. */
+    const conversationMediaPriorities = ref<Record<string, MediaPriority>>({});
+    try {
+      conversationMediaPriorities.value = parseConversationMediaPriorities(
+        localStorage.getItem(CONVERSATION_MEDIA_PRIORITY_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain no overrides. */
+    }
+
+    /** Whether each response section type is collapsed. */
+    const collapsedSections = ref<CollapsedSections>({
+      ...DEFAULT_COLLAPSED_SECTIONS,
     });
-    watch(collapsedSections, saveCollapsedSections, { deep: true });
-    watch(mediaPresentations, saveMediaPresentations, { deep: true });
+    try {
+      collapsedSections.value = parseCollapsedSections(
+        localStorage.getItem(COLLAPSED_SECTIONS_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain the collapse defaults. */
+    }
+
+    /** Which presentation each media section renders in. */
+    const mediaPresentations = ref<MediaPresentations>({
+      ...DEFAULT_MEDIA_PRESENTATIONS,
+    });
+    try {
+      mediaPresentations.value = parseMediaPresentations(
+        localStorage.getItem(MEDIA_PRESENTATIONS_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain the presentation defaults. */
+    }
+
+    watch(defaultMediaPriority, (value) => {
+      try {
+        localStorage.setItem(MEDIA_PRIORITY_KEY, value);
+      } catch {
+        /* Storage unavailable: retain the preference in memory. */
+      }
+    });
+    watch(
+      conversationMediaPriorities,
+      (value) => {
+        try {
+          localStorage.setItem(
+            CONVERSATION_MEDIA_PRIORITY_KEY,
+            JSON.stringify(value),
+          );
+        } catch {
+          /* Storage unavailable: retain overrides in memory. */
+        }
+      },
+      { deep: true },
+    );
+    watch(
+      collapsedSections,
+      (value) => {
+        try {
+          localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify(value));
+        } catch {
+          /* Storage unavailable: retain collapse preferences in memory. */
+        }
+      },
+      { deep: true },
+    );
+    watch(
+      mediaPresentations,
+      (value) => {
+        try {
+          localStorage.setItem(MEDIA_PRESENTATIONS_KEY, JSON.stringify(value));
+        } catch {
+          /* Storage unavailable: retain presentations in memory. */
+        }
+      },
+      { deep: true },
+    );
 
     function setDefaultMediaPriority(priority: MediaPriority): void {
       defaultMediaPriority.value = priority;
