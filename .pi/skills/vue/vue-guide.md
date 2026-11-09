@@ -22,7 +22,7 @@ Read sections in order on your first pass. When working, jump straight to the se
 - **Adding a Storybook story?** → Section 4 (Stories)
 - **Adding a test?** → Section 6 (Component Testing) + Section 7 (Composable Testing)
 - **Naming something?** → Section 8 (Reference: Naming Decision Table)
-- **Reviewing work?** → the Checklist in [SKILL.md](./SKILL.md)
+- **Reviewing work?** → the Checklist in [SKILL.md](./SKILL.md), plus the post-implementation placement audit in [code-structure §6a](../code-structure/SKILL.md#6a-post-implementation-placement-audit)
 - **Setting up a new component group?** → Section 5 (The Orchestrator Pattern) + Section 2's folder rules
 
 ---
@@ -157,9 +157,13 @@ Each helper function lives in its own `.helper.ts` file, named after the functio
 
 Any function that:
 
-- Takes input, returns output
-- Has no side effects (no refs, no store calls, no DOM)
-- Would otherwise be inlined in a `<script setup>` or a computed
+- Takes input and returns output
+- Has no side effects and reads no external state, including refs, stores, DOM, storage, clocks, or network
+- Performs parsing, validation, defaulting, normalization, key building, or another substantive pure transformation that would otherwise be embedded in a component, store, or composable
+
+Review these categories throughout the approved scope rather than stopping after obvious persisted-value parsers. Owner-level getters, synchronous mutations, and trivial inline operations remain with their owner; file size alone is not a reason to extract. Storage writes and other effects belong to the owning store action/watcher, composable workflow, or API module, never to a function presented as a pure helper.
+
+After implementation, repeat the placement review for touched stores, composables, helpers, remaining private functions, and immediate consumers as required by [code-structure §6a](../code-structure/SKILL.md#6a-post-implementation-placement-audit).
 
 ### Helpers never localize
 
