@@ -1,5 +1,6 @@
 import { computed, type Ref, ref } from 'vue';
 
+import { useModelCatalog } from '@/components/app/composables/use-model-catalog';
 import { buildFormData } from '@/components/chat/composables/helpers/build-form-data.helper';
 import { requireModel } from '@/components/chat/composables/helpers/require-model.helper';
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
@@ -67,6 +68,7 @@ export function useSubmit(): SubmitController {
   const socket = useSocket();
 
   const conversationSettingsStore = useConversationSettingsStore();
+  const modelCatalog = useModelCatalog();
   const memorySpacesStore = useMemorySpacesStore();
   const conversationStore = useConversationStore();
   const conversationSession = useConversationSession();
@@ -226,7 +228,7 @@ export function useSubmit(): SubmitController {
       // app-load fetch may have failed). Wait for it before failing with
       // "model required" so a prompt submitted right after reload never
       // hard-fails on the race.
-      await modelsStore.whenModelsReady();
+      await modelCatalog.whenModelsReady();
     }
     if (!requireModel(conversationModel, toast)) {
       return null;

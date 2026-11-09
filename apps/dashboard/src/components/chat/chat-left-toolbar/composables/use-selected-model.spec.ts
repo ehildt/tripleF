@@ -10,6 +10,8 @@ import type { OllamaModel } from '@/types/ollama-model.model';
 import { useSelectedModel } from './use-selected-model';
 
 const warmModel = vi.hoisted(() => vi.fn());
+const modelCatalog = vi.hoisted(() => ({ selectModel: vi.fn() }));
+const warming = vi.hoisted(() => ({ warmModelOnSelect: { value: false } }));
 const toast = vi.hoisted(() => ({ warning: vi.fn() }));
 const configuration = vi.hoisted(() => ({
   setModel: vi.fn(),
@@ -19,6 +21,14 @@ const configuration = vi.hoisted(() => ({
 vi.mock('@/components/chat/composables/use-conversation-configuration', () => ({
   useConversationConfiguration: () => configuration,
 }));
+
+vi.mock('@/components/app/composables/use-model-catalog', () => ({
+  useModelCatalog: () => modelCatalog,
+}));
+vi.mock(
+  '@/composables/use-model-warming-preference/use-model-warming-preference',
+  () => ({ useModelWarmingPreference: () => warming }),
+);
 
 vi.mock('@/api/warm-model.api', () => ({ warmModel }));
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
@@ -43,6 +53,8 @@ describe('useSelectedModel', () => {
     localStorage.clear();
     vi.restoreAllMocks();
     warmModel.mockClear();
+    modelCatalog.selectModel.mockClear();
+    warming.warmModelOnSelect.value = false;
     toast.warning.mockClear();
     configuration.setModel.mockClear();
     configuration.setNumCtx.mockClear();
@@ -82,9 +94,8 @@ describe('useSelectedModel', () => {
 
   it('changeModel warms local models only', () => {
     const modelsStore = useModelsStore();
-    modelsStore.warmModelOnSelect = true;
+    warming.warmModelOnSelect.value = true;
     modelsStore.models = [model({ origin: 'local' })];
-    vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
 
     const { changeModel } = useSelectedModel();
     changeModel('llama');
@@ -94,9 +105,8 @@ describe('useSelectedModel', () => {
 
   it('changeModel skips warming cloud models', () => {
     const modelsStore = useModelsStore();
-    modelsStore.warmModelOnSelect = true;
+    warming.warmModelOnSelect.value = true;
     modelsStore.models = [model({ origin: 'cloud' })];
-    vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
 
     const { changeModel } = useSelectedModel();
     changeModel('llama');
@@ -116,7 +126,6 @@ describe('useSelectedModel', () => {
     const modelsStore = useModelsStore();
     modelsStore.models = [model({ context_length: 8192 })];
     modelsStore.numCtxOptions = [2048, 4096, 8192];
-    vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
     const { changeModel } = useSelectedModel();
     changeModel('llama');
 
@@ -139,7 +148,6 @@ describe('useSelectedModel', () => {
     const modelsStore = useModelsStore();
     modelsStore.models = [model({ context_length: 8192 })];
     modelsStore.numCtxOptions = [2048, 4096, 8192];
-    vi.spyOn(modelsStore, 'setSelectedModel').mockImplementation(() => {});
     const { changeModel } = useSelectedModel();
     changeModel('llama');
 

@@ -1,12 +1,19 @@
-import { computed } from 'vue';
+import { computed, type ComputedRef } from 'vue';
 
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useModelsStore } from '@/stores/models/models.store';
+import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 
 import { useChatConversation } from './use-chat-conversation';
+
+interface ChatContextSizeSurface {
+  filteredContextSizeOptions: ComputedRef<string[]>;
+  defaultContextSize: ComputedRef<string>;
+  selectContextSize: (contextSize: string) => void;
+}
 
 /**
  * The chat context-size selector: the model-clamped option list, the default
@@ -14,7 +21,7 @@ import { useChatConversation } from './use-chat-conversation';
  * the models and conversation stores, the active conversation, and the toast
  * service — by import.
  */
-export function useChatContextSize() {
+export function useChatContextSize(): ChatContextSizeSurface {
   const modelsStore = useModelsStore();
   const configuration = useConversationConfiguration();
   const toast = useToast();
@@ -35,15 +42,15 @@ export function useChatContextSize() {
     () => filteredContextSizeOptions.value.at(-1) ?? '',
   );
 
-  function selectContextSize(ctx: string) {
+  function selectContextSize(ctx: string): void {
     const maxCtx = selectedModelObj.value?.context_length;
     if (maxCtx && Number(ctx) > maxCtx) {
       ctx = String(maxCtx);
       toast.warning(
         i18n.global.t('toast.contextClamped', {
           model: selectedModelObj.value?.model ?? '',
-          max: modelsStore.formatContextSize(maxCtx),
-          value: modelsStore.formatContextSize(maxCtx),
+          max: formatContextSize(maxCtx),
+          value: formatContextSize(maxCtx),
         }),
         { key: TOAST_KEY_CONTEXT_CLAMPED },
       );

@@ -1,195 +1,109 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useModelsStore } from './models.store';
 
 describe('useModelsStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    vi.restoreAllMocks();
   });
 
-  it('initializes with empty models and no loading', () => {
+  it('initializes with empty catalog and no loading or readiness', () => {
     const store = useModelsStore();
     expect(store.models).toEqual([]);
     expect(store.modelsLoading).toBe(false);
+    expect(store.modelsReady).toBe(false);
   });
 
-  it('fetchModels loads models on success', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: { get: () => null },
-        json: () =>
-          Promise.resolve({
-            models: [{ model: 'llama' }, { model: 'mistral' }],
-          }),
-      }),
-    );
+  it('applies catalog data through one synchronous mutation', () => {
     const store = useModelsStore();
-    await store.fetchModels();
-    expect(store.models).toEqual([{ model: 'llama' }, { model: 'mistral' }]);
-    expect(store.modelsLoading).toBe(false);
+    store.applyModelsCatalog({
+      models: [{ model: 'llama', capabilities: ['completion'] }],
+      numCtxOptions: [2048, 4096],
+    });
+
+    expect(store.modelNames).toEqual(['llama']);
+    expect(store.defaultNumCtx).toBe('4096');
   });
 
-  it('splits models into local and cloud groups by origin', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: { get: () => null },
-        json: () =>
-          Promise.resolve({
-            models: [
-              { model: 'llama', origin: 'local', capabilities: ['completion'] },
-              {
-                model: 'gpt-oss:120b',
-                origin: 'cloud',
-                capabilities: ['completion'],
-              },
-              { model: 'mistral', capabilities: ['completion'] },
-            ],
-          }),
-      }),
-    );
+  it('sorts eligible local and cloud groups and excludes capability-less models', () => {
     const store = useModelsStore();
-    await store.fetchModels();
-    // Models without an origin tag count as local.
-    expect(store.localModels).toEqual([
-      { model: 'llama', origin: 'local', capabilities: ['completion'] },
-      { model: 'mistral', capabilities: ['completion'] },
+    store.applyModelsCatalog({
+      models: [
+        { model: 'qwen', origin: 'local', capabilities: ['completion'] },
+        { model: 'kimi', origin: 'cloud', capabilities: ['completion'] },
+        { model: 'Mistral', capabilities: ['completion'] },
+        { model: 'gpt', origin: 'cloud', capabilities: ['completion'] },
+        { model: 'embed', origin: 'local', capabilities: [] },
+      ],
+      numCtxOptions: [],
+    });
+
+    expect(store.localModels.map((model) => model.model)).toEqual([
+      'Mistral',
+      'qwen',
     ]);
-    expect(store.cloudModels).toEqual([
-      { model: 'gpt-oss:120b', origin: 'cloud', capabilities: ['completion'] },
+    expect(store.cloudModels.map((model) => model.model)).toEqual([
+      'gpt',
+      'kimi',
     ]);
+    expect(store.modelNames).toContain('embed');
   });
 
-  it('sorts local and cloud groups alphabetically within each section', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: { get: () => null },
-        json: () =>
-          Promise.resolve({
-            models: [
-              {
-                model: 'qwen3:8b',
-                origin: 'local',
-                capabilities: ['completion'],
-              },
-              {
-                model: 'kimi-k2:1t',
-                origin: 'cloud',
-                capabilities: ['completion'],
-              },
-              {
-                model: 'Mistral:7b',
-                origin: 'local',
-                capabilities: ['completion'],
-              },
-              {
-                model: 'gpt-oss:120b',
-                origin: 'cloud',
-                capabilities: ['completion'],
-              },
-              {
-                model: 'gemma4:12b',
-                origin: 'local',
-                capabilities: ['completion'],
-              },
-            ],
-          }),
-      }),
-    );
+  it('uses only eligible models for selected and fallback defaults', () => {
     const store = useModelsStore();
-    await store.fetchModels();
-    expect(store.localModels.map((m) => m.model)).toEqual([
-      'gemma4:12b',
-      'Mistral:7b',
-      'qwen3:8b',
-    ]);
-    expect(store.cloudModels.map((m) => m.model)).toEqual([
-      'gpt-oss:120b',
-      'kimi-k2:1t',
-    ]);
+    store.applyModelsCatalog({
+      models: [
+        { model: 'embed', capabilities: [] },
+        { model: 'llama', capabilities: ['completion'] },
+        { model: 'cloud', origin: 'cloud', capabilities: ['completion'] },
+      ],
+      numCtxOptions: [],
+    });
+    expect(store.defaultModel).toBe('llama');
+
+    store.setSelectedModel('cloud');
+    expect(store.defaultModel).toBe('cloud');
+
+    store.setSelectedModel('embed');
+    expect(store.defaultModel).toBe('llama');
   });
 
-  it('excludes capability-less models from both picker groups', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: { get: () => null },
-        json: () =>
-          Promise.resolve({
-            models: [
-              { model: 'llama', origin: 'local', capabilities: ['completion'] },
-              { model: 'nomic-embed-text', origin: 'local', capabilities: [] },
-              {
-                model: 'gpt-oss:120b',
-                origin: 'cloud',
-                capabilities: ['completion'],
-              },
-              { model: 'embed', origin: 'cloud' },
-            ],
-          }),
-      }),
-    );
+  it('looks up raw models and derives their maximum context option', () => {
     const store = useModelsStore();
-    await store.fetchModels();
-    // The raw catalog stays complete for availability checks...
-    expect(store.models.map((m) => m.model)).toEqual([
-      'llama',
-      'nomic-embed-text',
-      'gpt-oss:120b',
-      'embed',
-    ]);
-    // ...but the picker lists never offer a model that can't run a chat request.
-    expect(store.localModels.map((m) => m.model)).toEqual(['llama']);
-    expect(store.cloudModels.map((m) => m.model)).toEqual(['gpt-oss:120b']);
+    store.applyModelsCatalog({
+      models: [
+        { model: 'llama', context_length: 8192 },
+        { model: 'small', context_length: 1024 },
+      ],
+      numCtxOptions: [2048, 4096, 8192],
+    });
+
+    expect(store.getModel('llama')?.context_length).toBe(8192);
+    expect(store.maxNumCtxForModel('llama')).toBe('8192');
+    expect(store.maxNumCtxForModel('small')).toBe('1024');
+    expect(store.maxNumCtxForModel('missing')).toBe('');
   });
 
-  it('fetchModels shows toast on refresh', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: { get: () => null },
-        json: () => Promise.resolve({ models: [{ model: 'x' }] }),
-      }),
-    );
+  it('treats a successful empty catalog as ready', () => {
     const store = useModelsStore();
-    await store.fetchModels({ refresh: true });
-    expect(store.models).toEqual([{ model: 'x' }]);
+    store.setLastFetchOk(true);
+    expect(store.modelsReady).toBe(true);
+
+    store.setLastFetchOk(false);
+    store.applyModelsCatalog({
+      models: [{ model: 'llama' }],
+      numCtxOptions: [],
+    });
+    expect(store.modelsReady).toBe(true);
   });
 
-  it('fetchModels shows error toast on non-ok', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
-    );
+  it('owns explicit loading and selection setters', () => {
     const store = useModelsStore();
-    await store.fetchModels();
-    expect(store.models).toEqual([]);
-  });
+    store.setModelsLoading(true);
+    store.setSelectedModel('llama');
 
-  it('fetchModels shows error toast on exception', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('network error')),
-    );
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const store = useModelsStore();
-    await store.fetchModels();
-    expect(store.models).toEqual([]);
-    expect(store.modelsLoading).toBe(false);
-    spy.mockRestore();
+    expect(store.modelsLoading).toBe(true);
+    expect(store.selectedModel).toBe('llama');
   });
 });

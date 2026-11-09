@@ -57,12 +57,15 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: state.t }),
 }));
 
+vi.mock('@/components/app/composables/use-model-catalog', () => ({
+  useModelCatalog: () => ({ fetchModels: state.fetchModels }),
+}));
+
 vi.mock('@/stores/models/models.store', () => ({
   useModelsStore: () => ({
     get selectedModel() {
       return state.selectedModel;
     },
-    fetchModels: state.fetchModels,
   }),
 }));
 

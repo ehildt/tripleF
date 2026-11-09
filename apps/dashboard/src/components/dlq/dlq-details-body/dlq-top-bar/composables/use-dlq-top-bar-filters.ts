@@ -1,37 +1,51 @@
-import { computed, type Ref } from 'vue';
+import { computed, type ComputedRef, type Ref } from 'vue';
 
 import { useModelsStore } from '@/stores/models/models.store';
 import type { DlqEntry } from '@/types/dlq-entry.model';
 
-/**
- * Derives the editable filter values shown in the DLQ details top bar from
- * the selected entry's payload, and owns the store-backed model/context
- * options the selects need (composables call stores for component-scoped
- * logic so the top-bar leaf stays presentational).
- */
+interface DlqPayloadWithFilters {
+  filters?: Record<string, unknown>;
+}
+
+interface DlqTopBarFilters {
+  modelValue: ComputedRef<string>;
+  modelErrored: ComputedRef<boolean>;
+  modelOptions: ComputedRef<string[]>;
+  eventValue: ComputedRef<string>;
+  roomIdValue: ComputedRef<string>;
+  streamValue: ComputedRef<string>;
+  numCtxValue: ComputedRef<string>;
+  numCtxOptions: ComputedRef<string[]>;
+  isMemoryJob: ComputedRef<boolean>;
+  streamChecked: ComputedRef<boolean>;
+  streamDisabled: ComputedRef<boolean>;
+}
+
+/** Derive editable filter values and model-clamped context options for DLQ. */
 export function useDlqTopBarFilters(
   entry: Ref<DlqEntry | null>,
   availableModels: Ref<string[]>,
   isImmutable: Ref<boolean>,
-) {
+): DlqTopBarFilters {
   const modelsStore = useModelsStore();
 
-  function filtersOf(entry: DlqEntry | null) {
-    const payload = entry?.payload;
-    if (!payload) return null;
-    return (payload as { filters?: Record<string, unknown> })?.filters ?? null;
+  function filtersOf(
+    selectedEntry: DlqEntry | null,
+  ): Record<string, unknown> | null {
+    const payload = selectedEntry?.payload as DlqPayloadWithFilters | null;
+    return payload?.filters ?? null;
   }
 
   const filterRecord = computed(() => filtersOf(entry.value));
 
   const modelValue = computed(() => {
-    const f = filterRecord.value;
-    if (!f) return '';
-    const raw = (f.model as unknown) ?? null;
+    const filters = filterRecord.value;
+    if (!filters) return '';
+    const raw = (filters.model as unknown) ?? null;
     if (!raw) return '';
     if (typeof raw === 'object' && raw !== null) {
-      const obj = raw as Record<string, unknown>;
-      return ((obj.model as string) || (obj.name as string) || '') ?? '';
+      const record = raw as Record<string, unknown>;
+      return ((record.model as string) || (record.name as string) || '') ?? '';
     }
     if (
       typeof raw === 'string' &&
@@ -62,38 +76,32 @@ export function useDlqTopBarFilters(
   const eventValue = computed(
     () => (filterRecord.value?.event as string) ?? '',
   );
-
   const roomIdValue = computed(
     () => (filterRecord.value?.roomId as string) ?? '',
   );
 
   const streamValue = computed(() => {
-    const f = filterRecord.value;
-    if (!f) return 'false';
-    return String(f.stream ?? 'false');
+    const filters = filterRecord.value;
+    if (!filters) return 'false';
+    return String(filters.stream ?? 'false');
   });
 
   const numCtxValue = computed(() => {
-    const f = filterRecord.value;
-    const val = f?.numCtx;
-    if (!val) return '';
-    return String(val);
+    const value = filterRecord.value?.numCtx;
+    if (!value) return '';
+    return String(value);
   });
 
-  /**
-   * Context-size choices from the models store, capped at the context length
-   * of the model the entry references so an oversized numCtx is never offered.
-   */
   const numCtxOptions = computed(() => {
     const all = modelsStore.numCtxOptions.map(String);
     if (!availableModels.value.length) return all;
     if (!modelValue.value) return all;
     const model = modelsStore.getModel(modelValue.value);
     if (!model?.context_length) return all;
-    return all.filter((opt) => Number(opt) <= model.context_length!);
+    return all.filter((option) => Number(option) <= model.context_length!);
   });
 
-  /** Memory jobs (jobName `memory-*`) never stream — the toggle is locked off. */
+  /** Memory jobs (jobName `memory-*`) never stream. */
   const isMemoryJob = computed(
     () => entry.value?.jobName.startsWith('memory-') ?? false,
   );
@@ -114,8 +122,5 @@ export function useDlqTopBarFilters(
     isMemoryJob,
     streamChecked,
     streamDisabled,
-    localModels: computed(() => modelsStore.localModels),
-    cloudModels: computed(() => modelsStore.cloudModels),
-    modelsLoading: computed(() => modelsStore.modelsLoading),
   };
 }

@@ -6,7 +6,6 @@
  * on the separate Memory tab.
  */
 import { Activity, KeyRound, RotateCcw, Server } from '@lucide/vue';
-import { storeToRefs } from 'pinia';
 
 import SettingsSection from '@/components/settings/shared/ui/settings-section/SettingsSection.vue';
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
@@ -15,7 +14,7 @@ import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
-import { useModelsStore } from '@/stores/models/models.store';
+import { useModelWarmingPreference } from '@/composables/use-model-warming-preference/use-model-warming-preference';
 
 import SystemHealthSection from '../system-health-section/SystemHealthSection.vue';
 import { useOllamaConnection } from './composables/use-ollama-connection';
@@ -34,9 +33,8 @@ const {
   submitHost,
 } = useOllamaConnection();
 
-const modelsStore = useModelsStore();
-const { warmModelOnSelect } = storeToRefs(modelsStore);
-const { toggleWarmModelOnSelect } = modelsStore;
+const { warmModelOnSelect, toggleWarmModelOnSelect } =
+  useModelWarmingPreference();
 </script>
 
 <template>
