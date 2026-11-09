@@ -6,6 +6,10 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 
 import App from './App.vue';
 
+const appMocks = vi.hoisted(() => ({
+  loadPreprocessingSettings: vi.fn(async () => {}),
+}));
+
 vi.mock('./stores/debug/debug.store', () => ({
   useDebugStore: () => ({
     debugLogCount: 0,
@@ -85,6 +89,16 @@ vi.mock('./components/chat/composables/use-conversation-catalog', () => ({
   }),
 }));
 
+vi.mock(
+  '@/composables/use-preprocessing-settings-sync/use-preprocessing-settings-sync',
+  () => ({
+    usePreprocessingSettingsSync: () => ({
+      loadSettings: appMocks.loadPreprocessingSettings,
+      flushSettings: vi.fn(async () => {}),
+    }),
+  }),
+);
+
 describe('App', () => {
   it('renders without crashing', () => {
     setActivePinia(createPinia());
@@ -103,5 +117,6 @@ describe('App', () => {
     const wrapper = mount(App, { global: { plugins: [router] } });
     expect(wrapper.find('header').exists()).toBe(true);
     expect(wrapper.find('main').exists()).toBe(true);
+    expect(appMocks.loadPreprocessingSettings).toHaveBeenCalledOnce();
   });
 });
