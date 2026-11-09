@@ -13,7 +13,7 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 
 ![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 ![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![license](https://img.shields.io/badge/license-PolyForm%20Strict%201.0.0-b16425?labelColor=333&style=for-the-badge&logo=github&logoColor=b16425&logoWidth=40)
+![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 [![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
 
 </div>
@@ -21,6 +21,8 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 <br>
 
 <div align="center">
+
+
 
 # Dependencies
 
@@ -59,6 +61,8 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 <br>
 
 <div align="center">
+
+
 
 # DevDependencies
 
@@ -104,8 +108,8 @@ The tripleF workbench UI: a Vue 3 dashboard for the 3F harness — streaming mul
 [![storybook](https://img.shields.io/badge/storybook-v10.6.6-1acb2c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1acb2c&logoWidth=40&style=flat-square)](https://github.com/storybookjs/storybook)
 [![tailwindcss](https://img.shields.io/badge/tailwindcss-v4.3.5-ba1ca8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ba1ca8&logoWidth=40&style=flat-square)](https://github.com/tailwindlabs/tailwindcss)
 [![typescript](https://img.shields.io/badge/typescript-v5.9.3-4c2eb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=4c2eb8&logoWidth=40&style=flat-square)](https://github.com/Microsoft/TypeScript)
-[![typescript-eslint](https://img.shields.io/badge/typescript_eslint-v8.72.1-dc2e59.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dc2e59&logoWidth=40&style=flat-square)](https://github.com/typescript-eslint/typescript-eslint)
-[![vite](https://img.shields.io/badge/vite-v8.3.6-33cc66.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33cc66&logoWidth=40&style=flat-square)](https://github.com/vitejs/vite)
+[![typescript-eslint](https://img.shields.io/badge/typescript_eslint-v8.72.2-dc2e59.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dc2e59&logoWidth=40&style=flat-square)](https://github.com/typescript-eslint/typescript-eslint)
+[![vite](https://img.shields.io/badge/vite-v8.3.7-33cc66.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33cc66&logoWidth=40&style=flat-square)](https://github.com/vitejs/vite)
 [![vitest](https://img.shields.io/badge/vitest-v5.1.0-80c026.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=80c026&logoWidth=40&style=flat-square)](https://github.com/vitest-dev/vitest)
 [![vue-eslint-parser](https://img.shields.io/badge/vue_eslint_parser-v10.4.2-2fc173.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc173&logoWidth=40&style=flat-square)](https://github.com/vuejs/vue-eslint-parser)
 [![vue-tsc](https://img.shields.io/badge/vue_tsc-v3.3.14-54bc24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=54bc24&logoWidth=40&style=flat-square)](https://github.com/vuejs/language-tools)

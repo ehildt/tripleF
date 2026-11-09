@@ -1,7 +1,7 @@
 {
   "name": "@triplef/triplef",
   "description": "tripleF (3F) monorepo — a source-available agentic AI workbench: conversation harness + dashboard, local-first via Ollama or Ollama Cloud.",
-  "version": "2.0.0",
+  "version": "1.8.0",
   "packageManager": "pnpm@12.18.0",
   "license": "SEE LICENSE IN LICENSE",
   "author": {

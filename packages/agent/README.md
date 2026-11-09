@@ -14,11 +14,13 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 <!-- DEPBADGE:START -->
 <div align="center">
 
+
+
 # StatusBadges
 
 ![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 ![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![license](https://img.shields.io/badge/license-PolyForm%20Strict%201.0.0-b16425?labelColor=333&style=for-the-badge&logo=github&logoColor=b16425&logoWidth=40)
+![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 
 </div>
 
@@ -26,10 +28,12 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 
 <div align="center">
 
+
+
 # Dependencies
 
 [![@mozilla/readability](https://img.shields.io/badge/_mozilla_readability-v0.6.0-bd28bb.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=bd28bb&logoWidth=40&style=for-the-badge)](https://github.com/mozilla/readability)
-[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v1.6.3-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=for-the-badge)](https://github.com/ehildt/tripleF)
+[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v2.0.0-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=for-the-badge)](https://github.com/ehildt/tripleF)
 [![linkedom](https://img.shields.io/badge/linkedom-v0.18.15-9c23be.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9c23be&logoWidth=40&style=for-the-badge)](https://github.com/WebReflection/linkedom)
 [![turndown](https://img.shields.io/badge/turndown-v7.2.5-ad7b1f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ad7b1f&logoWidth=40&style=for-the-badge)](https://github.com/mixmark-io/turndown)
 
@@ -38,6 +42,8 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 <br>
 
 <div align="center">
+
+
 
 # DevDependencies
 
@@ -64,7 +70,7 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 ![ts-unused-exports](https://img.shields.io/badge/ts_unused_exports-v11.0.1-5e26c0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=5e26c0&logoWidth=40&style=flat-square)
 ![tsup](https://img.shields.io/badge/tsup-v8.5.1-472cce.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=472cce&logoWidth=40&style=flat-square)
 ![typescript](https://img.shields.io/badge/typescript-v5.9.3-4c2eb8.svg?labelColor=333&cacheSeconds=3600&logo=typescript&logoColor=4c2eb8&logoWidth=40&style=flat-square)
-![typescript-eslint](https://img.shields.io/badge/typescript_eslint-v8.72.1-dc2e59.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=dc2e59&logoWidth=40&style=flat-square)
+![typescript-eslint](https://img.shields.io/badge/typescript_eslint-v8.72.2-dc2e59.svg?labelColor=333&cacheSeconds=3600&logo=eslint&logoColor=dc2e59&logoWidth=40&style=flat-square)
 ![vitest](https://img.shields.io/badge/vitest-v5.1.0-80c026.svg?labelColor=333&cacheSeconds=3600&logo=vitest&logoColor=80c026&logoWidth=40&style=flat-square)
 
 </div>
@@ -73,9 +79,11 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 
 <div align="center">
 
+
+
 # PeerDependencies
 
-[![ai](https://img.shields.io/badge/ai-v7.0.164-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
+[![ai](https://img.shields.io/badge/ai-v7.0.166-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
 [![zod](https://img.shields.io/badge/zod-v4.6.7-1eabb3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1eabb3&logoWidth=40&style=flat)](https://github.com/colinhacks/zod)
 
 </div>
