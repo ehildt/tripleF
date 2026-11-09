@@ -4,6 +4,8 @@ import { computed, ref } from 'vue';
 import type { ModelsCatalog } from '@/types/models-catalog.model';
 import type { OllamaModel } from '@/types/ollama-model.model';
 
+import { selectPickerModels } from './helpers/select-picker-models.helper';
+
 /** Shared model catalog data and synchronous derived state. */
 export const useModelsStore = defineStore('models', () => {
   const models = ref<OllamaModel[]>([]);
@@ -38,26 +40,8 @@ export const useModelsStore = defineStore('models', () => {
 
   // Keep the raw catalog complete for availability checks, but expose only
   // models with reported capabilities in chat picker/fallback surfaces.
-  const localModels = computed(() =>
-    models.value
-      .filter(
-        (model) =>
-          model.origin !== 'cloud' && (model.capabilities?.length ?? 0) > 0,
-      )
-      .sort((a, b) =>
-        a.model.localeCompare(b.model, undefined, { sensitivity: 'base' }),
-      ),
-  );
-  const cloudModels = computed(() =>
-    models.value
-      .filter(
-        (model) =>
-          model.origin === 'cloud' && (model.capabilities?.length ?? 0) > 0,
-      )
-      .sort((a, b) =>
-        a.model.localeCompare(b.model, undefined, { sensitivity: 'base' }),
-      ),
-  );
+  const localModels = computed(() => selectPickerModels(models.value, 'local'));
+  const cloudModels = computed(() => selectPickerModels(models.value, 'cloud'));
 
   function getModel(name: string): OllamaModel | undefined {
     return models.value.find((model) => model.model === name);

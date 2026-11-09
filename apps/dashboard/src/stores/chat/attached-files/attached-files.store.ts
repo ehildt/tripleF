@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { shallowRef } from 'vue';
 
 import { buildPendingFilesKey } from './helpers/build-pending-files-key.helper';
+import { updatePendingFilesMap } from './helpers/update-pending-files-map.helper';
 import type { AttachedFileEntry } from './attached-files.model';
 import type { PendingAttachmentScope } from './attached-files.store.types';
 
@@ -35,14 +36,12 @@ export const useAttachedFilesStore = defineStore('attachedFiles', () => {
     updater: (files: AttachedFileEntry[]) => AttachedFileEntry[],
   ): void {
     const key = buildPendingFilesKey(scope);
-    const map = new Map(pendingFilesByConversation.value);
-    const next = updater(map.get(key) ?? []);
-    if (next.length === 0) {
-      map.delete(key);
-    } else {
-      map.set(key, next);
-    }
-    pendingFilesByConversation.value = map;
+    const next = updater(pendingFilesByConversation.value.get(key) ?? []);
+    pendingFilesByConversation.value = updatePendingFilesMap(
+      pendingFilesByConversation.value,
+      key,
+      next,
+    );
   }
 
   function appendPendingFile(
@@ -77,9 +76,11 @@ export const useAttachedFilesStore = defineStore('attachedFiles', () => {
   function clearPendingFilesForConversation(
     scope: PendingAttachmentScope,
   ): void {
-    const map = new Map(pendingFilesByConversation.value);
-    map.delete(buildPendingFilesKey(scope));
-    pendingFilesByConversation.value = map;
+    pendingFilesByConversation.value = updatePendingFilesMap(
+      pendingFilesByConversation.value,
+      buildPendingFilesKey(scope),
+      [],
+    );
   }
 
   function clearPendingFiles(): void {

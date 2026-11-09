@@ -42,8 +42,8 @@ import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { useToastQueue } from '@/composables/use-toast-queue/use-toast-queue';
 import { i18n } from '@/i18n/i18n';
-import { useToastSettingsStore } from '@/stores/toast-settings/toast-settings.store';
-import type { ToastAnchor } from '@/stores/toast-settings/toast-settings.types';
+import { useToastSettingsStore } from '@/stores/widgets/toast-settings/toast-settings.store';
+import type { ToastAnchor } from '@/stores/widgets/toast-settings/toast-settings.types';
 import type { ToastType } from '@/types/toast-type.model';
 
 const toastSettingsStore = useToastSettingsStore();

@@ -7,7 +7,7 @@
  * rendering lives in ToastItem.
  */
 import { useToastQueue } from '@/composables/use-toast-queue/use-toast-queue';
-import { useToastSettingsStore } from '@/stores/toast-settings/toast-settings.store';
+import { useToastSettingsStore } from '@/stores/widgets/toast-settings/toast-settings.store';
 
 import { useToastAnchor } from './composables/use-toast-anchor';
 import ToastItem from './toast-item/ToastItem.vue';
