@@ -24,9 +24,8 @@ const socket = vi.hoisted(() => ({
   joinRoom: vi.fn(),
 }));
 const debug = vi.hoisted(() => ({ addDebugResult: vi.fn() }));
-const messages = vi.hoisted(() => ({
-  resetRequestForRetry: vi.fn(),
-  removeMessage: vi.fn(),
+const responseStreams = vi.hoisted(() => ({
+  resetHarnessResponseStream: vi.fn(),
 }));
 const toast = vi.hoisted(() => ({
   debug: vi.fn(),
@@ -57,8 +56,8 @@ vi.mock('@/composables/use-socket/use-socket', () => ({
 vi.mock('@/stores/debug/debug.store', () => ({
   useDebugStore: () => debug,
 }));
-vi.mock('@/stores/messages/messages.store', () => ({
-  useMessagesStore: () => messages,
+vi.mock('@/components/chat/composables/use-harness-response-streams', () => ({
+  useHarnessResponseStreams: () => responseStreams,
 }));
 vi.mock('@/composables/use-toast/use-toast', () => ({ useToast: () => toast }));
 vi.mock('@/i18n/i18n', () => ({
@@ -102,7 +101,7 @@ describe('useDlqRetrySession', () => {
     vi.clearAllMocks();
   });
 
-  it('prepares an existing conversation and registers pending state before requeue', async () => {
+  it('prepares an existing conversation and resets its response stream before requeue', async () => {
     const conversation = createConversation('Chat', {
       conversationId: 'conversation-1',
     });
@@ -122,11 +121,8 @@ describe('useDlqRetrySession', () => {
     expect(socket.ensureSocketConnection).toHaveBeenCalled();
     expect(socket.listenToEvent).toHaveBeenCalledWith('harness');
     expect(socket.joinRoom).toHaveBeenCalledWith('room-1', 'harness');
-    expect(messages.resetRequestForRetry).toHaveBeenCalledWith(
-      'harness',
-      'room-1',
+    expect(responseStreams.resetHarnessResponseStream).toHaveBeenCalledWith(
       'request-1',
-      true,
     );
     expect(session).toEqual({
       conversationStoreId: conversation.id,
@@ -193,7 +189,7 @@ describe('useDlqRetrySession', () => {
     );
   });
 
-  it('clears pending state and marks the exchange failed on retry failure', () => {
+  it('clears response state and marks the exchange failed on retry failure', () => {
     useDlqRetrySession().failRetrySession({
       conversationStoreId: 'c1',
       requestId: 'request-1',
@@ -202,7 +198,9 @@ describe('useDlqRetrySession', () => {
       stream: true,
     });
 
-    expect(messages.removeMessage).toHaveBeenCalledWith('request-1');
+    expect(responseStreams.resetHarnessResponseStream).toHaveBeenCalledWith(
+      'request-1',
+    );
     expect(completion.markExchangeError).toHaveBeenCalledWith(
       'c1',
       'request-1',
