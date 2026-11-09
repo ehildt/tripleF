@@ -1,4 +1,5 @@
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { buildBranchExchanges } from '@/components/chat/shared/helpers/build-branch-exchanges.helper';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import type { Exchange } from '@/stores/chat/conversation/conversation.model';
@@ -15,10 +16,11 @@ import { mapExchangeToNewSession } from './helpers/map-exchange-to-new-session.h
  */
 export function useBranchExchange() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const catalog = useConversationCatalog();
 
   function branchExchange(exchangeId: string) {
-    const id = conversationStore.activeConversationId;
+    const id = conversationSession.activeConversationId.value;
     if (!id) return;
     const conversation = conversationStore.getConversation(id);
     if (!conversation) return;

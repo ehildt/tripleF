@@ -13,7 +13,7 @@ describe('useConversationPrompt', () => {
 
   it('serializes included exchanges as turndown text messages', async () => {
     const conversation = createConversation('New chat');
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     const store = useConversationStore();
     store.addExchange(
       conversation.id,
@@ -59,7 +59,7 @@ describe('useConversationPrompt', () => {
 
   it('flattens structured assistant data when plain text is absent', async () => {
     const conversation = createConversation('New chat');
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     useConversationStore().addExchange(
       conversation.id,
       {
@@ -86,7 +86,7 @@ describe('useConversationPrompt', () => {
 
   it('reuses the lazy converter across prompt builds', async () => {
     const conversation = createConversation('New chat');
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     useConversationStore().addExchange(
       conversation.id,
       { role: 'user', content: '<h1>Title</h1>', status: 'done' },

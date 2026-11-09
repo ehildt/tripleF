@@ -131,6 +131,14 @@ The default stays state created inside the composable's function body — fresh 
 
 Composables access Pinia stores directly when the logic is scoped to one component tree (derivations, transient UI state, a widget's own flow). Components never call stores directly (unless it's a container component that reads a store and feeds leaves with props).
 
+### Encapsulate repeated keyed state reads
+
+When the same keyed lookup, fallback, optional access, or presence check over owned reactive records is needed more than once, the owning store or composable exposes a named getter function with an explicit return type. Internal operations and consumers use that getter instead of repeating raw indexed access, so key handling and missing-value semantics remain centralized. This is a legitimate owner API, not wrapper indirection.
+
+When the same getter result is repeatedly compared with an expected value or tested for membership, extend the owner getter with an optional expected-value argument and explicit TypeScript overload signatures. The base call retains its value-returning contract, while the comparison call returns a boolean using exact equality or membership semantics. Detect an omitted expected value by presence rather than truthiness so empty strings and other falsy values remain valid. Do not expose an untyped union-returning API or add a consumer-side comparator relay. A comparison used only once stays inline.
+
+Single-use lookups stay inline. Consumers import the owner rather than relaying its getter through another composable. Raw state remains available where Pinia requires it and for intentional key-existence assertions, but ordinary repeated reads go through the getter. See `code-structure` §8a.
+
 ### No `provide`/`inject` — for anything
 
 `provide`/`inject` is banned — for shared mutable state as a "context shuttle," and equally for app-level service singletons. Both hide the dependency behind a runtime key with **no compile-time guarantee** that a provider exists, and both force components to do dependency plumbing for their composables. Shared UI state follows the rule-18 ladder: a composable owned by the orchestrator passed to leaves as props, or — deliberately — a Pinia store. Services and app singletons resolve **by import** per the composition rule above: a dedicated composable assembles the facade from stores and returns it; consumers import and call it. Pre-existing provide/inject wiring is migrated away as it is touched, never extended.
@@ -193,7 +201,7 @@ Pick one based on what would actually help a reader:
 | A wrapper used 3+ times in the same file with the _same argument shape_ | **Name the result** (a `Set`, a `computed`) — see option 2.      |
 | A wrapper used across many files, with a domain meaning                 | **Promote it to a `.helper.ts` predicate** with its own spec.    |
 | A wrapper that branches, supplies defaults, or has side effects         | **Keep it** — that is real logic.                                |
-| A wrapper that only coerces/reshapes a value then calls once            | **Inline it** — the call site already says it.                    |
+| A wrapper that only coerces/reshapes a value then calls once            | **Inline it** — the call site already says it.                   |
 | A composable factory that returns a `computed` per key                  | **Keep it** — the factory creates reactive state, not a synonym. |
 
 ### Dependency injection is not a wrapper
@@ -284,9 +292,9 @@ The top-level component (e.g., `Chat.vue`, or a section orchestrator) is an **or
 
 ### The thin orchestrator
 
-The orchestrator's `<script setup>` is deliberately thin: the props type, store reads that wire child config, one data-composable call when there is *component-scoped* data to derive, and the template.
+The orchestrator's `<script setup>` is deliberately thin: the props type, store reads that wire child config, one data-composable call when there is _component-scoped_ data to derive, and the template.
 
-The thin-orchestrator rule also bans **wiring between composables in the setup script**: calling composable A and forwarding its return value into composable B is choreography the composables must do themselves (see Section 2, *Composition over relay*). The orchestrator calls each composable it binds from, binds template slots/props from their returns, and stops there.
+The thin-orchestrator rule also bans **wiring between composables in the setup script**: calling composable A and forwarding its return value into composable B is choreography the composables must do themselves (see Section 2, _Composition over relay_). The orchestrator calls each composable it binds from, binds template slots/props from their returns, and stops there.
 
 The orchestrator's shared state lives in its composable and is passed to leaves as props. Reach for a store only as a deliberate exception for data that genuinely routes across many unrelated components — and even then the store holds data plus data mutations, never component handles, and never commands a component. A data composable still has a place for genuinely tree-scoped derivation (formatting, per-props computed values, transient widget state) — it takes the component's props type, owns the `ref`/`computed`/`watch`/functions, and returns the display values + actions the template binds. Feature-scoped state the orchestrator itself owns — a playback session, a wizard's steps — lives in that composable and is passed to leaves as props; no store exists for it.
 
@@ -320,11 +328,11 @@ A component group (`chat/`, `dlq/`, `debug/`, …) is more than a bag of sub-com
 
 The parent's folder name is the kebab-case form of the main orchestrator's name:
 
-| Group folder | Main orchestrator file   | What it wires                              |
-| ------------ | ------------------------ | ------------------------------------------ |
+| Group folder | Main orchestrator file   | What it wires                                     |
+| ------------ | ------------------------ | ------------------------------------------------- |
 | `chat/`      | `Chat.vue`               | left toolbar, exchange list, input, right toolbar |
-| `dlq/`       | `Dlq.vue`                | list header, list body, details body       |
-| `debug/`     | `Debug.vue` (or similar) | results, filters, health                   |
+| `dlq/`       | `Dlq.vue`                | list header, list body, details body              |
+| `debug/`     | `Debug.vue` (or similar) | results, filters, health                          |
 
 ---
 
@@ -348,13 +356,13 @@ A `.vue` file's complexity is measured by **how much behavior it owns**, not by 
 
 ### Decision table
 
-| Component shape                                          | Test? | Why                                                                                |
-| -------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
-| Orchestrator                                             | ✓     | The wiring IS the component's behavior.                                            |
-| Widget with state and interaction (dropdowns, modals)    | ✓     | Keyboard handling, open/close, focus management are its reason for existing.       |
-| Component with a meaningful `<script setup>`             | ✓     | Any computed/branching/event logic deserves a test.                                |
-| Pure presentational: props → markup/styles               | skip  | Covered by the parent's spec/story; any logic is in a tested helper or composable. |
-| Leaf that just re-emits parent events                    | skip  | Trivial pass-through; tested transitively by the orchestrator's test.              |
+| Component shape                                       | Test? | Why                                                                                |
+| ----------------------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
+| Orchestrator                                          | ✓     | The wiring IS the component's behavior.                                            |
+| Widget with state and interaction (dropdowns, modals) | ✓     | Keyboard handling, open/close, focus management are its reason for existing.       |
+| Component with a meaningful `<script setup>`          | ✓     | Any computed/branching/event logic deserves a test.                                |
+| Pure presentational: props → markup/styles            | skip  | Covered by the parent's spec/story; any logic is in a tested helper or composable. |
+| Leaf that just re-emits parent events                 | skip  | Trivial pass-through; tested transitively by the orchestrator's test.              |
 
 **Story coverage is not a substitute for tests.** A `.stories.ts` captures the _visual states_ of a component. It does not assert behavior over time, branch on user input, or verify store interactions. A dropdown's story shows the menu open and closed; a test verifies that pressing `Escape` closes it.
 
@@ -366,7 +374,7 @@ A leaf rendered inside a `<Teleport>` still emits to its parent component (the s
 
 - **Object URLs**: jsdom's `URL.createObjectURL`/`revokeObjectURL` read browser-internal Blob buffers and throw on plain `File` objects. When the code under test creates object URLs, mock them in the spec setup (after any `resetAllMocks`) so `createObjectURL` returns an opaque string and `revokeObjectURL` is a no-op.
 - **Disabled controls**: VTU's `trigger()` silently drops synthetic events dispatched to a `disabled` button, so a hover/click handler never runs. Dispatch the DOM event manually to reach the attached listener. Note real browsers also don't fire mouse events on disabled buttons — a hover-hint that depends on them is a design fix, not a test fix.
-- **Watcher flush**: default watchers flush async. Assert watcher-driven effects (a localStorage persist, a store write) after awaiting a tick; `immediate` watchers already ran at instantiation. Consolidating several composables' watchers into one store changes *when* side effects fire across test paths — a prune/merge that used to live in a separate composable now runs wherever the shared store is instantiated; give test fixtures real references so the watcher behaves the way the production tree drives it.
+- **Watcher flush**: default watchers flush async. Assert watcher-driven effects (a localStorage persist, a store write) after awaiting a tick; `immediate` watchers already ran at instantiation. Consolidating several composables' watchers into one store changes _when_ side effects fire across test paths — a prune/merge that used to live in a separate composable now runs wherever the shared store is instantiated; give test fixtures real references so the watcher behaves the way the production tree drives it.
 - **Store-backed props**: presentational leaves derive state from props. When a test types in a leaf's input, it then flows the draft back down with a prop update to simulate the container round-trip, before asserting the resulting emit.
 - **Specs aren't type-checked**: `tsconfig.app.json` excludes `*.spec.ts` and `*.stories.ts`, so fixture literals drift silently — a union-typed key widening to a plain string never fails compile. Type fixtures as faithfully as production inputs: freeze literal configs, and type records against their imported domain types.
 
@@ -404,21 +412,21 @@ A store or store-using-composable test:
 
 When naming anything, check this table first:
 
-| Category                | Pattern                               | Example                                                            |
-| ----------------------- | ------------------------------------- | ------------------------------------------------------------------ |
-| **Boolean ref**         | `is` + Adjective/Noun                 | an open flag like `isModelMenuOpen`                                |
-| **Boolean computed**    | `is`/`has`/`should` prefix            | `hasNoModelSelected`, `shouldShowCapabilities`                     |
-| **Data ref**            | Descriptive noun                      | `selectedModel`, `attachedFiles`                                   |
-| **Collection computed** | Noun + derivation                     | `conversationsSortedByUpdated`                                     |
-| **Action function**     | Verb + Noun                           | `changeModel`, `toggleModelMenu`, `createConversation`             |
-| **Event handler**       | `on` + Event name                     | `onFileInputChange`, `onDocumentClick`                             |
-| **Cleanup function**    | Verb + What + Action                  | `revokeAllObjectUrls`, `closeAllMenus`                             |
-| **Formatting helper**   | `format` + What + As                  | `formatContextUsagePercent`                                        |
-| **Calculation helper**  | `calc` + What                         | `calcTokenPercent`                                                 |
-| **Predicate helper**    | `is`/`has` + What                     | `isConversationExpired`                                            |
-| **Component file**      | Noun phrase describing the UI element | `StreamSettingsMenu.vue`, `SubscribedEventItem.vue`                |
-| **Composable file**     | `use-` + Domain concept               | `use-blink.ts`, `use-menu-position.ts`                             |
-| **Store file**          | Domain concept, setup store           | `left-toolbar.ts` → `useLeftToolbarStore`                          |
-| **Helper file**         | Function name + `.helper.ts`          | `strip-html.helper.ts`                                             |
-| **Test file**           | Same name + `.spec.ts`                | `strip-html.helper.spec.ts`                                        |
-| **Story file**          | Same name + `.stories.ts`             | `ModelSelector.stories.ts`                                         |
+| Category                | Pattern                               | Example                                                |
+| ----------------------- | ------------------------------------- | ------------------------------------------------------ |
+| **Boolean ref**         | `is` + Adjective/Noun                 | an open flag like `isModelMenuOpen`                    |
+| **Boolean computed**    | `is`/`has`/`should` prefix            | `hasNoModelSelected`, `shouldShowCapabilities`         |
+| **Data ref**            | Descriptive noun                      | `selectedModel`, `attachedFiles`                       |
+| **Collection computed** | Noun + derivation                     | `conversationsSortedByUpdated`                         |
+| **Action function**     | Verb + Noun                           | `changeModel`, `toggleModelMenu`, `createConversation` |
+| **Event handler**       | `on` + Event name                     | `onFileInputChange`, `onDocumentClick`                 |
+| **Cleanup function**    | Verb + What + Action                  | `revokeAllObjectUrls`, `closeAllMenus`                 |
+| **Formatting helper**   | `format` + What + As                  | `formatContextUsagePercent`                            |
+| **Calculation helper**  | `calc` + What                         | `calcTokenPercent`                                     |
+| **Predicate helper**    | `is`/`has` + What                     | `isConversationExpired`                                |
+| **Component file**      | Noun phrase describing the UI element | `StreamSettingsMenu.vue`, `SubscribedEventItem.vue`    |
+| **Composable file**     | `use-` + Domain concept               | `use-blink.ts`, `use-menu-position.ts`                 |
+| **Store file**          | Domain concept, setup store           | `left-toolbar.ts` → `useLeftToolbarStore`              |
+| **Helper file**         | Function name + `.helper.ts`          | `strip-html.helper.ts`                                 |
+| **Test file**           | Same name + `.spec.ts`                | `strip-html.helper.spec.ts`                            |
+| **Story file**          | Same name + `.stories.ts`             | `ModelSelector.stories.ts`                             |

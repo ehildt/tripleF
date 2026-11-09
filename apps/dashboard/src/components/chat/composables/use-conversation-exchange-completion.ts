@@ -5,7 +5,7 @@ import { useConversationCatalog } from '@/components/chat/composables/use-conver
 import { useConversationPersistence } from '@/components/chat/composables/use-conversation-persistence';
 import type { Conversation } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
-import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 
 interface ConversationExchangeCompletion {
   markExchangeDone: (

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { convertDocuments } from '@/api/documents.api';
 import { checkObjectExists } from '@/api/object-storage.api';
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
@@ -39,6 +40,7 @@ describe('useAttachmentIntake', () => {
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
     useConversationStore();
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
@@ -76,7 +78,7 @@ describe('useAttachmentIntake', () => {
     await useAttachmentIntake().addFiles([file]);
 
     conversationStore.setConversationId(
-      conversationStore.activeConversationId!,
+      useConversationSession().activeConversationId.value!,
       'other-conversation',
     );
 

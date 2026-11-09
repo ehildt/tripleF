@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ref } from 'vue';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
 
@@ -21,7 +22,7 @@ function activeUploadedImages(
 ) {
   return getUploadedImagesForConversation(
     conversationStore.getConversation(
-      conversationStore.activeConversationId ?? '',
+      useConversationSession().activeConversationId.value ?? '',
     ),
   );
 }
@@ -29,6 +30,7 @@ function activeUploadedImages(
 describe('useAddImageToFiles', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
   });
 
   function setupActiveConversation() {

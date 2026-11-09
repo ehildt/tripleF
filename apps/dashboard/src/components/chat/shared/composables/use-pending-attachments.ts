@@ -1,5 +1,6 @@
 import { computed, type ComputedRef } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import type {
   AttachedFileEntry,
   AttachedFileKind,
@@ -30,9 +31,10 @@ interface PendingAttachments {
 export function usePendingAttachments(): PendingAttachments {
   const attachedFilesStore = useAttachedFilesStore();
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
 
   const activeScope = computed<PendingAttachmentScope | null>(() => {
-    const parentConversationId = conversationStore.activeConversationId;
+    const parentConversationId = conversationSession.activeConversationId.value;
     if (!parentConversationId) return null;
     const conversationId =
       conversationStore.getConversationId(parentConversationId);

@@ -2,6 +2,7 @@ import { computed } from 'vue';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
@@ -15,13 +16,14 @@ import { useSelectedModel } from './use-selected-model';
  */
 export function useContextSize() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const catalog = useConversationCatalog();
   const configuration = useConversationConfiguration();
   const modelsStore = useModelsStore();
   const { selectedModelDetails } = useSelectedModel();
 
   const activeConversationId = computed(
-    () => conversationStore.activeConversationId ?? '',
+    () => conversationSession.activeConversationId.value ?? '',
   );
 
   const activeConversation = computed(

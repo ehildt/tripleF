@@ -1,7 +1,7 @@
 import { watch } from 'vue';
 
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
-import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 
 import { usePendingAttachments } from '../shared/composables/use-pending-attachments';
 
@@ -11,7 +11,7 @@ import { usePendingAttachments } from '../shared/composables/use-pending-attachm
  * lifetime without making application boot instantiate the conversation store.
  */
 export function useAttachmentConversationSync(): void {
-  const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const configuration = useConversationConfiguration();
   const { selectedFiles } = usePendingAttachments();
 
@@ -19,7 +19,7 @@ export function useAttachmentConversationSync(): void {
     selectedFiles,
     (files) => {
       void configuration.setSavedFileInfos(
-        conversationStore.activeConversationId ?? '',
+        conversationSession.activeConversationId.value ?? '',
         files,
       );
     },

@@ -12,6 +12,7 @@ import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
 import { classifySelectedFiles } from '@/components/chat/helpers/classify-selected-files.helper';
 import { hasVisionConflict } from '@/components/chat/helpers/has-vision-conflict.helper';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useMergeSelection } from '@/components/chat/shared/composables/use-merge-selection';
 import { calcTotalContextPercentage } from '@/components/chat/shared/helpers/calc-total-context-percentage.helper';
 import {
@@ -26,9 +27,9 @@ import type {
   UploadedDocument,
 } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
-import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
 import { useModelsStore } from '@/stores/models/models.store';
 import type {
   ConversationMetadataDocument,
@@ -50,6 +51,8 @@ export function useSubmit() {
   const conversationSettingsStore = useConversationSettingsStore();
   const memorySpacesStore = useMemorySpacesStore();
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
+  const mergeSelectionStore = useMergeSelectionStore();
   const catalog = useConversationCatalog();
   const configuration = useConversationConfiguration();
   const turns = useConversationTurns();
@@ -57,17 +60,16 @@ export function useSubmit() {
   const modelsStore = useModelsStore();
   const attachedFilesStore = useAttachedFilesStore();
   const mergeSelection = useMergeSelection();
-  const mergeSelectionStore = useMergeSelectionStore();
   const toast = useToast();
   const { postHarnessRequest } = useAssistantRequest();
 
   const isSubmitting = ref(false);
 
   const activeConversation = computed(() => {
-    if (!conversationStore.activeConversationId) return null;
+    if (!conversationSession.activeConversationId.value) return null;
     return (
       conversationStore.getConversation(
-        conversationStore.activeConversationId,
+        conversationSession.activeConversationId.value,
       ) ?? null
     );
   });
@@ -77,7 +79,7 @@ export function useSubmit() {
   );
 
   function isTokenContextFull(): boolean {
-    const conversationId = conversationStore.activeConversationId;
+    const conversationId = conversationSession.activeConversationId.value;
     if (!conversationId) return false;
     const conversation = conversationStore.getConversation(conversationId);
     if (!conversation) return false;
@@ -91,8 +93,8 @@ export function useSubmit() {
   }
 
   function ensureActiveConversation(): string {
-    if (conversationStore.activeConversationId)
-      return conversationStore.activeConversationId;
+    if (conversationSession.activeConversationId.value)
+      return conversationSession.activeConversationId.value;
     return catalog.ensureConversation().id;
   }
 
@@ -112,7 +114,7 @@ export function useSubmit() {
     if (mergedContent) {
       return JSON.stringify([{ role: 'user', content: mergedContent }]);
     }
-    const id = conversationStore.activeConversationId;
+    const id = conversationSession.activeConversationId.value;
     if (!id)
       return JSON.stringify([
         { role: 'user', content: promptDraft.value.trim() },
@@ -225,7 +227,7 @@ export function useSubmit() {
     const event = (activeConversation.value?.event ?? '').trim();
     const room = (activeConversation.value?.roomId ?? '').trim();
     const userContent = promptDraft.value.trim();
-    const sid = conversationStore.activeConversationId;
+    const sid = conversationSession.activeConversationId.value;
     const conversationId = sid ? conversationStore.getConversationId(sid) : '';
 
     const selectedForMerge = sid ? mergeSelection.selectedExchanges(sid) : [];

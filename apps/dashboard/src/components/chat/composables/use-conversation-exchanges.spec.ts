@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Conversation } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 
 import { useConversationExchanges } from './use-conversation-exchanges';
 
@@ -24,17 +25,21 @@ function seed(loaded = true): Conversation {
     conversationId: 'server-1',
   });
   conversation.loaded = loaded;
-  useConversationStore().insertConversation(conversation, true);
+  useConversationStore().insertConversation(conversation);
   return conversation;
 }
 
-function add(conversation: Conversation, role: 'user' | 'assistant') {
+function add(
+  conversation: Conversation,
+  role: 'user' | 'assistant',
+  requestId = 'request-1',
+) {
   return useConversationStore().addExchange(
     conversation.id,
     {
       role,
       content: role === 'user' ? 'Question' : 'Answer',
-      requestId: 'request-1',
+      requestId,
       status: 'done',
     },
     'New chat',
@@ -99,5 +104,30 @@ describe('useConversationExchanges', () => {
     await exchanges.deleteExchangeAndPrune(conversation.id, user.id);
     expect(conversation.exchanges).toHaveLength(0);
     expect(persistence.persistConversation).toHaveBeenCalledTimes(2);
+  });
+
+  it('prunes only the deleted pair from merge selection', async () => {
+    const conversation = seed();
+    const firstUser = add(conversation, 'user', 'request-1');
+    const firstAssistant = add(conversation, 'assistant', 'request-1');
+    const secondUser = add(conversation, 'user', 'request-2');
+    const secondAssistant = add(conversation, 'assistant', 'request-2');
+    const mergeSelectionStore = useMergeSelectionStore();
+    mergeSelectionStore.setMergeSelectedIds(conversation.id, [
+      firstUser.id,
+      firstAssistant.id,
+      secondUser.id,
+      secondAssistant.id,
+    ]);
+
+    await useConversationExchanges().deleteExchangeAndPrune(
+      conversation.id,
+      firstUser.id,
+    );
+
+    expect(mergeSelectionStore.getMergeSelectedIds(conversation.id)).toEqual([
+      secondUser.id,
+      secondAssistant.id,
+    ]);
   });
 });

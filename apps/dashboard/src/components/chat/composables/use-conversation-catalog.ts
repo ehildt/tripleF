@@ -2,6 +2,7 @@ import { watch } from 'vue';
 
 import { fetchConversation } from '@/api/conversations.api';
 import { useConversationPersistence } from '@/components/chat/composables/use-conversation-persistence';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { i18n } from '@/i18n/i18n';
 import type {
   Conversation,
@@ -48,13 +49,17 @@ interface ConversationCatalog {
 /** Own catalog I/O, restore/load coordination, creation, and pin workflows. */
 export function useConversationCatalog(): ConversationCatalog {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const persistence = useConversationPersistence();
 
   function activateRestoredConversation(
     conversation: Conversation | undefined,
   ): void {
-    if (conversation) {
-      conversationStore.activateRestoredConversation(conversation.id);
+    if (
+      conversation &&
+      conversationSession.activeConversationId.value === null
+    ) {
+      conversationSession.setActiveConversationId(conversation.id);
     }
   }
 
@@ -143,7 +148,7 @@ export function useConversationCatalog(): ConversationCatalog {
 
   function watchActiveConversationBookmark(): void {
     watch(
-      () => conversationStore.activeConversationId,
+      () => conversationSession.activeConversationId.value,
       (id) => {
         if (!id) {
           localStorage.removeItem(LAST_ACTIVE_CONVERSATION_KEY);
@@ -205,9 +210,9 @@ export function useConversationCatalog(): ConversationCatalog {
   }
 
   function ensureConversation(): Conversation {
-    const existing = conversationStore.activeConversationId
+    const existing = conversationSession.activeConversationId.value
       ? conversationStore.getConversation(
-          conversationStore.activeConversationId,
+          conversationSession.activeConversationId.value,
         )
       : undefined;
     if (existing) return existing;
@@ -221,7 +226,8 @@ export function useConversationCatalog(): ConversationCatalog {
         conversationId,
       },
     );
-    conversationStore.insertConversation(conversation, true);
+    conversationStore.insertConversation(conversation);
+    conversationSession.setActiveConversationId(conversation.id);
     void persistence.persistConversation(conversation);
     return conversation;
   }
@@ -241,7 +247,8 @@ export function useConversationCatalog(): ConversationCatalog {
         roomId: roomId || '',
       },
     );
-    conversationStore.insertConversation(conversation, true);
+    conversationStore.insertConversation(conversation);
+    conversationSession.setActiveConversationId(conversation.id);
     void persistence.persistConversation(conversation);
     return conversation;
   }
@@ -251,13 +258,15 @@ export function useConversationCatalog(): ConversationCatalog {
       (candidate) => candidate.conversationId === conversation.conversationId,
     );
     if (existing) return existing;
-    conversationStore.insertConversation(conversation, false);
+    conversationStore.insertConversation(conversation);
     void persistence.persistConversation(conversation);
     return conversation;
   }
 
   function setActiveConversation(conversationStoreId: string): void {
-    conversationStore.selectConversation(conversationStoreId);
+    if (conversationStore.getConversation(conversationStoreId)) {
+      conversationSession.setActiveConversationId(conversationStoreId);
+    }
     void loadConversation(conversationStoreId);
   }
 

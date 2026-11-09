@@ -6,10 +6,10 @@ import { useConversationDocuments } from '@/components/chat/composables/use-conv
 import { useConversationExchangeCompletion } from '@/components/chat/composables/use-conversation-exchange-completion';
 import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
 import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
 
@@ -22,7 +22,7 @@ import type { PostHarnessRequestOptions } from './use-assistant-request.types';
 export function useAssistantRequest() {
   const socketProvider = useSocketProvider();
 
-  const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const configuration = useConversationConfiguration();
   const completion = useConversationExchangeCompletion();
   const images = useConversationImages();
@@ -87,7 +87,7 @@ export function useAssistantRequest() {
         toast.error(
           i18n.global.t('toast.requestError', { status: res.status }),
         );
-        const id = conversationStore.activeConversationId;
+        const id = conversationSession.activeConversationId.value;
         if (id) void completion.markExchangeError(id, requestId, msg);
         return;
       }
@@ -111,7 +111,7 @@ export function useAssistantRequest() {
       const msg = e instanceof Error ? e.message : String(e);
       toast.debug(msg);
       toast.error(i18n.global.t('toast.serverUnreachable'));
-      const id = conversationStore.activeConversationId;
+      const id = conversationSession.activeConversationId.value;
       if (id) void completion.markExchangeError(id, requestId, msg);
     }
   }

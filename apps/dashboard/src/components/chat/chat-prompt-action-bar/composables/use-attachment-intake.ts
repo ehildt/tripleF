@@ -6,6 +6,7 @@ import { useConversationCatalog } from '@/components/chat/composables/use-conver
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { useConversationDocuments } from '@/components/chat/composables/use-conversation-documents';
 import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
@@ -28,6 +29,7 @@ interface AttachmentIntake {
 export function useAttachmentIntake(): AttachmentIntake {
   const attachedFilesStore = useAttachedFilesStore();
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const catalog = useConversationCatalog();
   const configuration = useConversationConfiguration();
   const images = useConversationImages();
@@ -36,7 +38,7 @@ export function useAttachmentIntake(): AttachmentIntake {
   const toast = useToast();
 
   function ensureConversation(): string {
-    const parentConversationId = conversationStore.activeConversationId;
+    const parentConversationId = conversationSession.activeConversationId.value;
     if (!parentConversationId) return '';
     if (!conversationStore.getConversationId(parentConversationId))
       void configuration.setConversationId(parentConversationId, createId());
@@ -181,7 +183,8 @@ export function useAttachmentIntake(): AttachmentIntake {
 
   async function addFiles(files: File[]): Promise<void> {
     const parentConversationId =
-      conversationStore.activeConversationId || catalog.ensureConversation().id;
+      conversationSession.activeConversationId.value ||
+      catalog.ensureConversation().id;
     const conversationId = ensureConversation() || createId();
     if (!parentConversationId) return;
     void configuration.setConversationId(parentConversationId, conversationId);

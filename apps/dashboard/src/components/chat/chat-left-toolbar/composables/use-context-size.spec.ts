@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useModelsStore } from '@/stores/models/models.store';
 import type { OllamaModel } from '@/types/ollama-model.model';
@@ -23,6 +24,7 @@ vi.mock('./use-selected-model', async () => {
 describe('useContextSize', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
     localStorage.clear();
     selectedModel.details.value = null;
   });
