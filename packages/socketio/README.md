@@ -14,21 +14,17 @@ A NestJS module for building real-time applications with Socket.IO — room mana
 <!-- DEPBADGE:START -->
 <div align="center">
 
-
-
 # StatusBadges
 
 ![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 ![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![license](https://img.shields.io/badge/license-PolyForm%20Strict%201.0.0-b16425?labelColor=333&style=for-the-badge&logo=github&logoColor=b16425&logoWidth=40)
 
 </div>
 
 <br>
 
 <div align="center">
-
-
 
 # DevDependencies
 
@@ -64,8 +60,6 @@ A NestJS module for building real-time applications with Socket.IO — room mana
 <br>
 
 <div align="center">
-
-
 
 # PeerDependencies
 

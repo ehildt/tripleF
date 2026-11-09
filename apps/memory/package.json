@@ -2,7 +2,7 @@
   "name": "@triplef/memory",
   "description": "tripleF (3F) memory app — the outsourced Qdrant/vector-memory service (NestJS + Fastify): semantic memory store, cognition profiles, and the BullMQ vectorize pipeline (embed/extract/store).",
   "version": "1.2.1",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "author": {
     "email": "eugen.hildt@gmail.com",

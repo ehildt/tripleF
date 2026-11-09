@@ -1,8 +1,14 @@
 # Contributing to tripleF (3F)
 
-Thanks for your interest in contributing! tripleF is an open-source agentic AI workbench, and we welcome contributions of all kinds — code, docs, bug reports, and feature ideas.
+Thanks for your interest in contributing! tripleF is a source-available agentic AI workbench, and we welcome bug reports, feature ideas, and proposed contributions.
 
 Please read this guide before opening an issue or pull request. By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Licensing and permission
+
+tripleF's first-party code is licensed under the [PolyForm Strict License 1.0.0](LICENSE). The public license permits noncommercial use, but it does not permit modification or redistribution.
+
+Open an issue and obtain permission before creating a patch or pull request. Code contributions require a separate written contributor agreement granting the copyright holder the rights needed to distribute and commercially license the contribution. Do not submit code until that agreement is in place.
 
 ## Getting started
 
@@ -18,7 +24,7 @@ Please read this guide before opening an issue or pull request. By participating
 
 ## Making changes
 
-1. **Discuss before you build.** Open an issue first to discuss what you would like to change or add. This avoids wasted effort on work that won't be merged.
+1. **Discuss and obtain permission before you build.** Open an issue first to discuss what you would like to change or add. Do not modify the code until the proposal has been approved and the required contributor agreement is in place.
 2. **Branch from `main`** and keep changes focused on a single concern.
 3. **Follow the conventions** in the relevant skill docs:
    - Vue 3 / frontend: `dashboard/` — see the Vue conventions.
