@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia';
+
 import { useContextSize } from '@/components/chat/chat-left-toolbar/composables/use-context-size';
 import { useLeftToolbarMenus } from '@/components/chat/chat-left-toolbar/composables/use-left-toolbar-menus';
 import { useNewConversationForm } from '@/components/chat/chat-left-toolbar/composables/use-new-conversation-form';
 import { useNewSocketForm } from '@/components/chat/chat-left-toolbar/composables/use-new-socket-form';
 import { useSelectedModel } from '@/components/chat/chat-left-toolbar/composables/use-selected-model';
 import { useLeftToolbarView } from '@/components/chat/chat-left-toolbar/tabs/composables/use-left-toolbar-view';
+import { useModelsStore } from '@/stores/models/models.store';
 
 import { usePromptMenu } from './composables/use-prompt-menu';
 import ConversationMenu from './conversation-menu/ConversationMenu.vue';
@@ -19,13 +22,9 @@ const {
   toggleModelMenu,
 } = useLeftToolbarMenus();
 
-const {
-  hasNoModelSelected,
-  selectedModelName,
-  localModels,
-  cloudModels,
-  modelsLoading,
-} = useSelectedModel();
+const { hasNoModelSelected, selectedModelName } = useSelectedModel();
+const { localModels, cloudModels, modelsLoading } =
+  storeToRefs(useModelsStore());
 
 const { contextOptions, selectNumCtx } = useContextSize();
 

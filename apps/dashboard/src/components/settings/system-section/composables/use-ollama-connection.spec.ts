@@ -2,8 +2,6 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
-import { useModelsStore } from '@/stores/models/models.store';
-
 import { useOllamaConnection } from './use-ollama-connection';
 
 const settingsState = {
@@ -11,7 +9,11 @@ const settingsState = {
   patchConfig: vi.fn(),
   resetProvider: vi.fn(),
 };
+const modelCatalog = vi.hoisted(() => ({ fetchModels: vi.fn() }));
 
+vi.mock('@/components/app/composables/use-model-catalog', () => ({
+  useModelCatalog: () => modelCatalog,
+}));
 vi.mock('../../composables/use-settings-config', () => ({
   useSettingsConfig: () => ({
     config: ref({ ollama: { apiKey: 'abcd****wxyz', host: 'https://ollama' } }),
@@ -27,6 +29,7 @@ describe('useOllamaConnection', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    modelCatalog.fetchModels.mockResolvedValue(undefined);
   });
 
   it('syncs the drafts from the masked config', async () => {
@@ -38,11 +41,6 @@ describe('useOllamaConnection', () => {
 
   it('saves the API key and refetches the models on success', async () => {
     settingsState.updateApiKey.mockResolvedValue(true);
-    const modelsStore = useModelsStore();
-    const fetchModels = vi
-      .spyOn(modelsStore, 'fetchModels')
-      .mockResolvedValue(undefined);
-
     const { apiKeyDraft, submitApiKey } = useOllamaConnection();
     apiKeyDraft.value = 'new-secret-key';
     await submitApiKey();
@@ -51,29 +49,19 @@ describe('useOllamaConnection', () => {
       'ollama',
       'new-secret-key',
     );
-    expect(fetchModels).toHaveBeenCalledTimes(1);
+    expect(modelCatalog.fetchModels).toHaveBeenCalledTimes(1);
   });
 
   it('does not refetch the models when the key save fails', async () => {
     settingsState.updateApiKey.mockResolvedValue(false);
-    const modelsStore = useModelsStore();
-    const fetchModels = vi
-      .spyOn(modelsStore, 'fetchModels')
-      .mockResolvedValue(undefined);
-
     const { apiKeyDraft, submitApiKey } = useOllamaConnection();
     apiKeyDraft.value = 'new-secret-key';
     await submitApiKey();
 
-    expect(fetchModels).not.toHaveBeenCalled();
+    expect(modelCatalog.fetchModels).not.toHaveBeenCalled();
   });
 
   it('saves the host and refetches the models', async () => {
-    const modelsStore = useModelsStore();
-    const fetchModels = vi
-      .spyOn(modelsStore, 'fetchModels')
-      .mockResolvedValue(undefined);
-
     const { hostDraft, submitHost } = useOllamaConnection();
     hostDraft.value = 'https://ollama.com/api';
     await submitHost();
@@ -83,6 +71,6 @@ describe('useOllamaConnection', () => {
       'host',
       'https://ollama.com/api',
     );
-    expect(fetchModels).toHaveBeenCalledTimes(1);
+    expect(modelCatalog.fetchModels).toHaveBeenCalledTimes(1);
   });
 });

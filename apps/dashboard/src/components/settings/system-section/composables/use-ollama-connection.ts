@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useModelsStore } from '@/stores/models/models.store';
+import { useModelCatalog } from '@/components/app/composables/use-model-catalog';
 
 import { useApiKeyForm } from '../../composables/use-api-key-form';
 import { useHostForm } from '../../composables/use-host-form';
@@ -22,20 +22,20 @@ export function useOllamaConnection() {
     updateApiKey,
   } = useSettingsConfig();
 
-  const modelsStore = useModelsStore();
+  const modelCatalog = useModelCatalog();
 
   const maskedOllamaApiKey = computed(() => config.value?.ollama.apiKey ?? '');
   const ollamaHost = computed(() => config.value?.ollama.host ?? '');
 
   async function saveOllamaApiKey(apiKey: string) {
     const saved = await updateApiKey('ollama', apiKey);
-    if (saved) await modelsStore.fetchModels();
+    if (saved) await modelCatalog.fetchModels();
     return saved;
   }
 
   async function saveOllamaHost(host: string) {
     await patchConfig('ollama', 'host', host);
-    await modelsStore.fetchModels();
+    await modelCatalog.fetchModels();
   }
 
   const {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Brain, CircleGauge, Network, Radio, Tag } from '@lucide/vue';
+import { storeToRefs } from 'pinia';
 import { toRef } from 'vue';
 
 import FieldGrid from '@/components/shared/ui/field-grid/FieldGrid.vue';
@@ -7,6 +8,7 @@ import ModelFieldCard from '@/components/shared/ui/model-field-card/ModelFieldCa
 import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFieldCard.vue';
 import SelectFieldCard from '@/components/shared/ui/select-field-card/SelectFieldCard.vue';
 import TextFieldCard from '@/components/shared/ui/text-field-card/TextFieldCard.vue';
+import { useModelsStore } from '@/stores/models/models.store';
 import { formatContextSize } from '@/utils/format-context-size/format-context-size.helper';
 
 import { useDlqTopBarFilters } from './composables/use-dlq-top-bar-filters';
@@ -29,14 +31,14 @@ const {
   isMemoryJob,
   streamChecked,
   streamDisabled,
-  localModels,
-  cloudModels,
-  modelsLoading,
 } = useDlqTopBarFilters(
   toRef(props, 'entry'),
   toRef(props, 'models'),
   toRef(props, 'isImmutable'),
 );
+
+const { localModels, cloudModels, modelsLoading } =
+  storeToRefs(useModelsStore());
 
 function toggleStream() {
   if (isMemoryJob.value) return;

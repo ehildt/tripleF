@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 
+import { useModelCatalog } from '@/components/app/composables/use-model-catalog';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import type { LeftToolbarMenuKey } from './use-left-toolbar-menus.types';
@@ -32,6 +33,7 @@ const isConversationMenuOpen = computed(() => isMenuOpen('conversation'));
 const isStreamMenuOpen = computed(() => isMenuOpen('stream'));
 
 export function useLeftToolbarMenus() {
+  const modelCatalog = useModelCatalog();
   const modelsStore = useModelsStore();
   const { hasNoModelSelected } = useSelectedModel();
 
@@ -40,7 +42,7 @@ export function useLeftToolbarMenus() {
     closeAllMenus();
     if (!wasOpen) {
       openMenu('model');
-      void modelsStore.fetchModels({ refresh: true });
+      void modelCatalog.fetchModels({ refresh: true });
     }
   }
 
@@ -51,7 +53,7 @@ export function useLeftToolbarMenus() {
     if (wasOpen) return;
     openMenu('conversation');
     if (!modelsStore.models.length)
-      void modelsStore.fetchModels({ refresh: true });
+      void modelCatalog.fetchModels({ refresh: true });
   }
 
   function toggleStreamMenu() {

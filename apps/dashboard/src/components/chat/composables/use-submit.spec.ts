@@ -6,7 +6,6 @@ import { useSocket } from '@/composables/use-socket/use-socket';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
-import { useModelsStore } from '@/stores/models/models.store';
 
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
 import { usePromptDraft } from './use-prompt-draft';
@@ -21,6 +20,11 @@ const toast = vi.hoisted(() => ({
 
 const postHarnessRequest = vi.hoisted(() => vi.fn(async () => undefined));
 const buildPrompt = vi.hoisted(() => vi.fn(async () => '[]'));
+const modelCatalog = vi.hoisted(() => ({ whenModelsReady: vi.fn() }));
+
+vi.mock('@/components/app/composables/use-model-catalog', () => ({
+  useModelCatalog: () => modelCatalog,
+}));
 
 vi.mock('./use-conversation-prompt', () => ({
   useConversationPrompt: () => ({ buildPrompt }),
@@ -100,6 +104,8 @@ describe('useSubmit', () => {
     toast.warning.mockClear();
     postHarnessRequest.mockClear();
     buildPrompt.mockClear();
+    modelCatalog.whenModelsReady.mockClear();
+    modelCatalog.whenModelsReady.mockResolvedValue(undefined);
     usePromptDraft().promptDraft.value = '';
   });
 
@@ -180,9 +186,6 @@ describe('useSubmit', () => {
   it('stops before the transport when no model is available', async () => {
     seedDraft();
     useConversationCatalog().createNewConversation();
-    const modelsStore = useModelsStore();
-    vi.spyOn(modelsStore, 'whenModelsReady').mockResolvedValue(undefined);
-
     const { isSubmitting, submit } = useSubmit();
     await submit();
 
