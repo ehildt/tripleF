@@ -1,3 +1,8 @@
+import type {
+  TemplateName,
+  TemplatePartDefinition,
+} from './template-parts-settings.model';
+
 /**
  * The client-side catalog of toggleable response parts per template. This is
  * a pure display preference: the model still produces every section, the
@@ -6,29 +11,6 @@
  * keys before the template component renders (every section self-hides when
  * its data is absent).
  */
-
-export interface TemplatePartDefinition {
-  /** Stable part id (also used for the i18n label key suffix). */
-  id: string;
-  /** The response data keys this part owns; stripped when disabled. */
-  keys: string[];
-}
-
-export type TemplateName =
-  | 'article'
-  | 'news'
-  | 'describe'
-  | 'compare'
-  | 'ocr'
-  | 'summary'
-  | 'evaluation'
-  | 'product'
-  | 'shoplist'
-  | 'imagelist'
-  | 'videolist'
-  | 'stockmarketitem'
-  | 'stockmarketlist'
-  | 'text';
 
 /** The harness template catalog order (kept in sync with the server). */
 export const TEMPLATE_NAMES: readonly TemplateName[] = [
@@ -48,7 +30,7 @@ export const TEMPLATE_NAMES: readonly TemplateName[] = [
   'text',
 ];
 
-const HERO_KEYS = [
+const HERO_KEYS: TemplatePartDefinition['keys'] = [
   'heroImageUrl',
   'heroImageAlt',
   'heroCaption',
@@ -57,8 +39,16 @@ const HERO_KEYS = [
   'heroVideoCaption',
 ];
 
-const GALLERY_KEYS = ['galleryTitle', 'galleryItems'];
-const VIDEO_GALLERY_KEYS = ['videoGalleryTitle', 'videoGalleryItems'];
+export const TEMPLATE_PARTS_STORAGE_KEY = 'vision-template-parts';
+
+const GALLERY_KEYS: TemplatePartDefinition['keys'] = [
+  'galleryTitle',
+  'galleryItems',
+];
+const VIDEO_GALLERY_KEYS: TemplatePartDefinition['keys'] = [
+  'videoGalleryTitle',
+  'videoGalleryItems',
+];
 
 export const TEMPLATE_PARTS: Record<TemplateName, TemplatePartDefinition[]> = {
   article: [

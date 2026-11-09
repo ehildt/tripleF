@@ -1,10 +1,14 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TEMPLATE_NAMES } from './template-parts-settings.constant';
 import { useTemplatePartsSettingsStore } from './template-parts-settings.store';
 
 describe('useTemplatePartsSettingsStore', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
@@ -25,6 +29,7 @@ describe('useTemplatePartsSettingsStore', () => {
     const store = useTemplatePartsSettingsStore();
     expect(store.isTemplatePartVisible('article', 'hero')).toBe(true);
     expect(store.isTemplatePartVisible('article', 'not-a-part')).toBe(true);
+    expect(store.isTemplatePartVisible('article', 'constructor')).toBe(true);
     expect(store.isTemplatePartVisible('not-a-template', 'x')).toBe(true);
   });
 
@@ -41,7 +46,9 @@ describe('useTemplatePartsSettingsStore', () => {
     const store = useTemplatePartsSettingsStore();
     const before = JSON.stringify(store.templatePartsVisibility);
     store.setTemplatePartVisible('article', 'nope', false);
+    store.setTemplatePartVisible('article', 'constructor', false);
     expect(JSON.stringify(store.templatePartsVisibility)).toBe(before);
+    expect(localStorage.getItem('vision-template-parts')).toBeNull();
   });
 
   it('persists visibility to storage', () => {
@@ -60,6 +67,38 @@ describe('useTemplatePartsSettingsStore', () => {
     );
     const store = useTemplatePartsSettingsStore();
     expect(store.isTemplatePartVisible('article', 'hero')).toBe(false);
+  });
+
+  it('uses pristine defaults for corrupt storage', () => {
+    localStorage.setItem('vision-template-parts', '{');
+
+    const store = useTemplatePartsSettingsStore();
+
+    expect(store.isTemplatePartVisible('article', 'hero')).toBe(true);
+    expect(store.isTemplatePartVisible('news', 'sources')).toBe(true);
+  });
+
+  it('uses defaults when storage reads are unavailable', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    const store = useTemplatePartsSettingsStore();
+
+    expect(store.isTemplatePartVisible('article', 'hero')).toBe(true);
+  });
+
+  it('keeps changes in memory when storage writes are unavailable', () => {
+    const store = useTemplatePartsSettingsStore();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+
+    expect(() => {
+      store.setTemplatePartVisible('article', 'hero', false);
+      store.resetTemplateParts();
+    }).not.toThrow();
+    expect(store.isTemplatePartVisible('article', 'hero')).toBe(true);
   });
 
   it('resets every part back to enabled', () => {

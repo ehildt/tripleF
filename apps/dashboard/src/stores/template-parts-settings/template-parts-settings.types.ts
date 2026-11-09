@@ -1,4 +1,4 @@
-import type { TemplateName } from './template-parts-settings.constant';
+import type { TemplateName } from './template-parts-settings.model';
 
 /**
  * Per-template, per-part on/off map persisted as the template-parts widget
