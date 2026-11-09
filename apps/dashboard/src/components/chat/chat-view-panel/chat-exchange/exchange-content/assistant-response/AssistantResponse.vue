@@ -3,14 +3,10 @@ import type { Component } from 'vue';
 import { computed } from 'vue';
 
 import { isTrustedImageUrl } from '@/components/chat/shared/helpers/assistant-response/media/is-trusted-image-url.helper';
-import { TEMPLATE_PARTS } from '@/stores/template-parts-settings/template-parts-settings.constant';
-import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings/template-parts-settings.store';
-import type {
-  AssistantResponseData,
-  GalleryItem,
-} from '@/types/assistant-response-data.model';
+import type { GalleryItem } from '@/types/assistant-response-data.model';
 import type { LightboxImage } from '@/types/lightbox.model';
 
+import { useVisibleTemplateData } from './composables/use-visible-template-data';
 import ArticleResponse from './templates/article-response/ArticleResponse.vue';
 import CompareResponse from './templates/compare-response/CompareResponse.vue';
 import DescribeResponse from './templates/describe-response/DescribeResponse.vue';
@@ -26,20 +22,14 @@ import StockmarketListResponse from './templates/stockmarket-list-response/Stock
 import SummaryResponse from './templates/summary-response/SummaryResponse.vue';
 import TextResponse from './templates/text-response/TextResponse.vue';
 import VideoListResponse from './templates/video-list-response/VideoListResponse.vue';
+import type {
+  AssistantResponseEmits,
+  AssistantResponseProps,
+} from './AssistantResponse.types';
 
-const props = defineProps<{
-  template: string;
-  data?: AssistantResponseData;
-  text?: string;
-  /** Chart data streamed from EODHD tools, keyed by tool name. */
-  chartData?: Record<string, unknown>;
-  /** True once the respond step starts streaming — reveal the charts. */
-  revealCharts?: boolean;
-}>();
+const props = defineProps<AssistantResponseProps>();
 
-const emit = defineEmits<{
-  (e: 'imageClicked', images: LightboxImage[], clickedUrl: string): void;
-}>();
+const emit = defineEmits<AssistantResponseEmits>();
 
 const templateMap: Record<string, Component> = {
   article: ArticleResponse,
@@ -63,30 +53,10 @@ const activeComponent = computed(
   () => templateMap[props.template] ?? TextResponse,
 );
 
-const templatePartsSettingsStore = useTemplatePartsSettingsStore();
-
-/**
- * The client-side part visibility (Settings → Layouts): drop the data keys of
- * every disabled part before the template renders. Sections self-hide when
- * their data is absent, so a disabled part simply never renders — the model
- * output is untouched.
- */
-const visibleData = computed<AssistantResponseData>(() => {
-  const parts = TEMPLATE_PARTS[props.template as keyof typeof TEMPLATE_PARTS];
-  if (!parts || parts.length === 0) return props.data ?? {};
-  const hiddenKeys = new Set<string>();
-  for (const part of parts) {
-    if (
-      !templatePartsSettingsStore.isTemplatePartVisible(props.template, part.id)
-    ) {
-      for (const key of part.keys) hiddenKeys.add(key);
-    }
-  }
-  if (hiddenKeys.size === 0) return props.data ?? {};
-  const result: Record<string, unknown> = { ...props.data };
-  for (const key of hiddenKeys) delete result[key];
-  return result as AssistantResponseData;
-});
+const visibleData = useVisibleTemplateData(
+  () => props.template,
+  () => props.data,
+);
 
 /**
  * Only the stockmarket templates consume chartData/revealCharts. Passing

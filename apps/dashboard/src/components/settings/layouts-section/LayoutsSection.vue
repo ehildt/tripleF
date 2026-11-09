@@ -33,8 +33,8 @@ import { i18n } from '@/i18n/i18n';
 import {
   TEMPLATE_NAMES,
   TEMPLATE_PARTS,
-  type TemplateName,
 } from '@/stores/template-parts-settings/template-parts-settings.constant';
+import type { TemplateName } from '@/stores/template-parts-settings/template-parts-settings.model';
 import { useTemplatePartsSettingsStore } from '@/stores/template-parts-settings/template-parts-settings.store';
 
 import { useSettingsConfig } from '../composables/use-settings-config';
