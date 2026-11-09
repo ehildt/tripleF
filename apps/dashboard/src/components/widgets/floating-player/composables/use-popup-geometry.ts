@@ -1,8 +1,10 @@
-import { computed, type Ref } from 'vue';
+import { computed } from 'vue';
 
+import type { FloatingPopupRect } from '@/composables/create-playback-session/create-playback-session.types';
 import { clampRectToViewport } from '@/composables/helpers/clamp-rect-to-viewport.helper';
 import { trackPointerGesture } from '@/composables/helpers/track-pointer-gesture.helper';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
 import type { ResizeDirection } from '@/types/resize-direction.model';
 
 import { POPUP_ANCHOR_STYLES } from '../../popup-anchor-styles.constant';
@@ -11,9 +13,9 @@ import {
   MIN_PLAYER_MEDIA_HEIGHT_PX,
   MIN_PLAYER_MEDIA_WIDTH_PX,
 } from './player-media-floor.constant';
+import type { PopupGeometryControls } from './use-popup-geometry.types';
 
-/** Smallest popup: the media box keeps ≥360×200px (YouTube's hard floor for
- * players showing controls) even with the media bar visible on top. */
+/** Smallest popup: media ≥360×200px even with the media bar visible. */
 const MIN_POPUP_WIDTH_PX = MIN_PLAYER_MEDIA_WIDTH_PX;
 const MIN_POPUP_HEIGHT_PX =
   MIN_PLAYER_MEDIA_HEIGHT_PX + FLOATING_MEDIA_BAR_HEIGHT_PX;
@@ -22,52 +24,49 @@ const OPACITY_SNAP_STEP_PERCENT = 25;
 const OPACITY_SNAP_THRESHOLD_PERCENT = 3;
 
 /**
- * Shared geometry for the floating video popup: anchored at the configured
- * corner (Settings → Popout) until the user moves it. While position memory is
- * on, the geometry persists across players, conversations, and app reloads;
- * otherwise every popout opens at the initial anchor. Dragging keeps the
- * position, resizing keeps the aspect ratio.
+ * Own popup DOM gestures while the playback session owns numeric geometry.
+ * Pointer capture keeps drag/resize completion on the original target, and
+ * gesture completion is the only point where geometry is persisted.
  */
-export function usePopupGeometry(
-  floatingPopupOpacity: Ref<number>,
-  setFloatingPopupOpacity: (opacity: number) => void,
-) {
+export function usePopupGeometry(): PopupGeometryControls {
+  const playback = usePlaybackSession();
   const popoutSettingsStore = usePopoutSettingsStore();
 
-  const popupStyle = computed(() => {
-    const style: Record<string, string> = {
-      opacity: String(floatingPopupOpacity.value),
-      ...(popoutSettingsStore.floatingPopupRect
+  const popupStyle = computed<Record<string, string>>(() => {
+    const rect = playback.floatingPopupRect.value;
+    return {
+      opacity: String(playback.floatingPopupOpacity.value),
+      ...(rect
         ? {
-            left: `${popoutSettingsStore.floatingPopupRect.x}px`,
-            top: `${popoutSettingsStore.floatingPopupRect.y}px`,
-            width: `${popoutSettingsStore.floatingPopupRect.width}px`,
-            height: `${popoutSettingsStore.floatingPopupRect.height}px`,
+            left: `${rect.x}px`,
+            top: `${rect.y}px`,
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
           }
         : POPUP_ANCHOR_STYLES[popoutSettingsStore.popoutAnchor]),
     };
-
-    return style;
   });
 
-  /** Snapshot the popup's current box into the shared geometry state. */
-  function capturePopupRect(popup: HTMLElement) {
+  /** Capture a DOM box as plain numeric playback data. */
+  function capturePopupRect(popup: HTMLElement): FloatingPopupRect {
     const rect = popup.getBoundingClientRect();
-    popoutSettingsStore.floatingPopupRect = {
+    const captured = {
       x: rect.left,
       y: rect.top,
       width: rect.width,
       height: rect.height,
     };
+    playback.setFloatingPopupRect(captured);
+    return captured;
   }
 
-  function startDrag(event: PointerEvent) {
-    const bar = event.currentTarget as HTMLElement | null;
-    const popup = bar?.parentElement;
-    if (!popup || !bar) return;
+  function startDrag(event: PointerEvent): void {
+    const bar = event.currentTarget;
+    if (!(bar instanceof HTMLElement)) return;
+    const popup = bar.parentElement;
+    if (!popup) return;
 
-    capturePopupRect(popup);
-    const startRect = { ...popoutSettingsStore.floatingPopupRect! };
+    const startRect = capturePopupRect(popup);
     const offsetX = event.clientX - startRect.x;
     const offsetY = event.clientY - startRect.y;
 
@@ -75,31 +74,29 @@ export function usePopupGeometry(
       bar,
       event,
       (move) => {
-        popoutSettingsStore.floatingPopupRect = clampRectToViewport({
-          ...startRect,
-          x: move.clientX - offsetX,
-          y: move.clientY - offsetY,
-        });
+        playback.setFloatingPopupRect(
+          clampRectToViewport({
+            ...startRect,
+            x: move.clientX - offsetX,
+            y: move.clientY - offsetY,
+          }),
+        );
       },
-      popoutSettingsStore.rememberFloatingPopupRect,
+      playback.rememberFloatingPopupRect,
     );
   }
 
-  /**
-   * Resize from any edge or corner while keeping the popup's aspect ratio.
-   * The opposite side stays anchored; the dominant pointer axis drives the
-   * scale so diagonal corner drags feel natural.
-   */
-  function startResize(direction: ResizeDirection, event: PointerEvent) {
+  /** Resize from any edge/corner while preserving the popup aspect ratio. */
+  function startResize(direction: ResizeDirection, event: PointerEvent): void {
     event.preventDefault();
     event.stopPropagation();
 
-    const handle = event.currentTarget as HTMLElement | null;
-    const popup = handle?.parentElement;
-    if (!popup || !handle) return;
+    const handle = event.currentTarget;
+    if (!(handle instanceof HTMLElement)) return;
+    const popup = handle.parentElement;
+    if (!popup) return;
 
-    capturePopupRect(popup);
-    const start = { ...popoutSettingsStore.floatingPopupRect! };
+    const start = capturePopupRect(popup);
     const ratio = start.width / start.height;
     const startClientX = event.clientX;
     const startClientY = event.clientY;
@@ -136,32 +133,33 @@ export function usePopupGeometry(
         );
         const height = Math.max(MIN_POPUP_HEIGHT_PX, width / ratio);
 
-        popoutSettingsStore.floatingPopupRect = clampRectToViewport({
-          x: direction.includes('w')
-            ? start.x + (start.width - width)
-            : start.x,
-          y: direction.includes('n')
-            ? start.y + (start.height - height)
-            : start.y,
-          width,
-          height,
-        });
+        playback.setFloatingPopupRect(
+          clampRectToViewport({
+            x: direction.includes('w')
+              ? start.x + (start.width - width)
+              : start.x,
+            y: direction.includes('n')
+              ? start.y + (start.height - height)
+              : start.y,
+            width,
+            height,
+          }),
+        );
       },
-      popoutSettingsStore.rememberFloatingPopupRect,
+      playback.rememberFloatingPopupRect,
     );
   }
 
-  /**
-   * Set the popup opacity in percent (25–100). Values near a 25% step snap
-   * to it; everything in between adjusts finely.
-   */
-  function setOpacity(percent: number) {
+  /** Set opacity percent with snapping only near each quarter step. */
+  function setOpacity(percent: number): void {
     const snapped =
       Math.round(percent / OPACITY_SNAP_STEP_PERCENT) *
       OPACITY_SNAP_STEP_PERCENT;
     const withinSnapZone =
       Math.abs(percent - snapped) <= OPACITY_SNAP_THRESHOLD_PERCENT;
-    setFloatingPopupOpacity((withinSnapZone ? snapped : percent) / 100);
+    playback.setFloatingPopupOpacity(
+      (withinSnapZone ? snapped : percent) / 100,
+    );
   }
 
   return { popupStyle, startDrag, startResize, setOpacity };

@@ -24,8 +24,8 @@ import { usePlaylistCatalog } from './composables/use-playlist-catalog/use-playl
 import { useTheme } from './composables/use-theme/use-theme';
 import { useNavigationStore } from './stores/app/navigation/navigation.store';
 import { useDebugStore } from './stores/debug/debug.store';
-import { usePopoutSettingsStore } from './stores/popout-settings/popout-settings.store';
 import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
+import { usePopoutSettingsStore } from './stores/widgets/popout-settings/popout-settings.store';
 
 const debugStore = useDebugStore();
 const modelCatalog = useModelCatalog();

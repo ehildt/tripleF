@@ -1,9 +1,13 @@
 import { computed, ref } from 'vue';
 
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
+import { POPOUT_RECT_STORAGE_KEY } from '@/stores/widgets/popout-settings/popout-settings.constant';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
+
+import { parseFloatingPopupRect } from './helpers/parse-floating-popup-rect.helper';
+import type { FloatingPopupRect } from './create-playback-session.types';
 
 const PLAYLIST_AUTOPLAY_STORAGE_KEY = 'vision-playlist-autoplay';
 
@@ -47,6 +51,16 @@ export function createPlaybackSession() {
   // ── Preferences / window knobs ─────────────────────────
   const playlistAutoplayEnabled = ref(loadPlaylistAutoplayEnabled());
   const floatingPopupOpacity = ref(1);
+  const floatingPopupRect = ref<FloatingPopupRect | null>(null);
+  if (popoutSettingsStore.popoutRememberPosition) {
+    try {
+      floatingPopupRect.value = parseFloatingPopupRect(
+        localStorage.getItem(POPOUT_RECT_STORAGE_KEY),
+      );
+    } catch {
+      /* Storage unavailable: use the configured anchor. */
+    }
+  }
 
   /** Docked playlist tab visibility — read by the app-level marquee. */
   const dockedPlaylistPanelVisible = ref(false);
@@ -83,12 +97,50 @@ export function createPlaybackSession() {
     playbackAnchorStore.resetDockForLaunch();
   }
 
+  function setFloatingPopupRect(rect: FloatingPopupRect | null): void {
+    floatingPopupRect.value = rect;
+  }
+
+  /** Persist geometry at gesture end only while position memory is enabled. */
+  function rememberFloatingPopupRect(): void {
+    if (
+      !popoutSettingsStore.popoutRememberPosition ||
+      !floatingPopupRect.value
+    ) {
+      return;
+    }
+    try {
+      localStorage.setItem(
+        POPOUT_RECT_STORAGE_KEY,
+        JSON.stringify(floatingPopupRect.value),
+      );
+    } catch {
+      /* Storage unavailable: retain geometry only in memory. */
+    }
+  }
+
+  /** Clear live and persisted geometry after relevant Settings changes. */
+  function clearFloatingPopupRect(): void {
+    floatingPopupRect.value = null;
+    try {
+      localStorage.removeItem(POPOUT_RECT_STORAGE_KEY);
+    } catch {
+      /* Storage unavailable: the live geometry is still cleared. */
+    }
+  }
+
+  function releaseFloatingPopupRect(): void {
+    if (!popoutSettingsStore.popoutRememberPosition) {
+      floatingPopupRect.value = null;
+    }
+  }
+
   function closeLaunchedVideo() {
     launchedVideo.value = null;
     launchedFromPlaylist.value = false;
     launchedPlaylistQueue.value = [];
     clearActivePlayback();
-    popoutSettingsStore.releaseFloatingPopupRect();
+    releaseFloatingPopupRect();
   }
 
   function stopPlayback() {
@@ -202,6 +254,7 @@ export function createPlaybackSession() {
     activePlaybackControlSupported,
     playlistAutoplayEnabled,
     floatingPopupOpacity,
+    floatingPopupRect,
     dockedPlaylistPanelVisible,
     playbackToggleRequestId,
     launchVideo,
@@ -214,6 +267,9 @@ export function createPlaybackSession() {
     reportControlSupported,
     setDockedPlaylistPanelVisible,
     setFloatingPopupOpacity,
+    setFloatingPopupRect,
+    rememberFloatingPopupRect,
+    clearFloatingPopupRect,
     launchedAnchorCandidates,
     visibleAnchorCandidate,
     dockedAnchorCandidate,
