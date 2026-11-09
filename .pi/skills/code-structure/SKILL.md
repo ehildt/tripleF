@@ -68,6 +68,16 @@ A file lives next to its consumer unless it is shared across unrelated areas. Sh
 
 Helpers go in a `helpers/` folder parallel to their consumer. Resources shared across a whole area go in a `shared/` folder split by role. Only files used across the entire codebase belong in a top-level shared directory.
 
+## 6a. Post-implementation placement audit
+
+After every implementation, and before lint, tests, or Storybook gates, review the placement of all touched stores, composables, helpers, and their immediate consumers. Include remaining private functions and unaffected-looking siblings in the approved scope; do not inspect only newly created files or the most obvious parsing logic. A change can alter the correct owner or turn a formerly local unit into a shared one.
+
+- **Stores:** shared state belongs to its primary domain context. Widget-owned state lives under the widget area; sharing a domain value with a widget does not make it widget state. Stores retain owner-level getters, synchronous derivations, and mutations. Fetching, lifecycle, sockets, timers, and multi-unit workflows do not move into them.
+- **Composables:** component lifecycle, DOM behavior, sockets, timers, and workflows belong here. Actual unrelated consumers determine whether a composable is local, feature-shared, or app-shared. Singleton state remains in its owning composable and is documented/reset in affected specs. Returns must own, derive, or compose behavior rather than relay dependencies.
+- **Helpers:** review parsing, validation, defaulting, normalization, key building, and substantive pure transformations. Each helper takes inputs and returns output without reading storage, clocks, network, DOM, stores, or other external state. Keep owner-level getters/mutations and trivial inline operations where they belong; never extract solely to reduce file size.
+- **Side effects:** storage writes, network calls, clock reads, and similar effects stay in the owning store action/watcher, composable workflow, or API module. Never make an impure operation look pure by moving it into a `.helper.ts` file.
+- **Completion:** move misplaced units without compatibility forwarders, update every direct import and co-located type/spec path, and remove stale locations. Report any deliberate exception rather than treating passing static gates as proof of correct placement.
+
 ## 7. No barrel files
 
 A barrel file is a re-export-only `index.ts` that aggregates sibling imports. Do not create them. Import directly from the file that defines the symbol — the path is the file.
@@ -137,6 +147,7 @@ The semantics — consent gate, regression net, contract-not-infallible, report-
 - Wire-mirror types name the artifact they mirror; partial mirrors say so
 - No exported type that only its own declaration file references
 - Files co-located with their consumer unless shared across unrelated areas
+- After implementation, all touched stores, composables, helpers, remaining private functions, and immediate consumers pass the placement/purity audit in §6a
 - No new barrel files; published package entry points are the only exception
 - No wrapper functions
 - Repeated keyed state reads use an owner-level getter with explicit return type; repeated equality/membership checks use its type-safe comparator form; single-use operations stay inline
