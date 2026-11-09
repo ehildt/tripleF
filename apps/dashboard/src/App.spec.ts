@@ -15,13 +15,8 @@ vi.mock('./stores/debug/debug.store', () => ({
   }),
 }));
 
-vi.mock('./stores/messages/messages.store', () => ({
-  useMessagesStore: () => ({
-    completedCount: 0,
-    messages: [],
-    addMessage: vi.fn(),
-    clearMessages: vi.fn(),
-  }),
+vi.mock('./components/chat/composables/use-harness-events', () => ({
+  useHarnessEvents: () => ({ handleHarnessEvent: vi.fn() }),
 }));
 
 vi.mock('./stores/models/models.store', () => ({
@@ -49,9 +44,6 @@ vi.mock('@/composables/use-socket/use-socket', () => ({
     connectedRooms: new Map(),
     connectedPairs: [],
     setCallbacks: vi.fn(),
-    getSocket: vi.fn(() => ({ connected: false })),
-    trackRequest: vi.fn(),
-    addPendingMessage: vi.fn(),
     closeEvent: vi.fn(),
     closeRoom: vi.fn(),
     connect: vi.fn(),
@@ -60,22 +52,6 @@ vi.mock('@/composables/use-socket/use-socket', () => ({
     ensureSocketConnection: vi.fn(),
   }),
 }));
-
-vi.mock(
-  '@/components/chat/composables/helpers/create-socket-provider.helper',
-  () => ({
-    createSocketProvider: () => ({
-      getSocket: vi.fn(() => ({ connected: false })),
-      trackRequest: vi.fn(),
-      addPendingMessage: vi.fn(),
-      closeEvent: vi.fn(),
-      closeRoom: vi.fn(),
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      subscribeToEvent: vi.fn(),
-    }),
-  }),
-);
 
 vi.mock('./composables/use-theme/use-theme', () => ({
   useTheme: () => ({

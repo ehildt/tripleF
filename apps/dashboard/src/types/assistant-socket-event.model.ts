@@ -1,3 +1,5 @@
+import type { AssistantMediaReference } from './assistant-media-reference.model';
+import type { AssistantToolResult } from './serper-api.model';
 import type { SocketEvent } from './socket-event.model';
 
 /**
@@ -58,6 +60,27 @@ export interface AssistantChartData {
   template?: string;
 }
 
+/** Response upload metadata emitted with `harness:completed`. */
+export interface AssistantResponseMetadata {
+  /** Original upload display name; malformed entries may omit it. */
+  name?: string;
+  /** Object hash used to reuse the upload; malformed entries may omit it. */
+  hash?: string;
+  /** Original upload size in bytes when supplied by the producer. */
+  size?: number;
+  /** Storage origin used to classify local and cloud uploads. */
+  source?: string;
+  /** Media variant; missing values are treated as original for compatibility. */
+  variant?: string;
+}
+
+interface AssistantTokenUsage {
+  /** Cumulative prompt tokens reported for the completed turn. */
+  promptEvalCount?: number;
+  /** Response tokens reported for the completed turn. */
+  evalCount?: number;
+}
+
 /**
  * The terminal harness result (`harness:completed`). `result` is the
  * authoritative final text/JSON; `data` is the validated structured payload;
@@ -68,12 +91,12 @@ export interface AssistantCompletedData {
   result?: string;
   data?: Record<string, unknown>;
   images?: Array<Record<string, string>>;
-  toolResults?: Array<{ toolName: string; result: unknown }>;
-  availableImages?: Array<{ url: string; title?: string }>;
-  availableVideos?: Array<{ url: string; title?: string }>;
-  meta?: Array<{ name: string; hash: string; source: string; variant: string }>;
+  toolResults?: AssistantToolResult[];
+  availableImages?: AssistantMediaReference[];
+  availableVideos?: AssistantMediaReference[];
+  meta?: AssistantResponseMetadata[];
   prompt?: string;
-  usage?: { promptEvalCount?: number; evalCount?: number };
+  usage?: AssistantTokenUsage;
 }
 
 /** A terminal harness failure (`harness:failed`). */

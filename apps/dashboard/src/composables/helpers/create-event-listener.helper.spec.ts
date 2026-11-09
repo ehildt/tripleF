@@ -42,7 +42,7 @@ describe('createEventListener', () => {
     onDebugEntry.mockClear();
   });
 
-  it('forwards a parsed envelope to the message store', () => {
+  it('forwards a parsed envelope to the harness event callback', () => {
     const envelope = makeEnvelope('r1');
     listener()(envelope);
 

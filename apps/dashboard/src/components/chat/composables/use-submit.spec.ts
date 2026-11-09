@@ -6,7 +6,6 @@ import { useSocket } from '@/composables/use-socket/use-socket';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
-import { useMessagesStore } from '@/stores/messages/messages.store';
 import { useModelsStore } from '@/stores/models/models.store';
 
 import type { PostHarnessRequestOptions } from './use-assistant-request.types';
@@ -61,23 +60,15 @@ function stubBenignFetch() {
 }
 
 /**
- * The submit path reads the socket facade from the socket composable and the
- * messages/debug stores. Spy the actions that would otherwise open a
- * socket.io connection in jsdom; `addPendingMessage` is spied so the tests
- * can assert the in-flight registration without touching the messages
- * store's internals.
+ * The submit path reads the socket facade from the socket composable. Spy the
+ * subscription actions that would otherwise open a socket.io connection in
+ * jsdom; request transport itself is mocked at the assistant-request boundary.
  */
-function stubSocketSideEffects() {
+function stubSocketSideEffects(): void {
   const socketStore = useSocket();
-  const apiMessagesStore = useMessagesStore();
 
   vi.spyOn(socketStore, 'listenToEvent').mockImplementation(() => {});
   vi.spyOn(socketStore, 'joinRoom').mockImplementation(() => {});
-  const addPendingMessage = vi
-    .spyOn(apiMessagesStore, 'addPendingMessage')
-    .mockImplementation(() => {});
-
-  return { addPendingMessage };
 }
 
 /** Seed the shared prompt draft that `useSubmit` reads and clears. */
@@ -114,7 +105,7 @@ describe('useSubmit', () => {
 
   it('submits the prompt through the harness transport', async () => {
     seedDraft();
-    const { addPendingMessage } = stubSocketSideEffects();
+    stubSocketSideEffects();
     const conversation = useConversationCatalog().createNewConversation();
     conversation.model = 'llama3';
 
@@ -137,12 +128,6 @@ describe('useSubmit', () => {
     expect(requestId).not.toBe('');
     expect(request.formData).toBeInstanceOf(FormData);
     expect(usePromptDraft().promptDraft.value).toBe('');
-    expect(addPendingMessage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      requestId,
-      true,
-    );
     expect(isSubmitting.value).toBe(false);
     expect(toast.error).not.toHaveBeenCalled();
   });

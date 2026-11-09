@@ -7,6 +7,7 @@ describe('mapEntryToUploadedImage', () => {
     const result = mapEntryToUploadedImage(
       { name: 'img.png', hash: 'h1', size: 10, source: 'cloud' },
       'c1',
+      123,
     );
     expect(result).toMatchObject({
       name: 'img.png',
@@ -15,12 +16,14 @@ describe('mapEntryToUploadedImage', () => {
       selected: true,
       conversationId: 'c1',
       source: 'cloud',
+      uploadedAt: 123,
     });
   });
 
   it('defaults a non-cloud entry to local', () => {
     expect(
-      mapEntryToUploadedImage({ name: 'img.png', hash: 'h1' }, 'c1').source,
+      mapEntryToUploadedImage({ name: 'img.png', hash: 'h1' }, 'c1', 123)
+        .source,
     ).toBe('local');
   });
 });

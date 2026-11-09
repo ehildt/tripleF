@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, type Ref, ref } from 'vue';
 
 import { buildFormData } from '@/components/chat/composables/helpers/build-form-data.helper';
 import { requireModel } from '@/components/chat/composables/helpers/require-model.helper';
@@ -6,7 +6,6 @@ import { useConversationCatalog } from '@/components/chat/composables/use-conver
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { useConversationPrompt } from '@/components/chat/composables/use-conversation-prompt';
 import { useConversationTurns } from '@/components/chat/composables/use-conversation-turns';
-import { useSocketProvider } from '@/components/chat/composables/use-socket-provider';
 import { buildConversationMetadata } from '@/components/chat/helpers/build-conversation-metadata.helper';
 import { buildMergedPromptContent } from '@/components/chat/helpers/build-merged-prompt.helper';
 import { buildSeededExchanges } from '@/components/chat/helpers/build-seeded-exchanges.helper';
@@ -19,6 +18,7 @@ import {
   TOAST_KEY_CONTEXT_FULL,
   TOAST_KEY_MODEL_NO_IMAGES,
 } from '@/composables/toast-keys.constant';
+import { useSocket } from '@/composables/use-socket/use-socket';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
@@ -44,9 +44,27 @@ import { mapDocumentToPrompt } from './helpers/map-document-to-prompt.helper';
 import { useAssistantRequest } from './use-assistant-request';
 import { usePromptDraft } from './use-prompt-draft';
 
-export function useSubmit() {
+interface SubmitController {
+  isSubmitting: Ref<boolean>;
+  submit: (text?: string) => Promise<void>;
+}
+
+interface SubmitContext {
+  sid: string;
+  conversationId: string;
+  model: string;
+  event: string;
+  room: string;
+  requestId: string;
+  userContent: string;
+  isMergeSubmit: boolean;
+  mergeFromRequestIds: string[];
+  selectedForMerge: Exchange[];
+}
+
+export function useSubmit(): SubmitController {
   const { promptDraft, resetPromptDraft } = usePromptDraft();
-  const socketProvider = useSocketProvider();
+  const socket = useSocket();
 
   const conversationSettingsStore = useConversationSettingsStore();
   const memorySpacesStore = useMemorySpacesStore();
@@ -98,15 +116,15 @@ export function useSubmit() {
     return catalog.ensureConversation().id;
   }
 
-  function ensureSocketSubscription(eventName: string, room: string) {
-    if (!socketProvider.connectedEvents.has(eventName)) {
-      socketProvider.listenToEvent?.(eventName);
+  function ensureSocketSubscription(eventName: string, room: string): void {
+    if (!socket.connectedEvents.value.has(eventName)) {
+      socket.listenToEvent(eventName);
     }
     if (
       room &&
-      !(socketProvider.connectedRooms.get(eventName)?.has(room) ?? false)
+      !(socket.connectedRooms.value.get(eventName)?.has(room) ?? false)
     ) {
-      socketProvider.joinRoom?.(room, eventName);
+      socket.joinRoom(room, eventName);
     }
   }
 
@@ -200,18 +218,9 @@ export function useSubmit() {
     }
   }
 
-  async function buildSubmitContext(requestId: string): Promise<{
-    sid: string;
-    conversationId: string;
-    model: string;
-    event: string;
-    room: string;
-    requestId: string;
-    userContent: string;
-    isMergeSubmit: boolean;
-    mergeFromRequestIds: string[];
-    selectedForMerge: Exchange[];
-  } | null> {
+  async function buildSubmitContext(
+    requestId: string,
+  ): Promise<SubmitContext | null> {
     if (!conversationModel.value) {
       // Cold-start guard: the models catalog may still be loading (or the
       // app-load fetch may have failed). Wait for it before failing with
@@ -399,13 +408,6 @@ export function useSubmit() {
       conversationMetadata,
       language: i18n.global.locale.value,
     });
-
-    socketProvider.addPendingMessage(
-      event,
-      room,
-      requestId,
-      activeConversation.value?.stream ?? true,
-    );
 
     await postHarnessRequest({
       model,

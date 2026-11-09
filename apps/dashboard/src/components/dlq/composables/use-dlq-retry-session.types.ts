@@ -7,6 +7,6 @@ export interface DlqRetrySession {
   event: string;
   /** Original socket room; empty when the conversation is room-less. */
   roomId: string;
-  /** Original stream mode used for pending-message bookkeeping. */
+  /** Original stream mode used when preparing the retry turn. */
   stream: boolean;
 }

@@ -5,19 +5,18 @@ import { extractUploadedImagesFromResponse } from './extract-uploaded-images-fro
 describe('extractUploadedImagesFromResponse', () => {
   it('maps original meta entries to uploaded images', () => {
     const images = extractUploadedImagesFromResponse(
-      {
-        meta: [
-          { name: 'a.png', hash: 'ha', size: 10 },
-          {
-            name: 'b.png',
-            hash: 'hb',
-            size: 20,
-            variant: 'original',
-            source: 'cloud',
-          },
-        ],
-      },
+      [
+        { name: 'a.png', hash: 'ha', size: 10 },
+        {
+          name: 'b.png',
+          hash: 'hb',
+          size: 20,
+          variant: 'original',
+          source: 'cloud',
+        },
+      ],
       'conv-1',
+      123,
     );
 
     expect(images).toHaveLength(2);
@@ -28,29 +27,31 @@ describe('extractUploadedImagesFromResponse', () => {
       selected: true,
       conversationId: 'conv-1',
       source: 'local',
-      uploadedAt: expect.any(Number),
+      uploadedAt: 123,
     });
     expect(images[1].source).toBe('cloud');
   });
 
   it('skips derived variants and malformed entries', () => {
     const images = extractUploadedImagesFromResponse(
-      {
-        meta: [
-          { name: 'a.png', hash: 'ha', variant: 'thumb' },
-          { name: 'nohash' },
-        ],
-      },
+      [
+        { name: 'a.png', hash: 'ha', variant: 'thumb' },
+        { name: 'nohash' },
+        null,
+      ],
       'conv-1',
+      123,
     );
 
     expect(images).toEqual([]);
   });
 
   it('returns an empty list when meta is missing or not an array', () => {
-    expect(extractUploadedImagesFromResponse({}, 'conv-1')).toEqual([]);
-    expect(
-      extractUploadedImagesFromResponse({ meta: 'nope' }, 'conv-1'),
-    ).toEqual([]);
+    expect(extractUploadedImagesFromResponse(undefined, 'conv-1', 123)).toEqual(
+      [],
+    );
+    expect(extractUploadedImagesFromResponse('nope', 'conv-1', 123)).toEqual(
+      [],
+    );
   });
 });

@@ -18,6 +18,10 @@ interface ConversationExchangeCompletion {
     requestId: string,
     errorMessage?: string,
   ) => Promise<void>;
+  markExchangeCancelled: (
+    conversationStoreId: string,
+    requestId: string,
+  ) => Promise<void>;
 }
 
 /** Own terminal exchange transitions, merge resolution, and persistence. */
@@ -119,5 +123,39 @@ export function useConversationExchangeCompletion(): ConversationExchangeComplet
     });
   }
 
-  return { markExchangeDone, markExchangeError };
+  function markExchangeCancelled(
+    conversationStoreId: string,
+    requestId: string,
+  ): Promise<void> {
+    return write(conversationStoreId, (conversation) => {
+      const assistant = conversation.exchanges.find(
+        (exchange) =>
+          exchange.requestId === requestId && exchange.role === 'assistant',
+      );
+      if (!assistant) return false;
+
+      conversationStore.patchAssistantExchange(
+        conversationStoreId,
+        requestId,
+        {
+          status: 'done',
+          activity: undefined,
+          activityLanguage: undefined,
+          reasoning: undefined,
+          toolCalls: undefined,
+        },
+        true,
+      );
+      // Cancellation settles the pending request but leaves every selected
+      // source available for a later merge retry.
+      mergeSelectionStore.resolvePendingMerge(
+        conversationStoreId,
+        requestId,
+        [],
+      );
+      return true;
+    });
+  }
+
+  return { markExchangeDone, markExchangeError, markExchangeCancelled };
 }

@@ -1,7 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Conversation } from '@/stores/chat/conversation/conversation.model';
+import type {
+  Conversation,
+  Exchange,
+} from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
@@ -33,7 +36,7 @@ function add(
   role: 'user' | 'assistant',
   requestId: string,
   content = role === 'user' ? 'Question' : 'Answer',
-) {
+): Exchange {
   return useConversationStore().addExchange(
     conversation.id,
     { role, content, requestId, status: 'done' },
@@ -113,6 +116,48 @@ describe('useConversationExchangeCompletion', () => {
     expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
   });
 
+  it('settles cancellation without consuming merge sources', async () => {
+    const conversation = seed();
+    const origin = add(conversation, 'user', 'origin-1');
+    const merged = add(conversation, 'user', 'merge-request');
+    merged.mergeOrigin = ['origin-1'];
+    const assistant = add(
+      conversation,
+      'assistant',
+      'merge-request',
+      'Partial',
+    );
+    assistant.status = 'streaming';
+    assistant.activity = { key: 'activity.assembling' };
+    assistant.activityLanguage = 'de';
+    assistant.reasoning = 'thinking';
+    assistant.toolCalls = [{ name: 'web', status: 'start' }];
+    const mergeSelectionStore = useMergeSelectionStore();
+    mergeSelectionStore.setMergeSelectedIds(conversation.id, [origin.id]);
+    mergeSelectionStore.markMergePending(conversation.id, 'merge-request');
+
+    await useConversationExchangeCompletion().markExchangeCancelled(
+      conversation.id,
+      'merge-request',
+    );
+
+    expect(assistant.status).toBe('done');
+    expect(assistant.content).toBe('Partial');
+    expect(assistant.activity).toBeUndefined();
+    expect(assistant.activityLanguage).toBeUndefined();
+    expect(assistant.reasoning).toBeUndefined();
+    expect(assistant.toolCalls).toBeUndefined();
+    expect(origin.included).not.toBe(false);
+    expect(origin.mergedInto).toBeUndefined();
+    expect(
+      mergeSelectionStore.getPendingMergeRequest(conversation.id),
+    ).toBeUndefined();
+    expect(mergeSelectionStore.getMergeSelectedIds(conversation.id)).toEqual([
+      origin.id,
+    ]);
+    expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
+  });
+
   it('preserves done and error persistence semantics without an assistant', async () => {
     const conversation = seed();
     const completion = useConversationExchangeCompletion();
@@ -121,6 +166,10 @@ describe('useConversationExchangeCompletion', () => {
     expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
 
     await completion.markExchangeError(conversation.id, 'missing', 'Failed');
+    expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
+    expect(conversation.exchanges).toHaveLength(0);
+
+    await completion.markExchangeCancelled(conversation.id, 'missing');
     expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
     expect(conversation.exchanges).toHaveLength(0);
   });
