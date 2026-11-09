@@ -1,5 +1,6 @@
 import type { SessionConfig } from '../types/session-config.model';
 import { getApiUrl } from './api-url';
+import type { SessionConfigPatch } from './config.api.types';
 
 export async function fetchConfig(
   sessionId: string,
@@ -17,13 +18,7 @@ export async function fetchConfig(
 
 export async function saveConfig(
   sessionId: string,
-  patch: {
-    selectedModel?: string;
-    preprocessing?: Record<string, unknown>;
-    providerOverrides?: Record<string, unknown>;
-    memoryPartition?: string | null;
-    memoryCognition?: string | null;
-  },
+  patch: SessionConfigPatch,
 ): Promise<void> {
   const res = await fetch(getApiUrl(`/api/v1/configs/${sessionId}`), {
     method: 'PUT',
