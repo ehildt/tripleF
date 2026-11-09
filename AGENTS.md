@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a TypeScript monorepo for tripleF (3F), an open-source agentic AI workbench (conversation harness + dashboard), local-first via Ollama or Ollama Cloud.
+This is a TypeScript monorepo for tripleF (3F), a source-available agentic AI workbench (conversation harness + dashboard), local-first via Ollama or Ollama Cloud. First-party code is licensed under PolyForm Strict 1.0.0 for noncommercial use; modification, redistribution, and commercial use require separate permission.
 
 - `server/` — NestJS backend with Fastify, Prisma/PostgreSQL, BullMQ/KeyDB, RustFS.
 - `dashboard/` — Vue 3 frontend with Vite, Pinia, Tailwind, Storybook, Vitest.

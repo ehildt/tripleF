@@ -13,7 +13,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 ![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 ![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![license](https://img.shields.io/badge/license-PolyForm%20Strict%201.0.0-b16425?labelColor=333&style=for-the-badge&logo=github&logoColor=b16425&logoWidth=40)
 [![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
 
 </div>
@@ -21,8 +21,6 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 <br>
 
 <div align="center">
-
-
 
 # Dependencies
 
@@ -72,8 +70,6 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 <br>
 
 <div align="center">
-
-
 
 # DevDependencies
 

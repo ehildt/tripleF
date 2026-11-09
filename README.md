@@ -4,11 +4,11 @@
 
 <br>
 
-**An agentic AI workbench, fully open source.**     
+**An agentic AI workbench, source-available and free for noncommercial use.**<br>
 Chat with free open models — running **fully locally** via Ollama, or on **Ollama Cloud** for extra headroom.    
-No lock-in, no meter, no black box — the whole machine is inspectable, and yours.    
+Local-first, no meter, no black box — the whole machine is inspectable.<br>
 Early in development; already a complete chat experience with features some proprietary chats still miss.    
-tripleF aims for the top of the open-source community.   
+tripleF aims for the top of the source-available community.<br>
 
 
 <br>
@@ -16,7 +16,7 @@ tripleF aims for the top of the open-source community.
 
 ![github](https://img.shields.io/github/release/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
 ![github](https://img.shields.io/github/stars/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
-![github](https://img.shields.io/github/license/ehildt/tripleF?labelColor=333&style=for-the-badge&cacheSeconds=3600&color=b16425&logo=github&logoColor=b16425&logoWidth=40&branch=main)
+![license](https://img.shields.io/badge/license-PolyForm%20Strict%201.0.0-b16425?labelColor=333&style=for-the-badge&logo=github&logoColor=b16425&logoWidth=40)
 [![codecov](https://img.shields.io/codecov/c/github/ehildt/tripleF?labelColor=333&cacheSeconds=3600&logo=codecov&logoColor=4021b0&logoWidth=40&style=for-the-badge&color=4021b0&branch=main)](https://about.codecov.io/)
 
 <br>
@@ -44,7 +44,9 @@ You are all set! Checkout [**Quick Start guide**](.wiki/0.1-quick-start.md) to g
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request.    
 Found a vulnerability? See [SECURITY.md](SECURITY.md) for our reporting policy.    
 Community guidelines are in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).    
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+Licensed under the [PolyForm Strict License 1.0.0](LICENSE). Noncommercial use is permitted for individuals, companies, and other organizations.<br>
+Modification, redistribution, and commercial use—including paid cloud hosting—require separate written permission from the copyright holder.<br>
+Contact [Eugen Hildt](mailto:eugen.hildt@gmail.com) for commercial licensing or modification permission. Third-party dependencies remain subject to their own licenses.
 
 </div>
 
