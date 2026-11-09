@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
+import { parseMemoryCognition } from './helpers/parse-memory-cognition.helper';
 import { parseMemoryCognitionSpaces } from './helpers/parse-memory-cognition-spaces.helper';
 import { prependMemoryCognitionSpace } from './helpers/prepend-memory-cognition-space.helper';
+import { resolveMemoryPartition } from './helpers/resolve-memory-partition.helper';
 import {
   LEGACY_MEMORY_TENANT_KEY,
   MEMORY_COGNITION_KEY,
@@ -15,90 +17,73 @@ interface MemorySpaceIds {
   memoryCognition?: string | null;
 }
 
-function loadMemoryPartition(): string {
-  try {
-    // One-time migration of the pre-rename key, then the old slot is dropped.
-    const current = localStorage.getItem(MEMORY_PARTITION_KEY);
-    if (current !== null) return current.trim();
-    const legacy = localStorage.getItem(LEGACY_MEMORY_TENANT_KEY)?.trim() ?? '';
-    if (legacy) {
-      localStorage.setItem(MEMORY_PARTITION_KEY, legacy);
-      localStorage.removeItem(LEGACY_MEMORY_TENANT_KEY);
-      return legacy;
-    }
-    return 'default';
-  } catch {
-    return 'default';
-  }
-}
-
-function saveMemoryPartition(value: string): void {
-  try {
-    if (value) localStorage.setItem(MEMORY_PARTITION_KEY, value);
-    else localStorage.removeItem(MEMORY_PARTITION_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadMemoryCognition(): string {
-  try {
-    return localStorage.getItem(MEMORY_COGNITION_KEY)?.trim() || 'default';
-  } catch {
-    return 'default';
-  }
-}
-
-function saveMemoryCognition(value: string): void {
-  try {
-    if (value) localStorage.setItem(MEMORY_COGNITION_KEY, value);
-    else localStorage.removeItem(MEMORY_COGNITION_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadMemoryCognitionSpaces(): string[] {
-  try {
-    const raw = localStorage.getItem(MEMORY_COGNITION_SPACES_KEY);
-    return parseMemoryCognitionSpaces(raw);
-  } catch {
-    return ['default'];
-  }
-}
-
-function saveMemoryCognitionSpaces(spaces: string[]): void {
-  try {
-    if (spaces.length) {
-      localStorage.setItem(MEMORY_COGNITION_SPACES_KEY, JSON.stringify(spaces));
-    } else {
-      localStorage.removeItem(MEMORY_COGNITION_SPACES_KEY);
-    }
-  } catch {
-    /* ignore */
-  }
-}
-
 export const useMemorySpacesStore = defineStore('memory-spaces', () => {
-  /**
-   * Memory partition id — the user's memory space. Defaults to 'default' so
-   * memory survives browser-session rotation. Empty string = session is the
-   * partition (an explicit opt-in). Persisted to localStorage as a fast cache;
-   * server synchronization is owned by useMemorySpaceSync.
-   */
-  const memoryPartition = ref(loadMemoryPartition());
-  /**
-   * Memory cognition id — the AI's own understanding-of-the-user space.
-   * Defaults to 'default'. Empty string = cognition lives in the memory
-   * partition.
-   */
-  const memoryCognition = ref(loadMemoryCognition());
-  /** Most-recent-first local cognition-space history, capped at 20 entries. */
-  const memoryCognitionSpaces = ref<string[]>(loadMemoryCognitionSpaces());
+  /** User memory partition; an empty value explicitly selects the session. */
+  const memoryPartition = ref('default');
+  try {
+    const current = localStorage.getItem(MEMORY_PARTITION_KEY);
+    const legacy =
+      current === null ? localStorage.getItem(LEGACY_MEMORY_TENANT_KEY) : null;
+    memoryPartition.value = resolveMemoryPartition(current, legacy);
+    if (current === null && legacy?.trim()) {
+      // Preserve the one-time migration and removal of the old slot.
+      localStorage.setItem(MEMORY_PARTITION_KEY, memoryPartition.value);
+      localStorage.removeItem(LEGACY_MEMORY_TENANT_KEY);
+    }
+  } catch {
+    memoryPartition.value = 'default';
+  }
 
-  watch(memoryPartition, saveMemoryPartition);
-  watch(memoryCognition, saveMemoryCognition);
-  watch(memoryCognitionSpaces, saveMemoryCognitionSpaces);
+  /** AI cognition space; blank/missing storage uses the default. */
+  const memoryCognition = ref('default');
+  try {
+    memoryCognition.value = parseMemoryCognition(
+      localStorage.getItem(MEMORY_COGNITION_KEY),
+    );
+  } catch {
+    /* Storage unavailable: retain the default cognition space. */
+  }
+
+  /** Most-recent-first local cognition-space history, capped at 20 entries. */
+  const memoryCognitionSpaces = ref<string[]>(['default']);
+  try {
+    memoryCognitionSpaces.value = parseMemoryCognitionSpaces(
+      localStorage.getItem(MEMORY_COGNITION_SPACES_KEY),
+    );
+  } catch {
+    /* Storage unavailable: retain the default history. */
+  }
+
+  watch(memoryPartition, (value) => {
+    try {
+      if (value) localStorage.setItem(MEMORY_PARTITION_KEY, value);
+      else localStorage.removeItem(MEMORY_PARTITION_KEY);
+    } catch {
+      /* Storage unavailable: retain the partition in memory. */
+    }
+  });
+  watch(memoryCognition, (value) => {
+    try {
+      if (value) localStorage.setItem(MEMORY_COGNITION_KEY, value);
+      else localStorage.removeItem(MEMORY_COGNITION_KEY);
+    } catch {
+      /* Storage unavailable: retain the cognition id in memory. */
+    }
+  });
+  watch(memoryCognitionSpaces, (spaces) => {
+    try {
+      if (spaces.length) {
+        localStorage.setItem(
+          MEMORY_COGNITION_SPACES_KEY,
+          JSON.stringify(spaces),
+        );
+      } else {
+        localStorage.removeItem(MEMORY_COGNITION_SPACES_KEY);
+      }
+    } catch {
+      /* Storage unavailable: retain the history in memory. */
+    }
+  });
 
   function rememberMemoryCognitionSpace(space: string): void {
     memoryCognitionSpaces.value = prependMemoryCognitionSpace(

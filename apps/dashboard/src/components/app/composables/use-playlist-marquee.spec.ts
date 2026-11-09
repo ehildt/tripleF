@@ -1,8 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { useFloatingPlaylistOpen } from '@/components/widgets/floating-playlist/composables/use-floating-playlist-open';
 import { createPlaybackSession } from '@/composables/create-playback-session/create-playback-session';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
+import { usePlaylistSettingsStore } from '@/stores/widgets/playlist-settings/playlist-settings.store';
 
 import { usePlaylistMarquee } from './use-playlist-marquee';
 
@@ -10,6 +12,7 @@ describe('usePlaylistMarquee', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
+    useFloatingPlaylistOpen().closeFloatingPlaylist();
   });
 
   function seedPlaylist() {
@@ -57,9 +60,8 @@ describe('usePlaylistMarquee', () => {
 
   it('is true in floating mode while the floating playlist is open', () => {
     seedPlaylist();
-    const playlistStore = usePlaylistStore();
-    playlistStore.playlistMode = 'floating';
-    playlistStore.floatingPlaylistOpen = true;
+    usePlaylistSettingsStore().playlistMode = 'floating';
+    useFloatingPlaylistOpen().openFloatingPlaylist();
 
     const playback = createPlaybackSession();
     playback.activePlaybackVideoUrl.value = 'https://video.test/one';
@@ -70,9 +72,8 @@ describe('usePlaylistMarquee', () => {
 
   it('is false in floating mode while the floating playlist is closed', () => {
     seedPlaylist();
-    const playlistStore = usePlaylistStore();
-    playlistStore.playlistMode = 'floating';
-    playlistStore.floatingPlaylistOpen = false;
+    usePlaylistSettingsStore().playlistMode = 'floating';
+    useFloatingPlaylistOpen().closeFloatingPlaylist();
 
     const playback = createPlaybackSession();
     playback.activePlaybackVideoUrl.value = 'https://video.test/one';

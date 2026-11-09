@@ -32,18 +32,20 @@ import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFiel
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
+import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
-import type { PlaylistAnchor } from '@/stores/playlist/playlist.types';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePlaylistSettingsStore } from '@/stores/widgets/playlist-settings/playlist-settings.store';
+import type { PlaylistAnchor } from '@/stores/widgets/playlist-settings/playlist-settings.types';
 
+import { usePlaylistSettings } from './composables/use-playlist-settings';
 import type {
   PlaylistHorizontal,
   PlaylistVertical,
 } from './PlaylistPanel.types';
 
-const popoutSettingsStore = usePopoutSettingsStore();
-const playlistStore = usePlaylistStore();
+const playlistSettingsStore = usePlaylistSettingsStore();
+const { playlistPreviewVisible, toggleWidgetPreview } = useWidgetPreview();
+const { setPlaylistMode } = usePlaylistSettings();
 
 const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -67,24 +69,25 @@ const HORIZONTAL_OPTIONS = computed(() => [
 
 /** Floating mode on/off — off keeps the playlist in the chat right toolbar. */
 const floatingEnabled = computed(
-  () => playlistStore.playlistMode === 'floating',
+  () => playlistSettingsStore.playlistMode === 'floating',
 );
 
 const vertical = computed(
-  () => playlistStore.playlistAnchor.split('-')[0] as PlaylistVertical,
+  () => playlistSettingsStore.playlistAnchor.split('-')[0] as PlaylistVertical,
 );
 const horizontal = computed(
-  () => playlistStore.playlistAnchor.split('-')[1] as PlaylistHorizontal,
+  () =>
+    playlistSettingsStore.playlistAnchor.split('-')[1] as PlaylistHorizontal,
 );
 
-function setVertical(value: string) {
-  playlistStore.setPlaylistAnchor(
+function setVertical(value: string): void {
+  playlistSettingsStore.setPlaylistAnchor(
     `${value}-${horizontal.value}` as PlaylistAnchor,
   );
 }
 
-function setHorizontal(value: string) {
-  playlistStore.setPlaylistAnchor(
+function setHorizontal(value: string): void {
+  playlistSettingsStore.setPlaylistAnchor(
     `${vertical.value}-${value}` as PlaylistAnchor,
   );
 }
@@ -105,12 +108,6 @@ const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
     onSelect: setHorizontal,
   },
 ]);
-
-/** Toggle the floating-player preview; showing it hides the popout preview. */
-function handlePreviewToggle() {
-  popoutSettingsStore.hidePopoutPreview();
-  playlistStore.togglePlaylistPreview();
-}
 </script>
 
 <template>
@@ -119,25 +116,23 @@ function handlePreviewToggle() {
       <MenuButton
         :icon="ScanSearch"
         :label="
-          playlistStore.playlistPreviewVisible
+          playlistPreviewVisible
             ? $t('common.hideExampleFloatingPlayer')
             : $t('common.showExampleFloatingPlayer')
         "
-        :active="playlistStore.playlistPreviewVisible"
-        @click="handlePreviewToggle"
+        :active="playlistPreviewVisible"
+        @click="toggleWidgetPreview('playlist')"
       />
       <MenuButton
         :icon="RotateCcw"
         :label="$t('common.resetFloatingPlayerSettingsToDefaults')"
-        @click="playlistStore.resetPlaylistSettings"
+        @click="playlistSettingsStore.resetPlaylistSettings"
       />
       <MenuButton
         :icon="Power"
         :label="$t('common.floatPlayerAsAppWindow')"
         :active="floatingEnabled"
-        @click="
-          playlistStore.setPlaylistMode(floatingEnabled ? 'panel' : 'floating')
-        "
+        @click="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
       />
     </MenuRow>
 
@@ -152,11 +147,7 @@ function handlePreviewToggle() {
           :label="$t('common.dockingMode')"
           :description="$t('common.dockingModeDesc')"
           :checked="floatingEnabled"
-          @toggle="
-            playlistStore.setPlaylistMode(
-              floatingEnabled ? 'panel' : 'floating',
-            )
-          "
+          @toggle="setPlaylistMode(floatingEnabled ? 'panel' : 'floating')"
         />
 
         <SegmentedFieldCard
@@ -179,10 +170,12 @@ function handlePreviewToggle() {
           :icon="PanelRightClose"
           :label="$t('common.autoclose')"
           :description="$t('common.floatingPlayerAutocloseDesc')"
-          :checked="playlistStore.playlistAutoClose"
+          :checked="playlistSettingsStore.playlistAutoClose"
           :disabled="!floatingEnabled"
           @toggle="
-            playlistStore.setPlaylistAutoClose(!playlistStore.playlistAutoClose)
+            playlistSettingsStore.setPlaylistAutoClose(
+              !playlistSettingsStore.playlistAutoClose,
+            )
           "
         />
       </div>

@@ -16,8 +16,14 @@ vi.mock('@/composables/use-toast/use-toast', () => ({
   }),
 }));
 
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 
+vi.mock('@/api/playlists.api', () => ({
+  fetchAllPlaylists: vi.fn(async () => []),
+  savePlaylist: vi.fn(async () => undefined),
+  renamePlaylist: vi.fn(async () => undefined),
+  deletePlaylist: vi.fn(async () => undefined),
+}));
 import { usePlaylistToggle } from './use-playlist-toggle';
 
 const VIDEO = { videoUrl: 'https://video.test/one', title: 'One' };
@@ -41,7 +47,7 @@ describe('usePlaylistToggle', () => {
     const { isInPlaylist, togglePlaylistVideo } = usePlaylistToggle(() => null);
     expect(isInPlaylist.value).toBe(false);
     togglePlaylistVideo();
-    expect(store.getActivePlaylist()?.videos).toEqual([]);
+    expect(store.activePlaylist?.videos).toEqual([]);
   });
 
   it('adds the video when an active playlist exists', () => {
@@ -56,7 +62,7 @@ describe('usePlaylistToggle', () => {
     const { togglePlaylistVideo } = usePlaylistToggle(ref(VIDEO));
     togglePlaylistVideo();
     expect(toastWarning).toHaveBeenCalledOnce();
-    expect(store.getActivePlaylist()).toBeNull();
+    expect(store.activePlaylist).toBeNull();
   });
 
   it('removes the video when it is already in the active playlist', () => {

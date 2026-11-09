@@ -34,8 +34,8 @@ import NumberFieldCard from '@/components/shared/ui/number-field-card/NumberFiel
 import SectionHeader from '@/components/shared/ui/section-header/SectionHeader.vue';
 import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.types';
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
+import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 import type { PopoutAnchor } from '@/stores/popout-settings/popout-settings.types';
 
@@ -45,7 +45,7 @@ import type {
 } from './VideoPopoutPanel.types';
 
 const popoutSettingsStore = usePopoutSettingsStore();
-const playlistStore = usePlaylistStore();
+const { popoutPreviewVisible, toggleWidgetPreview } = useWidgetPreview();
 
 const VERTICAL_OPTIONS = computed(() => [
   { value: 'top', icon: ArrowUp, tooltip: i18n.global.t('common.top') },
@@ -74,13 +74,13 @@ const horizontal = computed(
   () => popoutSettingsStore.popoutAnchor.split('-')[1] as PopoutHorizontal,
 );
 
-function setVertical(value: string) {
+function setVertical(value: string): void {
   popoutSettingsStore.setPopoutAnchor(
     `${value}-${horizontal.value}` as PopoutAnchor,
   );
 }
 
-function setHorizontal(value: string) {
+function setHorizontal(value: string): void {
   popoutSettingsStore.setPopoutAnchor(
     `${vertical.value}-${value}` as PopoutAnchor,
   );
@@ -102,12 +102,6 @@ const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
     onSelect: setHorizontal,
   },
 ]);
-
-/** Toggle the popout preview; showing it hides the floating-player preview. */
-function handlePreviewToggle() {
-  playlistStore.hidePlaylistPreview();
-  popoutSettingsStore.togglePopoutPreview();
-}
 </script>
 
 <template>
@@ -116,12 +110,12 @@ function handlePreviewToggle() {
       <MenuButton
         :icon="ScanSearch"
         :label="
-          popoutSettingsStore.popoutPreviewVisible
+          popoutPreviewVisible
             ? $t('common.hideExamplePopout')
             : $t('common.showExamplePopout')
         "
-        :active="popoutSettingsStore.popoutPreviewVisible"
-        @click="handlePreviewToggle"
+        :active="popoutPreviewVisible"
+        @click="toggleWidgetPreview('popout')"
       />
       <MenuButton
         :icon="RotateCcw"

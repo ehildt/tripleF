@@ -98,22 +98,6 @@ export const usePopoutSettingsStore = defineStore('popoutSettings', () => {
     ),
   );
 
-  /** Example popout shown from Settings → Widgets to preview the anchor. */
-  const popoutPreviewVisible = ref(false);
-
-  /**
-   * Toggle the example popout on/off — the preview is persistent, not timed:
-   * it stays visible until the user dismisses it (or the toggle is flipped
-   * again).
-   */
-  function togglePopoutPreview() {
-    popoutPreviewVisible.value = !popoutPreviewVisible.value;
-  }
-
-  function hidePopoutPreview() {
-    popoutPreviewVisible.value = false;
-  }
-
   /**
    * Last geometry of the floating video popup. Hydrated from localStorage when
    * position memory is on, so a popout reappears where the user last moved it.
@@ -246,10 +230,7 @@ export const usePopoutSettingsStore = defineStore('popoutSettings', () => {
     popoutHideOnPlaylist,
     popoutAutoDock,
     popoutShowBarAlways,
-    popoutPreviewVisible,
     floatingPopupRect,
-    togglePopoutPreview,
-    hidePopoutPreview,
     setPopoutEnabled,
     setPopoutAnchor,
     setPopoutRememberPosition,

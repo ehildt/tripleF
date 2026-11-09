@@ -1,6 +1,4 @@
-import type { PlaylistAnchor, PlaylistMode } from './playlist.types';
-
-export const ACTIVE_PLAYLIST_STORAGE_KEY = 'vision-active-playlist';
+import type { PlaylistAnchor, PlaylistMode } from './playlist-settings.types';
 
 export const DEFAULT_PLAYLIST_MODE: PlaylistMode = 'panel';
 

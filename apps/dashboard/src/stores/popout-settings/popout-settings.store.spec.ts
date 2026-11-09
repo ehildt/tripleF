@@ -30,14 +30,6 @@ describe('usePopoutSettingsStore', () => {
     expect(usePopoutSettingsStore().popoutAnchor).toBe('bottom-right');
   });
 
-  it('toggles the preview popout', () => {
-    const store = usePopoutSettingsStore();
-    store.togglePopoutPreview();
-    expect(store.popoutPreviewVisible).toBe(true);
-    store.hidePopoutPreview();
-    expect(store.popoutPreviewVisible).toBe(false);
-  });
-
   it('changing the anchor drops any remembered position', () => {
     const store = usePopoutSettingsStore();
     store.floatingPopupRect = { x: 1, y: 2, width: 3, height: 4 };

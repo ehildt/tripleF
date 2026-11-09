@@ -10,54 +10,45 @@ import {
   TEMPORARY_RETENTION_KEY,
 } from './conversation-settings.constant';
 
-function loadTemporaryRetentionMinutes(): number {
-  try {
-    const raw = localStorage.getItem(TEMPORARY_RETENTION_KEY);
-    return parseTemporaryRetentionMinutes(raw);
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_TEMPORARY_RETENTION_MINUTES;
-}
-
-function saveTemporaryRetentionMinutes(value: number): void {
-  try {
-    localStorage.setItem(TEMPORARY_RETENTION_KEY, String(value));
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadDocumentTextLimit(): number {
-  try {
-    const raw = localStorage.getItem(DOCUMENT_TEXT_LIMIT_KEY);
-    return parseDocumentTextLimit(raw);
-  } catch {
-    return DEFAULT_DOCUMENT_TEXT_LIMIT;
-  }
-}
-
-function saveDocumentTextLimit(value: number): void {
-  try {
-    localStorage.setItem(DOCUMENT_TEXT_LIMIT_KEY, String(value));
-  } catch {
-    /* ignore */
-  }
-}
-
 export const useConversationSettingsStore = defineStore(
   'conversation-settings',
   () => {
-    /** How long an unpinned (temporary) conversation survives locally. */
+    /** How long an unpinned temporary conversation survives locally. */
     const temporaryRetentionMinutes = ref<number>(
-      loadTemporaryRetentionMinutes(),
+      DEFAULT_TEMPORARY_RETENTION_MINUTES,
     );
-    /** Max characters of extracted document text kept per file; the rest is
-     * truncated with a toast. Configurable so it can grow as models do. */
-    const documentTextLimit = ref<number>(loadDocumentTextLimit());
+    try {
+      temporaryRetentionMinutes.value = parseTemporaryRetentionMinutes(
+        localStorage.getItem(TEMPORARY_RETENTION_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain the default retention. */
+    }
 
-    watch(temporaryRetentionMinutes, saveTemporaryRetentionMinutes);
-    watch(documentTextLimit, saveDocumentTextLimit);
+    /** Maximum extracted document characters retained per file. */
+    const documentTextLimit = ref<number>(DEFAULT_DOCUMENT_TEXT_LIMIT);
+    try {
+      documentTextLimit.value = parseDocumentTextLimit(
+        localStorage.getItem(DOCUMENT_TEXT_LIMIT_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain the default document limit. */
+    }
+
+    watch(temporaryRetentionMinutes, (value) => {
+      try {
+        localStorage.setItem(TEMPORARY_RETENTION_KEY, String(value));
+      } catch {
+        /* Storage unavailable: retain the preference in memory. */
+      }
+    });
+    watch(documentTextLimit, (value) => {
+      try {
+        localStorage.setItem(DOCUMENT_TEXT_LIMIT_KEY, String(value));
+      } catch {
+        /* Storage unavailable: retain the preference in memory. */
+      }
+    });
 
     function setTemporaryRetentionMinutes(minutes: number): void {
       temporaryRetentionMinutes.value = Math.max(

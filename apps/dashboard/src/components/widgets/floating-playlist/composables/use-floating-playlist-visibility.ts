@@ -1,46 +1,34 @@
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
-import { storeToRefs } from 'pinia';
 import type { Ref } from 'vue';
 
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePlaylistSettingsStore } from '@/stores/widgets/playlist-settings/playlist-settings.store';
+
+import { useFloatingPlaylistOpen } from './use-floating-playlist-open';
+import type { FloatingPlaylistVisibilityControls } from './use-floating-playlist-visibility.types';
 
 /**
- * Open/collapse behavior of the floating playlist — mirrors the tab menu:
- * the window starts collapsed (a compact handle stays at the anchor) and
- * stays open until the user collapses it via the toggle handle or the X
- * icon (the window sweeps in or out of the handle) or presses Escape. With
- * autoclose on (Settings → Widgets → Playlist), the window also collapses
- * after a video was launched or a click landed outside the window. The open
- * state lives in the playlist store so the now-playing marquee can
- * follow it.
+ * Bind component-scoped outside-click and Escape listeners to the shared
+ * floating window state. Only the mounted floating component owns listeners;
+ * readers such as the app marquee use useFloatingPlaylistOpen directly.
  */
 export function useFloatingPlaylistVisibility(
   playlistRef: Ref<HTMLElement | null>,
-) {
-  const playlistStore = usePlaylistStore();
-  const { floatingPlaylistOpen: isOpen, playlistAutoClose } =
-    storeToRefs(playlistStore);
+): FloatingPlaylistVisibilityControls {
+  const settingsStore = usePlaylistSettingsStore();
+  const floatingPlaylist = useFloatingPlaylistOpen();
 
-  function togglePlaylist() {
-    isOpen.value = !isOpen.value;
+  function closeOnAutoclose(): void {
+    if (settingsStore.playlistAutoClose) {
+      floatingPlaylist.closeFloatingPlaylist();
+    }
   }
 
-  function closePlaylist() {
-    isOpen.value = false;
-  }
-
-  /** Collapse after an action inside the window — only when autoclose is on. */
-  function closeOnAutoclose() {
-    if (playlistAutoClose.value) closePlaylist();
-  }
-
-  onClickOutside(playlistRef, () => {
-    if (playlistAutoClose.value) closePlaylist();
-  });
-
+  onClickOutside(playlistRef, closeOnAutoclose);
   onKeyStroke('Escape', () => {
-    if (isOpen.value) closePlaylist();
+    if (floatingPlaylist.floatingPlaylistOpen.value) {
+      floatingPlaylist.closeFloatingPlaylist();
+    }
   });
 
-  return { isOpen, togglePlaylist, closePlaylist, closeOnAutoclose };
+  return { closeOnAutoclose };
 }
