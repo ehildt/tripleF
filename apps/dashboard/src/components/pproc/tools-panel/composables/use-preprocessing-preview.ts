@@ -1,24 +1,22 @@
 import { ref, useTemplateRef } from 'vue';
 
-import { getApiUrl } from '@/api/api-url';
+import { previewSharpOverrides } from '@/api/preview-sharp-overrides.api';
 import { useLightbox } from '@/components/shared/ui/lightbox/composables/use-lightbox';
+import { usePreprocessingSettingsSync } from '@/composables/use-preprocessing-settings-sync/use-preprocessing-settings-sync';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { usePreprocessingSettingsStore } from '@/stores/preprocessing-settings/preprocessing-settings.store';
 
 import { mapPreviewVariant } from './helpers/map-preview-variant.helper';
-import type { SharpPreviewVariant } from './use-preprocessing-preview.types';
+import { parseSharpPreviewVariants } from './helpers/parse-sharp-preview-variants.helper';
+import type { PreprocessingPreview } from './use-preprocessing-preview.types';
 
-/** One preprocessing variant returned by the preview endpoint. */
 /**
- * Preprocessing preview flow: the user picks an image once, it is sent to
- * the server's sharp pipeline immediately, and the resulting variants open
- * in the shared lightbox. The picked file is kept in memory so later
- * previews (after tweaking settings) reuse it; the lightbox header offers
- * a repick action to dismiss it and choose a new image.
+ * Pick or reuse an image, flush current preprocessing settings, and open the
+ * validated server-generated variants in the shared lightbox.
  */
-export function usePreprocessingPreview() {
-  const store = usePreprocessingSettingsStore();
+
+export function usePreprocessingPreview(): PreprocessingPreview {
+  const settingsSync = usePreprocessingSettingsSync();
   const toast = useToast();
   const lightbox = useLightbox();
 
@@ -26,25 +24,20 @@ export function usePreprocessingPreview() {
   const isPreviewLoading = ref(false);
   const fileInput = useTemplateRef<HTMLInputElement>('fileInput');
 
-  function openPicker() {
+  function openPicker(): void {
     fileInput.value?.click();
   }
 
-  async function sendPreview() {
-    if (!previewFile.value || isPreviewLoading.value) return;
+  async function sendPreview(): Promise<void> {
+    const image = previewFile.value;
+    if (!image || isPreviewLoading.value) return;
     isPreviewLoading.value = true;
     try {
-      // The settings push is debounced — flush it so the preview runs
-      // against the very latest knobs.
-      store.pushSettingsToServer();
-      const formData = new FormData();
-      formData.append('images', previewFile.value);
-      const res = await fetch(getApiUrl('/api/v1/sharp-overrides/preview'), {
-        method: 'POST',
-        body: formData,
-      });
-      if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-      const variants = (await res.json()) as SharpPreviewVariant[];
+      // Preview reads the server's global overrides, so the latest local
+      // snapshot must finish saving before the image is uploaded.
+      await settingsSync.flushSettings();
+      const payload = await previewSharpOverrides(image);
+      const variants = parseSharpPreviewVariants(payload);
       if (variants.length === 0) throw new Error('no variants returned');
       const images = variants.map(mapPreviewVariant);
       lightbox.openImages(images, images[0].url);
@@ -56,24 +49,24 @@ export function usePreprocessingPreview() {
     }
   }
 
-  function onFilePicked(event: Event) {
+  function onFilePicked(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     // Reset so picking the same file twice still fires change.
     input.value = '';
     if (!file) return;
     previewFile.value = file;
-    sendPreview();
+    void sendPreview();
   }
 
   /** First click picks an image; later clicks reuse it. */
-  function onPreviewClick() {
-    if (previewFile.value) sendPreview();
+  function onPreviewClick(): void {
+    if (previewFile.value) void sendPreview();
     else openPicker();
   }
 
   /** Dismiss the current image and pick a new one. */
-  function repickImage() {
+  function repickImage(): void {
     previewFile.value = null;
     lightbox.close();
     openPicker();

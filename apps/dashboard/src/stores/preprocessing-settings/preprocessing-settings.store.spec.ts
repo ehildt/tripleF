@@ -27,13 +27,21 @@ describe('constants', () => {
 describe('usePreprocessingSettingsStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    localStorage.clear();
   });
 
-  it('initializes with default settings', () => {
+  it('initializes with independent default settings', () => {
     const store = usePreprocessingSettingsStore();
     expect(store.enabled).toBe(true);
-    expect(store.settings).toMatchObject(DEFAULT_PREPROCESSING_SETTINGS);
+    expect(store.settings).toEqual(DEFAULT_PREPROCESSING_SETTINGS);
+    expect(store.settings.resize).not.toBe(
+      DEFAULT_PREPROCESSING_SETTINGS.resize,
+    );
+    expect(store.settings.variants).not.toBe(
+      DEFAULT_PREPROCESSING_SETTINGS.variants,
+    );
+    expect(store.settings.parameters).not.toBe(
+      DEFAULT_PREPROCESSING_SETTINGS.parameters,
+    );
   });
 
   it('toggles enabled', () => {
@@ -76,50 +84,38 @@ describe('usePreprocessingSettingsStore', () => {
     expect(store.parameters.blurSigma).toBe(2);
   });
 
-  it('isEffectivelyEnabled is false when enabled is false', () => {
+  it('applies hydrated settings without retaining the input references', () => {
     const store = usePreprocessingSettingsStore();
-    store.setEnabled(false);
-    expect(store.isEffectivelyEnabled).toBe(false);
+    const hydrated = structuredClone(DEFAULT_PREPROCESSING_SETTINGS);
+    hydrated.enabled = false;
+    hydrated.variants.grayscale = true;
+
+    store.applySettings(hydrated);
+    hydrated.variants.grayscale = false;
+
+    expect(store.enabled).toBe(false);
+    expect(store.variants.grayscale).toBe(true);
   });
 
-  it('isEffectivelyEnabled is false when no variants selected', () => {
-    const store = usePreprocessingSettingsStore();
-    store.setVariant('original', false);
-    expect(store.isEffectivelyEnabled).toBe(false);
-  });
-
-  it('resetToDefaults restores all defaults', () => {
+  it('resetToDefaults restores every nested group without mutating defaults', () => {
     const store = usePreprocessingSettingsStore();
     store.setVariant('grayscale', true);
     store.setParameter('blurSigma', 99);
+    store.setMaxWidth(256);
+
     store.resetToDefaults();
-    expect(store.variants.grayscale).toBe(false);
-    expect(store.parameters.blurSigma).toBe(0.5);
+
+    expect(store.settings).toEqual(DEFAULT_PREPROCESSING_SETTINGS);
+    expect(DEFAULT_PREPROCESSING_SETTINGS.variants.grayscale).toBe(false);
+    expect(DEFAULT_PREPROCESSING_SETTINGS.parameters.blurSigma).toBe(0.5);
   });
 
-  describe('getSummary', () => {
-    it('returns Disabled when off', () => {
-      const store = usePreprocessingSettingsStore();
-      store.setEnabled(false);
-      expect(store.getSummary()).toBe('Disabled');
-    });
-
-    it('lists active variants and size', () => {
-      const store = usePreprocessingSettingsStore();
-      store.setVariant('grayscale', true);
-      expect(store.getSummary()).toContain('768');
-      expect(store.getSummary()).toContain('grayscale');
-    });
-  });
-
-  describe('resetParameter / isParameterModified', () => {
-    it('detects modified parameters', () => {
-      const store = usePreprocessingSettingsStore();
-      expect(store.isParameterModified('blurSigma')).toBe(false);
-      store.setParameter('blurSigma', 5);
-      expect(store.isParameterModified('blurSigma')).toBe(true);
-      store.resetParameter('blurSigma');
-      expect(store.isParameterModified('blurSigma')).toBe(false);
-    });
+  it('detects whether a parameter differs from its default', () => {
+    const store = usePreprocessingSettingsStore();
+    expect(store.isParameterModified('blurSigma')).toBe(false);
+    store.setParameter('blurSigma', 5);
+    expect(store.isParameterModified('blurSigma')).toBe(true);
+    store.setParameter('blurSigma', 0.5);
+    expect(store.isParameterModified('blurSigma')).toBe(false);
   });
 });

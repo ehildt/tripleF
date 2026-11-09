@@ -21,10 +21,10 @@ import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue
 import ToastContainer from './components/widgets/toast-container/ToastContainer.vue';
 import { usePlaybackSession } from './composables/use-playback-session/use-playback-session';
 import { usePlaylistCatalog } from './composables/use-playlist-catalog/use-playlist-catalog';
+import { usePreprocessingSettingsSync } from './composables/use-preprocessing-settings-sync/use-preprocessing-settings-sync';
 import { useTheme } from './composables/use-theme/use-theme';
 import { useNavigationStore } from './stores/app/navigation/navigation.store';
 import { useDebugStore } from './stores/debug/debug.store';
-import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
 import { usePopoutSettingsStore } from './stores/widgets/popout-settings/popout-settings.store';
 
 const debugStore = useDebugStore();
@@ -37,12 +37,13 @@ const { showDlqBadge } = useAppNavigation();
 const { initTheme } = useTheme();
 const socket = useSocket();
 const { socketId } = socket;
-usePreprocessingSettingsStore();
 conversationCatalog.watchActiveConversationBookmark();
 void conversationCatalog.bootstrapConversations();
 useAttachmentLifecycle();
 const popoutSettingsStore = usePopoutSettingsStore();
 const playlistCatalog = usePlaylistCatalog();
+const preprocessingSettingsSync = usePreprocessingSettingsSync();
+void preprocessingSettingsSync.loadSettings();
 
 // The playback session is an app-level service: created once here, shared by
 // import across the tree, and passed as a prop to the floating player.
@@ -55,10 +56,6 @@ const { playlistMarqueeVisible } = usePlaylistMarquee(playback);
 // floating playlist — reads the same hydrated state without refetching on
 // each mount.
 void playlistCatalog.loadPlaylists();
-
-// The preprocessing config is server-persisted per session id: the store
-// fetches it on construction and pushes every change immediately from its
-// own watch — no boot-time orchestration here.
 
 socket.setCallbacks(debugStore.addDebugResult, handleHarnessEvent);
 
