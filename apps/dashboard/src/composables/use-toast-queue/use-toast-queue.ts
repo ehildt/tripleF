@@ -1,7 +1,7 @@
 import { reactive, watch } from 'vue';
 
 import { i18n } from '@/i18n/i18n';
-import { useToastSettingsStore } from '@/stores/toast-settings/toast-settings.store';
+import { useToastSettingsStore } from '@/stores/widgets/toast-settings/toast-settings.store';
 import type { ToastType } from '@/types/toast-type.model';
 
 import type { ToastOptions } from '../use-toast/use-toast.types';

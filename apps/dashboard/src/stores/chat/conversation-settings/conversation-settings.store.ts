@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
+import { normalizeTemporaryRetentionMinutes } from './helpers/normalize-temporary-retention-minutes.helper';
 import { parseDocumentTextLimit } from './helpers/parse-document-text-limit.helper';
 import { parseTemporaryRetentionMinutes } from './helpers/parse-temporary-retention-minutes.helper';
 import {
@@ -51,10 +52,8 @@ export const useConversationSettingsStore = defineStore(
     });
 
     function setTemporaryRetentionMinutes(minutes: number): void {
-      temporaryRetentionMinutes.value = Math.max(
-        0,
-        Math.floor(Number.isFinite(minutes) ? minutes : 0),
-      );
+      temporaryRetentionMinutes.value =
+        normalizeTemporaryRetentionMinutes(minutes);
     }
 
     function setDocumentTextLimit(value: number): void {

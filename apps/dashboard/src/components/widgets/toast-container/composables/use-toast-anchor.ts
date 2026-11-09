@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 
-import { useToastSettingsStore } from '@/stores/toast-settings/toast-settings.store';
+import { useToastSettingsStore } from '@/stores/widgets/toast-settings/toast-settings.store';
 
 /**
  * The toast stack's screen anchor, split into its vertical ('top' |

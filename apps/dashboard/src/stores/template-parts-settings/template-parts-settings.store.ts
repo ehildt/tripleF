@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import { buildDefaultTemplateParts } from './helpers/build-default-template-parts.helper';
 import { isTemplateName } from './helpers/is-template-name.helper';
@@ -7,17 +7,6 @@ import { parseTemplatePartsVisibility } from './helpers/parse-template-parts-vis
 import { TEMPLATE_PARTS_STORAGE_KEY } from './template-parts-settings.constant';
 import type { TemplateName } from './template-parts-settings.model';
 import type { TemplatePartsVisibility } from './template-parts-settings.types';
-
-function saveTemplateParts(visibility: TemplatePartsVisibility): void {
-  try {
-    localStorage.setItem(
-      TEMPLATE_PARTS_STORAGE_KEY,
-      JSON.stringify(visibility),
-    );
-  } catch {
-    /* storage unavailable — the setting stays in-memory only */
-  }
-}
 
 /**
  * Client-side per-template part visibility: which optional response parts
@@ -42,6 +31,21 @@ export const useTemplatePartsSettingsStore = defineStore(
       /* Storage unavailable: retain fresh canonical defaults. */
     }
 
+    watch(
+      templatePartsVisibility,
+      (visibility) => {
+        try {
+          localStorage.setItem(
+            TEMPLATE_PARTS_STORAGE_KEY,
+            JSON.stringify(visibility),
+          );
+        } catch {
+          /* Storage unavailable: retain visibility in memory. */
+        }
+      },
+      { deep: true, flush: 'sync' },
+    );
+
     function isTemplatePartVisible(template: string, partId: string): boolean {
       if (!isTemplateName(template)) return true;
       const parts = templatePartsVisibility.value[template];
@@ -56,7 +60,6 @@ export const useTemplatePartsSettingsStore = defineStore(
       const parts = templatePartsVisibility.value[template];
       if (!parts || !Object.hasOwn(parts, partId)) return;
       parts[partId] = visible;
-      saveTemplateParts(templatePartsVisibility.value);
     }
 
     function toggleTemplatePartVisible(
@@ -72,7 +75,6 @@ export const useTemplatePartsSettingsStore = defineStore(
 
     function resetTemplateParts(): void {
       templatePartsVisibility.value = buildDefaultTemplateParts();
-      saveTemplateParts(templatePartsVisibility.value);
     }
 
     return {

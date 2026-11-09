@@ -6,6 +6,7 @@ import { createId } from '@/utils/create-id/create-id.helper';
 
 import { inferConversationTitle } from './helpers/infer-conversation-title.helper';
 import { mapFileToSavedInfo } from './helpers/map-file-to-saved-info.helper';
+import { partitionConversationContext } from './helpers/partition-conversation-context.helper';
 import type {
   Conversation,
   ConversationSubscription,
@@ -225,21 +226,12 @@ export const useConversationStore = defineStore('conversation', () => {
     const conversation = getLoadedConversation(parentId);
     if (!conversation) return undefined;
     const conversationType = conversation.type;
-    const removedImages = conversation.uploadedImages.filter(
-      (image) =>
-        (image.conversationId ?? serverConversationId) === serverConversationId,
+    const partition = partitionConversationContext(
+      conversation,
+      serverConversationId,
     );
-
-    conversation.exchanges = conversation.exchanges.filter(
-      (exchange) =>
-        (exchange.conversationId ?? serverConversationId) !==
-        serverConversationId,
-    );
-
-    conversation.uploadedImages = conversation.uploadedImages.filter(
-      (image) =>
-        (image.conversationId ?? serverConversationId) !== serverConversationId,
-    );
+    conversation.exchanges = partition.exchanges;
+    conversation.uploadedImages = partition.uploadedImages;
 
     const recordRemoved = conversation.exchanges.length === 0;
 
@@ -248,7 +240,11 @@ export const useConversationStore = defineStore('conversation', () => {
       if (index !== -1) conversations.value.splice(index, 1);
     }
 
-    return { removedImages, recordRemoved, conversationType };
+    return {
+      removedImages: partition.removedImages,
+      recordRemoved,
+      conversationType,
+    };
   }
 
   return {
