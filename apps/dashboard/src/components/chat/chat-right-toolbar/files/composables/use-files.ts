@@ -6,6 +6,7 @@ import { useAttachmentList } from '@/components/chat/chat-right-toolbar/composab
 import type { AttachmentItem } from '@/components/chat/chat-right-toolbar/composables/use-attachment-list.types';
 import { useConversationDocuments } from '@/components/chat/composables/use-conversation-documents';
 import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
@@ -21,6 +22,7 @@ import { hasUploadedImageReference } from '@/stores/chat/conversation/helpers/ha
  */
 export function useFiles() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const images = useConversationImages();
   const documents = useConversationDocuments();
   const { attachedFiles, removePendingFile, togglePendingFile } =
@@ -28,7 +30,7 @@ export function useFiles() {
   const toast = useToast();
 
   const activeConversationId = computed(
-    () => conversationStore.activeConversationId ?? '',
+    () => conversationSession.activeConversationId.value ?? '',
   );
   const activeConversation = computed(
     () => conversationStore.getConversation(activeConversationId.value) ?? null,

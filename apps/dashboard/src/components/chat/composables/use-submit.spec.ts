@@ -5,7 +5,7 @@ import { useConversationCatalog } from '@/components/chat/composables/use-conver
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { useAttachedFilesStore } from '@/stores/chat/attached-files/attached-files.store';
 import type { Exchange } from '@/stores/chat/conversation/conversation.model';
-import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 import { useMessagesStore } from '@/stores/messages/messages.store';
 import { useModelsStore } from '@/stores/models/models.store';
 

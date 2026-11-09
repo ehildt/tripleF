@@ -92,22 +92,30 @@ The same discipline applies to audits and recommendations: options are judged by
 
 An abstract base class that owns real mechanics — lifecycle bookkeeping, guard logic, failure semantics — is behavior, not a wrapper: the ban targets rename-and-delegate indirection, not behavior-owning ancestors.
 
+## 8a. Encapsulate repeated keyed state reads
+
+When the same keyed lookup, fallback, optional access, or presence check over owned reactive records is needed more than once, define a named getter function on the owning store or composable with an explicit return type. Use that getter consistently for internal mutations and by consumers instead of repeating the raw indexed access. This centralizes the key shape and missing-value semantics and is legitimate behavior, not a banned wrapper.
+
+When the same getter result is repeatedly compared with an expected value or tested for membership, extend the owner getter with an optional expected-value argument and explicit TypeScript overload signatures. The base call retains its value-returning contract; the comparison call returns a boolean. Implement exact equality or membership semantics and distinguish an omitted argument by presence, never by truthiness. Do not expose an untyped union-returning API or add a consumer-side comparator relay. A comparison used only once stays inline.
+
+A lookup used only once stays inline. Do not add a second function that merely delegates to the owner's getter; consumers import the owner directly. Raw state may remain visible for Pinia state requirements and intentional key-existence assertions, but ordinary reads use the getter.
+
 ## 9. CSS classes are not an API
 
 Styling hooks belong to the component that renders them. Never derive behavior from another unit's DOM — counting children by class name, sniffing structure, or branching on what a selector finds turns a cosmetic name into a hidden cross-component contract that breaks silently the next time the class is renamed. If a consumer needs to know something about what was rendered (how many, which kind), that information flows the sanctioned way — props in, events out, or an explicitly passed count — never through DOM inspection of slotted or child content.
 
 ## 10. Naming decision table
 
-| Category            | Pattern                  | Example                     |
-| ------------------- | ------------------------ | --------------------------- |
-| Action function     | verb + noun              | `buildIntentSelectionPrompt` |
-| Predicate           | `is`/`has`/`should` prefix | `isTrustedImageUrl`        |
-| Formatting helper   | `format` + what          | `formatContextUsagePercent` |
-| Calculation helper  | `calc` + what            | `calcTokenPercent`          |
-| Helper file         | function name + `.helper.ts` | `strip-html.helper.ts`   |
-| Types file          | source name + `.types.ts`   | `tool-factory.types.ts`   |
-| Constants file      | theme + `.constant.ts`      | `media-counts.constant.ts` |
-| Model file          | domain noun + `.model.ts`   | `encyclopedia-select.model.ts` |
+| Category           | Pattern                      | Example                        |
+| ------------------ | ---------------------------- | ------------------------------ |
+| Action function    | verb + noun                  | `buildIntentSelectionPrompt`   |
+| Predicate          | `is`/`has`/`should` prefix   | `isTrustedImageUrl`            |
+| Formatting helper  | `format` + what              | `formatContextUsagePercent`    |
+| Calculation helper | `calc` + what                | `calcTokenPercent`             |
+| Helper file        | function name + `.helper.ts` | `strip-html.helper.ts`         |
+| Types file         | source name + `.types.ts`    | `tool-factory.types.ts`        |
+| Constants file     | theme + `.constant.ts`       | `media-counts.constant.ts`     |
+| Model file         | domain noun + `.model.ts`    | `encyclopedia-select.model.ts` |
 
 ## 11. Tests are a contract, not a mandate to create them
 
@@ -131,6 +139,7 @@ The semantics — consent gate, regression net, contract-not-infallible, report-
 - Files co-located with their consumer unless shared across unrelated areas
 - No new barrel files; published package entry points are the only exception
 - No wrapper functions
+- Repeated keyed state reads use an owner-level getter with explicit return type; repeated equality/membership checks use its type-safe comparator form; single-use operations stay inline
 - No component re-declares another component's props under renamed keys or forwards its events unchanged
 - No behavior derived from DOM class lookups — CSS classes are styling hooks, not an API
 - No local constant restates a shared constant value-for-value — duplicates collapse to the single source

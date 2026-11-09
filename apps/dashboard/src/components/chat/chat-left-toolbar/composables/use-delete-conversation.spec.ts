@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { deleteUploadedObject } from '@/api/object-storage.api';
 import type { Conversation } from '@/stores/chat/conversation/conversation.model';
@@ -21,6 +21,9 @@ const state = vi.hoisted(() => ({
   removeConversationLocally: vi.fn(async () => {}),
   deletePersistentConversation: vi.fn(async () => {}),
   clearPendingFiles: vi.fn(),
+  clearMergeSelection: vi.fn(),
+  setActiveConversationId: vi.fn(),
+  activeConversationId: 'c1' as string | null,
   removeSubscriptionByEventRoom: vi.fn(),
   closeRoom: vi.fn(),
   closeEvent: vi.fn(),
@@ -28,7 +31,9 @@ const state = vi.hoisted(() => ({
 
 vi.mock('@/stores/chat/conversation/conversation.store', () => ({
   useConversationStore: () => ({
-    conversations: state.conversations,
+    get conversations() {
+      return state.conversations;
+    },
     getConversation: () => state.target,
     deleteConversationContext: state.deleteConversationContext,
   }),
@@ -53,6 +58,23 @@ vi.mock('@/components/chat/composables/use-conversation-persistence', () => ({
 vi.mock('@/components/chat/shared/composables/use-pending-attachments', () => ({
   usePendingAttachments: () => ({ clearPendingFiles: state.clearPendingFiles }),
 }));
+vi.mock(
+  '@/components/chat/shared/composables/use-conversation-session',
+  () => ({
+    useConversationSession: () => ({
+      activeConversationId: computed(() => state.activeConversationId),
+      setActiveConversationId: state.setActiveConversationId,
+    }),
+  }),
+);
+vi.mock(
+  '@/stores/chat/conversation/merge-selection/merge-selection.store',
+  () => ({
+    useMergeSelectionStore: () => ({
+      clearMergeSelection: state.clearMergeSelection,
+    }),
+  }),
+);
 vi.mock('@/composables/use-socket/use-socket', () => ({
   useSocket: () => ({
     closeRoom: state.closeRoom,
@@ -88,11 +110,17 @@ describe('useDeleteConversation', () => {
     vi.clearAllMocks();
     state.conversations = [];
     state.target = undefined;
+    state.activeConversationId = 'c1';
     state.loadConversationForWrite.mockImplementation(async () => state.target);
-    state.deleteConversationContext.mockReturnValue({
-      removedImages: [],
-      recordRemoved: true,
-      conversationType: 'temporary',
+    state.deleteConversationContext.mockImplementation((id: string) => {
+      state.conversations = state.conversations.filter(
+        (conversation) => conversation.id !== id,
+      );
+      return {
+        removedImages: [],
+        recordRemoved: true,
+        conversationType: 'temporary',
+      };
     });
   });
 
@@ -111,6 +139,8 @@ describe('useDeleteConversation', () => {
       'context-1',
     );
     expect(state.removeConversationLocally).toHaveBeenCalledWith('context-1');
+    expect(state.clearMergeSelection).toHaveBeenCalledWith('c1');
+    expect(state.setActiveConversationId).toHaveBeenCalledWith(null);
     expect(state.clearPendingFiles).toHaveBeenCalledWith({
       parentConversationId: 'c1',
       conversationId: 'context-1',
@@ -127,6 +157,7 @@ describe('useDeleteConversation', () => {
 
     expect(state.closeRoom).not.toHaveBeenCalled();
     expect(state.closeEvent).not.toHaveBeenCalled();
+    expect(state.setActiveConversationId).toHaveBeenCalledWith('c2');
     expect(state.deleteConversationContext).toHaveBeenCalledWith(
       'c1',
       'context-1',
@@ -185,6 +216,7 @@ describe('useDeleteConversation', () => {
     await useDeleteConversation().deleteConversation(target.id);
 
     expect(state.persistConversation).toHaveBeenCalledWith(target);
+    expect(state.setActiveConversationId).not.toHaveBeenCalled();
     expect(state.removeConversationLocally).not.toHaveBeenCalled();
   });
 
@@ -193,5 +225,7 @@ describe('useDeleteConversation', () => {
 
     expect(state.loadConversationForWrite).not.toHaveBeenCalled();
     expect(state.deleteConversationContext).not.toHaveBeenCalled();
+    expect(state.clearMergeSelection).not.toHaveBeenCalled();
+    expect(state.setActiveConversationId).not.toHaveBeenCalled();
   });
 });

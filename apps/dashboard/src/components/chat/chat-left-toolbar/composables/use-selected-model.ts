@@ -2,6 +2,7 @@ import { computed } from 'vue';
 
 import { warmModel } from '@/api/warm-model.api';
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { TOAST_KEY_CONTEXT_CLAMPED } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
@@ -18,12 +19,13 @@ import { resolveNumCtxForModel } from '../shared/helpers/resolve-num-ctx-for-mod
  */
 export function useSelectedModel() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const configuration = useConversationConfiguration();
   const modelsStore = useModelsStore();
   const toast = useToast();
 
   const activeConversationId = computed(
-    () => conversationStore.activeConversationId ?? '',
+    () => conversationSession.activeConversationId.value ?? '',
   );
   const activeConversation = computed(
     () => conversationStore.getConversation(activeConversationId.value) ?? null,

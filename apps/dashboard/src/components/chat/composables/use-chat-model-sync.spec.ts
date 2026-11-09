@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import { useModelsStore } from '@/stores/models/models.store';
@@ -19,6 +20,7 @@ function textModel(): OllamaModel {
 describe('useChatModelSync', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
     localStorage.clear();
   });
 
@@ -33,7 +35,7 @@ describe('useChatModelSync', () => {
       model: 'llama-text',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.selectedModel = 'llama-vision';
@@ -48,7 +50,7 @@ describe('useChatModelSync', () => {
       model: 'llama-text',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const { supportsVision } = useChatModelSync();
     expect(supportsVision.value).toBe(true);
@@ -60,7 +62,7 @@ describe('useChatModelSync', () => {
       model: 'llama-vision',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.models = [visionModel(), textModel()];
@@ -76,7 +78,7 @@ describe('useChatModelSync', () => {
       model: 'llama-text',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.models = [visionModel(), textModel()];
@@ -93,7 +95,7 @@ describe('useChatModelSync', () => {
       numCtx: '',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.models = [{ ...textModel(), context_length: 8192 }];

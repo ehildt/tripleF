@@ -2,6 +2,7 @@ import { deleteUploadedObject } from '@/api/object-storage.api';
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { useConversationPersistence } from '@/components/chat/composables/use-conversation-persistence';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import type {
@@ -10,6 +11,7 @@ import type {
 } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { hasUploadedImageReference } from '@/stores/chat/conversation/helpers/has-uploaded-image-reference.helper';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 
 import { isSocketEventInUse } from '../shared/helpers/is-socket-event-in-use.helper';
 import { isSocketShared } from '../shared/helpers/is-socket-shared.helper';
@@ -18,6 +20,8 @@ import { useSocketSubscriptions } from './use-socket-subscriptions';
 /** Delete a conversation context after leaving its sockets and storage. */
 export function useDeleteConversation() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
+  const mergeSelectionStore = useMergeSelectionStore();
   const catalog = useConversationCatalog();
   const configuration = useConversationConfiguration();
   const persistence = useConversationPersistence();
@@ -99,6 +103,15 @@ export function useDeleteConversation() {
       serverConversationId,
     );
     if (!result) return;
+    mergeSelectionStore.clearMergeSelection(id);
+    if (
+      result.recordRemoved &&
+      conversationSession.activeConversationId.value === id
+    ) {
+      conversationSession.setActiveConversationId(
+        conversationStore.conversations[0]?.id ?? null,
+      );
+    }
 
     await deleteUnreferencedImages(
       id,

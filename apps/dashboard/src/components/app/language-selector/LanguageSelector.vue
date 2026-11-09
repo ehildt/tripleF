@@ -176,7 +176,6 @@ onUnmounted(() =>
    visible at the end of the scrollbar. */
 .language-selector__dropdown {
   position: fixed;
-  width: 14rem;
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-divider);
   box-shadow: 0 10px 15px -3px

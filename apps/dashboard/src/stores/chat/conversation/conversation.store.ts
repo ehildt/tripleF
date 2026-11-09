@@ -17,7 +17,6 @@ import type { ConversationContextDeletion } from './conversation.store.types';
 /** Canonical conversation records and synchronous mutations; I/O lives outside. */
 export const useConversationStore = defineStore('conversation', () => {
   const conversations = ref<Conversation[]>([]);
-  const activeConversationId = ref<string | null>(null);
   const hydrated = ref(false);
 
   function getConversation(id: string): Conversation | undefined {
@@ -63,20 +62,8 @@ export const useConversationStore = defineStore('conversation', () => {
     return stub;
   }
 
-  function activateRestoredConversation(id: string): void {
-    if (activeConversationId.value === null) activeConversationId.value = id;
-  }
-
-  function insertConversation(
-    conversation: Conversation,
-    activate: boolean,
-  ): void {
+  function insertConversation(conversation: Conversation): void {
     conversations.value.unshift(conversation);
-    if (activate) activeConversationId.value = conversation.id;
-  }
-
-  function selectConversation(id: string): void {
-    if (getConversation(id)) activeConversationId.value = id;
   }
 
   function renameConversation(id: string, title: string): boolean {
@@ -242,39 +229,36 @@ export const useConversationStore = defineStore('conversation', () => {
       (image) =>
         (image.conversationId ?? serverConversationId) === serverConversationId,
     );
+
     conversation.exchanges = conversation.exchanges.filter(
       (exchange) =>
         (exchange.conversationId ?? serverConversationId) !==
         serverConversationId,
     );
+
     conversation.uploadedImages = conversation.uploadedImages.filter(
       (image) =>
         (image.conversationId ?? serverConversationId) !== serverConversationId,
     );
+
     const recordRemoved = conversation.exchanges.length === 0;
+
     if (recordRemoved) {
-      const index = conversations.value.findIndex(
-        (candidate) => candidate.id === parentId,
-      );
+      const index = conversations.value.findIndex(({ id }) => id === parentId);
       if (index !== -1) conversations.value.splice(index, 1);
-      if (activeConversationId.value === parentId) {
-        activeConversationId.value = conversations.value[0]?.id ?? null;
-      }
     }
+
     return { removedImages, recordRemoved, conversationType };
   }
 
   return {
     conversations,
-    activeConversationId,
     hydrated,
     getConversation,
     getConversationId,
     mergeConversationStubs,
     applyLoadedConversation,
-    activateRestoredConversation,
     insertConversation,
-    selectConversation,
     renameConversation,
     setConversationType,
     patchConversation,

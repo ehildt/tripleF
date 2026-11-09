@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import { useModelsStore } from '@/stores/models/models.store';
@@ -38,6 +39,7 @@ function model(overrides: Partial<OllamaModel> = {}): OllamaModel {
 describe('useSelectedModel', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
     localStorage.clear();
     vi.restoreAllMocks();
     warmModel.mockClear();
@@ -60,7 +62,7 @@ describe('useSelectedModel', () => {
       model: 'conv-model',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.selectedModel = 'global-model';
@@ -109,7 +111,7 @@ describe('useSelectedModel', () => {
       numCtx: '999999',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.models = [model({ context_length: 8192 })];
@@ -132,7 +134,7 @@ describe('useSelectedModel', () => {
       numCtx: '4096',
     });
     conversationStore.conversations = [conversation];
-    conversationStore.activeConversationId = conversation.id;
+    useConversationSession().setActiveConversationId(conversation.id);
 
     const modelsStore = useModelsStore();
     modelsStore.models = [model({ context_length: 8192 })];

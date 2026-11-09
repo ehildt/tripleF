@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { conversationHasVideos } from '@/stores/chat/conversation/helpers/conversation-has-videos.helper';
@@ -16,10 +17,11 @@ import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 export function usePlaylistTab() {
   const playback = usePlaybackSession();
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const playlistStore = usePlaylistStore();
 
   const activeConversation = computed(() => {
-    const id = conversationStore.activeConversationId;
+    const id = conversationSession.activeConversationId.value;
     if (!id) return null;
     return conversationStore.getConversation(id) ?? null;
   });
