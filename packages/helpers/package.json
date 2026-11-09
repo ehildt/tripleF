@@ -131,11 +131,11 @@
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.72.1",
+    "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
-    "@nestjs/common": "^12.4.0",
+    "@nestjs/common": "^12.4.2",
     "@nestjs/swagger": "^12.1.1",
     "zod": "^4.6.7",
     "pino": "^10.4.0"
