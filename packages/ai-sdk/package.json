@@ -1,7 +1,7 @@
 {
   "name": "@triplef/ai-sdk",
   "description": "A NestJS module for the Vercel AI SDK with Ollama — streaming/generation clients, model catalog, and warm-up.",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "packageManager": "pnpm@12.18.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",

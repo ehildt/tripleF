@@ -1,7 +1,7 @@
 {
   "name": "@triplef/bullmq-logger",
   "description": "A NestJS logger for BullMQ jobs powered by pino",
-  "version": "1.3.2",
+  "version": "2.0.0",
   "packageManager": "pnpm@12.18.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
