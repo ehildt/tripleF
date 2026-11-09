@@ -2,8 +2,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
 
 import { createPlaybackSession } from './create-playback-session';
 
@@ -117,6 +117,67 @@ describe('createPlaybackSession', () => {
     const before = session.playbackToggleRequestId.value;
     session.requestPlaybackToggle();
     expect(session.playbackToggleRequestId.value).toBe(before + 1);
+  });
+
+  it('hydrates valid remembered popup geometry', () => {
+    localStorage.setItem(
+      'vision-popout-rect',
+      JSON.stringify({ x: 10, y: 20, width: 300, height: 200 }),
+    );
+
+    expect(createPlaybackSession().floatingPopupRect.value).toEqual({
+      x: 10,
+      y: 20,
+      width: 300,
+      height: 200,
+    });
+  });
+
+  it('does not hydrate popup geometry while position memory is disabled', () => {
+    localStorage.setItem('vision-popout-remember-position', 'false');
+    localStorage.setItem(
+      'vision-popout-rect',
+      JSON.stringify({ x: 10, y: 20, width: 300, height: 200 }),
+    );
+
+    expect(createPlaybackSession().floatingPopupRect.value).toBeNull();
+  });
+
+  it('persists geometry only with memory enabled and clears both copies', () => {
+    const session = createPlaybackSession();
+    const rect = { x: 10, y: 20, width: 300, height: 200 };
+    session.setFloatingPopupRect(rect);
+
+    session.rememberFloatingPopupRect();
+    expect(
+      JSON.parse(localStorage.getItem('vision-popout-rect') ?? 'null'),
+    ).toEqual(rect);
+
+    usePopoutSettingsStore().setPopoutRememberPosition(false);
+    localStorage.removeItem('vision-popout-rect');
+    session.rememberFloatingPopupRect();
+    expect(localStorage.getItem('vision-popout-rect')).toBeNull();
+
+    session.setFloatingPopupRect(rect);
+    localStorage.setItem('vision-popout-rect', JSON.stringify(rect));
+    session.clearFloatingPopupRect();
+    expect(session.floatingPopupRect.value).toBeNull();
+    expect(localStorage.getItem('vision-popout-rect')).toBeNull();
+  });
+
+  it('releases geometry on close only when position memory is disabled', () => {
+    const session = createPlaybackSession();
+    const rect = { x: 1, y: 2, width: 300, height: 200 };
+    session.setFloatingPopupRect(rect);
+    session.launchVideo(VIDEO_ONE);
+    session.closeLaunchedVideo();
+    expect(session.floatingPopupRect.value).toEqual(rect);
+
+    session.setFloatingPopupRect(rect);
+    usePopoutSettingsStore().setPopoutRememberPosition(false);
+    session.launchVideo(VIDEO_ONE);
+    session.closeLaunchedVideo();
+    expect(session.floatingPopupRect.value).toBeNull();
   });
 
   it('picks the visible in-view anchor when the popout is enabled', () => {

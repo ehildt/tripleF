@@ -1,4 +1,4 @@
-import type { PopoutAnchor } from '@/stores/popout-settings/popout-settings.types';
+import type { PopoutAnchor } from '@/stores/widgets/popout-settings/popout-settings.types';
 
 export type PlaylistMode = 'panel' | 'floating';
 

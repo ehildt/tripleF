@@ -5,7 +5,7 @@ import { usePausablePlayer } from '@/components/widgets/floating-player/composab
 import { usePopupGeometry } from '@/components/widgets/floating-player/composables/use-popup-geometry';
 import type { PlaybackSession } from '@/composables/create-playback-session/create-playback-session';
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
 
 /**
  * State for the standalone floating player host — the single mounted player
@@ -34,10 +34,7 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
   const popoutSettingsStore = usePopoutSettingsStore();
   const conversationSession = useConversationSession();
 
-  const geometry = usePopupGeometry(
-    session.floatingPopupOpacity,
-    session.setFloatingPopupOpacity,
-  );
+  const geometry = usePopupGeometry();
 
   const launchedVideo = computed(() => session.launchedVideo.value);
   const launchedVideoUrl = computed(() => launchedVideo.value?.videoUrl ?? '');
