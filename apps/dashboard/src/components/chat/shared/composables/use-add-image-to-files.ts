@@ -1,6 +1,7 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
 import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { extractObjectStorageImageHash } from '@/components/chat/shared/helpers/extract-object-storage-image-hash.helper';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { getUploadedImagesForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-images-for-conversation.helper';
@@ -33,6 +34,7 @@ export function useAddImageToFiles(
   item: MaybeRefOrGetter<AddableImage | null>,
 ) {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const images = useConversationImages();
 
   const canAddToFiles = computed(() => {
@@ -44,7 +46,7 @@ export function useAddImageToFiles(
   const isInFiles = computed(() => {
     const image = toValue(item);
     const hash = image ? extractObjectStorageImageHash(image.imageUrl) : null;
-    const sessionId = conversationStore.activeConversationId;
+    const sessionId = conversationSession.activeConversationId.value;
     if (!hash || !sessionId) return false;
     return getUploadedImagesForConversation(
       conversationStore.getConversation(sessionId),
@@ -54,7 +56,7 @@ export function useAddImageToFiles(
   function toggleAddToFiles() {
     const image = toValue(item);
     const hash = image ? extractObjectStorageImageHash(image.imageUrl) : null;
-    const sessionId = conversationStore.activeConversationId;
+    const sessionId = conversationSession.activeConversationId.value;
     if (!image || !hash || !sessionId) return;
 
     if (isInFiles.value) {

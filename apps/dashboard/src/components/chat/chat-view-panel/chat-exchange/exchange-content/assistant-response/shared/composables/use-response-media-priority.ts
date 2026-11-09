@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useAssistantResponseSettingsStore } from '@/stores/chat/assistant-response-settings/assistant-response-settings.store';
-import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import type { MediaPriority } from '@/types/assistant-response-data.model';
 
 /** The hero media fields the media-priority order depends on. */
@@ -18,13 +18,13 @@ export interface AssistantMediaInput {
  */
 export function useResponseMediaPriority(data: AssistantMediaInput) {
   const assistantResponseSettingsStore = useAssistantResponseSettingsStore();
-  const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
 
   const heroUrl = computed(() => data.heroVideoUrl || data.heroImageUrl);
 
   const mediaPriority = computed<MediaPriority>(() =>
     assistantResponseSettingsStore.getConversationMediaPriority(
-      conversationStore.activeConversationId ?? '',
+      conversationSession.activeConversationId.value ?? '',
     ),
   );
   const videosFirst = computed(() => mediaPriority.value === 'videos');

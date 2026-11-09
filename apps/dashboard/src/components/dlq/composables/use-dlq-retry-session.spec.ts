@@ -106,7 +106,7 @@ describe('useDlqRetrySession', () => {
     const conversation = createConversation('Chat', {
       conversationId: 'conversation-1',
     });
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     catalog.loadConversationForWrite.mockResolvedValue(conversation);
 
     const session = await useDlqRetrySession().prepareRetrySession(makeEntry());
@@ -156,7 +156,7 @@ describe('useDlqRetrySession', () => {
     const conversation = createConversation('Chat', {
       conversationId: 'conversation-1',
     });
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     useConversationStore().addExchange(
       conversation.id,
       {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { type Ref } from 'vue';
+import { type Ref, ref } from 'vue';
 
 import type { AttachedFileEntry } from '@/stores/chat/attached-files/attached-files.model';
 import type {
@@ -38,7 +38,6 @@ vi.mock('@/stores/chat/conversation/conversation.store', async () => {
   state.uploadedDocuments = uploadedDocuments;
   return {
     useConversationStore: () => ({
-      activeConversationId: 'conv-1',
       getConversation: () => ({
         id: 'conv-1',
         conversationId: 'c1',
@@ -49,6 +48,13 @@ vi.mock('@/stores/chat/conversation/conversation.store', async () => {
     }),
   };
 });
+
+vi.mock(
+  '@/components/chat/shared/composables/use-conversation-session',
+  () => ({
+    useConversationSession: () => ({ activeConversationId: ref('conv-1') }),
+  }),
+);
 
 describe('useAttachmentList', () => {
   beforeEach(() => {

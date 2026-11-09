@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
@@ -17,9 +18,10 @@ import type {
  */
 export function useActiveConversation(): ActiveSessionData {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
 
   const activeConversation = computed<ActiveSession | null>(() => {
-    const id = conversationStore.activeConversationId;
+    const id = conversationSession.activeConversationId.value;
     if (!id) return null;
     return conversationStore.getConversation(id) ?? null;
   });

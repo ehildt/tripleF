@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
 import { useChatView } from '@/components/chat/shared/composables/use-chat-view';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useSocket } from '@/composables/use-socket/use-socket';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
@@ -18,6 +19,7 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 describe('useHistoryPanel', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
     copyMock.mockClear();
     // useChatView is a module-scope singleton — reset it between tests.
     const chatView = useChatView();
@@ -54,7 +56,7 @@ describe('useHistoryPanel', () => {
 
     const conversationStore = useConversationStore();
     const conversation = conversationStore.getConversation(
-      conversationStore.activeConversationId!,
+      useConversationSession().activeConversationId.value!,
     )!;
     conversation.exchanges = [];
     expect(hasHistory.value).toBe(false);
@@ -142,7 +144,7 @@ describe('useHistoryPanel', () => {
     branchUserExchange(0);
 
     const branched = conversationStore.getConversation(
-      conversationStore.activeConversationId!,
+      useConversationSession().activeConversationId.value!,
     );
     expect(branched).toBeDefined();
     expect(branched!.id).not.toBe(conversation.id);
@@ -153,13 +155,14 @@ describe('useHistoryPanel', () => {
   });
 
   it('ignores branch requests for out-of-range history indices', () => {
-    const conversationStore = useConversationStore();
     const conversation = useConversationCatalog().ensureConversation();
     useConversationCatalog().setActiveConversation(conversation.id);
 
     const { branchUserExchange } = useHistoryPanel();
     branchUserExchange(5);
 
-    expect(conversationStore.activeConversationId).toBe(conversation.id);
+    expect(useConversationSession().activeConversationId.value).toBe(
+      conversation.id,
+    );
   });
 });

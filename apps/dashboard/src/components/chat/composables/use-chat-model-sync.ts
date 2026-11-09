@@ -2,6 +2,7 @@ import { computed, watch } from 'vue';
 
 import { useConversationConfiguration } from '@/components/chat/composables/use-conversation-configuration';
 import { useConversationImages } from '@/components/chat/composables/use-conversation-images';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { TOAST_KEY_MODEL_NO_IMAGES } from '@/composables/toast-keys.constant';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
@@ -21,13 +22,14 @@ const VISION_CAPABILITY = 'vision';
  */
 export function useChatModelSync() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const configuration = useConversationConfiguration();
   const images = useConversationImages();
   const modelsStore = useModelsStore();
   const toast = useToast();
 
   const activeConversationId = computed(
-    () => conversationStore.activeConversationId ?? '',
+    () => conversationSession.activeConversationId.value ?? '',
   );
   const activeConversation = computed(
     () => conversationStore.getConversation(activeConversationId.value) ?? null,

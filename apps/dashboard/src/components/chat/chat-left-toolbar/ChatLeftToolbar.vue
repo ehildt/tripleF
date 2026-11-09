@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia';
 import { onDeactivated } from 'vue';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { useConversationSettingsStore } from '@/stores/chat/conversation-settings/conversation-settings.store';
 
@@ -27,8 +28,10 @@ const {
 const { deleteConversation } = useDeleteConversation();
 
 const conversationStore = useConversationStore();
+const conversationSession = useConversationSession();
 const conversationSettingsStore = useConversationSettingsStore();
-const { conversations, activeConversationId } = storeToRefs(conversationStore);
+const { conversations } = storeToRefs(conversationStore);
+const { activeConversationId } = conversationSession;
 const { setActiveConversation, toggleConversationType } =
   useConversationCatalog();
 const { temporaryRetentionMinutes } = storeToRefs(conversationSettingsStore);

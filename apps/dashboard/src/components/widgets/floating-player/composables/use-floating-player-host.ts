@@ -1,10 +1,10 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePausablePlayer } from '@/components/widgets/floating-player/composables/use-pausable-player';
 import { usePopupGeometry } from '@/components/widgets/floating-player/composables/use-popup-geometry';
 import type { PlaybackSession } from '@/composables/create-playback-session/create-playback-session';
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 /**
@@ -32,7 +32,7 @@ import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings
 export function useFloatingPlayerHost(session: PlaybackSession) {
   const playbackAnchorStore = usePlaybackAnchorRegistry();
   const popoutSettingsStore = usePopoutSettingsStore();
-  const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
 
   const geometry = usePopupGeometry(
     session.floatingPopupOpacity,
@@ -138,7 +138,7 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
   // re-engage auto-following and override the hide-on-playlist background
   // setting so the window stays visible across the switch.
   watch(
-    () => conversationStore.activeConversationId,
+    () => conversationSession.activeConversationId.value,
     () => {
       if (!launchedVideo.value) return;
       playbackAnchorStore.forceShowPlayer.value = true;

@@ -8,6 +8,7 @@ import type {
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { prunePairedExchange } from '@/stores/chat/conversation/helpers/prune-paired-exchange.helper';
 import { togglePairedExchangeIncluded } from '@/stores/chat/conversation/helpers/toggle-paired-exchange-included.helper';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 
 interface ConversationExchanges {
   addExchange: (
@@ -27,6 +28,7 @@ interface ConversationExchanges {
 /** Own loaded exchange append, paired inclusion, deletion, and persistence. */
 export function useConversationExchanges(): ConversationExchanges {
   const conversationStore = useConversationStore();
+  const mergeSelectionStore = useMergeSelectionStore();
   const catalog = useConversationCatalog();
   const persistence = useConversationPersistence();
 
@@ -77,10 +79,25 @@ export function useConversationExchanges(): ConversationExchanges {
     exchangeId: string,
   ): Promise<void> {
     return write(conversationStoreId, (conversation) => {
-      const next = prunePairedExchange(conversation.exchanges, exchangeId);
-      return next === conversation.exchanges
-        ? false
-        : conversationStore.replaceExchanges(conversationStoreId, next);
+      const previous = conversation.exchanges;
+      const next = prunePairedExchange(previous, exchangeId);
+      if (next === previous) return false;
+
+      const remainingIds = new Set(next.map((exchange) => exchange.id));
+      const removedIds = previous
+        .filter((exchange) => !remainingIds.has(exchange.id))
+        .map((exchange) => exchange.id);
+      const replaced = conversationStore.replaceExchanges(
+        conversationStoreId,
+        next,
+      );
+      if (replaced) {
+        mergeSelectionStore.pruneMergeSelection(
+          conversationStoreId,
+          removedIds,
+        );
+      }
+      return replaced;
     });
   }
 

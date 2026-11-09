@@ -23,7 +23,7 @@ function seed(): Conversation {
   const conversation = createConversation('New chat', {
     conversationId: 'server-1',
   });
-  useConversationStore().insertConversation(conversation, true);
+  useConversationStore().insertConversation(conversation);
   return conversation;
 }
 
@@ -40,7 +40,7 @@ describe('useConversationTurns', () => {
   it('seeds active and cross-session turns with one persist per record', async () => {
     const active = seed();
     const other = createConversation('Other', { conversationId: 'server-2' });
-    useConversationStore().insertConversation(other, false);
+    useConversationStore().insertConversation(other);
     const turns = useConversationTurns();
 
     await turns.seedConversationTurn({

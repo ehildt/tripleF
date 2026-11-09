@@ -1,6 +1,6 @@
 import type { Exchange } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
-import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 
 import { getPairedExchangeIds } from '../helpers/get-paired-exchange-ids.helper';
 import type { UseMergeSelection } from './use-merge-selection.types';
@@ -9,17 +9,11 @@ export function useMergeSelection(): UseMergeSelection {
   const conversationStore = useConversationStore();
   const mergeSelectionStore = useMergeSelectionStore();
 
-  function selectedExchangeIds(conversationId: string): string[] {
-    return (
-      mergeSelectionStore.mergeSelectedIdsByConversation[conversationId] ?? []
-    );
-  }
-
   function isMergeSelected(
     conversationId: string,
     exchangeId: string,
   ): boolean {
-    return selectedExchangeIds(conversationId).includes(exchangeId);
+    return mergeSelectionStore.getMergeSelectedIds(conversationId, exchangeId);
   }
 
   function toggleMergeSelection(
@@ -32,17 +26,15 @@ export function useMergeSelection(): UseMergeSelection {
     const pair = getPairedExchangeIds(conversation.exchanges, exchangeId);
     if (!pair) return;
 
-    const next = new Set(selectedExchangeIds(conversationId));
+    const next = new Set(
+      mergeSelectionStore.getMergeSelectedIds(conversationId),
+    );
     const anySelected = pair.some((id) => next.has(id));
     for (const id of pair) {
       if (anySelected) next.delete(id);
       else next.add(id);
     }
     mergeSelectionStore.setMergeSelectedIds(conversationId, [...next]);
-  }
-
-  function clearMergeSelection(conversationId: string): void {
-    mergeSelectionStore.clearMergeSelection(conversationId);
   }
 
   function hasMergeCandidates(conversationId: string): boolean {
@@ -68,7 +60,9 @@ export function useMergeSelection(): UseMergeSelection {
   function selectedExchanges(conversationId: string): Exchange[] {
     const conversation = conversationStore.getConversation(conversationId);
     if (!conversation) return [];
-    const ids = new Set(selectedExchangeIds(conversationId));
+    const ids = new Set(
+      mergeSelectionStore.getMergeSelectedIds(conversationId),
+    );
     return conversation.exchanges.filter((exchange) => ids.has(exchange.id));
   }
 
@@ -87,10 +81,8 @@ export function useMergeSelection(): UseMergeSelection {
   return {
     isMergeSelected,
     toggleMergeSelection,
-    clearMergeSelection,
     hasMergeCandidates,
     isMergeArmed,
-    selectedExchangeIds,
     selectedExchanges,
     selectedRequestIds,
   };

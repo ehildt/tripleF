@@ -6,7 +6,7 @@ import { useNewConversationForm } from '@/components/chat/chat-left-toolbar/comp
 import { useNewSocketForm } from '@/components/chat/chat-left-toolbar/composables/use-new-socket-form';
 import { useSelectedModel } from '@/components/chat/chat-left-toolbar/composables/use-selected-model';
 import { useLeftToolbarView } from '@/components/chat/chat-left-toolbar/tabs/composables/use-left-toolbar-view';
-import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 
 /**
  * The prompt-menu's composed behaviors: actions whose meaning spans several
@@ -22,7 +22,7 @@ export function usePromptMenu() {
   const { closeAllMenus, toggleConversationMenu, toggleStreamMenu } =
     useLeftToolbarMenus();
 
-  const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const { changeModel } = useSelectedModel();
   const { currentNumCtx, defaultNumCtx } = useContextSize();
   const { submitNewSocket } = useNewSocketForm();
@@ -32,7 +32,7 @@ export function usePromptMenu() {
   /** True while no conversation is active — the conversation menu's trigger
    *  blinks to invite starting one. */
   const hasNoActiveConversation = computed(
-    () => !conversationStore.activeConversationId,
+    () => !conversationSession.activeConversationId.value,
   );
 
   /** The menu's option value falls back to the model's default context size

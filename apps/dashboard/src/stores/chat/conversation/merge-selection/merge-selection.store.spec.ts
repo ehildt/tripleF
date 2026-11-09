@@ -4,17 +4,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useMergeSelectionStore } from './merge-selection.store';
 
 describe('useMergeSelectionStore', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
-  });
+  beforeEach(() => setActivePinia(createPinia()));
 
-  it('sets and clears the selected ids per conversation', () => {
+  it('sets and clears selected ids per conversation', () => {
     const store = useMergeSelectionStore();
-
+    expect(store.getMergeSelectedIds('missing')).toEqual([]);
     store.setMergeSelectedIds('c1', ['a', 'b']);
-    expect(store.mergeSelectedIdsByConversation['c1']).toEqual(['a', 'b']);
+    expect(store.getMergeSelectedIds('c1')).toEqual(['a', 'b']);
+    expect(store.getMergeSelectedIds('c1', 'a')).toBe(true);
+    expect(store.getMergeSelectedIds('c1', 'missing')).toBe(false);
 
-    // An empty selection deletes the conversation key entirely.
     store.setMergeSelectedIds('c1', []);
     expect('c1' in store.mergeSelectedIdsByConversation).toBe(false);
   });
@@ -25,10 +24,10 @@ describe('useMergeSelectionStore', () => {
     store.setMergeSelectedIds('c2', ['x']);
 
     store.setMergeSelectedIds('c1', []);
-    expect(store.mergeSelectedIdsByConversation['c2']).toEqual(['x']);
+    expect(store.getMergeSelectedIds('c2')).toEqual(['x']);
   });
 
-  it('resolves a pending merge: stops the pulse and drops consumed sources', () => {
+  it('resolves pending state and drops consumed sources', () => {
     const store = useMergeSelectionStore();
     store.setMergeSelectedIds('c1', ['a', 'b', 'c']);
     store.markMergePending('c1', 'req-1');
@@ -36,21 +35,23 @@ describe('useMergeSelectionStore', () => {
     store.resolvePendingMerge('c1', 'req-1', ['a', 'b']);
 
     expect('c1' in store.pendingMergeRequestByConversation).toBe(false);
-    expect(store.mergeSelectedIdsByConversation['c1']).toEqual(['c']);
+    expect(store.getMergeSelectedIds('c1')).toEqual(['c']);
   });
 
-  it('ignores resolve calls for a different request id', () => {
+  it('ignores resolution for a different request id', () => {
     const store = useMergeSelectionStore();
     store.setMergeSelectedIds('c1', ['a', 'b']);
     store.markMergePending('c1', 'req-1');
 
     store.resolvePendingMerge('c1', 'req-other', ['a']);
 
-    expect(store.pendingMergeRequestByConversation['c1']).toBe('req-1');
-    expect(store.mergeSelectedIdsByConversation['c1']).toEqual(['a', 'b']);
+    expect(store.getPendingMergeRequest('c1')).toBe('req-1');
+    expect(store.getPendingMergeRequest('c1', 'req-1')).toBe(true);
+    expect(store.getPendingMergeRequest('c1', 'req-other')).toBe(false);
+    expect(store.getMergeSelectedIds('c1')).toEqual(['a', 'b']);
   });
 
-  it('consuming every source resolves the selection key entirely', () => {
+  it('removes both keys when every source is consumed', () => {
     const store = useMergeSelectionStore();
     store.setMergeSelectedIds('c1', ['a', 'b']);
     store.markMergePending('c1', 'req-1');
@@ -61,7 +62,20 @@ describe('useMergeSelectionStore', () => {
     expect('c1' in store.pendingMergeRequestByConversation).toBe(false);
   });
 
-  it('clearMergeSelection drops selection and pending state', () => {
+  it('prunes deleted exchanges without disturbing other selections or pending state', () => {
+    const store = useMergeSelectionStore();
+    store.setMergeSelectedIds('c1', ['a', 'b', 'c', 'd']);
+    store.setMergeSelectedIds('c2', ['x']);
+    store.markMergePending('c1', 'req-1');
+
+    store.pruneMergeSelection('c1', ['a', 'b']);
+
+    expect(store.getMergeSelectedIds('c1')).toEqual(['c', 'd']);
+    expect(store.getMergeSelectedIds('c2')).toEqual(['x']);
+    expect(store.getPendingMergeRequest('c1')).toBe('req-1');
+  });
+
+  it('clears selection and pending state together', () => {
     const store = useMergeSelectionStore();
     store.setMergeSelectedIds('c1', ['a']);
     store.markMergePending('c1', 'req-1');
@@ -72,7 +86,7 @@ describe('useMergeSelectionStore', () => {
     expect('c1' in store.pendingMergeRequestByConversation).toBe(false);
   });
 
-  it('clearMergeSelection is safe on a conversation with no pending merge', () => {
+  it('clears safely without a pending merge', () => {
     const store = useMergeSelectionStore();
     store.setMergeSelectedIds('c1', ['a']);
 

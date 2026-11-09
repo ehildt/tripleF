@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 /**
@@ -12,9 +13,10 @@ import { useConversationStore } from '@/stores/chat/conversation/conversation.st
  */
 export function useHistoryAvailability() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
 
   const hasHistory = computed(() => {
-    const conversationId = conversationStore.activeConversationId ?? '';
+    const conversationId = conversationSession.activeConversationId.value ?? '';
     const conversation = conversationId
       ? conversationStore.getConversation(conversationId)
       : null;

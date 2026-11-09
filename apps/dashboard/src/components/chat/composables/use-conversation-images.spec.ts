@@ -23,7 +23,7 @@ function seed() {
   const conversation = createConversation('New chat', {
     conversationId: 'server-1',
   });
-  useConversationStore().insertConversation(conversation, true);
+  useConversationStore().insertConversation(conversation);
   return conversation;
 }
 

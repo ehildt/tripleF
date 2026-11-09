@@ -12,7 +12,7 @@ function seedConversation(overrides: Partial<Conversation> = {}): Conversation {
     ...overrides,
   });
   if (overrides.loaded !== undefined) conversation.loaded = overrides.loaded;
-  store.insertConversation(conversation, true);
+  store.insertConversation(conversation);
   return conversation;
 }
 
@@ -93,17 +93,12 @@ describe('useConversationStore', () => {
     expect(stub.contextUsagePercent).toBe('50.00');
   });
 
-  it('reads stable ids without minting and activates records intentionally', () => {
+  it('reads stable ids without minting', () => {
     const conversation = seedConversation();
     const store = useConversationStore();
 
     expect(store.getConversationId(conversation.id)).toBe('server-1');
     expect(store.getConversationId('missing')).toBe('');
-    store.activeConversationId = null;
-    store.activateRestoredConversation(conversation.id);
-    expect(store.activeConversationId).toBe(conversation.id);
-    store.selectConversation('missing');
-    expect(store.activeConversationId).toBe(conversation.id);
   });
 
   it('appends and patches exchanges without performing I/O', () => {
@@ -191,10 +186,9 @@ describe('useConversationStore', () => {
       'image-hash',
     ]);
     expect(store.conversations).toHaveLength(0);
-    expect(store.activeConversationId).toBeNull();
   });
 
-  it('retains other contexts and selects a fallback after record deletion', () => {
+  it('retains other contexts and removes empty records', () => {
     const first = seedConversation();
     seedExchange(first, 'user', 'other', 'Other');
     first.exchanges[0].conversationId = 'other-context';
@@ -202,16 +196,13 @@ describe('useConversationStore', () => {
     const second = seedConversation({ conversationId: 'server-2' });
     seedExchange(second, 'user', 'current');
     const store = useConversationStore();
-    store.activeConversationId = second.id;
 
     const retained = store.deleteConversationContext(first.id, 'other-context');
     expect(retained?.recordRemoved).toBe(false);
     expect(first.exchanges).toHaveLength(1);
-    expect(store.activeConversationId).toBe(second.id);
 
     const secondResult = store.deleteConversationContext(second.id, 'server-2');
     expect(secondResult?.recordRemoved).toBe(true);
     expect(store.conversations).toHaveLength(1);
-    expect(store.activeConversationId).toBe(first.id);
   });
 });

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Conversation } from '@/stores/chat/conversation/conversation.model';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
-import { useMergeSelectionStore } from '@/stores/merge-selection/merge-selection.store';
+import { useMergeSelectionStore } from '@/stores/chat/conversation/merge-selection/merge-selection.store';
 
 import { useConversationExchangeCompletion } from './use-conversation-exchange-completion';
 
@@ -24,7 +24,7 @@ function seed(): Conversation {
   const conversation = createConversation('New chat', {
     conversationId: 'server-1',
   });
-  useConversationStore().insertConversation(conversation, true);
+  useConversationStore().insertConversation(conversation);
   return conversation;
 }
 
@@ -60,12 +60,12 @@ describe('useConversationExchangeCompletion', () => {
     const merged = add(conversation, 'user', 'merge-request', 'Merged');
     merged.mergeOrigin = ['origin-1', 'origin-2'];
     const assistant = add(conversation, 'assistant', 'merge-request');
-    const mergeStore = useMergeSelectionStore();
-    mergeStore.setMergeSelectedIds(conversation.id, [
+    const mergeSelectionStore = useMergeSelectionStore();
+    mergeSelectionStore.setMergeSelectedIds(conversation.id, [
       firstUser.id,
       secondUser.id,
     ]);
-    mergeStore.markMergePending(conversation.id, 'merge-request');
+    mergeSelectionStore.markMergePending(conversation.id, 'merge-request');
 
     await useConversationExchangeCompletion().markExchangeDone(
       conversation.id,
@@ -80,11 +80,11 @@ describe('useConversationExchangeCompletion', () => {
     expect(firstUser.included).toBe(false);
     expect(secondUser.mergedInto).toBe('merge-request');
     expect(
-      mergeStore.pendingMergeRequestByConversation[conversation.id],
+      mergeSelectionStore.getPendingMergeRequest(conversation.id),
     ).toBeUndefined();
-    expect(
-      mergeStore.mergeSelectedIdsByConversation[conversation.id],
-    ).toBeUndefined();
+    expect(mergeSelectionStore.getMergeSelectedIds(conversation.id)).toEqual(
+      [],
+    );
     expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
   });
 
@@ -94,9 +94,9 @@ describe('useConversationExchangeCompletion', () => {
     const merged = add(conversation, 'user', 'merge-request');
     merged.mergeOrigin = ['origin-1'];
     const assistant = add(conversation, 'assistant', 'merge-request');
-    const mergeStore = useMergeSelectionStore();
-    mergeStore.setMergeSelectedIds(conversation.id, [origin.id]);
-    mergeStore.markMergePending(conversation.id, 'merge-request');
+    const mergeSelectionStore = useMergeSelectionStore();
+    mergeSelectionStore.setMergeSelectedIds(conversation.id, [origin.id]);
+    mergeSelectionStore.markMergePending(conversation.id, 'merge-request');
 
     await useConversationExchangeCompletion().markExchangeError(
       conversation.id,
@@ -108,7 +108,7 @@ describe('useConversationExchangeCompletion', () => {
     expect(assistant.content).toBe('Failed');
     expect(origin.included).not.toBe(false);
     expect(
-      mergeStore.pendingMergeRequestByConversation[conversation.id],
+      mergeSelectionStore.getPendingMergeRequest(conversation.id),
     ).toBeUndefined();
     expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
   });

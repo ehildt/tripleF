@@ -30,7 +30,7 @@ describe('useConversationConfiguration', () => {
 
   it('persists model and socket configuration patches', async () => {
     const conversation = createConversation('New chat');
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     const configuration = useConversationConfiguration();
 
     await configuration.setModel(conversation.id, 'llama3');
@@ -53,7 +53,7 @@ describe('useConversationConfiguration', () => {
 
   it('stores stable ids, subscriptions, and saved file metadata', async () => {
     const conversation = createConversation('New chat');
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     const configuration = useConversationConfiguration();
     const file = new File(['body'], 'notes.txt', { type: 'text/plain' });
 
@@ -71,7 +71,7 @@ describe('useConversationConfiguration', () => {
 
   it('hydrates a stub before changing configuration', async () => {
     const conversation = createConversation('New chat', { loaded: false });
-    useConversationStore().insertConversation(conversation, true);
+    useConversationStore().insertConversation(conversation);
     catalog.loadConversationForWrite.mockImplementation(async (id: string) => {
       const loaded = useConversationStore().getConversation(id)!;
       loaded.loaded = true;

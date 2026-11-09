@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePendingAttachments } from '@/components/chat/shared/composables/use-pending-attachments';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { getUploadedDocumentsForConversation } from '@/stores/chat/conversation/helpers/get-uploaded-documents-for-conversation.helper';
@@ -21,10 +22,11 @@ import type { AttachmentItem } from './use-attachment-list.types';
  */
 export function useAttachmentList() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const { attachedFiles } = usePendingAttachments();
 
   const activeConversationId = computed(
-    () => conversationStore.activeConversationId ?? '',
+    () => conversationSession.activeConversationId.value ?? '',
   );
   const activeConversation = computed(
     () => conversationStore.getConversation(activeConversationId.value) ?? null,

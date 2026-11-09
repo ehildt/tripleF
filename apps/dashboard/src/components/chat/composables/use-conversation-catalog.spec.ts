@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { effectScope } from 'vue';
 
 import { fetchConversation } from '@/api/conversations.api';
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 import { createConversation } from '@/stores/chat/conversation/helpers/create-conversation.helper';
 import { toPersistedConversation } from '@/stores/chat/conversation/helpers/to-persisted-conversation.helper';
@@ -59,6 +60,7 @@ function stub(conversationId: string, id = conversationId) {
 describe('useConversationCatalog', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    useConversationSession().setActiveConversationId(null);
     localStorage.clear();
     vi.clearAllMocks();
     persistence.loadConversations.mockResolvedValue([]);
@@ -93,7 +95,9 @@ describe('useConversationCatalog', () => {
       loaded: true,
     });
     expect(conversation.subscriptions).toHaveLength(1);
-    expect(useConversationStore().activeConversationId).toBe(conversation.id);
+    expect(useConversationSession().activeConversationId.value).toBe(
+      conversation.id,
+    );
     expect(persistence.persistConversation).toHaveBeenCalledTimes(1);
     expect(persistence.persistConversation).toHaveBeenCalledWith(conversation);
   });
@@ -109,7 +113,9 @@ describe('useConversationCatalog', () => {
     expect(catalog.restoreConversation(recovered).id).toBe(recovered.id);
     expect(catalog.restoreConversation(recovered).id).toBe(recovered.id);
     expect(useConversationStore().conversations).toHaveLength(2);
-    expect(useConversationStore().activeConversationId).toBe(ensured.id);
+    expect(useConversationSession().activeConversationId.value).toBe(
+      ensured.id,
+    );
   });
 
   it('restores a saved temporary conversation without a server fetch', async () => {
@@ -125,7 +131,7 @@ describe('useConversationCatalog', () => {
     await useConversationCatalog().bootstrapConversations();
 
     expect(mockedFetchConversation).not.toHaveBeenCalled();
-    expect(useConversationStore().activeConversationId).toBe(local.id);
+    expect(useConversationSession().activeConversationId.value).toBe(local.id);
     expect(useConversationStore().hydrated).toBe(true);
   });
 
@@ -153,7 +159,7 @@ describe('useConversationCatalog', () => {
 
     expect(useConversationStore().conversations).toHaveLength(1);
     expect(saved.loaded).toBe(true);
-    expect(useConversationStore().activeConversationId).toBe(saved.id);
+    expect(useConversationSession().activeConversationId.value).toBe(saved.id);
   });
 
   it('clears an absent 404 bookmark but keeps a listed stub on failure', async () => {
@@ -168,7 +174,7 @@ describe('useConversationCatalog', () => {
     mockedFetchConversation.mockRejectedValue(new Error('offline'));
     await useConversationCatalog().bootstrapConversations();
 
-    expect(useConversationStore().activeConversationId).toBe(saved.id);
+    expect(useConversationSession().activeConversationId.value).toBe(saved.id);
     expect(saved.loaded).toBe(false);
     expect(localStorage.getItem('last-active-conversation-id')).toBe(
       saved.conversationId,
@@ -194,7 +200,9 @@ describe('useConversationCatalog', () => {
     finishFetch();
     await bootstrap;
 
-    expect(useConversationStore().activeConversationId).toBe(selected.id);
+    expect(useConversationSession().activeConversationId.value).toBe(
+      selected.id,
+    );
   });
 
   it('joins a user click into the in-flight restore', async () => {
@@ -223,7 +231,7 @@ describe('useConversationCatalog', () => {
   it('loads full content only when a stub is opened', async () => {
     const catalog = useConversationCatalog();
     const conversation = stub('lazy');
-    useConversationStore().insertConversation(conversation, false);
+    useConversationStore().insertConversation(conversation);
     mockedFetchConversation.mockResolvedValue(
       merged(conversation.conversationId),
     );
@@ -263,7 +271,7 @@ describe('useConversationCatalog', () => {
     expect(localStorage.getItem('last-active-conversation-id')).toBe(
       conversation.conversationId,
     );
-    useConversationStore().activeConversationId = null;
+    useConversationSession().setActiveConversationId(null);
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(localStorage.getItem('last-active-conversation-id')).toBeNull();
     scope.stop();

@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 
+import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { useConversationStore } from '@/stores/chat/conversation/conversation.store';
 
 import { useModelsStore } from '../../../stores/models/models.store';
@@ -11,10 +12,11 @@ import { useModelsStore } from '../../../stores/models/models.store';
  */
 export function useChatConversation() {
   const conversationStore = useConversationStore();
+  const conversationSession = useConversationSession();
   const modelsStore = useModelsStore();
 
   const conversationId = computed(
-    () => conversationStore.activeConversationId ?? '',
+    () => conversationSession.activeConversationId.value ?? '',
   );
 
   const conversation = computed(
