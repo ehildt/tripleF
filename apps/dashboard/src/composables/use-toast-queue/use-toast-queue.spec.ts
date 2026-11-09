@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 
-import { useToastSettingsStore } from '@/stores/toast-settings/toast-settings.store';
+import { useToastSettingsStore } from '@/stores/widgets/toast-settings/toast-settings.store';
 
 import { useToastQueue } from './use-toast-queue';
 
