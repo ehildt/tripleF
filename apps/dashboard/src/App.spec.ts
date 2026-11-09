@@ -15,6 +15,14 @@ vi.mock('./stores/debug/debug.store', () => ({
   }),
 }));
 
+vi.mock('./components/app/composables/use-model-catalog', () => ({
+  useModelCatalog: () => ({
+    fetchModels: vi.fn(),
+    selectModel: vi.fn(),
+    whenModelsReady: vi.fn(),
+  }),
+}));
+
 vi.mock('./components/chat/composables/use-harness-events', () => ({
   useHarnessEvents: () => ({ handleHarnessEvent: vi.fn() }),
 }));
@@ -26,9 +34,7 @@ vi.mock('./stores/models/models.store', () => ({
     localModels: [],
     cloudModels: [],
     numCtxOptions: [],
-    formatContextSize: (n: number) => String(n),
     modelsLoading: false,
-    fetchModels: vi.fn(),
   }),
 }));
 

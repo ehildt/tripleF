@@ -9,6 +9,7 @@ import { useActiveTab } from './components/app/composables/use-active-tab';
 import { useAppNavigation } from './components/app/composables/use-app-navigation';
 import { useAttachmentLifecycle } from './components/app/composables/use-attachment-lifecycle';
 import { useDlqLiveEvents } from './components/app/composables/use-dlq-live-events';
+import { useModelCatalog } from './components/app/composables/use-model-catalog';
 import { usePlaylistMarquee } from './components/app/composables/use-playlist-marquee';
 import TabMenu from './components/app/tab-menu/TabMenu.vue';
 import { useConversationCatalog } from './components/chat/composables/use-conversation-catalog';
@@ -22,13 +23,12 @@ import { usePlaybackSession } from './composables/use-playback-session/use-playb
 import { useTheme } from './composables/use-theme/use-theme';
 import { useNavigationStore } from './stores/app/navigation/navigation.store';
 import { useDebugStore } from './stores/debug/debug.store';
-import { useModelsStore } from './stores/models/models.store';
 import { usePlaylistStore } from './stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from './stores/popout-settings/popout-settings.store';
 import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
 
 const debugStore = useDebugStore();
-const modelsStore = useModelsStore();
+const modelCatalog = useModelCatalog();
 const navigationStore = useNavigationStore();
 const { handleHarnessEvent } = useHarnessEvents();
 const conversationCatalog = useConversationCatalog();
@@ -71,7 +71,7 @@ const route = useRoute();
 
 onBeforeMount(() => {
   initTheme();
-  modelsStore.fetchModels();
+  void modelCatalog.fetchModels();
 });
 
 onMounted(() => {

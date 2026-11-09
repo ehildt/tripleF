@@ -1,6 +1,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import { useModelCatalog } from '@/components/app/composables/use-model-catalog';
 import { useAssistantResponseSettingsStore } from '@/stores/chat/assistant-response-settings/assistant-response-settings.store';
 import type { ScrollMode } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.model';
 import { useChatNavigationSettingsStore } from '@/stores/chat/chat-navigation-settings/chat-navigation-settings.store';
@@ -36,6 +37,7 @@ export function useChatPromptActionBar() {
   const assistantResponseSettingsStore = useAssistantResponseSettingsStore();
   const chatNavigationSettingsStore = useChatNavigationSettingsStore();
   const promptMenuSettingsStore = usePromptMenuSettingsStore();
+  const modelCatalog = useModelCatalog();
   const modelsStore = useModelsStore();
 
   const { conversationId, conversation, selectedModelObj } =
@@ -68,7 +70,7 @@ export function useChatPromptActionBar() {
 
   /** Ambient refresh: the server cache owns freshness, so focus just re-asks. */
   function onPromptFocus() {
-    modelsStore.fetchModels({ silent: true });
+    void modelCatalog.fetchModels({ silent: true });
   }
 
   /** Tooltip shown on the engine toggle when no search engine is configured. */

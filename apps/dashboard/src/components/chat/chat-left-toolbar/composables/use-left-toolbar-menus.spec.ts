@@ -9,6 +9,11 @@ import { useLeftToolbarMenus } from './use-left-toolbar-menus';
 const selectedModel = vi.hoisted(() => ({})) as {
   hasNoModelSelected: Ref<boolean>;
 };
+const modelCatalog = vi.hoisted(() => ({ fetchModels: vi.fn() }));
+
+vi.mock('@/components/app/composables/use-model-catalog', () => ({
+  useModelCatalog: () => modelCatalog,
+}));
 
 vi.mock('./use-selected-model', async () => {
   const { ref } = await import('vue');
@@ -20,17 +25,16 @@ vi.mock('./use-selected-model', async () => {
 describe('useLeftToolbarMenus', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
     selectedModel.hasNoModelSelected.value = false;
+    modelCatalog.fetchModels.mockResolvedValue(undefined);
     // Reset the module-scope open-menu state between tests.
     const { closeAllMenus } = useLeftToolbarMenus();
     closeAllMenus();
   });
 
   it('opens the model menu exclusively and refreshes the catalog', () => {
-    const modelsStore = useModelsStore();
-    const fetchModels = vi
-      .spyOn(modelsStore, 'fetchModels')
-      .mockResolvedValue(undefined);
+    const fetchModels = modelCatalog.fetchModels;
 
     const { isModelMenuOpen, isConversationMenuOpen, toggleModelMenu } =
       useLeftToolbarMenus();
@@ -68,9 +72,7 @@ describe('useLeftToolbarMenus', () => {
   it('opens the conversation menu and fetches the catalog when empty', () => {
     const modelsStore = useModelsStore();
     modelsStore.models = [];
-    const fetchModels = vi
-      .spyOn(modelsStore, 'fetchModels')
-      .mockResolvedValue(undefined);
+    const fetchModels = modelCatalog.fetchModels;
 
     const { isConversationMenuOpen, toggleConversationMenu } =
       useLeftToolbarMenus();
