@@ -3,7 +3,9 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Component } from 'vue';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
+
+import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 
 import Settings from './Settings.vue';
 
@@ -91,6 +93,7 @@ describe('Settings', () => {
     setActivePinia(createPinia());
     localStorage.clear();
     vi.stubGlobal('fetch', mockFetch());
+    useWidgetPreview().hideWidgetPreview();
   });
 
   afterEach(() => {
@@ -203,6 +206,17 @@ describe('Settings', () => {
       expect(wrapper.text()).toContain('Side');
       expect(wrapper.text()).toContain('Auto-close');
     });
+  });
+
+  it('dismisses a widget preview when the Settings section changes', async () => {
+    const preview = useWidgetPreview();
+    const wrapper = mountPanel();
+    preview.toggleWidgetPreview('playlist');
+
+    await selectMenuTab(wrapper, 'Interface');
+    await nextTick();
+
+    expect(preview.activeWidgetPreview.value).toBeNull();
   });
 
   it('shows the health tiles on the system tab', async () => {

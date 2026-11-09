@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
+import { loadBooleanSetting } from '@/utils/load-boolean-setting/load-boolean-setting.helper';
+import { saveBooleanSetting } from '@/utils/save-boolean-setting/save-boolean-setting.helper';
+
+import { parseShowCounters } from './helpers/parse-show-counters.helper';
+import { parseTabVisibility } from './helpers/parse-tab-visibility.helper';
 import {
   DEFAULT_TAB_VISIBILITY,
   SHOW_COUNTERS_KEY,
@@ -8,62 +13,41 @@ import {
   TAB_VISIBILITY_KEY,
 } from './navigation.constant';
 
-function loadStar(): boolean {
-  try {
-    return localStorage.getItem(STAR_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function saveStar(value: boolean): void {
-  try {
-    localStorage.setItem(STAR_KEY, String(value));
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadTabVisibility(): Record<string, boolean> {
-  try {
-    return JSON.parse(localStorage.getItem(TAB_VISIBILITY_KEY) || '{}');
-  } catch {
-    return {};
-  }
-}
-
-function saveTabVisibility(value: Record<string, boolean>): void {
-  try {
-    localStorage.setItem(TAB_VISIBILITY_KEY, JSON.stringify(value));
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadShowCounters(): boolean {
-  try {
-    return localStorage.getItem(SHOW_COUNTERS_KEY) === 'true';
-  } catch {
-    return true;
-  }
-}
-
-function saveShowCounters(value: boolean): void {
-  try {
-    localStorage.setItem(SHOW_COUNTERS_KEY, String(value));
-  } catch {
-    /* ignore */
-  }
-}
-
 export const useNavigationStore = defineStore('navigation', () => {
-  const showChatStar = ref(loadStar());
-  const tabVisibility = ref<Record<string, boolean>>(loadTabVisibility());
-  const showCounters = ref(loadShowCounters());
+  const showChatStar = ref(loadBooleanSetting(STAR_KEY, false));
+  const tabVisibility = ref<Record<string, boolean>>({});
+  try {
+    tabVisibility.value = parseTabVisibility(
+      localStorage.getItem(TAB_VISIBILITY_KEY),
+    );
+  } catch {
+    /* Storage unavailable: retain the default visibility rules. */
+  }
 
-  watch(tabVisibility, saveTabVisibility, { deep: true });
-  watch(showChatStar, saveStar);
-  watch(showCounters, saveShowCounters);
+  const showCounters = ref(false);
+  try {
+    showCounters.value = parseShowCounters(
+      localStorage.getItem(SHOW_COUNTERS_KEY),
+    );
+  } catch {
+    // Preserve the established exception-path fallback, distinct from the
+    // missing-key default of false.
+    showCounters.value = true;
+  }
+
+  watch(
+    tabVisibility,
+    (value) => {
+      try {
+        localStorage.setItem(TAB_VISIBILITY_KEY, JSON.stringify(value));
+      } catch {
+        /* Storage unavailable: retain visibility in memory. */
+      }
+    },
+    { deep: true },
+  );
+  watch(showChatStar, (value) => saveBooleanSetting(STAR_KEY, value));
+  watch(showCounters, (value) => saveBooleanSetting(SHOW_COUNTERS_KEY, value));
 
   function isTabVisible(tab: string): boolean {
     return tabVisibility.value[tab] ?? DEFAULT_TAB_VISIBILITY[tab] ?? true;

@@ -5,10 +5,9 @@ import type { Ref } from 'vue';
 import { defineComponent, nextTick } from 'vue';
 
 import { useDlqActivity } from '@/components/dlq/composables/use-dlq-activity';
+import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 import type { ActiveTab } from '@/stores/app/navigation/navigation.model';
 import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 import { useAppNavigation } from './use-app-navigation';
 
@@ -33,6 +32,7 @@ describe('useAppNavigation', () => {
     localStorage.clear();
     refs.activeTab.value = 'chat';
     useDlqActivity().clearDlqActivity();
+    useWidgetPreview().hideWidgetPreview();
   });
 
   it('shows the DLQ badge only away from the DLQ route', async () => {
@@ -53,27 +53,20 @@ describe('useAppNavigation', () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const navigationStore = useNavigationStore();
-    const hidePopoutPreview = vi.spyOn(
-      usePopoutSettingsStore(),
-      'hidePopoutPreview',
-    );
-    const hidePlaylistPreview = vi.spyOn(
-      usePlaylistStore(),
-      'hidePlaylistPreview',
-    );
+    const widgetPreview = useWidgetPreview();
+    widgetPreview.toggleWidgetPreview('playlist');
     const wrapper = mount(Probe, { global: { plugins: [pinia] } });
     navigationStore.showChatStar = true;
 
     refs.activeTab.value = 'memory';
     await nextTick();
-    expect(hidePopoutPreview).toHaveBeenCalledTimes(1);
-    expect(hidePlaylistPreview).toHaveBeenCalledTimes(1);
+    expect(widgetPreview.activeWidgetPreview.value).toBeNull();
     expect(navigationStore.showChatStar).toBe(true);
 
+    widgetPreview.toggleWidgetPreview('popout');
     refs.activeTab.value = 'chat';
     await nextTick();
-    expect(hidePopoutPreview).toHaveBeenCalledTimes(2);
-    expect(hidePlaylistPreview).toHaveBeenCalledTimes(2);
+    expect(widgetPreview.activeWidgetPreview.value).toBeNull();
     expect(navigationStore.showChatStar).toBe(false);
     wrapper.unmount();
   });

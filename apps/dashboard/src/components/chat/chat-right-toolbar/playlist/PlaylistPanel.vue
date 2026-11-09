@@ -12,7 +12,11 @@
  * is never touched by two panels at once. Extra toolbar actions (the
  * floating player's collapse button) slot in after the playlists menu.
  */
+import { storeToRefs } from 'pinia';
+
 import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
+import { usePlaylistCatalog } from '@/composables/use-playlist-catalog/use-playlist-catalog';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import { usePlaylistTransport } from '../composables/use-playlist-transport';
@@ -28,7 +32,14 @@ const emit = defineEmits<{
   play: [item: VideoGalleryItem];
 }>();
 
-const { playlistVideos, hasQueuedVideos } = usePlaylistPanel();
+const { hasQueuedVideos } = usePlaylistPanel();
+const playlistStore = usePlaylistStore();
+const {
+  activePlaylistVideos: playlistVideos,
+  playlistNames,
+  activePlaylistName,
+} = storeToRefs(playlistStore);
+const { removeVideoFromActivePlaylist } = usePlaylistCatalog();
 
 const playback = usePlaybackSession();
 const {
@@ -48,13 +59,10 @@ const {
   playbackToggleTitle,
   toggleHideOnPlaylist,
   onPlayItem,
-  onRemoveItem,
 } = usePlaylistTransport();
 
 const {
   playlistNameInput,
-  playlistNames,
-  activePlaylistName,
   selectPlaylist,
   createPlaylist,
   deletePlaylist,
@@ -97,7 +105,7 @@ function onItemPlay(item: VideoGalleryItem) {
       :videos="playlistVideos"
       :active-video-url="activePlaybackVideoUrl"
       @play="onItemPlay"
-      @remove="onRemoveItem"
+      @remove="removeVideoFromActivePlaylist"
     />
     <PlaylistEmptyState v-else :has-playlists="playlistNames.length > 0" />
   </div>

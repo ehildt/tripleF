@@ -7,22 +7,21 @@ import type { DebugResultInput } from '@/types/debug-result-input.model';
 import { createId } from '@/utils/create-id/create-id.helper';
 import { saveBooleanSetting } from '@/utils/save-boolean-setting/save-boolean-setting.helper';
 
-const DEBUG_PAUSED_STORAGE_KEY = 'debug-paused';
-
-/** Logging is paused unless the persisted value is explicitly false. */
-function loadDebugPaused(): boolean {
-  try {
-    return localStorage.getItem(DEBUG_PAUSED_STORAGE_KEY) !== 'false';
-  } catch {
-    return true;
-  }
-}
+import { parseDebugPaused } from './helpers/parse-debug-paused.helper';
+import { DEBUG_PAUSED_STORAGE_KEY } from './debug.constant';
 
 /** Shared debug entries, pause preference, and persisted read state. */
 export const useDebugStore = defineStore('debug', () => {
   const debugResults = ref<DebugResult[]>([]);
   const readTracker = useReadTracker('read-debug-ids');
-  const debugPaused = ref(loadDebugPaused());
+  const debugPaused = ref(true);
+  try {
+    debugPaused.value = parseDebugPaused(
+      localStorage.getItem(DEBUG_PAUSED_STORAGE_KEY),
+    );
+  } catch {
+    /* Storage unavailable: retain the paused default. */
+  }
 
   watch(debugPaused, (paused) => {
     saveBooleanSetting(DEBUG_PAUSED_STORAGE_KEY, paused);

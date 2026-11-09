@@ -1,9 +1,12 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 
+import { usePlaylistCatalog } from '@/composables/use-playlist-catalog/use-playlist-catalog';
 import { useToast } from '@/composables/use-toast/use-toast';
 import { i18n } from '@/i18n/i18n';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
+
+import type { PlaylistToggleControls } from './use-playlist-toggle.types';
 
 /**
  * Playlist membership toggle for one video surface: whether the video is in
@@ -16,9 +19,10 @@ import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
  */
 export function usePlaylistToggle(
   item: MaybeRefOrGetter<VideoGalleryItem | null>,
-) {
+): PlaylistToggleControls {
   const toast = useToast();
   const playlistStore = usePlaylistStore();
+  const playlistCatalog = usePlaylistCatalog();
 
   const isInPlaylist = computed(() => {
     const video = toValue(item);
@@ -26,17 +30,17 @@ export function usePlaylistToggle(
     return playlistStore.isVideoInActivePlaylist(video.videoUrl);
   });
 
-  function togglePlaylistVideo() {
+  function togglePlaylistVideo(): void {
     const video = toValue(item);
     if (!video) return;
     if (isInPlaylist.value) {
-      playlistStore.removeVideoFromActivePlaylist(video.videoUrl);
+      playlistCatalog.removeVideoFromActivePlaylist(video.videoUrl);
     } else {
-      if (!playlistStore.getActivePlaylist()) {
+      if (!playlistStore.activePlaylist) {
         toast.warning(i18n.global.t('toast.createPlaylistFirst'));
         return;
       }
-      playlistStore.addVideoToActivePlaylist(video);
+      playlistCatalog.addVideoToActivePlaylist(video);
     }
   }
 

@@ -1,4 +1,4 @@
-import type { PlaylistAnchor } from '@/stores/playlist/playlist.types';
+import type { PlaylistAnchor } from '@/stores/widgets/playlist-settings/playlist-settings.types';
 
 /**
  * CSS anchoring per configured playlist position, mirroring the tab menu's

@@ -2,8 +2,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 
 import { createPlaybackSession } from './create-playback-session';
 

@@ -20,10 +20,10 @@ import PlaylistPreview from './components/widgets/playlist-preview/PlaylistPrevi
 import PopoutPreview from './components/widgets/popout-preview/PopoutPreview.vue';
 import ToastContainer from './components/widgets/toast-container/ToastContainer.vue';
 import { usePlaybackSession } from './composables/use-playback-session/use-playback-session';
+import { usePlaylistCatalog } from './composables/use-playlist-catalog/use-playlist-catalog';
 import { useTheme } from './composables/use-theme/use-theme';
 import { useNavigationStore } from './stores/app/navigation/navigation.store';
 import { useDebugStore } from './stores/debug/debug.store';
-import { usePlaylistStore } from './stores/playlist/playlist.store';
 import { usePopoutSettingsStore } from './stores/popout-settings/popout-settings.store';
 import { usePreprocessingSettingsStore } from './stores/preprocessing-settings/preprocessing-settings.store';
 
@@ -42,7 +42,7 @@ conversationCatalog.watchActiveConversationBookmark();
 void conversationCatalog.bootstrapConversations();
 useAttachmentLifecycle();
 const popoutSettingsStore = usePopoutSettingsStore();
-const playlistStore = usePlaylistStore();
+const playlistCatalog = usePlaylistCatalog();
 
 // The playback session is an app-level service: created once here, shared by
 // import across the tree, and passed as a prop to the floating player.
@@ -54,7 +54,7 @@ const { playlistMarqueeVisible } = usePlaylistMarquee(playback);
 // them once at boot so every surface — the chat right toolbar tab and the
 // floating playlist — reads the same hydrated state without refetching on
 // each mount.
-void playlistStore.loadPlaylists();
+void playlistCatalog.loadPlaylists();
 
 // The preprocessing config is server-persisted per session id: the store
 // fetches it on construction and pushes every change immediately from its

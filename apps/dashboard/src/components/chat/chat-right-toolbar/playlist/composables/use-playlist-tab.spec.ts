@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Ref } from 'vue';
 
 import { useConversationCatalog } from '@/components/chat/composables/use-conversation-catalog';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
+import { usePlaylistSettingsStore } from '@/stores/widgets/playlist-settings/playlist-settings.store';
 
 import { usePlaylistTab } from './use-playlist-tab';
 
@@ -96,8 +97,7 @@ describe('usePlaylistTab', () => {
 
   it('drops the conversation-video signal in floating mode', () => {
     seedConversationWithVideo();
-    const playlistStore = usePlaylistStore();
-    playlistStore.playlistMode = 'floating';
+    usePlaylistSettingsStore().playlistMode = 'floating';
 
     const { hasPlaylist } = usePlaylistTab();
 
@@ -108,7 +108,7 @@ describe('usePlaylistTab', () => {
     const playlistStore = usePlaylistStore();
     playlistStore.playlists = [{ name: 'main', videos: [] }];
     playlistStore.activePlaylistName = 'main';
-    playlistStore.playlistMode = 'floating';
+    usePlaylistSettingsStore().playlistMode = 'floating';
 
     const { hasPlaylist } = usePlaylistTab();
 

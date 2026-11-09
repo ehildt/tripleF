@@ -1,19 +1,18 @@
 import { computed, watch } from 'vue';
 
 import { useDlqActivity } from '@/components/dlq/composables/use-dlq-activity';
+import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 import { useNavigationStore } from '@/stores/app/navigation/navigation.store';
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 
 import { useActiveTab } from './use-active-tab';
+import type { AppNavigationState } from './use-app-navigation.types';
 
 /** Navigation-derived badges and transient-state dismissal for the app shell. */
-export function useAppNavigation() {
+export function useAppNavigation(): AppNavigationState {
   const { activeTab } = useActiveTab();
   const navigationStore = useNavigationStore();
   const dlqActivity = useDlqActivity();
-  const popoutSettingsStore = usePopoutSettingsStore();
-  const playlistStore = usePlaylistStore();
+  const widgetPreview = useWidgetPreview();
 
   const showDlqBadge = computed(
     () => dlqActivity.hasDlqActivity.value && activeTab.value !== 'dlq',
@@ -21,8 +20,7 @@ export function useAppNavigation() {
 
   watch(activeTab, (tab) => {
     // Settings previews are transient: switching tabs dismisses them.
-    popoutSettingsStore.hidePopoutPreview();
-    playlistStore.hidePlaylistPreview();
+    widgetPreview.hideWidgetPreview();
     if (tab === 'chat') navigationStore.clearChatResponseActivity();
   });
 

@@ -1,3 +1,5 @@
+import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
+
 import type { PlaylistSnapshot } from '../types/playlist.model';
 import { getApiUrl } from './api-url';
 
@@ -23,7 +25,7 @@ export async function fetchAllPlaylists(
 export async function savePlaylist(
   sessionId: string,
   name: string,
-  videos: Array<Record<string, unknown>>,
+  videos: VideoGalleryItem[],
 ): Promise<void> {
   const res = await fetch(
     getApiUrl(

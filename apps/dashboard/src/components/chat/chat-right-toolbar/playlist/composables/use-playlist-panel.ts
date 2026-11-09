@@ -1,24 +1,15 @@
+import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 
-import { usePlaylistStore } from '@/stores/playlist/playlist.store';
-import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
+import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 
-/**
- * Component-scoped state for the playlist panel: the queued videos of the
- * active playlist and whether the queue has content. Lives here — not in a
- * store — because only the playlist panel needs the queue list.
- */
-export function usePlaylistPanel() {
+import type { PlaylistPanelState } from './use-playlist-panel.types';
+
+/** Derive whether the active playlist has videos available to queue. */
+export function usePlaylistPanel(): PlaylistPanelState {
   const playlistStore = usePlaylistStore();
+  const { activePlaylistVideos } = storeToRefs(playlistStore);
+  const hasQueuedVideos = computed(() => activePlaylistVideos.value.length > 0);
 
-  const playlistVideos = computed<VideoGalleryItem[]>(() =>
-    playlistStore.getActivePlaylistVideos(),
-  );
-
-  const hasQueuedVideos = computed(() => playlistVideos.value.length > 0);
-
-  return {
-    playlistVideos,
-    hasQueuedVideos,
-  };
+  return { hasQueuedVideos };
 }
