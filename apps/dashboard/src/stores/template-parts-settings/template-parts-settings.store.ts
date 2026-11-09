@@ -2,38 +2,18 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 import { buildDefaultTemplateParts } from './helpers/build-default-template-parts.helper';
-import {
-  TEMPLATE_NAMES,
-  type TemplateName,
-} from './template-parts-settings.constant';
+import { isTemplateName } from './helpers/is-template-name.helper';
+import { parseTemplatePartsVisibility } from './helpers/parse-template-parts-visibility.helper';
+import { TEMPLATE_PARTS_STORAGE_KEY } from './template-parts-settings.constant';
+import type { TemplateName } from './template-parts-settings.model';
 import type { TemplatePartsVisibility } from './template-parts-settings.types';
-
-const STORAGE_KEY = 'vision-template-parts';
-
-function loadTemplateParts(): TemplatePartsVisibility {
-  const defaults = buildDefaultTemplateParts();
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) ?? '{}',
-    ) as Partial<TemplatePartsVisibility>;
-    for (const template of TEMPLATE_NAMES) {
-      const savedParts = saved[template];
-      if (!savedParts || typeof savedParts !== 'object') continue;
-      for (const [partId, enabled] of Object.entries(savedParts)) {
-        if (partId in defaults[template]) {
-          defaults[template][partId] = enabled !== false;
-        }
-      }
-    }
-  } catch {
-    /* storage unavailable or corrupt — stay on the pristine defaults */
-  }
-  return defaults;
-}
 
 function saveTemplateParts(visibility: TemplatePartsVisibility): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(visibility));
+    localStorage.setItem(
+      TEMPLATE_PARTS_STORAGE_KEY,
+      JSON.stringify(visibility),
+    );
   } catch {
     /* storage unavailable — the setting stays in-memory only */
   }
@@ -50,14 +30,22 @@ function saveTemplateParts(visibility: TemplatePartsVisibility): void {
 export const useTemplatePartsSettingsStore = defineStore(
   'templatePartsSettings',
   () => {
-    const templatePartsVisibility =
-      ref<TemplatePartsVisibility>(loadTemplateParts());
+    const templatePartsVisibility = ref<TemplatePartsVisibility>(
+      buildDefaultTemplateParts(),
+    );
+
+    try {
+      templatePartsVisibility.value = parseTemplatePartsVisibility(
+        localStorage.getItem(TEMPLATE_PARTS_STORAGE_KEY),
+      );
+    } catch {
+      /* Storage unavailable: retain fresh canonical defaults. */
+    }
 
     function isTemplatePartVisible(template: string, partId: string): boolean {
-      return (
-        templatePartsVisibility.value[template as TemplateName]?.[partId] ??
-        true
-      );
+      if (!isTemplateName(template)) return true;
+      const parts = templatePartsVisibility.value[template];
+      return Object.hasOwn(parts, partId) ? parts[partId] : true;
     }
 
     function setTemplatePartVisible(
@@ -66,7 +54,7 @@ export const useTemplatePartsSettingsStore = defineStore(
       visible: boolean,
     ): void {
       const parts = templatePartsVisibility.value[template];
-      if (!parts || !(partId in parts)) return;
+      if (!parts || !Object.hasOwn(parts, partId)) return;
       parts[partId] = visible;
       saveTemplateParts(templatePartsVisibility.value);
     }
