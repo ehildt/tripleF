@@ -36,15 +36,18 @@ import type { SegmentedFieldCardToggle } from '@/components/shared/ui/segmented-
 import SegmentedFieldCard from '@/components/shared/ui/segmented-field-card/SegmentedFieldCard.vue';
 import { useWidgetPreview } from '@/components/widgets/shared/composables/use-widget-preview';
 import { i18n } from '@/i18n/i18n';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
-import type { PopoutAnchor } from '@/stores/popout-settings/popout-settings.types';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
+import type { PopoutAnchor } from '@/stores/widgets/popout-settings/popout-settings.types';
 
+import { usePopoutSettings } from './composables/use-popout-settings';
 import type {
   PopoutHorizontal,
   PopoutVertical,
 } from './VideoPopoutPanel.types';
 
 const popoutSettingsStore = usePopoutSettingsStore();
+const { setPopoutAnchor, setPopoutRememberPosition, resetPopoutSettings } =
+  usePopoutSettings();
 const { popoutPreviewVisible, toggleWidgetPreview } = useWidgetPreview();
 
 const VERTICAL_OPTIONS = computed(() => [
@@ -75,15 +78,11 @@ const horizontal = computed(
 );
 
 function setVertical(value: string): void {
-  popoutSettingsStore.setPopoutAnchor(
-    `${value}-${horizontal.value}` as PopoutAnchor,
-  );
+  setPopoutAnchor(`${value}-${horizontal.value}` as PopoutAnchor);
 }
 
 function setHorizontal(value: string): void {
-  popoutSettingsStore.setPopoutAnchor(
-    `${vertical.value}-${value}` as PopoutAnchor,
-  );
+  setPopoutAnchor(`${vertical.value}-${value}` as PopoutAnchor);
 }
 
 const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
@@ -120,7 +119,7 @@ const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
       <MenuButton
         :icon="RotateCcw"
         :label="$t('common.resetPopoutSettingsToDefaults')"
-        @click="popoutSettingsStore.resetPopoutSettings"
+        @click="resetPopoutSettings"
       />
       <MenuButton
         :icon="Power"
@@ -156,7 +155,7 @@ const POSITION_TOGGLES = computed<readonly SegmentedFieldCardToggle[]>(() => [
           :checked="popoutSettingsStore.popoutRememberPosition"
           :disabled="!popoutSettingsStore.popoutEnabled"
           @toggle="
-            popoutSettingsStore.setPopoutRememberPosition(
+            setPopoutRememberPosition(
               !popoutSettingsStore.popoutRememberPosition,
             )
           "

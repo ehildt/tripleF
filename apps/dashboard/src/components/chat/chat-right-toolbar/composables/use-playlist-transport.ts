@@ -3,8 +3,8 @@ import { computed } from 'vue';
 
 import { usePlaybackAnchorRegistry } from '@/composables/use-playback-anchor-registry/use-playback-anchor-registry';
 import { usePlaybackSession } from '@/composables/use-playback-session/use-playback-session';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
 import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import type { PlaylistTransportControls } from './use-playlist-transport.types';

@@ -11,7 +11,7 @@ import { computed } from 'vue';
 
 import FloatingPopout from '@/components/shared/ui/floating-popout/FloatingPopout.vue';
 import { POPUP_ANCHOR_STYLES } from '@/components/widgets/popup-anchor-styles.constant';
-import { usePopoutSettingsStore } from '@/stores/popout-settings/popout-settings.store';
+import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-settings.store';
 
 import { useWidgetPreview } from '../shared/composables/use-widget-preview';
 
