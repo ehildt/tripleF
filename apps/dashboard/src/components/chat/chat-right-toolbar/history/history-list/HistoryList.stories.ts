@@ -110,12 +110,21 @@ export const ActivePrompt: Story = {
     docs: {
       description: {
         story:
-          'The active prompt scrolls its preview as a marquee and carries the accent ring.',
+          'The active prompt renders inline Markdown, including theme-accent strong text, and scrolls at the same pixel speed as every other marquee.',
       },
     },
   },
   args: {
     activeId: 'u2',
+    items: prompts.map((item) =>
+      item.id === 'u2'
+        ? {
+            ...item,
+            content:
+              'Can you give a **real-world example** of each approach and explain when to use it?',
+          }
+        : item,
+    ),
   },
 };
 

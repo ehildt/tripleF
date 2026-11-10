@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Seamless, endlessly-scrolling marquee text. Renders the text twice (the second copy is aria-hidden) so the -50% translate wrap is invisible, and respects prefers-reduced-motion.',
+          'Seamless, endlessly-scrolling text at a constant 50 px/s regardless of content length. Renders the text twice (the second copy is aria-hidden) so the -50% translate wrap is invisible, optionally renders sanitized inline Markdown, and respects prefers-reduced-motion.',
       },
     },
   },
@@ -23,5 +23,20 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     text: 'Now playing: a very long video title that scrolls seamlessly',
+  },
+};
+
+/** A short title uses a shorter loop while retaining the same pixel speed. */
+export const ShortText: Story = {
+  args: {
+    text: 'Now playing: short title',
+  },
+};
+
+/** Inline Markdown with theme-accent strong text. */
+export const InlineMarkdown: Story = {
+  args: {
+    text: 'Review the **theme-accent emphasis** in this history prompt.',
+    markdown: true,
   },
 };

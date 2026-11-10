@@ -138,6 +138,11 @@ const renderedHtml = computed(() => renderMarkdown(props.content));
   max-width: 100%;
 }
 
+.user-request__body :deep(strong) {
+  color: var(--color-accent-primary);
+  font-weight: 700;
+}
+
 /* Inline code (backticks) and fenced command blocks. Monospace comes from
    the global code rule; the chip background makes commands stand out. */
 .user-request__body :deep(code) {

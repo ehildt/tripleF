@@ -56,4 +56,20 @@ describe('renderMarkdown', () => {
 
     expect(html).not.toContain('href="javascript:');
   });
+
+  it('renders inline markdown without a paragraph wrapper', () => {
+    const html = renderMarkdown('**bold** and *emphasis*', { inline: true });
+
+    expect(html).toBe('<strong>bold</strong> and <em>emphasis</em>');
+    expect(html).not.toContain('<p>');
+  });
+
+  it('keeps block and inline cache entries separate', () => {
+    const content = '**cache mode**';
+
+    expect(renderMarkdown(content)).toContain('<p><strong>cache mode</strong>');
+    expect(renderMarkdown(content, { inline: true })).toBe(
+      '<strong>cache mode</strong>',
+    );
+  });
 });
