@@ -226,6 +226,7 @@ export class ExecuteActionService {
         ctx,
         intent,
         toolResults,
+        onToolEvent,
       );
       toolResults.push(...autoFetched);
 
@@ -319,6 +320,7 @@ export class ExecuteActionService {
     ctx: HarnessContext,
     intent: HarnessContext['outputs']['intent'],
     toolResults: ToolResult[],
+    onToolEvent?: ToolExecutionEventHandler,
   ): Promise<ToolResult[]> {
     const urls = collectAutoFetchUrls(
       intent?.tools ?? [],
@@ -326,7 +328,7 @@ export class ExecuteActionService {
       AUTO_FETCH_MAX_URLS,
     );
     if (urls.length === 0) return [];
-    const fetched = await this.autoFetchPages(urls);
+    const fetched = await this.autoFetchPages(urls, onToolEvent);
     this.logger.log(
       { requestId: ctx.requestId, step: 'execute', urls },
       'auto-fetched search result pages',
@@ -340,10 +342,15 @@ export class ExecuteActionService {
    * Batches run concurrently (bounded) so N pages land in ~N/concurrency
    * round-trips instead of N serial ones.
    */
-  private async autoFetchPages(urls: string[]): Promise<ToolResult[]> {
-    const webFetch = this.toolSelectionService.selectToolsByName([
-      'webFetch',
-    ]).webFetch;
+  private async autoFetchPages(
+    urls: string[],
+    onToolEvent?: ToolExecutionEventHandler,
+  ): Promise<ToolResult[]> {
+    const webFetch = wrapToolsWithExecutionEvents(
+      this.toolSelectionService.selectToolsByName(['webFetch']),
+      onToolEvent,
+    ).webFetch as
+      { execute?: (args: { url: string }) => Promise<unknown> } | undefined;
     if (!webFetch?.execute) return [];
     const results: ToolResult[] = [];
     for (let i = 0; i < urls.length; i += AUTO_FETCH_CONCURRENCY) {

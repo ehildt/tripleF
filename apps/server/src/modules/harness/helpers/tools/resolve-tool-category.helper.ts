@@ -1,4 +1,8 @@
 export type ToolCategory =
+  | 'memoryRecall'
+  | 'memoryDelete'
+  | 'knowledgeSearch'
+  | 'knowledgeRead'
   | 'web'
   | 'images'
   | 'videos'
@@ -19,6 +23,14 @@ export type ToolCategory =
  * Order matters: check the most specific suffixes before generic "search".
  */
 export function resolveToolCategory(toolName: string): ToolCategory {
+  if (toolName === 'memory-partition-recall') return 'memoryRecall';
+  if (
+    toolName.startsWith('memory-') &&
+    (toolName.endsWith('-delete') || toolName.endsWith('-forget'))
+  )
+    return 'memoryDelete';
+  if (toolName === 'encyclopedia-search') return 'knowledgeSearch';
+  if (toolName === 'encyclopedia-read') return 'knowledgeRead';
   if (toolName.startsWith('request')) return 'variants';
   if (toolName.startsWith('eodhd')) return 'market';
   if (/shopping/i.test(toolName)) return 'shopping';

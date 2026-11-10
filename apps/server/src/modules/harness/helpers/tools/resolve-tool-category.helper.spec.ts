@@ -3,6 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { resolveToolCategory } from './resolve-tool-category.helper.js';
 
 describe('resolveToolCategory', () => {
+  it('distinguishes personal memory recall from destructive memory operations', () => {
+    expect(resolveToolCategory('memory-partition-recall')).toBe('memoryRecall');
+    expect(resolveToolCategory('memory-partition-delete')).toBe('memoryDelete');
+    expect(resolveToolCategory('memory-cognition-delete')).toBe('memoryDelete');
+    expect(resolveToolCategory('memory-cognition-forget')).toBe('memoryDelete');
+  });
+
+  it('keeps stored knowledge separate from public web search', () => {
+    expect(resolveToolCategory('encyclopedia-search')).toBe('knowledgeSearch');
+    expect(resolveToolCategory('encyclopedia-read')).toBe('knowledgeRead');
+  });
+
   it('maps request/variants tools', () => {
     expect(resolveToolCategory('requestImageVariants')).toBe('variants');
   });

@@ -61,6 +61,21 @@ describe('buildToolActivityDescriptors', () => {
     ]);
   });
 
+  it('keeps memory and stored-knowledge operations semantically separate', () => {
+    const calls: ActiveToolCall[] = [
+      { name: 'memory-partition-recall', category: 'memoryRecall' },
+      { name: 'memory-partition-delete', category: 'memoryDelete' },
+      { name: 'encyclopedia-search', category: 'knowledgeSearch' },
+      { name: 'encyclopedia-read', category: 'knowledgeRead' },
+    ];
+    expect(buildToolActivityDescriptors(calls)).toEqual([
+      { key: 'activity.memoryRecall', meta: { query: undefined, count: 1 } },
+      { key: 'activity.memoryDelete', meta: { query: undefined, count: 1 } },
+      { key: 'activity.knowledgeSearch', meta: { query: undefined, count: 1 } },
+      { key: 'activity.knowledgeRead', meta: { query: undefined, count: 1 } },
+    ]);
+  });
+
   it('falls back to the generic executing label for unknown categories', () => {
     const calls: ActiveToolCall[] = [
       { name: 'customTool', category: 'other', query: 'x' },
