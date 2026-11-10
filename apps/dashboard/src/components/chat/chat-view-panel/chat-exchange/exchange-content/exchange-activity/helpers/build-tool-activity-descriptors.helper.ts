@@ -6,6 +6,10 @@ import { truncateQuery } from './truncate-query.helper';
 /** Tool categories with a dedicated `activity.*` translation key. Anything
  *  else falls back to the generic "executing {tool}" label. */
 const KNOWN_CATEGORY_KEYS: Record<string, string> = {
+  memoryRecall: 'activity.memoryRecall',
+  memoryDelete: 'activity.memoryDelete',
+  knowledgeSearch: 'activity.knowledgeSearch',
+  knowledgeRead: 'activity.knowledgeRead',
   web: 'activity.web',
   images: 'activity.images',
   videos: 'activity.videos',

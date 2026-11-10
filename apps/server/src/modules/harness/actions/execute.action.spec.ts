@@ -481,6 +481,62 @@ describe('ExecuteActionService', () => {
     expect(executeSpy).not.toHaveBeenCalled();
   });
 
+  it('emits lifecycle events for deterministic auto-fetched pages', async () => {
+    const url = 'https://example.com/article';
+    const webFetch = vi.fn().mockResolvedValue({ url, content: 'Full page' });
+    (aiSdkService.generateWithTools as any).mockResolvedValue({
+      text: '',
+      toolResults: [
+        {
+          toolName: 'serperWebSearch',
+          result: { results: [{ url, title: 'Example', snippet: 'Snippet' }] },
+        },
+      ],
+      usage: {},
+    });
+    (toolSelectionService.selectToolsByName as any).mockImplementation(
+      (names: string[]) =>
+        names[0] === 'webFetch'
+          ? { webFetch: { execute: webFetch } }
+          : { serperWebSearch: { description: 'search' } },
+    );
+    const ctx = createContext({
+      buffers: [],
+      meta: [],
+      intent: {
+        template: 'article',
+        prompt: 'default',
+        tools: ['serperWebSearch'],
+        getDate: false,
+        reasoning: '',
+        needsClarification: false,
+        plan: {},
+      },
+    });
+    const events: Array<Record<string, unknown>> = [];
+
+    const result = await service.execute(ctx, undefined, (event) =>
+      events.push(event as unknown as Record<string, unknown>),
+    );
+
+    expect(webFetch).toHaveBeenCalledWith({ url });
+    expect(events).toEqual([
+      expect.objectContaining({
+        name: 'webFetch',
+        category: 'fetch',
+        status: 'start',
+      }),
+      expect.objectContaining({
+        name: 'webFetch',
+        category: 'fetch',
+        status: 'done',
+      }),
+    ]);
+    expect(result.toolResults.map((toolResult) => toolResult.toolName)).toEqual(
+      ['serperWebSearch', 'webFetch'],
+    );
+  });
+
   it('attaches images to the latest user message for image tasks', async () => {
     (sharpService.resizeImages as any).mockResolvedValue([
       {

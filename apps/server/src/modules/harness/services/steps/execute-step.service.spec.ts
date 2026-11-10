@@ -27,6 +27,7 @@ function createContext(overrides?: Partial<HarnessContext>): HarnessContext {
 describe('ExecuteStepService', () => {
   let service: ExecuteStepService;
   let action: ExecuteActionService;
+  let io: SocketIOService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -48,6 +49,7 @@ describe('ExecuteStepService', () => {
 
     service = module.get<ExecuteStepService>(ExecuteStepService);
     action = module.get<ExecuteActionService>(ExecuteActionService);
+    io = module.get<SocketIOService>(SocketIOService);
   });
 
   it('should be defined', () => {
@@ -97,6 +99,52 @@ describe('ExecuteStepService', () => {
     ]);
     expect(ctx.outputs.inputTokens).toBe(20);
     expect(ctx.outputs.outputTokens).toBe(10);
+  });
+
+  it('plans neutrally and reviews completed memory work without claiming web activity', async () => {
+    (action.execute as any).mockImplementation(
+      async (_ctx, _abortSignal, onToolEvent) => {
+        onToolEvent({
+          name: 'memory-partition-recall',
+          category: 'memoryRecall',
+          status: 'start',
+        });
+        onToolEvent({
+          name: 'memory-partition-recall',
+          category: 'memoryRecall',
+          status: 'done',
+        });
+        return {
+          buffers: [],
+          processedMeta: [],
+          toolResults: [],
+        };
+      },
+    );
+    const ctx = createContext({
+      outputs: {
+        intent: {
+          template: 'text',
+          prompt: 'default',
+          tools: ['memory-partition-recall'],
+          language: 'en',
+          plan: {},
+        } as any,
+        toolResults: [],
+      },
+    });
+
+    await service.execute(ctx);
+
+    const envelopes = (io.emit as any).mock.calls.map((call) => call[1]);
+    const activityKeys = envelopes
+      .filter((event) => event.type === 'harness:activity')
+      .map((event) => event.data.key);
+    expect(activityKeys).toEqual([
+      'activity.choosingAction',
+      'activity.reviewingResults',
+    ]);
+    expect(activityKeys).not.toContain('activity.searching');
   });
 
   it('throws when interpret output is missing', async () => {

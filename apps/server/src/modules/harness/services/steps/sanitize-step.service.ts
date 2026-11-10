@@ -18,11 +18,24 @@ import {
   extractImageSearchItems,
   extractVideoSearchItems,
 } from '../../helpers/media/extract-media-from-tools.helper.js';
+import { resolveToolCategory } from '../../helpers/tools/resolve-tool-category.helper.js';
 import { HarnessContext } from '../harness-context.type.js';
 import { StepHandler } from '../harness-step.interface.js';
 
 import { mapDocumentSection } from './helpers/map-document-section.helper.js';
 import { mapIngestedMeta } from './helpers/map-ingested-meta.helper.js';
+
+/** Categories whose sanitize pass checks external links or media. */
+const LINK_VERIFICATION_TOOL_CATEGORIES = new Set([
+  'web',
+  'images',
+  'videos',
+  'news',
+  'shopping',
+  'reviews',
+  'places',
+  'fetch',
+]);
 
 @Injectable()
 export class SanitizeStepService implements StepHandler {
@@ -71,10 +84,8 @@ export class SanitizeStepService implements StepHandler {
         });
     }
 
-    // Only announce link verification when there are results to verify.
-    if (ctx.outputs.toolResults.length > 0) {
-      await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.verifying);
-    }
+    const status = this.resolveSanitizeStatus(ctx);
+    if (status) await this.emitStatus(ctx, status);
 
     const result = await this.sanitizeAction.execute(
       ctx,
@@ -109,6 +120,19 @@ export class SanitizeStepService implements StepHandler {
       },
       'results sanitized',
     );
+  }
+
+  private resolveSanitizeStatus(ctx: HarnessContext): string | undefined {
+    if (ctx.outputs.toolResults.length === 0) return undefined;
+
+    const hasLinksOrMedia = ctx.outputs.toolResults.some((result) =>
+      LINK_VERIFICATION_TOOL_CATEGORIES.has(
+        resolveToolCategory(result.toolName),
+      ),
+    );
+    return hasLinksOrMedia
+      ? HARNESS_ACTIVITY_KEYS.verifying
+      : HARNESS_ACTIVITY_KEYS.reviewingResults;
   }
 
   private appendIngestedMeta(
