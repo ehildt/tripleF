@@ -64,13 +64,12 @@ export class ExecuteStepService implements StepHandler {
   }
 
   /**
-   * Only announce what this step will actually do: searching when tools are
-   * selected, image analysis when images are attached, nothing otherwise — a
-   * status like "Searching the web" on a tool-less chat is misleading.
+   * Announce planning, not a source the model has not touched yet. Actual
+   * memory, knowledge-base, web, and media work is named by tool-start events.
    */
   private resolveExecuteStatus(ctx: HarnessContext): string | undefined {
     const hasTools = (ctx.outputs.intent?.tools ?? []).length > 0;
-    if (hasTools) return HARNESS_ACTIVITY_KEYS.searching;
+    if (hasTools) return HARNESS_ACTIVITY_KEYS.choosingAction;
     if (ctx.buffers.length > 0 || ctx.processedMeta.length > 0)
       return HARNESS_ACTIVITY_KEYS.analyzingImages;
     return undefined;
@@ -96,6 +95,9 @@ export class ExecuteStepService implements StepHandler {
         language: resolveHarnessActivityLanguage(ctx),
       },
     );
+    if (event.status === 'done') {
+      await this.emitStatus(ctx, HARNESS_ACTIVITY_KEYS.reviewingResults);
+    }
   }
 
   /**

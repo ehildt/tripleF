@@ -13,10 +13,13 @@ export type ToolExecutionEvent = {
 
 export type ToolExecutionEventHandler = (event: ToolExecutionEvent) => void;
 
-/** Pull the search query out of a tool input so clients can display it. */
+/** Pull public lookup text out of a tool input for call correlation and, for
+ * search categories, display. Fetched URLs correlate parallel page reads but
+ * stay hidden from the label; memory inputs deliberately have no fallback. */
 function extractToolQuery(input: unknown): string | undefined {
   if (!input || typeof input !== 'object') return undefined;
-  const query = (input as Record<string, unknown>).query;
+  const values = input as Record<string, unknown>;
+  const query = values.query ?? values.url;
   return typeof query === 'string' && query.trim() ? query.trim() : undefined;
 }
 

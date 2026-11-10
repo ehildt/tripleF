@@ -34,6 +34,30 @@ describe('wrapToolsWithExecutionEvents', () => {
     );
   });
 
+  it('uses a fetched URL to correlate parallel page reads', async () => {
+    const onToolEvent = vi.fn();
+    const execute = vi.fn().mockResolvedValue('ok');
+    const wrapped = wrapToolsWithExecutionEvents(
+      { webFetch: { execute } },
+      onToolEvent,
+    );
+    const input = { url: 'https://example.com/article' };
+
+    await (
+      wrapped.webFetch as {
+        execute: (...args: unknown[]) => Promise<unknown>;
+      }
+    ).execute(input);
+
+    expect(onToolEvent).toHaveBeenNthCalledWith(1, {
+      name: 'webFetch',
+      category: 'fetch',
+      query: input.url,
+      input,
+      status: 'start',
+    });
+  });
+
   it('fires an error event and rethrows', async () => {
     const onToolEvent = vi.fn();
     const execute = vi.fn().mockRejectedValue(new Error('boom'));

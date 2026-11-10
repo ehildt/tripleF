@@ -40,6 +40,7 @@ describe('SanitizeStepService', () => {
   let service: SanitizeStepService;
   let action: SanitizeActionService;
   let memoryEncyclopedia: MemoryEncyclopediaService;
+  let io: SocketIOService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -72,6 +73,7 @@ describe('SanitizeStepService', () => {
     memoryEncyclopedia = module.get<MemoryEncyclopediaService>(
       MemoryEncyclopediaService,
     );
+    io = module.get<SocketIOService>(SocketIOService);
   });
 
   it('should be defined', () => {
@@ -111,6 +113,38 @@ describe('SanitizeStepService', () => {
     );
     expect(ctx.request.messages).toBe(messages);
     expect(ctx.outputs.toolResults).toBe(toolResults);
+    const activities = (io.emit as any).mock.calls
+      .map((call) => call[1])
+      .filter((event) => event.type === 'harness:activity');
+    expect(activities.map((event) => event.data.key)).toEqual([
+      'activity.verifying',
+    ]);
+  });
+
+  it('reviews memory-only results without announcing link verification', async () => {
+    const ctx = createContext({
+      outputs: {
+        intent: { template: 'text', tools: ['memory-partition-recall'] } as any,
+        toolResults: [
+          { toolName: 'memory-partition-recall', result: { records: [] } },
+        ],
+      },
+    });
+    (action.execute as any).mockResolvedValue({
+      messages: [],
+      toolResults: ctx.outputs.toolResults,
+      verifiedImages: [],
+      verifiedVideos: [],
+    });
+
+    await service.execute(ctx);
+
+    const activities = (io.emit as any).mock.calls
+      .map((call) => call[1])
+      .filter((event) => event.type === 'harness:activity');
+    expect(activities.map((event) => event.data.key)).toEqual([
+      'activity.reviewingResults',
+    ]);
   });
 
   it('indexes uploaded documents into the encyclopedia', async () => {

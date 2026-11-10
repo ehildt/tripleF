@@ -62,16 +62,16 @@ describe('useActivityLabel', () => {
       const exchange = ref(
         makeExchange({
           activityLanguage: 'de',
-          activity: { key: 'activity.searching' },
+          activity: { key: 'activity.choosingAction' },
         }),
       );
       return useActivityLabel(exchange).activityLabel;
     });
 
     await nextTick();
-    expect(activityLabel!.value).toBe('activity.searching');
+    expect(activityLabel!.value).toBe('activity.choosingAction');
     expect(translate).toHaveBeenCalledWith(
-      'activity.searching',
+      'activity.choosingAction',
       {},
       { locale: 'de' },
     );
@@ -92,6 +92,57 @@ describe('useActivityLabel', () => {
 
     await nextTick();
     expect(activityLabel!.value).toBe('activity.responding');
+    scope.stop();
+  });
+
+  it('does not describe parallel memory operations as searches', async () => {
+    const scope = effectScope();
+    const activityLabel = scope.run(() => {
+      const exchange = ref(
+        makeExchange({
+          toolCalls: [
+            { name: 'memory-partition-delete', category: 'memoryDelete' },
+            { name: 'memory-cognition-delete', category: 'memoryDelete' },
+          ],
+        }),
+      );
+      return useActivityLabel(exchange).activityLabel;
+    });
+
+    await nextTick();
+    expect(activityLabel!.value).toBe('activity.memoryDelete…');
+    expect(translate).not.toHaveBeenCalledWith(
+      'activity.sourcesCount',
+      expect.anything(),
+      expect.anything(),
+    );
+    scope.stop();
+  });
+
+  it('keeps fetched URLs out of the visible label', async () => {
+    const scope = effectScope();
+    const activityLabel = scope.run(() => {
+      const exchange = ref(
+        makeExchange({
+          toolCalls: [
+            {
+              name: 'webFetch',
+              category: 'fetch',
+              query: 'https://example.com/article',
+            },
+          ],
+        }),
+      );
+      return useActivityLabel(exchange).activityLabel;
+    });
+
+    await nextTick();
+    expect(activityLabel!.value).toBe('activity.fetch…');
+    expect(translate).not.toHaveBeenCalledWith(
+      'activity.forQuery',
+      expect.anything(),
+      expect.anything(),
+    );
     scope.stop();
   });
 

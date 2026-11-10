@@ -3,7 +3,8 @@ import type { HarnessContext } from '../services/harness-context.type.js';
 /** Stable activity keys shared with the client's `activity.*` translations. */
 export const HARNESS_ACTIVITY_KEYS = {
   understanding: 'activity.understanding',
-  searching: 'activity.searching',
+  choosingAction: 'activity.choosingAction',
+  reviewingResults: 'activity.reviewingResults',
   analyzingImages: 'activity.analyzingImages',
   verifying: 'activity.verifying',
   gatheringImages: 'activity.gatheringImages',

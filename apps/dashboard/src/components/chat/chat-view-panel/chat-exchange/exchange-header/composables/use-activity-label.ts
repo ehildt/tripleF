@@ -11,6 +11,10 @@ import { ensureActivityLocaleLoaded } from '../helpers/ensure-activity-locale-lo
  *  and/or a source count (with a trailing ellipsis) rather than translated
  *  verbatim. */
 const TOOL_CATEGORY_KEYS = new Set([
+  'activity.memoryRecall',
+  'activity.memoryDelete',
+  'activity.knowledgeSearch',
+  'activity.knowledgeRead',
   'activity.web',
   'activity.images',
   'activity.videos',
@@ -21,6 +25,21 @@ const TOOL_CATEGORY_KEYS = new Set([
   'activity.fetch',
   'activity.reference',
   'activity.variants',
+  'activity.market',
+]);
+
+/** Search categories support query fragments and localized search counts.
+ * URLs used to correlate page fetches deliberately stay out of the label. */
+const SEARCH_CATEGORY_KEYS = new Set([
+  'activity.web',
+  'activity.images',
+  'activity.videos',
+  'activity.news',
+  'activity.shopping',
+  'activity.reviews',
+  'activity.places',
+  'activity.knowledgeSearch',
+  'activity.reference',
 ]);
 
 const CYCLE_INTERVAL_MS = 2000;
@@ -40,10 +59,10 @@ function translateToolCategory(
   label = i18n.global.t(descriptor.key, {}, { locale });
   const query = meta.query as string | undefined;
   const count = meta.count as number | undefined;
-  if (query) {
+  if (query && SEARCH_CATEGORY_KEYS.has(descriptor.key)) {
     label += ` ${i18n.global.t('activity.forQuery', { query }, { locale })}`;
   }
-  if (count && count > 1) {
+  if (count && count > 1 && SEARCH_CATEGORY_KEYS.has(descriptor.key)) {
     label += ` ${i18n.global.t(
       'activity.sourcesCount',
       { count },
