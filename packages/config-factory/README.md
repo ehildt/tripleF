@@ -67,7 +67,7 @@ A NestJS configuration library providing decorators and modules for caching retu
 
 # PeerDependencies
 
-[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v2.0.0-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=flat)](https://github.com/ehildt/tripleF)
+[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v1.6.4-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=flat)](https://github.com/ehildt/tripleF)
 [![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.2-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 
 </div>

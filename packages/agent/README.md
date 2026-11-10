@@ -33,7 +33,7 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 # Dependencies
 
 [![@mozilla/readability](https://img.shields.io/badge/_mozilla_readability-v0.6.0-bd28bb.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=bd28bb&logoWidth=40&style=for-the-badge)](https://github.com/mozilla/readability)
-[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v2.0.0-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=for-the-badge)](https://github.com/ehildt/tripleF)
+[![@triplef/helpers](https://img.shields.io/badge/_triplef_helpers-v1.6.4-1bda2e.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1bda2e&logoWidth=40&style=for-the-badge)](https://github.com/ehildt/tripleF)
 [![linkedom](https://img.shields.io/badge/linkedom-v0.18.15-9c23be.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=9c23be&logoWidth=40&style=for-the-badge)](https://github.com/WebReflection/linkedom)
 [![turndown](https://img.shields.io/badge/turndown-v7.2.5-ad7b1f.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=ad7b1f&logoWidth=40&style=for-the-badge)](https://github.com/mixmark-io/turndown)
 

@@ -71,7 +71,7 @@ A NestJS module for BullMQ integration with configuration types and validation s
 
 [![@nestjs/bullmq](https://img.shields.io/badge/_nestjs_bullmq-v12.0.1-69b927.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=69b927&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 [![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.2-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
-[![bullmq](https://img.shields.io/badge/bullmq-v6.7.2-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat)](https://github.com/taskforcesh/bullmq)
+[![bullmq](https://img.shields.io/badge/bullmq-v6.7.3-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat)](https://github.com/taskforcesh/bullmq)
 [![ioredis](https://img.shields.io/badge/ioredis-v6.0.0-b0219a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=b0219a&logoWidth=40&style=flat)](https://github.com/luin/ioredis)
 
 </div>
