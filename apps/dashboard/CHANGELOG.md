@@ -1,5 +1,25 @@
 # @triplef/dashboard
 
+## 0.6.3
+
+### Patch Changes
+
+- 5a7ab35: Migrate all 14 original dashboard Pinia stores to explicit domain ownership. Group widget-owned state under `stores/widgets/`, retain canonical shared records and synchronous store mutations, and move fetching, lifecycle, socket, timer, and workflow concerns to their owning composables and API modules.
+
+  Co-locate pure parsing, validation, normalization, key-building, and transformation helpers with focused coverage. Remove obsolete stores, proxy providers, compatibility forwarders, and duplicated server-page/request-history state while preserving storage identities, persistence behavior, streaming/retry/cancellation semantics, server contracts, and user-visible fallbacks.
+
+  Document the ownership decisions and add a mandatory post-implementation placement and purity audit for stores, composables, and helpers to the project skills.
+
+  Resolves #89.
+
+- 5a7ab35: Migrate the dashboard's remaining Tailwind utility classes to component-owned plain CSS with BEM class names, covering panels, panel headings, conversation icons, DLQ actions and status badges, and Storybook examples. Keep Tailwind's PostCSS integration and Preflight reset in place, remove stale utility selectors, and document the plain-CSS convention.
+
+  Resolves #121.
+
+- 5a7ab35: Switch all first-party code to the PolyForm Strict License 1.0.0. Noncommercial use remains permitted for individuals, companies, and other organizations, but modification, redistribution, and commercial use require separate permission from the copyright holder.
+
+  Update package license metadata, license badges, project descriptions, and contribution guidance to match. Third-party dependencies remain subject to their original licenses. Versions previously released under MIT or AGPL terms remain available under those terms.
+
 ## 0.6.2
 
 ### Patch Changes

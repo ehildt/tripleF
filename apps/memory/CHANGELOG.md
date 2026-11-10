@@ -1,5 +1,23 @@
 # @triplef/memory
 
+## 1.2.2
+
+### Patch Changes
+
+- 5a7ab35: Switch all first-party code to the PolyForm Strict License 1.0.0. Noncommercial use remains permitted for individuals, companies, and other organizations, but modification, redistribution, and commercial use require separate permission from the copyright holder.
+
+  Update package license metadata, license badges, project descriptions, and contribution guidance to match. Third-party dependencies remain subject to their original licenses. Versions previously released under MIT or AGPL terms remain available under those terms.
+
+- Updated dependencies [5a7ab35]
+  - @triplef/agent@2.0.2
+  - @triplef/ai-sdk@1.0.3
+  - @triplef/bullmq-logger@1.3.3
+  - @triplef/bullmq@1.1.7
+  - @triplef/config-factory@1.2.3
+  - @triplef/core-logger@1.0.3
+  - @triplef/helpers@1.6.4
+  - @triplef/ollama-api@1.0.0
+
 ## 1.2.1
 
 ### Patch Changes

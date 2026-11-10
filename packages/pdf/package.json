@@ -1,7 +1,7 @@
 {
   "name": "@triplef/pdf",
   "description": "tripleF (3F) PDF domain — single-owner pdfjs integration: per-page text-layer extraction and page rendering for the apps.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "packageManager": "pnpm@12.19.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
