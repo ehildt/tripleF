@@ -31,6 +31,9 @@ const isToggling = ref(false);
 const snapshotConfig = ref<ProviderOverrides | null>(null);
 const sessionOverrides = ref<ProviderSessionOverrides | null>(null);
 
+/** Engines suspended by the globe, restored without enabling other engines. */
+let enginesToRestoreAfterMasterToggle: string[] = [];
+
 /**
  * Whether the assistant currently has a search engine at its disposal, plus
  * the kill switch to toggle it from the chat view.
@@ -39,9 +42,9 @@ const sessionOverrides = ref<ProviderSessionOverrides | null>(null);
  * key is configured server-side) across every search engine and merges the
  * session-persisted `*.enabled` override, mirroring how Settings applies each
  * toggle. Search counts as enabled when at least one configured engine is
- * on. The master toggle writes `enabled` for ALL configured engines (Serper,
- * Bright Data, YouTube) to both the server overrides and the session
- * overrides — the same pair Settings writes — so every view stays consistent.
+ * on. The master toggle disables only the active engines and later restores
+ * that same subset to both the server overrides and session overrides — the
+ * same pair Settings writes — so disabled-but-configured engines stay off.
  * The state is `unknown` while loading or after a failed fetch so the UI
  * does not flash a wrong indicator.
  */
@@ -217,13 +220,31 @@ export function useSearchEngineAvailability() {
       return;
     }
     const previous = isEnabled.value;
+    const configured = configuredEngines(snapshotConfig.value);
+    let engines: string[];
+    if (previous) {
+      engines = configured.filter((name) =>
+        engineIsEnabled(snapshotConfig.value, sessionOverrides.value, name),
+      );
+      enginesToRestoreAfterMasterToggle = [...engines];
+    } else {
+      engines = configured.filter((name) =>
+        enginesToRestoreAfterMasterToggle.includes(name),
+      );
+      if (engines.length === 0) {
+        // A fresh all-off configuration has no subset to restore. Preserve
+        // the ability to enable search without switching on every engine.
+        engines = configured.includes('serper')
+          ? ['serper']
+          : configured.slice(0, 1);
+      }
+    }
+    if (engines.length === 0) return;
+
     const next = !previous;
     isEnabled.value = next;
     isToggling.value = true;
     try {
-      // Flip every configured search engine together (Serper, Bright Data,
-      // YouTube, EODHD) so the kill switch is a true master switch.
-      const engines = configuredEngines(snapshotConfig.value);
       const res = await fetch(getApiUrl('/api/v1/provider-overrides'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -267,6 +288,7 @@ export function useSearchEngineAvailability() {
   }
 
   function reset() {
+    enginesToRestoreAfterMasterToggle = [];
     hasApiKey.value = false;
     isEnabled.value = false;
     isLoaded.value = false;

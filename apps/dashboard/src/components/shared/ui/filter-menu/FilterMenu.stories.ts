@@ -1,4 +1,4 @@
-import { CircleAlert, Search } from '@lucide/vue';
+import { ListFilter } from '@lucide/vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { fn } from 'storybook/test';
 
@@ -12,30 +12,33 @@ const meta = {
     docs: {
       description: {
         component: `
-A small popover menu used by list headers for status, queue, and search
-filters. Renders an option list by default, or a single text input when
-\`hasTextValue\` is true. The trigger icon is provided through the default
-slot.
+A small options popover used by list headers for status filters. The
+trigger renders a lucide icon from the \`icon\` prop and teleports the
+option list with a transparent outside-click backdrop.
 `,
       },
     },
+  },
+  argTypes: {
+    icon: { control: false },
   },
   args: {
     isOpen: true,
     isActive: false,
     title: 'Status',
     width: '8rem',
-    options: ['Failed', 'Active', 'Cleared', 'Removed'],
+    icon: ListFilter,
+    options: [
+      { value: 'Failed', label: 'Failed' },
+      { value: 'Active', label: 'Active' },
+      { value: 'Cleared', label: 'Cleared' },
+      { value: 'Removed', label: 'Removed' },
+    ],
     selectedValue: '',
-    hasTextValue: false,
     onToggle: fn(),
+    onClose: fn(),
     onSelect: fn(),
   },
-  render: (args) => ({
-    components: { FilterMenu, CircleAlert },
-    setup: () => ({ args }),
-    template: `<FilterMenu v-bind="args"><CircleAlert /></FilterMenu>`,
-  }),
 } satisfies Meta<typeof FilterMenu>;
 
 export default meta;
@@ -50,19 +53,4 @@ export const WithSelection: Story = { args: { selectedValue: 'Active' } };
 /** Trigger shows the active tint when a value is set but the menu is closed. */
 export const ActiveTrigger: Story = {
   args: { isOpen: false, selectedValue: 'Active' },
-};
-
-/** Search input mode. */
-export const SearchMode: Story = {
-  args: {
-    hasTextValue: true,
-    title: 'Search',
-    options: [],
-    selectedValue: 'req-',
-  },
-  render: (args) => ({
-    components: { FilterMenu, Search },
-    setup: () => ({ args }),
-    template: `<FilterMenu v-bind="args"><Search /></FilterMenu>`,
-  }),
 };
