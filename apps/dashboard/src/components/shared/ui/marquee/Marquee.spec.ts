@@ -26,4 +26,27 @@ describe('Marquee', () => {
     expect(wrapper.find('.marquee').exists()).toBe(true);
     expect(wrapper.find('.marquee__track').exists()).toBe(true);
   });
+
+  it('renders sanitized inline Markdown in both copies when enabled', () => {
+    const wrapper = mount(Marquee, {
+      props: {
+        text: '**Now playing** <script>alert("xss")</script>',
+        markdown: true,
+      },
+    });
+    const texts = wrapper.findAll('.marquee__text');
+
+    expect(texts).toHaveLength(2);
+    expect(texts[0].find('strong').text()).toBe('Now playing');
+    expect(texts[0].find('p').exists()).toBe(false);
+    expect(texts[1].attributes('aria-hidden')).toBe('true');
+    expect(wrapper.find('script').exists()).toBe(false);
+  });
+
+  it('keeps Markdown syntax literal by default', () => {
+    const wrapper = mount(Marquee, { props: { text: '**Now playing**' } });
+
+    expect(wrapper.find('.marquee__text').text()).toBe('**Now playing**');
+    expect(wrapper.find('strong').exists()).toBe(false);
+  });
 });

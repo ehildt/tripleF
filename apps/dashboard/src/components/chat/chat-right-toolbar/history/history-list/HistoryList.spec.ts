@@ -142,4 +142,15 @@ describe('HistoryList', () => {
     expect(wrapper.find('.history-list-item__marquee').exists()).toBe(true);
     expect(wrapper.find('.history-list-item__percent').text()).toBe('12.50%');
   });
+
+  it('renders the active prompt as inline Markdown', () => {
+    const wrapper = mountList({
+      activeId: 'u1',
+      items: [{ ...items[0], content: 'First **important** prompt' }],
+    });
+    const marquee = wrapper.find('.history-list-item__marquee');
+
+    expect(marquee.find('strong').text()).toBe('important');
+    expect(marquee.find('p').exists()).toBe(false);
+  });
 });
