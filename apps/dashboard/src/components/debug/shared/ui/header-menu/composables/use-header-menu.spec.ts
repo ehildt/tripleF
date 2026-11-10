@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 
 import type { HeaderMenuProps } from '../HeaderMenu.types';
 import { useHeaderMenu } from './use-header-menu';
@@ -7,7 +7,6 @@ import { useHeaderMenu } from './use-header-menu';
 function makeProps(overrides: Partial<HeaderMenuProps> = {}): HeaderMenuProps {
   return reactive({
     filter: 'all',
-    search: '',
     allCount: 5,
     httpCount: 2,
     socketCount: 3,
@@ -18,10 +17,6 @@ function makeProps(overrides: Partial<HeaderMenuProps> = {}): HeaderMenuProps {
 
 function makeEmit() {
   return vi.fn();
-}
-
-function makeHeaderRef() {
-  return ref<HTMLElement | null>(null);
 }
 
 describe('useHeaderMenu', () => {
@@ -51,11 +46,7 @@ describe('useHeaderMenu', () => {
 
   it('arms the clear and emits only on the second click', () => {
     const emit = makeEmit();
-    const { clearArmed, handleClearClick } = useHeaderMenu(
-      makeProps(),
-      emit,
-      makeHeaderRef(),
-    );
+    const { clearArmed, handleClearClick } = useHeaderMenu(makeProps(), emit);
 
     handleClearClick();
     expect(clearArmed.value).toBe(true);
@@ -67,11 +58,7 @@ describe('useHeaderMenu', () => {
 
   it('disarms the clear after 3 seconds', () => {
     const emit = makeEmit();
-    const { clearArmed, handleClearClick } = useHeaderMenu(
-      makeProps(),
-      emit,
-      makeHeaderRef(),
-    );
+    const { clearArmed, handleClearClick } = useHeaderMenu(makeProps(), emit);
 
     handleClearClick();
     vi.advanceTimersByTime(3000);
