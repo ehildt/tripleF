@@ -156,13 +156,13 @@ describe('useSearchEngineAvailability', () => {
     ).toBe(true);
   });
 
-  it('re-enables the search engine when toggled after a kill', async () => {
-    vi.stubGlobal(
-      'fetch',
-      mockFetchByUrl({
-        serper: { enabled: false, apiKey: 'abcd****wxyz' },
-      }),
-    );
+  it('enables only Serper when a fresh configuration is all off', async () => {
+    const fetchMock = mockFetchByUrl({
+      serper: { enabled: false, apiKey: 's****masked' },
+      brightData: { enabled: false, apiKey: 'bd****masked' },
+      youtube: { enabled: false, apiKey: 'yt****masked' },
+    });
+    vi.stubGlobal('fetch', fetchMock);
     const { searchEngineState, refresh, toggleSearchEngine } =
       useSearchEngineAvailability();
     await refresh();
@@ -171,6 +171,39 @@ describe('useSearchEngineAvailability', () => {
     await toggleSearchEngine();
 
     expect(searchEngineState.value).toBe('enabled');
+    const serverPut = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        !String(url).includes('/api/v1/configs/') &&
+        (init as { method?: string } | undefined)?.method === 'PUT',
+    );
+    expect(
+      JSON.parse(
+        String((serverPut?.[1] as { body?: string } | undefined)?.body),
+      ),
+    ).toEqual({ serper: { enabled: true } });
+  });
+
+  it('uses the first configured engine as the fallback without Serper', async () => {
+    const fetchMock = mockFetchByUrl({
+      brightData: { enabled: false, apiKey: 'bd****masked' },
+      youtube: { enabled: false, apiKey: 'yt****masked' },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { refresh, toggleSearchEngine } = useSearchEngineAvailability();
+    await refresh();
+
+    await toggleSearchEngine();
+
+    const serverPut = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        !String(url).includes('/api/v1/configs/') &&
+        (init as { method?: string } | undefined)?.method === 'PUT',
+    );
+    expect(
+      JSON.parse(
+        String((serverPut?.[1] as { body?: string } | undefined)?.body),
+      ),
+    ).toEqual({ brightData: { enabled: true } });
   });
 
   it('reverts the state when the server write fails', async () => {
@@ -380,10 +413,10 @@ describe('useSearchEngineAvailability', () => {
     expect(searchEngineState.value).toBe('disabled');
   });
 
-  it('kill switch toggles every configured engine in server and session writes', async () => {
+  it('kill switch leaves configured engines the user disabled untouched', async () => {
     const fetchMock = mockFetchByUrl({
       serper: { enabled: true, apiKey: 's****masked' },
-      brightData: { enabled: true, apiKey: 'bd****masked' },
+      brightData: { enabled: false, apiKey: 'bd****masked' },
       youtube: { enabled: true, apiKey: 'yt****masked' },
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -401,40 +434,42 @@ describe('useSearchEngineAvailability', () => {
         url: String(url),
         body: JSON.parse(String((init as { body?: string }).body)),
       }));
-    // Server write flips all three engines off.
+    // Server write disables only the two active engines.
     expect(
       putBodies.some(
         (call) =>
           !call.url.includes('/api/v1/configs/') &&
           call.body.serper?.enabled === false &&
-          call.body.brightData?.enabled === false &&
-          call.body.youtube?.enabled === false,
+          call.body.youtube?.enabled === false &&
+          call.body.brightData === undefined,
       ),
     ).toBe(true);
-    // Session write mirrors all three engines off.
+    // Session write mirrors only the two active engines.
     expect(
       putBodies.some(
         (call) =>
           call.url.includes('/api/v1/configs/') &&
           call.body.providerOverrides?.serper?.enabled === false &&
-          call.body.providerOverrides?.brightData?.enabled === false &&
-          call.body.providerOverrides?.youtube?.enabled === false,
+          call.body.providerOverrides?.youtube?.enabled === false &&
+          call.body.providerOverrides?.brightData === undefined,
       ),
     ).toBe(true);
   });
 
-  it('re-enabling after a kill flips every configured engine back on', async () => {
+  it('re-enabling after a kill restores only previously enabled engines', async () => {
     const fetchMock = mockFetchByUrl({
-      serper: { enabled: false, apiKey: 's****masked' },
+      serper: { enabled: true, apiKey: 's****masked' },
       brightData: { enabled: false, apiKey: 'bd****masked' },
-      youtube: { enabled: false, apiKey: 'yt****masked' },
+      youtube: { enabled: true, apiKey: 'yt****masked' },
     });
     vi.stubGlobal('fetch', fetchMock);
     const { searchEngineState, refresh, toggleSearchEngine } =
       useSearchEngineAvailability();
     await refresh();
-    expect(searchEngineState.value).toBe('disabled');
+    expect(searchEngineState.value).toBe('enabled');
 
+    await toggleSearchEngine();
+    expect(searchEngineState.value).toBe('disabled');
     await toggleSearchEngine();
 
     expect(searchEngineState.value).toBe('enabled');
@@ -449,8 +484,17 @@ describe('useSearchEngineAvailability', () => {
         (call) =>
           !call.url.includes('/api/v1/configs/') &&
           call.body.serper?.enabled === true &&
-          call.body.brightData?.enabled === true &&
-          call.body.youtube?.enabled === true,
+          call.body.youtube?.enabled === true &&
+          call.body.brightData === undefined,
+      ),
+    ).toBe(true);
+    expect(
+      putBodies.some(
+        (call) =>
+          call.url.includes('/api/v1/configs/') &&
+          call.body.providerOverrides?.serper?.enabled === true &&
+          call.body.providerOverrides?.youtube?.enabled === true &&
+          call.body.providerOverrides?.brightData === undefined,
       ),
     ).toBe(true);
   });
