@@ -1,5 +1,13 @@
 # @triplef/dashboard
 
+## 0.6.4
+
+### Patch Changes
+
+- 55d3224: Fix the chat globe toggle to disable and restore only previously enabled search engines, leaving disabled-but-configured engines unchanged.
+- edf310e: Make chat activity updates accurately distinguish memory, knowledge, web, and tool-review work with localized cyberpunk labels, and split locale schemas and catalogs into domain modules without changing translation key paths.
+- 463ba2e: Highlight Markdown strong text with the theme accent, render active history marquees as sanitized inline Markdown, and keep marquee scrolling at a constant speed across text lengths.
+
 ## 0.6.3
 
 ### Patch Changes

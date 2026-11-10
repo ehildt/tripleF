@@ -1,5 +1,11 @@
 # @triplef/server
 
+## 1.5.4
+
+### Patch Changes
+
+- edf310e: Make chat activity updates accurately distinguish memory, knowledge, web, and tool-review work with localized cyberpunk labels, and split locale schemas and catalogs into domain modules without changing translation key paths.
+
 ## 1.5.3
 
 ### Patch Changes
