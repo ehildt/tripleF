@@ -8,6 +8,11 @@ const markdown = new MarkdownIt({
   breaks: true,
 });
 
+interface RenderMarkdownOptions {
+  /** Render single-paragraph content without a wrapping block element. */
+  inline?: boolean;
+}
+
 /** Max memoized renderMarkdown results (FIFO eviction beyond the cap). */
 const CACHE_CAP = 500;
 
@@ -38,22 +43,30 @@ markdown.core.ruler.push(
 /**
  * Render a markdown string to sanitized HTML, safe for v-html. Raw HTML in
  * the source is escaped by markdown-it; DOMPurify sanitizes the output.
+ * Inline mode renders a single paragraph without its wrapping p element.
  *
- * Memoized by source content: the chat re-renders every message of the
- * active conversation on each remount (conversation switches, route
+ * Memoized by rendering mode and source content: the chat re-renders every
+ * message of the active conversation on each remount (conversation switches, route
  * changes), and markdown-it + DOMPurify are the per-mount burst — a repeat
  * render is a Map lookup. FIFO-evicted at CACHE_CAP so a long session can
  * not grow the cache forever.
  */
-export function renderMarkdown(content: string): string {
+export function renderMarkdown(
+  content: string,
+  options: RenderMarkdownOptions = {},
+): string {
   if (!content) return '';
-  const cached = htmlCache.get(content);
+  const cacheKey = `${options.inline ? 'inline' : 'block'}:${content}`;
+  const cached = htmlCache.get(cacheKey);
   if (cached !== undefined) return cached;
-  const html = sanitizeHtml(markdown.render(content));
+  const rendered = options.inline
+    ? markdown.renderInline(content)
+    : markdown.render(content);
+  const html = sanitizeHtml(rendered);
   if (htmlCache.size >= CACHE_CAP) {
     const oldest = htmlCache.keys().next().value;
     if (oldest !== undefined) htmlCache.delete(oldest);
   }
-  htmlCache.set(content, html);
+  htmlCache.set(cacheKey, html);
   return html;
 }

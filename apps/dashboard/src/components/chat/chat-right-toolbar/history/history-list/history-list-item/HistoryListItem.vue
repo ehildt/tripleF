@@ -47,6 +47,7 @@ const emit = defineEmits<{
       v-if="active"
       class="history-list-item__marquee"
       :text="item.content"
+      markdown
     />
     <span v-else class="history-list-item__preview">{{ item.content }}</span>
 
