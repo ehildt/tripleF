@@ -78,6 +78,30 @@ describe('buildRelaxedLayout', () => {
     expect(topicNodes(nodes).map((c) => c.key)).toEqual(['y', 'x']);
   });
 
+  it('uses the configured cutoff to normalize inter-topic spacing', () => {
+    const nodes = [makeNode('a', 'x'), makeNode('b', 'y')];
+    const links = [makeLink('a', 'b', 0.85)];
+
+    const defaultLayout = buildRelaxedLayout(nodes, links, 0.7);
+    const stricterLayout = buildRelaxedLayout(nodes, links, 0.8);
+    const defaultA = defaultLayout.positions.get('a')!;
+    const defaultB = defaultLayout.positions.get('b')!;
+    const stricterA = stricterLayout.positions.get('a')!;
+    const stricterB = stricterLayout.positions.get('b')!;
+    const defaultDistance = Math.hypot(
+      defaultA.x - defaultB.x,
+      defaultA.y - defaultB.y,
+      defaultA.z - defaultB.z,
+    );
+    const stricterDistance = Math.hypot(
+      stricterA.x - stricterB.x,
+      stricterA.y - stricterB.y,
+      stricterA.z - stricterB.z,
+    );
+
+    expect(stricterDistance).toBeGreaterThan(defaultDistance);
+  });
+
   it('excludes weak inter links from the force pass', () => {
     const nodes = [
       makeNode('a', 'x'),

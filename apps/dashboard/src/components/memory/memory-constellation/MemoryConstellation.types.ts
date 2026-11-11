@@ -1,8 +1,9 @@
 /**
  * One dot in the memory constellation — a fact record, a cognition insight,
- * or a encyclopedia chunk. The layout is deterministic (topic centroid + disk),
- * so `topicKey` is what groups dots into a blob; `keys` drive the
- * co-occurrence (entity) links and `timestamp` drives the temporal chain.
+ * or a encyclopedia chunk. The layout is deterministic (spherical topic
+ * centroid + member scatter), so `topicKey` is what groups dots into a blob;
+ * `keys` drive the co-occurrence (entity) links and `timestamp` drives the
+ * temporal chain.
  */
 export interface ConstellationNode {
   id: string;
@@ -99,7 +100,7 @@ export interface ConstellationLink {
   source: string;
   target: string;
   type: 'temporal' | 'entity' | 'semantic';
-  /** Cosine similarity (semantic links) — drives edge opacity. */
+  /** Cosine similarity (semantic links) — drives layout distance and opacity. */
   score?: number;
   /**
    * Topical (suggested) semantic link written by the relink job — rendered
@@ -130,7 +131,7 @@ export interface ConstellationEdge {
   target: string;
   /** 'community' — topic hub → community hub, and community hub → cluster hub. */
   kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'community' | 'root';
-  /** Cosine similarity (inter edges) — drives opacity. */
+  /** Cosine similarity (inter edges) — drives layout distance and opacity. */
   score?: number;
   /** Aggregated from suggested (topical) links — rendered faintly. */
   suggested?: boolean;

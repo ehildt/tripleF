@@ -31,6 +31,22 @@ describe('layoutConstellation', () => {
     expect(new Set(zs).size).toBe(3);
   });
 
+  it('places topic centroids on a sphere instead of a ring', () => {
+    const nodes = ['w', 'x', 'y', 'z'].map((topic) =>
+      makeNode(`node-${topic}`, topic),
+    );
+    const topics = topicNodes(nodes);
+
+    const layout = layoutConstellation(nodes, topics);
+
+    const expectedRadius = Math.sqrt(nodes.length) * 60;
+    for (const centroid of layout.centroids.values()) {
+      expect(Math.hypot(centroid.x, centroid.y, centroid.z)).toBeCloseTo(
+        expectedRadius,
+      );
+    }
+  });
+
   it('is deterministic for the same input', () => {
     const nodes = [makeNode('a', 'x'), makeNode('b', 'x')];
     const topics = topicNodes(nodes);

@@ -20,13 +20,11 @@ describe('createPlaybackSession', () => {
     const registry = usePlaybackAnchorRegistry();
     registry.anchorCandidates.value = new Map();
     registry.playbackDockMode.value = 'auto';
-    registry.forceShowPlayer.value = false;
   });
 
   it('launches a video, sets now-playing, and resets the dock for the launch', () => {
     const registry = usePlaybackAnchorRegistry();
     registry.playbackDockMode.value = 'dock-dismissed';
-    registry.forceShowPlayer.value = true;
 
     const session = createPlaybackSession();
     session.launchVideo(VIDEO_ONE, { videos: [VIDEO_ONE, VIDEO_TWO] });
@@ -37,7 +35,6 @@ describe('createPlaybackSession', () => {
     expect(session.activePlaybackVideoUrl.value).toBe(VIDEO_ONE.videoUrl);
     expect(session.nowPlayingTitle.value).toBe('One');
     expect(registry.playbackDockMode.value).toBe('auto');
-    expect(registry.forceShowPlayer.value).toBe(false);
   });
 
   it('sets the title at launch and clears it for the next untitled video', () => {

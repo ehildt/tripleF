@@ -93,23 +93,14 @@ function unregisterAnchorCandidate(
  */
 const playbackDockMode = ref<PlaybackDockMode>('auto');
 
-/**
- * Force the player window to show even when the hide-on-playlist background
- * setting or a dismissal would suppress it. Set on a conversation switch
- * while a video is playing, so the player stays visible across switches;
- * cleared on the next launch/stop or a user dismissal.
- */
-const forceShowPlayer = ref(false);
-
 /** Fresh play intent: poster click or playlist launch — follow the anchor. */
 function engagePlayback() {
   playbackDockMode.value = 'auto';
 }
 
-/** A fresh launch returns to auto-following and lifts the force-show. */
+/** A fresh launch returns to auto-following. */
 function resetDockForLaunch() {
   playbackDockMode.value = 'auto';
-  forceShowPlayer.value = false;
 }
 
 /**
@@ -120,7 +111,6 @@ function resetDockForLaunch() {
  */
 function dockPlayback(hasVisibleAnchor: boolean) {
   playbackDockMode.value = hasVisibleAnchor ? 'auto' : 'dock-dismissed';
-  forceShowPlayer.value = false;
 }
 
 /**
@@ -131,7 +121,6 @@ function dockPlayback(hasVisibleAnchor: boolean) {
  */
 function dismissPlaybackWindow() {
   playbackDockMode.value = 'dock-dismissed';
-  forceShowPlayer.value = false;
 }
 
 /** Latch into floating mode (popout autodock=off and the anchor was lost). */
@@ -147,7 +136,6 @@ export function usePlaybackAnchorRegistry() {
     setAnchorCandidateInView,
     unregisterAnchorCandidate,
     playbackDockMode,
-    forceShowPlayer,
     engagePlayback,
     resetDockForLaunch,
     dockPlayback,
