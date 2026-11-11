@@ -84,6 +84,31 @@ describe('relaxConstellation', () => {
     expect(positions.get('topic:x')).toEqual({ x: 50, y: 0, z: 0 });
   });
 
+  it('pulls stronger inter-topic links closer than weaker visible links', () => {
+    const nodes = [makeNode('a', 'x'), makeNode('b', 'y')];
+    const seed = new Map([
+      ['a', pos(0, 0, 0)],
+      ['b', pos(120, 0, 0)],
+    ]);
+
+    const strong = relaxConstellation(
+      nodes,
+      [makeEdge('a', 'b', 'inter', 1)],
+      seed,
+      0.7,
+    );
+    const weak = relaxConstellation(
+      nodes,
+      [makeEdge('a', 'b', 'inter', 0.7)],
+      seed,
+      0.7,
+    );
+
+    expect(distance(strong.get('a')!, strong.get('b')!)).toBeLessThan(
+      distance(weak.get('a')!, weak.get('b')!),
+    );
+  });
+
   it('is deterministic for the same input', () => {
     const nodes = [makeNode('a', 'x'), makeNode('b', 'x'), makeNode('c', 'y')];
     const edges = [

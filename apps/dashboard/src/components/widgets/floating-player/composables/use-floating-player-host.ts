@@ -1,6 +1,5 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 
-import { useConversationSession } from '@/components/chat/shared/composables/use-conversation-session';
 import { usePausablePlayer } from '@/components/widgets/floating-player/composables/use-pausable-player';
 import { usePopupGeometry } from '@/components/widgets/floating-player/composables/use-popup-geometry';
 import type { PlaybackSession } from '@/composables/create-playback-session/create-playback-session';
@@ -32,7 +31,6 @@ import { usePopoutSettingsStore } from '@/stores/widgets/popout-settings/popout-
 export function useFloatingPlayerHost(session: PlaybackSession) {
   const playbackAnchorStore = usePlaybackAnchorRegistry();
   const popoutSettingsStore = usePopoutSettingsStore();
-  const conversationSession = useConversationSession();
 
   const geometry = usePopupGeometry();
 
@@ -122,25 +120,12 @@ export function useFloatingPlayerHost(session: PlaybackSession) {
 
   const windowHidden = computed(
     () =>
-      !playbackAnchorStore.forceShowPlayer.value &&
-      (playbackAnchorStore.playbackDockMode.value === 'dock-dismissed' ||
-        (popoutSettingsStore.popoutHideOnPlaylist &&
-          session.launchedFromPlaylist.value) ||
-        (!popoutSettingsStore.popoutEnabled &&
-          Boolean(launchedVideo.value) &&
-          !dockedInline.value)),
-  );
-
-  // A conversation switch while a video is playing always shows the player:
-  // re-engage auto-following and override the hide-on-playlist background
-  // setting so the window stays visible across the switch.
-  watch(
-    () => conversationSession.activeConversationId.value,
-    () => {
-      if (!launchedVideo.value) return;
-      playbackAnchorStore.forceShowPlayer.value = true;
-      playbackAnchorStore.engagePlayback();
-    },
+      playbackAnchorStore.playbackDockMode.value === 'dock-dismissed' ||
+      (popoutSettingsStore.popoutHideOnPlaylist &&
+        session.launchedFromPlaylist.value) ||
+      (!popoutSettingsStore.popoutEnabled &&
+        Boolean(launchedVideo.value) &&
+        !dockedInline.value),
   );
 
   // ---------- inline rect tracking ----------

@@ -1,5 +1,5 @@
 /**
- * Deterministic 32-bit string hash — the seed for a node's ring/disk
+ * Deterministic 32-bit string hash — the seed for a node's spherical
  * placement and its ambient animation phase. Same id → same position every
  * render, so the constellation is stable across reloads.
  */

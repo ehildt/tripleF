@@ -12,53 +12,30 @@ import type {
   ConstellationNode,
 } from '../MemoryConstellation.types';
 import type { ConstellationPosition } from '../MemoryConstellation.types';
+import { calcRelaxTicks } from './calc-relax-ticks.helper';
+import { calcScoreLinkDistance } from './calc-score-link-distance.helper';
+import { DEFAULT_INTER_LINK_MIN_SCORE } from './inter-link-min-score.constant';
 import { mapEdgeToSimLink } from './map-edge-to-sim-link.helper';
 import { mapNodeToSimNode } from './map-node-to-sim-node.helper';
-
-/** Static simulation ticks (no animation — run to a settled layout). */
-const RELAX_TICKS = 200;
-/** Reduced tick budget for large scenes (5000 dots still settle, faster). */
-const RELAX_TICKS_LARGE = 60;
-/** Node count above which the reduced tick budget applies. */
-const LARGE_SCENE_NODE_COUNT = 2000;
-/** Intra-topic (leaf → hub) target distance — leaves orbit their main dot. */
-const INTRA_DISTANCE = 40;
-/** Inter-topic (hub → hub) target distance — main dots stay further apart. */
-const INTER_DISTANCE = 80;
-/** Cluster (hub → cluster hub) distance — wider than inter so category
- *  hubs sit outside the ring of their member topics. */
-const CLUSTER_DISTANCE = 140;
-/** Community (hub → community hub) distance — between inter and cluster: the
- *  mid-tier dot settles inside the cluster halo, outside the topic ring. */
-const COMMUNITY_DISTANCE = 110;
-
-/** Target distance per edge kind — structural edges sit close, inter-topic
- *  edges apart, cluster hubs widest. */
-const LINK_DISTANCE: Record<SimLink['kind'], number> = {
-  intra: INTRA_DISTANCE,
-  inter: INTER_DISTANCE,
-  sibling: INTER_DISTANCE,
-  cluster: CLUSTER_DISTANCE,
-  community: COMMUNITY_DISTANCE,
-  root: CLUSTER_DISTANCE,
-};
-/** Repulsion strength (negative = repel). */
-const CHARGE_STRENGTH = -30;
-/** Collision radius (dot size) to prevent overlap. */
-const COLLIDE_RADIUS = 8;
+import {
+  CHARGE_STRENGTH,
+  COLLIDE_RADIUS,
+  STRUCTURAL_LINK_DISTANCE,
+} from './relax-constellation.constant';
 
 interface SimNode extends SimulationNodeDatum {
   id: string;
 }
 
 interface SimLink extends SimulationLinkDatum<SimNode> {
-  kind: 'intra' | 'inter' | 'sibling' | 'cluster' | 'community' | 'root';
+  kind: ConstellationEdge['kind'];
   score?: number;
 }
 
 /**
- * Relax the deterministic seed layout with a short force pass: linked nodes
- * pull together (distance ∝ 1 − score), all nodes repel mildly, and collision
+ * Relax the deterministic seed layout with a short force pass: structural
+ * links use fixed distances, inter/sibling links use cutoff-normalized
+ * non-linear cosine distances, all nodes repel mildly, and collision
  * prevents overlap. Anchored nodes (the profile hub) and category dots stay
  * pinned at their seed positions. Deterministic: seeded positions + d3's
  * fixed-seed LCG.
@@ -67,6 +44,7 @@ export function relaxConstellation(
   nodes: readonly ConstellationNode[],
   edges: readonly ConstellationEdge[],
   seed: ReadonlyMap<string, ConstellationPosition>,
+  interLinkMinScore: number = DEFAULT_INTER_LINK_MIN_SCORE,
 ): Map<string, ConstellationPosition> {
   const simNodes: SimNode[] = nodes.map((node) => mapNodeToSimNode(node, seed));
 
@@ -79,14 +57,19 @@ export function relaxConstellation(
       'link',
       forceLink<SimNode, SimLink>(simLinks)
         .id((node) => node.id)
-        .distance((link) => LINK_DISTANCE[link.kind])
+        .distance((link) => {
+          if (link.kind === 'inter' || link.kind === 'sibling') {
+            return calcScoreLinkDistance(link.score, interLinkMinScore);
+          }
+          return STRUCTURAL_LINK_DISTANCE[link.kind];
+        })
         .strength((link) => (link.kind === 'intra' ? 0.5 : 0.3)),
     )
     .force('charge', forceManyBody<SimNode>().strength(CHARGE_STRENGTH))
     .force('collide', forceCollide<SimNode>(COLLIDE_RADIUS))
     .stop();
 
-  for (let i = 0; i < relaxTicksFor(nodes.length); i++) simulation.tick();
+  for (let i = 0; i < calcRelaxTicks(nodes.length); i++) simulation.tick();
 
   const positions = new Map<string, ConstellationPosition>();
   for (const node of simNodes) {
@@ -97,9 +80,4 @@ export function relaxConstellation(
     });
   }
   return positions;
-}
-
-/** Tick budget by node count — large scenes settle with fewer passes. */
-function relaxTicksFor(nodeCount: number): number {
-  return nodeCount > LARGE_SCENE_NODE_COUNT ? RELAX_TICKS_LARGE : RELAX_TICKS;
 }
