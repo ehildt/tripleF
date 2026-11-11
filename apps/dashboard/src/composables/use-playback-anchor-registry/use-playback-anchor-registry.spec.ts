@@ -12,7 +12,6 @@ describe('usePlaybackAnchorRegistry', () => {
     const registry = usePlaybackAnchorRegistry();
     registry.anchorCandidates.value = new Map();
     registry.playbackDockMode.value = 'auto';
-    registry.forceShowPlayer.value = false;
   });
 
   it('registers an anchor candidate optimistically in-view', () => {
@@ -98,22 +97,8 @@ describe('usePlaybackAnchorRegistry', () => {
 
     registry.dockPlayback(true);
     expect(registry.playbackDockMode.value).toBe('auto');
-    expect(registry.forceShowPlayer.value).toBe(false);
 
     registry.dockPlayback(false);
     expect(registry.playbackDockMode.value).toBe('dock-dismissed');
-  });
-
-  it('forceShowPlayer lifts on engage-independent paths and drops on dock', () => {
-    const registry = usePlaybackAnchorRegistry();
-    registry.forceShowPlayer.value = true;
-
-    registry.dismissPlaybackWindow();
-    expect(registry.forceShowPlayer.value).toBe(false);
-
-    registry.forceShowPlayer.value = true;
-    registry.resetDockForLaunch();
-    expect(registry.forceShowPlayer.value).toBe(false);
-    expect(registry.playbackDockMode.value).toBe('auto');
   });
 });

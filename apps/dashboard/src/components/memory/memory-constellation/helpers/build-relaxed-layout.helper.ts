@@ -1,15 +1,13 @@
 import type {
-  ConstellationCluster,
   ConstellationClusterSummary,
-  ConstellationCommunity,
   ConstellationLink,
   ConstellationNode,
-  ConstellationPosition,
   ConstellationTopic,
   RelaxedLayout,
 } from '../MemoryConstellation.types';
 import { attachClusterSummaries } from './attach-cluster-summaries.helper';
 import { buildClusterNode, clusterNodeId } from './build-cluster-node.helper';
+import { buildClusterSeed } from './build-cluster-seed.helper';
 import { buildClusters } from './build-clusters.helper';
 import {
   attachCommunitiesToClusters,
@@ -19,68 +17,19 @@ import {
   buildCommunityNode,
   communityNodeId,
 } from './build-community-node.helper';
+import { buildCommunitySeed } from './build-community-seed.helper';
 import { buildEdges } from './build-edges.helper';
 import { DEFAULT_INTER_LINK_MIN_SCORE } from './inter-link-min-score.constant';
 import { layoutConstellation } from './layout-constellation.helper';
 import { relaxConstellation } from './relax-constellation.helper';
 import { topicNodes } from './topic-nodes.helper';
 
-/** Mean of the given positions (the seed of one synthetic hub dot). */
-function meanPosition(
-  seeds: ReadonlyArray<ConstellationPosition | undefined>,
-): ConstellationPosition {
-  let x = 0;
-  let y = 0;
-  let z = 0;
-  let count = 0;
-  for (const seed of seeds) {
-    if (!seed) continue;
-    x += seed.x;
-    y += seed.y;
-    z += seed.z;
-    count += 1;
-  }
-  if (count === 0) return { x: 0, y: 0, z: 0 };
-  return { x: x / count, y: y / count, z: z / count };
-}
-
-/** Seed of a community hub: the mean of its member topics' centroids. */
-function communitySeed(
-  community: ConstellationCommunity,
-  centroids: ReadonlyMap<string, ConstellationPosition>,
-): ConstellationPosition {
-  return meanPosition(
-    community.memberTopicKeys.map((topicKey) => centroids.get(topicKey)),
-  );
-}
-
 /**
- * Seed of a cluster hub: the mean of its community seeds plus its
- * community-less member topics' centroids — the force pass then settles it
- * between them.
- */
-function clusterSeed(
-  cluster: ConstellationCluster,
-  communityIdByTopic: ReadonlyMap<string, string>,
-  centroids: ReadonlyMap<string, ConstellationPosition>,
-  seed: ReadonlyMap<string, ConstellationPosition>,
-): ConstellationPosition {
-  return meanPosition([
-    ...cluster.memberCommunityKeys.map((communityKey) =>
-      seed.get(communityNodeId(communityKey)),
-    ),
-    ...cluster.memberTopicKeys
-      .filter((topicKey) => !communityIdByTopic.has(topicKey))
-      .map((topicKey) => centroids.get(topicKey)),
-  ]);
-}
-
-/**
- * Cluster + community + cluster + seed + relax every node once.
- * Deterministic for a given (nodes, links, minScore) triple; independent of
- * which topics are expanded. Weak inter links (below `interLinkMinScore`)
- * are excluded before the force pass so unrelated topics never pull
- * together. The synthetic community dots sit on the tier chain between the
+ * Build the taxonomy, seed every real and synthetic node, then relax once.
+ * Deterministic for a given (nodes, links, minScore, serverClusters) input;
+ * independent of which topics are expanded. Weak inter links (below
+ * `interLinkMinScore`) are excluded before the force pass so unrelated topics
+ * never pull together. The synthetic community dots sit on the tier chain between the
  * cluster hub and their member topic hubs.
  */
 export function buildRelaxedLayout(
@@ -111,13 +60,13 @@ export function buildRelaxedLayout(
   for (const community of communities) {
     seed.set(
       communityNodeId(community.key),
-      communitySeed(community, layout.centroids),
+      buildCommunitySeed(community, layout.centroids),
     );
   }
   for (const cluster of clusters) {
     seed.set(
       clusterNodeId(cluster.key),
-      clusterSeed(cluster, communityIdByTopic, layout.centroids, seed),
+      buildClusterSeed(cluster, communityIdByTopic, layout.centroids, seed),
     );
   }
   const edges = buildEdges(
@@ -132,6 +81,7 @@ export function buildRelaxedLayout(
     [...nodes, ...communityNodes, ...clusterNodes],
     edges,
     seed,
+    interLinkMinScore,
   );
   return { topics, clusters, communities, positions };
 }
