@@ -8,7 +8,7 @@ function makeNode(overrides: Record<string, unknown> = {}) {
     lane: 'partition',
     scopeKey: 'sess-1',
     kind: 'cluster',
-    parentId: 'root',
+    parentId: '',
     name: 'Games',
     normalizedName: 'games',
     summary: null,
@@ -97,6 +97,25 @@ describe('TaxonomyResolutionService.resolveLabels', () => {
     );
   });
 
+  it('uses exact-only minting when reconciling stored canonical labels', async () => {
+    const { service, taxonomy } = makeService();
+    taxonomy.listNodes.mockResolvedValue([makeNode()]);
+    taxonomy.resolveAlias.mockResolvedValue('n1');
+    taxonomy.getOrCreateNode.mockResolvedValue(
+      makeNode({ id: 'n2', name: 'gaming', normalizedName: 'gaming' }),
+    );
+
+    const results = await service.resolveLabels(
+      'partition',
+      'sess-1',
+      [{ kind: 'cluster', label: 'gaming' }],
+      { exactOnly: true },
+    );
+
+    expect(results[0]).toMatchObject({ how: 'minted', nodeId: 'n2' });
+    expect(taxonomy.resolveAlias).not.toHaveBeenCalled();
+  });
+
   it('mints a new node for an unknown label and embeds its vector', async () => {
     const { service, taxonomy, taxonomyVectors, embeddingService } =
       makeService();
@@ -145,7 +164,7 @@ describe('TaxonomyResolutionService.resolveLabels', () => {
       makeNode({
         id: 'c1',
         kind: 'community',
-        parentId: 'games',
+        parentId: 'n-games',
         name: 'Action',
         normalizedName: 'action',
       }),
@@ -170,6 +189,65 @@ describe('TaxonomyResolutionService.resolveLabels', () => {
     // as the parent tier.
     expect(results[0]).toMatchObject({ how: 'minted', name: 'Games' });
     expect(results[1]).toMatchObject({ how: 'exact', name: 'Action' });
+  });
+
+  it("mints a parent-local node instead of adopting another hub's label", async () => {
+    const { service, taxonomy } = makeService();
+    taxonomy.listNodes.mockResolvedValue([
+      makeNode({ id: 'cluster', kind: 'cluster', parentId: '' }),
+      makeNode({
+        id: 'community',
+        kind: 'community',
+        parentId: 'cluster',
+        name: 'notes',
+        normalizedName: 'notes',
+      }),
+      makeNode({
+        id: 'hub-a',
+        kind: 'hub',
+        parentId: 'community',
+        name: 'alpha',
+        normalizedName: 'alpha',
+      }),
+      makeNode({
+        id: 'hub-b',
+        kind: 'hub',
+        parentId: 'community',
+        name: 'beta',
+        normalizedName: 'beta',
+      }),
+      makeNode({
+        id: 'node-a',
+        kind: 'node',
+        parentId: 'hub-a',
+        name: 'shared aspect',
+        normalizedName: 'shared aspect',
+      }),
+    ]);
+    taxonomy.resolveAlias.mockResolvedValue('node-a');
+    taxonomy.getOrCreateNode.mockImplementation(
+      async (input: Record<string, unknown>) =>
+        makeNode({ ...input, id: 'node-b' }),
+    );
+
+    const results = await service.resolveLabels('partition', 'sess-1', [
+      { kind: 'cluster', label: 'games' },
+      { kind: 'community', label: 'notes', parentRef: 'games' },
+      { kind: 'hub', label: 'alpha', parentRef: 'notes' },
+      { kind: 'node', label: 'shared aspect', parentRef: 'alpha' },
+      { kind: 'hub', label: 'beta', parentRef: 'notes' },
+      { kind: 'node', label: 'shared aspect', parentRef: 'beta' },
+    ]);
+
+    expect(results[3]).toMatchObject({ how: 'exact', nodeId: 'node-a' });
+    expect(results[5]).toMatchObject({ how: 'minted', nodeId: 'node-b' });
+    expect(taxonomy.getOrCreateNode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'node',
+        parentId: 'hub-b',
+        normalizedName: 'shared aspect',
+      }),
+    );
   });
 });
 

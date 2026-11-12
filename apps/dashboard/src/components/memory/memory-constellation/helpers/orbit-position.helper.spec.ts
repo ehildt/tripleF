@@ -42,4 +42,12 @@ describe('orbitPosition', () => {
 
     expect(orbitPosition(position, center, Math.PI / 2, 0)).toEqual(position);
   });
+
+  it('separates a coincident single leaf from its hub without breaking collapse', () => {
+    const center = { x: 3, y: 4, z: 5 };
+
+    const orbiting = orbitPosition(center, center, 0);
+    expect(Math.hypot(orbiting.x - center.x, orbiting.y - center.y)).toBe(28);
+    expect(orbitPosition(center, center, 0, 0)).toEqual(center);
+  });
 });

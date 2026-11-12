@@ -9,6 +9,7 @@ import { Brain, Fingerprint, FolderTree, Layers, Network } from '@lucide/vue';
 import { computed } from 'vue';
 
 import MenuTabs from '@/components/shared/ui/menu-tabs/MenuTabs.vue';
+import PanelLayout from '@/components/shared/ui/panel-layout/PanelLayout.vue';
 import { useMemorySpaceSync } from '@/composables/use-memory-space-sync/use-memory-space-sync';
 import { i18n } from '@/i18n/i18n';
 
@@ -56,8 +57,9 @@ const SUBTAB_ITEMS = computed(() => [
 </script>
 
 <template>
-  <main class="memory-page">
+  <PanelLayout class="memory-page">
     <MenuTabs
+      class="memory-page__menu"
       variant="section"
       :items="SUBTAB_ITEMS"
       :active="activeSubtab"
@@ -73,7 +75,7 @@ const SUBTAB_ITEMS = computed(() => [
     <TaxonomyManager v-if="activeSubtab === 'taxonomy'" />
 
     <EncyclopediaSpace v-if="activeSubtab === 'encyclopedia'" />
-  </main>
+  </PanelLayout>
 </template>
 
 <style scoped>
@@ -83,5 +85,9 @@ const SUBTAB_ITEMS = computed(() => [
   gap: var(--spacing-3);
   padding: var(--spacing-3);
   grid-column: 1 / -1;
+}
+
+.memory-page__menu {
+  background-color: transparent;
 }
 </style>

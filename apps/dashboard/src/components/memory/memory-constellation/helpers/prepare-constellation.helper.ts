@@ -24,17 +24,17 @@ import { DEFAULT_INTER_LINK_MIN_SCORE } from './inter-link-min-score.constant';
 
 /**
  * Pure render-prep from a pre-relaxed layout: collapse the given topic
- * keys into their main dots, append the always-on cluster hubs and the
- * ZERO root, resolve links to visible nodes, and precompute edge opacity +
+ * keys into their main dots, append populated cluster/community hubs and
+ * the ZERO root, resolve links to visible nodes, and precompute edge opacity +
  * fog. Deterministic for a given (relaxedLayout, links, frictions,
  * collapsedKeys, interLinkMinScore, showSuggested, mainNodes) tuple. When
  * `showSuggested` is off, the weak arcs (every inter edge below the
  * strong-relation tier) are dropped before both the render list and the
  * per-node degree counts, so a node held up only by weak links reads as
  * unlinked. When `mainNodes` is present (the space feeds server-written
- * title-tier main nodes — even empty, cold scope), every multi-member blob
- * gets its synthetic main dot carrying the leaf summary: the node between
- * the hub tier and the leafs.
+ * title-tier main nodes — even empty, cold scope), every populated blob gets
+ * its synthetic main dot carrying the leaf summary: the hub between the
+ * community tier and its node/leaf descendants.
  */
 export function prepareConstellation(
   nodes: readonly ConstellationNode[],
@@ -66,8 +66,23 @@ export function prepareConstellation(
     frictions,
     mainNodeByKey,
   );
-  appendClusterNodes(clusters, relaxedPositions, acc, nodeById, frictions);
-  appendCommunityNodes(communities, relaxedPositions, acc, nodeById, frictions);
+  const visibleNodeIds = new Set(acc.nodeIndex.keys());
+  appendClusterNodes(
+    clusters,
+    relaxedPositions,
+    acc,
+    nodeById,
+    frictions,
+    visibleNodeIds,
+  );
+  appendCommunityNodes(
+    communities,
+    relaxedPositions,
+    acc,
+    nodeById,
+    frictions,
+    visibleNodeIds,
+  );
   appendRootNode(
     acc,
     buildRootHealthMeta(nodes, topics, clusters, links, frictions),
@@ -81,6 +96,8 @@ export function prepareConstellation(
     interLinkMinScore,
     communities,
     mainNodesEnabled,
+    nodeById,
+    visibleNodeIds,
   );
   const linkIndices = [
     ...buildLinkIndices(edges, nodeIndex, interLinkMinScore),

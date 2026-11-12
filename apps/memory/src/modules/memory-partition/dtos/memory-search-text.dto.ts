@@ -37,6 +37,15 @@ export class MemorySearchTextDto {
   memoryPartition?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Restrict to one cognition space — the AI understanding-of-the-user lane (insight and episode probes).',
+    example: 'default',
+  })
+  @IsString()
+  @IsOptional()
+  memoryCognition?: string;
+
+  @ApiPropertyOptional({
     description: 'Restrict to one partition session.',
     example: 'sess-1234',
   })
@@ -111,4 +120,14 @@ export class MemorySearchTextDto {
   @IsBoolean()
   @IsOptional()
   recency?: boolean;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+    description:
+      'Apply a bounded retrieval-heat boost after semantic candidate selection (cognition insight probes). Heat changes ranking only; it is not preference confidence.',
+  })
+  @IsBoolean()
+  @IsOptional()
+  weightByHeat?: boolean;
 }

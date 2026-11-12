@@ -1,12 +1,12 @@
 import type {
   ConstellationFriction,
   ConstellationNode,
-} from '../../../memory-constellation/MemoryConstellation.types';
+} from '../../MemoryConstellation.types';
 
 /**
  * The open frictions a node is party to (source OR target — a friction is an
- * undirected contested pair). Drives the metadata column's warning section
- * for the selected dot: each entry is one active conflict with its
+ * undirected contested pair). Drives the details popover's warning tab for
+ * the hovered or pinned dot: each entry is one active conflict with its
  * LLM-written reason.
  */
 export function mapNodeToFrictions(

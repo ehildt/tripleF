@@ -16,7 +16,7 @@ import type {
  * 0/N. `frictions`/`stale` surface only when non-zero (0 is the quiet norm).
  */
 export interface HubRollup {
-  /** Tooltip / metadata-column rows (label + value). */
+  /** Tooltip / details-popover rows (label + value). */
   meta: Array<{ label: string; value: string }>;
   /** One-line capture, e.g. "17 records · 6 sources · 1 friction". */
   summary: string;

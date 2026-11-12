@@ -23,16 +23,24 @@ const emit = defineEmits<MenuButtonEmits>();
       :class="{
         'menu-button--active': active || selected,
         'menu-button--muted': muted,
+        'menu-button--danger': danger,
+        'menu-button--armed': armed,
+        'menu-button--loading': loading,
       }"
       :role="selected !== undefined ? 'tab' : undefined"
       :aria-label="label"
       :aria-selected="selected"
       :aria-pressed="active"
-      :disabled="disabled"
+      :aria-busy="loading"
+      :disabled="disabled || loading"
       @click="emit('click')"
     >
       <MotionIcon v-if="icon">
-        <component :is="icon" class="menu-button__icon" />
+        <component
+          :is="icon"
+          class="menu-button__icon"
+          :class="{ 'menu-button__icon--loading': loading }"
+        />
       </MotionIcon>
       <span v-if="!icon">{{ label }}</span>
     </button>
@@ -80,9 +88,28 @@ const emit = defineEmits<MenuButtonEmits>();
   opacity: 0.8;
 }
 
+.menu-button--danger:hover:not(:disabled) {
+  color: var(--color-status-error);
+}
+
+.menu-button--armed,
+.menu-button--armed:hover:not(:disabled) {
+  color: var(--color-status-error);
+  background-color: color-mix(
+    in srgb,
+    var(--color-status-error) 20%,
+    transparent
+  );
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 .menu-button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.menu-button--loading:disabled {
+  opacity: 1;
 }
 
 .menu-button:focus {
@@ -98,5 +125,39 @@ const emit = defineEmits<MenuButtonEmits>();
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+.menu-button__icon--loading {
+  animation: menu-button-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes menu-button-pulse {
+  0%,
+  100% {
+    color: var(--color-fg-muted);
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
+  50% {
+    color: var(--color-accent-primary);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-button__icon--loading {
+    animation: none;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 </style>

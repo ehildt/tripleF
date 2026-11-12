@@ -22,6 +22,7 @@ import type {
   EncyclopediaChunkPoint,
 } from '../models/encyclopedia-chunk.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
+import type { EncyclopediaTaxonomyChainRecord } from '../models/taxonomy-chain.model.js';
 
 import { groupHeatIncrements } from './helpers/group-heat-increments.helper.js';
 import { mapEncyclopediaPointToIdVector } from './helpers/map-encyclopedia-point-to-id-vector.helper.js';
@@ -762,6 +763,47 @@ export class EncyclopediaRepository {
     }
   }
 
+  /** Read every non-superseded chunk's canonical chain and leaf identity. */
+  async listTaxonomyChains(): Promise<EncyclopediaTaxonomyChainRecord[]> {
+    if (!(await this.clientService.hasEncyclopediaCollection())) return [];
+    const client = this.clientService.getClient();
+    const points: EncyclopediaTaxonomyChainRecord[] = [];
+    let offset: string | number | null = null;
+    for (;;) {
+      const scroll = await client.scroll(this.collection, {
+        filter: {
+          must_not: [{ key: 'superseded', match: { value: true } }],
+        },
+        limit: SCROLL_PAGE,
+        offset: offset ?? undefined,
+        with_payload: [
+          'category',
+          'community',
+          'topic',
+          'node',
+          'url',
+          'is_linked',
+        ],
+        with_vector: false,
+      });
+      for (const point of scroll.points) {
+        const payload = point.payload ?? {};
+        points.push({
+          id: String(point.id),
+          url: (payload.url as string) ?? '',
+          isLinked: (payload.is_linked as boolean) ?? false,
+          category: payload.category as string | undefined,
+          community: payload.community as string | undefined,
+          hub: payload.topic as string | undefined,
+          tags: [],
+          node: payload.node as string | undefined,
+        });
+      }
+      offset = (scroll.next_page_offset as string | number | null) ?? null;
+      if (!offset) return points;
+    }
+  }
+
   /**
    * Scroll every non-superseded content chunk of the global encyclopedia with
    * vectors — the cluster-detection + main-node-grouping input (id + vector +
@@ -1027,6 +1069,7 @@ export class EncyclopediaRepository {
       category: payload.category as string | undefined,
       community: payload.community as string | undefined,
       topic: payload.topic as string | undefined,
+      node: payload.node as string | undefined,
       mimeType: payload.mime_type as string | undefined,
       sizeBytes: payload.size_bytes as number | undefined,
       originalHash: payload.original_hash as string | undefined,

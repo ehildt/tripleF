@@ -18,6 +18,9 @@ export const INSIGHT_TAG = 'insight';
 /** Distinguishing tag on cognition episode records — the short-term conversation-memory probe filter. */
 export const EPISODE_TAG = 'episode';
 
+/** Max derived insights injected into the respond context per turn. */
+export const COGNITION_PROBE_LIMIT = 3;
+
 /** Max conviction records injected into the respond context per turn. */
 export const CONVICTION_PROBE_LIMIT = 3;
 
@@ -37,5 +40,6 @@ export const EMPTY_MEMORY_COGNITION_SNAPSHOT: MemoryCognitionSnapshot = {
   profile: null,
   insights: [],
   convictions: [],
+  profileHeat: {},
   episodeProbeLimit: EPISODE_PROBE_LIMIT,
 };

@@ -129,22 +129,35 @@ export function useTaxonomyManager() {
   const router = useRouter();
   const { memoryPartition } = storeToRefs(useMemorySpacesStore());
   const toast = useToast();
+  /** Whether the URL selects the independent, partition-backed Tags view. */
+  const isTagsView = computed(() => route.query.view === 'tags');
 
   /**
    * The taxonomy lane — backed by the ?lane= query ('partition' is the
-   * default and renders without the parameter). Setting it pushes a
-   * history entry, so back/forward can undo a lane switch.
+   * default and renders without the parameter). Selecting a lane exits the
+   * Tags content view. Back/forward can undo a lane switch.
    */
   const lane = computed<TaxonomyLane>({
     get: () =>
-      route.query.lane === 'encyclopedia' ? 'encyclopedia' : 'partition',
+      isTagsView.value || route.query.lane !== 'encyclopedia'
+        ? 'partition'
+        : 'encyclopedia',
     set: (next) => {
+      const wasTagsView = isTagsView.value;
       const nextQuery = next === 'partition' ? undefined : next;
+      if (wasTagsView) {
+        void router.push({
+          name: 'memory',
+          params: { drill: undefined },
+          query: { ...route.query, lane: nextQuery, view: undefined },
+        });
+        return;
+      }
       if (route.query.lane === nextQuery) return;
       void router.push({
         name: 'memory',
         params: route.params,
-        query: { ...route.query, lane: nextQuery },
+        query: { ...route.query, lane: nextQuery, view: undefined },
       });
     },
   });
@@ -165,6 +178,8 @@ export function useTaxonomyManager() {
   const isUnavailable = ref(false);
   /** The current item's inline editor is open (one at a time). */
   const editingId = ref<string | null>(null);
+  /** Monotonic request id: only the latest scope refresh may commit. */
+  let refreshSequence = 0;
 
   const scopeKey = computed(() =>
     lane.value === 'partition'
@@ -176,8 +191,6 @@ export function useTaxonomyManager() {
   const itemsById = computed(
     () => new Map(items.value.map((item) => [item.id, item])),
   );
-
-  const isEmpty = computed(() => items.value.length === 0);
 
   /** Content branches gate on this: data in, nothing failed. */
   const isReady = computed(() => !isUnavailable.value && !isEmpty.value);
@@ -203,6 +216,12 @@ export function useTaxonomyManager() {
 
   const clusterRoots = computed(() => rootEntries('cluster'));
   const tagRoots = computed(() => rootEntries('tag'));
+  const isEmpty = computed(() => {
+    if (!isAtRoot.value) return currentItem.value === null;
+    return isTagsView.value
+      ? tagRoots.value.length === 0
+      : clusterRoots.value.length === 0;
+  });
 
   /** The current item's children as tier groups (communities first, then hubs). */
   const childGroups = computed<TaxonomyChildGroup[]>(() => {
@@ -239,17 +258,23 @@ export function useTaxonomyManager() {
 
   /** Fetch the active scope's taxonomy (failures degrade to unavailable). */
   async function refresh() {
+    const sequence = ++refreshSequence;
+    const requestLane = lane.value;
+    const requestScope = scopeKey.value;
     isLoading.value = true;
     isUnavailable.value = false;
     try {
-      items.value = await fetchMemoryTaxonomy(lane.value, scopeKey.value);
+      const nextItems = await fetchMemoryTaxonomy(requestLane, requestScope);
+      if (sequence !== refreshSequence) return;
+      items.value = nextItems;
       pruneDrillPath();
     } catch (error) {
+      if (sequence !== refreshSequence) return;
       items.value = [];
       isUnavailable.value = true;
       toast.debug(error instanceof Error ? error.message : String(error));
     } finally {
-      isLoading.value = false;
+      if (sequence === refreshSequence) isLoading.value = false;
     }
   }
 
@@ -267,6 +292,17 @@ export function useTaxonomyManager() {
 
   function toggleEditing(id: string): void {
     editingId.value = editingId.value === id ? null : id;
+  }
+
+  /** Open the partition-backed Tags content view at taxonomy root. */
+  function showTags(): void {
+    if (isTagsView.value && isAtRoot.value && route.query.lane === undefined)
+      return;
+    void router.push({
+      name: 'memory',
+      params: { drill: undefined },
+      query: { ...route.query, lane: undefined, view: 'tags' },
+    });
   }
 
   /** Rename an item (empty input is a no-op; server normalizes + propagates). */
@@ -351,12 +387,14 @@ export function useTaxonomyManager() {
     currentItem,
     clusterRoots,
     tagRoots,
+    isTagsView,
     childGroups,
     currentSiblings,
     editingId,
     itemLabel,
     refresh,
     descend,
+    showTags,
     toggleEditing,
     renameNode,
     mergeNode,

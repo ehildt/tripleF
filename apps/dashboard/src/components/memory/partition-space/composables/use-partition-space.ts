@@ -57,6 +57,8 @@ export function usePartitionSpace() {
   const isUnavailable = ref(false);
   const wipeArmed = ref(false);
   let wipeDisarmTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Monotonic refresh id: stale scope responses never commit. */
+  let refreshSequence = 0;
 
   const isEmpty = computed(() => nodes.value.length === 0);
   /** localStorage namespace for this space's expanded-topic set. */
@@ -65,6 +67,8 @@ export function usePartitionSpace() {
   const labelMeta = computed(() => buildLabelMeta(taxonomy.value, facts.value));
 
   async function refresh() {
+    const sequence = ++refreshSequence;
+    const requestPartition = partitionKey.value;
     isLoading.value = true;
     isUnavailable.value = false;
     const [
@@ -73,18 +77,14 @@ export function usePartitionSpace() {
       frictionsResult,
       clustersResult,
       mainNodesResult,
-      taxonomyResult,
     ] = await Promise.allSettled([
-      fetchMemoryFacts(
-        partitionKey.value,
-        constellationNodeLimit.value ?? 5000,
-      ),
-      fetchMemoryLinks({ memoryPartition: partitionKey.value }),
-      fetchMemoryFrictions({ memoryPartition: partitionKey.value }),
-      fetchMemoryClusters(partitionKey.value),
-      fetchMemoryMainNodes(partitionKey.value),
-      fetchMemoryTaxonomy('partition', partitionKey.value),
+      fetchMemoryFacts(requestPartition, constellationNodeLimit.value ?? 5000),
+      fetchMemoryLinks({ memoryPartition: requestPartition }),
+      fetchMemoryFrictions({ memoryPartition: requestPartition }),
+      fetchMemoryClusters(requestPartition),
+      fetchMemoryMainNodes(requestPartition),
     ]);
+    if (sequence !== refreshSequence) return;
     if (factsResult.status === 'fulfilled') {
       facts.value = factsResult.value;
       nodes.value = buildPartitionNodes(factsResult.value);
@@ -121,11 +121,23 @@ export function usePartitionSpace() {
             memberIds: node.memberIds,
           }))
         : [];
-    // A taxonomy fetch failure degrades to undecorated dots — the
-    // constellation itself is unaffected.
-    taxonomy.value =
-      taxonomyResult.status === 'fulfilled' ? taxonomyResult.value : [];
+    // Taxonomy is optional decoration: load it outside the canvas's critical
+    // loading path, then attach it when the registry responds.
+    taxonomy.value = [];
     isLoading.value = false;
+    void loadTaxonomy(requestPartition, sequence);
+  }
+
+  async function loadTaxonomy(
+    requestPartition: string,
+    sequence: number,
+  ): Promise<void> {
+    try {
+      const next = await fetchMemoryTaxonomy('partition', requestPartition);
+      if (sequence === refreshSequence) taxonomy.value = next;
+    } catch {
+      if (sequence === refreshSequence) taxonomy.value = [];
+    }
   }
 
   /** First click arms (a second within the window executes), then the partition is re-read. */

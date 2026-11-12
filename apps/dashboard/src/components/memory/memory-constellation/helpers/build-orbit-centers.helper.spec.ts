@@ -56,6 +56,6 @@ describe('buildOrbitCenters', () => {
     expect(centers.get('a')?.center).toEqual({ x: 10, y: 0, z: 0 });
     expect(centers.get('b')?.center).toEqual({ x: 10, y: 0, z: 0 });
     expect(centers.get('c')?.center).toEqual({ x: 10, y: 0, z: 0 });
-    expect(centers.has('d')).toBe(false);
+    expect(centers.get('d')?.center).toEqual({ x: 50, y: 0, z: 0 });
   });
 });

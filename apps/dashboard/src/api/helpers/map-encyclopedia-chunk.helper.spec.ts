@@ -16,6 +16,7 @@ describe('mapEncyclopediaChunk', () => {
         chunkIndex: 1,
         chunkCount: 2,
         partitionScope: 'p1',
+        node: 'installation',
       }),
     ).toEqual({
       id: 'c1',
@@ -28,6 +29,7 @@ describe('mapEncyclopediaChunk', () => {
       chunkIndex: 1,
       chunkCount: 2,
       partitionScope: 'p1',
+      node: 'installation',
     });
   });
 

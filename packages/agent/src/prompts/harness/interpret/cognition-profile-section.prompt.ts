@@ -16,6 +16,6 @@ export function buildCognitionProfileSection(profileJson: string): string | unde
   const capped =
     trimmed.length > COGNITION_PROFILE_CHAR_LIMIT ? `${trimmed.slice(0, COGNITION_PROFILE_CHAR_LIMIT)}…` : trimmed;
 
-  return `COGNITION PROFILE — YOUR accumulated understanding of this user: your own derived conclusions (traits, interests, standing context), not their verbatim statements. Use it to resolve what the user is referring to and to shape tool choices; never treat it as the current request itself.
+  return `COGNITION PROFILE — YOUR accumulated understanding of this user: your own derived conclusions (traits, interests, standing context), not their verbatim statements. Use it to resolve what the user is referring to and to shape tool choices; never treat it as the current request itself. An optional retrievalHeat object maps profile paths to normalized 0..1 retrieval-frequency weights: hotter entries may be stronger personalization candidates, but heat is usage history, never proof, confidence, or user intent; missing/cold entries are neutral, not false.
 ${capped}`;
 }

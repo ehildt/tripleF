@@ -14,6 +14,7 @@ export function mapEncyclopediaChunk(item: {
   community?: string;
   clusterId?: string;
   topic?: string;
+  node?: string;
   mimeType?: string;
   sizeBytes?: number;
   originalHash?: string;
@@ -41,6 +42,7 @@ export function mapEncyclopediaChunk(item: {
     community: item.community,
     clusterId: item.clusterId,
     topic: item.topic,
+    node: item.node,
     mimeType: item.mimeType,
     sizeBytes: item.sizeBytes,
     originalHash: item.originalHash,

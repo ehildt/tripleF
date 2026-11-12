@@ -13,6 +13,7 @@ describe('mapFact', () => {
           tags: ['a'],
           role: 'user',
           category: 'games',
+          node: 'base building',
         },
         0,
       ),
@@ -23,6 +24,7 @@ describe('mapFact', () => {
       tags: ['a'],
       role: 'user',
       category: 'games',
+      node: 'base building',
     });
   });
 

@@ -7,6 +7,7 @@ import {
 import { MemoryTaxonomyRepository } from '../../persistence/services/memory-taxonomy.repository.js';
 import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 import type { MemoryTaxonomyReconcileJobData } from '../../qdrant/models/memory.model.js';
+import type { TaxonomyChainRecord } from '../../qdrant/models/taxonomy-chain.model.js';
 import { EncyclopediaRepository } from '../../qdrant/services/encyclopedia.repository.js';
 import { MemoryRepository } from '../../qdrant/services/memory.repository.js';
 import { TaxonomyVectorRepository } from '../../qdrant/services/taxonomy-vector.repository.js';
@@ -22,6 +23,8 @@ import { scoreLabelPair } from '../helpers/score-label-pair.helper.js';
 import { TaxonomyAdjudicatorService } from './taxonomy-adjudicator.service.js';
 import { TaxonomyMergeService } from './taxonomy-merge.service.js';
 import { TaxonomyProbeService } from './taxonomy-probe.service.js';
+import { TaxonomyResolutionService } from './taxonomy-resolution.service.js';
+import type { TaxonomyLabelInput } from './taxonomy-resolution.service.types.js';
 
 /** The sweep's per-lane tier coverage (the encyclopedia carries no tag bag). */
 const LANES_KINDS: Record<'partition' | 'encyclopedia', MemoryTaxonomyKind[]> =
@@ -58,7 +61,7 @@ interface ReconcileCounts {
  * label-merge sweep that closes what the write-boundary snap deliberately
  * left open (precision over recall). Over one scope's registry, per tier:
  *
- * 1. Candidacy: pairwise trigram × label-embedding cosine (fused as max +
+ * 1. Candidacy: pairwise trigram cosine (fused as max +
  *    agreement bonus), floored per kind; communities/hubs only pair within
  *    the same parent (type partitioning per research).
  * 2. Auto-merge band: fused ≥ the kind's snap threshold AND the labels share
@@ -84,6 +87,7 @@ export class TaxonomyReconcileJobService {
     private readonly taxonomyMerge: TaxonomyMergeService,
     private readonly taxonomyVectors: TaxonomyVectorRepository,
     private readonly taxonomyProbe: TaxonomyProbeService,
+    private readonly taxonomyResolution: TaxonomyResolutionService,
     private readonly adjudicator: TaxonomyAdjudicatorService,
     private readonly memoryRepository: MemoryRepository,
     private readonly encyclopediaRepository: EncyclopediaRepository,
@@ -91,6 +95,7 @@ export class TaxonomyReconcileJobService {
 
   async execute(data: MemoryTaxonomyReconcileJobData): Promise<void> {
     const pairCap = Math.min(data.limit ?? 100, RECONCILE_MAX_PAIRS);
+    const hierarchyMinted = await this.repairHierarchy(data);
     const nodes = await this.taxonomy.listNodes(data.lane, data.scopeKey);
     const counts: ReconcileCounts = {
       candidates: 0,
@@ -124,13 +129,79 @@ export class TaxonomyReconcileJobService {
     }
 
     this.logger.log(
-      `taxonomy-reconcile ${data.lane}/${data.scopeKey}: ${counts.candidates} candidate pairs — auto-merged ${counts.autoMerged}, llm-merged ${counts.llmMerged}, distinct ${counts.distinct}, deferred ${counts.deferred}${data.dryRun ? ' (dryRun)' : ''}`,
+      `taxonomy-reconcile ${data.lane}/${data.scopeKey}: ${counts.candidates} candidate pairs — auto-merged ${counts.autoMerged}, llm-merged ${counts.llmMerged}, distinct ${counts.distinct}, deferred ${counts.deferred}; hierarchy minted ${hierarchyMinted}${data.dryRun ? ' (dryRun)' : ''}`,
     );
   }
 
   /**
-   * Score every eligible pair of one tier: fused trigram × embedding cosine,
-   * parent-partitioned for the tree tiers, floored, strongest first.
+   * Build the exact parent-local labels stored on one leaf.
+   * No aliases or fuzzy snapping are used.
+   */
+  private taxonomyChainLabels(
+    point: TaxonomyChainRecord,
+  ): TaxonomyLabelInput[] {
+    const labels: TaxonomyLabelInput[] = [];
+    if (point.category) {
+      labels.push({ kind: 'cluster', label: point.category });
+    }
+    if (point.category && point.community) {
+      labels.push({
+        kind: 'community',
+        label: point.community,
+        parentRef: point.category,
+      });
+    }
+    if (point.category && point.community && point.hub) {
+      labels.push({
+        kind: 'hub',
+        label: point.hub,
+        parentRef: point.community,
+      });
+    }
+    if (point.category && point.community && point.hub && point.node) {
+      labels.push({
+        kind: 'node',
+        label: point.node,
+        parentRef: point.hub,
+      });
+    }
+    for (const tag of [...point.tags].sort()) {
+      labels.push({ kind: 'tag', label: tag });
+    }
+    return labels;
+  }
+
+  /** Exact-only repair of stored canonical chains; dry runs never write. */
+  private async repairHierarchy(
+    data: MemoryTaxonomyReconcileJobData,
+  ): Promise<number> {
+    if (data.dryRun) return 0;
+    const points =
+      data.lane === 'partition'
+        ? await this.memoryRepository.listTaxonomyChains(data.scopeKey)
+        : await this.encyclopediaRepository.listTaxonomyChains();
+    const seen = new Set<string>();
+    let minted = 0;
+    for (const point of points) {
+      const labels = this.taxonomyChainLabels(point);
+      if (labels.length === 0) continue;
+      const key = JSON.stringify(labels);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const resolved = await this.taxonomyResolution.resolveLabels(
+        data.lane,
+        data.scopeKey,
+        labels,
+        { exactOnly: true },
+      );
+      minted += resolved.filter((result) => result.how === 'minted').length;
+    }
+    return minted;
+  }
+
+  /**
+   * Score every eligible pair of one tier: fused trigram and label-embedding
+   * cosine, parent-partitioned for the tree tiers, floored, strongest first.
    */
   private async candidatePairs(
     lane: MemoryTaxonomyLane,
@@ -241,7 +312,7 @@ export class TaxonomyReconcileJobService {
         )
       : this.memoryRepository.countByLabel(
           data.scopeKey,
-          field as 'category' | 'community' | 'subject' | 'tags',
+          field as 'category' | 'community' | 'subject' | 'node' | 'tags',
           node.name,
         );
   }

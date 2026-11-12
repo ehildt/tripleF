@@ -29,16 +29,16 @@ export function buildHeatIntensity(
   const intensity = sqrtNormalize(ownHeat);
 
   // Topic hubs: the rollup lands on the synthetic title dot — under the
-  // main-node regime that dot always exists for multi-member blobs, so the
-  // first member is a plain leaf there (own heat only); legacy blobs (and
-  // single-member topics) keep the rollup on the first member.
+  // main-node regime that dot exists for every populated topic, so every
+  // member is a plain leaf there (own heat only); legacy blobs keep the
+  // rollup on the first member.
   const topicHeat = new Map<string, number>();
   for (const topic of topics) topicHeat.set(topic.key, sumOf(topic.memberIds));
   const topicIntensity = sqrtNormalize(topicHeat);
   for (const topic of topics) {
     const value = topicIntensity.get(topic.key) ?? 0;
     intensity.set(`topic:${topic.key}`, value);
-    const hasMainDot = mainNodesEnabled && topic.memberIds.length > 1;
+    const hasMainDot = mainNodesEnabled && topic.memberIds.length > 0;
     if (!hasMainDot && topic.memberIds.length > 0)
       intensity.set(topic.memberIds[0], value);
   }

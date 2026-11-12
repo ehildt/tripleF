@@ -33,6 +33,7 @@ const {
   currentItem,
   clusterRoots,
   tagRoots,
+  isTagsView,
   childGroups,
   currentSiblings,
   editingId,
@@ -40,6 +41,7 @@ const {
   scopeKey,
   refresh,
   descend,
+  showTags,
   toggleEditing,
   renameNode,
   mergeNode,
@@ -57,7 +59,9 @@ onMounted(refresh);
     <TaxonomyManagerHeader
       v-model:lane="lane"
       :is-loading="isLoading"
+      :is-tags-view="isTagsView"
       @refresh="refresh"
+      @show-tags="showTags"
     />
 
     <div v-if="isUnavailable" class="taxonomy-manager__state">
@@ -68,18 +72,24 @@ onMounted(refresh);
       v-if="!isUnavailable && isEmpty && !isLoading"
       class="taxonomy-manager__state"
     >
-      {{ $t('common.memoryTaxonomyEmpty') }}
+      {{
+        $t(
+          isTagsView
+            ? 'common.memoryTaxonomyTagsEmpty'
+            : 'common.memoryTaxonomyEmpty',
+        )
+      }}
     </div>
 
     <TaxonomyNavGroup
-      v-if="isReady && isAtRoot && clusterRoots.length > 0"
+      v-if="isReady && isAtRoot && !isTagsView && clusterRoots.length > 0"
       kind="cluster"
       :items="clusterRoots"
       @select="descend"
     />
 
     <TaxonomyNavGroup
-      v-if="isReady && isAtRoot && tagRoots.length > 0"
+      v-if="isReady && isAtRoot && isTagsView && tagRoots.length > 0"
       kind="tag"
       :items="tagRoots"
       @select="descend"
