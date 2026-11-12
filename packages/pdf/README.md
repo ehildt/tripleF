@@ -23,7 +23,7 @@ Single-owner pdfjs integration for the tripleF (3F) apps — the one and only pl
 
 # Dependencies
 
-[![@napi-rs/canvas](https://img.shields.io/badge/_napi_rs_canvas-v1.1.0-c95618.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c95618&logoWidth=40&style=for-the-badge)](https://github.com/Brooooooklyn/canvas)
+[![@napi-rs/canvas](https://img.shields.io/badge/_napi_rs_canvas-v1.1.1-c95618.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c95618&logoWidth=40&style=for-the-badge)](https://github.com/Brooooooklyn/canvas)
 [![pdfjs-dist](https://img.shields.io/badge/pdfjs_dist-~6.5.438-d4259a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=d4259a&logoWidth=40&style=for-the-badge)](https://github.com/mozilla/pdf.js)
 
 </div>
@@ -53,7 +53,7 @@ Single-owner pdfjs integration for the tripleF (3F) apps — the one and only pl
 ![jiti](https://img.shields.io/badge/jiti-v2.7.0-2ab746.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2ab746&logoWidth=40&style=flat-square)
 ![lint-staged](https://img.shields.io/badge/lint_staged-v17.6.0-dfba26.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dfba26&logoWidth=40&style=flat-square)
 ![npm-check-updates](https://img.shields.io/badge/npm_check_updates-v23.1.1-1ec23c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1ec23c&logoWidth=40&style=flat-square)
-![prettier](https://img.shields.io/badge/prettier-v3.9.10-48bd28.svg?labelColor=333&cacheSeconds=3600&logo=prettier&logoColor=48bd28&logoWidth=40&style=flat-square)
+![prettier](https://img.shields.io/badge/prettier-v3.10.1-48bd28.svg?labelColor=333&cacheSeconds=3600&logo=prettier&logoColor=48bd28&logoWidth=40&style=flat-square)
 ![rimraf](https://img.shields.io/badge/rimraf-v6.1.4-24a85b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=24a85b&logoWidth=40&style=flat-square)
 ![ts-unused-exports](https://img.shields.io/badge/ts_unused_exports-v11.0.1-5e26c0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=5e26c0&logoWidth=40&style=flat-square)
 ![tsup](https://img.shields.io/badge/tsup-v8.5.1-472cce.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=472cce&logoWidth=40&style=flat-square)
@@ -71,7 +71,7 @@ Single-owner pdfjs integration for the tripleF (3F) apps — the one and only pl
 
 # PeerDependencies
 
-[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.4.2-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
+[![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.5.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
 
 </div>
 <!-- DEPBADGE:END -->
