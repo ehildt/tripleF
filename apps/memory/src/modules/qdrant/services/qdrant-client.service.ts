@@ -252,12 +252,18 @@ export class QdrantClientService implements OnModuleInit {
       // community is the plural sub-family tier one level below category —
       // keyword index powers community-scoped filters (taxonomy routing).
       { field_name: 'community', field_schema: 'keyword' },
+      // subject/node are the hub/aspect tiers — indexes power parent-local
+      // taxonomy counts and filtered recall without full collection scans.
+      { field_name: 'subject', field_schema: 'keyword' },
+      { field_name: 'node', field_schema: 'keyword' },
       // Full-text schema on text enables RAG-style containment filters
       // (`match: { text: ... }`) over the record content.
       { field_name: 'text', field_schema: 'text' },
       // Datetime schema on created_at powers the episode probe's recency
       // blend (formula query with exp_decay on the payload timestamp).
       { field_name: 'created_at', field_schema: 'datetime' },
+      // Retrieval heat participates in cognition formula rescoring.
+      { field_name: 'heat_amount', field_schema: 'float' },
       // Lifecycle flags — bool indexes power the strict/recommended view
       // filters and the Phase 2 recall formula boosts over these payloads.
       { field_name: 'is_consolidated', field_schema: 'bool' },
@@ -410,6 +416,8 @@ export class QdrantClientService implements OnModuleInit {
       { field_name: 'topic', field_schema: 'keyword' },
       // community is the plural sub-family tier between category and topic.
       { field_name: 'community', field_schema: 'keyword' },
+      // node is the singular aspect tier below the topic hub.
+      { field_name: 'node', field_schema: 'keyword' },
       // Lifecycle flags — bool indexes power the strict/recommended view
       // filters and the Phase 2 recall formula boosts over these payloads.
       { field_name: 'is_consolidated', field_schema: 'bool' },

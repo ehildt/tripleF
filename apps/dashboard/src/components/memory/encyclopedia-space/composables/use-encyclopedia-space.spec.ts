@@ -8,6 +8,7 @@ const api = {
   fetchEncyclopediaFrictions: vi.fn(),
   fetchEncyclopediaClusters: vi.fn(),
   fetchEncyclopediaMainNodes: vi.fn(),
+  fetchMemoryTaxonomy: vi.fn(),
 };
 
 vi.mock('@/api/memory.api', () => ({
@@ -23,11 +24,16 @@ vi.mock('@/api/memory.api', () => ({
     api.fetchEncyclopediaMainNodes(...args),
 }));
 
+vi.mock('@/api/memory-taxonomy.api', () => ({
+  fetchMemoryTaxonomy: (...args: unknown[]) => api.fetchMemoryTaxonomy(...args),
+}));
+
 describe('useEncyclopediaSpace', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.fetchEncyclopediaClusters.mockResolvedValue([]);
     api.fetchEncyclopediaMainNodes.mockResolvedValue([]);
+    api.fetchMemoryTaxonomy.mockResolvedValue([]);
   });
 
   it('maps fetched chunks to nodes grouped by domain', async () => {
@@ -52,6 +58,26 @@ describe('useEncyclopediaSpace', () => {
 
     expect(nodes.value).toHaveLength(1);
     expect(nodes.value[0].topicKey).toBe('example.com');
+  });
+
+  it('does not hold the canvas loading state for taxonomy metadata', async () => {
+    let resolveTaxonomy!: (value: []) => void;
+    api.fetchMemoryTaxonomy.mockReturnValue(
+      new Promise((resolve) => (resolveTaxonomy = resolve)),
+    );
+    api.fetchEncyclopediaChunks.mockResolvedValue([]);
+    api.fetchEncyclopediaLinks.mockResolvedValue([]);
+    api.fetchEncyclopediaFrictions.mockResolvedValue([]);
+
+    const { isLoading, refresh } = useEncyclopediaSpace();
+    await refresh();
+
+    expect(isLoading.value).toBe(false);
+    expect(api.fetchMemoryTaxonomy).toHaveBeenCalledWith(
+      'encyclopedia',
+      'global',
+    );
+    resolveTaxonomy([]);
   });
 
   it('degrades to unavailable on fetch failure', async () => {

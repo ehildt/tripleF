@@ -59,12 +59,14 @@ export class TaxonomyResolutionService {
 
   /**
    * Snap-or-mint one batch of labels against one scope's registry. Returns
-   * one outcome per input label, in input order.
+   * one outcome per input label, in input order. `exactOnly` is reserved for
+   * stored-chain reconciliation: it skips alias/fuzzy adoption before minting.
    */
   async resolveLabels(
     lane: MemoryTaxonomyLane,
     scopeKey: string,
     labels: TaxonomyLabelInput[],
+    options: { exactOnly?: boolean } = {},
   ): Promise<TaxonomyResolvedLabel[]> {
     const nodes = await this.taxonomy.listNodes(lane, scopeKey);
     const byInputLabel = new Map<string, MemoryTaxonomyNodeRecord>();
@@ -79,6 +81,7 @@ export class TaxonomyResolutionService {
         nodes,
         entry,
         parent,
+        options.exactOnly === true,
       );
       results.push(result);
       byInputLabel.set(
@@ -96,8 +99,14 @@ export class TaxonomyResolutionService {
     nodes: MemoryTaxonomyNodeRecord[],
     entry: TaxonomyLabelInput,
     parent: MemoryTaxonomyNodeRecord | undefined,
+    exactOnly = false,
   ): Promise<TaxonomyResolvedLabel> {
     const parentId = parent?.id ?? TAXONOMY_ROOT_PARENT;
+    if (entry.parentRef && !parent) {
+      throw new Error(
+        `Unresolved ${entry.kind} parent reference: ${entry.parentRef}`,
+      );
+    }
     const candidates = nodes.filter(
       (node) =>
         node.kind === entry.kind &&
@@ -106,37 +115,37 @@ export class TaxonomyResolutionService {
           : entry.parentRef === undefined),
     );
 
-    // 1. Exact: the canonical form is already a registry node.
-    const exact =
-      candidates.find((node) => node.normalizedName === entry.label) ??
-      nodes.find(
-        (node) =>
-          node.kind === entry.kind && node.normalizedName === entry.label,
-      );
+    // 1. Exact: only the current parent partition is eligible. A same-named
+    // label under another parent is a different hierarchy entry.
+    const exact = candidates.find(
+      (node) => node.normalizedName === entry.label,
+    );
     if (exact) {
       return buildResolutionOutcome(entry, exact, 'exact');
     }
 
     // 2. Alias: a previously snapped/renamed/merged variant.
-    const aliasNodeId = await this.taxonomy.resolveAlias(
-      lane,
-      scopeKey,
-      entry.kind,
-      entry.label,
-    );
+    const aliasNodeId = exactOnly
+      ? undefined
+      : await this.taxonomy.resolveAlias(
+          lane,
+          scopeKey,
+          entry.kind,
+          entry.label,
+        );
     const aliasNode = aliasNodeId
-      ? nodes.find((node) => node.id === aliasNodeId)
+      ? nodes.find(
+          (node) => node.id === aliasNodeId && node.parentId === parentId,
+        )
       : undefined;
     if (aliasNode) {
       return buildResolutionOutcome(entry, aliasNode, 'alias');
     }
 
-    // 3. Fuzzy: trigram snap over the candidacy (token-overlap guard).
-    const pool =
-      candidates.length > 0
-        ? candidates
-        : nodes.filter((node) => node.kind === entry.kind);
-    const fuzzy = bestFuzzyMatch(entry.label, pool, entry.kind);
+    // 3. Fuzzy: trigram snap remains inside the same parent partition.
+    const fuzzy = exactOnly
+      ? undefined
+      : bestFuzzyMatch(entry.label, candidates, entry.kind);
     if (fuzzy) {
       await this.taxonomy.insertAlias({
         nodeId: fuzzy.node.id,

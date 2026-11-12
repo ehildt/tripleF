@@ -97,6 +97,27 @@ export class MemoryCognitionService {
     });
   }
 
+  /**
+   * Aggregate insight heat by profile routing path, then normalize the
+   * hottest path to 1 with square-root dampening. Only positive paths are
+   * returned: an absent path is cold and neutral, never evidence that the
+   * profile value is wrong. This is a read-time projection; stored profile
+   * JSON and insight records stay unchanged.
+   */
+  calcProfileHeat(insights: readonly MemoryPoint[]): Record<string, number> {
+    const totals = new Map<string, number>();
+    for (const insight of insights) {
+      const amount = insight.heatAmount ?? 0;
+      if (!insight.path || amount <= 0) continue;
+      totals.set(insight.path, (totals.get(insight.path) ?? 0) + amount);
+    }
+    const max = Math.max(0, ...totals.values());
+    if (max === 0) return {};
+    return Object.fromEntries(
+      [...totals].map(([path, amount]) => [path, Math.sqrt(amount / max)]),
+    );
+  }
+
   /** The conviction records of a cognition space (the synthesized user/self-model conclusions — the management/listing read). */
   async listConvictions(
     memoryCognition: string,

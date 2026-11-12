@@ -2,7 +2,7 @@
   "name": "@triplef/pdf",
   "description": "tripleF (3F) PDF domain — single-owner pdfjs integration: per-page text-layer extraction and page rendering for the apps.",
   "version": "1.0.2",
-  "packageManager": "pnpm@12.19.0",
+  "packageManager": "pnpm@12.20.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "exports": {
@@ -51,7 +51,7 @@
     "lint:unused": "npx ts-unused-exports ./tsconfig.exclude.json --maxIssues=6"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^1.1.0",
+    "@napi-rs/canvas": "^1.1.1",
     "pdfjs-dist": "~6.5.438"
   },
   "devDependencies": {
@@ -72,7 +72,7 @@
     "jiti": "^2.7.0",
     "lint-staged": "^17.6.0",
     "npm-check-updates": "^23.1.1",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "rimraf": "^6.1.4",
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",
@@ -81,6 +81,6 @@
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
-    "@nestjs/common": "^12.4.2"
+    "@nestjs/common": "^12.5.0"
   }
 }

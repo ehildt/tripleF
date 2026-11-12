@@ -19,6 +19,9 @@ import { normalizeTaxonomyIcon } from '../helpers/normalize-taxonomy-icon.helper
 import { normalizeTaxonomyLabel } from '../helpers/normalize-taxonomy-label.helper.js';
 
 import type {
+  EncyclopediaTaxonomyField,
+  PartitionTaxonomyField,
+  TaxonomyLeafCount,
   TaxonomyLeafView,
   TaxonomyNodeView,
 } from './taxonomy.service.types.js';
@@ -79,26 +82,152 @@ export class TaxonomyService {
         (childCountById.get(node.parentId) ?? 0) + 1,
       );
     }
-    return Promise.all(
-      nodes.map(async (node) => ({
-        id: node.id,
-        kind: node.kind,
-        parentId: node.parentId,
-        name: node.name,
-        icon: node.icon,
-        summary: node.summary,
-        createdBy: node.createdBy,
-        leafCount: await this.countLeaves(lane, scopeKey, node, false),
-        linkedCount: await this.countLeaves(lane, scopeKey, node, true),
-        childCount: childCountById.get(node.id) ?? 0,
-        aliases: aliasesByNode.get(node.id) ?? [],
-        lastReflectedAt: node.lastReflectedAt,
-        lastConsolidatedAt: node.lastConsolidatedAt,
-        lastRelinkedAt: node.lastRelinkedAt,
-        createdAt: node.createdAt,
-        updatedAt: node.updatedAt,
-      })),
+    let leafCounts: Map<string, TaxonomyLeafCount>;
+    try {
+      leafCounts = await this.aggregateLeafCounts(lane, scopeKey, nodes);
+    } catch (error) {
+      this.logger.warn(
+        { lane, scopeKey },
+        `taxonomy aggregate counts failed; using per-label fallback: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      leafCounts = await this.fallbackLeafCounts(lane, scopeKey, nodes);
+    }
+    return nodes.map((node) => ({
+      id: node.id,
+      kind: node.kind,
+      parentId: node.parentId,
+      name: node.name,
+      icon: node.icon,
+      summary: node.summary,
+      createdBy: node.createdBy,
+      ...(leafCounts.get(node.id) ?? { leafCount: 0, linkedCount: 0 }),
+      childCount: childCountById.get(node.id) ?? 0,
+      aliases: aliasesByNode.get(node.id) ?? [],
+      lastReflectedAt: node.lastReflectedAt,
+      lastConsolidatedAt: node.lastConsolidatedAt,
+      lastRelinkedAt: node.lastRelinkedAt,
+      createdAt: node.createdAt,
+      updatedAt: node.updatedAt,
+    }));
+  }
+
+  /** Aggregate one scope's counts without two queries per registry row. */
+  private async aggregateLeafCounts(
+    lane: MemoryTaxonomyLane,
+    scopeKey: string,
+    nodes: MemoryTaxonomyNodeRecord[],
+  ): Promise<Map<string, TaxonomyLeafCount>> {
+    return lane === 'partition'
+      ? this.partitionLeafCounts(scopeKey, nodes)
+      : this.encyclopediaLeafCounts(nodes);
+  }
+
+  /** Exact filtered facets share one pair of requests per populated tier. */
+  private async partitionLeafCounts(
+    scopeKey: string,
+    nodes: MemoryTaxonomyNodeRecord[],
+  ): Promise<Map<string, TaxonomyLeafCount>> {
+    const counts = new Map<string, TaxonomyLeafCount>();
+    const fields = [
+      ...new Set(
+        nodes
+          .map(
+            (node) =>
+              TAXONOMY_LANE_FIELDS.partition[node.kind] as
+                PartitionTaxonomyField | undefined,
+          )
+          .filter((field): field is PartitionTaxonomyField => Boolean(field)),
+      ),
+    ];
+    await Promise.all(
+      fields.map(async (field) => {
+        const [leaves, linked] = await Promise.all([
+          this.memoryRepository.facetLabelCounts(scopeKey, field, {
+            limit: Math.max(1000, nodes.length),
+          }),
+          this.memoryRepository.facetLabelCounts(scopeKey, field, {
+            linkedOnly: true,
+            limit: Math.max(1000, nodes.length),
+          }),
+        ]);
+        const leafByName = new Map(
+          leaves.map((entry) => [entry.value, entry.count]),
+        );
+        const linkedByName = new Map(
+          linked.map((entry) => [entry.value, entry.count]),
+        );
+        for (const node of nodes) {
+          if (TAXONOMY_LANE_FIELDS.partition[node.kind] !== field) continue;
+          counts.set(node.id, {
+            leafCount: leafByName.get(node.name) ?? 0,
+            linkedCount: linkedByName.get(node.name) ?? 0,
+          });
+        }
+      }),
     );
+    return counts;
+  }
+
+  /** One metadata scan aggregates distinct source pages and any-linked leaves. */
+  private async encyclopediaLeafCounts(
+    nodes: MemoryTaxonomyNodeRecord[],
+  ): Promise<Map<string, TaxonomyLeafCount>> {
+    const chunks = await this.encyclopediaRepository.listTaxonomyChains();
+    const byField = new Map<
+      EncyclopediaTaxonomyField,
+      Map<string, { leaves: Set<string>; linked: Set<string> }>
+    >();
+    for (const chunk of chunks) {
+      for (const field of ['category', 'community', 'topic', 'node'] as const) {
+        const label = chunk[field === 'topic' ? 'hub' : field];
+        if (!label) continue;
+        const byLabel = byField.get(field) ?? new Map();
+        const aggregate = byLabel.get(label) ?? {
+          leaves: new Set<string>(),
+          linked: new Set<string>(),
+        };
+        const leafKey = chunk.url || chunk.id;
+        aggregate.leaves.add(leafKey);
+        if (chunk.isLinked) aggregate.linked.add(leafKey);
+        byLabel.set(label, aggregate);
+        byField.set(field, byLabel);
+      }
+    }
+    return new Map(
+      nodes.map((node) => {
+        const field = TAXONOMY_LANE_FIELDS.encyclopedia[
+          node.kind
+        ] as EncyclopediaTaxonomyField;
+        const aggregate = byField.get(field)?.get(node.name);
+        return [
+          node.id,
+          {
+            leafCount: aggregate?.leaves.size ?? 0,
+            linkedCount: aggregate?.linked.size ?? 0,
+          },
+        ];
+      }),
+    );
+  }
+
+  /** Previous per-label behavior, retained as a failure fallback. */
+  private async fallbackLeafCounts(
+    lane: MemoryTaxonomyLane,
+    scopeKey: string,
+    nodes: MemoryTaxonomyNodeRecord[],
+  ): Promise<Map<string, TaxonomyLeafCount>> {
+    const entries = await Promise.all(
+      nodes.map(async (node) => {
+        const [leafCount, linkedCount] = await Promise.all([
+          this.countLeaves(lane, scopeKey, node, false),
+          this.countLeaves(lane, scopeKey, node, true),
+        ]);
+        return [node.id, { leafCount, linkedCount }] as const;
+      }),
+    );
+    return new Map(entries);
   }
 
   /**
@@ -124,7 +253,7 @@ export class TaxonomyService {
     }
     const facts = await this.memoryRepository.listByLabel(
       scopeKey,
-      field as 'category' | 'community' | 'subject' | 'tags',
+      field as 'category' | 'community' | 'subject' | 'node' | 'tags',
       node.name,
       TAXONOMY_LEAVES_LIMIT,
     );
@@ -304,7 +433,7 @@ export class TaxonomyService {
       }
       return await this.memoryRepository.countByLabel(
         scopeKey,
-        field as 'category' | 'community' | 'subject' | 'tags',
+        field as 'category' | 'community' | 'subject' | 'node' | 'tags',
         node.name,
         { linkedOnly },
       );

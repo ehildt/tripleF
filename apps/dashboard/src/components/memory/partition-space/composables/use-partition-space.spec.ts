@@ -11,6 +11,7 @@ const api = {
   fetchMemoryFrictions: vi.fn(),
   fetchMemoryClusters: vi.fn(),
   fetchMemoryMainNodes: vi.fn(),
+  fetchMemoryTaxonomy: vi.fn(),
   wipeMemoryFacts: vi.fn(),
 };
 
@@ -25,12 +26,17 @@ vi.mock('@/api/memory.api', () => ({
   wipeMemoryFacts: (...args: unknown[]) => api.wipeMemoryFacts(...args),
 }));
 
+vi.mock('@/api/memory-taxonomy.api', () => ({
+  fetchMemoryTaxonomy: (...args: unknown[]) => api.fetchMemoryTaxonomy(...args),
+}));
+
 describe('usePartitionSpace', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
     api.fetchMemoryClusters.mockResolvedValue([]);
     api.fetchMemoryMainNodes.mockResolvedValue([]);
+    api.fetchMemoryTaxonomy.mockResolvedValue([]);
   });
 
   it('maps fetched facts to nodes and links', async () => {
@@ -73,6 +79,26 @@ describe('usePartitionSpace', () => {
     expect(frictions.value).toEqual([
       { source: 'a', target: 'b', reason: 'conflict' },
     ]);
+  });
+
+  it('does not hold the canvas loading state for taxonomy metadata', async () => {
+    let resolveTaxonomy!: (value: []) => void;
+    api.fetchMemoryTaxonomy.mockReturnValue(
+      new Promise((resolve) => (resolveTaxonomy = resolve)),
+    );
+    api.fetchMemoryFacts.mockResolvedValue([
+      { id: 'a', text: 'one', tags: ['work'] },
+    ]);
+    api.fetchMemoryLinks.mockResolvedValue([]);
+    api.fetchMemoryFrictions.mockResolvedValue([]);
+    useMemorySpacesStore().memoryPartition = 'test';
+
+    const { isLoading, refresh } = usePartitionSpace();
+    await refresh();
+
+    expect(isLoading.value).toBe(false);
+    expect(api.fetchMemoryTaxonomy).toHaveBeenCalledWith('partition', 'test');
+    resolveTaxonomy([]);
   });
 
   it('degrades to nodes-without-links when the links fetch fails', async () => {

@@ -1,5 +1,8 @@
 import type { ConstellationPosition } from '../MemoryConstellation.types';
 
+/** Radius for a single leaf whose relaxed position equals its hub. */
+const MIN_LEAF_ORBIT_RADIUS = 28;
+
 /**
  * Rotate a leaf position around its topic hub in the x-y plane by `angle`
  * radians — the slow leaf orbit around the main dot. The z coordinate is
@@ -15,6 +18,13 @@ export function orbitPosition(
 ): ConstellationPosition {
   const dx = position.x - center.x;
   const dy = position.y - center.y;
+  if (dx === 0 && dy === 0) {
+    return {
+      x: position.x + Math.cos(angle) * MIN_LEAF_ORBIT_RADIUS * scale,
+      y: position.y + Math.sin(angle) * MIN_LEAF_ORBIT_RADIUS * scale,
+      z: position.z,
+    };
+  }
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
   const rx = dx * cos - dy * sin;

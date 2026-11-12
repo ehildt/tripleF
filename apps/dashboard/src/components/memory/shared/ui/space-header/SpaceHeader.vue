@@ -1,17 +1,18 @@
 <script setup lang="ts">
 /**
  * Shared header for the memory spaces: the panel identity (icon tile,
- * label, description) plus an actions region. Pure presentational chrome —
- * the icon/label/description arrive as flat props and the actions slot is
- * the one channel for the caller's toolbar components.
+ * label, description) plus a header-menu actions region. Pure presentational
+ * chrome built on the same fixed-height bar as Settings.
  */
+import PanelHeader from '@/components/shared/ui/panel-header/PanelHeader.vue';
+
 import type { SpaceHeaderProps } from './SpaceHeader.types';
 
 defineProps<SpaceHeaderProps>();
 </script>
 
 <template>
-  <div class="space-header">
+  <PanelHeader class="space-header">
     <div class="space-header__icon">
       <component :is="icon" class="space-header__icon-glyph" />
     </div>
@@ -19,19 +20,14 @@ defineProps<SpaceHeaderProps>();
       <span class="space-header__label">{{ label }}</span>
       <span class="space-header__description">{{ description }}</span>
     </div>
-    <div class="space-header__actions">
-      <slot />
-    </div>
-  </div>
+    <slot />
+  </PanelHeader>
 </template>
 
 <style scoped>
 .space-header {
-  display: flex;
-  align-items: center;
   gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-3);
-  background-color: var(--color-bg-tertiary);
+  background-color: transparent;
 }
 
 .space-header__icon {
@@ -71,12 +67,5 @@ defineProps<SpaceHeaderProps>();
   line-height: 1.4;
   color: var(--color-fg-muted);
   overflow-wrap: anywhere;
-}
-
-.space-header__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  flex-shrink: 0;
 }
 </style>

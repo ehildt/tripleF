@@ -13,6 +13,9 @@ export interface ConstellationNode {
   topicKey: string;
   /** Full text shown in the hover tooltip. */
   text: string;
+  /** Unique long-form content for synthetic dots; generated rollups leave this
+   * absent so the details popover does not repeat their metadata fields. */
+  detailsText?: string;
   /** Short capture shown in the hover tooltip (falls back to `text`). */
   summary?: string;
   /** ISO timestamp for the temporal link chain (optional). */
@@ -30,7 +33,7 @@ export interface ConstellationNode {
   url?: string;
   /**
    * Download href for uploaded documents (encyclopedia chunks of a stored
-   * file) — drives the metadata column's download action. Absent for web
+   * file) — drives the node-details popover's download action. Absent for web
    * sources and memory points.
    */
   downloadUrl?: string;
@@ -83,7 +86,8 @@ export interface ConstellationNode {
   isBridge?: boolean;
   /** True for a synthesized conviction (the AI's derived conclusion about the user/self model). */
   isConviction?: boolean;
-  /** Resolved evidence texts backing a bridge/conviction (shown in the metadata column). */
+  /** Resolved evidence texts backing a bridge/conviction, shown in the
+   *  details popover. */
   evidenceTexts?: string[];
   /**
    * Retrieval count from the memory store — how often a semantic search
@@ -117,7 +121,7 @@ export interface ConstellationLink {
 export interface ConstellationFriction {
   source: string;
   target: string;
-  /** LLM-written description of the conflict (surfaced in the metadata column). */
+  /** LLM-written description of the conflict (surfaced in the details popover). */
   reason?: string;
 }
 
@@ -335,7 +339,7 @@ export interface MemoryConstellationProps {
   clusters?: ConstellationClusterSummary[];
   /**
    * Server-written title-tier main nodes — one per topic blob. When the prop
-   * is present (even empty), every multi-member topic gets its own synthetic
+   * is present (even empty), every populated topic gets its own synthetic
    * main dot carrying the summary of its attached leafs (cold scopes fall
    * back to the leaf rollup); when absent (e.g. the cognition space), the
    * first member doubles as the topic's main dot (legacy behavior).
@@ -370,7 +374,6 @@ export interface MemoryConstellationProps {
 }
 
 export interface MemoryConstellationEmits {
-  (e: 'nodeClick', node: ConstellationNode): void;
   /** The canvas's user-expanded set changed — the parent mirrors the
    *  expand-all toggle state (true = every topic expanded). */
   (e: 'expandedStateChange', isAllExpanded: boolean): void;

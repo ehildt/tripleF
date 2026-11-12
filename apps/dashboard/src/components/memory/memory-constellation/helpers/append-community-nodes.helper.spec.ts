@@ -46,4 +46,15 @@ describe('appendCommunityNodes', () => {
     appendCommunityNodes([community], new Map(), acc);
     expect(acc.positions.size).toBe(0);
   });
+
+  it('omits a community when no descendant survived the visibility pass', () => {
+    const acc: VisibleAccumulator = {
+      visibleNodes: [],
+      positions: new Map(),
+      nodeIndex: new Map(),
+    };
+    appendCommunityNodes([community], new Map(), acc, undefined, [], new Set());
+
+    expect(acc.visibleNodes).toEqual([]);
+  });
 });

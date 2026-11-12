@@ -76,6 +76,7 @@ export default {
     'The taxonomy registry is unreachable — check the memory service and try again',
   memoryTaxonomyEmpty:
     'No labels yet — the taxonomy fills in as memory is written',
+  memoryTaxonomyTagsEmpty: 'No tags in this partition yet',
   memoryTaxonomyClusters: 'Clusters',
   memoryTaxonomyClustersDesc:
     'The plural family buckets (games, stocks, work) — the top of the hierarchy',
@@ -115,10 +116,7 @@ export default {
   memoryTaxonomyIcon: 'Icon',
   memoryTaxonomyIconClear: 'Clear icon',
   memoryConstellationHint:
-    'Drag to rotate · Right-drag to pan · Scroll to zoom · Click a dot to inspect',
-  memoryMetadataShow: 'Show metadata',
-  memoryMetadataHide: 'Hide metadata',
-  memoryMetadataEmpty: 'Select a dot to see its details',
+    'Drag to rotate · Right-drag to pan · Scroll to zoom',
   memoryFrictionTag: '⚠ Contested — open conflict',
   memoryEvidenceTag: 'Supporting evidence',
   memoryDownloadDocument: 'Download document',

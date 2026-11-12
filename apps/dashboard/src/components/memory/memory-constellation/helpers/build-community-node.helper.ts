@@ -38,7 +38,7 @@ export function buildCommunityNode(
     topicKey: community.key,
     clusterKey: community.clusterKey,
     communityKey: community.key,
-    text: `${community.label} — ${topics} ${topicWord}, ${records} ${recordWord} — click to toggle`,
+    text: `${community.label} — ${topics} ${topicWord}, ${records} ${recordWord}`,
     summary: `${topics} ${topicWord} · ${records} ${recordWord}`,
     keys: [community.key],
     meta: [

@@ -17,7 +17,7 @@ describe('buildHubIds', () => {
     expect(hubIds).toEqual(new Set(['a', 'c', ROOT_NODE_ID]));
   });
 
-  it('uses the synthetic title dot for every multi-member topic under the main-node regime', () => {
+  it('uses the synthetic title dot for every topic under the main-node regime', () => {
     const hubIds = buildHubIds(
       [
         { key: 'x', label: 'x', color: '#000', memberIds: ['a', 'b'] },
@@ -29,7 +29,7 @@ describe('buildHubIds', () => {
       true,
     );
 
-    expect(hubIds).toEqual(new Set(['topic:x', 'c', ROOT_NODE_ID]));
+    expect(hubIds).toEqual(new Set(['topic:x', 'topic:y', ROOT_NODE_ID]));
   });
 
   it('still includes the ZERO root for empty topics', () => {

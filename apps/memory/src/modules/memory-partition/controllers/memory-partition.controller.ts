@@ -193,6 +193,7 @@ export class MemoryPartitionController {
   ): Promise<MemoryPoint[]> {
     return this.memorySearchService.searchByText({
       memoryPartition: body.memoryPartition,
+      memoryCognition: body.memoryCognition,
       sessionId: body.sessionId,
       text: body.text,
       limit: body.limit,
@@ -202,6 +203,7 @@ export class MemoryPartitionController {
       tags: body.tags,
       contains: body.contains,
       recency: body.recency,
+      weightByHeat: body.weightByHeat,
     });
   }
 
@@ -213,6 +215,7 @@ export class MemoryPartitionController {
   ): Promise<MemorySearchClustersResponseDto> {
     return this.memorySearchService.searchByTextWithClusters({
       memoryPartition: body.memoryPartition,
+      memoryCognition: body.memoryCognition,
       sessionId: body.sessionId,
       text: body.text,
       limit: body.limit,
@@ -222,6 +225,7 @@ export class MemoryPartitionController {
       tags: body.tags,
       contains: body.contains,
       recency: body.recency,
+      weightByHeat: body.weightByHeat,
     });
   }
 

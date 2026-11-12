@@ -2,7 +2,7 @@
   "name": "@triplef/ai-sdk",
   "description": "A NestJS module for the Vercel AI SDK with Ollama — streaming/generation clients, model catalog, and warm-up.",
   "version": "1.0.3",
-  "packageManager": "pnpm@12.19.0",
+  "packageManager": "pnpm@12.20.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "exports": {
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@changesets/cli": "^3.0.3",
     "@eslint/js": "^10.0.1",
-    "@nestjs/testing": "^12.4.2",
+    "@nestjs/testing": "^12.5.0",
     "@types/eslint": "^9.6.1",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "5.1.0",
@@ -69,7 +69,7 @@
     "jiti": "^2.7.0",
     "lint-staged": "^17.6.0",
     "npm-check-updates": "^23.1.1",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.1.4",
     "ts-unused-exports": "^11.0.1",
@@ -79,8 +79,8 @@
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
-    "@nestjs/common": "^12.4.2",
-    "ai": "^7.0.166",
+    "@nestjs/common": "^12.5.0",
+    "ai": "^7.0.170",
     "zod": "^4.6.7"
   }
 }

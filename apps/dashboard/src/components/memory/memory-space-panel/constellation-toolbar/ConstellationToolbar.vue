@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * The shared action row for the three memory spaces: reload, label toggle,
- * expand/collapse-all topics, view reset, rotation toggle, and the optional
- * armed two-click wipe (read-only spaces omit `wipeTitle`).
+ * The shared header action menu for the three memory spaces: reload, label
+ * toggle, expand/collapse-all topics, view reset, rotation toggle, and the
+ * optional armed two-click wipe (read-only spaces omit `wipeTitle`).
  */
 import {
   ChevronsDownUp,
@@ -17,7 +17,8 @@ import {
   Zap,
 } from '@lucide/vue';
 
-import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 
 import type {
   ConstellationToolbarEmits,
@@ -29,87 +30,70 @@ const emit = defineEmits<ConstellationToolbarEmits>();
 </script>
 
 <template>
-  <IconButton
-    :title="refreshTitle"
-    :disabled="isRefreshDisabled"
-    size="sm"
-    @click="emit('refresh')"
-  >
-    <RefreshCw />
-  </IconButton>
-  <IconButton
-    :title="$t('common.memoryToggleLabels')"
-    :active="showLabels"
-    size="sm"
-    @click="emit('toggleLabels')"
-  >
-    <Tags />
-  </IconButton>
-  <IconButton
-    :title="
-      isAllExpanded
-        ? $t('common.memoryCollapseAll')
-        : $t('common.memoryExpandAll')
-    "
-    :active="isAllExpanded"
-    size="sm"
-    @click="emit('toggleAllTopics')"
-  >
-    <ChevronsDownUp v-if="isAllExpanded" />
-    <ChevronsUpDown v-if="!isAllExpanded" />
-  </IconButton>
-  <IconButton
-    :title="
-      strictMode
-        ? $t('common.memoryRecommendedView')
-        : $t('common.memoryStrictView')
-    "
-    :active="strictMode"
-    size="sm"
-    @click="emit('toggleStrictMode')"
-  >
-    <Filter />
-  </IconButton>
-  <IconButton
-    :title="$t('common.memoryToggleSuggested')"
-    :active="showSuggested"
-    size="sm"
-    @click="emit('toggleSuggested')"
-  >
-    <Zap />
-  </IconButton>
-  <IconButton
-    :title="$t('common.memoryToggleHeat')"
-    :active="showHeat"
-    size="sm"
-    @click="emit('toggleHeat')"
-  >
-    <Flame />
-  </IconButton>
-  <IconButton
-    :title="$t('common.memoryResetView')"
-    size="sm"
-    @click="emit('resetView')"
-  >
-    <Shrink />
-  </IconButton>
-  <IconButton
-    :title="$t('common.memoryToggleRotation')"
-    :active="rotationEnabled"
-    size="sm"
-    @click="emit('toggleRotation')"
-  >
-    <Rotate3d />
-  </IconButton>
-  <IconButton
-    v-if="wipeTitle"
-    danger
-    size="sm"
-    :armed="wipeArmed"
-    :disabled="isWipeDisabled"
-    :title="wipeArmed ? $t('common.clickAgainConfirmDelete') : wipeTitle"
-    @click="emit('wipe')"
-  >
-    <Trash2 />
-  </IconButton>
+  <MenuRow variant="header" role="toolbar">
+    <MenuButton
+      :icon="RefreshCw"
+      :label="refreshTitle"
+      :disabled="isRefreshDisabled"
+      @click="emit('refresh')"
+    />
+    <MenuButton
+      :icon="Tags"
+      :label="$t('common.memoryToggleLabels')"
+      :active="showLabels"
+      @click="emit('toggleLabels')"
+    />
+    <MenuButton
+      :icon="isAllExpanded ? ChevronsDownUp : ChevronsUpDown"
+      :label="
+        isAllExpanded
+          ? $t('common.memoryCollapseAll')
+          : $t('common.memoryExpandAll')
+      "
+      :active="isAllExpanded"
+      @click="emit('toggleAllTopics')"
+    />
+    <MenuButton
+      :icon="Filter"
+      :label="
+        strictMode
+          ? $t('common.memoryRecommendedView')
+          : $t('common.memoryStrictView')
+      "
+      :active="strictMode"
+      @click="emit('toggleStrictMode')"
+    />
+    <MenuButton
+      :icon="Zap"
+      :label="$t('common.memoryToggleSuggested')"
+      :active="showSuggested"
+      @click="emit('toggleSuggested')"
+    />
+    <MenuButton
+      :icon="Flame"
+      :label="$t('common.memoryToggleHeat')"
+      :active="showHeat"
+      @click="emit('toggleHeat')"
+    />
+    <MenuButton
+      :icon="Shrink"
+      :label="$t('common.memoryResetView')"
+      @click="emit('resetView')"
+    />
+    <MenuButton
+      :icon="Rotate3d"
+      :label="$t('common.memoryToggleRotation')"
+      :active="rotationEnabled"
+      @click="emit('toggleRotation')"
+    />
+    <MenuButton
+      v-if="wipeTitle"
+      :icon="Trash2"
+      danger
+      :armed="wipeArmed"
+      :disabled="isWipeDisabled"
+      :label="wipeArmed ? $t('common.clickAgainConfirmDelete') : wipeTitle"
+      @click="emit('wipe')"
+    />
+  </MenuRow>
 </template>

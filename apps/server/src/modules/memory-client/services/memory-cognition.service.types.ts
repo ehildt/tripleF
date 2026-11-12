@@ -20,6 +20,8 @@ export interface MemoryCognitionSnapshot {
   insights: MemoryPoint[];
   /** Conviction records — the AI's synthesized conclusions (evidence-cited). */
   convictions: MemoryPoint[];
+  /** Normalized 0..1 retrieval heat by profile routing path, derived from linked insights. */
+  profileHeat?: Record<string, number>;
   /** Effective episode probe limit (system variable) — max episode records injected per turn. */
   episodeProbeLimit: number;
 }

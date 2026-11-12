@@ -1,13 +1,14 @@
 <script setup lang="ts">
 /**
- * The memory-space canvas: a 3D point cloud with x/y/z axes, rendered on a
- * 2D canvas via a perspective projection. Drag to rotate, right-drag to pan,
- * scroll to zoom, hover a dot for its full text, click a dot to select it.
+ * The memory-space canvas: a 3D point cloud rendered on a 2D canvas. Drag to
+ * rotate, right-drag to pan, scroll to zoom, and click a leaf, node, hub,
+ * cluster, or community to toggle its own interactive details popover.
  */
 import { ref, toRef } from 'vue';
 
 import { useMemoryConstellation } from './composables/use-memory-constellation';
 import { DEFAULT_INTER_LINK_MIN_SCORE } from './helpers/inter-link-min-score.constant';
+import NodeDetailsPopover from './node-details-popover/NodeDetailsPopover.vue';
 import type {
   MemoryConstellationEmits,
   MemoryConstellationProps,
@@ -28,9 +29,14 @@ const props = withDefaults(defineProps<MemoryConstellationProps>(), {
 const emit = defineEmits<MemoryConstellationEmits>();
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const tooltipRef = ref<HTMLDivElement | null>(null);
 
-const { hoveredNode, tooltipStyle } = useMemoryConstellation(
+const {
+  detailsPanels,
+  closeNodeDetails,
+  closeLatestNodeDetails,
+  startNodeDetailsDrag,
+  setDetailsPopoverRef,
+} = useMemoryConstellation(
   toRef(props, 'nodes'),
   toRef(props, 'links'),
   toRef(props, 'frictions'),
@@ -38,8 +44,6 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
   toRef(props, 'mainNodes'),
   toRef(props, 'labelMeta'),
   canvasRef,
-  tooltipRef,
-  (node) => emit('nodeClick', node),
   (isAllExpanded) => emit('expandedStateChange', isAllExpanded),
   {
     showLabels: toRef(props, 'showLabels'),
@@ -56,32 +60,28 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
 </script>
 
 <template>
-  <div class="memory-constellation">
-    <canvas ref="canvasRef" class="memory-constellation__canvas" />
+  <div class="memory-constellation" @keydown.esc="closeLatestNodeDetails">
+    <canvas
+      ref="canvasRef"
+      class="memory-constellation__canvas"
+      tabindex="0"
+      :aria-label="$t('common.memoryConstellationHint')"
+    />
 
-    <div
-      v-if="hoveredNode"
-      ref="tooltipRef"
-      class="memory-constellation__tooltip"
-      :style="tooltipStyle"
-    >
-      <p class="memory-constellation__tooltip-text">
-        {{ hoveredNode.summary ?? hoveredNode.text }}
-      </p>
-      <dl
-        v-if="hoveredNode.meta?.length"
-        class="memory-constellation__tooltip-meta"
-      >
-        <div
-          v-for="row in hoveredNode.meta"
-          :key="row.label"
-          class="memory-constellation__tooltip-row"
-        >
-          <dt>{{ row.label }}</dt>
-          <dd>{{ row.value }}</dd>
-        </div>
-      </dl>
-    </div>
+    <NodeDetailsPopover
+      v-for="panel in detailsPanels"
+      :key="panel.node.id"
+      :ref="(instance) => setDetailsPopoverRef(panel.node.id, instance)"
+      :label="panel.node.label"
+      :meta="panel.metaRows"
+      :content-html="panel.contentHtml"
+      :download-url="panel.node.downloadUrl"
+      :evidence-texts="panel.node.evidenceTexts ?? []"
+      :friction-reasons="panel.frictionReasons"
+      :position="panel.position"
+      @close="closeNodeDetails(panel.node.id)"
+      @drag="startNodeDetailsDrag(panel.node.id, $event)"
+    />
 
     <p class="memory-constellation__hint">
       {{ $t('common.memoryConstellationHint') }}
@@ -97,8 +97,7 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
      no pixel height is hardcoded here. */
   height: clamp(36rem, 75vh, 55rem);
   overflow: hidden;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-divider);
+  background-color: transparent;
 }
 
 .memory-constellation__canvas {
@@ -112,57 +111,9 @@ const { hoveredNode, tooltipStyle } = useMemoryConstellation(
   cursor: grabbing;
 }
 
-.memory-constellation__tooltip {
-  position: absolute;
-  z-index: 20;
-  max-width: 22rem;
-  padding: var(--spacing-2) var(--spacing-3);
-  pointer-events: none;
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-divider);
-  box-shadow: 0 8px 24px
-    color-mix(in srgb, var(--color-bg-primary) 35%, transparent);
-}
-
-.memory-constellation__tooltip-text {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--color-fg-primary);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.memory-constellation__tooltip-meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  margin: var(--spacing-2) 0 0;
-  padding-top: var(--spacing-2);
-  border-top: 1px solid var(--color-divider);
-}
-
-.memory-constellation__tooltip-row {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-3);
-}
-
-.memory-constellation__tooltip-row dt {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-fg-muted);
-}
-
-.memory-constellation__tooltip-row dd {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--color-fg-primary);
-  overflow-wrap: anywhere;
+.memory-constellation__canvas:focus-visible {
+  outline: 1px solid var(--color-accent-primary);
+  outline-offset: -1px;
 }
 
 .memory-constellation__hint {

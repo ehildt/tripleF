@@ -11,7 +11,7 @@ import { normalizePathSegment } from './normalize-path-segment.helper.js';
  * always matches a normalized insight path.
  */
 export function flattenProfilePaths(
-  profile: Record<string, unknown>,
+  profile: Record<string, unknown> = {},
 ): Array<{ path: string; value: string }> {
   const entries: Array<{ path: string; value: string }> = [];
   const fields = ['likes', 'dislikes', 'interests', 'expertise', 'goals'];

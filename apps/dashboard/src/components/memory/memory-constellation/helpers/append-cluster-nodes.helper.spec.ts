@@ -46,4 +46,15 @@ describe('appendClusterNodes', () => {
     expect(acc.visibleNodes).toHaveLength(1);
     expect(acc.positions.has('cluster:games')).toBe(false);
   });
+
+  it('omits a cluster when no descendant survived the visibility pass', () => {
+    const acc: VisibleAccumulator = {
+      visibleNodes: [],
+      positions: new Map(),
+      nodeIndex: new Map(),
+    };
+    appendClusterNodes(clusters, new Map(), acc, undefined, [], new Set());
+
+    expect(acc.visibleNodes).toEqual([]);
+  });
 });

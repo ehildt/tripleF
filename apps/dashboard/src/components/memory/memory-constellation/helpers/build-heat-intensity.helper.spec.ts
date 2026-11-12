@@ -95,10 +95,10 @@ describe('buildHeatIntensity', () => {
     expect(intensity.get('topic:t')).toBe(1);
     expect(intensity.get('a')).toBe(1);
     expect(intensity.get('b')).toBe(1);
-    // Single-member topic: the member is the main dot — it carries the
-    // rollup (sum 2 vs tier max 4 → sqrt(2/4)), not its leaf-scale own heat.
+    // Single-member topic: the synthetic hub carries the rollup while the
+    // member keeps its own leaf-scale heat.
     expect(intensity.get('topic:s')).toBeCloseTo(Math.sqrt(0.5));
-    expect(intensity.get('c')).toBeCloseTo(Math.sqrt(0.5));
+    expect(intensity.get('c')).toBe(1);
   });
 
   it('normalizes hub rollups within their own tier', () => {

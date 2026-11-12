@@ -203,6 +203,7 @@ export class InterpretStepService implements StepHandler {
     const episodeHits =
       cognitionKey && episodeProbeLimit > 0
         ? await this.memoryRecords.searchByText({
+            memoryCognition: cognitionKey,
             text: query,
             tags: [EPISODE_TAG],
             recency: true,
@@ -305,7 +306,16 @@ export class InterpretStepService implements StepHandler {
         JSON.parse(snapshot.profile) as Record<string, unknown>,
       );
       return userProfile
-        ? buildCognitionProfileSection(JSON.stringify(userProfile))
+        ? buildCognitionProfileSection(
+            JSON.stringify({
+              // Heat precedes the profile so the prompt's character cap
+              // cannot truncate every weight on a large profile.
+              ...(Object.keys(snapshot.profileHeat ?? {}).length > 0
+                ? { retrievalHeat: snapshot.profileHeat }
+                : {}),
+              ...userProfile,
+            }),
+          )
         : undefined;
     } catch {
       return undefined;

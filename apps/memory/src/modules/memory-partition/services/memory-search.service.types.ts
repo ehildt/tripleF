@@ -10,6 +10,8 @@ export interface SearchInput extends MemoryScopeFilters {
   limit?: number;
   /** Blend recency into the ranking (episode probe). */
   recency?: boolean;
+  /** Apply a bounded retrieval-heat boost after semantic candidate selection (cognition probes). */
+  weightByHeat?: boolean;
   /**
    * Track retrieval heat for this search's hits (default true). Background
    * bookkeeping probes (extract/write/profile prior-fact probes, consolidate

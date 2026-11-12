@@ -10,6 +10,7 @@ export function mapFact(
     community?: string;
     clusterId?: string;
     subject?: string;
+    node?: string;
     kind?: string;
     stability?: string;
     isConsolidated?: boolean;
@@ -34,6 +35,7 @@ export function mapFact(
     community: item.community,
     clusterId: item.clusterId,
     subject: item.subject,
+    node: item.node,
     kind: item.kind,
     stability: item.stability,
     isConsolidated: item.isConsolidated,

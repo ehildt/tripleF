@@ -55,6 +55,7 @@ export class MemorySearchService {
       for (const [index, vector] of vectors.entries()) {
         const results = await this.memoryRepository.searchMemory({
           memoryPartition: input.memoryPartition,
+          memoryCognition: input.memoryCognition,
           sessionId: input.sessionId,
           vector,
           // The variant's raw text drives the hybrid lexical leg (no task
@@ -68,6 +69,7 @@ export class MemorySearchService {
           category: input.category,
           contains: input.contains,
           recency: input.recency,
+          weightByHeat: input.weightByHeat,
         });
         for (const hit of results) {
           const existing = merged.get(hit.id);
@@ -92,6 +94,7 @@ export class MemorySearchService {
   ): Promise<MemoryPoint[]> {
     const hits = await this.searchRepository({
       memoryPartition: input.memoryPartition,
+      memoryCognition: input.memoryCognition,
       sessionId: input.sessionId,
       vector: input.vector,
       limit: input.limit,
@@ -101,6 +104,7 @@ export class MemorySearchService {
       tags: input.tags,
       category: input.category,
       contains: input.contains,
+      weightByHeat: input.weightByHeat,
     });
     this.trackRetrieval(hits, input.trackHeat);
     return hits;

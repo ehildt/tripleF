@@ -3,6 +3,7 @@ import type {
   ConstellationCommunity,
   ConstellationEdge,
   ConstellationLink,
+  ConstellationNode,
   ConstellationTopic,
 } from '../MemoryConstellation.types';
 import { buildClusterEdges } from './build-cluster-edges.helper';
@@ -30,9 +31,17 @@ export function buildEdges(
   minScore?: number,
   communities: readonly ConstellationCommunity[] = [],
   mainNodesEnabled = false,
+  nodeById?: ReadonlyMap<string, ConstellationNode>,
+  visibleNodeIds?: ReadonlySet<string>,
 ): ConstellationEdge[] {
   return [
-    ...buildIntraEdges(topics, collapsedKeys, mainNodesEnabled),
+    ...buildIntraEdges(
+      topics,
+      collapsedKeys,
+      mainNodesEnabled,
+      nodeById,
+      visibleNodeIds,
+    ),
     ...buildInterEdges(
       topics,
       links,
