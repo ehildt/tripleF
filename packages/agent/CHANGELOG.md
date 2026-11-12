@@ -1,5 +1,11 @@
 # @triplef/agent
 
+## 2.1.0
+
+### Minor Changes
+
+- 8ee933f: Require explicit user evidence before promoting likes and dislikes into the cognition profile, and teach cognition consumers that retrieval heat is a priority signal rather than evidence or confidence. Supports #75.
+
 ## 2.0.2
 
 ### Patch Changes

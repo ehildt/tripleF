@@ -1,5 +1,14 @@
 # @triplef/memory
 
+## 1.2.3
+
+### Patch Changes
+
+- 8ee933f: Restore node labels through the memory listing APIs and render populated hub-node-leaf hierarchies without empty synthetic constellation levels.
+- 8ee933f: Make taxonomy Tags routing reliable, decouple registry metadata from constellation loading, render populated single-leaf hub-node-leaf chains, scope label resolution to the correct parent, and aggregate taxonomy counts without per-row query fan-out.
+- Updated dependencies [8ee933f]
+  - @triplef/agent@2.1.0
+
 ## 1.2.2
 
 ### Patch Changes

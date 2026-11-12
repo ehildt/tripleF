@@ -1,5 +1,14 @@
 # @triplef/dashboard
 
+## 0.6.5
+
+### Patch Changes
+
+- 8ee933f: Unify Memory menus and surface styling, replace the metadata column with draggable multi-panel glassy details views, add an independent taxonomy Tags view, and pause constellation rotation safely during hover and open panels.
+- 8ee933f: Restore node labels through the memory listing APIs and render populated hub-node-leaf hierarchies without empty synthetic constellation levels.
+- 7d9137c: Fix hidden playlist video popouts reappearing after conversation switches and keep the visibility toggle functional. Fixes #132.
+- 8ee933f: Make taxonomy Tags routing reliable, decouple registry metadata from constellation loading, render populated single-leaf hub-node-leaf chains, scope label resolution to the correct parent, and aggregate taxonomy counts without per-row query fan-out.
+
 ## 0.6.4
 
 ### Patch Changes
