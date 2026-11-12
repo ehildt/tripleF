@@ -65,7 +65,7 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 ![jiti](https://img.shields.io/badge/jiti-v2.7.0-2ab746.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2ab746&logoWidth=40&style=flat-square)
 ![lint-staged](https://img.shields.io/badge/lint_staged-v17.6.0-dfba26.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=dfba26&logoWidth=40&style=flat-square)
 ![npm-check-updates](https://img.shields.io/badge/npm_check_updates-v23.1.1-1ec23c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1ec23c&logoWidth=40&style=flat-square)
-![prettier](https://img.shields.io/badge/prettier-v3.9.10-48bd28.svg?labelColor=333&cacheSeconds=3600&logo=prettier&logoColor=48bd28&logoWidth=40&style=flat-square)
+![prettier](https://img.shields.io/badge/prettier-v3.10.1-48bd28.svg?labelColor=333&cacheSeconds=3600&logo=prettier&logoColor=48bd28&logoWidth=40&style=flat-square)
 ![rimraf](https://img.shields.io/badge/rimraf-v6.1.4-24a85b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=24a85b&logoWidth=40&style=flat-square)
 ![ts-unused-exports](https://img.shields.io/badge/ts_unused_exports-v11.0.1-5e26c0.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=5e26c0&logoWidth=40&style=flat-square)
 ![tsup](https://img.shields.io/badge/tsup-v8.5.1-472cce.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=472cce&logoWidth=40&style=flat-square)
@@ -83,7 +83,7 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 
 # PeerDependencies
 
-[![ai](https://img.shields.io/badge/ai-v7.0.166-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
+[![ai](https://img.shields.io/badge/ai-v7.0.170-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
 [![zod](https://img.shields.io/badge/zod-v4.6.7-1eabb3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1eabb3&logoWidth=40&style=flat)](https://github.com/colinhacks/zod)
 
 </div>
