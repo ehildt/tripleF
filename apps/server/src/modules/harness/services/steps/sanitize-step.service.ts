@@ -2,10 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SocketIOService } from '@triplef/socketio';
 
 import { MemoryEncyclopediaService } from '../../../memory-client/services/memory-encyclopedia.service.js';
-import {
-  SanitizeActionService,
-  type SanitizeResult,
-} from '../../actions/sanitize.action.js';
+import { SanitizeActionService } from '../../actions/sanitize.action.js';
+import type { SanitizeResult } from '../../actions/sanitize.action.types.js';
 import {
   emitHarnessEvent,
   HARNESS_EVENT_TYPES,

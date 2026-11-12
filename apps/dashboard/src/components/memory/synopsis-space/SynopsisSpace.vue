@@ -11,7 +11,8 @@ import { Brain, Layers, Network, RefreshCw } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, watch } from 'vue';
 
-import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
+import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
+import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
 import { useMemorySpacesStore } from '@/stores/memory/memory-spaces/memory-spaces.store';
 
 import SpaceHeader from '../shared/ui/space-header/SpaceHeader.vue';
@@ -37,33 +38,29 @@ watch(partitionKey, refresh);
       :label="$t('common.memorySynopsisTitle')"
       :description="$t('common.memorySynopsisDesc')"
     >
-      <IconButton
-        :title="$t('common.memorySynopsisScopeEncyclopedia')"
-        :active="scope === 'encyclopedia'"
-        size="sm"
-        @click="setScope('encyclopedia')"
-      >
-        <Network />
-      </IconButton>
-      <IconButton
-        :title="
-          $t('common.memorySynopsisScopePartition') +
-          ` (${memoryPartition.trim() || 'default'})`
-        "
-        :active="scope === 'partition'"
-        size="sm"
-        @click="setScope('partition')"
-      >
-        <Brain />
-      </IconButton>
-      <IconButton
-        :title="$t('common.memorySynopsisRefresh')"
-        :disabled="isLoading"
-        size="sm"
-        @click="refresh"
-      >
-        <RefreshCw />
-      </IconButton>
+      <MenuRow variant="header" role="toolbar">
+        <MenuButton
+          :icon="Network"
+          :label="$t('common.memorySynopsisScopeEncyclopedia')"
+          :active="scope === 'encyclopedia'"
+          @click="setScope('encyclopedia')"
+        />
+        <MenuButton
+          :icon="Brain"
+          :label="
+            $t('common.memorySynopsisScopePartition') +
+            ` (${memoryPartition.trim() || 'default'})`
+          "
+          :active="scope === 'partition'"
+          @click="setScope('partition')"
+        />
+        <MenuButton
+          :icon="RefreshCw"
+          :label="$t('common.memorySynopsisRefresh')"
+          :disabled="isLoading"
+          @click="refresh"
+        />
+      </MenuRow>
     </SpaceHeader>
 
     <div v-if="isUnavailable" class="synopsis-space__state">

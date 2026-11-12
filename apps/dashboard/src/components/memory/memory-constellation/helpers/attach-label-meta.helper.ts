@@ -22,6 +22,7 @@ export function attachLabelMeta(
       ...node,
       icon: registry.icon ?? node.icon,
       summary: registry.summary?.trim() || node.summary,
+      detailsText: registry.summary?.trim() || node.detailsText,
       meta: [...(node.meta ?? []), ...(registry.meta ?? [])],
     };
   });

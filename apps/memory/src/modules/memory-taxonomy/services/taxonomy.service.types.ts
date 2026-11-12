@@ -1,5 +1,19 @@
 import type { MemoryTaxonomyNodeRecord } from '../../persistence/services/memory-taxonomy.repository.types.js';
 
+/** Payload fields backing the partition taxonomy tiers. */
+export type PartitionTaxonomyField =
+  'category' | 'community' | 'subject' | 'node' | 'tags';
+
+/** Payload fields backing the encyclopedia taxonomy tiers. */
+export type EncyclopediaTaxonomyField =
+  'category' | 'community' | 'topic' | 'node';
+
+/** Aggregated operational counts for one registry row. */
+export interface TaxonomyLeafCount {
+  leafCount: number;
+  linkedCount: number;
+}
+
 /**
  * Boundary of the taxonomy management surface: the dashboard tree read
  * shapes (node rows and their leaves).

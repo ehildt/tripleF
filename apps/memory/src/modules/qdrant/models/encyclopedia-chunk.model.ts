@@ -31,6 +31,8 @@ export interface EncyclopediaChunkPoint {
   community?: string;
   /** Narrow topic label (e.g. `wuthering waves`) — the constellation topic tier. */
   topic?: string;
+  /** Singular aspect under the topic — the constellation node tier. */
+  node?: string;
   /** Mime type of the original upload (uploaded documents only). */
   mimeType?: string;
   /** Byte size of the original upload (uploaded documents only). */
@@ -62,6 +64,8 @@ export interface EncyclopediaChunkHit {
   category?: string;
   community?: string;
   topic?: string;
+  /** Singular aspect under the topic — the constellation node tier. */
+  node?: string;
   /** Detected cluster id this chunk belongs to (written by the cluster job). */
   clusterId?: string;
   /** Mime type of the original upload (uploaded documents only). */

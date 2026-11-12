@@ -90,6 +90,7 @@ describe('MemoryRepository reads', () => {
               memory_partition: 'p',
               text: 'Likes dogs',
               tags: ['pets'],
+              node: 'health',
               created_at: '2025-01-02',
             },
           },
@@ -114,6 +115,7 @@ describe('MemoryRepository reads', () => {
         id: '7',
         text: 'Likes dogs',
         tags: ['pets'],
+        node: 'health',
       });
     });
 
@@ -141,6 +143,45 @@ describe('MemoryRepository reads', () => {
         tags: [],
         createdAt: '',
       });
+    });
+  });
+
+  describe('taxonomy chains', () => {
+    it('reads canonical hierarchy fields without vectors', async () => {
+      const { repository, client } = buildRepository();
+      client.scroll.mockResolvedValue({
+        points: [
+          {
+            id: 'p1',
+            payload: {
+              category: 'games',
+              community: 'action',
+              subject: 'alpha',
+              node: 'status',
+              tags: ['work'],
+            },
+          },
+        ],
+      });
+
+      const points = await repository.listTaxonomyChains('p');
+
+      expect(points).toEqual([
+        {
+          category: 'games',
+          community: 'action',
+          hub: 'alpha',
+          node: 'status',
+          tags: ['work'],
+        },
+      ]);
+      expect(client.scroll).toHaveBeenCalledWith(
+        COLLECTION,
+        expect.objectContaining({
+          with_payload: ['category', 'community', 'subject', 'node', 'tags'],
+          with_vector: false,
+        }),
+      );
     });
   });
 

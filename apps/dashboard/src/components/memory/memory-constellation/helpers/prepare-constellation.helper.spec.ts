@@ -13,6 +13,7 @@ const makeNode = (
   id: string,
   topicKey: string,
   clusterKey?: string,
+  node?: string,
 ): ConstellationNode => ({
   id,
   label: id,
@@ -20,6 +21,7 @@ const makeNode = (
   text: id,
   keys: [topicKey],
   clusterKey,
+  node,
 });
 
 const makeLink = (
@@ -88,12 +90,13 @@ describe('prepareConstellation', () => {
       ],
     );
 
-    // The title-tier dot leads the blob, then the leafs; the single-member
-    // topic stays its own main dot. The dot carries the server summary.
+    // Both blobs keep their synthetic title hubs, including the single-leaf
+    // topic. The work hub carries the server summary.
     expect(result.nodeList.map((n) => n.id)).toEqual([
       'topic:work',
       'a',
       'b',
+      'topic:hobby',
       'c',
       ROOT_NODE_ID,
     ]);
@@ -106,6 +109,75 @@ describe('prepareConstellation', () => {
     expect(intraPairs).toEqual([
       ['topic:work', 'a'],
       ['topic:work', 'b'],
+      ['topic:hobby', 'c'],
+    ]);
+  });
+
+  it('builds hub-node-leaf edges from classified visible leaves', () => {
+    const nodes = [
+      makeNode('a', 'work', undefined, 'planning'),
+      makeNode('b', 'work', undefined, 'planning'),
+    ];
+    const result = prepareConstellation(
+      nodes,
+      buildRelaxedLayout(nodes, []),
+      [],
+      new Set(),
+      undefined,
+      [],
+      true,
+      [],
+    );
+
+    expect(result.nodeList.map((node) => node.id)).toEqual([
+      'topic:work',
+      'node:work:planning',
+      'a',
+      'b',
+      ROOT_NODE_ID,
+    ]);
+    const orderedIds = result.nodeList.map((node) => node.id);
+    expect(
+      result.linkIndices
+        .filter((link) => link.kind === 'intra')
+        .map((link) => [orderedIds[link.a], orderedIds[link.b]]),
+    ).toEqual([
+      ['topic:work', 'node:work:planning'],
+      ['node:work:planning', 'a'],
+      ['node:work:planning', 'b'],
+    ]);
+    expect(result.positions.get('node:work:planning')).not.toEqual(
+      result.positions.get('topic:work'),
+    );
+  });
+
+  it('renders a single-leaf hub-node-leaf chain', () => {
+    const nodes = [makeNode('a', 'work', undefined, 'planning')];
+    const result = prepareConstellation(
+      nodes,
+      buildRelaxedLayout(nodes, []),
+      [],
+      new Set(),
+      undefined,
+      [],
+      true,
+      [],
+    );
+
+    expect(result.nodeList.map((node) => node.id)).toEqual([
+      'topic:work',
+      'node:work:planning',
+      'a',
+      ROOT_NODE_ID,
+    ]);
+    const orderedIds = result.nodeList.map((node) => node.id);
+    expect(
+      result.linkIndices
+        .filter((link) => link.kind === 'intra')
+        .map((link) => [orderedIds[link.a], orderedIds[link.b]]),
+    ).toEqual([
+      ['topic:work', 'node:work:planning'],
+      ['node:work:planning', 'a'],
     ]);
   });
 
@@ -281,6 +353,35 @@ describe('prepareConstellation', () => {
     expect(inter).toBeDefined();
     const ids = [result.nodeList[inter!.a].id, result.nodeList[inter!.b].id];
     expect(ids).toContain('topic:work');
+  });
+
+  it('omits expanded hierarchy dots when every descendant leaf is filtered', () => {
+    const nodes = [
+      {
+        ...makeNode('a', 'x', 'games', 'alpha'),
+        communityKey: 'survival',
+      },
+      {
+        ...makeNode('b', 'x', 'games', 'alpha'),
+        communityKey: 'survival',
+      },
+    ];
+    const layout = buildRelaxedLayout(nodes, []);
+    layout.positions.set('a', { x: 0, y: 0, z: 0 });
+    layout.positions.set('b', { x: 200, y: 0, z: 0 });
+
+    const result = prepareConstellation(
+      nodes,
+      layout,
+      [],
+      new Set(),
+      undefined,
+      [],
+      true,
+      [],
+    );
+
+    expect(result.nodeList.map((node) => node.id)).toEqual([ROOT_NODE_ID]);
   });
 
   it('auto-collapses leaves that drift too far from their main dot', () => {

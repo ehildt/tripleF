@@ -4,9 +4,8 @@ import { ROOT_NODE_ID } from './root-node-id.constant';
 /**
  * The ZERO root dot: a neutral anchor at the scene origin (0,0,0) that every
  * category hub connects to. Not a real point — a synthetic, always-visible
- * marker of the diagram's center. Clicking it selects it (no expand — there
- * is nothing folded under it): the metadata column then shows the space's
- * health rollup (fact/source/topic/cluster/link/friction counts).
+ * marker of the diagram's center. Its metadata carries the space's health
+ * rollup (fact/source/topic/cluster/link/friction counts).
  */
 export function buildRootNode(
   meta?: Array<{ label: string; value: string }>,

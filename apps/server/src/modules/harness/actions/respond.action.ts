@@ -175,7 +175,7 @@ export class RespondActionService {
     });
 
     const { content, inputTokens, outputTokens } = await consumeResponseStream(
-      result.fullStream,
+      result.stream,
       {
         onTextDelta: params.onTextDelta,
         onReasoningDelta: params.onReasoningDelta,

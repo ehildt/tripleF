@@ -31,6 +31,7 @@ import type {
   UpsertBatchInput,
 } from '../models/memory.model.js';
 import type { QdrantConfig } from '../models/qdrant-config.model.js';
+import type { TaxonomyChainRecord } from '../models/taxonomy-chain.model.js';
 
 import { groupHeatIncrements } from './helpers/group-heat-increments.helper.js';
 import { mapFacetHit } from './helpers/map-facet-hit.helper.js';
@@ -53,6 +54,10 @@ const RECENCY_PREFETCH_MULTIPLIER = 4;
  * crowding out raw relevance (cosine scores live in ~[0.3, 1.0]).
  */
 const CURATED_BOOST_WEIGHT = 0.1;
+
+/** Cognition heat contributes only a bounded near-tie nudge; semantic relevance stays authoritative. */
+const COGNITION_HEAT_BOOST_WEIGHT = 0.05;
+const COGNITION_HEAT_BOOST_CAP = 3;
 
 /** Scroll page size for id/vector sweeps (backfill + delete resolution). */
 const SCROLL_PAGE = 500;
@@ -112,7 +117,9 @@ export class MemoryRepository {
    * `memory_partition` / `memory_cognition` is the identity key (exactly one
    * is set); session/conversation/request are provenance for later filtering.
    * After the upsert, the batch's semantic edges are recomputed (unless
-   * `skipLinks` — episodes are not constellation nodes).
+   * `skipLinks` — episodes are not constellation nodes). Existing retrieval
+   * heat is read first and carried over because same-id upserts replace the
+   * whole Qdrant point.
    */
   async upsertBatch(input: UpsertBatchInput): Promise<void> {
     // Collection missing (feature off or Qdrant wiped) ⇒ drop silently: the
@@ -121,11 +128,36 @@ export class MemoryRepository {
     const client = this.clientService.getClient();
     const layout = await this.clientService.vectorLayout(this.collection);
     const createdAt = new Date().toISOString();
+    const existingPoints = input.points.length
+      ? ((await client.retrieve(this.collection, {
+          ids: input.points.map((point) => point.id),
+          with_payload: ['heat_amount', 'heat_timestamp'],
+          with_vector: false,
+        })) ?? [])
+      : [];
+    const retainedHeat = new Map<string, Record<string, unknown>>();
+    for (const point of existingPoints) {
+      retainedHeat.set(String(point.id), point.payload ?? {});
+    }
     await client.upsert(this.collection, {
       wait: true,
-      points: input.points.map((point) =>
-        mapMemoryPointToUpsert(point, input, createdAt, layout),
-      ),
+      points: input.points.map((point) => {
+        const upsert = mapMemoryPointToUpsert(point, input, createdAt, layout);
+        const previous = retainedHeat.get(point.id);
+        if (!previous) return upsert;
+        return {
+          ...upsert,
+          payload: {
+            ...upsert.payload,
+            ...(previous.heat_amount !== undefined
+              ? { heat_amount: previous.heat_amount }
+              : {}),
+            ...(previous.heat_timestamp !== undefined
+              ? { heat_timestamp: previous.heat_timestamp }
+              : {}),
+          },
+        };
+      }),
     });
 
     const lane = input.memoryPartition
@@ -214,8 +246,9 @@ export class MemoryRepository {
 
     // Fact recall: when query text is present and the collection has the
     // sparse vector, dense + lexical legs are RRF/DBSF-fused first (exact
-    // terms the dense leg misses), then the curated-tier boost formula
-    // rescales the fused score. No text (raw vector search) → dense only.
+    // terms the dense leg misses), then the curated-tier and optional
+    // cognition-heat boost formulas rescale the fused score. No text (raw
+    // vector search) → dense only.
     const sparse = input.text ? buildSparseVector(input.text) : undefined;
     const hybrid =
       layout.sparse &&
@@ -252,8 +285,13 @@ export class MemoryRepository {
           },
       query: {
         formula: {
-          sum: ['$score', ...this.curatedBoostTerms()],
+          sum: [
+            '$score',
+            ...this.curatedBoostTerms(),
+            ...(input.weightByHeat ? [this.cognitionHeatBoostTerm()] : []),
+          ],
         },
+        ...(input.weightByHeat ? { defaults: { heat_amount: 0 } } : {}),
       },
       limit,
       with_payload: true,
@@ -293,7 +331,8 @@ export class MemoryRepository {
   /**
    * Semantic search over one cognition scope's conviction records — the
    * synthesized user/self-model read path (the respond-time conviction
-   * probe).
+   * probe). Semantic thresholds select candidates before a bounded heat
+   * boost re-ranks them.
    */
   async searchConvictions(input: {
     memoryCognition: string;
@@ -304,18 +343,33 @@ export class MemoryRepository {
     const client = this.clientService.getClient();
     const layout = await this.clientService.vectorLayout(this.collection);
     const result = await client.query(this.collection, {
-      query: input.vector,
-      ...(layout.named ? { using: DENSE_VECTOR } : {}),
-      limit: Math.min(input.limit ?? 5, 5),
-      score_threshold: this.config.scoreThreshold,
-      with_payload: true,
-      filter: {
-        must: [
-          { key: 'memory_cognition', match: { value: input.memoryCognition } },
-          { key: 'tags', match: { any: [CONVICTION_TAG] } },
-        ],
-        must_not: [{ key: 'superseded', match: { value: true } }],
+      prefetch: {
+        query: input.vector,
+        ...(layout.named ? { using: DENSE_VECTOR } : {}),
+        limit: Math.max(
+          Math.min(input.limit ?? 5, 5) * RECENCY_PREFETCH_MULTIPLIER,
+          20,
+        ),
+        score_threshold: this.config.scoreThreshold,
+        filter: {
+          must: [
+            {
+              key: 'memory_cognition',
+              match: { value: input.memoryCognition },
+            },
+            { key: 'tags', match: { any: [CONVICTION_TAG] } },
+          ],
+          must_not: [{ key: 'superseded', match: { value: true } }],
+        },
       },
+      query: {
+        formula: {
+          sum: ['$score', this.cognitionHeatBoostTerm()],
+        },
+        defaults: { heat_amount: 0 },
+      },
+      limit: Math.min(input.limit ?? 5, 5),
+      with_payload: true,
     });
     return result.points.map((point) => this.toMemoryPoint(point));
   }
@@ -344,6 +398,16 @@ export class MemoryRepository {
     ];
   }
 
+  /** Bounded cognition heat term: sqrt-dampened and capped, with cold records defaulting to zero. */
+  private cognitionHeatBoostTerm(): Record<string, unknown> {
+    return {
+      mult: [
+        COGNITION_HEAT_BOOST_WEIGHT,
+        { min: [COGNITION_HEAT_BOOST_CAP, { sqrt: 'heat_amount' }] },
+      ],
+    };
+  }
+
   /**
    * Scroll-based listing for the settings inspection surface (no vector
    * needed). Ordered newest-first on `created_at` so the capped page always
@@ -367,23 +431,35 @@ export class MemoryRepository {
     return result.points.map((point) => this.toMemoryPoint(point));
   }
 
+  /** Exact leaf counts for every value of one taxonomy payload field. */
+  async facetLabelCounts(
+    memoryPartition: string,
+    field: 'category' | 'community' | 'subject' | 'node' | 'tags',
+    opts: { linkedOnly?: boolean; limit?: number } = {},
+  ): Promise<FacetValueCount[]> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const must: Array<Record<string, unknown>> = [
+      { key: 'memory_partition', match: { value: memoryPartition } },
+    ];
+    if (opts.linkedOnly) {
+      must.push({ key: 'is_linked', match: { value: true } });
+    }
+    const result = await this.clientService.getClient().facet(this.collection, {
+      key: field,
+      limit: opts.limit ?? 1000,
+      exact: true,
+      filter: { must },
+    });
+    return result.hits.map(mapFacetHit);
+  }
+
   /**
    * Distinct category values of one partition with point counts — the relink
    * job's inventory. One facet call (Qdrant ≥1.12, keyword index on
    * `category`), exact counts.
    */
   async facetCategories(memoryPartition: string): Promise<FacetValueCount[]> {
-    if (!(await this.clientService.hasCollection())) return [];
-    const client = this.clientService.getClient();
-    const result = await client.facet(this.collection, {
-      key: 'category',
-      limit: 1000,
-      exact: true,
-      filter: {
-        must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
-      },
-    });
-    return result.hits.map(mapFacetHit);
+    return this.facetLabelCounts(memoryPartition, 'category');
   }
 
   /** Distinct memory partitions of the collection (facet on the tenant key). */
@@ -400,17 +476,7 @@ export class MemoryRepository {
 
   /** Distinct tag values of one partition — the write/extract vocabulary. */
   async facetTags(memoryPartition: string): Promise<FacetValueCount[]> {
-    if (!(await this.clientService.hasCollection())) return [];
-    const client = this.clientService.getClient();
-    const result = await client.facet(this.collection, {
-      key: 'tags',
-      limit: 1000,
-      exact: true,
-      filter: {
-        must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
-      },
-    });
-    return result.hits.map(mapFacetHit);
+    return this.facetLabelCounts(memoryPartition, 'tags');
   }
 
   /**
@@ -420,7 +486,7 @@ export class MemoryRepository {
    */
   async countByLabel(
     memoryPartition: string,
-    field: 'category' | 'community' | 'subject' | 'tags',
+    field: 'category' | 'community' | 'subject' | 'node' | 'tags',
     value: string,
     opts?: { linkedOnly?: boolean },
   ): Promise<number> {
@@ -451,7 +517,7 @@ export class MemoryRepository {
    */
   async listByLabel(
     memoryPartition: string,
-    field: 'category' | 'community' | 'subject' | 'tags',
+    field: 'category' | 'community' | 'subject' | 'node' | 'tags',
     value: string,
     limit: number,
   ): Promise<MemoryLabelLeafRow[]> {
@@ -527,17 +593,7 @@ export class MemoryRepository {
 
   /** Distinct community values of one partition — the community vocabulary. */
   async facetCommunities(memoryPartition: string): Promise<FacetValueCount[]> {
-    if (!(await this.clientService.hasCollection())) return [];
-    const client = this.clientService.getClient();
-    const result = await client.facet(this.collection, {
-      key: 'community',
-      limit: 1000,
-      exact: true,
-      filter: {
-        must: [{ key: 'memory_partition', match: { value: memoryPartition } }],
-      },
-    });
-    return result.hits.map(mapFacetHit);
+    return this.facetLabelCounts(memoryPartition, 'community');
   }
 
   /**
@@ -987,6 +1043,42 @@ export class MemoryRepository {
         points: group.ids,
         wait: false,
       });
+    }
+  }
+
+  /** Read every non-superseded point's canonical taxonomy chain, without vectors. */
+  async listTaxonomyChains(
+    memoryPartition: string,
+  ): Promise<TaxonomyChainRecord[]> {
+    if (!(await this.clientService.hasCollection())) return [];
+    const client = this.clientService.getClient();
+    const points: TaxonomyChainRecord[] = [];
+    let offset: string | number | null = null;
+    for (;;) {
+      const scroll = await client.scroll(this.collection, {
+        filter: {
+          must: [
+            { key: 'memory_partition', match: { value: memoryPartition } },
+          ],
+          must_not: [{ key: 'superseded', match: { value: true } }],
+        },
+        limit: SCROLL_PAGE,
+        offset: offset ?? undefined,
+        with_payload: ['category', 'community', 'subject', 'node', 'tags'],
+        with_vector: false,
+      });
+      for (const point of scroll.points) {
+        const payload = point.payload ?? {};
+        points.push({
+          category: payload.category as string | undefined,
+          community: payload.community as string | undefined,
+          hub: payload.subject as string | undefined,
+          node: payload.node as string | undefined,
+          tags: (payload.tags as string[]) ?? [],
+        });
+      }
+      offset = (scroll.next_page_offset as string | number | null) ?? null;
+      if (!offset) return points;
     }
   }
 
@@ -1448,6 +1540,7 @@ export class MemoryRepository {
       category: payload.category as string | undefined,
       community: payload.community as string | undefined,
       subject: payload.subject as string | undefined,
+      node: payload.node as string | undefined,
       kind: payload.kind as string | undefined,
       stability: payload.stability as string | undefined,
       path: payload.path as string | undefined,

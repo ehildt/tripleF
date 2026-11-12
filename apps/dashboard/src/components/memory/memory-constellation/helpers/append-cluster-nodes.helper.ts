@@ -8,9 +8,9 @@ import type {
 import { buildClusterNode } from './build-cluster-node.helper';
 
 /**
- * Append every cluster's synthetic hub dot at its relaxed position —
- * cluster hubs are always visible (they are few and carry the category
- * overview), independent of member-topic collapse state. The member lookup
+ * Append each populated cluster's synthetic hub dot at its relaxed position.
+ * Collapsed member hubs count as descendants; a cluster with no rendered
+ * descendant is omitted rather than shown as an empty hub. The member lookup
  * and frictions feed the hubs' leaf rollup (sources, health, freshness).
  */
 export function appendClusterNodes(
@@ -19,8 +19,18 @@ export function appendClusterNodes(
   acc: VisibleAccumulator,
   nodeById?: ReadonlyMap<string, ConstellationNode>,
   frictions: readonly ConstellationFriction[] = [],
+  visibleNodeIds?: ReadonlySet<string>,
 ): void {
   for (const cluster of clusters) {
+    if (
+      visibleNodeIds &&
+      !cluster.memberTopicKeys.some((key) =>
+        visibleNodeIds.has(`topic:${key}`),
+      ) &&
+      !cluster.memberIds.some((id) => visibleNodeIds.has(id))
+    ) {
+      continue;
+    }
     const node = buildClusterNode(cluster, nodeById, frictions);
     acc.nodeIndex.set(node.id, acc.visibleNodes.length);
     acc.visibleNodes.push(node);

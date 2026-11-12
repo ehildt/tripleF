@@ -26,6 +26,14 @@ export class MemoryCognitionSnapshotDto {
   convictions!: MemoryItemDto[];
 
   @ApiProperty({
+    type: Object,
+    description:
+      'Normalized 0..1 retrieval heat by profile routing path (for example likes.cars), derived from path-linked insights. Missing paths are cold and neutral, not false or unsupported.',
+    example: { 'likes.cars': 0.71 },
+  })
+  profileHeat!: Record<string, number>;
+
+  @ApiProperty({
     type: Number,
     description:
       'Effective episode probe limit (system variable) — max short-term conversation-memory records the harness injects per turn.',

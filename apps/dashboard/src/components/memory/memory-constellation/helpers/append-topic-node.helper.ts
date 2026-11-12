@@ -40,6 +40,7 @@ export function appendTopicNode(
     label: topic.label,
     topicKey: topic.key,
     text: content,
+    detailsText: semantic || undefined,
     summary: semantic ? truncateText(semantic, 200) : rollupLine,
     keys: [topic.key],
     meta: rollup?.meta,

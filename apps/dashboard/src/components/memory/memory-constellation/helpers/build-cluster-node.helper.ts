@@ -57,7 +57,8 @@ export function buildClusterNode(
     clusterKey: cluster.key,
     text: cluster.summary?.trim()
       ? `${label} — ${cluster.summary.trim()}`
-      : `${label} — ${topics} ${topicWord}, ${records} ${recordWord} — click to toggle`,
+      : `${label} — ${topics} ${topicWord}, ${records} ${recordWord}`,
+    detailsText: cluster.summary?.trim() || undefined,
     summary: cluster.summary?.trim()
       ? truncateText(cluster.summary.trim(), 200)
       : `${topics} ${topicWord} · ${records} ${recordWord}`,

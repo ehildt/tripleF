@@ -129,6 +129,7 @@ export class MemoryCognitionController {
       profile: profile ? JSON.stringify(profile) : null,
       insights,
       convictions,
+      profileHeat: this.memoryCognitionService.calcProfileHeat(insights),
       episodeProbeLimit: this.memoryOverrides.getEpisodeProbeLimit(),
     };
   }

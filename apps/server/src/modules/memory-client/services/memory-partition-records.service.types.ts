@@ -26,6 +26,8 @@ export interface DeleteTextReceipt {
 export interface SearchByTextInput {
   /** Partition scope (the user-set partition or session fallback). */
   memoryPartition?: string;
+  /** Cognition scope for insight and episode probes. */
+  memoryCognition?: string;
   /** Restrict to one partition session. */
   sessionId?: string;
   /** Query text; embedded by the memory app. */
@@ -38,6 +40,8 @@ export interface SearchByTextInput {
   limit?: number;
   /** Blend recency into the ranking (episode probe). */
   recency?: boolean;
+  /** Apply a bounded retrieval-heat boost after semantic candidate selection (insight probe). */
+  weightByHeat?: boolean;
 }
 
 /** Mirror of `MemoryClusterDto` (memory-partition/dtos/memory-cluster.dto.ts) — one detected cluster summary. */

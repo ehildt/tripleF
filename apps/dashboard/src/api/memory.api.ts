@@ -177,6 +177,7 @@ export async function fetchMemoryFacts(
     category?: string;
     clusterId?: string;
     subject?: string;
+    node?: string;
     kind?: string;
     stability?: string;
     isConsolidated?: boolean;
@@ -301,6 +302,7 @@ export async function fetchEncyclopediaChunks(
     category?: string;
     clusterId?: string;
     topic?: string;
+    node?: string;
     mimeType?: string;
     sizeBytes?: number;
     originalHash?: string;

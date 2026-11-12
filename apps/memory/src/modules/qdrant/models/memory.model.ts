@@ -109,8 +109,8 @@ export interface MemoryPoint {
   clusterId?: string;
   /**
    * Retrieval count — incremented every time a semantic search surfaces
-   * this point as a hit (heat tracking; written by the read path, never
-   * filtered or ranked on).
+   * this point as a hit (heat tracking; written by the read path and used
+   * as a bounded ranking boost for opted-in cognition probes).
    */
   heatAmount?: number;
   /** ISO timestamp of the last retrieval that surfaced this point. */
@@ -206,6 +206,8 @@ export interface SearchMemoryInput extends MemoryScopeFilters {
    * a strong topical match. Used by the episode probe.
    */
   recency?: boolean;
+  /** Apply a bounded retrieval-heat boost after semantic candidate selection (cognition probes). */
+  weightByHeat?: boolean;
 }
 
 export interface ListMemoryInput extends MemoryScopeFilters {

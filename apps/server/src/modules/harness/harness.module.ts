@@ -18,16 +18,19 @@ import { NumCtxConfigService } from './configs/numctx-config.service.js';
 import { SourceBudgetConfigService } from './configs/source-budget-config.service.js';
 import { HarnessController } from './controllers/harness.controller.js';
 import { CloudImageIngestionService } from './services/cloud-image-ingestion.service.js';
+import { CognitionContextService } from './services/cognition-context.service.js';
 import { DocumentConversionService } from './services/document-conversion.service.js';
 import { HarnessCancellationService } from './services/harness-cancellation.service.js';
 import { HarnessChatStreamingService } from './services/harness-chat-streaming.service.js';
 import { HarnessContextService } from './services/harness-context.service.js';
 import { HarnessQueueService } from './services/harness-queue.service.js';
 import { HarnessStepEngineService } from './services/harness-step-engine.service.js';
+import { MediaSanitizationService } from './services/media-sanitization.service.js';
 import { MediaUrlValidatorService } from './services/media-url-validator.service.js';
 import { PdfPageDescribeService } from './services/pdf-page-describe.service.js';
 import { ResponseValidatorService } from './services/response-validator.service.js';
 import { ShownMediaService } from './services/shown-media.service.js';
+import { SourceContextService } from './services/source-context.service.js';
 import { StepRegistryService } from './services/step-registry.service.js';
 import { ExecuteStepService } from './services/steps/execute-step.service.js';
 import { InterpretStepService } from './services/steps/interpret-step.service.js';
@@ -105,6 +108,9 @@ export class HarnessModule {
       MediaUrlValidatorService,
       CloudImageIngestionService,
       ShownMediaService,
+      MediaSanitizationService,
+      SourceContextService,
+      CognitionContextService,
       ToolSelectionService,
     ],
   };

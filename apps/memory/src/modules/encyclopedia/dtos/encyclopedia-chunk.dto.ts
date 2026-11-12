@@ -114,6 +114,13 @@ export class EncyclopediaChunkDto {
 
   @ApiPropertyOptional({
     description:
+      'Singular aspect under the topic (e.g. base building) — the constellation node tier.',
+    example: 'base building',
+  })
+  node?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Detected cluster id this chunk belongs to (written by the memory-cluster job; the cluster tier grouping key).',
     example: '9f1c…',
   })

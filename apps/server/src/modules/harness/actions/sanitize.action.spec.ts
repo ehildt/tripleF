@@ -8,8 +8,11 @@ import { ProviderOverridesService } from '../../provider-overrides/services/prov
 import { SharpService } from '../../sharp/services/sharp.service.js';
 import { SourceBudgetConfigService } from '../configs/source-budget-config.service.js';
 import { CloudImageIngestionService } from '../services/cloud-image-ingestion.service.js';
+import { CognitionContextService } from '../services/cognition-context.service.js';
+import { MediaSanitizationService } from '../services/media-sanitization.service.js';
 import { MediaUrlValidatorService } from '../services/media-url-validator.service.js';
 import { ShownMediaService } from '../services/shown-media.service.js';
+import { SourceContextService } from '../services/source-context.service.js';
 
 import { SanitizeActionService } from './sanitize.action.js';
 
@@ -35,6 +38,9 @@ describe('SanitizeActionService', () => {
     module = await Test.createTestingModule({
       providers: [
         SanitizeActionService,
+        MediaSanitizationService,
+        SourceContextService,
+        CognitionContextService,
         {
           provide: CloudImageIngestionService,
           useValue: { ingest: vi.fn().mockResolvedValue([]) },

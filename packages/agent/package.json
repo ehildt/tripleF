@@ -2,7 +2,7 @@
   "name": "@triplef/agent",
   "description": "tripleF (3F) agent domain — structured-output schemas, prompt builders, and model tools shared across the apps.",
   "version": "2.0.2",
-  "packageManager": "pnpm@12.19.0",
+  "packageManager": "pnpm@12.20.0",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "exports": {
@@ -60,7 +60,7 @@
     "turndown": "^7.2.5"
   },
   "peerDependencies": {
-    "ai": "^7.0.166",
+    "ai": "^7.0.170",
     "zod": "^4.6.7"
   },
   "peerDependenciesMeta": {
@@ -87,7 +87,7 @@
     "jiti": "^2.7.0",
     "lint-staged": "^17.6.0",
     "npm-check-updates": "^23.1.1",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "rimraf": "^6.1.4",
     "ts-unused-exports": "^11.0.1",
     "tsup": "^8.5.1",

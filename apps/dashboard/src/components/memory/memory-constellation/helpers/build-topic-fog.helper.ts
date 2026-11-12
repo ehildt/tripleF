@@ -22,9 +22,8 @@ export function buildTopicFog(
 ): TopicFog[] {
   const fog: TopicFog[] = [];
   for (const topic of topics) {
-    const multiMember = topic.memberIds.length > 1;
     const center =
-      multiMember && (mainNodesEnabled || collapsedKeys.has(topic.key))
+      mainNodesEnabled || collapsedKeys.has(topic.key)
         ? computeRelaxedCentroid(topic, relaxedPositions)
         : relaxedPositions.get(topic.memberIds[0]);
     if (!center) continue;

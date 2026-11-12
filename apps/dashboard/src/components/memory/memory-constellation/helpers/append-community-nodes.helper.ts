@@ -8,9 +8,9 @@ import type {
 import { buildCommunityNode } from './build-community-node.helper';
 
 /**
- * Append every community's synthetic hub dot at its relaxed position — like
- * cluster hubs, community hubs are always visible (they are few and carry
- * the sub-family overview), independent of member-topic collapse state.
+ * Append each populated community's synthetic hub dot at its relaxed position.
+ * Collapsed member hubs count as descendants; a community with no rendered
+ * descendant is omitted rather than shown as an empty hub.
  */
 export function appendCommunityNodes(
   communities: readonly ConstellationCommunity[],
@@ -18,8 +18,18 @@ export function appendCommunityNodes(
   acc: VisibleAccumulator,
   nodeById?: ReadonlyMap<string, ConstellationNode>,
   frictions: readonly ConstellationFriction[] = [],
+  visibleNodeIds?: ReadonlySet<string>,
 ): void {
   for (const community of communities) {
+    if (
+      visibleNodeIds &&
+      !community.memberTopicKeys.some((key) =>
+        visibleNodeIds.has(`topic:${key}`),
+      ) &&
+      !community.memberIds.some((id) => visibleNodeIds.has(id))
+    ) {
+      continue;
+    }
     const node = buildCommunityNode(community, nodeById, frictions);
     acc.nodeIndex.set(node.id, acc.visibleNodes.length);
     acc.visibleNodes.push(node);

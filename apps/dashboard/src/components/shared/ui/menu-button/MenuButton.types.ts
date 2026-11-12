@@ -33,6 +33,12 @@ export interface MenuButtonProps {
   muted?: boolean;
   /** Disable the button. */
   disabled?: boolean;
+  /** Disable the action and pulse its icon while work is in flight. */
+  loading?: boolean;
+  /** Destructive hover tint for delete/wipe actions. */
+  danger?: boolean;
+  /** Destructive confirm state: pulsing error color until the second click. */
+  armed?: boolean;
 }
 
 export interface MenuButtonEmits {

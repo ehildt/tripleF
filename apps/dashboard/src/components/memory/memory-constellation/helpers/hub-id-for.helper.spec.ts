@@ -27,8 +27,8 @@ describe('hubIdFor', () => {
     expect(hubIdFor(topic, new Set(), true)).toBe('topic:work');
   });
 
-  it('still returns the member for a single-member topic under the main-node regime', () => {
+  it('returns the synthetic dot for a single-member topic under the main-node regime', () => {
     const single = { ...topic, memberIds: ['a'] };
-    expect(hubIdFor(single, new Set(), true)).toBe('a');
+    expect(hubIdFor(single, new Set(), true)).toBe('topic:work');
   });
 });

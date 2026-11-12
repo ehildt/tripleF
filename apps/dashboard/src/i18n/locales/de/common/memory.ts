@@ -78,6 +78,7 @@ export default {
     'Das Taxonomie-Register ist nicht erreichbar — prüfe den Gedächtnisdienst und versuche es erneut',
   memoryTaxonomyEmpty:
     'Noch keine Labels — die Taxonomie füllt sich, während Gedächtnis geschrieben wird',
+  memoryTaxonomyTagsEmpty: 'Noch keine Tags in dieser Partition',
   memoryTaxonomyClusters: 'Cluster',
   memoryTaxonomyClustersDesc:
     'Die pluralen Familienbuckets (Spiele, Aktien, Arbeit) — die Spitze der Hierarchie',
@@ -117,10 +118,7 @@ export default {
   memoryTaxonomyIcon: 'Icon',
   memoryTaxonomyIconClear: 'Icon entfernen',
   memoryConstellationHint:
-    'Ziehen zum Drehen · Rechts ziehen zum Schwenken · Scrollen zum Zoomen · Punkt anklicken zum Inspizieren',
-  memoryMetadataShow: 'Metadaten anzeigen',
-  memoryMetadataHide: 'Metadaten ausblenden',
-  memoryMetadataEmpty: 'Wähle einen Punkt, um Details zu sehen',
+    'Ziehen zum Drehen · Rechts ziehen zum Schwenken · Scrollen zum Zoomen',
   memoryFrictionTag: '⚠ Umstritten — offener Konflikt',
   memoryEvidenceTag: 'Unterstützende Belege',
   memoryDownloadDocument: 'Dokument herunterladen',

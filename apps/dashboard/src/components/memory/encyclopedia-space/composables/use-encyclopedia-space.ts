@@ -42,6 +42,8 @@ export function useEncyclopediaSpace() {
   >([]);
   const isLoading = ref(false);
   const isUnavailable = ref(false);
+  /** Monotonic refresh id: only the latest manual/mount refresh commits. */
+  let refreshSequence = 0;
   /** localStorage namespace for this space's expanded-topic set. */
   const storageKey = 'encyclopedia';
   /** Taxonomy metadata per macro-node dot id (icons + operational rows). */
@@ -50,6 +52,7 @@ export function useEncyclopediaSpace() {
   );
 
   async function refresh() {
+    const sequence = ++refreshSequence;
     isLoading.value = true;
     isUnavailable.value = false;
     const [
@@ -58,15 +61,14 @@ export function useEncyclopediaSpace() {
       frictionsResult,
       clustersResult,
       mainNodesResult,
-      taxonomyResult,
     ] = await Promise.allSettled([
       fetchEncyclopediaChunks(),
       fetchEncyclopediaLinks(),
       fetchEncyclopediaFrictions(),
       fetchEncyclopediaClusters(),
       fetchEncyclopediaMainNodes(),
-      fetchMemoryTaxonomy('encyclopedia', 'global'),
     ]);
+    if (sequence !== refreshSequence) return;
     if (chunksResult.status === 'fulfilled') {
       chunks.value = chunksResult.value;
       nodes.value = buildEncyclopediaNodes(chunksResult.value);
@@ -103,9 +105,20 @@ export function useEncyclopediaSpace() {
             memberIds: node.memberIds,
           }))
         : [];
-    taxonomy.value =
-      taxonomyResult.status === 'fulfilled' ? taxonomyResult.value : [];
+    // Taxonomy is optional decoration: load it outside the canvas's critical
+    // loading path, then attach it when the registry responds.
+    taxonomy.value = [];
     isLoading.value = false;
+    void loadTaxonomy(sequence);
+  }
+
+  async function loadTaxonomy(sequence: number): Promise<void> {
+    try {
+      const next = await fetchMemoryTaxonomy('encyclopedia', 'global');
+      if (sequence === refreshSequence) taxonomy.value = next;
+    } catch {
+      if (sequence === refreshSequence) taxonomy.value = [];
+    }
   }
 
   onMounted(refresh);

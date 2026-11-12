@@ -1,4 +1,5 @@
 import {
+  type ComponentPublicInstance,
   computed,
   onActivated,
   onDeactivated,
@@ -8,6 +9,9 @@ import {
   ref,
   watch,
 } from 'vue';
+
+import { trackPointerGesture } from '@/composables/helpers/track-pointer-gesture.helper';
+import { renderMarkdown } from '@/utils/render-markdown/render-markdown.helper';
 
 import { attachLabelMeta } from '../helpers/attach-label-meta.helper';
 import { buildFrictionPeerMap } from '../helpers/build-friction-peer-map.helper';
@@ -44,6 +48,12 @@ import type {
   DotTransition,
   ProjectedPoint,
 } from '../MemoryConstellation.types';
+import type {
+  NodeDetailsMetaRow,
+  NodeDetailsPopoverPosition,
+} from '../node-details-popover/NodeDetailsPopover.types';
+import { mapNodeToFrictions } from './helpers/map-node-to-frictions.helper';
+import { repairSpacedLinks } from './helpers/repair-spaced-links.helper';
 
 /** Expand animation duration (ms). */
 const EXPAND_TRANSITION_DURATION = 500;
@@ -55,7 +65,6 @@ const ZOOM_COLLAPSE_FACTOR = 1.2;
 const ZOOM_EXPAND_FACTOR = 1.5;
 /** Screen margin (px) around the viewport for the in-view expand test. */
 const IN_VIEW_MARGIN = 40;
-
 /** View controls wired from the panel header (labels, rotation, reset,
  *  expand/collapse all, inter-link score bar). */
 export interface MemoryConstellationControls {
@@ -78,10 +87,11 @@ export interface MemoryConstellationControls {
 /**
  * The memory-space canvas engine: a 3D point cloud rendered on a 2D canvas
  * via a perspective projection. Drag to rotate, right-drag to pan, scroll to
- * zoom, hover a dot for its full text, click a dot to select it. Clusters
- * start collapsed (category dots); the user can expand them (persisted per
- * space), and the camera auto-collapses on zoom-out / re-expands in-view
- * topics on zoom-in. Leaves slowly orbit their main dot.
+ * zoom, and click a leaf, node, hub, cluster, or community to toggle its
+ * details. Multiple independently positioned details panels can stay open.
+ * Clusters start collapsed (category dots); the user can expand them
+ * (persisted per space), and the camera auto-collapses on zoom-out /
+ * re-expands in-view topics on zoom-in. Leaves slowly orbit their main dot.
  */
 export function useMemoryConstellation(
   nodes: Ref<readonly ConstellationNode[]>,
@@ -91,16 +101,49 @@ export function useMemoryConstellation(
   mainNodes: Ref<readonly ConstellationMainNodeSummary[] | undefined>,
   labelMeta: Ref<ReadonlyMap<string, ConstellationLabelMeta> | undefined>,
   canvasRef: Ref<HTMLCanvasElement | null>,
-  tooltipRef: Ref<HTMLDivElement | null>,
-  onNodeClick: ((node: ConstellationNode) => void) | undefined,
   /** Fired whenever the user-expanded set changes so the parent can mirror
    *  its expand-all toggle state. */
   onExpandedStateChange: ((isAllExpanded: boolean) => void) | undefined,
   controls: MemoryConstellationControls,
   storageKey: string | undefined,
 ) {
-  const hoveredNode = ref<ConstellationNode | null>(null);
-  const tooltipStyle = ref({ left: '0px', top: '0px' });
+  const openDetailsNodes = ref<ConstellationNode[]>([]);
+  const detailsPositions = ref<Record<string, NodeDetailsPopoverPosition>>({});
+  const detailsAnchors = new Map<string, { x: number; y: number }>();
+  const detailsPopoverRefs = new Map<string, ComponentPublicInstance>();
+
+  function detailsContentHtmlFor(node: ConstellationNode): string {
+    // Synthetic dots generate `text` from the same operational fields shown
+    // above. Only their explicit, data-backed summaries belong below them.
+    const hasGeneratedText =
+      node.isRoot ||
+      node.isCluster ||
+      node.isCommunity ||
+      node.isTopic ||
+      node.isNodeTier;
+    const text = hasGeneratedText ? node.detailsText : node.text;
+    return text ? renderMarkdown(repairSpacedLinks(text)) : '';
+  }
+
+  function detailsMetaRowsFor(node: ConstellationNode): NodeDetailsMetaRow[] {
+    // Hub payloads can carry their summary both as a meta row and as the
+    // Markdown body. Render that information once in the direct details view.
+    return (node.meta ?? []).filter(
+      (row) => row.label !== 'summary' || !node.text.includes(row.value),
+    );
+  }
+
+  const detailsPanels = computed(() =>
+    openDetailsNodes.value.map((node) => ({
+      node,
+      contentHtml: detailsContentHtmlFor(node),
+      metaRows: detailsMetaRowsFor(node),
+      frictionReasons: mapNodeToFrictions(node, frictions.value).map(
+        (friction) => friction.reason ?? '',
+      ),
+      position: detailsPositions.value[node.id] ?? { left: '0px', top: '0px' },
+    })),
+  );
   /** Cluster keys the user expanded (persisted per space; empty = collapsed). */
   const expandedTopics = ref<Set<string>>(loadExpandedTopics());
   /** Cluster keys the camera expanded on zoom-in (ephemeral). */
@@ -223,9 +266,118 @@ export function useMemoryConstellation(
 
   let animFrame = 0;
   let prevFrameTime = 0;
+  let leafOrbitTimeSeconds: number | null = null;
   let resizeObserver: ResizeObserver | null = null;
   /** True while KeepAlive has deactivated the host (tab switch away from Memory). */
   let isDeactivated = false;
+
+  function clearNodeDetails(): void {
+    openDetailsNodes.value = [];
+    detailsPositions.value = {};
+    detailsAnchors.clear();
+    detailsPopoverRefs.clear();
+  }
+
+  function closeNodeDetails(nodeId: string): void {
+    openDetailsNodes.value = openDetailsNodes.value.filter(
+      (node) => node.id !== nodeId,
+    );
+    delete detailsPositions.value[nodeId];
+    detailsAnchors.delete(nodeId);
+    detailsPopoverRefs.delete(nodeId);
+    canvasRef.value?.focus({ preventScroll: true });
+  }
+
+  function closeLatestNodeDetails(): void {
+    const latest = openDetailsNodes.value.at(-1);
+    if (latest) closeNodeDetails(latest.id);
+  }
+
+  function toggleNodeDetails(node: ConstellationNode): void {
+    if (openDetailsNodes.value.some((openNode) => openNode.id === node.id)) {
+      closeNodeDetails(node.id);
+      return;
+    }
+    detailsAnchors.set(node.id, { x: state.mouseX, y: state.mouseY });
+    detailsPositions.value[node.id] = { left: '0px', top: '0px' };
+    openDetailsNodes.value = [...openDetailsNodes.value, node];
+  }
+
+  function startNodeDetailsDrag(nodeId: string, event: PointerEvent): void {
+    const handle = event.currentTarget;
+    const node = openDetailsNodes.value.find(
+      (openNode) => openNode.id === nodeId,
+    );
+    if (!node || !(handle instanceof HTMLElement) || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Reordering raises this panel above other open panels and makes it the
+    // next Escape dismissal without changing which panels remain open.
+    openDetailsNodes.value = [
+      ...openDetailsNodes.value.filter((openNode) => openNode.id !== nodeId),
+      node,
+    ];
+    const position = detailsPositions.value[nodeId];
+    const startLeft = Number.parseFloat(position?.left ?? '0');
+    const startTop = Number.parseFloat(position?.top ?? '0');
+    const startClientX = event.clientX;
+    const startClientY = event.clientY;
+    trackPointerGesture(handle, event, (move) => {
+      // The anchor retains the normal pointer-to-panel 16px offset. Starting
+      // from the rendered position prevents jumps at clamped canvas edges.
+      detailsAnchors.set(nodeId, {
+        x: startLeft + move.clientX - startClientX - 16,
+        y: startTop + move.clientY - startClientY - 16,
+      });
+      updateDetailsPopoverStyles();
+    });
+  }
+
+  function setDetailsPopoverRef(
+    nodeId: string,
+    instance: ComponentPublicInstance | Element | null,
+  ): void {
+    if (instance && !(instance instanceof Element)) {
+      detailsPopoverRefs.set(nodeId, instance);
+    } else {
+      detailsPopoverRefs.delete(nodeId);
+    }
+  }
+
+  function updateDetailsPopoverStyles(): void {
+    for (const node of openDetailsNodes.value) {
+      const anchor = detailsAnchors.get(node.id);
+      if (!anchor) continue;
+      const element = detailsPopoverRefs.get(node.id)?.$el;
+      const popover = element instanceof HTMLElement ? element : null;
+      const width = popover?.offsetWidth ?? 0;
+      const height = popover?.offsetHeight ?? 0;
+      const left = `${Math.max(4, Math.min(anchor.x + 16, state.W - width - 12))}px`;
+      const top = `${Math.max(4, Math.min(anchor.y + 16, state.H - height - 12))}px`;
+      const current = detailsPositions.value[node.id];
+      if (current?.left === left && current.top === top) continue;
+      detailsPositions.value[node.id] = { left, top };
+    }
+  }
+
+  /** Update pointer hit-testing, cursor feedback, and open-panel positions. */
+  function syncDetailsInteraction(
+    canvas: HTMLCanvasElement,
+    nodeList: ConstellationNode[],
+    projected: readonly ProjectedPoint[],
+  ): void {
+    const s = state;
+    if (s.mouseX >= 0 && !s.isDragging) {
+      s.hoverIndex = hitTestNode(s.mouseX, s.mouseY, projected);
+    }
+    const hovered = s.hoverIndex >= 0 ? nodeList[s.hoverIndex] : undefined;
+    canvas.style.cursor = cursorForInteraction(
+      s.isDragging || s.isPanning,
+      hovered !== undefined && !hovered.isRoot,
+    );
+    updateDetailsPopoverStyles();
+  }
 
   function draw() {
     // Parked while the Memory tab is hidden: do not render to the detached
@@ -254,18 +406,24 @@ export function useMemoryConstellation(
     prevFrameTime = time;
 
     // Auto-rotate (on by default, toggleable): orbit slowly, pausing while the
-    // user drags, pans, zooms, grabs, or hovers a dot — resuming shortly after
-    // the interaction ends (hovering pauses for as long as the pointer stays
-    // on the dot).
+    // user drags, pans, zooms, grabs, hovers a dot, or reads an open popover.
     if (controls.rotationEnabled.value) {
       s.targetYaw += idleYawIncrement(
         s.isDragging || s.isPanning,
-        s.hoverIndex >= 0,
+        s.hoverIndex >= 0 || openDetailsNodes.value.length > 0,
         s.lastInteraction,
         deltaSeconds,
         performance.now(),
       );
     }
+
+    // Leaf orbits use their own accumulated clock so hover pauses resume at
+    // the same angle instead of jumping forward to absolute wall-clock time.
+    if (leafOrbitTimeSeconds === null) leafOrbitTimeSeconds = time;
+    if (s.hoverIndex < 0 && openDetailsNodes.value.length === 0) {
+      leafOrbitTimeSeconds += deltaSeconds;
+    }
+    const leafOrbitTime = leafOrbitTimeSeconds;
 
     // Smooth camera interpolation.
     s.yaw += (s.targetYaw - s.yaw) * 0.12;
@@ -300,7 +458,7 @@ export function useMemoryConstellation(
         transitions,
         orbitCenters.value,
         nowMs,
-        time,
+        leafOrbitTime,
         viewCx,
         viewCy,
         s.yaw,
@@ -361,16 +519,7 @@ export function useMemoryConstellation(
       );
     }
 
-    if (s.mouseX >= 0 && !s.isDragging) {
-      s.hoverIndex = hitTestNode(s.mouseX, s.mouseY, projected);
-    }
-    // Click affordance: a dot is selectable (the metadata column shows its
-    // payload), so hovering one switches the canvas cursor to pointer; while
-    // dragging/panning the camera the grab cursors win.
-    canvas.style.cursor = cursorForInteraction(
-      s.isDragging || s.isPanning,
-      s.hoverIndex >= 0,
-    );
+    syncDetailsInteraction(canvas, nodeList, projected);
 
     const maxLinkCount = Math.max(1, ...linkCounts.values());
     // No hover (-1) misses the map — no ternary needed.
@@ -388,22 +537,6 @@ export function useMemoryConstellation(
       heatIntensity,
       frictionPeerSet,
     );
-
-    if (s.hoverIndex >= 0) {
-      const node = nodeList[s.hoverIndex];
-      hoveredNode.value = node;
-      const tip = tooltipRef.value;
-      if (tip) {
-        const tipW = tip.offsetWidth;
-        const tipH = tip.offsetHeight;
-        tooltipStyle.value = {
-          left: `${Math.max(4, Math.min(s.mouseX + 16, s.W - tipW - 12))}px`,
-          top: `${Math.max(4, Math.min(s.mouseY + 16, s.H - tipH - 12))}px`,
-        };
-      }
-    } else {
-      hoveredNode.value = null;
-    }
 
     cleanupTransitions();
 
@@ -589,12 +722,11 @@ export function useMemoryConstellation(
     const topic = relaxedLayout.value.topics.find((c) => c.key === key);
     if (!topic) return false;
     // Under the main-node regime the main dot sits at the blob centroid
-    // (always visible for multi-member topics); legacy expanded blobs keep
-    // it on the first member.
-    const hubPos =
-      mainNodesEnabled.value && topic.memberIds.length > 1
-        ? computeRelaxedCentroid(topic, relaxedLayout.value.positions)
-        : relaxedLayout.value.positions.get(topic.memberIds[0]);
+    // (including single-leaf topics); legacy expanded blobs keep it on the
+    // first member.
+    const hubPos = mainNodesEnabled.value
+      ? computeRelaxedCentroid(topic, relaxedLayout.value.positions)
+      : relaxedLayout.value.positions.get(topic.memberIds[0]);
     if (!hubPos) return false;
     const fov = Math.max(state.W, state.H) * 1.2;
     const p = projectPoint(
@@ -917,22 +1049,14 @@ export function useMemoryConstellation(
     const dy = Math.abs(state.pitch - state.pitchStart);
     if (dx < 0.01 && dy < 0.01 && state.hoverIndex >= 0) {
       const node = prepared.value.nodeList[state.hoverIndex];
-      // Every dot selects (the metadata column shows its payload); cluster
-      // and community hubs additionally toggle their folded members. The
-      // title-tier main dot only selects — topic collapse/expand is the
-      // camera's job (zoom bands) or the toolbar's expand-all toggle; the
-      // root only selects.
-      if (node.isRoot) {
-        onNodeClick?.(node);
-      } else if (node.isCluster && node.clusterKey) {
+      // Cluster/community hubs also toggle their folded members. Every
+      // non-root dot independently toggles its own details panel.
+      if (node.isCluster && node.clusterKey) {
         toggleCluster(node.clusterKey);
-        onNodeClick?.(node);
       } else if (node.isCommunity && node.communityKey) {
         toggleCommunity(node.communityKey);
-        onNodeClick?.(node);
-      } else {
-        onNodeClick?.(node);
       }
+      if (!node.isRoot) toggleNodeDetails(node);
     }
     state.isDragging = false;
   }
@@ -947,7 +1071,6 @@ export function useMemoryConstellation(
     state.isDragging = false;
     state.isPanning = false;
     state.hoverIndex = -1;
-    hoveredNode.value = null;
   }
 
   /** Start the render loop if it is not already running. */
@@ -1003,6 +1126,7 @@ export function useMemoryConstellation(
 
   onUnmounted(() => {
     stopLoop();
+    clearNodeDetails();
     resizeObserver?.disconnect();
     resizeObserver = null;
     const canvas = canvasRef.value;
@@ -1021,6 +1145,7 @@ export function useMemoryConstellation(
   watch([nodes, links], () => {
     autoExpandedTopics.value = new Set();
     pendingCollapse.value = new Set();
+    clearNodeDetails();
     fitZoom();
     onExpandedStateChange?.(isAllExpanded());
   });
@@ -1035,6 +1160,7 @@ export function useMemoryConstellation(
   // refit the camera (rotation/pan are left alone — rotation has its own
   // toggle). The refit waits for the collapse animation to finish.
   watch(controls.resetSignal, () => {
+    clearNodeDetails();
     collapseAll(true);
     pendingRefit = true;
   });
@@ -1084,5 +1210,11 @@ export function useMemoryConstellation(
     }
   }
 
-  return { hoveredNode, tooltipStyle };
+  return {
+    detailsPanels,
+    closeNodeDetails,
+    closeLatestNodeDetails,
+    startNodeDetailsDrag,
+    setDetailsPopoverRef,
+  };
 }

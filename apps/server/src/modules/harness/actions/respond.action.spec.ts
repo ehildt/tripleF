@@ -152,7 +152,7 @@ describe('RespondActionService', () => {
               });
             }),
             streamChat: vi.fn().mockResolvedValue({
-              fullStream: (async function* () {
+              stream: (async function* () {
                 yield {
                   type: 'text-delta',
                   text: JSON.stringify({ text: 'Hello world' }),
