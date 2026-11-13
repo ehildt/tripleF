@@ -71,6 +71,8 @@ export const commonMediaSchema = z.object({
   openPlaylist: z.string().optional(),
   pickDifferentImage: z.string().optional(),
   playPreview: z.string().optional(),
+  loadPlaylistFromFile: z.string().optional(),
+  savePlaylistToFile: z.string().optional(),
   savePlaylist: z.string().optional(),
   savedPlaylists: z.string().optional(),
   stopPlayback: z.string().optional(),

@@ -40,7 +40,6 @@ const displayName = computed(
   font-size: 0.75rem;
   font-family: var(--font-mono);
   color: var(--color-fg-secondary);
-  background-color: var(--color-bg-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

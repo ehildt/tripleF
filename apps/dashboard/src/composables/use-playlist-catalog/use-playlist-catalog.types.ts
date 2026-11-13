@@ -12,6 +12,8 @@ export interface PlaylistCatalogControls {
   renamePlaylist: (oldName: string, newName: string) => boolean;
   /** Delete an existing playlist locally and on the server. */
   deletePlaylist: (name: string) => boolean;
+  /** Import, activate, and persist a complete playlist under a unique name. */
+  importPlaylist: (name: string, videos: VideoGalleryItem[]) => Playlist | null;
   /** Add and persist a new active-queue video. */
   addVideoToActivePlaylist: (video: VideoGalleryItem) => boolean;
   /** Remove and persist an existing active-queue video. */

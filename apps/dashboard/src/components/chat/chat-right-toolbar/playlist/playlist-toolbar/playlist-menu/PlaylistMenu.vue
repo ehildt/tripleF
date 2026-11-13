@@ -1,28 +1,18 @@
 <script setup lang="ts">
 /**
- * Saved-playlists menu of the floating playlist: an icon-only trigger in
- * the toolbar row opens a menu with the playlist name field as the first
- * row and the saved playlists below. Picking a saved playlist loads it
- * immediately (autoload — there is deliberately no load button, and no
- * checkmarks). Open/close wiring (click outside, Escape) comes from the
- * shared useDropdown composable.
- *
- * The name field is a card matching the created entries: a borderless input
- * plus a Plus button to its right (both inside a bordered surface). The Plus
- * button (or Enter) saves the typed name as a new playlist and the field
- * clears for the next one. Each saved playlist in the list is an editable
- * name input carrying its own Edit and Trash buttons: focusing it loads the
- * playlist, the Edit button enables renaming, and emptying the field deletes
- * it. The active playlist is tinted. Styling mirrors the conversations menu
- * (bg-tertiary inputs and bordered list cards).
+ * Saved-playlists menu of the floating playlist toolbar. The trigger opens a
+ * name editor followed by the saved playlists. PlaylistNameRow owns the draft
+ * input and file/create actions; PlaylistMenuItem owns selection, export,
+ * rename, and deletion. Open/close wiring comes from the shared useDropdown composable.
  */
-import { Library, Plus } from '@lucide/vue';
+import { ListVideo } from '@lucide/vue';
 import { ref } from 'vue';
 
 import { useDropdown } from '@/components/shared/ui/drop-down/composables/use-dropdown';
 import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import PlaylistMenuItem from './playlist-menu-item/PlaylistMenuItem.vue';
+import PlaylistNameRow from './playlist-name-row/PlaylistNameRow.vue';
 import type {
   PlaylistMenuEmits,
   PlaylistMenuProps,
@@ -53,43 +43,25 @@ const { open, toggle, close } = useDropdown(containerRef, () => {});
         @click.stop="toggle"
         @pointerdown.stop
       >
-        <Library class="playlist-menu__trigger-icon" />
+        <ListVideo class="playlist-menu__trigger-icon" />
       </button>
     </Tooltip>
     <Transition name="playlist-menu">
       <div v-if="open" class="playlist-menu__menu" @click.stop>
-        <div class="playlist-menu__name-row">
-          <Tooltip :text="$t('common.typeNameToSavePlaylist')">
-            <input
-              v-model="playlistName"
-              type="text"
-              name="playlist-name"
-              class="playlist-menu__input"
-              :placeholder="$t('common.nameThisPlaylist')"
-              :aria-label="$t('common.playlistName')"
-              @keydown.enter.prevent="emit('create')"
-              @keydown.esc="close"
-            />
-          </Tooltip>
-          <Tooltip :text="$t('common.savePlaylist')">
-            <button
-              type="button"
-              class="playlist-menu__name-action"
-              :aria-label="$t('common.savePlaylist')"
-              :disabled="!playlistName.trim()"
-              @mousedown.prevent
-              @click="emit('create')"
-            >
-              <Plus class="playlist-menu__name-action-icon" />
-            </button>
-          </Tooltip>
-        </div>
+        <PlaylistNameRow
+          v-model:playlist-name="playlistName"
+          :is-create-disabled="!playlistName.trim()"
+          @load-file="emit('loadFile')"
+          @create="emit('create')"
+          @close="close"
+        />
         <PlaylistMenuItem
           v-for="name in playlists"
           :key="name"
           :name="name"
           :is-active="name === activePlaylistName"
           @select="emit('select', name)"
+          @save="emit('saveFile', name)"
           @rename="(newName) => emit('rename', name, newName)"
           @delete="emit('delete', name)"
         />
@@ -178,73 +150,5 @@ const { open, toggle, close } = useDropdown(containerRef, () => {});
 .playlist-menu-leave-from {
   max-height: 14rem;
   opacity: 1;
-}
-
-/* Name field: a card matching the created entries — bordered surface with a
-   borderless input and the Plus icon button outside the field. */
-.playlist-menu__name-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-divider);
-  width: 100%;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-
-.playlist-menu__name-row:focus-within {
-  border-color: var(--color-accent-primary);
-}
-
-.playlist-menu__input {
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  color: var(--color-fg-secondary);
-  outline: none;
-}
-
-.playlist-menu__input::placeholder {
-  color: var(--color-fg-muted);
-}
-
-.playlist-menu__input:focus {
-  color: var(--color-fg-primary);
-}
-
-/* Plus action button, an icon button like the entries' Edit/Trash. */
-.playlist-menu__name-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  min-height: 1.5rem;
-  padding: 0.125rem;
-  color: var(--color-fg-muted);
-  transition: color 0.2s ease;
-  cursor: pointer;
-  flex-shrink: 0;
-  border: none;
-  background: transparent;
-}
-
-.playlist-menu__name-action:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-}
-
-.playlist-menu__name-action:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.playlist-menu__name-action-icon {
-  width: 0.75rem;
-  height: 0.75rem;
 }
 </style>

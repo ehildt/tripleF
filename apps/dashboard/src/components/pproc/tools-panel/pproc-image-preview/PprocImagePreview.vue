@@ -8,9 +8,9 @@
  */
 import { ImagePlus, ScanSearch } from '@lucide/vue';
 
+import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
 import Lightbox from '@/components/shared/ui/lightbox/Lightbox.vue';
 import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
-import Tooltip from '@/components/shared/ui/tooltip/Tooltip.vue';
 
 import { usePreprocessingPreview } from '../composables/use-preprocessing-preview';
 
@@ -51,16 +51,13 @@ const {
     @select-index="lightbox.index.value = $event"
   >
     <template #actions>
-      <Tooltip :text="$t('common.pickDifferentImage')">
-        <button
-          type="button"
-          class="pproc-image-preview__repick"
-          :aria-label="$t('common.pickDifferentImage')"
-          @click="repickImage"
-        >
-          <ImagePlus class="pproc-image-preview__repick-icon" />
-        </button>
-      </Tooltip>
+      <IconButton
+        size="lg"
+        :title="$t('common.pickDifferentImage')"
+        @click="repickImage"
+      >
+        <ImagePlus />
+      </IconButton>
     </template>
   </Lightbox>
 </template>
@@ -68,24 +65,5 @@ const {
 <style scoped>
 .pproc-image-preview__file-input {
   display: none;
-}
-
-.pproc-image-preview__repick {
-  padding: var(--spacing-1);
-  color: var(--color-fg-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  flex-shrink: 0;
-}
-
-.pproc-image-preview__repick:hover {
-  color: var(--color-accent-primary);
-}
-
-.pproc-image-preview__repick-icon {
-  width: 1.25rem;
-  height: 1.25rem;
 }
 </style>

@@ -17,94 +17,118 @@ const { renderedHtml } = useTextResponse(props);
 
 <style scoped>
 .text-response {
-  line-height: 1.65;
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  line-height: 1.7;
 }
 
-/* v-html-injected paragraphs — :deep needed since markdown children are not
-   scoped component elements. Small gap between paragraphs (spacing-2). */
-.response-text :deep(p + p) {
-  margin-top: var(--spacing-2);
+.response-text {
+  color: var(--color-fg-secondary);
+  font-family: var(--font-sans);
+  overflow-wrap: anywhere;
 }
 
-/* ---------- markdown block elements ----------
+/* v-html-injected markdown needs :deep because its children do not carry
+   this component's scope id. Direct siblings share one vertical rhythm;
+   nested paragraphs keep their own smaller blockquote/list spacing. */
+.response-text :deep(p) {
+  margin: 0;
+}
 
-   Scoped to this component's markdown surface only: the padding used to be
-   applied globally to every block element inside .exchange-message,
-   leaking into structured template components and forcing chained-selector
-   overrides there. */
+.response-text :deep(> * + *) {
+  margin-top: var(--spacing-3);
+}
 
-.response-text :deep(div),
+.response-text :deep(strong) {
+  color: var(--color-fg-primary);
+  font-weight: 700;
+}
+
+/* ---------- lists ---------- */
+
 .response-text :deep(ul),
-.response-text :deep(ol),
+.response-text :deep(ol) {
+  margin: 0;
+  padding-left: var(--spacing-6);
+}
+
+.response-text :deep(ul) {
+  list-style-type: '- ';
+}
+
+/* Space before the list container itself, unless it leads the response. */
+.response-text :deep(ul:not(:first-child)),
+.response-text :deep(ol:not(:first-child)) {
+  margin-top: var(--spacing-3);
+}
+
+/* Keep following prose and other blocks separated from the list container. */
+.response-text :deep(> ul + *),
+.response-text :deep(> ol + *) {
+  margin-top: var(--spacing-3);
+}
+
+.response-text :deep(li + li) {
+  margin-top: var(--spacing-1);
+}
+
+.response-text :deep(li::marker) {
+  color: var(--color-accent-primary);
+}
+
+/* ---------- block elements ---------- */
+
 .response-text :deep(pre),
 .response-text :deep(table),
 .response-text :deep(blockquote) {
-  padding: var(--spacing-2);
+  margin: 0;
 }
 
-.response-text :deep(h1 + *),
-.response-text :deep(h2 + *),
-.response-text :deep(h3 + *),
-.response-text :deep(h4 + *),
-.response-text :deep(h5 + *),
-.response-text :deep(h6 + *) {
-  padding: var(--spacing-2);
+.response-text :deep(blockquote > p + p) {
+  margin-top: var(--spacing-2);
 }
 
 /* ---------- headings ---------- */
 
-.response-text :deep(h1) {
-  padding: 0.2em 0.5em;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 14%,
-    transparent
-  );
-}
-
-.response-text :deep(h2) {
-  padding: 0.2em 0.5em;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 12%,
-    transparent
-  );
-}
-
-.response-text :deep(h3) {
-  padding: 0.2em 0.5em;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 10%,
-    transparent
-  );
-}
-
-.response-text :deep(h4) {
-  padding: 0.2em 0.5em;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 8%,
-    transparent
-  );
-}
-
-.response-text :deep(h5) {
-  padding: 0.2em 0.5em;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 6%,
-    transparent
-  );
-}
-
+.response-text :deep(h1),
+.response-text :deep(h2),
+.response-text :deep(h3),
+.response-text :deep(h4),
+.response-text :deep(h5),
 .response-text :deep(h6) {
-  padding: 0.2em 0.5em;
-  background-color: color-mix(
-    in srgb,
-    var(--color-accent-primary) 4%,
-    transparent
-  );
+  margin: 0;
+  color: var(--color-fg-primary);
+  font-family: var(--font-sans);
+  line-height: 1.35;
+}
+
+/* A leading heading stays flush; headings following content get extra
+   separation from the preceding block. */
+.response-text :deep(> * + h1),
+.response-text :deep(> * + h2),
+.response-text :deep(> * + h3),
+.response-text :deep(> * + h4),
+.response-text :deep(> * + h5),
+.response-text :deep(> * + h6) {
+  margin-top: var(--spacing-4);
+}
+
+.response-text :deep(h1),
+.response-text :deep(h2) {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.response-text :deep(h3),
+.response-text :deep(h4) {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.response-text :deep(h5),
+.response-text :deep(h6) {
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 /* ---------- markdown image galleries ----------
@@ -197,21 +221,65 @@ const { renderedHtml } = useTextResponse(props);
 /* ---------- links, blockquotes, code ---------- */
 
 .response-text :deep(a) {
+  color: var(--color-accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
   transition: color 0.2s ease;
 }
 
+.response-text :deep(a:hover) {
+  color: var(--color-accent-hover);
+}
+
 .response-text :deep(blockquote) {
-  border-left-color: var(--color-accent-primary);
+  quotes: '“' '”';
+  padding: var(--spacing-2) var(--spacing-3);
+  border-left: 0.1875rem solid var(--color-accent-primary);
   background-color: color-mix(
     in srgb,
-    var(--color-accent-primary) 4%,
+    var(--color-accent-primary) 5%,
     transparent
   );
+  color: var(--color-fg-primary);
+  font-style: italic;
+}
+
+/* Decorative outer quotes: one pair around the whole blockquote, including
+   multi-paragraph quotes. The semantic element already announces a quote. */
+.response-text :deep(blockquote > p:first-of-type::before) {
+  content: open-quote;
+  color: var(--color-accent-primary);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.response-text :deep(blockquote > p:last-of-type::after) {
+  content: close-quote;
+  color: var(--color-accent-primary);
+  font-style: normal;
+  font-weight: 700;
 }
 
 .response-text :deep(pre) {
-  border-left: 3px solid
+  padding: var(--spacing-2) var(--spacing-3);
+  overflow-x: auto;
+  background-color: var(--color-bg-tertiary);
+  border-left: 0.1875rem solid
     color-mix(in srgb, var(--color-accent-primary) 40%, transparent);
+}
+
+.response-text :deep(code) {
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+  background-color: color-mix(in srgb, var(--color-fg-primary) 8%, transparent);
+  color: var(--color-fg-primary);
+  font-size: 0.9em;
+}
+
+.response-text :deep(pre code) {
+  padding: 0;
+  background: none;
+  color: inherit;
 }
 
 /* ---------- inline images ---------- */
@@ -238,6 +306,25 @@ const { renderedHtml } = useTextResponse(props);
 }
 
 /* ---------- tables, rules, media ---------- */
+
+.response-text :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.response-text :deep(th),
+.response-text :deep(td) {
+  padding: var(--spacing-2);
+  border-bottom: 0.0625rem solid var(--color-divider);
+  text-align: left;
+  vertical-align: top;
+}
+
+.response-text :deep(th) {
+  background-color: color-mix(in srgb, var(--color-fg-primary) 4%, transparent);
+  color: var(--color-fg-primary);
+  font-weight: 600;
+}
 
 .response-text :deep(tbody tr:hover) {
   background-color: color-mix(in srgb, var(--color-fg-primary) 4%, transparent);

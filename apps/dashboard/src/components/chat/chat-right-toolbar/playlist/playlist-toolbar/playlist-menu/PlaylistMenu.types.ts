@@ -6,8 +6,12 @@ export interface PlaylistMenuProps {
 }
 
 export interface PlaylistMenuEmits {
-  /** A saved playlist was picked (autoload — there is no load button). */
+  /** A saved playlist was picked and becomes active immediately. */
   select: [name: string];
+  /** Load a playlist from one user-selected JSON file. */
+  loadFile: [];
+  /** Save the named playlist entry to a JSON file. */
+  saveFile: [name: string];
   /** Save the typed name as a playlist (Plus button or Enter). */
   create: [];
   /** Rename the named saved playlist. */

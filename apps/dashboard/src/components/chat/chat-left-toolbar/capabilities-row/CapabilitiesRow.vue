@@ -18,6 +18,6 @@ defineProps<CapabilitiesRowProps>();
   flex-wrap: wrap;
   gap: var(--spacing-3);
   justify-content: flex-end;
-  padding: var(--spacing-2);
+  padding: 0 var(--spacing-2);
 }
 </style>

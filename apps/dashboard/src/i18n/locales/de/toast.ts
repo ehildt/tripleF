@@ -45,6 +45,11 @@ export default {
   playlistDeleted: 'Playlist {name} gelöscht',
   playlistNameExists: 'Dieser Playlist-Name ist vergeben',
   playlistLoaded: 'Playlist {name} geladen',
+  playlistExported: 'Playlist {name} exportiert',
+  playlistImported: 'Playlist {name} importiert',
+  couldNotExportPlaylist: 'Playlist {name} konnte nicht exportiert werden',
+  couldNotImportPlaylist:
+    '{name} konnte nicht importiert werden. Wähle eine gültige Playlist-JSON-Datei.',
   couldNotSavePlaylist: 'Playlist {name} konnte nicht gespeichert werden',
   couldNotRenamePlaylist: 'Playlist {name} konnte nicht umbenannt werden',
   couldNotDeletePlaylist: 'Playlist {name} konnte nicht gelöscht werden',

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 /**
- * One saved playlist in the floating playlist menu: a name input with an
- * Edit button and a Trash button to its right (the icons sit outside the
- * field, like the create field's Plus button), styled like the
+ * One saved playlist in the floating playlist menu: a name input with a
+ * right-aligned action group containing Edit, Save, and Trash buttons,
+ * matching the create field's input-plus-actions layout. It is styled like the
  * conversations menu's list cards. The name is read-only until the user
  * clicks Edit; clicking the read-only field loads the playlist (autoload),
  * and blurring the field renames it or deletes it when emptied (same as the
  * Trash button).
  */
-import { Pencil, Trash2 } from '@lucide/vue';
+import { Pencil, Save, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 
 import IconButton from '@/components/shared/ui/icon-button/IconButton.vue';
@@ -79,26 +79,37 @@ function onBlur() {
       @blur="onBlur"
       @keydown.enter.prevent="finishEditing"
     />
-    <IconButton
-      size="sm"
-      :active="isEditing"
-      :title="
-        isEditing ? $t('common.finishEditing') : $t('common.renamePlaylist')
-      "
-      @mousedown.prevent
-      @click="toggleNameEditing"
-    >
-      <Pencil />
-    </IconButton>
-    <IconButton
-      size="sm"
-      danger
-      :title="$t('common.deletePlaylist', { name })"
-      @mousedown.prevent
-      @click="emit('delete')"
-    >
-      <Trash2 />
-    </IconButton>
+    <div class="playlist-menu-item__actions">
+      <IconButton
+        size="sm"
+        :active="isEditing"
+        :title="
+          isEditing ? $t('common.finishEditing') : $t('common.renamePlaylist')
+        "
+        @mousedown.prevent
+        @click="toggleNameEditing"
+      >
+        <Pencil />
+      </IconButton>
+      <IconButton
+        size="sm"
+        :title="$t('common.savePlaylistToFile', { name })"
+        :aria-label="$t('common.savePlaylistToFile', { name })"
+        @mousedown.prevent
+        @click="emit('save')"
+      >
+        <Save />
+      </IconButton>
+      <IconButton
+        size="sm"
+        danger
+        :title="$t('common.deletePlaylist', { name })"
+        @mousedown.prevent
+        @click="emit('delete')"
+      >
+        <Trash2 />
+      </IconButton>
+    </div>
   </div>
 </template>
 
@@ -106,7 +117,7 @@ function onBlur() {
 .playlist-menu-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
+  gap: var(--spacing-1-5);
   padding: var(--spacing-1-5) var(--spacing-2);
   background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-divider);
@@ -117,6 +128,15 @@ function onBlur() {
 
 .playlist-menu-item--active {
   border-color: var(--color-accent-primary);
+}
+
+.playlist-menu-item__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0;
 }
 
 .playlist-menu-item__input {

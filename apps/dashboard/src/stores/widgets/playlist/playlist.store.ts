@@ -100,6 +100,33 @@ export const usePlaylistStore = defineStore('playlist', () => {
     return true;
   }
 
+  /** Import a queue under a unique name, activate it, and retain first occurrences. */
+  function importPlaylist(
+    name: string,
+    videos: VideoGalleryItem[],
+  ): Playlist | null {
+    const requestedName = name.trim();
+    if (!requestedName) return null;
+
+    let importedName = requestedName;
+    let suffix = 2;
+    while (getPlaylist(importedName)) {
+      importedName = `${requestedName} (${suffix})`;
+      suffix += 1;
+    }
+
+    const seenVideoUrls = new Set<string>();
+    const uniqueVideos = videos.filter((video) => {
+      if (seenVideoUrls.has(video.videoUrl)) return false;
+      seenVideoUrls.add(video.videoUrl);
+      return true;
+    });
+    const playlist: Playlist = { name: importedName, videos: uniqueVideos };
+    playlists.value = [...playlists.value, playlist];
+    setActivePlaylist(importedName);
+    return playlist;
+  }
+
   /** Append a non-empty, non-duplicate video to the active queue. */
   function addVideoToActivePlaylist(video: VideoGalleryItem): boolean {
     const active = activePlaylist.value;
@@ -138,6 +165,7 @@ export const usePlaylistStore = defineStore('playlist', () => {
     createPlaylist,
     renamePlaylist,
     deletePlaylist,
+    importPlaylist,
     addVideoToActivePlaylist,
     removeVideoFromActivePlaylist,
     isVideoInActivePlaylist,

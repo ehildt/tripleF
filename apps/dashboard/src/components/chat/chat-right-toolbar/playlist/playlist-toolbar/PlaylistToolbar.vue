@@ -16,6 +16,8 @@ const emit = defineEmits<{
   toggleAutoplay: [];
   togglePopoutVisibility: [];
   select: [name: string];
+  loadFile: [];
+  saveFile: [name: string];
   create: [];
   rename: [oldName: string, newName: string];
   delete: [name: string];
@@ -51,6 +53,8 @@ const emit = defineEmits<{
         :playlists="playlists"
         :active-playlist-name="activePlaylistName"
         @select="emit('select', $event)"
+        @load-file="emit('loadFile')"
+        @save-file="emit('saveFile', $event)"
         @create="emit('create')"
         @delete="emit('delete', $event)"
         @rename="(oldName, newName) => emit('rename', oldName, newName)"

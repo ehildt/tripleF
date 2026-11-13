@@ -44,14 +44,16 @@ onDeactivated(closeAllMenus);
 
 <template>
   <div class="chat-left-toolbar">
-    <SelectedModelLabel
-      :selected-model-name="selectedModelName"
-      :is-model-missing="isModelMissing"
-    />
-    <CapabilitiesRow
-      v-if="selectedModelCapabilities.length"
-      :capabilities="selectedModelCapabilities"
-    />
+    <div>
+      <SelectedModelLabel
+        :selected-model-name="selectedModelName"
+        :is-model-missing="isModelMissing"
+      />
+      <CapabilitiesRow
+        v-if="selectedModelCapabilities.length"
+        :capabilities="selectedModelCapabilities"
+      />
+    </div>
     <Tabs
       :conversations="conversations"
       :active-conversation-id="activeConversationId"
@@ -73,6 +75,6 @@ onDeactivated(closeAllMenus);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--spacing-2);
+  gap: 1.5rem var(--spacing-2);
 }
 </style>
