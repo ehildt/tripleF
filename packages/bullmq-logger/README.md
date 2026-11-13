@@ -69,7 +69,7 @@ A NestJS logger for BullMQ jobs powered by pino — emoji state indicators, fail
 # PeerDependencies
 
 [![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.5.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
-[![bullmq](https://img.shields.io/badge/bullmq-v6.7.5-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat)](https://github.com/taskforcesh/bullmq)
+[![bullmq](https://img.shields.io/badge/bullmq-v6.7.6-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat)](https://github.com/taskforcesh/bullmq)
 [![pino](https://img.shields.io/badge/pino-v10.4.0-2fc15b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2fc15b&logoWidth=40&style=flat)](https://github.com/pinojs/pino)
 [![pino-pretty](https://img.shields.io/badge/pino_pretty-v13.2.0-28acb8.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=28acb8&logoWidth=40&style=flat)](https://github.com/pinojs/pino-pretty)
 

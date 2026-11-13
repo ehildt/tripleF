@@ -70,7 +70,7 @@ A NestJS module for the Vercel AI SDK with Ollama — streaming and generation c
 # PeerDependencies
 
 [![@nestjs/common](https://img.shields.io/badge/_nestjs_common-v12.5.0-88de2b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=88de2b&logoWidth=40&style=flat)](https://github.com/nestjs/nest)
-[![ai](https://img.shields.io/badge/ai-v7.0.170-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
+[![ai](https://img.shields.io/badge/ai-v7.0.172-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
 
 </div>
 <!-- DEPBADGE:END -->

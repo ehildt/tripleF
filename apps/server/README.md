@@ -26,7 +26,7 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 
 # Dependencies
 
-[![@aws-sdk/client-s3](https://img.shields.io/badge/_aws_sdk_client_s3-3.1167.0-2b47c5.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b47c5&logoWidth=40&style=flat-square)](https://github.com/aws/aws-sdk-js-v3)
+[![@aws-sdk/client-s3](https://img.shields.io/badge/_aws_sdk_client_s3-3.1168.0-2b47c5.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2b47c5&logoWidth=40&style=flat-square)](https://github.com/aws/aws-sdk-js-v3)
 [![@fastify/compress](https://img.shields.io/badge/_fastify_compress-v9.3.0-c62478.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c62478&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-compress)
 [![@fastify/multipart](https://img.shields.io/badge/_fastify_multipart-v10.1.8-3dd198.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=3dd198&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-multipart)
 [![@fastify/static](https://img.shields.io/badge/_fastify_static-v10.1.10-8ab61b.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=8ab61b&logoWidth=40&style=flat-square)](https://github.com/fastify/fastify-static)
@@ -51,8 +51,8 @@ The tripleF conversation harness: a NestJS + Fastify server driving an agentic s
 [![@triplef/pdf](https://img.shields.io/badge/_triplef_pdf-v1.0.2-c7391a.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=c7391a&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@triplef/socketio](https://img.shields.io/badge/_triplef_socketio-v1.0.3-33e1be.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=33e1be&logoWidth=40&style=flat-square)](https://github.com/ehildt/tripleF)
 [![@xmldom/xmldom](https://img.shields.io/badge/_xmldom_xmldom-v0.9.12-1fad42.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1fad42&logoWidth=40&style=flat-square)](https://github.com/xmldom/xmldom)
-[![ai](https://img.shields.io/badge/ai-v7.0.170-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat-square)](https://github.com/vercel/ai)
-[![bullmq](https://img.shields.io/badge/bullmq-v6.7.5-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
+[![ai](https://img.shields.io/badge/ai-v7.0.172-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat-square)](https://github.com/vercel/ai)
+[![bullmq](https://img.shields.io/badge/bullmq-v6.7.6-e03a24.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=e03a24&logoWidth=40&style=flat-square)](https://github.com/taskforcesh/bullmq)
 [![class-transformer](https://img.shields.io/badge/class_transformer-v0.5.1-2bc59c.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=2bc59c&logoWidth=40&style=flat-square)](https://github.com/typestack/class-transformer)
 [![class-validator](https://img.shields.io/badge/class_validator-v0.15.1-461ddd.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=461ddd&logoWidth=40&style=flat-square)](https://github.com/typestack/class-validator)
 [![cld3-asm](https://img.shields.io/badge/cld3_asm-v4.0.0-642fc1.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=642fc1&logoWidth=40&style=flat-square)](https://github.com/kwonoj/cld3-asm)

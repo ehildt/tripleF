@@ -83,7 +83,7 @@ The tripleF (3F) agent domain — structured-output schemas, prompt builders, an
 
 # PeerDependencies
 
-[![ai](https://img.shields.io/badge/ai-v7.0.170-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
+[![ai](https://img.shields.io/badge/ai-v7.0.172-1d30af.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1d30af&logoWidth=40&style=flat)](https://github.com/vercel/ai)
 [![zod](https://img.shields.io/badge/zod-v4.6.7-1eabb3.svg?labelColor=333&cacheSeconds=3600&logo=npm&logoColor=1eabb3&logoWidth=40&style=flat)](https://github.com/colinhacks/zod)
 
 </div>
