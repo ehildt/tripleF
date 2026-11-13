@@ -1,108 +1,39 @@
 ---
 name: localization
-description: Localization (i18n) conventions for the dashboard. Use when adding, editing, or removing translation keys or locale files, running the localization schema/tests, or validating that all locales stay in sync with English.
+description: Localization conventions for the dashboard. Use when adding, editing, or removing translation keys or locale files, working with Vue I18n or the Zod locale schema, running localization tests, or validating that locales stay synchronized with English.
 ---
 
-# Localization (i18n) Conventions
+# Localization Router
 
-The dashboard's UI chrome is localized with `vue-i18n`. English (`en`) is the
-**source of truth** and the only locale used for testing. Every locale file is
-validated against a shared **Zod schema** so missing or extra fields are caught
-at compile/test time.
+The dashboard UI is localized with Vue I18n. English is the source of truth, the default locale, and the only locale used for component-behavior tests. Every locale file is validated against the shared schema so missing and extra fields are caught.
 
-## Where things live
+Dashboard localization paths are rooted at `apps/dashboard/src/i18n/`.
 
-- `src/i18n/locales/*.ts` — one file per locale. Each file exports a
-  `LocaleMessages` object that satisfies the schema.
-- `src/i18n/locale-schema.ts` — the Zod schema + the derived `LocaleMessages`
-  type (`z.infer`). This is the single source of truth for the shape.
-- `src/i18n/locale-registry.ts` — auto-discovers every file in `locales/`
-  via `import.meta.glob`, validates each against the schema, and reads the
-  `languageCode` / `countryCode` keys to derive the locale code and flag.
-- `src/i18n/locale-codes.ts` / `messages.ts` — derived from the registry; do
-  **not** edit the locale list by hand.
+## Route the task
 
-## Key naming (be explicit)
+| Task | Read |
+| --- | --- |
+| Add or translate messages, work with identity keys, fallback, or locale discovery | [Vue I18n](conventions/vue-i18n.md) |
+| Change the locale-message schema or derived message type | [Zod schema](conventions/zod-schema.md) |
+| Add, edit, remove, or audit keys after component changes | [Locale changes](conventions/locale-changes.md), plus the message or schema guide as applicable |
+| Review renamed, repurposed, translated-identifier, manually maintained, or orphaned keys | [Key drift](anti-patterns/key-drift.md) |
+| Run or review English-first and all-locale validation | [Schema validation](quality/schema-validation.md) |
 
-Every locale file carries two identity keys at the top of the object. Use the
-full, explicit names — never a bare `code`:
+## Always apply
 
-- **`languageCode`** — the i18n locale code used by `vue-i18n` (e.g. `'en'`,
-  `'de'`, `'fr'`). The registry derives the i18n code from this key; the
-  filename is irrelevant.
-- **`countryCode`** — the ISO 3166-1 alpha-2 country code used for the flag
-  (e.g. `'us'`, `'de'`, `'fr'`). The registry derives the flag map from this
-  key, so there is no separate hand-maintained flag table.
+- Add new keys to `en.ts` first and update the schema to the same shape before propagating translations.
+- Every locale object begins with explicit `languageCode` and `countryCode` identity keys; never use a bare `code`.
+- The schema owns message shape and its derived type. Never hand-maintain a parallel interface, locale list, or flag table.
+- A key's name and meaning are permanent. Add a new key rather than renaming or repurposing an existing one.
+- Required and optional describe presence only. Optional keys may fall back to English but have equally stable identity.
+- Proper names and technical identifiers remain unchanged in every locale and do not receive translation keys.
+- Every added, modified, or deleted component, composable, helper, or store is audited for referenced and dropped keys. Orphaned keys are removed.
+- English must validate before other locales are updated; every locale must then validate against the schema.
+- Creating or updating localization specs requires consent. Existing tests run after changes and are investigated rather than blindly trusted.
 
-The two identity keys sit at the top of every locale object (the `en` file uses `'en'` and `'us'`); the registry reads them to build the locale list and flag map. The rest of the object is the schema-shaped message tree.
+## Completion checklist
 
-## Core rules
-
-1. **English is the source of truth.** All new keys are added to `en.ts` first.
-   `en` is the default locale and the one used in tests.
-2. **Every locale file has `languageCode` and `countryCode` keys.**
-   `languageCode` holds the i18n locale code (e.g. `'en'`); `countryCode`
-   holds the flag country code (e.g. `'us'`). The registry derives both the
-   locale list and the flag map from these keys — the filename is irrelevant.
-3. **The type is derived from the Zod schema.** Extend the schema (in
-   `locale-schema.ts`) when adding a key; the `LocaleMessages` type updates
-   automatically. Do not hand-edit a separate interface.
-4. **Keys must be stable.** A key's **name and meaning** are permanent. Never
-   rename or repurpose a key — call sites (`t('common.copy')`) and the schema
-   depend on the name, and the meaning must be identical everywhere the key
-   appears. Add a new key instead of changing an existing one. This applies to
-   optional keys too: optionality only affects *presence*, never *identity*.
-5. **Optional vs required.** This is about *presence*, not *meaning*. A
-   required key must be translated in every locale; an optional key may be
-   omitted by a locale and fall back to English. Both required and optional
-   keys are equally **stable** — an optional key still has a fixed name and
-   meaning wherever it appears.
-6. **Never translate names or technical identifiers.** Proper names (brands,
-   products, companies, people) and technical identifiers stay **as-is** in
-   every locale — do not create keys for them. This includes API/zone/endpoint
-   names (`serp_api`, `unlocker`), parameter names (`Blur Sigma`, `CLAHE`),
-   protocol/acronym labels (`HTTP`, `SOCKET`), file formats, units, and other
-   technical tokens that must match a backend contract or carry no
-   translatable meaning.
-7. **Component changes trigger a localization sync check.** Every added,
-   modified, or deleted component (`.vue`, composable, helper, store) must be
-   audited for the translation keys it touches: add any new keys it references,
-   and **remove any key it no longer uses** — a key orphaned by a dropped usage
-   must be deleted, not left behind. This keeps `en.ts` and the schema exactly
-   in sync with what the code actually renders.
-
-## Workflow after any localization change
-
-0. **Component changes** (added/modified/deleted) trigger the same check as key
-   changes: add keys the new code references and remove keys it dropped, then
-   continue from step 1.
-
-1. **Edit `en.ts`** (add/remove/change keys) and update the schema in
-   `locale-schema.ts` to match.
-2. **Run the localization test** and validate the schema against English:
-   - `cd dashboard && pnpm test` (or the localization-specific spec)
-   - The schema must pass against `en.ts` before anything else.
-3. **If English passes**, update every other locale file to match the new
-   shape (add missing keys, remove dropped keys, translate new strings).
-4. **Verify all locales** by running the schema against each one — the
-   localization test iterates every file in `locales/` and asserts it parses
-   against the schema. All must pass.
-
-## Testing
-
-- The localization spec validates **every** locale file against the Zod schema,
-  so a missing key in any language fails the suite.
-- Always run the localization test after touching `locales/`, `locale-schema.ts`,
-  `locale-registry.ts`, `locale-codes.ts`, or `messages.ts`.
-- `en` is the only locale used for unit-testing component behavior; other
-  locales are validated structurally (schema) but not exercised in tests.
-
-## Checklist
-
-- [ ] Any added/modified/deleted component was audited: keys it references exist, and keys it dropped were removed
-- [ ] New keys added to `en.ts` first, then propagated to all other locales
-- [ ] Schema in `locale-schema.ts` updated to match the new shape
-- [ ] `languageCode` and `countryCode` keys present and correct in every locale file
-- [ ] No existing keys renamed or repurposed
-- [ ] Localization test passes against `en.ts`
-- [ ] All other locales updated and pass the schema in the test suite
+- English, schema, and every locale describe the same current message shape.
+- Identity keys and derived registries remain correct without hand-maintained duplicates.
+- No key was renamed, repurposed, orphaned, or created for an invariant technical identifier.
+- English-first and all-locale validation completed in the required order.
