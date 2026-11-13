@@ -111,6 +111,33 @@ describe('usePlaylistStore', () => {
     expect(store.activePlaylistName).toBe('main');
   });
 
+  it('imports complete queues with unique names and first-occurrence dedupe', () => {
+    const store = usePlaylistStore();
+    store.createPlaylist('main');
+    store.createPlaylist('main (2)');
+    const first = { videoUrl: 'https://cdn.example.com/one.mp4', title: 'One' };
+    const second = {
+      videoUrl: 'https://cdn.example.com/two.mp4',
+      title: 'Two',
+    };
+
+    const imported = store.importPlaylist(' main ', [
+      first,
+      second,
+      { ...first, title: 'Duplicate' },
+    ]);
+
+    expect(imported).toEqual({ name: 'main (3)', videos: [first, second] });
+    expect(store.activePlaylistName).toBe('main (3)');
+    expect(store.activePlaylistVideos).toEqual([first, second]);
+    expect(store.importPlaylist(' ', [])).toBeNull();
+    expect(store.importPlaylist('empty', [])).toEqual({
+      name: 'empty',
+      videos: [],
+    });
+    expect(store.activePlaylistName).toBe('empty');
+  });
+
   it('adds and removes active-queue videos with explicit outcomes', () => {
     const store = usePlaylistStore();
     store.createPlaylist('main');

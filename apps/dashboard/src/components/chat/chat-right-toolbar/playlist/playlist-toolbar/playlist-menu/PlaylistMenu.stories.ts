@@ -12,6 +12,8 @@ const meta = {
     playlists: ['Focus mix', 'Long ambient', 'Live sessions'],
     activePlaylistName: '',
     onSelect: fn(),
+    onLoadFile: fn(),
+    onSaveFile: fn(),
     'onUpdate:playlistName': fn(),
     onCreate: fn(),
     onDelete: fn(),
@@ -22,11 +24,12 @@ const meta = {
       description: {
         component: `
 Saved-playlists menu of the floating playlist toolbar row: the name field
-(input plus a Plus button) is the first row, then the saved playlists — each
-is an editable name input with its own Trash button (focus loads it, editing
-renames it on blur, emptying the field deletes it). The Plus button (or
-Enter) saves the typed name as a new playlist and clears the field; the
-active playlist is tinted. Open the menu via the trigger icon.
+(input plus Load and Plus buttons) is the first row, then the saved playlists
+— each is an editable name input with Edit, Save, and Trash buttons (focus
+loads it, editing renames it on blur, emptying the field deletes it). Load
+imports a JSON file, each row's Save exports that playlist, and Plus (or
+Enter) saves the typed name as a new playlist. The active playlist is tinted.
+Open the menu via the list-video trigger icon.
 `,
       },
     },

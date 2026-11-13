@@ -41,6 +41,11 @@ export default {
   playlistDeleted: 'Playlist {name} deleted',
   playlistNameExists: 'That playlist name is taken',
   playlistLoaded: 'Playlist {name} loaded',
+  playlistExported: 'Playlist {name} exported',
+  playlistImported: 'Playlist {name} imported',
+  couldNotExportPlaylist: "Couldn't export playlist {name}",
+  couldNotImportPlaylist:
+    "Couldn't import {name}. Choose a valid playlist JSON file.",
   couldNotSavePlaylist: "Couldn't save playlist {name}",
   couldNotRenamePlaylist: "Couldn't rename playlist {name}",
   couldNotDeletePlaylist: "Couldn't delete playlist {name}",

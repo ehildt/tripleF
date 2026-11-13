@@ -129,9 +129,9 @@ const presentation = useResponseMediaPresentation('video');
     flex: 0 0 100%;
   }
 
-  /* The lone last-row item spans the full row at the standard 3:2 video
-     ratio. The header became a caption overlay, so its former height now
-     belongs to the video. */
+  /* The lone last-row item uses a wider 2:1 frame to limit its height. The
+     header became a caption overlay, so its former height now belongs to
+     the video. */
   .video-gallery--count-3-plus
     > :deep(li:nth-child(2n + 1):last-child)
     .video-gallery__card {
@@ -146,7 +146,7 @@ const presentation = useResponseMediaPresentation('video');
     flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 2 / 1;
     height: auto;
     max-height: 100%;
   }
@@ -172,9 +172,9 @@ const presentation = useResponseMediaPresentation('video');
     flex: 0 0 100%;
   }
 
-  /* The lone last-row item spans the full row at the standard 3:2 video
-     ratio. The header became a caption overlay, so its former height now
-     belongs to the video. */
+  /* The lone last-row item uses a wider 2:1 frame to limit its height. The
+     header became a caption overlay, so its former height now belongs to
+     the video. */
   .video-gallery--count-3-plus
     > :deep(li:nth-child(3n + 1):last-child)
     .video-gallery__card {
@@ -189,7 +189,7 @@ const presentation = useResponseMediaPresentation('video');
     flex: 0 0 auto;
     min-height: 0;
     width: 100%;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 2 / 1;
     height: auto;
     max-height: 100%;
   }

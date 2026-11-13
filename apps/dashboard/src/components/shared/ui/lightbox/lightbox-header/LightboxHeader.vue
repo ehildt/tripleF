@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
 
-import MotionIcon from '../../motion-icon/MotionIcon.vue';
+import IconButton from '../../icon-button/IconButton.vue';
 import type {
   LightboxHeaderEmits,
   LightboxHeaderProps,
@@ -19,9 +19,14 @@ const emit = defineEmits<LightboxHeaderEmits>();
     </h1>
     <div class="lightbox__header-actions">
       <slot name="actions" />
-      <button type="button" class="lightbox__close" @click="emit('close')">
-        <MotionIcon><X class="lightbox__close-icon" /></MotionIcon>
-      </button>
+      <IconButton
+        size="lg"
+        danger
+        :title="$t('common.close')"
+        @click="emit('close')"
+      >
+        <X />
+      </IconButton>
     </div>
   </header>
 </template>
@@ -47,15 +52,10 @@ const emit = defineEmits<LightboxHeaderEmits>();
   flex-shrink: 0;
 }
 
-/* Mobile: smaller text and icon */
+/* Mobile: smaller text */
 @media (max-width: 639px) {
   .lightbox__title {
     font-size: 0.75rem;
-  }
-
-  .lightbox__close-icon {
-    width: 1.25rem;
-    height: 1.25rem;
   }
 }
 
@@ -66,24 +66,5 @@ const emit = defineEmits<LightboxHeaderEmits>();
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.lightbox__close {
-  padding: var(--spacing-1);
-  color: var(--color-fg-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  flex-shrink: 0;
-}
-
-.lightbox__close:hover {
-  color: var(--color-status-error);
-}
-
-.lightbox__close-icon {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 </style>

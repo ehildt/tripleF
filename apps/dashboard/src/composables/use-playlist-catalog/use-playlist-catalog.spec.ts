@@ -208,6 +208,26 @@ describe('usePlaylistCatalog', () => {
     );
   });
 
+  it('imports and activates a complete playlist with one persistence call', () => {
+    const store = usePlaylistStore();
+    store.createPlaylist('main');
+    const videos = [
+      { videoUrl: 'https://cdn.example.com/one.mp4', title: 'One' },
+      { videoUrl: 'https://cdn.example.com/two.mp4', title: 'Two' },
+    ];
+
+    const imported = usePlaylistCatalog().importPlaylist(' main ', videos);
+
+    expect(imported).toEqual({ name: 'main (2)', videos });
+    expect(store.activePlaylistName).toBe('main (2)');
+    expect(savePlaylistMock).toHaveBeenCalledTimes(1);
+    expect(savePlaylistMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'main (2)',
+      videos,
+    );
+  });
+
   it('dedupes queue additions and persists actual removals', () => {
     const store = usePlaylistStore();
     store.replacePlaylists([{ name: 'main', videos: [] }]);
