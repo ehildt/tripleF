@@ -131,36 +131,22 @@ export function useTaxonomyManager() {
   const toast = useToast();
   /** Whether the URL selects the independent, partition-backed Tags view. */
   const isTagsView = computed(() => route.query.view === 'tags');
+  /** Whether Partition is the selected taxonomy view. */
+  const isPartitionView = computed(
+    () => !isTagsView.value && route.query.lane !== 'encyclopedia',
+  );
+  /** Whether Encyclopedia is the selected taxonomy view. */
+  const isEncyclopediaView = computed(
+    () => !isTagsView.value && route.query.lane === 'encyclopedia',
+  );
 
   /**
-   * The taxonomy lane — backed by the ?lane= query ('partition' is the
-   * default and renders without the parameter). Selecting a lane exits the
-   * Tags content view. Back/forward can undo a lane switch.
+   * The registry lane backing the selected view; Tags reads the partition
+   * registry.
    */
-  const lane = computed<TaxonomyLane>({
-    get: () =>
-      isTagsView.value || route.query.lane !== 'encyclopedia'
-        ? 'partition'
-        : 'encyclopedia',
-    set: (next) => {
-      const wasTagsView = isTagsView.value;
-      const nextQuery = next === 'partition' ? undefined : next;
-      if (wasTagsView) {
-        void router.push({
-          name: 'memory',
-          params: { drill: undefined },
-          query: { ...route.query, lane: nextQuery, view: undefined },
-        });
-        return;
-      }
-      if (route.query.lane === nextQuery) return;
-      void router.push({
-        name: 'memory',
-        params: route.params,
-        query: { ...route.query, lane: nextQuery, view: undefined },
-      });
-    },
-  });
+  const lane = computed<TaxonomyLane>(() =>
+    isEncyclopediaView.value ? 'encyclopedia' : 'partition',
+  );
 
   /**
    * The drill chain's raw URL segment pairs, kind first (/memory/cluster/
@@ -294,9 +280,47 @@ export function useTaxonomyManager() {
     editingId.value = editingId.value === id ? null : id;
   }
 
-  /** Open the partition-backed Tags content view at taxonomy root. */
+  /**
+   * Open Partition at its root and clear every other taxonomy selector.
+   */
+  function showPartition(): void {
+    if (
+      route.query.lane === undefined &&
+      route.query.view === undefined &&
+      drillSegments.value.length === 0
+    )
+      return;
+    void router.push({
+      name: 'memory',
+      params: { drill: undefined },
+      query: { ...route.query, lane: undefined, view: undefined },
+    });
+  }
+
+  /**
+   * Open Encyclopedia at its root and clear every other taxonomy selector.
+   */
+  function showEncyclopedia(): void {
+    if (
+      route.query.lane === 'encyclopedia' &&
+      route.query.view === undefined &&
+      drillSegments.value.length === 0
+    )
+      return;
+    void router.push({
+      name: 'memory',
+      params: { drill: undefined },
+      query: { ...route.query, lane: 'encyclopedia', view: undefined },
+    });
+  }
+
+  /** Open Tags at its root and clear the lane selector. */
   function showTags(): void {
-    if (isTagsView.value && isAtRoot.value && route.query.lane === undefined)
+    if (
+      route.query.lane === undefined &&
+      route.query.view === 'tags' &&
+      drillSegments.value.length === 0
+    )
       return;
     void router.push({
       name: 'memory',
@@ -387,6 +411,8 @@ export function useTaxonomyManager() {
     currentItem,
     clusterRoots,
     tagRoots,
+    isPartitionView,
+    isEncyclopediaView,
     isTagsView,
     childGroups,
     currentSiblings,
@@ -394,6 +420,8 @@ export function useTaxonomyManager() {
     itemLabel,
     refresh,
     descend,
+    showPartition,
+    showEncyclopedia,
     showTags,
     toggleEditing,
     renameNode,
