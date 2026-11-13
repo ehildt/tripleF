@@ -1,41 +1,42 @@
 ---
 name: css
-description: CSS architecture and component styling conventions. Use when creating or editing Vue component styles, writing scoped CSS, working with design system tokens (colors, spacing, typography), converting Tailwind @apply to plain CSS, adding new CSS tokens, or modifying palette/theme files.
+description: CSS architecture and component styling conventions. Use when creating or editing styles, writing Vue scoped CSS, working with design tokens, converting Tailwind syntax to plain CSS, adding tokens, or modifying palette and theme files.
 ---
 
-# CSS Architecture & Component Styling
+# CSS Architecture Router
 
-Read the full guide before writing or modifying any component styles:
+Use this router to load only the styling guidance required by the task. Dashboard stylesheet paths are rooted at `apps/dashboard/src/assets/css/` unless stated otherwise.
 
-→ [css-guide.md](css-guide.md)
+## Route the task
 
-## Quick Rules
+| Task | Read |
+| --- | --- |
+| Write plain CSS with tokens, BEM, states, transparency, or recurring visual patterns | [Component styles](conventions/component-styles.md) |
+| Add or change tokens, palettes, display modes, global styles, or cascade imports | [Cascade and tokens](conventions/cascade-and-tokens.md) |
+| Style a Vue SFC, rename a scoped BEM block, use deep selectors, or assign wrapper ownership | [Vue scoped styles](conventions/vue-scoped-styles.md) |
+| Work with Tailwind `@theme`, migrate utility syntax, or review the Tailwind boundary | [Tailwind tokens](conventions/tailwind-tokens.md) |
+| Review prohibited directives, hardcoded themed values, wrapper elements, or hidden coupling | [Styling anti-patterns](anti-patterns/styling-coupling.md) |
+| Verify completed styling work | [Style verification](quality/style-verification.md) |
 
-1. **Use plain CSS with `var()` tokens** inside `<style scoped>`; template classes use component BEM names, not Tailwind utilities.
-2. **Never use `@apply` or `@reference`.**
-3. **Opacity colors** → `color-mix(in srgb, var(--color-token) N%, transparent)`.
-4. **State variants** (`hover:`, `disabled:`, `focus:`) → real CSS pseudo-class blocks.
-5. **Spacing** → `var(--spacing-*)` tokens; arbitrary values stay as `rem`.
-6. **Fonts** → `var(--font-mono)` or `var(--font-sans)`.
-7. **New tokens** go in `src/assets/css/tokens/` — only add values actually used.
-8. **The scoped BEM block mirrors the component name.** A component's root class is its kebab-case name (`ChatRightToolbar` → `.chat-right-toolbar`); `__element` and `--modifier` suffixes extend it. Rename the block, elements, and modifiers in the same change as the component.
-9. **Floating panels/menus carry a `__backdrop` element.** A fixed transparent backdrop sits beneath every teleported dropdown/popover so it can self-close on an outside click: `{block}__backdrop { position: fixed; inset: 0; z-index: <panel z-index − 1>; background: transparent; }` — the panel itself keeps the higher z-index. Do not paint the backdrop (no tint, no blur) for plain popovers; it is an invisible click-catcher (tint/blur is for modal surfaces like the lightbox/slide-over).
-10. **No styling-only wrapper elements.** An element that exists solely to carry a class around a single child component is indirection — delete the wrapper and let the child own the style. Padding chrome wrapped around one component moves into that component's own scoped root rule (its BEM block). Bounds: this covers the component's _internal_ chrome — padding between its edge and its content, its own background or border. _Outer_ spacing stays in the parent's layout (gap tokens on the flex/grid container); a component never sets its own margins. The escape hatch that makes wrappers unnecessary: a class passed onto a child component lands on its root element, so the parent's scoped styles can style that root. Anything deeper is a deliberate `:deep()` with a reason comment, never a wrapper.
+Load every applicable document. A new Vue component using the Tailwind token pipeline needs component styles, Vue scoped styles, Tailwind tokens, anti-pattern review, and final verification.
 
-## Token Files
+## Always apply
 
-| File                    | Contains                                                                                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `tokens/colors.css`     | All `--color-*` variables (backgrounds, foregrounds, accents, status, harmony, tab, method, borders, glow) |
-| `tokens/layout.css`     | `--spacing-*` variables                                                                                    |
-| `tokens/typography.css` | `--font-mono`, `--font-sans`                                                                               |
-| `palettes/*.css`        | Per-palette color overrides via `[data-theme='...']`                                                       |
-| `modes/light.css`       | Light-mode overrides via `:root[data-theme-mode='light']`                                                  |
+- Use plain CSS properties with `var()` token references and intentional BEM names.
+- Never use `@apply` or `@reference`; do not introduce Tailwind utility classes for component styling.
+- Themed color transparency uses `color-mix()` with the token, percentage, and transparent color.
+- Hover, disabled, focus, and focus-within states use real CSS pseudo-class blocks.
+- Spacing and font families use their tokens; small fixed sizes and font sizes use rem literals rather than invented tokens.
+- Add only values actually consumed. Reuse an existing step rather than defining a duplicate token.
+- A component owns its internal chrome; outer spacing remains with the parent's layout. Styling-only wrappers are removed.
+- Every plain floating popover has an invisible fixed backdrop one z-index step below its panel; tint and blur belong to modal surfaces.
+- Preserve cascade import order because token, palette, and mode overrides depend on it.
+- Before completion, verify token resolution, states, specificity, palettes, and display modes through the quality guide.
 
-## File Structure
+## Official foundations
 
-The CSS lives in a single directory: `style.css` is the entry point (imports only, in cascade order); `tokens/` holds `@theme` blocks with variable defaults; `palettes/` holds per-palette color overrides; `modes/` holds display-mode overrides; `components/` holds global (unscoped) component styles.
+- [CSS custom properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/--*)
+- [CSS `var()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/var)
+- [CSS `color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/color-mix)
 
-## Adding a New Token
-
-Add to the appropriate `@theme` block in `tokens/`, then override in palette files if the value differs per theme.
+Topic-specific documentation is linked from the relevant convention rather than aggregated here.
