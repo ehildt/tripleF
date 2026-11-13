@@ -20,6 +20,7 @@ import { usePlaylistStore } from '@/stores/widgets/playlist/playlist.store';
 import type { VideoGalleryItem } from '@/types/assistant-response-data.model';
 
 import { usePlaylistTransport } from '../composables/use-playlist-transport';
+import { usePlaylistFileTransfer } from './composables/use-playlist-file-transfer';
 import { usePlaylistLibrary } from './composables/use-playlist-library';
 import { usePlaylistPanel } from './composables/use-playlist-panel';
 import PlaylistEmptyState from './playlist-empty-state/PlaylistEmptyState.vue';
@@ -69,6 +70,8 @@ const {
   renamePlaylist,
 } = usePlaylistLibrary();
 
+const { savePlaylistToFile, loadPlaylistFromFile } = usePlaylistFileTransfer();
+
 function onItemPlay(item: VideoGalleryItem) {
   onPlayItem(item);
   emit('play', item);
@@ -93,6 +96,8 @@ function onItemPlay(item: VideoGalleryItem) {
       @toggle-autoplay="togglePlaylistAutoplay"
       @toggle-popout-visibility="toggleHideOnPlaylist"
       @select="selectPlaylist"
+      @load-file="loadPlaylistFromFile"
+      @save-file="savePlaylistToFile"
       @create="createPlaylist"
       @delete="deletePlaylist"
       @rename="renamePlaylist"

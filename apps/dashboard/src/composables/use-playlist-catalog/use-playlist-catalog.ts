@@ -94,6 +94,17 @@ export function usePlaylistCatalog(): PlaylistCatalogControls {
     return true;
   }
 
+  function importPlaylist(
+    name: string,
+    videos: VideoGalleryItem[],
+  ): Playlist | null {
+    const playlist = playlistStore.importPlaylist(name, videos);
+    if (!playlist) return null;
+    markMutation();
+    persistPlaylist(playlist);
+    return playlist;
+  }
+
   function addVideoToActivePlaylist(video: VideoGalleryItem): boolean {
     if (!playlistStore.addVideoToActivePlaylist(video)) return false;
     markMutation();
@@ -116,6 +127,7 @@ export function usePlaylistCatalog(): PlaylistCatalogControls {
     createPlaylist,
     renamePlaylist,
     deletePlaylist,
+    importPlaylist,
     addVideoToActivePlaylist,
     removeVideoFromActivePlaylist,
   };

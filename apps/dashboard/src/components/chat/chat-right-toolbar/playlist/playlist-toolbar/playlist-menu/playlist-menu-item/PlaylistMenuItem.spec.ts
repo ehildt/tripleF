@@ -9,8 +9,12 @@ function mountItem(name: string, isActive = false) {
 
 describe('PlaylistMenuItem', () => {
   it('the field is read-only until Edit is clicked', async () => {
-    const wrapper = mountItem('Focus');
+    const wrapper = mountItem('Focus', true);
+    expect(wrapper.classes()).toContain('playlist-menu-item--active');
     const input = wrapper.find('.playlist-menu-item__input');
+    expect(wrapper.findAll('.playlist-menu-item__actions button')).toHaveLength(
+      3,
+    );
     expect(input.attributes('readonly')).toBeDefined();
     await wrapper.find('button[aria-label="Rename playlist"]').trigger('click');
     expect(
@@ -50,6 +54,16 @@ describe('PlaylistMenuItem', () => {
     await input.trigger('blur');
     expect(wrapper.emitted('delete')).toBeTruthy();
     expect(wrapper.emitted('rename')).toBeFalsy();
+  });
+
+  it('saves its own playlist from the action next to Edit', async () => {
+    const wrapper = mountItem('Focus');
+    await wrapper
+      .find('button[aria-label="Save playlist Focus to file"]')
+      .trigger('click');
+
+    expect(wrapper.emitted('save')).toHaveLength(1);
+    expect(wrapper.emitted('select')).toBeUndefined();
   });
 
   it('the Trash button deletes the playlist', async () => {
