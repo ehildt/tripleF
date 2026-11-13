@@ -33,6 +33,8 @@ const {
   currentItem,
   clusterRoots,
   tagRoots,
+  isPartitionView,
+  isEncyclopediaView,
   isTagsView,
   childGroups,
   currentSiblings,
@@ -41,6 +43,8 @@ const {
   scopeKey,
   refresh,
   descend,
+  showPartition,
+  showEncyclopedia,
   showTags,
   toggleEditing,
   renameNode,
@@ -57,10 +61,13 @@ onMounted(refresh);
 <template>
   <main class="taxonomy-manager">
     <TaxonomyManagerHeader
-      v-model:lane="lane"
       :is-loading="isLoading"
+      :is-partition-view="isPartitionView"
+      :is-encyclopedia-view="isEncyclopediaView"
       :is-tags-view="isTagsView"
       @refresh="refresh"
+      @show-partition="showPartition"
+      @show-encyclopedia="showEncyclopedia"
       @show-tags="showTags"
     />
 

@@ -39,7 +39,7 @@ defineProps<MenuRowProps>();
 /* Standalone strip across a settings section: the secondary surface, the
    standard horizontal inset, and air below the line. */
 .menu-row--section {
-  padding: 0 var(--spacing-4) var(--spacing-3);
+  padding: 0 var(--spacing-4);
   background-color: var(--color-bg-secondary);
 }
 
