@@ -1,18 +1,15 @@
 <script setup lang="ts">
 /**
- * The taxonomy manager's shared space header: the memory-lane toggle
- * (partition / encyclopedia) and manual refresh use the same header menu as
- * the other memory spaces. The lane is backed by the route query.
+ * The taxonomy manager's shared space header: independent Partition,
+ * Encyclopedia, and Tags selectors plus manual refresh. Each selector emits
+ * its own intent; the route-backed composable owns the resulting navigation.
  */
 import { Brain, FolderTree, Network, RefreshCw, Tags } from '@lucide/vue';
-import { computed } from 'vue';
 
 import MenuButton from '@/components/shared/ui/menu-button/MenuButton.vue';
 import MenuRow from '@/components/shared/ui/menu-row/MenuRow.vue';
-import { i18n } from '@/i18n/i18n';
 
 import SpaceHeader from '../../shared/ui/space-header/SpaceHeader.vue';
-import type { TaxonomyLane } from '../composables/use-taxonomy-manager.types';
 import type {
   TaxonomyManagerHeaderEmits,
   TaxonomyManagerHeaderProps,
@@ -20,21 +17,6 @@ import type {
 
 defineProps<TaxonomyManagerHeaderProps>();
 const emit = defineEmits<TaxonomyManagerHeaderEmits>();
-const lane = defineModel<TaxonomyLane>('lane', { required: true });
-
-/** The lane segments of the memory-lane toggle. */
-const LANE_OPTIONS = computed(() => [
-  {
-    value: 'partition' as const,
-    icon: Brain,
-    tooltip: i18n.global.t('common.settingsMemoryPartition'),
-  },
-  {
-    value: 'encyclopedia' as const,
-    icon: Network,
-    tooltip: i18n.global.t('common.settingsMemoryEncyclopedia'),
-  },
-]);
 </script>
 
 <template>
@@ -49,12 +31,16 @@ const LANE_OPTIONS = computed(() => [
       :aria-label="$t('common.memoryTaxonomyManager')"
     >
       <MenuButton
-        v-for="option in LANE_OPTIONS"
-        :key="option.value"
-        :icon="option.icon"
-        :label="option.tooltip"
-        :active="!isTagsView && lane === option.value"
-        @click="lane = option.value"
+        :icon="Brain"
+        :label="$t('common.settingsMemoryPartition')"
+        :active="isPartitionView"
+        @click="emit('showPartition')"
+      />
+      <MenuButton
+        :icon="Network"
+        :label="$t('common.settingsMemoryEncyclopedia')"
+        :active="isEncyclopediaView"
+        @click="emit('showEncyclopedia')"
       />
       <MenuButton
         :icon="Tags"

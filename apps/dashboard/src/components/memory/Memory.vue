@@ -82,7 +82,6 @@ const SUBTAB_ITEMS = computed(() => [
 .memory-page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
   padding: var(--spacing-3);
   grid-column: 1 / -1;
 }

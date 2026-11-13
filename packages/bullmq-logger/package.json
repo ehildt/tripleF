@@ -79,7 +79,7 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^12.5.0",
-    "bullmq": "^6.7.5",
+    "bullmq": "^6.7.6",
     "zod": "^4.6.7",
     "pino": "^10.4.0",
     "pino-pretty": "^13.2.0"

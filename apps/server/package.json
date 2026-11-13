@@ -37,7 +37,7 @@
     "lint:unused": "npx ts-unused-exports ./tsconfig.exclude.json --maxIssues=0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1167.0",
+    "@aws-sdk/client-s3": "3.1168.0",
     "@fastify/compress": "^9.3.0",
     "@fastify/multipart": "^10.1.8",
     "@fastify/static": "^10.1.10",
@@ -62,8 +62,8 @@
     "@triplef/pdf": "^1.0.2",
     "@triplef/socketio": "^1.0.3",
     "@xmldom/xmldom": "^0.9.12",
-    "ai": "^7.0.170",
-    "bullmq": "^6.7.5",
+    "ai": "^7.0.172",
+    "bullmq": "^6.7.6",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cld3-asm": "^4.0.0",
