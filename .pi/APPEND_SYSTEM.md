@@ -18,34 +18,25 @@
 
 - **Skill files contain no code examples — ever.** Skills (`SKILL.md` and any companion guide files) are written in prose only: state the rule, the convention, and the reason. Never include fenced code blocks, code snippets, or copy-paste samples in a skill. If a structure or shape matters, describe it in words (names, ordering, placement, file naming). Inline references to a command name or identifier inside prose (e.g. `pnpm lint`) are fine — the ban is on sample code you could copy-paste. This rule is absolute.
 
-# Project Resources
+# Technology Guidance
 
-Pi loads `AGENTS.md` at startup for high-level project context. This project uses a dedicated skill for each domain:
-
-| Concern                        | Resource                          |
-| ------------------------------ | --------------------------------- |
-| Project overview, tone, safety | `AGENTS.md` (this project's root) |
-| Vue 3 / frontend conventions   | `./skills/vue/SKILL.md`           |
-| CSS / styling conventions      | `./skills/css/SKILL.md`           |
-| NestJS / server conventions    | `./skills/nestjs/SKILL.md`        |
-| Linting / type-checking        | `./skills/lint/SKILL.md`          |
-| Localization (i18n)            | `./skills/localization/SKILL.md`  |
-| Official docs / stack overview | `./skills/tech-stack/SKILL.md`    |
-| Framework-agnostic structure   | `./skills/code-structure/SKILL.md` |
-
-Use the relevant skill before implementing framework-specific changes.
+Available domain skills collectively describe the project's technology stack. They are independently supplied guidance, not dependencies of these agent rules. Apply whatever domain guidance is available; when none applies, consult official documentation and the codebase directly. This document does not maintain a registry or require particular skill installations.
 
 # Development Environment
 
-This project uses Docker Compose for local development with bind-mounted source volumes, providing hot reload for the backend (`./apps/server`), memory app (`./apps/memory`), and frontend (`./apps/dashboard`).
+This project uses [Docker Compose](https://docs.docker.com/compose/) for local development with bind-mounted source volumes, providing hot reload for the backend (`./apps/server`), memory app (`./apps/memory`), and frontend (`./apps/dashboard`).
 
-- Start backing services with `docker compose -f infra.compose.yml up -d --wait`, push the server-owned Prisma schema with `pnpm --filter @triplef/server db:push`, then use `docker compose up` (or `docker compose up -d`) to start the app stack.
+- Create each application's environment file from its committed example before the first start: server, memory, and dashboard. Leave existing environment files untouched unless explicitly asked to modify them.
+- Install dependencies from the repository root with `pnpm install`.
+- Start backing services with `docker compose -f infra.compose.yml up -d --wait`, push the server-owned Prisma schema with `pnpm --filter @triplef/server db:push`, then use `docker compose up` (or `docker compose up -d`) to start the app stack. The memory app never owns schema migration.
 - The app and infra Compose files share one project. Do **not** use `--remove-orphans` during routine split-file startup: each file would otherwise remove the other file's containers as orphans.
 - Do **not** instruct the user to rebuild images or restart containers when making code changes to `apps/server`, `apps/memory`, or `apps/dashboard`; the running containers pick up edits automatically via volume mounts.
 - Only suggest a rebuild (`docker compose build`) or a restart when:
   - `Dockerfile` or `package.json` dependency changes are made,
   - Infra services in `infra.compose.yml` change, or
   - The running container is actually stale for a confirmed reason.
+- RustFS runs as a non-root user. Mount its named volume directly at `/data`, retain the explicit `/health/ready` healthcheck, and validate readiness plus a representative S3 operation after object-storage infrastructure changes. A nested mount point can be created with root ownership and prevent startup.
+- Treat Compose startup and storage readiness as operational checks: verify infrastructure health and a representative operation rather than assuming that a running container is usable.
 
 # Package Publishing Workflow
 
@@ -71,6 +62,4 @@ Before proposing or implementing any non-trivial change, the agent must:
 - When introducing new code, ensure it aligns with the framework's current best practices and conventions.
 - If multiple technologies are involved, review the documentation for each relevant technology before proceeding.
 - When documentation and existing code conflict, verify the intended behavior and follow the documented approach unless there is a project-specific requirement to do otherwise.
-- For official documentation links and project stack guidance, see `./skills/tech-stack/SKILL.md`.
-- For framework-specific conventions, see the relevant skill under `./skills/`.
-- **Check conventions before running the quality gates.** After implementing — and before lint, tests, or Storybook stories — self-review the finished change against the relevant skills (folder structure and naming, props types, CSS tokens and BEM, i18n keys, store/composable boundaries) and report any deviations you find. Passing type-check and lint is not proof the conventions were followed.
+- **Check conventions before running the quality gates.** After implementing — and before lint, tests, or Storybook stories — self-review the finished change against the applicable project conventions (folder structure and naming, props types, CSS tokens and BEM, i18n keys, store/composable boundaries) and report any deviations you find. Passing type-check and lint is not proof the conventions were followed.

@@ -4,29 +4,20 @@
 
 This is a TypeScript monorepo for tripleF (3F), a source-available agentic AI workbench (conversation harness + dashboard), local-first via Ollama or Ollama Cloud. First-party code is licensed under PolyForm Strict 1.0.0 for noncommercial use; modification, redistribution, and commercial use require separate permission.
 
-- `server/` — NestJS backend with Fastify, Prisma/PostgreSQL, BullMQ/KeyDB, RustFS.
-- `dashboard/` — Vue 3 frontend with Vite, Pinia, Tailwind, Storybook, Vitest.
+- `apps/server/` — NestJS backend with Fastify, Prisma/PostgreSQL, BullMQ/KeyDB, RustFS.
+- `apps/memory/` — memory application.
+- `apps/dashboard/` — Vue 3 frontend with Vite, Pinia, Tailwind, Storybook, Vitest.
+- `packages/*` — published libraries consumed through published semver ranges.
 
 ## Monorepo & Tooling
 
 - Package manager: pnpm workspaces.
 - Local orchestration: Docker Compose.
+  - Compose files: `compose.yml` for development apps, `compose.prod.yml` for production apps, and `infra.compose.yml` for backing services.
   - Infra: `docker compose -f infra.compose.yml up -d` (postgres, rustfs, keydb).
   - App: `docker compose up` (server + dashboard with hot reload via bind mounts).
 - Quality gates: ESLint, TypeScript, Prettier, `depcheck`, `depcruise`, `ts-unused-exports`.
 - Tests: Vitest in both workspaces.
-
-## Available Skills
-
-Use the relevant skill before implementing framework-specific changes:
-
-- `vue` — Vue components, composables, helpers, stories, tests.
-- `css` — Styling, design tokens, scoped CSS.
-- `nestjs` — NestJS modules, controllers, services, processors, helpers, DTOs.
-- `lint` — ESLint, TypeScript, depcheck, depcruise.
-- `localization` — i18n conventions: Zod schema, `language` key, auto-discovery, and the en-first test workflow.
-- `tech-stack` — Official docs links and project stack overview.
-- `code-structure` — Framework-agnostic module/file structure: one function per file, co-located explicit types, role suffixes, co-location, no barrels.
 
 ## Working Rules
 
@@ -50,7 +41,7 @@ Act as a senior software engineer reviewing the work, not just an implementer:
 - Critique ideas, never people, and never the past. The no-argue rule above forbids blame and relitigating decisions; it does not forbid professional pushback before a decision is made.
 - Challenge, then commit. Once the user decides — even against the advice — implement their choice fully and without further resistance. The duty is to surface trade-offs before they commit, not to win the argument.
 - Match depth to risk: small, clearly-correct tasks get no lecture; large or unusual changes get a real review.
-- **Check conventions before linting, tests, and Storybook.** After implementing, self-review the finished code against the relevant skills and report deviations before running the quality gates; type-check and lint passing does not mean the conventions were followed.
+- **Check conventions before linting, tests, and Storybook.** After implementing, self-review the finished code against the applicable project conventions and report deviations before running the quality gates; type-check and lint passing does not mean the conventions were followed.
 
 ## Safety & Secrets
 

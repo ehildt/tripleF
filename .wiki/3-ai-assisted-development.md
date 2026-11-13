@@ -33,7 +33,7 @@ Context coding is not "vibe coding":
 ## The guardrails that make it stick
 
 - **Quality gates in CI on every branch:** ESLint, `vue-tsc`/tsc, Vitest, dependency-cruiser (architecture rules), `ts-unused-exports`, `depcheck`.
-- **Conventions as machine-readable context:** `AGENTS.md`, `.pi/skills/` (Vue, CSS, NestJS, lint, tech-stack) instruct any contributor — human or machine — about the same house rules.
+- **Conventions as machine-readable context:** `AGENTS.md` and the independently maintained domain guidance under `.pi/skills/` instruct any contributor — human or machine — about the same house rules.
 - **Documentation-first:** this wiki is written _for_ both audiences; new subsystems get documented when they land.
 - **Small, reviewable changes:** agents produce diffs, humans accept or reject; no generated bulk rewrites without explicit approval.
 
