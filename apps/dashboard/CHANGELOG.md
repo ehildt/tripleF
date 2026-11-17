@@ -1,5 +1,11 @@
 # @triplef/dashboard
 
+## 0.7.0
+
+### Minor Changes
+
+- 9705dc4: Add lossless JSON playlist save/load with full video metadata, safe filenames, duplicate-name handling, and new playlist menu actions and icon. Implements #139.
+
 ## 0.6.5
 
 ### Patch Changes
